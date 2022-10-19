@@ -67,7 +67,7 @@ class Destination(BaseDestination):
             raise Exception(message)
 
 
-        for sub_batch in batch(record_data, 100):
+        for sub_batch in batch(record_data, 1000):
             for insert_command in self.build_insert_commands(
                 database_name=database_name,
                 records=[d['record'] for d in sub_batch],
