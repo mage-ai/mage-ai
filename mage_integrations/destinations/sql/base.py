@@ -2,7 +2,7 @@ from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import REPLICATION_METHOD_FULL_TABLE, REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import argparse
 import sys
 
@@ -67,7 +67,7 @@ class Destination(BaseDestination):
             raise Exception(message)
 
 
-        for sub_batch in batch(record_data[:300], 100):
+        for sub_batch in batch(record_data, 100):
             for insert_command in self.build_insert_commands(
                 database_name=database_name,
                 records=[d['record'] for d in sub_batch],

@@ -70,9 +70,12 @@ class PostgreSQL(Destination):
         ]
 
         if unique_constraints and unique_conflict_method:
-            commands.append(f"ON CONFLICT ({', '.join([clean_column(col) for col in unique_constraints])})")
+            unique_constraints = [clean_column_name(col) for col in unique_constraints]
+            columns_cleaned = [clean_column_name(col) for col in columns]
+
+            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                update_command = [f'{clean_column_name(col)} = EXCLUDED.{clean_column_name(col)}' for col in columns]
+                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
                 commands.append(
                     f"DO UPDATE SET {', '.join(update_command)}",
                 )
