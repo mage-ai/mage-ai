@@ -8,7 +8,7 @@ from mage_integrations.destinations.sql.utils import (
     convert_column_type,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 
 class PostgreSQL(Destination):
@@ -48,6 +48,7 @@ class PostgreSQL(Destination):
         schema: Dict,
         schema_name: str,
         table_name: str,
+        insert_command_count_wrapper: Callable,
         database_name: str = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
@@ -69,7 +70,7 @@ class PostgreSQL(Destination):
         ]
 
         if unique_constraints and unique_conflict_method:
-            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
+            commands.append(f"ON CONFLICT ({', '.join([clean_column(col) for col in unique_constraints])})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                 update_command = [f'{clean_column_name(col)} = EXCLUDED.{clean_column_name(col)}' for col in columns]
                 commands.append(
@@ -79,7 +80,7 @@ class PostgreSQL(Destination):
                 commands.append('DO NOTHING')
 
         return [
-            '\n'.join(commands),
+            insert_command_count_wrapper('\n'.join(commands)),
         ]
 
     def does_table_exist(

@@ -8,7 +8,7 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 
 class Snowflake(Destination):
@@ -49,6 +49,7 @@ class Snowflake(Destination):
         schema: Dict,
         schema_name: str,
         table_name: str,
+        insert_command_count_wrapper: Callable,
         database_name: str = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
@@ -68,37 +69,52 @@ class Snowflake(Destination):
             records=records,
         )
 
-        commands = self.build_create_table_commands(
-            schema=schema,
-            schema_name=schema_name,
-            table_name=f'temp_{table_name}',
-            database_name=database_name,
-            unique_constraints=unique_constraints,
-        ) + [
-            f"INSERT INTO {full_table_name_temp} ({insert_columns}) VALUES ({insert_values})",
-        ]
-
-        merge_commands = [
-            f'MERGE INTO {full_table_name} AS a USING (SELECT * FROM {full_table_name_temp}) AS b',
-        ]
 
         if unique_constraints and unique_conflict_method:
+            drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
+            commands = [
+                drop_temp_table_command,
+            ] + self.build_create_table_commands(
+                schema=schema,
+                schema_name=schema_name,
+                table_name=f'temp_{table_name}',
+                database_name=database_name,
+                unique_constraints=unique_constraints,
+            ) + [
+                f"INSERT INTO {full_table_name_temp} ({insert_columns}) VALUES {insert_values}",
+            ]
+
+            unique_constraints = [clean_column_name(col) for col in unique_constraints]
+            columns_cleaned = [clean_column_name(col) for col in columns]
+
+            merge_commands = [
+                f'MERGE INTO {full_table_name} AS a',
+                f'USING (SELECT * FROM {full_table_name_temp}) AS b',
+                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints])}",
+            ]
+
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                 set_command = ', '.join(
-                    [f'a.{clean_column_name(col)} = b.{clean_column_name(col)}' for col in columns],
+                    [f'a.{col} = b.{col}' for col in columns_cleaned],
                 )
                 merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
 
-        merge_commands.append(
-            f'WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES ({insert_values})',
-        )
-        merge_command = '\n'.join(merge_commands)
+            merge_values = []
+            for i in range(len(records)):
+                v = ', '.join([f'b.{col}' for col in columns_cleaned])
+                merge_values.append(f'({v})')
+            merge_commands.append(
+                f"WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {', '.join(merge_values)}",
+            )
+            merge_command = '\n'.join(merge_commands)
 
-        drop_temp_table_command = f'DROP TABLE {full_table_name_temp}'
+            return commands + [
+                merge_command,
+                drop_temp_table_command,
+            ]
 
-        return commands + [
-            merge_command,
-            drop_temp_table_command,
+        return [
+            f"INSERT INTO {full_table_name} ({insert_columns}) VALUES {insert_values}",
         ]
 
     def does_table_exist(

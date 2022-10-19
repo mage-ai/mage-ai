@@ -74,16 +74,14 @@ class Destination(BaseDestination):
                 schema=schema,
                 schema_name=schema_name,
                 table_name=table_name,
+                insert_command_count_wrapper=lambda command: '\n'.join([
+                    f'WITH insert_rows_and_count AS ({command} RETURNING 1)',
+                    'SELECT COUNT(*) FROM insert_rows_and_count',
+                ]),
                 unique_conflict_method=self.unique_conflict_methods.get(stream),
                 unique_constraints=unique_constraints,
             ):
-                query_strings.append('\n'.join([
-                    'WITH rows AS (',
-                    insert_command,
-                    'RETURNING 1'
-                    ')',
-                    'SELECT COUNT(*) FROM rows',
-                ]))
+                query_strings.append(insert_command)
 
         connection = self.build_connection()
         data = connection.execute(query_strings, commit=True)
@@ -91,7 +89,8 @@ class Destination(BaseDestination):
         records_inserted = 0
         for array_of_tuples in data:
             for t in array_of_tuples:
-                records_inserted += t[0]
+                if len(t) >= 1 and type(t[0]) is int:
+                    records_inserted += t[0]
 
         self.logger.info('Export data completed.', tags=merge_dict(tags, dict(
             records_inserted=records_inserted,
