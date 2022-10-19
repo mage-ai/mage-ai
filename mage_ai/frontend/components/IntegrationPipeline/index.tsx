@@ -883,7 +883,7 @@ function IntegrationPipeline({
 
                         The conflict method <Text bold inline monospace>
                           {UniqueConflictMethodEnum.IGNORE}
-                        </Text> will save the new record regardless of duplication.
+                        </Text> will skip the new record if it’s a duplicate of an existing record.
                         The conflict method <Text bold inline monospace>
                           {UniqueConflictMethodEnum.UPDATE}
                         </Text> will not save the new record and instead update the existing record

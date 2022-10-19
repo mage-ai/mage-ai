@@ -59,6 +59,7 @@ Read more tech docs here. Got questions?
     - [Logging](features/orchestration/README.md#logs)
 
 ### Integrations
+- [Syncing data between 3rd party sources and destinations](data_integrations/README.md)
 - Compute
     - [Spark / PySpark](spark/setup/README.md)
 - Databases, data warehouses, data lakes, etc.
@@ -75,7 +76,7 @@ Read more tech docs here. Got questions?
 - Building pipelines
     - [Batch pipeline](tutorials/quick_start/etl_restaurant/README.md)
     - [Streaming pipeline](guides/pipelines/StreamingPipeline.md)
-    - *Data integration pipeline (coming soon)*
+    - [Data integration pipeline](guides/pipelines/DataIntegrationPipeline.md)
 - [SQL blocks](guides/blocks/SQL.md)
 - [Sensors: blocks depending on external pipelines](guides/blocks/Sensors.md)
 - [Triggering pipelines](core/abstractions.md#trigger)

@@ -16,7 +16,7 @@ Here are several example use cases for Mage (the list is not comprehensive):
 
 <br />
 
-## Integrating data
+## [Integrating data](../data_integrations/README.md)
 
 Data integration is synchronizing data from an external system to an internal system or vice versa.
 
