@@ -10,6 +10,9 @@ RUN apt -y update && apt -y install curl
 RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
 RUN apt install nodejs
 
+# Install R
+# RUN apt install -y r-base
+
 # Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN ${PIP} install -r requirements.txt

@@ -51,6 +51,10 @@ class Variable:
         self.variable_type = variable_type
         self.check_variable_type()
 
+    @property
+    def variable_path(self):
+        return os.path.join(self.variable_dir_path, f'{self.uuid}')
+
     def check_variable_type(self):
         if self.variable_type is None and self.storage.path_exists(
             os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
@@ -115,9 +119,8 @@ class Variable:
         return self.__read_json()
 
     def __delete_dataframe_analysis(self) -> None:
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         for k in DATAFRAME_ANALYSIS_KEYS:
-            file_path = os.path.join(variable_path, f'{k}.json')
+            file_path = os.path.join(self.variable_path, f'{k}.json')
             if self.storage.path_exists(file_path):
                 self.storage.remove(file_path)
 
@@ -127,12 +130,11 @@ class Variable:
             self.storage.remove(file_path)
 
     def __delete_parquet(self) -> None:
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
-        file_path = os.path.join(variable_path, 'data.parquet')
+        file_path = os.path.join(self.variable_path, 'data.parquet')
 
         if self.storage.path_exists(file_path):
             self.storage.remove(file_path)
-            self.storage.remove_dir(variable_path)
+            self.storage.remove_dir(self.variable_path)
 
     def __read_json(self, default_value={}) -> Dict:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
@@ -149,9 +151,8 @@ class Variable:
     def __read_geo_dataframe(self, sample: bool = False, sample_count: int = None):
         import geopandas as gpd
 
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
-        file_path = os.path.join(variable_path, 'data.sh')
-        sample_file_path = os.path.join(variable_path, 'sample_data.sh')
+        file_path = os.path.join(self.variable_path, 'data.sh')
+        sample_file_path = os.path.join(self.variable_path, 'sample_data.sh')
         if not os.path.exists(file_path):
             return gpd.GeoDataFrame()
         if sample and os.path.exists(sample_file_path):
@@ -168,9 +169,8 @@ class Variable:
         return df
 
     def __read_parquet(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
-        file_path = os.path.join(variable_path, 'data.parquet')
-        sample_file_path = os.path.join(variable_path, 'sample_data.parquet')
+        file_path = os.path.join(self.variable_path, 'data.parquet')
+        sample_file_path = os.path.join(self.variable_path, 'sample_data.parquet')
 
         read_sample_success = False
         if sample:
@@ -193,22 +193,20 @@ class Variable:
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
         if spark is None:
             return None
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         return (
             spark.read
             .format('csv')
             .option('header', 'true')
             .option('inferSchema', 'true')
             .option('delimiter', ',')
-            .load(variable_path)
+            .load(self.variable_path)
         )
 
     def __write_geo_dataframe(self, data) -> None:
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
-        os.makedirs(variable_path, exist_ok=True)
-        data.to_file(os.path.join(variable_path, 'data.sh'))
+        os.makedirs(self.variable_path, exist_ok=True)
+        data.to_file(os.path.join(self.variable_path, 'data.sh'))
         df_sample_output = data.iloc[:DATAFRAME_SAMPLE_COUNT]
-        df_sample_output.to_file(os.path.join(variable_path, 'sample_data.sh'))
+        df_sample_output.to_file(os.path.join(self.variable_path, 'sample_data.sh'))
 
     def __write_parquet(self, data: pd.DataFrame) -> None:
         df_output = data.copy()
@@ -222,28 +220,26 @@ class Variable:
                 except Exception:
                     # Fall back to convert to string
                     df_output[c] = series_non_null.astype(str)
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
-        self.storage.makedirs(variable_path, exist_ok=True)
+        self.storage.makedirs(self.variable_path, exist_ok=True)
         self.storage.write_parquet(
             df_output,
-            os.path.join(variable_path, 'data.parquet'),
+            os.path.join(self.variable_path, 'data.parquet'),
         )
         try:
             df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
             self.storage.write_parquet(
                 df_sample_output,
-                os.path.join(variable_path, 'sample_data.parquet'),
+                os.path.join(self.variable_path, 'sample_data.parquet'),
             )
         except Exception:
             pass
 
     def __write_spark_parquet(self, data) -> None:
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         (
             data.write
             .option('header', 'True')
             .mode('overwrite')
-            .csv(variable_path)
+            .csv(self.variable_path)
         )
 
     def __read_dataframe_analysis(
@@ -257,14 +253,13 @@ class Variable:
         3. insights.json
         4. suggestions.json
         """
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
-        if not self.storage.path_exists(variable_path):
+        if not self.storage.path_exists(self.variable_path):
             return dict()
         result = dict()
         for k in DATAFRAME_ANALYSIS_KEYS:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
-            result[k] = self.storage.read_json_file(os.path.join(variable_path, f'{k}.json'))
+            result[k] = self.storage.read_json_file(os.path.join(self.variable_path, f'{k}.json'))
         return result
 
     def __write_dataframe_analysis(self, data: Dict[str, Dict]) -> None:
@@ -275,7 +270,6 @@ class Variable:
         3. insights.json
         4. suggestions.json
         """
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
-        self.storage.makedirs(variable_path, exist_ok=True)
+        self.storage.makedirs(self.variable_path, exist_ok=True)
         for k in DATAFRAME_ANALYSIS_KEYS:
-            self.storage.write_json_file(os.path.join(variable_path, f'{k}.json'), data.get(k))
+            self.storage.write_json_file(os.path.join(self.variable_path, f'{k}.json'), data.get(k))
