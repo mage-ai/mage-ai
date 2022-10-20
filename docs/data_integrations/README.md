@@ -97,7 +97,7 @@ A destination can be a 3rd party API, SaaS, database, data warehouse, or a data 
 ### Available destinations
 
 - MySQL
-- PostgreSQL
+- [PostgreSQL](../../mage_integrations/destinations/postgresql/README.md)
 - Snowflake
 - *Amazon Web Services (AWS) Redshift (coming soon)*
 - *Amazon Web Services (AWS) S3 (coming soon)*
