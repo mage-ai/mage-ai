@@ -1,7 +1,6 @@
 from croniter import croniter
 from datetime import datetime, timedelta
-from mage_ai.data_preparation.logger_manager import LoggerManager
-from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
@@ -242,7 +241,7 @@ class PipelineRun(BaseModel):
     @property
     def logs(self):
         pipeline = Pipeline.get(self.pipeline_uuid)
-        return LoggerManager(
+        return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
             repo_config=pipeline.repo_config,
@@ -295,7 +294,7 @@ class BlockRun(BaseModel):
     @property
     def logs(self):
         pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
-        return LoggerManager(
+        return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
             block_uuid=self.block_uuid,
             partition=self.pipeline_run.execution_partition,
