@@ -11,6 +11,12 @@ Here are the high level steps to build a data integration pipeline:
 
 <br />
 
+## Demo video
+
+https://user-images.githubusercontent.com/1066980/196870752-6d1b0219-8fc0-419c-99d7-677bdcf3fc0a.mp4
+
+<br />
+
 ## Add new data integration pipeline
 
 1. Open Mage in your browser and click the <b>`[+ New pipeline]`</b> button.
