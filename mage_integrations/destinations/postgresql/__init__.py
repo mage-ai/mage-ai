@@ -101,7 +101,12 @@ class PostgreSQL(Destination):
 
             return bool(count)
 
-    def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
+    def calculate_records_inserted_and_updated(
+        self,
+        data: List[List[Tuple]],
+        unique_constraints: List[str] = None,
+        unique_conflict_method: str = None,
+    ) -> Tuple:
         records_inserted = 0
         for array_of_tuples in data:
             for t in array_of_tuples:
