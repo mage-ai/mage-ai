@@ -129,12 +129,15 @@ class Snowflake(Destination):
     def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
         records_inserted = 0
         records_updated = 0
+        number_of_data = len(data)
 
-        for array_of_tuples in data:
+        for idx, array_of_tuples in enumerate(data):
             for t in array_of_tuples:
                 if len(t) == 2 and type(t[0]) is int and type(t[1]) is int:
                     records_inserted += t[0]
                     records_updated += t[1]
+                elif idx == number_of_data - 1 and len(t) == 1 and type(t[0]) is int:
+                    records_inserted += t[0]
 
         return records_inserted, records_updated
 

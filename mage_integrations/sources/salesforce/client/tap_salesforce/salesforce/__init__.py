@@ -400,7 +400,7 @@ class Salesforce():
             else return bookmark from the state by subtracting lookback if provided
         """
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])
-        bookmark_properties = catalog_entry.get('bookmark_properties')
+        bookmark_properties = catalog_entry.get('bookmark_properties', [])
         replication_key = bookmark_properties[0] if len(bookmark_properties) else None
 
         # get bookmark value from the state
@@ -419,7 +419,7 @@ class Salesforce():
         query = "SELECT {} FROM {}".format(",".join(selected_properties), catalog_entry['stream'])
 
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])
-        bookmark_properties = catalog_entry.get('bookmark_properties')
+        bookmark_properties = catalog_entry.get('bookmark_properties', [])
         replication_key = bookmark_properties[0] if len(bookmark_properties) else None
 
         if replication_key:
