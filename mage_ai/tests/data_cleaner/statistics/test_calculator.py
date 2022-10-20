@@ -307,11 +307,11 @@ class StatisticsCalculatorTest(TestCase):
             ),
         )
         data = calculator.calculate_statistics_overview(df, is_clean=True)
-        self.assertEquals(data['text/word_distribution']['seat'], 4)
-        self.assertEquals(data['text/word_distribution']['create'], 2)
-        self.assertEquals(data['text/word_distribution']['place'], 2)
-        self.assertEquals(data['text/max_word_count'], 14)
-        self.assertEquals(data['text/min_word_count'], 7)
+        self.assertEqual(data['text/word_distribution']['seat'], 4)
+        self.assertEqual(data['text/word_distribution']['create'], 2)
+        self.assertEqual(data['text/word_distribution']['place'], 2)
+        self.assertEqual(data['text/max_word_count'], 14)
+        self.assertEqual(data['text/min_word_count'], 7)
 
     def test_calculate_statistics_email_data(self):
         # This data was generated using Faker
@@ -352,7 +352,7 @@ class StatisticsCalculatorTest(TestCase):
             'kim.com': 1,
         }
 
-        self.assertEquals(expected_domain_distribution, data['emails/domain_distribution'])
+        self.assertEqual(expected_domain_distribution, data['emails/domain_distribution'])
 
     def test_calculate_statistics_list_data(self):
         lists = [
@@ -380,7 +380,7 @@ class StatisticsCalculatorTest(TestCase):
             6: 1,
             0: 1,
         }
-        self.assertEquals(expected_list_length_distribution, data['lists/length_distribution'])
+        self.assertEqual(expected_list_length_distribution, data['lists/length_distribution'])
 
         expected_element_distribution = {
             'string': 3,
@@ -394,7 +394,7 @@ class StatisticsCalculatorTest(TestCase):
             2: 2,
             '3': 1,
         }
-        self.assertEquals(expected_element_distribution, data['lists/element_distribution'])
+        self.assertEqual(expected_element_distribution, data['lists/element_distribution'])
 
     def test_calculate_statistics_list_data_with_dictionaries(self):
         lists = [
@@ -423,7 +423,7 @@ class StatisticsCalculatorTest(TestCase):
             1: 1,
             8: 1,
         }
-        self.assertEquals(expected_list_length_distribution, data['lists/length_distribution'])
+        self.assertEqual(expected_list_length_distribution, data['lists/length_distribution'])
 
     def test_calculate_statistics_box_plot(self):
         df = pd.DataFrame(

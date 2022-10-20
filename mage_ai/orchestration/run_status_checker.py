@@ -14,6 +14,7 @@ BLOCK_FAILURE_STATUSES = [
     BlockRun.BlockRunStatus.FAILED,
 ]
 
+
 def check_status(
     pipeline_uuid: str,
     execution_date: datetime,

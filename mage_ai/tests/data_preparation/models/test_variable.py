@@ -5,20 +5,9 @@ from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
 import os
 import pandas as pd
-import shutil
 
 
 class VariableTest(TestCase):
-    def setUp(self):
-        self.repo_path = os.getcwd() + '/test'
-        if not os.path.exists(self.repo_path):
-            os.mkdir(self.repo_path)
-        return super().setUp()
-
-    def tearDown(self):
-        shutil.rmtree(self.repo_path)
-        return super().tearDown()
-
     def test_write_and_read_data(self):
         pipeline = self.__create_pipeline('test pipeline 1')
         variable1 = Variable('var1', pipeline.dir_path, 'block1')
@@ -104,7 +93,7 @@ class VariableTest(TestCase):
             ]
         )
         variable.write_data(data)
-        self.assertEquals(variable.read_data(), data)
+        self.assertEqual(variable.read_data(), data)
 
     def __create_pipeline(self, name):
         pipeline = Pipeline.create(

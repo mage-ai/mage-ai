@@ -9,22 +9,10 @@ from mage_ai.data_preparation.variable_manager import (
 )
 from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
-import os
 import pandas as pd
-import shutil
 
 
 class VariableManagerTest(TestCase):
-    def setUp(self):
-        self.repo_path = os.getcwd() + '/test'
-        if not os.path.exists(self.repo_path):
-            os.mkdir(self.repo_path)
-        return super().setUp()
-
-    def tearDown(self):
-        shutil.rmtree(self.repo_path)
-        return super().tearDown()
-
     def test_add_and_get_variable(self):
         self.__create_pipeline('test pipeline 1')
         variable_manager = VariableManager(self.repo_path)
