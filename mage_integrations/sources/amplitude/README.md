@@ -10,7 +10,7 @@
 
 ## Config
 
-You must enter the following credentials when configuring this source:
+You must enter the following settings when configuring this source:
 
 | Key | Description | Sample value
 | --- | --- | --- |

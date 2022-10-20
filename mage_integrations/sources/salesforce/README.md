@@ -1,35 +1,132 @@
-## Resources
-- https://stackoverflow.com/questions/12794302/salesforce-authentication-failing/29112224#29112224
-- https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5
+# Salesforce
 
-## Authorize apps
+<img
+  alt="Salesforce"
+  src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/2560px-Salesforce.com_logo.svg.png"
+  width="300"
+/>
 
-https://mage6-dev-ed.develop.my.salesforce.com/services/oauth2/authorize?client_id=&redirect_uri=https://login.salesforce.com/services/oauth2/success&response_type=code
+<br />
 
-### Redirect URL with code
+## Config
 
-https://login.salesforce.com/services/oauth2/success?code=
+You must enter the following settings when configuring this source:
 
-## Get access token
+| Key | Description | Sample value
+| --- | --- | --- |
+| `api_type` | The `api_type` is used to switch the behavior of the tap between using Salesforce's "REST" and "BULK" APIs. When new fields are discovered in Salesforce objects, the `select_fields_by_default` key describes whether or not the tap will select those fields by default. | `REST`, `BULK` |
+| `client_id` | OAuth Salesforce App secrets. | `ABC1...` |
+| `client_secret` | OAuth Salesforce App secrets. | `ABC1...` |
+| `is_sandbox` | If `true`, then the sandbox account will be used to load dat from. | `true`, `false` |
+| `lookback_window` | The `lookback_window` (in seconds) subtracts the desired amount of seconds from the bookmark to sync past data. Recommended value: 10 seconds. | `10` |
+| `refresh_token` | The `refresh_token` is a secret created during the OAuth flow | `ABC1...` |
+| `select_fields_by_default` | If `true`, the fields in a schema of a stream will all be selected by default when setting up a synchronization. | `true`, `false` |
+| `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be an [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) formatted date-time, like "2018-01-08T00:00:00Z". | `2022-01-01T00:00:00Z` |
+
+<br />
+
+### How to get your `client_id`, `client_secret`, and `refresh_token`
+
+#### Find your `client_id` and `client_secret`
+
+1. Sign into your Salesforce account.
+1. Create a <b>Connected App</b> and <b>Enable OAuth Settings for API Integration</b>
+by following this [Salesforce documentation](https://help.salesforce.com/s/articleView?id=sf.connected_app_create_api_integration.htm&type=5).
+1. After you created a <b>Connected App</b>, go to your <b>Setup</b> and click on the <b>Home</b> tab.
+1. On the left sidebar under the <b>Platform tools > Apps > App Manager</b>, click on <b>App Manager</b>.
+1. Find the row that contains the app you just created. On the furthest right column, click the dropdown caret icon and click <b>View</b>.
+1. Under the <b>API (Enable OAuth Settings)</b> section, find the subsection labeled <b>Consumer Key and Secret</b> and click the button <b>Manage Consumer Details</b>.
+1. A new page will open, displaying your <b>Consumer Key</b> (which is your `client_id`) and <b>Consumer Secret</b> (which is your `client_secret`).
+
+#### Authorize your <b>Connected App</b>
+
+1. Construct a URL with the following format:
+`https://[your_salesforce_domain].my.salesforce.com/services/oauth2/authorize?client_id=[client_id]&redirect_uri=https://login.salesforce.com/services/oauth2/success&response_type=code`
+
+| Variable | Description | Sample value |
+| --- | --- | --- |
+| `[your_salesforce_domain]` | The domain of your Salesforce account. | `mage-dev-ed` |
+| `[client_id]` | Your <b>Consumer Key</b> | `ABC123...` |
+
+2. Open that URL in a browser.
+3. Authorize your <b>Connected App</b> to have API access to your Salesforce account.
+4. Once you authorize, you’ll be redirect to a URL like this:
+`https://login.salesforce.com/services/oauth2/success?code=[code]`.
+5. Note the value of the `code` URL parameter, it’ll be used to get a `refresh_token`.
+
+#### Get a `refresh_token`
+
+Open a terminal and make the following POST request:
 
 ```bash
-curl -X POST https://mage.my.salesforce.com/services/oauth2/token \
+curl -X POST https://[your_salesforce_domain].my.salesforce.com/services/oauth2/token \
    -H "Content-Type: application/x-www-form-urlencoded"  \
-   -d "grant_type=authorization_code&code=&client_id=&client_secret=&redirect_uri=https://login.salesforce.com/services/oauth2/success"
+   -d "grant_type=authorization_code&code=[code]&client_id=[client_id]&client_secret=[client_secret]&redirect_uri=https://login.salesforce.com/services/oauth2/success"
 ```
 
-## Sample response
+Change the following URL parameters to match your credentials:
+
+| URL parameter | Description | Sample value |
+| --- | --- | --- |
+| `[your_salesforce_domain]` | The domain of your Salesforce account. | `mage-dev-ed` |
+| `[code]` | The code you received after authorizing your <b>Connected App</b> | `ABC123...` |
+| `[client_id]` | Your <b>Consumer Key</b> | `ABC123...` |
+| `[client_secret]` | Your <b>Consumer Secret</b> | `ABC1...` |
+
+Once you execute the above CURL command successfully,
+you’ll receive a response that could look like this:
 
 ```json
 {
-  "access_token": "",
-  "refresh_token": "",
-  "signature": "",
-  "scope": "",
-  "id_token": "",
-  "instance_url": "https://mage6-dev-ed.develop.my.salesforce.com",
-  "id": "https://login.salesforce.com/id/00D4w000001MV5AEAW/0054w00000AgUDiAAN",
+  "access_token": "...",
+  "refresh_token": "...",
+  "signature": "...",
+  "scope": "...",
+  "id_token": "...",
+  "instance_url": "https://[your_salesforce_domain].my.salesforce.com",
+  "id": "https://login.salesforce.com/id/.../...",
   "token_type": "Bearer",
   "issued_at": ""
 }
 ```
+
+Take note of the `refresh_token`, it’ll be used when you configure this source.
+
+### Additional resources in case you get lost
+
+- https://stackoverflow.com/questions/12794302/salesforce-authentication-failing/29112224#29112224
+- https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_oauth_and_connected_apps.htm
+- https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5
+
+<br />
+
+## Schema
+
+The available schema depends on the objects in your Salesforce account.
+
+Some example schema can include the following (depending on your account):
+
+- AIApplication
+- AIApplicationConfig
+- AIInsightAction
+- AIInsightFeedback
+- AIInsightReason
+- AIInsightValue
+- AIPredictionEvent
+- AIRecordInsight
+- AcceptedEventRelation
+- Account
+- ...
+- WorkTypeFeed
+- WorkTypeGroup
+- WorkTypeGroupFeed
+- WorkTypeGroupHistory
+- WorkTypeGroupMember
+- WorkTypeGroupMemberFeed
+- WorkTypeGroupMemberHistory
+- WorkTypeGroupShare
+- WorkTypeHistory
+- WorkTypeShare
+- *and more...*
+
+<br />
