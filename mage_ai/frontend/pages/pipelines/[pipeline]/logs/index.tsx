@@ -15,12 +15,13 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import LogDetail from '@components/Logs/Detail';
-import LogType from '@interfaces/LogType';
+import LogType, { LogRangeEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import LogToolbar from '@components/Logs/Toolbar';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
@@ -53,6 +54,7 @@ function BlockRuns({
   const [offset, setOffset] = useState(ITEMS_PER_PAGE);
   const [query, setQuery] = useState<FilterQueryType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
+  const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
   const pipeline = useMemo(() => ({
@@ -192,17 +194,11 @@ function BlockRuns({
           {!isLoading && (
             <>
               {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
-              <Spacing py={PADDING_UNITS}>
-                <KeyboardShortcutButton
-                  blackBorder
-                  inline
-                  onClick={fetchLogs}
-                  sameColorAsText
-                  uuid="logs/load_newest"
-                >
-                  Load latest logs
-                </KeyboardShortcutButton>
-              </Spacing>
+              <LogToolbar
+                fetchLogs={fetchLogs}
+                selectedRange={selectedRange}
+                setSelectedRange={setSelectedRange}
+              />
             </>
           )}
           {isLoading && 'Searching...'}
@@ -308,7 +304,7 @@ function BlockRuns({
                 justifyContent="center"
                 key="log_type"
               >
-                <LogLevelIndicatorStyle {...{[level?.toLowerCase()]: true}} />
+                <LogLevelIndicatorStyle {...{ [level?.toLowerCase()]: true }} />
               </Flex>,
               <Text
                 default

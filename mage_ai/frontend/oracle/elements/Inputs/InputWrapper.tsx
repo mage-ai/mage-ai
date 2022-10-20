@@ -554,12 +554,13 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   `}
 
   ${props => props.defaultColor && `
-    background-color: ${(props.theme.monotone || dark.monotone).grey200} !important;
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBackground} !important;
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).black};
 
     &:active,
     &:focus,
     &:hover {
-      background-color: ${(props.theme.monotone || dark.monotone).grey200} !important;
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground} !important;
     }
   `}
 

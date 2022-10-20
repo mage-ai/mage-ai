@@ -14,7 +14,6 @@ import {
   ChartTypeEnum,
   SortOrderEnum,
   TimeIntervalEnum,
-  VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_GROUP_BY,
   VARIABLE_NAME_HEIGHT,
   VARIABLE_NAME_LEGEND_LABELS,
@@ -27,11 +26,12 @@ import {
 import {
   DATE_FORMAT_LONG,
   DATE_FORMAT_SHORT,
+} from '@utils/date';
+import {
   numberWithCommas,
   roundNumber,
 } from '@utils/string';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { range, sortByKey } from '@utils/array';
 
 type ChartControllerProps = {

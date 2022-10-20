@@ -48,7 +48,7 @@ function Filter({
         const k2 = `${k1}[]`;
         let arr = q2[k2];
         if (arr && Array.isArray(arr)) {
-          arr = arr.map(String)
+          arr = arr.map(String);
           if (arr.includes(value)) {
             q2[k2] = remove(arr, val => val === value);
           } else {
@@ -90,10 +90,10 @@ function Filter({
 
           {LOG_LEVELS.map((level: LogLevelEnum) => (
             <Button
+              key={level}
               noBackground
               noBorder
               noPadding
-              key={level}
               onClick={() => goTo({ level }, { isList: true })}
             >
               <FilterRowStyle>
@@ -102,7 +102,7 @@ function Filter({
                     checked={Array.isArray(queryLevels) && queryLevels?.includes(String(level))}
                   />
                   <Spacing mr={1} />
-                  <LogLevelIndicatorStyle {...{[level.toLowerCase()]: true}} />
+                  <LogLevelIndicatorStyle {...{ [level.toLowerCase()]: true }} />
                   <Spacing mr={1} />
                   <Text disableWordBreak>
                     {capitalize(level.toLowerCase())}
@@ -126,10 +126,10 @@ function Filter({
             BlockTypeEnum.DATA_EXPORTER,
           ].map((blockType: BlockTypeEnum) => (
             <Button
+              key={blockType}
               noBackground
               noBorder
               noPadding
-              key={blockType}
               onClick={() => goTo({ block_type: blockType }, { isList: true })}
             >
               <FilterRowStyle>
@@ -164,10 +164,10 @@ function Filter({
 
           {blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).map((block: BlockType) => (
             <Button
+              key={block.uuid}
               noBackground
               noBorder
               noPadding
-              key={block.uuid}
               onClick={() => goTo({ block_uuid: block.uuid }, { isList: true })}
             >
               <FilterRowStyle>
@@ -184,7 +184,7 @@ function Filter({
                     square
                   />
                   <Spacing mr={1} />
-                  <Text disableWordBreak muted monospace>
+                  <Text disableWordBreak monospace muted>
                     {block.uuid}
                   </Text>
                 </FlexContainer>
@@ -237,10 +237,10 @@ function Filter({
 
             {queryPipelineRunIDs.map((id: string) => (
               <Button
+                key={`pipeline-run-${id}`}
                 noBackground
                 noBorder
                 noPadding
-                key={`pipeline-run-${id}`}
                 onClick={() => goTo({ pipeline_run_id: id }, { isList: true })}
               >
                 <FilterRowStyle>
@@ -271,10 +271,10 @@ function Filter({
 
             {queryBlockRunIDs.map((id: string) => (
               <Button
+                key={`block-run-${id}`}
                 noBackground
                 noBorder
                 noPadding
-                key={`block-run-${id}`}
                 onClick={() => goTo({ block_run_id: id }, { isList: true })}
               >
                 <FilterRowStyle>

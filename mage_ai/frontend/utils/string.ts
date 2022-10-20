@@ -5,9 +5,6 @@ import nouns from './samples/nouns';
 import numbers from './samples/numbers';
 import { randomSample } from './array';
 
-export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:SS';
-export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
-
 export function isJsonString(str) {
   try {
     JSON.parse(str);
@@ -32,22 +29,6 @@ export function capitalize(word) {
   }
 
   return word.charAt(0).toUpperCase() + word.slice(1);
-}
-
-export function formatDateShort(momentObj) {
-  return momentObj.format(DATE_FORMAT_SHORT);
-}
-
-export function dateFormatShort(text) {
-  return formatDateShort(moment(text));
-}
-
-export function dateFormatLong(text) {
-  return moment(text).format('YYYY-MM-DD HH:mm');
-}
-
-export function dateFormatLongFromUnixTimestamp(text) {
-  return moment.unix(text).format('YYYY-MM-DD HH:mm');
 }
 
 export function formattedQuantity(quantity, decimalPlaces = 4) {
