@@ -25,6 +25,7 @@ import LogToolbar from '@components/Logs/Toolbar';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
+import { LOG_ITEMS_PER_PAGE } from '@components/Logs/Toolbar/constants';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -36,7 +37,6 @@ import { indexBy, sortByKey } from '@utils/array';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
-const ITEMS_PER_PAGE = 40;
 const LOG_UUID_PARAM = 'log_uuid';
 
 type BlockRunsProp = {
@@ -51,7 +51,7 @@ function BlockRuns({
   const themeContext = useContext(ThemeContext);
   const pipelineUUID = pipelineProp.uuid;
 
-  const [offset, setOffset] = useState(ITEMS_PER_PAGE);
+  const [offset, setOffset] = useState(LOG_ITEMS_PER_PAGE);
   const [query, setQuery] = useState<FilterQueryType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
@@ -101,7 +101,6 @@ function BlockRuns({
         .concat(pipelineRunLogs)
         .reduce((acc, log) => acc.concat(initializeLogs(log)), []),
       ({ data }) => data?.timestamp || 0,
-      { ascending: false },
     ), [
     blockRunLogs,
     pipelineRunLogs,
@@ -137,7 +136,7 @@ function BlockRuns({
   const qPrev = usePrevious(q);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
-      setOffset(ITEMS_PER_PAGE);
+      setOffset(LOG_ITEMS_PER_PAGE);
       setQuery(q);
     }
   }, [
@@ -195,8 +194,8 @@ function BlockRuns({
             <>
               {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
               <LogToolbar
-                fetchLogs={fetchLogs}
                 selectedRange={selectedRange}
+                setLogOffset={setOffset}
                 setSelectedRange={setSelectedRange}
               />
             </>
@@ -339,11 +338,11 @@ function BlockRuns({
           <KeyboardShortcutButton
             blackBorder
             inline
-            onClick={() => setOffset(prev => prev + ITEMS_PER_PAGE)}
+            onClick={fetchLogs}
             sameColorAsText
-            uuid="logs/load_more"
+            uuid="logs/toolbar/load_newest"
           >
-            Load older logs
+            Load latest logs
           </KeyboardShortcutButton>
         </Spacing>
       )}
