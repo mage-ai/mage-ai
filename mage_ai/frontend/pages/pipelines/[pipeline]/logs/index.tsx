@@ -129,7 +129,7 @@ function BlockRuns({
   ]);
   const filteredLogCount = logsFiltered.length;
   const logs: LogType[] = useMemo(() => logsFiltered.slice(
-    filteredLogCount - offset,
+    Math.max(0, (filteredLogCount - offset)),
   ), [
       filteredLogCount,
       logsFiltered,
@@ -198,6 +198,8 @@ function BlockRuns({
             <>
               {numberWithCommas(logs.length)} logs of {numberWithCommas(filteredLogCount)} found
               <LogToolbar
+                logCount={filteredLogCount}
+                logOffset={offset}
                 selectedRange={selectedRange}
                 setLogOffset={setOffset}
                 setSelectedRange={setSelectedRange}
@@ -337,19 +339,16 @@ function BlockRuns({
         />
       )}
 
-      {offset < filteredLogCount && (
-        <Spacing p={PADDING_UNITS}>
-          <KeyboardShortcutButton
-            blackBorder
-            inline
-            onClick={fetchLogs}
-            sameColorAsText
-            uuid="logs/toolbar/load_newest"
-          >
-            Load latest logs
-          </KeyboardShortcutButton>
-        </Spacing>
-      )}
+      <Spacing p={PADDING_UNITS}>
+        <KeyboardShortcutButton
+          blackBorder
+          inline
+          onClick={fetchLogs}
+          uuid="logs/toolbar/load_newest"
+        >
+          Load latest logs
+        </KeyboardShortcutButton>
+      </Spacing>
     </PipelineDetailPage>
   );
 }

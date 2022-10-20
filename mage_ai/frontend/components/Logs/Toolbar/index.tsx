@@ -37,12 +37,16 @@ enum RangeQueryEnum {
 }
 
 type LogToolbarProps = {
+  logCount: number;
+  logOffset: number;
   selectedRange: LogRangeEnum;
   setLogOffset: (func: any) => void;
   setSelectedRange: (range: LogRangeEnum) => void;
 };
 
 function LogToolbar({
+  logCount,
+  logOffset,
   selectedRange,
   setLogOffset,
   setSelectedRange,
@@ -55,6 +59,7 @@ function LogToolbar({
     hour: padTime(String(new Date().getUTCHours())),
     minute: padTime(String(new Date().getUTCMinutes())),
   });
+  const allLogsLoaded = logOffset >= logCount;
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -101,12 +106,12 @@ function LogToolbar({
       <FlexContainer alignItems="center">
         <KeyboardShortcutButton
           blackBorder
+          disabled={allLogsLoaded}
           inline
           onClick={() => setLogOffset((prev: number) => prev + LOG_ITEMS_PER_PAGE)}
-          sameColorAsText
           uuid="logs/load_older_logs"
         >
-          Load older logs
+          {allLogsLoaded ? 'All past logs loaded' : 'Load older logs'}
         </KeyboardShortcutButton>
 
         <Spacing mr={2} />
