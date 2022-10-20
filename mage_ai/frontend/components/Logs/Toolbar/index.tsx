@@ -121,11 +121,16 @@ function LogToolbar({
             if (SPECIFIC_LOG_RANGES.includes(range)) {
               const startTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[range]);
               goToWithQuery(
-                { [RangeQueryEnum.START]: startTimestamp },
-                { replaceParams: true },
+                {
+                  [RangeQueryEnum.START]: startTimestamp,
+                  [RangeQueryEnum.END]: null,
+                },
               );
             } else if (range === LogRangeEnum.LAST_40_RUNS) {
-              Router.push(`/pipelines/${pipelineUUID}/logs`);
+              goToWithQuery({
+                [RangeQueryEnum.START]: null,
+                [RangeQueryEnum.END]: null,
+              });
             }
           }}
           paddingRight={UNIT * 4}
