@@ -8,27 +8,13 @@ import logging
 import os
 import sys
 
-def test(logging_config, logger: logging.Logger, log_filepath):
-    logging_type = logging_config.get('type')
-    if logging_type == 's3':
-        s3_config = S3Config.load(logging_config.get('config'))
-        prefix = s3_config.prefix
-        s3_client = s3.Client(s3_config.bucket)
-
-        string_io = io.StringIO()
-        handler = logging.StreamHandler(string_io)
-        logger.addHandler(handler)
-
-        atexit.register(
-            s3_client.upload,
-            object_key=f'{prefix}/{log_filepath}',
-            content=string_io.getvalue()
-        )
+        # print('writing to s3...')
+        # with open(log_filepath, 'rb') as file:
+        #     s3_client.upload_object(f'{prefix}/{log_filepath}', file)
     
 
 class LoggerManager:
-    @classmethod
-    def get_logger(
+    def __init__(
         self,
         repo_path: str = None,
         logs_dir: str = None,
@@ -37,39 +23,75 @@ class LoggerManager:
         partition: str = None,
         repo_config: RepoConfig = None,
     ):
-        log_filepath = self.get_log_filepath(
-            repo_path=repo_path,
-            logs_dir=logs_dir,
-            pipeline_uuid=pipeline_uuid,
-            block_uuid=block_uuid,
-            partition=partition,
+        self.repo_path = repo_path
+        self.logs_dir = logs_dir
+        self.pipeline_uuid = pipeline_uuid
+        self.block_uuid = block_uuid
+        self.partition = partition
+
+        self.logging_config = repo_config.logging_config if repo_config else dict()
+
+        self.log_filepath = self.get_log_filepath(
+            repo_path=self.repo_path,
+            logs_dir=self.logs_dir,
+            pipeline_uuid=self.pipeline_uuid,
+            block_uuid=self.block_uuid,
+            partition=self.partition,
             create_dir=True,
         )
 
-        logger_name_parts = [pipeline_uuid]
-        if partition is not None:
-            logger_name_parts.append(partition)
-        if block_uuid is not None:
-            logger_name_parts.append(block_uuid)
-        logger_name = '/'.join(logger_name_parts)
+        logger_name_parts = [self.pipeline_uuid]
+        if self.partition is not None:
+            logger_name_parts.append(self.partition)
+        if self.block_uuid is not None:
+            logger_name_parts.append(self.block_uuid)
+        self.logger_name = '/'.join(logger_name_parts)
 
-        logger = logging.getLogger(logger_name)
+        self.logger = logging.getLogger(self.logger_name)
 
-        if logger.handlers:
-            # if repo_config is not None and repo_config.logging_config:
-            #     test(repo_config.logging_config, logger, log_filepath)
-            # else:
-            formatter = logging.Formatter(
-                '%(asctime)s %(message)s',
-                '%Y-%m-%dT%H:%M:%S',
-            )
+        self.logger.setLevel(logging.getLevelName(self.logging_config.get('level', 'INFO')))
 
-            file_handler = logging.FileHandler(log_filepath)
-            file_handler.setLevel(logging.INFO)
-            file_handler.setFormatter(formatter)
+        self.string_io = None
+        if self.logger.hasHandlers():
+            if self.logging_config:
+                self.string_io = self.get_stream_io()
+            else:
+                formatter = logging.Formatter(
+                    '%(asctime)s %(message)s',
+                    '%Y-%m-%dT%H:%M:%S',
+                )
 
-            logger.addHandler(file_handler)
-        return logger
+                file_handler = logging.FileHandler(self.log_filepath)
+                file_handler.setLevel(logging.INFO)
+                file_handler.setFormatter(formatter)
+
+                self.logger.addHandler(file_handler)
+
+    def get_stream_io(self):
+        logging_type = self.logging_config.get('type')
+        if logging_type == 's3':
+            string_io = io.StringIO()
+            handler = logging.StreamHandler(string_io)
+            self.logger.addHandler(handler)
+
+            return string_io
+
+        return None
+
+    def get_logger(self):
+        return self.logger
+
+    def output_logs_to_destination(self):
+        logging_type = self.logging_config.get('type')
+        if logging_type == 's3':
+            s3_config = S3Config.load(config=self.logging_config.get('config'))
+            s3_client = s3.Client(bucket=s3_config.bucket)
+
+            prefix = s3_config.prefix
+
+            print('writing to s3...')
+            s3_client.upload(f'{prefix}/{self.log_filepath}', self.string_io.getvalue())
+
 
     @classmethod
     def get_log_filepath(

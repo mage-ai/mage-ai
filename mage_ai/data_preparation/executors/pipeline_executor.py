@@ -9,11 +9,11 @@ class PipelineExecutor:
     def __init__(self, pipeline: Pipeline, execution_partition: str = None):
         self.pipeline = pipeline
         self.execution_partition = execution_partition
-        logger_manager = LoggerManager.get_logger(
+        self.logger_manager = LoggerManager(
             pipeline_uuid=self.pipeline.uuid,
             partition=self.execution_partition,
         )
-        self.logger = DictLogger(logger_manager)
+        self.logger = DictLogger(self.logger_manager.get_logger())
 
     def execute(
         self,

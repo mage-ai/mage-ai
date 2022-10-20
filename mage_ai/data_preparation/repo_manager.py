@@ -43,7 +43,7 @@ class RepoConfig:
                 self.s3_bucket = path_parts.pop(0)
                 self.s3_path_prefix = '/'.join(path_parts)
 
-            self.logging_config = repo_config.get('logging_config')
+            self.logging_config = repo_config.get('logging_config', dict())
         except Exception:
             traceback.print_exc()
             pass

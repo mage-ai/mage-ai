@@ -27,11 +27,11 @@ class PipelineScheduler:
     ) -> None:
         self.pipeline_run = pipeline_run
         self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
-        logger_manager = LoggerManager.get_logger(
+        self.logger_manager = LoggerManager(
             pipeline_uuid=self.pipeline.uuid,
             partition=self.pipeline_run.execution_partition,
         )
-        self.logger = DictLogger(logger_manager)
+        self.logger = DictLogger(self.logger_manager.get_logger())
         self.notification_sender = NotificationSender(
             NotificationConfig.load(config=self.pipeline.repo_config.notification_config),
         )
