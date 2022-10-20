@@ -1,6 +1,8 @@
+from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from typing import Any, Dict, List
 import importlib
@@ -100,11 +102,15 @@ class IntegrationPipeline(Pipeline):
         return '/'.join(self.config_path.split('/')[:-1])
 
     def discover(self, streams: List[str] = None) -> dict:
+        global_vars = get_global_variables(self.uuid) or dict()
+
         if self.source_file_path and self.data_loader.file_path:
             try:
                 run_args = [
                     PYTHON,
                     self.source_file_path,
+                    '--config_json',
+                    build_config_json(self.data_loader.file_path, global_vars),
                     '--settings',
                     self.data_loader.file_path,
                     '--discover',
@@ -124,10 +130,14 @@ class IntegrationPipeline(Pipeline):
 
     def discover_streams(self) -> List[str]:
         if self.source_file_path and self.data_loader.file_path:
+            global_vars = get_global_variables(self.uuid) or dict()
+
             try:
                 proc = subprocess.run([
                     PYTHON,
                     self.source_file_path,
+                    '--config_json',
+                    build_config_json(self.data_loader.file_path, global_vars),
                     '--settings',
                     self.data_loader.file_path,
                     '--discover',
