@@ -2,8 +2,6 @@
   "database": "",
   "host": "",
   "password": "",
-  "port": 5432,
-  "schema": "",
-  "table": "",
+  "port": 3306,
   "username": ""
 }

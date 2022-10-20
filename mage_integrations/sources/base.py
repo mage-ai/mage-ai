@@ -4,7 +4,7 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
 )
-from mage_integrations.sources.messages import write_schema
+from mage_integrations.sources.messages import write_records, write_schema, write_state
 from mage_integrations.sources.utils import get_standard_metadata, parse_args
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import extract, merge_dict
@@ -12,6 +12,7 @@ from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.schema_helpers import extract_selected_columns
 from os.path import isfile
+from singer import utils
 from singer.schema import Schema
 from typing import Dict, List
 import dateutil.parser
@@ -133,13 +134,13 @@ class Source():
         try:
             if self.discover_mode:
                 if self.discover_streams_mode:
-                    json.dump(self.discover_streams(), sys.stdout, indent=2)
+                    json.dump(self.discover_streams(), sys.stdout)
                 else:
                     catalog = self.discover(streams=self.selected_streams)
                     if type(catalog) is Catalog:
                         catalog.dump()
                     elif type(catalog) is dict:
-                        json.dump(catalog, sys.stdout, indent=2)
+                        json.dump(catalog, sys.stdout)
             else:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
                 self.sync(catalog)
@@ -202,12 +203,14 @@ class Source():
             start_date = dateutil.parser.parse(self.config.get('start_date'))
 
         max_bookmark = None
-        for row in self.load_data(
+        rows = self.load_data(
             bookmarks=self.get_bookmarks_for_stream(stream),
             query=self.query,
             start_date=start_date,
-        ):
-            singer.write_records(
+            stream=stream,
+        )
+        for row in rows:
+            write_records(
                 stream.tap_stream_id,
                 [
                     {col: row.get(col) for col in extract_selected_columns(stream.metadata)},
@@ -216,7 +219,7 @@ class Source():
 
             if REPLICATION_METHOD_INCREMENTAL == stream.replication_method and bookmark_properties:
                 if self.is_sorted:
-                    singer.write_state({
+                    write_state({
                         stream.tap_stream_id: {col: row.get(col) for col in bookmark_properties},
                     })
                 else:
@@ -228,14 +231,23 @@ class Source():
 
         if bookmark_properties and not self.is_sorted:
             if max_bookmark:
-                singer.write_state({
+                write_state({
                     stream.tap_stream_id: {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
                 })
 
+        return rows
+
     def sync(self, catalog: Catalog) -> None:
         for stream in catalog.get_selected_streams(self.state):
+            tags = dict(stream=stream.tap_stream_id)
+            self.logger.info('Synced stream started.', tags=tags)
+
             self.process_stream(stream)
-            self.sync_stream(stream)
+            records = self.sync_stream(stream)
+
+            self.logger.info('Synced stream completed.', tags=merge_dict(tags, dict(
+                records=len(records),
+            )))
 
     def build_catalog_entry(self, stream_id, schema, **kwargs):
         # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata
@@ -304,3 +316,9 @@ class Source():
                     schemas[file_raw] = Schema.from_dict(json.load(file))
 
         return schemas
+
+
+@utils.handle_top_exception(LOGGER)
+def main(destination_class):
+    source = destination_class()
+    source.process()

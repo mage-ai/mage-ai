@@ -1,4 +1,5 @@
 from mage_ai.data_integrations.utils.config import build_config_json
+from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -6,6 +7,7 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from typing import Any, Dict, List
 import importlib
+import io
 import json
 import os
 import subprocess
@@ -120,10 +122,12 @@ class IntegrationPipeline(Pipeline):
                         '--selected_streams_json',
                         json.dumps(streams),
                     ]
+
                 proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.check_returncode()
 
-                return json.loads(proc.stdout)
+                return json.loads(parse_logs_and_json(proc.stdout.decode()))
+
             except subprocess.CalledProcessError as e:
                 message = e.stderr.decode("utf-8")
                 raise Exception(message)
@@ -133,7 +137,7 @@ class IntegrationPipeline(Pipeline):
             global_vars = get_global_variables(self.uuid) or dict()
 
             try:
-                proc = subprocess.run([
+                run_args = [
                     PYTHON,
                     self.source_file_path,
                     '--config_json',
@@ -142,11 +146,12 @@ class IntegrationPipeline(Pipeline):
                     self.data_loader.file_path,
                     '--discover',
                     '--discover_streams',
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                ]
+
+                proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.check_returncode()
 
-                output = proc.stdout
-                return json.loads(output)
+                return json.loads(parse_logs_and_json(proc.stdout.decode()))
             except subprocess.CalledProcessError as e:
                 message = e.stderr.decode("utf-8")
                 raise Exception(message)

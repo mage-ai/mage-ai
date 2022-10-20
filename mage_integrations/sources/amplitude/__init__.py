@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from mage_integrations.connections.amplitude import Amplitude as AmplitudeConnection
 from mage_integrations.sources.amplitude.constants import TABLE_KEY_PROPERTIES, VALID_REPLICATION_KEYS
-from mage_integrations.sources.base import Source
+from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.query import (
     get_end_date,
@@ -66,10 +66,6 @@ class Amplitude(Source):
     def get_valid_replication_keys(self, stream_id):
         return VALID_REPLICATION_KEYS[stream_id]
 
-@utils.handle_top_exception(LOGGER)
-def main():
-    source = Amplitude()
-    source.process()
 
 if __name__ == '__main__':
-    main()
+    main(Amplitude)
