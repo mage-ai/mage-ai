@@ -134,13 +134,13 @@ class Source():
         try:
             if self.discover_mode:
                 if self.discover_streams_mode:
-                    json.dump(self.discover_streams(), sys.stdout, indent=2)
+                    json.dump(self.discover_streams(), sys.stdout)
                 else:
                     catalog = self.discover(streams=self.selected_streams)
                     if type(catalog) is Catalog:
                         catalog.dump()
                     elif type(catalog) is dict:
-                        json.dump(catalog, sys.stdout, indent=2)
+                        json.dump(catalog, sys.stdout)
             else:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
                 self.sync(catalog)
