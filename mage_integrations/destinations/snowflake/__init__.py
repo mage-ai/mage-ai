@@ -8,6 +8,7 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping,
 )
 from mage_integrations.destinations.utils import clean_column_name
+from mage_integrations.utils.array import batch
 from typing import Callable, Dict, List, Tuple
 
 
@@ -69,7 +70,6 @@ class Snowflake(Destination):
             records=records,
         )
 
-
         if unique_constraints and unique_conflict_method:
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             commands = [
@@ -126,17 +126,42 @@ class Snowflake(Destination):
 
         return len(data[0]) >= 1
 
-    def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
+    def calculate_records_inserted_and_updated(
+        self,
+        data: List[List[Tuple]],
+        unique_constraints: List[str] = None,
+        unique_conflict_method: str = None,
+    ) -> Tuple:
         records_inserted = 0
         records_updated = 0
         number_of_data = len(data)
 
+        arr = []
+
         for idx, array_of_tuples in enumerate(data):
             for t in array_of_tuples:
-                if len(t) == 2 and type(t[0]) is int and type(t[1]) is int:
-                    records_inserted += t[0]
-                    records_updated += t[1]
-                elif idx == number_of_data - 1 and len(t) == 1 and type(t[0]) is int:
+                if len(t) >= 1 and type(t[0]) is int:
+                    arr.append(t)
+
+        print(arr)
+
+        if len(arr) == 1:
+            if len(arr[0]) >= 1:
+                if type(arr[0][0]) is int:
+                    records_inserted += arr[0][0]
+                if len(arr[0]) == 2 and type(arr[0][1]) is int:
+                    records_updated += arr[0][1]
+        elif unique_constraints and unique_conflict_method:
+            for group in batch(arr, 2):
+                row = group[1]
+                if len(row) >= 1:
+                    if type(row[0]) is int:
+                        records_inserted += row[0]
+                    if len(row) == 2 and type(row[1]) is int:
+                        records_updated += row[1]
+        else:
+            for t in arr:
+                if len(t) == 1 and type(t[0]) is int:
                     records_inserted += t[0]
 
         return records_inserted, records_updated

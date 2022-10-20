@@ -38,6 +38,7 @@ class Destination(BaseDestination):
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
+        unique_conflict_method = self.unique_conflict_methods.get(stream)
 
         query_strings = self.build_create_schema_commands(
             database_name=database_name,
@@ -78,7 +79,7 @@ class Destination(BaseDestination):
                     f'WITH insert_rows_and_count AS ({command} RETURNING 1)',
                     'SELECT COUNT(*) FROM insert_rows_and_count',
                 ]),
-                unique_conflict_method=self.unique_conflict_methods.get(stream),
+                unique_conflict_method=unique_conflict_method,
                 unique_constraints=unique_constraints,
             ):
                 query_strings.append(insert_command)
@@ -86,7 +87,11 @@ class Destination(BaseDestination):
         connection = self.build_connection()
         data = connection.execute(query_strings, commit=True)
 
-        records_inserted, records_updated = self.calculate_records_inserted_and_updated(data)
+        records_inserted, records_updated = self.calculate_records_inserted_and_updated(
+            data,
+            unique_constraints=unique_constraints,
+            unique_conflict_method=unique_conflict_method,
+        )
         if records_inserted is not None:
             tags.update(records_inserted=records_inserted)
         if records_updated is not None:
@@ -136,7 +141,12 @@ class Destination(BaseDestination):
     ) -> bool:
         raise Exception('Subclasses must implement the does_table_exist method.')
 
-    def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
+    def calculate_records_inserted_and_updated(
+        self,
+        data: List[List[Tuple]],
+        unique_constraints: List[str] = None,
+        unique_conflict_method: str = None,
+    ) -> Tuple:
         return None, None
 
 
