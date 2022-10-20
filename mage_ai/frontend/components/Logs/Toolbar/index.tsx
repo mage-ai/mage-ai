@@ -1,5 +1,5 @@
 import Router, { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
@@ -10,12 +10,22 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import usePrevious from '@utils/usePrevious';
 import { LogRangeEnum } from '@interfaces/LogType';
 import { LOG_RANGE_SEC_INTERVAL_MAPPING, SPECIFIC_LOG_RANGES } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+
 import { calculateStartTimestamp } from '@utils/number';
+import {
+  getDatePartsFromUnixTimestamp,
+  isoDateFormatFromDateParts,
+  padTime,
+  unixTimestampFromDate,
+  utcDateFromDateAndTime,
+} from '@utils/date';
 import { goToWithQuery } from '@utils/routing';
-import { utcDateFromDateAndTime } from '@utils/string';
+import { isEqual } from '@utils/hash';
+import { queryFromUrl } from '@utils/url';
 
 
 enum RangeQueryEnum {
@@ -26,7 +36,6 @@ enum RangeQueryEnum {
 type LogToolbarProps = {
   fetchLogs: () => void;
   selectedRange: LogRangeEnum;
-  setLogCount: (offset: number) => void;
   setSelectedRange: (range: LogRangeEnum) => void;
 };
 
@@ -34,17 +43,58 @@ function LogToolbar({
   fetchLogs,
   selectedRange,
   setSelectedRange,
-  setLogCount,
 }: LogToolbarProps) {
   const router = useRouter();
   const { pipeline: pipelineUUID } = router.query;
+
   const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
   const [startDate, setStartDate] = useState<Date>(null);
   const [startTime, setStartTime] = useState<TimeType>({ hour: '00', minute: '00' });
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [endTime, setEndTime] = useState<TimeType>({
-    hour: String(new Date().getUTCHours()),
-    minute: String(new Date().getUTCMinutes()) });
+    hour: padTime(String(new Date().getUTCHours())),
+    minute: padTime(String(new Date().getUTCMinutes())),
+  });
+
+  const q = queryFromUrl();
+  const qPrev = usePrevious(q);
+  useEffect(() => {
+    if (!isEqual(q, qPrev)) {
+      const {
+        start_timestamp: initialStart,
+        end_timestamp: initialEnd,
+      } = q;
+
+      if (initialStart) {
+        const {
+          date: initialStartDate,
+          hour: initialStartHour,
+          minute: initialStartMinute,
+        } = getDatePartsFromUnixTimestamp(initialStart);
+        setStartDate(initialStartDate);
+        setStartTime({
+          hour: padTime(initialStartHour),
+          minute: padTime(initialStartMinute),
+        });
+      }
+
+      if (initialEnd) {
+        const {
+          date: initialEndDate,
+          hour: initialEndHour,
+          minute: initialEndMinute,
+        } = getDatePartsFromUnixTimestamp(initialEnd);
+        setEndDate(initialEndDate);
+        setEndTime({
+          hour: padTime(initialEndHour),
+          minute: padTime(initialEndMinute),
+        });
+      }
+    }
+  }, [
+    q,
+    qPrev,
+  ]);
 
   return (
     <Spacing py={1}>
@@ -70,7 +120,10 @@ function LogToolbar({
             setSelectedRange(range);
             if (SPECIFIC_LOG_RANGES.includes(range)) {
               const startTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[range]);
-              goToWithQuery({ [RangeQueryEnum.START]: startTimestamp });
+              goToWithQuery(
+                { [RangeQueryEnum.START]: startTimestamp },
+                { replaceParams: true },
+              );
             } else if (range === LogRangeEnum.LAST_40_RUNS) {
               Router.push(`/pipelines/${pipelineUUID}/logs`);
             }
@@ -148,8 +201,15 @@ function LogToolbar({
 
             <Button
               borderRadius={UNIT / 2}
+              onClick={() => {
+                const start = isoDateFormatFromDateParts(startDate, startTime.hour, startTime.minute);
+                const end = isoDateFormatFromDateParts(endDate, endTime.hour, endTime.minute);
+                goToWithQuery({
+                  [RangeQueryEnum.START]: unixTimestampFromDate(start),
+                  [RangeQueryEnum.END]: unixTimestampFromDate(end),
+                });
+              }}
               padding={`${UNIT / 2}px`}
-              onClick={() => {}}
               primary
             >
               Search

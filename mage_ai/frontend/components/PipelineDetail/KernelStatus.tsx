@@ -36,7 +36,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { dateFormatLongFromUnixTimestamp } from '@utils/string';
+import { dateFormatLongFromUnixTimestamp } from '@utils/date';
 import { find, remove } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';

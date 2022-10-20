@@ -38,3 +38,23 @@ export function utcDateFromDateAndTime(
 ): string {
   return `${date.toISOString().split('T')[0]} ${hour}:${minute}`;
 }
+
+export function getDatePartsFromUnixTimestamp(
+  timestamp: string | number,
+): {
+  date: Date,
+  hour: string,
+  minute: string,
+} {
+  const dateMoment = moment.unix(+timestamp).utc();
+
+  return {
+    date: dateMoment.toDate(),
+    hour: String(dateMoment.hour()),
+    minute: String(dateMoment.minute()),
+  };
+}
+
+export function padTime(time: string) {
+  return time.padStart(2, '0');
+}

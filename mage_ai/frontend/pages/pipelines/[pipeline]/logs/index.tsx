@@ -15,7 +15,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import LogDetail from '@components/Logs/Detail';
-import LogType from '@interfaces/LogType';
+import LogType, { LogRangeEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -197,7 +197,6 @@ function BlockRuns({
               <LogToolbar
                 fetchLogs={fetchLogs}
                 selectedRange={selectedRange}
-                setLogCount={setOffset}
                 setSelectedRange={setSelectedRange}
               />
             </>
