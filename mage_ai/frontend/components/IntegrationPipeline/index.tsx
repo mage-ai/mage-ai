@@ -28,6 +28,7 @@ import IntegrationSourceType, {
   StreamType,
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
+import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -433,6 +434,20 @@ function IntegrationPipeline({
                 <Headline condensed level={4} spacingBelow>
                   Configuration
                 </Headline>
+
+                {dataLoaderBlockContent?.source && (
+                  <Spacing mb={2}>
+                    <Text>
+                      For more information on how to configure this source,
+                      read the <Link
+                        href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
+                        openNewWindow
+                      >
+                        {dataLoaderBlockContent.source} documentation
+                      </Link>
+                    </Text>
+                  </Spacing>
+                )}
 
                 {dataLoaderEditor}
               </Spacing>
@@ -1022,6 +1037,20 @@ function IntegrationPipeline({
               <Headline condensed level={4} spacingBelow>
                 Configuration
               </Headline>
+
+              {dataExporterBlockContent?.destination && (
+                <Spacing mb={2}>
+                  <Text>
+                    For more information on how to configure this destination,
+                    read the <Link
+                      href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
+                      openNewWindow
+                    >
+                      {dataExporterBlockContent.destination} documentation
+                    </Link>
+                  </Text>
+                </Spacing>
+              )}
 
               {dataExporterEditor}
             </Spacing>

@@ -99,10 +99,13 @@ function ContextMenu({
   }, []);
 
   const handleClick = useCallback((e) => {
-    e.preventDefault();
-    setVisible(false);
+    if (visible) {
+      e.preventDefault();
+      setVisible(false);
+    }
   }, [
     setVisible,
+    visible,
   ]);
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
