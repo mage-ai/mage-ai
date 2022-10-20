@@ -12,6 +12,7 @@ class PipelineExecutor:
         self.logger_manager = LoggerManager(
             pipeline_uuid=self.pipeline.uuid,
             partition=self.execution_partition,
+            repo_config=self.pipeline.repo_config,
         )
         self.logger = DictLogger(self.logger_manager.get_logger())
 
