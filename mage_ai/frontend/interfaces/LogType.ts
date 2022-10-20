@@ -25,6 +25,7 @@ export enum LogRangeEnum {
   LAST_HOUR = 'Last hour',
   LAST_DAY = 'Last day',
   LAST_WEEK = 'Last week',
+  LAST_30_DAYS = 'Last 30 days',
   CUSTOM_RANGE = 'Custom range',
 }
 
