@@ -1,4 +1,3 @@
-import Router, { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
@@ -12,7 +11,11 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import usePrevious from '@utils/usePrevious';
 import { LogRangeEnum } from '@interfaces/LogType';
-import { LOG_RANGE_SEC_INTERVAL_MAPPING, SPECIFIC_LOG_RANGES } from './constants';
+import {
+  LOG_ITEMS_PER_PAGE,
+  LOG_RANGE_SEC_INTERVAL_MAPPING,
+  SPECIFIC_LOG_RANGES,
+} from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 import { calculateStartTimestamp } from '@utils/number';
@@ -34,19 +37,20 @@ enum RangeQueryEnum {
 }
 
 type LogToolbarProps = {
-  fetchLogs: () => void;
+  logCount: number;
+  logOffset: number;
   selectedRange: LogRangeEnum;
+  setLogOffset: (func: any) => void;
   setSelectedRange: (range: LogRangeEnum) => void;
 };
 
 function LogToolbar({
-  fetchLogs,
+  logCount,
+  logOffset,
   selectedRange,
+  setLogOffset,
   setSelectedRange,
 }: LogToolbarProps) {
-  const router = useRouter();
-  const { pipeline: pipelineUUID } = router.query;
-
   const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
   const [startDate, setStartDate] = useState<Date>(null);
   const [startTime, setStartTime] = useState<TimeType>({ hour: '00', minute: '00' });
@@ -55,6 +59,7 @@ function LogToolbar({
     hour: padTime(String(new Date().getUTCHours())),
     minute: padTime(String(new Date().getUTCMinutes())),
   });
+  const allLogsLoaded = logOffset >= logCount;
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -101,12 +106,12 @@ function LogToolbar({
       <FlexContainer alignItems="center">
         <KeyboardShortcutButton
           blackBorder
+          disabled={allLogsLoaded}
           inline
-          onClick={fetchLogs}
-          sameColorAsText
-          uuid="logs/toolbar/load_newest"
+          onClick={() => setLogOffset((prev: number) => prev + LOG_ITEMS_PER_PAGE)}
+          uuid="logs/load_older_logs"
         >
-          Load latest logs
+          {allLogsLoaded ? 'All past logs loaded' : 'Load older logs'}
         </KeyboardShortcutButton>
 
         <Spacing mr={2} />

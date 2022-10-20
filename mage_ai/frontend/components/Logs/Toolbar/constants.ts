@@ -1,5 +1,7 @@
 import { LogRangeEnum } from '@interfaces/LogType';
 
+export const LOG_ITEMS_PER_PAGE = 40;
+
 export const SPECIFIC_LOG_RANGES = [
   LogRangeEnum.LAST_HOUR,
   LogRangeEnum.LAST_DAY,
