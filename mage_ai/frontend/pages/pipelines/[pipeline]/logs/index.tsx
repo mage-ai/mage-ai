@@ -127,7 +127,11 @@ function BlockRuns({
     logsAll,
     query,
   ]);
-  const logs: LogType[] = useMemo(() => logsFiltered.slice(0, offset), [
+  const filteredLogCount = logsFiltered.length;
+  const logs: LogType[] = useMemo(() => logsFiltered.slice(
+    filteredLogCount - offset,
+  ), [
+      filteredLogCount,
       logsFiltered,
       offset,
     ]);
@@ -192,7 +196,7 @@ function BlockRuns({
         <Text>
           {!isLoading && (
             <>
-              {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
+              {numberWithCommas(logs.length)} logs of {numberWithCommas(filteredLogCount)} found
               <LogToolbar
                 selectedRange={selectedRange}
                 setLogOffset={setOffset}
@@ -333,7 +337,7 @@ function BlockRuns({
         />
       )}
 
-      {offset < logsFiltered.length && (
+      {offset < filteredLogCount && (
         <Spacing p={PADDING_UNITS}>
           <KeyboardShortcutButton
             blackBorder
