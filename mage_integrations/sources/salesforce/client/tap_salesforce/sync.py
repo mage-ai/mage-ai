@@ -57,7 +57,7 @@ def resume_syncing_bulk_query(sf, catalog_entry, job_id, state, counter):
     stream = catalog_entry['stream']
     stream_alias = catalog_entry.get('stream_alias')
     catalog_metadata = metadata.to_map(catalog_entry.get('metadata'))
-    bookmark_properties = catalog_entry.get('bookmark_properties')
+    bookmark_properties = catalog_entry.get('bookmark_properties', [])
     replication_key = bookmark_properties[0] if len(bookmark_properties) else None
     stream_version = get_stream_version(catalog_entry, state)
     schema = catalog_entry['schema']
@@ -123,7 +123,7 @@ def sync_records(sf, catalog_entry, state, counter):
     schema = catalog_entry['schema']
     stream_alias = catalog_entry.get('stream_alias')
     catalog_metadata = metadata.to_map(catalog_entry['metadata'])
-    bookmark_properties = catalog_entry.get('bookmark_properties')
+    bookmark_properties = catalog_entry.get('bookmark_properties', [])
     replication_key = bookmark_properties[0] if len(bookmark_properties) else None
     stream_version = get_stream_version(catalog_entry, state)
     activate_version_message = singer.ActivateVersionMessage(stream=(stream_alias or stream),
