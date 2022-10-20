@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -49,12 +50,14 @@ function BlockRuns({
   pipeline: pipelineProp,
 }: BlockRunsProp) {
   const themeContext = useContext(ThemeContext);
+  const bottomOfPageButtonRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
 
   const [offset, setOffset] = useState(LOG_ITEMS_PER_PAGE);
   const [query, setQuery] = useState<FilterQueryType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
+  const [scrollToBottom, setScrollToBottom] = useState(false);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
   const pipeline = useMemo(() => ({
@@ -159,6 +162,16 @@ function BlockRuns({
     q,
     selectedLog,
     selectedLogPrev,
+  ]);
+
+  useEffect(() => {
+    if (scrollToBottom && !isLoading) {
+      bottomOfPageButtonRef?.current?.scrollIntoView();
+      setScrollToBottom(false);
+    }
+  }, [
+    scrollToBottom,
+    isLoading,
   ]);
 
   return (
@@ -339,11 +352,14 @@ function BlockRuns({
         />
       )}
 
-      <Spacing p={PADDING_UNITS}>
+      <Spacing p={PADDING_UNITS} ref={bottomOfPageButtonRef}>
         <KeyboardShortcutButton
           blackBorder
           inline
-          onClick={fetchLogs}
+          onClick={() => {
+            setScrollToBottom(true);
+            fetchLogs(null);
+          }}
           uuid="logs/toolbar/load_newest"
         >
           Load latest logs
