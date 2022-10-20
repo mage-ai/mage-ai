@@ -1,8 +1,8 @@
 from mage_integrations.connections.sql.base import Connection
-from psycopg2 import connect
+from mysql.connector import connect
 
 
-class PostgreSQL(Connection):
+class MySQL(Connection):
     def __init__(
         self,
         database: str,
@@ -15,12 +15,12 @@ class PostgreSQL(Connection):
         self.database = database
         self.host = host
         self.password = password
-        self.port = port or 5432
+        self.port = port or 3306
         self.username = username
 
     def build_connection(self):
         return connect(
-            dbname=self.database,
+            database=self.database,
             host=self.host,
             password=self.password,
             port=self.port,

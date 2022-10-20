@@ -1,5 +1,12 @@
-from singer.messages import SchemaMessage as SchemaMessageOriginal, write_message
+from mage_integrations.utils.parsers import encode_complex
+from singer.messages import (
+    RecordMessage,
+    SchemaMessage as SchemaMessageOriginal,
+    StateMessage,
+)
 from typing import List
+import simplejson
+import sys
 
 
 class SchemaMessage(SchemaMessageOriginal):
@@ -26,6 +33,20 @@ class SchemaMessage(SchemaMessageOriginal):
             result['unique_constraints'] = self.unique_constraints
 
         return result
+
+
+def format_message(message):
+    return simplejson.dumps(
+        message.asdict(),
+        default=encode_complex,
+        ignore_nan=True,
+        use_decimal=True,
+    )
+
+
+def write_message(message):
+    sys.stdout.write(format_message(message) + '\n')
+    sys.stdout.flush()
 
 
 def write_schema(
@@ -61,3 +82,32 @@ def write_schema(
             unique_constraints=unique_constraints,
         ),
     )
+
+
+def write_record(stream_name, record, stream_alias=None, time_extracted=None):
+    """Write a single record for the given stream.
+
+    write_record("users", {"id": 2, "email": "mike@stitchdata.com"})
+    """
+    write_message(RecordMessage(stream=(stream_alias or stream_name),
+                                record=record,
+                                time_extracted=time_extracted))
+
+
+def write_records(stream_name, records):
+    """Write a list of records for the given stream.
+
+    chris = {"id": 1, "email": "chris@stitchdata.com"}
+    mike = {"id": 2, "email": "mike@stitchdata.com"}
+    write_records("users", [chris, mike])
+    """
+    for record in records:
+        write_record(stream_name, record)
+
+
+def write_state(value):
+    """Write a state message.
+
+    write_state({'last_updated_at': '2017-02-14T09:21:00'})
+    """
+    write_message(StateMessage(value=value))
