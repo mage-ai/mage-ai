@@ -8,7 +8,6 @@ from mage_ai.data_cleaner.shared.utils import (
     is_dataframe,
     is_geo_dataframe,
 )
-from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -26,6 +25,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.constants import ENV_DEV

@@ -101,7 +101,7 @@ class ApiBlockRunLogHandler(BaseHandler):
         block_run = BlockRun.query.get(int(block_run_id))
         self.write(
             dict(
-                log=block_run.log_file.to_dict(include_content=True),
+                log=block_run.logs,
             ),
         )
 
@@ -245,7 +245,7 @@ class ApiPipelineRunLogHandler(BaseHandler):
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
         self.write(
             dict(
-                log=pipeline_run.log_file.to_dict(include_content=True),
+                log=pipeline_run.logs,
             ),
         )
 

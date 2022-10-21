@@ -1,7 +1,6 @@
 from croniter import croniter
 from datetime import datetime, timedelta
-from mage_ai.data_preparation.logger_manager import LoggerManager
-from mage_ai.data_preparation.models.file import File
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
@@ -243,11 +242,13 @@ class PipelineRun(BaseModel):
                     ])
 
     @property
-    def log_file(self):
-        return File.from_path(LoggerManager.get_log_filepath(
+    def logs(self):
+        pipeline = Pipeline.get(self.pipeline_uuid)
+        return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
-        ))
+            repo_config=pipeline.repo_config,
+        ).get_logs()
 
     @property
     def pipeline_schedule_name(self):
@@ -294,12 +295,14 @@ class BlockRun(BaseModel):
     pipeline_run = relationship(PipelineRun, back_populates='block_runs')
 
     @property
-    def log_file(self):
-        return File.from_path(LoggerManager.get_log_filepath(
-            pipeline_uuid=self.pipeline_run.pipeline_uuid,
+    def logs(self):
+        pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
+        return LoggerManagerFactory.get_logger_manager(
+            pipeline_uuid=pipeline.uuid,
             block_uuid=self.block_uuid,
             partition=self.pipeline_run.execution_partition,
-        ))
+            repo_config=pipeline.repo_config,
+        ).get_logs()
 
     @classmethod
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':

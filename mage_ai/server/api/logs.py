@@ -95,7 +95,7 @@ class ApiPipelineLogListHandler(BaseHandler):
                 model.pipeline_schedule_id = row.pipeline_schedule_id
                 model.pipeline_uuid = row.pipeline_uuid
 
-                pipeline_run_logs.append(model.log_file.to_dict(include_content=True))
+                pipeline_run_logs.append(model.logs)
 
         c = aliased(BlockRun, name='c')
         query = (
@@ -157,7 +157,7 @@ class ApiPipelineLogListHandler(BaseHandler):
             model2.block_uuid = row.block_uuid
             model2.pipeline_run = model
 
-            block_run_logs.append(model2.log_file.to_dict(include_content=True))
+            block_run_logs.append(model2.logs)
 
         self.write(dict(logs=[
             dict(

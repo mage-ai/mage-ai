@@ -1,5 +1,5 @@
-from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.shared.hash import merge_dict
 from typing import Callable, Dict
 import json
@@ -12,12 +12,13 @@ class BlockExecutor:
         self.block_uuid = block_uuid
         self.block = self.pipeline.get_block(block_uuid)
         self.execution_partition = execution_partition
-        logger_manager = LoggerManager.get_logger(
+        self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
             block_uuid=self.block_uuid,
             partition=self.execution_partition,
+            repo_config=self.pipeline.repo_config,
         )
-        self.logger = DictLogger(logger_manager)
+        self.logger = DictLogger(self.logger_manager.logger)
 
     def execute(
         self,
@@ -33,38 +34,41 @@ class BlockExecutor:
         runtime_arguments: Dict = None,
         **kwargs,
     ) -> Dict:
-        result = dict()
-
-        tags = self._build_tags(**kwargs.get('tags', {}))
-
-        self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
-        if on_start is not None:
-            on_start(self.block_uuid)
         try:
-            result = self._execute(
-                analyze_outputs=analyze_outputs,
-                callback_url=callback_url,
-                global_vars=global_vars,
-                update_status=update_status,
-                input_from_output=input_from_output,
-                verify_output=verify_output,
-                runtime_arguments=runtime_arguments,
-                **kwargs,
-            )
-        except Exception as e:
-            self.logger.info('Failed to execute block.', **tags)
-            if on_failure is not None:
-                on_failure(self.block_uuid)
-            elif callback_url is not None:
-                self.__update_block_run_status(callback_url, 'failed')
-            raise e
-        self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
-        if on_complete is not None:
-            on_complete(self.block_uuid)
-        elif callback_url is not None:
-            self.__update_block_run_status(callback_url, 'completed', tags)
+            result = dict()
 
-        return result
+            tags = self._build_tags(**kwargs.get('tags', {}))
+
+            self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
+            if on_start is not None:
+                on_start(self.block_uuid)
+            try:
+                result = self._execute(
+                    analyze_outputs=analyze_outputs,
+                    callback_url=callback_url,
+                    global_vars=global_vars,
+                    update_status=update_status,
+                    input_from_output=input_from_output,
+                    verify_output=verify_output,
+                    runtime_arguments=runtime_arguments,
+                    **kwargs,
+                )
+            except Exception as e:
+                self.logger.info('Failed to execute block.', **tags)
+                if on_failure is not None:
+                    on_failure(self.block_uuid)
+                elif callback_url is not None:
+                    self.__update_block_run_status(callback_url, 'failed')
+                raise e
+            self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
+            if on_complete is not None:
+                on_complete(self.block_uuid)
+            elif callback_url is not None:
+                self.__update_block_run_status(callback_url, 'completed', tags)
+
+            return result
+        finally:
+            self.logger_manager.output_logs_to_destination()
 
     def _execute(
         self,

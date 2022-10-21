@@ -1,8 +1,8 @@
 from contextlib import redirect_stdout
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
-from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.shared.stream import StreamToLogger
 from typing import Callable, Dict
 import yaml
 
@@ -10,6 +10,7 @@ import yaml
 class StreamingPipelineExecutor(PipelineExecutor):
     def __init__(self, pipeline: Pipeline, **kwargs):
         super().__init__(pipeline, **kwargs)
+        # TODO: Support custom log destination for streaming pipelines
         self.parse_and_validate_blocks()
 
     def parse_and_validate_blocks(self):

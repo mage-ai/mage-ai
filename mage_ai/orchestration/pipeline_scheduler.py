@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
-from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
@@ -27,11 +27,12 @@ class PipelineScheduler:
     ) -> None:
         self.pipeline_run = pipeline_run
         self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
-        logger_manager = LoggerManager.get_logger(
+        self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
             partition=self.pipeline_run.execution_partition,
+            repo_config=self.pipeline.repo_config,
         )
-        self.logger = DictLogger(logger_manager)
+        self.logger = DictLogger(self.logger_manager.logger)
         self.notification_sender = NotificationSender(
             NotificationConfig.load(config=self.pipeline.repo_config.notification_config),
         )
@@ -73,6 +74,7 @@ class PipelineScheduler:
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
                 )
+                self.logger_manager.output_logs_to_destination()
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline()
             else:

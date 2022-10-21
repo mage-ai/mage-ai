@@ -1,5 +1,5 @@
-from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from typing import Dict
 import asyncio
@@ -9,11 +9,12 @@ class PipelineExecutor:
     def __init__(self, pipeline: Pipeline, execution_partition: str = None):
         self.pipeline = pipeline
         self.execution_partition = execution_partition
-        logger_manager = LoggerManager.get_logger(
+        self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
             partition=self.execution_partition,
+            repo_config=self.pipeline.repo_config,
         )
-        self.logger = DictLogger(logger_manager)
+        self.logger = DictLogger(self.logger_manager.logger)
 
     def execute(
         self,
@@ -31,3 +32,4 @@ class PipelineExecutor:
             run_tests=run_tests,
             update_status=update_status,
         ))
+        self.logger_manager.output_logs_to_destination()
