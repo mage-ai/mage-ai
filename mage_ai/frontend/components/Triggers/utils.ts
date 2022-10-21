@@ -36,15 +36,15 @@ export function getTimeInUTC(dateTime: string) {
   if (!dateTime) {
     return null;
   }
-  return new Date(moment(dateTime).valueOf());
+  const date = new Date(moment(dateTime).valueOf());
 
-  // const utcTs = Date.UTC(
-  //   date.getFullYear(),
-  //   date.getMonth(),
-  //   date.getDate(),
-  //   date.getHours(),
-  //   date.getMinutes(),
-  //   date.getSeconds(),
-  // );
-  // return new Date(utcTs);
+  const utcTs = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds(),
+  );
+  return new Date(utcTs);
 }
