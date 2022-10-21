@@ -59,7 +59,7 @@ class PipelineScheduleTests(TestCase):
         self.assertTrue(pipeline_schedule2.should_schedule())
 
 
-class PielineRunTests(TestCase):
+class PipelineRunTests(TestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
@@ -97,7 +97,7 @@ class PielineRunTests(TestCase):
             'pipelines/test_pipeline/.logs',
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/pipeline.log',
         )
-        self.assertEquals(pipeline_run.log_file.file_path, expected_file_path)
+        self.assertEquals(pipeline_run.logs.get('path'), expected_file_path)
 
 
 class BlockRunTests(TestCase):
@@ -122,4 +122,4 @@ class BlockRunTests(TestCase):
                 'pipelines/test_pipeline/.logs',
                 f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/{b.block_uuid}.log',
             )
-            self.assertEquals(b.log_file.file_path, expected_file_path)
+            self.assertEquals(b.logs.get('path'), expected_file_path)
