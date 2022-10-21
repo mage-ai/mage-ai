@@ -4,6 +4,7 @@ import jinja2
 import os
 import subprocess
 import uuid
+import pandas as pd
 
 
 BLOCK_TYPE_TO_EXECUTION_TEMPLATE = {
@@ -34,7 +35,11 @@ def execute_r_code(
     with open(file_path, 'w') as foutput:
         foutput.write(execution_code)
     __execute_r_code(file_path)
-    # os.remove(file_path)
+    os.remove(file_path)
+
+    output_variable_object = block.output_variable_object(execution_partition=execution_partition)
+    df = pd.read_csv(os.path.join(output_variable_object.variable_path, 'data.csv'))
+    return df
 
 
 def __render_r_script(block, code: str, execution_partition: str = None):
@@ -47,11 +52,12 @@ def __render_r_script(block, code: str, execution_partition: str = None):
         execution_partition=execution_partition,
     ) or []
     output_variable_object = block.output_variable_object(execution_partition=execution_partition)
+    os.makedirs(output_variable_object.variable_path, exist_ok=True)
     return template.render(
         code=code,
-        input_paths=[v.variable_path + '/data.csv' for v in input_variable_objects],
+        input_paths=[os.path.join(v.variable_path, 'data.csv') for v in input_variable_objects],
         input_vars_str=', '.join([f'df_{i + 1}' for i in range(len(input_variable_objects))]),
-        output_path=output_variable_object.variable_path + '/data.csv',
+        output_path=os.path.join(output_variable_object.variable_path, 'data.csv'),
     ) + '\n'
 
 
