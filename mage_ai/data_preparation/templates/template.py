@@ -56,13 +56,25 @@ def fetch_template_source(
 ) -> str:
     template_source = ''
 
-    if language in [BlockLanguage.PYTHON, BlockLanguage.YAML]:
+    if language in [BlockLanguage.PYTHON, BlockLanguage.R, BlockLanguage.YAML]:
         if block_type == BlockType.DATA_LOADER:
-            template_source = __fetch_data_loader_templates(config, pipeline_type=pipeline_type)
+            template_source = __fetch_data_loader_templates(
+                config,
+                language=language,
+                pipeline_type=pipeline_type,
+            )
         elif block_type == BlockType.TRANSFORMER:
-            template_source = __fetch_transformer_templates(config, pipeline_type=pipeline_type)
+            template_source = __fetch_transformer_templates(
+                config,
+                language=language,
+                pipeline_type=pipeline_type,
+            )
         elif block_type == BlockType.DATA_EXPORTER:
-            template_source = __fetch_data_exporter_templates(config, pipeline_type=pipeline_type)
+            template_source = __fetch_data_exporter_templates(
+                config,
+                language=language,
+                pipeline_type=pipeline_type,
+            )
         elif block_type == BlockType.SENSOR:
             template_source = __fetch_sensor_templates(config)
     return template_source
@@ -86,6 +98,7 @@ def load_template(
 
 def __fetch_data_loader_templates(
     config: Mapping[str, str],
+    language: BlockLanguage = BlockLanguage.PYTHON,
     pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> str:
     data_source = config.get('data_source')
@@ -95,6 +108,9 @@ def __fetch_data_loader_templates(
     elif pipeline_type == PipelineType.STREAMING:
         template_folder = 'data_loaders/streaming'
         file_extension = 'yaml'
+    elif language == BlockLanguage.R:
+        template_folder = 'data_loaders/r'
+        file_extension = 'r'
     else:
         template_folder = 'data_loaders'
 
@@ -120,6 +136,7 @@ def __fetch_data_loader_templates(
 
 def __fetch_transformer_templates(
     config: Mapping[str, str],
+    language: BlockLanguage = BlockLanguage.PYTHON,
     pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> str:
     action_type = config.get('action_type')
@@ -140,6 +157,8 @@ def __fetch_transformer_templates(
             template_path = 'transformers/default_pyspark.jinja'
         elif pipeline_type == PipelineType.STREAMING:
             template_path = 'transformers/default_streaming.jinja'
+        elif language == BlockLanguage.R:
+            template_path = 'transformers/r/default.r'
         else:
             template_path = 'transformers/default.jinja'
         return (
@@ -183,6 +202,7 @@ def __fetch_transformer_action_template(action_type: ActionType, axis: Axis, exi
 
 def __fetch_data_exporter_templates(
     config: Mapping[str, str],
+    language: BlockLanguage = BlockLanguage.PYTHON,
     pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> str:
     data_source = config.get('data_source')
@@ -192,6 +212,9 @@ def __fetch_data_exporter_templates(
     elif pipeline_type == PipelineType.STREAMING:
         template_folder = 'data_exporters/streaming'
         file_extension = 'yaml'
+    elif language == BlockLanguage.R:
+        template_folder = 'data_exporters/r'
+        file_extension = 'r'
     else:
         template_folder = 'data_exporters'
 
