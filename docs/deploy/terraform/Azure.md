@@ -10,7 +10,8 @@
 1. [Log into Azure from CLI](#2-log-into-azure-from-cli)
 1. [Customize Terraform settings](#3-customize-terraform-settings)
 1. [Deploy](#4-deploy)
-1. [Misc](#5-misc)
+1. [Updating Mage versions](#updating-mage-versions)
+1. [Misc](#misc)
 
 <br />
 
@@ -200,6 +201,16 @@ In your browser, go to [`http://[IP_address]/`](http://IP_address/).
 > Note
 >
 > Change the `IP_address` to the IP address that was output in your terminal after successfully running `terraform apply`.
+
+<br />
+
+## Updating Mage versions
+
+After Mage is running in your cloud, you can update the Mage Docker image version by running the following command in your CLI tool:
+
+```bash
+az container restart --name mage-data-prep-production --resource-group mage-data-prep-production
+```
 
 <br />
 
