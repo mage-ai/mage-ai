@@ -39,6 +39,7 @@ export default interface PipelineScheduleType {
   pipeline_uuid?: string;
   schedule_interval?: string;
   schedule_type?: ScheduleTypeEnum;
+  sla?: number;
   start_time?: string;
   status?: ScheduleStatusEnum;
   updated_at?: string;

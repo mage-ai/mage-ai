@@ -56,6 +56,8 @@ import { indexBy, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { getTimeInUTC } from '../utils';
+import { scheduleMicrotask } from 'react-query/types/core/utils';
+import { toast } from 'react-toastify';
 
 const getTriggerTypes = (
   isStreamingPipeline?: boolean,
@@ -109,6 +111,7 @@ function Edit({
 
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
+  const [enableSLA, setEnableSLA] = useState<boolean>(false);
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
@@ -125,6 +128,7 @@ function Edit({
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
+    sla,
     start_time: startTime,
     variables: scheduleVariablesInit = {},
   } = schedule || {};
@@ -158,6 +162,29 @@ function Edit({
   );
 
   const scheduleVariables = useMemo(() => scheduleVariablesInit || {}, [scheduleVariablesInit]);
+
+  useEffect(
+    () => {
+      let unit = 'seconds';
+      let time = sla;
+      if (sla > 86400) {
+        time = time / 86400;
+        unit = 'days';
+      } else if (sla > 3600) {
+        time = time / 3600;
+        unit = 'hours';
+      } else if (sla > 60) {
+        time = time / 60;
+        unit = 'minutes';
+      }
+      setSchedule(schedule => ({
+        ...schedule,
+        slaAmount: time,
+        slaUnit: unit,
+      }));
+    },
+    [sla],
+  )
 
   useEffect(
     () => {
@@ -245,6 +272,30 @@ function Edit({
         ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}:00`
         : null;
     }
+
+    const slaAmount = schedule?.['slaAmount'];
+    const slaUnit = schedule?.['slaUnit'];
+    if (isNaN(slaAmount) || !slaUnit) {
+      toast.error(
+        'Please enter a valid SLA',
+        {
+          position: toast.POSITION.BOTTOM_RIGHT,
+          toastId: 'sla_error',
+        },
+      );
+      return;
+    }
+
+    let multiplier = 1;
+    if (slaUnit === 'days') {
+      multiplier = 86400;
+    } else if (slaUnit === 'hours') {
+      multiplier = 3600;
+    } else if (slaUnit === 'minutes') {
+      multiplier = 60;
+    }
+
+    data.sla = schedule?.['slaAmount'] * multiplier;
 
     // @ts-ignore
     updateSchedule({
@@ -807,72 +858,164 @@ function Edit({
   );
 
   // TODO: allow users to set their own custom runtime variables.
-  const variablesMemo = useMemo(() => !isEmptyObject(formattedVariables) && (
+  const afterMemo = useMemo(() => (
     <Spacing p={PADDING_UNITS}>
-      <FlexContainer alignItems="center">
-        <Spacing mr={2}>
-          <ToggleSwitch
-            checked={overwriteVariables}
-            onCheck={setOverwriteVariables}
-          />
-        </Spacing>
-        <Text monospace muted>
-          Overwrite global variables
-        </Text>
-      </FlexContainer>
+      {!isEmptyObject(formattedVariables) && (
+        <>
+          <FlexContainer alignItems="center">
+            <Spacing mr={2}>
+              <ToggleSwitch
+                checked={overwriteVariables}
+                onCheck={setOverwriteVariables}
+              />
+            </Spacing>
+            <Text monospace muted>
+              Overwrite global variables
+            </Text>
+          </FlexContainer>
 
-      {overwriteVariables && runtimeVariables
-        && Object.entries(runtimeVariables).length > 0 && (
-        <Spacing mt={2}>
-          <Table
-            columnFlex={[null, 1]}
-            columns={[
-              {
-                uuid: 'Variable',
-              },
-              {
-                uuid: 'Value',
-              },
-            ]}
-            rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
-              <Text
-                default
-                key={`variable_${uuid}`}
-                monospace
-              >
-                {uuid}
-              </Text>,
-              <TextInput
-                borderless
-                key={`variable_uuid_input_${uuid}`}
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setRuntimeVariables(vars => ({
-                    ...vars,
-                    [uuid]: e.target.value,
-                  }));
-                }}
-                paddingHorizontal={0}
-                placeholder="Variable value"
-                value={value}
-              />,
-            ])}
-          />
-        </Spacing>
+          {overwriteVariables && runtimeVariables
+            && Object.entries(runtimeVariables).length > 0 && (
+            <Spacing mt={2}>
+              <Table
+                columnFlex={[null, 1]}
+                columns={[
+                  {
+                    uuid: 'Variable',
+                  },
+                  {
+                    uuid: 'Value',
+                  },
+                ]}
+                rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
+                  <Text
+                    default
+                    key={`variable_${uuid}`}
+                    monospace
+                  >
+                    {uuid}
+                  </Text>,
+                  <TextInput
+                    borderless
+                    key={`variable_uuid_input_${uuid}`}
+                    monospace
+                    onChange={(e) => {
+                      e.preventDefault();
+                      setRuntimeVariables(vars => ({
+                        ...vars,
+                        [uuid]: e.target.value,
+                      }));
+                    }}
+                    paddingHorizontal={0}
+                    placeholder="Variable value"
+                    value={value}
+                  />,
+                ])}
+              />
+            </Spacing>
+          )}
+        </>
       )}
+      <Spacing mt={2}>
+        <FlexContainer alignItems="center">
+          <Spacing mr={2}>
+            <ToggleSwitch
+              checked={enableSLA}
+              onCheck={val => {
+                setEnableSLA(val);
+                if (!val) {
+                  setSchedule(schedule => ({
+                    ...schedule,
+                    sla: 0,
+                  }))
+                }
+              }}
+            />
+          </Spacing>
+          <Text monospace muted>
+            Configure trigger SLA
+          </Text>
+        </FlexContainer>
+        {enableSLA && (
+          <Spacing mt={2}>
+            <Table
+              columnFlex={[null, 1]}
+              rows={[[
+                <FlexContainer
+                  alignItems="center"
+                  key="sla_detail"
+                >
+                  <CalendarDate default size={1.5 * UNIT} />
+                  <Spacing mr={1} />
+                  <Text default>
+                    SLA
+                  </Text>
+                </FlexContainer>,
+                <FlexContainer>
+                  <Flex flex={1}>
+                    <TextInput
+                      noBorder
+                      fullWidth
+                      key="sla_input_detail"
+                      monospace
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setSchedule(s => ({
+                          ...s,
+                          slaAmount: parseInt(e.target.value),
+                        }));
+                      }}
+                      placeholder="Time"
+                      value={schedule?.['slaAmount']}
+                    />
+                  </Flex>
+                  <Flex flex={1}>
+                    <Select
+                      fullWidth
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setSchedule(s => ({
+                          ...s,
+                          slaUnit: e.target.value,
+                        }));
+                      }}
+                      value={schedule?.['slaUnit']}
+                    >
+                      <option value="" />
+                      <option key="days" value="days">
+                        days
+                      </option>
+                      <option key="hours" value="hours">
+                        hours
+                      </option>
+                      <option key="minutes" value="minutes">
+                        mins
+                      </option>
+                      <option key="seconds" value="seconds">
+                        seconds
+                      </option>
+                    </Select>
+                  </Flex>
+                </FlexContainer>
+              ]]}
+            />
+          </Spacing>
+        )}
+      </Spacing>
     </Spacing>
   ), [
+    enableSLA,
     formattedVariables,
     overwriteVariables,
     runtimeVariables,
+    setEnableSLA,
     setOverwriteVariables,
   ]);
 
   return (
     <>
       <PipelineDetailPage
-        after={variablesMemo}
+        after={afterMemo}
         breadcrumbs={[
           {
             label: () => 'Triggers',
