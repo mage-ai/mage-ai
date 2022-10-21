@@ -11,12 +11,12 @@ Data integration is synchronizing data from an external system to an internal sy
 - [How to build a data integration pipeline](../guides/pipelines/DataIntegrationPipeline.md)
 - [Sources](#sources)
     - [Available sources](#available-sources)
-    - [How to add a new source](../guides/data_integrations/sources/AddNewSource.md)
-    - [How to adapt an existing source](../guides/data_integrations/sources/AdaptExistingSource.md)
+    - [Add a new source](../guides/data_integrations/sources/AddNewSource.md)
+    - [Adapt an existing source](../guides/data_integrations/sources/AdaptExistingSource.md)
 - [Destinations](#destinations)
     - [Available destinations](#available-destinations)
-    - [How to add a new destination](../guides/data_integrations/destinations/AddNewDestination.md)
-    - [How to adapt an existing destination](../guides/data_integrations/destinations/AdaptExistingDestination.md)
+    - [Add a new destination](../guides/data_integrations/destinations/AddNewDestination.md)
+    - [Adapt an existing destination](../guides/data_integrations/destinations/AdaptExistingDestination.md)
 
 <br />
 
@@ -46,8 +46,13 @@ You can use Mage to sync data from your internal systems, and have that data app
 ## Sources
 
 A source is a system that you want to load data from and synchronize it into another system.
-
 A source can be a 3rd party API, SaaS, database, data warehouse, or a data lake.
+
+Read more about Sources:
+
+- [Technical documentation](sources/README.md)
+- [Add a new source](../guides/data_integrations/sources/AddNewSource.md)
+- [Adapt an existing source (aka Tap)](../guides/data_integrations/sources/AdaptExistingSource.md)
 
 ### Available sources
 
@@ -67,7 +72,7 @@ A source can be a 3rd party API, SaaS, database, data warehouse, or a data lake.
 
 > Don’t see a source you need?
 >
-> Check out the next section on <b>How to add a new source</b>
+> Check out the next section on <b>Add a new source</b>
 > or tell us on
 > [<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
 > and we can help you build it.
@@ -76,23 +81,16 @@ A source can be a 3rd party API, SaaS, database, data warehouse, or a data lake.
 
 <br />
 
-### How to add a new source
-
-[<b>Documentation here</b>](../guides/data_integrations/sources/AddNewSource.md)
-
-<br />
-
-### How to adapt an existing source (aka Tap)
-
-[<b>Documentation here</b>](../guides/data_integrations/sources/AdaptExistingSource.md)
-
-<br />
-
 ## Destinations
 
 A destination is a system that you want to export data into.
-
 A destination can be a 3rd party API, SaaS, database, data warehouse, or a data lake.
+
+Read more about destinations:
+
+- [Technical documentation](destinations/README.md)
+- [Add a new destination](../guides/data_integrations/destinations/AddNewDestination.md)
+- [Adapt an existing destination (aka Target)](../guides/data_integrations/destinations/AdaptExistingDestination.md)
 
 ### Available destinations
 
@@ -108,23 +106,11 @@ A destination can be a 3rd party API, SaaS, database, data warehouse, or a data 
 
 > Don’t see a destination you need?
 >
-> Check out the next section on <b>How to add a new destination</b>
+> Check out the next section on <b>Add a new destination</b>
 > or tell us on
 > [<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
 > and we can help you build it.
 
 [![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
-
-<br />
-
-### How to add a new destination
-
-[<b>Documentation here</b>](../guides/data_integrations/destinations/AddNewDestination.md)
-
-<br />
-
-### How to adapt an existing destination (aka Target)
-
-[<b>Documentation here</b>](../guides/data_integrations/destinations/AdaptExistingDestination.md)
 
 <br />

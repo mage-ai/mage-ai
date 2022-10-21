@@ -153,21 +153,6 @@ class Source():
             ))
             raise Exception(message)
 
-    def get_bookmarks_for_stream(self, stream) -> Dict:
-        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
-            return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
-
-    def get_boommark_properties_for_stream(self, stream) -> List[str]:
-        bookmark_properties = []
-
-        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
-            if stream.replication_key:
-                bookmark_properties = [stream.replication_key]
-            else:
-                bookmark_properties = stream.to_dict().get('bookmark_properties', [])
-
-        return bookmark_properties
-
     def process_stream(self, stream):
         self.logger.info(f'Syncing stream {stream.tap_stream_id}.')
 
@@ -186,7 +171,7 @@ class Source():
         )
 
         write_schema(
-            bookmark_properties=self.get_boommark_properties_for_stream(stream),
+            bookmark_properties=self.__get_boommark_properties_for_stream(stream),
             key_properties=stream.key_properties,
             replication_method=stream.replication_method,
             schema=schema_dict,
@@ -196,7 +181,7 @@ class Source():
         )
 
     def sync_stream(self, stream) -> None:
-        bookmark_properties = self.get_boommark_properties_for_stream(stream)
+        bookmark_properties = self.__get_boommark_properties_for_stream(stream)
 
         start_date = None
         if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and self.config.get('start_date'):
@@ -204,7 +189,7 @@ class Source():
 
         max_bookmark = None
         rows = self.load_data(
-            bookmarks=self.get_bookmarks_for_stream(stream),
+            bookmarks=self.__get_bookmarks_for_stream(stream),
             query=self.query,
             start_date=start_date,
             stream=stream,
@@ -291,16 +276,12 @@ class Source():
         raise Exception('Subclasses must implement the load_data method.')
 
     def get_forced_replication_method(self, stream_id: str) -> str:
-        # INCREMENTAL or FULL_TABLE
-        raise Exception('Subclasses must implement the get_forced_replication_method method.')
-        return ''
+        return REPLICATION_METHOD_FULL_TABLE
 
     def get_table_key_properties(self, stream_id: str) -> List[str]:
-        raise Exception('Subclasses must implement the get_table_key_properties method.')
         return []
 
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
-        raise Exception('Subclasses must implement the get_valid_replication_keys method.')
         return []
 
     def load_schemas_from_folder(self) -> dict:
@@ -316,6 +297,21 @@ class Source():
                     schemas[file_raw] = Schema.from_dict(json.load(file))
 
         return schemas
+
+    def __get_bookmarks_for_stream(self, stream) -> Dict:
+        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
+            return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
+
+    def __get_boommark_properties_for_stream(self, stream) -> List[str]:
+        bookmark_properties = []
+
+        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
+            if stream.replication_key:
+                bookmark_properties = [stream.replication_key]
+            else:
+                bookmark_properties = stream.to_dict().get('bookmark_properties', [])
+
+        return bookmark_properties
 
 
 @utils.handle_top_exception(LOGGER)
