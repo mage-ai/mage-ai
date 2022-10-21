@@ -1,6 +1,6 @@
 import Ansi from 'ansi-to-react';
 import useWebSocket from 'react-use-websocket';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -12,6 +12,14 @@ import KernelOutputType, {
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+
+import {
+  CharacterStyle,
+  ContainerStyle,
+  InnerStyle,
+  InputStyle,
+  LineStyle,
+} from './index.style';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_LEFT,
@@ -24,12 +32,6 @@ import {
   KEY_CODE_META,
   KEY_CODE_V,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import {
-  ContainerStyle,
-  InnerStyle,
-  InputStyle,
-  LineStyle,
-} from './index.style';
 import { getWebSocket } from '@api/utils/url';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -58,6 +60,7 @@ function Terminal({
   const [busy, setBusy] = useState<boolean>(false);
   const [command, setCommand] = useState<string>('');
   const [commandIndex, setCommandIndex] = useState<number>(0);
+  const [cursorIndex, setCursorIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useState<string[]>([INIT_COMMAND]);
   const [focus, setFocus] = useState<boolean>(false);
   const [kernelOutputs, setKernelOutputs] = useState<(KernelOutputType & {
@@ -130,6 +133,13 @@ function Terminal({
     unregisterOnKeyDown(terminalUUID);
   }, [unregisterOnKeyDown, terminalUUID]);
 
+  const decreaseCursorIndex = useCallback(() => {
+    setCursorIndex(currIdx => currIdx > 0 ? currIdx - 1 : currIdx);
+  }, []);
+  const increaseCursorIndex = useCallback(() => {
+    setCursorIndex(currIdx => (currIdx < command.length) ? currIdx + 1 : currIdx);
+  }, [command]);
+
   registerOnKeyDown(
     terminalUUID,
     (event, keyMapping, keyHistory) => {
@@ -153,18 +163,26 @@ function Terminal({
           interruptKernel();
         } else if (!busy) {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
-            setCommand(prev => prev.slice(0, prev.length - 1));
+            setCommand(prev => prev.slice(0, cursorIndex) + prev.slice(cursorIndex + 1));
+            setCursorIndex(currIdx => Math.max(0, currIdx - 1));
           } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
             if (commandHistory.length >= 1) {
               const idx = Math.max(0, commandIndex - 1);
               setCommand(commandHistory[idx]);
               setCommandIndex(idx);
+              setCursorIndex(commandHistory[idx].length - 1);
             }
+          } else if (onlyKeysPresent([KEY_CODE_ARROW_LEFT], keyMapping)) {
+            decreaseCursorIndex();
+          } else if (onlyKeysPresent([KEY_CODE_ARROW_RIGHT], keyMapping)) {
+            increaseCursorIndex();
           } else if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
             if (commandHistory.length >= 1) {
               const idx = Math.min(commandHistory.length, commandIndex + 1);
-              setCommand(commandHistory[idx] || '');
+              const nextCommand = commandHistory[idx] || '';
+              setCommand(nextCommand);
               setCommandIndex(idx);
+              setCursorIndex(nextCommand.length - 1);
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             if (command?.length >= 1) {
@@ -175,6 +193,7 @@ function Terminal({
               }));
               setCommandIndex(commandHistory.length + 1);
               setCommandHistory(prev => prev.concat(command));
+              setCursorIndex(0);
             }
             // @ts-ignore
             setKernelOutputs(prev => prev.concat({
@@ -187,6 +206,7 @@ function Terminal({
             navigator.clipboard.readText().then(clipText => setCommand(prev => prev + clipText));
           } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
             setCommand(prev => prev + key);
+            increaseCursorIndex();
           }
         }
       }
@@ -206,13 +226,6 @@ function Terminal({
       terminalUUID,
     ],
   );
-
-  const commandToDisplay = command?.split('').map(((char: string, idx: number) => (
-    <span key={`command-${idx}-${char}`}>
-      {char === ' ' && <>&nbsp;</>}
-      {char !== ' ' && char}
-    </span>
-  )));
 
   return (
     <ContainerStyle
@@ -286,13 +299,13 @@ function Terminal({
                         </Text>
                         {displayElement}
                       </FlexContainer>
-                    </LineStyle>
+                    </LineStyle>,
                   );
                 } else {
                   arr.push(
                     <LineStyle key={key}>
                       {displayElement}
-                    </LineStyle>
+                    </LineStyle>,
                   );
                 }
               }
@@ -308,12 +321,23 @@ function Terminal({
           )}
 
           {!busy && (
-            <InputStyle focused={focus}>
+            <InputStyle
+              focused={focus
+                && (command.length === 0 || cursorIndex === command.length)}
+            >
               <Text monospace>
                 <Text inline monospace warning>
                   →&nbsp;
                 </Text>
-                {commandToDisplay}
+                {command?.split('').map(((char: string, idx: number) => (
+                  <CharacterStyle
+                    focused={focus && cursorIndex === idx}
+                    key={`command-${idx}-${char}`}
+                  >
+                    {char === ' ' && <>&nbsp;</>}
+                    {char !== ' ' && char}
+                  </CharacterStyle>
+                )))}
               </Text>
             </InputStyle>
           )}

@@ -39,7 +39,7 @@ export const LineStyle = styled.div`
   height: ${ROW_HEIGHT}px;
 `;
 
-export const InputStyle = styled.div<{
+const BlinkingCursorStyleCss = css<{
   focused: boolean;
 }>`
   @keyframes cursor-blink {
@@ -48,19 +48,37 @@ export const InputStyle = styled.div<{
     }
   }
 
+  ::after {
+    ${props => props.focused && `
+      animation: cursor-blink 1.1s steps(2) infinite;
+      background-color: ${(props.theme.accent || dark.accent).warning};
+      content: "";
+      display: inline-block;
+      height: ${ROW_HEIGHT}px;
+      width: ${UNIT * 0.25}px;
+    `}
+  }
+`;
+
+export const InputStyle = styled.div<{
+  focused: boolean;
+}>`
   align-items: center;
   display: flex;
   gap: 2px;
   height: ${ROW_HEIGHT}px;
 
+  ${BlinkingCursorStyleCss}
+`;
+
+export const CharacterStyle = styled.span<{
+  focused: boolean;
+}>`
+  ${BlinkingCursorStyleCss}
+
   ::after {
     ${props => props.focused && `
-      animation: cursor-blink 1.5s steps(2) infinite;
-      background-color: ${(props.theme.accent || dark.accent).warning};
-      content: "";
-      display: inline-block;
-      height: ${ROW_HEIGHT}px;
-      width: ${UNIT * 0.75}px;
+      position: absolute;
     `}
   }
 `;
