@@ -2,6 +2,7 @@ import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ROW_HEIGHT = 20;
 
@@ -17,8 +18,11 @@ const SHARED_STYLES = css<{
   `}
 `;
 
-export const ContainerStyle = styled.div`
+export const ContainerStyle = styled.div<{
+  width?: number;
+}>`
   ${SHARED_STYLES}
+  ${ScrollbarStyledCss}
 
   height: 100%;
   overflow: auto;
@@ -39,8 +43,9 @@ export const LineStyle = styled.div`
   height: ${ROW_HEIGHT}px;
 `;
 
-export const InputStyle = styled.div<{
-  focused: boolean;
+const TerminalCursorStyleCss = css<{
+  focusBeginning?: boolean;
+  focused?: boolean;
 }>`
   @keyframes cursor-blink {
     0% {
@@ -48,19 +53,49 @@ export const InputStyle = styled.div<{
     }
   }
 
-  align-items: center;
-  display: flex;
-  gap: 2px;
-  height: ${ROW_HEIGHT}px;
-
-  ::after {
-    ${props => props.focused && `
-      animation: cursor-blink 1.5s steps(2) infinite;
+  ::before {
+    ${props => props.focusBeginning && `
+      position: absolute;
       background-color: ${(props.theme.accent || dark.accent).warning};
       content: "";
       display: inline-block;
       height: ${ROW_HEIGHT}px;
-      width: ${UNIT * 0.75}px;
+      width: ${UNIT}px;
+      opacity: 0.3;
+    `}
+  }
+
+  ::after {
+    ${props => props.focused && `
+      background-color: ${(props.theme.accent || dark.accent).warning};
+      content: "";
+      display: inline-block;
+      height: ${ROW_HEIGHT}px;
+      width: ${UNIT}px;
+      opacity: 0.3;
+    `}
+  }
+`;
+
+export const InputStyle = styled.div<{
+  focused?: boolean;
+}>`
+  align-items: center;
+  display: flex;
+  gap: 2px;
+
+  ${TerminalCursorStyleCss}
+`;
+
+export const CharacterStyle = styled.span<{
+  focusBeginning?: boolean;
+  focused?: boolean;
+}>`
+  ${TerminalCursorStyleCss}
+
+  ::after {
+    ${props => props.focused && `
+      position: absolute;
     `}
   }
 `;
