@@ -1,0 +1,81 @@
+{
+  "properties": {
+    "PassengerId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "Survived": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "Pclass": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "Name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Sex": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Age": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "SibSp": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "Parch": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "Ticket": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "Fare": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "Cabin": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "Embarked": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  },
+  "type": [
+    "null",
+    "object"
+  ]
+}
