@@ -19,7 +19,7 @@ class S3LoggerManager(LoggerManager):
         **kwargs,
     ):
         super().__init__(repo_config=repo_config, **kwargs)
-        self.s3_config = S3Config.load(config=self.logging_config.get('config'))
+        self.s3_config = S3Config.load(config=self.logging_config.destination_config)
         self.s3_client = s3.Client(bucket=self.s3_config.bucket)
 
     def output_logs_to_destination(self):

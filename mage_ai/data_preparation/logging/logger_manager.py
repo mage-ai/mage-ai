@@ -1,12 +1,22 @@
+from dataclasses import dataclass, field
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.config import BaseConfig
+from typing import Dict
 import io
 import logging
 import os
 import sys
     
+
+@dataclass
+class LoggingConfig(BaseConfig):
+    type: str
+    level: str = 'INFO'
+    destination_config: Dict = field(default_factory=dict)
+
 
 class LoggerManager:
     def __init__(
@@ -25,7 +35,8 @@ class LoggerManager:
         self.partition = partition
 
         self.repo_config = repo_config
-        self.logging_config = self.repo_config.logging_config if self.repo_config else dict()
+        logging_config = self.repo_config.logging_config if self.repo_config else dict()
+        self.logging_config = LoggingConfig.load(config=logging_config)
 
         logger_name_parts = [self.pipeline_uuid]
         if self.partition is not None:
@@ -36,7 +47,7 @@ class LoggerManager:
 
         self.logger = logging.getLogger(logger_name)
 
-        self.log_level = logging.getLevelName(self.logging_config.get('level', 'INFO'))
+        self.log_level = logging.getLevelName(self.logging_config.level)
         self.logger.setLevel(self.log_level)
 
         self.formatter = logging.Formatter(
@@ -45,7 +56,7 @@ class LoggerManager:
         )
         self.stream = None
         if not self.logger.handlers:
-            if self.logging_config:
+            if self.logging_config.destination_config:
                 handler = self.create_stream_handler()
             else:
                 log_filepath = self.get_log_filepath(create_dir=True)
@@ -55,7 +66,7 @@ class LoggerManager:
             handler.setFormatter(self.formatter)
             self.logger.addHandler(handler)
         else:
-            if self.logging_config:
+            if self.logging_config.destination_config:
                 stream_handler = \
                     find(lambda hr: hr.__class__ == logging.StreamHandler, self.logger.handlers)
                 if stream_handler:
