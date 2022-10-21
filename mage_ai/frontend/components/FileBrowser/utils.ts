@@ -56,6 +56,9 @@ export function getYamlBlockFromFile(
   currentPathInit: string = null,
 ): BlockType {
   const parts = getFullPath(file, currentPathInit).split('/');
+  if (!parts[1]) {
+    return;
+  }
   // This assumes path default_repo/[block_type]s/..
   const blockType = singularize(parts[1]);
   const fileName = parts[parts.length - 1];
