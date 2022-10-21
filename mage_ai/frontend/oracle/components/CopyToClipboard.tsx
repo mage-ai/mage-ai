@@ -62,7 +62,7 @@ function CopyToClipboard({
       >
         <FlexContainer alignItems="center">
           {iconPosition === IconPositionEnum.LEFT && (
-            <Spacing mr={1}>
+            <Spacing mr={linkText ? 1 : 0}>
               <FlexContainer alignItems="center">
                 <Copy inverted={inverted} muted={muted} size={UNIT * 2} />
               </FlexContainer>
@@ -74,7 +74,7 @@ function CopyToClipboard({
             </Text>
           )}
           {iconPosition === IconPositionEnum.RIGHT && (
-            <Spacing ml={1}>
+            <Spacing ml={linkText ? 1 : 0}>
               <FlexContainer alignItems="center">
                 <Copy inverted={inverted} muted={muted} />
               </FlexContainer>

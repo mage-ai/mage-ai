@@ -1272,6 +1272,7 @@ function PipelineDetailPage({
       deleteBlock={deleteBlock}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
+      globalVariables={globalVariables}
       interruptKernel={interruptKernel}
       isPipelineUpdating={isPipelineUpdating}
       kernel={kernel}
@@ -1313,6 +1314,7 @@ function PipelineDetailPage({
     deleteBlock,
     fetchFileTree,
     fetchPipeline,
+    globalVariables,
     interruptKernel,
     isPipelineUpdating,
     kernel,

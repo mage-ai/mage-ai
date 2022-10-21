@@ -11,6 +11,7 @@ import BlockType, {
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
 import CodeEditor from '@components/CodeEditor';
+import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -30,6 +31,7 @@ import IntegrationSourceType, {
 } from '@interfaces/IntegrationSourceType';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
+import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -58,6 +60,7 @@ type IntegrationPipelineProps = {
   blocks: BlockType[];
   codeBlocks?: any;
   fetchPipeline: () => void;
+  globalVariables: PipelineVariableType[];
   onChangeCodeBlock: (uuid: string, value: string) => void;
   pipeline: PipelineType;
   savePipelineContent: (payload?: {
@@ -76,6 +79,7 @@ function IntegrationPipeline({
   blocks,
   codeBlocks,
   fetchPipeline,
+  globalVariables,
   onChangeCodeBlock,
   pipeline,
   savePipelineContent,
@@ -338,6 +342,78 @@ function IntegrationPipeline({
     updateStream,
   ]);
 
+  const variablesTableMemo = useMemo(() => {
+    const variableRows = [];
+    globalVariables?.forEach(({
+      variables,
+    }) => variables?.forEach(({
+      uuid,
+      value,
+    }) => {
+      const variableCode = `"{{ variables('${uuid}') }}"`
+      return variableRows.push([
+        <Text monospace key={`variable-uuid-${uuid}`}>
+          {uuid}
+        </Text>,
+        <Text monospace key={`variable-uuid-${uuid}-{value}`}>
+          {value}
+        </Text>,
+        <Text monospace key={`variable-uuid-${uuid}-{value}-code`}>
+          {variableCode}
+        </Text>,
+        <CopyToClipboard
+          key={`variable-uuid-${uuid}-{value}-code-copy`}
+          copiedText={variableCode}
+          monospace
+          withCopyIcon
+        />
+      ]);
+    }));
+
+    return (
+      <Table
+        alignTop
+        columnFlex={[null, null, 1]}
+        columns={[
+          {
+            uuid: 'Key',
+          },
+          {
+            uuid: 'Value',
+          },
+          {
+            uuid: 'Code',
+          },
+        ]}
+        rows={variableRows}
+      />
+    );
+  }, [globalVariables]);
+
+  const buildVariablesTable = useCallback((href: string) => (
+    <Spacing mt={2}>
+      <Text default>
+        Use the following variables to interpolate sensitive or dynamic information
+        into the configuration.
+        <br />
+        You can also access values from your environment variables by using the following syntax: <Text inline monospace>
+          {`"{{ env_var('MY_ENV_VARIABLE_NAME') }}"`}
+        </Text>
+        <br />
+        For more information, check out the <Link
+          href={href}
+          openNewWindow
+        >
+          documentation
+        </Link>.
+      </Text>
+
+      <Spacing mt={1}>
+        {variablesTableMemo}
+      </Spacing>
+    </Spacing>
+  ), [variablesTableMemo]);
+
   return (
     <>
       <Spacing mb={1}>
@@ -437,7 +513,7 @@ function IntegrationPipeline({
 
                 {dataLoaderBlockContent?.source && (
                   <Spacing mb={2}>
-                    <Text>
+                    <Text default>
                       For more information on how to configure this source,
                       read the <Link
                         href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
@@ -446,6 +522,8 @@ function IntegrationPipeline({
                         {dataLoaderBlockContent.source} documentation
                       </Link>
                     </Text>
+
+                    {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-source')}
                   </Spacing>
                 )}
 
@@ -1049,6 +1127,8 @@ function IntegrationPipeline({
                       {dataExporterBlockContent.destination} documentation
                     </Link>
                   </Text>
+
+                  {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-destination')}
                 </Spacing>
               )}
 
