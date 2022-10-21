@@ -203,8 +203,13 @@ function Terminal({
               type: DataTypeEnum.TEXT,
             }));
             setCommand('');
+          } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
+            navigator.clipboard.writeText(window.getSelection().toString());
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)) {
-            navigator.clipboard.readText().then(clipText => setCommand(prev => prev + clipText));
+            navigator.clipboard.readText().then(clipText => {
+              setCommand(prev => prev + clipText);
+              setCursorIndex(command.length + clipText.length);
+            });
           } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
             setCommand(prev => prev.slice(0, cursorIndex) + key + prev.slice(cursorIndex));
             increaseCursorIndex();
