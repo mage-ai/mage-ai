@@ -494,14 +494,14 @@ class Block:
                         ignore_nan=True,
                     )
                 )
-            elif self.language != BlockLanguage.R and verify_output:
+            elif verify_output:
                 self.__verify_outputs(block_output)
                 variable_keys = list(self.output_variables.keys())
                 extra_output_count = len(block_output) - len(variable_keys)
                 variable_keys += [f'output_{idx}' for idx in range(extra_output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if self.language != BlockLanguage.R and store_variables:
+            if store_variables:
                 self.store_variables(
                     variable_mapping,
                     execution_partition=execution_partition,
