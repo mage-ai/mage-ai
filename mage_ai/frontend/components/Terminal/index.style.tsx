@@ -39,8 +39,9 @@ export const LineStyle = styled.div`
   height: ${ROW_HEIGHT}px;
 `;
 
-const BlinkingCursorStyleCss = css<{
-  focused: boolean;
+const TerminalCursorStyleCss = css<{
+  focusBeginning?: boolean;
+  focused?: boolean;
 }>`
   @keyframes cursor-blink {
     0% {
@@ -48,33 +49,46 @@ const BlinkingCursorStyleCss = css<{
     }
   }
 
-  ::after {
-    ${props => props.focused && `
-      animation: cursor-blink 1.1s steps(2) infinite;
+  ::before {
+    ${props => props.focusBeginning && `
+      position: absolute;
       background-color: ${(props.theme.accent || dark.accent).warning};
       content: "";
       display: inline-block;
       height: ${ROW_HEIGHT}px;
-      width: ${UNIT * 0.25}px;
+      width: ${UNIT}px;
+      opacity: 0.3;
+    `}
+  }
+
+  ::after {
+    ${props => props.focused && `
+      background-color: ${(props.theme.accent || dark.accent).warning};
+      content: "";
+      display: inline-block;
+      height: ${ROW_HEIGHT}px;
+      width: ${UNIT}px;
+      opacity: 0.3;
     `}
   }
 `;
 
 export const InputStyle = styled.div<{
-  focused: boolean;
+  focused?: boolean;
 }>`
   align-items: center;
   display: flex;
   gap: 2px;
   height: ${ROW_HEIGHT}px;
 
-  ${BlinkingCursorStyleCss}
+  ${TerminalCursorStyleCss}
 `;
 
 export const CharacterStyle = styled.span<{
-  focused: boolean;
+  focusBeginning?: boolean;
+  focused?: boolean;
 }>`
-  ${BlinkingCursorStyleCss}
+  ${TerminalCursorStyleCss}
 
   ::after {
     ${props => props.focused && `

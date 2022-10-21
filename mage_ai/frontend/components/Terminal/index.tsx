@@ -137,7 +137,7 @@ function Terminal({
     setCursorIndex(currIdx => currIdx > 0 ? currIdx - 1 : currIdx);
   }, []);
   const increaseCursorIndex = useCallback(() => {
-    setCursorIndex(currIdx => (currIdx < command.length) ? currIdx + 1 : currIdx);
+    setCursorIndex(currIdx => (currIdx <= command.length) ? currIdx + 1 : currIdx);
   }, [command]);
 
   registerOnKeyDown(
@@ -163,26 +163,27 @@ function Terminal({
           interruptKernel();
         } else if (!busy) {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
-            setCommand(prev => prev.slice(0, cursorIndex) + prev.slice(cursorIndex + 1));
+            const minIdx = Math.max(0, cursorIndex - 1);
+            setCommand(prev => prev.slice(0, minIdx) + prev.slice(cursorIndex));
             setCursorIndex(currIdx => Math.max(0, currIdx - 1));
+          } else if (onlyKeysPresent([KEY_CODE_ARROW_LEFT], keyMapping)) {
+            decreaseCursorIndex();
+          } else if (onlyKeysPresent([KEY_CODE_ARROW_RIGHT], keyMapping)) {
+            increaseCursorIndex();
           } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
             if (commandHistory.length >= 1) {
               const idx = Math.max(0, commandIndex - 1);
               setCommand(commandHistory[idx]);
               setCommandIndex(idx);
-              setCursorIndex(commandHistory[idx].length - 1);
+              setCursorIndex(commandHistory[idx].length);
             }
-          } else if (onlyKeysPresent([KEY_CODE_ARROW_LEFT], keyMapping)) {
-            decreaseCursorIndex();
-          } else if (onlyKeysPresent([KEY_CODE_ARROW_RIGHT], keyMapping)) {
-            increaseCursorIndex();
           } else if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
             if (commandHistory.length >= 1) {
               const idx = Math.min(commandHistory.length, commandIndex + 1);
               const nextCommand = commandHistory[idx] || '';
               setCommand(nextCommand);
               setCommandIndex(idx);
-              setCursorIndex(nextCommand.length - 1);
+              setCursorIndex(nextCommand.length);
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             if (command?.length >= 1) {
@@ -205,7 +206,7 @@ function Terminal({
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)) {
             navigator.clipboard.readText().then(clipText => setCommand(prev => prev + clipText));
           } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
-            setCommand(prev => prev + key);
+            setCommand(prev => prev.slice(0, cursorIndex) + key + prev.slice(cursorIndex));
             increaseCursorIndex();
           }
         }
@@ -323,7 +324,7 @@ function Terminal({
           {!busy && (
             <InputStyle
               focused={focus
-                && (command.length === 0 || cursorIndex === command.length)}
+                && (command.length === 0 || cursorIndex > command.length)}
             >
               <Text monospace>
                 <Text inline monospace warning>
@@ -331,7 +332,8 @@ function Terminal({
                 </Text>
                 {command?.split('').map(((char: string, idx: number) => (
                   <CharacterStyle
-                    focused={focus && cursorIndex === idx}
+                    focusBeginning={focus && cursorIndex === 0 && idx === 0}
+                    focused={focus && cursorIndex === idx + 1}
                     key={`command-${idx}-${char}`}
                   >
                     {char === ' ' && <>&nbsp;</>}
