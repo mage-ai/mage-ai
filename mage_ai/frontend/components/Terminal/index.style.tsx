@@ -18,7 +18,9 @@ const SHARED_STYLES = css<{
   `}
 `;
 
-export const ContainerStyle = styled.div`
+export const ContainerStyle = styled.div<{
+  width?: number;
+}>`
   ${SHARED_STYLES}
   ${ScrollbarStyledCss}
 
