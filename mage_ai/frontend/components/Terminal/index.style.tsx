@@ -79,7 +79,6 @@ export const InputStyle = styled.div<{
   align-items: center;
   display: flex;
   gap: 2px;
-  height: ${ROW_HEIGHT}px;
 
   ${TerminalCursorStyleCss}
 `;
