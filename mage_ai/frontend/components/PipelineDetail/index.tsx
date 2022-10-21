@@ -20,6 +20,7 @@ import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -66,6 +67,7 @@ type PipelineDetailProps = {
   deleteBlock: (block: BlockType) => Promise<any>;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  globalVariables: PipelineVariableType[];
   interruptKernel: () => void;
   isPipelineUpdating: boolean;
   kernel: KernelType;
@@ -119,6 +121,7 @@ function PipelineDetail({
   deleteBlock,
   fetchFileTree,
   fetchPipeline,
+  globalVariables,
   interruptKernel,
   isPipelineUpdating,
   kernel,
@@ -417,6 +420,7 @@ function PipelineDetail({
       blocks={blocks}
       codeBlocks={codeBlocks}
       fetchPipeline={fetchPipeline}
+      globalVariables={globalVariables}
       onChangeCodeBlock={onChangeCodeBlock}
       pipeline={pipeline}
       savePipelineContent={savePipelineContent}
@@ -427,6 +431,7 @@ function PipelineDetail({
     blocks,
     codeBlocks,
     fetchPipeline,
+    globalVariables,
     onChangeCodeBlock,
     onChangeCodeBlock,
     pipeline,

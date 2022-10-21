@@ -170,6 +170,19 @@ def load_data(
     return rows
 ```
 
+#### Available values in the `query` keyword argument
+
+There is a keyword argument named `query` in the `load_data` method that is a dictionary.
+
+When Mage runs a source, the following keys and values are automatically available on each run:
+
+| Key | Description | Sample value |
+| --- | --- | --- |
+| `_execution_date` | The date and time (in ISO format) of when the pipeline started running. | `2022-10-21T17:24:49.443559` |
+| `_execution_partition` | An automatically formatted partition of the pipeline run using the execution date. | `20221021T172557` (e.g. format `%Y%m%dT%H%M%S`) |
+| `_start_date` | You can define this variable as a [runtime variable](../../../production/runtime_variables.md) in your pipeline or it’ll be automatically filled in using the date and time your pipeline runs minus 1 hour, day, week, etc (based on your schedule’s interval). | `2022-10-01T00:00:00.000000` |
+| `_end_date` | You can define this variable as a [runtime variable](../../../production/runtime_variables.md) in your pipeline or it’ll be automatically filled in using the date and time your pipeline runs. | `2022-10-02T00:00:00.000000` |
+
 <br />
 
 ## 3. Add main function
