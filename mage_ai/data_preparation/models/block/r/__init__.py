@@ -38,7 +38,10 @@ def execute_r_code(
     os.remove(file_path)
 
     output_variable_object = block.output_variable_object(execution_partition=execution_partition)
-    df = pd.read_csv(os.path.join(output_variable_object.variable_path, 'data.csv'))
+    if output_variable_object is not None:
+        df = pd.read_csv(os.path.join(output_variable_object.variable_path, 'data.csv'))
+    else:
+        df = None
     return df
 
 
@@ -52,12 +55,16 @@ def __render_r_script(block, code: str, execution_partition: str = None):
         execution_partition=execution_partition,
     ) or []
     output_variable_object = block.output_variable_object(execution_partition=execution_partition)
-    os.makedirs(output_variable_object.variable_path, exist_ok=True)
+    if output_variable_object is not None:
+        os.makedirs(output_variable_object.variable_path, exist_ok=True)
+        output_path = os.path.join(output_variable_object.variable_path, 'data.csv')
+    else:
+        output_path = None
     return template.render(
         code=code,
         input_paths=[os.path.join(v.variable_path, 'data.csv') for v in input_variable_objects],
         input_vars_str=', '.join([f'df_{i + 1}' for i in range(len(input_variable_objects))]),
-        output_path=os.path.join(output_variable_object.variable_path, 'data.csv'),
+        output_path=output_path,
     ) + '\n'
 
 
