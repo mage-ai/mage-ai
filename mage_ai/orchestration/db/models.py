@@ -8,7 +8,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
+from sqlalchemy import Column, Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.orm.collections import InstrumentedList
@@ -53,8 +53,8 @@ class BaseModel(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     @classmethod
-    def create(cls, **kwargs):
-        model = cls(**kwargs)
+    def create(self, **kwargs):
+        model = self(**kwargs)
         model.save()
         return model
 
@@ -130,6 +130,7 @@ class PipelineSchedule(BaseModel):
     schedule_interval = Column(String(50))
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
     variables = Column(JSON)
+    sla = Column(Integer, default=None)
 
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
 
@@ -220,6 +221,7 @@ class PipelineRun(BaseModel):
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
     completed_at = Column(DateTime(timezone=True))
     variables = Column(JSON)
+    passed_sla = Column(Boolean, default=False)
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
     block_runs = relationship('BlockRun', back_populates='pipeline_run')

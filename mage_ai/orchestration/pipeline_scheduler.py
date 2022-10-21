@@ -8,6 +8,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
+from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
@@ -16,7 +17,9 @@ from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.dates import compare
 from typing import Any, Dict, List
+import pytz
 import traceback
 
 
@@ -376,6 +379,38 @@ def run_pipeline(pipeline_run_id, variables, tags):
         global_vars=variables,
         tags=tags,
     )
+
+
+def check_sla():
+    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+    pipeline_schedules = \
+        set([s.id for s in filter(lambda s: s.pipeline_uuid in repo_pipelines, PipelineSchedule.query.all())])
+
+    pipeline_runs = \
+        PipelineRun.query.filter(
+            PipelineRun.pipeline_schedule_id.in_(pipeline_schedules),
+            PipelineRun.status.in_(IN_PROGRESS_STATUSES),
+            PipelineRun.passed_sla.is_(False),
+        ).all()
+
+    if pipeline_runs:
+        pipeline = Pipeline.get(pipeline_runs[0].pipeline_schedule.pipeline_uuid)
+        notification_sender = NotificationSender(
+            NotificationConfig.load(config=pipeline.repo_config.notification_config),
+        )
+
+        current_time = datetime.now(tz=pytz.UTC)
+        for pipeline_run in pipeline_runs:
+            sla = pipeline_run.pipeline_schedule.sla
+            start_date = pipeline_run.execution_date if pipeline_run.execution_date is not None else pipeline_run.created_at
+            if sla and compare(start_date, current_time - timedelta(seconds=sla)) == 1:
+                # passed SLA for pipeline_run
+                notification_sender.send_pipeline_run_sla_passed_message(
+                    Pipeline.get(pipeline_run.pipeline_schedule.pipeline_uuid),
+                    pipeline_run,
+                )
+
+                pipeline_run.update(passed_sla=True)
 
 
 def schedule_all():

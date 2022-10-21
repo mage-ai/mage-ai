@@ -59,6 +59,23 @@ class NotificationSender:
             email_content=email_content,
         )
 
+    def send_pipeline_run_sla_passed_message(self, pipeline, pipeline_run) -> None:
+        message = (
+            f'SLA passed for pipeline `{pipeline.uuid}` '
+            f'with Trigger {pipeline_run.pipeline_schedule.id} '
+            f'`{pipeline_run.pipeline_schedule.name}` '
+            f'at execution time `{pipeline_run.execution_date}`.'
+        )
+        email_content = f'{message}\n'
+        if os.getenv('ENV') != 'production':
+            email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
+                                'to check pipeline run results and logs.'
+        self.send(
+            message=message,
+            email_subject=f'SLA passed for Mage pipeline {pipeline.uuid}',
+            email_content=email_content,
+        )
+
     def __pipeline_run_url(self, pipeline, pipeline_run):
         return f'http://localhost:6789/pipelines/{pipeline.uuid}/triggers/'\
                 f'{pipeline_run.pipeline_schedule_id}'
