@@ -371,3 +371,13 @@ SOURCES = [
 ```
 
 <br />
+
+## All done
+
+You’ve successfully added a new source. Now every developer can benefit from the awesome code you wrote.
+
+If you have any questions, thoughts, feedback, or need help, please chat with us on Slack for instant conversations:
+
+[![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
+
+<br />
