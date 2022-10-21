@@ -1,7 +1,5 @@
 from datetime import datetime
 from mage_ai.orchestration.db.models import (
-    BlockRun,
-    PipelineRun,
     PipelineSchedule,
 )
 from mage_ai.tests.base_test import TestCase

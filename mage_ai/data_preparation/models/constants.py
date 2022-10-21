@@ -22,6 +22,7 @@ LOGS_DIR = '.logs'
 
 class BlockLanguage(str, Enum):
     PYTHON = 'python'
+    R = 'r'
     SQL = 'sql'
     YAML = 'yaml'
 
@@ -58,6 +59,7 @@ class PipelineType(str, Enum):
 
 BLOCK_LANGUAGE_TO_FILE_EXTENSION = {
     BlockLanguage.PYTHON: 'py',
+    BlockLanguage.R: 'r',
     BlockLanguage.SQL: 'sql',
     BlockLanguage.YAML: 'yaml',
 }

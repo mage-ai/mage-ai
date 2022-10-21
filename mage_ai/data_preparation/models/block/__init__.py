@@ -494,14 +494,14 @@ class Block:
                         ignore_nan=True,
                     )
                 )
-            elif verify_output:
+            elif self.language != BlockLanguage.R and verify_output:
                 self.__verify_outputs(block_output)
                 variable_keys = list(self.output_variables.keys())
                 extra_output_count = len(block_output) - len(variable_keys)
                 variable_keys += [f'output_{idx}' for idx in range(extra_output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if store_variables:
+            if self.language != BlockLanguage.R and store_variables:
                 self.store_variables(
                     variable_mapping,
                     execution_partition=execution_partition,
@@ -571,10 +571,14 @@ class Block:
             )
 
     def __validate_execution(self, decorated_functions, input_vars):
+        """
+        Validate whether the number of function arguments matches the upstream blocks.
+        Only perform the validation for Python functions.
+        """
         if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
             return None
 
-        if BlockLanguage.SQL == self.language:
+        if BlockLanguage.PYTHON != self.language:
             return None
 
         if len(decorated_functions) == 0:
@@ -639,6 +643,7 @@ class Block:
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
     ) -> Dict:
+        # Fetch input variables
         upstream_block_uuids = []
         if input_args is None:
             input_vars = []
@@ -658,9 +663,12 @@ class Block:
                     ]
         else:
             input_vars = input_args
+
         outputs = []
         decorated_functions = []
         test_functions = []
+
+        # Set up logger
         if logger is not None:
             stdout = StreamToLogger(logger)
         elif build_block_output_stdout:
@@ -733,6 +741,14 @@ class Block:
                     outputs.append(proc2)
             elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(
+                    self,
+                    custom_code or self.content,
+                    execution_partition=execution_partition,
+                    global_vars=global_vars,
+                )
+            elif BlockLanguage.R == self.language and BlockType.CHART != self.type:
+                from mage_ai.data_preparation.models.block.r import execute_r_code
+                outputs = execute_r_code(
                     self,
                     custom_code or self.content,
                     execution_partition=execution_partition,
@@ -1143,6 +1159,35 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 self.uuid,
                 uuid,
             )
+
+    def input_variable_objects(self, execution_partition: str = None):
+        objs = []
+        for b in self.upstream_blocks:
+            for v in b.output_variables:
+                objs.append(
+                    self.pipeline.variable_manager.get_variable_object(
+                        self.pipeline.uuid,
+                        b.uuid,
+                        v,
+                        partition=execution_partition,
+                        variable_type=VariableType.DATAFRAME,
+                    ),
+                )
+        return objs
+
+    def output_variable_object(self, execution_partition: str = None):
+        """
+        Output dataframe variable object
+        """
+        if self.pipeline is None:
+            return None
+        return self.pipeline.variable_manager.get_variable_object(
+            self.pipeline.uuid,
+            self.uuid,
+            'df',
+            partition=execution_partition,
+            variable_type=VariableType.DATAFRAME,
+        )
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
