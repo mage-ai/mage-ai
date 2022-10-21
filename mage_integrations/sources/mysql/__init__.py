@@ -4,6 +4,7 @@ from mage_integrations.sources.mysql.utils import build_comparison_statement
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
+    BATCH_FETCH_LIMIT,
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_BOOLEAN,
@@ -134,33 +135,74 @@ WHERE table_schema = '{database}'
     ) -> List[Dict]:
         table_name = stream.tap_stream_id
 
-        columns = extract_selected_columns(stream.metadata)
-        query_string = f"""
-SELECT {', '.join(columns)}
-FROM {table_name}
-"""
-        where_statements = []
-        if bookmarks:
-            for col, val in bookmarks.items():
-                where_statements.append(
-                    build_comparison_statement(
-                        col,
-                        val,
-                        stream.schema.to_dict()['properties'],
-                        operator='>',
-                    ),
-                )
+        key_properties = stream.key_properties
+        unique_constraints = stream.unique_constraints
+        bookmark_properties = list(bookmarks.keys() if bookmarks else [])
 
-        if query:
-            for col, val in query.items():
-                if col in columns:
-                    where_statements.append(build_comparison_statement(col, val, stream.schema.to_dict()['properties']))
+        rows = []
+        rows_temp = None
+        loops = 0
 
-        if where_statements:
-            where_statement = ' AND '.join(where_statements)
-            query_string = f"{query_string}\nWHERE {where_statement}"
+        while rows_temp is None or len(rows_temp) >= 1:
+            row_number_statement = 'ROW_NUMBER()'
+            order_by_columns = set()
+            if key_properties:
+                order_by_columns.update(key_properties)
+            if unique_constraints:
+                order_by_columns.update(unique_constraints)
+            if bookmark_properties:
+                order_by_columns.update(bookmark_properties)
+            order_by_columns = list(order_by_columns)
 
-        rows = self.build_connection().load(query_string)
+            if order_by_columns:
+                over_statement = f"ORDER BY {', '.join(order_by_columns)}"
+                row_number_statement = f'{row_number_statement} OVER ({over_statement})'
+
+            columns = extract_selected_columns(stream.metadata)
+            columns_statement = '\n, '.join(columns)
+            query_string = f"""
+SELECT
+    {columns_statement}
+    , {row_number_statement} AS rnum
+FROM {table_name}"""
+            where_statements = []
+            if bookmarks:
+                for col, val in bookmarks.items():
+                    where_statements.append(
+                        build_comparison_statement(
+                            col,
+                            val,
+                            stream.schema.to_dict()['properties'],
+                            operator='>',
+                        ),
+                    )
+
+            if query:
+                for col, val in query.items():
+                    if col in columns:
+                        where_statements.append(build_comparison_statement(col, val, stream.schema.to_dict()['properties']))
+
+            if where_statements:
+                where_statement = ' AND '.join(where_statements)
+                query_string = f"{query_string}\nWHERE {where_statement}"
+
+            with_limit_query_string = f"""
+WITH rows_with_limit AS (
+{query_string}
+)
+
+SELECT
+    {columns_statement}
+    , rnum
+FROM rows_with_limit
+WHERE rnum >= {1 + (BATCH_FETCH_LIMIT * loops)} AND rnum <= {(BATCH_FETCH_LIMIT * (loops + 1))}"""
+
+            rows_temp = self.build_connection().load(with_limit_query_string)
+            loops += 1
+            rows += rows_temp
+
+            if len(rows_temp) < BATCH_FETCH_LIMIT:
+                break
 
         return [{col: row[idx] for idx, col in enumerate(columns)} for row in rows]
 
