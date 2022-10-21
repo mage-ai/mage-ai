@@ -47,6 +47,7 @@ def __render_r_script(block, code: str, execution_partition: str = None):
         execution_partition=execution_partition,
     ) or []
     output_variable_object = block.output_variable_object(execution_partition=execution_partition)
+    os.makedirs(output_variable_object.variable_path, exist_ok=True)
     return template.render(
         code=code,
         input_paths=[v.variable_path + '/data.csv' for v in input_variable_objects],
