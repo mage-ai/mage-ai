@@ -10,6 +10,7 @@ import yaml
 class StreamingPipelineExecutor(PipelineExecutor):
     def __init__(self, pipeline: Pipeline, **kwargs):
         super().__init__(pipeline, **kwargs)
+        # TODO: Support custom log destination for streaming pipelines
         self.parse_and_validate_blocks()
 
     def parse_and_validate_blocks(self):

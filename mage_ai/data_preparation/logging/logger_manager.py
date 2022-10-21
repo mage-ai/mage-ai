@@ -1,21 +1,11 @@
-from dataclasses import dataclass, field
+from mage_ai.data_preparation.logging import LoggingConfig
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
 from mage_ai.shared.array import find
-from mage_ai.shared.config import BaseConfig
-from typing import Dict
 import io
 import logging
 import os
-import sys
-    
-
-@dataclass
-class LoggingConfig(BaseConfig):
-    type: str
-    level: str = 'INFO'
-    destination_config: Dict = field(default_factory=dict)
 
 
 class LoggerManager:
