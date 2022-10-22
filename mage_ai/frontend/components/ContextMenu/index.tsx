@@ -99,13 +99,9 @@ function ContextMenu({
   }, []);
 
   const handleClick = useCallback((e) => {
-    if (visible) {
-      e.preventDefault();
-      setVisible(false);
-    }
+    setVisible(false);
   }, [
     setVisible,
-    visible,
   ]);
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
@@ -131,6 +127,9 @@ function ContextMenu({
         label: () => 'Delete',
         onClick: () => {
           const { block } = contextItem.data;
+          if (!block) {
+            return;
+          }
           if (block.type === BlockTypeEnum.CHART) {
             deleteWidget(block);
           } else {
