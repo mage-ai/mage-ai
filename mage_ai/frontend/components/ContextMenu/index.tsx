@@ -99,13 +99,9 @@ function ContextMenu({
   }, []);
 
   const handleClick = useCallback((e) => {
-    if (visible) {
-      e.preventDefault();
-      setVisible(false);
-    }
+    setVisible(false);
   }, [
     setVisible,
-    visible,
   ]);
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
@@ -131,6 +127,9 @@ function ContextMenu({
         label: () => 'Delete',
         onClick: () => {
           const { block } = contextItem.data;
+          if (!block) {
+            return;
+          }
           if (block.type === BlockTypeEnum.CHART) {
             deleteWidget(block);
           } else {
@@ -140,24 +139,6 @@ function ContextMenu({
         uuid: 'delete_block_file',
       },
     ],
-    // [FileContextEnum.PIPELINE]: [
-    //   {
-    //     label: () => 'Duplicate',
-    //     onClick: () => createPipeline({
-    //       pipeline: {
-    //         clone_pipeline_uuid: contextItem.data.name,
-    //         name: `${contextItem.data.name}_copy`,
-    //       },
-    //     }),
-    //     uuid: 'duplicate_pipeline',
-    //   },
-    //   {
-    //     disabled: numPipelines <= 1,
-    //     label: () => 'Delete',
-    //     onClick: () => deletePipeline(contextItem.data.name),
-    //     uuid: 'delete_pipeline',
-    //   },
-    // ],
   };
 
   return (

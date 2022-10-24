@@ -7,7 +7,6 @@ import FileType from '@interfaces/FileType';
 import Folder, { FolderSharedProps } from './Folder';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
-import { replacePipelinesFolderWithConfig } from './utils';
 
 type FileBrowserProps = {
   blocks: BlockType[];
@@ -30,16 +29,11 @@ function FileBrowser({
   ...props
 }: FileBrowserProps, ref) {
   const themeContext = useContext(ThemeContext);
-  const router = useRouter();
-  const { pipeline: currentPipelineName }: any = router.query;
   const pipelineBlockUuids = blocks.concat(widgets).map(({ uuid }) => uuid);
-  const childrenFilesWithPipelineConfig = files
-    ? replacePipelinesFolderWithConfig(files?.[0]?.children, currentPipelineName)
-    : [];
 
   return (
     <ContainerStyle ref={ref}>
-      {childrenFilesWithPipelineConfig.map((file: FileType) => (
+      {files?.map((file: FileType) => (
         <Folder
           {...props}
           file={file}

@@ -33,20 +33,13 @@ export function getFullPathWithoutRootFolder(
   return fullPath.split('/').slice(1).join('/');
 }
 
-export function getPipelineConfigPath(
-  file: FileType,
-  currentPipelineName: string,
-): string {
-  return `${FOLDER_NAME_PIPELINES}/${currentPipelineName}/${file.name}`;
-}
-
 export function getBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
 ) {
   const parts = getFullPath(file, currentPathInit).split('/');
-  // This assumes path [block_type]s/[filename]
-  const blockType = singularize(parts[0]);
+  // This assumes path default_repo/[block_type]s/.. 
+  const blockType = singularize(parts[1]);
   const fileName = parts[parts.length - 1];
 
   const pyRegex = new RegExp(`\.${FileExtensionEnum.PY}$`);
@@ -63,8 +56,11 @@ export function getYamlBlockFromFile(
   currentPathInit: string = null,
 ): BlockType {
   const parts = getFullPath(file, currentPathInit).split('/');
-  // This assumes path [block_type]s/[filename]
-  const blockType = singularize(parts[0]);
+  if (!parts[1]) {
+    return;
+  }
+  // This assumes path default_repo/[block_type]s/..
+  const blockType = singularize(parts[1]);
   const fileName = parts[parts.length - 1];
 
   const yamlRegex = new RegExp(`\.${FileExtensionEnum.YAML}$`);

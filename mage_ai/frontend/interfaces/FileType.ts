@@ -17,15 +17,20 @@ export const CODE_BLOCK_FILE_EXTENSIONS = [
   FileExtensionEnum.SQL,
 ];
 
-const SUPPORTED_FILE_EXTENSIONS = [
+const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
   FileExtensionEnum.SQL,
   FileExtensionEnum.TXT,
   FileExtensionEnum.YAML,
   FileExtensionEnum.YML,
 ];
 
-export const SUPPORTED_FILE_EXTENSIONS_REGEX =
-  new RegExp(SUPPORTED_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
+export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX =
+  new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
+
+const ALL_SUPPORTED_FILE_EXTENSIONS = SUPPORTED_EDITABLE_FILE_EXTENSIONS.concat(FileExtensionEnum.PY);
+
+export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX =
+  new RegExp(ALL_SUPPORTED_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
 
 export default interface FileType {
   children: FileType[];

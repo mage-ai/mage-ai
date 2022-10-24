@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/router';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
+  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   FOLDER_NAME_CHARTS,
-  FOLDER_NAME_CONFIG,
   FOLDER_NAME_PIPELINES,
   SpecialFileEnum,
-  SUPPORTED_FILE_EXTENSIONS_REGEX,
+  SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
@@ -33,8 +32,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
   getBlockUUIDFromFile,
-  getFullPath,
-  getPipelineConfigPath,
+  getFullPathWithoutRootFolder,
   getYamlBlockFromFile,
 } from './utils';
 import { singularize } from '@utils/string';
@@ -82,29 +80,19 @@ function Folder({
   if (!name) {
     file.name = DEFAULT_NAME;
   }
-  const router = useRouter();
-  const { pipeline: currentPipelineName }: any = router.query;
   const disabled = disabledProp
     || name === '__init__.py'
-    || !!name?.match(/^\./);
-  const isPipelineFolder = parentFile?.name === FOLDER_NAME_CONFIG;
+    || !!name?.match(/^\./)
+    || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp);
+  const isPipelineFolder = parentFile?.name === FOLDER_NAME_PIPELINES;
   const children = useMemo(() =>
-    isPipelineFolder
-      ? null
-      : (
-        childrenProp
-          ? sortByKey(childrenProp, ({
-            children: arr,
-            name: nameChild,
-          }) => name === FOLDER_NAME_CONFIG
-            ? nameChild
-            : (arr ? 0 : 1))
-          : childrenProp
-      ),
-    [
-      childrenProp,
-      isPipelineFolder,
-    ],
+    (childrenProp
+      ? sortByKey(childrenProp, ({
+          children: arr,
+        }) => arr ? 0 : 1)
+      : childrenProp
+    ),
+    [childrenProp],
   );
   const uuid = `${level}/${name}`;
   const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
@@ -165,17 +153,14 @@ function Folder({
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPath(file),
+                  getFullPathWithoutRootFolder(file),
                 );
               }
             }
 
             const yamlBlockFromFile = getYamlBlockFromFile(file);
 
-            if (isPipelineFolder) {
-              const pipelineMetadataFilePath = getPipelineConfigPath(file, currentPipelineName);
-              openFile(pipelineMetadataFilePath);
-            } else if (children) {
+            if (children) {
               setCollapsed((collapsedPrev) => {
                 set(uuid, !collapsedPrev);
 
@@ -185,17 +170,17 @@ function Folder({
               onSelectBlockFile(
                 yamlBlockFromFile.uuid,
                 yamlBlockFromFile.type,
-                getFullPath(file),
+                getFullPathWithoutRootFolder(file),
               );
-            } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
-              openFile(getFullPath(file));
+            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
+              openFile(getFullPathWithoutRootFolder(file));
             } else {
               const block = getBlockFromFile(file);
               if (block) {
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPath(file),
+                  getFullPathWithoutRootFolder(file),
                 );
               }
             }
@@ -214,7 +199,7 @@ function Folder({
               });
             } else if (children) {
               setContextItem({ type: FileContextEnum.FOLDER });
-            } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
+            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
               setContextItem({ type: FileContextEnum.FILE });
             } else {
               if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {

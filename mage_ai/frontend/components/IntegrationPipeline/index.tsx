@@ -516,7 +516,7 @@ function IntegrationPipeline({
                     <Text default>
                       For more information on how to configure this source,
                       read the <Link
-                        href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
+                        href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
                         openNewWindow
                       >
                         {dataLoaderBlockContent.source} documentation
@@ -1121,7 +1121,7 @@ function IntegrationPipeline({
                   <Text>
                     For more information on how to configure this destination,
                     read the <Link
-                      href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
+                      href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
                       openNewWindow
                     >
                       {dataExporterBlockContent.destination} documentation
