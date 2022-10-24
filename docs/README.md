@@ -53,10 +53,11 @@ Read more tech docs here. Got questions?
 - Configuring production settings
     - [Compute resource](production/compute_resource.md)
     - [Runtime variables](production/runtime_variables.md)
-- Monitoring and alerting
-    - [Status updates in Slack](monitoring/alerting/Slack.md)
-    - [Status updates in Email](monitoring/alerting/Email.md)
+- Observability
+    - [Alerting status updates in Slack](monitoring/alerting/Slack.md)
+    - [Alerting status updates in Email](monitoring/alerting/Email.md)
     - [Logging](features/orchestration/README.md#logs)
+    - [Monitoring](monitoring/README.md)
 
 ### Integrations
 - [Syncing data between 3rd party sources and destinations](data_integrations/README.md)
