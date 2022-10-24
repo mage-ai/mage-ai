@@ -1,8 +1,6 @@
 from contextlib import contextmanager, redirect_stdout
 from typing import Callable
-
 import logging
-import sys
 import time
 
 logger = logging.getLogger(__name__)

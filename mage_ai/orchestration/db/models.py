@@ -259,12 +259,12 @@ class PipelineRun(BaseModel):
     @classmethod
     def active_runs(
         self,
-        filter_conditions: List = None,
+        pipeline_uuids: List[str] = None,
         include_block_runs: bool = False,
     ) -> List['PipelineRun']:
         query = self.query.filter(self.status == self.PipelineRunStatus.RUNNING)
-        if filter_conditions is not None:
-            query = query.filter(*filter_conditions)
+        if pipeline_uuids is not None:
+            query = query.filter(PipelineRun.pipeline_uuid.in_(pipeline_uuids))
         if include_block_runs:
             query = query.options(joinedload(PipelineRun.block_runs))
         return query.all()

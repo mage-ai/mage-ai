@@ -1,5 +1,6 @@
 from datetime import datetime
 from mage_ai.orchestration.db.models import (
+    PipelineRun,
     PipelineSchedule,
 )
 from mage_ai.tests.base_test import TestCase
@@ -68,7 +69,7 @@ class PipelineRunTests(TestCase):
             self.repo_path,
         )
 
-    def block_runs_count(self):
+    def test_block_runs_count(self):
         pipeline_run = create_pipeline_run(pipeline_uuid='test_pipeline')
         block_count = len(self.__class__.pipeline.get_executable_blocks())
         self.assertEqual(pipeline_run.block_runs_count, block_count)
@@ -98,6 +99,42 @@ class PipelineRunTests(TestCase):
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/pipeline.log',
         )
         self.assertEquals(pipeline_run.logs.get('path'), expected_file_path)
+
+    def test_active_runs(self):
+        create_pipeline_with_blocks(
+            'test active run 1',
+            self.repo_path,
+        )
+        create_pipeline_with_blocks(
+            'test active run 2',
+            self.repo_path,
+        )
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_1',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_schedule = pipeline_run.pipeline_schedule
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_1',
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run3 = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_1',
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run4 = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_active_run_2',
+        )
+        pipeline_run4.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        results = PipelineRun.active_runs(
+            pipeline_uuids=['test_active_run_1'],
+            include_block_runs=True,
+        )
+        self.assertEqual(len(results), 2)
+        pipeline_run_ids = [p.id for p in results]
+        self.assertTrue(pipeline_run.id in pipeline_run_ids)
+        self.assertTrue(pipeline_run2.id in pipeline_run_ids)
 
 
 class BlockRunTests(TestCase):

@@ -1,9 +1,10 @@
+from datetime import datetime
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import PipelineRun, PipelineSchedule
 
 
-def create_pipeline(name, repo_path):
+def create_pipeline(name: str, repo_path: str):
     pipeline = Pipeline.create(
         name,
         repo_path=repo_path,
@@ -11,7 +12,7 @@ def create_pipeline(name, repo_path):
     return pipeline
 
 
-def create_pipeline_with_blocks(name, repo_path):
+def create_pipeline_with_blocks(name: str, repo_path: str):
     pipeline = Pipeline.create(
         name,
         repo_path=repo_path,
@@ -27,15 +28,15 @@ def create_pipeline_with_blocks(name, repo_path):
     return pipeline
 
 
-def create_pipeline_run(pipeline_uuid):
+def create_pipeline_run(pipeline_uuid: str):
     pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
     return pipeline_run
 
 
 def create_pipeline_run_with_schedule(
-    pipeline_uuid,
-    execution_date=None,
-    pipeline_schedule_id=None
+    pipeline_uuid: str,
+    execution_date: datetime = None,
+    pipeline_schedule_id: int = None,
 ):
     if pipeline_schedule_id is None:
         pipeline_schedule = PipelineSchedule.create(pipeline_uuid=pipeline_uuid)

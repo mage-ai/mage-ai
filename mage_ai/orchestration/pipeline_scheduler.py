@@ -447,7 +447,7 @@ def schedule_all():
             PipelineScheduler(pipeline_run).start(should_schedule=False)
 
     active_pipeline_runs = PipelineRun.active_runs(
-        filter_condition=[PipelineRun.pipeline_uuid in repo_pipelines],
+        pipeline_uuids=repo_pipelines,
         include_block_runs=True,
     )
 
