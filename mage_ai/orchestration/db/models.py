@@ -130,7 +130,7 @@ class PipelineSchedule(BaseModel):
     schedule_interval = Column(String(50))
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
     variables = Column(JSON)
-    sla = Column(Integer, default=None)
+    sla = Column(Integer, default=None) # in seconds
 
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
 
