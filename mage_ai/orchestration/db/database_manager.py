@@ -1,6 +1,7 @@
 from alembic.config import Config
 from alembic import command
 from mage_ai.orchestration.db import db_connection_url
+from mage_ai.shared.logger import LoggingLevel
 import os
 
 
@@ -12,7 +13,7 @@ class DatabaseManager:
     def script_location(self):
         pass
 
-    def run_migrations(self, log_level: str = None):
+    def run_migrations(self, log_level: LoggingLevel = None):
         cur_dirpath = os.path.abspath(os.path.dirname(__file__))
         alembic_cfg = Config(os.path.join(cur_dirpath, 'alembic.ini'))
         alembic_cfg.set_main_option(

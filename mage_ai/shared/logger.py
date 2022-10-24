@@ -1,4 +1,5 @@
 from contextlib import contextmanager, redirect_stdout
+from enum import Enum
 from typing import Callable
 import logging
 import time
@@ -27,6 +28,14 @@ class timer(object):
         dt = int((time.time() - self.start) * 1000)
         if self.verbose:
             logger.debug(f'[time] metric: {self.metric}, value: {dt}ms, tags: {self.tags}')
+
+
+class LoggingLevel(str, Enum):
+    DEBUG = 'DEBUG'
+    INFO = 'INFO'
+    WARNING = 'WARNING'
+    ERROR = 'ERROR'
+    CRITICAL = 'CRITICAL'
 
 
 class VerboseFunctionExec:
