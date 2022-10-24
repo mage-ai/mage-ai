@@ -139,24 +139,6 @@ function ContextMenu({
         uuid: 'delete_block_file',
       },
     ],
-    // [FileContextEnum.PIPELINE]: [
-    //   {
-    //     label: () => 'Duplicate',
-    //     onClick: () => createPipeline({
-    //       pipeline: {
-    //         clone_pipeline_uuid: contextItem.data.name,
-    //         name: `${contextItem.data.name}_copy`,
-    //       },
-    //     }),
-    //     uuid: 'duplicate_pipeline',
-    //   },
-    //   {
-    //     disabled: numPipelines <= 1,
-    //     label: () => 'Delete',
-    //     onClick: () => deletePipeline(contextItem.data.name),
-    //     uuid: 'delete_pipeline',
-    //   },
-    // ],
   };
 
   return (
