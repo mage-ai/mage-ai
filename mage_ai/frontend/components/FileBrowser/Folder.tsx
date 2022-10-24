@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
+  ALL_SUPPORTED_FILE_EXTENSIONS_REGEX,
   FOLDER_NAME_CHARTS,
   FOLDER_NAME_PIPELINES,
   SpecialFileEnum,
-  SUPPORTED_FILE_EXTENSIONS_REGEX,
+  SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
@@ -81,22 +82,17 @@ function Folder({
   }
   const disabled = disabledProp
     || name === '__init__.py'
-    || !!name?.match(/^\./);
+    || !!name?.match(/^\./)
+    || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp);
   const isPipelineFolder = parentFile?.name === FOLDER_NAME_PIPELINES;
   const children = useMemo(() =>
     (childrenProp
       ? sortByKey(childrenProp, ({
-        children: arr,
-        name: nameChild,
-      }) => name === FOLDER_NAME_PIPELINES
-        ? nameChild
-        : (arr ? 0 : 1))
+          children: arr,
+        }) => arr ? 0 : 1)
       : childrenProp
     ),
-    [
-      childrenProp,
-      isPipelineFolder,
-    ],
+    [childrenProp],
   );
   const uuid = `${level}/${name}`;
   const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
@@ -176,7 +172,7 @@ function Folder({
                 yamlBlockFromFile.type,
                 getFullPathWithoutRootFolder(file),
               );
-            } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
+            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
               openFile(getFullPathWithoutRootFolder(file));
             } else {
               const block = getBlockFromFile(file);
@@ -203,7 +199,7 @@ function Folder({
               });
             } else if (children) {
               setContextItem({ type: FileContextEnum.FOLDER });
-            } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
+            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
               setContextItem({ type: FileContextEnum.FILE });
             } else {
               if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {
