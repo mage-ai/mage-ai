@@ -46,6 +46,43 @@ class PipelineScheduleTests(TestCase):
             )
         self.assertTrue('Cron expression is invalid.' in str(context.exception))
 
+    def test_active_schedules(self):
+        create_pipeline_with_blocks(
+            'test active schedule 1',
+            self.repo_path,
+        )
+        create_pipeline_with_blocks(
+            'test active schedule 2',
+            self.repo_path,
+        )
+        pipeline_schedule1 = PipelineSchedule.create(
+            pipeline_uuid='test_active_schedule_1',
+            schedule_interval='@daily'
+        )
+        pipeline_schedule2 = PipelineSchedule.create(
+            pipeline_uuid='test_active_schedule_1',
+            schedule_interval='@daily'
+        )
+        pipeline_schedule3 = PipelineSchedule.create(
+            pipeline_uuid='test_active_schedule_2',
+            schedule_interval='@daily'
+        )
+        pipeline_schedule4 = PipelineSchedule.create(
+            pipeline_uuid='test_active_schedule_2',
+            schedule_interval='@daily'
+        )
+        pipeline_schedule2.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
+        pipeline_schedule3.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
+        results1 = PipelineSchedule.active_schedules(pipeline_uuids=['test_active_schedule_1'])
+        results2 = PipelineSchedule.active_schedules(pipeline_uuids=['test_active_schedule_2'])
+        results3 = PipelineSchedule.active_schedules()
+        self.assertEqual(set([r.id for r in results1]), set([pipeline_schedule2.id]))
+        self.assertEqual(set([r.id for r in results2]), set([pipeline_schedule3.id]))
+        self.assertEqual(
+            set([r.id for r in results3]),
+            set([pipeline_schedule2.id, pipeline_schedule3.id]),
+        )
+
     def test_should_schedule(self):
         pipeline_schedule1 = PipelineSchedule.create(
             pipeline_uuid='test_pipeline',
@@ -127,14 +164,26 @@ class PipelineRunTests(TestCase):
             pipeline_uuid='test_active_run_2',
         )
         pipeline_run4.update(status=PipelineRun.PipelineRunStatus.RUNNING)
-        results = PipelineRun.active_runs(
+        results1 = PipelineRun.active_runs(
             pipeline_uuids=['test_active_run_1'],
             include_block_runs=True,
         )
-        self.assertEqual(len(results), 2)
-        pipeline_run_ids = [p.id for p in results]
-        self.assertTrue(pipeline_run.id in pipeline_run_ids)
-        self.assertTrue(pipeline_run2.id in pipeline_run_ids)
+        results2 = PipelineRun.active_runs(
+            pipeline_uuids=['test_active_run_2'],
+            include_block_runs=True,
+        )
+        results3 = PipelineRun.active_runs(
+            include_block_runs=True,
+        )
+        self.assertEqual(
+            set([r.id for r in results1]),
+            set([pipeline_run.id, pipeline_run2.id]),
+        )
+        self.assertEqual(set([r.id for r in results2]), set([pipeline_run4.id]))
+        self.assertEqual(
+            set([r.id for r in results3]),
+            set([pipeline_run.id, pipeline_run2.id, pipeline_run4.id]),
+        )
 
 
 class BlockRunTests(TestCase):
