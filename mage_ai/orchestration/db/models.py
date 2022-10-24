@@ -153,8 +153,11 @@ class PipelineSchedule(BaseModel):
         return schedule_interval
 
     @classmethod
-    def active_schedules(self) -> List['PipelineSchedule']:
-        return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
+    def active_schedules(self, pipeline_uuids: List[str] = None) -> List['PipelineSchedule']:
+        query = self.query.filter(self.status == self.ScheduleStatus.ACTIVE)
+        if pipeline_uuids is not None:
+            query = query.filter(PipelineSchedule.pipeline_uuid.in_(pipeline_uuids))
+        return query.all()
 
     def current_execution_date(self) -> datetime:
         if self.schedule_interval is None:

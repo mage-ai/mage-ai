@@ -388,10 +388,7 @@ def check_sla():
     pipeline_schedules = \
         set([
             s.id
-            for s in filter(
-                lambda s: s.pipeline_uuid in repo_pipelines,
-                PipelineSchedule.active_schedules()
-            )
+            for s in PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
         ])
 
     pipeline_runs = \
@@ -433,7 +430,7 @@ def schedule_all():
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
 
     active_pipeline_schedules = \
-        list(filter(lambda s: s.pipeline_uuid in repo_pipelines, PipelineSchedule.active_schedules()))
+        list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))
 
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule():
