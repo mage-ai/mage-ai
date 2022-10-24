@@ -9,7 +9,7 @@ from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
@@ -257,8 +257,17 @@ class PipelineRun(BaseModel):
         return self.pipeline_schedule.name
 
     @classmethod
-    def active_runs(self) -> List['PipelineRun']:
-        return self.query.filter(self.status == self.PipelineRunStatus.RUNNING).all()
+    def active_runs(
+        self,
+        filter_conditions: List = None,
+        include_block_runs: bool = False,
+    ) -> List['PipelineRun']:
+        query = self.query.filter(self.status == self.PipelineRunStatus.RUNNING)
+        if filter_conditions is not None:
+            query = query.filter(*filter_conditions)
+        if include_block_runs:
+            query = query.options(joinedload(PipelineRun.block_runs))
+        return query.all()
 
     @classmethod
     def create(self, **kwargs) -> 'PipelineRun':
