@@ -21,6 +21,6 @@
     },
     {
         "name": "MAGE_DATABASE_CONNECTION_URL",
-        "value": "${database_connetion_url}"
+        "value": "${database_connection_url}"
     }
 ]
