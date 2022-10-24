@@ -41,6 +41,11 @@ Read more tech docs here. Got questions?
 - [Core abstractions](core/abstractions.md)
 - [Blocks](blocks/README.md)
 
+### Developing in the cloud
+- Version control
+    - [Setting up Git on cloud](guides/version_control/Git.md)
+- [Multi-development environment in the cloud](development/multi_development_environment/README.md)
+
 ### Production
 - Deploying to cloud
     - [Using Terraform](deploy/terraform/README.md)
@@ -48,16 +53,14 @@ Read more tech docs here. Got questions?
         - [Microsoft Azure](deploy/terraform/Azure.md)
         - [Google Cloud Platform (GCP)](deploy/terraform/GCP.md)
     - [AWS (without Terraform)](deploy/aws/README.md)
-- Version control
-    - [Setting up Git on cloud](guides/version_control/Git.md)
 - Configuring production settings
     - [Compute resource](production/compute_resource.md)
     - [Runtime variables](production/runtime_variables.md)
 - Observability
-    - [Alerting status updates in Slack](monitoring/alerting/Slack.md)
-    - [Alerting status updates in Email](monitoring/alerting/Email.md)
+    - [Alerting status updates in Slack](observability/alerting/Slack.md)
+    - [Alerting status updates in Email](observability/alerting/Email.md)
     - [Logging](features/orchestration/README.md#logs)
-    - [Monitoring](monitoring/README.md)
+    - [Monitoring](observability/monitoring/README.md)
 
 ### Integrations
 - [Syncing data between 3rd party sources and destinations](data_integrations/README.md)
