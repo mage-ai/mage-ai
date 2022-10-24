@@ -48,3 +48,41 @@ export function getTimeInUTC(dateTime: string) {
   );
   return new Date(utcTs);
 }
+
+export enum TimeUnitEnum {
+  DAY = 'day',
+  HOUR = 'hour',
+  MINUTE = 'minute',
+  SECOND = 'second',
+}
+
+export const TIME_UNIT_TO_SECONDS = {
+  [TimeUnitEnum.DAY]: 86400,
+  [TimeUnitEnum.HOUR]: 3600,
+  [TimeUnitEnum.MINUTE]: 60,
+  [TimeUnitEnum.SECOND]: 1,
+}
+
+export function convertSeconds(seconds: number) {
+  let unit = TimeUnitEnum.SECOND;
+  let time = seconds;
+  if (seconds % 86400 === 0) {
+    time = time / 86400;
+    unit = TimeUnitEnum.DAY;
+  } else if (seconds % 3600 === 0) {
+    time = time / 3600;
+    unit = TimeUnitEnum.HOUR;
+  } else if (seconds % 60 === 0) {
+    time = time / 60;
+    unit = TimeUnitEnum.MINUTE;
+  }
+
+  return {
+    time,
+    unit,
+  }
+}
+
+export function convertToSeconds(time: number, unit: TimeUnitEnum) {
+  return time * TIME_UNIT_TO_SECONDS[unit];
+}

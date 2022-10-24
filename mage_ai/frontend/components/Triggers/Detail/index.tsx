@@ -30,6 +30,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import {
   CalendarDate,
+  Info,
   MultiShare,
   MusicNotes,
   Pause,
@@ -45,6 +46,7 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
+import { convertSeconds } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -75,6 +77,7 @@ function TriggerDetail({
     name: pipelineScheduleName,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
+    sla,
     start_time: startTime,
     status,
     variables: scheduleVariablesInit = {},
@@ -213,6 +216,31 @@ function TriggerDetail({
       ],
     ];
 
+    if (sla) {
+      const { time, unit } = convertSeconds(sla)
+      const finalUnit = time === 1 ? unit : `${unit}s`;
+      rows.push(
+        [
+          <FlexContainer
+            alignItems="center"
+            key="trigger_sla_label"
+          >
+            <Info {...iconProps} />
+            <Spacing mr={1} />
+            <Text default>
+              SLA
+            </Text>
+          </FlexContainer>,
+          <Text
+            key="trigger_sla"
+            monospace
+          >
+            {`${time} ${finalUnit}`}
+          </Text>
+        ]
+      );
+    }
+
     if (scheduleInterval) {
       rows.push([
         <FlexContainer
@@ -264,6 +292,7 @@ function TriggerDetail({
   }, [
     isActive,
     scheduleInterval,
+    sla,
     startTime,
     scheduleType,
   ]);

@@ -711,10 +711,9 @@ const InputWrapper = ({
         },
         onChange: (e) => {
           // @ts-ignore
+          setContent(e.target.value);
           if (onChange) {
             onChange(e);
-          } else {
-            setContent(e.target.value);
           }
         },
         onClick,

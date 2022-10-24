@@ -1,9 +1,10 @@
-import {
+import React, {
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from 'react';
+import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -55,9 +56,7 @@ import { getFormattedVariables, parseVariables } from '@components/Sidekick/util
 import { indexBy, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { getTimeInUTC } from '../utils';
-import { scheduleMicrotask } from 'react-query/types/core/utils';
-import { toast } from 'react-toastify';
+import { convertSeconds, convertToSeconds, getTimeInUTC, TIME_UNIT_TO_SECONDS } from '../utils';
 
 const getTriggerTypes = (
   isStreamingPipeline?: boolean,
@@ -165,29 +164,6 @@ function Edit({
 
   useEffect(
     () => {
-      let unit = 'seconds';
-      let time = sla;
-      if (sla > 86400) {
-        time = time / 86400;
-        unit = 'days';
-      } else if (sla > 3600) {
-        time = time / 3600;
-        unit = 'hours';
-      } else if (sla > 60) {
-        time = time / 60;
-        unit = 'minutes';
-      }
-      setSchedule(schedule => ({
-        ...schedule,
-        slaAmount: time,
-        slaUnit: unit,
-      }));
-    },
-    [sla],
-  )
-
-  useEffect(
-    () => {
       if (startTime) {
         const dateTimeSplit = startTime.split(' ');
         const timePart = dateTimeSplit[1];
@@ -247,6 +223,19 @@ function Edit({
             setSchedule(pipelineSchedule);
           }
         }
+        
+        const slaFromSchedule = pipelineSchedule.sla
+
+        if (slaFromSchedule) {
+          setEnableSLA(true);
+
+          const { time, unit } = convertSeconds(sla);
+          setSchedule(schedule => ({
+            ...schedule,
+            slaAmount: time,
+            slaUnit: unit,
+          }));
+        }
       }
     },
     [pipelineSchedule],
@@ -273,29 +262,24 @@ function Edit({
         : null;
     }
 
-    const slaAmount = schedule?.['slaAmount'];
-    const slaUnit = schedule?.['slaUnit'];
-    if (isNaN(slaAmount) || !slaUnit) {
-      toast.error(
-        'Please enter a valid SLA',
-        {
-          position: toast.POSITION.BOTTOM_RIGHT,
-          toastId: 'sla_error',
-        },
-      );
-      return;
+    if (enableSLA) {
+      const slaAmount = schedule?.['slaAmount'];
+      const slaUnit = schedule?.['slaUnit'];
+      if (!slaAmount || isNaN(slaAmount) || !slaUnit) {
+        toast.error(
+          'Please enter a valid SLA',
+          {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            toastId: 'sla_error',
+          },
+        );
+        return;
+      }
+  
+      data.sla = convertToSeconds(slaAmount, slaUnit);
+    } else if (pipelineSchedule?.sla) {
+      data.sla = 0;
     }
-
-    let multiplier = 1;
-    if (slaUnit === 'days') {
-      multiplier = 86400;
-    } else if (slaUnit === 'hours') {
-      multiplier = 3600;
-    } else if (slaUnit === 'minutes') {
-      multiplier = 60;
-    }
-
-    data.sla = schedule?.['slaAmount'] * multiplier;
 
     // @ts-ignore
     updateSchedule({
@@ -304,7 +288,9 @@ function Edit({
   }, [
     customInterval,
     date,
+    enableSLA,
     eventMatchers,
+    pipelineSchedule,
     runtimeVariables,
     schedule,
     time,
@@ -926,7 +912,7 @@ function Edit({
                 if (!val) {
                   setSchedule(schedule => ({
                     ...schedule,
-                    sla: 0,
+                    slaAmount: 0,
                   }))
                 }
               }}
@@ -962,7 +948,7 @@ function Edit({
                         e.preventDefault();
                         setSchedule(s => ({
                           ...s,
-                          slaAmount: parseInt(e.target.value),
+                          slaAmount: e.target.value,
                         }));
                       }}
                       placeholder="Time"
@@ -972,6 +958,8 @@ function Edit({
                   <Flex flex={1}>
                     <Select
                       fullWidth
+                      monospace
+                      noBorder
                       onChange={(e) => {
                         e.preventDefault();
                         setSchedule(s => ({
@@ -979,21 +967,15 @@ function Edit({
                           slaUnit: e.target.value,
                         }));
                       }}
+                      placeholder="Select time unit"
+                      small
                       value={schedule?.['slaUnit']}
                     >
-                      <option value="" />
-                      <option key="days" value="days">
-                        days
-                      </option>
-                      <option key="hours" value="hours">
-                        hours
-                      </option>
-                      <option key="minutes" value="minutes">
-                        mins
-                      </option>
-                      <option key="seconds" value="seconds">
-                        seconds
-                      </option>
+                      {Object.keys(TIME_UNIT_TO_SECONDS).map(unit => (
+                        <option key={unit} value={unit}>
+                          {`${unit}(s)`}
+                        </option>
+                      ))}
                     </Select>
                   </Flex>
                 </FlexContainer>
@@ -1008,6 +990,7 @@ function Edit({
     formattedVariables,
     overwriteVariables,
     runtimeVariables,
+    schedule,
     setEnableSLA,
     setOverwriteVariables,
   ]);
