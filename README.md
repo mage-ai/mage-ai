@@ -67,10 +67,10 @@
     <img alt="PyPi" src="https://img.shields.io/pypi/v/mage-ai?color=orange" />
   </a>
   <a
-    href="https://app.circleci.com/pipelines/github/mage-ai/mage-ai?branch=master&filter=all"
+    href="https://anaconda.org/conda-forge/mage-ai"
     target="_blank"
   >
-    <img alt="Circle CI" src="https://img.shields.io/circleci/build/gh/mage-ai/mage-ai?color=%23159946&label=CircleCI&logo=circleci" />
+    <img src="https://anaconda.org/conda-forge/mage-ai/badges/version.svg" />
   </a>
   <a
     href="https://opensource.org/licenses/Apache-2.0"
