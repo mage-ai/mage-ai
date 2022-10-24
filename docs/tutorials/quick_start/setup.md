@@ -14,8 +14,8 @@ You can install Mage using Docker or `pip`:
 ##### 1. Create new project and launch tool
 
 ```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  mageai/mageai mage start [project_name]
+docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+  mage start [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.

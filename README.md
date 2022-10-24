@@ -145,8 +145,6 @@ learning from a <b>[hands-on tutorial](docs/tutorials/quick_start/etl_restaurant
 1. [Core abstractions](#-core-abstractions)
 1. [Contributing](docs/contributing/README.md)
 
-<img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
-
 <br />
 
 # 🏃‍♀️ Quick start
@@ -164,8 +162,6 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
     <sub>Want to use Spark or other integrations? Read more about [integrations](docs/README.md#integrations).</sub>
 
 1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
-
-<br />
 
 ### Using `pip` or `conda`
 
@@ -215,6 +211,8 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 - [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
 - [Load data from API, transform it, and export it to PostgreSQL](docs/tutorials/quick_start/etl_restaurant/README.md)
 - [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate_into_existing_project/README.md)
+
+<img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
 <br />
 
