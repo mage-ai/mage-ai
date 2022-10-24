@@ -388,10 +388,7 @@ def check_sla():
     pipeline_schedules = \
         set([
             s.id
-            for s in filter(
-                lambda s: s.pipeline_uuid in repo_pipelines,
-                PipelineSchedule.active_schedules()
-            )
+            for s in PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
         ])
 
     pipeline_runs = \
@@ -413,8 +410,8 @@ def check_sla():
                 continue
             start_date = \
                 pipeline_run.execution_date \
-                    if pipeline_run.execution_date is not None \
-                    else pipeline_run.created_at
+                if pipeline_run.execution_date is not None \
+                else pipeline_run.created_at
             if compare(start_date, current_time - timedelta(seconds=sla)) == 1:
                 # passed SLA for pipeline_run
                 notification_sender.send_pipeline_run_sla_passed_message(
@@ -433,7 +430,7 @@ def schedule_all():
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
 
     active_pipeline_schedules = \
-        list(filter(lambda s: s.pipeline_uuid in repo_pipelines, PipelineSchedule.active_schedules()))
+        list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))
 
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule():
@@ -446,8 +443,10 @@ def schedule_all():
             pipeline_run = PipelineRun.create(**payload)
             PipelineScheduler(pipeline_run).start(should_schedule=False)
 
-    active_pipeline_runs = \
-        list(filter(lambda r: r.pipeline_uuid in repo_pipelines, PipelineRun.active_runs()))
+    active_pipeline_runs = PipelineRun.active_runs(
+        pipeline_uuids=repo_pipelines,
+        include_block_runs=True,
+    )
 
     for r in active_pipeline_runs:
         try:

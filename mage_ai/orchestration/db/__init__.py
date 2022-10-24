@@ -4,14 +4,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import os
 
+TEST_DB = 'test.db'
 
 db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
-
 db_kwargs = dict(pool_pre_ping=True)
 
 if not db_connection_url:
     if is_test():
-        db_connection_url = 'sqlite:///test.db'
+        db_connection_url = f'sqlite:///{TEST_DB}'
     elif os.path.exists('mage_ai/orchestration/db/'):
         db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
     else:
