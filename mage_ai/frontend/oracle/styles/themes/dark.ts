@@ -225,6 +225,6 @@ export default {
     positive: LIME_TEXT,
   },
   text: {
-    fileBrowser: '#787A85',
+    fileBrowser: DARK_CONTENT_MUTED,
   },
 };

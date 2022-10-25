@@ -190,7 +190,7 @@ function AddNewBlocks({
                           label: () => 'Python',
                           uuid: 'transformers/python_all',
                         },
-                        ...getNonPythonMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER)
+                        ...getNonPythonMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER),
                       ]
                   )
                 }

@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
-import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 
@@ -14,16 +15,12 @@ export type BadgeProps = {
   small?: boolean;
 };
 
-const BadgeStyle = styled.p<BadgeProps>`a
+const BadgeStyle = styled.p<BadgeProps>`
   border-radius: ${BORDER_RADIUS_SMALL}px;
   display: inline;
-  font-family: ${MONO_FONT_FAMILY_REGULAR};
-  font-size: ${REGULAR};
+  font-family: ${FONT_FAMILY_REGULAR};
   margin: 0;
-
-  ${props => props.regular && `
-    ${REGULAR};
-  `}
+  ${REGULAR};
 
   ${props => props.small && `
     ${SMALL};
@@ -38,13 +35,13 @@ const BadgeStyle = styled.p<BadgeProps>`a
   `};
 
   ${props => !props.disabled && `
-    background-color: ${props.theme.feature.active};
-    color: ${props.theme.monotone.purple};
+    background-color: ${(props.theme || dark).background.row};
+    color: ${(props.theme || dark).content.muted};
   `}
 
   ${props => props.disabled && `
-    background-color: ${props.theme.feature.disabled};
-    color: ${props.theme.content.disabled};
+    background-color: ${(props.theme || dark).feature.disabled};
+    color: ${(props.theme || dark).content.disabled};
   `}
 
   ${props => props.quantifier && `
