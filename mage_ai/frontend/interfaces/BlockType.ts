@@ -7,6 +7,7 @@ import { DataTypeEnum } from './KernelOutputType';
 
 export enum BlockLanguageEnum {
   PYTHON = 'python',
+  R = 'r',
   SQL = 'sql',
   YAML = 'yaml',
 }
