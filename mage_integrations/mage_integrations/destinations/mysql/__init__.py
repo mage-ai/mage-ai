@@ -2,6 +2,7 @@ from mage_integrations.connections.mysql import MySQL as MySQLConnection
 from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.mysql.utils import (
     build_create_table_command,
+    clean_column_name,
     convert_column_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
@@ -9,7 +10,6 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     column_type_mapping,
 )
-from mage_integrations.destinations.utils import clean_column_name
 from typing import Callable, Dict, List, Tuple
 
 
@@ -22,6 +22,15 @@ class MySQL(Destination):
             port=self.config.get('port'),
             username=self.config['username'],
         )
+
+    def build_create_schema_commands(
+        self,
+        database_name: str,
+        schema_name: str,
+    ) -> List[str]:
+        return [
+            f'CREATE SCHEMA IF NOT EXISTS {database_name}',
+        ]
 
     def build_create_table_commands(
         self,
@@ -67,7 +76,7 @@ class MySQL(Destination):
             columns=columns,
             records=records,
         )
-        insert_columns = ', '.join(insert_columns)
+        insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
         insert_values = ', '.join(insert_values)
 
         insert_into = f'INTO {table_name} ({insert_columns})'
@@ -91,6 +100,8 @@ class MySQL(Destination):
 
         return [
             '\n'.join(commands),
+            # This will combine the count for number of rows inserted and number of rows updated.
+            # For example, if it inserts 2 and updates 2, that will yield 4.
             'SELECT ROW_COUNT()',
         ]
 

@@ -84,9 +84,10 @@ class PostgreSQL(Destination):
             else:
                 commands.append('DO NOTHING')
 
+        commands_string = '\n'.join(commands)
         return [
             '\n'.join([
-                f"WITH insert_rows_and_count AS ({'\n'.join(commands)} RETURNING 1)",
+                f"WITH insert_rows_and_count AS ({commands_string} RETURNING 1)",
                 'SELECT COUNT(*) FROM insert_rows_and_count',
             ]),
         ]

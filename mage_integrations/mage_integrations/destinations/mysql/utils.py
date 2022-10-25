@@ -1,3 +1,5 @@
+from mage_integrations.destinations.mysql.constants import RESERVED_WORDS
+from mage_integrations.destinations.utils import clean_column_name as clean_column_name_orig
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
@@ -7,8 +9,14 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
 )
-from mage_integrations.destinations.utils import clean_column_name
 from typing import Dict, List
+
+
+def clean_column_name(col):
+    col_new = clean_column_name_orig(col)
+    if col_new.upper() in RESERVED_WORDS:
+        col_new = f'_{col_new}'
+    return col_new
 
 
 def build_create_table_command(
@@ -51,7 +59,7 @@ def build_create_table_command(
 
 def convert_column_type(column_type: str, column_settings: Dict) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
-        return 'BOOL'
+        return 'CHAR(52)'
     elif COLUMN_TYPE_INTEGER == column_type:
         return 'UNSIGNED'
     elif COLUMN_TYPE_NUMBER == column_type:
