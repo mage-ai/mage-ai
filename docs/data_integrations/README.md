@@ -71,6 +71,12 @@ Read more about Sources:
 - *Shopify (coming soon)*
 - *Zendesk (coming soon)*
 
+Mage adheres to the data engineering standard for data integrations called the
+[Singer Spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
+
+All sources (aka taps) that has been developed by the
+open-source community can be adapted to use in Mage. Here is a [short list of available ones](https://www.singer.io/#taps).
+
 > Don’t see a source you need?
 >
 > Check out the next section on <b>Add a new source</b>
@@ -104,6 +110,12 @@ Read more about destinations:
 - *Google Cloud Platform (GCP) BigQuery (coming soon)*
 - *HubSpot (coming soon)*
 - *Salesforce (coming soon)*
+
+Mage adheres to the data engineering standard for data integrations called the
+[Singer Spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
+
+All destinations (aka targets) that has been developed by the
+open-source community can be adapted to use in Mage. Here is a [short list of available ones](https://www.singer.io/#targets).
 
 > Don’t see a destination you need?
 >
