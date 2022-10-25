@@ -135,7 +135,7 @@ def build_insert_command(
             vals.append(value_final)
         values.append(f"({', '.join(vals)})")
 
-    insert_columns = ', '.join([clean_column_name(col) for col in columns])
-    insert_values = ', '.join(values)
-
-    return [insert_columns, insert_values]
+    return [
+        [clean_column_name(col) for col in columns],
+        values,
+    ]

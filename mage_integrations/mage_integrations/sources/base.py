@@ -180,7 +180,7 @@ class Source():
             unique_constraints=stream.unique_constraints,
         )
 
-    def sync_stream(self, stream) -> None:
+    def sync_stream(self, stream) -> List[Dict]:
         bookmark_properties = self.__get_boommark_properties_for_stream(stream)
 
         start_date = None
@@ -231,7 +231,7 @@ class Source():
             records = self.sync_stream(stream)
 
             self.logger.info('Synced stream completed.', tags=merge_dict(tags, dict(
-                records=len(records),
+                records=len(records) if records is not None else None,
             )))
 
     def build_catalog_entry(self, stream_id, schema, **kwargs):

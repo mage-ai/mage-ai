@@ -27,6 +27,7 @@ class Snowflake(Destination):
         self,
         schema: Dict,
         schema_name: str,
+        stream: str,
         table_name: str,
         database_name: str = None,
         unique_constraints: List[str] = None,
@@ -50,7 +51,6 @@ class Snowflake(Destination):
         schema: Dict,
         schema_name: str,
         table_name: str,
-        insert_command_count_wrapper: Callable,
         database_name: str = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
@@ -69,6 +69,8 @@ class Snowflake(Destination):
             columns=columns,
             records=records,
         )
+        insert_columns = ', '.join(insert_columns)
+        insert_values = ', '.join(insert_values)
 
         if unique_constraints and unique_conflict_method:
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'

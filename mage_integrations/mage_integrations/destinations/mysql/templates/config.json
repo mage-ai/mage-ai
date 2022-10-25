@@ -3,7 +3,6 @@
   "host": "",
   "password": "",
   "port": 3306,
-  "schema": "",
   "table": "",
   "username": ""
 }

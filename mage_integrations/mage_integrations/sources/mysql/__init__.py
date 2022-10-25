@@ -31,6 +31,7 @@ class MySQL(Source):
             password=self.config['password'],
             port=self.config.get('port'),
             username=self.config['username'],
+            verbose=0 if self.discover_mode or self.discover_streams_mode else 1,
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:

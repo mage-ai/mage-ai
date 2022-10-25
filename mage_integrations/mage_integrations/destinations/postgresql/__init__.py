@@ -17,7 +17,7 @@ class PostgreSQL(Destination):
             database=self.config['database'],
             host=self.config['host'],
             password=self.config['password'],
-            port=self.config['port'],
+            port=self.config.get('port'),
             username=self.config['username'],
         )
 
@@ -25,6 +25,7 @@ class PostgreSQL(Destination):
         self,
         schema: Dict,
         schema_name: str,
+        stream: str,
         table_name: str,
         database_name: str = None,
         unique_constraints: List[str] = None,
@@ -48,7 +49,6 @@ class PostgreSQL(Destination):
         schema: Dict,
         schema_name: str,
         table_name: str,
-        insert_command_count_wrapper: Callable,
         database_name: str = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
@@ -63,6 +63,8 @@ class PostgreSQL(Destination):
             columns=columns,
             records=records,
         )
+        insert_columns = ', '.join(insert_columns)
+        insert_values = ', '.join(insert_values)
 
         commands = [
             f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
@@ -82,8 +84,12 @@ class PostgreSQL(Destination):
             else:
                 commands.append('DO NOTHING')
 
+        commands_string = '\n'.join(commands)
         return [
-            insert_command_count_wrapper('\n'.join(commands)),
+            '\n'.join([
+                f"WITH insert_rows_and_count AS ({commands_string} RETURNING 1)",
+                'SELECT COUNT(*) FROM insert_rows_and_count',
+            ]),
         ]
 
     def does_table_exist(
