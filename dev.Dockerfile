@@ -1,4 +1,4 @@
-FROM python
+FROM python:3.10
 
 LABEL description="Mage data management platform"
 
