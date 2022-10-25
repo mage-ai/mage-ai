@@ -1,4 +1,5 @@
 from mage_integrations.destinations.mysql.constants import RESERVED_WORDS
+from mage_integrations.destinations.sql.constants import SQL_RESERVED_WORDS
 from mage_integrations.destinations.utils import clean_column_name as clean_column_name_orig
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
@@ -14,7 +15,7 @@ from typing import Dict, List
 
 def clean_column_name(col):
     col_new = clean_column_name_orig(col)
-    if col_new.upper() in RESERVED_WORDS:
+    if col_new.upper() in (RESERVED_WORDS + SQL_RESERVED_WORDS):
         col_new = f'_{col_new}'
     return col_new
 
@@ -48,7 +49,8 @@ def build_create_table_command(
     if unique_constraints:
         cols = [clean_column_name(col) for col in unique_constraints]
         index_name = '_'.join(cols)
-        columns_and_types.append(f"CONSTRAINT unique_{index_name} Unique({', '.join(cols)})")
+        index_name = f'unique_{index_name}'[:64]
+        columns_and_types.append(f"CONSTRAINT {index_name} Unique({', '.join(cols)})")
 
     if key_properties and len(key_properties) >= 1:
         col = clean_column_name(key_properties[0])
