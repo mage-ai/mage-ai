@@ -10,6 +10,9 @@ RUN ${PIP} install "mage-ai[all]"
 # Install NFS dependencies
 RUN apt -y update && apt -y install nfs-common
 
+# Install R
+RUN apt install -y r-base
+
 # Set up spark kernel
 RUN ${PIP} install sparkmagic
 RUN mkdir ~/.sparkmagic
