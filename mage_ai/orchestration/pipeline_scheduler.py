@@ -18,6 +18,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.retry import retry
 from typing import Any, Dict, List
 import pytz
 import traceback
@@ -85,31 +86,30 @@ class PipelineScheduler:
         else:
             self.__schedule_pipeline()
 
+    @retry(retries=3, delay=5)
     def on_block_complete(self, block_uuid: str) -> None:
-        try:
-            block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-            block_run.update(
-                status=BlockRun.BlockRunStatus.COMPLETED,
-                completed_at=datetime.now(),
-            )
-            self.logger.info(
-                f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
-                **self.__build_tags(
-                    block_run_id=block_run.id,
-                    block_uuid=block_run.block_uuid,
-                ),
-            )
+        block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
+        block_run.update(
+            status=BlockRun.BlockRunStatus.COMPLETED,
+            completed_at=datetime.now(),
+        )
+        self.logger.info(
+            f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
+            **self.__build_tags(
+                block_run_id=block_run.id,
+                block_uuid=block_run.block_uuid,
+            ),
+        )
 
-            self.pipeline_run.refresh()
-            if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
-                return
-            else:
-                for b in self.pipeline_run.block_runs:
-                    b.refresh()
-                self.schedule()
-        except Exception:
-            traceback.print_exc()
+        self.pipeline_run.refresh()
+        if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
+            return
+        else:
+            for b in self.pipeline_run.block_runs:
+                b.refresh()
+            self.schedule()
 
+    @retry(retries=3, delay=5)
     def on_block_failure(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(status=BlockRun.BlockRunStatus.FAILED)
