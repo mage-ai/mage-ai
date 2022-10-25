@@ -12,6 +12,13 @@ export enum BlockLanguageEnum {
   YAML = 'yaml',
 }
 
+export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
+  [BlockLanguageEnum.PYTHON]: 'Py',
+  [BlockLanguageEnum.R]: 'R',
+  [BlockLanguageEnum.SQL]: 'SQL',
+  [BlockLanguageEnum.YAML]: 'YAML',
+};
+
 export enum BlockTypeEnum {
   CHART = 'chart',
   DATA_EXPORTER = 'data_exporter',
