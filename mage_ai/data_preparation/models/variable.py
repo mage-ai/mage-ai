@@ -14,6 +14,10 @@ from typing import Any, Dict, List
 import os
 import pandas as pd
 
+DATAFRAME_PARQUET_FILE = 'data.parquet'
+DATAFRAME_PARQUET_SAMPLE_FILE = 'sample_data.parquet'
+DATAFRAME_CSV_FILE = 'data.csv'
+
 
 class VariableType(str, Enum):
     DATAFRAME = 'dataframe'
@@ -55,9 +59,16 @@ class Variable:
     def variable_path(self):
         return os.path.join(self.variable_dir_path, f'{self.uuid}')
 
+    @classmethod
+    def dir_path(self, pipeline_path, block_uuid):
+        return os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
+
     def check_variable_type(self):
+        """
+        Infer variable type based on data in the storage.
+        """
         if self.variable_type is None and self.storage.path_exists(
-            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
+            os.path.join(self.variable_dir_path, f'{self.uuid}', DATAFRAME_PARQUET_FILE)
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
@@ -66,13 +77,24 @@ class Variable:
                 os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
             self.variable_type = VariableType.GEO_DATAFRAME
 
-    @classmethod
-    def dir_path(self, pipeline_path, block_uuid):
-        return os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
+    def convert_parquet_to_csv(self):
+        """
+        For DATAFRAME variable, convert parquet files to csv files.
+        """
+        if self.variable_type != VariableType.DATAFRAME:
+            return
+        csv_file_path = os.path.join(self.variable_path, DATAFRAME_CSV_FILE)
+        if self.storage.path_exists(csv_file_path):
+            return
+        df = self.__read_parquet()
+        self.storage.write_csv(df, csv_file_path)
 
     def delete(self):
+        """
+        Delete the variable data.
+        """
         if self.variable_type is None and self.storage.path_exists(
-            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
+            os.path.join(self.variable_dir_path, f'{self.uuid}', DATAFRAME_PARQUET_FILE)
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
@@ -82,7 +104,42 @@ class Variable:
             return self.__delete_dataframe_analysis()
         return self.__delete_json()
 
+    def read_data(
+        self,
+        dataframe_analysis_keys: List[str] = None,
+        sample: bool = False,
+        sample_count: int = None,
+        spark=None,
+    ) -> Any:
+        """
+        Read variable data.
+        
+        Args:
+            dataframe_analysis_keys (List[str], optional): For DATAFRAME_ANALYSIS variable,
+                only read the selected keys.
+            sample (bool, optional): Whether to sample the rows of a dataframe, used for
+                DATAFRAME variable.
+            sample_count (int, optional): The number of rows to sample, used for
+                DATAFRAME variable.
+            spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
+        """
+        if self.variable_type == VariableType.DATAFRAME:
+            return self.__read_parquet(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.SPARK_DATAFRAME:
+            return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+            return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
+        return self.__read_json()
+
     def write_data(self, data: Any) -> None:
+        """
+        Write variable data to the persistent storage.
+
+        Args:
+            data (Any): Variable data to be written to storage.
+        """
         if self.variable_type is None and type(data) is pd.DataFrame:
             self.variable_type = VariableType.DATAFRAME
         elif is_spark_dataframe(data):
@@ -101,23 +158,6 @@ class Variable:
         else:
             self.__write_json(data)
 
-    def read_data(
-        self,
-        dataframe_analysis_keys: List[str] = None,
-        sample: bool = False,
-        sample_count: int = None,
-        spark=None,
-    ) -> Any:
-        if self.variable_type == VariableType.DATAFRAME:
-            return self.__read_parquet(sample=sample, sample_count=sample_count)
-        elif self.variable_type == VariableType.SPARK_DATAFRAME:
-            return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
-        elif self.variable_type == VariableType.GEO_DATAFRAME:
-            return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
-        elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
-        return self.__read_json()
-
     def __delete_dataframe_analysis(self) -> None:
         for k in DATAFRAME_ANALYSIS_KEYS:
             file_path = os.path.join(self.variable_path, f'{k}.json')
@@ -130,7 +170,7 @@ class Variable:
             self.storage.remove(file_path)
 
     def __delete_parquet(self) -> None:
-        file_path = os.path.join(self.variable_path, 'data.parquet')
+        file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
 
         if self.storage.path_exists(file_path):
             self.storage.remove(file_path)
@@ -169,8 +209,8 @@ class Variable:
         return df
 
     def __read_parquet(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
-        file_path = os.path.join(self.variable_path, 'data.parquet')
-        sample_file_path = os.path.join(self.variable_path, 'sample_data.parquet')
+        file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
+        sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
 
         read_sample_success = False
         if sample:
@@ -223,13 +263,13 @@ class Variable:
         self.storage.makedirs(self.variable_path, exist_ok=True)
         self.storage.write_parquet(
             df_output,
-            os.path.join(self.variable_path, 'data.parquet'),
+            os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE),
         )
         try:
             df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
             self.storage.write_parquet(
                 df_sample_output,
-                os.path.join(self.variable_path, 'sample_data.parquet'),
+                os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE),
             )
         except Exception:
             pass
