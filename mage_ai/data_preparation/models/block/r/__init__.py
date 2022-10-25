@@ -1,5 +1,9 @@
 from mage_ai.data_preparation.models.constants import BlockType
-from typing import Dict
+from mage_ai.data_preparation.models.variable import (
+    DATAFRAME_CSV_FILE,
+    VariableType,
+)
+from typing import Dict, List
 import jinja2
 import os
 import subprocess
@@ -29,35 +33,65 @@ def execute_r_code(
     execution_partition: str = None,
     global_vars: Dict = None,
 ):
+    input_variable_objects = block.input_variable_objects(
+        execution_partition=execution_partition,
+    ) or []
+
     # Render R script with user code
-    execution_code = __render_r_script(block, code, execution_partition=execution_partition)
+    execution_code = __render_r_script(
+        block,
+        code,
+        execution_partition=execution_partition,
+        input_variable_objects=input_variable_objects,
+    )
     file_path = f'/tmp/{str(uuid.uuid4())}.r'
     with open(file_path, 'w') as foutput:
         foutput.write(execution_code)
+
+    # Convert input variable to csv format
+    __convert_inputs_to_csvs(input_variable_objects)
+
+    # Execute R script
     __execute_r_code(file_path)
     os.remove(file_path)
 
     output_variable_object = block.output_variable_object(execution_partition=execution_partition)
-    df = pd.read_csv(os.path.join(output_variable_object.variable_path, 'data.csv'))
+    if output_variable_object is not None:
+        df = pd.read_csv(os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE))
+    else:
+        df = None
     return df
 
 
-def __render_r_script(block, code: str, execution_partition: str = None):
+def __convert_inputs_to_csvs(input_variable_objects):
+    for v in input_variable_objects:
+        if v.variable_type == VariableType.DATAFRAME:
+            v.convert_parquet_to_csv()
+
+
+def __render_r_script(
+    block,
+    code: str,
+    execution_partition: str = None,
+    input_variable_objects: List = [],
+):
     if block.type not in BLOCK_TYPE_TO_EXECUTION_TEMPLATE:
         raise Exception(
             f'Block execution for {block.type} with R language is not supported.',
         )
     template = template_env.get_template(BLOCK_TYPE_TO_EXECUTION_TEMPLATE[block.type])
-    input_variable_objects = block.input_variable_objects(
-        execution_partition=execution_partition,
-    ) or []
+
     output_variable_object = block.output_variable_object(execution_partition=execution_partition)
-    os.makedirs(output_variable_object.variable_path, exist_ok=True)
+    if output_variable_object is not None:
+        os.makedirs(output_variable_object.variable_path, exist_ok=True)
+        output_path = os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE)
+    else:
+        output_path = None
     return template.render(
         code=code,
-        input_paths=[os.path.join(v.variable_path, 'data.csv') for v in input_variable_objects],
+        input_paths=[os.path.join(v.variable_path, DATAFRAME_CSV_FILE) for v in input_variable_objects],
         input_vars_str=', '.join([f'df_{i + 1}' for i in range(len(input_variable_objects))]),
-        output_path=os.path.join(output_variable_object.variable_path, 'data.csv'),
+        output_path=output_path,
     ) + '\n'
 
 

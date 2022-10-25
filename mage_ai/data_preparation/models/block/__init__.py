@@ -1179,7 +1179,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         """
         Output dataframe variable object
         """
-        if self.pipeline is None:
+        if self.pipeline is None or len(self.output_variables) == 0:
             return None
         return self.pipeline.variable_manager.get_variable_object(
             self.pipeline.uuid,
