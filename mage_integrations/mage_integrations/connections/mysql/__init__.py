@@ -10,8 +10,9 @@ class MySQL(Connection):
         password: str,
         username: str,
         port: int = None,
+        **kwargs,
     ):
-        super().__init__()
+        super().__init__(**kwargs)
         self.database = database
         self.host = host
         self.password = password

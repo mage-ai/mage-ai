@@ -43,6 +43,7 @@ class Destination():
         batch_processing: bool = False,
         config: Dict = None,
         config_file_path: str = None,
+        debug: bool = False,
         log_to_stdout: bool = False,
         logger = LOGGER,
         settings: Dict = None,
@@ -52,6 +53,7 @@ class Destination():
         if argument_parser:
             argument_parser.add_argument('--config', type=str, default=None)
             argument_parser.add_argument('--config_json', type=str, default=None)
+            argument_parser.add_argument('--debug', action='store_true')
             argument_parser.add_argument('--log_to_stdout', type=bool, default=False)
             argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
@@ -61,6 +63,8 @@ class Destination():
                 config_file_path = args.config
             if args.config_json:
                 config = json.loads(args.config_json)
+            if args.debug:
+                debug = args.debug
             if args.log_to_stdout:
                 log_to_stdout = args.log_to_stdout
             if args.settings:
@@ -72,6 +76,7 @@ class Destination():
         self._settings = settings
         self.bookmark_properties = None
         self.config_file_path = config_file_path
+        self.debug = debug
         self.key_properties = None
         self.logger = Logger(caller=self, log_to_stdout=log_to_stdout, logger=logger)
         self.batch_processing = batch_processing

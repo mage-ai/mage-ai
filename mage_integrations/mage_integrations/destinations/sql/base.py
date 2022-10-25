@@ -33,8 +33,8 @@ class Destination(BaseDestination):
         self.logger.info('Export data started', tags=tags)
 
         database_name = self.config.get('database')
-        schema_name = self.config['schema']
-        table_name = self.config['table']
+        schema_name = self.config.get('schema')
+        table_name = self.config.get('table')
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
@@ -59,6 +59,7 @@ class Destination(BaseDestination):
                     database_name=database_name,
                     schema=schema,
                     schema_name=schema_name,
+                    stream=stream,
                     table_name=table_name,
                     unique_constraints=unique_constraints,
                 )
@@ -75,14 +76,14 @@ class Destination(BaseDestination):
                 schema=schema,
                 schema_name=schema_name,
                 table_name=table_name,
-                insert_command_count_wrapper=lambda command: '\n'.join([
-                    f'WITH insert_rows_and_count AS ({command} RETURNING 1)',
-                    'SELECT COUNT(*) FROM insert_rows_and_count',
-                ]),
                 unique_conflict_method=unique_conflict_method,
                 unique_constraints=unique_constraints,
             ):
                 query_strings.append(insert_command)
+
+        if self.debug:
+            for qs in query_strings:
+                print(qs, '\n')
 
         connection = self.build_connection()
         data = connection.execute(query_strings, commit=True)
@@ -115,6 +116,7 @@ class Destination(BaseDestination):
         self,
         schema: Dict,
         schema_name: str,
+        stream: str,
         table_name: str,
         database_name: str = None,
         unique_constraints: List[str] = None,
