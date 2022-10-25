@@ -1,9 +1,10 @@
-import {
+import React, {
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from 'react';
+import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -55,7 +56,7 @@ import { getFormattedVariables, parseVariables } from '@components/Sidekick/util
 import { indexBy, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { getTimeInUTC } from '../utils';
+import { convertSeconds, convertToSeconds, getTimeInUTC, TIME_UNIT_TO_SECONDS } from '../utils';
 
 const getTriggerTypes = (
   isStreamingPipeline?: boolean,
@@ -109,6 +110,7 @@ function Edit({
 
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
+  const [enableSLA, setEnableSLA] = useState<boolean>(false);
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
@@ -125,6 +127,7 @@ function Edit({
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
+    sla,
     start_time: startTime,
     variables: scheduleVariablesInit = {},
   } = schedule || {};
@@ -220,6 +223,19 @@ function Edit({
             setSchedule(pipelineSchedule);
           }
         }
+        
+        const slaFromSchedule = pipelineSchedule.sla
+
+        if (slaFromSchedule) {
+          setEnableSLA(true);
+
+          const { time, unit } = convertSeconds(sla);
+          setSchedule(schedule => ({
+            ...schedule,
+            slaAmount: time,
+            slaUnit: unit,
+          }));
+        }
       }
     },
     [pipelineSchedule],
@@ -246,6 +262,25 @@ function Edit({
         : null;
     }
 
+    if (enableSLA) {
+      const slaAmount = schedule?.['slaAmount'];
+      const slaUnit = schedule?.['slaUnit'];
+      if (!slaAmount || isNaN(slaAmount) || !slaUnit) {
+        toast.error(
+          'Please enter a valid SLA',
+          {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            toastId: 'sla_error',
+          },
+        );
+        return;
+      }
+  
+      data.sla = convertToSeconds(slaAmount, slaUnit);
+    } else if (pipelineSchedule?.sla) {
+      data.sla = 0;
+    }
+
     // @ts-ignore
     updateSchedule({
       pipeline_schedule: data,
@@ -253,7 +288,9 @@ function Edit({
   }, [
     customInterval,
     date,
+    enableSLA,
     eventMatchers,
+    pipelineSchedule,
     runtimeVariables,
     schedule,
     time,
@@ -807,72 +844,161 @@ function Edit({
   );
 
   // TODO: allow users to set their own custom runtime variables.
-  const variablesMemo = useMemo(() => !isEmptyObject(formattedVariables) && (
+  const afterMemo = useMemo(() => (
     <Spacing p={PADDING_UNITS}>
-      <FlexContainer alignItems="center">
-        <Spacing mr={2}>
-          <ToggleSwitch
-            checked={overwriteVariables}
-            onCheck={setOverwriteVariables}
-          />
-        </Spacing>
-        <Text monospace muted>
-          Overwrite global variables
-        </Text>
-      </FlexContainer>
+      {!isEmptyObject(formattedVariables) && (
+        <>
+          <FlexContainer alignItems="center">
+            <Spacing mr={2}>
+              <ToggleSwitch
+                checked={overwriteVariables}
+                onCheck={setOverwriteVariables}
+              />
+            </Spacing>
+            <Text monospace muted>
+              Overwrite global variables
+            </Text>
+          </FlexContainer>
 
-      {overwriteVariables && runtimeVariables
-        && Object.entries(runtimeVariables).length > 0 && (
-        <Spacing mt={2}>
-          <Table
-            columnFlex={[null, 1]}
-            columns={[
-              {
-                uuid: 'Variable',
-              },
-              {
-                uuid: 'Value',
-              },
-            ]}
-            rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
-              <Text
-                default
-                key={`variable_${uuid}`}
-                monospace
-              >
-                {uuid}
-              </Text>,
-              <TextInput
-                borderless
-                key={`variable_uuid_input_${uuid}`}
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setRuntimeVariables(vars => ({
-                    ...vars,
-                    [uuid]: e.target.value,
-                  }));
-                }}
-                paddingHorizontal={0}
-                placeholder="Variable value"
-                value={value}
-              />,
-            ])}
-          />
-        </Spacing>
+          {overwriteVariables && runtimeVariables
+            && Object.entries(runtimeVariables).length > 0 && (
+            <Spacing mt={2}>
+              <Table
+                columnFlex={[null, 1]}
+                columns={[
+                  {
+                    uuid: 'Variable',
+                  },
+                  {
+                    uuid: 'Value',
+                  },
+                ]}
+                rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
+                  <Text
+                    default
+                    key={`variable_${uuid}`}
+                    monospace
+                  >
+                    {uuid}
+                  </Text>,
+                  <TextInput
+                    borderless
+                    key={`variable_uuid_input_${uuid}`}
+                    monospace
+                    onChange={(e) => {
+                      e.preventDefault();
+                      setRuntimeVariables(vars => ({
+                        ...vars,
+                        [uuid]: e.target.value,
+                      }));
+                    }}
+                    paddingHorizontal={0}
+                    placeholder="Variable value"
+                    value={value}
+                  />,
+                ])}
+              />
+            </Spacing>
+          )}
+        </>
       )}
+      <Spacing mt={2}>
+        <FlexContainer alignItems="center">
+          <Spacing mr={2}>
+            <ToggleSwitch
+              checked={enableSLA}
+              onCheck={val => {
+                setEnableSLA(val);
+                if (!val) {
+                  setSchedule(schedule => ({
+                    ...schedule,
+                    slaAmount: 0,
+                  }))
+                }
+              }}
+            />
+          </Spacing>
+          <Text monospace muted>
+            Configure trigger SLA
+          </Text>
+        </FlexContainer>
+        {enableSLA && (
+          <Spacing mt={2}>
+            <Table
+              columnFlex={[null, 1]}
+              rows={[[
+                <FlexContainer
+                  alignItems="center"
+                  key="sla_detail"
+                >
+                  <CalendarDate default size={1.5 * UNIT} />
+                  <Spacing mr={1} />
+                  <Text default>
+                    SLA
+                  </Text>
+                </FlexContainer>,
+                <FlexContainer>
+                  <Flex flex={1}>
+                    <TextInput
+                      noBorder
+                      fullWidth
+                      key="sla_input_detail"
+                      monospace
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setSchedule(s => ({
+                          ...s,
+                          slaAmount: e.target.value,
+                        }));
+                      }}
+                      placeholder="Time"
+                      value={schedule?.['slaAmount']}
+                    />
+                  </Flex>
+                  <Flex flex={1}>
+                    <Select
+                      fullWidth
+                      monospace
+                      noBorder
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setSchedule(s => ({
+                          ...s,
+                          slaUnit: e.target.value,
+                        }));
+                      }}
+                      placeholder="Select time unit"
+                      small
+                      value={schedule?.['slaUnit']}
+                    >
+                      {Object.keys(TIME_UNIT_TO_SECONDS).map(unit => (
+                        <option key={unit} value={unit}>
+                          {`${unit}(s)`}
+                        </option>
+                      ))}
+                    </Select>
+                  </Flex>
+                </FlexContainer>
+              ]]}
+            />
+          </Spacing>
+        )}
+      </Spacing>
     </Spacing>
   ), [
+    enableSLA,
     formattedVariables,
     overwriteVariables,
     runtimeVariables,
+    schedule,
+    setEnableSLA,
     setOverwriteVariables,
   ]);
 
   return (
     <>
       <PipelineDetailPage
-        after={variablesMemo}
+        after={afterMemo}
         breadcrumbs={[
           {
             label: () => 'Triggers',
