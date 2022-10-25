@@ -56,10 +56,11 @@ Read more about Sources:
 
 ### Available sources
 
-- [Amplitude](../../mage_integrations/sources/amplitude/README.md)
-- [MySQL](../../mage_integrations/sources/mysql/README.md)
-- [Salesforce](../../mage_integrations/sources/salesforce/README.md)
-- [Stripe](../../mage_integrations/sources/stripe/README.md)
+- [Amplitude](../../mage_integrations/mage_integrations/sources/amplitude/README.md)
+- [MySQL](../../mage_integrations/mage_integrations/sources/mysql/README.md)
+- [Redshift (Amazon Web Services)](../../mage_integrations/mage_integrations/sources/redshift/README.md)
+- [Salesforce](../../mage_integrations/mage_integrations/sources/salesforce/README.md)
+- [Stripe](../../mage_integrations/mage_integrations/sources/stripe/README.md)
 - *Airtable (coming soon)*
 - *Chargebee (coming soon)*
 - *Google Analytics (coming soon)*
@@ -94,9 +95,9 @@ Read more about destinations:
 
 ### Available destinations
 
-- [MySQL](../../mage_integrations/destinations/mysql/README.md)
-- [PostgreSQL](../../mage_integrations/destinations/postgresql/README.md)
-- [Snowflake](../../mage_integrations/destinations/snowflake/README.md)
+- [MySQL](../../mage_integrations/mage_integrations/destinations/mysql/README.md)
+- [PostgreSQL](../../mage_integrations/mage_integrations/destinations/postgresql/README.md)
+- [Snowflake](../../mage_integrations/mage_integrations/destinations/snowflake/README.md)
 - *Amazon Web Services (AWS) Redshift (coming soon)*
 - *Amazon Web Services (AWS) S3 (coming soon)*
 - *Azure Blob Storage (coming soon)*
