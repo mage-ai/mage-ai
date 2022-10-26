@@ -60,8 +60,7 @@ export function getNonPythonBlockFromFile(
   if (!parts[1]) {
     return;
   }
-  // This assumes path [block_type]s/..
-  const blockType = singularize(parts[0]);
+  const blockType = singularize(parts[currentPathInit ? 0 : 1]);
   const fileName = parts[parts.length - 1];
 
   const yamlRegex = new RegExp(`\.${FileExtensionEnum.YAML}$`);
