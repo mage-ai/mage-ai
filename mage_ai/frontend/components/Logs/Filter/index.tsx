@@ -24,9 +24,11 @@ export type FilterQueryType = {
   'block_run_id[]'?: string[];
   'block_type[]'?: string[];
   'block_uuid[]'?: string[];
+  end_timestamp?: string;
   'level[]'?: string[];
   'pipeline_run_id[]'?: string[];
   'pipeline_schedule_id[]'?: string[];
+  start_timestamp?: string;
 };
 
 type FilterProps = {

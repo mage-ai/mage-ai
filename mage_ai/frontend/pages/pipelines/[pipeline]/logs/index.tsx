@@ -71,9 +71,18 @@ function BlockRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
+  const dayAgoTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]);
   const { data: dataLogs, mutate: fetchLogs } = api.logs.pipelines.list(
     query ? pipelineUUID : null,
-    ignoreKeys(query, [LOG_UUID_PARAM]),
+    ignoreKeys(
+      query?.start_timestamp
+        ? query
+        : {
+          ...query,
+          start_timestamp: dayAgoTimestamp,
+        },
+      [LOG_UUID_PARAM],
+    ),
     {},
   );
   const isLoading = !dataLogs;
@@ -145,7 +154,7 @@ function BlockRuns({
   useEffect(() => {
     if (!q?.start_timestamp) {
       goToWithQuery({
-        start_timestamp: calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]),
+        start_timestamp: dayAgoTimestamp,
       });
     }
   }, []);
