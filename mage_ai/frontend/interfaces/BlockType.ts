@@ -13,7 +13,7 @@ export enum BlockLanguageEnum {
 }
 
 export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
-  [BlockLanguageEnum.PYTHON]: 'Py',
+  [BlockLanguageEnum.PYTHON]: 'PY',
   [BlockLanguageEnum.R]: 'R',
   [BlockLanguageEnum.SQL]: 'SQL',
   [BlockLanguageEnum.YAML]: 'YAML',
