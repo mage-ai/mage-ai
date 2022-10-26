@@ -10,7 +10,6 @@ import subprocess
 import uuid
 import pandas as pd
 
-
 BLOCK_TYPE_TO_EXECUTION_TEMPLATE = {
     BlockType.DATA_LOADER: 'data_loader.jinja',
     BlockType.TRANSFORMER: 'transformer.jinja',
@@ -96,17 +95,11 @@ def __render_r_script(
 
 
 def __execute_r_code(file_path: str):
-    outputs = subprocess.run(
+    subprocess.run(
         [
             'Rscript',
             '--vanilla',
             file_path
         ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        check=True,
     )
-    output_stdout = outputs.stdout.decode()
-    output_stderr = outputs.stderr.decode()
-    print(output_stdout)
-    if len(output_stderr) > 0:
-        raise Exception(output_stderr)
