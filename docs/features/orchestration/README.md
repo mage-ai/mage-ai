@@ -173,6 +173,15 @@ Browse all logs for a pipeline. You can search and filter logs by log level, blo
 <br />
 
 ## Monitor
-*WIP*
+
+  You can monitor many metrics for each of your pipelines and blocks.
+Soon, you’ll be able to monitor aggregate metrics across all pipelines and blocks.
+
+<img
+  alt="Monitoring"
+  src="https://github.com/mage-ai/assets/blob/main/monitoring.jpg?raw=true"
+/>
+
+Read more [here](../../observability/monitoring/README.md).
 
 <br />
