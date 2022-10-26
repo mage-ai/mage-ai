@@ -33,7 +33,7 @@ import {
   getBlockFromFile,
   getBlockUUIDFromFile,
   getFullPathWithoutRootFolder,
-  getYamlBlockFromFile,
+  getNonPythonBlockFromFile,
 } from './utils';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
@@ -158,7 +158,7 @@ function Folder({
               }
             }
 
-            const yamlBlockFromFile = getYamlBlockFromFile(file);
+            const nonPythonBlockFromFile = getNonPythonBlockFromFile(file);
 
             if (children) {
               setCollapsed((collapsedPrev) => {
@@ -166,10 +166,10 @@ function Folder({
 
                 return !collapsedPrev;
               });
-            } else if (yamlBlockFromFile) {
+            } else if (nonPythonBlockFromFile) {
               onSelectBlockFile(
-                yamlBlockFromFile.uuid,
-                yamlBlockFromFile.type,
+                nonPythonBlockFromFile.uuid,
+                nonPythonBlockFromFile.type,
                 getFullPathWithoutRootFolder(file),
               );
             } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {

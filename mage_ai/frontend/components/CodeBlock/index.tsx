@@ -11,7 +11,9 @@ import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
+import Badge from '@oracle/components/Badge';
 import BlockType, {
+  ABBREV_BLOCK_LANGUAGE_MAPPING,
   BLOCK_TYPES_WITH_NO_PARENTS,
   BLOCK_TYPES_WITH_UPSTREAM_INPUTS,
   BLOCK_TYPE_NAME_MAPPING,
@@ -642,6 +644,12 @@ function CodeBlockProps({
       >
         <Flex alignItems="center" flex={1}>
           <FlexContainer alignItems="center">
+            <Badge>
+              {ABBREV_BLOCK_LANGUAGE_MAPPING[block.language]}
+            </Badge>
+
+            <Spacing mr={1} />
+
             <Circle
               color={color}
               size={UNIT * 1.5}

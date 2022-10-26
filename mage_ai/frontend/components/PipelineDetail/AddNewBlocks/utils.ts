@@ -65,6 +65,28 @@ export const createDataSourceMenuItems = (
     }));
 };
 
+export const getNonPythonMenuItems = (
+  addNewBlock: (block: BlockRequestPayloadType) => void,
+  blockType: BlockTypeEnum,
+) => ([
+  {
+    label: () => 'SQL',
+    onClick: () => addNewBlock({
+      language: BlockLanguageEnum.SQL,
+      type: blockType,
+    }),
+    uuid: `${blockType}/sql`,
+  },
+  {
+    label: () => 'R',
+    onClick: () => addNewBlock({
+      language: BlockLanguageEnum.R,
+      type: blockType,
+    }),
+    uuid: `${blockType}/r`,
+  },
+]);
+
 export const getdataSourceMenuItems = (
   addNewBlock: (block: BlockRequestPayloadType) => void,
   blockType: BlockTypeEnum,
@@ -85,18 +107,11 @@ export const getdataSourceMenuItems = (
   } else {
     return [
       {
-        label: () => 'SQL',
-        onClick: () => addNewBlock({
-          language: BlockLanguageEnum.SQL,
-          type: blockType,
-        }),
-        uuid: `${blockType}/sql`,
-      },
-      {
         items: dataSourceMenuItemsMapping[blockType],
         label: () => 'Python',
         uuid: `${blockType}/python`,
       },
+      ...getNonPythonMenuItems(addNewBlock, blockType),
     ];
   }
 };

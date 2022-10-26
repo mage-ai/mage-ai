@@ -7,9 +7,17 @@ import { DataTypeEnum } from './KernelOutputType';
 
 export enum BlockLanguageEnum {
   PYTHON = 'python',
+  R = 'r',
   SQL = 'sql',
   YAML = 'yaml',
 }
+
+export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
+  [BlockLanguageEnum.PYTHON]: 'Py',
+  [BlockLanguageEnum.R]: 'R',
+  [BlockLanguageEnum.SQL]: 'SQL',
+  [BlockLanguageEnum.YAML]: 'YAML',
+};
 
 export enum BlockTypeEnum {
   CHART = 'chart',
@@ -32,6 +40,12 @@ export const BLOCK_TYPES = [
 export const YAML_BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
+];
+
+export const R_BLOCK_TYPES = [
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.TRANSFORMER,
 ];
 
 export const BLOCK_TYPES_NO_DATA_TABLE = [

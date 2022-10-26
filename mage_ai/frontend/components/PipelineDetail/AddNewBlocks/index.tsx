@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -27,6 +27,7 @@ import {
 import {
   createActionMenuGroupings,
   getdataSourceMenuItems,
+  getNonPythonMenuItems,
 } from './utils';
 
 type AddNewBlocksProps = {
@@ -185,18 +186,11 @@ function AddNewBlocks({
                     :
                       [
                         {
-                          label: () => 'SQL',
-                          onClick: () => addNewBlock({
-                            language: BlockLanguageEnum.SQL,
-                            type: BlockTypeEnum.TRANSFORMER,
-                          }),
-                          uuid: 'transformers/sql',
-                        },
-                        {
                           items: allActionMenuItems,
                           label: () => 'Python',
                           uuid: 'transformers/python_all',
                         },
+                        ...getNonPythonMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER),
                       ]
                   )
                 }

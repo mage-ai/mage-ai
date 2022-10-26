@@ -7,6 +7,7 @@ import FileType, {
 import BlockType, {
   BLOCK_TYPES,
   YAML_BLOCK_TYPES,
+  R_BLOCK_TYPES,
 } from '@interfaces/BlockType';
 import { prependArray, removeAtIndex } from '@utils/array';
 import { singularize } from '@utils/string';
@@ -51,7 +52,7 @@ export function getBlockFromFile(
   }
 }
 
-export function getYamlBlockFromFile(
+export function getNonPythonBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
 ): BlockType {
@@ -59,15 +60,20 @@ export function getYamlBlockFromFile(
   if (!parts[1]) {
     return;
   }
-  // This assumes path default_repo/[block_type]s/..
-  const blockType = singularize(parts[1]);
+  const blockType = singularize(parts[currentPathInit ? 0 : 1]);
   const fileName = parts[parts.length - 1];
 
   const yamlRegex = new RegExp(`\.${FileExtensionEnum.YAML}$`);
-  if (YAML_BLOCK_TYPES.includes(blockType) && fileName.match(yamlRegex)) {
+  const rRegex = new RegExp(`\.${FileExtensionEnum.R}$`);
+  if (fileName.match(yamlRegex) && YAML_BLOCK_TYPES.includes(blockType)) {
     return {
       type: blockType,
       uuid: fileName.replace(yamlRegex, ''),
+    };
+  } else if (fileName.match(rRegex) && R_BLOCK_TYPES.includes(blockType)) {
+    return {
+      type: blockType,
+      uuid: fileName.replace(rRegex, ''),
     };
   }
 }
