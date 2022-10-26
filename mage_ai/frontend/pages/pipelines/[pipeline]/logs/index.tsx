@@ -26,10 +26,11 @@ import LogToolbar from '@components/Logs/Toolbar';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
-import { LOG_ITEMS_PER_PAGE } from '@components/Logs/Toolbar/constants';
+import { LOG_ITEMS_PER_PAGE, LOG_RANGE_SEC_INTERVAL_MAPPING } from '@components/Logs/Toolbar/constants';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { calculateStartTimestamp } from '@utils/number';
 import { formatTimestamp, initializeLogs } from '@utils/models/log';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
@@ -141,6 +142,13 @@ function BlockRuns({
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
+  useEffect(() => {
+    if (!q?.start_timestamp) {
+      goToWithQuery({
+        start_timestamp: calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]),
+      });
+    }
+  }, []);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
       setOffset(LOG_ITEMS_PER_PAGE);

@@ -21,7 +21,6 @@ export const LOG_LEVELS = [
 ];
 
 export enum LogRangeEnum {
-  LAST_40_RUNS = 'Last 40 runs',
   LAST_HOUR = 'Last hour',
   LAST_DAY = 'Last day',
   LAST_WEEK = 'Last week',
