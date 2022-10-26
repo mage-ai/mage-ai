@@ -9,10 +9,10 @@ RUN ${PIP} install "mage-ai[all]"
 
 # Install NFS dependencies
 RUN apt -y update && apt -y install nfs-common
-RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
 
 # Install R
 RUN apt install -y r-base
+RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
 
 # Set up spark kernel
 RUN ${PIP} install sparkmagic
