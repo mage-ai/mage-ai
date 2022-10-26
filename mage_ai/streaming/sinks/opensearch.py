@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from mage_ai.streaming.sinks.base import BaseSink
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
+
 from requests_aws4auth import AWS4Auth
 from typing import Dict, List
 import boto3
@@ -8,19 +10,17 @@ import time
 
 
 @dataclass
-class OpensearchSinkConfig:
+class OpensearchConfig:
     host: str
     index_name: str
     verify_certs: bool = True
     http_auth: str = '@awsauth'
 
 
-class OpenSearchSink():
-    def __init__(self, config: Dict):
-        if 'connector_type' in config:
-            config.pop('connector_type')
-        self.config = OpensearchSinkConfig(**config)
+class OpenSearchSink(BaseSink):
+    config_class = OpensearchConfig
 
+    def init_client(self):
         # Initialize opensearch client
         if self.config.http_auth == '@awsauth':
             session = boto3.Session()

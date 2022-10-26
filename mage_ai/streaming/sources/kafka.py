@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from kafka import KafkaConsumer
 from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.sources.base import BaseSource
 from typing import Dict
 import json
 import time
@@ -18,7 +19,7 @@ class SSLConfig:
 
 
 @dataclass
-class KafkaSourceConfig(BaseConfig):
+class KafkaConfig(BaseConfig):
     bootstrap_server: str
     consumer_group: str
     topic: str
@@ -34,12 +35,10 @@ class KafkaSourceConfig(BaseConfig):
         return config
 
 
-class KafkaSource:
-    def __init__(self, config: Dict):
-        if 'connector_type' in config:
-            config.pop('connector_type')
-        self.config = KafkaSourceConfig.load(config=config)
+class KafkaSource(BaseSource):
+    config_class = KafkaConfig
 
+    def init_client(self):
         print('Start initializing kafka consumer.')
         # Initialize kafka consumer
         consumer_kwargs = dict(
