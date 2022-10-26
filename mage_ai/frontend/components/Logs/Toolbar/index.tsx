@@ -81,6 +81,11 @@ function LogToolbar({
           hour: padTime(initialStartHour),
           minute: padTime(initialStartMinute),
         });
+
+        const secondsAgo = (Math.ceil(Date.now() / 1000) - initialStart);
+        if (Math.abs(secondsAgo - LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]) <= 5) {
+          setSelectedRange(LogRangeEnum.LAST_DAY);
+        }
       }
 
       if (initialEnd) {
@@ -111,7 +116,7 @@ function LogToolbar({
           onClick={() => setLogOffset((prev: number) => prev + LOG_ITEMS_PER_PAGE)}
           uuid="logs/load_older_logs"
         >
-          {allLogsLoaded ? 'All past logs loaded' : 'Load older logs'}
+          {allLogsLoaded ? 'All logs within range loaded' : 'Load older logs'}
         </KeyboardShortcutButton>
 
         <Spacing mr={2} />
@@ -131,11 +136,6 @@ function LogToolbar({
                   [RangeQueryEnum.END]: null,
                 },
               );
-            } else if (range === LogRangeEnum.LAST_40_RUNS) {
-              goToWithQuery({
-                [RangeQueryEnum.START]: null,
-                [RangeQueryEnum.END]: null,
-              });
             }
           }}
           paddingRight={UNIT * 4}

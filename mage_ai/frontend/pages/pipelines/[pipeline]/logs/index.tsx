@@ -26,10 +26,11 @@ import LogToolbar from '@components/Logs/Toolbar';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
-import { LOG_ITEMS_PER_PAGE } from '@components/Logs/Toolbar/constants';
+import { LOG_ITEMS_PER_PAGE, LOG_RANGE_SEC_INTERVAL_MAPPING } from '@components/Logs/Toolbar/constants';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { calculateStartTimestamp } from '@utils/number';
 import { formatTimestamp, initializeLogs } from '@utils/models/log';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
@@ -70,9 +71,18 @@ function BlockRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
+  const dayAgoTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]);
   const { data: dataLogs, mutate: fetchLogs } = api.logs.pipelines.list(
     query ? pipelineUUID : null,
-    ignoreKeys(query, [LOG_UUID_PARAM]),
+    ignoreKeys(
+      query?.start_timestamp
+        ? query
+        : {
+          ...query,
+          start_timestamp: dayAgoTimestamp,
+        },
+      [LOG_UUID_PARAM],
+    ),
     {},
   );
   const isLoading = !dataLogs;
@@ -141,6 +151,13 @@ function BlockRuns({
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
+  useEffect(() => {
+    if (!q?.start_timestamp) {
+      goToWithQuery({
+        start_timestamp: dayAgoTimestamp,
+      });
+    }
+  }, []);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
       setOffset(LOG_ITEMS_PER_PAGE);
