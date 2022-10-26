@@ -3,13 +3,13 @@ from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import VariableManager
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 from pandas.util.testing import assert_frame_equal
 import os
 import pandas as pd
 
 
-class BlockTest(TestCase):
+class BlockTest(DBTestCase):
     def test_create(self):
         block1 = Block.create('test_transformer', 'transformer', self.repo_path)
         block2 = Block.create('test data loader', BlockType.DATA_LOADER, self.repo_path)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
@@ -10,7 +11,7 @@ import time
 
 
 @dataclass
-class OpensearchConfig:
+class OpensearchConfig(BaseConfig):
     host: str
     index_name: str
     verify_certs: bool = True

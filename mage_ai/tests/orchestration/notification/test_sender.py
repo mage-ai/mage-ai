@@ -1,7 +1,6 @@
-from mage_ai.orchestration.db.models import PipelineRun
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline, create_pipeline_run_with_schedule
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
@@ -10,7 +9,7 @@ from mage_ai.tests.orchestration.notification.constants import (
 from unittest.mock import patch
 
 
-class NotificationSenderTests(TestCase):
+class NotificationSenderTests(DBTestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()

@@ -1,13 +1,13 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable, VariableType
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 from pandas.util.testing import assert_frame_equal
 import os
 import pandas as pd
 
 
-class VariableTest(TestCase):
+class VariableTest(DBTestCase):
     def test_write_and_read_data(self):
         pipeline = self.__create_pipeline('test pipeline 1')
         variable1 = Variable('var1', pipeline.dir_path, 'block1')

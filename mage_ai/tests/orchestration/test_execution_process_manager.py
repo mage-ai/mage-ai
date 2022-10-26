@@ -1,11 +1,11 @@
 from mage_ai.orchestration.db.models import PipelineRun
 from mage_ai.orchestration.execution_process_manager import ExecutionProcessManager
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
 from unittest.mock import MagicMock, patch
 
 
-class ExecutionProcessManagerTests(TestCase):
+class ExecutionProcessManagerTests(DBTestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()

@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
@@ -9,7 +9,7 @@ from mage_ai.tests.factory import (
 from unittest.mock import MagicMock, patch
 
 
-class PipelineSchedulerTests(TestCase):
+class PipelineSchedulerTests(DBTestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()

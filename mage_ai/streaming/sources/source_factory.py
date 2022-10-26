@@ -12,3 +12,6 @@ class SourceFactory:
         elif connector_type == SourceType.AZURE_EVENT_HUB:
             from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
             return AzureEventHubSource(config)
+        raise Exception(
+            f'Consuming data from {connector_type} is not supported in streaming pipelines yet.',
+        )
