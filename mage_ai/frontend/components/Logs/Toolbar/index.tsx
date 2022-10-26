@@ -136,11 +136,6 @@ function LogToolbar({
                   [RangeQueryEnum.END]: null,
                 },
               );
-            } else if (range === LogRangeEnum.LAST_40_RUNS) {
-              goToWithQuery({
-                [RangeQueryEnum.START]: null,
-                [RangeQueryEnum.END]: null,
-              });
             }
           }}
           paddingRight={UNIT * 4}
