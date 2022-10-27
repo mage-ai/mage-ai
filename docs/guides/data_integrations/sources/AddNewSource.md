@@ -342,7 +342,7 @@ if __name__ == '__main__':
     }
 1. Run a sync:
     ```bash
-    python3 sources/titanic/__init__.py --config TEST_CONFIG.json --state TEST_STATE.json --catalog TEST_CATALOG.json
+    python3 mage_integrations/sources/titanic/__init__.py --config TEST_CONFIG.json --state TEST_STATE.json --catalog TEST_CATALOG.json
     ```
 
 You should see the following output in your terminal:

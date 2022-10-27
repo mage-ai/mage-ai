@@ -331,16 +331,16 @@ class Source:
                 records=len(records) if records is not None else None,
             )))
 
-    def build_catalog_entry(self, stream_id: str, schema, **kwargs):
-        """Summary
+    def build_catalog_entry(self, stream_id: str, schema, **kwargs) -> CatalogEntry:
+        """
+        Build catalog entry.
 
         Args:
-            stream_id (str): Description
-            schema (TYPE): Description
-            **kwargs: Description
+            stream_id (str): The name of the stream.
+            schema: The schema of the stream.
 
         Returns:
-            TYPE: Description
+            CatalogEntry: The catalog entry of the stream.
         """
         # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata
         metadata = get_standard_metadata(

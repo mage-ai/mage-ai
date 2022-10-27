@@ -3,7 +3,6 @@
 ```python
 from connections.amplitude import Amplitude
 from datetime import datetime, timedelta
-import importlib
 import json
 
 

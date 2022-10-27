@@ -8,7 +8,7 @@ from mage_integrations.destinations.sql.utils import (
     convert_column_type,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 
 class PostgreSQL(Destination):
