@@ -77,15 +77,27 @@
 
 <br />
 
-## What’s Mage used for
+<h3 align="center">
+  Give you data team magical powers
+</h3>
 
-🏗️ Integrate and synchronize data from 3rd party sources
+<p align="center">
+  Integrate and synchronize data from 3rd party sources
+</p>
 
-🚰 Build batch and real-time data transformation pipelines using Python, SQL, and R
+<p align="center">
+  Build batch and real-time data transformation pipelines using Python, SQL, and R
+</p>
 
-🎶 Manage, run, and monitor thousands of pipelines without losing sleep
+<p align="center">
+  Manage, run, and monitor thousands of pipelines without losing sleep
+</p>
 
 <br />
+
+<p align="center">
+  ↓
+</p>
 
 <p align="center">1️⃣ 🏗️</p>
 <h1 align="center">Build</h1>
@@ -97,7 +109,7 @@
 
 |   |   |
 | --- | --- |
-| <img src="https://github.com/mage-ai/assets/blob/main/mage-hiw-build.gif?raw=true" /> | <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. |
+| <img src="https://github.com/mage-ai/assets/blob/main/mage-build.gif?raw=true" /> | <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. |
 
 <p align="center">
   ↓
@@ -113,7 +125,7 @@
 
 |   |   |
 | --- | --- |
-| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="https://github.com/mage-ai/assets/blob/main/mage-preview.gif?raw=true" /> |
+| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="https://github.com/mage-ai/assets/blob/main/mage-preview2.gif?raw=true" /> |
 
 <p align="center">
   ↓
@@ -129,7 +141,7 @@
 
 |   |   |
 | --- | --- |
-| <img src="https://github.com/mage-ai/assets/blob/main/mage-launch-triggers.jpeg?raw=true" /> | <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. |
+| <img src="https://github.com/mage-ai/assets/blob/main/mage-launch.gif?raw=true" /> | <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. |
 
 <br />
 
