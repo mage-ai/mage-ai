@@ -243,7 +243,7 @@ class Source:
         )
 
         write_schema(
-            bookmark_properties=self.__get_boommark_properties_for_stream(stream),
+            bookmark_properties=self.__get_bookmark_properties_for_stream(stream),
             key_properties=stream.key_properties,
             replication_method=stream.replication_method,
             schema=schema_dict,
@@ -266,7 +266,7 @@ class Source:
         Returns:
             List[Dict]: The list of rows.
         """
-        bookmark_properties = self.__get_boommark_properties_for_stream(stream)
+        bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
 
         start_date = None
         if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and \
@@ -322,12 +322,12 @@ class Source:
         """
         for stream in catalog.get_selected_streams(self.state):
             tags = dict(stream=stream.tap_stream_id)
-            self.logger.info('Synced stream started.', tags=tags)
+            self.logger.info('Syncing stream started.', tags=tags)
 
             self.process_stream(stream)
             records = self.sync_stream(stream)
 
-            self.logger.info('Synced stream completed.', tags=merge_dict(tags, dict(
+            self.logger.info('Syncing stream completed.', tags=merge_dict(tags, dict(
                 records=len(records) if records is not None else None,
             )))
 
@@ -457,7 +457,7 @@ class Source:
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
             return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
 
-    def __get_boommark_properties_for_stream(self, stream) -> List[str]:
+    def __get_bookmark_properties_for_stream(self, stream) -> List[str]:
         bookmark_properties = []
 
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:

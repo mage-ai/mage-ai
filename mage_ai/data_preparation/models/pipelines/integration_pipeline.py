@@ -100,6 +100,11 @@ class IntegrationPipeline(Pipeline):
         return file_path
 
     @property
+    def transformer_file_path(self) -> str:
+        transformer_file = importlib.import_module('mage_integrations.transformers.base')
+        return os.path.abspath(transformer_file.__file__)
+
+    @property
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
 

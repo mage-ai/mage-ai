@@ -697,7 +697,7 @@ class Block:
 
             if self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
-                    proc1 = subprocess.run([
+                    proc = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.source_file_path,
                         '--config_json',
@@ -715,13 +715,112 @@ class Block:
                         json.dumps(runtime_arguments or {}),
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
 
-                    output = proc1.stdout.decode()
+                    output = proc.stdout.decode()
+                    print_logs_from_output(output)
+                    outputs.append(output)
+                elif BlockType.TRANSFORMER == self.type:
+                    input_from_previous = input_from_output['output'][0]
+
+                    # only supports 1 upstream block for now
+                    upstream_block_uuid = self.upstream_block_uuids[0]
+
+                    proc1 = subprocess.run([
+                        PYTHON_COMMAND,
+                        self.pipeline.transformer_file_path,
+                        '--pipeline_uuid',
+                        self.pipeline.uuid,
+                        '--block_uuid',
+                        upstream_block_uuid,
+                        '--execution_partition',
+                        execution_partition,
+                        '--log_to_stdout',
+                        '1',
+                        '--to_df',
+                        '1',
+                        # '--config_json',
+                        # build_config_json(
+                        #     self.pipeline.data_exporter.file_path,
+                        #     global_vars,
+                        # ),
+                        # '--log_to_stdout',
+                        # '1',
+                        # '--settings',
+                        # self.pipeline.data_exporter.file_path,
+                        # '--state',
+                        # self.pipeline.destination_state_file_path,
+                    ], input=input_from_previous, capture_output=True, text=True)
+
+                    print_logs_from_output(proc1.stdout)
+
+                    input_vars.append(
+                        self.pipeline.variable_manager.get_variable(
+                            self.pipeline.uuid,
+                            upstream_block_uuid,
+                            'df',
+                            partition=execution_partition,
+                            variable_type=VariableType.DATAFRAME,
+                            spark=(global_vars or dict()).get('spark'),
+                        )
+                    )
+
+                    exec(self.content, results)
+                    block_function = self.__validate_execution(decorated_functions, input_vars)
+                    if block_function is not None:
+                        df = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
+
+                    self.store_variables(
+                        dict(df=df),
+                        execution_partition=execution_partition,
+                        override_outputs=True,
+                    )
+
+                    print('here!')
+
+                    # self.execute_block(
+                    #     build_block_output_stdout=build_block_output_stdout,
+                    #     custom_code=custom_code,
+                    #     execution_partition=execution_partition,
+                    #     input_args=input_args,
+                    #     logger=logger,
+                    #     global_vars=global_vars,
+                    #     test_execution=test_execution,
+                    #     input_from_output=input_from_output,
+                    #     runtime_arguments=runtime_arguments,
+                    # )
+
+                    proc2 = subprocess.run([
+                        PYTHON_COMMAND,
+                        self.pipeline.transformer_file_path,
+                        '--pipeline_uuid',
+                        self.pipeline.uuid,
+                        '--block_uuid',
+                        self.uuid,
+                        '--execution_partition',
+                        execution_partition,
+                        '--log_to_stdout',
+                        '1',
+                        '--config_json',
+                        build_config_json(
+                            self.pipeline.data_loader.file_path,
+                            global_vars,
+                        ),
+                        '--log_to_stdout',
+                        '1',
+                        '--settings',
+                        self.pipeline.data_loader.file_path,
+                        '--state',
+                        self.pipeline.source_state_file_path,
+                        '--query_json',
+                        json.dumps(runtime_arguments or {}),
+                    ], stdout=subprocess.PIPE)
+
+                    output = proc2.stdout.decode()
                     print_logs_from_output(output)
                     outputs.append(output)
                 elif BlockType.DATA_EXPORTER == self.type:
                     input_from_previous = input_from_output['output'][0]
 
-                    proc2 = subprocess.run([
+                    proc = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.destination_file_path,
                         '--config_json',
@@ -737,8 +836,8 @@ class Block:
                         self.pipeline.destination_state_file_path,
                     ], input=input_from_previous, capture_output=True, text=True)
 
-                    print_logs_from_output(proc2.stdout)
-                    outputs.append(proc2)
+                    print_logs_from_output(proc.stdout)
+                    outputs.append(proc)
             elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(
                     self,

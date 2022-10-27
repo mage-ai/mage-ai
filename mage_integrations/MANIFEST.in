@@ -1,3 +1,4 @@
 include requirements.txt
 recursive-include mage_integrations/destinations *
 recursive-include mage_integrations/sources *
+recursive-include mage_integrations/transformers *
