@@ -116,13 +116,13 @@ class Source:
         Returns:
             Catalog: Description
         """
-        streams = streams or []
-
+        streams = []
+        catalog_entries = []
         for stream_id, schema in self.load_schemas_from_folder().items():
             if not streams or stream_id in streams:
-                streams.append(self.build_catalog_entry(stream_id, schema))
+                catalog_entries.append(self.build_catalog_entry(stream_id, schema))
 
-        return Catalog(streams)
+        return Catalog(catalog_entries)
 
     def discover_streams(self) -> List[Dict]:
         """
