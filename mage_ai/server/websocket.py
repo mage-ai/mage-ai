@@ -38,6 +38,7 @@ import asyncio
 import json
 import multiprocessing
 import os
+import re
 import tornado.websocket
 import traceback
 import uuid
@@ -179,6 +180,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             cancel_pipeline_execution(pipeline, publish_pipeline_message)
         elif not pipeline:
             code = message.get('code')
+            # Need to use Python magic command for changing directories
+            code = re.sub(r'^!%cd|^!cd', '%cd', code)
+
             client = self.init_kernel_client(DEFAULT_KERNEL_NAME)
             msg_id = client.execute(code)
             uuid = message.get('uuid')
