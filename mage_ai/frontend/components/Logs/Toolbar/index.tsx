@@ -112,10 +112,10 @@ function LogToolbar({
         <KeyboardShortcutButton
           blackBorder
           disabled={allLogsLoaded}
-          paddingBottom={UNIT * 0.75}
-          paddingTop={UNIT * 0.75}
           inline
           onClick={() => setLogOffset((prev: number) => prev + LOG_ITEMS_PER_PAGE)}
+          paddingBottom={UNIT * 0.75}
+          paddingTop={UNIT * 0.75}
           uuid="logs/load_older_logs"
         >
           {allLogsLoaded ? 'All logs within range loaded' : 'Load older logs'}
