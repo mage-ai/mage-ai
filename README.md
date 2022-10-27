@@ -76,7 +76,7 @@
 />
 
 <h3 align="center">
-  Give you data team magical powers
+  Give your data team magical powers
 </h3>
 
 <p align="center">
