@@ -9,7 +9,10 @@ import Headline from '@oracle/elements/Headline';
 import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
-import PipelineRunType from '@interfaces/PipelineRunType';
+import PipelineRunType, {
+  PipelineRunReqQueryParamsType,
+  RUN_STATUS_TO_LABEL,
+ } from '@interfaces/PipelineRunType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
@@ -17,17 +20,14 @@ import PipelineScheduleType, {
 } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
+
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
-import {
-  PADDING_UNITS,
-  UNIT,
-  UNITS_BETWEEN_SECTIONS,
-} from '@oracle/styles/units/spacing';
 import {
   CalendarDate,
   Info,
@@ -39,14 +39,21 @@ import {
   Sun,
   Switch,
 } from '@oracle/icons';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PROVIDER_EVENTS_BY_UUID } from '@interfaces/EventMatcherType';
+import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import {
   addTriggerVariables,
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
 import { convertSeconds } from '../utils';
+import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -85,13 +92,19 @@ function TriggerDetail({
 
   const q = queryFromUrl();
 
+  const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
+    _limit: LIMIT,
+    _offset: (q?.page ? q.page : 0) * LIMIT,
+  };
+  if (q?.status) {
+    pipelineRunsRequestQuery.status = q.status;
+  }
   const {
     data: dataPipelineRuns,
     mutate: fetchPipelineRuns,
-  } = api.pipeline_runs.pipeline_schedules.list(pipelineScheduleID, {
-    _limit: LIMIT,
-    _offset: (q?.page ? q.page : 0) * LIMIT,
-  }, {
+  } = api.pipeline_runs.pipeline_schedules.list(
+    pipelineScheduleID,
+    pipelineRunsRequestQuery, {
     refreshInterval: 3000,
     revalidateOnFocus: true,
   });
@@ -217,7 +230,7 @@ function TriggerDetail({
     ];
 
     if (sla) {
-      const { time, unit } = convertSeconds(sla)
+      const { time, unit } = convertSeconds(sla);
       const finalUnit = time === 1 ? unit : `${unit}s`;
       rows.push(
         [
@@ -512,6 +525,42 @@ function TriggerDetail({
           >
             Edit trigger
           </Button>
+
+          <Spacing mr={PADDING_UNITS} />
+
+          <Select
+            compact
+            defaultColor
+            onChange={e => {
+              e.preventDefault();
+              const updatedStatus = e.target.value;
+              if (updatedStatus === 'all') {
+                router.push(
+                  '/pipelines/[pipeline]/triggers/[...slug]',
+                  `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
+                );
+              } else {
+                goToWithQuery(
+                  {
+                    page: 0,
+                    status: e.target.value,
+                  },
+                );
+              }
+            }}
+            paddingRight={UNIT * 4}
+            placeholder="Select run status"
+            value={q?.status || 'all'}
+          >
+            <option key="all_statuses" value="all">
+              All statuses
+            </option>
+            {Object.values(RunStatusEnum).map(status => (
+              <option key={status} value={status}>
+                {RUN_STATUS_TO_LABEL[status]}
+              </option>
+            ))}
+          </Select>
         </FlexContainer>
       )}
       title={() => pipelineScheduleName}
