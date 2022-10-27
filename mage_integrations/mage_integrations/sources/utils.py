@@ -1,7 +1,6 @@
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
     INCLUSION_AUTOMATIC,
-    INCLUSION_AVAILABLE,
     INCLUSION_UNSUPPORTED,
     METADATA_KEY_INCLUSION,
     METADATA_KEY_SELECTED,
@@ -37,7 +36,8 @@ def get_standard_metadata(
         if stream_id:
             mdata = write(mdata, (), 'schema-name', stream_id)
         for field_name in schema['properties'].keys():
-            if (key_properties and field_name in key_properties) or (valid_replication_keys and field_name in valid_replication_keys):
+            if (key_properties and field_name in key_properties) or \
+               (valid_replication_keys and field_name in valid_replication_keys):
                 mdata = write(mdata, ('properties', field_name), 'inclusion', 'automatic')
             else:
                 mdata = write(mdata, ('properties', field_name), 'inclusion', 'available')
@@ -73,9 +73,9 @@ def update_catalog_dict(
         if len(breadcrumb) == 0:
             d['metadata'][METADATA_KEY_SELECTED] = select_stream
         elif breadcrumb and \
-           metadata and \
-           len(breadcrumb) == 2 and \
-           breadcrumb[0] == 'properties':
+                metadata and \
+                len(breadcrumb) == 2 and \
+                breadcrumb[0] == 'properties':
             column = breadcrumb[1]
 
             inclusion = metadata.get(METADATA_KEY_INCLUSION, INCLUSION_UNSUPPORTED)
@@ -99,6 +99,7 @@ def update_catalog_dict(
             streams.append(s)
 
     return dict(streams=streams)
+
 
 def update_catalog(
     absolute_path_to_catalog: str,

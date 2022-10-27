@@ -26,16 +26,17 @@ import traceback
 LOGGER = singer.get_logger()
 
 
-class Source():
-    def __init__(self,
-        args = None,
+class Source:
+    def __init__(
+        self,
+        args=None,
         catalog: Catalog = None,
         config: Dict = None,
         discover_mode: bool = False,
         discover_streams_mode: bool = False,
         is_sorted: bool = True,
         log_to_stdout: bool = False,
-        logger = LOGGER,
+        logger=LOGGER,
         query: Dict = {},
         schemas_folder: str = 'schemas',
         selected_streams: List[str] = None,
@@ -251,9 +252,9 @@ class Source():
             dict(
                 database=None,
                 is_view=None,
-                key_properties=[], # User customizes this after creating catalog from discover.
+                key_properties=[],  # User customizes this after creating catalog from discover.
                 metadata=metadata,
-                replication_key='', # User customizes this after creating catalog from discover.
+                replication_key='',     # User customizes this after creating catalog from discover.
                 replication_method=self.get_forced_replication_method(stream_id),
                 row_count=None,
                 schema=schema,
@@ -264,7 +265,6 @@ class Source():
             ),
             kwargs,
         ))
-
 
     def load_data(
         self,
