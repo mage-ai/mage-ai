@@ -1,5 +1,4 @@
-import { ThemeContext } from 'styled-components';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
@@ -10,7 +9,7 @@ import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunGradient from '@oracle/icons/custom/PipelineRunGradient';
-import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
+import PipelineRunType from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
@@ -25,7 +24,6 @@ import usePrevious from '@utils/usePrevious';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
-import { indexBy } from '@utils/array';
 import { queryFromUrl, queryString } from '@utils/url';
 
 const TAB_URL_PARAM = 'tab';
@@ -59,7 +57,6 @@ function PipelineRuns({
   pipeline: pipelineProp,
 }: PipelineRunsProp) {
   const router = useRouter();
-  const themeContext = useContext(ThemeContext);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [query, setQuery] = useState<{
@@ -77,8 +74,6 @@ function PipelineRuns({
     dataPipeline,
     pipelineUUID,
   ]);
-  const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
-  const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const { data: dataBlockRuns } = api.block_runs.list(ignoreKeys(query, [TAB_URL_PARAM]), {}, {
     pauseFetch: !query,
@@ -86,7 +81,6 @@ function PipelineRuns({
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>();
-  const [selectedBlockRun, setSelectedBlockRun] = useState<BlockRunType>();
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -96,7 +90,7 @@ function PipelineRuns({
     } = q;
 
     if (!isEqual(q, qPrev)) {
-      let newQuery = { ...qPrev, ...q };
+      const newQuery = { ...qPrev, ...q };
 
       if (pipelineRunId) {
         newQuery.pipeline_run_id = pipelineRunId;
@@ -127,7 +121,7 @@ function PipelineRuns({
   useEffect(() => {
     const uuid = q[TAB_URL_PARAM];
     if (uuid) {
-      setSelectedTab(TABS.find(({ uuid: tabUUID }) => tabUUID === uuid))
+      setSelectedTab(TABS.find(({ uuid: tabUUID }) => tabUUID === uuid));
     }
   }, [
     q,
@@ -152,19 +146,19 @@ function PipelineRuns({
         />
         <Spacing p={2}>
           <Paginate
-            page={Number(page)}
             maxPages={9}
             onUpdate={(p) => {
               const newPage = Number(p);
               const updatedQuery = {
                 ...q,
                 page: newPage >= 0 ? newPage : 0,
-              }
+              };
               router.push(
                 '/pipelines/[pipeline]/runs',
                 `/pipelines/${pipelineUUID}/runs?${queryString(updatedQuery)}`,
               );
             }}
+            page={Number(page)}
             totalPages={Math.ceil(totalRuns / LIMIT)}
           />
         </Spacing>
@@ -192,6 +186,11 @@ function PipelineRuns({
   return (
     <PipelineDetailPage
       afterHidden={TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid && !selectedRun}
+      breadcrumbs={[
+        {
+          label: () => 'Runs',
+        },
+      ]}
       buildSidekick={TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid
         ? props => buildTableSidekick({
           ...props,
@@ -201,11 +200,6 @@ function PipelineRuns({
         })
         : props => buildTableSidekick(props)
       }
-      breadcrumbs={[
-        {
-          label: () => 'Runs',
-        },
-      ]}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       title={({ name }) => `${name} runs`}
