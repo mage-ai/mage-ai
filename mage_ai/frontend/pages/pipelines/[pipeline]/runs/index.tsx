@@ -12,7 +12,7 @@ import PipelineRunGradient from '@oracle/icons/custom/PipelineRunGradient';
 import PipelineRunType, {
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
- } from '@interfaces/PipelineRunType';
+} from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
