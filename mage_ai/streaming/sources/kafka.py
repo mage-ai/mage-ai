@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from kafka import KafkaConsumer
 from mage_ai.shared.config import BaseConfig
-from typing import Dict
+from mage_ai.streaming.sources.base import BaseSource
+from typing import Callable, Dict
 import json
 import time
 
@@ -18,7 +19,7 @@ class SSLConfig:
 
 
 @dataclass
-class KafkaSourceConfig(BaseConfig):
+class KafkaConfig(BaseConfig):
     bootstrap_server: str
     consumer_group: str
     topic: str
@@ -34,12 +35,10 @@ class KafkaSourceConfig(BaseConfig):
         return config
 
 
-class KafkaSource:
-    def __init__(self, config: Dict):
-        if 'connector_type' in config:
-            config.pop('connector_type')
-        self.config = KafkaSourceConfig.load(config=config)
+class KafkaSource(BaseSource):
+    config_class = KafkaConfig
 
+    def init_client(self):
         print('Start initializing kafka consumer.')
         # Initialize kafka consumer
         consumer_kwargs = dict(
@@ -61,14 +60,14 @@ class KafkaSource:
         )
         print('Finish initializing kafka consumer.')
 
-    def read(self):
+    def read(self, handler: Callable):
         print('Start consuming messages from kafka.')
         for message in self.consumer:
             self.__print_message(message)
             data = json.loads(message.value.decode('utf-8'))
-            yield data
+            handler(data)
 
-    def batch_read(self):
+    def batch_read(self, handler: Callable):
         print('Start consuming messages from kafka.')
         if self.config.batch_size > 0:
             batch_size = self.config.batch_size
@@ -87,7 +86,7 @@ class KafkaSource:
                     self.__print_message(message)
                     message_values.append(json.loads(message.value.decode('utf-8')))
             if len(message_values) > 0:
-                yield message_values
+                handler(message_values)
 
     def test_connection(self):
         return True

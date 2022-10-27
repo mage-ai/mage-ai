@@ -6,7 +6,7 @@ import shutil
 import unittest
 
 
-class TestCase(unittest.TestCase):
+class DBTestCase(unittest.TestCase):
     def setUp(self):
         pass
 
@@ -28,3 +28,11 @@ class TestCase(unittest.TestCase):
         db_connection.close_session()
         os.remove(TEST_DB)
         super().tearDownClass()
+
+
+class TestCase(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass

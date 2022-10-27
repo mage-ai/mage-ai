@@ -1,11 +1,11 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 import os
 
 
-class PipelineTest(TestCase):
+class PipelineTest(DBTestCase):
     def test_create(self):
         pipeline = Pipeline.create(
             'test pipeline',

@@ -1,10 +1,10 @@
 from mage_ai.io.config import ConfigFileLoader, ConfigKey, EnvironmentVariableLoader
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 from pathlib import Path
 from unittest import mock
 
 
-class ConfigLoaderTests(TestCase):
+class ConfigLoaderTests(DBTestCase):
     def setUp(self):
         super().setUp()
         self.test_path = Path('./test')

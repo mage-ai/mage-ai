@@ -3,7 +3,7 @@ from mage_ai.orchestration.db.models import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run,
     create_pipeline_run_with_schedule,
@@ -12,7 +12,7 @@ from mage_ai.tests.factory import (
 import os
 
 
-class PipelineScheduleTests(TestCase):
+class PipelineScheduleTests(DBTestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
@@ -97,7 +97,7 @@ class PipelineScheduleTests(TestCase):
         self.assertTrue(pipeline_schedule2.should_schedule())
 
 
-class PipelineRunTests(TestCase):
+class PipelineRunTests(DBTestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
@@ -186,7 +186,7 @@ class PipelineRunTests(TestCase):
         )
 
 
-class BlockRunTests(TestCase):
+class BlockRunTests(DBTestCase):
     @classmethod
     def setUpClass(self):
         super().setUpClass()
