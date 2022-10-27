@@ -82,6 +82,7 @@ Read more tech docs here. Got questions?
     - [Streaming pipeline](guides/pipelines/StreamingPipeline.md)
     - [Data integration pipeline](guides/pipelines/DataIntegrationPipeline.md)
 - [SQL blocks](guides/blocks/SQL.md)
+- [R blocks](guides/blocks/R.md)
 - [Sensors: blocks depending on external pipelines](guides/blocks/Sensors.md)
 - [Triggering pipelines](core/abstractions.md#trigger)
     - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
