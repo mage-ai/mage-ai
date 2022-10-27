@@ -1,9 +1,9 @@
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
-from typing import Callable, Dict
+from typing import Callable, Dict, List, Union
 import yaml
 
 
@@ -74,7 +74,8 @@ class StreamingPipelineExecutor(PipelineExecutor):
             stdout = StreamToLogger(self.logger)
         try:
             with redirect_stdout(stdout):
-                self.__execute_in_python()
+                with redirect_stderr(stdout):
+                    self.__execute_in_python()
         except Exception as e:
             if not build_block_output_stdout:
                 self.logger.exception(
@@ -90,12 +91,16 @@ class StreamingPipelineExecutor(PipelineExecutor):
         sink_config = yaml.safe_load(self.sink_block.content)
         source = SourceFactory.get_source(source_config)
         sink = SinkFactory.get_sink(sink_config)
-        for messages in source.batch_read():
+
+        def handle_batch_events(messages: List[Union[Dict, str]]):
             if self.transformer_block is not None:
                 messages = self.transformer_block.execute_block(
                     input_args=[messages],
                 )['output']
             sink.batch_write(messages)
+
+        # Long running method
+        source.batch_read(handler=handle_batch_events)
 
     def __excute_in_flink(self):
         """

@@ -3,7 +3,6 @@ from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
-
 from requests_aws4auth import AWS4Auth
 from typing import Dict, List
 import boto3

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from kafka import KafkaConsumer
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sources.base import BaseSource
-from typing import Dict
+from typing import Callable, Dict
 import json
 import time
 
@@ -60,14 +60,14 @@ class KafkaSource(BaseSource):
         )
         print('Finish initializing kafka consumer.')
 
-    def read(self):
+    def read(self, handler: Callable):
         print('Start consuming messages from kafka.')
         for message in self.consumer:
             self.__print_message(message)
             data = json.loads(message.value.decode('utf-8'))
-            yield data
+            handler(data)
 
-    def batch_read(self):
+    def batch_read(self, handler: Callable):
         print('Start consuming messages from kafka.')
         if self.config.batch_size > 0:
             batch_size = self.config.batch_size
@@ -86,7 +86,7 @@ class KafkaSource(BaseSource):
                     self.__print_message(message)
                     message_values.append(json.loads(message.value.decode('utf-8')))
             if len(message_values) > 0:
-                yield message_values
+                handler(message_values)
 
     def test_connection(self):
         return True
