@@ -216,6 +216,16 @@ function PipelineDetailPage({
       headerMenuItems={headerMenuItems}
       navigationItems={[
         {
+          Icon: null,
+          IconSelected: null,
+          id: PageNameEnum.EDIT,
+          label: () => 'Edit pipeline',
+          linkProps: {
+            as: `/pipelines/${pipelineUUID}/edit`,
+            href: '/pipelines/[pipeline]/edit',
+          },
+        },
+        {
           Icon: Schedule,
           IconSelected: ScheduleGradient,
           id: PageNameEnum.TRIGGERS,
@@ -260,28 +270,7 @@ function PipelineDetailPage({
           isSelected: () => PageNameEnum.MONITOR === pageName,
         },
       ]}
-      subheaderChildren={typeof subheader !== 'undefined'
-        ? subheader
-        : (
-          <FlexContainer alignItems="center">
-            <KeyboardShortcutButton
-              background={PURPLE_BLUE}
-              bold
-              beforeElement={<Edit size={2.5 * UNIT} />}
-              inline
-              linkProps={{
-                as: `/pipelines/${pipelineUUID}/edit`,
-                href: '/pipelines/[pipeline]/edit',
-              }}
-              noHoverUnderline
-              sameColorAsText
-              uuid="PipelineDetailPage/edit"
-            >
-              Edit Pipeline
-            </KeyboardShortcutButton>
-          </FlexContainer>
-        )
-      }
+      subheaderChildren={typeof subheader !== 'undefined' && subheader}
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
       uuid={uuid}
     >

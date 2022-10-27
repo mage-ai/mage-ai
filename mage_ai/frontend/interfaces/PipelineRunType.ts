@@ -10,6 +10,13 @@ export const RUN_STATUS_TO_LABEL = {
   [RunStatus.INITIAL]: 'Ready',
 };
 
+export interface PipelineRunReqQueryParamsType {
+  _limit?: number;
+  _offset?: number;
+  pipeline_uuid?: string;
+  status?: RunStatusEnum;
+}
+
 export default interface PipelineRunType {
   block_runs?: BlockRunType[];
   block_runs_count?: number;

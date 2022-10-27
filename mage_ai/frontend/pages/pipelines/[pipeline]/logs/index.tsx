@@ -377,6 +377,8 @@ function BlockRuns({
             setScrollToBottom(true);
             fetchLogs(null);
           }}
+          paddingBottom={UNIT * 0.75}
+          paddingTop={UNIT * 0.75}
           uuid="logs/toolbar/load_newest"
         >
           Load latest logs

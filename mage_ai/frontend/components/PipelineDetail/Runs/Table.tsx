@@ -236,137 +236,146 @@ function PipelineRunsTable({
 
   return (
     <TableContainerStyle minHeight={UNIT * 30}>
-      <Table
-        columnFlex={columnFlex}
-        columns={columns}
-        isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
-        onClickRow={onClickRow}
-        rows={pipelineRuns.map((pipelineRun, index) => {
-          const {
-            block_runs_count: blockRunsCount,
-            completed_at: completedAt,
-            execution_date: executionDate,
-            id,
-            pipeline_schedule_id: pipelineScheduleId,
-            pipeline_schedule_name: pipelineScheduleName,
-            pipeline_uuid: pipelineUUID,
-            status,
-          } = pipelineRun;
+      {pipelineRuns.length === 0
+        ?
+          <Spacing px ={3} py={1}>
+            <Text bold default monospace muted>
+              No runs available
+            </Text>
+          </Spacing>
+        :
+          <Table
+            columnFlex={columnFlex}
+            columns={columns}
+            isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
+            onClickRow={onClickRow}
+            rows={pipelineRuns.map((pipelineRun, index) => {
+              const {
+                block_runs_count: blockRunsCount,
+                completed_at: completedAt,
+                execution_date: executionDate,
+                id,
+                pipeline_schedule_id: pipelineScheduleId,
+                pipeline_schedule_name: pipelineScheduleName,
+                pipeline_uuid: pipelineUUID,
+                status,
+              } = pipelineRun;
 
-          const isRetry =
-            index > 0
-              && pipelineRuns[index - 1].execution_date == pipelineRun.execution_date
-              && pipelineRuns[index - 1].id == pipelineRun.id;
+              const isRetry =
+                index > 0
+                  && pipelineRuns[index - 1].execution_date == pipelineRun.execution_date
+                  && pipelineRuns[index - 1].id == pipelineRun.id;
 
-          let arr = [];
-          if (isRetry) {
-            arr = [
-              <Spacing key="row_item_1" ml={1}>
-                <FlexContainer alignItems="center">
-                  <Subitem size={2 * UNIT} useStroke/>
-                  <Button
-                    borderRadius={BORDER_RADIUS_XXXLARGE}
-                    notClickable
-                    padding="6px"
+              let arr = [];
+              if (isRetry) {
+                arr = [
+                  <Spacing key="row_item_1" ml={1}>
+                    <FlexContainer alignItems="center">
+                      <Subitem size={2 * UNIT} useStroke/>
+                      <Button
+                        borderRadius={BORDER_RADIUS_XXXLARGE}
+                        notClickable
+                        padding="6px"
+                      >
+                        <Text muted>
+                          {RUN_STATUS_TO_LABEL[status]}
+                        </Text>
+                      </Button>
+                    </FlexContainer>
+                  </Spacing>,
+                  <Text default key="row_item_2" monospace muted>
+                    -
+                  </Text>,
+                  <Text default key="row_item_3" monospace muted>
+                    -
+                  </Text>,
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
+                    href={'/pipelines/[pipeline]/runs/[run]'}
+                    key="row_item_4"
+                    passHref
                   >
-                    <Text muted>
-                      {RUN_STATUS_TO_LABEL[status]}
-                    </Text>
-                  </Button>
-                </FlexContainer>
-              </Spacing>,
-              <Text default key="row_item_2" monospace muted>
-                -
-              </Text>,
-              <Text default key="row_item_3" monospace muted>
-                -
-              </Text>,
-              <NextLink
-                as={`/pipelines/${pipelineUUID}/runs/${id}`}
-                href={'/pipelines/[pipeline]/runs/[run]'}
-                key="row_item_4"
-                passHref
-              >
-                <Link bold muted>
-                  {`See block runs (${blockRunsCount})`}
-                </Link>
-              </NextLink>,
-              <Text key="row_item_5" monospace muted>
-                {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
-              </Text>,
-              <Button
-                default
-                iconOnly
-                key="row_item_6"
-                noBackground
-                onClick={() => Router.push(
-                  `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                )}
-              >
-                <TodoList default size={2 * UNIT} />
-              </Button>,
-            ];
+                    <Link bold muted>
+                      {`See block runs (${blockRunsCount})`}
+                    </Link>
+                  </NextLink>,
+                  <Text key="row_item_5" monospace muted>
+                    {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
+                  </Text>,
+                  <Button
+                    default
+                    iconOnly
+                    key="row_item_6"
+                    noBackground
+                    onClick={() => Router.push(
+                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                    )}
+                  >
+                    <TodoList default size={2 * UNIT} />
+                  </Button>,
+                ];
 
-          } else {
-            arr = [
-              <RetryButton
-                key="row_item_7"
-                onCancel={updatePipelineRun}
-                onSuccess={fetchPipelineRuns}
-                pipelineRun={pipelineRun}
-              />,
-              <Text default key="row_item_8" monospace>
-                {(executionDate && getTimeInUTC(executionDate).toISOString().split('.')[0]) || '-'}
-              </Text>,
-              <NextLink
-                as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-                href={'/pipelines/[pipeline]/triggers/[...slug]'}
-                key="row_item_9"
-                passHref
-              >
-                <Link bold sameColorAsText>
-                  {pipelineScheduleName}
-                </Link>
-              </NextLink>,
-              <NextLink
-                as={`/pipelines/${pipelineUUID}/runs/${id}`}
-                href={'/pipelines/[pipeline]/runs/[run]'}
-                key="row_item_10"
-                passHref
-              >
-                <Link bold sameColorAsText>
-                  {`See block runs (${blockRunsCount})`}
-                </Link>
-              </NextLink>,
-              <Text default key="row_item_11" monospace>
-                {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
-              </Text>,
-              <Button
-                default
-                iconOnly
-                key="row_item_12"
-                noBackground
-                onClick={() => Router.push(
-                  `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-                )}
-              >
-                <TodoList default size={2 * UNIT} />
-              </Button>,
-            ];
-          }
+              } else {
+                arr = [
+                  <RetryButton
+                    key="row_item_7"
+                    onCancel={updatePipelineRun}
+                    onSuccess={fetchPipelineRuns}
+                    pipelineRun={pipelineRun}
+                  />,
+                  <Text default key="row_item_8" monospace>
+                    {(executionDate && getTimeInUTC(executionDate).toISOString().split('.')[0]) || '-'}
+                  </Text>,
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+                    href={'/pipelines/[pipeline]/triggers/[...slug]'}
+                    key="row_item_9"
+                    passHref
+                  >
+                    <Link bold sameColorAsText>
+                      {pipelineScheduleName}
+                    </Link>
+                  </NextLink>,
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/runs/${id}`}
+                    href={'/pipelines/[pipeline]/runs/[run]'}
+                    key="row_item_10"
+                    passHref
+                  >
+                    <Link bold sameColorAsText>
+                      {`See block runs (${blockRunsCount})`}
+                    </Link>
+                  </NextLink>,
+                  <Text default key="row_item_11" monospace>
+                    {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
+                  </Text>,
+                  <Button
+                    default
+                    iconOnly
+                    key="row_item_12"
+                    noBackground
+                    onClick={() => Router.push(
+                      `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                    )}
+                  >
+                    <TodoList default size={2 * UNIT} />
+                  </Button>,
+                ];
+              }
 
-          if (onClickRow) {
-            arr.push(
-              <Flex flex={1} justifyContent="flex-end">
-                <ChevronRight default size={2 * UNIT} />
-              </Flex>
-            );
-          }
+              if (onClickRow) {
+                arr.push(
+                  <Flex flex={1} justifyContent="flex-end">
+                    <ChevronRight default size={2 * UNIT} />
+                  </Flex>
+                );
+              }
 
-          return arr;
-        })}
-        uuid="pipeline-runs"
-      />
+              return arr;
+            })}
+            uuid="pipeline-runs"
+          />
+      }
     </TableContainerStyle>
   );
 }

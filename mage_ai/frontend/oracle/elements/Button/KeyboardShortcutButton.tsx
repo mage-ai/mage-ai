@@ -80,6 +80,8 @@ export type KeyboardShortcutButtonProps = {
   noBackground?: boolean;
   noPadding?: boolean;
   noHover?: boolean;
+  paddingBottom?: number;
+  paddingTop?: number;
   pill?: boolean;
   primaryGradient?: boolean;
   secondary?: boolean;
@@ -153,12 +155,20 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     padding: ${UNIT * 0.5}px ${UNIT * 0.75}px;
   `}
 
+  ${props => !props.noPadding && !props.spacious && props.paddingTop && `
+    padding-top: ${props.paddingTop}px;
+  `}
+
   ${props => !props.noPadding && !props.spacious && props.halfPaddingTop && `
     padding-top: ${UNIT * 0.625}px;
   `}
 
   ${props => !props.noPadding && !props.spacious && props.halfPaddingBottom && `
     padding-bottom: ${UNIT * 0.625}px;
+  `}
+
+  ${props => !props.noPadding && !props.spacious && props.paddingBottom && `
+    padding-bottom: ${props.paddingBottom}px;
   `}
 
   ${props => !props.noPadding && !props.spacious && props.halfPaddingRight && `
