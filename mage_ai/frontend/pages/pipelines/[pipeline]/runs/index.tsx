@@ -109,6 +109,8 @@ function PipelineRuns({
 
       if (pipelineRunStatus) {
         newQuery.status = pipelineRunStatus;
+      } else {
+        delete newQuery.status;
       }
 
       setQuery(newQuery);
