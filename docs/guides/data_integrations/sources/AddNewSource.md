@@ -251,7 +251,7 @@ if __name__ == '__main__':
     ```
 1. We’ll create a `catalog.json` file that contains the stream and schema you want to synchronize.
     ```bash
-    python3 sources/titanic/__init__.py --config TEST_CONFIG.json --discover > TEST_CATALOG.json
+    python3 mage_integrations/sources/titanic/__init__.py --config TEST_CONFIG.json --discover > TEST_CATALOG.json
     ```
 1. Open the `TEST_CATALOG.json` file that was just created.
     1. Under the `streams` key, in the 1st object in the `streams` array, find the key `metadata`.
