@@ -7,11 +7,12 @@ import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineV2Gradient from '@oracle/icons/custom/PipelineV2Gradient';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BlocksStacked, PipelineV2 } from '@oracle/icons';
+import { NavigationItemStyle } from './index.style';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { capitalize } from '@utils/string';
 
 const ICON_SIZE = 3 * UNIT;
 
@@ -66,11 +67,11 @@ function VerticalNavigation({
       isSelected,
       label,
       linkProps,
-    }, idx: Number) => {
+    }, idx: number) => {
       const selected: boolean = isSelected
         ? isSelected(pathname)
         : !!pathname.match(new RegExp(`^/${id}[/]*`));
-      const IconToUse = selected && IconSelected ? IconSelected : Icon;
+      const IconToUse = (selected && IconSelected) ? IconSelected : Icon;
 
       return (
         <Spacing
@@ -83,7 +84,7 @@ function VerticalNavigation({
             size={null}
             widthFitContent
           >
-            {selected && (
+            {(selected && IconSelected) && (
               <GradientButton
                 backgroundGradient={PURPLE_BLUE}
                 backgroundPanel
@@ -112,16 +113,12 @@ function VerticalNavigation({
                 sameColorAsText
                 uuid={`VerticalNavigation/${id}`}
               >
-                <div
-                  style={{
-                    alignItems: 'center',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: 1 * UNIT,
-                  }}
-                >
-                  <IconToUse muted size={ICON_SIZE} />
-                </div>
+                <NavigationItemStyle primary={!IconToUse}>
+                  {IconToUse
+                    ? <IconToUse muted size={ICON_SIZE} />
+                    : <Text>Edit</Text>
+                  }
+                </NavigationItemStyle>
               </KeyboardShortcutButton>
             )}
           </Tooltip>

@@ -1,9 +1,11 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { transition } from '@oracle/styles/mixins';
 
 export const VERTICAL_NAVIGATION_WIDTH = (PADDING_UNITS * UNIT) + (5 * UNIT) + (PADDING_UNITS * UNIT);
 
@@ -49,5 +51,25 @@ export const ContentStyle = styled.div<{
 
   ${props => `
     height: calc(100vh - ${HEADER_HEIGHT + (props.heightOffset || 0)}px);
+  `}
+`;
+
+export const NavigationItemStyle = styled.div<{
+  primary?: boolean;
+}>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${UNIT}px;
+  border-radius: ${BORDER_RADIUS}px;
+
+  ${props => props.primary && `
+    ${transition()}
+    background: ${(props.theme || dark).chart.backgroundPrimary};
+    border: 1px solid ${(props.theme || dark).feature.active};
+
+    &:hover {
+      background-color: ${(props.theme || dark).interactive.linkSecondary};
+    }
   `}
 `;
