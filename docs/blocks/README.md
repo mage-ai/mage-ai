@@ -4,6 +4,8 @@ Each block (except a scratchpad block) in a pipeline maps to an individual file 
 
 Blocks can be reused and shared across multiple pipelines within the same project.
 
+<img height="240" alt="Blocks" src="https://user-images.githubusercontent.com/97557538/198362650-6a61dfb2-8afb-40d4-b5ce-fb9f145f23a6.png">
+
 Current block types:
 
 1. [Scratchpad](#1-scratchpad)
