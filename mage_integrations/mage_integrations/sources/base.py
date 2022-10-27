@@ -87,6 +87,12 @@ class Source:
 
     @classmethod
     def templates(self) -> List[Dict]:
+        """
+        Get a list of template files.
+
+        Returns:
+            List[Dict]: Description
+        """
         parts = inspect.getfile(self).split('/')
         absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
 
@@ -101,7 +107,16 @@ class Source:
         return templates
 
     def discover(self, streams: List[str] = None) -> Catalog:
-        streams = []
+        """
+        Disocver streams and build catalog entries.
+
+        Args:
+            streams (List[str], optional): Description
+
+        Returns:
+            Catalog: Description
+        """
+        streams = streams or []
 
         for stream_id, schema in self.load_schemas_from_folder().items():
             if not streams or stream_id in streams:
@@ -110,12 +125,27 @@ class Source:
         return Catalog(streams)
 
     def discover_streams(self) -> List[Dict]:
+        """
+        Discover streams.
+
+        Returns:
+            List[Dict]: Description
+        """
         return [dict(
             stream=stream_id,
             tap_stream_id=stream_id,
         ) for stream_id in self.get_stream_ids()]
 
     def get_stream_ids(self) -> List[str]:
+        """
+        Get stream IDs after discovery.
+
+        Returns:
+            List[str]: A list of discovered stream IDs.
+
+        Raises:
+            Exception: The stream type in catalog is not a CatalogEntry or a dict.
+        """
         # If you want to display available stream IDs before getting the stream properties,
         # override this method to return a list of stream IDs
         catalog = self.discover()
@@ -132,6 +162,15 @@ class Source:
         return stream_ids
 
     def process(self) -> None:
+        """
+        Main method to fetch data from the source with the following steps:
+            1. Discover streams
+            2. Build catalog
+            3. Start syncing data
+
+        Raises:
+            Exception: Failed to fetch data from the source.
+        """
         try:
             if self.discover_mode:
                 if self.discover_streams_mode:
@@ -155,6 +194,38 @@ class Source:
             raise Exception(message)
 
     def process_stream(self, stream):
+        """
+        Start syncing stream and write SCHEMA message.
+        SCHEMA messages describe the datatypes of data in the stream.
+
+        Example SCHEMA message:
+            {
+              "type": "SCHEMA",
+              "stream": "users",
+              "schema": {
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "key_properties": ["id"],
+              "bookmark_properties": ["updated_at"]
+            }
+
+        Args:
+            stream (TYPE): The stream to be processed.
+
+        Raises:
+            Exception: Invalid replication_method.
+        """
         self.logger.info(f'Syncing stream {stream.tap_stream_id}.')
 
         if stream.replication_method not in [
@@ -182,10 +253,24 @@ class Source:
         )
 
     def sync_stream(self, stream) -> List[Dict]:
+        """
+        Steps:
+            1. Get bookmarks.
+            2. Load data.
+            3. Write RECORD messages.
+            4. Write STATE messages.
+
+        Args:
+            stream (TYPE): The stream object.
+
+        Returns:
+            List[Dict]: The list of rows.
+        """
         bookmark_properties = self.__get_boommark_properties_for_stream(stream)
 
         start_date = None
-        if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and self.config.get('start_date'):
+        if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and \
+           self.config.get('start_date'):
             start_date = dateutil.parser.parse(self.config.get('start_date'))
 
         max_bookmark = None
@@ -218,12 +303,23 @@ class Source:
         if bookmark_properties and not self.is_sorted:
             if max_bookmark:
                 write_state({
-                    stream.tap_stream_id: {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
+                    stream.tap_stream_id:
+                    {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
                 })
 
         return rows
 
     def sync(self, catalog: Catalog) -> None:
+        """
+        Main method to sync the data.
+
+        Steps:
+            1. Process stream: write SCHEMA message.
+            2. Sync stream: load data, write RECORD messages and STATE messages.
+
+        Args:
+            catalog (Catalog): The catalog of streams
+        """
         for stream in catalog.get_selected_streams(self.state):
             tags = dict(stream=stream.tap_stream_id)
             self.logger.info('Synced stream started.', tags=tags)
@@ -235,7 +331,17 @@ class Source:
                 records=len(records) if records is not None else None,
             )))
 
-    def build_catalog_entry(self, stream_id, schema, **kwargs):
+    def build_catalog_entry(self, stream_id: str, schema, **kwargs):
+        """Summary
+
+        Args:
+            stream_id (str): Description
+            schema (TYPE): Description
+            **kwargs: Description
+
+        Returns:
+            TYPE: Description
+        """
         # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata
         metadata = get_standard_metadata(
             key_properties=self.get_table_key_properties(stream_id),
@@ -273,18 +379,67 @@ class Source:
         start_date: datetime = None,
         **kwargs,
     ) -> List[Dict]:
+        """
+        Load data from source.
+
+        Args:
+            bookmarks (Dict): Bookmarks for the stream id.
+            query (Dict): query
+            start_date (datetime): start_date
+
+        Returns:
+            List[Dict]: The list of rows.
+        """
         raise Exception('Subclasses must implement the load_data method.')
 
     def get_forced_replication_method(self, stream_id: str) -> str:
+        """
+        Get forced replication method to use for a stream.
+        Either FULL_TABLE or INCREMENTAL.
+
+        Args:
+            stream_id (str): The name of the stream.
+
+        Returns:
+            str: The replication method.
+        """
         return REPLICATION_METHOD_FULL_TABLE
 
     def get_table_key_properties(self, stream_id: str) -> List[str]:
+        """
+        Get the table key properties: a list of strings indicating which
+        properties make up the primary key for this stream.
+
+        Args:
+            stream_id (str): The name of the stream.
+
+        Returns:
+            List[str]: The list of key properties.
+        """
         return []
 
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
+        """
+        Get valid replication keys.
+        Replication key is the name of a property in the source to use as a
+        "bookmark". For example, this will often be an "updated-at" field or
+        an auto-incrementing primary key (requires replication-method).
+
+        Args:
+            stream_id (str): The name of the stream.
+
+        Returns:
+            List[str]: The list of replication keys.
+        """
         return []
 
-    def load_schemas_from_folder(self) -> dict:
+    def load_schemas_from_folder(self) -> Dict:
+        """
+        Load schemas from /schemas folder.
+
+        Returns:
+            dict: A dictionary of schema name to schema
+        """
         parts = inspect.getfile(self.__class__).split('/')
         absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/{self.schemas_folder}")
 
