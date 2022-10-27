@@ -6,31 +6,15 @@
     <img
       align="center"
       alt="Mage"
-      src="https://github.com/mage-ai/assets/blob/main/mascots/mascots.jpg?raw=true"
+      src="https://github.com/mage-ai/assets/blob/main/mascots/mascots-shorter.jpeg?raw=true"
       style="width:100%;"
     />
   </a>
 </h1>
 
 <p align="center">
-  🧙 Mage is an open-source data pipeline tool for
-  <b>transforming</b> and <b>integrating</b> data
+  🧙 A modern replacement for Airflow.
 </p>
-
-<div align="center">
-  <a
-    href="https://www.youtube.com/watch?v=hrsErfPDits"
-    target="_blank"
-  >
-    <img
-      align="center"
-      style="width:100%;"
-      src="https://github.com/mage-ai/assets/blob/main/pipelines/data-exporter-sql.gif?raw=true"
-    />
-  </a>
-</div>
-
-<br />
 
 <p align="center">
   <a
@@ -91,47 +75,71 @@
   src="https://static.scarf.sh/a.png?x-pxid=b3c96d79-b8f0-414b-a687-8bfc164b4b7a"
 />
 
-## Features
+<h3 align="center">
+  Give your data team magical powers
+</h3>
 
-|   |   |   |
-| --- | --- | --- |
-| 🎶 | <b>[Orchestration](docs/features/orchestration/README.md)</b> | Schedule and manage data pipelines with observability. |
-| 📓 | <b>[Notebook](docs/features/README.md#notebook-for-building-data-pipelines)</b> | Interactive Python, SQL, & R editor for coding data pipelines. |
-| 🏗️ | <b>[Data integrations](docs/data_integrations/README.md)</b> | Synchronize data from 3rd party sources to your internal destinations. |
-| 🚰 | <b>[Streaming pipelines](docs/guides/pipelines/StreamingPipeline.md)</b> | Ingest and transform real-time data. |
+<p align="center">
+  Integrate and synchronize data from 3rd party sources
+</p>
 
-<b>A sample data pipeline defined across 3 files ➝</b>
+<p align="center">
+  Build batch and real-time data transformation pipelines using Python, SQL, and R
+</p>
 
-1. Load data ➝
-    ```python
-    @data_loader
-    def load_csv_from_file():
-        return pd.read_csv('default_repo/titanic.csv')
-    ```
-1. Transform data ➝
-    ```python
-    @transformer
-    def select_columns_from_df(df, *args):
-        return df[['Age', 'Fare', 'Survived']]
-    ```
-1. Export data ➝
-    ```python
-    @data_exporter
-    def export_titanic_data_to_disk(df) -> None:
-        df.to_csv('default_repo/titanic_transformed.csv')
-    ```
+<p align="center">
+  Manage, run, and monitor thousands of pipelines without losing sleep
+</p>
 
-<b>What the data pipeline looks like in the UI ➝</b>
+<br />
 
-<img
-  alt="data pipeline overview"
-  src="media/data-pipeline-overview.jpg"
-/>
+<p align="center">
+  ↓
+</p>
 
-New? We recommend reading about <b>[blocks](docs/blocks/README.md)</b> and
-learning from a <b>[hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/README.md)</b>.
+<p align="center">1️⃣ 🏗️</p>
+<h1 align="center">Build</h1>
+<p align="center">
+  Have you met anyone who said they loved developing in Airflow?
+  <br />
+  That’s why we designed an easy developer experience that you’ll enjoy.
+</p>
 
-[![Ask us questions on Slack](https://img.shields.io/badge/%20-Ask%20us%20questions%20on%20Slack-purple?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
+|   |   |
+| --- | --- |
+| <img src="https://github.com/mage-ai/assets/blob/main/mage-build.gif?raw=true" /> | <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. |
+
+<p align="center">
+  ↓
+</p>
+
+<p align="center">2️⃣ 🔮</p>
+<h1 align="center">Preview</h1>
+<p align="center">
+  Stop wasting time waiting around for your DAGs to finish testing.
+  <br />
+  Get instant feedback from your code each time you run it.
+</p>
+
+|   |   |
+| --- | --- |
+| <b>Interactive code</b><br />Immediately see results from your code’s output with an interactive notebook UI.<br /><br/><b>Data is a first-class citizen</b><br />Each block of code in your pipeline produces data that can be versioned, partitioned, and cataloged for future use.<br /><br /><b>Collaborate on cloud</b><br />Develop collaboratively on cloud resources, version control with Git, and test pipelines without waiting for an available shared staging environment. | <img src="https://github.com/mage-ai/assets/blob/main/mage-preview2.gif?raw=true" /> |
+
+<p align="center">
+  ↓
+</p>
+
+<p align="center">3️⃣ 🚀</p>
+<h1 align="center">Launch</h1>
+<p align="center">
+  Don’t have a large team dedicated to Airflow?
+  <br />
+  Mage makes it easy for a single developer or small team to scale up and manage thousands of pipelines.
+</p>
+
+|   |   |
+| --- | --- |
+| <img src="https://github.com/mage-ai/assets/blob/main/mage-launch.gif?raw=true" /> | <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. |
 
 <br />
 
@@ -141,6 +149,7 @@ learning from a <b>[hands-on tutorial](docs/tutorials/quick_start/etl_restaurant
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
 1. [Documentation](docs/README.md)
+1. [Features](#-features)
 1. [Core design principles](docs/core/design_principles.md)
 1. [Core abstractions](docs/core/abstractions.md)
 1. [Contributing](docs/contributing/README.md)
@@ -213,6 +222,50 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 - [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate_into_existing_project/README.md)
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
+
+<br />
+
+# 🔮 [Features](docs/features/README.md)
+
+|   |   |   |
+| --- | --- | --- |
+| 🎶 | <b>[Orchestration](docs/features/orchestration/README.md)</b> | Schedule and manage data pipelines with observability. |
+| 📓 | <b>[Notebook](docs/features/README.md#notebook-for-building-data-pipelines)</b> | Interactive Python, SQL, & R editor for coding data pipelines. |
+| 🏗️ | <b>[Data integrations](docs/data_integrations/README.md)</b> | Synchronize data from 3rd party sources to your internal destinations. |
+| 🚰 | <b>[Streaming pipelines](docs/guides/pipelines/StreamingPipeline.md)</b> | Ingest and transform real-time data. |
+
+<b>A sample data pipeline defined across 3 files ➝</b>
+
+1. Load data ➝
+    ```python
+    @data_loader
+    def load_csv_from_file():
+        return pd.read_csv('default_repo/titanic.csv')
+    ```
+1. Transform data ➝
+    ```python
+    @transformer
+    def select_columns_from_df(df, *args):
+        return df[['Age', 'Fare', 'Survived']]
+    ```
+1. Export data ➝
+    ```python
+    @data_exporter
+    def export_titanic_data_to_disk(df) -> None:
+        df.to_csv('default_repo/titanic_transformed.csv')
+    ```
+
+<b>What the data pipeline looks like in the UI ➝</b>
+
+<img
+  alt="data pipeline overview"
+  src="media/data-pipeline-overview.jpg"
+/>
+
+New? We recommend reading about <b>[blocks](docs/blocks/README.md)</b> and
+learning from a <b>[hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/README.md)</b>.
+
+[![Ask us questions on Slack](https://img.shields.io/badge/%20-Ask%20us%20questions%20on%20Slack-purple?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
 <br />
 
