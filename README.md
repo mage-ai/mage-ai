@@ -75,20 +75,22 @@
   src="https://static.scarf.sh/a.png?x-pxid=b3c96d79-b8f0-414b-a687-8bfc164b4b7a"
 />
 
-<h3 align="center">
-  Give your data team magical powers
-</h3>
+<div align="center">
+
+### Give your data team `magical` powers
+
+</div>
 
 <p align="center">
-  Integrate and synchronize data from 3rd party sources
+  <b>Integrate</b> and synchronize data from 3rd party sources
 </p>
 
 <p align="center">
-  Build batch and real-time data transformation pipelines using Python, SQL, and R
+  Build real-time and batch pipelines to <b>transform</b> data using Python, SQL, and R
 </p>
 
 <p align="center">
-  Manage, run, and monitor thousands of pipelines without losing sleep
+  Run, monitor, and <b>orchestrate</b> thousands of pipelines without losing sleep
 </p>
 
 <br />
@@ -143,7 +145,9 @@
 
 <br />
 
-## Table of contents
+# 🧙 Intro
+
+Mage is an open-source data pipeline tool for transforming and integrating data.
 
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Demo](#-demo)
