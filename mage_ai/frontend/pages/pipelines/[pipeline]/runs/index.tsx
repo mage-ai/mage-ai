@@ -3,25 +3,32 @@ import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
-import BlockRunType from '@interfaces/BlockRunType';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import FlexContainer from '@oracle/components/FlexContainer';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunGradient from '@oracle/icons/custom/PipelineRunGradient';
-import PipelineRunType from '@interfaces/PipelineRunType';
+import PipelineRunType, {
+  PipelineRunReqQueryParamsType,
+  RUN_STATUS_TO_LABEL,
+ } from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
 } from '@components/PipelineRun/shared/buildTableSidekick';
+import usePrevious from '@utils/usePrevious';
+
 import {
   BlocksSeparated,
   PipelineRun,
 } from '@oracle/icons';
-import usePrevious from '@utils/usePrevious';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { queryFromUrl, queryString } from '@utils/url';
@@ -63,6 +70,7 @@ function PipelineRuns({
     offset?: number;
     pipeline_run_id?: number;
     pipeline_uuid?: string;
+    status?: RunStatusEnum;
   }>(null);
 
   const pipelineUUID = pipelineProp.uuid;
@@ -87,6 +95,7 @@ function PipelineRuns({
   useEffect(() => {
     const {
       pipeline_run_id: pipelineRunId,
+      status: pipelineRunStatus,
     } = q;
 
     if (!isEqual(q, qPrev)) {
@@ -98,6 +107,10 @@ function PipelineRuns({
         newQuery.pipeline_uuid = pipelineUUID;
       }
 
+      if (pipelineRunStatus) {
+        newQuery.status = pipelineRunStatus;
+      }
+
       setQuery(newQuery);
     }
   }, [
@@ -106,14 +119,18 @@ function PipelineRuns({
     qPrev,
   ]);
 
+  const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
+    _limit: LIMIT,
+    _offset: (q?.page ? q.page : 0) * LIMIT,
+    pipeline_uuid: pipelineUUID,
+  };
+  if (q?.status) {
+    pipelineRunsRequestQuery.status = q.status;
+  }
   const {
     data: dataPipelineRuns,
     mutate: fetchPipelineRuns,
-  } = api.pipeline_runs.list({
-    pipeline_uuid: pipelineUUID,
-    _limit: LIMIT,
-    _offset: (q?.page ? q.page : 0) * LIMIT,
-  });
+  } = api.pipeline_runs.list(pipelineRunsRequestQuery);
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
   const totalRuns = useMemo(() => dataPipelineRuns?.total_count || [], [dataPipelineRuns]);
 
@@ -207,11 +224,49 @@ function PipelineRuns({
     >
       <PageSectionHeader>
         <Spacing py={1}>
-          <ButtonTabs
-            onClickTab={({ uuid }) => goToWithQuery({ tab: uuid }, { replaceParams: true })}
-            selectedTabUUID={selectedTab?.uuid}
-            tabs={TABS}
-          />
+          <FlexContainer alignItems="center">
+            <ButtonTabs
+              onClickTab={({ uuid }) => {
+                setQuery(null);
+                goToWithQuery({ tab: uuid }, { replaceParams: true });
+              }}
+              selectedTabUUID={selectedTab?.uuid}
+              tabs={TABS}
+            />
+            {TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid &&
+              <Select
+                compact
+                defaultColor
+                onChange={e => {
+                  e.preventDefault();
+                  const updatedStatus = e.target.value;
+                  if (updatedStatus === 'all') {
+                    setQuery(null);
+                    goToWithQuery({ tab: TAB_PIPELINE_RUNS.uuid }, { replaceParams: true });
+                  } else {
+                    goToWithQuery(
+                      {
+                        page: 0,
+                        status: e.target.value,
+                      },
+                    );
+                  }
+                }}
+                paddingRight={UNIT * 4}
+                placeholder="Select run status"
+                value={query?.status}
+              >
+                <option key="all_statuses" value="all">
+                  All
+                </option>
+                {Object.values(RunStatusEnum).map(status => (
+                  <option key={status} value={status}>
+                    {RUN_STATUS_TO_LABEL[status]}
+                  </option>
+                ))}
+              </Select>
+            }
+          </FlexContainer>
         </Spacing>
       </PageSectionHeader>
 
