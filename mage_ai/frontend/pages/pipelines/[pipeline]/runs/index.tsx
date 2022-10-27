@@ -259,7 +259,7 @@ function PipelineRuns({
                 value={query?.status}
               >
                 <option key="all_statuses" value="all">
-                  All
+                  All statuses
                 </option>
                 {Object.values(RunStatusEnum).map(status => (
                   <option key={status} value={status}>

@@ -553,7 +553,7 @@ function TriggerDetail({
             value={q?.status || 'all'}
           >
             <option key="all_statuses" value="all">
-              All
+              All statuses
             </option>
             {Object.values(RunStatusEnum).map(status => (
               <option key={status} value={status}>
