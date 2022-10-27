@@ -75,11 +75,9 @@
   src="https://static.scarf.sh/a.png?x-pxid=b3c96d79-b8f0-414b-a687-8bfc164b4b7a"
 />
 
-<br />
-
-<h3 align="center">
+<h2 align="center">
   Give you data team magical powers
-</h3>
+</h2>
 
 <p align="center">
   Integrate and synchronize data from 3rd party sources
