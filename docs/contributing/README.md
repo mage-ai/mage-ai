@@ -8,7 +8,7 @@ Got questions? Live chat with us in
 
 Anything you contribute, the Mage team and community will maintain. We’re in it together!
 
-1. Projects to contribute to
+1. [Projects to contribute to](#projects-to-contribute-to)
 1. [Set up development environment](#set-up-development-environment)
 1. [Debugging](#debugging)
 1. [Guides](#guides)
