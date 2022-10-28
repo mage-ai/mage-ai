@@ -3,7 +3,7 @@
 * [Overview](README.md)
   * [Features](docs/features/README.md)
     * [Data pipeline management](docs/features/orchestration/README.md)
-  * [Concepts]
+  * Concepts
     * [Core abstractions](docs/core/abstractions.md)
     * [Core design principles](docs/core/design\_principles.md)
     * [Blocks](docs/blocks/README.md)
