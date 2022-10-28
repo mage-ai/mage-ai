@@ -271,6 +271,16 @@ class Block:
     @property
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
+
+        if BlockType.DBT == self.type:
+            file_path = self.configuration.get('file_path')
+
+            return os.path.join(
+                repo_path or os.getcwd(),
+                'dbt',
+                file_path,
+            )
+
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
 
         return os.path.join(
@@ -334,26 +344,28 @@ class Block:
             config = {}
 
         uuid = clean_name(name)
-        block_dir_path = os.path.join(repo_path, f'{block_type}s')
-        if not os.path.exists(block_dir_path):
-            os.mkdir(block_dir_path)
-            with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
-                pass
-
         language = language or BlockLanguage.PYTHON
-        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
-        file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
-        if os.path.exists(file_path):
-            if pipeline is not None and pipeline.has_block(uuid):
-                raise Exception(f'Block {uuid} already exists. Please use a different name.')
-        else:
-            load_template(
-                block_type,
-                config,
-                file_path,
-                language=language,
-                pipeline_type=pipeline.type if pipeline is not None else None,
-            )
+
+        if BlockType.DBT != block_type:
+            block_dir_path = os.path.join(repo_path, f'{block_type}s')
+            if not os.path.exists(block_dir_path):
+                os.mkdir(block_dir_path)
+                with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
+                    pass
+
+            file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
+            file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
+            if os.path.exists(file_path):
+                if pipeline is not None and pipeline.has_block(uuid):
+                    raise Exception(f'Block {uuid} already exists. Please use a different name.')
+            else:
+                load_template(
+                    block_type,
+                    config,
+                    file_path,
+                    language=language,
+                    pipeline_type=pipeline.type if pipeline is not None else None,
+                )
 
         block = self.block_class_from_type(block_type, pipeline=pipeline)(
             name,
@@ -1365,6 +1377,12 @@ class DataExporterBlock(Block):
         return dict()
 
 
+class DbtBlock(Block):
+    @property
+    def output_variables(self):
+        return dict()
+
+
 class TransformerBlock(Block):
     @property
     def output_variables(self):
@@ -1414,6 +1432,7 @@ class DestinationBlock(Block):
 BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_EXPORTER: DataExporterBlock,
     BlockType.DATA_LOADER: DataLoaderBlock,
+    BlockType.DBT: DbtBlock,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: TransformerBlock,
     BlockType.SENSOR: SensorBlock,

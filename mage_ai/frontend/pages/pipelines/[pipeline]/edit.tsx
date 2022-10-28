@@ -363,7 +363,8 @@ function PipelineDetailPage({
     include_outputs: isEmptyObject(messages),
   });
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
-  const projectName = useMemo(() => filesData?.files?.[0]?.name, [filesData]);
+  const files = useMemo(() => filesData?.files || [], [filesData]);
+  const projectName = useMemo(() => files?.[0]?.name, [files]);
   const pipeline = data?.pipeline;
 
   useEffect(() => {
@@ -1272,6 +1273,7 @@ function PipelineDetailPage({
       deleteBlock={deleteBlock}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
+      files={files}
       globalVariables={globalVariables}
       interruptKernel={interruptKernel}
       isPipelineUpdating={isPipelineUpdating}
@@ -1314,6 +1316,7 @@ function PipelineDetailPage({
     deleteBlock,
     fetchFileTree,
     fetchPipeline,
+    files,
     globalVariables,
     interruptKernel,
     isPipelineUpdating,
@@ -1495,7 +1498,7 @@ function PipelineDetailPage({
     >
       <FileBrowser
         blocks={blocks}
-        files={filesData?.files}
+        files={files}
         onSelectBlockFile={onSelectBlockFile}
         openFile={openFile}
         openPipeline={(uuid: string) => {
@@ -1509,7 +1512,7 @@ function PipelineDetailPage({
     </ContextMenu>
   ), [
     blocks,
-    filesData?.files,
+    files,
     onSelectBlockFile,
   ]);
 

@@ -1,5 +1,6 @@
 import React, {
   createRef,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -14,8 +15,11 @@ import BlockType, {
   BlockTypeEnum,
   SetEditingBlockType,
 } from '@interfaces/BlockType';
+import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
 import DataProviderType from '@interfaces/DataProviderType';
+import FileSelectorPopup from '@components/FileSelectorPopup';
+import FileType from '@interfaces/FileType';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
@@ -67,6 +71,7 @@ type PipelineDetailProps = {
   deleteBlock: (block: BlockType) => Promise<any>;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  files: FileType[];
   globalVariables: PipelineVariableType[];
   interruptKernel: () => void;
   isPipelineUpdating: boolean;
@@ -121,6 +126,7 @@ function PipelineDetail({
   deleteBlock,
   fetchFileTree,
   fetchPipeline,
+  files,
   globalVariables,
   interruptKernel,
   isPipelineUpdating,
@@ -152,9 +158,11 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
+  const [addDBTModelVisible, setAddDBTModelVisible] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
   const [addNewBlockMenuOpenIdx, setAddNewBlockMenuOpenIdx] = useState<number>(null);
+  const [lastBlockIndex, setLastBlockIndex] = useState<number>(null);
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -307,6 +315,18 @@ function PipelineDetail({
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
   }, [pipeline]);
 
+
+
+  const onClickAddSingleDBTModel = useCallback((blockIndex: number) => {
+    setAddDBTModelVisible(true);
+    setLastBlockIndex(blockIndex);
+  }, [
+    setAddDBTModelVisible,
+    setLastBlockIndex,
+  ]);
+
+  console.log(lastBlockIndex)
+
   const codeBlocks = useMemo(
     () => blocks
     .filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type)
@@ -357,6 +377,7 @@ function PipelineDetail({
           messages={messages[uuid]}
           noDivider={idx === numberOfBlocks - 1 || isIntegration}
           onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+          onClickAddSingleDBTModel={onClickAddSingleDBTModel}
           openSidekickView={openSidekickView}
           pipeline={pipeline}
           ref={blockRefs.current[path]}
@@ -364,6 +385,7 @@ function PipelineDetail({
           runningBlocks={runningBlocks}
           savePipelineContent={savePipelineContent}
           selected={selected}
+          setAddDBTModelVisible={setAddDBTModelVisible}
           setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
           setAnyInputFocused={setAnyInputFocused}
           setEditingBlock={setEditingBlock}
@@ -395,6 +417,7 @@ function PipelineDetail({
     messages,
     numberOfBlocks,
     onChangeCodeBlock,
+    onClickAddSingleDBTModel,
     openSidekickView,
     pipeline,
     runBlock,
@@ -402,6 +425,7 @@ function PipelineDetail({
     runningBlocksByUUID,
     savePipelineContent,
     selectedBlock,
+    setAddDBTModelVisible,
     setAddNewBlockMenuOpenIdx,
     setAnyInputFocused,
     setEditingBlock,
@@ -483,6 +507,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
       hideRecommendations={isIntegration}
       hideScratchpad={isIntegration}
       hideSensor={isIntegration}
+      onClickAddSingleDBTModel={onClickAddSingleDBTModel}
       pipeline={pipeline}
       setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
     />
@@ -490,6 +515,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
     blocks,
     isIntegration,
     pipeline,
+    onClickAddSingleDBTModel,
     setRecsWindowOpenBlockIdx,
   ]);
 
@@ -518,6 +544,38 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               {addNewBlocksMemo}
             </Spacing>
           </>
+        )}
+
+        {addDBTModelVisible && (
+          <ClickOutside
+            onClickOutside={() => setAddDBTModelVisible(false)}
+            open
+          >
+            <FileSelectorPopup
+              blocks={blocks}
+              files={files}
+              onClose={() => setAddDBTModelVisible(false)}
+              onOpenFile={(filePath: string) => {
+                const newBlock = {
+                  configuration: {
+                    file_path: filePath,
+                  },
+                  language: BlockLanguageEnum.SQL,
+                  type: BlockTypeEnum.DBT,
+                };
+                const block = blocks[lastBlockIndex === null ? blocks.length - 1 : lastBlockIndex];
+                const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+
+                addNewBlockAtIndex({
+                  ...newBlock,
+                  upstream_blocks: upstreamBlocks,
+                }, lastBlockIndex === null ? numberOfBlocks : lastBlockIndex + 1, setSelectedBlock);
+
+                setAddDBTModelVisible(false);
+                setTextareaFocused(true);
+              }}
+            />
+          </ClickOutside>
         )}
       </Spacing>
     </>

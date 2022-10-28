@@ -25,13 +25,17 @@ export function getFullPath(
   return currentPath;
 }
 
+export function removeRootFromFilePath(filePath: string): string {
+  return filePath.split('/').slice(1).join('/');
+}
+
 export function getFullPathWithoutRootFolder(
   file: FileType,
   currentPathInit: string = null,
 ): string {
   const fullPath = getFullPath(file, currentPathInit);
 
-  return fullPath.split('/').slice(1).join('/');
+  return removeRootFromFilePath(fullPath);
 }
 
 export function getBlockFromFile(
@@ -39,7 +43,7 @@ export function getBlockFromFile(
   currentPathInit: string = null,
 ) {
   const parts = getFullPath(file, currentPathInit).split('/');
-  // This assumes path default_repo/[block_type]s/.. 
+  // This assumes path default_repo/[block_type]s/..
   const blockType = singularize(parts[1]);
   const fileName = parts[parts.length - 1];
 

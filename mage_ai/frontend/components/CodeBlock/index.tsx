@@ -92,6 +92,7 @@ import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
+import { getModelName } from '@utils/models/dbt';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -116,6 +117,7 @@ type CodeBlockProps = {
   messages: KernelOutputType[];
   noDivider?: boolean;
   onChange?: (value: string) => void;
+  onClickAddSingleDBTModel: (blockIdx: number) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   runBlock: (payload: {
@@ -160,6 +162,7 @@ function CodeBlockProps({
   messages: blockMessages = [],
   noDivider,
   onChange,
+  onClickAddSingleDBTModel,
   openSidekickView,
   pipeline,
   runBlock,
@@ -201,6 +204,8 @@ function CodeBlockProps({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
+
+  const isDBT = BlockTypeEnum.DBT === block?.type;
 
   const blockPrevious = usePrevious(block);
   useEffect(() => {
@@ -670,7 +675,11 @@ function CodeBlockProps({
                 color={color}
                 monospace
               >
-                {BLOCK_TYPE_NAME_MAPPING[block.type]?.toUpperCase()}
+                {(
+                  isDBT
+                    ? BlockTypeEnum.DBT
+                    : BLOCK_TYPE_NAME_MAPPING[block.type]
+                )?.toUpperCase()}
               </Text>
             </FlyoutMenuWrapper>
 
@@ -699,33 +708,41 @@ function CodeBlockProps({
           <Spacing mr={1} />
 
           <FlexContainer alignItems="center">
-            <LabelWithValueClicker
-              bold={false}
-              inputValue={newBlockUuid}
-              monospace
-              muted
-              notRequired
-              onBlur={() => setTimeout(() => {
-                setAnyInputFocused(false);
-                setIsEditingBlock(false);
-              }, 300)}
-              onChange={(e) => {
-                setNewBlockUuid(e.target.value);
-                e.preventDefault();
-              }}
-              onClick={() => {
-                setAnyInputFocused(true);
-                setIsEditingBlock(true);
-              }}
-              onFocus={() => {
-                setAnyInputFocused(true);
-                setIsEditingBlock(true);
-              }}
-              stacked
-              value={!isEditingBlock && block.uuid}
-            />
+            {isDBT && (
+              <Text muted monospace>
+                {getModelName(block)}
+              </Text>
+            )}
 
-            {isEditingBlock && (
+            {!isDBT && (
+              <LabelWithValueClicker
+                bold={false}
+                inputValue={newBlockUuid}
+                monospace
+                muted
+                notRequired
+                onBlur={() => setTimeout(() => {
+                  setAnyInputFocused(false);
+                  setIsEditingBlock(false);
+                }, 300)}
+                onChange={(e) => {
+                  setNewBlockUuid(e.target.value);
+                  e.preventDefault();
+                }}
+                onClick={() => {
+                  setAnyInputFocused(true);
+                  setIsEditingBlock(true);
+                }}
+                onFocus={() => {
+                  setAnyInputFocused(true);
+                  setIsEditingBlock(true);
+                }}
+                stacked
+                value={!isEditingBlock && block.uuid}
+              />
+            )}
+
+            {isEditingBlock && !dbt && (
               <>
                 <Spacing ml={1} />
                 <Link
@@ -781,7 +798,7 @@ function CodeBlockProps({
                     monospace={numberOfParentBlocks >= 1}
                     underline={numberOfParentBlocks === 0}
                     >
-                    {numberOfParentBlocks === 0 && 'Click to set parent blocks'}
+                    {numberOfParentBlocks === 0 && 'Edit parent blocks'}
                     {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
                   </Text>
 
@@ -845,7 +862,10 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          {BlockLanguageEnum.SQL === block.language && !codeCollapsed && (
+          {BlockLanguageEnum.SQL === block.language
+            && !codeCollapsed
+            && BlockTypeEnum.DBT !== block.type
+            && (
             <CodeHelperStyle>
               <FlexContainer justifyContent="space-between">
                 <FlexContainer>
@@ -1138,6 +1158,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               }}
               blockIdx={blockIdx}
               compact
+              onClickAddSingleDBTModel={onClickAddSingleDBTModel}
               pipeline={pipeline}
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
               setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}

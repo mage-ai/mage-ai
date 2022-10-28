@@ -21,7 +21,6 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-
 import { GraphContainerStyle } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -32,6 +31,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getModelName } from '@utils/models/dbt';
 import { onSuccess } from '@api/utils/response';
 
 const Canvas = dynamic(
@@ -241,6 +241,8 @@ function DependencyGraph({
       } else if (BlockTypeEnum.DATA_EXPORTER === block.type) {
         displayText = `Destination: ${contentParsed.destination}`;
       }
+    } else if (BlockTypeEnum.DBT === block.type) {
+      displayText = getModelName(block);
     }
 
     return displayText;
