@@ -450,7 +450,7 @@ class Pipeline:
 
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
-        block.upstream_blocks = upstream_blocks
+        block.update_upstream_blocks(upstream_blocks)
         block.pipeline = self
         if priority is None or priority >= len(mapping.keys()):
             mapping[block.uuid] = block
@@ -521,7 +521,7 @@ class Pipeline:
                     ]
 
                 # All blocks will depend on non-widget type blocks
-                block.upstream_blocks = self.get_blocks(upstream_block_uuids, widget=False)
+                block.update_upstream_blocks(self.get_blocks(upstream_block_uuids, widget=False))
         else:
             save_kwargs['block_uuid'] = block.uuid
 

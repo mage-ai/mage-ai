@@ -8,7 +8,10 @@ from mage_ai.data_cleaner.shared.utils import (
     is_dataframe,
     is_geo_dataframe,
 )
-from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
+from mage_ai.data_preparation.models.block.dbt.utils import (
+    add_blocks_upstream_from_refs,
+    update_model_settings,
+)
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -35,7 +38,7 @@ from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 from queue import Queue
-from typing import Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List, Set
 import asyncio
 import functools
 import json
@@ -1070,6 +1073,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.executor_type = data['executor_type']
             self.__update_pipeline_block()
         return self
+
+    def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
+        upstream_blocks_previous = self.upstream_blocks
+        self.upstream_blocks = upstream_blocks
+        if BlockType.DBT == self.type:
+            update_model_settings(self, upstream_blocks, upstream_blocks_previous)
 
     def update_content(self, content, widget=False):
         if content != self.content:
