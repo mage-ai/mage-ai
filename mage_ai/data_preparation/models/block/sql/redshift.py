@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
     interpolate_input,
     should_cache_data_from_upstream,
 )
+from mage_ai.io.config import ConfigKey
 
 
 def create_upstream_block_tables(
@@ -16,7 +17,11 @@ def create_upstream_block_tables(
     for idx, upstream_block in enumerate(block.upstream_blocks):
         if should_cache_data_from_upstream(block, upstream_block, [
             'data_provider',
-            'data_provider_profile',
+        ], [
+            ConfigKey.REDSHIFT_DBNAME,
+            ConfigKey.REDSHIFT_HOST,
+            ConfigKey.REDSHIFT_PORT,
+            ConfigKey.REDSHIFT_CLUSTER_ID,
         ]):
             df = get_variable(
                 upstream_block.pipeline.uuid,
