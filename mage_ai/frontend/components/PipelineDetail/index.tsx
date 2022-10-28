@@ -564,13 +564,15 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
                   language: BlockLanguageEnum.SQL,
                   type: BlockTypeEnum.DBT,
                 };
-                const block = blocks[lastBlockIndex === null ? blocks.length - 1 : lastBlockIndex];
+                const isAddingFromBlock =
+                  typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;
+                const block = blocks[isAddingFromBlock ? blocks.length - 1 : lastBlockIndex];
                 const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
                 addNewBlockAtIndex({
                   ...newBlock,
                   upstream_blocks: upstreamBlocks,
-                }, lastBlockIndex === null ? numberOfBlocks : lastBlockIndex + 1, setSelectedBlock);
+                }, isAddingFromBlock ? numberOfBlocks : lastBlockIndex + 1, setSelectedBlock);
 
                 setAddDBTModelVisible(false);
                 setTextareaFocused(true);
