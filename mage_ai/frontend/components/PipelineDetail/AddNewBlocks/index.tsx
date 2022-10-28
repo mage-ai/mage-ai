@@ -37,6 +37,7 @@ type AddNewBlocksProps = {
   compact?: boolean;
   hideDataExporter?: boolean;
   hideDataLoader?: boolean;
+  hideDbt?: boolean;
   hideRecommendations?: boolean;
   hideScratchpad?: boolean;
   hideSensor?: boolean;
@@ -58,6 +59,7 @@ function AddNewBlocks({
   compact,
   hideDataExporter,
   hideDataLoader,
+  hideDbt,
   hideRecommendations,
   hideScratchpad,
   hideSensor,
@@ -269,7 +271,7 @@ function AddNewBlocks({
             </>
           )}
 
-          {!false && (
+          {!hideDbt && (
             <>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts

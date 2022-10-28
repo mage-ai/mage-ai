@@ -504,6 +504,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
       }}
       hideDataExporter={isIntegration}
       hideDataLoader={isIntegration}
+      hideDbt={isIntegration || PipelineTypeEnum.STREAMING === pipeline?.type}
       hideRecommendations={isIntegration}
       hideScratchpad={isIntegration}
       hideSensor={isIntegration}
