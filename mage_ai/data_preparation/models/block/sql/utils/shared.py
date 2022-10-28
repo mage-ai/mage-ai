@@ -1,6 +1,20 @@
 from jinja2 import Template
 from mage_ai.data_preparation.models.constants import BlockLanguage
+from typing import List
 import re
+
+
+def should_cache_data_from_upstream(
+    block,
+    upstream_block,
+    config_keys: List[str],
+) -> bool:
+    config1 = block.configuration
+    config2 = upstream_block.configuration
+
+    return (BlockLanguage.SQL == block.language
+        and BlockLanguage.SQL != upstream_block.language) \
+        or not all([config1.get(k) == config2.get(k) for k in config_keys])
 
 
 def interpolate_input(block, query, replace_func=None):
