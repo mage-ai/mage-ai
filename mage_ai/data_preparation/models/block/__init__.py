@@ -737,21 +737,10 @@ class Block:
                         '1',
                         '--to_df',
                         '1',
-                        # '--config_json',
-                        # build_config_json(
-                        #     self.pipeline.data_exporter.file_path,
-                        #     global_vars,
-                        # ),
-                        # '--log_to_stdout',
-                        # '1',
-                        # '--settings',
-                        # self.pipeline.data_exporter.file_path,
-                        # '--state',
-                        # self.pipeline.destination_state_file_path,
                     ], input=input_from_previous, capture_output=True, text=True)
-
                     print_logs_from_output(proc1.stdout)
 
+                    # run transformer code and store it
                     input_vars.append(
                         self.pipeline.variable_manager.get_variable(
                             self.pipeline.uuid,
@@ -762,7 +751,6 @@ class Block:
                             spark=(global_vars or dict()).get('spark'),
                         )
                     )
-
                     exec(self.content, results)
                     block_function = self.__validate_execution(decorated_functions, input_vars)
                     if block_function is not None:
@@ -773,20 +761,6 @@ class Block:
                         execution_partition=execution_partition,
                         override_outputs=True,
                     )
-
-                    print('here!')
-
-                    # self.execute_block(
-                    #     build_block_output_stdout=build_block_output_stdout,
-                    #     custom_code=custom_code,
-                    #     execution_partition=execution_partition,
-                    #     input_args=input_args,
-                    #     logger=logger,
-                    #     global_vars=global_vars,
-                    #     test_execution=test_execution,
-                    #     input_from_output=input_from_output,
-                    #     runtime_arguments=runtime_arguments,
-                    # )
 
                     proc2 = subprocess.run([
                         PYTHON_COMMAND,
@@ -804,8 +778,6 @@ class Block:
                             self.pipeline.data_loader.file_path,
                             global_vars,
                         ),
-                        '--log_to_stdout',
-                        '1',
                         '--settings',
                         self.pipeline.data_loader.file_path,
                         '--state',

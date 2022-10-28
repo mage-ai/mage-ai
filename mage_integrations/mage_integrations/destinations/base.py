@@ -119,6 +119,10 @@ class Destination():
             self.logger.exception(message)
             raise Exception(message)
 
+    @config.setter
+    def config(self, config):
+        self._config = config
+
     @property
     def settings(self) -> Dict:
         if self._settings:
@@ -128,6 +132,10 @@ class Destination():
                 return yaml.safe_load(f.read())
 
         return {}
+
+    @settings.setter
+    def settings(self, settings):
+        self._settings = settings
 
     def export_data(
         self,
@@ -150,7 +158,7 @@ class Destination():
         tags: dict = {},
     ) -> None:
         self.export_data(
-            record=self.__validate_and_prepare_record(
+            record=self._validate_and_prepare_record(
                 stream=stream,
                 schema=schema,
                 row=row,
@@ -163,7 +171,7 @@ class Destination():
 
     def process_record_data(self, record_data: List[Dict], stream: str) -> None:
         batch_data = [dict(
-            record=self.__validate_and_prepare_record(**rd),
+            record=self._validate_and_prepare_record(**rd),
             stream=stream,
         ) for rd in record_data]
 
@@ -201,7 +209,7 @@ class Destination():
 
     def process(self, input_buffer) -> None:
         try:
-            self.__process(input_buffer)
+            self._process(input_buffer)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
             self.logger.exception(message, tags=dict(
@@ -211,7 +219,7 @@ class Destination():
             ))
             raise Exception(message)
 
-    def __process(self, input_buffer) -> None:
+    def _process(self, input_buffer) -> None:
         self.bookmark_properties = {}
         self.key_properties = {}
         self.replication_methods = {}
@@ -299,18 +307,7 @@ class Destination():
             for state in states:
                 self.process_state(**state)
 
-    def __emit_state(self, state):
-        if state:
-            line = json.dumps(state)
-            text = f'{line}\n'
-            if self.state_file_path:
-                with open(self.state_file_path, 'w') as f:
-                    f.write(text)
-            else:
-                sys.stdout.write()
-                sys.stdout.flush()
-
-    def __validate_and_prepare_record(
+    def _validate_and_prepare_record(
         self,
         stream: str,
         schema: dict,
@@ -332,3 +329,14 @@ class Destination():
         self.validators[stream].validate(record)
 
         return flatten_record(record)
+
+    def __emit_state(self, state):
+        if state:
+            line = json.dumps(state)
+            text = f'{line}\n'
+            if self.state_file_path:
+                with open(self.state_file_path, 'w') as f:
+                    f.write(text)
+            else:
+                sys.stdout.write()
+                sys.stdout.flush()

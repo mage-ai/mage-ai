@@ -193,7 +193,7 @@ class Source:
             ))
             raise Exception(message)
 
-    def process_stream(self, stream):
+    def process_stream(self, stream, properties: Dict = None):
         """
         Start syncing stream and write SCHEMA message.
         SCHEMA messages describe the datatypes of data in the stream.
@@ -237,9 +237,12 @@ class Source:
             raise Exception(message)
 
         schema_dict = stream.schema.to_dict()
-        schema_dict['properties'] = extract(
-            schema_dict['properties'],
-            extract_selected_columns(stream.metadata),
+        if properties:
+            schema_dict['properties'] = properties
+        else:
+            schema_dict['properties'] = extract(
+                schema_dict['properties'],
+                extract_selected_columns(stream.metadata),
         )
 
         write_schema(
@@ -309,7 +312,7 @@ class Source:
 
         return rows
 
-    def sync(self, catalog: Catalog) -> None:
+    def sync(self, catalog: Catalog, properties: Dict = None) -> None:
         """
         Main method to sync the data.
 
@@ -324,7 +327,7 @@ class Source:
             tags = dict(stream=stream.tap_stream_id)
             self.logger.info('Syncing stream started.', tags=tags)
 
-            self.process_stream(stream)
+            self.process_stream(stream, properties)
             records = self.sync_stream(stream)
 
             self.logger.info('Syncing stream completed.', tags=merge_dict(tags, dict(
