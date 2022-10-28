@@ -23,26 +23,25 @@
     * [Data cleaning aka data cleansing](docs/tutorials/data\_cleaning.md)
     * [Data cleaning workflow](docs/tutorials/data\_cleaning\_workflow.md)
     * [Using the tool from end-to-end](docs/tutorials/quick-start.md)
-    * [Triggers](docs/tutorials/triggers/README.md)
-      * [Schedule pipelines to run periodically](docs/tutorials/triggers/schedule.md)
-      * [Events](docs/tutorials/triggers/events/README.md)
-        * [Trigger pipeline from AWS Event](docs/tutorials/triggers/events/aws.md)
-    * [Airflow](docs/tutorials/airflow/README.md)
+    * Airflow
       * [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate\_into\_existing\_project/README.md)
-    * [Guides](docs/tutorials/guides/README.md)
-      * [Data exporter](docs/tutorials/guides/data-exporter/README.md)
-        * [Export data to S3](docs/tutorials/guides/data\_exporter/s3.md)
-      * [Data loader](docs/tutorials/guides/data-loader/README.md)
-        * [Load data from S3](docs/tutorials/guides/data\_loader/s3.md)
-  * [Guides](docs/guides/README.md)
-    * [Blocks](docs/guides/blocks/README.md)
+  * Guides
+    * Blocks
       * [R blocks](docs/guides/blocks/R.md)
       * [SQL blocks](docs/guides/blocks/SQL.md)
       * [Sensors: blocks depending on external pipelines](docs/guides/blocks/Sensors.md)
     * [Pipelines](docs/guides/pipelines/README.md)
       * [How to build a data integration pipeline](docs/guides/pipelines/DataIntegrationPipeline.md)
       * [Streaming pipeline](docs/guides/pipelines/StreamingPipeline.md)
-    * [Version control](docs/guides/version-control/README.md)
+    * Data loader
+        * [Load data from S3](docs/tutorials/guides/data\_loader/s3.md)
+    * Data exporter
+        * [Export data to S3](docs/tutorials/guides/data\_exporter/s3.md)
+    * Triggers
+      * [Schedule pipelines to run periodically](docs/tutorials/triggers/schedule.md)
+      * Events
+        * [Trigger pipeline from AWS Event](docs/tutorials/triggers/events/aws.md)
+    * Version control
       * [Setting up Git on cloud](docs/guides/version\_control/Git.md)
   * [Data integrations](docs/data\_integrations/README.md)
     * [Sources](docs/data\_integrations/sources/README.md)

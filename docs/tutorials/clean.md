@@ -1,6 +1,6 @@
 # Clean
 
-### 3. Cleaning data
+### Cleaning data
 After building a data cleaning pipeline from the UI,
 you can clean your data anywhere you can execute Python code:
 
