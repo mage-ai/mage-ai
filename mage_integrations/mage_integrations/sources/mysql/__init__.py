@@ -1,4 +1,3 @@
-from datetime import datetime
 from mage_integrations.connections.mysql import MySQL as MySQLConnection
 from mage_integrations.sources.mysql.utils import column_type_mapping
 from mage_integrations.sources.base import Source, main
@@ -6,7 +5,6 @@ from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     BATCH_FETCH_LIMIT,
     COLUMN_FORMAT_DATETIME,
-    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_NULL,

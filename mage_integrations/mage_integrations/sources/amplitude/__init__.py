@@ -5,12 +5,9 @@ from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.query import (
     get_end_date,
-    get_execution_date,
-    get_execution_partition,
     get_start_date,
 )
 from mage_integrations.utils.array import find_index
-from singer import utils
 from typing import Dict, List
 import dateutil.parser
 import singer

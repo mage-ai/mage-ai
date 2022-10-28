@@ -1,4 +1,3 @@
-from datetime import datetime
 from mage_integrations.connections.redshift import Redshift as RedshiftConnection
 from mage_integrations.sources.redshift.constants import (
     DATA_TYPES_BOOLEAN,

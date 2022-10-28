@@ -13,8 +13,7 @@ from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce impor
 from singer import utils
 from typing import List
 import singer
-import sys
-import json
+
 
 LOGGER = singer.get_logger()
 

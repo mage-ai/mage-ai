@@ -69,7 +69,7 @@ STREAM_REPLICATION_KEY = {
     'payout_transactions': 'id',
     # invoice_line_items is bookmarked based on parent invoices,
     # no replication key value on the object itself
-    #'invoice_line_items': 'date'
+    # 'invoice_line_items': 'date'
     'disputes': 'created',
     'products': 'created',
 }
@@ -1121,8 +1121,8 @@ def get_date_window_size(param, default_value):
         return float(window_size)
     else:
         # Raise Exception if window_size value is 0, "0" or invalid string.
-        raise Exception("The entered window size '{}' is invalid, it should"\
-            " be a valid non-zero integer.".format(window_size))
+        raise Exception("The entered window size '{}' is invalid, it should"
+                        " be a valid non-zero integer.".format(window_size))
 
 
 class Stripe(Source):
@@ -1155,9 +1155,9 @@ class Stripe(Source):
 def main():
     # Retry 429 RateLimitError 7 times.
     @backoff.on_exception(backoff.expo,
-                            stripe.error.RateLimitError,
-                            max_tries=7,
-                            factor=2)
+                          stripe.error.RateLimitError,
+                          max_tries=7,
+                          factor=2)
     def new_request(self, method, url, params=None, headers=None):
         '''The new request function to overwrite the request() function of the APIRequestor class of SDK.'''
         rbody, rcode, rheaders, my_api_key = self.request_raw(
@@ -1166,7 +1166,6 @@ def main():
         resp = self.interpret_response(rbody, rcode, rheaders)
         LOGGER.debug('request id : %s', resp.request_id)
         return resp, my_api_key
-
 
     # To log the request_id, we replaced the request() function of the APIRequestor
     # class o SDK, captured the response and logged the request_id

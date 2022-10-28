@@ -1,7 +1,6 @@
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_integrations.sources.constants import SOURCES
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.hash import merge_dict
 from typing import List, Dict
@@ -24,6 +23,8 @@ def get_collection(key: str, available_options: List[Dict]):
             d['templates'] = mod.templates()
         except FileNotFoundError:
             d['templates'] = {}
+        except Exception:
+            continue
 
         collection.append(d)
 
