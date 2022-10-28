@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.shared.array import find
+from mage_ai.shared.array import find, flatten
 from mage_ai.shared.utils import files_in_path
 from typing import Dict, List
 import os
@@ -76,9 +76,8 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
 
     filename = attributes_dict['filename']
     full_path = attributes_dict['full_path']
-    model_name = attributes_dict['model_name']
     project_name = attributes_dict['project_name']
-    settings_filename = re.sub(filename, f'{model_name}.yml', full_path)
+    settings_filename = re.sub(filename, f'mage_sources.yml', full_path)
 
     source_name = f'mage_{project_name}'
 
@@ -86,6 +85,10 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
         uuids = [b.uuid for b in upstream_blocks]
         for upstream_block in upstream_blocks_previous:
             if upstream_block.uuid in uuids:
+                continue
+
+            # If upstream block that’s being removed has a downstream block that is a DBT block
+            if any([block.type == b.type for b in upstream_block.downstream_blocks]):
                 continue
 
             if os.path.exists(settings_filename):
@@ -125,7 +128,7 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
                     if source:
                         if not source.get('tables'):
                             source['tables'] = []
-                        if new_table not in [x['name'] for x in source['tables']]:
+                        if table_name not in [x['name'] for x in source['tables']]:
                             source['tables'].append(new_table)
                     else:
                         settings['sources'].append(new_source)
