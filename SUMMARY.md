@@ -60,7 +60,6 @@
             * [Blacklisted Objects Explanation](mage\_integrations/mage\_integrations/sources/salesforce/client/Blacklisting.md)
             * [Changelog](mage\_integrations/mage\_integrations/sources/salesforce/client/CHANGELOG.md)
         * [Stripe](mage\_integrations/mage\_integrations/sources/stripe/README.md)
-        * [Titanic](mage\_integrations/mage\_integrations/sources/titanic/README.md)
       * Connections
         * [Example code](mage\_integrations/mage\_integrations/connections/amplitude/README.md)
         * [Google Analytics](mage\_integrations/mage\_integrations/connections/google\_analytics/README.md)
