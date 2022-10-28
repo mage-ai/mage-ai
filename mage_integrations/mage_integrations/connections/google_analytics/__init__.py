@@ -11,7 +11,7 @@ from mage_integrations.connections.google_analytics.constants import (
     METRICS,
 )
 from mage_integrations.connections.google_analytics.utils import parse_response
-from typing import Literal, TypedDict
+from typing import Literal
 from mage_integrations.utils.dictionary import merge_dict
 import os
 import re

@@ -267,6 +267,7 @@ METRICS = [
     'wauPerMau',
 ]
 
+
 class CredentialsInfoType(TypedDict):
     auth_provider_x509_cert_url: str
     auth_uri: str
