@@ -68,7 +68,6 @@ class Destination(BaseDestination):
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
-
         for sub_batch in batch(record_data, 1000):
             for insert_command in self.build_insert_commands(
                 database_name=database_name,

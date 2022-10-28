@@ -470,6 +470,6 @@ class Source:
 
 
 @utils.handle_top_exception(LOGGER)
-def main(destination_class):
-    source = destination_class()
+def main(source_class):
+    source = source_class()
     source.process()
