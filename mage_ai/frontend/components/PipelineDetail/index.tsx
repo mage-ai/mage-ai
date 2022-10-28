@@ -325,8 +325,6 @@ function PipelineDetail({
     setLastBlockIndex,
   ]);
 
-  console.log(lastBlockIndex)
-
   const codeBlocks = useMemo(
     () => blocks
     .filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type)
@@ -563,6 +561,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
                   },
                   language: BlockLanguageEnum.SQL,
                   type: BlockTypeEnum.DBT,
+                  name: filePath,
                 };
                 const isAddingFromBlock =
                   typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;

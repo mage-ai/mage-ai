@@ -8,6 +8,7 @@ from mage_ai.data_cleaner.shared.utils import (
     is_dataframe,
     is_geo_dataframe,
 )
+from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -317,8 +318,19 @@ class Block:
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
-            upstream_block_uuids = kwargs.get('upstream_block_uuids')
-            pipeline.add_block(block, upstream_block_uuids, priority=priority, widget=widget)
+            upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
+
+            if BlockType.DBT == block.type:
+                arr = add_blocks_upstream_from_refs(block)
+                upstream_block_uuids += [b.uuid for b in arr]
+
+            pipeline.add_block(
+                block,
+                upstream_block_uuids,
+                priority=priority if len(upstream_block_uuids) == 0 else None,
+                widget=widget,
+            )
+
 
     @classmethod
     def create(

@@ -790,11 +790,10 @@ function PipelineDetailPage({
                 block,
               },
             } = response;
-            setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
             onCreateCallback?.(block);
             setRecsWindowOpenBlockIdx(null);
-            fetchFileTree();
-            fetchPipeline();
+            fetchFileTree()
+            fetchPipeline().then(({ pipeline: { blocks: arr } }) => setBlocks(arr));
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,

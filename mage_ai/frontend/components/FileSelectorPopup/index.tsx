@@ -81,7 +81,6 @@ function FileSelectorPopup({
         <FileBrowser
           files={dbtModelFiles}
           isFileDisabled={(filePath: string, children) => {
-            console.log(filePath, children)
             return !!existingModelsByFilePath[filePath]
               || (!children?.length &&
                 !filePath.match(new RegExp(`\.${BlockLanguageEnum.SQL}\$`))
