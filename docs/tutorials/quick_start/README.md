@@ -1,2 +1,0 @@
-# quick\_start
-
