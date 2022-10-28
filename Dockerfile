@@ -4,6 +4,7 @@ ARG PIP=pip3
 USER root
 
 # Install Mage
+RUN ${PIP} install --upgrade pip
 RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 RUN ${PIP} install "mage-ai[all]"
 
