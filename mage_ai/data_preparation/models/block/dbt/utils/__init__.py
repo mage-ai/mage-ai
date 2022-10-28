@@ -1,5 +1,8 @@
+from mage_ai.data_preparation.models.block.sql import execute_sql_code as execute_sql_code_orig
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.base import DataSource
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.shared.array import find, flatten
 from mage_ai.shared.utils import files_in_path
 from typing import Dict, List
@@ -144,3 +147,54 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
 
             with open(settings_filename, 'w') as f:
                 yaml.safe_dump(settings, f)
+
+
+def get_profile(block, profile_target: str = None) -> Dict:
+    attr = parse_attributes(block)
+    project_name = attr['project_name']
+    project_full_path = attr['project_full_path']
+    with open(f'{project_full_path}/profiles.yml', 'r') as f:
+        profile = yaml.safe_load(f)[project_name]
+        outputs = profile['outputs']
+        target = profile['target']
+
+        return outputs.get(profile_target or target)
+
+
+def execute_sql_code(
+    block,
+    query: str,
+    profile_target: str,
+    **kwargs,
+):
+    profile = get_profile(block, profile_target)
+
+    database = profile.get('dbname')
+    host = profile.get('host')
+    password = profile.get('password')
+    port = profile.get('port')
+    profile_type = profile.get('type')
+    schema = profile.get('schema')
+    user = profile.get('user')
+
+    if DataSource.POSTGRES == profile_type:
+        config_file_loader = ConfigFileLoader(config=dict(
+            POSTGRES_DBNAME=database,
+            POSTGRES_HOST=host,
+            POSTGRES_PASSWORD=password,
+            POSTGRES_PORT=port,
+            POSTGRES_USER=user,
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=database,
+            data_provider_schema=schema,
+        )
+
+    return execute_sql_code_orig(
+        block,
+        query,
+        config_file_loader=config_file_loader,
+        configuration=configuration,
+        **kwargs,
+    )

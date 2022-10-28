@@ -259,7 +259,12 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
     }
 
-    def __init__(self, filepath: os.PathLike = None, profile='default') -> None:
+    def __init__(
+        self,
+        filepath: os.PathLike = None,
+        profile='default',
+        config: Dict = None,
+    ) -> None:
         """
         Initializes IO Configuration loader. Input configuration file can have two formats:
         - Standard: contains a subset of the configuration keys specified in `ConfigKey`. This
@@ -273,13 +278,17 @@ class ConfigFileLoader(BaseConfigLoader):
             Defaults to '[repo_path]/io_config.yaml'
             profile (str, optional): Profile to load configuration settings from. Defaults to 'default'.
         """
-        if filepath is None:
-            filepath = os.environ[REPO_PATH_ENV_VAR] / 'io_config.yaml'
-        self.filepath = Path(filepath)
-        self.profile = profile
-        with self.filepath.open('r') as fin:
-            config_file = Template(fin.read()).render(env_var=os.getenv)
-            self.config = yaml.full_load(config_file)[profile]
+        if config:
+            self.config = config
+        else:
+            if filepath is None:
+                filepath = os.environ[REPO_PATH_ENV_VAR] / 'io_config.yaml'
+            self.filepath = Path(filepath)
+            self.profile = profile
+            with self.filepath.open('r') as fin:
+                config_file = Template(fin.read()).render(env_var=os.getenv)
+                self.config = yaml.full_load(config_file)[profile]
+
         self.use_verbose_format = any(source in self.config.keys() for source in VerboseConfigKey)
 
     def contains(self, key: Union[ConfigKey, str]) -> Any:

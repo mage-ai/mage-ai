@@ -10,6 +10,7 @@ from mage_ai.data_cleaner.shared.utils import (
 )
 from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
+    execute_sql_code as execute_sql_code_dbt,
     parse_attributes,
     update_model_settings,
 )
@@ -336,7 +337,6 @@ class Block:
                 priority=priority if len(upstream_block_uuids) == 0 else None,
                 widget=widget,
             )
-
 
     @classmethod
     def create(
@@ -727,12 +727,18 @@ class Block:
 
             if BlockType.DBT == self.type:
                 attr = parse_attributes(self)
+                file_path = attr['file_path']
                 project_full_path = attr['project_full_path']
                 path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
+                variables = merge_dict(global_vars, runtime_arguments or {})
+
+                dbt_command = 'run'
+                if test_execution:
+                    dbt_command = 'compile'
 
                 args = [
                     'dbt',
-                    'run',
+                    dbt_command,
                     '--select',
                     path_to_model,
                     '--project-dir',
@@ -741,13 +747,30 @@ class Block:
                     project_full_path,
                     '--vars',
                     simplejson.dumps(
-                        merge_dict(global_vars, runtime_arguments or {}),
+                        variables,
                         default=encode_complex,
                         ignore_nan=True,
                     ),
                 ]
 
+                dbt_profile_target = variables.get('dbt_profile_target')
+                if dbt_profile_target:
+                    args += [
+                        '--target',
+                        dbt_profile_target,
+                    ]
+
                 subprocess.run(args, preexec_fn=os.setsid)
+
+                if test_execution:
+                    with open(f'{project_full_path}/target/compiled/{file_path}', 'r') as f:
+                        outputs = execute_sql_code_dbt(
+                            self,
+                            f.read(),
+                            execution_partition=execution_partition,
+                            global_vars=global_vars,
+                            profile_target=dbt_profile_target,
+                        )
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
                     proc = subprocess.run([
