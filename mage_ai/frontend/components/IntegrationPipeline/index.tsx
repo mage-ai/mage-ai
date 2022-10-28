@@ -1040,19 +1040,19 @@ function IntegrationPipeline({
       <Spacing mb={1}>
         <FlexContainer alignItems="center">
           <Button
-            disabled={!dataLoaderBlock}
+            disabled={!dataLoaderBlock || !dataExporterBlock}
             iconOnly
             onClick={() => setTransformerVisible(prev => !prev)}
           >
             <>
-              {transformerVisible && dataLoaderBlock && (
+              {transformerVisible && dataLoaderBlock && dataExporterBlock && (
                 <ChevronUp
                   size={1.5 * UNIT}
                 />
               )}
-              {(!transformerVisible || !dataLoaderBlock) && (
+              {(!transformerVisible || !dataLoaderBlock || !dataExporterBlock) && (
                 <ChevronDown
-                  disabled={!dataLoaderBlock}
+                  disabled={!dataLoaderBlock || !dataExporterBlock}
                   size={1.5 * UNIT}
                 />
               )}
@@ -1069,7 +1069,7 @@ function IntegrationPipeline({
         </FlexContainer>
       </Spacing>
       
-      {transformerVisible && dataLoaderBlock && (
+      {transformerVisible && dataLoaderBlock && dataExporterBlock && (
         <Spacing mb={1}>
           {codeBlocks.length > 0 && (
             <SectionStyle>
