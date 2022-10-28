@@ -742,7 +742,7 @@ function CodeBlockProps({
               />
             )}
 
-            {isEditingBlock && !dbt && (
+            {isEditingBlock && !isDBT && (
               <>
                 <Spacing ml={1} />
                 <Link
