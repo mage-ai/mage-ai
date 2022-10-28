@@ -7,7 +7,7 @@
       align="center"
       alt="Mage"
       src="https://github.com/mage-ai/assets/blob/main/mascots/mascots-shorter.jpeg?raw=true"
-      style="width:100%;"
+      width="100%"
     />
   </a>
 </h1>
@@ -92,7 +92,7 @@
 
 <br />
 
-<p align="center">
+<p style="text-align: center;">
   ↓
 </p>
 
