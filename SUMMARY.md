@@ -3,7 +3,7 @@
 * [Overview](README.md)
   * [Features](docs/features/README.md)
     * [Data pipeline management](docs/features/orchestration/README.md)
-  * Concepts
+  * [Concepts](readme/concepts/README.md)
     * [Core abstractions](docs/core/abstractions.md)
     * [Core design principles](docs/core/design\_principles.md)
     * [Blocks](docs/blocks/README.md)
@@ -12,7 +12,7 @@
       * [Transformer actions](docs/actions/transformer\_actions/README.md)
   * [Use cases](docs/use\_cases/README.md)
 * [Documentation](docs/README.md)
-  * Quick start
+  * [Quick start](docs/quick-start/README.md)
     * [Setup and install](docs/tutorials/quick\_start/setup.md)
     * [Load, transform, and export restaurant data](docs/tutorials/quick\_start/etl\_restaurant/README.md)
       * [Use a completed pipeline](docs/tutorials/quick\_start/etl\_restaurant/use\_completed\_pipeline.md)
@@ -23,26 +23,26 @@
     * [Data cleaning aka data cleansing](docs/tutorials/data\_cleaning.md)
     * [Data cleaning workflow](docs/tutorials/data\_cleaning\_workflow.md)
     * [Using the tool from end-to-end](docs/tutorials/quick-start.md)
-    * Triggers
+    * [Triggers](docs/tutorials/triggers/README.md)
       * [Schedule pipelines to run periodically](docs/tutorials/triggers/schedule.md)
-      * Events
+      * [Events](docs/tutorials/triggers/events/README.md)
         * [Trigger pipeline from AWS Event](docs/tutorials/triggers/events/aws.md)
-    * Airflow
+    * [Airflow](docs/tutorials/airflow/README.md)
       * [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate\_into\_existing\_project/README.md)
     * [Guides](docs/tutorials/guides/README.md)
-      * Data exporter
+      * [Data exporter](docs/tutorials/guides/data-exporter/README.md)
         * [Export data to S3](docs/tutorials/guides/data\_exporter/s3.md)
-      * Data loader
+      * [Data loader](docs/tutorials/guides/data-loader/README.md)
         * [Load data from S3](docs/tutorials/guides/data\_loader/s3.md)
-  * Guides
-    * Blocks
+  * [Guides](docs/guides/README.md)
+    * [Blocks](docs/guides/blocks/README.md)
       * [R blocks](docs/guides/blocks/R.md)
       * [SQL blocks](docs/guides/blocks/SQL.md)
       * [Sensors: blocks depending on external pipelines](docs/guides/blocks/Sensors.md)
-    * Pipelines
+    * [Pipelines](docs/guides/pipelines/README.md)
       * [How to build a data integration pipeline](docs/guides/pipelines/DataIntegrationPipeline.md)
       * [Streaming pipeline](docs/guides/pipelines/StreamingPipeline.md)
-    * Version control
+    * [Version control](docs/guides/version-control/README.md)
       * [Setting up Git on cloud](docs/guides/version\_control/Git.md)
   * [Data integrations](docs/data\_integrations/README.md)
     * [Sources](docs/data\_integrations/sources/README.md)
@@ -62,16 +62,16 @@
             * [Changelog](mage\_integrations/mage\_integrations/sources/salesforce/client/CHANGELOG.md)
         * [Stripe](mage\_integrations/mage\_integrations/sources/stripe/README.md)
         * [Titanic](mage\_integrations/mage\_integrations/sources/titanic/README.md)
-      * Connections
+      * [Connections](docs/data\_integrations/mage\_integrations/connections/README.md)
         * [Example code](mage\_integrations/mage\_integrations/connections/amplitude/README.md)
         * [Google Analytics](mage\_integrations/mage\_integrations/connections/google\_analytics/README.md)
         * [PostgreSQL](mage\_integrations/mage\_integrations/connections/postgresql/README.md)
-      * Destinations
+      * [Destinations](docs/data\_integrations/mage\_integrations/destinations/README.md)
         * [MySQL](mage\_integrations/mage\_integrations/destinations/mysql/README.md)
         * [PostgreSQL](mage\_integrations/mage\_integrations/destinations/postgresql/README.md)
         * [Redshift](mage\_integrations/mage\_integrations/destinations/redshift/README.md)
         * [Snowflake](mage\_integrations/mage\_integrations/destinations/snowflake/README.md)
-  * Code block integrations
+  * [Code block integrations](docs/code-block-integrations/README.md)
     * [BigQuery](docs/integrations/BigQuery.md)
     * [MySQL](docs/integrations/MySQL.md)
     * [PostgreSQL](docs/integrations/PostgreSQL.md)
@@ -79,17 +79,17 @@
     * [S3](docs/integrations/S3.md)
     * [Snowflake](docs/integrations/Snowflake.md)
   * [Kernels](docs/kernels/README.md)
-  * Development
+  * [Development](docs/development/README.md)
     * [Multi-development environment in the cloud](docs/development/multi\_development\_environment/README.md)
-  * Production
+  * [Production](docs/production/README.md)
     * [Run pipeline in Airflow](docs/production/airflow.md)
     * [Compute Resource](docs/production/compute\_resource.md)
     * [Run pipeline in Prefect](docs/production/prefect.md)
     * [Runtime Variables](docs/production/runtime\_variables.md)
   * [Testing](docs/testing/README.md)
-  * Triggers
+  * [Triggers](docs/triggers/README.md)
     * [Triggering pipeline via API request](docs/triggers/api.md)
-  * Deploy
+  * [Deploy](docs/deploy/README.md)
     * [AWS](docs/deploy/aws/README.md)
     * [Terraform](docs/deploy/terraform/README.md)
       * [Terraform Amazon Web Services (AWS)](docs/deploy/terraform/AWS.md)
@@ -98,8 +98,8 @@
         * [Terraform Azure resources](docs/deploy/terraform/Azure/Resources.md)
       * [Terraform Google Cloud Platform (GCP)](docs/deploy/terraform/GCP.md)
         * [Terraform GCP resources](docs/deploy/terraform/GCP/Resources.md)
-  * Observability
-    * Alerting
+  * [Observability](docs/observability/README.md)
+    * [Alerting](docs/observability/alerting/README.md)
       * [Email](docs/observability/alerting/Email.md)
       * [Slack](docs/observability/alerting/Slack.md)
     * [Monitoring](docs/observability/monitoring/README.md)
@@ -108,7 +108,7 @@
   * [Running the server](mage\_ai/server/README.md)
   * [Database migrations](mage\_ai/orchestration/db/migrations/README.md)
 * [Contributing](docs/contributing/README.md)
-    * [Contributing guide](docs/contributing/data\_cleaner/README.md)
-    * [Jupyter](docs/contributing/jupyter.md)
-    * [Testing](docs/contributing/testing.md)
-    * [Adding a chart](docs/contributing/charts/how\_to\_add.md)
+  * [Contributing guide](docs/contributing/data\_cleaner/README.md)
+  * [Jupyter](docs/contributing/jupyter.md)
+  * [Testing](docs/contributing/testing.md)
+  * [Adding a chart](docs/contributing/charts/how\_to\_add.md)
