@@ -12,7 +12,7 @@
       * [Transformer actions](docs/actions/transformer\_actions/README.md)
   * [Use cases](docs/use\_cases/README.md)
 * [Documentation](docs/README.md)
-  * [Quick start](docs/tutorials/quick\_start/README.md)
+  * Quick start
     * [Setup and install](docs/tutorials/quick\_start/setup.md)
     * [Load, transform, and export restaurant data](docs/tutorials/quick\_start/etl\_restaurant/README.md)
       * [Use a completed pipeline](docs/tutorials/quick\_start/etl\_restaurant/use\_completed\_pipeline.md)
@@ -23,37 +23,34 @@
     * [Data cleaning aka data cleansing](docs/tutorials/data\_cleaning.md)
     * [Data cleaning workflow](docs/tutorials/data\_cleaning\_workflow.md)
     * [Using the tool from end-to-end](docs/tutorials/quick-start.md)
-    * [Triggers](docs/tutorials/triggers/README.md)
+    * Triggers
       * [Schedule pipelines to run periodically](docs/tutorials/triggers/schedule.md)
-      * [Events](docs/tutorials/triggers/events/README.md)
+      * Events
         * [Trigger pipeline from AWS Event](docs/tutorials/triggers/events/aws.md)
-    * [Airflow](docs/tutorials/airflow/README.md)
+    * Airflow
       * [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate\_into\_existing\_project/README.md)
     * [Guides](docs/tutorials/guides/README.md)
-      * [Data exporter](docs/tutorials/guides/data\_exporter/README.md)
+      * Data exporter
         * [Export data to S3](docs/tutorials/guides/data\_exporter/s3.md)
-      * [Data loader](docs/tutorials/guides/data\_loader/README.md)
+      * Data loader
         * [Load data from S3](docs/tutorials/guides/data\_loader/s3.md)
-  * [Guides](docs/guides/README.md)
-    * [blocks](docs/guides/blocks/README.md)
+  * Guides
+    * Blocks
       * [R blocks](docs/guides/blocks/R.md)
       * [SQL blocks](docs/guides/blocks/SQL.md)
       * [Sensors: blocks depending on external pipelines](docs/guides/blocks/Sensors.md)
-    * [Pipelines](docs/guides/pipelines/README.md)
+    * Pipelines
       * [How to build a data integration pipeline](docs/guides/pipelines/DataIntegrationPipeline.md)
       * [Streaming pipeline](docs/guides/pipelines/StreamingPipeline.md)
-    * [Version control](docs/guides/version\_control/README.md)
+    * Version control
       * [Setting up Git on cloud](docs/guides/version\_control/Git.md)
-    * [Data integrations](docs/guides/data\_integrations/README.md)
-      * [Destinations](docs/guides/data\_integrations/destinations/README.md)
-        * [Adapt an existing destination](docs/guides/data\_integrations/destinations/AdaptExistingDestination.md)
-        * [Add a new destination](docs/guides/data\_integrations/destinations/AddNewDestination.md)
-      * [sources](docs/guides/data\_integrations/sources/README.md)
-        * [Adapt an existing source](docs/guides/data\_integrations/sources/AdaptExistingSource.md)
-        * [Add a new source](docs/guides/data\_integrations/sources/AddNewSource.md)
   * [Data integrations](docs/data\_integrations/README.md)
     * [Sources](docs/data\_integrations/sources/README.md)
+      * [Adapt an existing source](docs/guides/data\_integrations/sources/AdaptExistingSource.md)
+      * [Add a new source](docs/guides/data\_integrations/sources/AddNewSource.md)
     * [Destinations](docs/data\_integrations/destinations/README.md)
+      * [Adapt an existing destination](docs/guides/data\_integrations/destinations/AdaptExistingDestination.md)
+      * [Add a new destination](docs/guides/data\_integrations/destinations/AddNewDestination.md)
     * [Mage integrations](mage\_integrations/README.md)
       * [Schema](mage\_integrations/mage\_integrations/sources/README.md)
         * [Amplitude](mage\_integrations/mage\_integrations/sources/amplitude/README.md)
@@ -65,16 +62,16 @@
             * [Changelog](mage\_integrations/mage\_integrations/sources/salesforce/client/CHANGELOG.md)
         * [Stripe](mage\_integrations/mage\_integrations/sources/stripe/README.md)
         * [Titanic](mage\_integrations/mage\_integrations/sources/titanic/README.md)
-      * [Connections](mage\_integrations/mage\_integrations/connections/README.md)
-        * [Example](mage\_integrations/mage\_integrations/connections/amplitude/README.md)
-        * [Google analytics](mage\_integrations/mage\_integrations/connections/google\_analytics/README.md)
+      * Connections
+        * [Example code](mage\_integrations/mage\_integrations/connections/amplitude/README.md)
+        * [Google Analytics](mage\_integrations/mage\_integrations/connections/google\_analytics/README.md)
         * [PostgreSQL](mage\_integrations/mage\_integrations/connections/postgresql/README.md)
-      * [Destinations](mage\_integrations/mage\_integrations/destinations/README.md)
+      * Destinations
         * [MySQL](mage\_integrations/mage\_integrations/destinations/mysql/README.md)
         * [PostgreSQL](mage\_integrations/mage\_integrations/destinations/postgresql/README.md)
         * [Redshift](mage\_integrations/mage\_integrations/destinations/redshift/README.md)
         * [Snowflake](mage\_integrations/mage\_integrations/destinations/snowflake/README.md)
-  * [Code block integrations](docs/integrations/README.md)
+  * Code block integrations
     * [BigQuery](docs/integrations/BigQuery.md)
     * [MySQL](docs/integrations/MySQL.md)
     * [PostgreSQL](docs/integrations/PostgreSQL.md)
@@ -82,17 +79,17 @@
     * [S3](docs/integrations/S3.md)
     * [Snowflake](docs/integrations/Snowflake.md)
   * [Kernels](docs/kernels/README.md)
-  * [Development](docs/development/README.md)
+  * Development
     * [Multi-development environment in the cloud](docs/development/multi\_development\_environment/README.md)
-  * [Production](docs/production/README.md)
+  * Production
     * [Run pipeline in Airflow](docs/production/airflow.md)
     * [Compute Resource](docs/production/compute\_resource.md)
     * [Run pipeline in Prefect](docs/production/prefect.md)
     * [Runtime Variables](docs/production/runtime\_variables.md)
   * [Testing](docs/testing/README.md)
-  * [Triggers](docs/triggers/README.md)
+  * Triggers
     * [Triggering pipeline via API request](docs/triggers/api.md)
-  * [Deploy](docs/deploy/README.md)
+  * Deploy
     * [AWS](docs/deploy/aws/README.md)
     * [Terraform](docs/deploy/terraform/README.md)
       * [Terraform Amazon Web Services (AWS)](docs/deploy/terraform/AWS.md)
@@ -101,8 +98,8 @@
         * [Terraform Azure resources](docs/deploy/terraform/Azure/Resources.md)
       * [Terraform Google Cloud Platform (GCP)](docs/deploy/terraform/GCP.md)
         * [Terraform GCP resources](docs/deploy/terraform/GCP/Resources.md)
-  * [Observability](docs/observability/README.md)
-    * [Alerting](docs/observability/alerting/README.md)
+  * Observability
+    * Alerting
       * [Email](docs/observability/alerting/Email.md)
       * [Slack](docs/observability/alerting/Slack.md)
     * [Monitoring](docs/observability/monitoring/README.md)
@@ -111,7 +108,7 @@
   * [Running the server](mage\_ai/server/README.md)
   * [Database migrations](mage\_ai/orchestration/db/migrations/README.md)
 * [Contributing](docs/contributing/README.md)
+    * [Contributing guide](docs/contributing/data\_cleaner/README.md)
     * [Jupyter](docs/contributing/jupyter.md)
     * [Testing](docs/contributing/testing.md)
     * [Adding a chart](docs/contributing/charts/how\_to\_add.md)
-    * [Contributing guide](docs/contributing/data\_cleaner/README.md)
