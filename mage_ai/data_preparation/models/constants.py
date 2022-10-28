@@ -69,6 +69,7 @@ CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.CHART,
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
+    BlockType.DBT,
     BlockType.SENSOR,
     BlockType.TRANSFORMER,
 ]

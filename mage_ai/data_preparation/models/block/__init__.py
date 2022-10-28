@@ -10,6 +10,7 @@ from mage_ai.data_cleaner.shared.utils import (
 )
 from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
+    parse_attributes,
     update_model_settings,
 )
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
@@ -33,6 +34,7 @@ from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.constants import ENV_DEV
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
@@ -44,6 +46,7 @@ import functools
 import json
 import os
 import pandas as pd
+import re
 import simplejson
 import subprocess
 import sys
@@ -722,7 +725,30 @@ class Block:
 
             outputs = []
 
-            if self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
+            if BlockType.DBT == self.type:
+                attr = parse_attributes(self)
+                project_full_path = attr['project_full_path']
+                path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
+
+                args = [
+                    'dbt',
+                    'run',
+                    '--select',
+                    path_to_model,
+                    '--project-dir',
+                    project_full_path,
+                    '--profiles-dir',
+                    project_full_path,
+                    '--vars',
+                    simplejson.dumps(
+                        merge_dict(global_vars, runtime_arguments or {}),
+                        default=encode_complex,
+                        ignore_nan=True,
+                    ),
+                ]
+
+                subprocess.run(args, preexec_fn=os.setsid)
+            elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
                     proc = subprocess.run([
                         PYTHON_COMMAND,

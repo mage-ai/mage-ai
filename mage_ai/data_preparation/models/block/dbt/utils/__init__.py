@@ -26,6 +26,7 @@ def parse_attributes(block) -> Dict:
         filename=filename,
         full_path=f'{get_repo_path()}/dbt/{file_path}',
         model_name=model_name,
+        project_full_path=f'{get_repo_path()}/dbt/{project_name}',
         project_name=project_name,
     )
 
