@@ -1,10 +1,6 @@
 # Redshift
 
-<img
-  alt="Redshift"
-  src="https://www.freelogovectors.net/wp-content/uploads/2018/07/amazon-redshift-logo.png"
-  height="100"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754422-f3800160-b36a-4e3c-af78-cf322e55a7d3.png)
 
 <br />
 
