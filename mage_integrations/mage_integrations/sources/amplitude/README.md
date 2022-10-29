@@ -1,10 +1,6 @@
 # Amplitude
 
-<img
-  alt="Amplitude"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Amplitude_logo.svg/5000px-Amplitude_logo.svg.png"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198753477-f08a7424-00de-4ae3-9d04-e1c1429a7d28.png)
 
 <br />
 
