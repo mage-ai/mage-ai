@@ -5,7 +5,7 @@ Read more tech docs here. Got questions?
 [![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
 
-![looking](https://user-images.githubusercontent.com/78053898/198753259-a86381a6-f235-4a1f-8514-745bb965da06.svg)
+![](https://user-images.githubusercontent.com/78053898/198753334-e47c8494-0289-4f96-9058-f0f2387b23fb.svg)
 <img
   referrerpolicy="no-referrer-when-downgrade"
   src="https://static.scarf.sh/a.png?x-pxid=166cb008-7c31-4e95-909a-0f5fdc1d375a"
