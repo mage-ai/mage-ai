@@ -2,7 +2,7 @@
 
 These are the fundamental concepts that Mage uses to operate.
 
-![thinking](https://user-images.githubusercontent.com/78053898/198752755-ed44ffd6-7e6c-45d3-a4ca-91f2810ce46c.svg)
+![](https://user-images.githubusercontent.com/78053898/198752755-ed44ffd6-7e6c-45d3-a4ca-91f2810ce46c.svg)
 
 ## Table of contents
 
