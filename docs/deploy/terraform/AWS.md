@@ -1,10 +1,6 @@
 # Terraform Amazon Web Services (AWS)
 
-<img
-  alt="AWS"
-  src="https://www.zencos.com/wp-content/uploads/2021/11/aws-logo.png"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754745-9e462ffc-1214-47d2-8093-05c88949c08e.png)
 
 1. [Environment variables](#1-environment-variables)
 1. [Customize Terraform settings](#2-customize-terraform-settings)
