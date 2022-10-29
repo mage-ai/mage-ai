@@ -1,36 +1,21 @@
-from mage_integrations.connections.mysql import MySQL as MySQLConnection
+from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
-from mage_integrations.destinations.mysql.utils import (
-    build_create_table_command,
-    clean_column_name,
-    convert_column_type,
-)
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
+    build_create_table_command,
     build_insert_command,
     column_type_mapping,
+    convert_column_type,
 )
+from mage_integrations.destinations.utils import clean_column_name
 from typing import Dict, List, Tuple
 
 
-class MySQL(Destination):
-    def build_connection(self) -> MySQLConnection:
-        return MySQLConnection(
-            database=self.config['database'],
-            host=self.config['host'],
-            password=self.config['password'],
-            port=self.config.get('port'),
-            username=self.config['username'],
+class BigQuery(Destination):
+    def build_connection(self) -> BigQueryConnection:
+        return BigQueryConnection(
+            path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
         )
-
-    def build_create_schema_commands(
-        self,
-        database_name: str,
-        schema_name: str,
-    ) -> List[str]:
-        return [
-            f'CREATE SCHEMA IF NOT EXISTS {database_name}',
-        ]
 
     def build_create_table_commands(
         self,
@@ -46,12 +31,10 @@ class MySQL(Destination):
                 column_type_mapping=column_type_mapping(
                     schema,
                     convert_column_type,
-                    lambda item_type_converted: 'TEXT',
+                    lambda item_type_converted: 'ARRAY',
                 ),
                 columns=schema['properties'].keys(),
-                full_table_name=f'{database_name}.{table_name}',
-                key_properties=self.key_properties.get(stream),
-                schema=schema,
+                full_table_name=f'{schema_name}.{table_name}',
                 unique_constraints=unique_constraints,
             ),
         ]
@@ -71,38 +54,38 @@ class MySQL(Destination):
             column_type_mapping=column_type_mapping(
                 schema,
                 convert_column_type,
-                lambda item_type_converted: 'TEXT',
+                lambda item_type_converted: f'{item_type_converted}[]',
             ),
             columns=columns,
             records=records,
         )
-        insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
+        insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
 
-        insert_into = f'INTO {table_name} ({insert_columns})'
-        commands_after = []
+        commands = [
+            f'INSERT INTO {database_name}.{schema}.{table_name} ({insert_columns})',
+            f'VALUES {insert_values}',
+        ]
 
         if unique_constraints and unique_conflict_method:
+            unique_constraints = [clean_column_name(col) for col in unique_constraints]
+            columns_cleaned = [clean_column_name(col) for col in columns]
+
+            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                columns_cleaned = [clean_column_name(col) for col in columns]
-                update_command = [f'{col} = new.{col}' for col in columns_cleaned]
-                commands_after += [
-                    'AS new',
-                    f"ON DUPLICATE KEY UPDATE {', '.join(update_command)}",
-                ]
+                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
+                commands.append(
+                    f"DO UPDATE SET {', '.join(update_command)}",
+                )
             else:
-                insert_into = f'IGNORE {insert_into}'
+                commands.append('DO NOTHING')
 
-        commands = [
-            f'INSERT {insert_into}',
-            f'VALUES {insert_values}',
-        ] + commands_after
-
+        commands_string = '\n'.join(commands)
         return [
-            '\n'.join(commands),
-            # This will combine the count for number of rows inserted and number of rows updated.
-            # For example, if it inserts 2 and updates 2, that will yield 4.
-            'SELECT ROW_COUNT()',
+            '\n'.join([
+                f"WITH insert_rows_and_count AS ({commands_string} RETURNING 1)",
+                'SELECT COUNT(*) FROM insert_rows_and_count',
+            ]),
         ]
 
     def does_table_exist(
@@ -111,14 +94,13 @@ class MySQL(Destination):
         table_name: str,
         database_name: str = None,
     ) -> bool:
-        connection = self.build_connection()
-        data = connection.load('\n'.join([
-            'SELECT * FROM information_schema.tables ',
-            f'WHERE table_schema = \'{database_name}\' AND table_name = \'{table_name}\'',
-            'LIMIT 1',
-        ]))
-
-        return len(data) >= 1
+        data = self.build_connection().execute([f"""
+SELECT 1
+FROM `{database_name}.{schema_name}.__TABLES_SUMMARY__`
+WHERE table_id = '{table_name}'
+"""])
+        print(data)
+        return len(data[0]) >= 1
 
     def calculate_records_inserted_and_updated(
         self,
@@ -136,4 +118,4 @@ class MySQL(Destination):
 
 
 if __name__ == '__main__':
-    main(MySQL)
+    main(BigQuery)

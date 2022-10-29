@@ -9,7 +9,7 @@ from mage_integrations.destinations.sql.utils import (
 )
 from mage_integrations.destinations.utils import clean_column_name
 from mage_integrations.utils.array import batch
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 
 class Snowflake(Destination):
@@ -136,7 +136,6 @@ class Snowflake(Destination):
     ) -> Tuple:
         records_inserted = 0
         records_updated = 0
-        number_of_data = len(data)
 
         arr = []
 
