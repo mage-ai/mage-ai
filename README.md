@@ -92,10 +92,6 @@
 
 <br />
 
-<p align="center">
-  ↓
-</p>
-
 <p align="center">1️⃣ 🏗️</p>
 <h1 align="center">Build</h1>
 <p align="center">
