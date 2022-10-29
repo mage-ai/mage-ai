@@ -5,16 +5,19 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
     should_cache_data_from_upstream,
 )
 from mage_ai.io.config import ConfigKey
+from typing import Dict
 
 
 def create_upstream_block_tables(
     loader,
     block,
+    configuration: Dict = None,
     execution_partition: str = None,
 ):
-    data_provider = block.configuration.get('data_provider')
-    database = block.configuration.get('data_provider_database')
-    schema = block.configuration.get('data_provider_schema')
+    configuration = configuration if configuration else block.configuration
+    data_provider = configuration.get('data_provider')
+    database = configuration.get('data_provider_database')
+    schema = configuration.get('data_provider_schema')
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
         if should_cache_data_from_upstream(block, upstream_block, [

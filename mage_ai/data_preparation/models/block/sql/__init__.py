@@ -56,6 +56,7 @@ def execute_sql_code(
         bigquery.create_upstream_block_tables(
             loader,
             block,
+            configuration=configuration,
             execution_partition=execution_partition,
         )
 
@@ -93,6 +94,7 @@ def execute_sql_code(
             postgres.create_upstream_block_tables(
                 loader,
                 block,
+                configuration=configuration,
                 execution_partition=execution_partition,
             )
 
@@ -124,6 +126,7 @@ def execute_sql_code(
             redshift.create_upstream_block_tables(
                 loader,
                 block,
+                configuration=configuration,
                 execution_partition=execution_partition,
             )
 
@@ -156,6 +159,7 @@ def execute_sql_code(
             snowflake.create_upstream_block_tables(
                 loader,
                 block,
+                configuration=configuration,
                 execution_partition=execution_partition,
             )
 

@@ -282,11 +282,6 @@ function AddNewBlocks({
                     uuid: 'dbt/single_model',
                   },
                   {
-                    label: () => 'Multiple models',
-                    onClick: () => true,
-                    uuid: 'dbt/multiple_models',
-                  },
-                  {
                     label: () => 'All models (w/ optional exclusion)',
                     onClick: () => true,
                     uuid: 'dbt/all_models',

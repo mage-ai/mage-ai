@@ -224,7 +224,6 @@ function CodeOutput({
           isTable = true;
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           const textArr = data?.split('\\n');
-          console.log(textArr)
 
           displayElement = (
             <OutputRowStyle {...outputRowSharedProps}>
