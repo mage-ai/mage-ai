@@ -1,10 +1,6 @@
 # Stripe
 
-<img
-  alt="Stripe"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/2560px-Stripe_Logo%2C_revised_2016.svg.png"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754241-6581cb14-eddc-425b-b90f-e2a11ef22782.png)
 
 <br />
 
