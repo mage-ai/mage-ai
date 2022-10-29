@@ -1,6 +1,6 @@
 # Setting up Git on cloud
 
-![Octocat](https://user-images.githubusercontent.com/78053898/198753409-c7c41a8d-c137-4273-bb3b-76ecc81f8ee2.png)
+![](https://user-images.githubusercontent.com/78053898/198753409-c7c41a8d-c137-4273-bb3b-76ecc81f8ee2.png)
 
 1. Open terminal
 1. Configure Git
