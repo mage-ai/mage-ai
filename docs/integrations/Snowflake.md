@@ -1,10 +1,6 @@
 # Snowflake
 
-<img
-  alt="Snowflake"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Snowflake_Logo.svg/1280px-Snowflake_Logo.svg.png"
-  height="100"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754469-d3c289d7-65c7-44d0-818c-a7a15b393d4c.png)
 
 <br />
 
