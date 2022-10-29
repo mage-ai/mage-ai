@@ -1,10 +1,6 @@
 # Snowflake
 
-<img
-  alt="Snowflake"
-  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPr4JGdHQSz8_6nELnAyYz2-lo1pr7NqMZ3R_7CYxUk61TpXC6VBcfit7N3buDFt50yQ&usqp=CAU"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754338-a8aeb12e-6e23-45e5-b130-7a1979a2b31d.png)
 
 <br />
 
