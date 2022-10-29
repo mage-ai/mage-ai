@@ -1,10 +1,6 @@
 # Terraform Microsoft Azure
 
-<img
-  alt="Azure"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Microsoft_Azure_Logo.svg/1024px-Microsoft_Azure_Logo.svg.png"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754758-13aed127-73cd-4582-8556-f4f7f84012f9.png)
 
 1. [Install Azure CLI](#1-install-azure-cli)
 1. [Log into Azure from CLI](#2-log-into-azure-from-cli)
