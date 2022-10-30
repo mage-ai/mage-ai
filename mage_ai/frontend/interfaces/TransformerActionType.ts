@@ -15,6 +15,8 @@ export const COLUMN_ACTIONS: ActionTypeEnum[] = [
   ActionTypeEnum.FIRST,
   ActionTypeEnum.FIX_SYNTAX_ERRORS,
   ActionTypeEnum.IMPUTE,
+  ActionTypeEnum.NORMALIZE,
+  ActionTypeEnum.STANDARDIZE,
   ActionTypeEnum.LAST,
   ActionTypeEnum.MAX,
   ActionTypeEnum.MEDIAN,
@@ -41,6 +43,7 @@ export enum ActionGroupingEnum {
   COLUMN_REMOVAL = 'Column removal',
   SHIFT_ROWS = 'Shift rows in a column',
   MISC = 'Miscellaneous',
+  FEATURE_SCALING = 'Feature Scaling',
 }
 
 export const ACTION_GROUPING_MAPPING = {
@@ -74,6 +77,11 @@ export const ACTION_GROUPING_MAPPING = {
       ActionTypeEnum.IMPUTE,
       ActionTypeEnum.REMOVE_OUTLIERS,
     ],
+    [ActionGroupingEnum.FEATURE_SCALING]: [
+      ActionTypeEnum.NORMALIZE,
+      ActionTypeEnum.STANDARDIZE,
+    ],
+
   },
   [AxisEnum.ROW]: {
     [ActionGroupingEnum.MISC]: [
@@ -97,6 +105,8 @@ export const ACTION_TYPE_HUMAN_READABLE_MAPPING = {
     [ActionTypeEnum.FIRST]: 'Aggregate by first value',
     [ActionTypeEnum.FIX_SYNTAX_ERRORS]: 'Fix syntax errors',
     [ActionTypeEnum.IMPUTE]: 'Fill in missing values',
+    [ActionTypeEnum.NORMALIZE]: 'Normalize Data',
+    [ActionTypeEnum.STANDARDIZE]: 'Standardize Data',
     [ActionTypeEnum.LAST]: 'Aggregate by last value',
     [ActionTypeEnum.MAX]: 'Aggregate by maximum value',
     [ActionTypeEnum.MEDIAN]: 'Aggregate by median value',

@@ -14,6 +14,8 @@ export enum ActionTypeEnum {
   FIX_SYNTAX_ERRORS = 'fix_syntax_errors',
   GROUP = 'group',
   IMPUTE = 'impute',
+  NORMALIZE = 'normalize',
+  STANDARDIZE = 'standardize',
   JOIN = 'join',
   LAST = 'last',
   LIMIT = 'limit',

@@ -158,3 +158,6 @@ mage_ai/frontend/package-lock.json
 
 # vscode
 .vscode/
+
+.[*]
+*/

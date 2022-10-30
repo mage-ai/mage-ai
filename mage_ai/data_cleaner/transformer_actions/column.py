@@ -340,3 +340,20 @@ def __groupby_agg(df, action, agg_method):
         on=action_options['groupby_columns'],
         how='left',
     )
+
+def normalize(df, action, **kwargs):
+    columns = action['action_arguments']
+    for col in columns:
+        data_min = np.nanmin(df[col], axis=0)
+        data_max = np.nanmax(df[col], axis=0)
+        data_range = data_max-data_min
+        df[col] = df[col].apply(lambda x: (x-data_min)/data_range)
+    return df
+
+def standardize(df, action, **kwargs):
+    columns = action['action_arguments']
+    for col in columns:
+        data_mean = np.mean(df[col], axis=0)
+        data_std = np.std(df[col], axis=0)
+        df[col] = df[col].apply(lambda x: (x-data_mean)/data_std)
+    return df
