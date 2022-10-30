@@ -10,8 +10,9 @@ from mage_ai.data_cleaner.shared.utils import (
 )
 from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
-    execute_sql_code as execute_sql_code_dbt,
+    create_upstream_tables,
     parse_attributes,
+    query_from_compiled_sql,
     update_model_settings,
 )
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
@@ -760,17 +761,20 @@ class Block:
                         dbt_profile_target,
                     ]
 
-                subprocess.run(args, preexec_fn=os.setsid)
+                create_upstream_tables(
+                    self,
+                    execution_partition=execution_partition,
+                    profile_target=dbt_profile_target,
+
+                )
+
+                stdout = subprocess.PIPE if not test_execution else None
+                proc1 = subprocess.run(args, preexec_fn=os.setsid, stdout=stdout)
 
                 if test_execution:
-                    with open(f'{project_full_path}/target/compiled/{file_path}', 'r') as f:
-                        outputs = execute_sql_code_dbt(
-                            self,
-                            f.read(),
-                            execution_partition=execution_partition,
-                            global_vars=global_vars,
-                            profile_target=dbt_profile_target,
-                        )
+                    outputs = [query_from_compiled_sql(self, dbt_profile_target)]
+                else:
+                    print(proc1.stdout.decode())
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
                     proc = subprocess.run([

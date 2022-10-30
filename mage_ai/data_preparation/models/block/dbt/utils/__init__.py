@@ -1,10 +1,17 @@
-from mage_ai.data_preparation.models.block.sql import execute_sql_code as execute_sql_code_orig
+from mage_ai.data_preparation.models.block.sql import (
+    bigquery,
+    execute_sql_code as execute_sql_code_orig,
+    postgres,
+    redshift,
+    snowflake,
+)
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.shared.array import find, flatten
 from mage_ai.shared.utils import files_in_path
+from pandas import DataFrame
 from typing import Dict, List
 import os
 import re
@@ -193,15 +200,8 @@ def get_profile(block, profile_target: str = None) -> Dict:
         return outputs.get(profile_target or target)
 
 
-def execute_sql_code(
-    block,
-    query: str,
-    profile_target: str,
-    **kwargs,
-):
+def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
     profile = get_profile(block, profile_target)
-    attr = parse_attributes(block)
-    profiles_full_path = attr['profiles_full_path']
 
     database = profile.get('dbname')
     host = profile.get('host')
@@ -210,6 +210,9 @@ def execute_sql_code(
     profile_type = profile.get('type')
     schema = profile.get('schema')
     user = profile.get('user')
+
+    config_file_loader = None
+    configuration = None
 
     if DataSource.POSTGRES == profile_type:
         config_file_loader = ConfigFileLoader(config=dict(
@@ -225,11 +228,28 @@ def execute_sql_code(
             data_provider_schema=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
-    else:
+
+    if not config_file_loader or not configuration:
+        attr = parse_attributes(block)
+        profiles_full_path = attr['profiles_full_path']
+
         msg = f'No configuration matching profile type {profile_type}. ' \
             f'Change your target in {profiles_full_path} ' \
             'or add dbt_profile_target to your global variables.'
         raise Exception(msg)
+
+    return config_file_loader, configuration
+
+def execute_sql_code(
+    block,
+    query: str,
+    profile_target: str,
+    **kwargs,
+):
+    config_file_loader, configuration = config_file_loader_and_configuration(
+        block,
+        profile_target,
+    )
 
     return execute_sql_code_orig(
         block,
@@ -238,3 +258,47 @@ def execute_sql_code(
         configuration=configuration,
         **kwargs,
     )
+
+
+def create_upstream_tables(
+    block,
+    profile_target: str,
+    **kwargs,
+) -> None:
+    config_file_loader, configuration = config_file_loader_and_configuration(
+        block,
+        profile_target,
+    )
+
+    data_provider = configuration.get('data_provider')
+
+    if DataSource.POSTGRES.value == data_provider:
+        from mage_ai.io.postgres import Postgres
+
+        with Postgres.with_config(config_file_loader) as loader:
+            postgres.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                **kwargs,
+            )
+
+
+def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
+    attr = parse_attributes(block)
+
+    config_file_loader, configuration = config_file_loader_and_configuration(
+        block,
+        profile_target,
+    )
+    data_provider = configuration['data_provider']
+
+    project_full_path = attr['project_full_path']
+    file_path = attr['file_path']
+
+    with open(f'{project_full_path}/target/compiled/{file_path}', 'r') as f:
+        if DataSource.POSTGRES.value == data_provider:
+            from mage_ai.io.postgres import Postgres
+
+            with Postgres.with_config(config_file_loader) as loader:
+                return loader.load(f.read())
