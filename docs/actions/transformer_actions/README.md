@@ -295,6 +295,9 @@ Note: Action variables are inferred from `arguments` and `df`.
   - [Row Shifting Actions](#row-shifting-actions)
     - [Shift Up](#shift-up)
     - [Shift Down](#shift-down)
+  - [Feature Scaling Actions](#feature-scaling-actions)
+    - [Normalize Data](#normalize-data)
+    - [Standardize Data](#standardize-data)
   - [Other Column Actions](#other-column-actions)
     - [Difference](#difference)
     - [Fill In Missing Values](#fill-in-missing-values)
@@ -586,6 +589,49 @@ build_transformer_action(
 - **_outputs:_** Metadata for the newly added downshifted column. Must have at most a single entry containing the following information:
   - `uuid`: Name of the new downshifted column
   - `type`: Data type of the new downshifted column
+
+## Feature Scaling Actions
+
+These actions are used to normalize the range of independent variables or features of data. These actions are  generally performed during the data preprocessing step.
+
+| Type              | Formula                |
+| -----------       | ---------------------- |
+| Normalization     | `(X-Xmin)/(Xmax-Xmin)` |
+| Standardization   | `(X-Xmean)/Xstd`       |
+
+### Normalize Data
+Perform Normalization on the desired columns of a dataset.
+
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.NORMALIZE,
+    arguments=['Column1','Column2'],
+    axis=Axis.COLUMN,
+)
+```
+**Args**
+- **_arguments:_** The columns to Normalize.
+  - If no columns are provided then no Normalization is performed
+
+### Standardize Data
+Perform Standardization on the desired columns of a dataset.
+
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.STANDARDIZE,
+    arguments=['Column1','Column2'],
+    axis=Axis.COLUMN,
+)
+```
+**Args**
+- **_arguments:_** The columns to Standardize.
+  - If no columns are provided then no Standardization is performed
 
 ## Other Column Actions
 
