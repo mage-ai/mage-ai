@@ -774,7 +774,8 @@ class Block:
                 if test_execution:
                     outputs = [query_from_compiled_sql(self, dbt_profile_target)]
                 else:
-                    print(proc1.stdout.decode())
+                    for line in proc1.stdout.decode().split('\n'):
+                        print(line)
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
                     proc = subprocess.run([

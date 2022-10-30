@@ -279,6 +279,7 @@ def create_upstream_tables(
             postgres.create_upstream_block_tables(
                 loader,
                 block,
+                cascade_on_drop=True,
                 configuration=configuration,
                 **kwargs,
             )

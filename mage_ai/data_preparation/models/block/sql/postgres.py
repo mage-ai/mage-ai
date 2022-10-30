@@ -11,6 +11,7 @@ from typing import Dict
 def create_upstream_block_tables(
     loader,
     block,
+    cascade_on_drop: bool = False,
     configuration: Dict = None,
     execution_partition: str = None,
 ):
@@ -47,6 +48,7 @@ def create_upstream_block_tables(
                 df,
                 schema_name,
                 table_name,
+                cascade_on_drop=cascade_on_drop,
                 drop_table_on_replace=True,
                 if_exists='replace',
                 index=False,

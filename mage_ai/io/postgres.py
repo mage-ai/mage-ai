@@ -116,6 +116,7 @@ class Postgres(BaseSQLConnection):
         verbose: bool = True,
         query_string: str = None,
         drop_table_on_replace: bool = False,
+        cascade_on_drop: bool = False,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -158,7 +159,10 @@ class Postgres(BaseSQLConnection):
                         )
                     elif ExportWritePolicy.REPLACE == if_exists:
                         if drop_table_on_replace:
-                            cur.execute(f'DROP TABLE {full_table_name}')
+                            cmd = f'DROP TABLE {full_table_name}'
+                            if cascade_on_drop:
+                                cmd = f'{cmd} CASCADE'
+                            cur.execute(cmd)
                             should_create_table = True
                         else:
                             cur.execute(f'DELETE FROM {full_table_name}')
