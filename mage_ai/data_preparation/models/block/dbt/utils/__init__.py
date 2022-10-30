@@ -153,7 +153,7 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
             if block.type == upstream_block.type:
                 continue
 
-            table_name = source_table_name_for_block(block)
+            table_name = source_table_name_for_block(upstream_block)
 
             new_table = dict(name=table_name)
             new_source = dict(

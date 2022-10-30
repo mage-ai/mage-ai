@@ -20,6 +20,9 @@ def should_cache_data_from_upstream(
         # TODO (tommy dang): check to see if the upstream block has the same data source
         return True
 
+    if BlockType.DBT == block.type and BlockType.DBT == upstream_block.type:
+        return False
+
     config_path = path.join(get_repo_path(), 'io_config.yaml')
 
     config1 = block.configuration or {}
