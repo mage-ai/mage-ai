@@ -13,8 +13,8 @@ from mage_integrations.connections.google_analytics.constants import (
 )
 from mage_integrations.connections.google_analytics.utils import parse_response
 from mage_integrations.connections.utils.google import CredentialsInfoType
-from typing import Literal
 from mage_integrations.utils.dictionary import merge_dict
+from typing import Literal
 import os
 import re
 
@@ -27,7 +27,8 @@ class GoogleAnalytics(Connection):
         path_to_credentials_json_file: str = None,
     ):
         if not credentials_info and not path_to_credentials_json_file:
-            raise Exception('GoogleAnalytics connection requires credentials_info or path_to_credentials_json_file.')
+            raise Exception('GoogleAnalytics connection requires credentials_info '
+                            'or path_to_credentials_json_file.')
 
         super().__init__()
         self.credentials_info = credentials_info
