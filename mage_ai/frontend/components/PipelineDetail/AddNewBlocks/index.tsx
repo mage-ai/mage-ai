@@ -42,7 +42,7 @@ type AddNewBlocksProps = {
   hideTransformer?: boolean;
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
-  setRecsWindowOpenBlockIdx: (idx: number) => void;
+  setRecsWindowOpenBlockIdx?: (idx: number) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
