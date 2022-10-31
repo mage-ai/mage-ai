@@ -38,7 +38,6 @@ class BigQuery(Connection):
 
         cursor = connection.cursor()
         for query_string in query_strings:
-            print(f'Execute query: {query_string}')
             cursor.execute(clean_query(query_string))
             description = cursor.description
             if description:

@@ -32,10 +32,12 @@ class BigQuery(Destination):
                     schema,
                     convert_column_type,
                     lambda item_type_converted: 'ARRAY',
+                    string_type='STRING',
                 ),
                 columns=schema['properties'].keys(),
                 full_table_name=f'{schema_name}.{table_name}',
-                unique_constraints=unique_constraints,
+                # BigQuery doesn't support unique constraints
+                unique_constraints=None,
             ),
         ]
 
@@ -49,43 +51,67 @@ class BigQuery(Destination):
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
+        full_table_name = f'{database_name}.{schema_name}.{table_name}'
+        full_table_name_temp = f'{database_name}.{schema_name}.temp_{table_name}'
+
         columns = list(schema['properties'].keys())
+        mapping = column_type_mapping(
+            schema,
+            convert_column_type,
+            lambda item_type_converted: 'ARRAY',
+            string_type='STRING',
+        )
         insert_columns, insert_values = build_insert_command(
-            column_type_mapping=column_type_mapping(
-                schema,
-                convert_column_type,
-                lambda item_type_converted: f'{item_type_converted}[]',
-            ),
+            column_type_mapping=mapping,
             columns=columns,
             records=records,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
 
-        commands = [
-            f'INSERT INTO {database_name}.{schema}.{table_name} ({insert_columns})',
-            f'VALUES {insert_values}',
-        ]
-
         if unique_constraints and unique_conflict_method:
+            drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
+            commands = [
+                drop_temp_table_command,
+            ] + self.build_create_table_commands(
+                schema=schema,
+                schema_name=schema_name,
+                stream=None,
+                table_name=f'temp_{table_name}',
+                database_name=database_name,
+                unique_constraints=unique_constraints,
+            ) + [
+                f'INSERT INTO {full_table_name_temp} ({insert_columns}) VALUES {insert_values}',
+            ]
+
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
             columns_cleaned = [clean_column_name(col) for col in columns]
 
-            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
-            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
-                commands.append(
-                    f"DO UPDATE SET {', '.join(update_command)}",
-                )
-            else:
-                commands.append('DO NOTHING')
+            merge_commands = [
+                f'MERGE INTO {full_table_name} AS a',
+                f'USING (SELECT * FROM {full_table_name_temp}) AS b',
+                f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints])}",
+            ]
 
-        commands_string = '\n'.join(commands)
+            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+                set_command = ', '.join(
+                    [f'a.{col} = b.{col}' for col in columns_cleaned],
+                )
+                merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
+
+            merge_values = f"({', '.join([f'b.{col}' for col in columns_cleaned])})"
+            merge_commands.append(
+                f'WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values}',
+            )
+            merge_command = '\n'.join(merge_commands)
+
+            return commands + [
+                merge_command,
+                drop_temp_table_command,
+            ]
+
         return [
-            '\n'.join([
-                f"WITH insert_rows_and_count AS ({commands_string} RETURNING 1)",
-                'SELECT COUNT(*) FROM insert_rows_and_count',
-            ]),
+            f'INSERT INTO {full_table_name} ({insert_columns}) VALUES {insert_values}',
         ]
 
     def does_table_exist(
@@ -99,7 +125,6 @@ SELECT 1
 FROM `{database_name}.{schema_name}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
 """])
-        print(data)
         return len(data[0]) >= 1
 
     def calculate_records_inserted_and_updated(
