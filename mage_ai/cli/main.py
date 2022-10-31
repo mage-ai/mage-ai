@@ -74,7 +74,7 @@ Commands:
         )
     elif command == 'run' or command == 'test':
         from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
-        from mage_ai.data_preparation.models.pipeline import Pipeline
+        from mage_ai.data_preparation.models.pipeline.base import Pipeline
         from mage_ai.data_preparation.repo_manager import set_repo_path
         from mage_ai.data_preparation.variable_manager import get_global_variables
         from mage_ai.shared.hash import merge_dict

@@ -119,7 +119,7 @@ Example code:
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.shared.hash import ignore_keys
 import mage_ai
 import os

@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.aws.emr import emr
 from mage_ai.services.aws.emr.resource_manager import EmrResourceManager

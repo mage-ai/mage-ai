@@ -63,7 +63,7 @@ flow.run()
 Example code:
 ```python
 from prefect import Task, Flow
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 import asyncio
 import os
 

@@ -344,6 +344,9 @@ function PipelineDetail({
           dataProviders={dataProviders}
           defaultValue={block.content}
           deleteBlock={(b: BlockType) => {
+            if (isIntegration) {
+              
+            }
             deleteBlock(b);
             setAnyInputFocused(false);
           }}
@@ -355,7 +358,7 @@ function PipelineDetail({
           mainContainerRef={mainContainerRef}
           mainContainerWidth={mainContainerWidth}
           messages={messages[uuid]}
-          noDivider={idx === numberOfBlocks - 1}
+          noDivider={idx === numberOfBlocks - 1 || isIntegration}
           onChange={(value: string) => onChangeCodeBlock(uuid, value)}
           openSidekickView={openSidekickView}
           pipeline={pipeline}

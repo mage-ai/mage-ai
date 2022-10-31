@@ -1,6 +1,6 @@
 from datetime import datetime
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.orchestration.db.models import PipelineRun, PipelineSchedule
 
 

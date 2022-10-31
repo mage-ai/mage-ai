@@ -5,7 +5,7 @@ from mage_ai.data_preparation.models.constants import (
     ExecutorType,
     PipelineType,
 )
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.shared.code import is_pyspark_code
 
 

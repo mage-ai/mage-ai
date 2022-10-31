@@ -148,43 +148,6 @@ class Pipeline:
         duplicate_pipeline.save()
         return duplicate_pipeline
 
-    @classmethod
-    def get(self, uuid, repo_path: str = None):
-        return self(uuid, repo_path=repo_path)
-
-    @classmethod
-    def get_all_pipelines(self, repo_path):
-        pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
-        if not os.path.exists(pipelines_folder):
-            os.mkdir(pipelines_folder)
-        return [
-            d
-            for d in os.listdir(pipelines_folder)
-            if self.is_valid_pipeline(os.path.join(pipelines_folder, d))
-        ]
-
-    @classmethod
-    def get_pipelines_by_block(self, block, repo_path=None, widget=False):
-        repo_path = repo_path or get_repo_path()
-        pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
-        pipelines = []
-        for entry in os.scandir(pipelines_folder):
-            if entry.is_dir():
-                try:
-                    p = Pipeline(entry.name, repo_path=repo_path)
-                    mapping = p.widgets_by_uuid if widget else p.blocks_by_uuid
-                    if block.uuid in mapping:
-                        pipelines.append(p)
-                except Exception:
-                    pass
-        return pipelines
-
-    @classmethod
-    def is_valid_pipeline(self, pipeline_path):
-        return os.path.isdir(pipeline_path) and os.path.exists(
-            os.path.join(pipeline_path, METADATA_FILE_NAME)
-        )
-
     def block_deletable(self, block, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
         if block.uuid not in mapping:
@@ -601,7 +564,7 @@ class Pipeline:
 
     def save(self, block_uuid: str = None, widget: bool = False):
         if block_uuid is not None:
-            current_pipeline = Pipeline(self.uuid, self.repo_path)
+            current_pipeline = self.__class__(self.uuid, self.repo_path)
             block = self.get_block(block_uuid, widget=widget)
             if widget:
                 current_pipeline.widgets_by_uuid[block_uuid] = block

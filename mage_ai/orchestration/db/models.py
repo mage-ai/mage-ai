@@ -1,7 +1,8 @@
 from croniter import croniter
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline import get_pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
@@ -187,7 +188,7 @@ class PipelineSchedule(BaseModel):
             return False
 
         try:
-            Pipeline.get(self.pipeline_uuid)
+            get_pipeline(self.pipeline_uuid)
         except Exception:
             return False
 
@@ -248,7 +249,7 @@ class PipelineRun(BaseModel):
 
     @property
     def logs(self):
-        pipeline = Pipeline.get(self.pipeline_uuid)
+        pipeline = get_pipeline(self.pipeline_uuid)
         return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
@@ -277,7 +278,7 @@ class PipelineRun(BaseModel):
         pipeline_run = super().create(**kwargs)
         pipeline_uuid = kwargs.get('pipeline_uuid')
         if pipeline_uuid is not None:
-            pipeline = Pipeline.get(pipeline_uuid)
+            pipeline = get_pipeline(pipeline_uuid)
             blocks = pipeline.get_executable_blocks()
             for b in blocks:
                 BlockRun.create(
@@ -310,7 +311,7 @@ class BlockRun(BaseModel):
 
     @property
     def logs(self):
-        pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
+        pipeline = get_pipeline(self.pipeline_run.pipeline_uuid)
         return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
             block_uuid=self.block_uuid,
@@ -329,7 +330,7 @@ class BlockRun(BaseModel):
         return None
 
     def get_outputs(self, sample_count: int = None) -> List[Dict]:
-        pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
+        pipeline = get_pipeline(self.pipeline_run.pipeline_uuid)
         block = pipeline.get_block(self.block_uuid)
         return block.get_outputs(
             execution_partition=self.pipeline_run.execution_partition,

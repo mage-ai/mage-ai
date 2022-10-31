@@ -1,5 +1,5 @@
 from distutils.file_util import copy_file
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from typing import Callable
 import asyncio
 import multiprocessing

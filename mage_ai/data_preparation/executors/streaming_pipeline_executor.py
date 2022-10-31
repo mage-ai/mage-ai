@@ -1,7 +1,7 @@
 from contextlib import redirect_stderr, redirect_stdout
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from typing import Callable, Dict, List, Union
 import yaml

@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline import get_pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.server.api.base import BaseHandler
@@ -10,7 +11,7 @@ import json
 
 class ApiPipelineBlockHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         block = pipeline.get_block(block_uuid)
         include_outputs = self.get_bool_argument('include_outputs', True)
         if block is None:
@@ -29,7 +30,7 @@ class ApiPipelineBlockHandler(BaseHandler):
         """
         Allow updating block name, uuid, type, upstream_block, and downstream_blocks
         """
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         data = json.loads(self.request.body).get('block', {})
         block = pipeline.get_block(block_uuid)
         if block is None:
@@ -38,7 +39,7 @@ class ApiPipelineBlockHandler(BaseHandler):
         self.write(dict(block=block.to_dict(include_content=True)))
 
     def delete(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
@@ -48,7 +49,7 @@ class ApiPipelineBlockHandler(BaseHandler):
 
 class ApiPipelineBlockExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
@@ -65,7 +66,7 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
 
 class ApiPipelineBlockListHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         include_outputs = self.get_bool_argument('include_outputs', True)
         self.write(
             dict(
@@ -82,7 +83,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
         """
         Create block and add to pipeline
         """
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         payload = json.loads(self.request.body).get('block', {})
         block = Block.create(
             payload.get('name') or payload.get('uuid'),
@@ -108,7 +109,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
 
 class ApiPipelineBlockAnalysisHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
@@ -118,7 +119,7 @@ class ApiPipelineBlockAnalysisHandler(BaseHandler):
 
 class ApiPipelineBlockOutputHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')

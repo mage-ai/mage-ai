@@ -6,7 +6,8 @@ from mage_ai.data_preparation.models.constants import (
     CUSTOM_EXECUTION_BLOCK_TYPES,
     PIPELINES_FOLDER,
 )
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
+from mage_ai.data_preparation.models.pipeline import get_pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.server.active_kernel import (
@@ -162,7 +163,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = None
         if pipeline_uuid:
-            pipeline = Pipeline(pipeline_uuid, get_repo_path())
+            pipeline = get_pipeline(pipeline_uuid, get_repo_path())
 
         # Add default trigger runtime variables so the code can run successfully.
         global_vars = {}

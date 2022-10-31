@@ -238,7 +238,7 @@ def add_execution_code(
                 magic_header = '%%spark -o df --maxrows 10000'
 
     return f"""{magic_header}
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.array import find
 import datetime
@@ -296,7 +296,7 @@ def get_block_output_process_code(
         return None
     return f"""%%local
 from mage_ai.data_preparation.models.constants import BlockStatus
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 
 import pandas
 
@@ -325,7 +325,7 @@ def get_pipeline_execution_code(
     else:
         global_vars_spark = ''
     return f"""
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 import asyncio
 
 def execute_pipeline():

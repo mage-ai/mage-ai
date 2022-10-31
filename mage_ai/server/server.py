@@ -1,7 +1,8 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline import get_all_pipelines, get_pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
@@ -149,13 +150,13 @@ class ApiFileContentHandler(BaseHandler):
 
 class ApiPipelineHandler(BaseHandler):
     def delete(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         response = dict(pipeline=pipeline.to_dict())
         pipeline.delete()
         self.write(response)
 
     def get(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         include_content = self.get_bool_argument('include_content', True)
         include_outputs = self.get_bool_argument('include_outputs', True)
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
@@ -174,7 +175,7 @@ class ApiPipelineHandler(BaseHandler):
         """
         Allow updating pipeline name, uuid, status
         """
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
@@ -205,7 +206,7 @@ class ApiPipelineHandler(BaseHandler):
 
 class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
 
         global_vars = None
         if len(self.request.body) != 0:
@@ -227,11 +228,11 @@ class ApiPipelineListHandler(BaseHandler):
     def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
-        pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+        pipeline_uuids = get_all_pipelines(get_repo_path())
         pipelines = []
         for uuid in pipeline_uuids:
             try:
-                pipeline = Pipeline.get(uuid)
+                pipeline = get_pipeline(uuid)
                 pipelines.append(pipeline)
             except Exception:
                 pass
@@ -281,7 +282,7 @@ class ApiPipelineListHandler(BaseHandler):
                 repo_path=get_repo_path(),
             )
         else:
-            source = Pipeline.get(clone_pipeline_uuid)
+            source = get_pipeline(clone_pipeline_uuid)
             pipeline = Pipeline.duplicate(source, name)
         self.write(dict(pipeline=pipeline.to_dict()))
 

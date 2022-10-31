@@ -127,7 +127,7 @@ def run(
     run_sensors: bool = True,
     **global_vars,
 ) -> None:
-    from mage_ai.data_preparation.models.pipeline import Pipeline
+    from mage_ai.data_preparation.models.pipeline.base import Pipeline
     from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)

@@ -4,8 +4,8 @@ from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.data_preparation.models.pipeline.integration_pipeline import IntegrationPipeline
+from mage_ai.data_preparation.models.pipeline import get_all_pipelines, get_pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
@@ -30,7 +30,7 @@ class PipelineScheduler:
         pipeline_run: PipelineRun,
     ) -> None:
         self.pipeline_run = pipeline_run
-        self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
+        self.pipeline = get_pipeline(pipeline_run.pipeline_uuid)
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
             partition=self.pipeline_run.execution_partition,
@@ -245,7 +245,7 @@ def run_integration_pipeline(
 
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
-    integration_pipeline = IntegrationPipeline.get(pipeline_scheduler.pipeline.uuid)
+    integration_pipeline = IntegrationPipeline(pipeline_scheduler.pipeline.uuid)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
                                    f'pipeline {integration_pipeline.uuid}',
                                    **tags)
@@ -357,8 +357,6 @@ def run_block(
     pipeline_scheduler = PipelineScheduler(pipeline_run)
 
     pipeline = pipeline_scheduler.pipeline
-    if PipelineType.INTEGRATION == pipeline_type:
-        pipeline = IntegrationPipeline.get(pipeline.uuid)
 
     block_run = BlockRun.query.get(block_run_id)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
@@ -401,7 +399,7 @@ def run_pipeline(pipeline_run_id, variables, tags):
 
 
 def check_sla():
-    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+    repo_pipelines = set(get_all_pipelines(get_repo_path()))
     pipeline_schedules = \
         set([
             s.id
@@ -444,7 +442,7 @@ def schedule_all():
     1. Check whether any new pipeline runs need to be scheduled.
     2. In active pipeline runs, check whether any block runs need to be scheduled.
     """
-    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+    repo_pipelines = set(get_all_pipelines(get_repo_path()))
 
     active_pipeline_schedules = \
         list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))

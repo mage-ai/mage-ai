@@ -1,6 +1,6 @@
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_integrations.sources.constants import SOURCES
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.data_preparation.models.pipeline.integration_pipeline import IntegrationPipeline
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.hash import merge_dict
 from typing import List, Dict
@@ -43,7 +43,7 @@ class ApiIntegrationSourcesHandler(BaseHandler):
 
 class ApiIntegrationSourceStreamHandler(BaseHandler):
     def put(self, pipeline_uuid):
-        pipeline = IntegrationPipeline.get(pipeline_uuid)
+        pipeline = IntegrationPipeline(pipeline_uuid)
         streams = pipeline.discover_streams() or {}
 
         self.write(dict(
@@ -57,7 +57,7 @@ class ApiIntegrationSourceStreamHandler(BaseHandler):
 class ApiIntegrationSourceHandler(BaseHandler):
     def put(self, pipeline_uuid):
         payload = self.get_payload()
-        pipeline = IntegrationPipeline.get(pipeline_uuid)
+        pipeline = IntegrationPipeline(pipeline_uuid)
         selected_streams = payload.get('integration_source', {}).get('streams')
         catalog = pipeline.discover(streams=selected_streams) or {}
 

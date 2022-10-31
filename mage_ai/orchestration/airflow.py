@@ -1,5 +1,5 @@
 from datetime import datetime
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline import get_all_pipelines, get_pipeline
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from typing import Dict, List, Any
 import mage_ai
@@ -13,7 +13,7 @@ def create_dag(
     dag_settings: Dict[str, Any] = dict(),
     globals_dict: Dict[str, Any] = dict(),
 ):
-    pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
+    pipeline = get_pipeline(pipeline_uuid, repo_path=project_path)
 
     tasks = []
 
@@ -81,7 +81,7 @@ def create_dags(
     dag_settings: Dict[str, Any] = dict(),
     globals_dict: Dict[str, Any] = dict(),
 ):
-    all_pipeline_uuids = Pipeline.get_all_pipelines(project_path)
+    all_pipeline_uuids = get_all_pipelines(project_path)
     for pipeline_uuid in all_pipeline_uuids:
         if pipeline_uuid not in blacklist_pipelines:
             create_dag(

@@ -1,10 +1,11 @@
+from mage_ai.data_preparation.models.pipeline import get_pipeline
 from .base import (
     META_KEY_LIMIT,
     BaseDetailHandler,
     BaseHandler,
 )
 from datetime import datetime
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.orchestration.db.models import (
     BlockRun,
     EventMatcher,
@@ -328,7 +329,7 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                 results = PipelineSchedule.query.all()
                 collection = [s.to_dict() for s in results]
             else:
-                pipeline = Pipeline.get(pipeline_uuid)
+                pipeline = get_pipeline(pipeline_uuid)
                 results = (
                     PipelineSchedule.
                     query.
@@ -349,7 +350,7 @@ class ApiPipelineScheduleListHandler(BaseHandler):
         self.finish()
 
     def post(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = get_pipeline(pipeline_uuid)
 
         payload = self.get_payload()
         payload['pipeline_uuid'] = pipeline.uuid

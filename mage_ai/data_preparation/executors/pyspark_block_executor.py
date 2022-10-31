@@ -1,6 +1,6 @@
 from contextlib import redirect_stdout
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline.base import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.aws.emr import emr
