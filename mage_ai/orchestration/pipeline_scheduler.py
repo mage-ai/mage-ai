@@ -3,7 +3,7 @@ from dateutil.relativedelta import relativedelta
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
@@ -14,7 +14,6 @@ from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
-from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare

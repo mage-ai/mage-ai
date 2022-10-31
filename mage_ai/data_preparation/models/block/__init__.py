@@ -23,7 +23,7 @@ from mage_ai.data_preparation.models.constants import (
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.variable import VariableType
+from mage_ai.data_preparation.models.variable import DATAFRAME_PARQUET_FILE, VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
@@ -724,15 +724,19 @@ class Block:
                     # only supports 1 upstream block for now
                     upstream_block_uuid = self.upstream_block_uuids[0]
 
+                    upstream_df_var = self.pipeline.variable_manager.get_variable_object(
+                        self.pipeline.uuid,
+                        upstream_block_uuid,
+                        'df',
+                        partition=execution_partition,
+                        variable_type=VariableType.DATAFRAME,
+                    )
+
                     proc1 = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.transformer_file_path,
-                        '--pipeline_uuid',
-                        self.pipeline.uuid,
-                        '--block_uuid',
-                        upstream_block_uuid,
-                        '--execution_partition',
-                        execution_partition,
+                        '--df_file_path',
+                        os.path.join(upstream_df_var.variable_path, DATAFRAME_PARQUET_FILE),
                         '--log_to_stdout',
                         '1',
                         '--to_df',
@@ -741,16 +745,7 @@ class Block:
                     print_logs_from_output(proc1.stdout)
 
                     # run transformer code and store it
-                    input_vars.append(
-                        self.pipeline.variable_manager.get_variable(
-                            self.pipeline.uuid,
-                            upstream_block_uuid,
-                            'df',
-                            partition=execution_partition,
-                            variable_type=VariableType.DATAFRAME,
-                            spark=(global_vars or dict()).get('spark'),
-                        )
-                    )
+                    input_vars.append(upstream_df_var.read_data())
                     exec(self.content, results)
                     block_function = self.__validate_execution(decorated_functions, input_vars)
                     if block_function is not None:
@@ -762,15 +757,19 @@ class Block:
                         override_outputs=True,
                     )
 
+                    df_variable = self.pipeline.variable_manager.get_variable_object(
+                        self.pipeline.uuid,
+                        self.uuid,
+                        'df',
+                        partition=execution_partition,
+                        variable_type=VariableType.DATAFRAME,
+                    )
+
                     proc2 = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.transformer_file_path,
-                        '--pipeline_uuid',
-                        self.pipeline.uuid,
-                        '--block_uuid',
-                        self.uuid,
-                        '--execution_partition',
-                        execution_partition,
+                        '--df_file_path',
+                        os.path.join(df_variable.variable_path, DATAFRAME_PARQUET_FILE),
                         '--log_to_stdout',
                         '1',
                         '--config_json',

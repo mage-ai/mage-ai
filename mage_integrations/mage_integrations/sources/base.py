@@ -222,6 +222,8 @@ class Source:
 
         Args:
             stream (TYPE): The stream to be processed.
+            properties (Dict, optional): Dictionary to overwrite the
+                stream's schema properties.
 
         Raises:
             Exception: Invalid replication_method.
@@ -322,6 +324,7 @@ class Source:
 
         Args:
             catalog (Catalog): The catalog of streams
+            properties (Dict): Optional argument to overwrite stream schema properties
         """
         for stream in catalog.get_selected_streams(self.state):
             tags = dict(stream=stream.tap_stream_id)

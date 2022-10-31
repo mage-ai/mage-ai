@@ -153,9 +153,9 @@ class Destination():
     def process_record(
         self,
         stream: str,
-        schema: dict,
-        row: dict,
-        tags: dict = {},
+        schema: Dict,
+        row: Dict,
+        tags: Dict = {},
     ) -> None:
         self.export_data(
             record=self._validate_and_prepare_record(
@@ -181,9 +181,9 @@ class Destination():
     def process_schema(
         self,
         stream: str,
-        schema: dict,
-        row: dict,
-        tags: dict = {},
+        schema: Dict,
+        row: Dict,
+        tags: Dict = dict(),
     ) -> None:
         if not stream:
             message = f'Required key {KEY_STREAM} is missing from row.'
@@ -198,10 +198,10 @@ class Destination():
         self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
         self.validators[stream] = Draft4Validator(schema)
 
-    def process_state(self, row: dict, tags: dict = {}) -> None:
+    def process_state(self, row: Dict, tags: Dict = dict()) -> None:
         state = row.get(KEY_VALUE)
         if state:
-            self.__emit_state(state)
+            self._emit_state(state)
         else:
             message = f'A state message is missing a state value.'
             self.logger.exception(message, tags=tags)
@@ -330,7 +330,7 @@ class Destination():
 
         return flatten_record(record)
 
-    def __emit_state(self, state):
+    def _emit_state(self, state):
         if state:
             line = json.dumps(state)
             text = f'{line}\n'
