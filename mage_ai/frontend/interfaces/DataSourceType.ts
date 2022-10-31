@@ -3,6 +3,7 @@ import { BlockTypeEnum } from './BlockType';
 export enum DataSourceTypeEnum {
   API = 'api',
   AZURE_BLOB_STORAGE = 'azure_blob_storage',
+  AZURE_EVENT_HUB = 'azure_event_hub',
   BIGQUERY = 'bigquery',
   FILE = 'file',
   GENERIC = 'generic',
@@ -18,6 +19,7 @@ export enum DataSourceTypeEnum {
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.API]: 'API',
   [DataSourceTypeEnum.AZURE_BLOB_STORAGE]: 'Azure Blob Storage',
+  [DataSourceTypeEnum.AZURE_EVENT_HUB]: 'Azure Event Hub',
   [DataSourceTypeEnum.BIGQUERY]: 'Google BigQuery',
   [DataSourceTypeEnum.FILE]: 'Local file',
   [DataSourceTypeEnum.GENERIC]: 'Generic (no template)',
