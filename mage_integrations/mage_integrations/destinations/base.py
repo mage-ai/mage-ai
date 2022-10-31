@@ -119,6 +119,8 @@ class Destination():
             self.logger.exception(message)
             raise Exception(message)
 
+    # The @config.setter and @settings.setter are not currently used by destinations
+    # and destination subclasses. They are used by the transformer subclass.
     @config.setter
     def config(self, config):
         self._config = config
@@ -307,6 +309,17 @@ class Destination():
             for state in states:
                 self.process_state(**state)
 
+    def _emit_state(self, state):
+        if state:
+            line = json.dumps(state)
+            text = f'{line}\n'
+            if self.state_file_path:
+                with open(self.state_file_path, 'w') as f:
+                    f.write(text)
+            else:
+                sys.stdout.write()
+                sys.stdout.flush()
+
     def _validate_and_prepare_record(
         self,
         stream: str,
@@ -329,14 +342,3 @@ class Destination():
         self.validators[stream].validate(record)
 
         return flatten_record(record)
-
-    def _emit_state(self, state):
-        if state:
-            line = json.dumps(state)
-            text = f'{line}\n'
-            if self.state_file_path:
-                with open(self.state_file_path, 'w') as f:
-                    f.write(text)
-            else:
-                sys.stdout.write()
-                sys.stdout.flush()
