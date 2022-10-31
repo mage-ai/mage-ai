@@ -55,6 +55,15 @@ class GoogleSearchConsole(Source):
                     results.append(merge_dict(r, zip(dimensions, keys)))
         return results
 
+    def get_forced_replication_method(self, stream_id):
+        return STREAMS[stream_id]['replication_method']
+
+    def get_table_key_properties(self, stream_id):
+        return STREAMS[stream_id]['key_properties']
+
+    def get_valid_replication_keys(self, stream_id):
+        return STREAMS[stream_id].get('replication_keys', [])
+
 
 if __name__ == '__main__':
     main(GoogleSearchConsole)
