@@ -260,6 +260,23 @@ def run_integration_pipeline(
         block_runs,
     )
 
+    executable_block_runs = []
+    current_block = integration_pipeline.get_block(data_loader_block_run.block_uuid)
+
+    # we expect that blocks in integration pipelines only have 1 downstream block, and
+    # that there is only 1 root block and 1 leaf block.
+    while True:
+        executable_block_runs.append(
+            find(
+                lambda b: b.block_uuid == current_block.uuid,
+                block_runs,
+            )
+        )
+        downstream_blocks = current_block.downstream_blocks
+        if len(downstream_blocks) == 0:
+            break
+        current_block = downstream_blocks[0]
+
     outputs = []
     if data_loader_block_run and data_exporter_block_run:
 
@@ -299,7 +316,7 @@ def run_integration_pipeline(
             _start_date=start_date,
         )
 
-        for idx, block_run in enumerate([data_loader_block_run, data_exporter_block_run]):
+        for idx, block_run in enumerate(executable_block_runs):
             tags_updated = merge_dict(tags, dict(
                 block_run_id=block_run.id,
                 block_uuid=block_run.block_uuid,

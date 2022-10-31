@@ -219,7 +219,7 @@ def parse_args(required_config_keys):
         help='Sources will log using Singer logger by default. Set his flag to True to log to sys.stdout.',
     )
 
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     if args.state:
         setattr(args, 'state_path', args.state)

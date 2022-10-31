@@ -2,7 +2,7 @@ from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from typing import Any, Dict, List
@@ -100,8 +100,28 @@ class IntegrationPipeline(Pipeline):
         return file_path
 
     @property
+    def transformer_file_path(self) -> str:
+        transformer_file = importlib.import_module('mage_integrations.transformers.base')
+        return os.path.abspath(transformer_file.__file__)
+
+    @property
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
+
+    def validate(self, error_msg=None):
+        super().validate()
+
+        combined_blocks = dict()
+        combined_blocks.update(self.blocks_by_uuid)
+
+        def __check_downstream_blocks(block: Block):
+            if len(block.downstream_blocks) > 1:
+                raise InvalidPipelineError(
+                    f'Block {block.uuid} has too many downstream dependencies')
+
+        for uuid in combined_blocks:
+            __check_downstream_blocks(self.blocks_by_uuid[uuid])
+
 
     def discover(self, streams: List[str] = None) -> dict:
         global_vars = get_global_variables(self.uuid) or dict()

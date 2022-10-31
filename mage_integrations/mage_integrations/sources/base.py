@@ -193,7 +193,7 @@ class Source:
             ))
             raise Exception(message)
 
-    def process_stream(self, stream):
+    def process_stream(self, stream, properties: Dict = None):
         """
         Start syncing stream and write SCHEMA message.
         SCHEMA messages describe the datatypes of data in the stream.
@@ -222,6 +222,8 @@ class Source:
 
         Args:
             stream (TYPE): The stream to be processed.
+            properties (Dict, optional): Dictionary to overwrite the
+                stream's schema properties.
 
         Raises:
             Exception: Invalid replication_method.
@@ -237,13 +239,16 @@ class Source:
             raise Exception(message)
 
         schema_dict = stream.schema.to_dict()
-        schema_dict['properties'] = extract(
-            schema_dict['properties'],
-            extract_selected_columns(stream.metadata),
+        if properties:
+            schema_dict['properties'] = properties
+        else:
+            schema_dict['properties'] = extract(
+                schema_dict['properties'],
+                extract_selected_columns(stream.metadata),
         )
 
         write_schema(
-            bookmark_properties=self.__get_boommark_properties_for_stream(stream),
+            bookmark_properties=self.__get_bookmark_properties_for_stream(stream),
             key_properties=stream.key_properties,
             replication_method=stream.replication_method,
             schema=schema_dict,
@@ -266,7 +271,7 @@ class Source:
         Returns:
             List[Dict]: The list of rows.
         """
-        bookmark_properties = self.__get_boommark_properties_for_stream(stream)
+        bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
 
         start_date = None
         if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and \
@@ -309,7 +314,7 @@ class Source:
 
         return rows
 
-    def sync(self, catalog: Catalog) -> None:
+    def sync(self, catalog: Catalog, properties: Dict = None) -> None:
         """
         Main method to sync the data.
 
@@ -319,15 +324,16 @@ class Source:
 
         Args:
             catalog (Catalog): The catalog of streams
+            properties (Dict): Optional argument to overwrite stream schema properties
         """
         for stream in catalog.get_selected_streams(self.state):
             tags = dict(stream=stream.tap_stream_id)
-            self.logger.info('Synced stream started.', tags=tags)
+            self.logger.info('Syncing stream started.', tags=tags)
 
-            self.process_stream(stream)
+            self.process_stream(stream, properties)
             records = self.sync_stream(stream)
 
-            self.logger.info('Synced stream completed.', tags=merge_dict(tags, dict(
+            self.logger.info('Syncing stream completed.', tags=merge_dict(tags, dict(
                 records=len(records) if records is not None else None,
             )))
 
@@ -457,7 +463,7 @@ class Source:
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
             return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
 
-    def __get_boommark_properties_for_stream(self, stream) -> List[str]:
+    def __get_bookmark_properties_for_stream(self, stream) -> List[str]:
         bookmark_properties = []
 
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:

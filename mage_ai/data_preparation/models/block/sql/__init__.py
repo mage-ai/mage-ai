@@ -154,7 +154,6 @@ def execute_sql_code(
 
             query_string = snowflake.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
-            print('WTFFFFFFFFFFFFFFFFF', query_string)
             loader.export(
                 None,
                 table_name,
