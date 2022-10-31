@@ -10,7 +10,7 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     column_type_mapping,
 )
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 
 class MySQL(Destination):
@@ -119,7 +119,6 @@ class MySQL(Destination):
         ]))
 
         return len(data) >= 1
-
 
     def calculate_records_inserted_and_updated(
         self,

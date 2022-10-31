@@ -36,7 +36,11 @@ def build_create_table_command(
     return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
 
 
-def convert_column_type(column_type: str, column_settings: Dict) -> str:
+def convert_column_type(
+    column_type: str,
+    column_settings: Dict,
+    string_type: str = 'VARCHAR',
+) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
         return 'BOOLEAN'
     elif COLUMN_TYPE_INTEGER == column_type:
@@ -48,15 +52,16 @@ def convert_column_type(column_type: str, column_settings: Dict) -> str:
     elif COLUMN_TYPE_STRING == column_type:
         if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
             # Twice as long as the number of characters in ISO date format
-            return 'VARCHAR(52)'
+            return 'VARCHAR(52)' if string_type == 'VARCHAR' else string_type
         else:
-            return 'VARCHAR(255)'
+            return 'VARCHAR(255)' if string_type == 'VARCHAR' else string_type
 
 
 def column_type_mapping(
     schema: Dict,
     convert_column_type_func: Callable,
     convert_array_column_type_func: Callable,
+    string_type: str = 'VARCHAR',
 ) -> Dict:
     mapping = {}
     for column, column_settings in schema['properties'].items():
@@ -77,7 +82,10 @@ def column_type_mapping(
         if COLUMN_TYPE_ARRAY == column_type and len(column_types) >= 2:
             column_type = column_types[1]
 
-        column_type_converted = 'VARCHAR(255)'
+        if string_type == 'VARCHAR':
+            column_type_converted = 'VARCHAR(255)'
+        else:
+            column_type_converted = string_type
         item_type = None
         item_type_converted = None
 
@@ -85,10 +93,18 @@ def column_type_mapping(
             item_types = [t for t in column_settings.get('items', {}).get('type', []) if 'null' != t]
             if len(item_types):
                 item_type = item_types[0]
-                item_type_converted = convert_column_type_func(item_type, column_settings)
+                item_type_converted = convert_column_type_func(
+                    item_type,
+                    column_settings,
+                    string_type=string_type,
+                )
                 column_type_converted = convert_array_column_type_func(item_type_converted)
         else:
-            column_type_converted = convert_column_type_func(column_type, column_settings)
+            column_type_converted = convert_column_type_func(
+                column_type,
+                column_settings,
+                string_type=string_type,
+            )
 
         mapping[column] = dict(
             item_type=item_type,

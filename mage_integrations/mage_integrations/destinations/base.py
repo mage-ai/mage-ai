@@ -38,14 +38,15 @@ LOGGER = singer.get_logger()
 
 
 class Destination():
-    def __init__(self,
-        argument_parser = None,
+    def __init__(
+        self,
+        argument_parser=None,
         batch_processing: bool = False,
         config: Dict = None,
         config_file_path: str = None,
         debug: bool = False,
         log_to_stdout: bool = False,
-        logger = LOGGER,
+        logger=LOGGER,
         settings: Dict = None,
         settings_file_path: str = None,
         state_file_path: str = None,
