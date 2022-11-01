@@ -317,7 +317,7 @@ class Destination():
                 with open(self.state_file_path, 'w') as f:
                     f.write(text)
             else:
-                sys.stdout.write()
+                sys.stdout.write(text)
                 sys.stdout.flush()
 
     def _validate_and_prepare_record(
