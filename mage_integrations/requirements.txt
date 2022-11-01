@@ -1,4 +1,5 @@
 google-analytics-data==0.14.2
+google-api-python-client==2.65.0
 google-cloud-bigquery==3.2.0
 jsonschema==2.6.0
 mysql-connector-python==8.0.31

@@ -32,6 +32,7 @@ class BigQuery(Destination):
                     schema,
                     convert_column_type,
                     lambda item_type_converted: 'ARRAY',
+                    number_type='FLOAT64',
                     string_type='STRING',
                 ),
                 columns=schema['properties'].keys(),
@@ -59,6 +60,7 @@ class BigQuery(Destination):
             schema,
             convert_column_type,
             lambda item_type_converted: 'ARRAY',
+            number_type='FLOAT64',
             string_type='STRING',
         )
         insert_columns, insert_values = build_insert_command(

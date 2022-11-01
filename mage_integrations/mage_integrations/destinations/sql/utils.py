@@ -39,6 +39,7 @@ def build_create_table_command(
 def convert_column_type(
     column_type: str,
     column_settings: Dict,
+    number_type: str = 'DOUBLE PRECISION',
     string_type: str = 'VARCHAR',
 ) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
@@ -46,7 +47,7 @@ def convert_column_type(
     elif COLUMN_TYPE_INTEGER == column_type:
         return 'BIGINT'
     elif COLUMN_TYPE_NUMBER == column_type:
-        return 'DOUBLE PRECISION'
+        return number_type
     elif COLUMN_TYPE_OBJECT == column_type:
         return 'TEXT'
     elif COLUMN_TYPE_STRING == column_type:
@@ -61,6 +62,7 @@ def column_type_mapping(
     schema: Dict,
     convert_column_type_func: Callable,
     convert_array_column_type_func: Callable,
+    number_type: str = 'DOUBLE PRECISION',
     string_type: str = 'VARCHAR',
 ) -> Dict:
     mapping = {}
@@ -96,6 +98,7 @@ def column_type_mapping(
                 item_type_converted = convert_column_type_func(
                     item_type,
                     column_settings,
+                    number_type=number_type,
                     string_type=string_type,
                 )
                 column_type_converted = convert_array_column_type_func(item_type_converted)
@@ -103,6 +106,7 @@ def column_type_mapping(
             column_type_converted = convert_column_type_func(
                 column_type,
                 column_settings,
+                number_type=number_type,
                 string_type=string_type,
             )
 
