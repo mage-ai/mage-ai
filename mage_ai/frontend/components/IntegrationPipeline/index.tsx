@@ -110,76 +110,220 @@ function IntegrationPipeline({
 
   const dataLoaderBlock: BlockType =
     useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type), [blocks]);
+  
+  const [dataLoaderBlockConfig, setDataLoaderBlockConfig] = useState(null);
   const dataLoaderBlockContent = useMemo(() => {
     if (!dataLoaderBlock) {
       return {};
     }
 
-    return parse(dataLoaderBlock.content);
-  }, [dataLoaderBlock]);
-
-  const dataExporterBlock: BlockType =
-    useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type), [blocks]);
-  const dataExporterBlockContent = useMemo(() => {
-    if (!dataExporterBlock) {
-      return {};
+    const content = parse(dataLoaderBlock.content);
+    
+    if (!dataLoaderBlockConfig) {
+      setDataLoaderBlockConfig(stringify(content?.config));
     }
 
-    return parse(dataExporterBlock.content);
-  }, [dataExporterBlock]);
+    return content;
+  }, [dataLoaderBlock]);
 
+
+  const [sourceConnected, setSourceConnected] = useState<boolean>(null);
+  const [testSourceConnection, {isLoading: isLoadingTestSourceConnection}] = useMutation(
+    api.integration_sources.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setSourceConnected(true);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+            setSourceConnected(false);
+          },
+        },
+      ),
+    },
+  );
   const dataLoaderEditor = useMemo(() => {
     if (!dataLoaderBlock) {
       return;
     }
 
     return (
-      <CodeEditorStyle>
-        <CodeEditor
-          autoHeight
-          language={BlockLanguageEnum.YAML}
-          onChange={(val: string) => {
-            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-              ...dataLoaderBlockContent,
-              config: parse(val),
-            }));
-          }}
-          tabSize={2}
-          value={stringify(dataLoaderBlockContent?.config || undefined)}
-          width="100%"
-        />
-      </CodeEditorStyle>
+      <>
+        <CodeEditorStyle>
+          <CodeEditor
+            autoHeight
+            language={BlockLanguageEnum.YAML}
+            onChange={(val: string) => {
+              setDataLoaderBlockConfig(val);
+              onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                ...dataLoaderBlockContent,
+                config: parse(val),
+              }));
+            }}
+            tabSize={2}
+            value={dataLoaderBlockConfig || undefined}
+            width="100%"
+          />
+        </CodeEditorStyle>
+        <Spacing mt={1}>
+          <FlexContainer alignItems="center">
+            <Button
+              onClick={() => {
+                // @ts-ignore
+                testSourceConnection({
+                  action: 'test_connection',
+                  pipeline_uuid: pipeline.uuid,
+                  config: parse(dataLoaderBlockConfig),
+                })
+              }}
+              primary
+              small
+            >
+              Test connection
+            </Button>
+            <Spacing ml={1}>
+              {isLoadingTestSourceConnection ? (
+                <Spinner color="white" small/>
+              ) : (
+                <>
+                  {sourceConnected && (
+                    <Text success>
+                      Connected to destination succesfully!
+                    </Text>
+                  )}
+                  {sourceConnected === false && (
+                    <Text danger>
+                      Failed to connect to destination.
+                    </Text>
+                  )}
+                </>
+              )}
+            </Spacing>
+          </FlexContainer>
+        </Spacing>
+      </>
     );
   }, [
     dataLoaderBlock,
+    dataLoaderBlockConfig,
     dataLoaderBlockContent,
+    isLoadingTestSourceConnection,
   ]);
 
+  const dataExporterBlock: BlockType =
+    useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type), [blocks]);
+  
+  const [dataExporterBlockConfig, setDataExporterBlockConfig] = useState(null);
+  const dataExporterBlockContent = useMemo(() => {
+    if (!dataExporterBlock) {
+      return {}
+    }
+
+    const content = parse(dataExporterBlock.content);
+
+    if (!dataExporterBlockConfig) {
+      setDataExporterBlockConfig(stringify(content?.config));
+    }
+
+    return content;
+  }, [dataExporterBlock]);
+  
+  const [destinationConnected, setDestinationConnected] = useState<boolean>(null);
+  const [testDestinationConnection, {isLoading: isLoadingTestDestinationConnection}] = useMutation(
+    api.integration_destinations.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setDestinationConnected(true);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+            setDestinationConnected(false);
+          },
+        },
+      ),
+    },
+  );
   const dataExporterEditor = useMemo(() => {
     if (!dataExporterBlock) {
       return;
     }
 
     return (
-      <CodeEditorStyle>
-        <CodeEditor
-          autoHeight
-          language={BlockLanguageEnum.YAML}
-          onChange={(val: string) => {
-            onChangeCodeBlock(dataExporterBlock.uuid, stringify({
-              ...dataExporterBlockContent,
-              config: parse(val),
-            }));
-          }}
-          tabSize={2}
-          value={stringify(dataExporterBlockContent?.config || undefined)}
-          width="100%"
-        />
-      </CodeEditorStyle>
+      <>
+        <CodeEditorStyle>
+          <CodeEditor
+            autoHeight
+            language={BlockLanguageEnum.YAML}
+            onChange={(val: string) => {
+              setDataExporterBlockConfig(val);
+              onChangeCodeBlock(dataExporterBlock.uuid, stringify({
+                ...dataExporterBlockContent,
+                config: parse(val),
+              }));
+            }}
+            tabSize={2}
+            value={dataExporterBlockConfig}
+            width="100%"
+          />
+        </CodeEditorStyle>
+        <Spacing mt={1}>
+          <FlexContainer alignItems="center">
+            <Button
+              onClick={() => {
+                // @ts-ignore
+                testDestinationConnection({
+                  action: 'test_connection',
+                  pipeline_uuid: pipeline.uuid,
+                  config: parse(dataExporterBlockConfig),
+                })
+              }}
+              primary
+              small
+            >
+              Test connection
+            </Button>
+            <Spacing ml={1}>
+              {isLoadingTestDestinationConnection ? (
+                <Spinner color="white" small/>
+              ) : (
+                <>
+                  {destinationConnected && (
+                    <Text success>
+                      Connected to destination succesfully!
+                    </Text>
+                  )}
+                  {destinationConnected === false && (
+                    <Text danger>
+                      Failed to connect to destination.
+                    </Text>
+                  )}
+                </>
+              )}
+            </Spacing>
+          </FlexContainer>
+        </Spacing>
+      </>
     );
   }, [
     dataExporterBlock,
+    dataExporterBlockConfig,
     dataExporterBlockContent,
+    destinationConnected,
+    isLoadingTestDestinationConnection,
   ]);
 
   const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [

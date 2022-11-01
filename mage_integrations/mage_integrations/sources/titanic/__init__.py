@@ -21,6 +21,13 @@ class Titanic(Source):
 
         yield rows
 
+    def test_connection(self):
+        url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/titanic_survival.csv'
+        request = requests.get(url)
+
+        if request.status_code != 200:
+            raise Exception('Could not fetch titanic data')
+
 
 if __name__ == '__main__':
     main(Titanic)

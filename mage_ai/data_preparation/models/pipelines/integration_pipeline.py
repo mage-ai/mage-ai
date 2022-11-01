@@ -1,3 +1,4 @@
+import simplejson
 from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
@@ -107,6 +108,38 @@ class IntegrationPipeline(Pipeline):
     @property
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
+
+    def test_source_connection(self, config: Dict = None):
+        try:
+            run_args = [
+                PYTHON,
+                self.source_file_path,
+                '--config_json',
+                simplejson.dumps(config),
+                '--test_connection',
+            ]
+
+            proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+            proc.check_returncode()
+        except subprocess.CalledProcessError as e:
+            message = e.stderr.decode("utf-8")
+            raise Exception(message)
+
+    def test_destination_connection(self, config: Dict = None):
+        try:
+            run_args = [
+                PYTHON,
+                self.destination_file_path,
+                '--config_json',
+                simplejson.dumps(config),
+                '--test_connection',
+            ]
+
+            proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+            proc.check_returncode()
+        except subprocess.CalledProcessError as e:
+            message = e.stderr.decode("utf-8")
+            raise Exception(message)
 
     def discover(self, streams: List[str] = None) -> dict:
         global_vars = get_global_variables(self.uuid) or dict()

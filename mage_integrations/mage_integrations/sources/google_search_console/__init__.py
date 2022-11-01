@@ -15,6 +15,13 @@ class GoogleSearchConsole(Source):
     DATE_FORMAT = '%Y-%m-%d'
     ROW_LIMIT = 1000
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.connection = GoogleSearchConsoleConnection(
+            path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
+        )
+
     def load_data(
         self,
         stream,
@@ -24,10 +31,6 @@ class GoogleSearchConsole(Source):
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         stream_name = stream.tap_stream_id
-
-        connection = GoogleSearchConsoleConnection(
-            path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
-        )
 
         endpoint_config = STREAMS[stream_name]
         body_params = endpoint_config.get('body', {})
@@ -66,7 +69,7 @@ class GoogleSearchConsole(Source):
                 body_params['rowLimit'] = self.ROW_LIMIT
 
                 while True:
-                    rows_raw = connection.load(site, body_params)
+                    rows_raw = self.connection.load(site, body_params)
                     rows = []
                     if rows_raw is None:
                         break
@@ -87,6 +90,9 @@ class GoogleSearchConsole(Source):
 
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].get('replication_keys', [])
+
+    def test_connection(self):
+        self.connection.connect()
 
 
 if __name__ == '__main__':

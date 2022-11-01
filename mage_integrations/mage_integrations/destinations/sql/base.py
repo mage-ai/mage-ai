@@ -14,6 +14,9 @@ class Destination(BaseDestination):
     SCHEMA_CONFIG_KEY = 'schema'
 
     BATCH_SIZE = 1000
+    
+    def test_connection(self) -> None:
+        self.build_connection().build_connection()
 
     def export_data(
         self,
@@ -105,7 +108,7 @@ class Destination(BaseDestination):
             tags.update(records_updated=records_updated)
 
         self.logger.info('Export data completed.', tags=tags)
-
+    
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')
 

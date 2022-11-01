@@ -1,5 +1,6 @@
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_integrations.sources.constants import SOURCES
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.hash import merge_dict
@@ -35,11 +36,38 @@ class ApiIntegrationDestinationsHandler(BaseHandler):
     def get(self):
         self.write(dict(integration_destinations=get_collection('destinations', DESTINATIONS)))
 
+    def post(self):
+        payload = self.get_payload()
+
+        action = payload['action']
+        if action == 'test_connection':
+            pipeline_uuid = payload['pipeline_uuid']
+            pipeline = Pipeline.get(pipeline_uuid)
+            config = payload['config']
+
+            pipeline.test_destination_connection(config=config)
+            self.write(dict(success=True))
+        
+        self.finish()
+
 
 class ApiIntegrationSourcesHandler(BaseHandler):
     def get(self):
         self.write(dict(integration_sources=get_collection('sources', SOURCES)))
 
+    def post(self):
+        payload = self.get_payload()
+
+        action = payload['action']
+        if action == 'test_connection':
+            pipeline_uuid = payload['pipeline_uuid']
+            pipeline = Pipeline.get(pipeline_uuid)
+            config = payload['config']
+
+            pipeline.test_source_connection(config=config)
+            self.write(dict(success=True))
+        
+        self.finish()
 
 class ApiIntegrationSourceStreamHandler(BaseHandler):
     def put(self, pipeline_uuid):

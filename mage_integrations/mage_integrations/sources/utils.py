@@ -219,6 +219,12 @@ def parse_args(required_config_keys):
         help='Sources will log using Singer logger by default. Set his flag to True to log to sys.stdout.',
     )
 
+    parser.add_argument(
+        '--test_connection',
+        action='store_true',
+        help='Set this flag to True to only test the source connection with the provided config.'
+    )
+
     args, _ = parser.parse_known_args()
 
     if args.state:
