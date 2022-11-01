@@ -12,6 +12,8 @@ LOGGER = singer.get_logger()
 
 
 class GoogleSearchConsole(Source):
+    ROW_LIMIT = 1000
+
     def load_data(
         self,
         stream,
@@ -50,14 +52,23 @@ class GoogleSearchConsole(Source):
                 body_params['dimensions'] = dimensions
                 LOGGER.info('stream: {}, dimensions_list: {}'.format(stream_name, dimensions))
 
-                body_params['start_date'] = start_date
-                body_params['end_date'] = end_date
+                body_params['startDate'] = start_date
+                body_params['endDate'] = end_date
+                start_row = 0
+                body_params['startRow'] = start_row
+                body_params['rowLimit'] = self.ROW_LIMIT
 
-                rows = connection.load(site, body_params)
-                for r in rows:
-                    keys = r.pop('keys')
-                    r['site_url'] = site
-                    results.append(merge_dict(r, zip(dimensions, keys)))
+                while True:
+                    rows = connection.load(site, body_params)
+                    if rows is None:
+                        break
+                    for r in rows:
+                        keys = r.pop('keys')
+                        r['site_url'] = site
+                        results.append(merge_dict(r, zip(dimensions, keys)))
+                    start_row += self.ROW_LIMIT
+                    body_params['startRow'] = start_row
+
         return results
 
     def get_forced_replication_method(self, stream_id):
