@@ -357,6 +357,7 @@ function BlockRuns({
                 key="log_message"
                 monospace
                 textOverflow
+                title={message || content}
               >
                 {message || content}
               </Text>,

@@ -139,11 +139,16 @@ function LogDetail({
         <Table
           columnFlex={[null, 1]}
           columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
-          rows={rows.map(([k, v]) => [
-            <Text monospace muted>
+          rows={rows.map(([k, v], idx) => [
+            <Text
+              key={`${k}_${idx}_key`}
+              monospace
+              muted
+            >
               {k}
             </Text>,
             <Text
+              key={`${k}_${idx}_val`}
               monospace
               textOverflow
               title={v}
