@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_integrations.connections.google_search_console import \
     GoogleSearchConsole as GoogleSearchConsoleConnection
 from mage_integrations.sources.base import Source, main
@@ -27,6 +28,8 @@ class GoogleSearchConsole(Source):
 
         endpoint_config = STREAMS[stream_name]
         body_params = endpoint_config.get('body', {})
+        start_date = self.config.get('start_date')
+        end_date = datetime.now().strftime('%Y-%m-%d')
 
         site_list = self.config['site_urls'].replace(' ', '').split(',')
         for site in site_list:
@@ -46,8 +49,10 @@ class GoogleSearchConsole(Source):
                 dimensions = [c for c in columns if c in dimensions_all]
                 body_params['dimensions'] = dimensions
                 LOGGER.info('stream: {}, dimensions_list: {}'.format(stream_name, dimensions))
-                body_params['start_date'] = '2022-10-01'
-                body_params['end_date'] = '2022-10-31'
+
+                body_params['start_date'] = start_date
+                body_params['end_date'] = end_date
+
                 rows = connection.load(site, body_params)
                 for r in rows:
                     keys = r.pop('keys')
