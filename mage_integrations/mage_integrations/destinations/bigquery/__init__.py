@@ -12,7 +12,7 @@ from typing import Dict, List, Tuple
 
 
 class BigQuery(Destination):
-    BATCH_SIZE = 100
+    BATCH_SIZE = 500
 
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(

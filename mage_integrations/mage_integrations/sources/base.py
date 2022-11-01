@@ -245,7 +245,7 @@ class Source:
             schema_dict['properties'] = extract(
                 schema_dict['properties'],
                 extract_selected_columns(stream.metadata),
-        )
+            )
 
         write_schema(
             bookmark_properties=self.__get_bookmark_properties_for_stream(stream),
