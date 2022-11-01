@@ -40,6 +40,8 @@ import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
 const LOG_UUID_PARAM = 'log_uuid';
+const PIPELINE_RUN_ID_PARAM = 'pipeline_run_id[]';
+const BLOCK_RUN_ID_PARAM = 'block_run_id[]';
 
 type BlockRunsProp = {
   pipeline: {
@@ -71,16 +73,19 @@ function BlockRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
+  const q = queryFromUrl();
+  const onlyLoadPastDayLogs = !q?.start_timestamp
+    && !(q?.hasOwnProperty(PIPELINE_RUN_ID_PARAM) || q?.hasOwnProperty(BLOCK_RUN_ID_PARAM));
   const dayAgoTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]);
   const { data: dataLogs, mutate: fetchLogs } = api.logs.pipelines.list(
     query ? pipelineUUID : null,
     ignoreKeys(
-      query?.start_timestamp
-        ? query
-        : {
+      onlyLoadPastDayLogs
+        ? {
           ...query,
           start_timestamp: dayAgoTimestamp,
-        },
+        }
+        : query,
       [LOG_UUID_PARAM],
     ),
     {},
@@ -149,10 +154,9 @@ function BlockRuns({
       offset,
     ]);
 
-  const q = queryFromUrl();
   const qPrev = usePrevious(q);
   useEffect(() => {
-    if (!q?.start_timestamp) {
+    if (onlyLoadPastDayLogs) {
       goToWithQuery({
         start_timestamp: dayAgoTimestamp,
       });
