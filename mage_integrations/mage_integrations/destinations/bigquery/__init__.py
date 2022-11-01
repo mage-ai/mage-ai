@@ -12,6 +12,9 @@ from typing import Dict, List, Tuple
 
 
 class BigQuery(Destination):
+    DATABASE_CONFIG_KEY = 'project_id'
+    SCHEMA_CONFIG_KEY = 'dataset'
+
     BATCH_SIZE = 500
 
     def build_connection(self) -> BigQueryConnection:

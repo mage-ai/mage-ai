@@ -10,6 +10,9 @@ import sys
 
 
 class Destination(BaseDestination):
+    DATABASE_CONFIG_KEY = 'database'
+    SCHEMA_CONFIG_KEY = 'schema'
+
     BATCH_SIZE = 1000
 
     def export_data(
@@ -36,8 +39,8 @@ class Destination(BaseDestination):
 
         self.logger.info('Export data started', tags=tags)
 
-        database_name = self.config.get('database')
-        schema_name = self.config.get('schema')
+        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
+        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get('table')
 
         schema = self.schemas[stream]
