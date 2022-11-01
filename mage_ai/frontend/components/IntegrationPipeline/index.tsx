@@ -1071,51 +1071,56 @@ function IntegrationPipeline({
       
       {transformerVisible && dataLoaderBlock && dataExporterBlock && (
         <Spacing mb={1}>
+        <SectionStyle>
           {codeBlocks.length > 0 && (
-            <SectionStyle>
-              <Spacing mb={1}>
-                {codeBlocks}
-              </Spacing>
-            </SectionStyle>
+            <Spacing mb={1}>
+              {codeBlocks.map(codeBlock => (
+                <Spacing mb={1}>
+                  {codeBlock}
+                </Spacing>
+              ))}
+            </Spacing>
           )}
-          <AddNewBlocks
-            addNewBlock={(newBlock: BlockRequestPayloadType) => {
-              let content = newBlock.content;
-              let configuration = newBlock.configuration;
+          <Spacing mt={1}>
+            <AddNewBlocks
+              addNewBlock={(newBlock: BlockRequestPayloadType) => {
+                let content = newBlock.content;
+                let configuration = newBlock.configuration;
 
-              const currentBlock = blocks[blocks.length - 2];
-              const upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
+                const currentBlock = blocks[blocks.length - 2];
+                const upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
 
-              const ret = addNewBlockAtIndex({
-                ...newBlock,
-                configuration,
-                content,
-                upstream_blocks: upstreamBlocks,
-              },
-              blocks.length - 1,
-              block => {
-                // @ts-ignore
-                updateDestinationBlock({
-                  block: {
-                    ...dataExporterBlock,
-                    upstream_blocks: [block.uuid],
-                  },
+                const ret = addNewBlockAtIndex({
+                  ...newBlock,
+                  configuration,
+                  content,
+                  upstream_blocks: upstreamBlocks,
+                },
+                blocks.length - 1,
+                block => {
+                  // @ts-ignore
+                  updateDestinationBlock({
+                    block: {
+                      ...dataExporterBlock,
+                      upstream_blocks: [block.uuid],
+                    },
+                  });
+                  setSelectedBlock(block);
                 });
-                setSelectedBlock(block);
-              });
 
-              return ret;
-            }}
-            // blockIdx={blockIdx}
-            compact
-            hideDataExporter
-            hideDataLoader
-            hideRecommendations
-            hideScratchpad
-            hideSensor
-            pipeline={pipeline}
-
-          />
+                return ret;
+              }}
+              // blockIdx={blockIdx}
+              compact
+              hideDataExporter
+              hideDataLoader
+              hideRecommendations
+              hideScratchpad
+              hideSensor
+              pipeline={pipeline}
+            />
+          </Spacing>
+          </SectionStyle>
         </Spacing>
       )}
 
