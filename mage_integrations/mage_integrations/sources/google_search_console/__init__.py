@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from mage_integrations.connections.google_search_console import \
     GoogleSearchConsole as GoogleSearchConsoleConnection
 from mage_integrations.sources.base import Source, main
@@ -12,6 +12,7 @@ LOGGER = singer.get_logger()
 
 
 class GoogleSearchConsole(Source):
+    DATE_FORMAT = '%Y-%m-%d'
     ROW_LIMIT = 1000
 
     def load_data(
@@ -30,8 +31,14 @@ class GoogleSearchConsole(Source):
 
         endpoint_config = STREAMS[stream_name]
         body_params = endpoint_config.get('body', {})
+
         start_date = self.config.get('start_date')
-        end_date = datetime.now().strftime('%Y-%m-%d')
+        if bookmarks is not None and bookmarks.get('date') is not None:
+            start_date = datetime.strptime(bookmarks.get('date'), self.DATE_FORMAT)
+            start_date += timedelta(days=1)
+            start_date = start_date.strftime(self.DATE_FORMAT)
+
+        end_date = datetime.now().strftime(self.DATE_FORMAT)
 
         site_list = self.config['site_urls'].replace(' ', '').split(',')
         for site in site_list:
