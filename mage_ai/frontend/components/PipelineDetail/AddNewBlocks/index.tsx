@@ -283,7 +283,10 @@ function AddNewBlocks({
                   },
                   {
                     label: () => 'All models (w/ optional exclusion)',
-                    onClick: () => true,
+                    onClick: () => addNewBlock({
+                      language: BlockLanguageEnum.YAML,
+                      type: BlockTypeEnum.DBT,
+                    }),
                     uuid: 'dbt/all_models',
                   },
                 ]}

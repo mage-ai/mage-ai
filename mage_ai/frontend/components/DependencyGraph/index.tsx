@@ -225,7 +225,7 @@ function DependencyGraph({
 
 
   const displayTextForBlock = useCallback((block: BlockType): string => {
-    let displayText = block.uuid;
+    let displayText;
 
     if (PipelineTypeEnum.INTEGRATION === pipeline?.type && BlockTypeEnum.TRANSFORMER !== block.type) {
       let contentParsed: {
@@ -243,6 +243,10 @@ function DependencyGraph({
       }
     } else if (BlockTypeEnum.DBT === block.type) {
       displayText = getModelName(block);
+    }
+
+    if (!displayText) {
+      displayText = block.uuid;
     }
 
     return displayText;

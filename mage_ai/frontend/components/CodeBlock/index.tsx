@@ -527,7 +527,10 @@ function CodeBlockProps({
         onChange?.(val);
       }}
       onDidChangeCursorPosition={onDidChangeCursorPosition}
-      placeholder="Start typing here..."
+      placeholder={BlockTypeEnum.DBT === block.type && BlockLanguageEnum.YAML === block.language
+        ? 'e.g. path/to/my_model.sql'
+        : 'Start typing here...'
+      }
       selected={selected}
       setSelected={setSelected}
       setTextareaFocused={setTextareaFocused}
@@ -862,6 +865,46 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
+          {BlockTypeEnum.DBT === block.type
+            && BlockLanguageEnum.YAML === block.language
+            && !codeCollapsed
+            && (
+            <CodeHelperStyle>
+              <FlexContainer>
+                <Flex flex={1}>
+                  <Text monospace default small>
+                    dbt run --exclude <Text
+                      inline
+                      monospace
+                      small
+                    >
+                      [type your exclude syntax below]
+                    </Text>
+                  </Text>
+
+                  <Spacing mr={1} />
+
+                  <Text monospace muted small>
+                    (paths start from project/dbt/ folder)
+                  </Text>
+                </Flex>
+
+                <Spacing mr={1} />
+
+                <Text muted small>
+                  <Link
+                    href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
+                    openNewWindow
+                    small
+                  >
+                    Examples
+                  </Link>
+                </Text>
+
+                <Spacing mr={5} />
+              </FlexContainer>
+            </CodeHelperStyle>
+          )}
           {BlockLanguageEnum.SQL === block.language
             && !codeCollapsed
             && BlockTypeEnum.DBT !== block.type

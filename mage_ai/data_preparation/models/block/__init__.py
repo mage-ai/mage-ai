@@ -281,7 +281,7 @@ class Block:
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
-        if BlockType.DBT == self.type:
+        if self.should_treat_as_dbt():
             file_path = self.configuration.get('file_path')
 
             return os.path.join(
@@ -328,7 +328,7 @@ class Block:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if BlockType.DBT == block.type:
+            if block.should_treat_as_dbt():
                 arr = add_blocks_upstream_from_refs(block)
                 upstream_block_uuids += [b.uuid for b in arr]
 
@@ -365,7 +365,7 @@ class Block:
         uuid = clean_name(name)
         language = language or BlockLanguage.PYTHON
 
-        if BlockType.DBT != block_type:
+        if BlockType.DBT != block_type or BlockLanguage.YAML == language:
             block_dir_path = os.path.join(repo_path, f'{block_type}s')
             if not os.path.exists(block_dir_path):
                 os.mkdir(block_dir_path)
@@ -727,31 +727,40 @@ class Block:
             outputs = []
 
             if BlockType.DBT == self.type:
-                attr = parse_attributes(self)
-                file_path = attr['file_path']
-                project_full_path = attr['project_full_path']
-                path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
                 variables = merge_dict(global_vars, runtime_arguments or {})
 
                 dbt_command = 'run'
-                if test_execution:
-                    dbt_command = 'compile'
-
                 args = [
-                    'dbt',
-                    dbt_command,
-                    '--select',
-                    path_to_model,
-                    '--project-dir',
-                    project_full_path,
-                    '--profiles-dir',
-                    project_full_path,
                     '--vars',
                     simplejson.dumps(
                         variables,
                         default=encode_complex,
                         ignore_nan=True,
                     ),
+                ]
+
+                is_sql = BlockLanguage.SQL == self.language
+                if is_sql:
+                    attr = parse_attributes(self)
+                    file_path = attr['file_path']
+                    project_full_path = attr['project_full_path']
+                    path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
+
+                    if test_execution:
+                        dbt_command = 'compile'
+
+                    args += [
+                        '--select',
+                        path_to_model,
+                    ]
+                else:
+                    project_full_path = 'WTF'
+
+                args += [
+                    '--project-dir',
+                    project_full_path,
+                    '--profiles-dir',
+                    project_full_path,
                 ]
 
                 dbt_profile_target = variables.get('dbt_profile_target')
@@ -761,17 +770,21 @@ class Block:
                         dbt_profile_target,
                     ]
 
-                create_upstream_tables(
-                    self,
-                    execution_partition=execution_partition,
-                    profile_target=dbt_profile_target,
+                if is_sql:
+                    create_upstream_tables(
+                        self,
+                        execution_partition=execution_partition,
+                        profile_target=dbt_profile_target,
 
-                )
+                    )
 
                 stdout = subprocess.PIPE if not test_execution else None
-                proc1 = subprocess.run(args, preexec_fn=os.setsid, stdout=stdout)
+                proc1 = subprocess.run([
+                    'dbt',
+                    dbt_command,
+                ] + args, preexec_fn=os.setsid, stdout=stdout)
 
-                if test_execution:
+                if is_sql and test_execution:
                     outputs = [query_from_compiled_sql(self, dbt_profile_target)]
                 else:
                     for line in proc1.stdout.decode().split('\n'):
@@ -1131,7 +1144,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
         upstream_blocks_previous = self.upstream_blocks
         self.upstream_blocks = upstream_blocks
-        if BlockType.DBT == self.type:
+        if self.should_treat_as_dbt():
             update_model_settings(self, upstream_blocks, upstream_blocks_previous)
 
     def update_content(self, content, widget=False):
@@ -1345,6 +1358,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             partition=execution_partition,
             variable_type=VariableType.DATAFRAME,
         )
+
+    def should_treat_as_dbt(self) -> bool:
+        return BlockType.DBT == self.type and BlockLanguage.SQL == self.language
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
