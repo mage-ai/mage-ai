@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from mage_integrations.connections.google_search_console import \
     GoogleSearchConsole as GoogleSearchConsoleConnection
 from mage_integrations.sources.base import Source, main
@@ -12,6 +12,9 @@ LOGGER = singer.get_logger()
 
 
 class GoogleSearchConsole(Source):
+    DATE_FORMAT = '%Y-%m-%d'
+    ROW_LIMIT = 1000
+
     def load_data(
         self,
         stream,
@@ -28,8 +31,14 @@ class GoogleSearchConsole(Source):
 
         endpoint_config = STREAMS[stream_name]
         body_params = endpoint_config.get('body', {})
+
         start_date = self.config.get('start_date')
-        end_date = datetime.now().strftime('%Y-%m-%d')
+        if bookmarks is not None and bookmarks.get('date') is not None:
+            start_date = datetime.strptime(bookmarks.get('date'), self.DATE_FORMAT)
+            start_date += timedelta(days=1)
+            start_date = start_date.strftime(self.DATE_FORMAT)
+
+        end_date = datetime.now().strftime(self.DATE_FORMAT)
 
         site_list = self.config['site_urls'].replace(' ', '').split(',')
         for site in site_list:
@@ -50,14 +59,23 @@ class GoogleSearchConsole(Source):
                 body_params['dimensions'] = dimensions
                 LOGGER.info('stream: {}, dimensions_list: {}'.format(stream_name, dimensions))
 
-                body_params['start_date'] = start_date
-                body_params['end_date'] = end_date
+                body_params['startDate'] = start_date
+                body_params['endDate'] = end_date
+                start_row = 0
+                body_params['startRow'] = start_row
+                body_params['rowLimit'] = self.ROW_LIMIT
 
-                rows = connection.load(site, body_params)
-                for r in rows:
-                    keys = r.pop('keys')
-                    r['site_url'] = site
-                    results.append(merge_dict(r, zip(dimensions, keys)))
+                while True:
+                    rows = connection.load(site, body_params)
+                    if rows is None:
+                        break
+                    for r in rows:
+                        keys = r.pop('keys')
+                        r['site_url'] = site
+                        results.append(merge_dict(r, zip(dimensions, keys)))
+                    start_row += self.ROW_LIMIT
+                    body_params['startRow'] = start_row
+
         return results
 
     def get_forced_replication_method(self, stream_id):

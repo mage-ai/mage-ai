@@ -12,6 +12,8 @@ from typing import Dict, List, Tuple
 
 
 class BigQuery(Destination):
+    BATCH_SIZE = 500
+
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
             path_to_credentials_json_file=self.config['path_to_credentials_json_file'],

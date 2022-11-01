@@ -121,6 +121,7 @@ def column_type_mapping(
 
 
 def convert_column_to_type(value, column_type) -> str:
+    value = value.replace("'", "\\'")
     return f"CAST('{value}' AS {column_type})"
 
 

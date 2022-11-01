@@ -48,4 +48,6 @@ class GoogleSearchConsole(Connection):
         service = self.connect()
         response = service.searchanalytics().query(siteUrl=site_url, body=payload).execute()
 
-        return response['rows']
+        if response is None:
+            return None
+        return response.get('rows')
