@@ -1,10 +1,6 @@
 # Setting up Git on cloud
 
-<img
-  alt="GitHub"
-  src="https://github.githubassets.com/images/modules/logos_page/Octocat.png"
-  width="200"
-/>
+![](https://user-images.githubusercontent.com/78053898/198753409-c7c41a8d-c137-4273-bb3b-76ecc81f8ee2.png)
 
 1. Open terminal
 1. Configure Git

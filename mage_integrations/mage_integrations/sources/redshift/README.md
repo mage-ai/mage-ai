@@ -1,10 +1,6 @@
 # Redshift
 
-<img
-  alt="Redshift"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Amazon-Redshift-Logo.svg/1862px-Amazon-Redshift-Logo.svg.png"
-  width="200"
-/>
+![Amazon-Redshift-Logo svg](https://user-images.githubusercontent.com/78053898/198753538-2d606c3a-f6b0-472a-b0b3-c16086f256fc.png)
 
 <br />
 

@@ -1,10 +1,6 @@
 # Terraform
 
-<img
-  alt="Terraform"
-  src="https://www.vectorlogo.zone/logos/terraformio/terraformio-ar21.png"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754720-d6b1e5bd-caa8-431e-a4cb-e26743c0ef36.png)
 
 Deploy Mage to your cloud provider using Terraform.
 

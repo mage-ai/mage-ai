@@ -1,7 +1,7 @@
 # BigQuery
 
 <img
-  alt="Google BigQuery"
+  alt=""
   src="https://www.vectorlogo.zone/logos/google_bigquery/google_bigquery-ar21.svg"
   height="200"
 />

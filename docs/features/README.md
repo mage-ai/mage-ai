@@ -1,11 +1,6 @@
 # 🔮 Features
 
-<img 
-  alt="Fire mage casting" 
-  height="200"
-  src="https://raw.githubusercontent.com/mage-ai/assets/main/mascots/fire/casting.svg"
-/>
-
+![](https://user-images.githubusercontent.com/78053898/198751496-22d51f03-f09f-454c-8f98-409b5dbec8f9.svg)
 
 - [Data pipeline management](#data-pipeline-management)
 - [Notebook for building data pipelines](#notebook-for-building-data-pipelines)

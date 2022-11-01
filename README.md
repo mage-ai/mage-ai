@@ -11,9 +11,8 @@
     />
   </a>
 </h1>
-
 <p align="center">
-  🧙 A modern replacement for Airflow.
+  🧙 A modern replacement for Airflow.
 </p>
 
 <p align="center">
@@ -42,7 +41,6 @@
     <b>Community chat</b>
   </a>
 </p>
-
 <div align="center">
   <a
     href="https://pypi.org/project/mage-ai/"
@@ -69,7 +67,6 @@
     <img alt="Slack" src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack" />
   </a>
 </div>
-
 <img
   referrerpolicy="no-referrer-when-downgrade"
   src="https://static.scarf.sh/a.png?x-pxid=b3c96d79-b8f0-414b-a687-8bfc164b4b7a"
@@ -94,10 +91,6 @@
 </p>
 
 <br />
-
-<p align="center">
-  ↓
-</p>
 
 <p align="center">1️⃣ 🏗️</p>
 <h1 align="center">Build</h1>
@@ -210,7 +203,6 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 > WARNING
 >
 > The live demo is public to everyone, please don’t save anything sensitive (e.g. passwords, secrets, etc).
-
 ### Demo video (2 min)
 
 [![Mage quick start demo](media/mage-youtube-preview.jpg)](https://www.youtube.com/watch?v=hrsErfPDits "Mage quick start demo")
@@ -317,13 +309,11 @@ Individually, we’re a mage.
 >
 > Magic is indistinguishable from advanced technology.
 > A mage is someone who uses magic (aka advanced technology).
-
 Together, we’re Magers!
 
 > 🧙‍♂️🧙 Magers (`/ˈmājər/`)
 >
 > A group of mages who help each other realize their full potential!
-
 Let’s hang out and chat together ➝
 
 [![Hang out on Slack](https://img.shields.io/badge/%20-Hang%20out%20on%20Slack-purple?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
@@ -332,10 +322,10 @@ For real-time news, fun memes, data engineering topics, and more, join us on ➝
 
 |   |   |
 | --- | --- |
-| <img alt="Twitter" height="20" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Twitter-logo.svg/2491px-Twitter-logo.svg.png" /> | [Twitter](https://twitter.com/mage_ai) |
-| <img alt="LinkedIn" height="20" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/800px-LinkedIn_logo_initials.png" /> | [LinkedIn](https://www.linkedin.com/company/magetech/mycompany) |
-| <img alt="GitHub" height="20" src="https://github.githubassets.com/images/modules/logos_page/Octocat.png" /> | [GitHub](https://github.com/mage-ai/mage-ai) |
-| <img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" /> | [Slack](https://www.mage.ai/chat) |
+| <img alt="Twitter" height="20" src="https://user-images.githubusercontent.com/78053898/198755056-a15c4439-c07f-41ea-ba35-bc4bfdd09f1a.png" /> | [Twitter](https://twitter.com/mage_ai) |
+| <img alt="LinkedIn" height="20" src="https://user-images.githubusercontent.com/78053898/198755052-2777d6ae-c161-4a4b-9ece-4fd7bd458e26.png" /> | [LinkedIn](https://www.linkedin.com/company/magetech/mycompany) |
+| <img alt="GitHub" height="20" src="https://user-images.githubusercontent.com/78053898/198755053-5c3971b1-9c49-4888-8a8e-1599f0fc6646.png" /> | [GitHub](https://github.com/mage-ai/mage-ai) |
+| <img alt="Slack" height="20" src="https://user-images.githubusercontent.com/78053898/198755054-03d47bfc-18b6-45a5-9593-7b496eb927f3.png" /> | [Slack](https://www.mage.ai/chat) |
 
 <br />
 

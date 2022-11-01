@@ -4,7 +4,7 @@ from small UI enhancements to brand new cleaning actions.
 We love seeing community members level up and give people power-ups!
 
 Got questions? Live chat with us in
-[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
+[<img alt="Slack" height="20" src="https://user-images.githubusercontent.com/78053898/198755650-3a314c52-36b5-4b73-a24b-16e1efcdd7f8.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
 
 Anything you contribute, the Mage team and community will maintain. We’re in it together!
 

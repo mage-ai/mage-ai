@@ -1,10 +1,6 @@
 # MySQL
 
-<img
-  alt="MySQL"
-  src="https://1000logos.net/wp-content/uploads/2020/08/MySQL-Logo.png"
-  width="200"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754276-a4524211-aafa-40b2-a95a-1d8f08ba6835.png)
 
 <br />
 

@@ -2,11 +2,7 @@
 
 Every user experience and technical design decision adheres to these principles.
 
-<img 
-  alt="Wind mage casting" 
-  height="200"
-  src="https://raw.githubusercontent.com/mage-ai/assets/main/mascots/wind/casting.svg"
-/>
+![](https://user-images.githubusercontent.com/78053898/198752891-1e823231-f5eb-48ea-8a6d-91e60ec368c9.svg)
 
 ## 💻 Easy developer experience
 Open-source engine that comes with a custom notebook UI for building data pipelines.

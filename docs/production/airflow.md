@@ -4,7 +4,7 @@ Need help integrating Mage into an existing Airflow project?
 
 Check out this [tutorial](../tutorials/airflow/integrate_into_existing_project/README.md) or
 get instant help from us in
-[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat).
+[<img alt="Slack" height="20" src="https://user-images.githubusercontent.com/78053898/198754561-0648546a-6d36-45b1-a5a8-c4f53da8563e.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat).
 
 ---
 

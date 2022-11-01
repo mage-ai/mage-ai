@@ -1,10 +1,6 @@
 # Salesforce
 
-<img
-  alt="Salesforce"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/2560px-Salesforce.com_logo.svg.png"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198753571-7c033641-75a2-4338-b257-ee37a159915e.png)
 
 <br />
 

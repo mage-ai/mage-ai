@@ -1,10 +1,6 @@
 # PostgreSQL
 
-<img
-  alt="PostgreSQL"
-  src="https://www.vectorlogo.zone/logos/postgresql/postgresql-horizontal.svg"
-  height="100"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754399-3b594af0-cf84-41d3-8faf-e1f6e4c5182d.png)
 
 <br />
 

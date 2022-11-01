@@ -1,10 +1,6 @@
 # Terraform Google Cloud Platform (GCP)
 
-<img
-  alt="GCP"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Google_Cloud_logo.svg/2560px-Google_Cloud_logo.svg.png"
-  width="300"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754786-3c4618dd-d648-4af7-b288-5ff18371335b.png)
 
 1. [Install gcloud CLI](#1-install-gcloud-cli)
 1. [Log into GCP from CLI](#2-log-into-gcp-from-cli)
