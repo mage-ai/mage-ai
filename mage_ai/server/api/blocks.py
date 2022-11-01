@@ -6,6 +6,22 @@ from mage_ai.data_preparation.utils.block.convert_content import convert_to_bloc
 from mage_ai.server.api.base import BaseHandler
 import asyncio
 import json
+import urllib.parse
+
+
+class ApiBlockHandler(BaseHandler):
+    def delete(self, block_type_and_uuid_encoded):
+        block_type_and_uuid = urllib.parse.unquote(block_type_and_uuid_encoded)
+        parts = block_type_and_uuid.split('/')
+        if len(parts) != 2:
+            raise Exception('The url path should be in block_type/block_uuid format.')
+        block_type = parts[0]
+        block_uuid = parts[1]
+        block = Block(block_uuid, block_uuid, block_type)
+        if not block.exists():
+            raise Exception(f'Block {block_uuid} does not exist')
+        block.delete()
+        self.write(dict(block=block.to_dict()))
 
 
 class ApiPipelineBlockHandler(BaseHandler):
