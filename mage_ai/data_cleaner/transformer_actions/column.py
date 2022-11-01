@@ -347,7 +347,7 @@ def normalize(df, action, **kwargs):
         data_min = np.nanmin(df[col], axis=0)
         data_max = np.nanmax(df[col], axis=0)
         data_range = data_max-data_min
-        df[col] = df[col].apply(lambda x: (x-data_min)/data_range)
+        df[col] = (df[col] - data_min) / data_range
     return df
 
 def standardize(df, action, **kwargs):
@@ -355,5 +355,5 @@ def standardize(df, action, **kwargs):
     for col in columns:
         data_mean = np.mean(df[col], axis=0)
         data_std = np.std(df[col], axis=0)
-        df[col] = df[col].apply(lambda x: (x-data_mean)/data_std)
+        df[col] = (df[col]-data_mean)/data_std
     return df
