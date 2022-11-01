@@ -2,6 +2,7 @@ import { parse, stringify } from 'yaml';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import Button from '@oracle/elements/Button';
 import BlockType, {
   BlockLanguageEnum,
@@ -47,6 +48,7 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
+import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
 
@@ -88,6 +90,7 @@ function IntegrationPipeline({
 }: IntegrationPipelineProps) {
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
+  const [transformerVisible, setTransformerVisible] = useState(true);
 
   const { data: dataIntegrationSources } = api.integration_sources.list();
   const integrationSources: IntegrationSourceType[] =
@@ -342,6 +345,27 @@ function IntegrationPipeline({
     updateStream,
   ]);
 
+  const [updateDestinationBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+    api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline?.();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   const variablesTableMemo = useMemo(() => {
     const variableRows = [];
     globalVariables?.forEach(({
@@ -444,449 +468,495 @@ function IntegrationPipeline({
       </Spacing>
 
       {sourceVisible && (
-        <SectionStyle>
-          <Spacing mb={5}>
-            <Headline condensed level={4} spacingBelow>
-              Select source
-            </Headline>
+        <Spacing mb={1}>
+          <SectionStyle>
+            <Spacing mb={5}>
+              <Headline condensed level={4} spacingBelow>
+                Select source
+              </Headline>
 
-            <Select
-              onChange={(e) => {
-                const sourceUUID = e.target.value;
-                if (!sourceUUID) {
-                  return;
-                }
+              <Select
+                onChange={(e) => {
+                  const sourceUUID = e.target.value;
+                  if (!sourceUUID) {
+                    return;
+                  }
 
-                const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
-                if (config) {
-                  Object.keys(config).forEach((key: string) => {
-                    config[key] = config[key] || null;
-                  });
-                }
+                  const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
+                  if (config) {
+                    Object.keys(config).forEach((key: string) => {
+                      config[key] = config[key] || null;
+                    });
+                  }
 
-                if (dataLoaderBlock) {
-                  onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-                    ...dataLoaderBlockContent,
-                    catalog: {},
-                    config,
-                    source: sourceUUID,
-                  }));
-                } else {
-                  addNewBlockAtIndex({
-                    content: stringify({
-                      source: sourceUUID,
+                  if (dataLoaderBlock) {
+                    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                      ...dataLoaderBlockContent,
+                      catalog: {},
                       config,
-                    }),
-                    language: BlockLanguageEnum.YAML,
-                    type: BlockTypeEnum.DATA_LOADER,
-                  }, 0, setSelectedBlock);
-                }
+                      source: sourceUUID,
+                    }));
+                  } else {
+                    addNewBlockAtIndex({
+                      content: stringify({
+                        source: sourceUUID,
+                        config,
+                      }),
+                      language: BlockLanguageEnum.YAML,
+                      type: BlockTypeEnum.DATA_LOADER,
+                    }, 0, setSelectedBlock);
+                  }
 
-                setIntegrationSourceStream(null);
-                setSelectedStreamID(null);
+                  setIntegrationSourceStream(null);
+                  setSelectedStreamID(null);
 
-                savePipelineContent().then(() => {
-                  fetchPipeline();
-                });
-              }}
-              primary
-              value={dataLoaderBlockContent?.source}
-            >
-              <option value="" />
-              {integrationSources.map(({ name, uuid }) => (
-                <option
-                  key={uuid}
-                  value={uuid}
-                >
-                  {name}
-                </option>
-              ))}
-            </Select>
-          </Spacing>
+                  savePipelineContent().then(() => {
+                    fetchPipeline();
+                  });
+                }}
+                primary
+                value={dataLoaderBlockContent?.source}
+              >
+                <option value="" />
+                {integrationSources.map(({ name, uuid }) => (
+                  <option
+                    key={uuid}
+                    value={uuid}
+                  >
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </Spacing>
 
-          {dataLoaderBlock && (
-            <>
-              <Spacing mb={5}>
-                <Headline condensed level={4} spacingBelow>
-                  Configuration
-                </Headline>
-
-                {dataLoaderBlockContent?.source && (
-                  <Spacing mb={2}>
-                    <Text default>
-                      For more information on how to configure this source,
-                      read the <Link
-                        href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
-                        openNewWindow
-                      >
-                        {dataLoaderBlockContent.source} documentation
-                      </Link>
-                    </Text>
-
-                    {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-source')}
-                  </Spacing>
-                )}
-
-                {dataLoaderEditor}
-              </Spacing>
-
-              <Spacing mb={5}>
-                <Headline condensed level={4} spacingBelow>
-                  Select stream
-                </Headline>
-
-                {integrationSourceStream?.streams?.length && (
-                  <Spacing mb={2}>
-                    <Select
-                      onChange={(e) => {
-                        const uuid = e.target.value;
-                        setSelectedStreamID(uuid);
-                        if (uuid) {
-                          // @ts-ignore
-                          fetchIntegrationSource({
-                            integration_source: {
-                              streams: [
-                                uuid,
-                              ],
-                            },
-                          });
-                        } else {
-                          onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-                            ...dataLoaderBlockContent,
-                            catalog: {},
-                          }));
-                          savePipelineContent().then(() => fetchPipeline());
-                        }
-                      }}
-                      primary
-                      value={selectedStreamID || ''}
-                    >
-                      <option value="" />
-                      {integrationSourceStream?.streams?.map(({
-                        tap_stream_id: uuid,
-                      }) => (
-                        <option
-                          key={uuid}
-                          value={uuid}
-                        >
-                          {uuid}
-                        </option>
-                      ))}
-                    </Select>
-                  </Spacing>
-                )}
-
-                <Button
-                  loading={isLoadingFetchIntegrationSourceStream}
-                  onClick={() => {
-                    savePipelineContent().then(() => {
-                      fetchIntegrationSourceStream();
-                      fetchPipeline();
-                    });
-                  }}
-                  primary
-                  small
-                >
-                  Fetch list of streams
-                </Button>
-              </Spacing>
-            </>
-          )}
-
-          {isLoadingFetchIntegrationSource && <Spinner />}
-
-          {!isLoadingFetchIntegrationSource && catalog?.streams?.map(({
-            bookmark_properties: bookmarkProperties,
-            metadata,
-            replication_method: replicationMethod,
-            schema: {
-              properties,
-            },
-            tap_stream_id: streamUUID,
-            unique_constraints: uniqueConstraints,
-            unique_conflict_method: uniqueConflictMethod,
-          }: StreamType) => {
-            const metadataByColumn = indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/'));
-
-            const metadataForStream =
-              find(metadata, ({ breadcrumb }) => breadcrumb.length === 0)?.metadata
-            const validKeyProperties = metadataForStream['table-key-properties'] || [];
-            const validReplicationKeys = metadataForStream['valid-replication-keys'] || [];
-
-            return (
-              <div key={streamUUID}>
-                <Headline condensed level={4} spacingBelow>
-                  Schema for {streamUUID}
-                </Headline>
-
-                <Table
-                  alignTop
-                  columnFlex={[null, 2, 1, null, null]}
-                  columns={[
-                    {
-                      uuid: 'Selected',
-                    },
-                    {
-                      uuid: 'Name',
-                    },
-                    {
-                      uuid: 'Type',
-                    },
-                    {
-                      uuid: 'Unique',
-                    },
-                    {
-                      uuid: 'Bookmark',
-                    },
-                  ]}
-                  rows={Object.entries(properties).map(([
-                    columnName, {
-                      anyOf: columnTypesAnyOf = [],
-                      format: columnFormat,
-                      type: columnTypesInit = [],
-                    },
-                  ]) => {
-                    const columnTypesSet = new Set(Array.isArray(columnTypesInit)
-                      ? columnTypesInit
-                      : [columnTypesInit]
-                    );
-                    columnTypesAnyOf.forEach(({
-                      items,
-                      type,
-                    }) => {
-                      if (Array.isArray(type)) {
-                        type.forEach(t => columnTypesSet.add(t));
-                      } else {
-                        columnTypesSet.add(type);
-                      }
-                    });
-                    const columnTypes = Array.from(columnTypesSet);
-
-                    const {
-                      metadata: {
-                        inclusion,
-                        selected,
-                      },
-                    } = metadataByColumn[`properties/${columnName}`] || {};
-
-                    const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
-                      if (columnTypes.indexOf(colType) >= 0 || (
-                        COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType)
-                          && ColumnFormatEnum.DATE_TIME === columnFormat
-                      )) {
-                        return acc;
-                      }
-
-                      return acc.concat(
-                        <option key={colType} value={colType}>
-                          {colType}
-                        </option>
-                      );
-                    }, []);
-                    const indexOfFirstStringType =
-                      columnTypes.findIndex((colType: ColumnTypeEnum) => colType === ColumnTypeEnum.STRING);
-
-                    return [
-                      <Checkbox
-                        checked={selected}
-                        disabled={InclusionEnum.AUTOMATIC === inclusion}
-                        key={`${streamUUID}/${columnName}/selected`}
-                        onClick={InclusionEnum.AUTOMATIC === inclusion
-                          ? null
-                          : () => {
-                            updateMetadataForColumn(streamUUID, columnName, {
-                              selected: !selected,
-                            });
-                          }
-                        }
-                      />,
-                      <Text
-                        key={`${streamUUID}/${columnName}/name`}
-                      >
-                        {columnName}
-                      </Text>,
-                      <FlexContainer
-                        key={`${streamUUID}/${columnName}/type`}
-                      >
-                        <Flex flex={1}>
-                          <FlexContainer
-                            alignItems="center"
-                            flexWrap="wrap"
-                            fullWidth
-                          >
-                            {columnTypes.map((columnType: ColumnTypeEnum, idx: number) => (
-                              <Spacing
-                                key={`${streamUUID}/${columnName}/${columnType}/${idx}/chip`}
-                                mb={1}
-                                mr={1}
-                              >
-                                <Chip
-                                  border
-                                  label={ColumnFormatEnum.DATE_TIME === columnFormat &&
-                                      ColumnTypeEnum.STRING === columnType &&
-                                      indexOfFirstStringType === idx
-                                    ? COLUMN_TYPE_CUSTOM_DATE_TIME
-                                    : columnType
-                                  }
-                                  onClick={() => {
-                                    const data: SchemaPropertyType = {
-                                      format: columnFormat,
-                                      type: columnTypes.filter((colType: ColumnTypeEnum) =>
-                                        colType !== columnType),
-                                    };
-
-                                    if (ColumnFormatEnum.DATE_TIME === columnFormat &&
-                                      ColumnTypeEnum.STRING === columnType
-                                    ) {
-                                      data.format = null;
-                                    }
-
-                                    updateSchemaProperty(streamUUID, columnName, data);
-                                  }}
-                                  small
-                                />
-                              </Spacing>
-                            ))}
-                          </FlexContainer>
-                        </Flex>
-
-                        {columnTypeOptions.length >= 1 && (
-                          <Select
-                            compact
-                            onChange={(e) => {
-                              const columnType = e.target.value;
-                              const data: SchemaPropertyType = {
-                                format: columnFormat,
-                                type: columnTypes,
-                              };
-
-                              if (COLUMN_TYPE_CUSTOM_DATE_TIME === String(columnType)) {
-                                data.format = ColumnFormatEnum.DATE_TIME;
-                                data.type.push(ColumnTypeEnum.STRING);
-                              } else {
-                                data.type.push(columnType);
-                              }
-
-                              updateSchemaProperty(streamUUID, columnName, data);
-                            }}
-                            primary
-                            small
-                            value=""
-                            width={10 * UNIT}
-                          >
-                            <option value="" />
-                            {columnTypeOptions}
-                          </Select>
-                        )}
-                      </FlexContainer>,
-                      <Checkbox
-                        checked={!!uniqueConstraints?.includes(columnName)}
-                        disabled={validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName)}
-                        key={`${streamUUID}/${columnName}/unique`}
-                        onClick={() => updateStream(streamUUID, (stream: StreamType) => {
-                          if (stream.unique_constraints?.includes(columnName)) {
-                            stream.unique_constraints =
-                              remove(stream.unique_constraints, col => columnName === col);
-                          } else {
-                            stream.unique_constraints =
-                              [columnName].concat(stream.unique_constraints || []);
-                          }
-
-                          return stream;
-                        })}
-                      />,
-                      <Checkbox
-                        checked={!!bookmarkProperties?.includes(columnName)}
-                        disabled={validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName)}
-                        key={`${streamUUID}/${columnName}/bookmark`}
-                        onClick={() => updateStream(streamUUID, (stream: StreamType) => {
-                          if (stream.bookmark_properties?.includes(columnName)) {
-                            stream.bookmark_properties =
-                              remove(stream.bookmark_properties, col => columnName === col);
-                          } else {
-                            stream.bookmark_properties =
-                              [columnName].concat(stream.bookmark_properties || []);
-                          }
-
-                          return stream;
-                        })}
-                      />,
-                    ];
-                  })}
-                />
-
-                <Spacing mt={5}>
+            {dataLoaderBlock && (
+              <>
+                <Spacing mb={5}>
                   <Headline condensed level={4} spacingBelow>
-                    Settings
+                    Configuration
                   </Headline>
 
-                  <Spacing mb={3}>
-                    <Spacing mb={1}>
-                      <Text bold large>
-                        Replication method
-                      </Text>
+                  {dataLoaderBlockContent?.source && (
+                    <Spacing mb={2}>
                       <Text default>
-                        Do you want to synchronize the entire stream (<Text bold inline monospace>
-                          {ReplicationMethodEnum.FULL_TABLE}
-                        </Text>)
-                        on each integration pipeline run or
-                        only new records (<Text bold inline monospace>
-                          {ReplicationMethodEnum.INCREMENTAL}
-                        </Text>)?
+                        For more information on how to configure this source,
+                        read the <Link
+                          href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
+                          openNewWindow
+                        >
+                          {dataLoaderBlockContent.source} documentation
+                        </Link>
                       </Text>
+
+                      {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-source')}
                     </Spacing>
+                  )}
 
-                    <Select
-                      onChange={(e) => {
-                        updateStream(streamUUID, (stream: StreamType) => ({
-                          ...stream,
-                          replication_method: e.target.value,
-                        }))
-                      }}
-                      primary
-                      value={replicationMethod}
-                    >
-                      <option value="" />
-                      <option value={ReplicationMethodEnum.FULL_TABLE}>
-                        {ReplicationMethodEnum.FULL_TABLE}
-                      </option>
-                      <option value={ReplicationMethodEnum.INCREMENTAL}>
-                        {ReplicationMethodEnum.INCREMENTAL}
-                      </option>
-                    </Select>
-                  </Spacing>
+                  {dataLoaderEditor}
+                </Spacing>
 
-                  {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
+                <Spacing mb={5}>
+                  <Headline condensed level={4} spacingBelow>
+                    Select stream
+                  </Headline>
+
+                  {integrationSourceStream?.streams?.length && (
+                    <Spacing mb={2}>
+                      <Select
+                        onChange={(e) => {
+                          const uuid = e.target.value;
+                          setSelectedStreamID(uuid);
+                          if (uuid) {
+                            // @ts-ignore
+                            fetchIntegrationSource({
+                              integration_source: {
+                                streams: [
+                                  uuid,
+                                ],
+                              },
+                            });
+                          } else {
+                            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                              ...dataLoaderBlockContent,
+                              catalog: {},
+                            }));
+                            savePipelineContent().then(() => fetchPipeline());
+                          }
+                        }}
+                        primary
+                        value={selectedStreamID || ''}
+                      >
+                        <option value="" />
+                        {integrationSourceStream?.streams?.map(({
+                          tap_stream_id: uuid,
+                        }) => (
+                          <option
+                            key={uuid}
+                            value={uuid}
+                          >
+                            {uuid}
+                          </option>
+                        ))}
+                      </Select>
+                    </Spacing>
+                  )}
+
+                  <Button
+                    loading={isLoadingFetchIntegrationSourceStream}
+                    onClick={() => {
+                      savePipelineContent().then(() => {
+                        fetchIntegrationSourceStream();
+                        fetchPipeline();
+                      });
+                    }}
+                    primary
+                    small
+                  >
+                    Fetch list of streams
+                  </Button>
+                </Spacing>
+              </>
+            )}
+
+            {isLoadingFetchIntegrationSource && <Spinner />}
+
+            {!isLoadingFetchIntegrationSource && catalog?.streams?.map(({
+              bookmark_properties: bookmarkProperties,
+              metadata,
+              replication_method: replicationMethod,
+              schema: {
+                properties,
+              },
+              tap_stream_id: streamUUID,
+              unique_constraints: uniqueConstraints,
+              unique_conflict_method: uniqueConflictMethod,
+            }: StreamType) => {
+              const metadataByColumn = indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/'));
+
+              const metadataForStream =
+                find(metadata, ({ breadcrumb }) => breadcrumb.length === 0)?.metadata
+              const validKeyProperties = metadataForStream['table-key-properties'] || [];
+              const validReplicationKeys = metadataForStream['valid-replication-keys'] || [];
+
+              return (
+                <div key={streamUUID}>
+                  <Headline condensed level={4} spacingBelow>
+                    Schema for {streamUUID}
+                  </Headline>
+
+                  <Table
+                    alignTop
+                    columnFlex={[null, 2, 1, null, null]}
+                    columns={[
+                      {
+                        uuid: 'Selected',
+                      },
+                      {
+                        uuid: 'Name',
+                      },
+                      {
+                        uuid: 'Type',
+                      },
+                      {
+                        uuid: 'Unique',
+                      },
+                      {
+                        uuid: 'Bookmark',
+                      },
+                    ]}
+                    rows={Object.entries(properties).map(([
+                      columnName, {
+                        anyOf: columnTypesAnyOf = [],
+                        format: columnFormat,
+                        type: columnTypesInit = [],
+                      },
+                    ]) => {
+                      const columnTypesSet = new Set(Array.isArray(columnTypesInit)
+                        ? columnTypesInit
+                        : [columnTypesInit]
+                      );
+                      columnTypesAnyOf.forEach(({
+                        items,
+                        type,
+                      }) => {
+                        if (Array.isArray(type)) {
+                          type.forEach(t => columnTypesSet.add(t));
+                        } else {
+                          columnTypesSet.add(type);
+                        }
+                      });
+                      const columnTypes = Array.from(columnTypesSet);
+
+                      const {
+                        metadata: {
+                          inclusion,
+                          selected,
+                        },
+                      } = metadataByColumn[`properties/${columnName}`] || {};
+
+                      const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
+                        if (columnTypes.indexOf(colType) >= 0 || (
+                          COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType)
+                            && ColumnFormatEnum.DATE_TIME === columnFormat
+                        )) {
+                          return acc;
+                        }
+
+                        return acc.concat(
+                          <option key={colType} value={colType}>
+                            {colType}
+                          </option>
+                        );
+                      }, []);
+                      const indexOfFirstStringType =
+                        columnTypes.findIndex((colType: ColumnTypeEnum) => colType === ColumnTypeEnum.STRING);
+
+                      return [
+                        <Checkbox
+                          checked={selected}
+                          disabled={InclusionEnum.AUTOMATIC === inclusion}
+                          key={`${streamUUID}/${columnName}/selected`}
+                          onClick={InclusionEnum.AUTOMATIC === inclusion
+                            ? null
+                            : () => {
+                              updateMetadataForColumn(streamUUID, columnName, {
+                                selected: !selected,
+                              });
+                            }
+                          }
+                        />,
+                        <Text
+                          key={`${streamUUID}/${columnName}/name`}
+                        >
+                          {columnName}
+                        </Text>,
+                        <FlexContainer
+                          key={`${streamUUID}/${columnName}/type`}
+                        >
+                          <Flex flex={1}>
+                            <FlexContainer
+                              alignItems="center"
+                              flexWrap="wrap"
+                              fullWidth
+                            >
+                              {columnTypes.map((columnType: ColumnTypeEnum, idx: number) => (
+                                <Spacing
+                                  key={`${streamUUID}/${columnName}/${columnType}/${idx}/chip`}
+                                  mb={1}
+                                  mr={1}
+                                >
+                                  <Chip
+                                    border
+                                    label={ColumnFormatEnum.DATE_TIME === columnFormat &&
+                                        ColumnTypeEnum.STRING === columnType &&
+                                        indexOfFirstStringType === idx
+                                      ? COLUMN_TYPE_CUSTOM_DATE_TIME
+                                      : columnType
+                                    }
+                                    onClick={() => {
+                                      const data: SchemaPropertyType = {
+                                        format: columnFormat,
+                                        type: columnTypes.filter((colType: ColumnTypeEnum) =>
+                                          colType !== columnType),
+                                      };
+
+                                      if (ColumnFormatEnum.DATE_TIME === columnFormat &&
+                                        ColumnTypeEnum.STRING === columnType
+                                      ) {
+                                        data.format = null;
+                                      }
+
+                                      updateSchemaProperty(streamUUID, columnName, data);
+                                    }}
+                                    small
+                                  />
+                                </Spacing>
+                              ))}
+                            </FlexContainer>
+                          </Flex>
+
+                          {columnTypeOptions.length >= 1 && (
+                            <Select
+                              compact
+                              onChange={(e) => {
+                                const columnType = e.target.value;
+                                const data: SchemaPropertyType = {
+                                  format: columnFormat,
+                                  type: columnTypes,
+                                };
+
+                                if (COLUMN_TYPE_CUSTOM_DATE_TIME === String(columnType)) {
+                                  data.format = ColumnFormatEnum.DATE_TIME;
+                                  data.type.push(ColumnTypeEnum.STRING);
+                                } else {
+                                  data.type.push(columnType);
+                                }
+
+                                updateSchemaProperty(streamUUID, columnName, data);
+                              }}
+                              primary
+                              small
+                              value=""
+                              width={10 * UNIT}
+                            >
+                              <option value="" />
+                              {columnTypeOptions}
+                            </Select>
+                          )}
+                        </FlexContainer>,
+                        <Checkbox
+                          checked={!!uniqueConstraints?.includes(columnName)}
+                          disabled={validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName)}
+                          key={`${streamUUID}/${columnName}/unique`}
+                          onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                            if (stream.unique_constraints?.includes(columnName)) {
+                              stream.unique_constraints =
+                                remove(stream.unique_constraints, col => columnName === col);
+                            } else {
+                              stream.unique_constraints =
+                                [columnName].concat(stream.unique_constraints || []);
+                            }
+
+                            return stream;
+                          })}
+                        />,
+                        <Checkbox
+                          checked={!!bookmarkProperties?.includes(columnName)}
+                          disabled={validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName)}
+                          key={`${streamUUID}/${columnName}/bookmark`}
+                          onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                            if (stream.bookmark_properties?.includes(columnName)) {
+                              stream.bookmark_properties =
+                                remove(stream.bookmark_properties, col => columnName === col);
+                            } else {
+                              stream.bookmark_properties =
+                                [columnName].concat(stream.bookmark_properties || []);
+                            }
+
+                            return stream;
+                          })}
+                        />,
+                      ];
+                    })}
+                  />
+
+                  <Spacing mt={5}>
+                    <Headline condensed level={4} spacingBelow>
+                      Settings
+                    </Headline>
+
                     <Spacing mb={3}>
                       <Spacing mb={1}>
                         <Text bold large>
-                          Bookmark properties
+                          Replication method
                         </Text>
                         <Text default>
-                          After each integration pipeline run,
-                          the last record that was successfully synchronized
-                          will be used as the bookmark.
-                          The properties listed below will be extracted from the last record and used
-                          as the bookmark.
+                          Do you want to synchronize the entire stream (<Text bold inline monospace>
+                            {ReplicationMethodEnum.FULL_TABLE}
+                          </Text>)
+                          on each integration pipeline run or
+                          only new records (<Text bold inline monospace>
+                            {ReplicationMethodEnum.INCREMENTAL}
+                          </Text>)?
+                        </Text>
+                      </Spacing>
 
-                          <br />
+                      <Select
+                        onChange={(e) => {
+                          updateStream(streamUUID, (stream: StreamType) => ({
+                            ...stream,
+                            replication_method: e.target.value,
+                          }))
+                        }}
+                        primary
+                        value={replicationMethod}
+                      >
+                        <option value="" />
+                        <option value={ReplicationMethodEnum.FULL_TABLE}>
+                          {ReplicationMethodEnum.FULL_TABLE}
+                        </option>
+                        <option value={ReplicationMethodEnum.INCREMENTAL}>
+                          {ReplicationMethodEnum.INCREMENTAL}
+                        </option>
+                      </Select>
+                    </Spacing>
 
-                          On the next run, the synchronization will start after the bookmarked record.
+                    {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
+                      <Spacing mb={3}>
+                        <Spacing mb={1}>
+                          <Text bold large>
+                            Bookmark properties
+                          </Text>
+                          <Text default>
+                            After each integration pipeline run,
+                            the last record that was successfully synchronized
+                            will be used as the bookmark.
+                            The properties listed below will be extracted from the last record and used
+                            as the bookmark.
+
+                            <br />
+
+                            On the next run, the synchronization will start after the bookmarked record.
+                          </Text>
+                        </Spacing>
+
+                        <FlexContainer alignItems="center" flexWrap="wrap">
+                          {!bookmarkProperties?.length && (
+                            <Text italic>
+                              Click the checkbox under the column <Text bold inline italic>
+                                Bookmark
+                              </Text> to
+                              use a specific column as a bookmark property.
+                            </Text>
+                          )}
+                          {bookmarkProperties?.map((columnName: string) => (
+                            <Spacing
+                              key={`bookmark_properties/${columnName}`}
+                              mb={1}
+                              mr={1}
+                            >
+                              <Chip
+                                label={columnName}
+                                onClick={() => {
+                                  updateStream(streamUUID, (stream: StreamType) => ({
+                                    ...stream,
+                                    bookmark_properties: remove(
+                                      stream.bookmark_properties || [],
+                                      (col: string) => col === columnName,
+                                    ),
+                                  }));
+                                }}
+                                primary
+                              />
+                            </Spacing>
+                          ))}
+                        </FlexContainer>
+                      </Spacing>
+                    )}
+
+                    <Spacing mb={3}>
+                      <Spacing mb={1}>
+                        <Text bold large>
+                          Unique constraints
+                        </Text>
+                        <Text default>
+                          Multiple records (e.g. 2 or more) with the same values
+                          in the columns listed below will be considered duplicates.
                         </Text>
                       </Spacing>
 
                       <FlexContainer alignItems="center" flexWrap="wrap">
-                        {!bookmarkProperties?.length && (
-                          <Text italic>
-                            Click the checkbox under the column <Text bold inline italic>
-                              Bookmark
-                            </Text> to
-                            use a specific column as a bookmark property.
-                          </Text>
-                        )}
-                        {bookmarkProperties?.map((columnName: string) => (
+                        {!uniqueConstraints?.length && (
+                            <Text italic>
+                              Click the checkbox under the column <Text bold inline italic>
+                                Unique
+                              </Text> to
+                              use a specific column as a unique constraint.
+                            </Text>
+                          )}
+                        {uniqueConstraints?.map((columnName: string) => (
                           <Spacing
-                            key={`bookmark_properties/${columnName}`}
+                            key={`unique_constraints/${columnName}`}
                             mb={1}
                             mr={1}
                           >
@@ -895,8 +965,8 @@ function IntegrationPipeline({
                               onClick={() => {
                                 updateStream(streamUUID, (stream: StreamType) => ({
                                   ...stream,
-                                  bookmark_properties: remove(
-                                    stream.bookmark_properties || [],
+                                  unique_constraints: remove(
+                                    stream.unique_constraints || [],
                                     (col: string) => col === columnName,
                                   ),
                                 }));
@@ -907,112 +977,149 @@ function IntegrationPipeline({
                         ))}
                       </FlexContainer>
                     </Spacing>
-                  )}
 
-                  <Spacing mb={3}>
-                    <Spacing mb={1}>
-                      <Text bold large>
-                        Unique constraints
-                      </Text>
-                      <Text default>
-                        Multiple records (e.g. 2 or more) with the same values
-                        in the columns listed below will be considered duplicates.
-                      </Text>
-                    </Spacing>
+                    <Spacing mb={3}>
+                      <Spacing mb={1}>
+                        <Text bold large>
+                          Unique conflict method
+                        </Text>
+                        <Text default>
+                          If a new record has the same value as an existing record
+                          in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.map((col: string, idx: number) => (
+                            <Text
+                              bold
+                              inline
+                              key={col}
+                              monospace
+                            >
+                              {idx >= 1 && <>,&nbsp;</>}
+                              {col}
+                            </Text>
+                          ))}, how do you want to resolve the conflict?
 
-                    <FlexContainer alignItems="center" flexWrap="wrap">
-                      {!uniqueConstraints?.length && (
-                          <Text italic>
-                            Click the checkbox under the column <Text bold inline italic>
-                              Unique
-                            </Text> to
-                            use a specific column as a unique constraint.
-                          </Text>
-                        )}
-                      {uniqueConstraints?.map((columnName: string) => (
-                        <Spacing
-                          key={`unique_constraints/${columnName}`}
-                          mb={1}
-                          mr={1}
-                        >
-                          <Chip
-                            label={columnName}
-                            onClick={() => {
-                              updateStream(streamUUID, (stream: StreamType) => ({
-                                ...stream,
-                                unique_constraints: remove(
-                                  stream.unique_constraints || [],
-                                  (col: string) => col === columnName,
-                                ),
-                              }));
-                            }}
-                            primary
-                          />
-                        </Spacing>
-                      ))}
-                    </FlexContainer>
-                  </Spacing>
+                          <br />
 
-                  <Spacing mb={3}>
-                    <Spacing mb={1}>
-                      <Text bold large>
-                        Unique conflict method
-                      </Text>
-                      <Text default>
-                        If a new record has the same value as an existing record
-                        in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.map((col: string, idx: number) => (
-                          <Text
-                            bold
-                            inline
-                            key={col}
-                            monospace
-                          >
-                            {idx >= 1 && <>,&nbsp;</>}
-                            {col}
-                          </Text>
-                        ))}, how do you want to resolve the conflict?
+                          The conflict method <Text bold inline monospace>
+                            {UniqueConflictMethodEnum.IGNORE}
+                          </Text> will skip the new record if it’s a duplicate of an existing record.
+                          The conflict method <Text bold inline monospace>
+                            {UniqueConflictMethodEnum.UPDATE}
+                          </Text> will not save the new record and instead update the existing record
+                          with the new record’s properties.
+                        </Text>
+                      </Spacing>
 
-                        <br />
-
-                        The conflict method <Text bold inline monospace>
+                      <Select
+                        onChange={(e) => {
+                          updateStream(streamUUID, (stream: StreamType) => ({
+                            ...stream,
+                            unique_conflict_method: e.target.value,
+                          }))
+                        }}
+                        primary
+                        value={uniqueConflictMethod}
+                      >
+                        <option value="" />
+                        <option value={UniqueConflictMethodEnum.IGNORE}>
                           {UniqueConflictMethodEnum.IGNORE}
-                        </Text> will skip the new record if it’s a duplicate of an existing record.
-                        The conflict method <Text bold inline monospace>
+                        </option>
+                        <option value={UniqueConflictMethodEnum.UPDATE}>
                           {UniqueConflictMethodEnum.UPDATE}
-                        </Text> will not save the new record and instead update the existing record
-                        with the new record’s properties.
-                      </Text>
+                        </option>
+                      </Select>
                     </Spacing>
-
-                    <Select
-                      onChange={(e) => {
-                        updateStream(streamUUID, (stream: StreamType) => ({
-                          ...stream,
-                          unique_conflict_method: e.target.value,
-                        }))
-                      }}
-                      primary
-                      value={uniqueConflictMethod}
-                    >
-                      <option value="" />
-                      <option value={UniqueConflictMethodEnum.IGNORE}>
-                        {UniqueConflictMethodEnum.IGNORE}
-                      </option>
-                      <option value={UniqueConflictMethodEnum.UPDATE}>
-                        {UniqueConflictMethodEnum.UPDATE}
-                      </option>
-                    </Select>
                   </Spacing>
-                </Spacing>
-              </div>
-            );
-          })}
+                </div>
+              );
+            })}
+          </SectionStyle>
 
-          {codeBlocks}
-        </SectionStyle>
+        </Spacing>
       )}
 
-      <Spacing mb={5} />
+      <Spacing mb={1}>
+        <FlexContainer alignItems="center">
+          <Button
+            disabled={!dataLoaderBlock || !dataExporterBlock}
+            iconOnly
+            onClick={() => setTransformerVisible(prev => !prev)}
+          >
+            <>
+              {transformerVisible && dataLoaderBlock && dataExporterBlock && (
+                <ChevronUp
+                  size={1.5 * UNIT}
+                />
+              )}
+              {(!transformerVisible || !dataLoaderBlock || !dataExporterBlock) && (
+                <ChevronDown
+                  disabled={!dataLoaderBlock || !dataExporterBlock}
+                  size={1.5 * UNIT}
+                />
+              )}
+            </>
+          </Button>
+
+          <Spacing mr={1} />
+
+          <FlexContainer alignItems="center">
+            <Headline>
+              Transformers
+            </Headline>
+          </FlexContainer>
+        </FlexContainer>
+      </Spacing>
+      
+      {transformerVisible && dataLoaderBlock && dataExporterBlock && (
+        <Spacing mb={1}>
+          {codeBlocks.length > 0 && (
+            <SectionStyle>
+              <Spacing mb={1}>
+                {codeBlocks}
+              </Spacing>
+            </SectionStyle>
+          )}
+          <AddNewBlocks
+            addNewBlock={(newBlock: BlockRequestPayloadType) => {
+              let content = newBlock.content;
+              let configuration = newBlock.configuration;
+
+              const currentBlock = blocks[blocks.length - 2];
+              const upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
+
+              const ret = addNewBlockAtIndex({
+                ...newBlock,
+                configuration,
+                content,
+                upstream_blocks: upstreamBlocks,
+              },
+              blocks.length - 1,
+              block => {
+                // @ts-ignore
+                updateDestinationBlock({
+                  block: {
+                    ...dataExporterBlock,
+                    upstream_blocks: [block.uuid],
+                  },
+                });
+                setSelectedBlock(block);
+              });
+
+              return ret;
+            }}
+            // blockIdx={blockIdx}
+            compact
+            hideDataExporter
+            hideDataLoader
+            hideRecommendations
+            hideScratchpad
+            hideSensor
+            pipeline={pipeline}
+
+          />
+        </Spacing>
+      )}
+
+
 
       <Spacing mb={1}>
         <FlexContainer alignItems="center">

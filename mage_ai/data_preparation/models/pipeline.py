@@ -564,13 +564,23 @@ class Pipeline:
             downstream_block_uuids = [
                 b.uuid for b in block.downstream_blocks if b.type != BlockType.CHART
             ]
-            if len(downstream_block_uuids) > 0:
+            if self.type == PipelineType.INTEGRATION:
+                for downstream_block in block.downstream_blocks:
+                    upstream_block_uuids = list(filter(
+                        lambda uuid: uuid != block.uuid,
+                        downstream_block.upstream_block_uuids
+                    ))
+                    downstream_block.update(dict(
+                        upstream_blocks=[*upstream_block_uuids, *block.upstream_block_uuids]
+                    ))
+            elif len(downstream_block_uuids) > 0:
                 raise Exception(
                     f'Block(s) {downstream_block_uuids} are depending on block {block.uuid}'
                     '. Please remove the downstream blocks first.'
                 )
-            for downstream_block in block.downstream_blocks:
-                downstream_block.delete(commit=False)
+            else:
+                for downstream_block in block.downstream_blocks:
+                    downstream_block.delete(commit=False)
 
         upstream_blocks = block.upstream_blocks
         for upstream_block in upstream_blocks:

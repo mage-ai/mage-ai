@@ -25,6 +25,7 @@ const getDataSourceTypes = (
     return {
       [BlockTypeEnum.DATA_LOADER]: [
         DataSourceTypeEnum.KAFKA,
+        DataSourceTypeEnum.AZURE_EVENT_HUB,
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.OPENSEARCH,
