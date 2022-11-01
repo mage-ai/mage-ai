@@ -150,7 +150,14 @@ class Pipeline:
 
     @classmethod
     def get(self, uuid, repo_path: str = None):
-        return self(uuid, repo_path=repo_path)
+        from mage_ai.data_preparation.models.pipelines.integration_pipeline \
+            import IntegrationPipeline
+
+        pipeline = self(uuid, repo_path=repo_path)
+        if PipelineType.INTEGRATION == pipeline.type:
+            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
+        
+        return pipeline
 
     @classmethod
     def get_all_pipelines(self, repo_path):

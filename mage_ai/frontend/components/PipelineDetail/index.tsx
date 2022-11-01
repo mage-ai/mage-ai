@@ -355,7 +355,7 @@ function PipelineDetail({
           mainContainerRef={mainContainerRef}
           mainContainerWidth={mainContainerWidth}
           messages={messages[uuid]}
-          noDivider={idx === numberOfBlocks - 1}
+          noDivider={idx === numberOfBlocks - 1 || isIntegration}
           onChange={(value: string) => onChangeCodeBlock(uuid, value)}
           openSidekickView={openSidekickView}
           pipeline={pipeline}
