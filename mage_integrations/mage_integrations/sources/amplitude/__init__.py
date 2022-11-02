@@ -45,6 +45,7 @@ class Amplitude(Source):
         results = self.connection.load(
             start_date=start_date,
             end_date=end_date,
+            sample=kwargs['sample_data'],
         )
 
         if bookmarks:

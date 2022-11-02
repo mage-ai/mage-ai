@@ -433,6 +433,7 @@ class Source:
         self,
         bookmarks: Dict = None,
         query: Dict = {},
+        sample_data: bool = False,
         start_date: datetime = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:

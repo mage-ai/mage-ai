@@ -140,6 +140,7 @@ WHERE schemaname = '{schema}'
         stream,
         bookmarks: Dict = None,
         query: Dict = {},
+        sample_data: bool = False,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         database_name = self.config['database']
