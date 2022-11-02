@@ -1,6 +1,7 @@
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
+from jinja2 import Template
 from logging import Logger
 from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
@@ -754,7 +755,12 @@ class Block:
                         path_to_model,
                     ]
                 else:
-                    project_full_path = 'WTF'
+                    project_name = Template(self.configuration['dbt_project_name']).render(
+                        env_var=os.getenv,
+                        variables=variables,
+                    )
+                    project_full_path = f'{get_repo_path()}/dbt/{project_name}'
+                    args += self.content.split(' ')
 
                 args += [
                     '--project-dir',
@@ -763,8 +769,13 @@ class Block:
                     project_full_path,
                 ]
 
-                dbt_profile_target = variables.get('dbt_profile_target')
+                dbt_profile_target = self.configuration.get('dbt_profile_target') \
+                    or variables.get('dbt_profile_target')
                 if dbt_profile_target:
+                    dbt_profile_target = Template(dbt_profile_target).render(
+                        env_var=os.getenv,
+                        variables=lambda x: variables.get(x),
+                    )
                     args += [
                         '--target',
                         dbt_profile_target,
@@ -779,6 +790,15 @@ class Block:
                     )
 
                 stdout = subprocess.PIPE if not test_execution else None
+
+                if not is_sql and not test_execution:
+                    proc0 = subprocess.run([
+                        'dbt',
+                        'test',
+                    ] + args, preexec_fn=os.setsid, stdout=stdout)
+                    for line in proc0.stdout.decode().split('\n'):
+                        print(line)
+
                 proc1 = subprocess.run([
                     'dbt',
                     dbt_command,
@@ -786,9 +806,21 @@ class Block:
 
                 if is_sql and test_execution:
                     outputs = [query_from_compiled_sql(self, dbt_profile_target)]
-                else:
+                elif not test_execution:
                     for line in proc1.stdout.decode().split('\n'):
                         print(line)
+
+                if not test_execution:
+                    with open(f'{project_full_path}/target/run_results.json', 'r') as f:
+                        run_results = json.load(f)
+
+                        print('DBT run results:')
+                        print(json.dumps(run_results))
+
+                        for result in run_results['results']:
+                            if 'error' == result['status']:
+                                raise Exception(result['message'])
+
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
                     proc = subprocess.run([

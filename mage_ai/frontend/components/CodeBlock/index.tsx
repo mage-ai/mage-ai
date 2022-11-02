@@ -71,6 +71,8 @@ import {
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
   CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+  CONFIG_KEY_DBT_PROFILE_TARGET,
+  CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_EXPORT_WRITE_POLICY,
 } from '@interfaces/ChartBlockType';
 import {
@@ -193,6 +195,8 @@ function CodeBlockProps({
     [CONFIG_KEY_DATA_PROVIDER_DATABASE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_DATABASE],
     [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
     [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
+    [CONFIG_KEY_DBT_PROFILE_TARGET]: block?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET],
+    [CONFIG_KEY_DBT_PROJECT_NAME]: block?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
     [CONFIG_KEY_EXPORT_WRITE_POLICY]: block?.configuration?.[CONFIG_KEY_EXPORT_WRITE_POLICY]
       || ExportWritePolicyEnum.APPEND,
   });
@@ -528,7 +532,7 @@ function CodeBlockProps({
       }}
       onDidChangeCursorPosition={onDidChangeCursorPosition}
       placeholder={BlockTypeEnum.DBT === block.type && BlockLanguageEnum.YAML === block.language
-        ? 'e.g. path/to/my_model.sql'
+        ? 'e.g. --select path/to/my_model1.sql --exclude path/to/my_model2.sql'
         : 'Start typing here...'
       }
       selected={selected}
@@ -618,7 +622,10 @@ function CodeBlockProps({
         ...payload,
       };
 
-      if (data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE]) {
+      if ((data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE])
+        || data[CONFIG_KEY_DBT_PROFILE_TARGET]
+        || data[CONFIG_KEY_DBT_PROJECT_NAME]
+      ) {
         savePipelineContent({
           block: {
             configuration: data,
@@ -870,22 +877,76 @@ function CodeBlockProps({
             && !codeCollapsed
             && (
             <CodeHelperStyle>
-              <FlexContainer>
+              <FlexContainer alignItems="center">
+                <Text monospace muted small>
+                  DBT project name:
+                </Text>
+                <span>&nbsp;</span>
+                <TextInput
+                  compact
+                  monospace
+                  onBlur={() => setTimeout(() => {
+                    setAnyInputFocused(false);
+                  }, 300)}
+                  onChange={(e) => {
+                    // @ts-ignore
+                    updateDataProviderConfig({
+                      [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
+                    });
+                    e.preventDefault();
+                  }}
+                  onFocus={() => {
+                    setAnyInputFocused(true);
+                  }}
+                  placeholder="e.g. my_project"
+                  small
+                  value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME]}
+                />
+
+                <Spacing mr={2} />
+
+                <Text monospace muted small>
+                  DBT profile target:
+                </Text>
+                <span>&nbsp;</span>
+                <TextInput
+                  compact
+                  monospace
+                  onBlur={() => setTimeout(() => {
+                    setAnyInputFocused(false);
+                  }, 300)}
+                  onChange={(e) => {
+                    // @ts-ignore
+                    updateDataProviderConfig({
+                      [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                    });
+                    e.preventDefault();
+                  }}
+                  onFocus={() => {
+                    setAnyInputFocused(true);
+                  }}
+                  placeholder="e.g. prod"
+                  small
+                  value={dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET]}
+                />
+              </FlexContainer>
+
+              <FlexContainer alignItems="center">
                 <Flex flex={1}>
                   <Text monospace default small>
-                    dbt run --exclude <Text
+                    dbt run <Text
                       inline
                       monospace
                       small
                     >
-                      [type your exclude syntax below]
+                      [type your --select and --exclude syntax below]
                     </Text>
                   </Text>
 
                   <Spacing mr={1} />
 
                   <Text monospace muted small>
-                    (paths start from project/dbt/ folder)
+                    (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
                   </Text>
                 </Flex>
 
