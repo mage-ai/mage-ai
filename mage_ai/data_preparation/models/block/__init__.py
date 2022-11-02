@@ -11,6 +11,7 @@ from mage_ai.data_cleaner.shared.utils import (
 )
 from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
+    build_command_line_arguments,
     create_upstream_tables,
     parse_attributes,
     query_from_compiled_sql,
@@ -93,6 +94,7 @@ async def run_blocks(
                 if run_tests:
                     block.run_tests(
                         build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
                         update_tests=False,
                     )
 
@@ -195,6 +197,7 @@ def run_blocks_sync(
             if run_tests:
                 block.run_tests(
                     build_block_output_stdout=build_block_output_stdout,
+                    global_vars=global_vars,
                     update_tests=False,
                 )
         tasks[block.uuid] = True
@@ -498,7 +501,8 @@ class Block:
                 not_executed_upstream_blocks = list(
                     filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
                 )
-                if len(not_executed_upstream_blocks) > 0:
+                all_upstream_is_dbt = all([BlockType.DBT == b.type for b in not_executed_upstream_blocks])
+                if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
                     raise Exception(
                         f"Block {self.uuid}'s upstream blocks have not been executed yet. "
                         f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
@@ -730,74 +734,23 @@ class Block:
             if BlockType.DBT == self.type:
                 variables = merge_dict(global_vars, runtime_arguments or {})
 
-                dbt_command = 'run'
-                args = [
-                    '--vars',
-                    simplejson.dumps(
-                        variables,
-                        default=encode_complex,
-                        ignore_nan=True,
-                    ),
-                ]
+                dbt_command, args, command_line_dict = build_command_line_arguments(
+                    self,
+                    variables,
+                    test_execution=test_execution,
+                )
+                project_full_path = command_line_dict['project_full_path']
+                dbt_profile_target = command_line_dict['profile_target']
 
                 is_sql = BlockLanguage.SQL == self.language
-                if is_sql:
-                    attr = parse_attributes(self)
-                    file_path = attr['file_path']
-                    project_full_path = attr['project_full_path']
-                    path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
-
-                    if test_execution:
-                        dbt_command = 'compile'
-
-                    args += [
-                        '--select',
-                        path_to_model,
-                    ]
-                else:
-                    project_name = Template(self.configuration['dbt_project_name']).render(
-                        env_var=os.getenv,
-                        variables=variables,
-                    )
-                    project_full_path = f'{get_repo_path()}/dbt/{project_name}'
-                    args += self.content.split(' ')
-
-                args += [
-                    '--project-dir',
-                    project_full_path,
-                    '--profiles-dir',
-                    project_full_path,
-                ]
-
-                dbt_profile_target = self.configuration.get('dbt_profile_target') \
-                    or variables.get('dbt_profile_target')
-                if dbt_profile_target:
-                    dbt_profile_target = Template(dbt_profile_target).render(
-                        env_var=os.getenv,
-                        variables=lambda x: variables.get(x),
-                    )
-                    args += [
-                        '--target',
-                        dbt_profile_target,
-                    ]
-
                 if is_sql:
                     create_upstream_tables(
                         self,
                         execution_partition=execution_partition,
                         profile_target=dbt_profile_target,
-
                     )
 
-                stdout = subprocess.PIPE if not test_execution else None
-
-                if not is_sql and not test_execution:
-                    proc0 = subprocess.run([
-                        'dbt',
-                        'test',
-                    ] + args, preexec_fn=os.setsid, stdout=stdout)
-                    for line in proc0.stdout.decode().split('\n'):
-                        print(line)
+                stdout = None if test_execution else subprocess.PIPE
 
                 proc1 = subprocess.run([
                     'dbt',
@@ -1224,9 +1177,41 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         self,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
+        global_vars: Dict = {},
         logger: Logger = None,
         update_tests: bool = True,
     ) -> None:
+        if logger is not None:
+            stdout = StreamToLogger(logger)
+        elif build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        else:
+            stdout = sys.stdout
+
+        if BlockType.DBT == self.type:
+            dbt_command, args, _ = build_command_line_arguments(self, global_vars, run_tests=True)
+
+            proc1 = subprocess.run([
+                'dbt',
+                dbt_command,
+            ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE)
+
+            number_of_errors = 0
+
+            with redirect_stdout(stdout):
+                lines = proc1.stdout.decode().split('\n')
+                for idx, line in enumerate(lines):
+                    print(line)
+
+                    match = re.match('ERROR=([0-9]+)', line)
+                    if match:
+                        number_of_errors += int(match.groups()[0])
+
+            if number_of_errors >= 1:
+                raise Exception('DBT test failed.')
+
+            return
+
         test_functions = []
         if update_tests:
             results = {
@@ -1249,13 +1234,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             )
             for variable in self.output_variables.keys()
         ]
-
-        if logger is not None:
-            stdout = StreamToLogger(logger)
-        elif build_block_output_stdout:
-            stdout = build_block_output_stdout(self.uuid)
-        else:
-            stdout = sys.stdout
 
         with redirect_stdout(stdout):
             tests_passed = 0

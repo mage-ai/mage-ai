@@ -1,3 +1,4 @@
+from jinja2 import Template
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
@@ -5,16 +6,21 @@ from mage_ai.data_preparation.models.block.sql import (
     redshift,
     snowflake,
 )
+from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.shared.array import find, flatten
+from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import files_in_path
 from pandas import DataFrame
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import os
 import re
+import simplejson
 import yaml
 
 
@@ -303,3 +309,71 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
 
             with Postgres.with_config(config_file_loader) as loader:
                 return loader.load(f.read())
+
+
+def build_command_line_arguments(
+    block,
+    variables: Dict,
+    run_tests: bool = False,
+    test_execution: bool = False,
+) -> Tuple[str, List[str], Dict]:
+    variables = merge_dict(
+        variables,
+        get_global_variables(block.pipeline.uuid) if block.pipeline else {},
+    )
+    dbt_command = 'test' if run_tests else 'run'
+
+    args = [
+        '--vars',
+        simplejson.dumps(
+            variables,
+            default=encode_complex,
+            ignore_nan=True,
+        ),
+    ]
+
+    if BlockLanguage.SQL == block.language:
+        attr = parse_attributes(block)
+        file_path = attr['file_path']
+        project_full_path = attr['project_full_path']
+        path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
+
+        if test_execution:
+            dbt_command = 'compile'
+
+        args += [
+            '--select',
+            path_to_model,
+        ]
+    else:
+        project_name = Template(block.configuration['dbt_project_name']).render(
+            env_var=os.getenv,
+            variables=variables,
+        )
+        project_full_path = f'{get_repo_path()}/dbt/{project_name}'
+        args += block.content.split(' ')
+
+    args += [
+        '--project-dir',
+        project_full_path,
+        '--profiles-dir',
+        project_full_path,
+    ]
+
+    dbt_profile_target = block.configuration.get('dbt_profile_target') \
+        or variables.get('dbt_profile_target')
+
+    if dbt_profile_target:
+        dbt_profile_target = Template(dbt_profile_target).render(
+            env_var=os.getenv,
+            variables=lambda x: variables.get(x),
+        )
+        args += [
+            '--target',
+            dbt_profile_target,
+        ]
+
+    return dbt_command, args, dict(
+        profile_target=dbt_profile_target,
+        project_full_path=project_full_path,
+    )
