@@ -3,13 +3,15 @@ from typing import Dict, Generator, List
 import requests
 
 
+URL = 'https://raw.githubusercontent.com/mage-ai/datasets/master/titanic_survival.csv'
+
 class Titanic(Source):
+
     def load_data(
         self,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/titanic_survival.csv'
-        text = requests.get(url).text
+        text = requests.get(URL).text
 
         rows = []
         lines = text.rstrip().split('\n')
@@ -22,8 +24,7 @@ class Titanic(Source):
         yield rows
 
     def test_connection(self):
-        url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/titanic_survival.csv'
-        request = requests.get(url)
+        request = requests.get(URL)
 
         if request.status_code != 200:
             raise Exception('Could not fetch titanic data')

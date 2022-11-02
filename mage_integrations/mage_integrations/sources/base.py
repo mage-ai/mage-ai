@@ -191,12 +191,13 @@ class Source:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
                 self.sync(catalog)
         except Exception as err:
-            # message = f'{self.__class__.__name__} process failed with error {sys.exc_info()}.'
-            self.logger.exception('error', tags=dict(
+            message = f'{self.__class__.__name__} process failed with error {str(err)}.'
+            self.logger.exception(message, tags=dict(
                 error=str(err),
                 errors=traceback.format_stack(),
                 message=traceback.format_exc(),
             ))
+            raise Exception(message)
 
     def process_stream(self, stream, properties: Dict = None):
         """

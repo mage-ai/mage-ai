@@ -602,9 +602,9 @@ def start_server(
 
     if manage:
         os.environ[MANAGE_ENV_VAR] = '1'
-    # else:
-    #     # Start a subprocess for scheduler
-    #     scheduler_manager.start_scheduler()
+    else:
+        # Start a subprocess for scheduler
+        scheduler_manager.start_scheduler()
 
     enable_pretty_logging()
 
