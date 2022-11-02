@@ -276,6 +276,9 @@ class Source:
            self.config.get('start_date'):
             start_date = dateutil.parser.parse(self.config.get('start_date'))
 
+        bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
+        max_bookmark = []
+
         record_count = 0
         for rows in self.load_data(
             bookmarks=self.__get_bookmarks_for_stream(stream),
@@ -283,14 +286,31 @@ class Source:
             start_date=start_date,
             stream=stream,
         ):
-            self.write_records(stream, rows)
+            max_bookmark_tmp = self.write_records(stream, rows)
+            max_bookmark = max(max_bookmark, max_bookmark_tmp)
             record_count += len(rows)
+
+        if bookmark_properties and not self.is_sorted:
+            if max_bookmark:
+                write_state({
+                    stream.tap_stream_id:
+                    {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
+                })
 
         return record_count
 
-    def write_records(self, stream, rows: List[Dict]):
+    def write_records(self, stream, rows: List[Dict]) -> List:
+        """Write RECORD messages.
+
+        Args:
+            stream (TYPE): The stream object.
+            rows (List[Dict]): Records to write.
+
+        Returns:
+            List: Bookmark values.
+        """
         bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
-        max_bookmark = None
+        max_bookmark = []
 
         for row in rows:
             write_records(
@@ -311,13 +331,7 @@ class Source:
                         max_bookmark,
                         [row.get(col) for col in bookmark_properties],
                     )
-
-        if bookmark_properties and not self.is_sorted:
-            if max_bookmark:
-                write_state({
-                    stream.tap_stream_id:
-                    {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
-                })
+        return max_bookmark
 
     def sync(self, catalog: Catalog, properties: Dict = None) -> None:
         """
