@@ -1,15 +1,17 @@
-from mage_ai.shared.array import difference
 from .base import BaseHandler
+from mage_ai.server.active_kernel import (
+    get_active_kernel_name,
+)
+from mage_ai.server.kernels import KernelName
 from mage_ai.shared.hash import merge_dict
 
-import json
 import os
 
 
 class ApiClustersHandler(BaseHandler):
     def get(self, cluster_type):
         clusters = []
-        if cluster_type == 'emr':
+        if cluster_type == 'emr' and get_active_kernel_name() == KernelName.PYSPARK:
             from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
             clusters = emr_cluster_manager.list_clusters()
         self.write(dict(clusters=clusters))
@@ -67,7 +69,6 @@ class ApiInstancesHandler(BaseHandler):
             cluster_name = self.get_argument('cluster_name', os.getenv('ECS_CLUSTER_NAME'))
             ecs_instance_manager = EcsTaskManager(cluster_name)
             instances = ecs_instance_manager.list_tasks()
-
 
         self.write(dict(instances=instances))
 
