@@ -40,22 +40,18 @@ function SourceConfig({
   }, [blockContent])
 
 
-  const [connected, setConnected] = useState<boolean>(null);
+  const [connected, setConnected] = useState<boolean>(null)
+  const [error, setError] = useState<string>();
   const [testConnection, { isLoading }] = useMutation(
     api[apiName].useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: (res) => {
             setConnected(true);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
+          onErrorCallback: ({ error }) => {
+            setError(error);
             setConnected(false);
           },
         },
@@ -94,10 +90,11 @@ function SourceConfig({
                 action: 'test_connection',
                 pipeline_uuid: pipeline.uuid,
                 config: parse(blockConfig),
-              })
+              });
+              setError(null);
             }}
-            primary
             small
+            success
           >
             Test connection
           </Button>
@@ -107,19 +104,26 @@ function SourceConfig({
             ) : (
               <>
                 {connected && (
-                  <Text success>
+                  <Text small success>
                     Connected successfully!
                   </Text>
                 )}
                 {connected === false && (
-                  <Text danger>
-                    Failed to connect.
+                  <Text small warning>
+                    Failed to connect, see error below.
                   </Text>
                 )}
               </>
             )}
           </Spacing>
         </FlexContainer>
+        {error && (
+          <Spacing mt={1}>
+            <Text small warning>
+              {error}
+            </Text>
+          </Spacing>
+        )}
       </Spacing>
     </>
   );

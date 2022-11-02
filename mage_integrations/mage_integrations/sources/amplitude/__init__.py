@@ -71,6 +71,5 @@ class Amplitude(Source):
         self.connection.load(start_date=today, end_date=today)
 
 
-
 if __name__ == '__main__':
     main(Amplitude)

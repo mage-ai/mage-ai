@@ -2,9 +2,11 @@ from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import dig
+from mage_ai.shared.parsers import extract_json_objects
 from typing import Any, Dict, List
 import importlib
 import json
@@ -125,11 +127,23 @@ class IntegrationPipeline(Pipeline):
                     '--test_connection',
                 ]
 
-                proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+                proc = subprocess.run(
+                    run_args,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=10,
+                )
                 proc.check_returncode()
         except subprocess.CalledProcessError as e:
-            message = e.stderr.decode("utf-8")
-            raise Exception(message)
+            test = e.stderr.decode('utf-8').split('\n')
+
+            json_object = {}
+            for line in test:
+                if line.startswith('ERROR'):
+                    json_object = next(extract_json_objects(line))
+            
+            error = dig(json_object, 'tags.error')
+            raise Exception(error)
 
     def discover(self, streams: List[str] = None) -> dict:
         global_vars = get_global_variables(self.uuid) or dict()
@@ -157,7 +171,7 @@ class IntegrationPipeline(Pipeline):
                 return json.loads(parse_logs_and_json(proc.stdout.decode()))
 
             except subprocess.CalledProcessError as e:
-                message = e.stderr.decode("utf-8")
+                message = e.stderr.decode('utf-8')
                 raise Exception(message)
 
     def discover_streams(self) -> List[str]:
@@ -181,5 +195,5 @@ class IntegrationPipeline(Pipeline):
 
                 return json.loads(parse_logs_and_json(proc.stdout.decode()))
             except subprocess.CalledProcessError as e:
-                message = e.stderr.decode("utf-8")
+                message = e.stderr.decode('utf-8')
                 raise Exception(message)
