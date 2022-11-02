@@ -112,7 +112,7 @@ function IntegrationPipeline({
     useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type), [blocks]);
   const dataLoaderBlockContent = useMemo(() => {
     if (!dataLoaderBlock) {
-      return {}
+      return {};
     }
 
     return parse(dataLoaderBlock.content);
@@ -122,7 +122,7 @@ function IntegrationPipeline({
     useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type), [blocks]);
   const dataExporterBlockContent = useMemo(() => {
     if (!dataExporterBlock) {
-      return {}
+      return {};
     }
 
     return parse(dataExporterBlock.content);
@@ -374,7 +374,7 @@ function IntegrationPipeline({
       uuid,
       value,
     }) => {
-      const variableCode = `"{{ variables('${uuid}') }}"`
+      const variableCode = `"{{ variables('${uuid}') }}"`;
       return variableRows.push([
         <Text monospace key={`variable-uuid-${uuid}`}>
           {uuid}
@@ -390,7 +390,7 @@ function IntegrationPipeline({
           copiedText={variableCode}
           monospace
           withCopyIcon
-        />
+        />,
       ]);
     }));
 
@@ -622,6 +622,7 @@ function IntegrationPipeline({
 
             {!isLoadingFetchIntegrationSource && catalog?.streams?.map(({
               bookmark_properties: bookmarkProperties,
+              key_properties: keyProperties,
               metadata,
               replication_method: replicationMethod,
               schema: {
@@ -634,7 +635,7 @@ function IntegrationPipeline({
               const metadataByColumn = indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/'));
 
               const metadataForStream =
-                find(metadata, ({ breadcrumb }) => breadcrumb.length === 0)?.metadata
+                find(metadata, ({ breadcrumb }) => breadcrumb.length === 0)?.metadata;
               const validKeyProperties = metadataForStream['table-key-properties'] || [];
               const validReplicationKeys = metadataForStream['valid-replication-keys'] || [];
 
@@ -663,6 +664,9 @@ function IntegrationPipeline({
                       {
                         uuid: 'Bookmark',
                       },
+                      {
+                        uuid: 'Key prop',
+                      },
                     ]}
                     rows={Object.entries(properties).map(([
                       columnName, {
@@ -673,7 +677,7 @@ function IntegrationPipeline({
                     ]) => {
                       const columnTypesSet = new Set(Array.isArray(columnTypesInit)
                         ? columnTypesInit
-                        : [columnTypesInit]
+                        : [columnTypesInit],
                       );
                       columnTypesAnyOf.forEach(({
                         items,
@@ -705,7 +709,7 @@ function IntegrationPipeline({
                         return acc.concat(
                           <option key={colType} value={colType}>
                             {colType}
-                          </option>
+                          </option>,
                         );
                       }, []);
                       const indexOfFirstStringType =
@@ -808,7 +812,9 @@ function IntegrationPipeline({
                           checked={!!uniqueConstraints?.includes(columnName)}
                           disabled={validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName)}
                           key={`${streamUUID}/${columnName}/unique`}
-                          onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                          onClick={(validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName))
+                            ? null
+                            : () => updateStream(streamUUID, (stream: StreamType) => {
                             if (stream.unique_constraints?.includes(columnName)) {
                               stream.unique_constraints =
                                 remove(stream.unique_constraints, col => columnName === col);
@@ -824,13 +830,30 @@ function IntegrationPipeline({
                           checked={!!bookmarkProperties?.includes(columnName)}
                           disabled={validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName)}
                           key={`${streamUUID}/${columnName}/bookmark`}
-                          onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                          onClick={(validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName))
+                            ? null
+                            : () => updateStream(streamUUID, (stream: StreamType) => {
                             if (stream.bookmark_properties?.includes(columnName)) {
                               stream.bookmark_properties =
                                 remove(stream.bookmark_properties, col => columnName === col);
                             } else {
                               stream.bookmark_properties =
                                 [columnName].concat(stream.bookmark_properties || []);
+                            }
+
+                            return stream;
+                          })}
+                        />,
+                        <Checkbox
+                          checked={!!keyProperties?.includes(columnName)}
+                          key={`${streamUUID}/${columnName}/key_property`}
+                          onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                            if (stream.key_properties?.includes(columnName)) {
+                              stream.key_properties =
+                                remove(stream.key_properties, col => columnName === col);
+                            } else {
+                              stream.key_properties =
+                                [columnName].concat(stream.key_properties || []);
                             }
 
                             return stream;
@@ -866,7 +889,7 @@ function IntegrationPipeline({
                           updateStream(streamUUID, (stream: StreamType) => ({
                             ...stream,
                             replication_method: e.target.value,
-                          }))
+                          }));
                         }}
                         primary
                         value={replicationMethod}
@@ -947,12 +970,12 @@ function IntegrationPipeline({
 
                       <FlexContainer alignItems="center" flexWrap="wrap">
                         {!uniqueConstraints?.length && (
-                            <Text italic>
-                              Click the checkbox under the column <Text bold inline italic>
-                                Unique
-                              </Text> to
-                              use a specific column as a unique constraint.
-                            </Text>
+                          <Text italic>
+                            Click the checkbox under the column <Text bold inline italic>
+                              Unique
+                            </Text> to
+                            use a specific column as a unique constraint.
+                          </Text>
                           )}
                         {uniqueConstraints?.map((columnName: string) => (
                           <Spacing
@@ -967,6 +990,46 @@ function IntegrationPipeline({
                                   ...stream,
                                   unique_constraints: remove(
                                     stream.unique_constraints || [],
+                                    (col: string) => col === columnName,
+                                  ),
+                                }));
+                              }}
+                              primary
+                            />
+                          </Spacing>
+                        ))}
+                      </FlexContainer>
+                    </Spacing>
+
+                    <Spacing mb={3}>
+                      <Spacing mb={1}>
+                        <Text bold large>
+                          Key properties
+                        </Text>
+                      </Spacing>
+
+                      <FlexContainer alignItems="center" flexWrap="wrap">
+                        {!keyProperties?.length && (
+                          <Text italic>
+                            Click the checkbox under the column <Text bold inline italic>
+                              Key prop
+                            </Text> to
+                            use a specific column as a key property.
+                          </Text>
+                          )}
+                        {keyProperties?.map((columnName: string) => (
+                          <Spacing
+                            key={`key_properties/${columnName}`}
+                            mb={1}
+                            mr={1}
+                          >
+                            <Chip
+                              label={columnName}
+                              onClick={() => {
+                                updateStream(streamUUID, (stream: StreamType) => ({
+                                  ...stream,
+                                  key_properties: remove(
+                                    stream.key_properties || [],
                                     (col: string) => col === columnName,
                                   ),
                                 }));
@@ -1014,7 +1077,7 @@ function IntegrationPipeline({
                           updateStream(streamUUID, (stream: StreamType) => ({
                             ...stream,
                             unique_conflict_method: e.target.value,
-                          }))
+                          }));
                         }}
                         primary
                         value={uniqueConflictMethod}
@@ -1084,8 +1147,8 @@ function IntegrationPipeline({
             <Spacing mt={1}>
               <AddNewBlocks
                 addNewBlock={(newBlock: BlockRequestPayloadType) => {
-                  let content = newBlock.content;
-                  let configuration = newBlock.configuration;
+                  const content = newBlock.content;
+                  const configuration = newBlock.configuration;
 
                   const currentBlock = blocks[blocks.length - 2];
                   const upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
@@ -1251,4 +1314,4 @@ function IntegrationPipeline({
   );
 }
 
-export default IntegrationPipeline
+export default IntegrationPipeline;
