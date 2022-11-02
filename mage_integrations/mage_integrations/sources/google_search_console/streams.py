@@ -16,7 +16,7 @@ STREAMS = {
     },
 
     'performance_report_custom': {
-        'key_properties': ['site_url', 'search_type', 'date', 'dimensions_hash_key'],
+        'key_properties': ['site_url', 'search_type', 'date'],
         'replication_method': 'INCREMENTAL',
         'replication_keys': ['date'],
         'path': 'sites/{}/searchAnalytics/query',
