@@ -24,7 +24,7 @@ from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
 from mage_integrations.utils.schema_helpers import extract_selected_columns
 from singer.schema import Schema
-from typing import Callable, Dict, Generator, List
+from typing import Dict, Generator, List
 
 
 class Redshift(Source):
@@ -140,7 +140,6 @@ WHERE schemaname = '{schema}'
         stream,
         bookmarks: Dict = None,
         query: Dict = {},
-        write_records_func: Callable = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         database_name = self.config['database']
