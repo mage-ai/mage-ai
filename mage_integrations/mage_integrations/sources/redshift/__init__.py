@@ -216,7 +216,7 @@ FROM rows_with_limit
 WHERE rnum >= {1 + (BATCH_FETCH_LIMIT * loops)} AND rnum <= {(BATCH_FETCH_LIMIT * (loops + 1))}"""
 
             rows_temp = self.build_connection().load(with_limit_query_string)
-            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows]
+            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
             yield rows
 
             loops += 1
