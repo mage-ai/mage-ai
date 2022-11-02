@@ -808,7 +808,9 @@ function IntegrationPipeline({
                           checked={!!uniqueConstraints?.includes(columnName)}
                           disabled={validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName)}
                           key={`${streamUUID}/${columnName}/unique`}
-                          onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                          onClick={(validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName))
+                            ? null
+                            : () => updateStream(streamUUID, (stream: StreamType) => {
                             if (stream.unique_constraints?.includes(columnName)) {
                               stream.unique_constraints =
                                 remove(stream.unique_constraints, col => columnName === col);
@@ -824,7 +826,9 @@ function IntegrationPipeline({
                           checked={!!bookmarkProperties?.includes(columnName)}
                           disabled={validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName)}
                           key={`${streamUUID}/${columnName}/bookmark`}
-                          onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                          onClick={(validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName))
+                            ? null
+                            : () => updateStream(streamUUID, (stream: StreamType) => {
                             if (stream.bookmark_properties?.includes(columnName)) {
                               stream.bookmark_properties =
                                 remove(stream.bookmark_properties, col => columnName === col);
