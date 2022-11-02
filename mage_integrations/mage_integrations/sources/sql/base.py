@@ -168,7 +168,7 @@ FROM {self.table_prefix}{table_name}"""
                                 val,
                                 stream.schema.to_dict()['properties'],
                                 column_type_mapping,
-                            )
+                            ),
                         )
 
             if where_statements:
@@ -187,8 +187,7 @@ FROM rows_with_limit
 WHERE rnum >= {1 + (BATCH_FETCH_LIMIT * loops)} AND rnum <= {(BATCH_FETCH_LIMIT * (loops + 1))}"""
 
             rows_temp = self.build_connection().load(with_limit_query_string)
-            rows = [{col: rows_temp[idx] for idx, col in enumerate(columns)}
-                    for rows_temp in rows_temp]
+            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
             yield rows
 
             loops += 1
