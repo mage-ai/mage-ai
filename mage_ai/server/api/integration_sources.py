@@ -1,5 +1,6 @@
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_integrations.sources.constants import SOURCES
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.server.api.base import BaseHandler
@@ -42,10 +43,10 @@ class ApiIntegrationDestinationsHandler(BaseHandler):
         action = payload['action']
         if action == 'test_connection':
             pipeline_uuid = payload['pipeline_uuid']
-            pipeline = Pipeline.get(pipeline_uuid)
+            pipeline = IntegrationPipeline.get(pipeline_uuid)
             config = payload['config']
 
-            pipeline.test_destination_connection(config=config)
+            pipeline.test_connection(BlockType.DATA_EXPORTER, config=config)
             self.write(dict(success=True))
         
         self.finish()
@@ -61,10 +62,10 @@ class ApiIntegrationSourcesHandler(BaseHandler):
         action = payload['action']
         if action == 'test_connection':
             pipeline_uuid = payload['pipeline_uuid']
-            pipeline = Pipeline.get(pipeline_uuid)
+            pipeline = IntegrationPipeline.get(pipeline_uuid)
             config = payload['config']
 
-            pipeline.test_source_connection(config=config)
+            pipeline.test_connection(BlockType.DATA_LOADER, config=config)
             self.write(dict(success=True))
         
         self.finish()

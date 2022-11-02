@@ -68,7 +68,7 @@ class Amplitude(Source):
 
     def test_connection(self):
         today = datetime.utcnow()
-        self.connection.load(start_date=today, start_date=today)
+        self.connection.load(start_date=today, end_date=today)
 
 
 

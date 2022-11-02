@@ -109,34 +109,25 @@ class IntegrationPipeline(Pipeline):
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
 
-    def test_source_connection(self, config: Dict = None):
+    def test_connection(self, block_type: BlockType, config: Dict = None):
+        file_path = None
+        if BlockType.DATA_LOADER == block_type:
+            file_path = self.source_file_path
+        elif BlockType.DATA_EXPORTER == block_type:
+            file_path = self.destination_file_path
+
         try:
-            run_args = [
-                PYTHON,
-                self.source_file_path,
-                '--config_json',
-                simplejson.dumps(config),
-                '--test_connection',
-            ]
+            if file_path:
+                run_args = [
+                    PYTHON,
+                    file_path,
+                    '--config_json',
+                    simplejson.dumps(config),
+                    '--test_connection',
+                ]
 
-            proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
-            proc.check_returncode()
-        except subprocess.CalledProcessError as e:
-            message = e.stderr.decode("utf-8")
-            raise Exception(message)
-
-    def test_destination_connection(self, config: Dict = None):
-        try:
-            run_args = [
-                PYTHON,
-                self.destination_file_path,
-                '--config_json',
-                simplejson.dumps(config),
-                '--test_connection',
-            ]
-
-            proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
-            proc.check_returncode()
+                proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+                proc.check_returncode()
         except subprocess.CalledProcessError as e:
             message = e.stderr.decode("utf-8")
             raise Exception(message)
