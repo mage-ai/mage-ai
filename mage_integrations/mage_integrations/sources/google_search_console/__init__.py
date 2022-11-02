@@ -5,7 +5,7 @@ from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.google_search_console.streams import STREAMS
 from mage_integrations.utils.dictionary import merge_dict
 from mage_integrations.utils.schema_helpers import extract_selected_columns
-from typing import Dict, List
+from typing import Callable, Dict, Generator, List
 import singer
 
 LOGGER = singer.get_logger()
@@ -20,14 +20,14 @@ class GoogleSearchConsole(Source):
         stream,
         bookmarks: Dict = None,
         query: Dict = {},
+        write_records_func: Callable = None,
         **kwargs,
-    ) -> List[Dict]:
+    ) -> Generator[List[Dict], None, None]:
         stream_name = stream.tap_stream_id
 
         connection = GoogleSearchConsoleConnection(
             path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
         )
-        results = []
 
         endpoint_config = STREAMS[stream_name]
         body_params = endpoint_config.get('body', {})
@@ -66,17 +66,18 @@ class GoogleSearchConsole(Source):
                 body_params['rowLimit'] = self.ROW_LIMIT
 
                 while True:
-                    rows = connection.load(site, body_params)
-                    if rows is None:
+                    rows_raw = connection.load(site, body_params)
+                    rows = []
+                    if rows_raw is None:
                         break
-                    for r in rows:
+                    for r in rows_raw:
                         keys = r.pop('keys')
                         r['site_url'] = site
-                        results.append(merge_dict(r, zip(dimensions, keys)))
+                        rows.append(merge_dict(r, zip(dimensions, keys)))
                     start_row += self.ROW_LIMIT
                     body_params['startRow'] = start_row
 
-        return results
+                    yield rows
 
     def get_forced_replication_method(self, stream_id):
         return STREAMS[stream_id]['replication_method']

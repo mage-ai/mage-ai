@@ -14,7 +14,7 @@ from mage_integrations.utils.schema_helpers import extract_selected_columns
 from os.path import isfile
 from singer import utils
 from singer.schema import Schema
-from typing import Dict, List
+from typing import Dict, Generator, List
 import dateutil.parser
 import inspect
 import json
@@ -257,7 +257,7 @@ class Source:
             unique_constraints=stream.unique_constraints,
         )
 
-    def sync_stream(self, stream) -> List[Dict]:
+    def sync_stream(self, stream) -> int:
         """
         Steps:
             1. Get bookmarks.
@@ -269,22 +269,29 @@ class Source:
             stream (TYPE): The stream object.
 
         Returns:
-            List[Dict]: The list of rows.
+            int: Number of records.
         """
-        bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
-
         start_date = None
         if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and \
            self.config.get('start_date'):
             start_date = dateutil.parser.parse(self.config.get('start_date'))
 
-        max_bookmark = None
-        rows = self.load_data(
+        record_count = 0
+        for rows in self.load_data(
             bookmarks=self.__get_bookmarks_for_stream(stream),
             query=self.query,
             start_date=start_date,
             stream=stream,
-        )
+        ):
+            self.write_records(stream, rows)
+            record_count += len(rows)
+
+        return record_count
+
+    def write_records(self, stream, rows: List[Dict]):
+        bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
+        max_bookmark = None
+
         for row in rows:
             write_records(
                 stream.tap_stream_id,
@@ -312,8 +319,6 @@ class Source:
                     {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
                 })
 
-        return rows
-
     def sync(self, catalog: Catalog, properties: Dict = None) -> None:
         """
         Main method to sync the data.
@@ -331,10 +336,10 @@ class Source:
             self.logger.info('Syncing stream started.', tags=tags)
 
             self.process_stream(stream, properties)
-            records = self.sync_stream(stream)
+            record_count = self.sync_stream(stream)
 
             self.logger.info('Syncing stream completed.', tags=merge_dict(tags, dict(
-                records=len(records) if records is not None else None,
+                records=record_count,
             )))
 
     def build_catalog_entry(self, stream_id: str, schema, **kwargs) -> CatalogEntry:
@@ -384,7 +389,7 @@ class Source:
         query: Dict = {},
         start_date: datetime = None,
         **kwargs,
-    ) -> List[Dict]:
+    ) -> Generator[List[Dict], None, None]:
         """
         Load data from source.
 
@@ -392,9 +397,6 @@ class Source:
             bookmarks (Dict): Bookmarks for the stream id.
             query (Dict): query
             start_date (datetime): start_date
-
-        Returns:
-            List[Dict]: The list of rows.
         """
         raise Exception('Subclasses must implement the load_data method.')
 
