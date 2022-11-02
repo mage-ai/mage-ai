@@ -8,7 +8,7 @@ from mage_integrations.sources.query import (
     get_start_date,
 )
 from mage_integrations.utils.array import find_index
-from typing import Dict, List
+from typing import Dict, Generator, List
 import dateutil.parser
 import singer
 
@@ -21,7 +21,7 @@ class Amplitude(Source):
         bookmarks: Dict = None,
         query: Dict = {},
         **kwargs,
-    ) -> List[Dict]:
+    ) -> Generator[List[Dict], None, None]:
         connection = AmplitudeConnection(
             self.config['api_key'],
             self.config['secret_key'],
@@ -52,7 +52,7 @@ class Amplitude(Source):
             if index >= 0:
                 results = results[index + 1:]
 
-        return list(results)
+        yield list(results)
 
     def get_forced_replication_method(self, stream_id):
         return REPLICATION_METHOD_INCREMENTAL

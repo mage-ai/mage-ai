@@ -143,8 +143,8 @@ def load_data(
     query: Dict = {},
     start_date: datetime = None,
     **kwargs,
-) -> List[Dict]:
-    return [{}]
+) -> Generator[List[Dict], None, None]:
+    yield []
 ```
 
 Override this method to contain the logic for fetching data that is specific to your source.
@@ -155,7 +155,7 @@ For example, here is the code for the `Titanic` source’s `load_data` method:
 def load_data(
     self,
     **kwargs,
-) -> List[Dict]:
+) -> Generator[List[Dict], None, None]:
     url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/titanic_survival.csv'
     text = requests.get(url).text
 
@@ -167,7 +167,7 @@ def load_data(
         values = line.split(',')
         rows.append({col: values[idx] for idx, col in enumerate(columns)})
 
-    return rows
+    yield rows
 ```
 
 #### Available values in the `query` keyword argument

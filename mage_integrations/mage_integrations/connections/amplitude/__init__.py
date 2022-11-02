@@ -105,7 +105,6 @@ class Amplitude(Connection):
 
         return data
 
-
     def __fetch_files(self, start_date, end_date):
         start_date_string = start_date.strftime(DATE_FORMAT)
         end_date_string = end_date.strftime(DATE_FORMAT)
@@ -130,4 +129,3 @@ class Amplitude(Connection):
             )))
 
         return None
-

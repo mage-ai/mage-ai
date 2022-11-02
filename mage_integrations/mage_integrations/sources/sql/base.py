@@ -20,7 +20,7 @@ from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
 from mage_integrations.utils.schema_helpers import extract_selected_columns
 from singer.schema import Schema
-from typing import Dict, List
+from typing import Dict, Generator, List
 
 
 class Source(BaseSource):
@@ -113,14 +113,13 @@ class Source(BaseSource):
         bookmarks: Dict = None,
         query: Dict = {},
         **kwargs,
-    ) -> List[Dict]:
+    ) -> Generator[List[Dict], None, None]:
         table_name = stream.tap_stream_id
 
         key_properties = stream.key_properties
         unique_constraints = stream.unique_constraints
         bookmark_properties = list(bookmarks.keys() if bookmarks else [])
 
-        rows = []
         rows_temp = None
         loops = 0
 
@@ -188,13 +187,14 @@ FROM rows_with_limit
 WHERE rnum >= {1 + (BATCH_FETCH_LIMIT * loops)} AND rnum <= {(BATCH_FETCH_LIMIT * (loops + 1))}"""
 
             rows_temp = self.build_connection().load(with_limit_query_string)
+            rows = [{col: rows_temp[idx] for idx, col in enumerate(columns)}
+                    for rows_temp in rows_temp]
+            yield rows
+
             loops += 1
-            rows += rows_temp
 
             if len(rows_temp) < BATCH_FETCH_LIMIT:
                 break
-
-        return [{col: row[idx] for idx, col in enumerate(columns)} for row in rows]
 
     def build_discover_query(self, schema: str, streams: List[str] = None):
         query = f"""
