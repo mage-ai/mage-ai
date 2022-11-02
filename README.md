@@ -17,6 +17,16 @@
 
 <p align="center">
   <a
+    href="https://github.com/mage-ai/mage-ai"
+    target="_blank"
+  >
+    <span>View open-source project on GitHub</span>
+    <img alt="GitHub" height="20" src="https://user-images.githubusercontent.com/78053898/198755053-5c3971b1-9c49-4888-8a8e-1599f0fc6646.png" />
+  </a>
+</p>
+
+<p align="center">
+  <a
     href="https://www.youtube.com/watch?v=hrsErfPDits"
     target="_blank"
   >
@@ -66,6 +76,12 @@
   >
     <img alt="Slack" src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack" />
   </a>
+  <a
+    href="https://github.com/mage-ai/mage-ai"
+    target="_blank"
+  >
+    <img alt="Github Stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github">
+  </a>
 </div>
 <img
   referrerpolicy="no-referrer-when-downgrade"
@@ -102,7 +118,7 @@
 
 |   |   |
 | --- | --- |
-| <img src="https://github.com/mage-ai/assets/blob/main/mage-build.gif?raw=true" /> | <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. |
+| <b>Easy developer experience</b><br />Start developing locally with a single command or launch a dev environment in your cloud using Terraform.<br /><br/><b>Language of choice</b><br />Write code in Python, SQL, or R in the same data pipeline for ultimate flexibility.<br /><br /><b>Engineering best practices built-in</b><br />Each step in your pipeline is a standalone file containing modular code that’s reusable and testable with data validations. No more DAGs with spaghetti code. | <img src="https://github.com/mage-ai/assets/blob/main/mage-build.gif?raw=true" /> |
 
 <p align="center">
   ↓
@@ -134,7 +150,7 @@
 
 |   |   |
 | --- | --- |
-| <img src="https://github.com/mage-ai/assets/blob/main/mage-launch.gif?raw=true" /> | <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. |
+| <b>Fast deploy</b><br />Deploy Mage to AWS, GCP, or Azure with only 2 commands using maintained Terraform templates.<br /><br/><b>Scaling made simple</b><br />Transform very large datasets directly in your data warehouse or through a native integration with Spark.<br /><br /><b>Observability</b><br />Operationalize your pipelines with built-in monitoring, alerting, and observability through an intuitive UI. | <img src="https://github.com/mage-ai/assets/blob/main/mage-launch.gif?raw=true" /> |
 
 <br />
 
