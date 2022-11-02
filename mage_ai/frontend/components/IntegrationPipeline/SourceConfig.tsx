@@ -47,12 +47,17 @@ function SourceConfig({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: (res) => {
-            setConnected(true);
+        callback: (res) => {
+            setConnected(res['success']);
+            setError(res['error_message']);
           },
-          onErrorCallback: ({ error }) => {
-            setError(error);
-            setConnected(false);
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
           },
         },
       ),

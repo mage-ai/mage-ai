@@ -51,7 +51,7 @@ class ApiIntegrationDestinationsHandler(BaseHandler):
                 pipeline.test_connection(BlockType.DATA_EXPORTER, config=config)
                 self.write(dict(success=True))
             except Exception as e:
-                self.write(dict(success=False, error=str(e)))
+                self.write(dict(success=False, error_message=str(e)))
         
         self.finish()
 
@@ -73,7 +73,7 @@ class ApiIntegrationSourcesHandler(BaseHandler):
                 pipeline.test_connection(BlockType.DATA_LOADER, config=config)
                 self.write(dict(success=True))
             except Exception as e:
-                self.write(dict(success=False, error=str(e)))
+                self.write(dict(success=False, error_message=str(e)))
         
         self.finish()
 
