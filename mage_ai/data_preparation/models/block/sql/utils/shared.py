@@ -13,6 +13,9 @@ def should_cache_data_from_upstream(
     config_keys: List[str],
     config_profile_keys: List[str],
 ) -> bool:
+    if BlockType.DBT == upstream_block.type:
+        return False
+
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
         return True
 

@@ -873,7 +873,6 @@ function CodeBlockProps({
           hasOutput={hasOutput}
         >
           {BlockTypeEnum.DBT === block.type
-            && BlockLanguageEnum.YAML === block.language
             && !codeCollapsed
             && (
             <CodeHelperStyle>
@@ -882,26 +881,33 @@ function CodeBlockProps({
                   DBT project name:
                 </Text>
                 <span>&nbsp;</span>
-                <TextInput
-                  compact
-                  monospace
-                  onBlur={() => setTimeout(() => {
-                    setAnyInputFocused(false);
-                  }, 300)}
-                  onChange={(e) => {
-                    // @ts-ignore
-                    updateDataProviderConfig({
-                      [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
-                    });
-                    e.preventDefault();
-                  }}
-                  onFocus={() => {
-                    setAnyInputFocused(true);
-                  }}
-                  placeholder="e.g. my_project"
-                  small
-                  value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME]}
-                />
+                {BlockLanguageEnum.YAML === block.language && (
+                  <TextInput
+                    compact
+                    monospace
+                    onBlur={() => setTimeout(() => {
+                      setAnyInputFocused(false);
+                    }, 300)}
+                    onChange={(e) => {
+                      // @ts-ignore
+                      updateDataProviderConfig({
+                        [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
+                      });
+                      e.preventDefault();
+                    }}
+                    onFocus={() => {
+                      setAnyInputFocused(true);
+                    }}
+                    placeholder="e.g. my_project"
+                    small
+                    value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME]}
+                  />
+                )}
+                {BlockLanguageEnum.YAML !== block.language && (
+                  <Text monospace small>
+                    {block?.configuration?.file_path?.split('/')?.[0]}
+                  </Text>
+                )}
 
                 <Spacing mr={2} />
 
@@ -931,41 +937,44 @@ function CodeBlockProps({
                 />
               </FlexContainer>
 
-              <FlexContainer alignItems="center">
-                <Flex flex={1}>
-                  <Text monospace default small>
-                    dbt run <Text
-                      inline
-                      monospace
-                      small
-                    >
-                      [type your --select and --exclude syntax below]
+              {BlockLanguageEnum.YAML === block.language && (
+                <FlexContainer alignItems="center">
+                  <Flex flex={1}>
+                    <Text monospace default small>
+                      dbt run <Text
+                        inline
+                        monospace
+                        small
+                      >
+                        [type your --select and --exclude syntax below]
+                      </Text>
                     </Text>
-                  </Text>
+
+                    <Spacing mr={1} />
+
+                    <Text monospace muted small>
+                      (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                    </Text>
+                  </Flex>
 
                   <Spacing mr={1} />
 
-                  <Text monospace muted small>
-                    (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                  <Text muted small>
+                    <Link
+                      href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
+                      openNewWindow
+                      small
+                    >
+                      Examples
+                    </Link>
                   </Text>
-                </Flex>
 
-                <Spacing mr={1} />
-
-                <Text muted small>
-                  <Link
-                    href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
-                    openNewWindow
-                    small
-                  >
-                    Examples
-                  </Link>
-                </Text>
-
-                <Spacing mr={5} />
-              </FlexContainer>
+                  <Spacing mr={5} />
+                </FlexContainer>
+              )}
             </CodeHelperStyle>
           )}
+
           {BlockLanguageEnum.SQL === block.language
             && !codeCollapsed
             && BlockTypeEnum.DBT !== block.type

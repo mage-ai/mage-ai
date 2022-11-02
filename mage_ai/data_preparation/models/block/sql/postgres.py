@@ -30,6 +30,7 @@ def create_upstream_block_tables(
             ConfigKey.POSTGRES_HOST,
             ConfigKey.POSTGRES_PORT,
         ]):
+            print('WTFFFFFFFFFFFFFFF', block.type, upstream_block.type, should_cache_data_from_upstream(block, upstream_block, [], []))
             table_name = upstream_block.table_name
 
             df = get_variable(
