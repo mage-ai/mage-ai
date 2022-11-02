@@ -1,7 +1,6 @@
 from datetime import datetime
 from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.constants import KEY_RECORD, KEY_STREAM, KEY_VALUE
-from mage_integrations.destinations.utils import flatten_record
+from mage_integrations.destinations.constants import KEY_VALUE
 from mage_integrations.sources.base import Source
 from mage_integrations.transformers.utils import infer_dtypes, write_parquet_file
 from mage_integrations.utils.logger import Logger
@@ -20,11 +19,11 @@ LOGGER = singer.get_logger()
 class Transformer(Source, Destination):
     def __init__(
         self,
-        argument_parser = None,
+        argument_parser=None,
         batch_processing: bool = False,
         df_file_path: str = None,
         log_to_stdout: bool = False,
-        logger = LOGGER,
+        logger=LOGGER,
         state_file_path: str = None,
         to_df: bool = False,
     ):
@@ -121,6 +120,11 @@ class Transformer(Source, Destination):
             
             if os.path.exists(self.df_file_path):
                 os.remove(self.df_file_path)
+
+            # Create directory if not exists
+            df_dir_path = os.path.dirname(self.df_file_path)
+            os.makedirs(df_dir_path, exist_ok=True)
+
             write_parquet_file(self.df_file_path, df)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
@@ -148,6 +152,7 @@ class Transformer(Source, Destination):
             dtypes = {k: dict(type=[v]) for k, v in infer_dtypes(self.df).items()}
 
             self.sync(catalog, dtypes)
+
 
 if __name__ == '__main__':
     transformer = Transformer(argument_parser=argparse.ArgumentParser())
