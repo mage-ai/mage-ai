@@ -1,5 +1,5 @@
 import { parse, stringify } from 'yaml';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
@@ -11,7 +11,6 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
-import CodeEditor from '@components/CodeEditor';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -34,22 +33,19 @@ import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
+import SourceConfig from './SourceConfig';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
-import {
-  CodeEditorStyle,
-  SectionStyle,
-} from './index.style';
+import { SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
-import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
+import { onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
 
 type IntegrationPipelineProps = {
@@ -117,67 +113,37 @@ function IntegrationPipeline({
 
     return parse(dataLoaderBlock.content);
   }, [dataLoaderBlock]);
+  const dataLoaderEditor = useMemo(() => (
+    <SourceConfig
+      api="integration_sources"
+      block={dataLoaderBlock}
+      blockContent={dataLoaderBlockContent}
+      onChangeCodeBlock={onChangeCodeBlock}
+      pipeline={pipeline}
+    />
+  ), [
+    dataLoaderBlock,
+    dataLoaderBlockContent,
+  ]);
 
   const dataExporterBlock: BlockType =
     useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type), [blocks]);
   const dataExporterBlockContent = useMemo(() => {
     if (!dataExporterBlock) {
-      return {};
+      return {}
     }
 
     return parse(dataExporterBlock.content);
   }, [dataExporterBlock]);
-
-  const dataLoaderEditor = useMemo(() => {
-    if (!dataLoaderBlock) {
-      return;
-    }
-
-    return (
-      <CodeEditorStyle>
-        <CodeEditor
-          autoHeight
-          language={BlockLanguageEnum.YAML}
-          onChange={(val: string) => {
-            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-              ...dataLoaderBlockContent,
-              config: parse(val),
-            }));
-          }}
-          tabSize={2}
-          value={stringify(dataLoaderBlockContent?.config || undefined)}
-          width="100%"
-        />
-      </CodeEditorStyle>
-    );
-  }, [
-    dataLoaderBlock,
-    dataLoaderBlockContent,
-  ]);
-
-  const dataExporterEditor = useMemo(() => {
-    if (!dataExporterBlock) {
-      return;
-    }
-
-    return (
-      <CodeEditorStyle>
-        <CodeEditor
-          autoHeight
-          language={BlockLanguageEnum.YAML}
-          onChange={(val: string) => {
-            onChangeCodeBlock(dataExporterBlock.uuid, stringify({
-              ...dataExporterBlockContent,
-              config: parse(val),
-            }));
-          }}
-          tabSize={2}
-          value={stringify(dataExporterBlockContent?.config || undefined)}
-          width="100%"
-        />
-      </CodeEditorStyle>
-    );
-  }, [
+  const dataExporterEditor = useMemo(() => (
+    <SourceConfig
+      api="integration_destinations"
+      block={dataExporterBlock}
+      blockContent={dataExporterBlockContent}
+      onChangeCodeBlock={onChangeCodeBlock}
+      pipeline={pipeline}
+    />
+  ), [
     dataExporterBlock,
     dataExporterBlockContent,
   ]);

@@ -14,6 +14,9 @@ class Destination(BaseDestination):
     SCHEMA_CONFIG_KEY = 'schema'
 
     BATCH_SIZE = 1000
+    
+    def test_connection(self) -> None:
+        self.build_connection().build_connection()
 
     def export_data(
         self,

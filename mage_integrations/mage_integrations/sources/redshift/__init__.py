@@ -224,6 +224,8 @@ WHERE rnum >= {1 + (BATCH_FETCH_LIMIT * loops)} AND rnum <= {(BATCH_FETCH_LIMIT 
             if len(rows_temp) < BATCH_FETCH_LIMIT:
                 break
 
+    def test_connection(self):
+        self.build_connection().build_connection()
 
 if __name__ == '__main__':
     main(Redshift)

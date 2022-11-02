@@ -50,6 +50,7 @@ class Destination():
         settings: Dict = None,
         settings_file_path: str = None,
         state_file_path: str = None,
+        test_connection: bool = False,
     ):
         if argument_parser:
             argument_parser.add_argument('--config', type=str, default=None)
@@ -58,6 +59,7 @@ class Destination():
             argument_parser.add_argument('--log_to_stdout', type=bool, default=False)
             argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
+            argument_parser.add_argument('--test_connection', action='store_true')
             args = argument_parser.parse_args()
 
             if args.config:
@@ -72,9 +74,11 @@ class Destination():
                 settings_file_path = args.settings
             if args.state:
                 state_file_path = args.state
+            if args.test_connection:
+                test_connection = args.test_connection
 
-        self._config = config
-        self._settings = settings
+        self.config = config
+        self.settings = settings
         self.bookmark_properties = None
         self.config_file_path = config_file_path
         self.debug = debug
@@ -85,6 +89,7 @@ class Destination():
         self.schemas = None
         self.settings_file_path = settings_file_path
         self.state_file_path = state_file_path
+        self.should_test_connection = test_connection
         self.unique_conflict_methods = None
         self.unique_constraints = None
         self.validators = None
@@ -138,6 +143,9 @@ class Destination():
     @settings.setter
     def settings(self, settings):
         self._settings = settings
+
+    def test_connection(self) -> None:
+        raise Exception('Subclasses must implement the test_connection method.')
 
     def export_data(
         self,
@@ -211,7 +219,11 @@ class Destination():
 
     def process(self, input_buffer) -> None:
         try:
-            self._process(input_buffer)
+            if self.should_test_connection:
+                self.logger.info('Testing connection...')
+                self.test_connection()
+            else:
+                self._process(input_buffer)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
             self.logger.exception(message, tags=dict(

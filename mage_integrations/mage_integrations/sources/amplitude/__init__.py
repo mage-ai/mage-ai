@@ -16,17 +16,20 @@ LOGGER = singer.get_logger()
 
 
 class Amplitude(Source):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.connection = AmplitudeConnection(
+            self.config['api_key'],
+            self.config['secret_key'],
+        )
+
     def load_data(
         self,
         bookmarks: Dict = None,
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        connection = AmplitudeConnection(
-            self.config['api_key'],
-            self.config['secret_key'],
-        )
-
         today = datetime.utcnow()
         start_date = today - timedelta(days=1)
         end_date = today
@@ -39,7 +42,7 @@ class Amplitude(Source):
         if end_date_string:
             end_date = dateutil.parser.parse(end_date_string)
 
-        results = connection.load(
+        results = self.connection.load(
             start_date=start_date,
             end_date=end_date,
         )
@@ -62,6 +65,10 @@ class Amplitude(Source):
 
     def get_valid_replication_keys(self, stream_id):
         return VALID_REPLICATION_KEYS[stream_id]
+
+    def test_connection(self):
+        today = datetime.utcnow()
+        self.connection.load(start_date=today, end_date=today)
 
 
 if __name__ == '__main__':

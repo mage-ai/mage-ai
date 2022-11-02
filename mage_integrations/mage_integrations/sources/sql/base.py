@@ -211,3 +211,6 @@ WHERE table_schema = '{schema}'
             table_names = ', '.join([f"'{n}'" for n in streams])
             query = f'{query}\nAND TABLE_NAME IN ({table_names})'
         return query
+
+    def test_connection(self):
+        self.build_connection().build_connection()

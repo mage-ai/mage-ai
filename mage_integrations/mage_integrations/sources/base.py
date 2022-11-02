@@ -42,6 +42,7 @@ class Source:
         selected_streams: List[str] = None,
         settings: Dict = None,
         state: Dict = None,
+        test_connection: bool = False,
         verbose: int = 1,
     ):
         args = parse_args([])
@@ -62,6 +63,8 @@ class Source:
                 selected_streams = args.selected_streams
             if args.state:
                 state = args.state
+            if args.test_connection:
+                test_connection = args.test_connection
 
         self.catalog = catalog
         self.config = config
@@ -78,6 +81,7 @@ class Source:
         self.schemas_folder = schemas_folder
         self.selected_streams = selected_streams
         self.settings = settings
+        self.should_test_connection = test_connection
         self.state = state
 
         if type(query) is str:
@@ -172,7 +176,9 @@ class Source:
             Exception: Failed to fetch data from the source.
         """
         try:
-            if self.discover_mode:
+            if self.should_test_connection:
+                self.test_connection()
+            elif self.discover_mode:
                 if self.discover_streams_mode:
                     json.dump(self.discover_streams(), sys.stdout)
                 else:
@@ -185,7 +191,7 @@ class Source:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
                 self.sync(catalog)
         except Exception as err:
-            message = f'{self.__class__.__name__} process failed with error {err}.'
+            message = f'{self.__class__.__name__} process failed with error {str(err)}.'
             self.logger.exception(message, tags=dict(
                 error=str(err),
                 errors=traceback.format_stack(),
@@ -396,6 +402,12 @@ class Source:
             ),
             kwargs,
         ))
+
+    def test_connection(self) -> None:
+        """
+        Test connection with source
+        """
+        raise Exception('Subclasses must implement the test_connection method.')
 
     def load_data(
         self,

@@ -81,6 +81,9 @@ class Salesforce(Source):
             if self.client.login_timer:
                 self.client.login_timer.cancel()
 
+    def test_connection(self):
+        self.client
+
 
 @utils.handle_top_exception(LOGGER)
 def main():

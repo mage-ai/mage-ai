@@ -1150,6 +1150,8 @@ class Stripe(Source):
                 if STREAM_TO_TYPE_FILTER.get(stream_name):
                     sync_event_updates(stream_name, Context.is_sub_stream(stream_name))
 
+    def test_connection(self) -> None:
+        configure_stripe_client()
 
 @utils.handle_top_exception(LOGGER)
 def main():
@@ -1179,7 +1181,9 @@ def main():
     # set the config and state in prior to check the authentication in the discovery mode itself.
     configure_stripe_client()
 
-    if source.discover_mode:
+    if source.should_test_connection:
+        pass
+    elif source.discover_mode:
         source.process()
     else:
         Context.window_size = get_date_window_size('date_window_size', DEFAULT_DATE_WINDOW_SIZE)
