@@ -210,6 +210,9 @@ function PipelineRunsTable({
       uuid: 'Status',
     },
     {
+      uuid: 'Pipeline UUID',
+    },
+    {
       uuid: 'Date',
     },
     {
@@ -284,28 +287,31 @@ function PipelineRunsTable({
                     </FlexContainer>
                   </Spacing>,
                   <Text default key="row_item_2" monospace muted>
-                    -
+                    {pipelineUUID}
                   </Text>,
                   <Text default key="row_item_3" monospace muted>
+                    -
+                  </Text>,
+                  <Text default key="row_item_4" monospace muted>
                     -
                   </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
-                    key="row_item_4"
+                    key="row_item_5"
                     passHref
                   >
                     <Link bold muted>
                       {`See block runs (${blockRunsCount})`}
                     </Link>
                   </NextLink>,
-                  <Text key="row_item_5" monospace muted>
+                  <Text key="row_item_6" monospace muted>
                     {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
                   </Text>,
                   <Button
                     default
                     iconOnly
-                    key="row_item_6"
+                    key="row_item_7"
                     noBackground
                     onClick={() => Router.push(
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
@@ -318,18 +324,21 @@ function PipelineRunsTable({
               } else {
                 arr = [
                   <RetryButton
-                    key="row_item_7"
+                    key="row_item_8"
                     onCancel={updatePipelineRun}
                     onSuccess={fetchPipelineRuns}
                     pipelineRun={pipelineRun}
                   />,
-                  <Text default key="row_item_8" monospace>
+                  <Text default key="row_item_2" monospace>
+                    {pipelineUUID}
+                  </Text>,
+                  <Text default key="row_item_9" monospace>
                     {(executionDate && getTimeInUTC(executionDate).toISOString().split('.')[0]) || '-'}
                   </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
                     href={'/pipelines/[pipeline]/triggers/[...slug]'}
-                    key="row_item_9"
+                    key="row_item_10"
                     passHref
                   >
                     <Link bold sameColorAsText>
@@ -339,20 +348,20 @@ function PipelineRunsTable({
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/runs/${id}`}
                     href={'/pipelines/[pipeline]/runs/[run]'}
-                    key="row_item_10"
+                    key="row_item_11"
                     passHref
                   >
                     <Link bold sameColorAsText>
                       {`See block runs (${blockRunsCount})`}
                     </Link>
                   </NextLink>,
-                  <Text default key="row_item_11" monospace>
+                  <Text default key="row_item_12" monospace>
                     {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
                   </Text>,
                   <Button
                     default
                     iconOnly
-                    key="row_item_12"
+                    key="row_item_13"
                     noBackground
                     onClick={() => Router.push(
                       `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
