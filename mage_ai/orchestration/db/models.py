@@ -218,9 +218,9 @@ class PipelineRun(BaseModel):
         CANCELLED = 'cancelled'
 
     pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
-    pipeline_uuid = Column(String(255))
-    execution_date = Column(DateTime(timezone=True))
-    status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
+    pipeline_uuid = Column(String(255), index=True)
+    execution_date = Column(DateTime(timezone=True), index=True)
+    status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL, index=True)
     completed_at = Column(DateTime(timezone=True))
     variables = Column(JSON)
     passed_sla = Column(Boolean, default=False)

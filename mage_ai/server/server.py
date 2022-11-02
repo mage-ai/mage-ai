@@ -1,4 +1,3 @@
-from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -21,6 +20,7 @@ from mage_ai.server.active_kernel import (
 from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
+    ApiBlockHandler,
     ApiPipelineBlockAnalysisHandler,
     ApiPipelineBlockExecuteHandler,
     ApiPipelineBlockHandler,
@@ -100,21 +100,6 @@ class PipelineRunsPageHandler(tornado.web.RequestHandler):
 class ManagePageHandler(tornado.web.RequestHandler):
     def get(self, *args):
         self.render('manage.html')
-
-
-class ApiBlockHandler(BaseHandler):
-    def delete(self, block_type_and_uuid_encoded):
-        block_type_and_uuid = urllib.parse.unquote(block_type_and_uuid_encoded)
-        parts = block_type_and_uuid.split('/')
-        if len(parts) != 2:
-            raise Exception('The url path should be in block_type/block_uuid format.')
-        block_type = parts[0]
-        block_uuid = parts[1]
-        block = Block(block_uuid, block_uuid, block_type)
-        if not block.exists():
-            raise Exception(f'Block {block_uuid} does not exist')
-        block.delete()
-        self.write(dict(block=block.to_dict()))
 
 
 class ApiFileListHandler(BaseHandler):
