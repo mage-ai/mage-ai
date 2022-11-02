@@ -1153,8 +1153,6 @@ class Stripe(Source):
     def test_connection(self) -> None:
         configure_stripe_client()
 
-
-
 @utils.handle_top_exception(LOGGER)
 def main():
     # Retry 429 RateLimitError 7 times.

@@ -1,4 +1,3 @@
-import simplejson
 from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
@@ -8,9 +7,9 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from typing import Any, Dict, List
 import importlib
-import io
 import json
 import os
+import simplejson
 import subprocess
 import yaml
 

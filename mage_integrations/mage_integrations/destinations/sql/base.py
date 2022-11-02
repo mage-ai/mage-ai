@@ -108,7 +108,7 @@ class Destination(BaseDestination):
             tags.update(records_updated=records_updated)
 
         self.logger.info('Export data completed.', tags=tags)
-    
+
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')
 

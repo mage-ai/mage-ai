@@ -125,4 +125,4 @@ function SourceConfig({
   );
 }
 
-export default SourceConfig
+export default SourceConfig;

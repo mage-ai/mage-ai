@@ -159,7 +159,7 @@ class Destination():
 
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         raise Exception('Subclasses must implement the export_batch_data method.')
-    
+
     def process_record(
         self,
         stream: str,

@@ -1,5 +1,5 @@
 import { parse, stringify } from 'yaml';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
@@ -11,7 +11,6 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
-import CodeEditor from '@components/CodeEditor';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -34,24 +33,20 @@ import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
+import SourceConfig from './SourceConfig';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
-import {
-  CodeEditorStyle,
-  SectionStyle,
-} from './index.style';
+import { SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
-import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
+import { onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
-import SourceConfig from './SourceConfig';
 
 type IntegrationPipelineProps = {
   addNewBlockAtIndex: (
