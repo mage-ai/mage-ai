@@ -6,8 +6,6 @@ from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.hash import merge_dict
 from typing import List, Dict
 import importlib
-import sys
-import traceback
 
 
 def get_collection(key: str, available_options: List[Dict]):
@@ -76,6 +74,7 @@ class ApiIntegrationSourcesHandler(BaseHandler):
                 self.write(dict(success=False, error_message=str(e)))
         
         self.finish()
+
 
 class ApiIntegrationSourceStreamHandler(BaseHandler):
     def put(self, pipeline_uuid):
