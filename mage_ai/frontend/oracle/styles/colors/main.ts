@@ -52,3 +52,6 @@ export const PURPLE_GRADIENT = 'linear-gradient(180deg, rgba(127, 79, 235, 0.3) 
 export const RED_GRADIENT = 'linear-gradient(180deg, rgba(255, 5, 5, 0.3) 0%, rgba(255, 5, 5, 0) 100%);';
 export const PURPLE_PINK_GRADIENT = 'linear-gradient(95.24deg, #4877FF 0.93%, #7D55EC 54%, #B98D95 100.82%)';
 export const BLUE_GRADIENT = 'linear-gradient(98.99deg, #2ECDF7 8.49%, #0066FF 102.8%)';
+
+export const DBT_ORANGE = '#fc6949';
+export const DBT_ORANGE_TRANSPARENT = 'rgba(252, 105, 73, 0.5)';

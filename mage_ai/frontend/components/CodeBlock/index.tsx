@@ -71,6 +71,8 @@ import {
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
   CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+  CONFIG_KEY_DBT_PROFILE_TARGET,
+  CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_EXPORT_WRITE_POLICY,
 } from '@interfaces/ChartBlockType';
 import {
@@ -92,6 +94,7 @@ import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
+import { getModelName } from '@utils/models/dbt';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -116,6 +119,7 @@ type CodeBlockProps = {
   messages: KernelOutputType[];
   noDivider?: boolean;
   onChange?: (value: string) => void;
+  onClickAddSingleDBTModel: (blockIdx: number) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   runBlock: (payload: {
@@ -160,6 +164,7 @@ function CodeBlockProps({
   messages: blockMessages = [],
   noDivider,
   onChange,
+  onClickAddSingleDBTModel,
   openSidekickView,
   pipeline,
   runBlock,
@@ -190,6 +195,8 @@ function CodeBlockProps({
     [CONFIG_KEY_DATA_PROVIDER_DATABASE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_DATABASE],
     [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
     [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
+    [CONFIG_KEY_DBT_PROFILE_TARGET]: block?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET],
+    [CONFIG_KEY_DBT_PROJECT_NAME]: block?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
     [CONFIG_KEY_EXPORT_WRITE_POLICY]: block?.configuration?.[CONFIG_KEY_EXPORT_WRITE_POLICY]
       || ExportWritePolicyEnum.APPEND,
   });
@@ -201,6 +208,8 @@ function CodeBlockProps({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
+
+  const isDBT = BlockTypeEnum.DBT === block?.type;
 
   const blockPrevious = usePrevious(block);
   useEffect(() => {
@@ -522,7 +531,10 @@ function CodeBlockProps({
         onChange?.(val);
       }}
       onDidChangeCursorPosition={onDidChangeCursorPosition}
-      placeholder="Start typing here..."
+      placeholder={BlockTypeEnum.DBT === block.type && BlockLanguageEnum.YAML === block.language
+        ? 'e.g. --select path/to/my_model1.sql --exclude path/to/my_model2.sql'
+        : 'Start typing here...'
+      }
       selected={selected}
       setSelected={setSelected}
       setTextareaFocused={setTextareaFocused}
@@ -610,7 +622,10 @@ function CodeBlockProps({
         ...payload,
       };
 
-      if (data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE]) {
+      if ((data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE])
+        || data[CONFIG_KEY_DBT_PROFILE_TARGET]
+        || data[CONFIG_KEY_DBT_PROJECT_NAME]
+      ) {
         savePipelineContent({
           block: {
             configuration: data,
@@ -670,7 +685,11 @@ function CodeBlockProps({
                 color={color}
                 monospace
               >
-                {BLOCK_TYPE_NAME_MAPPING[block.type]?.toUpperCase()}
+                {(
+                  isDBT
+                    ? BlockTypeEnum.DBT
+                    : BLOCK_TYPE_NAME_MAPPING[block.type]
+                )?.toUpperCase()}
               </Text>
             </FlyoutMenuWrapper>
 
@@ -699,33 +718,41 @@ function CodeBlockProps({
           <Spacing mr={1} />
 
           <FlexContainer alignItems="center">
-            <LabelWithValueClicker
-              bold={false}
-              inputValue={newBlockUuid}
-              monospace
-              muted
-              notRequired
-              onBlur={() => setTimeout(() => {
-                setAnyInputFocused(false);
-                setIsEditingBlock(false);
-              }, 300)}
-              onChange={(e) => {
-                setNewBlockUuid(e.target.value);
-                e.preventDefault();
-              }}
-              onClick={() => {
-                setAnyInputFocused(true);
-                setIsEditingBlock(true);
-              }}
-              onFocus={() => {
-                setAnyInputFocused(true);
-                setIsEditingBlock(true);
-              }}
-              stacked
-              value={!isEditingBlock && block.uuid}
-            />
+            {isDBT && (
+              <Text muted monospace>
+                {getModelName(block)}
+              </Text>
+            )}
 
-            {isEditingBlock && (
+            {!isDBT && (
+              <LabelWithValueClicker
+                bold={false}
+                inputValue={newBlockUuid}
+                monospace
+                muted
+                notRequired
+                onBlur={() => setTimeout(() => {
+                  setAnyInputFocused(false);
+                  setIsEditingBlock(false);
+                }, 300)}
+                onChange={(e) => {
+                  setNewBlockUuid(e.target.value);
+                  e.preventDefault();
+                }}
+                onClick={() => {
+                  setAnyInputFocused(true);
+                  setIsEditingBlock(true);
+                }}
+                onFocus={() => {
+                  setAnyInputFocused(true);
+                  setIsEditingBlock(true);
+                }}
+                stacked
+                value={!isEditingBlock && block.uuid}
+              />
+            )}
+
+            {isEditingBlock && !isDBT && (
               <>
                 <Spacing ml={1} />
                 <Link
@@ -781,7 +808,7 @@ function CodeBlockProps({
                     monospace={numberOfParentBlocks >= 1}
                     underline={numberOfParentBlocks === 0}
                     >
-                    {numberOfParentBlocks === 0 && 'Click to set parent blocks'}
+                    {numberOfParentBlocks === 0 && 'Edit parent blocks'}
                     {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
                   </Text>
 
@@ -845,7 +872,113 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          {BlockLanguageEnum.SQL === block.language && !codeCollapsed && (
+          {BlockTypeEnum.DBT === block.type
+            && !codeCollapsed
+            && (
+            <CodeHelperStyle>
+              <FlexContainer alignItems="center">
+                <Text monospace muted small>
+                  DBT project name:
+                </Text>
+                <span>&nbsp;</span>
+                {BlockLanguageEnum.YAML === block.language && (
+                  <TextInput
+                    compact
+                    monospace
+                    onBlur={() => setTimeout(() => {
+                      setAnyInputFocused(false);
+                    }, 300)}
+                    onChange={(e) => {
+                      // @ts-ignore
+                      updateDataProviderConfig({
+                        [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
+                      });
+                      e.preventDefault();
+                    }}
+                    onFocus={() => {
+                      setAnyInputFocused(true);
+                    }}
+                    placeholder="e.g. my_project"
+                    small
+                    value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME]}
+                  />
+                )}
+                {BlockLanguageEnum.YAML !== block.language && (
+                  <Text monospace small>
+                    {block?.configuration?.file_path?.split('/')?.[0]}
+                  </Text>
+                )}
+
+                <Spacing mr={2} />
+
+                <Text monospace muted small>
+                  DBT profile target:
+                </Text>
+                <span>&nbsp;</span>
+                <TextInput
+                  compact
+                  monospace
+                  onBlur={() => setTimeout(() => {
+                    setAnyInputFocused(false);
+                  }, 300)}
+                  onChange={(e) => {
+                    // @ts-ignore
+                    updateDataProviderConfig({
+                      [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                    });
+                    e.preventDefault();
+                  }}
+                  onFocus={() => {
+                    setAnyInputFocused(true);
+                  }}
+                  placeholder="e.g. prod"
+                  small
+                  value={dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET]}
+                />
+              </FlexContainer>
+
+              {BlockLanguageEnum.YAML === block.language && (
+                <FlexContainer alignItems="center">
+                  <Flex flex={1}>
+                    <Text monospace default small>
+                      dbt run <Text
+                        inline
+                        monospace
+                        small
+                      >
+                        [type your --select and --exclude syntax below]
+                      </Text>
+                    </Text>
+
+                    <Spacing mr={1} />
+
+                    <Text monospace muted small>
+                      (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                    </Text>
+                  </Flex>
+
+                  <Spacing mr={1} />
+
+                  <Text muted small>
+                    <Link
+                      href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
+                      openNewWindow
+                      small
+                    >
+                      Examples
+                    </Link>
+                  </Text>
+
+                  <Spacing mr={5} />
+                </FlexContainer>
+              )}
+            </CodeHelperStyle>
+          )}
+
+          {BlockLanguageEnum.SQL === block.language
+            && !codeCollapsed
+            && BlockTypeEnum.DBT !== block.type
+            && (
             <CodeHelperStyle>
               <FlexContainer justifyContent="space-between">
                 <FlexContainer>
@@ -1138,6 +1271,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               }}
               blockIdx={blockIdx}
               compact
+              onClickAddSingleDBTModel={onClickAddSingleDBTModel}
               pipeline={pipeline}
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
               setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}

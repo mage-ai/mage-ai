@@ -9,8 +9,8 @@ import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
 
 type FileBrowserProps = {
-  blocks: BlockType[];
-  files: FileType[];
+  blocks?: BlockType[];
+  files?: FileType[];
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
 

@@ -23,6 +23,7 @@ export enum BlockTypeEnum {
   CHART = 'chart',
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
+  DBT = 'dbt',
   SCRATCHPAD = 'scratchpad',
   SENSOR = 'sensor',
   TRANSFORMER = 'transformer',

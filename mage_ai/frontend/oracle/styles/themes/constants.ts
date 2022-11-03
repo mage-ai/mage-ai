@@ -6,6 +6,8 @@ export type ThemeType = {
     contentDefaultTransparent: string;
     cyan: string;
     cyanTransparent: string;
+    dbt: string;
+    dbtLight: string;
     info: string;
     infoTransparent: string;
     negative: string;

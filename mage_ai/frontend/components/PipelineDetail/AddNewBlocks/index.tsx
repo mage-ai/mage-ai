@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
+import DBTLogo from '@oracle/icons/custom/DBTLogo';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -36,10 +37,12 @@ type AddNewBlocksProps = {
   compact?: boolean;
   hideDataExporter?: boolean;
   hideDataLoader?: boolean;
+  hideDbt?: boolean;
   hideRecommendations?: boolean;
   hideScratchpad?: boolean;
   hideSensor?: boolean;
   hideTransformer?: boolean;
+  onClickAddSingleDBTModel?: (blockIdx: number) => void;
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setRecsWindowOpenBlockIdx?: (idx: number) => void;
@@ -48,6 +51,7 @@ type AddNewBlocksProps = {
 const DATA_LOADER_BUTTON_INDEX = 0;
 const TRANSFORMER_BUTTON_INDEX = 1;
 const DATA_EXPORTER_BUTTON_INDEX = 2;
+const DBT_BUTTON_INDEX = 3;
 
 function AddNewBlocks({
   addNewBlock,
@@ -55,10 +59,12 @@ function AddNewBlocks({
   compact,
   hideDataExporter,
   hideDataLoader,
+  hideDbt,
   hideRecommendations,
   hideScratchpad,
   hideSensor,
   hideTransformer,
+  onClickAddSingleDBTModel,
   pipeline,
   setAddNewBlockMenuOpenIdx,
   setRecsWindowOpenBlockIdx,
@@ -67,6 +73,7 @@ function AddNewBlocks({
   const dataLoaderButtonRef = useRef(null);
   const transformerButtonRef = useRef(null);
   const dataExporterButtonRef = useRef(null);
+  const dbtButtonRef = useRef(null);
   const sharedProps = {
     compact,
     inline: true,
@@ -257,6 +264,54 @@ function AddNewBlocks({
                   uuid="AddNewBlocks/Data_exporter"
                 >
                   Data exporter
+                </KeyboardShortcutButton>
+              </FlyoutMenuWrapper>
+
+              <Spacing ml={1} />
+            </>
+          )}
+
+          {!hideDbt && (
+            <>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={[
+                  {
+                    label: () => 'Single model',
+                    onClick: () => onClickAddSingleDBTModel?.(blockIdx),
+                    uuid: 'dbt/single_model',
+                  },
+                  {
+                    label: () => 'All models (w/ optional exclusion)',
+                    onClick: () => addNewBlock({
+                      language: BlockLanguageEnum.YAML,
+                      type: BlockTypeEnum.DBT,
+                    }),
+                    uuid: 'dbt/all_models',
+                  },
+                ]}
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex === DBT_BUTTON_INDEX}
+                parentRef={dbtButtonRef}
+                uuid="dbt_button"
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <DBTLogo size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setButtonMenuOpenIndex(val =>
+                      val === DBT_BUTTON_INDEX
+                        ? null
+                        : DBT_BUTTON_INDEX,
+                    );
+                    handleBlockZIndex();
+                  }}
+                  uuid="AddNewBlocks/DBT"
+                >
+                  DBT model
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
 

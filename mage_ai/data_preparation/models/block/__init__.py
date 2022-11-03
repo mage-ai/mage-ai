@@ -1,12 +1,22 @@
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
+from jinja2 import Template
 from logging import Logger
 from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_cleaner.shared.utils import (
     is_dataframe,
     is_geo_dataframe,
+)
+from mage_ai.data_preparation.models.block.dbt.utils import (
+    add_blocks_upstream_from_refs,
+    build_command_line_arguments,
+    create_upstream_tables,
+    parse_attributes,
+    query_from_compiled_sql,
+    run_dbt_tests,
+    update_model_settings,
 )
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
@@ -29,17 +39,19 @@ from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.constants import ENV_DEV
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 from queue import Queue
-from typing import Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List, Set
 import asyncio
 import functools
 import json
 import os
 import pandas as pd
+import re
 import simplejson
 import subprocess
 import sys
@@ -71,6 +83,15 @@ async def run_blocks(
                 f'Executing {block.type} block...',
                 build_block_output_stdout=build_block_output_stdout,
             ):
+                is_dbt = BlockType.DBT == block.type
+
+                if run_tests and is_dbt:
+                    run_dbt_tests(
+                        block=block,
+                        build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
+                    )
+
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
@@ -80,9 +101,11 @@ async def run_blocks(
                     update_status=update_status,
                     parallel=parallel,
                 )
-                if run_tests:
+
+                if run_tests and not is_dbt:
                     block.run_tests(
                         build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
                         update_tests=False,
                     )
 
@@ -175,6 +198,15 @@ def run_blocks_sync(
             f'Executing {block.type} block...',
             build_block_output_stdout=build_block_output_stdout,
         ):
+            is_dbt = BlockType.DBT == block.type
+
+            if run_tests and is_dbt:
+                run_dbt_tests(
+                    block=block,
+                    build_block_output_stdout=build_block_output_stdout,
+                    global_vars=global_vars,
+                )
+
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
@@ -182,9 +214,11 @@ def run_blocks_sync(
                 run_all_blocks=True,
                 test_execution=not run_sensors,
             )
-            if run_tests:
+
+            if run_tests and not is_dbt:
                 block.run_tests(
                     build_block_output_stdout=build_block_output_stdout,
+                    global_vars=global_vars,
                     update_tests=False,
                 )
         tasks[block.uuid] = True
@@ -271,6 +305,16 @@ class Block:
     @property
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
+
+        if self.should_treat_as_dbt():
+            file_path = self.configuration.get('file_path')
+
+            return os.path.join(
+                repo_path or os.getcwd(),
+                'dbt',
+                file_path,
+            )
+
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
 
         return os.path.join(
@@ -307,8 +351,18 @@ class Block:
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
-            upstream_block_uuids = kwargs.get('upstream_block_uuids')
-            pipeline.add_block(block, upstream_block_uuids, priority=priority, widget=widget)
+            upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
+
+            if block.should_treat_as_dbt():
+                arr = add_blocks_upstream_from_refs(block)
+                upstream_block_uuids += [b.uuid for b in arr]
+
+            pipeline.add_block(
+                block,
+                upstream_block_uuids,
+                priority=priority if len(upstream_block_uuids) == 0 else None,
+                widget=widget,
+            )
 
     @classmethod
     def create(
@@ -334,26 +388,28 @@ class Block:
             config = {}
 
         uuid = clean_name(name)
-        block_dir_path = os.path.join(repo_path, f'{block_type}s')
-        if not os.path.exists(block_dir_path):
-            os.mkdir(block_dir_path)
-            with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
-                pass
-
         language = language or BlockLanguage.PYTHON
-        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
-        file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
-        if os.path.exists(file_path):
-            if pipeline is not None and pipeline.has_block(uuid):
-                raise Exception(f'Block {uuid} already exists. Please use a different name.')
-        else:
-            load_template(
-                block_type,
-                config,
-                file_path,
-                language=language,
-                pipeline_type=pipeline.type if pipeline is not None else None,
-            )
+
+        if BlockType.DBT != block_type or BlockLanguage.YAML == language:
+            block_dir_path = os.path.join(repo_path, f'{block_type}s')
+            if not os.path.exists(block_dir_path):
+                os.mkdir(block_dir_path)
+                with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
+                    pass
+
+            file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
+            file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
+            if os.path.exists(file_path):
+                if pipeline is not None and pipeline.has_block(uuid):
+                    raise Exception(f'Block {uuid} already exists. Please use a different name.')
+            else:
+                load_template(
+                    block_type,
+                    config,
+                    file_path,
+                    language=language,
+                    pipeline_type=pipeline.type if pipeline is not None else None,
+                )
 
         block = self.block_class_from_type(block_type, pipeline=pipeline)(
             name,
@@ -466,7 +522,8 @@ class Block:
                 not_executed_upstream_blocks = list(
                     filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
                 )
-                if len(not_executed_upstream_blocks) > 0:
+                all_upstream_is_dbt = all([BlockType.DBT == b.type for b in not_executed_upstream_blocks])
+                if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
                     raise Exception(
                         f"Block {self.uuid}'s upstream blocks have not been executed yet. "
                         f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
@@ -695,7 +752,50 @@ class Block:
 
             outputs = []
 
-            if self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
+            if BlockType.DBT == self.type:
+                variables = merge_dict(global_vars, runtime_arguments or {})
+
+                dbt_command, args, command_line_dict = build_command_line_arguments(
+                    self,
+                    variables,
+                    test_execution=test_execution,
+                )
+                project_full_path = command_line_dict['project_full_path']
+                dbt_profile_target = command_line_dict['profile_target']
+
+                is_sql = BlockLanguage.SQL == self.language
+                if is_sql:
+                    create_upstream_tables(
+                        self,
+                        execution_partition=execution_partition,
+                        profile_target=dbt_profile_target,
+                    )
+
+                stdout = None if test_execution else subprocess.PIPE
+
+                proc1 = subprocess.run([
+                    'dbt',
+                    dbt_command,
+                ] + args, preexec_fn=os.setsid, stdout=stdout)
+
+                if is_sql and test_execution:
+                    outputs = [query_from_compiled_sql(self, dbt_profile_target)]
+                elif not test_execution:
+                    for line in proc1.stdout.decode().split('\n'):
+                        print(line)
+
+                if not test_execution:
+                    with open(f'{project_full_path}/target/run_results.json', 'r') as f:
+                        run_results = json.load(f)
+
+                        print('DBT run results:')
+                        print(json.dumps(run_results))
+
+                        for result in run_results['results']:
+                            if 'error' == result['status']:
+                                raise Exception(result['message'])
+
+            elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
                     proc = subprocess.run([
                         PYTHON_COMMAND,
@@ -1047,6 +1147,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.__update_pipeline_block()
         return self
 
+    def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
+        upstream_blocks_previous = self.upstream_blocks
+        self.upstream_blocks = upstream_blocks
+        if self.should_treat_as_dbt():
+            update_model_settings(self, upstream_blocks, upstream_blocks_previous)
+
     def update_content(self, content, widget=False):
         if content != self.content:
             self.status = BlockStatus.UPDATED
@@ -1092,9 +1198,17 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         self,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
+        global_vars: Dict = {},
         logger: Logger = None,
         update_tests: bool = True,
     ) -> None:
+        if logger is not None:
+            stdout = StreamToLogger(logger)
+        elif build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        else:
+            stdout = sys.stdout
+
         test_functions = []
         if update_tests:
             results = {
@@ -1117,13 +1231,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             )
             for variable in self.output_variables.keys()
         ]
-
-        if logger is not None:
-            stdout = StreamToLogger(logger)
-        elif build_block_output_stdout:
-            stdout = build_block_output_stdout(self.uuid)
-        else:
-            stdout = sys.stdout
 
         with redirect_stdout(stdout):
             tests_passed = 0
@@ -1259,6 +1366,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             variable_type=VariableType.DATAFRAME,
         )
 
+    def should_treat_as_dbt(self) -> bool:
+        return BlockType.DBT == self.type and BlockLanguage.SQL == self.language
+
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
         """
@@ -1365,6 +1475,12 @@ class DataExporterBlock(Block):
         return dict()
 
 
+class DbtBlock(Block):
+    @property
+    def output_variables(self):
+        return dict()
+
+
 class TransformerBlock(Block):
     @property
     def output_variables(self):
@@ -1414,6 +1530,7 @@ class DestinationBlock(Block):
 BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_EXPORTER: DataExporterBlock,
     BlockType.DATA_LOADER: DataLoaderBlock,
+    BlockType.DBT: DbtBlock,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: TransformerBlock,
     BlockType.SENSOR: SensorBlock,

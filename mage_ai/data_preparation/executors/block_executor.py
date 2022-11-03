@@ -1,3 +1,5 @@
+from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.shared.hash import merge_dict
@@ -81,6 +83,15 @@ class BlockExecutor:
         runtime_arguments: Dict = None,
         **kwargs,
     ) -> Dict:
+        is_dbt = BlockType.DBT == self.block.type
+
+        if is_dbt:
+            run_dbt_tests(
+                block=self.block,
+                global_vars=global_vars,
+                logger=self.logger,
+            )
+
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,
             execution_partition=self.execution_partition,
@@ -92,10 +103,12 @@ class BlockExecutor:
             verify_output=verify_output,
             runtime_arguments=runtime_arguments,
         )
-        self.block.run_tests(
-            logger=self.logger,
-            update_tests=False,
-        )
+
+        if not is_dbt:
+            self.block.run_tests(
+                logger=self.logger,
+                update_tests=False,
+            )
 
         return result
 

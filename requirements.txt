@@ -47,3 +47,6 @@ azure-storage-blob
 kafka-python
 opensearch-py
 requests_aws4auth
+
+# DBT
+dbt-core

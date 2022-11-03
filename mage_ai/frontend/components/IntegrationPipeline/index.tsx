@@ -1097,7 +1097,7 @@ function IntegrationPipeline({
           </FlexContainer>
         </FlexContainer>
       </Spacing>
-      
+
       {transformerVisible && dataLoaderBlock && dataExporterBlock && (
         <Spacing mb={1}>
           <SectionStyle>
@@ -1143,6 +1143,7 @@ function IntegrationPipeline({
                 compact
                 hideDataExporter
                 hideDataLoader
+                hideDbt
                 hideRecommendations
                 hideScratchpad
                 hideSensor

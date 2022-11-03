@@ -32,6 +32,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
   getBlockUUIDFromFile,
+  getFullPath,
   getFullPathWithoutRootFolder,
   getNonPythonBlockFromFile,
 } from './utils';
@@ -41,15 +42,18 @@ import { sortByKey } from '@utils/array';
 const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
+  isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
   onlyShowChildren?: boolean;
-  onSelectBlockFile: (
+  onSelectBlockFile?: (
     blockUUID: string,
     blockType: BlockTypeEnum,
     filePath: string,
   ) => void;
   openFile: (path: string) => void;
-  openPipeline: (uuid: string) => void;
-  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  openPipeline?: (uuid: string) => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  uncollapsed?: boolean;
+  useRootFolder?: boolean;
 };
 
 type FolderProps = {
@@ -61,6 +65,7 @@ type FolderProps = {
 
 function Folder({
   file,
+  isFileDisabled,
   level,
   onlyShowChildren,
   onSelectBlockFile,
@@ -70,6 +75,8 @@ function Folder({
   pipelineBlockUuids,
   setContextItem,
   theme,
+  uncollapsed,
+  useRootFolder,
 }: FolderProps) {
   const {
     children: childrenProp,
@@ -80,10 +87,10 @@ function Folder({
   if (!name) {
     file.name = DEFAULT_NAME;
   }
-  const disabled = disabledProp
-    || name === '__init__.py'
-    || !!name?.match(/^\./)
-    || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp);
+  const filePathToUse: string = useRootFolder
+    ? getFullPath(file)
+    : getFullPathWithoutRootFolder(file);
+
   const isPipelineFolder = parentFile?.name === FOLDER_NAME_PIPELINES;
   const children = useMemo(() =>
     (childrenProp
@@ -94,9 +101,22 @@ function Folder({
     ),
     [childrenProp],
   );
+
+  const disabled = isFileDisabled
+    ? isFileDisabled(filePathToUse, children)
+    : (
+      disabledProp
+        || name === '__init__.py'
+        || !!name?.match(/^\./)
+        || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
+    );
+
   const uuid = `${level}/${name}`;
   const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
-  const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
+  const [collapsed, setCollapsed] = useState<boolean>(typeof uncollapsed === 'undefined'
+    ? get(uuid, false)
+    : !uncollapsed,
+  );
 
   let IconEl = FileFill;
   if (level === 1 && name === FOLDER_NAME_PIPELINES) {
@@ -118,6 +138,7 @@ function Folder({
         ...f,
         parent: file,
       }}
+      isFileDisabled={isFileDisabled}
       key={`${uuid}/${f?.name || DEFAULT_NAME}`}
       level={onlyShowChildren ? level : level + 1}
       onSelectBlockFile={onSelectBlockFile}
@@ -127,11 +148,16 @@ function Folder({
       pipelineBlockUuids={pipelineBlockUuids}
       setContextItem={setContextItem}
       theme={theme}
+      uncollapsed={uncollapsed}
+      useRootFolder={useRootFolder}
     />
   )), [
     children,
+    isFileDisabled,
     openFile,
     openPipeline,
+    uncollapsed,
+    useRootFolder,
   ]);
 
   return (
@@ -147,10 +173,10 @@ function Folder({
             }
 
             if (parentFile?.name === FOLDER_NAME_CHARTS) {
-              openSidekickView(ViewKeyEnum.CHARTS);
+              openSidekickView?.(ViewKeyEnum.CHARTS);
               const block = getBlockFromFile(file);
               if (block) {
-                onSelectBlockFile(
+                onSelectBlockFile?.(
                   block.uuid,
                   block.type,
                   getFullPathWithoutRootFolder(file),
@@ -167,17 +193,17 @@ function Folder({
                 return !collapsedPrev;
               });
             } else if (nonPythonBlockFromFile) {
-              onSelectBlockFile(
+              onSelectBlockFile?.(
                 nonPythonBlockFromFile.uuid,
                 nonPythonBlockFromFile.type,
                 getFullPathWithoutRootFolder(file),
               );
             } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
-              openFile(getFullPathWithoutRootFolder(file));
+              openFile(filePathToUse);
             } else {
               const block = getBlockFromFile(file);
               if (block) {
-                onSelectBlockFile(
+                onSelectBlockFile?.(
                   block.uuid,
                   block.type,
                   getFullPathWithoutRootFolder(file),

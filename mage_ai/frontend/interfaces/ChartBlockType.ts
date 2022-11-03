@@ -16,6 +16,8 @@ export const CONFIG_KEY_DATA_PROVIDER = 'data_provider';
 export const CONFIG_KEY_DATA_PROVIDER_DATABASE = 'data_provider_database'
 export const CONFIG_KEY_DATA_PROVIDER_PROFILE = 'data_provider_profile';
 export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
+export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
+export const CONFIG_KEY_DBT_PROFILE_TARGET = 'dbt_profile_target';
 export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
 
 export const VARIABLE_NAMES = [
@@ -85,6 +87,8 @@ export interface ConfigurationType {
   [CONFIG_KEY_DATA_PROVIDER_DATABASE]?: string;
   [CONFIG_KEY_DATA_PROVIDER_PROFILE]?: string;
   [CONFIG_KEY_DATA_PROVIDER_SCHEMA]?: string;
+  [CONFIG_KEY_DBT_PROFILE_TARGET]?: string;
+  [CONFIG_KEY_DBT_PROJECT_NAME]?: string;
   [VARIABLE_NAME_BUCKETS]?: number;
   [VARIABLE_NAME_CHART_STYLE]?: ChartStyleEnum;
   [VARIABLE_NAME_GROUP_BY]?: string[];
@@ -97,6 +101,7 @@ export interface ConfigurationType {
   [VARIABLE_NAME_Y]?: string;
   [VARIABLE_NAME_Y_SORT_ORDER]?: SortOrderEnum;
   chart_type?: ChartTypeEnum;
+  file_path?: string;
 }
 
 export function buildMetricName(metric: MetricType) {

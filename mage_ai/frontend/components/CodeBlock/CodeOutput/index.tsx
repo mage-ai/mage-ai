@@ -223,13 +223,17 @@ function CodeOutput({
           );
           isTable = true;
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+          const textArr = data?.split('\\n');
+
           displayElement = (
             <OutputRowStyle {...outputRowSharedProps}>
-              <Text monospace preWrap>
-                <Ansi>
-                  {data}
-                </Ansi>
-              </Text>
+              {textArr.map((t) => (
+                <Text key={t} monospace preWrap>
+                  <Ansi>
+                    {t}
+                  </Ansi>
+                </Text>
+              ))}
             </OutputRowStyle>
           );
         } else if (dataType === DataTypeEnum.TEXT_HTML) {

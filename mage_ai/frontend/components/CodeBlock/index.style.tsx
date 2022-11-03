@@ -38,6 +38,9 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.SENSOR === blockType) {
     accent = (theme.accent || dark.accent).pink;
     accentLight = (theme.accent || dark.accent).pinkLight;
+  } else if (BlockTypeEnum.DBT === blockType) {
+    accent = (theme.accent || dark.accent).dbt;
+    accentLight = (theme.accent || dark.accent).dbtLight;
   }
 
   return {

@@ -11,12 +11,13 @@ from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from os import path
 from time import sleep
-from typing import Dict
+from typing import Any, Dict
 
 PREVIEWABLE_BLOCK_TYPES = [
-    BlockType.DATA_LOADER,
-    BlockType.TRANSFORMER,
     BlockType.DATA_EXPORTER,
+    BlockType.DATA_LOADER,
+    BlockType.DBT,
+    BlockType.TRANSFORMER,
 ]
 
 
@@ -25,15 +26,20 @@ def execute_sql_code(
     query: str,
     execution_partition: str = None,
     global_vars: Dict = None,
+    config_file_loader: Any = None,
+    configuration: Dict = None,
 ):
-    config_path = path.join(get_repo_path(), 'io_config.yaml')
-    config_profile = block.configuration.get('data_provider_profile')
-    config_file_loader = ConfigFileLoader(config_path, config_profile)
+    configuration = configuration if configuration else block.configuration
 
-    data_provider = block.configuration.get('data_provider')
-    database = block.configuration.get('data_provider_database')
-    schema = block.configuration.get('data_provider_schema')
-    export_write_policy = block.configuration.get('export_write_policy', ExportWritePolicy.APPEND)
+    if not config_file_loader:
+        config_path = path.join(get_repo_path(), 'io_config.yaml')
+        config_profile = configuration.get('data_provider_profile')
+        config_file_loader = ConfigFileLoader(config_path, config_profile)
+
+    data_provider = configuration.get('data_provider')
+    database = configuration.get('data_provider_database')
+    schema = configuration.get('data_provider_schema')
+    export_write_policy = configuration.get('export_write_policy', ExportWritePolicy.APPEND)
 
     if 'execution_date' in global_vars:
         global_vars['ds'] = global_vars['execution_date'].strftime('%Y-%m-%d')
@@ -50,6 +56,7 @@ def execute_sql_code(
         bigquery.create_upstream_block_tables(
             loader,
             block,
+            configuration=configuration,
             execution_partition=execution_partition,
         )
 
@@ -87,11 +94,13 @@ def execute_sql_code(
             postgres.create_upstream_block_tables(
                 loader,
                 block,
+                configuration=configuration,
                 execution_partition=execution_partition,
             )
 
             query_string = postgres.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
+
             loader.export(
                 None,
                 schema,
@@ -117,6 +126,7 @@ def execute_sql_code(
             redshift.create_upstream_block_tables(
                 loader,
                 block,
+                configuration=configuration,
                 execution_partition=execution_partition,
             )
 
@@ -149,6 +159,7 @@ def execute_sql_code(
             snowflake.create_upstream_block_tables(
                 loader,
                 block,
+                configuration=configuration,
                 execution_partition=execution_partition,
             )
 

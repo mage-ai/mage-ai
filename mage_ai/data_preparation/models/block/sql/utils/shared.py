@@ -1,5 +1,5 @@
 from jinja2 import Template
-from mage_ai.data_preparation.models.constants import BlockLanguage
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from os import path
@@ -13,8 +13,18 @@ def should_cache_data_from_upstream(
     config_keys: List[str],
     config_profile_keys: List[str],
 ) -> bool:
+    if BlockType.DBT == upstream_block.type:
+        return False
+
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
         return True
+
+    if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
+        # TODO (tommy dang): check to see if the upstream block has the same data source
+        return True
+
+    if BlockType.DBT == block.type and BlockType.DBT == upstream_block.type:
+        return False
 
     config_path = path.join(get_repo_path(), 'io_config.yaml')
 
@@ -26,7 +36,6 @@ def should_cache_data_from_upstream(
 
     return not all([config1.get(k) == config2.get(k) for k in config_keys]) \
         or not all([loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys])
-
 
 
 def interpolate_input(block, query, replace_func=None):

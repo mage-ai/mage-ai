@@ -38,6 +38,7 @@ class BlockType(str, Enum):
     CHART = 'chart'
     DATA_EXPORTER = 'data_exporter'
     DATA_LOADER = 'data_loader'
+    DBT = 'dbt'
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'
     TRANSFORMER = 'transformer'
@@ -68,6 +69,7 @@ CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.CHART,
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
+    BlockType.DBT,
     BlockType.SENSOR,
     BlockType.TRANSFORMER,
 ]
