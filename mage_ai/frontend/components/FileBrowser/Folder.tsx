@@ -42,16 +42,16 @@ import { sortByKey } from '@utils/array';
 const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
-  isFileDisabled: (filePath: string, children: FileType[]) => boolean;
+  isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
   onlyShowChildren?: boolean;
-  onSelectBlockFile: (
+  onSelectBlockFile?: (
     blockUUID: string,
     blockType: BlockTypeEnum,
     filePath: string,
   ) => void;
   openFile: (path: string) => void;
-  openPipeline: (uuid: string) => void;
-  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  openPipeline?: (uuid: string) => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   uncollapsed?: boolean;
   useRootFolder?: boolean;
 };
@@ -173,10 +173,10 @@ function Folder({
             }
 
             if (parentFile?.name === FOLDER_NAME_CHARTS) {
-              openSidekickView(ViewKeyEnum.CHARTS);
+              openSidekickView?.(ViewKeyEnum.CHARTS);
               const block = getBlockFromFile(file);
               if (block) {
-                onSelectBlockFile(
+                onSelectBlockFile?.(
                   block.uuid,
                   block.type,
                   getFullPathWithoutRootFolder(file),
@@ -193,7 +193,7 @@ function Folder({
                 return !collapsedPrev;
               });
             } else if (nonPythonBlockFromFile) {
-              onSelectBlockFile(
+              onSelectBlockFile?.(
                 nonPythonBlockFromFile.uuid,
                 nonPythonBlockFromFile.type,
                 getFullPathWithoutRootFolder(file),
@@ -203,7 +203,7 @@ function Folder({
             } else {
               const block = getBlockFromFile(file);
               if (block) {
-                onSelectBlockFile(
+                onSelectBlockFile?.(
                   block.uuid,
                   block.type,
                   getFullPathWithoutRootFolder(file),

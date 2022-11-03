@@ -42,7 +42,7 @@ type AddNewBlocksProps = {
   hideScratchpad?: boolean;
   hideSensor?: boolean;
   hideTransformer?: boolean;
-  onClickAddSingleDBTModel: (blockIdx: number) => void;
+  onClickAddSingleDBTModel?: (blockIdx: number) => void;
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setRecsWindowOpenBlockIdx?: (idx: number) => void;
@@ -278,7 +278,7 @@ function AddNewBlocks({
                 items={[
                   {
                     label: () => 'Single model',
-                    onClick: () => onClickAddSingleDBTModel(blockIdx),
+                    onClick: () => onClickAddSingleDBTModel?.(blockIdx),
                     uuid: 'dbt/single_model',
                   },
                   {

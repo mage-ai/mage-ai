@@ -383,7 +383,6 @@ function PipelineDetail({
           runningBlocks={runningBlocks}
           savePipelineContent={savePipelineContent}
           selected={selected}
-          setAddDBTModelVisible={setAddDBTModelVisible}
           setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
           setAnyInputFocused={setAnyInputFocused}
           setEditingBlock={setEditingBlock}
@@ -423,7 +422,6 @@ function PipelineDetail({
     runningBlocksByUUID,
     savePipelineContent,
     selectedBlock,
-    setAddDBTModelVisible,
     setAddNewBlockMenuOpenIdx,
     setAnyInputFocused,
     setEditingBlock,
