@@ -57,6 +57,7 @@ Read more about Sources:
 ### Available sources
 
 - [Amplitude](../../mage_integrations/mage_integrations/sources/amplitude/README.md)
+- [Google Search Console](../../mage_integrations/mage_integrations/sources/google_search_console/README.md)
 - [MySQL](../../mage_integrations/mage_integrations/sources/mysql/README.md)
 - [Redshift (Amazon Web Services)](../../mage_integrations/mage_integrations/sources/redshift/README.md)
 - [Salesforce](../../mage_integrations/mage_integrations/sources/salesforce/README.md)
@@ -101,13 +102,13 @@ Read more about destinations:
 
 ### Available destinations
 
+- [Google Cloud Platform (GCP) BigQuery](../../mage_integrations/mage_integrations/destinations/bigquery/README.md)
 - [MySQL](../../mage_integrations/mage_integrations/destinations/mysql/README.md)
 - [PostgreSQL](../../mage_integrations/mage_integrations/destinations/postgresql/README.md)
 - [Snowflake](../../mage_integrations/mage_integrations/destinations/snowflake/README.md)
 - *Amazon Web Services (AWS) Redshift (coming soon)*
 - *Amazon Web Services (AWS) S3 (coming soon)*
 - *Azure Blob Storage (coming soon)*
-- *Google Cloud Platform (GCP) BigQuery (coming soon)*
 - *HubSpot (coming soon)*
 - *Salesforce (coming soon)*
 
