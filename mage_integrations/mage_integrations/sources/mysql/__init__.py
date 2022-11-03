@@ -25,7 +25,6 @@ SELECT
     , COLUMN_KEY
     , COLUMN_NAME
     , COLUMN_TYPE
-    , EXTRA
     , IS_NULLABLE
 FROM information_schema.columns
 WHERE table_schema = '{database}'

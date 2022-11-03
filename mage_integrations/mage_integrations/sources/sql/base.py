@@ -45,7 +45,7 @@ class Source(BaseSource):
             for column_data in columns_data:
                 column_key = column_data[2]
                 column_name = column_data[3]
-                column_type = column_data[4]
+                column_type = column_data[4].lower()
                 is_nullable = column_data[5]
 
                 column_format = None
