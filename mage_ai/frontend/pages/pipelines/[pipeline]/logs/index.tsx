@@ -1,3 +1,4 @@
+import Ansi from 'ansi-to-react';
 import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
 import {
@@ -354,7 +355,9 @@ function BlockRuns({
                 monospace
                 textOverflow
               >
-                {message || content}
+                <Ansi>
+                  {message || content}
+                </Ansi>
               </Text>,
               <Flex
                 flex={1}

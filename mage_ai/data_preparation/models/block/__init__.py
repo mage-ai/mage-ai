@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     create_upstream_tables,
     parse_attributes,
     query_from_compiled_sql,
+    run_dbt_tests,
     update_model_settings,
 )
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
@@ -82,6 +83,15 @@ async def run_blocks(
                 f'Executing {block.type} block...',
                 build_block_output_stdout=build_block_output_stdout,
             ):
+                is_dbt = BlockType.DBT == block.type
+
+                if run_tests and is_dbt:
+                    run_dbt_tests(
+                        block=block,
+                        build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
+                    )
+
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
@@ -91,7 +101,8 @@ async def run_blocks(
                     update_status=update_status,
                     parallel=parallel,
                 )
-                if run_tests:
+
+                if run_tests and not is_dbt:
                     block.run_tests(
                         build_block_output_stdout=build_block_output_stdout,
                         global_vars=global_vars,
@@ -187,6 +198,15 @@ def run_blocks_sync(
             f'Executing {block.type} block...',
             build_block_output_stdout=build_block_output_stdout,
         ):
+            is_dbt = BlockType.DBT == block.type
+
+            if run_tests and is_dbt:
+                run_dbt_tests(
+                    block=block,
+                    build_block_output_stdout=build_block_output_stdout,
+                    global_vars=global_vars,
+                )
+
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
@@ -194,7 +214,8 @@ def run_blocks_sync(
                 run_all_blocks=True,
                 test_execution=not run_sensors,
             )
-            if run_tests:
+
+            if run_tests and not is_dbt:
                 block.run_tests(
                     build_block_output_stdout=build_block_output_stdout,
                     global_vars=global_vars,
@@ -1187,30 +1208,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             stdout = build_block_output_stdout(self.uuid)
         else:
             stdout = sys.stdout
-
-        if BlockType.DBT == self.type:
-            dbt_command, args, _ = build_command_line_arguments(self, global_vars, run_tests=True)
-
-            proc1 = subprocess.run([
-                'dbt',
-                dbt_command,
-            ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE)
-
-            number_of_errors = 0
-
-            with redirect_stdout(stdout):
-                lines = proc1.stdout.decode().split('\n')
-                for idx, line in enumerate(lines):
-                    print(line)
-
-                    match = re.match('ERROR=([0-9]+)', line)
-                    if match:
-                        number_of_errors += int(match.groups()[0])
-
-            if number_of_errors >= 1:
-                raise Exception('DBT test failed.')
-
-            return
 
         test_functions = []
         if update_tests:

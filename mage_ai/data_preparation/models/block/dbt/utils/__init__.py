@@ -1,4 +1,6 @@
+from contextlib import redirect_stdout
 from jinja2 import Template
+from logging import Logger
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
@@ -9,6 +11,7 @@ from mage_ai.data_preparation.models.block.sql import (
 from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
@@ -17,10 +20,11 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import files_in_path
 from pandas import DataFrame
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 import os
 import re
 import simplejson
+import subprocess
 import yaml
 
 
@@ -377,3 +381,37 @@ def build_command_line_arguments(
         profile_target=dbt_profile_target,
         project_full_path=project_full_path,
     )
+
+def run_dbt_tests(
+    block,
+    build_block_output_stdout: Callable[..., object] = None,
+    global_vars: Dict = {},
+    logger: Logger = None,
+) -> None:
+    if logger is not None:
+        stdout = StreamToLogger(logger)
+    elif build_block_output_stdout:
+        stdout = build_block_output_stdout(block.uuid)
+    else:
+        stdout = sys.stdout
+
+    dbt_command, args, _ = build_command_line_arguments(block, global_vars, run_tests=True)
+
+    proc1 = subprocess.run([
+        'dbt',
+        dbt_command,
+    ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE)
+
+    number_of_errors = 0
+
+    with redirect_stdout(stdout):
+        lines = proc1.stdout.decode().split('\n')
+        for idx, line in enumerate(lines):
+            print(line)
+
+            match = re.search('ERROR=([0-9]+)', line)
+            if match:
+                number_of_errors += int(match.groups()[0])
+
+    if number_of_errors >= 1:
+        raise Exception('DBT test failed.')
