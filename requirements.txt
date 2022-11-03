@@ -50,4 +50,3 @@ requests_aws4auth
 
 # DBT
 dbt-core
-dbt-postgres
