@@ -57,15 +57,16 @@ Read more about Sources:
 ### Available sources
 
 - [Amplitude](../../mage_integrations/mage_integrations/sources/amplitude/README.md)
+- [BigQuery](../../mage_integrations/mage_integrations/sources/bigquery/README.md)
 - [Google Search Console](../../mage_integrations/mage_integrations/sources/google_search_console/README.md)
 - [MySQL](../../mage_integrations/mage_integrations/sources/mysql/README.md)
+- [PostgreSQL](../../mage_integrations/mage_integrations/sources/postgresql/README.md)
 - [Redshift (Amazon Web Services)](../../mage_integrations/mage_integrations/sources/redshift/README.md)
 - [Salesforce](../../mage_integrations/mage_integrations/sources/salesforce/README.md)
 - [Stripe](../../mage_integrations/mage_integrations/sources/stripe/README.md)
 - *Airtable (coming soon)*
 - *Chargebee (coming soon)*
 - *Google Analytics (coming soon)*
-- *Google Search Console (coming soon)*
 - *Google Sheets (coming soon)*
 - *HubSpot (coming soon)*
 - *MongoDB (coming soon)*
