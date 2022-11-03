@@ -254,7 +254,7 @@ class Source:
             )
 
         write_schema(
-            bookmark_properties=self.__get_bookmark_properties_for_stream(stream),
+            bookmark_properties=self._get_bookmark_properties_for_stream(stream),
             key_properties=stream.key_properties,
             replication_method=stream.replication_method,
             schema=schema_dict,
@@ -282,7 +282,7 @@ class Source:
            self.config.get('start_date'):
             start_date = dateutil.parser.parse(self.config.get('start_date'))
 
-        bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
+        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
         max_bookmark = []
 
         record_count = 0
@@ -315,7 +315,7 @@ class Source:
         Returns:
             List: Bookmark values.
         """
-        bookmark_properties = self.__get_bookmark_properties_for_stream(stream)
+        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
         max_bookmark = []
 
         for row in rows:
@@ -487,11 +487,7 @@ class Source:
 
         return schemas
 
-    def __get_bookmarks_for_stream(self, stream) -> Dict:
-        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
-            return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
-
-    def __get_bookmark_properties_for_stream(self, stream) -> List[str]:
+    def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
         bookmark_properties = []
 
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
@@ -499,8 +495,11 @@ class Source:
                 bookmark_properties = [stream.replication_key]
             else:
                 bookmark_properties = stream.to_dict().get('bookmark_properties', [])
-
         return bookmark_properties
+
+    def __get_bookmarks_for_stream(self, stream) -> Dict:
+        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
+            return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
 
 
 @utils.handle_top_exception(LOGGER)
