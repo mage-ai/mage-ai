@@ -118,7 +118,7 @@ class Source(BaseSource):
 
         key_properties = stream.key_properties
         unique_constraints = stream.unique_constraints
-        bookmark_properties = list(bookmarks.keys() if bookmarks else [])
+        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
 
         rows_temp = None
         loops = 0
