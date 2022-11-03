@@ -1,19 +1,16 @@
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
-from jinja2 import Template
 from logging import Logger
 from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_cleaner.shared.utils import (
-    is_dataframe,
     is_geo_dataframe,
 )
 from mage_ai.data_preparation.models.block.dbt.utils import (
     add_blocks_upstream_from_refs,
     build_command_line_arguments,
     create_upstream_tables,
-    parse_attributes,
     query_from_compiled_sql,
     run_dbt_tests,
     update_model_settings,
@@ -51,7 +48,6 @@ import functools
 import json
 import os
 import pandas as pd
-import re
 import simplejson
 import subprocess
 import sys
@@ -271,17 +267,34 @@ class Block:
             and (self.pipeline is None or self.pipeline.type != PipelineType.STREAMING)
         )
 
-    @property
-    def input_variables(self):
-        return {b.uuid: b.output_variables.keys() for b in self.upstream_blocks}
+    def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
+        """Get input variables from upstream blocks' output variables.
+        Args:
+            execution_partition (str, optional): The execution paratition string.
 
-    @property
-    def output_variables(self):
+        Returns:
+            Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
         """
-        Return output variables in dictionary.
+        return {b.uuid: b.output_variables(execution_partition=execution_partition).keys()
+                for b in self.upstream_blocks}
+
+    def output_variables(self, execution_partition: str = None) -> Dict[str, Any]:
+        """Return output variables in dictionary.
         The key is the variable name, and the value is variable data type.
+
+        Args:
+            execution_partition (str, optional): The execution paratition string.
+
+        Returns:
+            Dict[str, Any]: Mapping from variable name to variable data type.
         """
-        return dict()
+        all_variables = self.pipeline.variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            self.uuid,
+            partition=execution_partition,
+        )
+        output_variables = {v: dict for v in all_variables if v == 'df' or v.startswith('output')}
+        return output_variables
 
     @property
     def outputs(self):
@@ -547,11 +560,9 @@ class Block:
                         ignore_nan=True,
                     )
                 )
-            elif verify_output:
-                self.__verify_outputs(block_output)
-                variable_keys = list(self.output_variables.keys())
-                extra_output_count = len(block_output) - len(variable_keys)
-                variable_keys += [f'output_{idx}' for idx in range(extra_output_count)]
+            else:
+                output_count = len(block_output)
+                variable_keys = [f'output_{idx}' for idx in range(output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
             if store_variables:
@@ -701,7 +712,9 @@ class Block:
         if input_args is None:
             input_vars = []
             if self.pipeline is not None:
-                for upstream_block_uuid, variables in self.input_variables.items():
+                for upstream_block_uuid, variables in self.input_variables(
+                    execution_partition=execution_partition,
+                ).items():
                     upstream_block_uuids.append(upstream_block_uuid)
                     input_vars += [
                         self.pipeline.variable_manager.get_variable(
@@ -731,13 +744,13 @@ class Block:
         results = {}
         outputs_from_input_vars = {}
 
-        if input_args is None:
-            for idx, input_var in enumerate(input_vars):
-                upstream_block_uuid = upstream_block_uuids[idx]
-                outputs_from_input_vars[upstream_block_uuid] = input_var
-                outputs_from_input_vars[f'df_{idx + 1}'] = input_var
-        else:
-            outputs_from_input_vars = dict()
+        # if input_args is None:
+        #     for idx, input_var in enumerate(input_vars):
+        #         upstream_block_uuid = upstream_block_uuids[idx]
+        #         outputs_from_input_vars[upstream_block_uuid] = input_var
+        #         outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+        # else:
+        #     outputs_from_input_vars = dict()
 
         with redirect_stdout(stdout):
             results = {
@@ -984,10 +997,11 @@ class Block:
     def get_analyses(self):
         if self.status == BlockStatus.NOT_EXECUTED:
             return []
-        if len(self.output_variables) == 0:
+        output_variables = self.output_variables()
+        if len(output_variables) == 0:
             return []
         analyses = []
-        for v, vtype in self.output_variables.items():
+        for v, vtype in output_variables.items():
             if vtype is not pd.DataFrame:
                 continue
             data = self.pipeline.variable_manager.get_variable(
@@ -1023,8 +1037,9 @@ class Block:
         )
 
         if not include_print_outputs:
-            all_variables = [v for v in all_variables if v in self.output_variables.keys()
-                             or v.startswith('output')]
+            all_variables = [v for v in all_variables if v in self.output_variables(
+                                execution_partition=execution_partition,
+                            ).keys()]
 
         for v in all_variables:
             data = variable_manager.get_variable(
@@ -1235,7 +1250,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 self.uuid,
                 variable,
             )
-            for variable in self.output_variables.keys()
+            for variable in self.output_variables().keys()
         ]
 
         with redirect_stdout(stdout):
@@ -1260,8 +1275,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
-            vtype = self.output_variables.get(uuid)
-            if vtype is pd.DataFrame:
+            if type(data) is pd.DataFrame:
                 if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS:
                     continue
                 if data.shape[0] > DATAFRAME_ANALYSIS_MAX_ROWS:
@@ -1324,7 +1338,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                                  and not v.startswith('output')]
         elif override_outputs:
             removed_variables = [v for v in all_variables
-                                 if v not in variable_mapping.keys() and v.startswith('output')]
+                                 if v not in variable_mapping.keys() and
+                                 (v.startswith('output') or v == 'df')]
         for uuid, data in variable_mapping.items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
@@ -1346,7 +1361,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
     def input_variable_objects(self, execution_partition: str = None):
         objs = []
         for b in self.upstream_blocks:
-            for v in b.output_variables:
+            for v in b.output_variables(execution_partition=execution_partition):
                 objs.append(
                     self.pipeline.variable_manager.get_variable_object(
                         self.pipeline.uuid,
@@ -1362,7 +1377,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         """
         Output dataframe variable object
         """
-        if self.pipeline is None or len(self.output_variables) == 0:
+        if self.pipeline is None or len(self.output_variables(
+            execution_partition=execution_partition),
+        ) == 0:
             return None
         return self.pipeline.variable_manager.get_variable_object(
             self.pipeline.uuid,
@@ -1439,28 +1456,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             widget=BlockType.CHART == self.type,
         )
 
-    def __verify_outputs(self, outputs):
-        if len(outputs) < len(self.output_variables):
-            raise Exception(
-                f'Validation error for block {self.uuid}: '
-                f'the number of output variables does not match the block type: {self.type} ',
-            )
-        variable_names = list(self.output_variables.keys())
-        variable_dtypes = list(self.output_variables.values())
-        for idx, output in enumerate(outputs):
-            if idx >= len(variable_dtypes):
-                break
-            actual_dtype = type(output)
-            expected_dtype = variable_dtypes[idx]
-            if (expected_dtype != pd.DataFrame and actual_dtype is not expected_dtype) or (
-                expected_dtype == pd.DataFrame and not is_dataframe(output)
-            ):
-                raise Exception(
-                    f'Validation error for block {self.uuid}: '
-                    f'the variable {variable_names[idx]} should be {expected_dtype} type, '
-                    f'but {actual_dtype} type is returned',
-                )
-
     def __block_decorator(self, decorated_functions):
         def custom_code(function):
             decorated_functions.append(function)
@@ -1469,35 +1464,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         return custom_code
 
 
-class DataLoaderBlock(Block):
-    @property
-    def output_variables(self):
-        return dict(df=pd.DataFrame)
-
-
-class DataExporterBlock(Block):
-    @property
-    def output_variables(self):
-        return dict()
-
-
-class DbtBlock(Block):
-    @property
-    def output_variables(self):
-        return dict()
-
-
-class TransformerBlock(Block):
-    @property
-    def output_variables(self):
-        return dict(df=pd.DataFrame)
-
-
 class SensorBlock(Block):
-    @property
-    def output_variables(self):
-        return dict()
-
     def execute_block_function(
         self,
         block_function: Callable,
@@ -1534,10 +1501,10 @@ class DestinationBlock(Block):
 
 
 BLOCK_TYPE_TO_CLASS = {
-    BlockType.DATA_EXPORTER: DataExporterBlock,
-    BlockType.DATA_LOADER: DataLoaderBlock,
-    BlockType.DBT: DbtBlock,
+    BlockType.DATA_EXPORTER: Block,
+    BlockType.DATA_LOADER: Block,
+    BlockType.DBT: Block,
     BlockType.SCRATCHPAD: Block,
-    BlockType.TRANSFORMER: TransformerBlock,
+    BlockType.TRANSFORMER: Block,
     BlockType.SENSOR: SensorBlock,
 }
