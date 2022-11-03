@@ -37,16 +37,16 @@ snowflake-connector-python==2.7.9
 tables==3.7.0
 
 # Azure
-azure-eventhub
-azure-identity
-azure-keyvault-secrets
-azure-keyvault-certificates
-azure-storage-blob
+azure-eventhub==5.10.1
+azure-identity==1.11.0
+azure-keyvault-secrets==4.6.0
+azure-keyvault-certificates==4.6.0
+azure-storage-blob==12.14.1
 
 # Streaming
-kafka-python
-opensearch-py
-requests_aws4auth
+kafka-python==2.0.2
+opensearch-py==2.0.0
+requests_aws4auth==1.1.2
 
 # DBT
-dbt-core
+dbt-core==0.13.1
