@@ -55,7 +55,10 @@ const SHARED_STYLES = css<{
   `}
 `;
 
-export const TableHeadStyle = styled.th`
+export const TableHeadStyle = styled.th<{
+  compact?: boolean;
+  noBorder?: boolean;
+}>`
   ${SHARED_STYLES}
 `;
 
