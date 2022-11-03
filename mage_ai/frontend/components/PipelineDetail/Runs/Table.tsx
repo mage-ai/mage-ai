@@ -376,7 +376,7 @@ function PipelineRunsTable({
                 arr.push(
                   <Flex flex={1} justifyContent="flex-end">
                     <ChevronRight default size={2 * UNIT} />
-                  </Flex>
+                  </Flex>,
                 );
               }
 
