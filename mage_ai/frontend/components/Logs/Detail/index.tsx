@@ -5,6 +5,7 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Link from '@oracle/elements/Link';
 import LogType from '@interfaces/LogType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -14,11 +15,11 @@ import {
   BarStyle,
 } from './index.style';
 import { Close } from '@oracle/icons';
-import { LogLevelIndicatorStyle } from '../index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { formatTimestamp } from '@utils/models/log';
 import { sortByKey } from '@utils/array';
 
+const MESSAGE_KEY = 'message';
 const KEYS_TO_SKIP = [
   'error',
   'error_stack',
@@ -37,6 +38,7 @@ function LogDetail({
   onClose,
 }: LogDetailProps) {
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
+  const [showFullLogMessage, setShowFullLogMessage] = useState<boolean>(false);
   const {
     data,
     name,
@@ -139,23 +141,42 @@ function LogDetail({
         <Table
           columnFlex={[null, 1]}
           columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
-          rows={rows.map(([k, v], idx) => [
-            <Text
-              key={`${k}_${idx}_key`}
-              monospace
-              muted
-            >
-              {k}
-            </Text>,
-            <Text
-              key={`${k}_${idx}_val`}
-              monospace
-              textOverflow
-              title={v}
-            >
-              {v}
-            </Text>,
-          ])}
+          rows={rows.map(([k, v], idx) => {
+            const isMessageKey = k === MESSAGE_KEY;
+            return [
+              <Text
+                key={`${k}_${idx}_key`}
+                monospace
+                muted
+              >
+                {k}
+              </Text>,
+              <>
+                <Text
+                  key={`${k}_${idx}_val`}
+                  monospace
+                  small={isMessageKey && showFullLogMessage}
+                  textOverflow
+                  title={v}
+                  whiteSpaceNormal={isMessageKey && showFullLogMessage}
+                  wordBreak={isMessageKey && showFullLogMessage}
+                >
+                  {v}
+                </Text>
+                {isMessageKey &&
+                  <Link
+                    muted
+                    onClick={() => setShowFullLogMessage(prevState => !prevState)}
+                  >
+                    {showFullLogMessage
+                      ? 'Click to hide log'
+                      : 'Click to show full log message'
+                    }
+                  </Link>
+                }
+              </>,
+            ];
+          })}
           uuid="LogDetail"
         />
       )}
