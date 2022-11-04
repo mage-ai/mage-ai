@@ -790,7 +790,7 @@ class Block:
 
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
-                    proc = subprocess.run([
+                    proc1 = subprocess.Popen([
                         PYTHON_COMMAND,
                         self.pipeline.source_file_path,
                         '--config_json',
@@ -808,9 +808,18 @@ class Block:
                         json.dumps(runtime_arguments or {}),
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
 
-                    output = proc.stdout.decode()
-                    print_logs_from_output(output)
-                    outputs.append(output)
+                    proc2 = subprocess.Popen([
+                        PYTHON_COMMAND,
+                        '--pipeline_uuid',
+                        self.pipeline.uuid,
+                        '--block_uuid',
+                        self.uuid,
+                        '--execution_partition',
+                        execution_partition,
+                        self.pipeline.log_printer_file_path,
+                    ], stdin=proc1.stdout, stdout=subprocess.PIPE)
+
+                    outputs.append(proc2.stdout)
                 elif BlockType.TRANSFORMER == self.type:
                     input_from_previous = input_from_output['output'][0]
 
@@ -884,7 +893,7 @@ class Block:
                 elif BlockType.DATA_EXPORTER == self.type:
                     input_from_previous = input_from_output['output'][0]
 
-                    proc = subprocess.run([
+                    proc1 = subprocess.Popen([
                         PYTHON_COMMAND,
                         self.pipeline.destination_file_path,
                         '--config_json',
@@ -898,10 +907,21 @@ class Block:
                         self.pipeline.data_exporter.file_path,
                         '--state',
                         self.pipeline.destination_state_file_path,
-                    ], input=input_from_previous, capture_output=True, text=True)
+                    ], stdin=input_from_previous, stdout=subprocess.PIPE, text=True)
 
-                    print_logs_from_output(proc.stdout)
-                    outputs.append(proc)
+                    proc2 = subprocess.Popen([
+                        PYTHON_COMMAND,
+                        '--pipeline_uuid',
+                        self.pipeline.uuid,
+                        '--block_uuid',
+                        self.uuid,
+                        '--execution_partition',
+                        execution_partition,
+                        self.pipeline.log_printer_file_path,
+                    ], stdin=proc1.stdout, stdout=subprocess.PIPE)
+
+                    proc2.communicate()
+                    outputs.append(proc2)
             elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(
                     self,

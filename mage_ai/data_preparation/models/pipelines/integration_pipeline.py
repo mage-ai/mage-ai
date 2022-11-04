@@ -67,6 +67,11 @@ class IntegrationPipeline(Pipeline):
         return file_path
 
     @property
+    def log_printer_file_path(self) -> str:
+        log_printer_file = importlib.import_module('mage_ai.data_integrations.logger.printer')
+        return os.path.abspath(log_printer_file.__file__)
+
+    @property
     def source_config(self) -> Dict:
         if self.data_loader and self.data_loader.content:
             return yaml.safe_load(self.data_loader.content)

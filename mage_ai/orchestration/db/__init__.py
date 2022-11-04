@@ -7,7 +7,10 @@ import os
 TEST_DB = 'test.db'
 
 db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
-db_kwargs = dict(pool_pre_ping=True)
+db_kwargs = dict(
+    echo=False,
+    pool_pre_ping=True,
+)
 
 if not db_connection_url:
     if is_test():

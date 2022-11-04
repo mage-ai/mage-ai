@@ -1,5 +1,6 @@
 import multiprocessing
 
+
 def start_session_and_run(*target_args):
     from mage_ai.orchestration.db import db_connection
 
@@ -14,6 +15,7 @@ def start_session_and_run(*target_args):
 
     db_connection.close_session()
     return results
+
 
 def create_process(target, args=()):
     new_args = [target, *args]
