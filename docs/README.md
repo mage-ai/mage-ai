@@ -95,7 +95,7 @@ Read more tech docs here. Got questions?
 - [Templates](#templates)
 - DBT
     - [Run a single model](guides/dbt/run_model.md)
-    - Run selected models (and optionally exclude others)
+    - [Run selected models (and optionally exclude others)](guides/dbt/run_models.md)
     - Connection profiles
     - DBT models depending on other blocks using sources
     - Running DBT tests
