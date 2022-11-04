@@ -3,13 +3,13 @@
 <img alt="DBT" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
 
 1. [Set up new Mage project](#1-set-up-new-mage-project)
-1. [Set up DBT project](#1-set-up-dbt-project)
+1. [Set up DBT project](#2-set-up-dbt-project)
 1. [Create standard (batch) pipeline](#3-create-standard-pipeline)
 1. [Create DBT profile for database connections](#4-create-dbt-profile-for-database-connections)
 1. [Add data loader block to pipeline](#5-add-data-loader-block-to-pipeline)
 1. [Add DBT model block to pipeline](#6-add-dbt-model-block-to-pipeline)
 1. [Add test for DBT model](#7-add-test-for-dbt-model)
-1. [Execute pipeline end-to-end](#8)
+1. [Execute pipeline end-to-end](#8-execute-pipeline-end-to-end)
 
 <br />
 
@@ -233,7 +233,7 @@ Congratulations! You’ve created a data pipeline that orchestrates your DBT mod
 ## Support
 
 If you get stuck, run into problems, or just want someone to walk you through these steps, please join our
-[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
+[<img alt="Slack" height="20" src="https://user-images.githubusercontent.com/78053898/198755054-03d47bfc-18b6-45a5-9593-7b496eb927f3.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
 and someone will help you ASAP.
 
 [![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
