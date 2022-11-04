@@ -267,35 +267,6 @@ class Block:
             and (self.pipeline is None or self.pipeline.type != PipelineType.STREAMING)
         )
 
-    def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
-        """Get input variables from upstream blocks' output variables.
-        Args:
-            execution_partition (str, optional): The execution paratition string.
-
-        Returns:
-            Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
-        """
-        return {b.uuid: b.output_variables(execution_partition=execution_partition).keys()
-                for b in self.upstream_blocks}
-
-    def output_variables(self, execution_partition: str = None) -> Dict[str, Any]:
-        """Return output variables in dictionary.
-        The key is the variable name, and the value is variable data type.
-
-        Args:
-            execution_partition (str, optional): The execution paratition string.
-
-        Returns:
-            Dict[str, Any]: Mapping from variable name to variable data type.
-        """
-        all_variables = self.pipeline.variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
-            self.uuid,
-            partition=execution_partition,
-        )
-        output_variables = {v: dict for v in all_variables if v == 'df' or v.startswith('output')}
-        return output_variables
-
     @property
     def outputs(self):
         if not self._outputs_loaded:
@@ -722,7 +693,6 @@ class Block:
                             upstream_block_uuid,
                             var,
                             partition=execution_partition,
-                            variable_type=VariableType.DATAFRAME,
                             spark=(global_vars or dict()).get('spark'),
                         )
                         for var in variables
@@ -997,12 +967,12 @@ class Block:
     def get_analyses(self):
         if self.status == BlockStatus.NOT_EXECUTED:
             return []
-        output_variables = self.output_variables()
-        if len(output_variables) == 0:
+        output_variable_objects = self.output_variable_object()
+        if len(output_variable_objects) == 0:
             return []
         analyses = []
-        for v, vtype in output_variables.items():
-            if vtype is not pd.DataFrame:
+        for v in output_variable_objects:
+            if v.type != VariableType.DATAFRAME:
                 continue
             data = self.pipeline.variable_manager.get_variable(
                 self.pipeline.uuid,
@@ -1037,9 +1007,7 @@ class Block:
         )
 
         if not include_print_outputs:
-            all_variables = [v for v in all_variables if v in self.output_variables(
-                                execution_partition=execution_partition,
-                            ).keys()]
+            all_variables = self.output_variables(execution_partition=execution_partition)
 
         for v in all_variables:
             data = variable_manager.get_variable(
@@ -1250,7 +1218,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 self.uuid,
                 variable,
             )
-            for variable in self.output_variables().keys()
+            for variable in self.output_variables()
         ]
 
         with redirect_stdout(stdout):
@@ -1358,7 +1326,26 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 uuid,
             )
 
-    def input_variable_objects(self, execution_partition: str = None):
+    def input_variables(self, execution_partition: str = None) -> Dict[str, List[str]]:
+        """Get input variables from upstream blocks' output variables.
+        Args:
+            execution_partition (str, optional): The execution paratition string.
+
+        Returns:
+            Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
+        """
+        return {b.uuid: b.output_variables(execution_partition=execution_partition)
+                for b in self.upstream_blocks}
+
+    def input_variable_objects(self, execution_partition: str = None) -> List:
+        """Get input variable objects from upstream blocks' output variables.
+
+        Args:
+            execution_partition (str, optional): The execution paratition string.
+
+        Returns:
+            List: List of input variable objects.
+        """
         objs = []
         for b in self.upstream_blocks:
             for v in b.output_variables(execution_partition=execution_partition):
@@ -1368,26 +1355,51 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                         b.uuid,
                         v,
                         partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME,
                     ),
                 )
         return objs
 
-    def output_variable_object(self, execution_partition: str = None):
+    def output_variables(self, execution_partition: str = None) -> List[str]:
+        """Return output variables in dictionary.
+        The key is the variable name, and the value is variable data type.
+
+        Args:
+            execution_partition (str, optional): The execution paratition string.
+
+        Returns:
+            List[str]: List of variable names.
         """
-        Output dataframe variable object
-        """
-        if self.pipeline is None or len(self.output_variables(
-            execution_partition=execution_partition),
-        ) == 0:
-            return None
-        return self.pipeline.variable_manager.get_variable_object(
+        all_variables = self.pipeline.variable_manager.get_variables_by_block(
             self.pipeline.uuid,
             self.uuid,
-            'df',
             partition=execution_partition,
-            variable_type=VariableType.DATAFRAME,
         )
+        output_variables = [v for v in all_variables if v == 'df' or v.startswith('output')]
+        return output_variables
+
+    def output_variable_objects(self, execution_partition: str = None) -> List:
+        """Get output variable objects.
+
+        Args:
+            execution_partition (str, optional): The execution paratition string.
+
+        Returns:
+            List: List of output variable objects.
+        """
+        if self.pipeline is None:
+            return []
+
+        output_variables = self.output_variables(execution_partition=execution_partition)
+
+        if len(output_variables) == 0:
+            return []
+
+        return [self.pipeline.variable_manager.get_variable_object(
+            self.pipeline.uuid,
+            self.uuid,
+            v,
+            partition=execution_partition,
+        ) for v in output_variables]
 
     def should_treat_as_dbt(self) -> bool:
         return BlockType.DBT == self.type and BlockLanguage.SQL == self.language
