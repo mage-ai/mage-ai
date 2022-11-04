@@ -536,7 +536,7 @@ class Block:
                 variable_keys = [f'output_{idx}' for idx in range(output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            if store_variables:
+            if store_variables and self.pipeline.type != PipelineType.INTEGRATION:
                 self.store_variables(
                     variable_mapping,
                     execution_partition=execution_partition,
@@ -838,7 +838,7 @@ class Block:
                     print_logs_from_output(proc1.stdout)
 
                     # run transformer code and store it
-                    input_vars.append(upstream_df_var.read_data())
+                    input_vars = [upstream_df_var.read_data()]
                     exec(self.content, results)
                     block_function = self.__validate_execution(decorated_functions, input_vars)
                     if block_function is not None:
@@ -1198,6 +1198,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         self,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
+        execution_partition: str = None,
         global_vars: Dict = {},
         logger: Logger = None,
         update_tests: bool = True,
@@ -1228,8 +1229,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 self.pipeline.uuid,
                 self.uuid,
                 variable,
+                partition=execution_partition,
             )
-            for variable in self.output_variables()
+            for variable in self.output_variables(execution_partition=execution_partition)
         ]
 
         with redirect_stdout(stdout):
@@ -1540,11 +1542,13 @@ class SensorBlock(Block):
 
 
 class SourceBlock(Block):
-    pass
+    def output_variables(self, execution_partition: str = None) -> List[str]:
+        return []
 
 
 class DestinationBlock(Block):
-    pass
+    def output_variables(self, execution_partition: str = None) -> List[str]:
+        return []
 
 
 BLOCK_TYPE_TO_CLASS = {
