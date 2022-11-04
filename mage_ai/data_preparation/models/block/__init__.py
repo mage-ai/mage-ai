@@ -83,15 +83,6 @@ async def run_blocks(
                 f'Executing {block.type} block...',
                 build_block_output_stdout=build_block_output_stdout,
             ):
-                is_dbt = BlockType.DBT == block.type
-
-                if run_tests and is_dbt:
-                    run_dbt_tests(
-                        block=block,
-                        build_block_output_stdout=build_block_output_stdout,
-                        global_vars=global_vars,
-                    )
-
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
@@ -102,12 +93,19 @@ async def run_blocks(
                     parallel=parallel,
                 )
 
-                if run_tests and not is_dbt:
-                    block.run_tests(
-                        build_block_output_stdout=build_block_output_stdout,
-                        global_vars=global_vars,
-                        update_tests=False,
-                    )
+                if run_tests:
+                    if BlockType.DBT == block.type:
+                        run_dbt_tests(
+                            block=block,
+                            build_block_output_stdout=build_block_output_stdout,
+                            global_vars=global_vars,
+                        )
+                    else:
+                        block.run_tests(
+                            build_block_output_stdout=build_block_output_stdout,
+                            global_vars=global_vars,
+                            update_tests=False,
+                        )
 
         return asyncio.create_task(execute_and_run_tests())
 
@@ -198,15 +196,6 @@ def run_blocks_sync(
             f'Executing {block.type} block...',
             build_block_output_stdout=build_block_output_stdout,
         ):
-            is_dbt = BlockType.DBT == block.type
-
-            if run_tests and is_dbt:
-                run_dbt_tests(
-                    block=block,
-                    build_block_output_stdout=build_block_output_stdout,
-                    global_vars=global_vars,
-                )
-
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
@@ -215,12 +204,19 @@ def run_blocks_sync(
                 test_execution=not run_sensors,
             )
 
-            if run_tests and not is_dbt:
-                block.run_tests(
-                    build_block_output_stdout=build_block_output_stdout,
-                    global_vars=global_vars,
-                    update_tests=False,
-                )
+            if run_tests:
+                if BlockType.DBT == block.type:
+                    run_dbt_tests(
+                        block=block,
+                        build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
+                    )
+                else:
+                    block.run_tests(
+                        build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
+                        update_tests=False,
+                    )
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
@@ -769,6 +765,7 @@ class Block:
                         self,
                         execution_partition=execution_partition,
                         profile_target=dbt_profile_target,
+                        cache_upstream_dbt_models=test_execution,
                     )
 
                 stdout = None if test_execution else subprocess.PIPE
@@ -779,7 +776,16 @@ class Block:
                 ] + args, preexec_fn=os.setsid, stdout=stdout)
 
                 if is_sql and test_execution:
-                    outputs = [query_from_compiled_sql(self, dbt_profile_target)]
+                    df = query_from_compiled_sql(
+                        self,
+                        dbt_profile_target,
+                    )
+                    self.store_variables(
+                        dict(df=df),
+                        execution_partition=execution_partition,
+                        override_outputs=True,
+                    )
+                    outputs = [df]
                 elif not test_execution:
                     for line in proc1.stdout.decode().split('\n'):
                         print(line)
