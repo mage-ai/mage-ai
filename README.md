@@ -232,6 +232,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 - [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
 - [Load data from API, transform it, and export it to PostgreSQL](docs/tutorials/quick_start/etl_restaurant/README.md)
 - [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate_into_existing_project/README.md)
+- [Set up DBT models and orchestrate DBT runs](docs/tutorials/dbt/quick_start.md)
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
