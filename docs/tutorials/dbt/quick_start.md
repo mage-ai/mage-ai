@@ -233,7 +233,7 @@ Congratulations! You’ve created a data pipeline that orchestrates your DBT mod
 ## Support
 
 If you get stuck, run into problems, or just want someone to walk you through these steps, please join our
-[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
+[<img alt="Slack" height="20" src="https://user-images.githubusercontent.com/78053898/198755054-03d47bfc-18b6-45a5-9593-7b496eb927f3.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
 and someone will help you ASAP.
 
 [![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
