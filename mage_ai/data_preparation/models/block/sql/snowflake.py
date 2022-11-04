@@ -1,4 +1,3 @@
-from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     interpolate_input,
@@ -15,7 +14,6 @@ def create_upstream_block_tables(
     execution_partition: str = None,
 ):
     configuration = configuration if configuration else block.configuration
-    data_provider = configuration.get('data_provider')
     database = configuration.get('data_provider_database')
     schema = configuration.get('data_provider_schema')
 
@@ -31,7 +29,7 @@ def create_upstream_block_tables(
             df = get_variable(
                 upstream_block.pipeline.uuid,
                 upstream_block.uuid,
-                'df',
+                'output_0',
                 partition=execution_partition,
             )
 

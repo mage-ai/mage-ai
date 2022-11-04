@@ -1385,7 +1385,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         output_variables.sort()
         return output_variables
 
-    def output_variable_objects(self, execution_partition: str = None) -> List:
+    def output_variable_objects(
+        self,
+        execution_partition: str = None,
+        variable_type: VariableType = None,
+    ) -> List:
         """Get output variable objects.
 
         Args:
@@ -1402,12 +1406,15 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if len(output_variables) == 0:
             return []
 
-        return [self.pipeline.variable_manager.get_variable_object(
+        variable_objects = [self.pipeline.variable_manager.get_variable_object(
             self.pipeline.uuid,
             self.uuid,
             v,
             partition=execution_partition,
         ) for v in output_variables]
+        if variable_type is not None:
+            variable_objects = [v for v in variable_objects if v.variable_type == variable_type]
+        return variable_objects
 
     def should_treat_as_dbt(self) -> bool:
         return BlockType.DBT == self.type and BlockLanguage.SQL == self.language
