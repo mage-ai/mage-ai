@@ -41,6 +41,9 @@
       * [Schedule pipelines to run periodically](docs/tutorials/triggers/schedule.md)
       * Events
         * [Trigger pipeline from AWS Event](docs/tutorials/triggers/events/aws.md)
+    * DBT
+      * [Run a single model](docs/guides/dbt/run\_model.md)
+      * [Run selected models (and optionally exclude others)](docs/guides/dbt/run\_models.md)
     * Version control
       * [Setting up Git on cloud](docs/guides/version\_control/Git.md)
   * [Data integrations](docs/data\_integrations/README.md)
