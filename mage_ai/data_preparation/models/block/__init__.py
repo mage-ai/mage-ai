@@ -1096,7 +1096,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             if o is None:
                 continue
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
-                    o['variable_uuid'] != 'df':
+                    not self.__is_output_variable(o['variable_uuid']):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
@@ -1313,12 +1313,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             # Not remove dataframe variables
             removed_variables = [v for v in all_variables
                                  if v not in variable_mapping.keys()
-                                 and v != 'df'
-                                 and not v.startswith('output')]
+                                 and not self.__is_output_variable(v)]
         elif override_outputs:
             removed_variables = [v for v in all_variables
                                  if v not in variable_mapping.keys() and
-                                 (v.startswith('output') or v == 'df')]
+                                 self.__is_output_variable(v)]
         for uuid, data in variable_mapping.items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
@@ -1385,7 +1384,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.uuid,
             partition=execution_partition,
         )
-        output_variables = [v for v in all_variables if v == 'df' or v.startswith('output')]
+        output_variables = [v for v in all_variables if self.__is_output_variable(v)]
         output_variables.sort()
         return output_variables
 
@@ -1436,6 +1435,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
     def should_treat_as_dbt(self) -> bool:
         return BlockType.DBT == self.type and BlockLanguage.SQL == self.language
+
+    def __is_output_variable(self, variable_uuid):
+        return variable_uuid == 'df' or variable_uuid.startswith('output')
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
