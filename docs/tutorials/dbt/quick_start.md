@@ -3,13 +3,13 @@
 <img alt="DBT" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
 
 1. [Set up new Mage project](#1-set-up-new-mage-project)
-1. [Set up DBT project](#1-set-up-dbt-project)
+1. [Set up DBT project](#2-set-up-dbt-project)
 1. [Create standard (batch) pipeline](#3-create-standard-pipeline)
 1. [Create DBT profile for database connections](#4-create-dbt-profile-for-database-connections)
 1. [Add data loader block to pipeline](#5-add-data-loader-block-to-pipeline)
 1. [Add DBT model block to pipeline](#6-add-dbt-model-block-to-pipeline)
 1. [Add test for DBT model](#7-add-test-for-dbt-model)
-1. [Execute pipeline end-to-end](#8)
+1. [Execute pipeline end-to-end](#8-execute-pipeline-end-to-end)
 
 <br />
 
