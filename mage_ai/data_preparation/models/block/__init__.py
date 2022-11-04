@@ -1416,6 +1416,20 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             variable_objects = [v for v in variable_objects if v.variable_type == variable_type]
         return variable_objects
 
+    def variable_object(
+        self,
+        variable_uuid: str,
+        execution_partition: str = None,
+    ):
+        if self.pipeline is None:
+            return []
+        return self.pipeline.variable_manager.get_variable_object(
+            self.pipeline.uuid,
+            self.uuid,
+            variable_uuid,
+            partition=execution_partition,
+        )
+
     def should_treat_as_dbt(self) -> bool:
         return BlockType.DBT == self.type and BlockLanguage.SQL == self.language
 
