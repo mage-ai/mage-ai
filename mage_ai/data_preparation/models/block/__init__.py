@@ -967,20 +967,20 @@ class Block:
     def get_analyses(self):
         if self.status == BlockStatus.NOT_EXECUTED:
             return []
-        output_variable_objects = self.output_variable_object()
+        output_variable_objects = self.output_variable_objects()
         if len(output_variable_objects) == 0:
             return []
         analyses = []
         for v in output_variable_objects:
-            if v.type != VariableType.DATAFRAME:
+            if v.variable_type != VariableType.DATAFRAME:
                 continue
             data = self.pipeline.variable_manager.get_variable(
                 self.pipeline.uuid,
                 self.uuid,
-                v,
+                v.uuid,
                 variable_type=VariableType.DATAFRAME_ANALYSIS,
             )
-            data['variable_uuid'] = v
+            data['variable_uuid'] = v.uuid
             analyses.append(data)
         return analyses
 
