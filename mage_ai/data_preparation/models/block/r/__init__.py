@@ -54,9 +54,12 @@ def execute_r_code(
     __execute_r_code(file_path)
     os.remove(file_path)
 
-    output_variable_object = block.output_variable_object(execution_partition=execution_partition)
-    if output_variable_object is not None:
-        df = pd.read_csv(os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE))
+    output_variable_objects = block.output_variable_objects(
+        execution_partition=execution_partition,
+        variable_type=VariableType.DATAFRAME,
+    )
+    if len(output_variable_objects) > 0:
+        df = pd.read_csv(os.path.join(output_variable_objects[0].variable_path, DATAFRAME_CSV_FILE))
     else:
         df = None
     return df
@@ -80,12 +83,10 @@ def __render_r_script(
         )
     template = template_env.get_template(BLOCK_TYPE_TO_EXECUTION_TEMPLATE[block.type])
 
-    output_variable_object = block.output_variable_object(execution_partition=execution_partition)
-    if output_variable_object is not None:
-        os.makedirs(output_variable_object.variable_path, exist_ok=True)
-        output_path = os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE)
-    else:
-        output_path = None
+    output_variable_object = block.variable_object('output_0', execution_partition=execution_partition)
+    os.makedirs(output_variable_object.variable_path, exist_ok=True)
+    output_path = os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE)
+
     return template.render(
         code=code,
         input_paths=[os.path.join(v.variable_path, DATAFRAME_CSV_FILE) for v in input_variable_objects],

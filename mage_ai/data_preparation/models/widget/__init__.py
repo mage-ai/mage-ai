@@ -205,12 +205,6 @@ class Widget(Block):
         return data
 
 
-class ChartBlock(Widget):
-    @property
-    def output_variables(self):
-        return dict()
-
-
 BLOCK_TYPE_TO_CLASS = {
-    BlockType.CHART: ChartBlock,
+    BlockType.CHART: Widget,
 }

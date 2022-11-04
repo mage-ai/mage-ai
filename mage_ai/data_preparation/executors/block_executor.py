@@ -56,7 +56,9 @@ class BlockExecutor:
                     **kwargs,
                 )
             except Exception as e:
-                self.logger.info('Failed to execute block.', **tags)
+                self.logger.exception('Failed to execute block.', **merge_dict(tags, dict(
+                    error=e,
+                )))
                 if on_failure is not None:
                     on_failure(self.block_uuid)
                 elif callback_url is not None:
@@ -103,6 +105,7 @@ class BlockExecutor:
             )
         else:
             self.block.run_tests(
+                execution_partition=self.execution_partition,
                 logger=self.logger,
                 update_tests=False,
             )

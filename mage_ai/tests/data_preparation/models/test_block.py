@@ -59,13 +59,13 @@ def remove_duplicate_rows(df):
         data = variable_manager.get_variable(
             pipeline.uuid,
             block2.uuid,
-            'df',
+            'output_0',
             variable_type='dataframe'
         )
         analysis = variable_manager.get_variable(
             pipeline.uuid,
             block2.uuid,
-            'df',
+            'output_0',
             variable_type='dataframe_analysis',
         )
         df_final = pd.DataFrame({'col1': [1, 1, 3], 'col2': [2, 2, 4]}).drop_duplicates()
@@ -122,13 +122,13 @@ def union_datasets(df1, df2):
         data = variable_manager.get_variable(
             pipeline.uuid,
             block3.uuid,
-            'df',
+            'output_0',
             variable_type='dataframe'
         )
         analysis = variable_manager.get_variable(
             pipeline.uuid,
             block3.uuid,
-            'df',
+            'output_0',
             variable_type='dataframe_analysis',
         )
         df_final = pd.concat([

@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.server.api.base import BaseHandler
@@ -138,5 +139,10 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
-        outputs = block.get_outputs(include_print_outputs=False, sample_count=None)
+        # Only fetch dataframe variables by default
+        outputs = block.get_outputs(
+            include_print_outputs=False,
+            sample_count=None,
+            variable_type=VariableType.DATAFRAME,
+        )
         self.write(dict(outputs=outputs))
