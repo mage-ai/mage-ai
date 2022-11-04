@@ -1,6 +1,6 @@
 # Set up DBT models & orchestrate DBT runs
 
-<img alt="DBT" src="https://www.getdbt.com/ui/img/social/facebook.png" width="300" />
+<img alt="DBT" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
 
 1. [Set up new Mage project](#1-set-up-new-mage-project)
 1. [Set up DBT project](#1-set-up-dbt-project)
