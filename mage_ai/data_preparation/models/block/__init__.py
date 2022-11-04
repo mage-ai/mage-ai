@@ -989,6 +989,7 @@ class Block:
         execution_partition: str = None,
         include_print_outputs: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        variable_type: VariableType = None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
@@ -1010,11 +1011,17 @@ class Block:
             all_variables = self.output_variables(execution_partition=execution_partition)
 
         for v in all_variables:
-            data = variable_manager.get_variable(
+            variable_object = variable_manager.get_variable_object(
                 self.pipeline.uuid,
                 self.uuid,
                 v,
                 partition=execution_partition,
+            )
+
+            if variable_type is not None and variable_object.variable_type != variable_type:
+                continue
+
+            data = variable_object.read_data(
                 sample=True,
                 sample_count=sample_count,
             )
@@ -1375,6 +1382,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             partition=execution_partition,
         )
         output_variables = [v for v in all_variables if v == 'df' or v.startswith('output')]
+        output_variables.sort()
         return output_variables
 
     def output_variable_objects(self, execution_partition: str = None) -> List:
