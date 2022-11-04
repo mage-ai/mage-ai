@@ -8,7 +8,7 @@ from mage_ai.data_preparation.models.block.sql import (
     redshift,
     snowflake,
 )
-from mage_ai.data_preparation.models.constants import BlockLanguage
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
@@ -25,6 +25,7 @@ import os
 import re
 import simplejson
 import subprocess
+import sys
 import yaml
 
 
@@ -273,6 +274,7 @@ def execute_sql_code(
 def create_upstream_tables(
     block,
     profile_target: str,
+    cache_upstream_dbt_models: bool = False,
     **kwargs,
 ) -> None:
     config_file_loader, configuration = config_file_loader_and_configuration(
@@ -291,8 +293,44 @@ def create_upstream_tables(
                 block,
                 cascade_on_drop=True,
                 configuration=configuration,
+                cache_upstream_dbt_models=cache_upstream_dbt_models,
                 **kwargs,
             )
+
+
+def interpolate_input(
+    block,
+    query: str,
+    configuration: Dict,
+    profile_database: str,
+    profile_schema: str,
+    replace_func=None,
+) -> str:
+    def __replace_func(db, schema, tn):
+        if replace_func:
+            return replace_func(db, schema, tn)
+
+        return f'{schema}.{tn}'
+
+    for idx, upstream_block in enumerate(block.upstream_blocks):
+        if BlockType.DBT != upstream_block.type:
+            continue
+
+        attrs = parse_attributes(upstream_block)
+        model_name = attrs['model_name']
+        matcher1 = f'"{profile_database}"."{profile_schema}"."{model_name}"'
+
+        database = configuration.get('data_provider_database')
+        schema = configuration.get('data_provider_schema')
+        table_name = upstream_block.table_name
+
+        query = re.sub(
+            matcher1,
+            __replace_func(database, schema, table_name),
+            query,
+        )
+
+    return query
 
 
 def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
@@ -307,12 +345,23 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
     project_full_path = attr['project_full_path']
     file_path = attr['file_path']
 
+    profile = get_profile(block, profile_target)
+
     with open(f'{project_full_path}/target/compiled/{file_path}', 'r') as f:
         if DataSource.POSTGRES.value == data_provider:
             from mage_ai.io.postgres import Postgres
 
+            query_string = f.read()
+            query_string = interpolate_input(
+                block,
+                query_string,
+                configuration=configuration,
+                profile_database=profile['dbname'],
+                profile_schema=profile['schema'],
+            )
+
             with Postgres.with_config(config_file_loader) as loader:
-                return loader.load(f.read())
+                return loader.load(query_string)
 
 
 def build_command_line_arguments(

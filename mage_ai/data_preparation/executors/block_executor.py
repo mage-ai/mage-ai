@@ -83,15 +83,6 @@ class BlockExecutor:
         runtime_arguments: Dict = None,
         **kwargs,
     ) -> Dict:
-        is_dbt = BlockType.DBT == self.block.type
-
-        if is_dbt:
-            run_dbt_tests(
-                block=self.block,
-                global_vars=global_vars,
-                logger=self.logger,
-            )
-
         result = self.block.execute_sync(
             analyze_outputs=analyze_outputs,
             execution_partition=self.execution_partition,
@@ -104,7 +95,13 @@ class BlockExecutor:
             runtime_arguments=runtime_arguments,
         )
 
-        if not is_dbt:
+        if BlockType.DBT == self.block.type:
+            run_dbt_tests(
+                block=self.block,
+                global_vars=global_vars,
+                logger=self.logger,
+            )
+        else:
             self.block.run_tests(
                 logger=self.logger,
                 update_tests=False,

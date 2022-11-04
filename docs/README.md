@@ -32,6 +32,10 @@ Read more tech docs here. Got questions?
 
 ### Tutorials
 - [Tutorials](tutorials/README.md)
+    - [Train model on Titanic dataset](tutorials/quick_start/train_titanic_model/README.md)
+    - [Load data from API, transform it, and export it to PostgreSQL](tutorials/quick_start/etl_restaurant/README.md)
+    - [Integrate Mage into an existing Airflow project](tutorials/airflow/integrate_into_existing_project/README.md)
+    - [Set up DBT models and orchestrate DBT runs](tutorials/quick_start.md)
 
 ### Design
 - [Core design principles](core/design_principles.md)

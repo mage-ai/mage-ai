@@ -11,60 +11,57 @@ You can install Mage using Docker or `pip`:
 
 ### Using Docker
 
-##### 1. Create new project and launch tool
+1. Create new project and launch tool
+    ```bash
+    docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+      mage start [project_name]
+    ```
+1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
+1. Run pipeline after building it in the tool
+    ```bash
+    docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+      mage run [project_name] [pipeline]
+    ```
 
-```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-  mage start [project_name]
-```
-
-Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
-
-##### 2. Run pipeline after building it in the tool
-```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  mageai/mageai mage run [project_name] [pipeline]
-```
-
-##### Initialize new project
+#### Initialize new project
 If you want to create a different project with a different name, run the following:
 
 ```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  mageai/mageai mage init [project_name]
+docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+  mage init [project_name]
 ```
 
 <br />
 
 ### Using `pip` or [`conda`](https://github.com/conda-forge/mage-ai-feedstock)
 
-##### 1. Install Mage
-```bash
-pip install mage-ai
-```
+1. Install Mage
+    ```bash
+    pip install mage-ai
+    ```
 
-or
+    or
 
-```bash
-conda install -c conda-forge mage-ai
-```
+    ```bash
+    conda install -c conda-forge mage-ai
+    ```
 
-<sub>If you run into errors, see the [errors section](#errors) below.</sub>
+    <sub>If you run into errors, see the [errors section](#errors) below.</sub>
 
-##### 2. Create new project and launch tool
-```bash
-mage start [project_name]
-```
+1. Create new project and launch tool
+    ```bash
+    mage start [project_name]
+    ```
+1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
+1. Run pipeline after building it in the tool
+    ```bash
+    mage run [project_name] [pipeline]
+    ```
 
-Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
+#### Initialize new project
 
-##### 3. Run pipeline after building it in the tool
-```bash
-mage run [project_name] [pipeline]
-```
-
-##### Initialize new project
 If you want to create a different project with a different name, run the following:
+
 ```bash
 mage init [project_name]
 ```
