@@ -93,6 +93,13 @@ Read more tech docs here. Got questions?
 - Testing
     - [Data validation](testing/README.md#data-validation)
 - [Templates](#templates)
+- DBT
+    - [Run a single model](guides/dbt/run_model.md)
+    - [Run selected models (and optionally exclude others)](guides/dbt/run_models.md)
+    - Connection profiles
+    - DBT models depending on other blocks using sources
+    - Running DBT tests
+    - Add an existing DBT project to Mage
 
 ### About
 - [Features](features/README.md)

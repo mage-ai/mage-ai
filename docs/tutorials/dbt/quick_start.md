@@ -119,6 +119,8 @@ under the folders `demo/models/example/`.
     1. The model named `my_first_dbt_model` was added to the pipeline because `my_second_dbt_model`
     references it.
 
+![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
+
 ### 6a. Edit DBT model `my_first_dbt_model`
 
 1. In the DBT block named `my_first_dbt_model`,
