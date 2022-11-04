@@ -184,7 +184,8 @@ and click the file named `test_my_second_dbt_model.sql`. If you don’t see it, 
     ```sql
     SELECT id
     FROM {{ ref('my_second_dbt_model') }}
-    HAVING (id >= 1)
+    GROUP BY id
+    HAVING (id = 0)
     ```
 1. Read more about DBT tests in their [documentation](https://docs.getdbt.com/docs/build/tests).
 
@@ -196,5 +197,44 @@ and click the file named `test_my_second_dbt_model.sql`. If you don’t see it, 
 1. Create a new trigger (you can use any interval you want for this tutorial).
 For more details, follow these [steps](../../features/orchestration/README.md#create-trigger).
 1. After your trigger is created, click the <b>`Start trigger`</b> button at the top of the page.
+1. The pipeline will eventually fail because a DBT test failed.
+This means everything is working as expected.
+1. Open the file `demo_project/dbt/demo/models/example/schema.yml`
+and remove the tests named `unique` under both models. Your file should look like this:
+    ```yaml
+    version: 2
+
+    models:
+      - name: my_first_dbt_model
+        description: "A starter dbt model"
+        columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+              - not_null
+
+      - name: my_second_dbt_model
+        description: "A starter dbt model"
+        columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+              - not_null
+    ```
+1. Click on the <b>`Failed`</b> button next to the pipeline run and click <b>`Retry run`</b>.
+It should complete running successfully after a few minutes.
+
+Congratulations! You’ve created a data pipeline that orchestrates your DBT models.
+
+<br />
+
+## Support
+
+If you get stuck, run into problems, or just want someone to walk you through these steps, please join our
+[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
+and someone will help you ASAP.
+
+[![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
+
 
 <br />
