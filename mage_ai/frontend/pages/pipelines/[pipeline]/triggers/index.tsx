@@ -373,7 +373,7 @@ function PipelineSchedules({
                   onClick={() => deletePipelineTrigger(id)}
                   right={UNIT * 2}
                   title={`Are you sure you want to delete the trigger ${name}?`}
-                  top={(windowHeight / 2) - (UNIT * 20)}
+                  top={(windowHeight / 2) - (UNIT * 16)}
                   width={UNIT * 40}
                 />
               </ClickOutside>
