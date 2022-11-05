@@ -1,0 +1,52 @@
+# DBT connection profiles
+
+Mage will look for a file named `profiles.yml` located in your DBT project root folder.
+
+For example, if your Mage project is named `demo_project` and your DBT project name is `demo`,
+then your `profiles.yml` file for that DBT project should be located in
+`demo_project/dbt/demo/profiles.yml`.
+
+If you have a 2nd DBT project (e.g. named `example`), the connection profiles for that project
+should be located in `demo_project/dbt/example/profiles.yml`.
+
+For more information on how to configure your connection profiles,
+read [DBT’s documentation](https://docs.getdbt.com/docs/get-started/connection-profiles).
+
+<br />
+
+## How connection profiles are used
+
+When you run a [single DBT model](run_model.md) or [selected DBT models](run_models.md),
+there is an input field labeled `DBT profile target`.
+The value in that field will be the connection profile target that Mage uses
+when running a DBT model block.
+
+The command Mage executes is `dbt run` with the flag `--target` and the value of that flag is the
+value from the input field labeled `DBT profile target`.
+
+<br />
+
+## Variable interpolation
+
+You can add [variables](../../production/runtime_variables.md) specific to your pipeline.
+These variables are accessible in each block of your pipeline.
+
+In addition, all the environment variables are accessible within the SQL query
+using the `var` syntax.
+
+| Syntax | Description | Example |
+| --- | --- | --- |
+| `{{ env_var('...') }}` | Get a value from the environment variables. | `{{ env_var('ENV') }}` |
+| `{{ variables('...') }}` | Get a value from the runtime variables. | `{{ variables('execution_date') }}` |
+
+### DBT profile target
+
+When typing in the DBT profile target for a DBT block, you can explicitly state the target
+(e.g. `dev`) you want the block to use or you can use variable interpolation.
+For example:
+
+| Key | Example string | Result |
+| --- | --- | --- |
+| `ENV` | `postgres_{{ env_var('ENV') }}` | `postgres_prod` |
+
+<br />

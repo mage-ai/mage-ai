@@ -96,10 +96,10 @@ Read more tech docs here. Got questions?
 - DBT
     - [Run a single model](guides/dbt/run_model.md)
     - [Run selected models (and optionally exclude others)](guides/dbt/run_models.md)
-    - Connection profiles
-    - DBT models depending on other blocks using sources
-    - Running DBT tests
-    - Add an existing DBT project to Mage
+    - [Connection profiles](guides/dbt/connection_profiles.md)
+    - [DBT models depending on other blocks using sources](guides/dbt/dependencies.md)
+    - [Running DBT tests](guides/dbt/tests.md)
+    - [Add an existing DBT project to Mage](guides/dbt/add_existing_project.md)
 
 ### About
 - [Features](features/README.md)
