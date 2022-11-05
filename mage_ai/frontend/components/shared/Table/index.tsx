@@ -30,7 +30,7 @@ type TableProps = {
   onClickRow?: (index: number) => void;
   rows: any[][];
   uuid?: string;
-}
+};
 
 function Table({
   alignTop,

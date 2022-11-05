@@ -4,8 +4,10 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import ClickOutside from '@oracle/components/ClickOutside';
 import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
@@ -14,12 +16,13 @@ import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
 } from '@interfaces/PipelineScheduleType';
+import PopupMenu from '@oracle/components/PopupMenu';
 import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { Add, Edit, Pause, PlayButtonFilled, TodoList } from '@oracle/icons';
+import { Add, Edit, Pause, PlayButtonFilled, TodoList, Trash } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables } from '@components/Sidekick/utils';
@@ -39,6 +42,7 @@ function PipelineSchedules({
 }: PipelineSchedulesProp) {
   const router = useRouter();
   const pipelineUUID = pipeline.uuid;
+  const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<string>(null);
 
   const {
     data: dataGlobalVariables,
@@ -101,6 +105,23 @@ function PipelineSchedules({
     },
   );
 
+  const [deletePipelineTrigger] = useMutation(
+    (id: string) => api.pipeline_schedules.useDelete(id)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineSchedules();
+            router.push(
+              '/pipelines/[pipeline]/triggers',
+              `/pipelines/${pipelineUUID}/triggers`,
+            );
+          },
+        },
+      ),
+    },
+  );
+
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
     const variablesOrig =
@@ -116,7 +137,7 @@ function PipelineSchedules({
 
     const showVariables = hasOverride
       ? selectedSchedule?.variables
-      : !isEmptyObject(variablesOrig) ? variablesOrig : null
+      : !isEmptyObject(variablesOrig) ? variablesOrig : null;
 
     return props => {
       const dependencyGraphHeight = props.height - (showVariables ? 151 : 0);
@@ -157,7 +178,7 @@ function PipelineSchedules({
             noStatus
           />
         </>
-      )
+      );
     };
   }, [
     globalVariables,
@@ -174,7 +195,7 @@ function PipelineSchedules({
       buildSidekick={buildSidekick}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
-      subheaderBackgroundImage='/images/banner-shape-purple-peach.jpg'
+      subheaderBackgroundImage="/images/banner-shape-purple-peach.jpg"
       subheaderButton={
         <KeyboardShortcutButton
           blackBorder
@@ -233,7 +254,7 @@ function PipelineSchedules({
           },
           {
             label: () => '',
-            uuid: 'edit',
+            uuid: 'edit/delete',
           },
         ]}
         isSelectedRow={(rowIndex: number) => pipelinesSchedules[rowIndex].id === selectedSchedule?.id}
@@ -250,6 +271,7 @@ function PipelineSchedules({
           return [
             <Button
               iconOnly
+              key="toggle_trigger"
               noBackground
               noBorder
               noPadding
@@ -270,6 +292,7 @@ function PipelineSchedules({
             </Button>,
             <Text
               default={ScheduleStatusEnum.INACTIVE === status}
+              key="trigger_status"
               monospace
               success={ScheduleStatusEnum.ACTIVE === status}
             >
@@ -277,6 +300,7 @@ function PipelineSchedules({
             </Text>,
             <Text
               default
+              key="trigger_type"
               monospace
             >
               {SCHEDULE_TYPE_TO_LABEL[pipelineSchedule.schedule_type]?.()}
@@ -284,6 +308,7 @@ function PipelineSchedules({
             <NextLink
               as={`/pipelines/${pipelineUUID}/triggers/${id}`}
               href={'/pipelines/[pipeline]/triggers/[...slug]'}
+              key="trigger_name"
               passHref
             >
               <Link
@@ -300,15 +325,16 @@ function PipelineSchedules({
                 {name}
               </Link>
             </NextLink>,
-            <Text default monospace>
+            <Text default key="trigger_frequency" monospace>
               {scheduleInterval}
             </Text>,
-            <Text default monospace>
+            <Text default key="trigger_run_count" monospace>
               {pipelineRunsCount}
             </Text>,
             <Button
               default
               iconOnly
+              key="logs_button"
               noBackground
               onClick={() => router.push(
                 `/pipelines/${pipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
@@ -316,14 +342,39 @@ function PipelineSchedules({
             >
               <TodoList default size={2 * UNIT} />
             </Button>,
-            <Button
-              default
-              iconOnly
-              noBackground
-              onClick={() => router.push(`/pipelines/${pipelineUUID}/triggers/${id}/edit`)}
-            >
-              <Edit default size={2 * UNIT} />
-            </Button>,
+            <FlexContainer key="edit_delete_buttons">
+              <Button
+                default
+                iconOnly
+                noBackground
+                onClick={() => router.push(`/pipelines/${pipelineUUID}/triggers/${id}/edit`)}
+                title="Edit"
+              >
+                <Edit default size={2 * UNIT} />
+              </Button>
+              <Button
+                default
+                iconOnly
+                noBackground
+                onClick={() => setDeleteConfirmationOpenIdx(id)}
+                title="Delete"
+              >
+                <Trash default size={2 * UNIT} />
+              </Button>
+              <ClickOutside
+                onClickOutside={() => setDeleteConfirmationOpenIdx(null)}
+                open={deleteConfirmationOpenIdx === id}
+              >
+                <PopupMenu
+                  danger
+                  onCancel={() => setDeleteConfirmationOpenIdx(null)}
+                  onClick={() => deletePipelineTrigger(id)}
+                  right={UNIT * 16}
+                  title={`Are you sure you want to delete the trigger ${name}?`}
+                  width={UNIT * 40}
+                />
+              </ClickOutside>
+            </FlexContainer>,
           ];
         })}
         uuid="pipeline-triggers"
