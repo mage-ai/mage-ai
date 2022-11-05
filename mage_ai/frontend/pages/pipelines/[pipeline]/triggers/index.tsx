@@ -30,6 +30,7 @@ import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { randomNameGenerator } from '@utils/string';
+import { useWindowSize } from '@utils/sizes';
 
 type PipelineSchedulesProp = {
   pipeline: {
@@ -43,6 +44,7 @@ function PipelineSchedules({
   const router = useRouter();
   const pipelineUUID = pipeline.uuid;
   const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<string>(null);
+  const { height: windowHeight } = useWindowSize();
 
   const {
     data: dataGlobalVariables,
@@ -81,7 +83,7 @@ function PipelineSchedules({
     }
   );
 
-  const [updatePipelineSchedule, { isLoading: isLoadingUpdatePipelineSchedule }] = useMutation(
+  const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
       api.pipeline_schedules.useUpdate(pipelineSchedule.id)({
         pipeline_schedule: pipelineSchedule,
@@ -147,8 +149,8 @@ function PipelineSchedules({
           {showVariables && (
             <RuntimeVariables
               hasOverride={hasOverride}
-              variables={showVariables}
               scheduleType={selectedSchedule?.schedule_type}
+              variables={showVariables}
             />
           )}
           {!showVariables && (
@@ -198,8 +200,8 @@ function PipelineSchedules({
       subheaderBackgroundImage="/images/banner-shape-purple-peach.jpg"
       subheaderButton={
         <KeyboardShortcutButton
-          blackBorder
           beforeElement={<Add size={2.5 * UNIT} />}
+          blackBorder
           inline
           loading={isLoadingCreateSchedule}
           noHoverUnderline
@@ -281,7 +283,7 @@ function PipelineSchedules({
                   id: pipelineSchedule.id,
                   status: ScheduleStatusEnum.ACTIVE === status
                     ? ScheduleStatusEnum.INACTIVE
-                    : ScheduleStatusEnum.ACTIVE
+                    : ScheduleStatusEnum.ACTIVE,
                 });
               }}
             >
@@ -369,8 +371,9 @@ function PipelineSchedules({
                   danger
                   onCancel={() => setDeleteConfirmationOpenIdx(null)}
                   onClick={() => deletePipelineTrigger(id)}
-                  right={UNIT * 16}
+                  right={UNIT * 2}
                   title={`Are you sure you want to delete the trigger ${name}?`}
+                  top={(windowHeight / 2) - (UNIT * 20)}
                   width={UNIT * 40}
                 />
               </ClickOutside>

@@ -18,6 +18,7 @@ const ContainerStyle = styled.div<PopupMenuContainerProps>`
   padding: ${UNIT * 2}px;
   position: absolute;
   z-index: ${HEADER_Z_INDEX + 100};
+  cursor: default;
 
   ${props => `
     background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
