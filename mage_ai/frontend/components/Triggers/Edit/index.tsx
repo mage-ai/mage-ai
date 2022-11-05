@@ -172,6 +172,13 @@ function Edit({
           hour: timePart.substring(0, 2),
           minute: timePart.substring(3, 5),
         });
+      } else {
+        const currentDatetime = new Date();
+        setDate(currentDatetime);
+        setTime({
+          hour: String(currentDatetime.getUTCHours()),
+          minute: String(currentDatetime.getUTCMinutes()),
+        });
       }
     },
     [startTime],
@@ -224,7 +231,7 @@ function Edit({
           }
         }
         
-        const slaFromSchedule = pipelineSchedule.sla
+        const slaFromSchedule = pipelineSchedule.sla;
 
         if (slaFromSchedule) {
           setEnableSLA(true);
@@ -913,7 +920,7 @@ function Edit({
                   setSchedule(schedule => ({
                     ...schedule,
                     slaAmount: 0,
-                  }))
+                  }));
                 }
               }}
             />
@@ -937,13 +944,12 @@ function Edit({
                     SLA
                   </Text>
                 </FlexContainer>,
-                <FlexContainer>
+                <FlexContainer key="sla_input_detail">
                   <Flex flex={1}>
                     <TextInput
-                      noBorder
                       fullWidth
-                      key="sla_input_detail"
                       monospace
+                      noBorder
                       onChange={(e) => {
                         e.preventDefault();
                         setSchedule(s => ({

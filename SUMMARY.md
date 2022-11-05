@@ -19,12 +19,12 @@
     * [Train model on Titanic dataset](docs/tutorials/quick\_start/train\_titanic\_model/README.md)
       * [Use a completed pipeline](docs/tutorials/quick\_start/train\_titanic\_model/use\_completed\_pipeline.md)
   * [Tutorials](docs/tutorials/README.md)
+    * [Set up DBT models & orchestrate DBT runs](docs/tutorials/dbt/quick\_start.md)
+    * [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate\_into\_existing\_project/README.md)
     * [Clean](docs/tutorials/clean.md)
     * [Data cleaning aka data cleansing](docs/tutorials/data\_cleaning.md)
     * [Data cleaning workflow](docs/tutorials/data\_cleaning\_workflow.md)
     * [Using the tool from end-to-end](docs/tutorials/quick-start.md)
-    * Airflow
-      * [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate\_into\_existing\_project/README.md)
   * Guides
     * Blocks
       * [R blocks](docs/guides/blocks/R.md)
@@ -41,6 +41,9 @@
       * [Schedule pipelines to run periodically](docs/tutorials/triggers/schedule.md)
       * Events
         * [Trigger pipeline from AWS Event](docs/tutorials/triggers/events/aws.md)
+    * DBT
+      * [Run a single model](docs/guides/dbt/run\_model.md)
+      * [Run selected models (and optionally exclude others)](docs/guides/dbt/run\_models.md)
     * Version control
       * [Setting up Git on cloud](docs/guides/version\_control/Git.md)
   * [Data integrations](docs/data\_integrations/README.md)
@@ -51,24 +54,29 @@
       * [Adapt an existing destination](docs/guides/data\_integrations/destinations/AdaptExistingDestination.md)
       * [Add a new destination](docs/guides/data\_integrations/destinations/AddNewDestination.md)
     * [Mage integrations](mage\_integrations/README.md)
-      * [Schema](mage\_integrations/mage\_integrations/sources/README.md)
+      * Sources
+        * [Schema](mage\_integrations/mage\_integrations/sources/README.md)
         * [Amplitude](mage\_integrations/mage\_integrations/sources/amplitude/README.md)
+        * [BigQuery](mage\_integrations/mage\_integrations/sources/bigquery/README.md)
+        * [Google Search Console](mage\_integrations/mage\_integrations/sources/google\_search\_console/README.md)
         * [MySQL](mage\_integrations/mage\_integrations/sources/mysql/README.md)
+        * [PostgreSQL](mage\_integrations/mage\_integrations/sources/postgresql/README.md)
         * [Redshift](mage\_integrations/mage\_integrations/sources/redshift/README.md)
         * [Salesforce](mage\_integrations/mage\_integrations/sources/salesforce/README.md)
           * [Client](mage\_integrations/mage\_integrations/sources/salesforce/client/README.md)
             * [Blacklisted Objects Explanation](mage\_integrations/mage\_integrations/sources/salesforce/client/Blacklisting.md)
             * [Changelog](mage\_integrations/mage\_integrations/sources/salesforce/client/CHANGELOG.md)
         * [Stripe](mage\_integrations/mage\_integrations/sources/stripe/README.md)
-      * Connections
-        * [Example code](mage\_integrations/mage\_integrations/connections/amplitude/README.md)
-        * [Google Analytics](mage\_integrations/mage\_integrations/connections/google\_analytics/README.md)
-        * [PostgreSQL](mage\_integrations/mage\_integrations/connections/postgresql/README.md)
       * Destinations
+        * [BigQuery](mage\_integrations/mage\_integrations/destinations/bigquery/README.md)
         * [MySQL](mage\_integrations/mage\_integrations/destinations/mysql/README.md)
         * [PostgreSQL](mage\_integrations/mage\_integrations/destinations/postgresql/README.md)
         * [Redshift](mage\_integrations/mage\_integrations/destinations/redshift/README.md)
         * [Snowflake](mage\_integrations/mage\_integrations/destinations/snowflake/README.md)
+      * Connections
+        * [Example Amplitude connection](mage\_integrations/mage\_integrations/connections/amplitude/README.md)
+        * [Google Analytics](mage\_integrations/mage\_integrations/connections/google\_analytics/README.md)
+        * [PostgreSQL](mage\_integrations/mage\_integrations/connections/postgresql/README.md)
   * Code block integrations
     * [BigQuery](docs/integrations/BigQuery.md)
     * [MySQL](docs/integrations/MySQL.md)

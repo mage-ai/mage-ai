@@ -1,10 +1,6 @@
 # PostgreSQL
 
-<img
-  alt="PostgreSQL"
-  src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Postgresql_elephant.svg/1985px-Postgresql_elephant.svg.png"
-  width="200"
-/>
+![](https://user-images.githubusercontent.com/78053898/198754309-2ef713a7-62c8-4ea8-9ebb-8c24ed038cb3.png)
 
 <br />
 

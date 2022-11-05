@@ -25,8 +25,8 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
         [blockUuid]: {
           runtime,
           status: status,
-        }
-      }
+        },
+      };
     },
     {},
   );
@@ -61,7 +61,7 @@ export const TIME_UNIT_TO_SECONDS = {
   [TimeUnitEnum.HOUR]: 3600,
   [TimeUnitEnum.MINUTE]: 60,
   [TimeUnitEnum.SECOND]: 1,
-}
+};
 
 export function convertSeconds(seconds: number) {
   let unit = TimeUnitEnum.SECOND;
@@ -80,7 +80,7 @@ export function convertSeconds(seconds: number) {
   return {
     time,
     unit,
-  }
+  };
 }
 
 export function convertToSeconds(time: number, unit: TimeUnitEnum) {
