@@ -12,12 +12,13 @@ and a test file named `test_my_second_dbt_model.sql` with the following folder s
 ```
 demo_project/
 |   dbt/
-|   |   models/
-|   |   |   example/
-|   |   |   |   my_third_dbt_model.sql
-|   |   tests/
-|   |   |   example/
-|   |   |   |   my_third_dbt_model.sql
+|   |   demo/
+|   |   |   models/
+|   |   |   |   example/
+|   |   |   |   |   my_third_dbt_model.sql
+|   |   |   tests/
+|   |   |   |   example/
+|   |   |   |   |   my_third_dbt_model.sql
 ```
 
 Then whenever your pipeline runs, the test in `test_my_second_dbt_model.sql` will also be ran after
@@ -25,6 +26,29 @@ the DBT run for the model `my_third_dbt_model` is complete.
 
 Any errors in the DBT test will also fail the pipeline run. The output of the test will be logged
 and viewable when inspecting the pipeline’s run and logs.
+
+<br />
+
+## Folder and file naming conventions
+
+In your tests folder, you must mirror the path of the model you want to test.
+
+For example, if your model is named `my_third_dbt_model` and if its located under the folder
+named `example`, then your test file must be located here:
+
+```
+models/example/my_third_dbt_model.sql
+```
+
+```
+tests/example/my_third_dbt_model.sql
+```
+
+Note that the model file and test file have the same name (e.g. `my_third_dbt_model.sql`)
+and are nested under a folder with
+identical names (e.g. `example`).
+
+<br />
 
 ## Example
 

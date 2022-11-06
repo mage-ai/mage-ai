@@ -30,11 +30,12 @@ here is an example of where the `mage_sources.yml` file could be located:
 ```
 demo_project/
 |   dbt/
-|   |   models/
-|   |   |   example/
-|   |   |   |   mage_sources.yml
-|   |   |   |   my_first_dbt_model.sql
-|   |   |   |   my_second_dbt_model.sql
+|   |   demo/
+|   |   |   models/
+|   |   |   |   example/
+|   |   |   |   |   mage_sources.yml
+|   |   |   |   |   my_first_dbt_model.sql
+|   |   |   |   |   my_second_dbt_model.sql
 ```
 
 ### Sources
