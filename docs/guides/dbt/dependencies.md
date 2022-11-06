@@ -33,7 +33,7 @@ demo_project/
 |   |   models/
 |   |   |   example/
 |   |   |   |   mage_sources.yml
-|   |   |   |   my_second_dbt_model.sql
+|   |   |   |   my_first_dbt_model.sql
 |   |   |   |   my_second_dbt_model.sql
 ```
 
