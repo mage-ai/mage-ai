@@ -64,7 +64,7 @@ Read more tech docs here. Got questions?
     - [Monitoring](observability/monitoring/README.md)
 
 ### Integrations
-- [Syncing data between 3rd party sources and destinations](data_integrations/README.md)
+- [Data integrations: syncing data between 3rd party sources and destinations](data_integrations/README.md)
 - Compute
     - [Spark / PySpark](spark/setup/README.md)
 - Databases, data warehouses, data lakes, etc.
