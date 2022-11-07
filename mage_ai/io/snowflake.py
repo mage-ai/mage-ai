@@ -129,6 +129,8 @@ class Snowflake(BaseSQLConnection):
 
         def __process():
             with self._ctx.cursor() as cur:
+                cur.execute(f'CREATE SCHEMA IF NOT EXISTS {database}.{schema}')
+
                 cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
                 table_doesnt_exist = cur.rowcount == 0
                 if cur.rowcount > 1:
