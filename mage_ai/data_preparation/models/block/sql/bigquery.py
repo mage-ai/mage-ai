@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     interpolate_input,
@@ -12,7 +13,12 @@ def create_upstream_block_tables(
     block,
     configuration: Dict = None,
     execution_partition: str = None,
+    cache_upstream_dbt_models: bool = False,
 ):
+    from mage_ai.data_preparation.models.block.dbt.utils import (
+        parse_attributes,
+        source_table_name_for_block,
+    )
     configuration = configuration if configuration else block.configuration
     database = configuration.get('data_provider_database')
     schema = configuration.get('data_provider_schema')
@@ -24,6 +30,10 @@ def create_upstream_block_tables(
             ConfigKey.GOOGLE_SERVICE_ACC_KEY,
             ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH,
         ]):
+            if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
+                continue
+
+            table_name = upstream_block.table_name
 
             df = get_variable(
                 upstream_block.pipeline.uuid,
@@ -32,9 +42,14 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
+            if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
+                attributes_dict = parse_attributes(block)
+                schema = attributes_dict['source_name']
+                table_name = source_table_name_for_block(upstream_block)
+
             loader.export(
                 df,
-                f'{schema}.{upstream_block.table_name}',
+                f'{schema}.{table_name}',
                 database=database,
                 if_exists='replace',
                 verbose=False,

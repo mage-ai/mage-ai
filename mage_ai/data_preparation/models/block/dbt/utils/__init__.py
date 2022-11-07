@@ -5,17 +5,14 @@ from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
     postgres,
-    redshift,
-    snowflake,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
-from mage_ai.shared.array import find, flatten
+from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import files_in_path
@@ -44,7 +41,7 @@ def parse_attributes(block) -> Dict:
     project_full_path = f'{get_repo_path()}/dbt/{project_name}'
 
     full_path = f'{get_repo_path()}/dbt/{file_path}'
-    sources_full_path = re.sub(filename, f'mage_sources.yml', full_path)
+    sources_full_path = re.sub(filename, 'mage_sources.yml', full_path)
 
     source_name = f'mage_{project_name}'
 
@@ -60,6 +57,7 @@ def parse_attributes(block) -> Dict:
         source_name=source_name,
         sources_full_path=sources_full_path,
     )
+
 
 def extract_refs(block) -> List[str]:
     return re.findall(
@@ -104,6 +102,7 @@ def add_blocks_upstream_from_refs(block) -> None:
 
 
 def get_source(block) -> Dict:
+    attributes_dict = parse_attributes(block)
     source_name = attributes_dict['source_name']
     settings = load_sources(block)
     return find(lambda x: x['name'] == source_name, settings.get('sources', []))
@@ -200,7 +199,6 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
 def get_profile(block, profile_target: str = None) -> Dict:
     attr = parse_attributes(block)
     project_name = attr['project_name']
-    project_full_path = attr['project_full_path']
     profiles_full_path = attr['profiles_full_path']
 
     with open(profiles_full_path, 'r') as f:
@@ -214,24 +212,39 @@ def get_profile(block, profile_target: str = None) -> Dict:
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
     profile = get_profile(block, profile_target)
 
-    database = profile.get('dbname')
-    host = profile.get('host')
-    password = profile.get('password')
-    port = profile.get('port')
     profile_type = profile.get('type')
-    schema = profile.get('schema')
-    user = profile.get('user')
 
     config_file_loader = None
     configuration = None
 
     if DataSource.POSTGRES == profile_type:
+        database = profile.get('dbname')
+        host = profile.get('host')
+        password = profile.get('password')
+        port = profile.get('port')
+        schema = profile.get('schema')
+        user = profile.get('user')
+
         config_file_loader = ConfigFileLoader(config=dict(
             POSTGRES_DBNAME=database,
             POSTGRES_HOST=host,
             POSTGRES_PASSWORD=password,
             POSTGRES_PORT=port,
             POSTGRES_USER=user,
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=database,
+            data_provider_schema=schema,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
+    elif DataSource.BIGQUERY == profile_type:
+        keyfile = profile.get('keyfile')
+        database = profile.get('project')
+        schema = profile.get('dataset')
+
+        config_file_loader = ConfigFileLoader(config=dict(
+            GOOGLE_SERVICE_ACC_KEY_FILEPATH=keyfile,
         ))
         configuration = dict(
             data_provider=profile_type,
@@ -250,6 +263,7 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         raise Exception(msg)
 
     return config_file_loader, configuration
+
 
 def execute_sql_code(
     block,
@@ -284,7 +298,7 @@ def create_upstream_tables(
 
     data_provider = configuration.get('data_provider')
 
-    if DataSource.POSTGRES.value == data_provider:
+    if DataSource.POSTGRES == data_provider:
         from mage_ai.io.postgres import Postgres
 
         with Postgres.with_config(config_file_loader) as loader:
@@ -296,6 +310,17 @@ def create_upstream_tables(
                 cache_upstream_dbt_models=cache_upstream_dbt_models,
                 **kwargs,
             )
+    elif DataSource.BIGQUERY == data_provider:
+        from mage_ai.io.bigquery import BigQuery
+
+        loader = BigQuery.with_config(config_file_loader)
+        bigquery.create_upstream_block_tables(
+            loader,
+            block,
+            configuration=configuration,
+            cache_upstream_dbt_models=cache_upstream_dbt_models,
+            **kwargs,
+        )
 
 
 def interpolate_input(
@@ -304,13 +329,17 @@ def interpolate_input(
     configuration: Dict,
     profile_database: str,
     profile_schema: str,
+    quote_str: str = '',
     replace_func=None,
 ) -> str:
+    def __quoted(name):
+        return quote_str + name + quote_str
+
     def __replace_func(db, schema, tn):
         if replace_func:
             return replace_func(db, schema, tn)
 
-        return f'{schema}.{tn}'
+        return f'{__quoted(schema)}.{__quoted(tn)}'
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
         if BlockType.DBT != upstream_block.type:
@@ -318,7 +347,8 @@ def interpolate_input(
 
         attrs = parse_attributes(upstream_block)
         model_name = attrs['model_name']
-        matcher1 = f'"{profile_database}"."{profile_schema}"."{model_name}"'
+        matcher1 = f'{__quoted(profile_database)}.{__quoted(profile_schema)}.'\
+                   f'{__quoted(model_name)}'
 
         database = configuration.get('data_provider_database')
         schema = configuration.get('data_provider_schema')
@@ -348,20 +378,38 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
     profile = get_profile(block, profile_target)
 
     with open(f'{project_full_path}/target/compiled/{file_path}', 'r') as f:
-        if DataSource.POSTGRES.value == data_provider:
-            from mage_ai.io.postgres import Postgres
+        query_string = f.read()
 
-            query_string = f.read()
-            query_string = interpolate_input(
-                block,
-                query_string,
-                configuration=configuration,
-                profile_database=profile['dbname'],
-                profile_schema=profile['schema'],
-            )
+        profile_type = profile.get('type')
+        quote_str = ''
+        if DataSource.POSTGRES == profile_type:
+            database = profile['dbname']
+            schema = profile['schema']
+            quote_str = '"'
+        elif DataSource.BIGQUERY == profile_type:
+            database = profile['project']
+            schema = profile['dataset']
+            quote_str = '`'
+
+        query_string = interpolate_input(
+            block,
+            query_string,
+            configuration=configuration,
+            profile_database=database,
+            profile_schema=schema,
+            quote_str=quote_str,
+        )
+
+        if DataSource.POSTGRES == data_provider:
+            from mage_ai.io.postgres import Postgres
 
             with Postgres.with_config(config_file_loader) as loader:
                 return loader.load(query_string)
+        elif DataSource.BIGQUERY == data_provider:
+            from mage_ai.io.bigquery import BigQuery
+
+            loader = BigQuery.with_config(config_file_loader)
+            return loader.load(query_string)
 
 
 def build_command_line_arguments(
@@ -430,6 +478,7 @@ def build_command_line_arguments(
         profile_target=dbt_profile_target,
         project_full_path=project_full_path,
     )
+
 
 def run_dbt_tests(
     block,
