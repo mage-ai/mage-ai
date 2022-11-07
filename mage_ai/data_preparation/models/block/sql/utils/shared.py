@@ -17,6 +17,9 @@ def should_cache_data_from_upstream(
         # TODO (tommy dang): check to see if the upstream block has the same data source
         return True
 
+    if BlockType.SENSOR == upstream_block.type:
+        return False
+
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
         return True
 
