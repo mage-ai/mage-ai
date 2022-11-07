@@ -17,16 +17,6 @@
 
 <p align="center">
   <a
-    href="https://github.com/mage-ai/mage-ai"
-    target="_blank"
-  >
-    <span>View open-source project on GitHub</span>
-    <img alt="GitHub" height="20" src="https://user-images.githubusercontent.com/78053898/198755053-5c3971b1-9c49-4888-8a8e-1599f0fc6646.png" />
-  </a>
-</p>
-
-<p align="center">
-  <a
     href="https://www.youtube.com/watch?v=hrsErfPDits"
     target="_blank"
   >
