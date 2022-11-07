@@ -1069,19 +1069,19 @@ function IntegrationPipeline({
       <Spacing mb={1}>
         <FlexContainer alignItems="center">
           <Button
-            disabled={!dataLoaderBlock || !dataExporterBlock}
+            disabled={!dataLoaderBlock}
             iconOnly
             onClick={() => setTransformerVisible(prev => !prev)}
           >
             <>
-              {transformerVisible && dataLoaderBlock && dataExporterBlock && (
+              {transformerVisible && dataLoaderBlock && (
                 <ChevronUp
                   size={1.5 * UNIT}
                 />
               )}
-              {(!transformerVisible || !dataLoaderBlock || !dataExporterBlock) && (
+              {(!transformerVisible || !dataLoaderBlock) && (
                 <ChevronDown
-                  disabled={!dataLoaderBlock || !dataExporterBlock}
+                  disabled={!dataLoaderBlock}
                   size={1.5 * UNIT}
                 />
               )}
@@ -1098,7 +1098,7 @@ function IntegrationPipeline({
         </FlexContainer>
       </Spacing>
 
-      {transformerVisible && dataLoaderBlock && dataExporterBlock && (
+      {transformerVisible && dataLoaderBlock && (
         <Spacing mb={1}>
           <SectionStyle>
             {codeBlocks.length > 0 && (
@@ -1117,7 +1117,11 @@ function IntegrationPipeline({
                   const configuration = newBlock.configuration;
 
                   const currentBlock = blocks[blocks.length - 2];
-                  const upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
+                  
+                  let upstreamBlocks = [dataLoaderBlock.uuid];
+                  if (currentBlock) {
+                    upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
+                  }
 
                   const ret = addNewBlockAtIndex({
                     ...newBlock,
@@ -1127,14 +1131,16 @@ function IntegrationPipeline({
                   },
                   blocks.length - 1,
                   block => {
-                    // @ts-ignore
-                    updateDestinationBlock({
-                      block: {
-                        ...dataExporterBlock,
-                        upstream_blocks: [block.uuid],
-                      },
-                    });
-                    setSelectedBlock(block);
+                    if (dataExporterBlock) {
+                      // @ts-ignore
+                      updateDestinationBlock({
+                        block: {
+                          ...dataExporterBlock,
+                          upstream_blocks: [block.uuid],
+                        },
+                      });
+                      setSelectedBlock(block);
+                    }
                   });
 
                   return ret;
@@ -1147,6 +1153,7 @@ function IntegrationPipeline({
                 hideRecommendations
                 hideScratchpad
                 hideSensor
+                hideTransformerDataSources
                 pipeline={pipeline}
               />
             </Spacing>
@@ -1226,7 +1233,7 @@ function IntegrationPipeline({
                     language: BlockLanguageEnum.YAML,
                     type: BlockTypeEnum.DATA_EXPORTER,
                     upstream_blocks: [
-                      dataLoaderBlock.uuid,
+                      blocks[blocks.length - 1].uuid,
                     ],
                   }, 1, setSelectedBlock);
                 }
