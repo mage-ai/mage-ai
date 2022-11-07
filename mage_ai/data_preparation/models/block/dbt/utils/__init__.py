@@ -329,13 +329,17 @@ def interpolate_input(
     configuration: Dict,
     profile_database: str,
     profile_schema: str,
+    quote_str: str = '',
     replace_func=None,
 ) -> str:
+    def __quoted(name):
+        return quote_str + name + quote_str
+
     def __replace_func(db, schema, tn):
         if replace_func:
             return replace_func(db, schema, tn)
 
-        return f'{schema}.{tn}'
+        return f'{__quoted(schema)}.{__quoted(tn)}'
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
         if BlockType.DBT != upstream_block.type:
@@ -343,7 +347,8 @@ def interpolate_input(
 
         attrs = parse_attributes(upstream_block)
         model_name = attrs['model_name']
-        matcher1 = f'"{profile_database}"."{profile_schema}"."{model_name}"'
+        matcher1 = f'{__quoted(profile_database)}.{__quoted(profile_schema)}.'\
+                   f'{__quoted(model_name)}'
 
         database = configuration.get('data_provider_database')
         schema = configuration.get('data_provider_schema')
@@ -376,12 +381,15 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
         query_string = f.read()
 
         profile_type = profile.get('type')
+        quote_str = ''
         if DataSource.POSTGRES == profile_type:
             database = profile['dbname']
             schema = profile['schema']
+            quote_str = '"'
         elif DataSource.BIGQUERY == profile_type:
             database = profile['project']
             schema = profile['dataset']
+            quote_str = '`'
 
         query_string = interpolate_input(
             block,
@@ -389,6 +397,7 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             configuration=configuration,
             profile_database=database,
             profile_schema=schema,
+            quote_str=quote_str,
         )
 
         if DataSource.POSTGRES == data_provider:
