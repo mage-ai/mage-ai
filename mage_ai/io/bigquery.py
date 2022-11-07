@@ -171,6 +171,12 @@ WHERE table_id = '{table_name}'
                         raise ValueError(
                             f'Invalid policy specified for handling existence of table: \'{if_exists}\''
                         )
+                parts = table_id.split('.')
+                if len(parts) == 2:
+                    schema = parts[0]
+                elif len(parts) == 3:
+                    schema = parts[1]
+                self.client.create_dataset(dataset=schema, exists_ok=True)
                 self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
         if verbose:

@@ -44,7 +44,7 @@ def create_upstream_block_tables(
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 attributes_dict = parse_attributes(block)
-                schema = attributes_dict['dataset']
+                schema = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
             loader.export(
