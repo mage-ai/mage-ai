@@ -42,6 +42,7 @@ type AddNewBlocksProps = {
   hideScratchpad?: boolean;
   hideSensor?: boolean;
   hideTransformer?: boolean;
+  hideTransformerDataSources?: boolean;
   onClickAddSingleDBTModel?: (blockIdx: number) => void;
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
@@ -64,6 +65,7 @@ function AddNewBlocks({
   hideScratchpad,
   hideSensor,
   hideTransformer,
+  hideTransformerDataSources,
   onClickAddSingleDBTModel,
   pipeline,
   setAddNewBlockMenuOpenIdx,
@@ -106,12 +108,6 @@ function AddNewBlocks({
     },
     {
       bold: true,
-      items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
-      label: () => 'Data sources',
-      uuid: 'data_sources_grouping',
-    },
-    {
-      bold: true,
       items: rowActionMenuItems,
       label: () => 'Row actions',
       uuid: 'row_actions_grouping',
@@ -123,6 +119,19 @@ function AddNewBlocks({
     },
     ...columnActionMenuItems,
   ];
+
+  if (!hideTransformerDataSources) {
+    allActionMenuItems.splice(
+      1,
+      0, 
+      {
+        bold: true,
+        items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+        label: () => 'Data sources',
+        uuid: 'data_sources_grouping',
+      },
+    );
+  }
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
   const handleBlockZIndex = useCallback(() =>
