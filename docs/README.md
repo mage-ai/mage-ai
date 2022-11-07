@@ -65,6 +65,13 @@ Read more tech docs here. Got questions?
 
 ### Integrations
 - [Data integrations: syncing data between 3rd party sources and destinations](data_integrations/README.md)
+- [DBT: orchestrate your DBT runs and build pipelines that depend on non-DBT tasks](dbt/README.md)
+    - [Run a single model](guides/dbt/run_model.md)
+    - [Run selected models (and optionally exclude others)](guides/dbt/run_models.md)
+    - [Connection profiles](guides/dbt/connection_profiles.md)
+    - [DBT models depending on other blocks using sources](guides/dbt/dependencies.md)
+    - [Running DBT tests](guides/dbt/tests.md)
+    - [Add an existing DBT project to Mage](guides/dbt/add_existing_project.md)
 - Compute
     - [Spark / PySpark](spark/setup/README.md)
 - Databases, data warehouses, data lakes, etc.
@@ -93,13 +100,6 @@ Read more tech docs here. Got questions?
 - Testing
     - [Data validation](testing/README.md#data-validation)
 - [Templates](#templates)
-- DBT
-    - [Run a single model](guides/dbt/run_model.md)
-    - [Run selected models (and optionally exclude others)](guides/dbt/run_models.md)
-    - [Connection profiles](guides/dbt/connection_profiles.md)
-    - [DBT models depending on other blocks using sources](guides/dbt/dependencies.md)
-    - [Running DBT tests](guides/dbt/tests.md)
-    - [Add an existing DBT project to Mage](guides/dbt/add_existing_project.md)
 
 ### About
 - [Features](features/README.md)

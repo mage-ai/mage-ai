@@ -140,6 +140,7 @@ next to the label `DBT profile target` at the top is an input field, enter `dev`
 by pressing `Command` + `Enter`.
 1. You should see a preview of the query results.
 
+![](https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true)
 
 ### 6b. Edit DBT model `my_second_dbt_model`
 

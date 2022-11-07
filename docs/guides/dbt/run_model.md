@@ -31,6 +31,8 @@ Under the hood, Mage is running [`dbt compile`](https://docs.getdbt.com/referenc
 for that single model, then executing the compiled SQL query in the data source from
 your DBT project’s [connection profile](https://docs.getdbt.com/docs/get-started/connection-profiles) target.
 
+![](https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true)
+
 <br />
 
 ## Pipeline execution run
