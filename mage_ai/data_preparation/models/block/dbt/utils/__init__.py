@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
     postgres,
+    snowflake,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -252,6 +253,23 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider_schema=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
+    elif DataSource.SNOWFLAKE == profile_type:
+        database = profile.get('database')
+        schema = profile.get('schema')
+        config_file_loader = ConfigFileLoader(config=dict(
+            SNOWFLAKE_USER=profile.get('user'),
+            SNOWFLAKE_PASSWORD=profile.get('password'),
+            SNOWFLAKE_ACCOUNT=profile.get('account'),
+            SNOWFLAKE_DEFAULT_WH=profile.get('warehouse'),
+            SNOWFLAKE_DEFAULT_DB=profile.get('database'),
+            SNOWFLAKE_DEFAULT_SCHEMA=profile.get('schema'),
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=database,
+            data_provider_schema=schema,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
 
     if not config_file_loader or not configuration:
         attr = parse_attributes(block)
@@ -321,6 +339,17 @@ def create_upstream_tables(
             cache_upstream_dbt_models=cache_upstream_dbt_models,
             **kwargs,
         )
+    elif DataSource.SNOWFLAKE == data_provider:
+        from mage_ai.io.snowflake import Snowflake
+
+        with Snowflake.with_config(config_file_loader) as loader:
+            snowflake.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                cache_upstream_dbt_models=cache_upstream_dbt_models,
+                **kwargs,
+            )
 
 
 def interpolate_input(
@@ -390,6 +419,9 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             database = profile['project']
             schema = profile['dataset']
             quote_str = '`'
+        elif DataSource.SNOWFLAKE == profile_type:
+            database = profile['database']
+            schema = profile['schema']
 
         query_string = interpolate_input(
             block,
@@ -410,6 +442,11 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
 
             loader = BigQuery.with_config(config_file_loader)
             return loader.load(query_string)
+        elif DataSource.SNOWFLAKE == data_provider:
+            from mage_ai.io.snowflake import Snowflake
+
+            with Snowflake.with_config(config_file_loader) as loader:
+                return loader.load(query_string)
 
 
 def build_command_line_arguments(
@@ -435,7 +472,6 @@ def build_command_line_arguments(
 
     if BlockLanguage.SQL == block.language:
         attr = parse_attributes(block)
-        file_path = attr['file_path']
         project_full_path = attr['project_full_path']
         path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
 
