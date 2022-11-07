@@ -19,21 +19,15 @@
   <a
     href="https://www.youtube.com/watch?v=hrsErfPDits"
     target="_blank"
-  >
-    <b>Watch demo</b>
-  </a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
+  ><b>Watch demo</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
   <a
     href="https://demo.mage.ai"
     target="_blank"
-  >
-    <b>Live demo</b>
-  </a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
+  ><b>Live demo</b></a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
   <a
     href="docs/README.md"
     target="_blank"
-  >
-    <b>Documentation</b>
-  </a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
+  ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
   <a
     href="https://www.mage.ai/chat"
     target="_blank"
@@ -236,6 +230,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 | 📓 | <b>[Notebook](docs/features/README.md#notebook-for-building-data-pipelines)</b> | Interactive Python, SQL, & R editor for coding data pipelines. |
 | 🏗️ | <b>[Data integrations](docs/data_integrations/README.md)</b> | Synchronize data from 3rd party sources to your internal destinations. |
 | 🚰 | <b>[Streaming pipelines](docs/guides/pipelines/StreamingPipeline.md)</b> | Ingest and transform real-time data. |
+| ❎ | <b>[DBT](docs/dbt/README.md)</b> | Build, run, and manage your DBT models with Mage. |
 
 <b>A sample data pipeline defined across 3 files ➝</b>
 
