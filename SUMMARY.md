@@ -42,8 +42,12 @@
       * Events
         * [Trigger pipeline from AWS Event](docs/tutorials/triggers/events/aws.md)
     * DBT
+      * [Add an existing DBT project to Mage](docs/guides/dbt/add\_existing\_project.md)
+      * [DBT connection profiles](docs/guides/dbt/connection\_profiles.md)
+      * [DBT sources and upstream dependencies](docs/guides/dbt/dependencies.md)
       * [Run a single model](docs/guides/dbt/run\_model.md)
       * [Run selected models (and optionally exclude others)](docs/guides/dbt/run\_models.md)
+      * [Running DBT tests](docs/guides/dbt/tests.md)
     * Version control
       * [Setting up Git on cloud](docs/guides/version\_control/Git.md)
   * [Data integrations](docs/data\_integrations/README.md)
@@ -109,6 +113,7 @@
       * [Email](docs/observability/alerting/Email.md)
       * [Slack](docs/observability/alerting/Slack.md)
     * [Monitoring](docs/observability/monitoring/README.md)
+  * [DBT](docs/dbt/README.md)
   * [Spark](docs/spark/setup/README.md)
   * [Frontend](mage\_ai/frontend/README.md)
   * [Running the server](mage\_ai/server/README.md)
