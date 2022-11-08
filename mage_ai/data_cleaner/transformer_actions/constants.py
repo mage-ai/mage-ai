@@ -69,6 +69,8 @@ class ActionType(str, Enum):
     UNION = 'union'
     UPDATE_TYPE = 'update_type'
     UPDATE_VALUE = 'update_value'
+    NORMALIZE = 'normalize'
+    STANDARDIZE = 'standardize'
 
 
 class Axis(str, Enum):

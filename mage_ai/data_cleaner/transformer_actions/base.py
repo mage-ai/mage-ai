@@ -37,6 +37,8 @@ FUNCTION_MAPPING = {
         ActionType.FIRST: column.first,
         ActionType.FIX_SYNTAX_ERRORS: column.fix_syntax_errors,
         ActionType.IMPUTE: column.impute,
+        ActionType.NORMALIZE: column.normalize,
+        ActionType.STANDARDIZE: column.standardize,
         ActionType.LAST: column.last,
         ActionType.MAX: column.max,
         ActionType.MEDIAN: column.median,
