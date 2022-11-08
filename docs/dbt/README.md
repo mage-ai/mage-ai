@@ -41,7 +41,7 @@ Build, run, and manage your DBT models with Mage.
 
 ## Tutorials
 
-1. [Set up DBT models & orchestrate DBT runs](../tutorials/dbt/quick_start.md)
+- [Set up DBT models & orchestrate DBT runs](../tutorials/dbt/quick_start.md)
 
 <br />
 
