@@ -124,7 +124,6 @@ class Source(BaseSource):
         loops = 0
 
         while rows_temp is None or len(rows_temp) >= 1:
-            row_number_statement = 'ROW_NUMBER()'
             order_by_columns = set()
             if key_properties:
                 order_by_columns.update(key_properties)
@@ -135,8 +134,9 @@ class Source(BaseSource):
             order_by_columns = list(order_by_columns)
 
             if order_by_columns:
-                over_statement = f"ORDER BY {', '.join(order_by_columns)}"
-                row_number_statement = f'{row_number_statement} OVER ({over_statement})'
+                order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
+            else:
+                order_by_statement = ''
 
             columns = extract_selected_columns(stream.metadata)
 
@@ -144,7 +144,6 @@ class Source(BaseSource):
             query_string = f"""
 SELECT
     {columns_statement}
-    , {row_number_statement} AS rnum
 FROM {self.table_prefix}{table_name}"""
             where_statements = []
             if bookmarks:
@@ -176,15 +175,10 @@ FROM {self.table_prefix}{table_name}"""
                 query_string = f"{query_string}\nWHERE {where_statement}"
 
             with_limit_query_string = f"""
-WITH rows_with_limit AS (
 {query_string}
-)
-
-SELECT
-    {columns_statement}
-    , rnum
-FROM rows_with_limit
-WHERE rnum >= {1 + (BATCH_FETCH_LIMIT * loops)} AND rnum <= {(BATCH_FETCH_LIMIT * (loops + 1))}"""
+{order_by_statement}
+LIMIT {BATCH_FETCH_LIMIT}
+OFFSET {BATCH_FETCH_LIMIT * loops}"""
 
             rows_temp = self.build_connection().load(with_limit_query_string)
             rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
