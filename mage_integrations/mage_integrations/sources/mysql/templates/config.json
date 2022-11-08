@@ -1,9 +1,9 @@
 {
   "database": "",
   "host": "",
-  "password": "",
   "port": 3306,
   "username": "",
+  "password": "",
   "connection_method": "direct",
   "ssh_host": "",
   "ssh_port": 22,
