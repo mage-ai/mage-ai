@@ -1,4 +1,4 @@
-from mage_ai.data_integrations.utils.config import build_config_json
+from mage_ai.data_integrations.utils.config import build_config_json, interpolate_variables
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
@@ -6,7 +6,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig
-from mage_ai.shared.parsers import extract_json_objects
+from mage_ai.shared.parsers import encode_complex, extract_json_objects
 from typing import Any, Dict, List
 import importlib
 import json
@@ -110,7 +110,7 @@ class IntegrationPipeline(Pipeline):
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
 
-    def test_connection(self, block_type: BlockType, config: Dict = None):
+    def test_connection(self, block_type: BlockType, config: str = None):
         file_path = None
         if BlockType.DATA_LOADER == block_type:
             file_path = self.source_file_path
@@ -123,7 +123,11 @@ class IntegrationPipeline(Pipeline):
                     PYTHON,
                     file_path,
                     '--config_json',
-                    simplejson.dumps(config),
+                    simplejson.dumps(
+                        interpolate_variables(config, get_global_variables(self.uuid)),
+                        default=encode_complex,
+                        ignore_nan=True,
+                    ),
                     '--test_connection',
                 ]
 
