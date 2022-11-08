@@ -16,7 +16,7 @@ Build, run, and manage your DBT models with Mage.
 
 | Role | Benefits |
 | --- | --- |
-| Analytics engineers<img width="100" /> | With Mage and DBT combined, you can expand your capabilities from analytics to data engineering and building complex data pipelines. |
+| Analytics engineers<img width="100" /> | With Mage and DBT combined, you can expand build and run complex data pipelines. |
 | Data engineers<img width="100" /> | Simplify your data infrastructure and reduce the amount of redundant tools in your “modern” data stack. Replace DBT cloud and Airflow with Mage’s native integration with DBT. |
 
 ![](https://www.meme-arsenal.com/memes/1b10a71e3fd178b2f623d2cde61f6b42.jpg)
