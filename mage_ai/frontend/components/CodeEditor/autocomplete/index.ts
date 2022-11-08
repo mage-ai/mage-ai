@@ -25,7 +25,7 @@ function columnNameItems(monaco, range, block: BlockType) {
 function variableManagersDefinedRegex(blocks, pipeline) {
   return blocks.map((block: BlockType) => {
     const regex = new RegExp(
-      `([\\w_]+)[ ]*=[ ]*get_variable\\('${pipeline.uuid}', '${block.uuid}', 'df'\\)`,
+      `([\\w_]+)[ ]*=[ ]*get_variable\\('${pipeline.uuid}', '${block.uuid}', 'output_0'\\)`,
       'g',
     );
 
@@ -86,7 +86,7 @@ function variablesFromBlocks(
       insertText: `from mage_ai.data_preparation.variable_manager import get_variable
 
 
-df = get_variable('${pipeline.uuid}', '${uuid}', 'df')
+df = get_variable('${pipeline.uuid}', '${uuid}', 'output_0')
 `,
       range,
     });
@@ -107,7 +107,7 @@ function variablesFromPositionalArguments(monaco, range, {
     const {
       type,
     } = upstreamBlock;
-    const insertText = idx === 0 ? 'df' : `args[${idx - 1}]`;
+    const insertText = idx === 0 ? 'output_0' : `args[${idx - 1}]`;
 
     return {
       label: `df ${uuid} ${type} block`,
@@ -227,7 +227,7 @@ export default function(opts: ProviderOptionsType) {
       // Variables defined in other blocks (e.g. the code copied from variables tab)
       // Upstream block input value dataframe variables
       if (BlockTypeEnum.CHART === type || BlockTypeEnum.SCRATCHPAD === type) {
-        // Search all previous lines where [var] = get_variable(pipeline_uuid, block_uuid, 'df')
+        // Search all previous lines where [var] = get_variable(pipeline_uuid, block_uuid, 'output_0')
         // is defined, then get the value of [var] and check to see if they typed it on the
         // same line as the current word.
 

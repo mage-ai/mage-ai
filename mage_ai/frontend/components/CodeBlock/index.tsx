@@ -1250,7 +1250,7 @@ function CodeBlockProps({
                   content = `from mage_ai.data_preparation.variable_manager import get_variable
 
 
-df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
+df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 `;
                 }
 
