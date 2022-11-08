@@ -67,3 +67,9 @@ class MySQL(Connection):
             port=port,
             user=self.username,
         )
+
+    def close_connection(self, connection):
+        connection.close()
+        if self.ssh_tunnel is not None:
+            self.ssh_tunnel.stop()
+            self.ssh_tunnel = None

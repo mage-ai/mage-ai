@@ -5,6 +5,9 @@ from typing import List
 
 
 class Connection(BaseConnection):
+    def close_connection(self, connection):
+        connection.close()
+
     def execute(
         self,
         query_strings: List[str],
@@ -23,7 +26,8 @@ class Connection(BaseConnection):
 
         if commit:
             connection.commit()
-        connection.close()
+
+        self.close_connection(connection)
 
         return data
 
