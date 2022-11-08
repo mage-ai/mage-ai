@@ -46,8 +46,9 @@ function SourceConfig({
     api[apiName].useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
-        response, {
-        callback: (res) => {
+        response,
+        {
+          callback: (res) => {
             setConnected(res['success']);
             setError(res['error_message']);
           },

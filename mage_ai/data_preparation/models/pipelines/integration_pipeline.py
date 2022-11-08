@@ -1,3 +1,4 @@
+from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_integrations.utils.config import build_config_json, interpolate_variables
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
@@ -11,6 +12,7 @@ from typing import Any, Dict, List
 import importlib
 import json
 import os
+import pandas as pd
 import simplejson
 import subprocess
 import yaml
@@ -139,10 +141,57 @@ class IntegrationPipeline(Pipeline):
                 )
                 proc.check_returncode()
         except subprocess.CalledProcessError as e:
-            test = e.stderr.decode('utf-8').split('\n')
+            stderr = e.stderr.decode('utf-8').split('\n')
 
             json_object = {}
-            for line in test:
+            for line in stderr:
+                if line.startswith('ERROR'):
+                    json_object = next(extract_json_objects(line))
+            
+            error = dig(json_object, 'tags.error')
+            raise Exception(error)
+
+    def preview_data(self, block_type: BlockType) -> pd.DataFrame:
+        global_vars = get_global_variables(self.uuid) or dict()
+        file_path = None
+        if BlockType.DATA_LOADER == block_type:
+            file_path = self.source_file_path
+        elif BlockType.DATA_EXPORTER == block_type:
+            file_path = self.destination_file_path
+
+        try:
+            if file_path:
+                run_args = [
+                    PYTHON,
+                    file_path,
+                    '--config_json',
+                    build_config_json(self.data_loader.file_path, global_vars),
+                    '--load_sample_data',
+                    '--log_to_stdout',
+                    '1',
+                    '--settings',
+                    self.data_loader.file_path,
+                    '--state',
+                    self.source_state_file_path,
+                    '--pipeline_uuid',
+                    self.uuid,
+                    '--block_uuid',
+                    self.data_loader.uuid,
+                ]
+
+                proc = subprocess.run(
+                    run_args,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+
+                print_logs_from_output(proc.stdout.decode())
+                proc.check_returncode()
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr.decode('utf-8').split('\n')
+
+            json_object = {}
+            for line in stderr:
                 if line.startswith('ERROR'):
                     json_object = next(extract_json_objects(line))
             

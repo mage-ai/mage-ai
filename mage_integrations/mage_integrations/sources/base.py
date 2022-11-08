@@ -1,4 +1,5 @@
 from datetime import datetime
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
@@ -23,6 +24,7 @@ import dateutil.parser
 import inspect
 import json
 import os
+import pandas as pd
 import singer
 import sys
 import traceback
@@ -39,6 +41,7 @@ class Source:
         discover_mode: bool = False,
         discover_streams_mode: bool = False,
         is_sorted: bool = True,
+        load_sample_data: bool = False,
         log_to_stdout: bool = False,
         logger=LOGGER,
         query: Dict = {},
@@ -49,6 +52,9 @@ class Source:
         test_connection: bool = False,
         verbose: int = 1,
     ):
+        self.pipeline_uuid = None
+        self.block_uuid = None
+
         args = parse_args([])
         if args:
             if args.catalog:
@@ -69,6 +75,12 @@ class Source:
                 state = args.state
             if args.test_connection:
                 test_connection = args.test_connection
+            if args.load_sample_data:
+                load_sample_data = args.load_sample_data
+            if args.pipeline_uuid:
+                self.pipeline_uuid = args.pipeline_uuid
+            if args.block_uuid:
+                self.block_uuid = args.block_uuid
 
         self.catalog = catalog
         self.config = config
@@ -76,6 +88,7 @@ class Source:
         self.discover_streams_mode = discover_streams_mode
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
+        self.load_sample_data = load_sample_data
         self.logger = Logger(
             caller=self,
             log_to_stdout=log_to_stdout,
@@ -182,6 +195,20 @@ class Source:
         try:
             if self.should_test_connection:
                 self.test_connection()
+            elif self.load_sample_data:
+                catalog = self.catalog or self.discover(streams=self.selected_streams)
+                for stream in catalog.get_selected_streams(self.state):
+                    gen = self.load_data(stream, sample_data=True)
+                    if gen is not None \
+                        and self.pipeline_uuid is not None \
+                        and self.block_uuid is not None:
+                        
+                        data = next(gen)
+                        df = pd.DataFrame.from_records(data)
+                        
+                        pipeline = Pipeline(self.pipeline_uuid)
+                        block = pipeline.get_block(self.block_uuid)
+                        block.store_variables(dict(output_sample_data=df))
             elif self.discover_mode:
                 if self.discover_streams_mode:
                     json.dump(self.discover_streams(), sys.stdout)
@@ -431,6 +458,7 @@ class Source:
 
     def load_data(
         self,
+        stream,
         bookmarks: Dict = None,
         query: Dict = {},
         sample_data: bool = False,

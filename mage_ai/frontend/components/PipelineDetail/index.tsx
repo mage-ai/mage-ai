@@ -442,10 +442,13 @@ function PipelineDetail({
       fetchPipeline={fetchPipeline}
       globalVariables={globalVariables}
       onChangeCodeBlock={onChangeCodeBlock}
+      openSidekickView={openSidekickView}
       pipeline={pipeline}
       savePipelineContent={savePipelineContent}
       setErrors={setErrors}
+      setOutputBlocks={setOutputBlocks}
       setSelectedBlock={setSelectedBlock}
+      setSelectedOutputBlock={setSelectedOutputBlock}
     />
   ), [
     blocks,

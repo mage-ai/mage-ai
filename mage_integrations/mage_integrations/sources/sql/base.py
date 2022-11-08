@@ -35,6 +35,7 @@ class Source(BaseSource):
 
     def discover(self, streams: List[str] = None) -> Catalog:
         query = self.build_discover_query(streams=streams)
+
         rows = self.build_connection().load(query)
         groups = group_by(lambda t: t[0], rows)
 
@@ -140,7 +141,7 @@ class Source(BaseSource):
             else:
                 order_by_statement = ''
 
-            columns = extract_selected_columns(stream.metadata)
+            columns = self.update_column_names(extract_selected_columns(stream.metadata))
 
             columns_statement = '\n, '.join(columns)
             query_string = f"""
@@ -190,6 +191,9 @@ OFFSET {BATCH_FETCH_LIMIT * loops}"""
 
             if len(rows_temp) < BATCH_FETCH_LIMIT:
                 break
+
+    def update_column_names(self, columns: List[str]) -> List[str]:
+        return columns
 
     def build_discover_query(self, schema: str, streams: List[str] = None):
         query = f"""

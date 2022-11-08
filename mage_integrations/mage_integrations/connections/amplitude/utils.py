@@ -21,13 +21,13 @@ def build_date_range(
         # requests to amplitude.
         start_date = today - timedelta(days=365)
 
-    if end_date:
+    if sample:
+        end_date = start_date + timedelta(hours=1)
+    elif end_date:
         if start_date > end_date:
             return None, None
         if offset is not None:
             end_date = start_date
-    elif sample:
-        end_date = start_date + timedelta(hours=1)
     else:
         end_date = today + timedelta(hours=23)
 

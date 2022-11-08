@@ -47,6 +47,9 @@ import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
+import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 
 type IntegrationPipelineProps = {
   addNewBlockAtIndex: (
@@ -60,6 +63,7 @@ type IntegrationPipelineProps = {
   fetchPipeline: () => void;
   globalVariables: PipelineVariableType[];
   onChangeCodeBlock: (uuid: string, value: string) => void;
+  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   savePipelineContent: (payload?: {
     block?: BlockType;
@@ -69,7 +73,9 @@ type IntegrationPipelineProps = {
     errors: any;
     response: any;
   }) => void;
+  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
+  setSelectedOutputBlock: (block: BlockType) => void;
 };
 
 function IntegrationPipeline({
@@ -79,10 +85,13 @@ function IntegrationPipeline({
   fetchPipeline,
   globalVariables,
   onChangeCodeBlock,
+  openSidekickView,
   pipeline,
   savePipelineContent,
   setErrors,
+  setOutputBlocks,
   setSelectedBlock,
+  setSelectedOutputBlock,
 }: IntegrationPipelineProps) {
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
@@ -148,6 +157,38 @@ function IntegrationPipeline({
     dataExporterBlockContent,
   ]);
 
+  const [sourceSampleDataError, setSourceSampleDataError] = useState<string>();
+  const [loadSampleData, { isLoading: isLoadingLoadSampleData }] = useMutation(
+    api.integration_sources.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response,
+        {
+          callback: (res) => {
+            if (res['success']) {
+              setSelectedOutputBlock(dataLoaderBlock);
+              openSidekickView(ViewKeyEnum.DATA);
+              setOutputBlocks(() => {
+                setSelectedOutputBlock(dataLoaderBlock);
+                return [dataLoaderBlock];
+              });
+            } else {
+              setSourceSampleDataError(res['error']);
+            }
+          },
+          onErrorCallBack: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          }
+        }
+      )
+    }
+  )
+
   const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
     dataLoaderBlockContent,
   ]);
@@ -208,7 +249,14 @@ function IntegrationPipeline({
               catalog: catalogData,
             }));
 
-            savePipelineContent().then(() => fetchPipeline());
+            savePipelineContent().then(() => {
+              fetchPipeline();
+              // @ts-ignore
+              loadSampleData({
+                action: 'sample_data',
+                pipeline_uuid: pipeline?.uuid,
+              });
+            });
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -531,6 +579,8 @@ function IntegrationPipeline({
                       <Select
                         onChange={(e) => {
                           const uuid = e.target.value;
+
+                          setOutputBlocks(() => []);
                           setSelectedStreamID(uuid);
                           if (uuid) {
                             // @ts-ignore
@@ -564,6 +614,17 @@ function IntegrationPipeline({
                           </option>
                         ))}
                       </Select>
+                      {isLoadingLoadSampleData && (
+                        <FlexContainer>
+                          <Spinner color="white" small/> 
+
+                        </FlexContainer>
+                      )}
+                      {sourceSampleDataError && (
+                        <Text warning>
+                          {sourceSampleDataError}
+                        </Text>
+                      )}
                     </Spacing>
                   )}
 
