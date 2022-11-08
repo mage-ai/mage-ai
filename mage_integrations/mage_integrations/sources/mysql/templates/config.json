@@ -1,7 +1,13 @@
 {
   "database": "",
   "host": "",
-  "password": "",
   "port": 3306,
-  "username": ""
+  "username": "",
+  "password": "",
+  "connection_method": "direct",
+  "ssh_host": "",
+  "ssh_port": 22,
+  "ssh_username": "",
+  "ssh_password": "",
+  "ssh_pkey": ""
 }

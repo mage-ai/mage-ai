@@ -1,4 +1,7 @@
-from mage_integrations.connections.mysql import MySQL as MySQLConnection
+from mage_integrations.connections.mysql import (
+    ConnectionMethod,
+    MySQL as MySQLConnection
+)
 from mage_integrations.sources.base import main
 from mage_integrations.sources.sql.base import Source
 from typing import List
@@ -10,8 +13,14 @@ class MySQL(Source):
             database=self.config['database'],
             host=self.config['host'],
             password=self.config['password'],
-            port=self.config.get('port'),
+            port=self.config.get('port', 3306),
             username=self.config['username'],
+            connection_method=self.config.get('connection_method', ConnectionMethod.DIRECT),
+            ssh_host=self.config.get('ssh_host'),
+            ssh_port=self.config.get('ssh_port', 22),
+            ssh_username=self.config.get('ssh_username'),
+            ssh_password=self.config.get('ssh_password'),
+            ssh_pkey=self.config.get('ssh_pkey'),
             verbose=0 if self.discover_mode or self.discover_streams_mode else 1,
         )
 
