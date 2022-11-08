@@ -94,7 +94,7 @@ function SourceConfig({
               testConnection({
                 action: 'test_connection',
                 pipeline_uuid: pipeline.uuid,
-                config: parse(blockConfig),
+                config: blockConfig,
               });
               setError(null);
             }}
