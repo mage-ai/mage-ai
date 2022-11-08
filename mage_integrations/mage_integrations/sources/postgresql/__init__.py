@@ -43,7 +43,7 @@ WHERE  c.table_schema = '{schema}'
 
         if streams:
             table_names = ', '.join([f"'{n}'" for n in streams])
-            query = f'{query}\nAND TABLE_NAME IN ({table_names})'
+            query = f'{query}\nAND c.TABLE_NAME IN ({table_names})'
         return query
 
 
