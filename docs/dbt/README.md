@@ -6,6 +6,7 @@ Transform DBT with Mage.
 
 1. [Overview](#overview)
 1. [Features](#features)
+1. [Tutorials](#tutorials)
 1. [Guides](#guides)
 
 <br />
@@ -35,6 +36,12 @@ Build, run, and manage your DBT models with Mage.
 | Build dynamic DBT pipelines using flexible variable interpolation | `{{ env_var('...') }}`<br />`{{ variables('...') }}` |
 | Automatically run DBT tests every time a pipeline runs | Write checks using DBT tests, then Mage will run them and fail the pipeline if the test results produce any failures. |
 | Observability built-in | Monitor your DBT pipelines and get alerted when things break. |
+
+<br />
+
+## Tutorials
+
+1. [Set up DBT models & orchestrate DBT runs](../tutorials/dbt/quick_start.md)
 
 <br />
 
