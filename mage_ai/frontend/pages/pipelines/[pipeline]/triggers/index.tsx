@@ -354,6 +354,7 @@ function PipelineSchedules({
               >
                 <Edit default size={2 * UNIT} />
               </Button>
+              <Spacing mr={1} />
               <Button
                 default
                 iconOnly
