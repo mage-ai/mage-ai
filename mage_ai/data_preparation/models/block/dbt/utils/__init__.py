@@ -472,11 +472,22 @@ def build_command_line_arguments(
 
     if BlockLanguage.SQL == block.language:
         attr = parse_attributes(block)
+        project_name = attr['project_name']
+        file_path = attr['file_path']
         project_full_path = attr['project_full_path']
-        path_to_model = re.sub(f'{project_full_path}/', '', attr['full_path'])
+        full_path = attr['full_path']
+        path_to_model = re.sub(f'{project_full_path}/', '', full_path)
 
         if test_execution:
             dbt_command = 'compile'
+
+            with open(f'{project_full_path}/dbt_project.yml') as f:
+                dbt_project = yaml.safe_load(f)
+                target_path = dbt_project['target-path']
+                path = f'{project_full_path}/{target_path}/compiled/{file_path}'
+                print(path, os.path.exists(path))
+                if os.path.exists(path):
+                    os.remove(path)
 
         args += [
             '--select',

@@ -21,15 +21,16 @@ def create_upstream_block_tables(
     )
     configuration = configuration if configuration else block.configuration
     database = configuration.get('data_provider_database')
-    schema = configuration.get('data_provider_schema')
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
+        print('WTFFFFFFFFFFFFFFFFFF', upstream_block.uuid)
         if should_cache_data_from_upstream(block, upstream_block, [
             'data_provider',
         ], [
             ConfigKey.GOOGLE_SERVICE_ACC_KEY,
             ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH,
         ]):
+            print('WTFFFFFFFFFFFFFFFFFF', upstream_block.uuid, BlockType.DBT == upstream_block.type, cache_upstream_dbt_models)
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
@@ -42,14 +43,16 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
+            schema_name = configuration.get('data_provider_schema')
+
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 attributes_dict = parse_attributes(block)
-                schema = attributes_dict['source_name']
+                schema_name = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
             loader.export(
                 df,
-                f'{schema}.{table_name}',
+                f'{schema_name}.{table_name}',
                 database=database,
                 if_exists='replace',
                 verbose=False,
