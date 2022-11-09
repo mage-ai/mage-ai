@@ -35,6 +35,8 @@ export function getTooltipContentLength(
   if (typeof renderContentFunction === 'undefined' || typeof tooltipData === 'undefined') {
     return 0;
   }
+  const children = renderContentFunction?.(tooltipData, index)?.props?.children;
+  const childrenArr = Array.isArray(children) ? children : [children];
 
-  return renderContentFunction?.(tooltipData, index)?.props?.children?.join('').length;
+  return childrenArr.join('').length;
 }
