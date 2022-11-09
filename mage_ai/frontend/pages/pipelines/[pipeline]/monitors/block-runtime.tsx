@@ -81,8 +81,8 @@ function BlockRuntimeMonitor({
   } = dataMonitor?.monitor_stats || {};
 
   const dateRange = useMemo(() => {
-    let date = new Date()
-    const dateRange = []
+    const date = new Date();
+    const dateRange = [];
     for (let i = 0; i < 90; i++) {
       dateRange.unshift(date.toISOString().split('T')[0]);
       date.setDate(date.getDate() - 1);
@@ -149,7 +149,10 @@ function BlockRuntimeMonitor({
               All
             </option>
             {pipelineSchedules && pipelineSchedules.map(schedule => (
-              <option value={schedule.id}>
+              <option
+                key={schedule.id}
+                value={schedule.id}
+              >
                 {schedule.name}
               </option>
             ))}
@@ -159,8 +162,11 @@ function BlockRuntimeMonitor({
     >
       <Spacing mx={2}>
         {blockRuntimeData &&
-          Object.entries(blockRuntimeData).map(([blockUuid, data]) => (
-            <Spacing mt={2}>
+          Object.entries(blockRuntimeData).map(([blockUuid, data], idx) => (
+            <Spacing
+              key={`${blockUuid}_${idx}`}
+              mt={2}
+            >
               <FlexContainer alignItems="center">
                 <Spacing mx={1}>
                   <Circle
@@ -185,7 +191,7 @@ function BlockRuntimeMonitor({
                   data={data}
                   getX={data => moment(data.x).valueOf()}
                   gridProps={{
-                    stroke: "black",
+                    stroke: 'black',
                     strokeDasharray: null,
                     strokeOpacity: 0.2,
                   }}
@@ -221,7 +227,7 @@ function BlockRuntimeMonitor({
         )}
       </Spacing>
     </Monitor>
-  )
+  );
 }
 
 BlockRuntimeMonitor.getInitialProps = async (ctx: any) => {
