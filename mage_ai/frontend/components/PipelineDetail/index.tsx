@@ -396,6 +396,7 @@ function PipelineDetail({
           selected={selected}
           setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
           setAnyInputFocused={setAnyInputFocused}
+          setCreatingNewDBTModel={setCreatingNewDBTModel}
           setEditingBlock={setEditingBlock}
           setOutputBlocks={setOutputBlocks}
           setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}

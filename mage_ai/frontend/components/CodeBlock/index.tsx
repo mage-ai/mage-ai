@@ -136,6 +136,7 @@ type CodeBlockProps = {
   }) => Promise<any>;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused: (value: boolean) => void;
+  setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -173,6 +174,7 @@ function CodeBlockProps({
   selected,
   setAddNewBlockMenuOpenIdx,
   setAnyInputFocused,
+  setCreatingNewDBTModel,
   setEditingBlock,
   setOutputBlocks,
   setRecsWindowOpenBlockIdx,
@@ -1274,6 +1276,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
               onClickAddSingleDBTModel={onClickAddSingleDBTModel}
               pipeline={pipeline}
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+              setCreatingNewDBTModel={setCreatingNewDBTModel}
               setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
             />
           )}

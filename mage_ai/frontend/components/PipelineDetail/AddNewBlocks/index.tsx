@@ -290,7 +290,7 @@ function AddNewBlocks({
                   {
                     label: () => 'New model',
                     onClick: () => {
-                      setCreatingNewDBTModel(true);
+                      setCreatingNewDBTModel?.(true);
                       onClickAddSingleDBTModel?.(blockIdx);
                     },
                     uuid: 'dbt/new_model',
