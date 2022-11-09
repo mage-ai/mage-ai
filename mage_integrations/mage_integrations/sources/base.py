@@ -245,8 +245,13 @@ class Source:
             raise Exception(message)
 
         schema_dict = stream.schema.to_dict()
+        schema_properties_dict = schema_dict['properties']
         if properties:
-            schema_dict['properties'] = properties
+            schema_dict['properties'] = {
+                k: schema_properties_dict[k]
+                if k in schema_properties_dict else v
+                for k, v in properties.items()
+            }
         else:
             schema_dict['properties'] = extract(
                 schema_dict['properties'],
@@ -263,7 +268,7 @@ class Source:
             unique_constraints=stream.unique_constraints,
         )
 
-    def sync_stream(self, stream) -> int:
+    def sync_stream(self, stream, properties: Dict = None) -> int:
         """
         Steps:
             1. Get bookmarks.
@@ -292,7 +297,7 @@ class Source:
             start_date=start_date,
             stream=stream,
         ):
-            max_bookmark_tmp = self.write_records(stream, rows)
+            max_bookmark_tmp = self.write_records(stream, rows, properties)
             max_bookmark = max(max_bookmark, max_bookmark_tmp)
             record_count += len(rows)
 
@@ -305,7 +310,7 @@ class Source:
 
         return record_count
 
-    def write_records(self, stream, rows: List[Dict]) -> List:
+    def write_records(self, stream, rows: List[Dict], properties: Dict = None) -> List:
         """Write RECORD messages.
 
         Args:
@@ -318,11 +323,15 @@ class Source:
         bookmark_properties = self._get_bookmark_properties_for_stream(stream)
         max_bookmark = []
 
+        columns = extract_selected_columns(stream.metadata)
+        if properties is not None:
+            columns = list(properties.keys())
+
         for row in rows:
             write_records(
                 stream.tap_stream_id,
                 [
-                    {col: row.get(col) for col in extract_selected_columns(stream.metadata)},
+                    {col: row.get(col) for col in columns},
                 ],
             )
 
@@ -356,7 +365,7 @@ class Source:
             self.logger.info('Syncing stream started.', tags=tags)
 
             self.process_stream(stream, properties)
-            record_count = self.sync_stream(stream)
+            record_count = self.sync_stream(stream, properties)
 
             self.logger.info('Syncing stream completed.', tags=merge_dict(tags, dict(
                 records=record_count,

@@ -99,8 +99,7 @@ function RetryButton({
         borderRadius={BORDER_RADIUS_XXXLARGE}
         danger={RunStatus.FAILED === status}
         default={RunStatus.INITIAL === status}
-        notClickable={RunStatus.COMPLETED === status}
-        onClick={() => setShowConfirmation(RunStatus.COMPLETED !== status)}
+        onClick={() => setShowConfirmation(true)}
         padding="6px"
         primary={RunStatus.RUNNING === status}
         warning={RunStatus.CANCELLED === status}
@@ -144,7 +143,7 @@ function RetryButton({
               </Spacing>
             </>
           )}
-          {[RunStatus.CANCELLED, RunStatus.FAILED].includes(status) && (
+          {[RunStatus.CANCELLED, RunStatus.FAILED, RunStatus.COMPLETED].includes(status) && (
             <>
               <Text bold color="#9ECBFF">
                 Run {status}
