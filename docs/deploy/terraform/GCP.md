@@ -17,6 +17,9 @@ You can run the following command to see all the resources that will be created 
 
 ```bash
 cd scripts/deploy/terraform/gcp
+```
+
+```bash
 terraform plan
 ```
 
@@ -45,6 +48,9 @@ Once you created an account, from your terminal run the following command to log
 
 ```bash
 gcloud init
+```
+
+```bash
 gcloud auth application-default login
 ```
 
@@ -242,6 +248,8 @@ If it isn’t, add a new rule with the following values:
 | Mode | Match | Action | Priority |
 | --- | --- | --- | --- |
 | Basic mode | [Enter your IP address](https://whatismyipaddress.com/) | Allow | 100 |
+
+If you still get 403, check to see if you’re using `http://` and NOT `https://`.
 
 <br />
 
