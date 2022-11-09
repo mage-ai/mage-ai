@@ -274,6 +274,23 @@ If you still get 403, check to see if you’re using `http://` and NOT `https://
 
 <br />
 
+## Updating Mage versions
+
+After Mage is running in your cloud, you can update the Mage Docker image version by
+running the following command in your CLI tool:
+
+```bash
+gcloud run deploy [app_name] --image [docker_image]
+```
+
+> `app_name`
+>
+> This is the value you changed when editing the
+> [./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf)
+> file.
+
+<br />
+
 ## Misc
 
 ### Security

@@ -203,11 +203,14 @@ def get_profile(block, profile_target: str = None) -> Dict:
     profiles_full_path = attr['profiles_full_path']
 
     with open(profiles_full_path, 'r') as f:
-        profile = yaml.safe_load(f)[project_name]
-        outputs = profile['outputs']
-        target = profile['target']
+        try:
+            profile = yaml.safe_load(f)[project_name]
+            outputs = profile['outputs']
+            target = profile.get('target')
 
-        return outputs.get(profile_target or target)
+            return outputs.get(profile_target or target)
+        except Exception:
+            print(f'Error loading file {profiles_full_path}, please check file content syntax.')
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
@@ -485,7 +488,6 @@ def build_command_line_arguments(
                 dbt_project = yaml.safe_load(f)
                 target_path = dbt_project['target-path']
                 path = f'{project_full_path}/{target_path}/compiled/{file_path}'
-                print(path, os.path.exists(path))
                 if os.path.exists(path):
                     os.remove(path)
 
