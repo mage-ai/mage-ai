@@ -168,9 +168,15 @@ function FileEditor({
         inline
         onClick={() => {
           const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
+          const blockUUID = getBlockUUID(file.path.split('/'));
           const blockReqPayload: BlockRequestPayloadType = {
+            configuration: {
+              file_path: file.path.split('/')[0] === BlockTypeEnum.DBT
+                ? blockUUID
+                : null,
+            },
             language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
-            name: getBlockUUID(file.path.split('/')),
+            name: blockUUID,
             type: getBlockType(file.path.split('/')),
           };
 
