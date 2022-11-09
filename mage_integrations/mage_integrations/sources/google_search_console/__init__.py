@@ -5,7 +5,7 @@ from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.google_search_console.streams import STREAMS
 from mage_integrations.utils.dictionary import merge_dict
 from mage_integrations.utils.schema_helpers import extract_selected_columns
-from typing import Callable, Dict, Generator, List
+from typing import Dict, Generator, List
 import singer
 
 LOGGER = singer.get_logger()
@@ -27,7 +27,6 @@ class GoogleSearchConsole(Source):
         stream,
         bookmarks: Dict = None,
         query: Dict = {},
-        write_records_func: Callable = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         stream_name = stream.tap_stream_id
