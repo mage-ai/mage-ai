@@ -48,6 +48,7 @@ Read more tech docs here. Got questions?
 - [Multi-development environment in the cloud](development/multi_development_environment/README.md)
 
 ### Production
+- [CI/CD](deploy/ci_cd/README.md)
 - Deploying to cloud
     - [Using Terraform](deploy/terraform/README.md)
         - [Amazon Web Services (AWS)](deploy/terraform/AWS.md)

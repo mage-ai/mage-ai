@@ -179,7 +179,8 @@ WHERE table_id = '{table_name}'
                 self.client.create_dataset(dataset=schema, exists_ok=True)
 
                 # Clean column names
-                df.columns = df.columns.str.replace(' ', '_')
+                if type(df) is DataFrame:
+                    df.columns = df.columns.str.replace(' ', '_')
 
                 self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
