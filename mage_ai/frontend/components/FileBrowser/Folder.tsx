@@ -42,6 +42,7 @@ import { sortByKey } from '@utils/array';
 const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
+  allowOpeningFolders?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
   onlyShowChildren?: boolean;
   onSelectBlockFile?: (
@@ -64,6 +65,7 @@ type FolderProps = {
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
+  allowOpeningFolders,
   file,
   isFileDisabled,
   level,
@@ -134,6 +136,7 @@ function Folder({
 
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
+      allowOpeningFolders={allowOpeningFolders}
       file={{
         ...f,
         parent: file,
@@ -187,11 +190,15 @@ function Folder({
             const nonPythonBlockFromFile = getNonPythonBlockFromFile(file);
 
             if (children) {
-              setCollapsed((collapsedPrev) => {
-                set(uuid, !collapsedPrev);
+              if (allowOpeningFolders) {
+                openFile(filePathToUse);
+              } else {
+                  setCollapsed((collapsedPrev) => {
+                    set(uuid, !collapsedPrev);
 
-                return !collapsedPrev;
-              });
+                    return !collapsedPrev;
+                  });
+              }
             } else if (nonPythonBlockFromFile) {
               onSelectBlockFile?.(
                 nonPythonBlockFromFile.uuid,

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import BlockType, { BlockLanguageEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -6,6 +6,8 @@ import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { Close } from '@oracle/icons';
 import {
@@ -17,17 +19,25 @@ import { find, indexBy } from '@utils/array';
 
 type FileSelectorPopupProps = {
   blocks: BlockType[];
+  creatingNewDBTModel?: boolean;
+  dbtModelName?: string;
   files: FileType[];
   onClose: () => void;
   onOpenFile: (filePath: string) => void;
+  setDbtModelName?: (name: string) => void;
 };
 
 function FileSelectorPopup({
   blocks,
+  creatingNewDBTModel,
+  dbtModelName,
   files,
   onClose,
   onOpenFile,
+  setDbtModelName,
 }: FileSelectorPopupProps) {
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+
   const dbtModelFiles = useMemo(
     () => {
       const arr1 = find(files?.[0]?.children || [], ({ name }) => 'dbt' === name)?.children;
@@ -63,11 +73,46 @@ function FileSelectorPopup({
       <WindowHeaderStyle>
         <Flex alignItems="center">
           <Text
+            danger={creatingNewDBTModel && !dbtModelName}
             disableWordBreak
             monospace
           >
-            Select DBT model file
+            {creatingNewDBTModel
+              ? 'Enter name for dbt model'
+              : 'Select DBT model file'
+            }
           </Text>
+          {creatingNewDBTModel &&
+            <>
+              <Spacing mx={1}>
+                <LabelWithValueClicker
+                  bold={false}
+                  inputValue={dbtModelName}
+                  monospace
+                  muted
+                  notRequired
+                  onBlur={() => {
+                    setIsEditingName(false);
+                  }}
+                  onChange={(e) => {
+                    setDbtModelName(e.target.value);
+                    e.preventDefault();
+                  }}
+                  onClick={() => {
+                    setIsEditingName(true);
+                  }}
+                  onFocus={() => {
+                    setIsEditingName(true);
+                  }}
+                  stacked
+                  value={!isEditingName && dbtModelName}
+                />
+              </Spacing>
+              <Text disableWordBreak monospace>
+                and select file location:
+              </Text>
+            </>
+          }
         </Flex>
         <Button
           iconOnly
@@ -79,8 +124,13 @@ function FileSelectorPopup({
 
       <WindowContentStyle>
         <FileBrowser
+          allowOpeningFolders
           files={dbtModelFiles}
           isFileDisabled={(filePath: string, children) => {
+            if (creatingNewDBTModel) {
+              return !children || children?.some(childFolder => childFolder?.name === 'models');
+            }
+
             return !!existingModelsByFilePath[filePath]
               || (!children?.length &&
                 !filePath.match(new RegExp(`\.${BlockLanguageEnum.SQL}\$`))
