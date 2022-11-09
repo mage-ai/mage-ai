@@ -23,12 +23,14 @@ def create_upstream_block_tables(
     database = configuration.get('data_provider_database')
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
+        print('WTFFFFFFFFFFFFFFFFFF', upstream_block.uuid)
         if should_cache_data_from_upstream(block, upstream_block, [
             'data_provider',
         ], [
             ConfigKey.GOOGLE_SERVICE_ACC_KEY,
             ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH,
         ]):
+            print('WTFFFFFFFFFFFFFFFFFF', upstream_block.uuid, BlockType.DBT == upstream_block.type, cache_upstream_dbt_models)
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
