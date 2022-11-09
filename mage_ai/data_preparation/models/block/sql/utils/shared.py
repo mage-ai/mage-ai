@@ -13,12 +13,12 @@ def should_cache_data_from_upstream(
     config_keys: List[str],
     config_profile_keys: List[str],
 ) -> bool:
+    if BlockType.SENSOR == upstream_block.type:
+        return False
+
     if BlockType.DBT == block.type:
         # TODO (tommy dang): check to see if the upstream block has the same data source
         return True
-
-    if BlockType.SENSOR == upstream_block.type:
-        return False
 
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
         return True
