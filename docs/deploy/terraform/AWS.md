@@ -51,6 +51,12 @@ variable "docker_image" {
 }
 ```
 
+> Note: Custom Docker images
+>
+> If you previously tagged a Docker image you built when following this
+> [CI/CD guide](../ci_cd/README.md), you must push that locally tagged Docker image to
+> Amazon Elastic Container Registry (ECR) before deploying using Terraform.
+
 <b>Region (optional)</b>
 
 In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),

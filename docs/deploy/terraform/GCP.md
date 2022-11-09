@@ -75,40 +75,61 @@ by clicking the <b>`+ CREATE REPOSITORY`</b> button.
 1. Near the top of the page, click the link <b>`SETUP INSTRUCTIONS`</b>
 or read these [instructions](https://cloud.google.com/artifact-registry/docs/docker/authentication)
 to set up authentication for Docker.
-    - <b>TLDR</b> - Run the following command in your terminal:
+
+    <b>TLDR</b> - Run the following command in your terminal:
     ```bash
     gcloud auth configure-docker [region]-docker.pkg.dev
     ```
-    - An example command could look like this:
-    ```bash
-    gcloud auth configure-docker us-west2-docker.pkg.dev
-    ```
+
+    An example command could look like this:
+        ```bash
+        gcloud auth configure-docker us-west2-docker.pkg.dev
+        ```
+
 1. Pull the Mage Docker image:
     ```bash
     docker pull mageai/mageai:latest
     ```
-    - If you’re local workstation is using macOS and a silicon chip (e.g. M1, M2, etc),
+
+    If you’re local workstation is using macOS and a silicon chip (e.g. M1, M2, etc),
     then run this command instead:
-    ```bash
-    docker pull --platform linux/amd64 mageai/mageai:latest
-    ```
-1. Tag the pulled Mage docker image:
-    ```bash
-    docker tag mageai/mageai:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
-    ```
-    - An example command could look like this:
-    ```bash
-    docker tag mageai/mageai:latest \
-      us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-    ```
+        ```bash
+        docker pull --platform linux/amd64 mageai/mageai:latest
+        ```
+
+1. Tag the pulled Mage docker image or use a previously tagged Docker image you built
+when following this [CI/CD guide](../ci_cd/README.md):
+    1. Sample commands if using vanilla Mage Docker image:
+        ```bash
+        docker tag mageai/mageai:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
+        ```
+
+        An example command could look like this:
+            ```bash
+            docker tag mageai/mageai:latest \
+              us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
+            ```
+
+    1. Sample commands if using previously tagged custom Docker image:
+        ```bash
+        docker tag mageprod:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
+        ```
+
+        An example command could look like this:
+            ```bash
+            docker tag mageprod:latest \
+              us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
+            ```
+
 1. Push the local Docker image to GCP Artifact Registry:
     ```bash
     docker push [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
     ```
-    - An example command could look like this:
-    ```bash
-    docker push us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-    ```
+
+    An example command could look like this:
+        ```bash
+        docker push us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
+        ```
 
 <br />
 

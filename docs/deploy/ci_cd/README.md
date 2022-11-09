@@ -10,7 +10,7 @@
       mage start demo_project
     ```
 
-    For more examples, read the [setup guide](../tutorials/quick_start/setup.md).
+    For more examples, read the [setup guide](../../tutorials/quick_start/setup.md).
 
 1. Once you’re done developing, copy the contents of the `mage-ai/templates/docker/Dockerfile`
 and paste it into a new `Dockerfile` located in the parent folder of your Mage project (e.g. `my_team/Dockerfile`).
@@ -41,3 +41,15 @@ newly created Dockerfile as the additional set of instructions:
     >
     > Change `mageprod` to any other name. You’ll need this tag name when deploying to
     > production in the cloud.
+
+1. To test the new image works, run the following command:
+    ```bash
+    docker run -it -p 6789:6789 mageprod:latest mage start demo_project
+    ```
+1. Open your browser and go to http://localhost:6789/
+    1. You should see all your pipelines there.
+    1. Changing the contents of files won’t change the contents on your local file system
+    because all your code was packaged together within the Docker image (this is intentional).
+1. The next steps depends on your deployment method. If you are using [Terraform](../terraform/README.md),
+then you’ll need to use the previously tag name (e.g. `mageprod`) when pushing a Docker image to a
+remote Docker registry.
