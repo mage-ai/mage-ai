@@ -205,17 +205,17 @@ function BlockRuntimeMonitor({
                   }}
                   noCurve
                   renderXTooltipContent={data => (
-                    <Text center small>
+                    <Text center inverted small>
                       {moment(data.x).format('MMM DD')}
                     </Text>
                   )}
                   renderYTooltipContent={data => {
                     const yValue = data?.y?.[0];
-                    return yValue != undefined && (
-                      <Text center small>
+                    return yValue !== undefined && (
+                      <Text center inverted small>
                         {yValue.toFixed ? yValue.toFixed(3) : yValue}
                       </Text>
-                    );
+                      );
                   }}
                   thickStroke
                   xLabelFormat={val => moment(val).format('MMM DD')}
