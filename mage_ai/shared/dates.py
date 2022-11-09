@@ -1,6 +1,7 @@
 import datetime
 import pytz
 
+
 def compare(date1: datetime, date2: datetime) -> int:
     if date1 is None or date2 is None:
         return None
@@ -14,3 +15,8 @@ def compare(date1: datetime, date2: datetime) -> int:
         return 1
     else:
         return 0
+
+
+def n_days_ago(n: int) -> str:
+    day = datetime.datetime.now() - datetime.timedelta(days=n)
+    return day.strftime('%Y-%m-%d')
