@@ -120,6 +120,12 @@ variable "docker_image" {
 }
 ```
 
+> Note: Custom Docker images
+>
+> If you previously tagged a Docker image you built when following this
+> [CI/CD guide](../ci_cd/README.md), you must push that locally tagged Docker image to
+> Azure Container Registry before deploying using Terraform.
+
 <b>Region</b>
 
 In the file [./scripts/deploy/terraform/azure/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/main.tf),
