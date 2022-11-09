@@ -213,7 +213,7 @@ function BlockRuntimeMonitor({
                     const yValue = data?.y?.[0];
                     return yValue !== undefined && (
                       <Text center inverted small>
-                        {yValue.toFixed ? yValue.toFixed(3) : yValue}
+                        {yValue.toFixed ? yValue.toFixed(3) : yValue}s
                       </Text>
                       );
                   }}
