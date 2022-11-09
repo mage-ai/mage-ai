@@ -59,7 +59,7 @@ def build_create_table_command(
     return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
 
 
-def convert_column_type(column_type: str, column_settings: Dict) -> str:
+def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
         return 'CHAR(52)'
     elif COLUMN_TYPE_INTEGER == column_type:
