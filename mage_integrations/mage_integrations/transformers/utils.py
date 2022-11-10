@@ -3,6 +3,11 @@ from pandas.api.types import infer_dtype
 import pandas as pd
 
 
+INVALID_DATA_TYPES = [
+    'empty',
+    'mixed',
+]
+
 def write_parquet_file(file_path: str, df: pd.DataFrame) -> None:
     df_output = df.copy()
     # Clean up data types since parquet doesn't support mixed data types

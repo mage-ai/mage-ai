@@ -1,10 +1,12 @@
 from datetime import datetime
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.constants import KEY_VALUE
+from mage_integrations.mage_integrations.transformers.utils import INVALID_DATA_TYPES
+from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
 from mage_integrations.sources.base import Source
 from mage_integrations.transformers.utils import infer_dtypes, write_parquet_file
 from mage_integrations.utils.logger import Logger
-from typing import Dict, List
+from typing import Dict, Generator, List
 
 import argparse
 import os
@@ -141,15 +143,23 @@ class Transformer(Source, Destination):
         query: Dict = {},
         start_date: datetime = None,
         **kwargs,
-    ):
-        return self.df.to_dict('records')
+    ) -> Generator[List[Dict], None, None]:
+        records = self.df.to_dict('records')
+        current = 0
+        while current < len(records):
+            yield records[current : current + BATCH_FETCH_LIMIT]
+
+            current = current + BATCH_FETCH_LIMIT
 
     def process(self, input_buffer) -> None:
         if self.to_df:
             self.transform_input(input_buffer)
         else:
             catalog = self.catalog or self.discover(streams=self.selected_streams)
-            dtypes = {k: dict(type=[v]) for k, v in infer_dtypes(self.df).items()}
+            dtypes = {
+                k: dict(type=['null', 'string' if v in INVALID_DATA_TYPES else v])
+                for k, v in infer_dtypes(self.df).items()
+            }
 
             self.sync(catalog, dtypes)
 
