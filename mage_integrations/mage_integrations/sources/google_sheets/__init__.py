@@ -109,7 +109,7 @@ class GoogleSheets(Source):
 
         # Initialize paging for 1st batch
         is_last_row = False
-        batch_rows = 200
+        batch_rows = 10000
         from_row = 2
         if sheet_max_row < batch_rows:
             to_row = sheet_max_row
