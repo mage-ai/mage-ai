@@ -619,7 +619,7 @@ function SchemaTable({
             </Spacing>
 
             <ToggleSwitch
-              checked={autoAddNewFields}
+              checked={!!autoAddNewFields}
               onCheck={() => updateStream(streamUUID, (stream: StreamType) => ({
                 ...stream,
                 auto_add_new_fields: !autoAddNewFields,
