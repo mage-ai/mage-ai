@@ -121,7 +121,6 @@ def column_type_mapping(
 
 
 def convert_column_to_type(value, column_type) -> str:
-    value = value.replace("'", "\\'")
     return f"CAST('{value}' AS {column_type})"
 
 
@@ -129,6 +128,7 @@ def build_insert_command(
     column_type_mapping: Dict,
     columns: List[str],
     records: List[Dict],
+    convert_column_to_type_func: Callable = convert_column_to_type,
 ) -> List[str]:
     values = []
     for row in records:
@@ -149,7 +149,7 @@ def build_insert_command(
                     value_final = [str(s).replace("'", "''") for s in v]
                     value_final = f"'{{{', '.join(value_final)}}}'"
                 else:
-                    value_final = convert_column_to_type(
+                    value_final = convert_column_to_type_func(
                         str(v).replace("'", "''"),
                         column_type_converted,
                     )

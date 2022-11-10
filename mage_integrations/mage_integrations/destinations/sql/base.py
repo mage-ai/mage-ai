@@ -14,7 +14,7 @@ class Destination(BaseDestination):
     SCHEMA_CONFIG_KEY = 'schema'
 
     BATCH_SIZE = 1000
-    
+
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
@@ -79,9 +79,11 @@ class Destination(BaseDestination):
             raise Exception(message)
 
         for sub_batch in batch(record_data, self.BATCH_SIZE):
+            records = [d['record'] for d in sub_batch]
+
             for insert_command in self.build_insert_commands(
                 database_name=database_name,
-                records=[d['record'] for d in sub_batch],
+                records=records,
                 schema=schema,
                 schema_name=schema_name,
                 table_name=table_name,
