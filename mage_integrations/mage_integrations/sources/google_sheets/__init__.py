@@ -47,14 +47,14 @@ class GoogleSheets(Source):
                 sheet_title = sheet.get('properties', {}).get('title')
                 schema = Schema.from_dict(sheet_json_schema)
                 metadata = get_standard_metadata(
-                    key_properties=['__sdc_row'],
+                    key_properties=['__google_sheet_row'],
                     replication_method=REPLICATION_METHOD_FULL_TABLE,
                     schema=schema.to_dict(),
                     stream_id=sheet_title,
                     valid_replication_keys=[],
                 )
                 catalog_entry = CatalogEntry(
-                    key_properties=['__sdc_row'],
+                    key_properties=['__google_sheet_row'],
                     metadata=metadata,
                     replication_method=REPLICATION_METHOD_FULL_TABLE,
                     schema=schema,
@@ -224,13 +224,13 @@ class GoogleSheets(Source):
             'type': 'object',
             'additionalProperties': False,
             'properties': {
-                '__sdc_spreadsheet_id': {
+                '__google_spreadsheet_id': {
                     'type': ['null', 'string']
                 },
-                '__sdc_sheet_id': {
+                '__google_sheet_id': {
                     'type': ['null', 'integer']
                 },
-                '__sdc_row': {
+                '__google_sheet_row': {
                     'type': ['null', 'integer']
                 }
             }
@@ -360,7 +360,7 @@ class GoogleSheets(Source):
                 column_is_skipped = True
                 skipped = skipped + 1
                 column_index_str = str(column_index).zfill(2)
-                column_name = '__sdc_skip_col_{}'.format(column_index_str)
+                column_name = '__google_sheet_skip_col_{}'.format(column_index_str)
                 # unsupported field description if the field is to be skipped
                 col_properties = {
                     'type': ['null', 'string'],
