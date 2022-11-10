@@ -8,7 +8,7 @@ import {
   CatalogType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
-import { indexBy, sortByKey } from '@utils/array';
+import { find, indexBy, sortByKey } from '@utils/array';
 
 type SchemaSettingsProps = {
   catalog: CatalogType;
@@ -31,10 +31,13 @@ function SchemaSettings({
   ]);
 
   useEffect(() => {
-    if (!selectedTab && tabs.length > 0) {
-      setSelectedTab(tabs[0]);
+    if (tabs.length > 0) {
+      if (!selectedTab || !find(tabs, ({ uuid }) => selectedTab.uuid === uuid)) {
+        setSelectedTab(tabs[0]);
+      }
     }
   }, [
+    selectedTab,
     setSelectedTab,
     tabs,
   ]);
