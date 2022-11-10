@@ -29,7 +29,7 @@ import {
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { find, indexBy } from '@utils/array';
+import { find, indexBy, remove } from '@utils/array';
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;

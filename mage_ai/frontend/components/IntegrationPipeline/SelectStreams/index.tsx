@@ -18,12 +18,6 @@ type SelectStreamsProps = {
   onActionCallback: (selectedStreams: {
     [key: string]: boolean;
   }) => void;
-  selectedStreams: {
-    [key: string]: boolean;
-  };
-  setSelectedStreams: (selectedStreams: {
-    [key: string]: boolean;
-  }) => void;
   streams: StreamType[];
 };
 

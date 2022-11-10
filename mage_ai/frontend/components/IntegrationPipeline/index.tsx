@@ -868,14 +868,27 @@ function IntegrationPipeline({
 
               {dataExporterBlockContent?.destination && (
                 <Spacing mb={2}>
-                  <Text>
+                  <Text default>
                     For more information on how to configure this destination,
                     read the <Link
                       href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
                       openNewWindow
                     >
                       {dataExporterBlockContent.destination} documentation
-                    </Link>
+                    </Link>.
+
+                    <br />
+                    <br />
+
+                    If your configuration contains a key named <Text inline monospace>
+                      table
+                    </Text>, it’s optional.
+                    <br />
+                    The table that’s created in this destination will have
+                    a name corresponding to the stream’s unique name (by default) or the value you
+                    entered under the input field labeled <Text bold inline>
+                      Table name
+                    </Text> in a previous section.
                   </Text>
 
                   {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-destination')}
