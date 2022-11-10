@@ -312,6 +312,9 @@ def create_upstream_tables(
     cache_upstream_dbt_models: bool = False,
     **kwargs,
 ) -> None:
+    if len([b for b in block.upstream_blocks if BlockType.SENSOR != b.type]) == 0:
+        return
+
     config_file_loader, configuration = config_file_loader_and_configuration(
         block,
         profile_target,
