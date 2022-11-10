@@ -34,7 +34,7 @@ class BaseModel(Base):
     @classproperty
     def query(cls):
         return db_connection.session.query(cls)
-    
+
     @classproperty
     def select(cls):
         return db_connection.session.query
@@ -247,12 +247,15 @@ class PipelineRun(BaseModel):
                     ])
 
     @property
+    def pipeline(self) -> 'Pipeline':
+        return Pipeline.get(self.pipeline_uuid)
+
+    @property
     def logs(self):
-        pipeline = Pipeline.get(self.pipeline_uuid)
         return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
-            repo_config=pipeline.repo_config,
+            repo_config=self.pipeline.repo_config,
         ).get_logs()
 
     @property
@@ -273,18 +276,24 @@ class PipelineRun(BaseModel):
         return query.all()
 
     @classmethod
-    def create(self, **kwargs) -> 'PipelineRun':
+    def create(self, create_block_runs: bool = True, **kwargs) -> 'PipelineRun':
         pipeline_run = super().create(**kwargs)
         pipeline_uuid = kwargs.get('pipeline_uuid')
-        if pipeline_uuid is not None:
-            pipeline = Pipeline.get(pipeline_uuid)
-            blocks = pipeline.get_executable_blocks()
-            for b in blocks:
-                BlockRun.create(
-                    pipeline_run_id=pipeline_run.id,
-                    block_uuid=b.uuid,
-                )
+        if pipeline_uuid is not None and create_block_runs:
+            pipeline_run.create_block_runs()
+
         return pipeline_run
+
+    def create_block_run(self, block_uuid: str) -> 'BlockRun':
+        return BlockRun.create(
+            block_uuid=block_uuid,
+            pipeline_run_id=self.id,
+        )
+
+    def create_block_runs(self) -> List['BlockRun']:
+        blocks = self.pipeline.get_executable_blocks()
+
+        return [self.create_block_run(b.uuid) for b in blocks]
 
     def all_blocks_completed(self) -> bool:
         return all(b.status == BlockRun.BlockRunStatus.COMPLETED

@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from mage_ai.data_integrations.utils.config import get_catalog
+from mage_ai.data_integrations.utils.scheduler import create_block_runs
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -240,7 +242,7 @@ def run_integration_pipeline(
     executable_block_runs: List[int],
     variables: Dict,
     tags: Dict,
-):
+) -> None:
     from mage_integrations.sources.utils import update_source_state_from_destination_state
 
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
@@ -251,72 +253,88 @@ def run_integration_pipeline(
                                    **tags)
 
     block_runs = BlockRun.query.filter(BlockRun.id.in_(executable_block_runs))
-    data_loader_block_run = find(
-        lambda b: b.block_uuid == integration_pipeline.data_loader.uuid,
-        block_runs,
-    )
-    data_exporter_block_run = find(
-        lambda b: b.block_uuid == integration_pipeline.data_exporter.uuid,
-        block_runs,
+
+    update_source_state_from_destination_state(
+        integration_pipeline.source_state_file_path,
+        integration_pipeline.destination_state_file_path,
     )
 
-    executable_block_runs = []
-    current_block = integration_pipeline.get_block(data_loader_block_run.block_uuid)
+    pipeline_schedule = pipeline_run.pipeline_schedule
+    schedule_interval = pipeline_schedule.schedule_interval
+    execution_date = pipeline_schedule.current_execution_date()
 
-    # we expect that blocks in integration pipelines only have 1 downstream block, and
-    # that there is only 1 root block and 1 leaf block.
-    while True:
-        executable_block_runs.append(
-            find(
-                lambda b: b.block_uuid == current_block.uuid,
-                block_runs,
+    end_date = None
+    start_date = None
+    date_diff = None
+
+    if PipelineSchedule.ScheduleInterval.ONCE == schedule_interval:
+        end_date = variables.get('_end_date')
+        start_date = variables.get('_start_date')
+    elif PipelineSchedule.ScheduleInterval.HOURLY == schedule_interval:
+        date_diff = timedelta(hours=1)
+    elif PipelineSchedule.ScheduleInterval.DAILY == schedule_interval:
+        date_diff = timedelta(days=1)
+    elif PipelineSchedule.ScheduleInterval.WEEKLY == schedule_interval:
+        date_diff = timedelta(weeks=1)
+    elif PipelineSchedule.ScheduleInterval.MONTHLY == schedule_interval:
+        date_diff = relativedelta(months=1)
+
+    if date_diff is not None:
+        end_date = (execution_date).isoformat()
+        start_date = (execution_date - date_diff).isoformat()
+
+    runtime_arguments = dict(
+        _end_date=end_date,
+        _execution_date=execution_date.isoformat(),
+        _execution_partition=pipeline_run.execution_partition,
+        _start_date=start_date,
+    )
+
+    data_loader_block = integration_pipeline.data_loader
+    data_exporter_block = integration_pipeline.data_exporter
+    catalog = get_catalog(data_loader_block, variables)
+
+    for stream in catalog['streams']:
+        tap_stream_id = stream['tap_stream_id']
+
+        block_runs_in_order = []
+        current_block = data_loader_block
+
+        while True:
+            block_runs_in_order.append(
+                find(
+                    lambda b: b.block_uuid == f'{current_block.uuid}:{tap_stream_id}',
+                    block_runs,
+                )
             )
+            downstream_blocks = current_block.downstream_blocks
+            if len(downstream_blocks) == 0:
+                break
+            current_block = downstream_blocks[0]
+
+        data_loader_block_run = find(
+            lambda b: b.block_uuid == f'{data_loader_block.uuid}:{tap_stream_id}',
+            block_runs,
         )
-        downstream_blocks = current_block.downstream_blocks
-        if len(downstream_blocks) == 0:
-            break
-        current_block = downstream_blocks[0]
-
-    outputs = []
-    if data_loader_block_run and data_exporter_block_run:
-
-        update_source_state_from_destination_state(
-            integration_pipeline.source_state_file_path,
-            integration_pipeline.destination_state_file_path,
+        data_exporter_block_run = find(
+            lambda b: b.block_uuid == f'{data_exporter_block.uuid}:{tap_stream_id}',
+            block_runs,
         )
+        transformer_block_runs = [br for br in block_runs_in_order if br.block_uuid not in [
+            f'{data_loader_block.uuid}:{tap_stream_id}',
+            f'{data_exporter_block.uuid}:{tap_stream_id}',
+        ]]
 
-        pipeline_schedule = pipeline_run.pipeline_schedule
-        schedule_interval = pipeline_schedule.schedule_interval
-        execution_date = pipeline_schedule.current_execution_date()
+        block_runs_and_configs = [
+            (data_loader_block_run, dict(selected_streams=[tap_stream_id])),
+        ] + [(br, {}) for br in transformer_block_runs] + [
+            (data_exporter_block_run, dict(destination_table=stream.get('destination_table'))),
+        ]
 
-        end_date = None
-        start_date = None
-        date_diff = None
+        outputs = []
+        for idx, tup in enumerate(block_runs_and_configs):
+            block_run, template_runtime_configuration = tup
 
-        if PipelineSchedule.ScheduleInterval.ONCE == schedule_interval:
-            end_date = variables.get('_end_date')
-            start_date = variables.get('_start_date')
-        elif PipelineSchedule.ScheduleInterval.HOURLY == schedule_interval:
-            date_diff = timedelta(hours=1)
-        elif PipelineSchedule.ScheduleInterval.DAILY == schedule_interval:
-            date_diff = timedelta(days=1)
-        elif PipelineSchedule.ScheduleInterval.WEEKLY == schedule_interval:
-            date_diff = timedelta(weeks=1)
-        elif PipelineSchedule.ScheduleInterval.MONTHLY == schedule_interval:
-            date_diff = relativedelta(months=1)
-
-        if date_diff is not None:
-            end_date = (execution_date).isoformat()
-            start_date = (execution_date - date_diff).isoformat()
-
-        runtime_arguments = dict(
-            _end_date=end_date,
-            _execution_date=execution_date.isoformat(),
-            _execution_partition=pipeline_run.execution_partition,
-            _start_date=start_date,
-        )
-
-        for idx, block_run in enumerate(executable_block_runs):
             tags_updated = merge_dict(tags, dict(
                 block_run_id=block_run.id,
                 block_uuid=block_run.block_uuid,
@@ -339,6 +357,7 @@ def run_integration_pipeline(
                 pipeline_type=PipelineType.INTEGRATION,
                 verify_output=False,
                 runtime_arguments=runtime_arguments,
+                template_runtime_configuration=template_runtime_configuration,
             )
             outputs.append(output)
 
@@ -352,6 +371,7 @@ def run_block(
     pipeline_type: PipelineType = None,
     verify_output: bool = True,
     runtime_arguments: Dict = None,
+    template_runtime_configuration: Dict = None,
 ) -> Any:
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
@@ -380,6 +400,7 @@ def run_block(
         input_from_output=input_from_output,
         verify_output=verify_output,
         runtime_arguments=runtime_arguments,
+        template_runtime_configuration=template_runtime_configuration,
     )
 
 
@@ -451,13 +472,24 @@ def schedule_all():
 
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule():
+            pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
-                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+                pipeline_uuid=pipeline_uuid,
                 variables=pipeline_schedule.variables,
             )
+
+            pipeline = Pipeline.get(pipeline_uuid)
+            is_integration = PipelineType.INTEGRATION == pipeline.type
+            if is_integration:
+                payload['create_block_runs'] = False
+
             pipeline_run = PipelineRun.create(**payload)
+
+            if is_integration:
+                create_block_runs(pipeline_run)
+
             PipelineScheduler(pipeline_run).start(should_schedule=False)
 
     active_pipeline_runs = PipelineRun.active_runs(

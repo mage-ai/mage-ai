@@ -156,7 +156,7 @@ class Pipeline:
         pipeline = self(uuid, repo_path=repo_path)
         if PipelineType.INTEGRATION == pipeline.type:
             pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
-        
+
         return pipeline
 
     @classmethod
@@ -482,9 +482,14 @@ class Pipeline:
         self.save()
         return block
 
-    def get_block(self, block_uuid, widget=False):
+    def get_block(self, block_uuid, check_template: bool = False, widget: bool = False) -> 'Block':
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
-        return mapping.get(block_uuid)
+        block = mapping.get(block_uuid)
+
+        if not block:
+            block = mapping.get(block_uuid.split(':')[0])
+
+        return block
 
     def get_blocks(self, block_uuids, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

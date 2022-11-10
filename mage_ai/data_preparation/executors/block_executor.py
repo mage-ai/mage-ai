@@ -12,7 +12,7 @@ class BlockExecutor:
     def __init__(self, pipeline, block_uuid, execution_partition=None):
         self.pipeline = pipeline
         self.block_uuid = block_uuid
-        self.block = self.pipeline.get_block(block_uuid)
+        self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
         self.execution_partition = execution_partition
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
@@ -34,8 +34,12 @@ class BlockExecutor:
         input_from_output: Dict = None,
         verify_output: bool = True,
         runtime_arguments: Dict = None,
+        template_runtime_configuration: Dict = None,
         **kwargs,
     ) -> Dict:
+        if template_runtime_configuration:
+            self.block.template_runtime_configuration = template_runtime_configuration
+
         try:
             result = dict()
 
@@ -132,6 +136,6 @@ class BlockExecutor:
     def _build_tags(self, **kwargs):
         return merge_dict(kwargs, dict(
             block_type=self.block.type,
-            block_uuid=self.block.uuid,
+            block_uuid=self.block_uuid,
             pipeline_uuid=self.pipeline.uuid,
         ))

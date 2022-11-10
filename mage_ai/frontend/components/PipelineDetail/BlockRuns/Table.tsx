@@ -7,7 +7,7 @@ import BlockRunType, { RunStatus } from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -66,73 +66,88 @@ function BlockRunsTable({
       isSelectedRow={(rowIndex: number) => blockRuns[rowIndex].id === selectedRun?.id}
       onClickRow={onClickRow}
       rows={blockRuns?.map(({
-        block_uuid: blockUUID,
+        block_uuid: blockUUIDOrig,
         completed_at: completedAt,
         created_at: createdAt,
         id,
         pipeline_schedule_id: pipelineScheduleId,
         pipeline_schedule_name: pipelineScheduleName,
         status,
-      }: BlockRunType) => [
-        <Text monospace default>
-          {createdAt}
-        </Text>,
-        <Text
-          danger={RunStatus.FAILED === status}
-          default={RunStatus.CANCELLED === status}
-          info={RunStatus.INITIAL === status}
-          monospace
-          success={RunStatus.COMPLETED === status}
-          warning={RunStatus.RUNNING === status}
-        >
-          {status}
-        </Text>,
-        <NextLink
-          as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-          href={'/pipelines/[pipeline]/triggers/[...slug]'}
-          passHref
-        >
-          <Link bold sameColorAsText>
-            {pipelineScheduleName}
-          </Link>
-        </NextLink>,
-        <NextLink
-          as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
-          href={'/pipelines/[pipeline]/edit'}
-          passHref
-        >
-          <Link
-            bold
-            sameColorAsText
-            verticalAlignContent
+      }: BlockRunType) => {
+        let blockUUID = blockUUIDOrig;
+
+        let streamID;
+        if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
+          const parts = blockUUID.split(':');
+          blockUUID = parts[0];
+          streamID = parts[1];
+        }
+
+        return [
+          <Text monospace default>
+            {createdAt}
+          </Text>,
+          <Text
+            danger={RunStatus.FAILED === status}
+            default={RunStatus.CANCELLED === status}
+            info={RunStatus.INITIAL === status}
+            monospace
+            success={RunStatus.COMPLETED === status}
+            warning={RunStatus.RUNNING === status}
           >
-            <Circle
-              color={getColorsForBlockType(blocksByUUID[blockUUID]?.type, {
-                theme: themeContext,
-              }).accent}
-              size={UNIT * 1.5}
-              square
-            />
-            <Spacing mr={1} />
-            <Text monospace>
-              {blockUUID}
-            </Text>
-          </Link>
-        </NextLink>,
-        <Text monospace default>
-          {completedAt || '-'}
-        </Text>,
-        <Button
-          default
-          iconOnly
-          noBackground
-          onClick={() => Router.push(
-            `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
-          )}
-        >
-          <TodoList default size={2 * UNIT} />
-        </Button>,
-      ])}
+            {status}
+          </Text>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+            href={'/pipelines/[pipeline]/triggers/[...slug]'}
+            passHref
+          >
+            <Link bold sameColorAsText>
+              {pipelineScheduleName}
+            </Link>
+          </NextLink>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
+            href={'/pipelines/[pipeline]/edit'}
+            passHref
+          >
+            <Link
+              bold
+              sameColorAsText
+              verticalAlignContent
+            >
+              <Circle
+                color={getColorsForBlockType(blocksByUUID[blockUUID]?.type, {
+                  theme: themeContext,
+                }).accent}
+                size={UNIT * 1.5}
+                square
+              />
+              <Spacing mr={1} />
+              <Text monospace>
+                {blockUUID}{streamID && ': '}{streamID && (
+                  <Text default inline monospace>
+                    {streamID}
+                  </Text>
+                )}
+              </Text>
+            </Link>
+          </NextLink>,
+          <Text monospace default>
+            {completedAt || '-'}
+          </Text>,
+          <Button
+            default
+            iconOnly
+            noBackground
+            onClick={() => Router.push(
+              `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
+            )}
+          >
+            <TodoList default size={2 * UNIT} />
+          </Button>,
+        ];
+      })}
       uuid="block-runs"
     />
   );
