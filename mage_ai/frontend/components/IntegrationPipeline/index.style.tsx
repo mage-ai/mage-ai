@@ -24,6 +24,8 @@ export const CodeEditorStyle = styled.div`
 `;
 
 export const TableContainerStyle = styled.div`
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 90vh;
+
   ${ScrollbarStyledCss}
 `;

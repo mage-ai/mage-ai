@@ -341,6 +341,7 @@ function SchemaTable({
             />,
           ];
         })}
+        stickyHeader
       />
 
     </TableContainerStyle>
