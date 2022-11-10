@@ -251,7 +251,7 @@ class Destination():
 
             try:
                 row = json.loads(line)
-            except json.decoder.JSONDecodeError as err:
+            except json.decoder.JSONDecodeError:
                 self.logger.info(f'Unable to parse: {line}', tags=tags)
                 continue
 

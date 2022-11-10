@@ -73,6 +73,21 @@ class Destination(BaseDestination):
                     table_name=table_name,
                     unique_constraints=unique_constraints,
                 )
+            else:
+                """
+                Check whether any new columns are added
+                """
+                alter_table_commands = self.build_alter_table_commands(
+                    database_name=database_name,
+                    schema=schema,
+                    schema_name=schema_name,
+                    stream=stream,
+                    table_name=table_name,
+                    unique_constraints=unique_constraints,
+                )
+                if len(alter_table_commands) > 0:
+                    query_strings += alter_table_commands
+
         else:
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
@@ -133,6 +148,17 @@ class Destination(BaseDestination):
         unique_constraints: List[str] = None,
     ) -> List[str]:
         raise Exception('Subclasses must implement the build_create_table_commands method.')
+
+    def build_alter_table_commands(
+        self,
+        schema: Dict,
+        schema_name: str,
+        stream: str,
+        table_name: str,
+        database_name: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        return []
 
     def build_insert_commands(
         self,
