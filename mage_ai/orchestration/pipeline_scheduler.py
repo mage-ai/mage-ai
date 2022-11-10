@@ -325,10 +325,11 @@ def run_integration_pipeline(
             f'{data_exporter_block.uuid}:{tap_stream_id}',
         ]]
 
+        destination_table = stream.get('destination_table', tap_stream_id)
         block_runs_and_configs = [
             (data_loader_block_run, dict(selected_streams=[tap_stream_id])),
         ] + [(br, {}) for br in transformer_block_runs] + [
-            (data_exporter_block_run, dict(destination_table=stream.get('destination_table'))),
+            (data_exporter_block_run, dict(destination_table=destination_table)),
         ]
 
         outputs = []
