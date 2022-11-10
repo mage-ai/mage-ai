@@ -325,7 +325,7 @@ function SchemaTable({
               })}
             />,
             <Checkbox
-              checked={!!keyProperties?.includes(columnName)}
+              checked={!!partitionKeys?.includes(columnName)}
               key={`${streamUUID}/${columnName}/partition_key`}
               onClick={() => updateStream(streamUUID, (stream: StreamType) => {
                 if (stream.partition_keys?.includes(columnName)) {
@@ -565,6 +565,49 @@ function SchemaTable({
                       ...stream,
                       key_properties: remove(
                         stream.key_properties || [],
+                        (col: string) => col === columnName,
+                      ),
+                    }));
+                  }}
+                  primary
+                />
+              </Spacing>
+            ))}
+          </FlexContainer>
+        </Spacing>
+
+        <Spacing mb={3}>
+          <Spacing mb={1}>
+            <Text bold large>
+              Partition keys
+            </Text>
+            <Text default>
+              One or more columns can be used to partition the table.
+            </Text>
+          </Spacing>
+
+          <FlexContainer alignItems="center" flexWrap="wrap">
+            {!partitionKeys?.length && (
+              <Text italic>
+                Click the checkbox under the column <Text bold inline italic>
+                  Partition key
+                </Text> to
+                use a specific column as a partition key.
+              </Text>
+              )}
+            {partitionKeys?.map((columnName: string) => (
+              <Spacing
+                key={`key_properties/${columnName}`}
+                mb={1}
+                mr={1}
+              >
+                <Chip
+                  label={columnName}
+                  onClick={() => {
+                    updateStream(streamUUID, (stream: StreamType) => ({
+                      ...stream,
+                      partition_keys: remove(
+                        stream.partition_keys || [],
                         (col: string) => col === columnName,
                       ),
                     }));
