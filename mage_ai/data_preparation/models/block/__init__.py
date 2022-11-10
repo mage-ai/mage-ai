@@ -2,7 +2,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from logging import Logger
-from mage_ai.data_integrations.utils.config import build_config_json
+from mage_ai.data_integrations.utils.config import build_catalog_json, build_config_json
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
@@ -253,6 +253,7 @@ class Block:
         self.downstream_blocks = []
         self.test_functions = []
         self.global_vars = {}
+        self.template_runtime_configuration = {}
 
     @property
     def content(self):
@@ -800,8 +801,12 @@ class Block:
                         ),
                         '--log_to_stdout',
                         '1',
-                        '--settings',
-                        self.pipeline.data_loader.file_path,
+                        '--catalog_json',
+                        build_catalog_json(
+                            self.pipeline.data_loader.file_path,
+                            global_vars,
+                            selected_streams=self.template_runtime_configuration.get('selected_streams'),
+                        ),
                         '--state',
                         self.pipeline.source_state_file_path,
                         '--query_json',
@@ -884,6 +889,10 @@ class Block:
                 elif BlockType.DATA_EXPORTER == self.type:
                     input_from_previous = input_from_output['output'][0]
 
+                    override = {}
+                    if self.template_runtime_configuration.get('destination_table'):
+                        override['table'] = self.template_runtime_configuration['destination_table']
+
                     proc = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.destination_file_path,
@@ -891,6 +900,7 @@ class Block:
                         build_config_json(
                             self.pipeline.data_exporter.file_path,
                             global_vars,
+                            override=override,
                         ),
                         '--log_to_stdout',
                         '1',

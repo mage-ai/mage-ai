@@ -19,6 +19,7 @@ import Link from '@oracle/elements/Link';
 import LogDetail from '@components/Logs/Detail';
 import LogType, { LogRangeEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
@@ -64,7 +65,7 @@ function BlockRuns({
   const [scrollToBottom, setScrollToBottom] = useState(false);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
-  const pipeline = useMemo(() => ({
+  const pipeline: PipelineType = useMemo(() => ({
     ...dataPipeline?.pipeline,
     uuid: pipelineUUID,
   }), [
@@ -303,7 +304,12 @@ function BlockRuns({
             } = data || {};
 
             let idEl;
-            const blockUUID = blockUUIDProp || name.split('.log')[0];
+            let blockUUID = blockUUIDProp || name.split('.log')[0];
+
+            if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
+              blockUUID = blockUUID.split(':')[0];
+            }
+
             const block = blocksByUUID[blockUUID];
             if (block) {
               const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;

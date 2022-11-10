@@ -41,7 +41,7 @@ class ExecutorFactory:
             execution_partition=execution_partition,
         )
         if executor_type is None:
-            block = pipeline.get_block(block_uuid)
+            block = pipeline.get_block(block_uuid, check_template=True)
             if pipeline.type == PipelineType.PYSPARK and (
                 block.type != BlockType.SENSOR or is_pyspark_code(block.content)
             ):

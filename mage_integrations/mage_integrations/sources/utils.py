@@ -167,6 +167,11 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--catalog_json',
+        help='JSON string containing catalog streams.',
+    )
+
+    parser.add_argument(
         '-s', '--state',
         help='State file',
     )
@@ -259,8 +264,11 @@ def parse_args(required_config_keys):
             if args.settings.get('config') and not args.config:
                 config.update(args.settings['config'])
 
-            if args.settings.get('catalog'):
+            if args.settings.get('catalog') and not args.catalog:
                 args.catalog = Catalog.from_dict(args.settings['catalog'])
+
+    if args.catalog_json:
+        args.catalog = Catalog.from_dict(json.loads(args.catalog_json))
 
     if args.config:
         setattr(args, 'config_path', args.config)
