@@ -341,7 +341,7 @@ class GoogleSheets(Source):
                         # Interesting - order in the anyOf makes a difference.
                         # Number w/ singer.decimal must be listed last, otherwise errors occur.
                         col_properties = {
-                            'type': ['null', 'string'],
+                            'type': ['null', 'string', 'integer'],
                             'format': 'singer.decimal'
                         }
                         column_gs_type = 'numberType'
