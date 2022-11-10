@@ -68,6 +68,7 @@ function SchemaTable({
     destination_table: destinationTableInit = '',
     key_properties: keyProperties,
     metadata,
+    partition_keys: partitionKeys,
     replication_method: replicationMethod,
     schema: {
       properties,
@@ -105,7 +106,7 @@ function SchemaTable({
   const tableMemo = useMemo(() => (
     <Table
       alignTop
-      columnFlex={[null, 2, 1, null, null]}
+      columnFlex={[null, 2, 1, null, null, null, null]}
       columns={[
         {
           label: () => '',
@@ -125,6 +126,9 @@ function SchemaTable({
         },
         {
           uuid: 'Key prop',
+        },
+        {
+          uuid: 'Partition key',
         },
       ]}
       rows={Object.entries(properties).map(([
@@ -313,6 +317,21 @@ function SchemaTable({
               } else {
                 stream.key_properties =
                   [columnName].concat(stream.key_properties || []);
+              }
+
+              return stream;
+            })}
+          />,
+          <Checkbox
+            checked={!!keyProperties?.includes(columnName)}
+            key={`${streamUUID}/${columnName}/partition_key`}
+            onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+              if (stream.partition_keys?.includes(columnName)) {
+                stream.partition_keys =
+                  remove(stream.partition_keys, col => columnName === col);
+              } else {
+                stream.partition_keys =
+                  [columnName].concat(stream.partition_keys || []);
               }
 
               return stream;
