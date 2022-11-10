@@ -50,6 +50,3 @@ dbt-core==1.3.0
 dbt-postgres==1.3.0
 dbt-bigquery==1.3.0
 dbt-snowflake==1.3.0
-
-# Mage integrations
-git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations

@@ -7,8 +7,6 @@ ARG PIP=pip3
 USER root
 
 RUN apt -y update && apt -y install curl
-RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
-RUN apt install nodejs
 
 # Install R
 RUN apt install -y r-base
@@ -17,9 +15,9 @@ RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
 # Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN ${PIP} install --upgrade pip
+RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 RUN ${PIP} install -r requirements.txt
 RUN ${PIP} install jupyterlab
-RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 
 COPY ./mage_ai /home/src/mage_ai
 
@@ -33,6 +31,8 @@ RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cu
 
 
 # Install node modules used in front-end
+RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
+RUN apt install nodejs
 RUN npm install --global yarn
 RUN yarn global add next
 RUN cd /home/src/mage_ai/frontend && yarn install
