@@ -49,7 +49,7 @@ def build_alter_table_command(
         in columns
     ]
     # TODO: support add new unique constraints
-    return f"ALTER TABLE {full_table_name} q{', '.join(columns_and_types)}"
+    return f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
 
 
 def convert_column_type(
