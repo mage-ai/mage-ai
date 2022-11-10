@@ -36,6 +36,22 @@ def build_create_table_command(
     return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
 
 
+def build_alter_table_command(
+    column_type_mapping: Dict,
+    columns: List[str],
+    full_table_name: str,
+) -> str:
+    if not columns:
+        return None
+
+    columns_and_types = [
+        f"ADD COLUMN {clean_column_name(col)} {column_type_mapping[col]['type_converted']}" for col
+        in columns
+    ]
+    # TODO: support add new unique constraints
+    return f"ALTER TABLE {full_table_name} q{', '.join(columns_and_types)}"
+
+
 def convert_column_type(
     column_type: str,
     column_settings: Dict,

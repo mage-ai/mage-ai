@@ -31,7 +31,7 @@ FROM {dataset}.INFORMATION_SCHEMA.COLUMNS
 
         if streams:
             table_names = ', '.join([f"'{n}'" for n in streams])
-            query = f'{query}\nAND TABLE_NAME IN ({table_names})'
+            query = f'{query}\nWHERE TABLE_NAME IN ({table_names})'
         return query
 
 
