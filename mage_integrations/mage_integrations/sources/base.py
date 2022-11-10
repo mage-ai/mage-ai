@@ -1,5 +1,4 @@
 from datetime import datetime
-from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
@@ -14,6 +13,7 @@ from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import extract, group_by, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
+from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
 from mage_integrations.utils.schema_helpers import extract_selected_columns
 
 from os.path import isfile
@@ -25,6 +25,7 @@ import inspect
 import json
 import os
 import pandas as pd
+import simplejson
 import singer
 import sys
 import traceback
@@ -52,9 +53,6 @@ class Source:
         test_connection: bool = False,
         verbose: int = 1,
     ):
-        self.pipeline_uuid = None
-        self.block_uuid = None
-
         args = parse_args([])
         if args:
             if args.catalog:
@@ -77,10 +75,6 @@ class Source:
                 test_connection = args.test_connection
             if args.load_sample_data:
                 load_sample_data = args.load_sample_data
-            if args.pipeline_uuid:
-                self.pipeline_uuid = args.pipeline_uuid
-            if args.block_uuid:
-                self.block_uuid = args.block_uuid
 
         self.catalog = catalog
         self.config = config
@@ -199,21 +193,17 @@ class Source:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
                 for stream in catalog.get_selected_streams(self.state):
                     gen = self.load_data(stream, sample_data=True)
-                    if gen is not None \
-                        and self.pipeline_uuid is not None \
-                        and self.block_uuid is not None:
-                        
+                    if gen is not None:
                         data = next(gen)
                         df = pd.DataFrame.from_records(data)
-                        
-                        pipeline = Pipeline(self.pipeline_uuid)
-                        block = pipeline.get_block(self.block_uuid)
 
-                        variables = dict()
-                        var_name = f'output_sample_data_{stream.tap_stream_id}'
-                        variables[var_name] = df
+                        output = {
+                            'stream_id': stream.tap_stream_id,
+                            'sample_data': df.to_json(),
+                            'type': TYPE_SAMPLE_DATA,
+                        }
 
-                        block.store_variables(variables)
+                        sys.stdout.write(simplejson.dumps(output) + '\n')
             elif self.discover_mode:
                 if self.discover_streams_mode:
                     json.dump(self.discover_streams(), sys.stdout)

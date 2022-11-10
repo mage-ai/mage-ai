@@ -152,6 +152,8 @@ class IntegrationPipeline(Pipeline):
             raise Exception(error)
 
     def preview_data(self, block_type: BlockType) -> pd.DataFrame:
+        from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
+        
         global_vars = get_global_variables(self.uuid) or dict()
         file_path = None
         if BlockType.DATA_LOADER == block_type:
@@ -173,10 +175,6 @@ class IntegrationPipeline(Pipeline):
                     self.data_loader.file_path,
                     '--state',
                     self.source_state_file_path,
-                    '--pipeline_uuid',
-                    self.uuid,
-                    '--block_uuid',
-                    self.data_loader.uuid,
                 ]
 
                 proc = subprocess.run(
@@ -185,7 +183,29 @@ class IntegrationPipeline(Pipeline):
                     stderr=subprocess.PIPE,
                 )
 
-                print_logs_from_output(proc.stdout.decode())
+                output = proc.stdout.decode()
+
+                print_logs_from_output(output)
+
+                pipeline = Pipeline(self.uuid)
+                block = pipeline.get_block(self.data_loader.uuid)
+
+                for line in output.split('\n'):
+                    try:
+                        data = json.loads(line)
+                        if TYPE_SAMPLE_DATA == data.get('type'):
+                            sample_data_json = data.get('sample_data')
+                            sample_data = pd.DataFrame.from_dict(json.loads(sample_data_json))
+                            stream_id = data.get('stream_id')
+
+                            variables = {
+                                f'output_sample_data_{stream_id}': sample_data,
+                            }
+
+                            block.store_variables(variables)
+                    except json.decoder.JSONDecodeError:
+                        pass
+
                 proc.check_returncode()
         except subprocess.CalledProcessError as e:
             stderr = e.stderr.decode('utf-8').split('\n')

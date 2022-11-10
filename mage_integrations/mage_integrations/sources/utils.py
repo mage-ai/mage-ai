@@ -236,16 +236,6 @@ def parse_args(required_config_keys):
         help='Set this flag to True to load sample data from the provided config.'
     )
 
-    parser.add_argument(
-        '--pipeline_uuid',
-        help='Pipeline uuid for the source block.'
-    )
-
-    parser.add_argument(
-        '--block_uuid',
-        help='Block uuid for the source block.'
-    )
-
     args, _ = parser.parse_known_args()
 
     if args.state:

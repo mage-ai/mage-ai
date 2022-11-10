@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from mage_integrations.sources.base import Source as BaseSource
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
@@ -29,7 +28,6 @@ class Source(BaseSource):
     def table_prefix(self):
         return ''
 
-    @abstractmethod
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')
 
