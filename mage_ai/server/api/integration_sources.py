@@ -75,17 +75,12 @@ class ApiIntegrationSourcesHandler(BaseHandler):
         elif action == 'sample_data':
             pipeline_uuid = payload['pipeline_uuid']
             pipeline = IntegrationPipeline.get(pipeline_uuid)
-            # config = payload['config']
 
-            # try:
-            pipeline.preview_data(BlockType.DATA_LOADER)
-            # sample_data_dict = dict(
-            #     columns=sample_df.columns.tolist(),
-            #     rows=sample_df.to_numpy().tolist(),
-            # )
-            self.write(dict(success=True))
-            # except Exception as e:
-            #     self.write(dict(success=False, error_message=str(e)))
+            try:
+                pipeline.preview_data(BlockType.DATA_LOADER)
+                self.write(dict(success=True))
+            except Exception as e:
+                self.write(dict(success=False, error_message=str(e)))
 
         
         self.finish()

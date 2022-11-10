@@ -42,14 +42,12 @@ import api from '@api';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { find, indexBy, remove } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
-import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 
 type IntegrationPipelineProps = {
   addNewBlockAtIndex: (
