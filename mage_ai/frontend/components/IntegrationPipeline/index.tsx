@@ -143,7 +143,7 @@ function IntegrationPipeline({
     useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type), [blocks]);
   const dataExporterBlockContent = useMemo(() => {
     if (!dataExporterBlock) {
-      return {}
+      return {};
     }
 
     return parse(dataExporterBlock.content);
@@ -167,6 +167,7 @@ function IntegrationPipeline({
 
   const [selectedStreamID, setSelectedStreamID] =
     useState<string>(catalog?.streams?.[0]?.tap_stream_id);
+  const autoAddNewFieldsProp = catalog?.streams?.[0]?.auto_add_new_fields || false;
 
   const updateSampleDataVariable = useCallback(
     () => setSampleDataVariable(selectedStreamID),

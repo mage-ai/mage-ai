@@ -78,6 +78,7 @@ interface MetadataType {
 }
 
 export interface StreamType {
+  auto_add_new_fields: boolean;
   bookmark_properties: string[];
   destination_table?: string;
   key_properties: string[];
