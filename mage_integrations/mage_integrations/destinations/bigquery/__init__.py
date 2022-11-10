@@ -35,7 +35,7 @@ class BigQuery(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        return [
+        create_table_command = \
             build_create_table_command(
                 column_type_mapping=column_type_mapping(
                     schema,
@@ -48,7 +48,17 @@ class BigQuery(Destination):
                 full_table_name=f'{schema_name}.{table_name}',
                 # BigQuery doesn't support unique constraints
                 unique_constraints=None,
-            ),
+            )
+
+        if self.partition_keys:
+            create_table_command = f'''
+{create_table_command}
+PARTITION BY
+  {self.partition_keys[0]}
+            '''
+
+        return [
+            create_table_command,
         ]
 
     def build_alter_table_commands(

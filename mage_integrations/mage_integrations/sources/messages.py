@@ -12,12 +12,14 @@ import sys
 class SchemaMessage(SchemaMessageOriginal):
     def __init__(
         self,
+        partition_keys: List[str] = None,
         replication_method: str = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.partition_keys = partition_keys
         self.replication_method = replication_method
         self.unique_conflict_method = unique_conflict_method
         self.unique_constraints = unique_constraints
@@ -25,6 +27,8 @@ class SchemaMessage(SchemaMessageOriginal):
     def asdict(self):
         result = super().asdict()
 
+        if self.partition_keys:
+            result['partition_keys'] = self.partition_keys
         if self.replication_method:
             result['replication_method'] = self.replication_method
         if self.unique_conflict_method:
@@ -54,6 +58,7 @@ def write_schema(
     schema,
     key_properties: List[str],
     bookmark_properties: List[str] = None,
+    partition_keys: List[str] = None,
     replication_method: str = None,
     stream_alias: str = None,
     unique_conflict_method: str = None,
@@ -75,6 +80,7 @@ def write_schema(
         SchemaMessage(
             bookmark_properties=bookmark_properties,
             key_properties=key_properties,
+            partition_keys=partition_keys,
             replication_method=replication_method,
             schema=schema,
             stream=(stream_alias or stream_name),
