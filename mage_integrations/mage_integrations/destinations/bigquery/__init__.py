@@ -1,11 +1,14 @@
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
+from mage_integrations.destinations.bigquery.utils import (
+    convert_column_to_type,
+    convert_column_type,
+)
 from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_command,
     column_type_mapping,
-    convert_column_type,
 )
 from mage_integrations.destinations.utils import clean_column_name
 from typing import Dict, List, Tuple
@@ -71,6 +74,7 @@ class BigQuery(Destination):
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=mapping,
             columns=columns,
+            convert_column_to_type_func=convert_column_to_type,
             records=records,
         )
         insert_columns = ', '.join(insert_columns)
