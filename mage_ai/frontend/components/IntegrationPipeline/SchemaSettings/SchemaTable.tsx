@@ -613,7 +613,7 @@ function SchemaTable({
                 Automatically add new fields
               </Text>
               <Text default>
-                Turn the toggle on if you want new table columns to be automatically added and
+                Turn the toggle on if you want new table columns in the data source to be automatically added and
                 synced with the data destination.
               </Text>
             </Spacing>
