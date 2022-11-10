@@ -1,5 +1,6 @@
 from mage_ai.data_integrations.utils.config import get_catalog
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.orchestration.db.models import BlockRun
 from mage_ai.shared.array import find
 from typing import Dict, List, Tuple
 
