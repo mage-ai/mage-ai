@@ -272,9 +272,9 @@ def transform_sheet_data(spreadsheet_id, sheet_id, sheet_title, from_row, column
         else:
             sheet_data_row_tf = {}
             # Add spreadsheet_id, sheet_id, and row
-            sheet_data_row_tf['__sdc_spreadsheet_id'] = spreadsheet_id
-            sheet_data_row_tf['__sdc_sheet_id'] = sheet_id
-            sheet_data_row_tf['__sdc_row'] = row_num
+            sheet_data_row_tf['__google_spreadsheet_id'] = spreadsheet_id
+            sheet_data_row_tf['__google_sheet_id'] = sheet_id
+            sheet_data_row_tf['__google_sheet_row'] = row_num
             col_num = 1
             for (value, unformatted_value) in zip(row, unformatted_row):
                 # Select column metadata based on column index
