@@ -79,6 +79,7 @@ interface MetadataType {
 
 export interface StreamType {
   bookmark_properties: string[];
+  destination_table?: string;
   key_properties: string[];
   metadata: MetadataType[];
   replication_key: string;
