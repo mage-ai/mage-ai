@@ -1140,7 +1140,7 @@ class Stripe(Source):
                 Context.updated_counts[stream_name] = 0
         super().sync(catalog)
 
-    def sync_stream(self, stream) -> None:
+    def sync_stream(self, stream, properties: Dict = None) -> int:
         stream_name = stream.tap_stream_id
         if Context.is_selected(stream_name):
             # Run the sync for only parent streams/only child streams/both parent-child streams
