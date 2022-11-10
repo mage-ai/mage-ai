@@ -5,12 +5,16 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_INCREMENTAL,
 )
 from mage_integrations.sources.messages import write_records, write_schema, write_state
-from mage_integrations.sources.utils import get_standard_metadata, parse_args
+from mage_integrations.sources.utils import (
+    get_standard_metadata,
+    parse_args,
+)
 from mage_integrations.utils.array import find_index
-from mage_integrations.utils.dictionary import extract, merge_dict
+from mage_integrations.utils.dictionary import extract, group_by, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.schema_helpers import extract_selected_columns
+
 from os.path import isfile
 from singer import utils
 from singer.schema import Schema
@@ -188,7 +192,23 @@ class Source:
                     elif type(catalog) is dict:
                         json.dump(catalog, sys.stdout)
             else:
-                catalog = self.catalog or self.discover(streams=self.selected_streams)
+                if not self.catalog:
+                    catalog = self.discover(streams=self.selected_streams)
+                else:
+                    streams_to_update = []
+                    for stream in self.catalog.streams:
+                        if stream.auto_add_new_fields:
+                            streams_to_update.append(stream.tap_stream_id)
+                    if len(streams_to_update) > 0:
+                        updated_streams = self.discover(streams=streams_to_update).streams
+                        updated_streams = group_by(
+                            lambda s: s.tap_stream_id,
+                            updated_streams
+                        )
+                        for stream in self.catalog.streams:
+                            if stream.tap_stream_id in updated_streams:
+                                stream.update_schema(updated_streams[stream.tap_stream_id][0])
+                    catalog = self.catalog
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {str(err)}.'

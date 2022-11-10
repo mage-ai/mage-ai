@@ -1,3 +1,6 @@
+from mage_integrations.sources.constants import (
+    METADATA_KEY_SELECTED,
+)
 from singer import catalog
 from typing import List
 import json
@@ -6,12 +9,14 @@ import json
 class CatalogEntry(catalog.CatalogEntry):
     def __init__(
         self,
+        auto_add_new_fields: bool = False,
         bookmark_properties: List[str] = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.auto_add_new_fields = False
         self.bookmark_properties = bookmark_properties
         self.unique_conflict_method = unique_conflict_method
         self.unique_constraints = unique_constraints
@@ -19,6 +24,8 @@ class CatalogEntry(catalog.CatalogEntry):
     def to_dict(self):
         result = super().to_dict()
 
+        if self.auto_add_new_fields is not None:
+            result['auto_add_new_fields'] = self.auto_add_new_fields
         if self.bookmark_properties:
             result['bookmark_properties'] = self.bookmark_properties
         if self.unique_conflict_method:
@@ -27,6 +34,27 @@ class CatalogEntry(catalog.CatalogEntry):
             result['unique_constraints'] = self.unique_constraints
 
         return result
+
+    def update_schema(self, new_catalog_entry: 'CatalogEntry'):
+        """
+        Add new fields from new_catalog_entry to catalog_entry
+        """
+
+        metadata_by_col = dict()
+        for d in new_catalog_entry.metadata:
+            breadcrumb = d.get('breadcrumb')
+            if not breadcrumb:
+                continue
+            if len(breadcrumb) == 2 and breadcrumb[0] == 'properties':
+                metadata_by_col[breadcrumb[1]] = d
+        for col, col_property in new_catalog_entry.schema.properties.items():
+            if col not in self.schema.properties:
+                self.schema.properties[col] = col_property
+                if col in metadata_by_col:
+                    col_metadata = metadata_by_col[col]
+                    col_metadata['metadata'][METADATA_KEY_SELECTED] = True
+                    self.metadata.append(col_metadata)
+        return self
 
 
 class Catalog(catalog.Catalog):
@@ -45,6 +73,7 @@ class Catalog(catalog.Catalog):
         streams = []
         for stream in data['streams']:
             entry = CatalogEntry()
+            entry.auto_add_new_fields = stream.get('auto_add_new_fields')
             entry.bookmark_properties = stream.get('bookmark_properties')
             entry.database = stream.get('database_name')
             entry.is_view = stream.get('is_view')
