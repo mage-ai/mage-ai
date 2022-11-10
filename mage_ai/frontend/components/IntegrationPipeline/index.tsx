@@ -74,6 +74,7 @@ type IntegrationPipelineProps = {
     response: any;
   }) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSampleDataVariable: (variable: string) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
 };
@@ -90,6 +91,7 @@ function IntegrationPipeline({
   savePipelineContent,
   setErrors,
   setOutputBlocks,
+  setSampleDataVariable,
   setSelectedBlock,
   setSelectedOutputBlock,
 }: IntegrationPipelineProps) {
@@ -157,6 +159,18 @@ function IntegrationPipeline({
     dataExporterBlockContent,
   ]);
 
+  const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
+    dataLoaderBlockContent,
+  ]);
+
+  const [selectedStreamID, setSelectedStreamID] =
+    useState<string>(catalog?.streams?.[0]?.tap_stream_id);
+
+  const updateSampleDataVariable = useCallback(
+    () => setSampleDataVariable(selectedStreamID),
+    [selectedStreamID],
+  );
+
   const [sourceSampleDataError, setSourceSampleDataError] = useState<string>();
   const [loadSampleData, { isLoading: isLoadingLoadSampleData }] = useMutation(
     api.integration_sources.useCreate(),
@@ -167,6 +181,7 @@ function IntegrationPipeline({
           callback: (res) => {
             if (res['success']) {
               setSelectedOutputBlock(dataLoaderBlock);
+              updateSampleDataVariable();
               openSidekickView(ViewKeyEnum.DATA);
               setOutputBlocks(() => {
                 setSelectedOutputBlock(dataLoaderBlock);
@@ -188,13 +203,6 @@ function IntegrationPipeline({
       )
     }
   )
-
-  const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
-    dataLoaderBlockContent,
-  ]);
-
-  const [selectedStreamID, setSelectedStreamID] =
-    useState<string>(catalog?.streams?.[0]?.tap_stream_id);
 
   const [
     fetchIntegrationSource,
@@ -615,10 +623,13 @@ function IntegrationPipeline({
                         ))}
                       </Select>
                       {isLoadingLoadSampleData && (
-                        <FlexContainer>
-                          <Spinner color="white" small/> 
-
-                        </FlexContainer>
+                        <Spacing mt={1}>
+                          <FlexContainer>
+                            <Spinner color="white" small/> 
+                            <Spacing ml={1} />
+                            <Text small> Loading data preview </Text>
+                          </FlexContainer>
+                        </Spacing>
                       )}
                       {sourceSampleDataError && (
                         <Text warning>

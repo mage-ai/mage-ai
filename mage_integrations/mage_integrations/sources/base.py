@@ -208,7 +208,12 @@ class Source:
                         
                         pipeline = Pipeline(self.pipeline_uuid)
                         block = pipeline.get_block(self.block_uuid)
-                        block.store_variables(dict(output_sample_data=df))
+
+                        variables = dict()
+                        var_name = f'output_sample_data_{stream.tap_stream_id}'
+                        variables[var_name] = df
+
+                        block.store_variables(variables)
             elif self.discover_mode:
                 if self.discover_streams_mode:
                     json.dump(self.discover_streams(), sys.stdout)

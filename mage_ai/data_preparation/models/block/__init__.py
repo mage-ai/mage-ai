@@ -1021,8 +1021,6 @@ class Block:
             partition=execution_partition,
         )
 
-        print('all variables:', all_variables)
-
         if not include_print_outputs:
             all_variables = self.output_variables(execution_partition=execution_partition)
 
@@ -1041,7 +1039,6 @@ class Block:
                 sample=True,
                 sample_count=sample_count,
             )
-            print('data type:', type(data))
             if type(data) is pd.DataFrame:
                 try:
                     analysis = variable_manager.get_variable(
