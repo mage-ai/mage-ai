@@ -139,9 +139,10 @@ class Source(BaseSource):
             else:
                 order_by_statement = ''
 
-            columns = self.update_column_names(extract_selected_columns(stream.metadata))
+            columns = extract_selected_columns(stream.metadata)
+            clean_columns = self.update_column_names(columns)
 
-            columns_statement = '\n, '.join(columns)
+            columns_statement = '\n, '.join(clean_columns)
             query_string = f"""
 SELECT
     {columns_statement}
