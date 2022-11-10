@@ -15,6 +15,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import usePrevious from '@utils/usePrevious';
 import {
   COLUMN_TYPES,
@@ -49,7 +50,7 @@ export type SchemaTableProps = {
     streamUUID: string,
     streamDataTransformer: (stream: StreamType) => StreamType,
   ) => void;
-}
+};
 
 type SchemaTablePropsInternal = {
   stream: StreamType;
@@ -64,6 +65,7 @@ function SchemaTable({
   const timeout = useRef(null);
 
   const {
+    auto_add_new_fields: autoAddNewFields,
     bookmark_properties: bookmarkProperties,
     destination_table: destinationTableInit,
     key_properties: keyProperties,
@@ -602,6 +604,28 @@ function SchemaTable({
               {UniqueConflictMethodEnum.UPDATE}
             </option>
           </Select>
+        </Spacing>
+
+        <Spacing mb={3}>
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <Spacing mb={1}>
+              <Text bold large>
+                Automatically add new fields
+              </Text>
+              <Text default>
+                Turn the toggle on if you want new table columns in the data source to be automatically added and
+                synced with the data destination.
+              </Text>
+            </Spacing>
+
+            <ToggleSwitch
+              checked={!!autoAddNewFields}
+              onCheck={() => updateStream(streamUUID, (stream: StreamType) => ({
+                ...stream,
+                auto_add_new_fields: !autoAddNewFields,
+              }))}
+            />
+          </FlexContainer>
         </Spacing>
       </Spacing>
     </>

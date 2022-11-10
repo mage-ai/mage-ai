@@ -9,18 +9,11 @@ import BlockType, {
   BlockRequestPayloadType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
-import Checkbox from '@oracle/elements/Checkbox';
-import Chip from '@oracle/components/Chip';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import IntegrationSourceType, {
-  COLUMN_TYPES,
-  COLUMN_TYPE_CUSTOM_DATE_TIME,
   CatalogType,
-  ColumnFormatEnum,
-  ColumnTypeEnum,
   InclusionEnum,
   IntegrationSourceStreamType,
   PropertyMetadataType,
@@ -34,23 +27,21 @@ import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import SchemaSettings from './SchemaSettings';
 import Select from '@oracle/elements/Inputs/Select';
-import SelectStreams from './SelectStreams'
+import SelectStreams from './SelectStreams';
 import SourceConfig from './SourceConfig';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { find, indexBy, remove } from '@utils/array';
+import { find, indexBy } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onSuccess } from '@api/utils/response';
-import { pluralize } from '@utils/string';
 import { useModal } from '@context/Modal';
 
 type IntegrationPipelineProps = {
@@ -143,7 +134,7 @@ function IntegrationPipeline({
     useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type), [blocks]);
   const dataExporterBlockContent = useMemo(() => {
     if (!dataExporterBlock) {
-      return {}
+      return {};
     }
 
     return parse(dataExporterBlock.content);
@@ -174,7 +165,7 @@ function IntegrationPipeline({
   );
 
   const [sourceSampleDataError, setSourceSampleDataError] = useState<string>();
-  const [loadSampleData, { isLoading: isLoadingLoadSampleData }] = useMutation(
+  const [loadSampleData] = useMutation(
     api.integration_sources.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -369,7 +360,7 @@ function IntegrationPipeline({
     updateStream,
   ]);
 
-  const [updateDestinationBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+  const [updateDestinationBlock] = useMutation(
     api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
     {
       onSuccess: (response: any) => onSuccess(
@@ -401,13 +392,13 @@ function IntegrationPipeline({
       const variableCode = `"{{ variables('${uuid}') }}"`;
       if (!uuid.startsWith('output')) {
         return variableRows.push([
-          <Text monospace key={`variable-uuid-${uuid}`}>
+          <Text key={`variable-uuid-${uuid}`} monospace>
             {uuid}
           </Text>,
-          <Text monospace key={`variable-uuid-${uuid}-{value}`}>
+          <Text key={`variable-uuid-${uuid}-{value}`} monospace>
             {value}
           </Text>,
-          <Text monospace key={`variable-uuid-${uuid}-{value}-code`}>
+          <Text key={`variable-uuid-${uuid}-{value}-code`} monospace>
             {variableCode}
           </Text>,
           <CopyToClipboard
@@ -706,8 +697,8 @@ function IntegrationPipeline({
           <SectionStyle>
             {codeBlocks.length > 0 && (
               <Spacing mb={1}>
-                {codeBlocks.map(codeBlock => (
-                  <Spacing mb={1}>
+                {codeBlocks.map((codeBlock, idx) => (
+                  <Spacing key={idx} mb={1}>
                     {codeBlock}
                   </Spacing>
                 ))}
