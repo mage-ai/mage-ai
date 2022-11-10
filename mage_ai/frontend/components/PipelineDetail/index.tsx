@@ -108,6 +108,7 @@ type PipelineDetailProps = {
   setPipelineContentTouched: (value: boolean) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
+  setSampleDataVariable: (variable: string) => void; 
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
   setTextareaFocused: (value: boolean) => void;
@@ -152,6 +153,7 @@ function PipelineDetail({
   setPipelineContentTouched,
   setRecsWindowOpenBlockIdx,
   setRunningBlocks,
+  setSampleDataVariable,
   setSelectedBlock,
   setSelectedOutputBlock,
   setTextareaFocused,
@@ -442,10 +444,14 @@ function PipelineDetail({
       fetchPipeline={fetchPipeline}
       globalVariables={globalVariables}
       onChangeCodeBlock={onChangeCodeBlock}
+      openSidekickView={openSidekickView}
       pipeline={pipeline}
       savePipelineContent={savePipelineContent}
       setErrors={setErrors}
+      setOutputBlocks={setOutputBlocks}
+      setSampleDataVariable={setSampleDataVariable}
       setSelectedBlock={setSelectedBlock}
+      setSelectedOutputBlock={setSelectedOutputBlock}
     />
   ), [
     blocks,

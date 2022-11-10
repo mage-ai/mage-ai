@@ -42,6 +42,7 @@ import api from '@api';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { find, indexBy, remove } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
@@ -60,6 +61,7 @@ type IntegrationPipelineProps = {
   fetchPipeline: () => void;
   globalVariables: PipelineVariableType[];
   onChangeCodeBlock: (uuid: string, value: string) => void;
+  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   savePipelineContent: (payload?: {
     block?: BlockType;
@@ -69,7 +71,10 @@ type IntegrationPipelineProps = {
     errors: any;
     response: any;
   }) => void;
+  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSampleDataVariable: (variable: string) => void;
   setSelectedBlock: (block: BlockType) => void;
+  setSelectedOutputBlock: (block: BlockType) => void;
 };
 
 function IntegrationPipeline({
@@ -79,10 +84,14 @@ function IntegrationPipeline({
   fetchPipeline,
   globalVariables,
   onChangeCodeBlock,
+  openSidekickView,
   pipeline,
   savePipelineContent,
   setErrors,
+  setOutputBlocks,
+  setSampleDataVariable,
   setSelectedBlock,
+  setSelectedOutputBlock,
 }: IntegrationPipelineProps) {
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
@@ -155,6 +164,44 @@ function IntegrationPipeline({
   const [selectedStreamID, setSelectedStreamID] =
     useState<string>(catalog?.streams?.[0]?.tap_stream_id);
 
+  const updateSampleDataVariable = useCallback(
+    () => setSampleDataVariable(selectedStreamID),
+    [selectedStreamID],
+  );
+
+  const [sourceSampleDataError, setSourceSampleDataError] = useState<string>();
+  const [loadSampleData, { isLoading: isLoadingLoadSampleData }] = useMutation(
+    api.integration_sources.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response,
+        {
+          callback: (res) => {
+            if (res['success']) {
+              setSelectedOutputBlock(dataLoaderBlock);
+              updateSampleDataVariable();
+              openSidekickView(ViewKeyEnum.DATA);
+              setOutputBlocks(() => {
+                setSelectedOutputBlock(dataLoaderBlock);
+                return [dataLoaderBlock];
+              });
+            } else {
+              setSourceSampleDataError(res['error']);
+            }
+          },
+          onErrorCallBack: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          }
+        }
+      )
+    }
+  )
+
   const [
     fetchIntegrationSource,
     {
@@ -208,7 +255,14 @@ function IntegrationPipeline({
               catalog: catalogData,
             }));
 
-            savePipelineContent().then(() => fetchPipeline());
+            savePipelineContent().then(() => {
+              fetchPipeline();
+              // @ts-ignore
+              loadSampleData({
+                action: 'sample_data',
+                pipeline_uuid: pipeline?.uuid,
+              });
+            });
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -341,23 +395,25 @@ function IntegrationPipeline({
       value,
     }) => {
       const variableCode = `"{{ variables('${uuid}') }}"`;
-      return variableRows.push([
-        <Text monospace key={`variable-uuid-${uuid}`}>
-          {uuid}
-        </Text>,
-        <Text monospace key={`variable-uuid-${uuid}-{value}`}>
-          {value}
-        </Text>,
-        <Text monospace key={`variable-uuid-${uuid}-{value}-code`}>
-          {variableCode}
-        </Text>,
-        <CopyToClipboard
-          key={`variable-uuid-${uuid}-{value}-code-copy`}
-          copiedText={variableCode}
-          monospace
-          withCopyIcon
-        />,
-      ]);
+      if (!uuid.startsWith('output')) {
+        variableRows.push([
+          <Text monospace key={`variable-uuid-${uuid}`}>
+            {uuid}
+          </Text>,
+          <Text monospace key={`variable-uuid-${uuid}-{value}`}>
+            {value}
+          </Text>,
+          <Text monospace key={`variable-uuid-${uuid}-{value}-code`}>
+            {variableCode}
+          </Text>,
+          <CopyToClipboard
+            key={`variable-uuid-${uuid}-{value}-code-copy`}
+            copiedText={variableCode}
+            monospace
+            withCopyIcon
+          />,
+        ]);
+      }
     }));
 
     return (
@@ -531,6 +587,8 @@ function IntegrationPipeline({
                       <Select
                         onChange={(e) => {
                           const uuid = e.target.value;
+
+                          setOutputBlocks(() => []);
                           setSelectedStreamID(uuid);
                           if (uuid) {
                             // @ts-ignore
@@ -564,6 +622,20 @@ function IntegrationPipeline({
                           </option>
                         ))}
                       </Select>
+                      {isLoadingLoadSampleData && (
+                        <Spacing mt={1}>
+                          <FlexContainer>
+                            <Spinner color="white" small/> 
+                            <Spacing ml={1} />
+                            <Text small> Loading data preview </Text>
+                          </FlexContainer>
+                        </Spacing>
+                      )}
+                      {sourceSampleDataError && (
+                        <Text warning>
+                          {sourceSampleDataError}
+                        </Text>
+                      )}
                     </Spacing>
                   )}
 

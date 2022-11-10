@@ -46,6 +46,8 @@ WHERE  c.table_schema = '{schema}'
             query = f'{query}\nAND c.TABLE_NAME IN ({table_names})'
         return query
 
+    def update_column_names(self, columns: List[str]) -> List[str]:
+        return list(map(lambda column: f'"{column}"', columns))
 
 if __name__ == '__main__':
     main(PostgreSQL)

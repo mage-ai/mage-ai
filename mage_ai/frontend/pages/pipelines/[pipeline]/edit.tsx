@@ -66,7 +66,7 @@ import {
   removeDataOutputBlockUUID,
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
-import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
+import { equals, find, pushAtIndex, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
@@ -105,7 +105,50 @@ function PipelineDetailPage({
 
   const mainContainerRef = useRef(null);
 
+  // Kernels
+  const [messages, setMessages] = useState<{
+    [uuid: string]: KernelOutputType[];
+  }>({});
+  const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
+
+  const {
+    data: dataKernels,
+    mutate: fetchKernels,
+  } = api.kernels.list({}, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+  });
+  const kernels = dataKernels?.kernels;
+  const kernel =
+    kernels?.find(({ name }) =>
+      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]
+    ) || kernels?.[0];
+
   // Pipeline
+  const pipelineUUID = pipelineProp.uuid;
+  const pipelineUUIDPrev = usePrevious(pipelineUUID);
+  const {
+    data,
+    isLoading,
+    mutate: fetchPipeline,
+  } = api.pipelines.detail(pipelineUUID, {
+    include_outputs: isEmptyObject(messages),
+  });
+  const { data: filesData, mutate: fetchFileTree } = api.files.list();
+  const files = useMemo(() => filesData?.files || [], [filesData]);
+  const projectName = useMemo(() => files?.[0]?.name, [files]);
+  const pipeline = data?.pipeline;
+
+  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
+  useEffect(() => {
+    if (data?.error) {
+      setErrors({
+        errors: parseErrorFromResponse(data),
+        response: data,
+      });
+    }
+  }, [data]);
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
 
@@ -153,8 +196,6 @@ function PipelineDetailPage({
   const chartRefs = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
-  const pipelineUUID = pipelineProp.uuid;
-  const pipelineUUIDPrev = usePrevious(pipelineUUID);
 
   const setContentByBlockUUID = useCallback((data: {
     [uuid: string]: string;
@@ -271,6 +312,7 @@ function PipelineDetailPage({
     }
   }, [pipelineUUID, pipelineUUIDPrev]);
 
+  const [sampleDataVariable, setSampleDataVariable] = useState<string>();
   const {
     data: blockSampleData,
     mutate: fetchSampleData,
@@ -280,7 +322,16 @@ function PipelineDetailPage({
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
       && selectedOutputBlock?.uuid,
   );
-  const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
+  const sampleData: SampleDataType = useMemo(() => {
+    if (isIntegration) {
+      return find(
+        blockSampleData?.outputs,
+        ({ variable_uuid }) => variable_uuid === `output_sample_data_${sampleDataVariable}`,
+      )?.sample_data;
+    } else {
+      return blockSampleData?.outputs?.[0]?.sample_data;
+    }
+  }, [blockSampleData, isIntegration, sampleDataVariable]);
   const {
     data: blockAnalysis,
     mutate: fetchAnalysis,
@@ -348,46 +399,6 @@ function PipelineDetailPage({
     revalidateOnFocus: true,
   });
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
-
-  // Kernels
-  const [messages, setMessages] = useState<{
-    [uuid: string]: KernelOutputType[];
-  }>({});
-  const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
-
-  const {
-    data,
-    isLoading,
-    mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineUUID, {
-    include_outputs: isEmptyObject(messages),
-  });
-  const { data: filesData, mutate: fetchFileTree } = api.files.list();
-  const files = useMemo(() => filesData?.files || [], [filesData]);
-  const projectName = useMemo(() => files?.[0]?.name, [files]);
-  const pipeline = data?.pipeline;
-
-  useEffect(() => {
-    if (data?.error) {
-      setErrors({
-        errors: parseErrorFromResponse(data),
-        response: data,
-      });
-    }
-  }, [data]);
-
-  const {
-    data: dataKernels,
-    mutate: fetchKernels,
-  } = api.kernels.list({}, {
-    refreshInterval: 5000,
-    revalidateOnFocus: true,
-  });
-  const kernels = dataKernels?.kernels;
-  const kernel =
-    kernels?.find(({ name }) =>
-      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]
-    ) || kernels?.[0];
 
   useEffect(() => {
     setSelectedFilePath(filePathFromUrl);
@@ -1298,6 +1309,7 @@ function PipelineDetailPage({
       setPipelineContentTouched={setPipelineContentTouched}
       setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
       setRunningBlocks={setRunningBlocks}
+      setSampleDataVariable={setSampleDataVariable}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
       setTextareaFocused={setTextareaFocused}
@@ -1587,7 +1599,7 @@ function PipelineDetailPage({
                     selected={selected}
                     uuid={outputBlockUUID}
                   >
-                    {outputBlockUUID}
+                    {isIntegration && sampleDataVariable ? sampleDataVariable : outputBlockUUID}
                   </KeyboardShortcutButton>
                 </Spacing>
               );

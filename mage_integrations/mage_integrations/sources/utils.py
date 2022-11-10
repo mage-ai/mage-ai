@@ -230,6 +230,12 @@ def parse_args(required_config_keys):
         help='Set this flag to True to only test the source connection with the provided config.'
     )
 
+    parser.add_argument(
+        '--load_sample_data',
+        action='store_true',
+        help='Set this flag to True to load sample data from the provided config.'
+    )
+
     args, _ = parser.parse_known_args()
 
     if args.state:

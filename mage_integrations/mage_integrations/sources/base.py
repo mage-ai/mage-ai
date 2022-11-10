@@ -13,6 +13,7 @@ from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import extract, group_by, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
+from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
 from mage_integrations.utils.schema_helpers import extract_selected_columns
 
 from os.path import isfile
@@ -23,6 +24,8 @@ import dateutil.parser
 import inspect
 import json
 import os
+import pandas as pd
+import simplejson
 import singer
 import sys
 import traceback
@@ -39,6 +42,7 @@ class Source:
         discover_mode: bool = False,
         discover_streams_mode: bool = False,
         is_sorted: bool = True,
+        load_sample_data: bool = False,
         log_to_stdout: bool = False,
         logger=LOGGER,
         query: Dict = {},
@@ -69,6 +73,8 @@ class Source:
                 state = args.state
             if args.test_connection:
                 test_connection = args.test_connection
+            if args.load_sample_data:
+                load_sample_data = args.load_sample_data
 
         self.catalog = catalog
         self.config = config
@@ -76,6 +82,7 @@ class Source:
         self.discover_streams_mode = discover_streams_mode
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
+        self.load_sample_data = load_sample_data
         self.logger = Logger(
             caller=self,
             log_to_stdout=log_to_stdout,
@@ -182,6 +189,21 @@ class Source:
         try:
             if self.should_test_connection:
                 self.test_connection()
+            elif self.load_sample_data:
+                catalog = self.catalog or self.discover(streams=self.selected_streams)
+                for stream in catalog.get_selected_streams(self.state):
+                    gen = self.load_data(stream, sample_data=True)
+                    if gen is not None:
+                        data = next(gen)
+                        df = pd.DataFrame.from_records(data)
+
+                        output = {
+                            'stream_id': stream.tap_stream_id,
+                            'sample_data': df.to_json(),
+                            'type': TYPE_SAMPLE_DATA,
+                        }
+
+                        sys.stdout.write(simplejson.dumps(output) + '\n')
             elif self.discover_mode:
                 if self.discover_streams_mode:
                     json.dump(self.discover_streams(), sys.stdout)
@@ -442,8 +464,10 @@ class Source:
 
     def load_data(
         self,
+        stream,
         bookmarks: Dict = None,
         query: Dict = {},
+        sample_data: bool = False,
         start_date: datetime = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:

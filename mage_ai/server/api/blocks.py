@@ -145,4 +145,5 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
             sample_count=None,
             variable_type=VariableType.DATAFRAME,
         )
+
         self.write(dict(outputs=outputs))
