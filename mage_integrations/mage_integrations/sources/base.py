@@ -278,6 +278,8 @@ class Source:
 
         Args:
             stream (TYPE): The stream object.
+            properties (Dict, optional ): Dictionary to overwrite the
+                stream's schema properties.
 
         Returns:
             int: Number of records.
