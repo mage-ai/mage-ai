@@ -395,23 +395,25 @@ function IntegrationPipeline({
       value,
     }) => {
       const variableCode = `"{{ variables('${uuid}') }}"`;
-      return variableRows.push([
-        <Text monospace key={`variable-uuid-${uuid}`}>
-          {uuid}
-        </Text>,
-        <Text monospace key={`variable-uuid-${uuid}-{value}`}>
-          {value}
-        </Text>,
-        <Text monospace key={`variable-uuid-${uuid}-{value}-code`}>
-          {variableCode}
-        </Text>,
-        <CopyToClipboard
-          key={`variable-uuid-${uuid}-{value}-code-copy`}
-          copiedText={variableCode}
-          monospace
-          withCopyIcon
-        />,
-      ]);
+      if (!uuid.startsWith('output')) {
+        variableRows.push([
+          <Text monospace key={`variable-uuid-${uuid}`}>
+            {uuid}
+          </Text>,
+          <Text monospace key={`variable-uuid-${uuid}-{value}`}>
+            {value}
+          </Text>,
+          <Text monospace key={`variable-uuid-${uuid}-{value}-code`}>
+            {variableCode}
+          </Text>,
+          <CopyToClipboard
+            key={`variable-uuid-${uuid}-{value}-code-copy`}
+            copiedText={variableCode}
+            monospace
+            withCopyIcon
+          />,
+        ]);
+      }
     }));
 
     return (
