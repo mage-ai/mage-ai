@@ -13,9 +13,9 @@ db_kwargs = dict(pool_pre_ping=True)
 if not db_connection_url:
     if is_test():
         db_connection_url = f'sqlite:///{TEST_DB}'
-    elif os.path.exists('mage_ai/orchestration/db/'):
-        # For local dev environment
-        db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
+    # elif os.path.exists('mage_ai/orchestration/db/'):
+    #     # For local dev environment
+    #     db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
     elif os.path.exists('mage-ai.db'):
         # For backward compatiblility
         db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
@@ -24,6 +24,7 @@ if not db_connection_url:
         db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
     db_kwargs['connect_args'] = {'check_same_thread': False}
 
+print(f'db connection url: {db_connection_url}')
 engine = create_engine(
     db_connection_url,
     **db_kwargs,

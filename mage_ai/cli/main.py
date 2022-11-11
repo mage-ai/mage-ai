@@ -51,8 +51,6 @@ Commands:
         repo_path = os.path.join(os.getcwd(), sys.argv[2])
         init_repo(repo_path)
     elif command == 'start':
-        from mage_ai.server.server import start_server
-
         parser = argparse.ArgumentParser()
         parser.add_argument('repo_path', metavar='project_path', type=str)
         parser.add_argument('--host', nargs='?', type=str)
@@ -62,21 +60,26 @@ Commands:
         args = dict()
         if len(sys.argv) >= 3:
             args = vars(parser.parse_args(sys.argv[2:]))
-            repo_path = args['repo_path']
+            project_path = args['repo_path']
         else:
-            repo_path = os.getcwd()
+            project_path = os.getcwd()
+        project_path = os.path.abspath(project_path)
+
+        from mage_ai.data_preparation.repo_manager import set_repo_path
+
+        set_repo_path(project_path)
+
+        from mage_ai.server.server import start_server
 
         start_server(
             host=args.get('host'),
             manage=args.get('manage_instance') == '1',
             port=args.get('port'),
-            project=repo_path,
+            project=project_path,
         )
     elif command == 'run' or command == 'test':
-        from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
-        from mage_ai.data_preparation.models.pipeline import Pipeline
+
         from mage_ai.data_preparation.repo_manager import set_repo_path
-        from mage_ai.data_preparation.variable_manager import get_global_variables
         from mage_ai.shared.hash import merge_dict
 
         parser = argparse.ArgumentParser(description='Run pipeline.')
@@ -106,6 +109,11 @@ Commands:
 
         project_path = os.path.abspath(project_path)
         set_repo_path(project_path)
+
+        from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
+        from mage_ai.data_preparation.models.pipeline import Pipeline
+        from mage_ai.data_preparation.variable_manager import get_global_variables
+
         sys.path.append(os.path.dirname(project_path))
         pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
 
