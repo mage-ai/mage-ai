@@ -88,7 +88,7 @@ def init_repo(repo_path: str) -> None:
     if os.path.exists(repo_path):
         return
 
-    os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exists_ok=True)
+    os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exist_ok=True)
     copy_template_directory('repo', repo_path)
 
 
