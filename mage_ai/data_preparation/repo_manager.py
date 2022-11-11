@@ -46,6 +46,8 @@ class RepoConfig:
                     self.variables_dir = os.path.abspath(
                         os.path.join(self.repo_path, self.variables_dir),
                     )
+            os.makedirs(self.variables_dir, exist_ok=True)
+
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
@@ -88,7 +90,7 @@ def init_repo(repo_path: str) -> None:
     if os.path.exists(repo_path):
         return
 
-    os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exists_ok=True)
+    os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exist_ok=True)
     copy_template_directory('repo', repo_path)
 
 
