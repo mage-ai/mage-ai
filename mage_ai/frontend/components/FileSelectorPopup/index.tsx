@@ -9,12 +9,16 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import dark from '@oracle/styles/themes/dark';
 import { Close } from '@oracle/icons';
 import {
+  InputRowStyle,
   WindowHeaderStyle,
   WindowContainerStyle,
   WindowContentStyle,
+  WindowFooterStyle,
 } from './index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy } from '@utils/array';
 
 type FileSelectorPopupProps = {
@@ -37,6 +41,7 @@ function FileSelectorPopup({
   setDbtModelName,
 }: FileSelectorPopupProps) {
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
 
   const dbtModelFiles = useMemo(
     () => {
@@ -73,46 +78,14 @@ function FileSelectorPopup({
       <WindowHeaderStyle>
         <Flex alignItems="center">
           <Text
-            danger={creatingNewDBTModel && !dbtModelName}
             disableWordBreak
             monospace
           >
             {creatingNewDBTModel
-              ? 'Enter name for dbt model'
+              ? 'Create new DBT model'
               : 'Select DBT model file'
             }
           </Text>
-          {creatingNewDBTModel &&
-            <>
-              <Spacing mx={1}>
-                <LabelWithValueClicker
-                  bold={false}
-                  inputValue={dbtModelName}
-                  monospace
-                  muted
-                  notRequired
-                  onBlur={() => {
-                    setIsEditingName(false);
-                  }}
-                  onChange={(e) => {
-                    setDbtModelName(e.target.value);
-                    e.preventDefault();
-                  }}
-                  onClick={() => {
-                    setIsEditingName(true);
-                  }}
-                  onFocus={() => {
-                    setIsEditingName(true);
-                  }}
-                  stacked
-                  value={!isEditingName && dbtModelName}
-                />
-              </Spacing>
-              <Text disableWordBreak monospace>
-                and select file location:
-              </Text>
-            </>
-          }
         </Flex>
         <Button
           iconOnly
@@ -122,9 +95,55 @@ function FileSelectorPopup({
         </Button>
       </WindowHeaderStyle>
 
+      {creatingNewDBTModel &&
+        <>
+          <InputRowStyle>
+            <LabelWithValueClicker
+              inputValue={dbtModelName}
+              label="Model name (cannot be changed):"
+              labelColor={dark.accent.dbt}
+              minWidth={UNIT * 38}
+              notRequired
+              onBlur={() => {
+                setIsEditingName(false);
+              }}
+              onChange={(e) => {
+                setDbtModelName(e.target.value);
+                e.preventDefault();
+              }}
+              onClick={() => {
+                setIsEditingName(true);
+              }}
+              onFocus={() => {
+                setIsEditingName(true);
+              }}
+              placeholder="Enter name"
+              required
+              value={!isEditingName && dbtModelName}
+            />
+          </InputRowStyle>
+          <InputRowStyle>
+            <FlexContainer alignItems="center">
+              <Text bold color={dark.accent.dbt}>
+                Select folder location:&nbsp;
+              </Text>
+              <Text
+                bold
+                muted={!selectedFilePath}
+              >
+                {selectedFilePath
+                  ? `dbt/${selectedFilePath}`
+                  : 'Choose folder below'
+                }
+              </Text>
+            </FlexContainer>
+          </InputRowStyle>
+        </>
+      }
+
       <WindowContentStyle>
         <FileBrowser
-          allowOpeningFolders={creatingNewDBTModel}
+          allowSelectingFolders={creatingNewDBTModel}
           disableContextMenu
           files={dbtModelFiles}
           isFileDisabled={(filePath: string, children) => {
@@ -138,10 +157,27 @@ function FileSelectorPopup({
               );
           }}
           openFile={onOpenFile}
+          selectFile={setSelectedFilePath}
           uncollapsed
           useRootFolder
         />
       </WindowContentStyle>
+
+      {creatingNewDBTModel &&
+        <WindowFooterStyle>
+          <Button
+            backgroundColor={(!dbtModelName || !selectedFilePath)
+              ? dark.monotone.grey500
+              : dark.accent.dbt
+            }
+            disabled={!dbtModelName || !selectedFilePath}
+            onClick={() => onOpenFile(selectedFilePath)}
+            padding="6px 8px"
+          >
+            Create model
+          </Button>
+        </WindowFooterStyle>
+      }
     </WindowContainerStyle>
   );
 }
