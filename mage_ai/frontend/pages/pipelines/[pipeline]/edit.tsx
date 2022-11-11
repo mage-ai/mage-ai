@@ -803,7 +803,7 @@ function PipelineDetailPage({
             } = response;
             onCreateCallback?.(block);
             setRecsWindowOpenBlockIdx(null);
-            fetchFileTree()
+            fetchFileTree();
             fetchPipeline().then(({ pipeline: { blocks: arr } }) => setBlocks(arr));
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -1036,7 +1036,7 @@ function PipelineDetailPage({
         uuid,
       } = message;
 
-      const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2 );
+      const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
       if (msgType !== 'stream_pipeline') {
         // @ts-ignore
@@ -1640,13 +1640,23 @@ function PipelineDetailPage({
           >
             <FileEditor
               active={selectedFilePath === filePath}
-              addNewBlock={(b: BlockRequestPayloadType) => {
-                addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.name);
+              addNewBlock={(
+                b: BlockRequestPayloadType,
+                cb: (block: BlockType) => void,
+              ) => {
+                addNewBlockAtIndex(
+                  b,
+                  blocks.length,
+                  cb,
+                  b.name,
+                );
                 router.push(`/pipelines/${pipelineUUID}/edit`);
               }}
+              fetchPipeline={fetchPipeline}
               filePath={filePath}
               pipeline={pipeline}
               setFilesTouched={setFilesTouched}
+              setSelectedBlock={setSelectedBlock}
             />
           </div>
         ))}
