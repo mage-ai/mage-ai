@@ -42,7 +42,7 @@ import { sortByKey } from '@utils/array';
 const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
-  allowOpeningFolders?: boolean;
+  allowSelectingFolders?: boolean;
   disableContextMenu?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
   onlyShowChildren?: boolean;
@@ -54,6 +54,7 @@ export type FolderSharedProps = {
   openFile: (path: string) => void;
   openPipeline?: (uuid: string) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  selectFile?: (path: string) => void;
   uncollapsed?: boolean;
   useRootFolder?: boolean;
 };
@@ -66,7 +67,7 @@ type FolderProps = {
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
-  allowOpeningFolders,
+  allowSelectingFolders,
   disableContextMenu,
   file,
   isFileDisabled,
@@ -77,6 +78,7 @@ function Folder({
   openPipeline,
   openSidekickView,
   pipelineBlockUuids,
+  selectFile,
   setContextItem,
   theme,
   uncollapsed,
@@ -138,7 +140,7 @@ function Folder({
 
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
-      allowOpeningFolders={allowOpeningFolders}
+      allowSelectingFolders={allowSelectingFolders}
       disableContextMenu={disableContextMenu}
       file={{
         ...f,
@@ -152,13 +154,14 @@ function Folder({
       openPipeline={openPipeline}
       openSidekickView={openSidekickView}
       pipelineBlockUuids={pipelineBlockUuids}
+      selectFile={selectFile}
       setContextItem={setContextItem}
       theme={theme}
       uncollapsed={uncollapsed}
       useRootFolder={useRootFolder}
     />
   )), [
-    allowOpeningFolders,
+    allowSelectingFolders,
     children,
     disableContextMenu,
     file,
@@ -170,6 +173,7 @@ function Folder({
     openPipeline,
     openSidekickView,
     pipelineBlockUuids,
+    selectFile,
     setContextItem,
     theme,
     uncollapsed,
@@ -204,8 +208,8 @@ function Folder({
             const nonPythonBlockFromFile = getNonPythonBlockFromFile(file);
 
             if (children) {
-              if (allowOpeningFolders) {
-                openFile(filePathToUse);
+              if (allowSelectingFolders) {
+                selectFile(filePathToUse);
               } else {
                   setCollapsed((collapsedPrev) => {
                     set(uuid, !collapsedPrev);
