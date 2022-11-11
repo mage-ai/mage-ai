@@ -326,9 +326,9 @@ function SchemaTable({
             />,
             <Checkbox
               checked={!!partitionKeys?.includes(columnName)}
-              disabled={validKeyProperties.includes(columnName)}
+              disabled={validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat}
               key={`${streamUUID}/${columnName}/partition_key`}
-              onClick={validKeyProperties.includes(columnName)
+              onClick={(validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat)
                 ? null
                 : () => updateStream(streamUUID, (stream: StreamType) => {
                 if (stream.partition_keys?.includes(columnName)) {
