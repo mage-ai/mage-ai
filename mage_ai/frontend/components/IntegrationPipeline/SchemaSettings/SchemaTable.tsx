@@ -108,9 +108,9 @@ function SchemaTable({
     metadataForStream,
   ]);
 
-  const tableMemo = useMemo(() => {
-    const showPartitionKey = PARTITION_KEY_DESTINATIONS.includes(destination);
+  const showPartitionKey = PARTITION_KEY_DESTINATIONS.includes(destination);
 
+  const tableMemo = useMemo(() => {
     const columns = [
       {
         label: () => '',
@@ -137,7 +137,6 @@ function SchemaTable({
       columns.push({
         uuid: 'Partition key',
       });
-
     }
 
     return (
@@ -376,8 +375,8 @@ function SchemaTable({
       </TableContainerStyle>
     );
   }, [
-    destination,
     properties,
+    showPartitionKey,
     stream,
     streamUUID,
   ]);
@@ -607,50 +606,52 @@ function SchemaTable({
             ))}
           </FlexContainer>
         </Spacing>
-
-        <Spacing mb={3}>
-          <Spacing mb={1}>
-            <Text bold large>
-              Partition keys
-            </Text>
-            <Text default>
-              One datetime column can be used to partition the table. (Note: Partition keys
-              currently only work with BigQuery destinations. Support for other destinations is WIP.)
-            </Text>
-          </Spacing>
-
-          <FlexContainer alignItems="center" flexWrap="wrap">
-            {!partitionKeys?.length && (
-              <Text italic>
-                Click the checkbox under the column <Text bold inline italic>
-                  Partition key
-                </Text> to
-                use a specific column as a partition key.
+        
+        {showPartitionKey && (
+          <Spacing mb={3}>
+            <Spacing mb={1}>
+              <Text bold large>
+                Partition keys
               </Text>
-              )}
-            {partitionKeys?.map((columnName: string) => (
-              <Spacing
-                key={`key_properties/${columnName}`}
-                mb={1}
-                mr={1}
-              >
-                <Chip
-                  label={columnName}
-                  onClick={() => {
-                    updateStream(streamUUID, (stream: StreamType) => ({
-                      ...stream,
-                      partition_keys: remove(
-                        stream.partition_keys || [],
-                        (col: string) => col === columnName,
-                      ),
-                    }));
-                  }}
-                  primary
-                />
-              </Spacing>
-            ))}
-          </FlexContainer>
-        </Spacing>
+              <Text default>
+                One datetime column can be used to partition the table. (Note: Partition keys
+                currently only work with BigQuery destinations. Support for other destinations is WIP.)
+              </Text>
+            </Spacing>
+
+            <FlexContainer alignItems="center" flexWrap="wrap">
+              {!partitionKeys?.length && (
+                <Text italic>
+                  Click the checkbox under the column <Text bold inline italic>
+                    Partition key
+                  </Text> to
+                  use a specific column as a partition key.
+                </Text>
+                )}
+              {partitionKeys?.map((columnName: string) => (
+                <Spacing
+                  key={`key_properties/${columnName}`}
+                  mb={1}
+                  mr={1}
+                >
+                  <Chip
+                    label={columnName}
+                    onClick={() => {
+                      updateStream(streamUUID, (stream: StreamType) => ({
+                        ...stream,
+                        partition_keys: remove(
+                          stream.partition_keys || [],
+                          (col: string) => col === columnName,
+                        ),
+                      }));
+                    }}
+                    primary
+                  />
+                </Spacing>
+              ))}
+            </FlexContainer>
+          </Spacing>
+        )}
 
         <Spacing mb={SPACING_BOTTOM_UNITS}>
           <Spacing mb={1}>
