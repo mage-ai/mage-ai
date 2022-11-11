@@ -43,6 +43,7 @@ const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
   allowOpeningFolders?: boolean;
+  disableContextMenu?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
   onlyShowChildren?: boolean;
   onSelectBlockFile?: (
@@ -66,6 +67,7 @@ type FolderProps = {
 
 function Folder({
   allowOpeningFolders,
+  disableContextMenu,
   file,
   isFileDisabled,
   level,
@@ -137,6 +139,7 @@ function Folder({
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
       allowOpeningFolders={allowOpeningFolders}
+      disableContextMenu={disableContextMenu}
       file={{
         ...f,
         parent: file,
@@ -155,12 +158,23 @@ function Folder({
       useRootFolder={useRootFolder}
     />
   )), [
+    allowOpeningFolders,
     children,
+    disableContextMenu,
+    file,
     isFileDisabled,
+    level,
+    onSelectBlockFile,
+    onlyShowChildren,
     openFile,
     openPipeline,
+    openSidekickView,
+    pipelineBlockUuids,
+    setContextItem,
+    theme,
     uncollapsed,
     useRootFolder,
+    uuid,
   ]);
 
   return (
@@ -220,6 +234,9 @@ function Folder({
           }}
           onContextMenu={(e) => {
             e.preventDefault();
+            if (disableContextMenu) {
+              return;
+            }
 
             if (disabled) {
               setContextItem({ type: FileContextEnum.DISABLED });
@@ -282,8 +299,6 @@ function Folder({
             color={color}
             default={!color && !disabled}
             disabled={disabled}
-            // disabled={disabled || (isEditableCodeBlock && !fileUsedByPipeline)}
-            // italic={isEditableCodeBlock && !fileUsedByPipeline && name !== SpecialFileEnum.INIT_PY}
             monospace
             small
           >

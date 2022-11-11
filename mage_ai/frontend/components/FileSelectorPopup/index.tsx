@@ -124,7 +124,8 @@ function FileSelectorPopup({
 
       <WindowContentStyle>
         <FileBrowser
-          allowOpeningFolders
+          allowOpeningFolders={creatingNewDBTModel}
+          disableContextMenu
           files={dbtModelFiles}
           isFileDisabled={(filePath: string, children) => {
             if (creatingNewDBTModel) {
