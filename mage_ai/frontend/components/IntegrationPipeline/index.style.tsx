@@ -8,7 +8,6 @@ import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 export const SectionStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
   padding: ${PADDING_UNITS * UNIT}px;
-  overflow: hidden;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).popup};
