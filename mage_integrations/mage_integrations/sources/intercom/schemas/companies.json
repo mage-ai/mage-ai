@@ -1,0 +1,106 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "company_id": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "custom_attributes": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "id": {
+      "type": ["null", "string"]
+    },
+    "industry": {
+      "type": ["null", "string"]
+    },
+    "monthly_spend": {
+      "type": ["null", "number"],
+      "multipleOf": 1e-8
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "plan": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": ["null", "string"]
+        },
+        "name": {
+          "type": ["null", "string"]
+        },
+        "type": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "remote_created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "segments": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": ["null", "object"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": ["null", "string"]
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "session_count": {
+      "type": ["null", "integer"]
+    },
+    "size": {
+      "type": ["null", "integer"]
+    },
+    "tags": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": ["null", "object"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": ["null", "string"]
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "user_count": {
+      "type": ["null", "integer"]
+    },
+    "website": {
+      "type": ["null", "string"]
+    }
+  }
+}
