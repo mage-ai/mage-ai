@@ -28,6 +28,7 @@ import {
   StreamType,
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
+import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove } from '@utils/array';
 import { pluralize } from '@utils/string';
@@ -68,6 +69,7 @@ function SchemaTable({
     destination_table: destinationTableInit = '',
     key_properties: keyProperties,
     metadata,
+    partition_keys: partitionKeys,
     replication_method: replicationMethod,
     schema: {
       properties,
@@ -103,224 +105,249 @@ function SchemaTable({
   ]);
 
   const tableMemo = useMemo(() => (
-    <Table
-      alignTop
-      columnFlex={[null, 2, 1, null, null]}
-      columns={[
-        {
-          label: () => '',
-          uuid: 'Selected',
-        },
-        {
-          uuid: 'Name',
-        },
-        {
-          uuid: 'Type',
-        },
-        {
-          uuid: 'Unique',
-        },
-        {
-          uuid: 'Bookmark',
-        },
-        {
-          uuid: 'Key prop',
-        },
-      ]}
-      rows={Object.entries(properties).map(([
-        columnName, {
-          anyOf: columnTypesAnyOf = [],
-          format: columnFormat,
-          type: columnTypesInit = [],
-        },
-      ]) => {
-        const columnTypesSet = new Set(Array.isArray(columnTypesInit)
-          ? columnTypesInit
-          : [columnTypesInit],
-        );
-        columnTypesAnyOf.forEach(({
-          items,
-          type,
-        }) => {
-          if (Array.isArray(type)) {
-            type.forEach(t => columnTypesSet.add(t));
-          } else {
-            columnTypesSet.add(type);
-          }
-        });
-        const columnTypes = Array.from(columnTypesSet);
-
-        const {
-          metadata: {
-            inclusion,
-            selected,
+    <TableContainerStyle>
+      <Table
+        alignTop
+        columnFlex={[null, 2, 1, null, null, null, null]}
+        columns={[
+          {
+            label: () => '',
+            uuid: 'Selected',
           },
-        } = metadataByColumn[`properties/${columnName}`] || {};
-
-        const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
-          if (columnTypes.indexOf(colType) >= 0 || (
-            COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType)
-              && ColumnFormatEnum.DATE_TIME === columnFormat
-          )) {
-            return acc;
-          }
-
-          return acc.concat(
-            <option key={colType} value={colType}>
-              {colType}
-            </option>,
+          {
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Type',
+          },
+          {
+            uuid: 'Unique',
+          },
+          {
+            uuid: 'Bookmark',
+          },
+          {
+            uuid: 'Key prop',
+          },
+          {
+            uuid: 'Partition key',
+          },
+        ]}
+        rows={Object.entries(properties).map(([
+          columnName, {
+            anyOf: columnTypesAnyOf = [],
+            format: columnFormat,
+            type: columnTypesInit = [],
+          },
+        ]) => {
+          const columnTypesSet = new Set(Array.isArray(columnTypesInit)
+            ? columnTypesInit
+            : [columnTypesInit],
           );
-        }, []);
-        const indexOfFirstStringType =
-          columnTypes.findIndex((colType: ColumnTypeEnum) => colType === ColumnTypeEnum.STRING);
-
-        return [
-          <Checkbox
-            checked={selected}
-            disabled={InclusionEnum.AUTOMATIC === inclusion}
-            key={`${streamUUID}/${columnName}/selected`}
-            onClick={InclusionEnum.AUTOMATIC === inclusion
-              ? null
-              : () => {
-                updateMetadataForColumn(streamUUID, columnName, {
-                  selected: !selected,
-                });
-              }
+          columnTypesAnyOf.forEach(({
+            items,
+            type,
+          }) => {
+            if (Array.isArray(type)) {
+              type.forEach(t => columnTypesSet.add(t));
+            } else {
+              columnTypesSet.add(type);
             }
-          />,
-          <Text
-            key={`${streamUUID}/${columnName}/name`}
-          >
-            {columnName}
-          </Text>,
-          <FlexContainer
-            key={`${streamUUID}/${columnName}/type`}
-          >
-            <Flex flex={1}>
-              <FlexContainer
-                alignItems="center"
-                flexWrap="wrap"
-                fullWidth
-              >
-                {columnTypes.map((columnType: ColumnTypeEnum, idx: number) => (
-                  <Spacing
-                    key={`${streamUUID}/${columnName}/${columnType}/${idx}/chip`}
-                    mb={1}
-                    mr={1}
-                  >
-                    <Chip
-                      border
-                      label={ColumnFormatEnum.DATE_TIME === columnFormat &&
-                          ColumnTypeEnum.STRING === columnType &&
-                          indexOfFirstStringType === idx
-                        ? COLUMN_TYPE_CUSTOM_DATE_TIME
-                        : columnType
-                      }
-                      onClick={() => {
-                        const data: SchemaPropertyType = {
-                          format: columnFormat,
-                          type: columnTypes.filter((colType: ColumnTypeEnum) =>
-                            colType !== columnType),
-                        };
-
-                        if (ColumnFormatEnum.DATE_TIME === columnFormat &&
-                          ColumnTypeEnum.STRING === columnType
-                        ) {
-                          data.format = null;
+          });
+          const columnTypes = Array.from(columnTypesSet);
+  
+          const {
+            metadata: {
+              inclusion,
+              selected,
+            },
+          } = metadataByColumn[`properties/${columnName}`] || {};
+  
+          const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
+            if (columnTypes.indexOf(colType) >= 0 || (
+              COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType)
+                && ColumnFormatEnum.DATE_TIME === columnFormat
+            )) {
+              return acc;
+            }
+  
+            return acc.concat(
+              <option key={colType} value={colType}>
+                {colType}
+              </option>,
+            );
+          }, []);
+          const indexOfFirstStringType =
+            columnTypes.findIndex((colType: ColumnTypeEnum) => colType === ColumnTypeEnum.STRING);
+  
+          return [
+            <Checkbox
+              checked={selected}
+              disabled={InclusionEnum.AUTOMATIC === inclusion}
+              key={`${streamUUID}/${columnName}/selected`}
+              onClick={InclusionEnum.AUTOMATIC === inclusion
+                ? null
+                : () => {
+                  updateMetadataForColumn(streamUUID, columnName, {
+                    selected: !selected,
+                  });
+                }
+              }
+            />,
+            <Text
+              key={`${streamUUID}/${columnName}/name`}
+            >
+              {columnName}
+            </Text>,
+            <FlexContainer
+              key={`${streamUUID}/${columnName}/type`}
+            >
+              <Flex flex={1}>
+                <FlexContainer
+                  alignItems="center"
+                  flexWrap="wrap"
+                  fullWidth
+                >
+                  {columnTypes.map((columnType: ColumnTypeEnum, idx: number) => (
+                    <Spacing
+                      key={`${streamUUID}/${columnName}/${columnType}/${idx}/chip`}
+                      mb={1}
+                      mr={1}
+                    >
+                      <Chip
+                        border
+                        label={ColumnFormatEnum.DATE_TIME === columnFormat &&
+                            ColumnTypeEnum.STRING === columnType &&
+                            indexOfFirstStringType === idx
+                          ? COLUMN_TYPE_CUSTOM_DATE_TIME
+                          : columnType
                         }
+                        onClick={() => {
+                          const data: SchemaPropertyType = {
+                            format: columnFormat,
+                            type: columnTypes.filter((colType: ColumnTypeEnum) =>
+                              colType !== columnType),
+                          };
+  
+                          if (ColumnFormatEnum.DATE_TIME === columnFormat &&
+                            ColumnTypeEnum.STRING === columnType
+                          ) {
+                            data.format = null;
+                          }
+  
+                          updateSchemaProperty(streamUUID, columnName, data);
+                        }}
+                        small
+                      />
+                    </Spacing>
+                  ))}
+                </FlexContainer>
+              </Flex>
+  
+              {columnTypeOptions.length >= 1 && (
+                <Select
+                  compact
+                  onChange={(e) => {
+                    const columnType = e.target.value;
+                    const data: SchemaPropertyType = {
+                      format: columnFormat,
+                      type: columnTypes,
+                    };
+  
+                    if (COLUMN_TYPE_CUSTOM_DATE_TIME === String(columnType)) {
+                      data.format = ColumnFormatEnum.DATE_TIME;
+                      data.type.push(ColumnTypeEnum.STRING);
+                    } else {
+                      data.type.push(columnType);
+                    }
+  
+                    updateSchemaProperty(streamUUID, columnName, data);
+                  }}
+                  primary
+                  small
+                  value=""
+                  width={10 * UNIT}
+                >
+                  <option value="" />
+                  {columnTypeOptions}
+                </Select>
+              )}
+            </FlexContainer>,
+            <Checkbox
+              checked={!!uniqueConstraints?.includes(columnName)}
+              disabled={validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName)}
+              key={`${streamUUID}/${columnName}/unique`}
+              onClick={(validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName))
+                ? null
+                : () => updateStream(streamUUID, (stream: StreamType) => {
+                if (stream.unique_constraints?.includes(columnName)) {
+                  stream.unique_constraints =
+                    remove(stream.unique_constraints, col => columnName === col);
+                } else {
+                  stream.unique_constraints =
+                    [columnName].concat(stream.unique_constraints || []);
+                }
+  
+                return stream;
+              })}
+            />,
+            <Checkbox
+              checked={!!bookmarkProperties?.includes(columnName)}
+              disabled={validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName)}
+              key={`${streamUUID}/${columnName}/bookmark`}
+              onClick={(validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName))
+                ? null
+                : () => updateStream(streamUUID, (stream: StreamType) => {
+                if (stream.bookmark_properties?.includes(columnName)) {
+                  stream.bookmark_properties =
+                    remove(stream.bookmark_properties, col => columnName === col);
+                } else {
+                  stream.bookmark_properties =
+                    [columnName].concat(stream.bookmark_properties || []);
+                }
+  
+                return stream;
+              })}
+            />,
+            <Checkbox
+              checked={!!keyProperties?.includes(columnName)}
+              key={`${streamUUID}/${columnName}/key_property`}
+              onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                if (stream.key_properties?.includes(columnName)) {
+                  stream.key_properties =
+                    remove(stream.key_properties, col => columnName === col);
+                } else {
+                  stream.key_properties =
+                    [columnName].concat(stream.key_properties || []);
+                }
+  
+                return stream;
+              })}
+            />,
+            <Checkbox
+              checked={!!partitionKeys?.includes(columnName)}
+              disabled={validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat}
+              key={`${streamUUID}/${columnName}/partition_key`}
+              onClick={(validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat)
+                ? null
+                : () => updateStream(streamUUID, (stream: StreamType) => {
+                if (stream.partition_keys?.includes(columnName)) {
+                  stream.partition_keys =
+                    remove(stream.partition_keys, col => columnName === col);
+                } else {
+                  stream.partition_keys =
+                    [columnName].concat(stream.partition_keys || []);
+                }
+  
+                return stream;
+              })}
+            />,
+          ];
+        })}
+        stickyHeader
+      />
 
-                        updateSchemaProperty(streamUUID, columnName, data);
-                      }}
-                      small
-                    />
-                  </Spacing>
-                ))}
-              </FlexContainer>
-            </Flex>
-
-            {columnTypeOptions.length >= 1 && (
-              <Select
-                compact
-                onChange={(e) => {
-                  const columnType = e.target.value;
-                  const data: SchemaPropertyType = {
-                    format: columnFormat,
-                    type: columnTypes,
-                  };
-
-                  if (COLUMN_TYPE_CUSTOM_DATE_TIME === String(columnType)) {
-                    data.format = ColumnFormatEnum.DATE_TIME;
-                    data.type.push(ColumnTypeEnum.STRING);
-                  } else {
-                    data.type.push(columnType);
-                  }
-
-                  updateSchemaProperty(streamUUID, columnName, data);
-                }}
-                primary
-                small
-                value=""
-                width={10 * UNIT}
-              >
-                <option value="" />
-                {columnTypeOptions}
-              </Select>
-            )}
-          </FlexContainer>,
-          <Checkbox
-            checked={!!uniqueConstraints?.includes(columnName)}
-            disabled={validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName)}
-            key={`${streamUUID}/${columnName}/unique`}
-            onClick={(validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName))
-              ? null
-              : () => updateStream(streamUUID, (stream: StreamType) => {
-              if (stream.unique_constraints?.includes(columnName)) {
-                stream.unique_constraints =
-                  remove(stream.unique_constraints, col => columnName === col);
-              } else {
-                stream.unique_constraints =
-                  [columnName].concat(stream.unique_constraints || []);
-              }
-
-              return stream;
-            })}
-          />,
-          <Checkbox
-            checked={!!bookmarkProperties?.includes(columnName)}
-            disabled={validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName)}
-            key={`${streamUUID}/${columnName}/bookmark`}
-            onClick={(validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName))
-              ? null
-              : () => updateStream(streamUUID, (stream: StreamType) => {
-              if (stream.bookmark_properties?.includes(columnName)) {
-                stream.bookmark_properties =
-                  remove(stream.bookmark_properties, col => columnName === col);
-              } else {
-                stream.bookmark_properties =
-                  [columnName].concat(stream.bookmark_properties || []);
-              }
-
-              return stream;
-            })}
-          />,
-          <Checkbox
-            checked={!!keyProperties?.includes(columnName)}
-            key={`${streamUUID}/${columnName}/key_property`}
-            onClick={() => updateStream(streamUUID, (stream: StreamType) => {
-              if (stream.key_properties?.includes(columnName)) {
-                stream.key_properties =
-                  remove(stream.key_properties, col => columnName === col);
-              } else {
-                stream.key_properties =
-                  [columnName].concat(stream.key_properties || []);
-              }
-
-              return stream;
-            })}
-          />,
-        ];
-      })}
-    />
+    </TableContainerStyle>
   ), [
     properties,
     stream,
@@ -542,6 +569,50 @@ function SchemaTable({
                       ...stream,
                       key_properties: remove(
                         stream.key_properties || [],
+                        (col: string) => col === columnName,
+                      ),
+                    }));
+                  }}
+                  primary
+                />
+              </Spacing>
+            ))}
+          </FlexContainer>
+        </Spacing>
+
+        <Spacing mb={3}>
+          <Spacing mb={1}>
+            <Text bold large>
+              Partition keys
+            </Text>
+            <Text default>
+              One or more columns can be used to partition the table. (Note: Partition
+              keys currently only work with BigQuery destinations. Support for other destinations is WIP.)
+            </Text>
+          </Spacing>
+
+          <FlexContainer alignItems="center" flexWrap="wrap">
+            {!partitionKeys?.length && (
+              <Text italic>
+                Click the checkbox under the column <Text bold inline italic>
+                  Partition key
+                </Text> to
+                use a specific column as a partition key.
+              </Text>
+              )}
+            {partitionKeys?.map((columnName: string) => (
+              <Spacing
+                key={`key_properties/${columnName}`}
+                mb={1}
+                mr={1}
+              >
+                <Chip
+                  label={columnName}
+                  onClick={() => {
+                    updateStream(streamUUID, (stream: StreamType) => ({
+                      ...stream,
+                      partition_keys: remove(
+                        stream.partition_keys || [],
                         (col: string) => col === columnName,
                       ),
                     }));

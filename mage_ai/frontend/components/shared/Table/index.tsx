@@ -29,6 +29,7 @@ type TableProps = {
   noBorder?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
+  stickyHeader?: boolean;
   uuid?: string;
 };
 
@@ -43,6 +44,7 @@ function Table({
   noBorder,
   onClickRow,
   rows,
+  stickyHeader,
   uuid,
 }: TableProps) {
   const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), columnFlex);
@@ -126,6 +128,7 @@ function Table({
               compact={compact}
               key={`${uuid}-col-${col.uuid}-${idx}`}
               noBorder={noBorder}
+              sticky={stickyHeader}
             >
               <Text bold leftAligned monospace muted>
                 {col.label ? col.label() : col.uuid}

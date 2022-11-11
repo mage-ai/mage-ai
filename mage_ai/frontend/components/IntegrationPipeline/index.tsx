@@ -36,7 +36,7 @@ import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
-import { SectionStyle } from './index.style';
+import { SectionStyle, TableContainerStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { cleanName } from '@utils/string';

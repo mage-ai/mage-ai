@@ -58,8 +58,16 @@ const SHARED_STYLES = css<{
 export const TableHeadStyle = styled.th<{
   compact?: boolean;
   noBorder?: boolean;
+  sticky?: boolean;
 }>`
   ${SHARED_STYLES}
+
+  ${props => props.sticky && `
+    background-color: ${(props.theme || dark).background.panel};
+    z-index: 1;
+    position: sticky;
+    top: 0;
+  `}
 `;
 
 export const TableDataStyle = styled.td`
