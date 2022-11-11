@@ -25,6 +25,7 @@ RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cu
 
 EXPOSE 6789
 
+ENV MAGE_DATA_DIR="/home/src/mage_data"
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
 
