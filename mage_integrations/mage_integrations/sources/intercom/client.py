@@ -1,6 +1,4 @@
-import backoff
 import requests
-from requests.exceptions import ConnectionError, Timeout
 from singer import metrics, utils
 import singer
 
@@ -9,6 +7,7 @@ LOGGER = singer.get_logger()
 API_VERSION = '2.0'
 
 REQUEST_TIMEOUT = 300
+
 
 class Server5xxError(Exception):
     pass
@@ -24,6 +23,7 @@ class IntercomError(Exception):
 
 class IntercomBadRequestError(IntercomError):
     pass
+
 
 class IntercomScrollExistsError(IntercomError):
     pass
@@ -100,6 +100,7 @@ def get_exception_for_error_code(error_code, intercom_error_code):
         error_code = 423
     return ERROR_CODE_EXCEPTION_MAPPING.get(error_code, IntercomError)
 
+
 def raise_for_error(response):
     try:
         response.raise_for_status()
@@ -122,8 +123,9 @@ def raise_for_error(response):
                     error_code = err.get('code')
                     ex = get_exception_for_error_code(error_code=status_code, intercom_error_code=error_code)
                     if status_code == 401 and 'access_token' in error_code:
-                        LOGGER.error("Your API access_token is expired/invalid as per Intercom’s "\
-                            "security policy. \n Please re-authenticate your connection to "\
+                        LOGGER.error(
+                            "Your API access_token is expired/invalid as per Intercom’s "
+                            "security policy. \n Please re-authenticate your connection to "
                             "generate a new access_token and resume extraction.")
                     message = '{}: {}\n{}'.format(error_code, error_message, message)
                 raise ex('{}'.format(message)) from error
@@ -154,7 +156,6 @@ class IntercomClient(object):
     # `check_access_token` may throw timeout error. `request` method also call `check_access_token`.
     # So, to add backoff over `check_access_token` may cause 5*5 = 25 times backoff which is not expected.
     # That's why added backoff here.
-    @backoff.on_exception(backoff.expo, Timeout, max_tries=5, factor=2)
     def __enter__(self):
         self.__verified = self.check_access_token()
         return self
@@ -162,10 +163,6 @@ class IntercomClient(object):
     def __exit__(self, exception_type, exception_value, traceback):
         self.__session.close()
 
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, ConnectionError, Server429Error),
-                          max_tries=7,
-                          factor=3)
     @utils.ratelimit(1000, 60)
     def check_access_token(self):
         if self.__access_token is None:
@@ -192,11 +189,6 @@ class IntercomClient(object):
 
     # Rate limiting:
     #  https://developers.intercom.com/intercom-api-reference/reference#rate-limiting
-    @backoff.on_exception(backoff.expo, Timeout, max_tries=5, factor=2) # Backoff for request timeout
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, ConnectionError, Server429Error, IntercomScrollExistsError),
-                          max_tries=7,
-                          factor=3)
     @utils.ratelimit(1000, 60)
     def request(self, method, path=None, url=None, **kwargs):
         if not self.__verified:
@@ -205,7 +197,12 @@ class IntercomClient(object):
         if not url and path:
             url = '{}/{}'.format(self.base_url, path)
 
-        LOGGER.info("URL: {} {}, Params: {}, JSON Body: {}".format(method, url, kwargs.get("params"), kwargs.get("json")))
+        LOGGER.info("URL: {} {}, Params: {}, JSON Body: {}".format(
+            method,
+            url,
+            kwargs.get("params"),
+            kwargs.get("json"),
+        ))
 
         if 'endpoint' in kwargs:
             endpoint = kwargs['endpoint']
@@ -226,7 +223,7 @@ class IntercomClient(object):
             kwargs['headers']['Content-Type'] = 'application/json'
 
         with metrics.http_request_timer(endpoint) as timer:
-            response = self.__session.request(method, url, timeout=self.__request_timeout, **kwargs) # Pass request timeout
+            response = self.__session.request(method, url, timeout=self.__request_timeout, **kwargs)
             timer.tags[metrics.Tag.http_status_code] = response.status_code
 
         if response.status_code >= 500:
