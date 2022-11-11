@@ -1,4 +1,5 @@
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
+from mage_ai.shared.environments import is_test
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from jinja2 import Template
 from typing import Dict
@@ -8,14 +9,17 @@ import traceback
 import yaml
 
 MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'
-DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
+if is_test():
+    DEFAULT_MAGE_DATA_DIR = './'
+else:
+    DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
 
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
         self.repo_path = repo_path or get_repo_path()
         self.repo_name = os.path.basename(self.repo_path)
-        self.variables_dir = os.getenv('MAGE_DATA_DIR', '~/.mage_data')
+        self.variables_dir = os.getenv('MAGE_DATA_DIR', DEFAULT_MAGE_DATA_DIR)
         try:
             if not config_dict:
                 metadata_path = os.path.join(self.repo_path, 'metadata.yaml')
@@ -32,10 +36,11 @@ class RepoConfig:
                 repo_config.get('variables_dir', self.variables_dir),
             )
             if self.variables_dir is not None and not self.variables_dir.startswith('s3'):
-                if os.path.isabs(self.variables_dir) and (
+                if os.path.isabs(self.variables_dir) and self.variables_dir != self.repo_path and (
                     not config_dict or not config_dict.get('variables_dir')
                 ):
-                    # If the variables_dir is an absolute path and from config file
+                    # If the variables_dir is an absolute path, not same as repo_path, and
+                    # from config file
                     self.variables_dir = os.path.join(self.variables_dir, self.repo_name)
                 else:
                     self.variables_dir = os.path.abspath(
@@ -83,7 +88,7 @@ def init_repo(repo_path: str) -> None:
     if os.path.exists(repo_path):
         return
 
-    os.makedirs(os.getenv('MAGE_DATA_DIR', '~/.mage_data'), exists_ok=True)
+    os.makedirs(os.getenv('MAGE_DATA_DIR', DEFAULT_MAGE_DATA_DIR), exists_ok=True)
     copy_template_directory('repo', repo_path)
 
 
@@ -98,3 +103,7 @@ def get_repo_config(repo_path=None) -> RepoConfig:
 def set_repo_path(repo_path: str) -> None:
     os.environ[REPO_PATH_ENV_VAR] = repo_path
     sys.path.append(os.path.dirname(repo_path))
+
+
+def get_variables_dir(repo_path: str = None) -> str:
+    return get_repo_config(repo_path=repo_path).variables_dir

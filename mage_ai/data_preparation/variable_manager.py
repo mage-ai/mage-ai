@@ -10,8 +10,8 @@ from mage_ai.data_preparation.models.variable import (
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.data_preparation.storage.s3_storage import S3Storage
 from mage_ai.data_preparation.repo_manager import (
-    get_repo_config,
     get_repo_path,
+    get_variables_dir,
 )
 from mage_ai.shared.constants import S3_PREFIX
 from typing import Any, Dict, List
@@ -227,7 +227,7 @@ def get_variable(
     Set block intermediate variable by key.
     Block intermediate variables are stored in variables dir.
     """
-    return VariableManager(get_repo_config().variables_dir).get_variable(
+    return VariableManager(variables_dir=get_variables_dir()).get_variable(
         pipeline_uuid,
         block_uuid,
         key,

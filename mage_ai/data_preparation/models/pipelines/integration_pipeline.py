@@ -46,7 +46,7 @@ class IntegrationPipeline(Pipeline):
 
     @property
     def destination_dir(self) -> str:
-        path = f'{self.pipeline_dir}/{self.destination_uuid}'
+        path = f'{self.pipeline_variables_dir}/{self.destination_uuid}'
         if not os.path.exists(path):
             os.makedirs(path)
         return path
@@ -73,7 +73,7 @@ class IntegrationPipeline(Pipeline):
 
     @property
     def source_dir(self) -> str:
-        path = f'{self.pipeline_dir}/{self.source_uuid}'
+        path = f'{self.pipeline_variables_dir}/{self.source_uuid}'
         if not os.path.exists(path):
             os.makedirs(path)
         return path
@@ -92,10 +92,6 @@ class IntegrationPipeline(Pipeline):
     def transformer_file_path(self) -> str:
         transformer_file = importlib.import_module('mage_integrations.transformers.base')
         return os.path.abspath(transformer_file.__file__)
-
-    @property
-    def pipeline_dir(self) -> str:
-        return '/'.join(self.config_path.split('/')[:-1])
 
     def destination_state_file_path(self, uuid: str) -> str:
         file_path = f'{self.destination_dir}/{clean_name(uuid)}_state'
