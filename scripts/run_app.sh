@@ -5,7 +5,7 @@ PROJECT_PATH="default_repo"
 
 if [[ ! -z "${FILESTORE_IP_ADDRESS}" && ! -z "${FILE_SHARE_NAME}" ]]; then
     echo "Mounting Cloud Filestore ${FILESTORE_IP_ADDRESS}:/${FILE_SHARE_NAME}"
-    mount -o nolock $FILESTORE_IP_ADDRESS:/$FILE_SHARE_NAME ./
+    mount -o nolock $FILESTORE_IP_ADDRESS:/$FILE_SHARE_NAME /home/src
     echo "Mounting completed."
 fi
 
