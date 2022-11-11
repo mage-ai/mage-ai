@@ -240,9 +240,12 @@ def add_execution_code(
     return f"""{magic_header}
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
 import datetime
 import pandas as pd
+
+db_connection.start_session()
 
 def execute_custom_code():
     block_uuid=\'{block_uuid}\'

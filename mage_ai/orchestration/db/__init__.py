@@ -30,10 +30,13 @@ class DBConnection:
         self.session = None
 
     def start_session(self):
+        if self.session is not None and self.session.is_active:
+            return
         self.session = scoped_session(session_factory)
 
     def close_session(self):
         self.session.close()
+        self.session = None
 
 
 db_connection = DBConnection()
