@@ -119,24 +119,23 @@ function FileSelectorPopup({
               }}
               placeholder="Enter name"
               required
+              stacked
               value={!isEditingName && dbtModelName}
             />
           </InputRowStyle>
           <InputRowStyle>
-            <FlexContainer alignItems="center">
-              <Text bold color={dark.accent.dbt}>
-                Select folder location:&nbsp;
-              </Text>
-              <Text
-                bold
-                muted={!selectedFilePath}
-              >
-                {selectedFilePath
-                  ? `dbt/${selectedFilePath}`
-                  : 'Choose folder below'
-                }
-              </Text>
-            </FlexContainer>
+            <Text bold color={dark.accent.dbt}>
+              Select folder location:
+            </Text>
+            <Text
+              bold
+              muted={!selectedFilePath}
+            >
+              {selectedFilePath
+                ? `dbt/${selectedFilePath}`
+                : 'Choose folder below'
+              }
+            </Text>
           </InputRowStyle>
         </>
       }
