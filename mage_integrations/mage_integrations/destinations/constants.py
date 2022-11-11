@@ -9,6 +9,7 @@ COLUMN_TYPE_STRING = 'string'
 
 KEY_BOOKMARK_PROPERTIES = 'bookmark_properties'
 KEY_KEY_PROPERTIES = 'key_properties'
+KEY_PARTITION_KEYS = 'partition_keys'
 KEY_RECORD = 'record'
 KEY_REPLICATION_METHOD = 'replication_method'
 KEY_SCHEMA = 'schema'

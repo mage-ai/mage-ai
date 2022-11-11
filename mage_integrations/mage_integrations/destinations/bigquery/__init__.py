@@ -35,20 +35,34 @@ class BigQuery(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        return [
+        type_mapping = column_type_mapping(
+            schema,
+            convert_column_type,
+            lambda item_type_converted: 'ARRAY',
+            number_type='FLOAT64',
+            string_type='STRING',
+        )
+
+        create_table_command = \
             build_create_table_command(
-                column_type_mapping=column_type_mapping(
-                    schema,
-                    convert_column_type,
-                    lambda item_type_converted: 'ARRAY',
-                    number_type='FLOAT64',
-                    string_type='STRING',
-                ),
+                column_type_mapping=type_mapping,
                 columns=schema['properties'].keys(),
                 full_table_name=f'{schema_name}.{table_name}',
                 # BigQuery doesn't support unique constraints
                 unique_constraints=None,
-            ),
+            )
+
+        stream_partition_keys = self.partition_keys.get(stream, [])
+        if len(stream_partition_keys) > 0:
+            partition_col = stream_partition_keys[0]
+            create_table_command = f'''
+{create_table_command}
+PARTITION BY
+  DATE({partition_col})
+            '''
+
+        return [
+            create_table_command,
         ]
 
     def build_alter_table_commands(

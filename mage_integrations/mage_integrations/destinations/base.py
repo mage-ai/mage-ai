@@ -2,6 +2,7 @@ from jsonschema.validators import Draft4Validator
 from mage_integrations.destinations.constants import (
     KEY_BOOKMARK_PROPERTIES,
     KEY_KEY_PROPERTIES,
+    KEY_PARTITION_KEYS,
     KEY_RECORD,
     KEY_REPLICATION_METHOD,
     KEY_SCHEMA,
@@ -79,12 +80,13 @@ class Destination():
 
         self.config = config
         self.settings = settings
+        self.batch_processing = batch_processing
         self.bookmark_properties = None
         self.config_file_path = config_file_path
         self.debug = debug
         self.key_properties = None
         self.logger = Logger(caller=self, log_to_stdout=log_to_stdout, logger=logger)
-        self.batch_processing = batch_processing
+        self.partition_keys = None
         self.replication_methods = None
         self.schemas = None
         self.settings_file_path = settings_file_path
@@ -202,6 +204,7 @@ class Destination():
 
         self.bookmark_properties[stream] = row.get(KEY_BOOKMARK_PROPERTIES)
         self.key_properties[stream] = row.get(KEY_KEY_PROPERTIES)
+        self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS, [])
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
         self.schemas[stream] = schema
         self.unique_conflict_methods[stream] = row.get(KEY_UNIQUE_CONFLICT_METHOD)
@@ -236,6 +239,7 @@ class Destination():
     def _process(self, input_buffer) -> None:
         self.bookmark_properties = {}
         self.key_properties = {}
+        self.partition_keys = {}
         self.replication_methods = {}
         self.schemas = {}
         self.unique_conflict_methods = {}
