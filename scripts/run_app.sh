@@ -13,6 +13,7 @@ if [[ ! -z "${USER_CODE_PATH}" ]]; then
     PROJECT_PATH=$USER_CODE_PATH
 fi
 
+echo "Starting project at ${PROJECT_PATH}"
 mage start $PROJECT_PATH
 
 # Exit immediately when one of the background processes terminate.
