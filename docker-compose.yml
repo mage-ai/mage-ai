@@ -18,6 +18,7 @@ services:
     volumes:
       - .:/home/src
       - ~/.aws:/root/.aws
+      - ~/.mage_data:/root/.mage_data
     restart: on-failure:5
     stdin_open: true # used for interactive debugging
     tty: true # used for interactive debugging

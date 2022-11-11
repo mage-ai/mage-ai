@@ -2,6 +2,7 @@ from async_timeout import asyncio
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import DBTestCase
 from pandas.util.testing import assert_frame_equal
@@ -55,7 +56,9 @@ def remove_duplicate_rows(df):
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
 
-        variable_manager = VariableManager(pipeline.repo_path)
+        variable_manager = VariableManager(
+            variables_dir=get_repo_config(self.repo_path).variables_dir,
+        )
         data = variable_manager.get_variable(
             pipeline.uuid,
             block2.uuid,
@@ -118,7 +121,9 @@ def union_datasets(df1, df2):
         asyncio.run(block2.execute())
         asyncio.run(block3.execute())
 
-        variable_manager = VariableManager(pipeline.repo_path)
+        variable_manager = VariableManager(
+            variables_dir=get_repo_config(self.repo_path).variables_dir,
+        )
         data = variable_manager.get_variable(
             pipeline.uuid,
             block3.uuid,

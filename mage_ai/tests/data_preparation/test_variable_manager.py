@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.repo_manager import set_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_config, set_repo_path
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
     get_global_variable,
@@ -15,7 +15,9 @@ import pandas as pd
 class VariableManagerTest(DBTestCase):
     def test_add_and_get_variable(self):
         self.__create_pipeline('test pipeline 1')
-        variable_manager = VariableManager(self.repo_path)
+        variable_manager = VariableManager(
+            variables_dir=get_repo_config(self.repo_path).variables_dir,
+        )
         data1 = {'k1': 'v1', 'k2': 'v2'}
         data2 = pd.DataFrame([
             ['test1', 1],
@@ -68,7 +70,10 @@ class VariableManagerTest(DBTestCase):
 
     def test_get_variables_by_pipeline(self):
         self.__create_pipeline('test pipeline 2')
-        variable_manager = VariableManager(self.repo_path)
+        variable_manager = VariableManager(
+            repo_path=self.repo_path,
+            variables_dir=get_repo_config(self.repo_path).variables_dir,
+        )
         variable_manager.add_variable('test_pipeline_2', 'block1', 'var1', 1)
         variable_manager.add_variable('test_pipeline_2', 'block1', 'var2', 2)
         variable_manager.add_variable('test_pipeline_2', 'block2', 'var3', 3)

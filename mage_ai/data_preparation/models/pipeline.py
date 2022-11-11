@@ -69,6 +69,14 @@ class Pipeline:
         return self.repo_config.variables_dir
 
     @property
+    def pipeline_variables_dir(self):
+        return os.path.join(
+            self.variables_dir,
+            PIPELINES_FOLDER,
+            self.uuid,
+        )
+
+    @property
     def remote_variables_dir(self):
         return self.repo_config.remote_variables_dir
 

@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
 from mage_ai.shared.environments import is_test
 from sqlalchemy import create_engine
@@ -13,9 +14,14 @@ if not db_connection_url:
     if is_test():
         db_connection_url = f'sqlite:///{TEST_DB}'
     elif os.path.exists('mage_ai/orchestration/db/'):
+        # For local dev environment
         db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
+    elif os.path.exists('mage-ai.db'):
+        # For backward compatiblility
+        db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
     else:
-        db_connection_url = 'sqlite:///mage-ai.db'
+        # For new projects, create mage-ai.db in variables idr
+        db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
     db_kwargs['connect_args'] = {'check_same_thread': False}
 
 engine = create_engine(

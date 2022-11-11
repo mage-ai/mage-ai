@@ -2,7 +2,12 @@ from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PRE
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
+from mage_ai.data_preparation.repo_manager import (
+    get_repo_path,
+    get_variables_dir,
+    init_repo,
+    set_repo_path,
+)
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
@@ -273,7 +278,8 @@ class ApiPipelineListHandler(BaseHandler):
 
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        variable_manager = VariableManager(get_repo_path())
+        # Get global variables from project's path
+        variable_manager = VariableManager(variables_dir=get_repo_path())
 
         def get_variable_value(block_uuid, variable_uuid):
             variable = variable_manager.get_variable_object(pipeline_uuid, block_uuid, variable_uuid)
@@ -321,7 +327,10 @@ class ApiPipelineVariableListHandler(BaseHandler):
             variable_value,
         )
 
-        variables_dict = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
+        # Get global variables from project's path
+        variables_dict = VariableManager(
+            variables_dir=get_repo_path(),
+        ).get_variables_by_pipeline(pipeline_uuid)
         variables = [
             dict(
                 block=dict(uuid=uuid),

@@ -3,6 +3,7 @@ from mage_ai.orchestration.db.models import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run,
@@ -131,7 +132,7 @@ class PipelineRunTests(DBTestCase):
         )
         execution_date_str = execution_date.strftime(format='%Y%m%dT%H%M%S')
         expected_file_path = os.path.join(
-            self.__class__.repo_path,
+            get_repo_config(self.repo_path).variables_dir,
             'pipelines/test_pipeline/.logs',
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/pipeline.log',
         )
@@ -204,7 +205,7 @@ class BlockRunTests(DBTestCase):
         execution_date_str = execution_date.strftime(format='%Y%m%dT%H%M%S')
         for b in pipeline_run.block_runs:
             expected_file_path = os.path.join(
-                self.__class__.repo_path,
+                get_repo_config(self.repo_path).variables_dir,
                 'pipelines/test_pipeline/.logs',
                 f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/{b.block_uuid}.log',
             )
