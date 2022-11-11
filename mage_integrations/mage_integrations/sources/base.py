@@ -347,10 +347,16 @@ class Source:
 
         if bookmark_properties and not self.is_sorted:
             if max_bookmark:
-                write_state({
-                    stream.tap_stream_id:
-                    {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
-                })
+                state = {}
+
+                for idx, col in enumerate(bookmark_properties):
+                    singer.write_bookmark(state,
+                        stream.tap_stream_id,
+                        col,
+                        max_bookmark[idx],
+                    )
+
+                write_state(state)
 
         return record_count
 
@@ -381,9 +387,16 @@ class Source:
 
             if REPLICATION_METHOD_INCREMENTAL == stream.replication_method and bookmark_properties:
                 if self.is_sorted:
-                    write_state({
-                        stream.tap_stream_id: {col: row.get(col) for col in bookmark_properties},
-                    })
+                    state = {}
+
+                    for idx, col in enumerate(bookmark_properties):
+                        singer.write_bookmark(state,
+                            stream.tap_stream_id,
+                            col,
+                            row.get(col),
+                        )
+
+                    write_state(state)
                 else:
                     # If data unsorted, save max value until end of writes
                     max_bookmark = max(

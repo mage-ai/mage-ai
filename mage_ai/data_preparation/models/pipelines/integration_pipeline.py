@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig
+from mage_ai.shared.utils import clean_name
 from mage_ai.shared.parsers import encode_complex, extract_json_objects
 from typing import Any, Dict, List
 import importlib
@@ -61,14 +62,6 @@ class IntegrationPipeline(Pipeline):
             return os.path.abspath(self.destination.__file__)
 
     @property
-    def destination_state_file_path(self) -> str:
-        file_path = f'{self.destination_dir}/state'
-        if not os.path.exists(file_path):
-            with open(file_path, 'w') as f:
-                f.write('')
-        return file_path
-
-    @property
     def source_config(self) -> Dict:
         if self.data_loader and self.data_loader.content:
             return yaml.safe_load(self.data_loader.content)
@@ -96,14 +89,6 @@ class IntegrationPipeline(Pipeline):
             return os.path.abspath(self.source.__file__)
 
     @property
-    def source_state_file_path(self) -> str:
-        file_path = f'{self.source_dir}/state.json'
-        if not os.path.exists(file_path):
-            with open(file_path, 'w') as f:
-                f.write(json.dumps(dict(bookmarks={})))
-        return file_path
-
-    @property
     def transformer_file_path(self) -> str:
         transformer_file = importlib.import_module('mage_integrations.transformers.base')
         return os.path.abspath(transformer_file.__file__)
@@ -111,6 +96,20 @@ class IntegrationPipeline(Pipeline):
     @property
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
+
+    def destination_state_file_path(self, uuid: str) -> str:
+        file_path = f'{self.destination_dir}/{clean_name(uuid)}_state'
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write('')
+        return file_path
+
+    def source_state_file_path(self, uuid: str) -> str:
+        file_path = f'{self.source_dir}/{clean_name(uuid)}_state.json'
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write(json.dumps(dict(bookmarks={})))
+        return file_path
 
     def test_connection(self, block_type: BlockType, config: str = None):
         file_path = None
@@ -147,13 +146,13 @@ class IntegrationPipeline(Pipeline):
             for line in stderr:
                 if line.startswith('ERROR'):
                     json_object = next(extract_json_objects(line))
-            
+
             error = dig(json_object, 'tags.error')
             raise Exception(error)
 
     def preview_data(self, block_type: BlockType) -> pd.DataFrame:
         from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
-        
+
         global_vars = get_global_variables(self.uuid) or dict()
         file_path = None
         if BlockType.DATA_LOADER == block_type:
@@ -174,7 +173,7 @@ class IntegrationPipeline(Pipeline):
                     '--settings',
                     self.data_loader.file_path,
                     '--state',
-                    self.source_state_file_path,
+                    self.source_state_file_path_for_block_uuid(self.data_loader.uuid),
                 ]
 
                 proc = subprocess.run(
@@ -214,7 +213,7 @@ class IntegrationPipeline(Pipeline):
             for line in stderr:
                 if line.startswith('ERROR'):
                     json_object = next(extract_json_objects(line))
-            
+
             error = dig(json_object, 'tags.error')
             raise Exception(error)
 

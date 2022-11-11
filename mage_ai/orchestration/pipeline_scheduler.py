@@ -254,11 +254,6 @@ def run_integration_pipeline(
 
     block_runs = BlockRun.query.filter(BlockRun.id.in_(executable_block_runs))
 
-    update_source_state_from_destination_state(
-        integration_pipeline.source_state_file_path,
-        integration_pipeline.destination_state_file_path,
-    )
-
     pipeline_schedule = pipeline_run.pipeline_schedule
     schedule_interval = pipeline_schedule.schedule_interval
     execution_date = pipeline_schedule.current_execution_date()
@@ -312,17 +307,20 @@ def run_integration_pipeline(
                 break
             current_block = downstream_blocks[0]
 
+        data_loader_uuid = f'{data_loader_block.uuid}:{tap_stream_id}'
+        data_exporter_uuid = f'{data_exporter_block.uuid}:{tap_stream_id}'
+
         data_loader_block_run = find(
-            lambda b: b.block_uuid == f'{data_loader_block.uuid}:{tap_stream_id}',
+            lambda b: b.block_uuid == data_loader_uuid,
             block_runs,
         )
         data_exporter_block_run = find(
-            lambda b: b.block_uuid == f'{data_exporter_block.uuid}:{tap_stream_id}',
+            lambda b: b.block_uuid == data_exporter_uuid,
             block_runs,
         )
         transformer_block_runs = [br for br in block_runs_in_order if br.block_uuid not in [
-            f'{data_loader_block.uuid}:{tap_stream_id}',
-            f'{data_exporter_block.uuid}:{tap_stream_id}',
+            data_loader_uuid,
+            data_exporter_uuid,
         ]]
 
         destination_table = stream.get('destination_table', tap_stream_id)
@@ -331,6 +329,11 @@ def run_integration_pipeline(
         ] + [(br, {}) for br in transformer_block_runs] + [
             (data_exporter_block_run, dict(destination_table=destination_table)),
         ]
+
+        update_source_state_from_destination_state(
+            integration_pipeline.source_state_file_path(tap_stream_id),
+            integration_pipeline.destination_state_file_path(destination_table),
+        )
 
         outputs = []
         for idx, tup in enumerate(block_runs_and_configs):

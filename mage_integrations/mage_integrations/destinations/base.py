@@ -270,11 +270,15 @@ class Destination():
                 raise Exception(message)
 
             stream = row.get(KEY_STREAM)
+            if TYPE_STATE == row_type:
+                stream = list(row['value']['bookmarks'].keys())[0]
+
             schema = self.schemas.get(stream)
+
             if stream:
                 tags.update(stream=stream)
 
-            if not batches_by_stream.get(stream):
+            if stream and not batches_by_stream.get(stream):
                 batches_by_stream[stream] = dict(
                     record_data=[],
                     state_data=[],
@@ -312,14 +316,30 @@ class Destination():
                 self.logger.exception(message, tags=tags)
                 raise Exception(message)
 
+        stream_states = {}
         for stream, batches in batches_by_stream.items():
             record_data = batches['record_data']
-            if len(record_data) >= 1:
-                self.process_record_data(record_data, stream)
 
-            states = batches['state_data']
-            for state in states:
-                self.process_state(**state)
+            if len(record_data) >= 1:
+                # If there is an error with a stream, catch error so that state can still
+                # be persisted for previously successfully streams
+                try:
+                    self.process_record_data(record_data, stream)
+
+                    states = batches['state_data']
+                    if len(states) >= 1:
+                        stream_states[stream] = states[-1]
+                except Exception as err:
+                    print(f'Error processing record data for stream {stream}: {err}.')
+
+        if len(stream_states.values()) >= 1:
+            bookmarks = {}
+            for stream, state in stream_states.items():
+                bookmarks.update(state['row'][KEY_VALUE]['bookmarks'])
+
+            self.process_state(row={
+                KEY_VALUE: dict(bookmarks=bookmarks),
+            })
 
     def _emit_state(self, state):
         if state:

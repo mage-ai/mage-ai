@@ -253,3 +253,7 @@ export function randomNameGenerator() {
 export function randomSimpleHashGenerator() {
   return `${randomSample(letters)}${randomSample(numbers)}`;
 }
+
+export function cleanName(name: string): string {
+  return name.toLowerCase().replace(/\W+/g, '_')
+}
