@@ -407,6 +407,8 @@ function IntegrationPipeline({
     },
   );
 
+  console.log('destination name:', dataExporterBlockContent?.destination);
+
   const variablesTableMemo = useMemo(() => {
     const variableRows = [];
     globalVariables?.forEach(({
@@ -677,6 +679,7 @@ function IntegrationPipeline({
             <Spacing mt={3}>
               <SchemaSettings
                 catalog={catalog}
+                destination={dataExporterBlockContent?.destination}
                 updateMetadataForColumn={updateMetadataForColumn}
                 updateSchemaProperty={updateSchemaProperty}
                 updateStream={updateStream}
