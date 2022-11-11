@@ -126,12 +126,16 @@ class Source(BaseSource):
 
         while rows_temp is None or len(rows_temp) >= 1:
             order_by_columns = set()
-            if key_properties:
-                order_by_columns.update(key_properties)
-            if unique_constraints:
-                order_by_columns.update(unique_constraints)
+
             if bookmark_properties:
                 order_by_columns.update(bookmark_properties)
+
+            if key_properties:
+                order_by_columns.update(key_properties)
+
+            if unique_constraints:
+                order_by_columns.update(unique_constraints)
+
             order_by_columns = list(order_by_columns)
 
             if order_by_columns:

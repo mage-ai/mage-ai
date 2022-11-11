@@ -270,11 +270,15 @@ class Destination():
                 raise Exception(message)
 
             stream = row.get(KEY_STREAM)
+            if TYPE_STATE == row_type:
+                stream = list(row['value']['bookmarks'].keys())[0]
+
             schema = self.schemas.get(stream)
+
             if stream:
                 tags.update(stream=stream)
 
-            if not batches_by_stream.get(stream):
+            if stream and not batches_by_stream.get(stream):
                 batches_by_stream[stream] = dict(
                     record_data=[],
                     state_data=[],
@@ -314,12 +318,14 @@ class Destination():
 
         for stream, batches in batches_by_stream.items():
             record_data = batches['record_data']
+
             if len(record_data) >= 1:
                 self.process_record_data(record_data, stream)
 
-            states = batches['state_data']
-            for state in states:
-                self.process_state(**state)
+                states = batches['state_data']
+
+                for state in states:
+                    self.process_state(**state)
 
     def _emit_state(self, state):
         if state:

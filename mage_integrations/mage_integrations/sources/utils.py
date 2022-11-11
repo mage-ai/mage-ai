@@ -131,10 +131,10 @@ def update_source_state_from_destination_state(
             f.write('')
 
     with open(absolute_path_to_source_state, 'w') as f:
-        line = '{}'
+        line = json.dumps(dict(bookmarks={}))
         if destination_state and len(destination_state) >= 1:
             line = destination_state[len(destination_state) - 1]
-        f.write(json.dumps(dict(bookmarks=json.loads(line))))
+        f.write(line)
 
 
 def parse_args(required_config_keys):
