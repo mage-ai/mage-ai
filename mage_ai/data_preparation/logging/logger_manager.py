@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.logging import LoggingConfig
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.shared.array import find
 import io
 import logging
@@ -24,7 +24,7 @@ class LoggerManager:
         self.block_uuid = block_uuid
         self.partition = partition
 
-        self.repo_config = repo_config
+        self.repo_config = repo_config or get_repo_config()
         logging_config = self.repo_config.logging_config if self.repo_config else dict()
         self.logging_config = LoggingConfig.load(config=logging_config)
 
@@ -74,8 +74,7 @@ class LoggerManager:
             os.makedirs(path)
 
     def get_log_filepath_prefix(self):
-        repo_path = self.repo_path or get_repo_path()
-        logs_dir = self.logs_dir or repo_path
+        logs_dir = self.logs_dir or self.repo_config.variables_dir
 
         return os.path.join(
             logs_dir,

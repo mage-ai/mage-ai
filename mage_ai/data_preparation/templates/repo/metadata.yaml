@@ -1,4 +1,4 @@
-variables_dir: ./
+variables_dir: ~/.mage_data
 remote_variables_dir: s3://bucket/path_prefix
 
 emr_config:
