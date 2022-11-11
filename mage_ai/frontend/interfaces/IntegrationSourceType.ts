@@ -83,6 +83,7 @@ export interface StreamType {
   destination_table?: string;
   key_properties: string[];
   metadata: MetadataType[];
+  partition_keys: string[];
   replication_key: string;
   replication_method: ReplicationMethodEnum;
   schema: SchemaType;
