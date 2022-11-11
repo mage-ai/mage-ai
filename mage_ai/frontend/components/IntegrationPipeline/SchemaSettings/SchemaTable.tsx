@@ -326,8 +326,11 @@ function SchemaTable({
             />,
             <Checkbox
               checked={!!partitionKeys?.includes(columnName)}
+              disabled={validKeyProperties.includes(columnName)}
               key={`${streamUUID}/${columnName}/partition_key`}
-              onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+              onClick={validKeyProperties.includes(columnName)
+                ? null
+                : () => updateStream(streamUUID, (stream: StreamType) => {
                 if (stream.partition_keys?.includes(columnName)) {
                   stream.partition_keys =
                     remove(stream.partition_keys, col => columnName === col);
@@ -583,7 +586,8 @@ function SchemaTable({
               Partition keys
             </Text>
             <Text default>
-              One or more columns can be used to partition the table.
+              One or more columns can be used to partition the table. (Note: Partition
+              keys currently only work with BigQuery destinations. Support for other destinations is WIP.)
             </Text>
           </Spacing>
 
