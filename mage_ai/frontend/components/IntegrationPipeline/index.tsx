@@ -38,6 +38,7 @@ import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { cleanName } from '@utils/string';
 import { find, indexBy } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
@@ -232,6 +233,9 @@ function IntegrationPipeline({
                   }
                   if (!stream.unique_conflict_method) {
                     stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
+                  }
+                  if (!stream.destination_table) {
+                    stream.destination_table = cleanName(stream.tap_stream_id);
                   }
 
                   stream.metadata[idx] = {

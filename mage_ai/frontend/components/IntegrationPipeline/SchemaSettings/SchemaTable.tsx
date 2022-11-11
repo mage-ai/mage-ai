@@ -67,7 +67,7 @@ function SchemaTable({
   const {
     auto_add_new_fields: autoAddNewFields,
     bookmark_properties: bookmarkProperties,
-    destination_table: destinationTableInit,
+    destination_table: destinationTableInit = '',
     key_properties: keyProperties,
     metadata,
     replication_method: replicationMethod,
@@ -79,7 +79,7 @@ function SchemaTable({
     unique_conflict_method: uniqueConflictMethod,
   } = stream;
 
-  const [destinationTable, setDestinationTable] = useState<string>('');
+  const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
