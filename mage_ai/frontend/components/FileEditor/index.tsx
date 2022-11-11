@@ -6,19 +6,20 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import CodeEditor from '@components/CodeEditor';
 import FileType, { FileExtensionEnum, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
-import { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { find } from '@utils/array';
 import { getBlockType, getBlockUUID } from './utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { onSuccess } from '@api/utils/response';
@@ -27,20 +28,24 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type FileEditorProps = {
   active: boolean;
-  addNewBlock: (b: BlockRequestPayloadType) => void;
+  addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
+  fetchPipeline: () => void;
   filePath: string;
   pipeline: PipelineType;
   setFilesTouched: (data: {
     [path: string]: boolean;
   }) => void;
+  setSelectedBlock: (block: BlockType) => void;
 };
 
 function FileEditor({
   active,
   addNewBlock,
+  fetchPipeline,
   filePath,
   pipeline,
   setFilesTouched,
+  setSelectedBlock,
 }: FileEditorProps) {
   const [file, setFile] = useState<FileType>(null);
   const containerRef = useRef(null);
@@ -140,6 +145,20 @@ function FileEditor({
     setFilesTouched,
   ]);
 
+  const dataExporterBlock: BlockType = find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type);
+  const [updateDestinationBlock] = useMutation(
+    api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline?.();
+          },
+        },
+      ),
+    },
+  );
+
   const addToPipelineEl = (fileExtension === FileExtensionEnum.PY || fileExtension === FileExtensionEnum.SQL
     || ((fileExtension === FileExtensionEnum.YAML || fileExtension === FileExtensionEnum.R)
       && getNonPythonBlockFromFile(file, file?.path))
@@ -147,11 +166,38 @@ function FileEditor({
     <Spacing p={2}>
       <KeyboardShortcutButton
         inline
-        onClick={() => addNewBlock({
-          language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
-          name: getBlockUUID(file.path.split('/')),
-          type: getBlockType(file.path.split('/')),
-        })}
+        onClick={() => {
+          const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
+          const blockReqPayload: BlockRequestPayloadType = {
+            language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
+            name: getBlockUUID(file.path.split('/')),
+            type: getBlockType(file.path.split('/')),
+          };
+
+          if (isIntegrationPipeline) {
+            const dataLoaderBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
+            const upstreamBlocks = dataExporterBlock?.upstream_blocks
+              ? dataExporterBlock.upstream_blocks
+              : (dataLoaderBlock ? [dataLoaderBlock.uuid] : []);
+            blockReqPayload.upstream_blocks = upstreamBlocks;
+          }
+
+          addNewBlock(
+            blockReqPayload,
+            block => {
+              if (isIntegrationPipeline && dataExporterBlock) {
+                // @ts-ignore
+                updateDestinationBlock({
+                  block: {
+                    ...dataExporterBlock,
+                    upstream_blocks: [block.uuid],
+                  },
+                });
+              }
+              setSelectedBlock(block);
+            },
+          );
+        }}
         uuid="FileEditor/AddToCurrentPipeline"
       >
         Add to current pipeline
