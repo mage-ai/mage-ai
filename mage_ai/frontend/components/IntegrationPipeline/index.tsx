@@ -159,12 +159,9 @@ function IntegrationPipeline({
   ]);
   const autoAddNewFields = (catalog?.streams || []).every(({ auto_add_new_fields }) => auto_add_new_fields);
 
-  const [selectedStreamID, setSelectedStreamID] =
-    useState<string>(catalog?.streams?.[0]?.tap_stream_id);
-
   const updateSampleDataVariable = useCallback(
-    () => setSampleDataVariable(selectedStreamID),
-    [selectedStreamID],
+    () => setSampleDataVariable(catalog?.streams?.[0]?.tap_stream_id),
+    [catalog],
   );
 
   const [sourceSampleDataError, setSourceSampleDataError] = useState<string>();
