@@ -303,6 +303,7 @@ class Source:
         write_schema(
             bookmark_properties=self._get_bookmark_properties_for_stream(stream),
             key_properties=stream.key_properties,
+            partition_keys=stream.partition_keys,
             replication_method=stream.replication_method,
             schema=schema_dict,
             stream_name=stream.tap_stream_id,

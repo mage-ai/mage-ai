@@ -204,7 +204,7 @@ class Destination():
 
         self.bookmark_properties[stream] = row.get(KEY_BOOKMARK_PROPERTIES)
         self.key_properties[stream] = row.get(KEY_KEY_PROPERTIES)
-        self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS)
+        self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS, [])
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
         self.schemas[stream] = schema
         self.unique_conflict_methods[stream] = row.get(KEY_UNIQUE_CONFLICT_METHOD)

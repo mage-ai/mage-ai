@@ -11,6 +11,7 @@ class CatalogEntry(catalog.CatalogEntry):
         self,
         auto_add_new_fields: bool = False,
         bookmark_properties: List[str] = None,
+        partition_keys: List[str] = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
@@ -18,6 +19,7 @@ class CatalogEntry(catalog.CatalogEntry):
         super().__init__(**kwargs)
         self.auto_add_new_fields = False
         self.bookmark_properties = bookmark_properties
+        self.partition_keys = partition_keys
         self.unique_conflict_method = unique_conflict_method
         self.unique_constraints = unique_constraints
 
@@ -28,6 +30,8 @@ class CatalogEntry(catalog.CatalogEntry):
             result['auto_add_new_fields'] = self.auto_add_new_fields
         if self.bookmark_properties:
             result['bookmark_properties'] = self.bookmark_properties
+        if self.partition_keys:
+            result['partition_keys'] = self.partition_keys
         if self.unique_conflict_method:
             result['unique_conflict_method'] = self.unique_conflict_method
         if self.unique_constraints:
@@ -79,6 +83,7 @@ class Catalog(catalog.Catalog):
             entry.is_view = stream.get('is_view')
             entry.key_properties = stream.get('key_properties')
             entry.metadata = stream.get('metadata')
+            entry.partition_keys = stream.get('partition_keys')
             entry.replication_key = stream.get('replication_key')
             entry.replication_method = stream.get('replication_method')
             entry.schema = catalog.Schema.from_dict(stream.get('schema'))
