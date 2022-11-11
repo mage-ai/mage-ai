@@ -791,6 +791,9 @@ class Block:
 
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
+                    selected_streams = self.template_runtime_configuration.get('selected_streams')
+                    stream = selected_streams[0] if len(selected_streams) else None
+
                     proc = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.source_file_path,
@@ -805,10 +808,10 @@ class Block:
                         build_catalog_json(
                             self.pipeline.data_loader.file_path,
                             global_vars,
-                            selected_streams=self.template_runtime_configuration.get('selected_streams'),
+                            selected_streams=selected_streams,
                         ),
                         '--state',
-                        self.pipeline.source_state_file_path,
+                        self.pipeline.source_state_file_path(stream),
                         '--query_json',
                         json.dumps(runtime_arguments or {}),
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
@@ -817,6 +820,9 @@ class Block:
                     print_logs_from_output(output)
                     outputs.append(output)
                 elif BlockType.TRANSFORMER == self.type:
+                    selected_streams = self.template_runtime_configuration.get('selected_streams')
+                    stream = selected_streams[0] if len(selected_streams) else None
+
                     input_from_previous = input_from_output['output'][0]
 
                     # only supports 1 upstream block for now
@@ -878,7 +884,7 @@ class Block:
                         '--settings',
                         self.pipeline.data_loader.file_path,
                         '--state',
-                        self.pipeline.source_state_file_path,
+                        self.pipeline.source_state_file_path(stream),
                         '--query_json',
                         json.dumps(runtime_arguments or {}),
                     ], stdout=subprocess.PIPE)
@@ -907,7 +913,7 @@ class Block:
                         '--settings',
                         self.pipeline.data_exporter.file_path,
                         '--state',
-                        self.pipeline.destination_state_file_path,
+                        self.pipeline.destination_state_file_path(override.get('table')),
                     ], input=input_from_previous, capture_output=True, text=True)
 
                     print_logs_from_output(proc.stdout)
