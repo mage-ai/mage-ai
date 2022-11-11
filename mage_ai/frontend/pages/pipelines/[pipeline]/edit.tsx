@@ -1652,7 +1652,6 @@ function PipelineDetailPage({
                 );
                 router.push(`/pipelines/${pipelineUUID}/edit`);
               }}
-              blockRefs={blockRefs}
               fetchPipeline={fetchPipeline}
               filePath={filePath}
               pipeline={pipeline}
