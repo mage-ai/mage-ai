@@ -33,6 +33,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle } from './index.style';
@@ -156,6 +157,7 @@ function IntegrationPipeline({
   const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
     dataLoaderBlockContent,
   ]);
+  const autoAddNewFields = (catalog?.streams || []).every(({ auto_add_new_fields }) => auto_add_new_fields);
 
   const [selectedStreamID, setSelectedStreamID] =
     useState<string>(catalog?.streams?.[0]?.tap_stream_id);
@@ -322,6 +324,26 @@ function IntegrationPipeline({
     onChangeCodeBlock,
     savePipelineContent,
   ]);
+  const updateAllStreams = useCallback((
+    streamDataTransformer: (stream: StreamType) => StreamType,
+  ) => {
+    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+      ...dataLoaderBlockContent,
+      catalog: {
+        ...catalog,
+        streams: catalog.streams.map(stream => streamDataTransformer(stream)),
+      },
+    }));
+
+    savePipelineContent().then(() => fetchPipeline());
+  }, [
+    catalog,
+    dataLoaderBlock,
+    dataLoaderBlockContent,
+    fetchPipeline,
+    onChangeCodeBlock,
+    savePipelineContent,
+  ]);
 
   const updateSchemaProperty = useCallback((
     streamUUID: string,
@@ -406,8 +428,8 @@ function IntegrationPipeline({
             {variableCode}
           </Text>,
           <CopyToClipboard
-            key={`variable-uuid-${uuid}-{value}-code-copy`}
             copiedText={variableCode}
+            key={`variable-uuid-${uuid}-{value}-code-copy`}
             monospace
             withCopyIcon
           />,
@@ -862,32 +884,56 @@ function IntegrationPipeline({
               </Headline>
 
               {dataExporterBlockContent?.destination && (
-                <Spacing mb={2}>
-                  <Text default>
-                    For more information on how to configure this destination,
-                    read the <Link
-                      href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
-                      openNewWindow
-                    >
-                      {dataExporterBlockContent.destination} documentation
-                    </Link>.
+                <>
+                  <Spacing mb={2}>
+                    <Text default>
+                      For more information on how to configure this destination,
+                      read the <Link
+                        href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
+                        openNewWindow
+                      >
+                        {dataExporterBlockContent.destination} documentation
+                      </Link>.
 
-                    <br />
-                    <br />
+                      <br />
+                      <br />
 
-                    If your configuration contains a key named <Text inline monospace>
-                      table
-                    </Text>, it’s optional.
-                    <br />
-                    The table that’s created in this destination will have
-                    a name corresponding to the stream’s unique name (by default) or the value you
-                    entered under the input field labeled <Text bold inline>
-                      Table name
-                    </Text> in a previous section.
-                  </Text>
+                      If your configuration contains a key named <Text inline monospace>
+                        table
+                      </Text>, it’s optional.
+                      <br />
+                      The table that’s created in this destination will have
+                      a name corresponding to the stream’s unique name (by default) or the value you
+                      entered under the input field labeled <Text bold inline>
+                        Table name
+                      </Text> in a previous section.
+                    </Text>
 
-                  {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-destination')}
-                </Spacing>
+                    {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-destination')}
+                  </Spacing>
+
+                  <Spacing mb={3}>
+                    <FlexContainer alignItems="center" justifyContent="space-between">
+                      <Spacing mb={1}>
+                        <Text bold large>
+                          Automatically add new fields
+                        </Text>
+                        <Text default>
+                          Turn the toggle on if you want new table columns in each data source stream
+                          to be automatically added and synced with the data destination.
+                        </Text>
+                      </Spacing>
+
+                      <ToggleSwitch
+                        checked={!!autoAddNewFields}
+                        onCheck={() => updateAllStreams((stream: StreamType) => ({
+                          ...stream,
+                          auto_add_new_fields: !autoAddNewFields,
+                        }))}
+                      />
+                    </FlexContainer>
+                  </Spacing>
+                </>
               )}
 
               {dataExporterEditor}
