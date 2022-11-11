@@ -93,9 +93,9 @@ to set up authentication for Docker.
 
     If you’re local workstation is using macOS and a silicon chip (e.g. M1, M2, etc),
     then run this command instead:
-        ```bash
+
         docker pull --platform linux/amd64 mageai/mageai:latest
-        ```
+
 
 1. Tag the pulled Mage docker image or use a previously tagged Docker image you built
 when following this [CI/CD guide](../ci_cd/README.md):
@@ -105,10 +105,10 @@ when following this [CI/CD guide](../ci_cd/README.md):
         ```
 
         An example command could look like this:
-            ```bash
+
             docker tag mageai/mageai:latest \
               us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-            ```
+
 
     1. Sample commands if using previously tagged custom Docker image:
         ```bash
@@ -116,10 +116,10 @@ when following this [CI/CD guide](../ci_cd/README.md):
         ```
 
         An example command could look like this:
-            ```bash
+
             docker tag mageprod:latest \
               us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-            ```
+
 
 1. Push the local Docker image to GCP Artifact Registry:
     ```bash
@@ -127,9 +127,9 @@ when following this [CI/CD guide](../ci_cd/README.md):
     ```
 
     An example command could look like this:
-        ```bash
+
         docker push us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
-        ```
+
 
 <br />
 
