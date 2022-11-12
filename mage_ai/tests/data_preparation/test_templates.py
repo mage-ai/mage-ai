@@ -90,8 +90,7 @@ def test_output(df) -> None:
         self.assertEqual(expected_string, new_string)
 
     def test_template_generation_data_loader_default(self):
-        expected_template = """from pandas import DataFrame
-
+        expected_template = """
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
 if 'test' not in globals():
@@ -99,16 +98,16 @@ if 'test' not in globals():
 
 
 @data_loader
-def load_data(**kwargs) -> DataFrame:
+def load_data(*args, **kwargs):
     \"\"\"
     Template code for loading data from any source.
 
     Returns:
-        DataFrame: Returned pandas data frame.
+        Anything
     \"\"\"
     # Specify your data loading logic here
 
-    return DataFrame({})
+    return {}
 
 
 @test
@@ -123,6 +122,7 @@ def test_output(df) -> None:
         config2 = {}
         new_template1 = fetch_template_source(BlockType.DATA_LOADER, config1)
         new_template2 = fetch_template_source(BlockType.DATA_LOADER, config2)
+
         self.assertEqual(expected_template, new_template1)
         self.assertEqual(expected_template, new_template2)
 
@@ -131,7 +131,6 @@ def test_output(df) -> None:
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from os import path
-from pandas import DataFrame
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -140,7 +139,7 @@ if 'test' not in globals():
 
 
 @data_loader
-def load_data_from_redshift(**kwargs) -> DataFrame:
+def load_data_from_redshift(*args, **kwargs):
     \"\"\"
     Template for loading data from a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
@@ -166,7 +165,6 @@ def test_output(df) -> None:
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from os import path
-from pandas import DataFrame
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -175,7 +173,7 @@ if 'test' not in globals():
 
 
 @data_loader
-def load_from_s3_bucket(**kwargs) -> DataFrame:
+def load_from_s3_bucket(*args, **kwargs):
     \"\"\"
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
@@ -213,7 +211,6 @@ def test_output(df) -> None:
         expected_template = """import io
 import pandas as pd
 import requests
-from pandas import DataFrame
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -222,7 +219,7 @@ if 'test' not in globals():
 
 
 @data_loader
-def load_data_from_api(**kwargs) -> DataFrame:
+def load_data_from_api(*args, **kwargs):
     \"\"\"
     Template for loading data from API
     \"\"\"
