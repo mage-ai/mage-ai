@@ -63,6 +63,8 @@
         * [Amplitude](mage\_integrations/mage\_integrations/sources/amplitude/README.md)
         * [BigQuery](mage\_integrations/mage\_integrations/sources/bigquery/README.md)
         * [Google Search Console](mage\_integrations/mage\_integrations/sources/google\_search\_console/README.md)
+        * [Google Sheets](mage\_integrations/mage\_integrations/sources/google_sheets/README.md)
+        * [Intercom](mage\_integrations/mage\_integrations/sources/intercom/README.md)
         * [MySQL](mage\_integrations/mage\_integrations/sources/mysql/README.md)
         * [PostgreSQL](mage\_integrations/mage\_integrations/sources/postgresql/README.md)
         * [Redshift](mage\_integrations/mage\_integrations/sources/redshift/README.md)
