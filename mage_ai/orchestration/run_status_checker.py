@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
@@ -27,11 +27,18 @@ def check_status(
         .query
         .join(PipelineRun.pipeline_schedule)
         .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
-        .filter(PipelineRun.execution_date == execution_date)
+        .filter(PipelineRun.execution_date >= execution_date - timedelta(days=1))
+        .order_by(PipelineRun.execution_date.desc())
         .first()
     )
+
     if pipeline_run is None:
         return False
+
+    if pipeline_run.execution_date != execution_date and \
+        pipeline_run.pipeline_schedule.schedule_interval != PipelineSchedule.ScheduleInterval.ONCE:
+        return False
+
     pipeline_run.refresh()
 
     if block_uuid is not None:

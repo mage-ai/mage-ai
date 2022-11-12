@@ -10,7 +10,7 @@ from os import path
 
 {% block content %}
 @data_loader
-def load_from_google_cloud_storage(**kwargs) -> DataFrame:
+def load_from_google_cloud_storage(*args, **kwargs):
     """
     Template for loading data from a Google Cloud Storage bucket.
     Specify your configuration settings in 'io_config.yaml'.

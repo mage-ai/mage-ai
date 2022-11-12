@@ -10,7 +10,7 @@ from os import path
 
 {% block content %}
 @data_loader
-def load_from_s3_bucket(**kwargs) -> DataFrame:
+def load_from_s3_bucket(*args, **kwargs):
     """
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.

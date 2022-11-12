@@ -10,7 +10,7 @@ from os import path
 
 {% block content %}
 @data_loader
-def load_from_azure_blob_storage(**kwargs) -> DataFrame:
+def load_from_azure_blob_storage(*args, **kwargs):
     """
     Template for loading data from a Azure Blob Storage.
     Specify your configuration settings in 'io_config.yaml'.

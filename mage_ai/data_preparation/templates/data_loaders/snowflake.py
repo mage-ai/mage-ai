@@ -10,7 +10,7 @@ from os import path
 
 {% block content %}
 @data_loader
-def load_data_from_snowflake(**kwargs) -> DataFrame:
+def load_data_from_snowflake(*args, **kwargs):
     """
     Template for loading data from a Snowflake warehouse.
     Specify your configuration settings in 'io_config.yaml'.
