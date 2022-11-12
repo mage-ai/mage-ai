@@ -62,7 +62,7 @@ export const WindowContentStyle = styled.div<{
   `}
 
   ${props => !props.minMaxHeight && `
-    max-height: calc(100vh - ${HEADER_HEIGHT * 5.5}px);
+    max-height: calc(100vh - ${HEADER_HEIGHT * 6.5}px);
   `}
 `;
 
