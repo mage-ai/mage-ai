@@ -6,7 +6,9 @@ export function getModelName(block: BlockType): string {
   if (filePath) {
     const parts = filePath.split('/');
     const fullName = parts[parts.length - 1];
+    const nameWithoutExtension = fullName.split('.');
+    nameWithoutExtension.pop();
 
-    return fullName.split('.')[0];
+    return nameWithoutExtension.join('.');
   }
 }

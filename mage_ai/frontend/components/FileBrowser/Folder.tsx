@@ -42,6 +42,8 @@ import { sortByKey } from '@utils/array';
 const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
+  allowSelectingFolders?: boolean;
+  disableContextMenu?: boolean;
   isFileDisabled?: (filePath: string, children: FileType[]) => boolean;
   onlyShowChildren?: boolean;
   onSelectBlockFile?: (
@@ -52,6 +54,7 @@ export type FolderSharedProps = {
   openFile: (path: string) => void;
   openPipeline?: (uuid: string) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  selectFile?: (path: string) => void;
   uncollapsed?: boolean;
   useRootFolder?: boolean;
 };
@@ -64,6 +67,8 @@ type FolderProps = {
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
+  allowSelectingFolders,
+  disableContextMenu,
   file,
   isFileDisabled,
   level,
@@ -73,6 +78,7 @@ function Folder({
   openPipeline,
   openSidekickView,
   pipelineBlockUuids,
+  selectFile,
   setContextItem,
   theme,
   uncollapsed,
@@ -134,6 +140,8 @@ function Folder({
 
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
+      allowSelectingFolders={allowSelectingFolders}
+      disableContextMenu={disableContextMenu}
       file={{
         ...f,
         parent: file,
@@ -146,18 +154,31 @@ function Folder({
       openPipeline={openPipeline}
       openSidekickView={openSidekickView}
       pipelineBlockUuids={pipelineBlockUuids}
+      selectFile={selectFile}
       setContextItem={setContextItem}
       theme={theme}
       uncollapsed={uncollapsed}
       useRootFolder={useRootFolder}
     />
   )), [
+    allowSelectingFolders,
     children,
+    disableContextMenu,
+    file,
     isFileDisabled,
+    level,
+    onSelectBlockFile,
+    onlyShowChildren,
     openFile,
     openPipeline,
+    openSidekickView,
+    pipelineBlockUuids,
+    selectFile,
+    setContextItem,
+    theme,
     uncollapsed,
     useRootFolder,
+    uuid,
   ]);
 
   return (
@@ -187,11 +208,15 @@ function Folder({
             const nonPythonBlockFromFile = getNonPythonBlockFromFile(file);
 
             if (children) {
-              setCollapsed((collapsedPrev) => {
-                set(uuid, !collapsedPrev);
+              if (allowSelectingFolders) {
+                selectFile(filePathToUse);
+              } else {
+                  setCollapsed((collapsedPrev) => {
+                    set(uuid, !collapsedPrev);
 
-                return !collapsedPrev;
-              });
+                    return !collapsedPrev;
+                  });
+              }
             } else if (nonPythonBlockFromFile) {
               onSelectBlockFile?.(
                 nonPythonBlockFromFile.uuid,
@@ -213,6 +238,9 @@ function Folder({
           }}
           onContextMenu={(e) => {
             e.preventDefault();
+            if (disableContextMenu) {
+              return;
+            }
 
             if (disabled) {
               setContextItem({ type: FileContextEnum.DISABLED });
@@ -275,8 +303,6 @@ function Folder({
             color={color}
             default={!color && !disabled}
             disabled={disabled}
-            // disabled={disabled || (isEditableCodeBlock && !fileUsedByPipeline)}
-            // italic={isEditableCodeBlock && !fileUsedByPipeline && name !== SpecialFileEnum.INIT_PY}
             monospace
             small
           >

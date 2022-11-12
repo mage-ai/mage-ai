@@ -49,6 +49,13 @@ export const R_BLOCK_TYPES = [
   BlockTypeEnum.TRANSFORMER,
 ];
 
+export const SQL_BLOCK_TYPES = [
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.DBT,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export const BLOCK_TYPES_NO_DATA_TABLE = [
   BlockTypeEnum.CHART,
   BlockTypeEnum.SCRATCHPAD,

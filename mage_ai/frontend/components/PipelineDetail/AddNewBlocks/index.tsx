@@ -46,6 +46,7 @@ type AddNewBlocksProps = {
   onClickAddSingleDBTModel?: (blockIdx: number) => void;
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
+  setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setRecsWindowOpenBlockIdx?: (idx: number) => void;
 };
 
@@ -69,6 +70,7 @@ function AddNewBlocks({
   onClickAddSingleDBTModel,
   pipeline,
   setAddNewBlockMenuOpenIdx,
+  setCreatingNewDBTModel,
   setRecsWindowOpenBlockIdx,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
@@ -286,7 +288,15 @@ function AddNewBlocks({
                 disableKeyboardShortcuts
                 items={[
                   {
-                    label: () => 'Single model',
+                    label: () => 'New model',
+                    onClick: () => {
+                      setCreatingNewDBTModel?.(true);
+                      onClickAddSingleDBTModel?.(blockIdx);
+                    },
+                    uuid: 'dbt/new_model',
+                  },
+                  {
+                    label: () => 'Single model (from file)',
                     onClick: () => onClickAddSingleDBTModel?.(blockIdx),
                     uuid: 'dbt/single_model',
                   },

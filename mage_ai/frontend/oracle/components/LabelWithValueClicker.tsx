@@ -19,6 +19,7 @@ export type LabelWithValueClickerProps = {
   inputWidth?: number;
   invertedTheme?: boolean;
   label?: string;
+  labelColor?: string;
   menuOpen?: boolean;
   muted?: boolean;
   onClick: () => void;
@@ -44,6 +45,7 @@ function LabelWithValueClicker({
   inputWidth,
   invertedTheme,
   label,
+  labelColor,
   menuOpen = false,
   monospace,
   muted,
@@ -62,7 +64,15 @@ function LabelWithValueClicker({
 
   const labelEl = label && (
     <>
-      <Text bold={bold} inverted={invertedTheme} lineHeight={20} monospace={monospace} muted={muted} small={small}>
+      <Text
+        bold={bold}
+        color={labelColor}
+        inverted={invertedTheme}
+        lineHeight={20}
+        monospace={monospace}
+        muted={muted}
+        small={small}
+      >
         {label}
       </Text>
 

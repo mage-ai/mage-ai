@@ -8,11 +8,8 @@ import { HEADER_HEIGHT, HEADER_Z_INDEX } from '@components/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ContextMenuSharedProps = {
-  createPipeline?: (data: any) => void;
-  deletePipeline?: (uuid: string) => void;
   deleteBlockFile?: (b: BlockType) => void;
   deleteWidget?: (b: BlockType) => void;
-  numPipelines?: number;
 };
 
 export type ContextMenuProps = {
@@ -77,12 +74,9 @@ const ContainerStyle = styled.div<{
 function ContextMenu({
   areaRef,
   children,
-  createPipeline,
   deleteBlockFile,
-  deletePipeline,
   deleteWidget,
   enableContextItem,
-  numPipelines,
   type,
 }: ContextMenuProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });

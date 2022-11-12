@@ -1501,7 +1501,6 @@ function PipelineDetailPage({
   const before = useMemo(() => (
     <ContextMenu
       areaRef={fileTreeRef}
-      createPipeline={createPipeline}
       deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
       enableContextItem

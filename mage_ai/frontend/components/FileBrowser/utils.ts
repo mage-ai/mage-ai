@@ -1,14 +1,16 @@
+import BlockType, {
+  BlockTypeEnum,
+  BLOCK_TYPES,
+  YAML_BLOCK_TYPES,
+  R_BLOCK_TYPES,
+  SQL_BLOCK_TYPES,
+} from '@interfaces/BlockType';
 import FileType, {
   CODE_BLOCK_FILE_EXTENSIONS,
   FileExtensionEnum,
   FOLDER_NAME_PIPELINES,
   METADATA_FILENAME,
 } from '@interfaces/FileType';
-import BlockType, {
-  BLOCK_TYPES,
-  YAML_BLOCK_TYPES,
-  R_BLOCK_TYPES,
-} from '@interfaces/BlockType';
 import { prependArray, removeAtIndex } from '@utils/array';
 import { singularize } from '@utils/string';
 
@@ -64,11 +66,15 @@ export function getNonPythonBlockFromFile(
   if (!parts[1]) {
     return;
   }
-  const blockType = singularize(parts[currentPathInit ? 0 : 1]);
+  let blockType: BlockTypeEnum = singularize(parts[currentPathInit ? 0 : 1]);
+  if (parts[1] === BlockTypeEnum.DBT) {
+    blockType = BlockTypeEnum.DBT;
+  }
   const fileName = parts[parts.length - 1];
 
   const yamlRegex = new RegExp(`\.${FileExtensionEnum.YAML}$`);
   const rRegex = new RegExp(`\.${FileExtensionEnum.R}$`);
+  const sqlRegex = new RegExp(`\.${FileExtensionEnum.SQL}$`);
   if (fileName.match(yamlRegex) && YAML_BLOCK_TYPES.includes(blockType)) {
     return {
       type: blockType,
@@ -78,6 +84,16 @@ export function getNonPythonBlockFromFile(
     return {
       type: blockType,
       uuid: fileName.replace(rRegex, ''),
+    };
+  } else if (fileName.match(sqlRegex) && SQL_BLOCK_TYPES.includes(blockType)) {
+    const formattedFilename = fileName.replace(/[.]/g, '_');
+    const blockUUID = blockType === BlockTypeEnum.DBT
+      ? parts.slice(2, -1).join('_').concat(`_${formattedFilename}`)
+      : fileName.replace(sqlRegex, '');
+
+    return {
+      type: blockType,
+      uuid: blockUUID,
     };
   }
 }

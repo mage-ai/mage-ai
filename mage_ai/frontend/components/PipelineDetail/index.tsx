@@ -19,7 +19,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
 import DataProviderType from '@interfaces/DataProviderType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
-import FileType from '@interfaces/FileType';
+import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
@@ -49,6 +49,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { addUnderscores, randomNameGenerator } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -165,6 +166,8 @@ function PipelineDetail({
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
   const [addNewBlockMenuOpenIdx, setAddNewBlockMenuOpenIdx] = useState<number>(null);
   const [lastBlockIndex, setLastBlockIndex] = useState<number>(null);
+  const [creatingNewDBTModel, setCreatingNewDBTModel] = useState<boolean>(false);
+  const [dbtModelName, setDbtModelName] = useState<string>('');
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -327,6 +330,12 @@ function PipelineDetail({
     setLastBlockIndex,
   ]);
 
+  const closeAddDBTModelPopup = useCallback(() => {
+    setAddDBTModelVisible(false);
+    setCreatingNewDBTModel(false);
+    setDbtModelName('');
+  }, []);
+
   const codeBlocks = useMemo(
     () => blocks
     .filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type)
@@ -387,6 +396,7 @@ function PipelineDetail({
           selected={selected}
           setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
           setAnyInputFocused={setAnyInputFocused}
+          setCreatingNewDBTModel={setCreatingNewDBTModel}
           setEditingBlock={setEditingBlock}
           setOutputBlocks={setOutputBlocks}
           setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
@@ -512,6 +522,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       hideSensor={isIntegration}
       onClickAddSingleDBTModel={onClickAddSingleDBTModel}
       pipeline={pipeline}
+      setCreatingNewDBTModel={setCreatingNewDBTModel}
       setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
     />
   ), [
@@ -551,21 +562,26 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 
         {addDBTModelVisible && (
           <ClickOutside
-            onClickOutside={() => setAddDBTModelVisible(false)}
+            onClickOutside={closeAddDBTModelPopup}
             open
           >
             <FileSelectorPopup
               blocks={blocks}
+              creatingNewDBTModel={creatingNewDBTModel}
+              dbtModelName={dbtModelName}
               files={files}
-              onClose={() => setAddDBTModelVisible(false)}
+              onClose={closeAddDBTModelPopup}
               onOpenFile={(filePath: string) => {
+                const finalFilePath = creatingNewDBTModel
+                  ? `${filePath}/${addUnderscores(dbtModelName || randomNameGenerator())}.${FileExtensionEnum.SQL}`
+                  : filePath;
                 const newBlock = {
                   configuration: {
-                    file_path: filePath,
+                    file_path: finalFilePath,
                   },
                   language: BlockLanguageEnum.SQL,
+                  name: finalFilePath,
                   type: BlockTypeEnum.DBT,
-                  name: filePath,
                 };
                 const isAddingFromBlock =
                   typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;
@@ -577,9 +593,10 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
                   upstream_blocks: upstreamBlocks,
                 }, isAddingFromBlock ? numberOfBlocks : lastBlockIndex + 1, setSelectedBlock);
 
-                setAddDBTModelVisible(false);
+                closeAddDBTModelPopup();
                 setTextareaFocused(true);
               }}
+              setDbtModelName={setDbtModelName}
             />
           </ClickOutside>
         )}
