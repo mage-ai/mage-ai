@@ -8,7 +8,7 @@ import requests
 
 {% block content %}
 @data_loader
-def load_data_from_api(**kwargs) -> DataFrame:
+def load_data_from_api(*args, **kwargs):
     """
     Template for loading data from API
     """

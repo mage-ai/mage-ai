@@ -7,7 +7,7 @@ from mage_ai.io.file import FileIO
 
 {% block content %}
 @data_loader
-def load_data_from_file(**kwargs) -> DataFrame:
+def load_data_from_file(*args, **kwargs):
     """
     Template for loading data from filesystem.
 

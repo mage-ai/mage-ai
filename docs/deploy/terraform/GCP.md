@@ -250,7 +250,9 @@ can also be customized to your needs.
     service_ip = "34.107.187.208"
     ```
 
-    In your browser, go to [`http://[IP_address]/`](http://IP_address/).
+    It’ll take a few minutes for GCP Cloud Run to start up and be ready to receive requests.
+
+    After a few minutes, open a browser and go to [`http://[IP_address]/`](http://IP_address/).
 
     > Note
     >

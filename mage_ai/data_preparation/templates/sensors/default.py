@@ -12,5 +12,5 @@ def check_condition(**kwargs) -> bool:
     return check_status(
         'pipeline_uuid',
         kwargs['execution_date'],
-        block_uuid='block_uuid',  # optional
+        block_uuid='block_uuid',  # optional if you want the sensor to wait on a specific block
     )
