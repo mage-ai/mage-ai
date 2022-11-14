@@ -289,7 +289,7 @@ function Table({
   const { slug = [] } = router.query;
   const removedRowIndexes = new Set(previewIndexes?.removedRows || []);
 
-  const RenderRow = useCallback(({ index, style }) => {
+  const renderRow = useCallback(({ index, style }) => {
     const row = rows[index];
     prepareRow(row);
     const { original } = row;
@@ -435,6 +435,22 @@ function Table({
     rows,
   ]);
 
+  const variableListMemo = useMemo(() => (
+    <VariableSizeList
+      estimatedItemSize={BASE_ROW_HEIGHT}
+      height={listHeight}
+      itemCount={rows?.length}
+      itemSize={(idx: number) => estimateCellHeight(rows[idx])}
+      outerRef={refListOuter}
+      style={{
+        maxHeight: maxHeight,
+        pointerEvents: disableScrolling ? 'none' : null,
+      }}
+    >
+      {renderRow}
+    </VariableSizeList>
+  ), [listHeight, refListOuter, renderRow, rows])
+
   return (
     <div
       {...getTableProps()}
@@ -499,19 +515,7 @@ function Table({
           ))}
         </div>
 
-        <VariableSizeList
-          estimatedItemSize={BASE_ROW_HEIGHT}
-          height={listHeight}
-          itemCount={rows?.length}
-          itemSize={(idx: number) => estimateCellHeight(rows[idx])}
-          outerRef={refListOuter}
-          style={{
-            maxHeight: maxHeight,
-            pointerEvents: disableScrolling ? 'none' : null,
-          }}
-        >
-          {RenderRow}
-        </VariableSizeList>
+        {variableListMemo}
       </div>
     </div>
   );

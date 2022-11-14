@@ -105,13 +105,14 @@ type PipelineDetailProps = {
     errors: any;
     response: any;
   }) => void;
+  setIntegrationStreams: (streams: string[]) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
-  setSampleDataVariable: (variable: string) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
+  setSelectedStream: (stream: string) => void;
   setTextareaFocused: (value: boolean) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
@@ -149,14 +150,15 @@ function PipelineDetail({
   setAnyInputFocused,
   setEditingBlock,
   setErrors,
+  setIntegrationStreams,
   setMessages,
   setOutputBlocks,
   setPipelineContentTouched,
   setRecsWindowOpenBlockIdx,
   setRunningBlocks,
-  setSampleDataVariable,
   setSelectedBlock,
   setSelectedOutputBlock,
+  setSelectedStream,
   setTextareaFocused,
   textareaFocused,
   widgets,
@@ -458,10 +460,11 @@ function PipelineDetail({
       pipeline={pipeline}
       savePipelineContent={savePipelineContent}
       setErrors={setErrors}
+      setIntegrationStreams={setIntegrationStreams}
       setOutputBlocks={setOutputBlocks}
-      setSampleDataVariable={setSampleDataVariable}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
+      setSelectedStream={setSelectedStream}
     />
   ), [
     blocks,
