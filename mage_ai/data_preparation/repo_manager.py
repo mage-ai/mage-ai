@@ -19,7 +19,6 @@ class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
         self.repo_path = repo_path or get_repo_path()
         self.repo_name = os.path.basename(self.repo_path)
-        self.variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR)
         try:
             if not config_dict:
                 metadata_path = os.path.join(self.repo_path, 'metadata.yaml')
@@ -33,12 +32,17 @@ class RepoConfig:
                 repo_config = config_dict
 
             # Priority:
+            # 1. 'variables_dir' from config_dict
             # 1. os.getenv(MAGE_DATA_DIR_ENV_VAR)
-            # 2. repo_config.get('variables_dir')
+            # 2. 'variables_dir' from repo_config file
             # 3. DEFAULT_MAGE_DATA_DIR
-            if not os.getenv(MAGE_DATA_DIR_ENV_VAR):
+            if config_dict is not None and config_dict.get('variables_dir'):
+                self.variables_dir = config_dict.get('variables_dir')
+            elif os.getenv(MAGE_DATA_DIR_ENV_VAR):
+                self.variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
+            else:
                 self.variables_dir = os.path.expanduser(
-                    repo_config.get('variables_dir', self.variables_dir),
+                    repo_config.get('variables_dir', DEFAULT_MAGE_DATA_DIR),
                 )
             if self.variables_dir is not None and not self.variables_dir.startswith('s3'):
                 if os.path.isabs(self.variables_dir) and self.variables_dir != self.repo_path and (
