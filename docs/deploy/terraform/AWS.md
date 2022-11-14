@@ -71,9 +71,9 @@ variable "docker_image" {
 > Amazon Elastic Container Registry (ECR) before deploying using Terraform.
 > Read the [AWS documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html) to learn more.
 
-1. docker build --platform linux/amd64 -t mage-tommy-test .
-1. docker tag mage-tommy-test:latest 679849156117.dkr.ecr.us-west-2.amazonaws.com/mage-tommy-test:latest
-1. docker push 679849156117.dkr.ecr.us-west-2.amazonaws.com/mage-tommy-test:latest
+1. `docker build --platform linux/amd64 -t [image_name] .`
+1. `docker tag [image_name]:latest [registry_uuid].dkr.ecr.[region].amazonaws.com/[image_name]:latest`
+1. `docker push [registry_uuid].dkr.ecr.[region].amazonaws.com/[image_name]:latest`
 
 <b>Region (optional)</b>
 
@@ -95,7 +95,7 @@ can also be customized to your needs.
 
 <br />
 
-## 3. Configurable variables
+## 3. Configurable environment variables
 
 In the [`mage-ai/scripts/deploy/terraform/aws/env_vars.json`](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/env_vars.json)
 file, you can edit the following variables, which are used by the tool while running in the cloud:
@@ -107,6 +107,10 @@ the tool to use while running in the cloud:
 - `AWS_SECRET_ACCESS_KEY`
 
 These variable values are used by the tool to retrieve AWS resources like CloudWatch events, etc.
+
+<b>Other environment variables</b>
+
+You can add any environment variable you want in this file. These will be set on the running container.
 
 <br />
 
