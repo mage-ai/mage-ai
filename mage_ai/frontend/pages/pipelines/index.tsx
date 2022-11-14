@@ -239,7 +239,7 @@ function PipelineListPage() {
             <Text
               key={`pipeline_name_${idx}`}
             >
-              {name}
+              {uuid}
             </Text>,
             <Text
               key={`pipeline_type_${idx}`}

@@ -167,14 +167,14 @@ function SchemaTable({
               }
             });
             const columnTypes = Array.from(columnTypesSet);
-    
+
             const {
               metadata: {
                 inclusion,
                 selected,
               },
             } = metadataByColumn[`properties/${columnName}`] || {};
-    
+
             const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
               if (columnTypes.indexOf(colType) >= 0 || (
                 COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType)
@@ -182,7 +182,7 @@ function SchemaTable({
               )) {
                 return acc;
               }
-    
+
               return acc.concat(
                 <option key={colType} value={colType}>
                   {colType}
@@ -191,7 +191,7 @@ function SchemaTable({
             }, []);
             const indexOfFirstStringType =
               columnTypes.findIndex((colType: ColumnTypeEnum) => colType === ColumnTypeEnum.STRING);
-    
+
             const row = [
               <Checkbox
                 checked={selected}
@@ -240,13 +240,13 @@ function SchemaTable({
                               type: columnTypes.filter((colType: ColumnTypeEnum) =>
                                 colType !== columnType),
                             };
-    
+
                             if (ColumnFormatEnum.DATE_TIME === columnFormat &&
                               ColumnTypeEnum.STRING === columnType
                             ) {
                               data.format = null;
                             }
-    
+
                             updateSchemaProperty(streamUUID, columnName, data);
                           }}
                           small
@@ -255,7 +255,7 @@ function SchemaTable({
                     ))}
                   </FlexContainer>
                 </Flex>
-    
+
                 {columnTypeOptions.length >= 1 && (
                   <Select
                     compact
@@ -265,14 +265,14 @@ function SchemaTable({
                         format: columnFormat,
                         type: columnTypes,
                       };
-    
+
                       if (COLUMN_TYPE_CUSTOM_DATE_TIME === String(columnType)) {
                         data.format = ColumnFormatEnum.DATE_TIME;
                         data.type.push(ColumnTypeEnum.STRING);
                       } else {
                         data.type.push(columnType);
                       }
-    
+
                       updateSchemaProperty(streamUUID, columnName, data);
                     }}
                     primary
@@ -299,7 +299,7 @@ function SchemaTable({
                     stream.unique_constraints =
                       [columnName].concat(stream.unique_constraints || []);
                   }
-    
+
                   return stream;
                 })}
               />,
@@ -317,7 +317,7 @@ function SchemaTable({
                     stream.bookmark_properties =
                       [columnName].concat(stream.bookmark_properties || []);
                   }
-    
+
                   return stream;
                 })}
               />,
@@ -332,12 +332,12 @@ function SchemaTable({
                     stream.key_properties =
                       [columnName].concat(stream.key_properties || []);
                   }
-    
+
                   return stream;
                 })}
               />,
             ];
-            
+
             if (showPartitionKey) {
               row.push(
                 <Checkbox
@@ -410,6 +410,7 @@ function SchemaTable({
         <Spacing mt={1}>
           <TextInput
             label="Table name"
+            monospace
             onChange={(e) => {
               const val = e.target.value;
               setDestinationTable(val);
@@ -606,7 +607,7 @@ function SchemaTable({
             ))}
           </FlexContainer>
         </Spacing>
-        
+
         {showPartitionKey && (
           <Spacing mb={3}>
             <Spacing mb={1}>
