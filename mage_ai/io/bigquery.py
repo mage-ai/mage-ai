@@ -146,14 +146,14 @@ WHERE table_id = '{table_name}'
 
                 if ExportWritePolicy.REPLACE == if_exists:
                     self.client.query(f'DROP TABLE {full_table_name}')
-                    command = 'CREATE TABLE'
+                    command = f'CREATE TABLE {table_id} AS'
                 elif table_doesnt_exist:
-                    command = 'CREATE TABLE'
+                    command = f'CREATE TABLE {table_id} AS'
                 else:
-                    command = 'INSERT INTO'
+                    command = f'INSERT INTO {table_id}'
 
                 sql = f"""
-{command} {table_id}
+{command}
 {query_string}
 """
                 self.client.query(sql)
