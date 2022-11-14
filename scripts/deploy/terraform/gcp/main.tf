@@ -117,10 +117,8 @@ resource "google_cloud_run_service" "run_service" {
       }
       # volumes {
       #   name = "secret-bigquery-key"
-
       #   secret {
       #     secret_name  = "bigquery_key"
-
       #     items {
       #       key  = "latest"
       #       path = "bigquery_key"
@@ -128,7 +126,6 @@ resource "google_cloud_run_service" "run_service" {
       #   }
       # }
     }
-
 
     metadata {
       annotations = {
