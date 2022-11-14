@@ -178,7 +178,7 @@ function PipelineDetailPage({
 
       if (breadcrumbsProp) {
         arr.push({
-          label: () => pipeline.name,
+          label: () => pipeline.uuid,
           linkProps: {
             as: `/pipelines/${pipelineUUID}/triggers`,
             href: '/pipelines/[pipeline]/triggers',
