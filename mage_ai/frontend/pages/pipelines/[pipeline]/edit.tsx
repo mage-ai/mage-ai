@@ -343,8 +343,8 @@ function PipelineDetailPage({
       && selectedOutputBlock?.uuid,
   );
   const {
-    insights,
-    metadata,
+    insights = {},
+    metadata = {},
     statistics = {},
   } = blockAnalysis?.analyses?.[0] || {};
   const {

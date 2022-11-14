@@ -147,6 +147,7 @@ function Sidekick({
     statistics,
   });
   const hasData = sampleData && insights && Object.keys(statistics).length > 0;
+  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -308,7 +309,8 @@ function Sidekick({
         }
         {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
 
-        {((selectedBlock && hasData)
+        {(isIntegration 
+          || (selectedBlock && hasData)
           || (!selectedBlock && hasData && activeView === ViewKeyEnum.DATA))
           ? null
           : (MESSAGE_VIEWS.includes(activeView) &&

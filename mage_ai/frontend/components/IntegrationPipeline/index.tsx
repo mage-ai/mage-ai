@@ -35,6 +35,7 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle, TableContainerStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -45,7 +46,6 @@ import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
-import usePrevious from '@utils/usePrevious';
 
 type IntegrationPipelineProps = {
   addNewBlockAtIndex: (
