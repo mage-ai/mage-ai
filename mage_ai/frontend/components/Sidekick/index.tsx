@@ -254,7 +254,20 @@ function Sidekick({
             )}
           </>
         }
-        {activeView === ViewKeyEnum.DATA && columns.length > 0 && dataTableMemo}
+        {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
+          <DataTable
+            columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
+            columns={columns}
+            height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
+            noBorderBottom
+            noBorderLeft
+            noBorderRight
+            noBorderTop
+            renderColumnHeader={renderColumnHeader}
+            rows={rows}
+            width={afterWidth}
+          />
+      )}
         {activeView === ViewKeyEnum.REPORTS &&
           <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
             <FlexContainer flexDirection="column" fullWidth>

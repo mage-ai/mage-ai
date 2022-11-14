@@ -677,16 +677,6 @@ function IntegrationPipeline({
                   >
                     View and select streams
                   </Button>
-
-                  {/* <Button
-                    onClick={() => setOutputBlocks(() => {
-                      setSelectedOutputBlock(dataLoaderBlock);
-                      return [dataLoaderBlock];
-                    })}
-                    small
-                  >
-                    Reload source data
-                  </Button> */}
                 </div>
 
                 {isLoadingLoadSampleData && (
