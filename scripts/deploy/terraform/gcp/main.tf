@@ -110,8 +110,23 @@ resource "google_cloud_run_service" "run_service" {
           name  = "FILE_SHARE_NAME"
           value = "share1"
         }
+        # volume_mounts {
+        #   mount_path = "/secrets/bigquery"
+        #   name       = "secret-bigquery-key"
+        # }
       }
+      # volumes {
+      #   name = "secret-bigquery-key"
+      #   secret {
+      #     secret_name  = "bigquery_key"
+      #     items {
+      #       key  = "latest"
+      #       path = "bigquery_key"
+      #     }
+      #   }
+      # }
     }
+
     metadata {
       annotations = {
         "run.googleapis.com/execution-environment" = "gen2"
