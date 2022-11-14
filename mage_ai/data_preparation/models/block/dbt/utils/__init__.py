@@ -204,7 +204,10 @@ def get_profile(block, profile_target: str = None) -> Dict:
 
     with open(profiles_full_path, 'r') as f:
         try:
-            profile = yaml.safe_load(f)[project_name]
+            text = Template(f.read()).render(
+                env_var=os.getenv,
+            )
+            profile = yaml.safe_load(text)[project_name]
             outputs = profile['outputs']
             target = profile.get('target')
 
