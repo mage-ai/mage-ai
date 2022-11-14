@@ -335,7 +335,7 @@ def execute_pipeline():
     pipeline = Pipeline(
         uuid=\'{pipeline_uuid}\',
         config={pipeline_config},
-        repo_config={repo_config},
+        # repo_config={repo_config},
     )
 
     global_vars = {global_vars} or dict()

@@ -300,7 +300,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_type=block_type,
                     kernel_name=kernel_name,
                     pipeline_config=pipeline.get_config_from_yaml(),
-                    repo_config=get_repo_config().to_dict(remote=remote_execution),
+                    # repo_config=get_repo_config().to_dict(remote=remote_execution),
                     run_tests=run_tests,
                     run_upstream=run_upstream,
                     update_status=False if remote_execution else True,
