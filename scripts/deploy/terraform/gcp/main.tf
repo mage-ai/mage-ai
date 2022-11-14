@@ -48,6 +48,11 @@ resource "google_project_service" "vpcaccess" {
   disable_on_destroy = false
 }
 
+# Enable Secret Manager API
+resource "google_project_service" "secretmanager" {
+  service            = "secretmanager.googleapis.com"
+  disable_on_destroy = false
+}
 
 # #############################################
 # #    Google Artifact Registry Repository    #
