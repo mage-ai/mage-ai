@@ -193,6 +193,30 @@ variable "region" {
 }
 ```
 
+<b>Application Environment Variables</b>
+
+Set your environment variables in your running cloud environment by adding the following under
+the resource named `google_cloud_run_service` in the file
+[./scripts/deploy/terraform/gcp/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/main.tf):
+
+```
+resource "google_cloud_run_service" "run_service" {
+  ...
+
+  template {
+    spec {
+      containers {
+        ...
+        env {
+          name  = "NAME_OF_ENVIRONMENT_VARIABLE"
+          value = "value of environment variable"
+        }
+      }
+    }
+  }
+}
+```
+
 ### More
 
 Other variables defined in [./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf)

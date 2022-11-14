@@ -10,7 +10,7 @@ COPY [project_name] [project_name]
 # Replace [project_name] with the name of your project (e.g. demo_project)
 ENV USER_CODE_PATH="/home/mage_code/[project_name]"
 
-RUN pip3 install -r $(ls -d */ | head -1)/requirements.txt
+RUN pip3 install -r [project_name]/requirements.txt
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/mage_code"
 
