@@ -40,7 +40,7 @@ class RepoConfig:
                 self.variables_dir = config_dict.get('variables_dir')
             elif os.getenv(MAGE_DATA_DIR_ENV_VAR):
                 self.variables_dir = os.getenv(MAGE_DATA_DIR_ENV_VAR)
-            elif not os.getenv(MAGE_DATA_DIR_ENV_VAR):
+            else:
                 self.variables_dir = os.path.expanduser(
                     repo_config.get('variables_dir', DEFAULT_MAGE_DATA_DIR),
                 )
