@@ -39,6 +39,19 @@ aws_secret_access_key = XXX
 
 ## 2. Customize Terraform settings
 
+<b>Application name (optional)</b>
+
+In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
+you can change the default application name that will appear in AWS ECS:
+
+```
+variable "app_name" {
+  type        = string
+  description = "Application Name"
+  default     = "mage-data-prep"
+}
+```
+
 <b>Docker image (optional)</b>
 
 In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
@@ -56,6 +69,11 @@ variable "docker_image" {
 > If you previously tagged a Docker image you built when following this
 > [CI/CD guide](../ci_cd/README.md), you must push that locally tagged Docker image to
 > Amazon Elastic Container Registry (ECR) before deploying using Terraform.
+> Read the [AWS documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html) to learn more.
+
+1. docker build --platform linux/amd64 -t mage-tommy-test .
+1. docker tag mage-tommy-test:latest 679849156117.dkr.ecr.us-west-2.amazonaws.com/mage-tommy-test:latest
+1. docker push 679849156117.dkr.ecr.us-west-2.amazonaws.com/mage-tommy-test:latest
 
 <b>Region (optional)</b>
 
@@ -168,6 +186,33 @@ Check to see if the service task in your ECS cluster is running or if it stopped
 503 typically means that the service task isn’t running and that can be caused by a variety of things.
 
 Open the service task that stopped running and click on the "Logs" tab to see what issues occurred.
+
+<b>`exec /bin/sh: exec format error`</b>
+
+If your cluster is running and the service launches a task that eventually stops, check the logs for
+the stopped task. If the logs contain the error above, try re-building your image with the
+platform flag `--platform linux/amd64`.
+
+<br />
+
+## Updating Mage versions
+
+After Mage is running in your cloud, you can update the Mage Docker image version by
+running the following command in your CLI tool:
+
+```bash
+aws ecs update-service --cluster [cluster_name] --service [service_name] --force-new-deployment
+```
+
+> `cluster_name`
+>
+> This is the name of your AWS ECS cluster. Go to the AWS ECS dashboard to view the clusters and
+> find the cluster with the name that contains the `app_name` from `variables.tf`.
+
+> `service_name`
+>
+> This is the name of your AWS ECS service running in your AWS ECS cluster with the name
+> identified from above.
 
 <br />
 
