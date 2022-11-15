@@ -71,7 +71,7 @@ variable "docker_image" {
 > Amazon Elastic Container Registry (ECR) before deploying using Terraform.
 > Read the [AWS documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html) to learn more.
 
-1. `docker build --platform linux/amd64 -t [image_name] .`
+1. `docker build --platform linux/amd64 -tag [image_name]:latest .`
 1. `docker tag [image_name]:latest [registry_uuid].dkr.ecr.[region].amazonaws.com/[image_name]:latest`
 1. `docker push [registry_uuid].dkr.ecr.[region].amazonaws.com/[image_name]:latest`
 
@@ -85,6 +85,18 @@ variable "aws_region" {
   type        = string
   description = "AWS Region"
   default     = "us-west-2"
+}
+```
+
+<b>Availability zones (optional)</b>
+
+In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
+you must change the availability zones to match your region from above:
+
+```
+variable "availability_zones" {
+  description = "List of availability zones"
+  default     = ["us-west-2a", "us-west-2b"]
 }
 ```
 
