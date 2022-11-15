@@ -12,7 +12,8 @@ class BigQuery(Source):
 
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
-            path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
+            credentials_info=self.config.get('credentials_json'),
+            path_to_credentials_json_file=self.config.get('path_to_credentials_json_file'),
         )
 
     def build_discover_query(self, streams: List[str] = None):
