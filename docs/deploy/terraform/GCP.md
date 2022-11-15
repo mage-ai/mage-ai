@@ -217,6 +217,89 @@ resource "google_cloud_run_service" "run_service" {
 }
 ```
 
+<b>Secrets</b>
+
+1. Go to [Google Secret Manager UI](https://console.cloud.google.com/security/secret-manager).
+1. Click the button at the top labeled <b>`+ CREATE SECRET`</b>.
+1. Fill in the name of your secret; e.g. `bigquery_credentials`.
+1. Under <b>Secret value</b>, upload your service account credentials JSON file or paste the JSON into
+the textarea labeled <b>Secret value</b>.
+1. Scroll all the way down and click the button <b>`CREATE SECRET`</b>.
+1. Click on the <b>PERMISSIONS</b> tab.
+1. Click the button <b>`+ GRANT ACCESS`</b>.
+1. Under the field labeled <b>New principles</b>, add the service account that is associated to
+your Google Cloud Run. If you can’t find this, try deploying GCP with Terraform and you’ll receive
+an error that looks like this:
+    ```
+    ╷
+    │ Error: resource is in failed state "Ready:False", message: Revision 'mage-2992l' is not ready and cannot serve traffic. spec.template.spec.volumes[1].secret.items[0].key: Permission denied on secret: projects/1054912425479/secrets/bigquery_credentials/versions/latest for Revision service account 1054912425479-compute@developer.gserviceaccount.com. The service account used must be granted the 'Secret Manager Secret Accessor' role (roles/secretmanager.secretAccessor) at the secret, project or higher level.
+    │
+    │   with google_cloud_run_service.run_service,
+    │   on main.tf line 88, in resource "google_cloud_run_service" "run_service":
+    │   88: resource "google_cloud_run_service" "run_service" {
+    │
+    ╵
+    ```
+1. Under the field labeled <b>Select a role</b>, enter the value `Secret Manager Secret Accessor`.
+1. Click the button <b>SAVE</b>.
+1. Mount secrets to Google Cloud Run via Terraform in the file
+[./scripts/deploy/terraform/gcp/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/main.tf):
+    ```
+    resource "google_cloud_run_service" "run_service" {
+      ...
+
+      template {
+        spec {
+          containers {
+            ...
+            env {
+              name = "path_to_keyfile"
+              value = "/secrets/bigquery/bigquery_credentials"
+            }
+            volume_mounts {
+              name       = "secrets-bigquery_credentials"
+              mount_path = "/secrets/bigquery"
+            }
+          }
+          volumes {
+            name = "secrets-bigquery_credentials"
+            secret {
+              secret_name  = "bigquery_credentials"
+              items {
+                key  = "latest"
+                path = "bigquery_credentials"
+              }
+            }
+          }
+        }
+      }
+    }
+    ```
+1. In your Python code or in any field that support variable interpolation, enter the following
+to get the value from the secret:
+    1. Python:
+    ```python
+    import os
+
+
+    with open(os.getenv('path_to_keyfile'), 'r') as f:
+        print(f.read())
+    ```
+    1. YAML
+    ```yaml
+    demo:
+    target: prod
+    outputs:
+      prod_bigquery:
+        dataset: mage_demo
+        keyfile: "{{ env_var('path_to_keyfile') }}"
+        method: service-account
+        project: my_cool_gcp_project
+        threads: 1
+        type: bigquery
+    ```
+
+
 ### More
 
 Other variables defined in [./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf)
