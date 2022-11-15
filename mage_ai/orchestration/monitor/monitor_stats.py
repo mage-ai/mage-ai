@@ -151,21 +151,6 @@ class MonitorStats:
 
         return self.__cal_block_run_stats(block_runs, __stats_func)
 
-    def get_rows_inserted(
-        self,
-        pipeline_uuid: str = None,
-        start_time: datetime = None,
-        end_time: datetime = None,
-        **kwargs,
-    ) -> Dict:
-        pipeline_runs = self.__filter_pipeline_runs(
-            pipeline_uuid=pipeline_uuid,
-            start_time=start_time,
-            end_time=end_time,
-            **kwargs,
-        )
-
-
     def __filter_pipeline_runs(
         self,
         pipeline_uuid: str = None,

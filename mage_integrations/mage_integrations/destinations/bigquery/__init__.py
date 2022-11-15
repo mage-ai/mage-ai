@@ -81,10 +81,10 @@ SELECT
 FROM {schema_name}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}'
         """)
-
-        self.logger.info(f'load results:{results}')
         current_columns = [r[0] for r in results]
         schema_columns = schema['properties'].keys()
+
+        # BigQuery column names can't have spaces
         schema_columns = list(map(lambda col: col.replace(' ', '_'), schema_columns))
         new_columns = [c for c in schema_columns if c not in current_columns]
 
@@ -102,7 +102,7 @@ WHERE TABLE_NAME = '{table_name}'
                     string_type='STRING',
                 ),
                 columns=new_columns,
-                full_table_name=f'{database_name}.{schema_name}.{table_name}',
+                full_table_name=f'{schema_name}.{table_name}',
             ),
         ]
 
@@ -218,13 +218,26 @@ WHERE table_id = '{table_name}'
         except Exception:
             pass
 
-        # records_inserted = 0
-        # for array_of_tuples in data:
-        #     for t in array_of_tuples:
-        #         if len(t) >= 1 and type(t[0]) is int:
-        #             records_inserted += t[0]
-
         return records_inserted, 0
+
+    def _fetch_row_count_before_update(
+        self,
+        database_name: str,
+        schema_name: str,
+        table_name: str,
+    ):
+        try:
+            if self.does_table_exist(
+                database_name=database_name,
+                schema_name=schema_name,
+                table_name=table_name,
+            ):
+                return self.build_connection().execute([f"""
+SELECT COUNT(*)
+FROM `{database_name}.{schema_name}.{table_name}`
+                """])[0][0][0]
+        except Exception:
+            return 0
 
 
 if __name__ == '__main__':

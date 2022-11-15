@@ -56,18 +56,16 @@ class Destination(BaseDestination, ABC):
             schema_name=schema_name,
         )
 
-        does_table_exist = self.does_table_exist(
-            database_name=database_name,
-            schema_name=schema_name,
-            table_name=table_name,
-        )
-
         replication_method = self.replication_methods[stream]
         if replication_method in [
             REPLICATION_METHOD_FULL_TABLE,
             REPLICATION_METHOD_INCREMENTAL,
         ]:
-            if not does_table_exist:
+            if not self.does_table_exist(
+                database_name=database_name,
+                schema_name=schema_name,
+                table_name=table_name,
+            ):
                 query_strings += self.build_create_table_commands(
                     database_name=database_name,
                     schema=schema,
@@ -114,21 +112,14 @@ class Destination(BaseDestination, ABC):
             for qs in query_strings:
                 print(qs, '\n')
 
-        for qs in query_strings:
-            self.logger.info(qs)
-
-        num_rows_before_query = 0
-        
-        if does_table_exist:
-            num_rows_before_query = self.build_connection().execute([f"""
-    SELECT COUNT(*)
-    FROM `{database_name}.{schema_name}.{table_name}`
-    """])
+        num_rows_before_query = self._fetch_row_count_before_update(
+            database_name,
+            schema_name,
+            table_name,
+        )
 
         connection = self.build_connection()
         data = connection.execute(query_strings, commit=True)
-
-        self.logger.info('testing 123')
 
         records_inserted, records_updated = self.calculate_records_inserted_and_updated(
             data,
@@ -209,6 +200,15 @@ class Destination(BaseDestination, ABC):
         **kwargs,
     ) -> Tuple:
         return None, None
+
+    # only needed for BigQuery
+    def _fetch_row_count_before_update(
+        self,
+        database_name: str,
+        schema_name: str,
+        table_name: str,
+    ):
+        return 0
 
 
 def main(destination_class):
