@@ -14,15 +14,27 @@
 
 1. Once you’re done developing, copy the contents of the `mage-ai/templates/docker/Dockerfile`
 and paste it into a new `Dockerfile` located in the parent folder of your Mage project (e.g. `my_team/Dockerfile`).
+Replace all instances of the string `[project_name]` with your project name. For example, if your
+project name is `demo_project`, then your Dockerfile will look like this:
     The contents of `mage-ai/templates/docker/Dockerfile` are:
     ```
     FROM mageai/mageai:latest
 
-    WORKDIR /home/src
+    WORKDIR /home/mage_code
 
-    COPY . .
+    # Replace [project_name] with the name of your project (e.g. demo_project)
+    COPY demo_project demo_project
 
-    RUN pip3 install -r $(ls -d */ | head -1)/requirements.txt
+    # Set the USER_CODE_PATH variable to the path of user project.
+    # The project path needs to contain project name.
+    # Replace [project_name] with the name of your project (e.g. demo_project)
+    ENV USER_CODE_PATH="/home/mage_code/demo_project"
+
+    RUN pip3 install -r demo_project/requirements.txt
+
+    ENV PYTHONPATH="${PYTHONPATH}:/home/mage_code"
+
+    CMD ["/bin/sh", "-c", "/app/run_app.sh"]
 
     ```
 1. Your current folder structure should look like this:
@@ -53,3 +65,74 @@ newly created Dockerfile as the additional set of instructions:
 1. The next steps depends on your deployment method. If you are using [Terraform](../terraform/README.md),
 then you’ll need to use the previously tag name (e.g. `mageprod`) when pushing a Docker image to a
 remote Docker registry.
+
+<br />
+
+## Using GitHub Actions
+
+1. Create a new repository on GitHub.
+1. Open your repository on GitHub, then click the tab labeled <b>Settings</b>.
+1. Click the section labeled <b>Security</b> on the left hand side to expand it.
+1. Click the link labeled <b>Actions</b>.
+1. Click the button labeled <b>New repository secret</b> in the top right corner.
+1. Follow the instructions below for your specific cloud provider:
+
+### AWS
+
+<br />
+
+### Azure
+
+<br />
+
+### GCP
+
+1. In the field labeled <b>Name</b>, enter the value `GCP_CREDENTIALS`.
+1. In the field labeled <b>Secret</b>, enter the JSON string containing your GCP service account
+credentials. It should look something like this:
+    ```json
+    {
+      "type": "service_account",
+      "project_id": "mage-123456",
+      "private_key_id": "...",
+      "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+      "client_email": "mage@mage-123456.iam.gserviceaccount.com",
+      "client_id": "...",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/mage%40mage-123456.iam.gserviceaccount.com"
+    }
+    ```
+1. Click the button labeled <b>Add secret</b> to save.
+1. Click on the tab labeled <b>Actions</b>.
+1. On the left side, click the button labeled <b>New workflow</b>.
+1. Find the link labeled <b>`set up a workflow yourself`</b> and click it.
+1. Copy the contents from the GitHub Action YAML file for GCP at
+[templates/github_actions/build_and_deploy_to_gcp_cloud_run.yml](https://github.com/mage-ai/mage-ai/blob/master/templates/github_actions/build_and_deploy_to_gcp_cloud_run.yml), and
+paste it into the textarea.
+1. Change the following values under the key labeled `env`:
+    ```yaml
+    env:
+      PROJECT_ID: ...
+      GAR_LOCATION: ...
+      REPOSITORY: ...
+      IMAGE: ...
+    ```
+
+    | Key | Description | Sample value |
+    | --- | --- | --- |
+    | `PROJECT_ID` | Project ID of where you launched Mage using Terraform. | `mage-123456` |
+    | `GAR_LOCATION` | Region that Mage is already deployed in. | `us-east1` |
+    | `REPOSITORY` | The name of your GCP Artifact Registry that is storing your Docker image. | `mage-prod` |
+    | `IMAGE` | The name of the Docker image you pushed to the above GCP Artifact Registry. | `mageai` |
+
+1. Click the button labeled <b>Start commit</b> in the top right corner.
+1. Click the button labeled <b>Commit new file</b>.
+1. Everytime you merge a pull request into the master branch, this GitHub Action will run, building
+a Docker image using your GitHub code, then updating Google Cloud Run to use the new image with
+the updated code.
+
+<br />
+
+<br />
