@@ -51,7 +51,7 @@ project name is `demo_project`, then your Dockerfile will look like this:
 1. Build a custom Docker image using `mageai/mageai:latest` as the base and using the
 newly created Dockerfile as the additional set of instructions:
     ```
-    docker build --tag mageprod:latest .
+    docker build --platform linux/amd64 --tag mageprod:latest .
     ```
 
     > Note
@@ -84,7 +84,44 @@ remote Docker registry.
 
 ### AWS
 
-*Coming soon...*
+1. In the field labeled <b>Name</b>, enter the value `AWS_ACCESS_KEY_ID`.
+1. In the field labeled <b>Secret</b>, enter your AWS Access Key ID.
+1. Click the button labeled <b>Add secret</b> to save.
+1. Add a 2nd secret by clicking the button labeled <b>New repository secret</b> in the top right corner.
+1. In the field labeled <b>Name</b>, enter the value `AWS_SECRET_ACCESS_KEY`.
+1. In the field labeled <b>Secret</b>, enter your AWS Secret Access Key.
+1. Click the button labeled <b>Add secret</b> to save.
+1. Click on the tab labeled <b>Actions</b>.
+1. On the left side, click the button labeled <b>New workflow</b>.
+1. Find the link labeled <b>`set up a workflow yourself`</b> and click it.
+1. Copy the contents from the GitHub Action YAML file for AWS at
+[templates/github_actions/build_and_deploy_to_aws_ecs.yml](https://github.com/mage-ai/mage-ai/blob/master/templates/github_actions/build_and_deploy_to_aws_ecs.yml), and
+paste it into the textarea.
+1. Change the following values under the key labeled `env`:
+    ```yaml
+    env:
+      AWS_REGION: ...
+      CONTAINER_NAME: ...
+      ECR_REPOSITORY: ...
+      ECS_CLUSTER: ...
+      ECS_SERVICE: ...
+      ECS_TASK_DEFINITION: ...
+    ```
+
+    | Key | Description | Sample value |
+    | --- | --- | --- |
+    | `AWS_REGION` | Region of your AWS ECS cluster. | `us-west-2` |
+    | `CONTAINER_NAME` | Set this to the name of the container in the containerDefinitions section of your task definition. | `mage-data-production-container` |
+    | `ECR_REPOSITORY` | The name of the AWS ECR repository you created to store your Docker images. | `mage-data` |
+    | `ECS_CLUSTER` | The name of your AWS ECS cluster. | `mage-production-cluster` |
+    | `ECS_SERVICE` | The name of your AWS ECS service. | `mage-production-ecs-service` |
+    | `ECS_TASK_DEFINITION` | Go to your AWS ECS task definition for the above service. Click on the <b>JSON</b> tab on the task definition detail page. Copy the JSON string content and save it to a file in your root folder containing your Mage project. Use the path to that file as the value in this field. | `some_path/ecs-task-definition.json` |
+
+1. Click the button labeled <b>Start commit</b> in the top right corner.
+1. Click the button labeled <b>Commit new file</b>.
+1. Every time you merge a pull request into the master branch, this GitHub Action will run, building
+a Docker image using your GitHub code, then updating Google Cloud Run to use the new image with
+the updated code.
 
 <br />
 
@@ -133,7 +170,7 @@ paste it into the textarea.
     | --- | --- | --- |
     | `PROJECT_ID` | Project ID of where you launched Mage using Terraform. | `mage-123456` |
     | `GAR_LOCATION` | Region that Mage is already deployed in. | `us-east1` |
-    | `REPOSITORY` | The name of your GCP Artifact Registry that is storing your Docker image. | `mage-prod` |
+    | `REPOSITORY` | The name of your GCP Artifact Registry that is storing your Docker image. | `mageprod` |
     | `IMAGE` | The name of the Docker image you pushed to the above GCP Artifact Registry. | `mageai` |
 
 1. Click the button labeled <b>Start commit</b> in the top right corner.
