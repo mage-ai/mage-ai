@@ -918,9 +918,11 @@ class Block:
 
                     tags = print_logs_from_output(proc.stdout)
 
+                    stream = tags.get('stream', '')
+
                     # store tags as variables for metrics
                     self.store_variables(
-                        dict(tags=tags),
+                        { f'tags_{stream}': tags },
                         execution_partition=execution_partition,
                     )
                     outputs.append(proc)

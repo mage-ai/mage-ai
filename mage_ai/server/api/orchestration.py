@@ -264,50 +264,10 @@ class ApiPipelineRunLogHandler(BaseHandler):
 class ApiPipelineRunVariablesHandler(BaseHandler):
     def get(self, pipeline_run_id):
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
-        execution_partition = pipeline_run.execution_partition
-        block_runs = pipeline_run.block_runs
-        pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
-        variable_manager = pipeline.variable_manager
-
-        def get_variable_dict(variable, block_uuid, execution_partition):
-            variable_object = variable_manager.get_variable_object(
-                pipeline.uuid,
-                block_uuid,
-                variable,
-                partition=execution_partition,
-            )
-
-            return dict(
-                data=variable_object.read_data(
-                    sample=True,
-                    sample_count=10,
-                ),
-                variable_uuid=variable,
-            )
-
-        variables = dict()
-        for block_run in block_runs:
-            block_uuid = pipeline.get_block(block_run.block_uuid).uuid
-            all_variables = variable_manager.get_variables_by_block(
-                pipeline.uuid,
-                block_uuid,
-                partition=execution_partition,
-            )
-            variables[block_run.block_uuid] = \
-                list(
-                    map(
-                        lambda variable: get_variable_dict(
-                            variable,
-                            block_uuid,
-                            execution_partition
-                        ),
-                        all_variables
-                    )
-                )
 
         self.write(
             dict(
-                variables=variables,
+                variables=pipeline_run.output_variables,
             ),
         )
 
