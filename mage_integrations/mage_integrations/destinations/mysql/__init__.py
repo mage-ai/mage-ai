@@ -125,6 +125,7 @@ class MySQL(Destination):
         data: List[List[Tuple]],
         unique_constraints: List[str] = None,
         unique_conflict_method: str = None,
+        **kwargs,
     ) -> Tuple:
         records_inserted = 0
         for array_of_tuples in data:

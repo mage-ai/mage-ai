@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
     REPLICATION_METHOD_FULL_TABLE,
@@ -9,7 +10,7 @@ import argparse
 import sys
 
 
-class Destination(BaseDestination):
+class Destination(BaseDestination, ABC):
     DATABASE_CONFIG_KEY = 'database'
     SCHEMA_CONFIG_KEY = 'schema'
 
@@ -55,16 +56,18 @@ class Destination(BaseDestination):
             schema_name=schema_name,
         )
 
+        does_table_exist = self.does_table_exist(
+            database_name=database_name,
+            schema_name=schema_name,
+            table_name=table_name,
+        )
+
         replication_method = self.replication_methods[stream]
         if replication_method in [
             REPLICATION_METHOD_FULL_TABLE,
             REPLICATION_METHOD_INCREMENTAL,
         ]:
-            if not self.does_table_exist(
-                database_name=database_name,
-                schema_name=schema_name,
-                table_name=table_name,
-            ):
+            if not does_table_exist:
                 query_strings += self.build_create_table_commands(
                     database_name=database_name,
                     schema=schema,
@@ -111,11 +114,28 @@ class Destination(BaseDestination):
             for qs in query_strings:
                 print(qs, '\n')
 
+        for qs in query_strings:
+            self.logger.info(qs)
+
+        num_rows_before_query = 0
+        
+        if does_table_exist:
+            num_rows_before_query = self.build_connection().execute([f"""
+    SELECT COUNT(*)
+    FROM `{database_name}.{schema_name}.{table_name}`
+    """])
+
         connection = self.build_connection()
         data = connection.execute(query_strings, commit=True)
 
+        self.logger.info('testing 123')
+
         records_inserted, records_updated = self.calculate_records_inserted_and_updated(
             data,
+            num_rows_before_query=num_rows_before_query,
+            database_name=database_name,
+            schema_name=schema_name,
+            table_name=table_name,
             unique_constraints=unique_constraints,
             unique_conflict_method=unique_conflict_method,
         )
@@ -126,6 +146,7 @@ class Destination(BaseDestination):
 
         self.logger.info('Export data completed.', tags=tags)
 
+    @abstractmethod
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')
 
@@ -185,6 +206,7 @@ class Destination(BaseDestination):
         data: List[List[Tuple]],
         unique_constraints: List[str] = None,
         unique_conflict_method: str = None,
+        **kwargs,
     ) -> Tuple:
         return None, None
 

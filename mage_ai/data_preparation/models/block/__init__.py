@@ -916,7 +916,13 @@ class Block:
                         self.pipeline.destination_state_file_path(override.get('table')),
                     ], input=input_from_previous, capture_output=True, text=True)
 
-                    print_logs_from_output(proc.stdout)
+                    tags = print_logs_from_output(proc.stdout)
+
+                    # store tags as variables for metrics
+                    self.store_variables(
+                        dict(tags=tags),
+                        execution_partition=execution_partition,
+                    )
                     outputs.append(proc)
             elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(

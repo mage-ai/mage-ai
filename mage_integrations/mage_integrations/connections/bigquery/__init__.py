@@ -43,6 +43,7 @@ class BigQuery(Connection):
         for query_string in query_strings:
             cursor.execute(clean_query(query_string))
             description = cursor.description
+            self.info(f'description: {description}')
             if description:
                 data.append(cursor.fetchall())
 
