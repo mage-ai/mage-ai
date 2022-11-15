@@ -33,7 +33,9 @@ class GoogleSearchConsole(Connection):
                 scopes=scope,
             )
         else:
-            credentials = self.credentials_info
+            credentials = service_account.Credentials.from_service_account_info(
+                self.credentials_info,
+            )
         return build(
             'webmasters',
             'v3',
