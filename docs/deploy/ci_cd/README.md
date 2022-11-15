@@ -1,5 +1,10 @@
 # CI/CD
 
+1. [Local to cloud](#local-to-cloud)
+1. [Using GitHub Actions](#using-github-actions)
+
+<br />
+
 ## Local to cloud
 
 1. Create a parent folder for your Mage project (e.g. `my_team`).
@@ -79,9 +84,13 @@ remote Docker registry.
 
 ### AWS
 
+*Coming soon...*
+
 <br />
 
 ### Azure
+
+*Coming soon...*
 
 <br />
 
@@ -132,7 +141,5 @@ paste it into the textarea.
 1. Everytime you merge a pull request into the master branch, this GitHub Action will run, building
 a Docker image using your GitHub code, then updating Google Cloud Run to use the new image with
 the updated code.
-
-<br />
 
 <br />
