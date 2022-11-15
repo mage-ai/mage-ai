@@ -48,3 +48,4 @@ jobs:
       with:
         service: mage-int-dbt
         image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}
+        region: ${{ env.GAR_LOCATION }}
