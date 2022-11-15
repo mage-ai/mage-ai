@@ -58,6 +58,7 @@
                 "iam:AttachRolePolicy",
                 "iam:CreatePolicy",
                 "iam:CreateRole",
+                "iam:CreateServiceLinkedRole",
                 "iam:GetPolicy",
                 "iam:GetPolicyVersion",
                 "iam:GetRole",
