@@ -219,7 +219,7 @@ resource "google_cloud_run_service" "run_service" {
 
 <b>Secrets</b>
 
-1. Go to [Google Secret Manager UI](https://console.cloud.google.com/security/secret-manager).
+1. Go to [Google Secret Manager UI](https://console.cloud.google.com/security/secret-manager?referrer=search&authuser=1).
 1. Click the button at the top labeled <b>`+ CREATE SECRET`</b>.
 1. Fill in the name of your secret; e.g. `bigquery_credentials`.
 1. Under <b>Secret value</b>, upload your service account credentials JSON file or paste the JSON into
