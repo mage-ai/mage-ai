@@ -410,48 +410,46 @@ function KernelStatus({
           </Spacing>
         </FlexContainer>
 
-        {!selectedFilePath && (
-          <Spacing px={PADDING_UNITS}>
-            <Flex alignItems="center">
-              {kernelStatus}
-              <Spacing ml={2}/>
-              <Tooltip
-                appearBefore
-                block
-                description={
-                  <>
-                    <FlexContainer alignItems="center">
-                      <Text default inline>Press</Text>&nbsp;<KeyboardText
-                        inline
-                        keyText={KEY_SYMBOL_META}
-                      />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
-                        inline
-                        keyText={KEY_SYMBOL_S}
-                      />&nbsp;<Text default inline>to save changes.</Text>
-                      <br />
-                    </FlexContainer>
+        <Spacing px={PADDING_UNITS}>
+          <Flex alignItems="center">
+            {kernelStatus}
+            <Spacing ml={2}/>
+            <Tooltip
+              appearBefore
+              block
+              description={
+                <>
+                  <FlexContainer alignItems="center">
+                    <Text default inline>Press</Text>&nbsp;<KeyboardText
+                      inline
+                      keyText={KEY_SYMBOL_META}
+                    />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
+                      inline
+                      keyText={KEY_SYMBOL_S}
+                    />&nbsp;<Text default inline>to save changes.</Text>
+                    <br />
+                  </FlexContainer>
 
-                    <Spacing mt={1}>
-                      <Text default>
-                        Or, go to <Text inline monospace>
-                          File
-                        </Text>{' › '}<Text inline monospace>
-                          Save pipeline
-                        </Text>.
-                      </Text>
-                    </Spacing>
-                  </>
-                }
-                size={null}
-                widthFitContent
-              >
-                <Text muted>
-                  {saveStatus}
-                </Text>
-              </Tooltip>
-            </Flex>
-          </Spacing>
-        )}
+                  <Spacing mt={1}>
+                    <Text default>
+                      Or, go to <Text inline monospace>
+                        File
+                      </Text>{' › '}<Text inline monospace>
+                        Save pipeline
+                      </Text>.
+                    </Text>
+                  </Spacing>
+                </>
+              }
+              size={null}
+              widthFitContent
+            >
+              <Text muted>
+                {saveStatus}
+              </Text>
+            </Tooltip>
+          </Flex>
+        </Spacing>
       </FlexContainer>
     </PipelineHeaderStyle>
   );

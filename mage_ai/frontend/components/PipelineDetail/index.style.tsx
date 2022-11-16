@@ -50,6 +50,8 @@ export const PipelineHeaderStyle = styled.div<{
   ${props => props.secondary && `
     height: ${TABS_HEADER_HEIGHT}px;
     top: ${ASIDE_HEADER_HEIGHT * 2}px;
+    overflow-x: auto;
+    z-index: 3;
   `}
 
   ${hideScrollBar()}

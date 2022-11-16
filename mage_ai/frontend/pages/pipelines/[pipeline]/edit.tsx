@@ -1635,6 +1635,7 @@ function PipelineDetailPage({
         before={before}
         beforeHeader={beforeHeader}
         errors={errors}
+        headerOffset={37}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
         page={page}
