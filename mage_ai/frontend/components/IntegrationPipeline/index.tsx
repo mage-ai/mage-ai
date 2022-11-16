@@ -1,5 +1,5 @@
 import { parse, stringify } from 'yaml';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
@@ -35,6 +35,7 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle, TableContainerStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -68,10 +69,11 @@ type IntegrationPipelineProps = {
     errors: any;
     response: any;
   }) => void;
+  setIntegrationStreams: (streams: string[]) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
-  setSampleDataVariable: (variable: string) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
+  setSelectedStream: (stream: string) => void;
 };
 
 function IntegrationPipeline({
@@ -85,10 +87,11 @@ function IntegrationPipeline({
   pipeline,
   savePipelineContent,
   setErrors,
+  setIntegrationStreams,
   setOutputBlocks,
-  setSampleDataVariable,
   setSelectedBlock,
   setSelectedOutputBlock,
+  setSelectedStream,
 }: IntegrationPipelineProps) {
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
@@ -159,16 +162,24 @@ function IntegrationPipeline({
   ]);
   const autoAddNewFields = (catalog?.streams || []).every(({ auto_add_new_fields }) => auto_add_new_fields);
 
-  const [selectedStreamID, setSelectedStreamID] =
-    useState<string>(catalog?.streams?.[0]?.tap_stream_id);
-
-  const updateSampleDataVariable = useCallback(
-    () => setSampleDataVariable(selectedStreamID),
-    [selectedStreamID],
+  const updateSelectedStream = useCallback(
+    () => setSelectedStream(catalog?.streams?.[0]?.tap_stream_id),
+    [catalog],
   );
+  
+  const catalogPrev = usePrevious(catalog);
+  useEffect(() => {
+    if (!catalogPrev && catalog) {
+      setOutputBlocks(() => {
+        setSelectedOutputBlock(dataLoaderBlock);
+        return [dataLoaderBlock];
+      });
+      setIntegrationStreams(catalog?.streams?.map(({ tap_stream_id }) => tap_stream_id));
+    }
+  }, [catalog]);
 
   const [sourceSampleDataError, setSourceSampleDataError] = useState<string>();
-  const [loadSampleData] = useMutation(
+  const [loadSampleData, { isLoading: isLoadingLoadSampleData }] = useMutation(
     api.integration_sources.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -176,8 +187,7 @@ function IntegrationPipeline({
         {
           callback: (res) => {
             if (res['success']) {
-              setSelectedOutputBlock(dataLoaderBlock);
-              updateSampleDataVariable();
+              updateSelectedStream();
               openSidekickView(ViewKeyEnum.DATA);
               setOutputBlocks(() => {
                 setSelectedOutputBlock(dataLoaderBlock);
@@ -250,6 +260,9 @@ function IntegrationPipeline({
                 }
               });
             });
+
+            setOutputBlocks(() => []);
+            setIntegrationStreams(streams.map(({ tap_stream_id }) => tap_stream_id));
 
             onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
               ...dataLoaderBlockContent,
@@ -665,6 +678,22 @@ function IntegrationPipeline({
                     View and select streams
                   </Button>
                 </div>
+
+                {isLoadingLoadSampleData && (
+                  <Spacing mt={1}>
+                    <FlexContainer>
+                      <Spinner color="white" small/> 
+                      <Spacing ml={1} />
+                      <Text small> Loading source data preview </Text>
+                    </FlexContainer>
+                  </Spacing>
+                )}
+
+                {sourceSampleDataError && (
+                  <Text warning>
+                    {sourceSampleDataError}
+                  </Text>
+                )}
               </>
             )}
           </SectionStyle>
@@ -680,6 +709,7 @@ function IntegrationPipeline({
               <SchemaSettings
                 catalog={catalog}
                 destination={dataExporterBlockContent?.destination}
+                setSelectedStream={setSelectedStream}
                 updateMetadataForColumn={updateMetadataForColumn}
                 updateSchemaProperty={updateSchemaProperty}
                 updateStream={updateStream}

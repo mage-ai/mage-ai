@@ -169,7 +169,7 @@ class IntegrationPipeline(Pipeline):
                     '--settings',
                     self.data_loader.file_path,
                     '--state',
-                    self.source_state_file_path_for_block_uuid(self.data_loader.uuid),
+                    self.source_state_file_path(self.data_loader.uuid),
                 ]
 
                 proc = subprocess.run(

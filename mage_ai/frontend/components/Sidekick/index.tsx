@@ -147,6 +147,7 @@ function Sidekick({
     statistics,
   });
   const hasData = sampleData && insights && Object.keys(statistics).length > 0;
+  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -182,6 +183,21 @@ function Sidekick({
     selectedBlock,
     setSelectedBlock,
   ]);
+
+  const dataTableMemo = useMemo(() => (
+    <DataTable
+      columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
+      columns={columns}
+      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
+      noBorderBottom
+      noBorderLeft
+      noBorderRight
+      noBorderTop
+      renderColumnHeader={renderColumnHeader}
+      rows={rows}
+      width={afterWidth}
+    />
+  ), [columns, rows]);
 
   return (
     <>
@@ -252,7 +268,7 @@ function Sidekick({
             rows={rows}
             width={afterWidth}
           />
-        )}
+      )}
         {activeView === ViewKeyEnum.REPORTS &&
           <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
             <FlexContainer flexDirection="column" fullWidth>
@@ -293,7 +309,8 @@ function Sidekick({
         }
         {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
 
-        {((selectedBlock && hasData)
+        {(isIntegration 
+          || (selectedBlock && hasData)
           || (!selectedBlock && hasData && activeView === ViewKeyEnum.DATA))
           ? null
           : (MESSAGE_VIEWS.includes(activeView) &&
