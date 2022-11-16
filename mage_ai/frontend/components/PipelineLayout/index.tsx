@@ -24,7 +24,6 @@ import {
   set,
 } from '@storage/localStorage';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
-import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { capitalize } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
@@ -37,6 +36,7 @@ type PipelineLayoutProps = {
   beforeHeader?: any;
   children: any;
   errors: any;
+  headerOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef?: any;
   page: string;
@@ -57,6 +57,7 @@ function PipelineLayout({
   beforeHeader,
   children,
   errors,
+  headerOffset,
   mainContainerHeader,
   mainContainerRef,
   page,
@@ -189,6 +190,7 @@ function PipelineLayout({
         beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
         header={headerMemo}
+        headerOffset={headerOffset}
         mainContainerHeader={mainContainerHeader}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}
