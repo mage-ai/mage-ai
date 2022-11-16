@@ -10,6 +10,7 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
     REPLICATION_METHOD_FULL_TABLE,
+    REPLICATION_METHOD_LOG_BASED,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.sources.sql.utils import (
@@ -122,7 +123,6 @@ class Source(BaseSource):
             query,
             count_records=True,
         )
-
         return rows[0]['number_of_records']
 
     def load_data(
@@ -132,9 +132,18 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+            for data in self.load_data_from_logs(
+                stream,
+                bookmarks=bookmarks,
+                query=query,
+                **kwargs,
+            ):
+                yield data
+            return
+
         rows_temp = None
         loops = 0
-
 
         while rows_temp is None or len(rows_temp) >= 1:
             if loops >= 1:
@@ -157,6 +166,15 @@ class Source(BaseSource):
 
             if has_custom_limit or len(rows_temp) < BATCH_FETCH_LIMIT:
                 break
+
+    def load_data_from_logs(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        **kwargs,
+    ) -> Generator[List[Dict], None, None]:
+        raise Exception('Subclasses must implement the test_connection method.')
 
     def update_column_names(self, columns: List[str]) -> List[str]:
         return columns
