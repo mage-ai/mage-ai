@@ -1654,6 +1654,7 @@ function PipelineDetailPage({
               fetchPipeline={fetchPipeline}
               filePath={filePath}
               pipeline={pipeline}
+              selectedFilePath={selectedFilePath}
               setFilesTouched={setFilesTouched}
               setSelectedBlock={setSelectedBlock}
             />
