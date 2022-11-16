@@ -41,7 +41,7 @@ function FileTabs({
         alignItems="center"
         justifyContent="flex-start"
       >
-        {filePathsMemo?.map((filePath: string) => {
+        {filePathsMemo?.map((filePath: string, idx: number) => {
           const selected: boolean = selectedFilePath === encodeURIComponent(filePath);
 
           return (
@@ -61,6 +61,7 @@ function FileTabs({
               }}
             >
               <FileTabStyle
+                last={idx === filePathsMemo.length - 1}
                 selected={selected}
               >
                 <FlexContainer

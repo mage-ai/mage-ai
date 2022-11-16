@@ -58,7 +58,8 @@ export const PipelineHeaderStyle = styled.div<{
 `;
 
 export const FileTabStyle = styled.div<{
-  selected: boolean;
+  last?: boolean;
+  selected?: boolean;
 }>`
   border-left: 1px solid transparent;
   height: 100%;
@@ -81,5 +82,9 @@ export const FileTabStyle = styled.div<{
 
   ${props => !props.selected && `
     border-color: ${(props.theme.borders || dark.borders).light} !important;
+  `}
+
+  ${props => props.last && `
+    border-right: 1px solid transparent;
   `}
 `;
