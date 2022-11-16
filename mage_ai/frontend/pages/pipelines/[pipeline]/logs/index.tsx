@@ -90,7 +90,7 @@ function BlockRuns({
         : query,
       [LOG_UUID_PARAM],
     ),
-    {},
+    { refreshInterval: 5000 },
   );
   const isLoading = !dataLogs;
   const {
