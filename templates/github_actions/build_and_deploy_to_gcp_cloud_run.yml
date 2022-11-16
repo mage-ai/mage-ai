@@ -6,10 +6,11 @@ on:
       - master
 
 env:
-  PROJECT_ID: PROJECT_ID
   GAR_LOCATION: GAR_LOCATION
-  REPOSITORY: REPOSITORY
+  GOOGLE_CLOUD_RUN_SERVICE_NAME: GOOGLE_CLOUD_RUN_SERVICE_NAME
   IMAGE: IMAGE
+  PROJECT_ID: PROJECT_ID
+  REPOSITORY: REPOSITORY
 
 jobs:
   build-and-deploy:
@@ -46,6 +47,6 @@ jobs:
     - id: deploy
       uses: google-github-actions/deploy-cloudrun@v0
       with:
-        service: mage-int-dbt
+        service: ${{ env.GOOGLE_CLOUD_RUN_SERVICE_NAME }}
         image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}
         region: ${{ env.GAR_LOCATION }}
