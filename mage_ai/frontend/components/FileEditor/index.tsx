@@ -32,6 +32,7 @@ type FileEditorProps = {
   fetchPipeline: () => void;
   filePath: string;
   pipeline: PipelineType;
+  selectedFilePath: string;
   setFilesTouched: (data: {
     [path: string]: boolean;
   }) => void;
@@ -44,6 +45,7 @@ function FileEditor({
   fetchPipeline,
   filePath,
   pipeline,
+  selectedFilePath,
   setFilesTouched,
   setSelectedBlock,
 }: FileEditorProps) {
@@ -60,8 +62,10 @@ function FileEditor({
   const [touched, setTouched] = useState<boolean>(false);
 
   useEffect(() => {
-    containerRef?.current?.scrollIntoView();
-  }, [containerRef?.current]);
+    if (selectedFilePath) {
+      containerRef?.current?.scrollIntoView();
+    }
+  }, [selectedFilePath]);
 
   const [updateFile] = useMutation(
     api.file_contents.useUpdate(file?.path),

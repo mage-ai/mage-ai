@@ -109,7 +109,7 @@ type PipelineDetailProps = {
   setPipelineContentTouched: (value: boolean) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
-  setSampleDataVariable: (variable: string) => void; 
+  setSampleDataVariable: (variable: string) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
   setTextareaFocused: (value: boolean) => void;
@@ -575,7 +575,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
                 const finalFilePath = creatingNewDBTModel
                   ? `${filePath}/${addUnderscores(dbtModelName || randomNameGenerator())}.${FileExtensionEnum.SQL}`
                   : filePath;
-                const newBlock = {
+                const newBlock: BlockRequestPayloadType = {
                   configuration: {
                     file_path: finalFilePath,
                   },
@@ -583,6 +583,11 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
                   name: finalFilePath,
                   type: BlockTypeEnum.DBT,
                 };
+                if (creatingNewDBTModel) {
+                  newBlock.content = `--Docs: https://docs.mage.ai/docs/guides/dbt/dependencies
+`;
+                }
+
                 const isAddingFromBlock =
                   typeof lastBlockIndex === 'undefined' || lastBlockIndex === null;
                 const block = blocks[isAddingFromBlock ? blocks.length - 1 : lastBlockIndex];
