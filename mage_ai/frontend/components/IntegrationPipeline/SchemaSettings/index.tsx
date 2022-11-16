@@ -12,10 +12,12 @@ import { find, indexBy, sortByKey } from '@utils/array';
 
 type SchemaSettingsProps = {
   catalog: CatalogType;
+  setSelectedStream: (stream: string) => void;
 } & SchemaTableProps;
 
 function SchemaSettings({
   catalog,
+  setSelectedStream,
   ...props
 }: SchemaSettingsProps) {
   const [selectedTab, setSelectedTab] = useState<TabType>(null);
@@ -45,7 +47,10 @@ function SchemaSettings({
   return (
     <>
       <ButtonTabs
-        onClickTab={setSelectedTab}
+        onClickTab={(tab) => {
+          setSelectedTab(tab);
+          setSelectedStream(tab.uuid);
+        }}
         selectedTabUUID={selectedTab?.uuid}
         tabs={tabs}
       />

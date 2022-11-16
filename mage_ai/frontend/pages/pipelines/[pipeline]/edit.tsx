@@ -290,6 +290,8 @@ function PipelineDetailPage({
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
   const [outputBlocks, setOutputBlocks] = useState<BlockType[]>(outputBlocksInit);
+  const [integrationStreams, setIntegrationStreams] = useState<string[]>();
+  const [selectedStream, setSelectedStream] = useState<string>();
   const [selectedOutputBlock, setSelectedOutputBlock] = useState<BlockType>(null);
   const outputBlocksPrev = usePrevious(outputBlocks);
 
@@ -312,7 +314,6 @@ function PipelineDetailPage({
     }
   }, [pipelineUUID, pipelineUUIDPrev]);
 
-  const [sampleDataVariable, setSampleDataVariable] = useState<string>();
   const {
     data: blockSampleData,
     mutate: fetchSampleData,
@@ -326,12 +327,12 @@ function PipelineDetailPage({
     if (isIntegration) {
       return find(
         blockSampleData?.outputs,
-        ({ variable_uuid }) => variable_uuid === `output_sample_data_${sampleDataVariable}`,
+        ({ variable_uuid }) => variable_uuid === `output_sample_data_${selectedStream}`,
       )?.sample_data;
     } else {
       return blockSampleData?.outputs?.[0]?.sample_data;
     }
-  }, [blockSampleData, isIntegration, sampleDataVariable]);
+  }, [blockSampleData, isIntegration, selectedStream]);
   const {
     data: blockAnalysis,
     mutate: fetchAnalysis,
@@ -342,8 +343,8 @@ function PipelineDetailPage({
       && selectedOutputBlock?.uuid,
   );
   const {
-    insights,
-    metadata,
+    insights = {},
+    metadata = {},
     statistics = {},
   } = blockAnalysis?.analyses?.[0] || {};
   const {
@@ -1304,14 +1305,15 @@ function PipelineDetailPage({
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
+      setIntegrationStreams={setIntegrationStreams}
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
       setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
       setRunningBlocks={setRunningBlocks}
-      setSampleDataVariable={setSampleDataVariable}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
+      setSelectedStream={setSelectedStream}
       setTextareaFocused={setTextareaFocused}
       textareaFocused={textareaFocused}
       widgets={widgets}
@@ -1567,7 +1569,7 @@ function PipelineDetailPage({
             fullHeight
             fullWidth
           >
-            {outputBlocks.map(block => {
+            {!isIntegration && outputBlocks.map(block => {
               const { uuid: outputBlockUUID } = block;
               const selected = selectedOutputBlock?.uuid === outputBlockUUID;
 
@@ -1598,11 +1600,25 @@ function PipelineDetailPage({
                     selected={selected}
                     uuid={outputBlockUUID}
                   >
-                    {isIntegration && sampleDataVariable ? sampleDataVariable : outputBlockUUID}
+                    {outputBlockUUID}
                   </KeyboardShortcutButton>
                 </Spacing>
               );
             })}
+            {isIntegration && integrationStreams?.map(stream => (
+              <Spacing key={stream} pl={1}>
+                <KeyboardShortcutButton
+                  blackBorder
+                  compact
+                  muted
+                  onClick={() => setSelectedStream(stream)}
+                  selected={selectedStream === stream}
+                  uuid={stream}
+                >
+                  {stream}
+                </KeyboardShortcutButton>
+              </Spacing>
+            ))}
           </FlexContainer>
         )}
         before={before}
