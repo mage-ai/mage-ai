@@ -26,18 +26,39 @@ TEST_STATE
 
 Run
 
+### Discover streams
+
 ```bash
-python3 mage_integrations/sources/salesforce/__init__.py \
+python3 mage_integrations/sources/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
   --discover_streams
 ```
 
+### Get schema
+
 ```bash
-python3 mage_integrations/sources/salesforce/__init__.py \
+python3 mage_integrations/sources/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
-  --selected_streams '["Account"]' > mage_integrations/TEST_CATALOG.json
+  --selected_streams '["user_activity", "user_with_emails"]' > mage_integrations/TEST_CATALOG.json
+```
+
+### Count records
+
+```bash
+python3 mage_integrations/sources/postgresql/__init__.py \
+  --config mage_integrations/TEST_CONFIG1.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --state mage_integrations/TEST_STATE.json \
+  --count_records
+```
+
+```bash
+python3 mage_integrations/sources/postgresql/__init__.py \
+  --config mage_integrations/TEST_CONFIG1.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --state mage_integrations/TEST_STATE.json
 ```
 
 ```bash
