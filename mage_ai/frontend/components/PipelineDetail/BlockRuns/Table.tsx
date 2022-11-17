@@ -77,10 +77,12 @@ function BlockRunsTable({
         let blockUUID = blockUUIDOrig;
 
         let streamID;
+        let index;
         if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
           const parts = blockUUID.split(':');
           blockUUID = parts[0];
           streamID = parts[1];
+          index = parts[2];
         }
 
         return [
@@ -128,6 +130,10 @@ function BlockRunsTable({
                 {blockUUID}{streamID && ': '}{streamID && (
                   <Text default inline monospace>
                     {streamID}
+                  </Text>
+                )}{index >= 0 && ': '}{index >= 0 && (
+                  <Text default inline monospace>
+                    {index}
                   </Text>
                 )}
               </Text>

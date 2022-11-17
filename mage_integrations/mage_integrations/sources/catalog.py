@@ -45,6 +45,8 @@ class CatalogEntry(catalog.CatalogEntry):
         """
 
         metadata_by_col = dict()
+        if type(new_catalog_entry) is dict:
+            new_catalog_entry = Catalog.from_dict(dict(streams=[new_catalog_entry])).streams[0]
         for d in new_catalog_entry.metadata:
             breadcrumb = d.get('breadcrumb')
             if not breadcrumb:

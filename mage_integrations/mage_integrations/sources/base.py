@@ -39,6 +39,7 @@ class Source:
         args=None,
         catalog: Catalog = None,
         config: Dict = None,
+        count_records: bool = False,
         discover_mode: bool = False,
         discover_streams_mode: bool = False,
         is_sorted: bool = True,
@@ -59,6 +60,8 @@ class Source:
                 catalog = args.catalog
             if args.config:
                 config = args.config
+            if args.count_records:
+                count_records = args.count_records
             if args.discover:
                 discover_mode = args.discover
             if args.discover_streams:
@@ -78,6 +81,7 @@ class Source:
 
         self.catalog = catalog
         self.config = config
+        self.count_records_mode = count_records
         self.discover_mode = discover_mode
         self.discover_streams_mode = discover_streams_mode
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
@@ -213,6 +217,22 @@ class Source:
                         catalog.dump()
                     elif type(catalog) is dict:
                         json.dump(catalog, sys.stdout)
+            elif self.count_records_mode:
+                arr = []
+                streams = [stream for stream in self.catalog.get_selected_streams(self.state) if stream.tap_stream_id in self.selected_streams]
+                for stream in streams:
+                    tap_stream_id = stream.tap_stream_id
+                    count = self.count_records(
+                        stream=stream,
+                        bookmarks=self.__get_bookmarks_for_stream(stream),
+                        query=self.query,
+                    )
+                    arr.append(dict(
+                        count=count,
+                        id=tap_stream_id,
+                        stream=tap_stream_id,
+                    ))
+                json.dump(arr, sys.stdout)
             else:
                 if not self.catalog:
                     catalog = self.discover(streams=self.selected_streams)
@@ -224,7 +244,7 @@ class Source:
                     if len(streams_to_update) > 0:
                         updated_streams = self.discover(streams=streams_to_update).streams
                         updated_streams = group_by(
-                            lambda s: s.tap_stream_id,
+                            lambda s: s['tap_stream_id'] if type(s) is dict else s.tap_stream_id,
                             updated_streams
                         )
                         for stream in self.catalog.streams:
@@ -475,6 +495,15 @@ class Source:
         Test connection with source
         """
         raise Exception('Subclasses must implement the test_connection method.')
+
+    def count_records(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        **kwargs,
+    ) -> int:
+        return 0
 
     def load_data(
         self,

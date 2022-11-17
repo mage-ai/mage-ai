@@ -20,7 +20,8 @@ from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
 from mage_integrations.utils.schema_helpers import extract_selected_columns
 from singer.schema import Schema
-from typing import Dict, Generator, List
+from time import sleep
+from typing import Any, Dict, Generator, List, Tuple
 
 
 class Source(BaseSource):
@@ -108,6 +109,22 @@ class Source(BaseSource):
 
         return Catalog(streams)
 
+    def count_records(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        **kwargs,
+    ) -> int:
+        rows, rows_temp = self.__fetch_rows(
+            stream,
+            bookmarks,
+            query,
+            count_records=True,
+        )
+
+        return rows[0]['number_of_records']
+
     def load_data(
         self,
         stream,
@@ -115,84 +132,30 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        table_name = stream.tap_stream_id
-
-        key_properties = stream.key_properties
-        unique_constraints = stream.unique_constraints
-        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
-
         rows_temp = None
         loops = 0
 
+
         while rows_temp is None or len(rows_temp) >= 1:
-            order_by_columns = set()
+            if loops >= 1:
+                sleep(1)
 
-            if bookmark_properties:
-                order_by_columns.update(bookmark_properties)
+            has_custom_limit = query.get('_limit', None) is not None
+            limit = query.get('_limit', BATCH_FETCH_LIMIT)
+            offset = query.get('_offset', BATCH_FETCH_LIMIT * loops)
 
-            if key_properties:
-                order_by_columns.update(key_properties)
-
-            if unique_constraints:
-                order_by_columns.update(unique_constraints)
-
-            order_by_columns = list(order_by_columns)
-
-            if order_by_columns:
-                order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
-            else:
-                order_by_statement = ''
-
-            columns = extract_selected_columns(stream.metadata)
-            clean_columns = self.update_column_names(columns)
-
-            columns_statement = '\n, '.join(clean_columns)
-            query_string = f"""
-SELECT
-    {columns_statement}
-FROM {self.table_prefix}{table_name}"""
-            where_statements = []
-            if bookmarks:
-                for col, val in bookmarks.items():
-                    where_statements.append(
-                        build_comparison_statement(
-                            col,
-                            val,
-                            stream.schema.to_dict()['properties'],
-                            column_type_mapping,
-                            operator='>',
-                        ),
-                    )
-
-            if query:
-                for col, val in query.items():
-                    if col in columns:
-                        where_statements.append(
-                            build_comparison_statement(
-                                col,
-                                val,
-                                stream.schema.to_dict()['properties'],
-                                column_type_mapping,
-                            ),
-                        )
-
-            if where_statements:
-                where_statement = ' AND '.join(where_statements)
-                query_string = f"{query_string}\nWHERE {where_statement}"
-
-            with_limit_query_string = f"""
-{query_string}
-{order_by_statement}
-LIMIT {BATCH_FETCH_LIMIT}
-OFFSET {BATCH_FETCH_LIMIT * loops}"""
-
-            rows_temp = self.build_connection().load(with_limit_query_string)
-            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
+            rows, rows_temp = self.__fetch_rows(
+                stream,
+                bookmarks,
+                query,
+                limit=limit,
+                offset=offset,
+            )
             yield rows
 
             loops += 1
 
-            if len(rows_temp) < BATCH_FETCH_LIMIT:
+            if has_custom_limit or len(rows_temp) < BATCH_FETCH_LIMIT:
                 break
 
     def update_column_names(self, columns: List[str]) -> List[str]:
@@ -217,3 +180,98 @@ WHERE table_schema = '{schema}'
 
     def test_connection(self):
         self.build_connection().build_connection()
+
+    def __fetch_rows(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        count_records: bool = False,
+        limit: int = BATCH_FETCH_LIMIT,
+        offset: int = 0,
+    ) -> Tuple[List[Dict], List[Any]]:
+        table_name = stream.tap_stream_id
+
+        key_properties = stream.key_properties
+        unique_constraints = stream.unique_constraints
+        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
+
+        order_by_columns = set()
+
+        if bookmark_properties:
+            order_by_columns.update(bookmark_properties)
+
+        if key_properties:
+            order_by_columns.update(key_properties)
+
+        if unique_constraints:
+            order_by_columns.update(unique_constraints)
+
+        order_by_columns = list(order_by_columns)
+
+        if order_by_columns:
+            order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
+        else:
+            order_by_statement = ''
+
+        columns = extract_selected_columns(stream.metadata)
+        clean_columns = self.update_column_names(columns)
+
+        if count_records:
+            columns_statement = 'COUNT(*) AS number_of_records'
+        else:
+            columns_statement = '\n, '.join(clean_columns)
+
+        query_string = '\n'.join([
+            'SELECT',
+            columns_statement,
+            f'FROM {self.table_prefix}{table_name}',
+        ])
+
+        where_statements = []
+        if bookmarks:
+            for col, val in bookmarks.items():
+                where_statements.append(
+                    build_comparison_statement(
+                        col,
+                        val,
+                        stream.schema.to_dict()['properties'],
+                        column_type_mapping,
+                        operator='>',
+                    ),
+                )
+
+        if query:
+            for col, val in query.items():
+                if col in columns:
+                    where_statements.append(
+                        build_comparison_statement(
+                            col,
+                            val,
+                            stream.schema.to_dict()['properties'],
+                            column_type_mapping,
+                        ),
+                    )
+
+        if where_statements:
+            where_statement = ' AND '.join(where_statements)
+            query_string = f"{query_string}\nWHERE {where_statement}"
+
+        with_limit_query_string = [
+            query_string,
+            order_by_statement,
+        ]
+        if not count_records:
+            with_limit_query_string += [
+                f'LIMIT {limit}',
+                f'OFFSET {offset}',
+            ]
+        with_limit_query_string = '\n'.join(with_limit_query_string)
+
+        rows_temp = self.build_connection().load(with_limit_query_string)
+        if count_records:
+            rows = [dict(number_of_records=row[0]) for row in rows_temp]
+        else:
+            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
+
+        return rows, rows_temp

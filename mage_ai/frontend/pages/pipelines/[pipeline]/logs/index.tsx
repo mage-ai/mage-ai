@@ -306,8 +306,13 @@ function BlockRuns({
             let idEl;
             let blockUUID = blockUUIDProp || name.split('.log')[0];
 
+            let streamID;
+            let index;
             if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
-              blockUUID = blockUUID.split(':')[0];
+              const parts = blockUUID.split(':');
+              blockUUID = parts[0];
+              streamID = parts[1];
+              index = parts[2];
             }
 
             const block = blocksByUUID[blockUUID];
@@ -336,7 +341,15 @@ function BlockRuns({
                       <Spacing mr={1} />
 
                       <Text monospace>
-                        {blockUUID}
+                        {blockUUID}{streamID && ': '}{streamID && (
+                          <Text default inline monospace>
+                            {streamID}
+                          </Text>
+                        )}{index >= 0 && ': '}{index >= 0 && (
+                          <Text default inline monospace>
+                            {index}
+                          </Text>
+                        )}
                       </Text>
                     </Link>
                   </NextLink>

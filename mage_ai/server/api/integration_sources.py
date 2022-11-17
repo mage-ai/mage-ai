@@ -50,7 +50,7 @@ class ApiIntegrationDestinationsHandler(BaseHandler):
                 self.write(dict(success=True))
             except Exception as e:
                 self.write(dict(success=False, error_message=str(e)))
-        
+
         self.finish()
 
 
@@ -66,7 +66,7 @@ class ApiIntegrationSourcesHandler(BaseHandler):
             pipeline_uuid = payload['pipeline_uuid']
             pipeline = IntegrationPipeline.get(pipeline_uuid)
             config = payload['config']
-            
+
             try:
                 pipeline.test_connection(BlockType.DATA_LOADER, config=config)
                 self.write(dict(success=True))
@@ -82,7 +82,6 @@ class ApiIntegrationSourcesHandler(BaseHandler):
             except Exception as e:
                 self.write(dict(success=False, error_message=str(e)))
 
-        
         self.finish()
 
 

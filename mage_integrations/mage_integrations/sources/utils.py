@@ -188,6 +188,12 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--count_records',
+        action='store_true',
+        help='Count number of records that could be synced.',
+    )
+
+    parser.add_argument(
         '-d', '--discover',
         action='store_true',
         help='Do schema discovery',
