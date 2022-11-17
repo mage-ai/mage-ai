@@ -12,5 +12,4 @@ singer-python==5.12.2
 snowflake-connector-python==2.7.9
 sshtunnel==0.4.0
 stripe==4.2.0
-tap-framework==0.1.1
 xmltodict==0.13.0

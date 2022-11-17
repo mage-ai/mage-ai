@@ -1,0 +1,465 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "customer_id": {
+      "type": ["null", "string"]
+    },
+    "currency_code": {
+      "type": ["null", "string"]
+    },
+    "plan_id": {
+      "type": ["null", "string"]
+    },
+    "plan_quantity": {
+      "type": ["null", "integer"]
+    },
+    "plan_unit_price": {
+      "type": ["null", "integer"]
+    },
+    "billing_period": {
+      "type": ["null", "integer"]
+    },
+    "mrr": {
+      "type": ["null", "integer"]
+    },
+    "billing_period_unit": {
+      "type": ["null", "string"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "coupon": {
+      "type": ["null", "string"]
+    },
+    "trial_start": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "trial_end": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "trial_end_action": {
+      "type": ["null", "string"]
+    },
+    "current_term_start": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "current_term_end": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "next_billing_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "remaining_billing_cycles": {
+      "type": ["null", "integer"]
+    },
+    "po_number": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "started_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "activated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "cancelled_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "cancel_reason": {
+      "type": ["null", "string"]
+    },
+    "affiliate_token": {
+      "type": ["null", "string"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "payment_source_id": {
+      "type": ["null", "string"]
+    },
+    "auto_collection": {
+      "type": ["null", "string"]
+    },
+    "start_date": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "changes_scheduled_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "invoice_notes": {
+      "type": ["null", "string"]
+    },
+    "deleted": {
+      "type": ["null", "boolean"]
+    },
+    "base_currency_code": {
+      "type": ["null", "string"]
+    },
+    "due_invoices_count": {
+      "type": ["null", "integer"]
+    },
+    "exchange_rate": {
+      "type": ["null", "number"]
+    },
+    "has_scheduled_advance_invoices": {
+      "type": ["null", "boolean"]
+    },
+    "has_scheduled_changes": {
+      "type": ["null", "boolean"]
+    },
+    "plan_amount": {
+      "type": ["null", "integer"]
+    },
+    "plan_free_quantity": {
+      "type": ["null", "integer"]
+    },
+    "resource_version": {
+      "type": ["null", "integer"]
+    },
+    "object": {
+      "type": ["null", "string"]
+    },
+    "setup_fee": {
+      "type": ["null", "integer"]
+    },
+    "gift_id": {
+      "type": ["null", "string"]
+    },
+    "contract_term_billing_cycle_on_renewal": {
+      "type": ["null", "integer"]
+    },
+    "override_relationship": {
+      "type": ["null", "boolean"]
+    },
+    "pause_date": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "resume_date": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "created_from_ip": {
+      "type": ["null", "string"]
+    },
+    "due_since": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "total_dues": {
+      "type": ["null", "integer"]
+    },
+    "meta_data": {
+      "type": ["null", "string"]
+    },
+    "custom_fields": {
+      "type": ["null", "string"]
+    },
+    "plan_amount_in_decimal" : {
+      "type": ["null", "string"]
+    },
+    "plan_free_quantity_in_decimal" : {
+      "type": ["null", "string"]
+    },
+    "plan_quantity_in_decimal" : {
+      "type": ["null", "string"]
+    },
+    "plan_unit_price_in_decimal" : {
+      "type": ["null", "string"]
+    },
+    "cancel_schedule_created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "offline_payment_method" : {
+      "type": ["null", "string"]
+    },
+    "cancel_reason_code" : {
+      "type": ["null", "string"]
+    },
+    "free_period": {
+      "type": ["null", "integer"]
+    },
+    "free_period_unit" : {
+      "type": ["null", "string"]
+    },
+    "create_pending_invoices": {
+      "type": ["null", "boolean"]
+    },
+    "auto_close_invoices": {
+      "type": ["null", "boolean"]
+    },
+    "channel" : {
+      "type": ["null", "string"]
+    },
+    "addons": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "id": {
+            "type": ["null", "string"]
+          },
+          "quantity": {
+            "type": ["null", "integer"]
+          },
+          "unit_price": {
+            "type": ["null", "integer"]
+          },
+          "amount": {
+            "type": ["null", "integer"]
+          },
+          "trial_end": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "remaining_billing_cycles": {
+            "type": ["null", "integer"]
+          },
+          "object": {
+            "type": ["null", "string"]
+          },
+          "quantity_in_decimal": {
+            "type": ["null", "string"]
+          },
+          "unit_price_in_decimal": {
+            "type": ["null", "string"]
+          },
+          "amount_in_decimal": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "event_based_addons": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "id": {
+            "type": ["null", "string"]
+          },
+          "quantity": {
+            "type": ["null", "integer"]
+          },
+          "unit_price": {
+            "type": ["null", "integer"]
+          },
+          "on_event": {
+            "type": ["null", "string"]
+          },
+          "charge_once": {
+            "type": ["null", "boolean"]
+          },
+          "object": {
+            "type": ["null", "string"]
+          },
+          "quantity_in_decimal": {
+            "type": ["null", "string"]
+          },
+          "unit_price_in_decimal": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "charged_event_based_addons": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "id": {
+            "type": ["null", "string"]
+          },
+          "last_charged_at": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "object": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "coupons": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "coupon_id": {
+            "type": ["null", "string"]
+          },
+          "apply_till": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "applied_count": {
+            "type": ["null", "integer"]
+          },
+          "coupon_code": {
+            "type": ["null", "string"]
+          },
+          "object": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "shipping_address": {
+      "type": ["null","object"],
+      "properties": {
+        "first_name": {
+          "type": ["null", "string"]
+        },
+        "last_name": {
+          "type": ["null", "string"]
+        },
+        "email": {
+          "type": ["null", "string"]
+        },
+        "company": {
+          "type": ["null", "string"]
+        },
+        "phone": {
+          "type": ["null", "string"]
+        },
+        "line1": {
+          "type": ["null", "string"]
+        },
+        "line2": {
+          "type": ["null", "string"]
+        },
+        "line3": {
+          "type": ["null", "string"]
+        },
+        "city": {
+          "type": ["null", "string"]
+        },
+        "state_code": {
+          "type": ["null", "string"]
+        },
+        "state": {
+          "type": ["null", "string"]
+        },
+        "country": {
+          "type": ["null", "string"]
+        },
+        "zip": {
+          "type": ["null", "string"]
+        },
+        "validation_status": {
+          "type": ["null", "string"]
+        },
+        "object": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "referral_info": {
+      "type": ["null","object"],
+      "properties": {
+        "referral_code": {
+          "type": ["null", "string"]
+        },
+        "coupon_code": {
+          "type": ["null", "string"]
+        },
+        "referrer_id": {
+          "type": ["null", "string"]
+        },
+        "external_reference_id": {
+          "type": ["null", "string"]
+        },
+        "reward_status": {
+          "type": ["null", "string"]
+        },
+        "referral_system": {
+          "type": ["null", "string"]
+        },
+        "account_id": {
+          "type": ["null", "string"]
+        },
+        "campaign_id": {
+          "type": ["null", "string"]
+        },
+        "external_campaign_id": {
+          "type": ["null", "string"]
+        },
+        "friend_offer_type": {
+          "type": ["null", "string"]
+        },
+        "referrer_reward_type": {
+          "type": ["null", "string"]
+        },
+        "notify_referral_system": {
+          "type": ["null", "string"]
+        },
+        "destination_url": {
+          "type": ["null", "string"]
+        },
+        "post_purchase_widget_enabled": {
+          "type": ["null", "boolean"]
+        }
+      }
+    },
+    "contract_term": {
+      "type": ["null","object"],
+      "properties": {
+        "id": {
+          "type": ["null", "string"]
+        },
+        "status": {
+          "type": ["null", "string"]
+        },
+        "contract_start": {
+          "type": ["null", "string"],
+          "format": "date-time"
+        },
+        "contract_end": {
+          "type": ["null", "string"],
+          "format": "date-time"
+        },
+        "billing_cycle": {
+          "type": ["null", "integer"]
+        },
+        "action_at_term_end": {
+          "type": ["null", "string"]
+        },
+        "total_contract_value": {
+          "type": ["null", "integer"]
+        },
+        "cancellation_cutoff_period": {
+          "type": ["null", "integer"]
+        },
+        "created_at": {
+          "type": ["null", "string"],
+          "format": "date-time"
+        },
+        "subscription_id": {
+          "type": ["null", "string"]
+        },
+        "remaining_billing_cycles": {
+          "type": ["null", "integer"]
+        }
+      }
+    }
+  }
+}

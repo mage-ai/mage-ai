@@ -1,0 +1,127 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "resource_version": {
+      "type": ["null", "integer"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "customer_id": {
+      "type": ["null", "string"]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "reference_id": {
+      "type": ["null", "string"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "gateway": {
+      "type": ["null", "string"]
+    },
+    "gateway_account_id": {
+      "type": ["null", "string"]
+    },
+    "ip_address": {
+      "type": ["null", "string"]
+    },
+    "issuing_country": {
+      "type": ["null", "string"]
+    },
+    "deleted": {
+      "type": ["null", "boolean"]
+    },
+    "object": {
+      "type": ["null", "string"]
+    },
+    "card": {
+      "$ref": "cards.json#/"
+    },
+    "bank_account": {
+      "type": ["null", "object"],
+      "properties": {
+        "last4": {
+          "type": ["null", "string"]
+        },
+        "name_on_account": {
+          "type": ["null", "string"]
+        },
+        "bank_name": {
+          "type": ["null", "string"]
+        },
+        "mandate_id": {
+          "type": ["null", "string"]
+        },
+        "account_type": {
+          "type": ["null", "string"]
+        },
+        "echeck_type": {
+          "type": ["null", "string"]
+        },
+        "account_holder_type": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "amazon_payment": {
+      "type": ["null", "object"],
+      "properties": {
+        "email": {
+          "type": ["null", "string"]
+        },
+        "agreement_id": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "paypal": {
+      "type": ["null", "object"],
+      "properties": {
+        "email": {
+          "type": ["null", "string"]
+        },
+        "agremeent_id": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "upi": {
+      "type": ["null", "object"],
+      "properties": {
+        "vpa": {
+          "type": ["null", "string"]
+        }
+      }
+    },
+    "mandates": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "id": {
+            "type": ["null", "string"]
+          },
+          "subscription_id": {
+            "type": ["null", "string"]
+          },
+          "created_at": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

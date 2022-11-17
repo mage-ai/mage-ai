@@ -1,11 +1,8 @@
 from requests.exceptions import Timeout, ConnectionError
 from singer import utils
 import backoff
-import json
 import requests
-import simplejson
 import singer
-import time
 
 LOGGER = singer.get_logger()
 
@@ -154,10 +151,6 @@ class ChargebeeClient():
 
         return params
 
-    @backoff.on_exception(backoff.expo,
-                         (Server4xxError, Server5xxError, Timeout, ConnectionError),
-                          max_tries=5,
-                          factor=3)
     @utils.ratelimit(100, 60)
     def make_request(self, url, method, params=None, body=None):
 

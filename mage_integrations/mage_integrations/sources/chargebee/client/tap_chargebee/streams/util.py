@@ -1,8 +1,6 @@
 import json
 
 class Util:
-	
-	plans = []
-	addons = []
-	coupons = []
-
+    plans = []
+    addons = []
+    coupons = []

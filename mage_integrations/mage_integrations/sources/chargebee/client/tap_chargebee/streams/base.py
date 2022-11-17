@@ -1,32 +1,211 @@
-import singer
-import time
+from datetime import datetime, timedelta
+from dateutil.parser import parse
+from mage_integrations.sources.chargebee.client.tap_chargebee.state import (
+    get_last_record_value_for_table,
+    incorporate,
+    save_state
+)
+from mage_integrations.sources.chargebee.client.tap_chargebee.streams.util import Util
+from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
+from mage_integrations.sources.messages import write_records, write_schema
+import inspect
 import json
 import os
-
 import pytz
-from datetime import datetime, timedelta
-
-from .util import Util
-from dateutil.parser import parse
-from mage_integrations.sources.messages import write_records
-from tap_framework.streams import BaseStream
-from tap_framework.schemas import load_schema_by_name
-from tap_framework.config import get_config_start_date
-from tap_chargebee.state import get_last_record_value_for_table, incorporate, \
-    save_state
+import singer
+import time
     
 
 LOGGER = singer.get_logger()
+
+def is_selected(stream_catalog):
+    metadata = singer.metadata.to_map(stream_catalog.metadata)
+    stream_metadata = metadata.get((), {})
+
+    inclusion = stream_metadata.get('inclusion')
+
+    if stream_metadata.get('selected') is not None:
+        selected = stream_metadata.get('selected')
+    else:
+        selected = stream_metadata.get('selected-by-default')
+
+    if inclusion == 'unsupported':
+        return False
+
+    elif selected is not None:
+        return selected
+
+    return inclusion == 'automatic'
+
+class BaseStream:
+    # GLOBAL PROPERTIES
+    TABLE = None
+    KEY_PROPERTIES = []
+    API_METHOD = 'GET'
+    REQUIRES = []
+
+    def __init__(self, config, state, catalog, client):
+        self.config = config
+        self.state = state
+        self.catalog = catalog
+        self.client = client
+        self.substreams = []
+
+    def get_class_path(self):
+        return os.path.dirname(inspect.getfile(self.__class__))
+
+    def load_schema_by_name(self, name):
+        path = os.path.normpath(
+                os.path.join(
+                    self.get_class_path(),
+                    '../../../schemas/{}.json'.format(name)))
+
+        LOGGER.info(f'path: {path}')
+
+        return singer.utils.load_json(
+            os.path.normpath(
+                os.path.join(
+                    self.get_class_path(),
+                    '../../../schemas/{}.json'.format(name))))
+
+    def get_schema(self):
+        return self.load_schema_by_name(self.TABLE)
+
+    def get_stream_data(self, result):
+        """
+        Given a result set from Campaign Monitor, return the data
+        to be persisted for this stream.
+        """
+        raise RuntimeError("get_stream_data not implemented!")
+
+    def get_url(self):
+        """
+        Return the URL to hit for data from this stream.
+        """
+        raise RuntimeError("get_url not implemented!")
+
+    @classmethod
+    def requirements_met(cls, catalog):
+        selected_streams = [
+            s.stream for s in catalog.streams if is_selected(s)
+        ]
+
+        return set(cls.REQUIRES).issubset(selected_streams)
+
+    @classmethod
+    def matches_catalog(cls, stream_catalog):
+        return stream_catalog.stream == cls.TABLE
+
+    def generate_catalog(self):
+        schema = self.get_schema()
+        mdata = singer.metadata.new()
+
+        mdata = singer.metadata.write(
+            mdata,
+            (),
+            'inclusion',
+            'available'
+        )
+
+        for field_name, field_schema in schema.get('properties').items():
+            inclusion = 'available'
+
+            if field_name in self.KEY_PROPERTIES:
+                inclusion = 'automatic'
+
+            mdata = singer.metadata.write(
+                mdata,
+                ('properties', field_name),
+                'inclusion',
+                inclusion
+            )
+
+        return [{
+            'tap_stream_id': self.TABLE,
+            'stream': self.TABLE,
+            'key_properties': self.KEY_PROPERTIES,
+            'schema': self.get_schema(),
+            'metadata': singer.metadata.to_list(mdata)
+        }]
+
+    def transform_record(self, record):
+        with singer.Transformer() as tx:
+            metadata = {}
+
+            if self.catalog.metadata is not None:
+                metadata = singer.metadata.to_map(self.catalog.metadata)
+
+            return tx.transform(
+                record,
+                self.catalog.schema.to_dict(),
+                metadata)
+
+    def get_catalog_keys(self):
+        return list(self.catalog.schema.properties.keys())
+
+    def write_schema(self):
+        LOGGER.info(f'catalog: {self.catalog}')
+        LOGGER.info(f'wtffffffffffff')
+        write_schema(
+            self.catalog.stream,
+            self.catalog.schema.to_dict(),
+            key_properties=self.catalog.key_properties,
+            bookmark_properties=self.catalog.bookmark_properties,
+            replication_method=self.catalog.replication_method,
+            unique_conflict_method=self.catalog.unique_conflict_method,
+            unique_constraints=self.catalog.unique_constraints,
+        )
+
+    def sync(self):
+        LOGGER.info('Syncing stream {} with {}'
+                    .format(self.catalog.tap_stream_id,
+                            self.__class__.__name__))
+
+        self.write_schema()
+
+        return self.sync_data()
+
+    def sync_data(self, substreams=None):
+        if substreams is None:
+            substreams = []
+
+        table = self.TABLE
+
+        url = self.get_url()
+
+        result = self.client.make_request(url, self.API_METHOD)
+
+        data = self.get_stream_data(result)
+
+        with singer.metrics.record_counter(endpoint=table) as counter:
+            for index, obj in enumerate(data):
+                LOGGER.debug("On {} of {}".format(index, len(data)))
+
+                singer.write_records(
+                    table,
+                    [self.transform_record(obj)])
+
+                counter.increment()
+
+                for substream in substreams:
+                    substream.sync_data(parent=obj)
 
 
 class BaseChargebeeStream(BaseStream):
 
     def write_schema(self):
-        singer.write_schema(
+        bookmark_properties = []
+        if REPLICATION_METHOD_INCREMENTAL == self.catalog.replication_method:
+            bookmark_properties = self.BOOKMARK_PROPERTIES
+        write_schema(
             self.catalog.stream,
             self.catalog.schema.to_dict(),
-            key_properties=self.KEY_PROPERTIES,
-            bookmark_properties=self.BOOKMARK_PROPERTIES)
+            key_properties=self.catalog.key_properties or [],
+            bookmark_properties=bookmark_properties,
+            replication_method=self.catalog.replication_method,
+            unique_conflict_method=self.catalog.unique_conflict_method,
+            unique_constraints=self.catalog.unique_constraints,
+        )
 
     def get_abs_path(self, path):
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
@@ -47,7 +226,7 @@ class BaseChargebeeStream(BaseStream):
 
     def load_shared_schema_ref(self,folder_name):
         """Create a reference dict of all streams."""
-        shared_schemas_path = self.get_abs_path('../schemas/'+folder_name)
+        shared_schemas_path = self.get_abs_path('../../../schemas/'+folder_name)
 
         shared_file_names = [f for f in os.listdir(shared_schemas_path)
                             if os.path.isfile(os.path.join(shared_schemas_path, f))]
@@ -161,7 +340,7 @@ class BaseChargebeeStream(BaseStream):
         # If there is no bookmark date, fall back to using the start date from the config file.
         if bookmark_date is None:
             LOGGER.info('Could not locate bookmark_date from STATE file. Falling back to start_date from config.json instead.')
-            bookmark_date = get_config_start_date(self.config)
+            bookmark_date = parse(self.config.get('start_date'))
         else:
             bookmark_date = parse(bookmark_date)
 

@@ -1,0 +1,30 @@
+{
+    "type": ["null", "object"],
+    "properties": {
+        "id": {
+            "type": ["null", "string"]
+        },
+        "notes": {
+            "type": ["null", "string"]
+        },
+        "entity_type": {
+            "type": ["null", "string"]
+        },
+        "object": {
+            "type": ["null", "string"]
+        },
+        "type": {
+            "type": ["null", "string"]
+        },
+        "entity_id": {
+            "type": ["null", "string"]
+        },
+        "added_by": {
+            "type": ["null", "string"]
+        },
+        "created_at": {
+            "type": ["null", "string"],
+            "format": "date-time"
+        }
+    }
+}
