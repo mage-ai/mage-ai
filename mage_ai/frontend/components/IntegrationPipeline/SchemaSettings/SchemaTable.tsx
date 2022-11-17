@@ -22,6 +22,8 @@ import {
   ColumnFormatEnum,
   ColumnTypeEnum,
   InclusionEnum,
+  IntegrationDestinationEnum,
+  IntegrationSourceEnum,
   PropertyMetadataType,
   ReplicationMethodEnum,
   SchemaPropertyType,
@@ -36,7 +38,8 @@ import { pluralize } from '@utils/string';
 const SPACING_BOTTOM_UNITS = 5;
 
 export type SchemaTableProps = {
-  destination: string;
+  destination: IntegrationDestinationEnum;
+  source: IntegrationSourceEnum;
   updateMetadataForColumn: (
     streamUUID: string,
     columnName: string,
@@ -61,6 +64,7 @@ const PARTITION_KEY_DESTINATIONS = ['bigquery'];
 
 function SchemaTable({
   destination,
+  source,
   stream,
   updateMetadataForColumn,
   updateSchemaProperty,
@@ -462,10 +466,14 @@ function SchemaTable({
             value={replicationMethod}
           >
             <option value="" />
-            {Object.values(ReplicationMethodEnum).map(method => (
-              <option key={method} value={method}>
-                {method}
-              </option>
+            {Object.values(ReplicationMethodEnum)
+              .filter(method => (source === IntegrationSourceEnum.POSTGRESQL
+                ? true
+                : method !== ReplicationMethodEnum.LOG_BASED))
+              .map(method => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
             ))}
           </Select>
         </Spacing>
