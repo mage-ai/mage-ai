@@ -45,7 +45,8 @@ class CatalogEntry(catalog.CatalogEntry):
         """
 
         metadata_by_col = dict()
-        for d in new_catalog_entry.metadata:
+        arr = new_catalog_entry['metadata'] if type(new_catalog_entry) is dict else new_catalog_entry.metadata
+        for d in arr:
             breadcrumb = d.get('breadcrumb')
             if not breadcrumb:
                 continue
