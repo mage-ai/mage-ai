@@ -29,6 +29,7 @@ ENV MAGE_DATA_DIR="/home/src/mage_data"
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
 
+COPY ./scripts/install_other_dependencies.py /app/install_other_dependencies.py
 COPY ./scripts/run_app.sh /app/run_app.sh
 RUN chmod +x /app/run_app.sh
 

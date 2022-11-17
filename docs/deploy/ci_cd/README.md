@@ -17,31 +17,38 @@
 
     For more examples, read the [setup guide](../../tutorials/quick_start/setup.md).
 
-1. Once you’re done developing, copy the contents of the `mage-ai/templates/docker/Dockerfile`
+1. Once you’re done developing, copy the contents of the this [Dockerfile template](https://github.com/mage-ai/docker/blob/master/Dockerfile)
 and paste it into a new `Dockerfile` located in the parent folder of your Mage project (e.g. `my_team/Dockerfile`).
 Replace all instances of the string `[project_name]` with your project name. For example, if your
 project name is `demo_project`, then your Dockerfile will look like this:
-    The contents of `mage-ai/templates/docker/Dockerfile` are:
+    The contents of your `Dockerfile` are:
     ```
     FROM mageai/mageai:latest
 
-    WORKDIR /home/mage_code
+    ARG PROJECT_NAME=[project_name]
+    ARG MAGE_CODE_PATH=/home/mage_code
+    ARG USER_CODE_PATH=${MAGE_CODE_PATH}/${PROJECT_NAME}
+
+    WORKDIR ${MAGE_CODE_PATH}
 
     # Replace [project_name] with the name of your project (e.g. demo_project)
-    COPY demo_project demo_project
+    COPY ${PROJECT_NAME} ${PROJECT_NAME}
 
     # Set the USER_CODE_PATH variable to the path of user project.
     # The project path needs to contain project name.
     # Replace [project_name] with the name of your project (e.g. demo_project)
-    ENV USER_CODE_PATH="/home/mage_code/demo_project"
+    ENV USER_CODE_PATH=${USER_CODE_PATH}
 
-    RUN pip3 install -r demo_project/requirements.txt
+    # Install custom Python libraries
+    RUN pip3 install -r ${USER_CODE_PATH}/requirements.txt
+    # Install custom libraries within 3rd party libraries (e.g. DBT packages)
+    RUN python3 /app/install_other_dependencies.py --path ${USER_CODE_PATH}
 
     ENV PYTHONPATH="${PYTHONPATH}:/home/mage_code"
 
     CMD ["/bin/sh", "-c", "/app/run_app.sh"]
-
     ```
+
 1. Your current folder structure should look like this:
     ```
     my_team/
