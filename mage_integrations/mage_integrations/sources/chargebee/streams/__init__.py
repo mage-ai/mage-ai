@@ -13,7 +13,6 @@ from .plans import PlansStream
 from .subscriptions import SubscriptionsStream
 from .transactions import TransactionsStream
 from .virtual_bank_accounts import VirtualBankAccountsStream
-from .credit_notes import CreditNotesStream
 from .gifts import GiftsStream
 from .orders import OrdersStream
 from .quotes import QuotesStream

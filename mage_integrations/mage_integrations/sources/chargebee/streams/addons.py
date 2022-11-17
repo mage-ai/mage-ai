@@ -1,10 +1,9 @@
-from mage_integrations.sources.chargebee.client.tap_chargebee.streams.base \
-    import BaseChargebeeStream
+from mage_integrations.sources.chargebee.streams.base import BaseChargebeeStream
 
 
-class GiftsStream(BaseChargebeeStream):
-    TABLE = 'gifts'
-    ENTITY = 'gift'
+class AddonsStream(BaseChargebeeStream):
+    TABLE = 'addons'
+    ENTITY = 'addon'
     REPLICATION_METHOD = 'INCREMENTAL'
     REPLICATION_KEY = 'updated_at'
     KEY_PROPERTIES = ['id']
@@ -13,8 +12,8 @@ class GiftsStream(BaseChargebeeStream):
     VALID_REPLICATION_KEYS = ['updated_at']
     INCLUSION = 'available'
     API_METHOD = 'GET'
-    SCHEMA = 'common/gifts'
+    SCHEMA = 'plan_model/addons'
     SORT_BY = None
 
     def get_url(self):
-        return 'https://{}.chargebee.com/api/v2/gifts'.format(self.config.get('site'))
+        return 'https://{}.chargebee.com/api/v2/addons'.format(self.config.get('site'))

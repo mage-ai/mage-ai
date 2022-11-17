@@ -1,3 +1,4 @@
+from mage_integrations.sources.messages import write_state
 import datetime
 import json
 import singer
@@ -48,7 +49,7 @@ def save_state(state):
 
     LOGGER.info('Updating state.')
 
-    singer.write_state(state)
+    write_state(state)
 
 
 def load_state(filename):

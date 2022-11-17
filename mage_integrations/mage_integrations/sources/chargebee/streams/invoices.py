@@ -1,5 +1,4 @@
-from mage_integrations.sources.chargebee.client.tap_chargebee.streams.base \
-    import BaseChargebeeStream
+from mage_integrations.sources.chargebee.streams.base import BaseChargebeeStream
 
 
 class InvoicesStream(BaseChargebeeStream):

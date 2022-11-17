@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-from mage_integrations.sources.chargebee.client.tap_chargebee.state import (
+from mage_integrations.sources.chargebee.state import (
     get_last_record_value_for_table,
     incorporate,
     save_state
 )
-from mage_integrations.sources.chargebee.client.tap_chargebee.streams.util import Util
+from mage_integrations.sources.chargebee.streams.util import Util
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.messages import write_records, write_schema
 import inspect
@@ -55,18 +55,11 @@ class BaseStream:
         return os.path.dirname(inspect.getfile(self.__class__))
 
     def load_schema_by_name(self, name):
-        path = os.path.normpath(
-                os.path.join(
-                    self.get_class_path(),
-                    '../../../schemas/{}.json'.format(name)))
-
-        LOGGER.info(f'path: {path}')
-
         return singer.utils.load_json(
             os.path.normpath(
                 os.path.join(
                     self.get_class_path(),
-                    '../../../schemas/{}.json'.format(name))))
+                    '../schemas/{}.json'.format(name))))
 
     def get_schema(self):
         return self.load_schema_by_name(self.TABLE)
@@ -226,7 +219,7 @@ class BaseChargebeeStream(BaseStream):
 
     def load_shared_schema_ref(self,folder_name):
         """Create a reference dict of all streams."""
-        shared_schemas_path = self.get_abs_path('../../../schemas/'+folder_name)
+        shared_schemas_path = self.get_abs_path('../schemas/'+folder_name)
 
         shared_file_names = [f for f in os.listdir(shared_schemas_path)
                             if os.path.isfile(os.path.join(shared_schemas_path, f))]

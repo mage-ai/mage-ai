@@ -1,10 +1,9 @@
-from mage_integrations.sources.chargebee.client.tap_chargebee.streams.base \
-    import BaseChargebeeStream
+from mage_integrations.sources.chargebee.streams.base import BaseChargebeeStream
 
 
-class OrdersStream(BaseChargebeeStream):
-    TABLE = 'orders'
-    ENTITY = 'order'
+class ItemsStream(BaseChargebeeStream):
+    TABLE = 'items'
+    ENTITY = 'item'
     REPLICATION_METHOD = 'INCREMENTAL'
     REPLICATION_KEY = 'updated_at'
     KEY_PROPERTIES = ['id']
@@ -13,8 +12,8 @@ class OrdersStream(BaseChargebeeStream):
     VALID_REPLICATION_KEYS = ['updated_at']
     INCLUSION = 'available'
     API_METHOD = 'GET'
-    SCHEMA = 'common/orders'
+    SCHEMA = 'item_model/items'
     SORT_BY = 'updated_at'
 
     def get_url(self):
-        return 'https://{}.chargebee.com/api/v2/orders'.format(self.config.get('site'))
+        return 'https://{}.chargebee.com/api/v2/items'.format(self.config.get('site'))
