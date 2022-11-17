@@ -69,7 +69,7 @@ def build_state(raw_state, catalog):
     for catalog_entry in catalog['streams']:
         tap_stream_id = catalog_entry['tap_stream_id']
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])
-        replication_method = catalog_metadata.get((), {}).get('replication-method')
+        replication_method = catalog_entry['replication_method']
 
         version = singer.get_bookmark(raw_state,
                                       tap_stream_id,
@@ -307,7 +307,6 @@ def do_sync(sf, catalog, state, sync_complete_callback=None):
         activate_version_message = singer.ActivateVersionMessage(
             stream=(stream_alias or stream), version=stream_version)
 
-        catalog_metadata = metadata.to_map(catalog_entry['metadata'])
         bookmark_properties = catalog_entry.get('bookmark_properties', [])
         replication_key = bookmark_properties[0] if len(bookmark_properties) else None
 

@@ -27,5 +27,24 @@ TEST_STATE
 Run
 
 ```bash
-python3 mage_integrations/sources/amplitude/__init__.py --config TEST_CONFIG_S.json --catalog TEST_CATALOG.json --state TEST_STATE.json | python3 mage_integrations/destinations/snowflake/__init__.py --config TEST_CONFIG_D.json --state TEST_STATE
+python3 mage_integrations/sources/salesforce/__init__.py \
+  --config mage_integrations/TEST_CONFIG1.json \
+  --discover \
+  --discover_streams
+```
+
+```bash
+python3 mage_integrations/sources/salesforce/__init__.py \
+  --config mage_integrations/TEST_CONFIG1.json \
+  --discover \
+  --selected_streams '["Account"]' > mage_integrations/TEST_CATALOG.json
+```
+
+```bash
+python3 mage_integrations/sources/salesforce/__init__.py \
+  --config mage_integrations/TEST_CONFIG1.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/postgresql/__init__.py \
+  --config mage_integrations/TEST_CONFIG2.json \
+  --state mage_integrations/STATE
 ```

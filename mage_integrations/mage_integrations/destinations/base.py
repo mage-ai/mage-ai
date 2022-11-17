@@ -275,7 +275,13 @@ class Destination():
 
             stream = row.get(KEY_STREAM)
             if TYPE_STATE == row_type:
-                stream = list(row['value']['bookmarks'].keys())[0]
+                row_value = row['value']
+                if row_value.get('current_stream'):
+                    stream = row_value['current_stream']
+                elif row_value.get('bookmarks'):
+                    stream = list(row_value['bookmarks'].keys())[0]
+                else:
+                    stream = list(row_value.keys())[0]
 
             schema = self.schemas.get(stream)
 
