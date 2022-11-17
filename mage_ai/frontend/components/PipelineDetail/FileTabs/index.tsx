@@ -33,7 +33,6 @@ function FileTabs({
   const themeContext: ThemeType = useContext(ThemeContext);
   const filePathsMemo =
   useMemo(() => filePaths.map(path => decodeURIComponent(path)), [filePaths]);
-  console.log('filePathsMemo:', filePathsMemo);
 
   return (
     <PipelineHeaderStyle secondary>
@@ -102,6 +101,7 @@ function FileTabs({
 
                   {selected && (
                     <Tooltip
+                      appearAbove
                       label="Close"
                       size={null}
                       widthFitContent
@@ -114,7 +114,6 @@ function FileTabs({
                         onClick={() => {
                           const newFilePaths = remove(filePathsMemo, path => path === filePath)
                             .map(path => encodeURIComponent(path));
-                          console.log('newFilePaths:', newFilePaths);
 
                           goToWithQuery({
                             file_path: newFilePaths[newFilePaths.length - 1] || null,
