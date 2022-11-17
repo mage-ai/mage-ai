@@ -452,6 +452,14 @@ function SchemaTable({
               only new records (<Text bold inline monospace>
                 {ReplicationMethodEnum.INCREMENTAL}
               </Text>)?
+              {source === IntegrationSourceEnum.POSTGRESQL &&
+                <Text default>
+                  Log-based incremental replication (<Text bold inline monospace>
+                    {ReplicationMethodEnum.LOG_BASED}
+                  </Text>)
+                  is also available for PostgreSQL sources.
+                </Text>
+              }
             </Text>
           </Spacing>
 
