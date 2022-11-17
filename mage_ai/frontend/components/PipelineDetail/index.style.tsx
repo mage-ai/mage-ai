@@ -7,6 +7,7 @@ import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 
 export const ANIMATION_DURATION = 300;
+const TABS_HEADER_HEIGHT = 37;
 
 export const PipelineContainerStyle = styled.div`
   .pipeline-detail-enter-active {
@@ -32,7 +33,9 @@ export const OverlayStyle = styled.div`
   `}
 `;
 
-export const PipelineHeaderStyle = styled.div`
+export const PipelineHeaderStyle = styled.div<{
+  secondary?: boolean;
+}>`
   height: ${ASIDE_HEADER_HEIGHT}px;
   position: sticky;
   top: ${ASIDE_HEADER_HEIGHT}px;
@@ -44,11 +47,19 @@ export const PipelineHeaderStyle = styled.div`
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 
+  ${props => props.secondary && `
+    height: ${TABS_HEADER_HEIGHT}px;
+    top: ${ASIDE_HEADER_HEIGHT * 2}px;
+    overflow-x: auto;
+    z-index: 3;
+  `}
+
   ${hideScrollBar()}
 `;
 
 export const FileTabStyle = styled.div<{
-  selected: boolean;
+  last?: boolean;
+  selected?: boolean;
 }>`
   border-left: 1px solid transparent;
   height: 100%;
@@ -71,5 +82,9 @@ export const FileTabStyle = styled.div<{
 
   ${props => !props.selected && `
     border-color: ${(props.theme.borders || dark.borders).light} !important;
+  `}
+
+  ${props => props.last && `
+    border-right: 1px solid transparent;
   `}
 `;

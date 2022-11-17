@@ -22,6 +22,7 @@ import DataProviderType from '@interfaces/DataProviderType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
+import FileTabs from '@components/PipelineDetail/FileTabs';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
@@ -1379,21 +1380,31 @@ function PipelineDetailPage({
   const mainContainerHeaderMemo = useMemo(() => {
     if (page === PAGE_NAME_EDIT) {
       return (
-        <KernelStatus
-          filePaths={selectedFilePaths}
-          filesTouched={filesTouched}
-          isBusy={runningBlocks.length >= 1}
-          isPipelineUpdating={isPipelineUpdating}
-          kernel={kernel}
-          pipeline={pipeline}
-          pipelineContentTouched={pipelineContentTouched}
-          pipelineLastSaved={pipelineLastSaved}
-          restartKernel={restartKernel}
-          savePipelineContent={savePipelineContent}
-          selectedFilePath={selectedFilePath}
-          setErrors={setErrors}
-          updatePipelineMetadata={updatePipelineMetadata}
-        />
+        <>
+          <KernelStatus
+            filePaths={selectedFilePaths}
+            filesTouched={filesTouched}
+            isBusy={runningBlocks.length >= 1}
+            isPipelineUpdating={isPipelineUpdating}
+            kernel={kernel}
+            pipeline={pipeline}
+            pipelineContentTouched={pipelineContentTouched}
+            pipelineLastSaved={pipelineLastSaved}
+            restartKernel={restartKernel}
+            savePipelineContent={savePipelineContent}
+            selectedFilePath={selectedFilePath}
+            setErrors={setErrors}
+            updatePipelineMetadata={updatePipelineMetadata}
+          />
+          {selectedFilePaths?.length > 0 &&
+            <FileTabs
+              filePaths={selectedFilePaths}
+              filesTouched={filesTouched}
+              savePipelineContent={savePipelineContent}
+              selectedFilePath={selectedFilePath}
+            />
+          }
+        </>
       );
     }
   }, [
@@ -1624,6 +1635,7 @@ function PipelineDetailPage({
         before={before}
         beforeHeader={beforeHeader}
         errors={errors}
+        headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
         page={page}

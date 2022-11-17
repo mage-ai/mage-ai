@@ -123,10 +123,7 @@ function KernelStatus({
     }
   }, [pipeline?.uuid]);
 
-  const filePaths =
-    useMemo(() => filePathsProp.map(path => decodeURIComponent(path)), [filePathsProp]);
   let saveStatus;
-
   if (pipelineContentTouched) {
     saveStatus = 'Unsaved changes';
   } else if (isPipelineUpdating) {
@@ -228,8 +225,7 @@ function KernelStatus({
                     id,
                     is_active: isActive,
                     status,
-                  }) => {
-                    return {
+                  }) => ({
                       label: () => (
                         <FlexContainer
                           alignItems="center"
@@ -268,8 +264,7 @@ function KernelStatus({
                             },
                           }),
                       uuid: id,
-                    };
-                  }),
+                    })),
                 ]}
                 onClickCallback={() => setShowSelectCluster(false)}
                 open={showSelectCluster}
@@ -413,147 +408,48 @@ function KernelStatus({
               </FlexContainer>
             )}
           </Spacing>
-
-          {filePaths?.map((filePath: string) => {
-            const selected: boolean = selectedFilePath === encodeURIComponent(filePath);
-
-            return (
-              <FlexContainer
-                flexDirection="column"
-                fullHeight
-                justifyContent="flex-end"
-                key={filePath}
-                // @ts-ignore
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!selected) {
-                    savePipelineContent();
-                    goToWithQuery({
-                      file_path: encodeURIComponent(filePath),
-                    });
-                  }
-                }}
-              >
-                <FileTabStyle
-                  selected={selected}
-                >
-                  <FlexContainer
-                    alignItems="center"
-                    fullHeight
-                  >
-                    {!filesTouched[filePath] && (
-                      <FileFill
-                        muted={!selected}
-                        size={UNIT * 1.5}
-                      />
-                    )}
-
-                    {filesTouched[filePath] && (
-                      <Tooltip
-                        label="Unsaved changes"
-                        size={null}
-                        widthFitContent
-                      >
-                        <div style={{ padding: 1 }}>
-                          <Circle
-                            borderColor={(themeContext || dark).borders.danger}
-                            size={UNIT * 1.25}
-                          />
-                        </div>
-                      </Tooltip>
-                    )}
-
-                    <Spacing mr={1} />
-
-                    <Text
-                      muted={!selected}
-                    >
-                      {filePath}
-                    </Text>
-
-                    <Spacing mr={2} />
-
-                    {selected && (
-                      <Tooltip
-                        label="Close"
-                        size={null}
-                        widthFitContent
-                      >
-                        <Link
-                          autoHeight
-                          block
-                          noHoverUnderline
-                          noOutline
-                          onClick={() => {
-                            const newFilePaths = remove(filePaths, path => path === filePath)
-                              .map(path => encodeURIComponent(path));
-
-                            goToWithQuery({
-                              file_path: newFilePaths[newFilePaths.length - 1] || null,
-                              'file_paths[]': newFilePaths,
-                            }, {
-                              pushHistory: true,
-                            });
-                          }}
-                          preventDefault
-                        >
-                          <Close
-                            size={UNIT * 1.25}
-                          />
-                        </Link>
-                      </Tooltip>
-                    )}
-                    {!selected && <div style={{ width: UNIT * 1.25 }} />}
-                  </FlexContainer>
-                </FileTabStyle>
-
-              </FlexContainer>
-            );
-          })}
         </FlexContainer>
 
-        {!selectedFilePath && (
-          <Spacing px={PADDING_UNITS}>
-            <Flex alignItems="center">
-              {kernelStatus}
-              <Spacing ml={2}/>
-              <Tooltip
-                appearBefore
-                block
-                description={
-                  <>
-                    <FlexContainer alignItems="center">
-                      <Text default inline>Press</Text>&nbsp;<KeyboardText
-                        inline
-                        keyText={KEY_SYMBOL_META}
-                      />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
-                        inline
-                        keyText={KEY_SYMBOL_S}
-                      />&nbsp;<Text default inline>to save changes.</Text>
-                      <br />
-                    </FlexContainer>
+        <Spacing px={PADDING_UNITS}>
+          <Flex alignItems="center">
+            {kernelStatus}
+            <Spacing ml={2}/>
+            <Tooltip
+              appearBefore
+              block
+              description={
+                <>
+                  <FlexContainer alignItems="center">
+                    <Text default inline>Press</Text>&nbsp;<KeyboardText
+                      inline
+                      keyText={KEY_SYMBOL_META}
+                    />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
+                      inline
+                      keyText={KEY_SYMBOL_S}
+                    />&nbsp;<Text default inline>to save changes.</Text>
+                    <br />
+                  </FlexContainer>
 
-                    <Spacing mt={1}>
-                      <Text default>
-                        Or, go to <Text inline monospace>
-                          File
-                        </Text>{' › '}<Text inline monospace>
-                          Save pipeline
-                        </Text>.
-                      </Text>
-                    </Spacing>
-                  </>
-                }
-                size={null}
-                widthFitContent
-              >
-                <Text muted>
-                  {saveStatus}
-                </Text>
-              </Tooltip>
-            </Flex>
-          </Spacing>
-        )}
+                  <Spacing mt={1}>
+                    <Text default>
+                      Or, go to <Text inline monospace>
+                        File
+                      </Text>{' › '}<Text inline monospace>
+                        Save pipeline
+                      </Text>.
+                    </Text>
+                  </Spacing>
+                </>
+              }
+              size={null}
+              widthFitContent
+            >
+              <Text muted>
+                {saveStatus}
+              </Text>
+            </Tooltip>
+          </Flex>
+        </Spacing>
       </FlexContainer>
     </PipelineHeaderStyle>
   );
