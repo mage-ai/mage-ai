@@ -103,11 +103,32 @@ export interface IntegrationSourceStreamType {
   uuid: string;
 }
 
+export enum IntegrationSourceEnum {
+  AMPLITUDE = 'amplitude',
+  BIGQUERY = 'bigquery',
+  CHARGEBEE = 'chargebee',
+  GOOGLE_SEARCH_CONSOLE = 'google_search_console',
+  GOOGLE_SHEETS = 'google_sheets',
+  INTERCOM = 'intercom',
+  MYSQL = 'mysql',
+  POSTGRESQL = 'postgresql',
+  REDSHIFT = 'redshift',
+  SALESFORCE = 'salesforce',
+  STRIPE = 'stripe',
+}
+
+export enum IntegrationDestinationEnum {
+  BIGQUERY = 'bigquery',
+  MYSQL = 'mysql',
+  POSTGRESQL = 'postgresql',
+  SNOWFLAKE = 'snowflake',
+}
+
 export default interface IntegrationSourceType {
   name: string;
   streams: StreamType[];
   templates: {
     [key: string]: string;
   }[];
-  uuid: string;
+  uuid: IntegrationSourceEnum;
 }

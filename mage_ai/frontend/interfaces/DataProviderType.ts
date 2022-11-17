@@ -2,7 +2,7 @@ export enum ExportWritePolicyEnum {
   APPEND = 'append',
   FAIL = 'fail',
   REPLACE = 'replace',
-};
+}
 
 export const EXPORT_WRITE_POLICIES = [
   ExportWritePolicyEnum.APPEND,
