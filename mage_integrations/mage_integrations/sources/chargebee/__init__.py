@@ -3,94 +3,17 @@ from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.chargebee.client import ChargebeeClient
 from mage_integrations.sources.chargebee.state import save_state
 from mage_integrations.sources.chargebee.streams import (
+    STREAMS,
     ITEM_MODEL_AVAILABLE_STREAMS,
     PLAN_MODEL_AVAILABLE_STREAMS,
 )
 from mage_integrations.sources.chargebee.streams.base import is_selected
-from typing import List
+from singer.schema import Schema
+from typing import Dict, Generator, List
 import singer
 
+
 LOGGER = singer.get_logger()
-
-class Runner:
-
-    def __init__(self, config, state, catalog, client, available_streams):
-        self.config = config
-        self.state = state
-        self.catalog = catalog
-        self.client = client
-        self.available_streams = available_streams
-
-    def get_streams_to_replicate(self):
-        streams = []
-
-        if not self.catalog:
-            return streams
-
-        for stream_catalog in self.catalog.streams:
-            if not is_selected(stream_catalog):
-                LOGGER.info("'{}' is not marked selected, skipping."
-                            .format(stream_catalog.stream))
-                continue
-
-            for available_stream in self.available_streams:
-                if available_stream.matches_catalog(stream_catalog):
-                    if not available_stream.requirements_met(self.catalog):
-                        raise RuntimeError(
-                            "{} requires that that the following are "
-                            "selected: {}"
-                            .format(stream_catalog.stream,
-                                    ','.join(available_stream.REQUIRES)))
-
-                    to_add = available_stream(
-                        self.config, self.state, stream_catalog, self.client)
-
-                    streams.append(to_add)
-
-        return streams
-
-    def do_discover(self):
-        LOGGER.info("Starting discovery.")
-
-        catalog = []
-
-        for available_stream in self.available_streams:
-            stream = available_stream(self.config, self.state, None, None)
-
-            catalog += stream.generate_catalog()
-
-        return catalog
-
-    def do_sync(self):
-        LOGGER.info("Starting sync.")
-
-        streams = self.get_streams_to_replicate()
-
-        for stream in streams:
-            try:
-                stream.state = self.state
-                stream.sync()
-                self.state = stream.state
-            except OSError as e:
-                LOGGER.error(str(e))
-                exit(e.errno)
-
-            except Exception as e:
-                LOGGER.error(str(e))
-                LOGGER.error('Failed to sync endpoint {}, moving on!'
-                             .format(stream.TABLE))
-                raise e
-
-        save_state(self.state)
-
-
-class ChargebeeRunner(Runner):
-    pass
-    # def __init__(self, args, client, available_streams, catalog = None):
-    #     super().__init__(args, client, available_streams)
-
-    #     self.catalog = catalog
-
 
 class Chargebee(Source):
     def __init__(self, **kwargs):
@@ -98,28 +21,33 @@ class Chargebee(Source):
 
         self.client = ChargebeeClient(self.config)
 
-    def discover(self, streams: List[str] = None) -> Catalog:
-        runner = ChargebeeRunner(
+    def load_data(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        **kwargs,
+    ) -> Generator[List[Dict], None, None]:
+        tap_stream_id = stream.tap_stream_id
+        stream_obj = STREAMS[tap_stream_id](
             self.config,
             self.state,
-            self.catalog,
-            self.client,
-            self.get_available_streams(),
+            stream,
+            self.client
         )
 
-        return Catalog(runner.do_discover())
+        return stream_obj.load_data()
 
-    def sync(self, catalog: Catalog) -> None:
-        runner = ChargebeeRunner(
-            self.config,
-            self.state,
-            self.catalog,
-            self.client,
-            self.get_available_streams(),
-        )
-        runner.do_sync()
+    def get_forced_replication_method(self, stream_id):
+        return STREAMS[stream_id].REPLICATION_METHOD
 
-    def get_available_streams(self):
+    def get_table_key_properties(self, stream_id):
+        return STREAMS[stream_id].KEY_PROPERTIES
+
+    def get_valid_replication_keys(self, stream_id):
+        return STREAMS[stream_id].VALID_REPLICATION_KEYS
+
+    def load_schemas_from_folder(self) -> Dict:
         site_name = self.config.get('site')
         LOGGER.info("Site Name {}".format(site_name))
         configuration_url = 'https://{}.chargebee.com/api/v2/configurations'.format(site_name)
@@ -142,7 +70,16 @@ class Chargebee(Source):
         else:
             LOGGER.error("Incorrect Product Catalog version {}".format(product_catalog_version))
             raise RuntimeError("Incorrect Product Catalog version")
-        return available_streams
+        
+        return {
+            stream.TABLE: Schema.from_dict(
+                stream(self.config, self.state, None, None).get_schema())
+            for stream in available_streams
+        }
+
+    def test_connection(self):
+        pass
+
 
 if __name__ == '__main__':
     main(Chargebee)

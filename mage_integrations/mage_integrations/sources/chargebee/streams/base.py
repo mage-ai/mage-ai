@@ -37,7 +37,8 @@ def is_selected(stream_catalog):
 
     return inclusion == 'automatic'
 
-class BaseStream:
+
+class BaseChargebeeStream():
     # GLOBAL PROPERTIES
     TABLE = None
     KEY_PROPERTIES = []
@@ -50,141 +51,6 @@ class BaseStream:
         self.catalog = catalog
         self.client = client
         self.substreams = []
-
-    def get_class_path(self):
-        return os.path.dirname(inspect.getfile(self.__class__))
-
-    def load_schema_by_name(self, name):
-        return singer.utils.load_json(
-            os.path.normpath(
-                os.path.join(
-                    self.get_class_path(),
-                    '../schemas/{}.json'.format(name))))
-
-    def get_schema(self):
-        return self.load_schema_by_name(self.TABLE)
-
-    def get_stream_data(self, result):
-        """
-        Given a result set from Campaign Monitor, return the data
-        to be persisted for this stream.
-        """
-        raise RuntimeError("get_stream_data not implemented!")
-
-    def get_url(self):
-        """
-        Return the URL to hit for data from this stream.
-        """
-        raise RuntimeError("get_url not implemented!")
-
-    @classmethod
-    def requirements_met(cls, catalog):
-        selected_streams = [
-            s.stream for s in catalog.streams if is_selected(s)
-        ]
-
-        return set(cls.REQUIRES).issubset(selected_streams)
-
-    @classmethod
-    def matches_catalog(cls, stream_catalog):
-        return stream_catalog.stream == cls.TABLE
-
-    def generate_catalog(self):
-        schema = self.get_schema()
-        mdata = singer.metadata.new()
-
-        mdata = singer.metadata.write(
-            mdata,
-            (),
-            'inclusion',
-            'available'
-        )
-
-        for field_name, field_schema in schema.get('properties').items():
-            inclusion = 'available'
-
-            if field_name in self.KEY_PROPERTIES:
-                inclusion = 'automatic'
-
-            mdata = singer.metadata.write(
-                mdata,
-                ('properties', field_name),
-                'inclusion',
-                inclusion
-            )
-
-        return [{
-            'tap_stream_id': self.TABLE,
-            'stream': self.TABLE,
-            'key_properties': self.KEY_PROPERTIES,
-            'schema': self.get_schema(),
-            'metadata': singer.metadata.to_list(mdata)
-        }]
-
-    def transform_record(self, record):
-        with singer.Transformer() as tx:
-            metadata = {}
-
-            if self.catalog.metadata is not None:
-                metadata = singer.metadata.to_map(self.catalog.metadata)
-
-            return tx.transform(
-                record,
-                self.catalog.schema.to_dict(),
-                metadata)
-
-    def get_catalog_keys(self):
-        return list(self.catalog.schema.properties.keys())
-
-    def write_schema(self):
-        LOGGER.info(f'catalog: {self.catalog}')
-        LOGGER.info(f'wtffffffffffff')
-        write_schema(
-            self.catalog.stream,
-            self.catalog.schema.to_dict(),
-            key_properties=self.catalog.key_properties,
-            bookmark_properties=self.catalog.bookmark_properties,
-            replication_method=self.catalog.replication_method,
-            unique_conflict_method=self.catalog.unique_conflict_method,
-            unique_constraints=self.catalog.unique_constraints,
-        )
-
-    def sync(self):
-        LOGGER.info('Syncing stream {} with {}'
-                    .format(self.catalog.tap_stream_id,
-                            self.__class__.__name__))
-
-        self.write_schema()
-
-        return self.sync_data()
-
-    def sync_data(self, substreams=None):
-        if substreams is None:
-            substreams = []
-
-        table = self.TABLE
-
-        url = self.get_url()
-
-        result = self.client.make_request(url, self.API_METHOD)
-
-        data = self.get_stream_data(result)
-
-        with singer.metrics.record_counter(endpoint=table) as counter:
-            for index, obj in enumerate(data):
-                LOGGER.debug("On {} of {}".format(index, len(data)))
-
-                singer.write_records(
-                    table,
-                    [self.transform_record(obj)])
-
-                counter.increment()
-
-                for substream in substreams:
-                    substream.sync_data(parent=obj)
-
-
-class BaseChargebeeStream(BaseStream):
 
     def write_schema(self):
         bookmark_properties = []
@@ -200,85 +66,17 @@ class BaseChargebeeStream(BaseStream):
             unique_constraints=self.catalog.unique_constraints,
         )
 
+    def get_url(self):
+        """
+        Return the URL to hit for data from this stream.
+        """
+        raise RuntimeError("get_url not implemented!")
+
     def get_abs_path(self, path):
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
-    def load_shared_schema_refs(self):
-        """Select folder to create a reference dict."""
-        shared_schema_refs = {}
-        schema_folders = ["common"]
-        if self.config['item_model']:
-            # Chosen streams of product catalog v2
-            schema_folders.append("item_model")
-        else:
-            # Chosen streams of product catalog v1
-            schema_folders.append("plan_model")
-        for schema_folder in schema_folders:
-            shared_schema_refs.update(self.load_shared_schema_ref(schema_folder))
-        return shared_schema_refs
-
-    def load_shared_schema_ref(self,folder_name):
-        """Create a reference dict of all streams."""
-        shared_schemas_path = self.get_abs_path('../schemas/'+folder_name)
-
-        shared_file_names = [f for f in os.listdir(shared_schemas_path)
-                            if os.path.isfile(os.path.join(shared_schemas_path, f))]
-
-        shared_schema_refs = {}
-        for shared_file in shared_file_names:
-            # Excluded event stream as it is not used as a reference in any other stream
-            if shared_file == "events.json":
-                continue
-            with open(os.path.join(shared_schemas_path, shared_file)) as data_file:
-                shared_schema_refs[shared_file] = json.load(data_file)
-
-        return shared_schema_refs
-
-    def generate_catalog(self):
-        schema = self.get_schema()
-        mdata = singer.metadata.new()
-
-        metadata = {
-
-            "forced-replication-method": self.REPLICATION_METHOD,
-            "valid-replication-keys": self.VALID_REPLICATION_KEYS,
-            "inclusion": self.INCLUSION,
-            #"selected-by-default": self.SELECTED_BY_DEFAULT,
-            "table-key-properties": self.KEY_PROPERTIES
-        }
-
-        for k, v in metadata.items():
-            mdata = singer.metadata.write(
-                mdata,
-                (),
-                k,
-                v
-            )
-
-        for field_name, field_schema in schema.get('properties').items():
-            inclusion = 'available'
-
-            if field_name in self.KEY_PROPERTIES or field_name in self.BOOKMARK_PROPERTIES:
-                inclusion = 'automatic'
-
-            mdata = singer.metadata.write(
-                mdata,
-                ('properties', field_name),
-                'inclusion',
-                inclusion
-            )
-
-        refs = self.load_shared_schema_refs()
-
-        return [{
-            'tap_stream_id': self.TABLE,
-            'stream': self.TABLE,
-            'schema': singer.resolve_schema_references(schema, refs),
-            'metadata': singer.metadata.to_list(mdata)
-        }]
-
-    def appendCustomFields(self, record):
-        listOfCustomFieldObj = ['addon', 'plan', 'subscription', 'customer']
+    def append_custom_fields(self, record):
+        list_of_custom_field_obj = ['addon', 'plan', 'subscription', 'customer']
         custom_fields = {}
         event_custom_fields = {}
         if self.ENTITY == 'event':
@@ -287,7 +85,7 @@ class BaseChargebeeStream(BaseStream):
             sl = slice(len(words) - 1)
             content_obj = "_".join(words[sl])     
             
-            if content_obj in listOfCustomFieldObj:
+            if content_obj in list_of_custom_field_obj:
                 for k in record['content'][content_obj].keys():
                     if "cf_" in k:
                         event_custom_fields[k] = record['content'][content_obj][k]
@@ -306,7 +104,7 @@ class BaseChargebeeStream(BaseStream):
         with singer.Transformer(integer_datetime_fmt="unix-seconds-integer-datetime-parsing") as tx:
             metadata = {}
             
-            record = self.appendCustomFields(record)
+            record = self.append_custom_fields(record)
                 
             if self.catalog.metadata is not None:
                 metadata = singer.metadata.to_map(self.catalog.metadata)
@@ -320,7 +118,7 @@ class BaseChargebeeStream(BaseStream):
         entity = self.ENTITY
         return [self.transform_record(item.get(entity)) for item in data]
 
-    def sync_data(self):
+    def load_data(self):
         table = self.TABLE
         api_method = self.API_METHOD
         done = False
@@ -407,7 +205,7 @@ class BaseChargebeeStream(BaseStream):
             with singer.metrics.record_counter(endpoint=table) as ctr:
                 # Combine transformed records and deleted data of  "plan, addon and coupon" collected from events endpoint
                 to_write = to_write + deleted_records
-                write_records(table, to_write)
+                yield to_write
 
                 ctr.increment(amount=len(to_write))
 
@@ -426,7 +224,15 @@ class BaseChargebeeStream(BaseStream):
                 params['offset'] = response.get('next_offset')
                 bookmark_date = max_date
 
-        save_state(self.state)
+    def get_class_path(self):
+        return os.path.dirname(inspect.getfile(self.__class__))
+
+    def load_schema_by_name(self, name):
+        return singer.utils.load_json(
+            os.path.normpath(
+                os.path.join(
+                    self.get_class_path(),
+                    '../schemas/{}.json'.format(name))))
 
     def get_schema(self):
         return self.load_schema_by_name(self.SCHEMA)
