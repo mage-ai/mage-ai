@@ -72,7 +72,8 @@ class Chargebee(Source):
             raise RuntimeError("Incorrect Product Catalog version")
         
         return {
-            stream.TABLE: Schema.from_dict(stream(self.config, self.state, None, None).get_schema())
+            stream.TABLE: Schema.from_dict(
+                stream(self.config, self.state, None, None).get_schema())
             for stream in available_streams
         }
 
