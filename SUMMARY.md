@@ -103,6 +103,7 @@
     * [Triggering pipeline via API request](docs/triggers/api.md)
   * Deploy
     * [AWS](docs/deploy/aws/README.md)
+    * [CI/CD](docs/deploy/ci_cd/README.md)
     * [Terraform](docs/deploy/terraform/README.md)
       * [Terraform Amazon Web Services (AWS)](docs/deploy/terraform/AWS.md)
         * [Terraform AWS resources](docs/deploy/terraform/AWS/Resources.md)

@@ -420,8 +420,6 @@ function IntegrationPipeline({
     },
   );
 
-  console.log('destination name:', dataExporterBlockContent?.destination);
-
   const variablesTableMemo = useMemo(() => {
     const variableRows = [];
     globalVariables?.forEach(({
