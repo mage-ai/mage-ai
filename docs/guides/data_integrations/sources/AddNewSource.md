@@ -255,41 +255,6 @@ if __name__ == '__main__':
     ```
 1. Open the `TEST_CATALOG.json` file that was just created.
     1. Under the `streams` key, in the 1st object in the `streams` array, find the key `metadata`.
-    1. In that `metadata` array of objects, locate the object where its key
-    named `breadcrumb` is equal to an empty array (e.g. `[]`);
-    this is usually the 1st object in the `metadata` array.
-    1. In that object, there is another key named `metadata`.
-    In that object, there is a key called `selected`. Set that value to `true`.
-    1. The resulting `TEST_CATALOG.json` should look something like this:
-    ```json
-    {
-      "streams": [
-        {
-          "tap_stream_id": "passengers",
-          "replication_key": "",
-          "replication_method": "FULL_TABLE",
-          "key_properties": [],
-          "schema": {},
-          "stream": "passengers",
-          "metadata": [
-            {
-              "breadcrumb": [],
-              "metadata": {
-                "table-key-properties": [],
-                "forced-replication-method": "FULL_TABLE",
-                "valid-replication-keys": [],
-                "inclusion": "available",
-                "schema-name": "passengers",
-                "selected": true
-              }
-            }
-          ]
-        }
-      ]
-    }
-    ```
-1. Open the `TEST_CATALOG.json` file that was just created.
-    1. Under the `streams` key, in the 1st object in the `streams` array, find the key `metadata`.
     1. Go through each object in the `metadata` array where
     the value of the `breadcrumb` key is not an empty array (e.g. `[]`).
     1. For those objects, there is another key named `metadata`.
