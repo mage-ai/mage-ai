@@ -28,6 +28,7 @@ You must enter the following settings when configuring this source:
 1. Sign into your Salesforce account.
 1. Create a <b>Connected App</b> and <b>Enable OAuth Settings for API Integration</b>
 by following this [Salesforce documentation](https://help.salesforce.com/s/articleView?id=sf.connected_app_create_api_integration.htm&type=5).
+1. Use the following URL as the callback URl: https://login.salesforce.com/services/oauth2/success
 1. After you created a <b>Connected App</b>, go to your <b>Setup</b> and click on the <b>Home</b> tab.
 1. On the left sidebar under the <b>Platform tools > Apps > App Manager</b>, click on <b>App Manager</b>.
 1. Find the row that contains the app you just created. On the furthest right column, click the dropdown caret icon and click <b>View</b>.
