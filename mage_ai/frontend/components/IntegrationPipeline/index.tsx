@@ -708,6 +708,7 @@ function IntegrationPipeline({
                 catalog={catalog}
                 destination={dataExporterBlockContent?.destination}
                 setSelectedStream={setSelectedStream}
+                source={dataLoaderBlockContent?.source}
                 updateMetadataForColumn={updateMetadataForColumn}
                 updateSchemaProperty={updateSchemaProperty}
                 updateStream={updateStream}

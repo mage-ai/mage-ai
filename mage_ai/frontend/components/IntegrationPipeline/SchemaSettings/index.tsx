@@ -6,7 +6,6 @@ import Spacing from '@oracle/elements/Spacing';
 import { SectionStyle } from '../index.style';
 import {
   CatalogType,
-  StreamType,
 } from '@interfaces/IntegrationSourceType';
 import { find, indexBy, sortByKey } from '@utils/array';
 
