@@ -137,8 +137,6 @@ class BaseStream:
         return list(self.catalog.schema.properties.keys())
 
     def write_schema(self):
-        LOGGER.info(f'catalog: {self.catalog}')
-        LOGGER.info(f'wtffffffffffff')
         write_schema(
             self.catalog.stream,
             self.catalog.schema.to_dict(),
@@ -277,8 +275,8 @@ class BaseChargebeeStream(BaseStream):
             'metadata': singer.metadata.to_list(mdata)
         }]
 
-    def appendCustomFields(self, record):
-        listOfCustomFieldObj = ['addon', 'plan', 'subscription', 'customer']
+    def append_custom_fields(self, record):
+        list_of_custom_field_obj = ['addon', 'plan', 'subscription', 'customer']
         custom_fields = {}
         event_custom_fields = {}
         if self.ENTITY == 'event':
@@ -287,7 +285,7 @@ class BaseChargebeeStream(BaseStream):
             sl = slice(len(words) - 1)
             content_obj = "_".join(words[sl])     
             
-            if content_obj in listOfCustomFieldObj:
+            if content_obj in list_of_custom_field_obj:
                 for k in record['content'][content_obj].keys():
                     if "cf_" in k:
                         event_custom_fields[k] = record['content'][content_obj][k]
@@ -306,7 +304,7 @@ class BaseChargebeeStream(BaseStream):
         with singer.Transformer(integer_datetime_fmt="unix-seconds-integer-datetime-parsing") as tx:
             metadata = {}
             
-            record = self.appendCustomFields(record)
+            record = self.append_custom_fields(record)
                 
             if self.catalog.metadata is not None:
                 metadata = singer.metadata.to_map(self.catalog.metadata)

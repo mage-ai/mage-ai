@@ -7,7 +7,7 @@ from mage_integrations.sources.chargebee.streams import (
     PLAN_MODEL_AVAILABLE_STREAMS,
 )
 from mage_integrations.sources.chargebee.streams.base import is_selected
-from typing import List
+from typing import Dict, Generator, List
 import singer
 
 LOGGER = singer.get_logger()
@@ -98,6 +98,15 @@ class Chargebee(Source):
 
         self.client = ChargebeeClient(self.config)
 
+    def load_data(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        **kwargs,
+    ) -> Generator[List[Dict], None, None]:
+        yield []
+
     def discover(self, streams: List[str] = None) -> Catalog:
         runner = ChargebeeRunner(
             self.config,
@@ -118,6 +127,9 @@ class Chargebee(Source):
             self.get_available_streams(),
         )
         runner.do_sync()
+
+    def test_connection(self):
+        pass
 
     def get_available_streams(self):
         site_name = self.config.get('site')
