@@ -791,6 +791,15 @@ class Block:
 
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
+                    from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
+
+                    query_data = runtime_arguments or {}
+
+                    index = self.template_runtime_configuration.get('index', None)
+                    if index is not None:
+                        query_data['_limit'] = BATCH_FETCH_LIMIT
+                        query_data['_offset'] = BATCH_FETCH_LIMIT * index
+
                     selected_streams = self.template_runtime_configuration.get('selected_streams')
                     stream = selected_streams[0] if len(selected_streams) else None
 
@@ -813,7 +822,7 @@ class Block:
                         '--state',
                         self.pipeline.source_state_file_path(stream),
                         '--query_json',
-                        json.dumps(runtime_arguments or {}),
+                        json.dumps(query_data),
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
 
                     output = proc.stdout.decode()

@@ -135,22 +135,27 @@ class Source(BaseSource):
         rows_temp = None
         loops = 0
 
+
         while rows_temp is None or len(rows_temp) >= 1:
             if loops >= 1:
                 sleep(1)
+
+            has_custom_limit = query.get('_limit', None) is not None
+            limit = query.get('_limit', BATCH_FETCH_LIMIT)
+            offset = query.get('_offset', BATCH_FETCH_LIMIT * loops)
 
             rows, rows_temp = self.__fetch_rows(
                 stream,
                 bookmarks,
                 query,
-                limit=BATCH_FETCH_LIMIT,
-                offset=BATCH_FETCH_LIMIT * loops,
+                limit=limit,
+                offset=offset,
             )
             yield rows
 
             loops += 1
 
-            if len(rows_temp) < BATCH_FETCH_LIMIT:
+            if has_custom_limit or len(rows_temp) < BATCH_FETCH_LIMIT:
                 break
 
     def update_column_names(self, columns: List[str]) -> List[str]:

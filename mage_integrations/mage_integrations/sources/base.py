@@ -219,7 +219,8 @@ class Source:
                         json.dump(catalog, sys.stdout)
             elif self.count_records_mode:
                 arr = []
-                for stream in self.catalog.get_selected_streams(self.state):
+                streams = [stream for stream in self.catalog.get_selected_streams(self.state) if stream.tap_stream_id in self.selected_streams]
+                for stream in streams:
                     tap_stream_id = stream.tap_stream_id
                     count = self.count_records(
                         stream=stream,

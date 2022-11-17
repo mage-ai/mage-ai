@@ -1,5 +1,5 @@
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
-from mage_ai.data_integrations.utils.config import build_config_json, interpolate_variables
+from mage_ai.data_integrations.utils.config import build_config_json, get_catalog, interpolate_variables
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
@@ -213,7 +213,41 @@ class IntegrationPipeline(Pipeline):
             error = dig(json_object, 'tags.error')
             raise Exception(error)
 
-    def discover(self, streams: List[str] = None) -> dict:
+    def count_records(self) -> List[Dict]:
+        global_vars = get_global_variables(self.uuid) or dict()
+        arr = []
+        catalog = get_catalog(self.data_loader, global_vars)
+
+        if self.source_file_path and self.data_loader.file_path:
+            for stream_data in catalog['streams']:
+                stream = stream_data['tap_stream_id']
+
+                try:
+                    run_args = [
+                        PYTHON,
+                        self.source_file_path,
+                        '--config_json',
+                        build_config_json(self.data_loader.file_path, global_vars),
+                        '--settings',
+                        self.data_loader.file_path,
+                        '--state',
+                        self.source_state_file_path(stream),
+                        '--selected_streams_json',
+                        json.dumps([stream]),
+                        '--count_records',
+                    ]
+
+                    proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    proc.check_returncode()
+
+                    arr += json.loads(parse_logs_and_json(proc.stdout.decode()))
+                except subprocess.CalledProcessError as e:
+                    message = e.stderr.decode('utf-8')
+                    raise Exception(message)
+
+        return arr
+
+    def discover(self, streams: List[str] = None) -> Dict:
         global_vars = get_global_variables(self.uuid) or dict()
 
         if self.source_file_path and self.data_loader.file_path:

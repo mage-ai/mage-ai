@@ -51,13 +51,15 @@ python3 mage_integrations/sources/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json \
-  --count_records
+  --count_records \
+  --selected_streams '["user_activity", "user_with_emails"]'
 ```
 
 ```bash
 python3 mage_integrations/sources/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
+  --query_json '{"_end_date": null, "_execution_date": "2022-11-17T21:05:53.341319", "_execution_partition": "444/20221117T210443", "_start_date": null, "_limit": 1000, "_offset": 0}' \
   --state mage_integrations/TEST_STATE.json
 ```
 
