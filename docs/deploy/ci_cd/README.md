@@ -167,18 +167,20 @@ paste it into the textarea.
 1. Change the following values under the key labeled `env`:
     ```yaml
     env:
-      PROJECT_ID: ...
       GAR_LOCATION: ...
-      REPOSITORY: ...
+      GOOGLE_CLOUD_RUN_SERVICE_NAME: ...
       IMAGE: ...
+      PROJECT_ID: ...
+      REPOSITORY: ...
     ```
 
     | Key | Description | Sample value |
     | --- | --- | --- |
-    | `PROJECT_ID` | Project ID of where you launched Mage using Terraform. | `mage-123456` |
     | `GAR_LOCATION` | Region that Mage is already deployed in. | `us-east1` |
-    | `REPOSITORY` | The name of your GCP Artifact Registry that is storing your Docker image. | `mageprod` |
+    | `GOOGLE_CLOUD_RUN_SERVICE_NAME` | The name of your Google Cloud Run service. Go to the Google Cloud Run dashboard to find it. | `mage-data` |
     | `IMAGE` | The name of the Docker image you pushed to the above GCP Artifact Registry. | `mageai` |
+    | `PROJECT_ID` | Project ID of where you launched Mage using Terraform. | `mage-123456` |
+    | `REPOSITORY` | The name of your GCP Artifact Registry that is storing your Docker image. | `mageprod` |
 
 1. Click the button labeled <b>Start commit</b> in the top right corner.
 1. Click the button labeled <b>Commit new file</b>.

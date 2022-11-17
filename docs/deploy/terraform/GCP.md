@@ -54,6 +54,18 @@ gcloud init
 gcloud auth application-default login
 ```
 
+### Permissions required for deployment
+
+Go to the IAM management dashboard,
+find the service account associated to the account you just logged into, and then
+add these roles to that service account
+(e.g. choose your account as the principal when adding new roles):
+
+1. Artifact Registry Read
+1. Artifact Registry Writer
+1. Cloud Run Developer
+1. Service Account Token Creator
+
 <br />
 
 ## 3. Push Docker image to GCP Artifact Registry
@@ -217,7 +229,7 @@ resource "google_cloud_run_service" "run_service" {
 }
 ```
 
-<b>Secrets</b>
+### Secrets
 
 1. Go to [Google Secret Manager UI](https://console.cloud.google.com/security/secret-manager?referrer=search&authuser=1).
 1. Click the button at the top labeled <b>`+ CREATE SECRET`</b>.
@@ -225,7 +237,13 @@ resource "google_cloud_run_service" "run_service" {
 1. Under <b>Secret value</b>, upload your service account credentials JSON file or paste the JSON into
 the textarea labeled <b>Secret value</b>.
 1. Scroll all the way down and click the button <b>`CREATE SECRET`</b>.
-1. Click on the <b>PERMISSIONS</b> tab.
+
+You can mount secrets from Google Secret Manager through Terraform configurations or through the
+Google Console UI.
+
+#### Method A: Terraform configurations
+
+1. Once you save a secret in Google Secret Manager, click on the <b>PERMISSIONS</b> tab.
 1. Click the button <b>`+ GRANT ACCESS`</b>.
 1. Under the field labeled <b>New principles</b>, add the service account that is associated to
 your Google Cloud Run. If you can’t find this, try deploying GCP with Terraform and you’ll receive
@@ -240,6 +258,10 @@ an error that looks like this:
     │
     ╵
     ```
+
+    If you still get this error when re-running `terraform apply` even after granting access,
+    try <b>Method B</b> down below.
+
 1. Under the field labeled <b>Select a role</b>, enter the value `Secret Manager Secret Accessor`.
 1. Click the button <b>SAVE</b>.
 1. Mount secrets to Google Cloud Run via Terraform in the file
@@ -299,6 +321,12 @@ to get the value from the secret:
         type: bigquery
     ```
 
+#### Method B: through GCP UI (aka console but not to be confused with CLI)
+
+1. Go to your Google Cloud Run dashboard, find the service running Mage,
+and click on it to view its details.
+1. Follow these [Google provided instructions](https://cloud.google.com/run/docs/configuring/secrets#mounting-secrets-service)
+to manually mount the secret to the running Mage Cloud Run service and grant the right permissions for that service to access those secrets.
 
 ### More
 
