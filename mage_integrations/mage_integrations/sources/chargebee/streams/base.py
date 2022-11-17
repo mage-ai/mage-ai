@@ -113,13 +113,13 @@ class BaseStream:
                 inclusion
             )
 
-        return [{
-            'tap_stream_id': self.TABLE,
-            'stream': self.TABLE,
-            'key_properties': self.KEY_PROPERTIES,
-            'schema': self.get_schema(),
-            'metadata': singer.metadata.to_list(mdata)
-        }]
+        return dict(
+            tap_stream_id=self.TABLE,
+            stream=self.TABLE,
+            key_properties=self.KEY_PROPERTIES,
+            schema=self.get_schema(),
+            metadata=singer.metadata.to_list(mdata)
+        )
 
     def transform_record(self, record):
         with singer.Transformer() as tx:
@@ -268,12 +268,12 @@ class BaseChargebeeStream(BaseStream):
 
         refs = self.load_shared_schema_refs()
 
-        return [{
-            'tap_stream_id': self.TABLE,
-            'stream': self.TABLE,
-            'schema': singer.resolve_schema_references(schema, refs),
-            'metadata': singer.metadata.to_list(mdata)
-        }]
+        return dict(
+            tap_stream_id=self.TABLE,
+            stream=self.TABLE,
+            schema=singer.resolve_schema_references(schema, refs),
+            metadata=singer.metadata.to_list(mdata)
+        )
 
     def append_custom_fields(self, record):
         list_of_custom_field_obj = ['addon', 'plan', 'subscription', 'customer']
@@ -317,6 +317,112 @@ class BaseChargebeeStream(BaseStream):
     def get_stream_data(self, data):
         entity = self.ENTITY
         return [self.transform_record(item.get(entity)) for item in data]
+
+    def load_data(self):
+        table = self.TABLE
+        api_method = self.API_METHOD
+        done = False
+        sync_interval_in_mins = 2
+
+        # Attempt to get the bookmark date from the state file (if one exists and is supplied).
+        LOGGER.info('Attempting to get the most recent bookmark_date for entity {}.'.format(self.ENTITY))
+        bookmark_date = get_last_record_value_for_table(self.state, table, 'bookmark_date')
+
+        # If there is no bookmark date, fall back to using the start date from the config file.
+        if bookmark_date is None:
+            LOGGER.info('Could not locate bookmark_date from STATE file. Falling back to start_date from config.json instead.')
+            bookmark_date = parse(self.config.get('start_date'))
+        else:
+            bookmark_date = parse(bookmark_date)
+
+        # Convert bookmarked start date to POSIX.
+        bookmark_date_posix = int(bookmark_date.timestamp())
+        to_date = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
+        to_date_posix = int(to_date.timestamp())
+        sync_window = str([bookmark_date_posix, to_date_posix])
+        LOGGER.info("Sync Window {} for schema {}".format(sync_window, table))
+
+        # Create params for filtering
+        if self.ENTITY == 'event':
+            params = {"occurred_at[between]": sync_window}
+            bookmark_key = 'occurred_at'
+        elif self.ENTITY in ['promotional_credit','comment']:
+            params = {"created_at[between]": sync_window}
+            bookmark_key = 'created_at'
+        else:
+            params = {"updated_at[between]": sync_window}
+            bookmark_key = 'updated_at'
+
+        # Add sort_by[asc] to prevent data overwrite by oldest deleted records
+        if self.SORT_BY is not None:
+            params['sort_by[asc]'] = self.SORT_BY
+
+        LOGGER.info("Querying {} starting at {}".format(table, bookmark_date))
+
+        while not done:
+            max_date = to_date
+
+            response = self.client.make_request(
+                url=self.get_url(),
+                method=api_method,
+                params=params)
+
+            if 'api_error_code' in response.keys():
+                if response['api_error_code'] == 'configuration_incompatible':
+                    LOGGER.error('{} is not configured'.format(response['error_code']))
+                    break
+
+            records = response.get('list')
+
+            # List of deleted "plans, addons and coupons" from the /events endpoint
+            deleted_records = []
+
+            if self.config.get('include_deleted') not in ['false','False', False]:
+                if self.ENTITY == 'event':
+                    # Parse "event_type" from events records and collect deleted plan/addon/coupon from events
+                    for record in records:
+                        event = record.get(self.ENTITY)
+                        if event["event_type"] == 'plan_deleted':
+                            Util.plans.append(event['content']['plan'])
+                        elif event['event_type'] == 'addon_deleted':
+                            Util.addons.append(event['content']['addon'])
+                        elif event['event_type'] == 'coupon_deleted':
+                            Util.coupons.append(event['content']['coupon'])
+                # We need additional transform for deleted records as "to_write" already contains transformed data
+                if self.ENTITY == 'plan':
+                    for plan in Util.plans:
+                        deleted_records.append(self.transform_record(plan))
+                if self.ENTITY == 'addon':
+                    for addon in Util.addons:
+                        deleted_records.append(self.transform_record(addon))
+                if self.ENTITY == 'coupon':
+                    for coupon in Util.coupons:
+                        deleted_records.append(self.transform_record(coupon))
+
+            # Get records from API response and transform
+            to_write = self.get_stream_data(records)
+
+            with singer.metrics.record_counter(endpoint=table) as ctr:
+                # Combine transformed records and deleted data of  "plan, addon and coupon" collected from events endpoint
+                to_write = to_write + deleted_records
+                yield to_write
+
+                ctr.increment(amount=len(to_write))
+
+            # update max_date with minimum of (max_replication_key) or (now - 2 minutes)
+            # this will make sure that bookmark does not go beyond (now - 2 minutes)
+            # so, no data will be missed due to API latency
+            max_date = min(max_date, to_date)
+            self.state = incorporate(
+                self.state, table, 'bookmark_date', max_date)
+
+            if not response.get('next_offset'):
+                LOGGER.info("Final offset reached. Ending sync.")
+                done = True
+            else:
+                LOGGER.info("Advancing by one offset.")
+                params['offset'] = response.get('next_offset')
+                bookmark_date = max_date
 
     def sync_data(self):
         table = self.TABLE
