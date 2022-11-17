@@ -364,7 +364,7 @@ function SchemaTable({
                     return stream;
                   })}
                 />,
-              )
+              );
             }
 
             return row;
@@ -462,12 +462,11 @@ function SchemaTable({
             value={replicationMethod}
           >
             <option value="" />
-            <option value={ReplicationMethodEnum.FULL_TABLE}>
-              {ReplicationMethodEnum.FULL_TABLE}
-            </option>
-            <option value={ReplicationMethodEnum.INCREMENTAL}>
-              {ReplicationMethodEnum.INCREMENTAL}
-            </option>
+            {Object.values(ReplicationMethodEnum).map(method => (
+              <option key={method} value={method}>
+                {method}
+              </option>
+            ))}
           </Select>
         </Spacing>
 

@@ -1,6 +1,7 @@
 export enum ReplicationMethodEnum {
   FULL_TABLE = 'FULL_TABLE',
   INCREMENTAL = 'INCREMENTAL',
+  LOG_BASED = 'LOG_BASED',
 }
 
 export enum UniqueConflictMethodEnum {
