@@ -1,0 +1,241 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "customer_id": {
+      "type": ["null", "string"]
+    },
+    "subscription_id": {
+      "type": ["null", "string"]
+    },
+    "gateway_account_id": {
+      "type": ["null", "string"]
+    },
+    "payment_source_id": {
+      "type": ["null", "string"]
+    },
+    "payment_method": {
+      "type": ["null", "string"]
+    },
+    "iin": {
+      "type": ["null", "string"]
+    },
+    "last4": {
+      "type": ["null", "string"]
+    },
+    "reference_number": {
+      "type": ["null", "string"]
+    },
+    "gateway": {
+      "type": ["null", "string"]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "date": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "settled_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "currency_code": {
+      "type": ["null", "string"]
+    },
+    "amount": {
+      "type": ["null", "integer"]
+    },
+    "id_at_gateway": {
+      "type": ["null", "string"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "fraud_flag": {
+      "type": ["null", "string"]
+    },
+    "initiator_type": {
+      "type": ["null", "string"]
+    },
+    "three_d_secure": {
+      "type": ["null", "boolean"]
+    },
+    "error_code": {
+      "type": ["null", "string"]
+    },
+    "error_text": {
+      "type": ["null", "string"]
+    },
+    "validated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "fraud_reason": {
+      "type": ["null", "string"]
+    },
+    "amount_unused": {
+      "type": ["null", "integer"]
+    },
+    "masked_card_number": {
+      "type": ["null", "string"]
+    },
+    "reference_transaction_id": {
+      "type": ["null", "string"]
+    },
+    "reversal_txn_id": {
+      "type": ["null", "string"]
+    },
+    "deleted": {
+      "type": ["null", "boolean"]
+    },
+    "exchange_rate": {
+      "type": ["null", "number"]
+    },
+    "base_currency_code": {
+      "type": ["null", "string"]
+    },
+    "resource_version": {
+      "type": ["null", "integer"]
+    },
+    "object": {
+      "type": ["null", "string"]
+    },
+    "refunded_txn_id": {
+      "type": ["null", "string"]
+    },
+    "authorization_reason": {
+      "type": ["null", "string"]
+    },
+    "voided_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "reversal_transaction_id": {
+      "type": ["null", "string"]
+    },
+    "reference_authorization_id": {
+      "type": ["null", "string"]
+    },
+    "amount_capturable": {
+      "type": ["null", "string"]
+    },
+    "merchant_reference_id": {
+      "type": ["null", "string"]
+    },
+    "linked_invoices": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "invoice_id": {
+            "type": ["null", "string"]
+          },
+          "applied_amount": {
+            "type": ["null", "integer"]
+          },
+          "applied_at": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "invoice_date": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "invoice_total": {
+            "type": ["null", "integer"]
+          },
+          "invoice_status": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "linked_credit_notes": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "cn_id": {
+            "type": ["null", "string"]
+          },
+          "applied_amount": {
+            "type": ["null", "integer"]
+          },
+          "applied_at": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "cn_reason_code": {
+            "type": ["null", "string"]
+          },
+          "cn_create_reason_code": {
+            "type": ["null", "string"]
+          },
+          "cn_date": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "cn_total": {
+            "type": ["null", "integer"]
+          },
+          "cn_status": {
+            "type": ["null", "string"]
+          },
+          "cn_reference_invoice_id": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "linked_refunds": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "txn_id": {
+            "type": ["null", "string"]
+          },
+          "txn_status": {
+            "type": ["null", "string"]
+          },
+          "txn_date": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "txn_amount": {
+            "type": ["null", "integer"]
+          }
+        }
+      }
+    },
+    "linked_payments": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "id": {
+            "type": ["null", "string"]
+          },
+          "status": {
+            "type": ["null", "string"]
+          },
+          "amount": {
+            "type": ["null", "integer"]
+          },
+          "date": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

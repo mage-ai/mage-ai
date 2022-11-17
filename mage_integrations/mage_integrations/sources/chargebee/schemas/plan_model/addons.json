@@ -1,0 +1,163 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "channel":{
+      "type": ["null", "string"]
+    },
+    "invoice_name": {
+      "type": ["null", "string"]
+    },
+    "description": {
+      "type": ["null", "string"]
+    },
+    "pricing_model": {
+      "type": ["null", "string"]
+    },
+    "charge_type": {
+      "type": ["null", "string"]
+    },
+    "price": {
+      "type": ["null", "integer"]
+    },
+    "currency_code": {
+      "type": ["null", "string"]
+    },
+    "period": {
+      "type": ["null", "integer"]
+    },
+    "period_unit": {
+      "type": ["null", "string"]
+    },
+    "unit": {
+      "type": ["null", "string"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "archived_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "enabled_in_portal": {
+      "type": ["null", "boolean"]
+    },
+    "tax_code": {
+      "type": ["null", "string"]
+    },
+    "taxjar_product_code": {
+      "type": ["null", "string"]
+    },
+    "avalara_sale_type": {
+      "type": ["null", "string"]
+    },
+    "avalara_transaction_type": {
+      "type": ["null", "integer"]
+    },
+    "avalara_service_type": {
+      "type": ["null", "integer"]
+    },
+    "sku": {
+      "type": ["null", "string"]
+    },
+    "accounting_code": {
+      "type": ["null", "string"]
+    },
+    "accounting_category1": {
+      "type": ["null", "string"]
+    },
+    "accounting_category2": {
+      "type": ["null", "string"]
+    },
+    "accounting_category3": {
+      "type": ["null", "string"]
+    },
+    "accounting_category4": {
+      "type": ["null", "string"]
+    },
+    "is_shippable": {
+      "type": ["null", "boolean"]
+    },
+    "shipping_frequency_period": {
+      "type": ["null", "integer"]
+    },
+    "shipping_frequency_period_unit": {
+      "type": ["null", "string"]
+    },
+    "resource_version": {
+      "type": ["null", "integer"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "included_in_mrr": {
+      "type": ["null", "boolean"]
+    },
+    "invoice_notes": {
+      "type": ["null", "string"]
+    },
+    "taxable": {
+      "type": ["null", "boolean"]
+    },
+    "tax_profile_id": {
+      "type": ["null", "string"]
+    },
+    "object": {
+      "type": ["null", "string"]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "meta_data": {
+      "type": ["null", "string"]
+    },
+    "custom_fields": {
+      "type": ["null", "string"]
+    },
+    "show_description_in_invoices": {
+      "type": ["null", "boolean"]
+    },
+    "show_description_in_quotes": {
+      "type": ["null", "boolean"]
+    },
+    "price_in_decimal": {
+      "type": ["null", "string"] 
+    },
+    "tiers": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null","object"],
+        "properties": {
+          "starting_unit": {
+            "type": ["null", "integer"]
+          },
+          "ending_unit": {
+            "type": ["null", "integer"]
+          },
+          "price": {
+            "type": ["null", "integer"]
+          },
+          "object": {
+            "type": ["null", "string"]
+          },
+          "starting_unit_in_decimal": {
+            "type": ["null", "string"]
+          },
+          "ending_unit_in_decimal": {
+            "type": ["null", "string"]
+          },
+          "price_in_decimal": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "invoice_name": {
+      "type": ["null", "string"]
+    },
+    "discount_type": {
+      "type": ["null", "string"]
+    },
+    "discount_percentage": {
+      "type": ["null", "number"]
+    },
+    "discount_amount": {
+      "type": ["null", "number"]
+    },
+    "currency_code": {
+      "type": ["null", "string"]
+    },
+    "duration_type": {
+      "type": ["null", "string"]
+    },
+    "valid_till": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "duration_month": {
+      "type": ["null", "integer"]
+    },
+    "max_redemptions": {
+      "type": ["null", "integer"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "apply_discount_on": {
+      "type": ["null", "string"]
+    },
+    "apply_on": {
+      "type": ["null", "string"]
+    },
+    "plan_constraint": {
+      "type": ["null", "string"]
+    },
+    "addon_constraint": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "archived_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "resource_version": {
+      "type": ["null", "integer"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "included_in_mrr": {
+      "type": ["null", "boolean"]
+    },
+    "period": {
+      "type": ["null", "integer"]
+    },
+    "period_unit": {
+      "type": ["null", "string"]
+    },
+    "object": {
+      "type": ["null", "string"]
+    },
+    "redemptions": {
+      "type": ["null", "integer"]
+    },
+    "plan_ids": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "string"]
+      }
+    },
+    "addon_ids": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "string"]
+      }
+    }, 
+    "invoice_notes": {
+      "type": ["null", "string"]
+    },
+    "meta_data": {
+      "type": ["null", "string"]
+    }
+  }
+}
