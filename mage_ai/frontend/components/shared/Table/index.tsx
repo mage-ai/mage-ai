@@ -21,6 +21,7 @@ type TableProps = {
     as: string;
     href: string;
   };
+  columnBorders?: boolean;
   columnFlex: number[];
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
@@ -29,13 +30,16 @@ type TableProps = {
   noBorder?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
+  stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
   uuid?: string;
+  wrapColumns?: boolean;
 };
 
 function Table({
   alignTop,
   buildLinkProps,
+  columnBorders,
   columnFlex,
   columnMaxWidth,
   columns = [],
@@ -44,8 +48,10 @@ function Table({
   noBorder,
   onClickRow,
   rows,
+  stickyFirstColumn,
   stickyHeader,
   uuid,
+  wrapColumns,
 }: TableProps) {
   const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), columnFlex);
   const calculateCellWidth = useCallback((idx: number) => {
@@ -62,12 +68,16 @@ function Table({
     const cellEls = cells.map((cell, colIndex) => (
       <TableDataStyle
         alignTop={alignTop}
+        columnBorders={columnBorders}
         compact={compact}
         key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
+        last={colIndex === cells.length - 1}
         maxWidth={columnMaxWidth?.(colIndex)}
         noBorder={noBorder}
         selected={isSelectedRow?.(rowIndex)}
+        stickyFirstColumn={stickyFirstColumn && colIndex === 0}
         width={calculateCellWidth(colIndex)}
+        wrapColumns={wrapColumns}
       >
         {cell}
       </TableDataStyle>
@@ -120,13 +130,15 @@ function Table({
   ]);
 
   return (
-    <TableStyle>
+    <TableStyle columnBorders={columnBorders}>
       {columns?.length >= 1 && (
         <TableRowStyle noHover>
           {columns.map((col, idx) => (
             <TableHeadStyle
+              columnBorders={columnBorders}
               compact={compact}
               key={`${uuid}-col-${col.uuid}-${idx}`}
+              last={idx === columns.length - 1}
               noBorder={noBorder}
               sticky={stickyHeader}
             >

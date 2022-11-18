@@ -3,9 +3,17 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export const TableStyle = styled.table`
+const ROW_HEIGHT = 20 + (UNIT * 2) + 2;
+
+export const TableStyle = styled.table<{
+  columnBorders?: boolean;
+}>`
   contain: size;
   width: 100%;
+
+  ${props => props.columnBorders && `
+    border-collapse: separate;
+  `}
 `;
 
 export const TableRowStyle = styled.tr<{
@@ -19,14 +27,16 @@ export const TableRowStyle = styled.tr<{
   `}
 `;
 
-
-const SHARED_STYLES = css<{
+type SHARED_TABLE_PROPS = {
   alignTop?: boolean;
+  columnBorders?: boolean;
   compact?: boolean;
   maxWidth?: string;
   noBorder?: boolean;
   selected?: boolean;
-}>`
+};
+
+const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
   text-overflow: ellipsis;
   white-space: nowrap;
 
@@ -55,12 +65,20 @@ const SHARED_STYLES = css<{
   `}
 `;
 
-export const TableHeadStyle = styled.th<{
-  compact?: boolean;
-  noBorder?: boolean;
+export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
+  last?: boolean;
   sticky?: boolean;
 }>`
   ${SHARED_STYLES}
+
+  ${props => props.columnBorders && `
+    border: 1px solid ${(props.theme.borders || dark.borders).light};
+    border-right: none;
+  `}
+
+  ${props => props.columnBorders && props.last && `
+    border-right: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
 
   ${props => props.sticky && `
     background-color: ${(props.theme || dark).background.panel};
@@ -70,10 +88,34 @@ export const TableHeadStyle = styled.th<{
   `}
 `;
 
-export const TableDataStyle = styled.td`
+export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
+  stickyFirstColumn?: boolean;
+  last?: boolean;
+  wrapColumns?: boolean;
+}>`
   ${SHARED_STYLES}
+
+  ${props => props.columnBorders && `
+    border-left: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.columnBorders && props.last && `
+    border-right: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.stickyFirstColumn && `
+    background-color: ${(props.theme || dark).background.rowHoverBackground};
+    z-index: 1;
+    position: sticky;
+    left: 0;
+    top: ${ROW_HEIGHT}px;
+  `}
 
   ${props => props.selected && `
     background-color: ${(props.theme.interactive || dark.interactive).activeBorder};
+  `}
+
+  ${props => props.wrapColumns && `
+    white-space: break-spaces;
   `}
 `;
