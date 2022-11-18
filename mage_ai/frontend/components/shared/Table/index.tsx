@@ -31,6 +31,7 @@ type TableProps = {
   rows: any[][];
   stickyHeader?: boolean;
   uuid?: string;
+  wrapColumns?: boolean;
 };
 
 function Table({
@@ -46,6 +47,7 @@ function Table({
   rows,
   stickyHeader,
   uuid,
+  wrapColumns,
 }: TableProps) {
   const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), columnFlex);
   const calculateCellWidth = useCallback((idx: number) => {
@@ -68,6 +70,7 @@ function Table({
         noBorder={noBorder}
         selected={isSelectedRow?.(rowIndex)}
         width={calculateCellWidth(colIndex)}
+        wrapColumns={wrapColumns}
       >
         {cell}
       </TableDataStyle>

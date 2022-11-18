@@ -70,10 +70,17 @@ export const TableHeadStyle = styled.th<{
   `}
 `;
 
-export const TableDataStyle = styled.td`
+export const TableDataStyle = styled.td<{
+  selected?: boolean;
+  wrapColumns?: boolean;
+}>`
   ${SHARED_STYLES}
 
   ${props => props.selected && `
     background-color: ${(props.theme.interactive || dark.interactive).activeBorder};
+  `}
+
+  ${props => props.wrapColumns && `
+    white-space: break-spaces;
   `}
 `;
