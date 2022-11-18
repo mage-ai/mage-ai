@@ -10,6 +10,7 @@ class PostgreSQL(Connection):
         password: str,
         username: str,
         port: int = None,
+        connection_factory=None,
     ):
         super().__init__()
         self.database = database
@@ -17,12 +18,16 @@ class PostgreSQL(Connection):
         self.password = password
         self.port = port or 5432
         self.username = username
+        self.connection_factory = connection_factory
 
     def build_connection(self):
-        return connect(
+        connect_kwargs = dict(
             dbname=self.database,
             host=self.host,
             password=self.password,
             port=self.port,
             user=self.username,
         )
+        if self.connection_factory is not None:
+            connect_kwargs['connection_factory'] = self.connection_factory
+        return connect(**connect_kwargs)

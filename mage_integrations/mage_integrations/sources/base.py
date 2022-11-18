@@ -3,6 +3,7 @@ from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
+    REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.messages import write_records, write_schema, write_state
 from mage_integrations.sources.utils import (
@@ -301,6 +302,7 @@ class Source:
         if stream.replication_method not in [
             REPLICATION_METHOD_FULL_TABLE,
             REPLICATION_METHOD_INCREMENTAL,
+            REPLICATION_METHOD_LOG_BASED,
         ]:
             message = f'Invalid replication_method {stream.replication_method}'
             self.logger.exception(message)
@@ -390,7 +392,8 @@ class Source:
                 state = {}
 
                 for idx, col in enumerate(bookmark_properties):
-                    singer.write_bookmark(state,
+                    singer.write_bookmark(
+                        state,
                         stream.tap_stream_id,
                         col,
                         max_bookmark[idx],
@@ -434,7 +437,8 @@ class Source:
                     state = {}
 
                     for idx, col in enumerate(bookmark_properties):
-                        singer.write_bookmark(state,
+                        singer.write_bookmark(
+                            state,
                             stream.tap_stream_id,
                             col,
                             row.get(col),
@@ -624,7 +628,10 @@ class Source:
         return bookmark_properties
 
     def __get_bookmarks_for_stream(self, stream) -> Dict:
-        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
+        if stream.replication_method in [
+            REPLICATION_METHOD_INCREMENTAL,
+            REPLICATION_METHOD_LOG_BASED,
+        ]:
             return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
 
 
