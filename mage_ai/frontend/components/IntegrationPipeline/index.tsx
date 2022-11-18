@@ -166,7 +166,7 @@ function IntegrationPipeline({
     () => setSelectedStream(catalog?.streams?.[0]?.tap_stream_id),
     [catalog],
   );
-  
+
   const catalogPrev = usePrevious(catalog);
   useEffect(() => {
     if (!catalogPrev && catalog) {
@@ -204,10 +204,10 @@ function IntegrationPipeline({
             },
           }) => {
             console.log(errors, message);
-          }
-        }
-      )
-    }
+          },
+        },
+      ),
+    },
   );
 
   const [
@@ -680,7 +680,7 @@ function IntegrationPipeline({
                 {isLoadingLoadSampleData && (
                   <Spacing mt={1}>
                     <FlexContainer>
-                      <Spinner color="white" small/> 
+                      <Spinner color="white" small/>
                       <Spacing ml={1} />
                       <Text small> Loading source data preview </Text>
                     </FlexContainer>
