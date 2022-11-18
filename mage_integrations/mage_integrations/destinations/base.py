@@ -169,6 +169,8 @@ class Destination():
         row: Dict,
         tags: Dict = {},
     ) -> None:
+        self.logger.info(f'{self.__class__.__name__} process record started.', tags=tags)
+
         self.export_data(
             record=self._validate_and_prepare_record(
                 stream=stream,
@@ -181,14 +183,36 @@ class Destination():
             tags=tags,
         )
 
+        self.logger.info(f'{self.__class__.__name__} process record completed.', tags=tags)
+
     def process_record_data(self, record_data: List[Dict], stream: str) -> None:
         batch_data = [dict(
             record=self._validate_and_prepare_record(**rd),
             stream=stream,
         ) for rd in record_data]
 
+        tags = dict(
+            records=len(batch_data),
+            stream=stream,
+        )
+
+        self.logger.info(
+            f'{self.__class__.__name__} process record data for stream {stream} started.',
+            tags=tags,
+        )
+
         if len(batch_data) >= 1:
             self.export_batch_data(batch_data, stream)
+
+            self.logger.info(
+                f'{self.__class__.__name__} process record data for stream {stream} completed.',
+                tags=tags,
+            )
+        else:
+            self.logger.info(
+                f'{self.__class__.__name__} process record data for stream {stream} empty.',
+                tags=tags,
+            )
 
     def process_schema(
         self,
@@ -221,6 +245,9 @@ class Destination():
             raise Exception(message)
 
     def process(self, input_buffer) -> None:
+        class_name = self.__class__.__name__
+        self.logger.info(f'{class_name} process started.')
+
         try:
             if self.should_test_connection:
                 self.logger.info('Testing connection...')
@@ -228,13 +255,15 @@ class Destination():
             else:
                 self._process(input_buffer)
         except Exception as err:
-            message = f'{self.__class__.__name__} process failed with error {err}.'
+            message = f'{class_name} process failed with error {err}.'
             self.logger.exception(message, tags=dict(
                 error=str(err),
                 errors=traceback.format_stack(),
                 message=traceback.format_exc(),
             ))
             raise Exception(message)
+
+        self.logger.info(f'{class_name} process completed.')
 
     def _process(self, input_buffer) -> None:
         self.bookmark_properties = {}

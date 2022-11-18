@@ -295,7 +295,8 @@ class Source:
         Raises:
             Exception: Invalid replication_method.
         """
-        self.logger.info(f'Syncing stream {stream.tap_stream_id}.')
+        tap_stream_id = stream.tap_stream_id
+        self.logger.info(f'Process stream {tap_stream_id} started.')
 
         if stream.replication_method not in [
             REPLICATION_METHOD_FULL_TABLE,
@@ -319,16 +320,27 @@ class Source:
                 extract_selected_columns(stream.metadata),
             )
 
-        write_schema(
+        schema_data = dict(
             bookmark_properties=self._get_bookmark_properties_for_stream(stream),
             key_properties=stream.key_properties,
             partition_keys=stream.partition_keys,
             replication_method=stream.replication_method,
             schema=schema_dict,
-            stream_name=stream.tap_stream_id,
+            stream_name=tap_stream_id,
             unique_conflict_method=stream.unique_conflict_method,
             unique_constraints=stream.unique_constraints,
         )
+        tags = dict(
+            schema=schema_data,
+            stream=tap_stream_id,
+        )
+        self.logger.info(f'Write schema {tap_stream_id} started.', tags=tags)
+
+        write_schema(**schema_data)
+
+        self.logger.info(f'Write schema {tap_stream_id} completed.', tags=tags)
+
+        self.logger.info(f'Process stream {tap_stream_id} completed.')
 
     def sync_stream(self, stream, properties: Dict = None) -> int:
         """
@@ -354,6 +366,14 @@ class Source:
         bookmark_properties = self._get_bookmark_properties_for_stream(stream)
         max_bookmark = []
 
+        tap_stream_id = stream.tap_stream_id
+        tags = dict(
+            query=self.query,
+            start_date=start_date,
+            stream=tap_stream_id,
+        )
+        self.logger.info(f'Load data for stream {tap_stream_id} started.', tags=tags)
+
         record_count = 0
         for rows in self.load_data(
             bookmarks=self.__get_bookmarks_for_stream(stream),
@@ -377,6 +397,10 @@ class Source:
                     )
 
                 write_state(state)
+
+        self.logger.info(f'Load data for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
+            records=record_count,
+        )))
 
         return record_count
 
@@ -437,16 +461,21 @@ class Source:
             catalog (Catalog): The catalog of streams
             properties (Dict): Optional argument to overwrite stream schema properties
         """
+        self.logger.info('Sync started.')
+
         for stream in catalog.get_selected_streams(self.state):
-            tags = dict(stream=stream.tap_stream_id)
-            self.logger.info('Syncing stream started.', tags=tags)
+            tap_stream_id = stream.tap_stream_id
+            tags = dict(stream=tap_stream_id)
+            self.logger.info(f'Sync for stream {tap_stream_id} started.', tags=tags)
 
             self.process_stream(stream, properties)
             record_count = self.sync_stream(stream, properties)
 
-            self.logger.info('Syncing stream completed.', tags=merge_dict(tags, dict(
+            self.logger.info(f'Sync for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
                 records=record_count,
             )))
+
+        self.logger.info('Sync completed.')
 
     def build_catalog_entry(self, stream_id: str, schema, **kwargs) -> CatalogEntry:
         """
