@@ -1,6 +1,7 @@
 import moment from 'moment';
 
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:SS';
+export const DATE_FORMAT_LONG_NO_SEC = 'YYYY-MM-DD HH:mm';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 
 export function formatDateShort(momentObj) {
@@ -11,12 +12,18 @@ export function dateFormatShort(text) {
   return formatDateShort(moment(text));
 }
 
-export function dateFormatLong(text) {
-  return moment(text).format('YYYY-MM-DD HH:mm');
+export function dateFormatLong(text, opts?) {
+  const { utcFormat } = opts;
+
+  if (utcFormat) {
+    return moment(text).utc().format(DATE_FORMAT_LONG_NO_SEC);
+  }
+
+  return moment(text).format(DATE_FORMAT_LONG_NO_SEC);
 }
 
 export function dateFormatLongFromUnixTimestamp(text) {
-  return moment.unix(text).format('YYYY-MM-DD HH:mm');
+  return moment.unix(text).format(DATE_FORMAT_LONG_NO_SEC);
 }
 
 export function isoDateFormatFromDateParts(

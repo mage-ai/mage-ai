@@ -78,9 +78,9 @@ function PipelineSchedules({
           }) => {
             console.log(errors, message);
           },
-        }
-      )
-    }
+        },
+      ),
+    },
   );
 
   const [updatePipelineSchedule] = useMutation(
