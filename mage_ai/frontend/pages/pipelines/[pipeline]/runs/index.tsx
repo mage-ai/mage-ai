@@ -84,6 +84,7 @@ function PipelineRuns({
     pipeline_uuid?: string;
     status?: RunStatusEnum;
   }>(null);
+  const [loadingButton, setLoadingButton] = useState<boolean>(false);
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
@@ -166,7 +167,8 @@ function PipelineRuns({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            // router.reload();
+            setLoadingButton(true);
+            setTimeout(() => setLoadingButton(false), 3000);
           },
         },
       ),
@@ -261,7 +263,7 @@ function PipelineRuns({
               >
                 <Button
                   beforeIcon={<PlayButton size={UNIT * 2} />}
-                  loading={isLoadingCreateSchedule}
+                  loading={isLoadingCreateSchedule || loadingButton}
                   // @ts-ignore
                   onClick={() => createSchedule({
                     pipeline_schedule: {
