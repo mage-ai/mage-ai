@@ -16,16 +16,6 @@ export type TooltipProps = {
 
 const MAX_WIDTH = UNIT * 42;
 
-const SHARED_CONTAINER_STYLES = css<{
-  size?: number;
-}>`
-  position: relative;
-
-  ${props => props.size && `
-    height: ${props.size}px;
-  `}
-`;
-
 const SHARED_STYLES = css<{
   width?: number;
 } & TooltipProps>`

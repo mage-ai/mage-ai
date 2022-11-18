@@ -77,6 +77,6 @@ TriggerDetailPage.getInitialProps= async(ctx: any) => {
   return {
     pipelineUUID,
   };
-}
+};
 
 export default TriggerDetailPage;

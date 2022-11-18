@@ -18,6 +18,7 @@ import PipelineRunType, {
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
@@ -143,7 +144,7 @@ function PipelineRuns({
   const {
     data: dataPipelineRuns,
     mutate: fetchPipelineRuns,
-  } = api.pipeline_runs.list(pipelineRunsRequestQuery);
+  } = api.pipeline_runs.list(pipelineRunsRequestQuery, { refreshInterval: 5000 });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
   const totalRuns = useMemo(() => dataPipelineRuns?.total_count || [], [dataPipelineRuns]);
 
@@ -165,9 +166,7 @@ function PipelineRuns({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            setTimeout(() => {
-              fetchPipelineRuns();
-            }, 5000);
+            // router.reload();
           },
         },
       ),
@@ -254,25 +253,31 @@ function PipelineRuns({
         <Spacing py={1}>
           <FlexContainer alignItems="center">
             <Spacing ml={2}>
-              <Button
-                beforeIcon={<PlayButton size={UNIT * 2} />}
-                loading={isLoadingCreateSchedule}
-                // @ts-ignore
-                onClick={() => createSchedule({
-                  pipeline_schedule: {
-                    name: randomNameGenerator(),
-                    schedule_interval: ScheduleIntervalEnum.ONCE,
-                    schedule_type: ScheduleTypeEnum.TIME,
-                    start_time: dateFormatLong(new Date().toISOString(), { utcFormat: true }),
-                    status: ScheduleStatusEnum.ACTIVE,
-                  },
-                })}
-                outline
-                primary
-                title="Creates an @once trigger and runs it immediately"
+              <Tooltip
+                default
+                fullSize
+                label="Creates an @once trigger and runs it immediately"
+                widthFitContent
               >
-                Run pipeline once
-              </Button>
+                <Button
+                  beforeIcon={<PlayButton size={UNIT * 2} />}
+                  loading={isLoadingCreateSchedule}
+                  // @ts-ignore
+                  onClick={() => createSchedule({
+                    pipeline_schedule: {
+                      name: randomNameGenerator(),
+                      schedule_interval: ScheduleIntervalEnum.ONCE,
+                      schedule_type: ScheduleTypeEnum.TIME,
+                      start_time: dateFormatLong(new Date().toISOString(), { utcFormat: true }),
+                      status: ScheduleStatusEnum.ACTIVE,
+                    },
+                  })}
+                  outline
+                  primary
+                >
+                  Run pipeline once
+                </Button>
+              </Tooltip>
             </Spacing>
             <ButtonTabs
               onClickTab={({ uuid }) => {
