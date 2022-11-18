@@ -588,6 +588,9 @@ function SchemaTable({
             <Text bold large>
               Key properties
             </Text>
+            <Text default>
+              Key properties are used as the primary key for the destination table.
+            </Text>
           </Spacing>
 
           <FlexContainer alignItems="center" flexWrap="wrap">
