@@ -3,7 +3,7 @@ from google.oauth2 import service_account
 from mage_integrations.connections.sql.base import Connection
 from mage_integrations.connections.utils.google import CredentialsInfoType
 from mage_integrations.connections.utils.sql import clean_query
-from typing import List
+from typing import List, Tuple
 
 
 class BigQuery(Connection):
@@ -30,24 +30,7 @@ class BigQuery(Connection):
         client = Client(credentials=self.credentials_info)
         return dbapi.Connection(client)
 
-    def execute(
-        self,
-        query_strings: List[str],
-        commit=False,
-    ) -> List[List[tuple]]:
-        connection = self.build_connection()
-
-        data = []
-
+    def execute_with_connection(self, connection, query_strings: List[str]) -> List[Tuple]:
         cursor = connection.cursor()
-        for query_string in query_strings:
-            cursor.execute(clean_query(query_string))
-            description = cursor.description
-            if description:
-                data.append(cursor.fetchall())
 
-        if commit:
-            connection.commit()
-        connection.close()
-
-        return data
+        return self.get_data_from_query_strings(cursor, query_strings)

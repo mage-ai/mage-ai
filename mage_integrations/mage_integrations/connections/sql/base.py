@@ -1,12 +1,18 @@
+from datetime import datetime
 from mage_integrations.connections.base import Connection as BaseConnection
 from mage_integrations.connections.utils.sql import clean_query
 from mage_integrations.utils.dictionary import merge_dict
-from typing import List
+from typing import List, Tuple
+import re
 
 
 class Connection(BaseConnection):
     def close_connection(self, connection):
         connection.close()
+
+    def execute_with_connection(self, connection, query_strings: List[str]) -> List[Tuple]:
+        with connection.cursor() as cursor:
+            return self.get_data_from_query_strings(cursor, query_strings)
 
     def execute(
         self,
@@ -15,19 +21,42 @@ class Connection(BaseConnection):
     ) -> List[List[tuple]]:
         connection = self.build_connection()
 
-        data = []
-
-        with connection.cursor() as cursor:
-            for query_string in query_strings:
-                cursor.execute(clean_query(query_string))
-                description = cursor.description
-                if description:
-                    data.append(cursor.fetchall())
+        data = self.execute_with_connection(connection, query_strings)
 
         if commit:
             connection.commit()
 
         self.close_connection(connection)
+
+        return data
+
+    def get_data_from_query_strings(self, cursor, query_strings):
+        data = []
+
+        for query_string in query_strings:
+            qs = query_string.strip().upper()
+            message = 'Execute generic command'
+            if re.match('^CREATE[ ]+TABLE', qs):
+                message = 'Execute create table command'
+            elif re.match('^CREATE[ ]+SCHEMA', qs):
+                message = 'Execute create schema command'
+            elif re.match('^INSERT', qs):
+                message = 'Execute insert command'
+            elif re.match('^ALTER[ ]+TABLE', qs):
+                message = 'Execute alter table command'
+
+            self.logger.info(f'{message} started.')
+            now1 = datetime.utcnow().timestamp()
+
+            cursor.execute(clean_query(query_string))
+            description = cursor.description
+            if description:
+                data.append(cursor.fetchall())
+
+            now2 = datetime.utcnow().timestamp()
+            self.logger.info(f'{message} completed.', tags=dict(
+                time=now2 - now1,
+            ))
 
         return data
 
