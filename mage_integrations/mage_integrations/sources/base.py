@@ -135,7 +135,6 @@ class Source:
         Returns:
             Catalog: Description
         """
-        streams = []
         catalog_entries = []
         for stream_id, schema in self.load_schemas_from_folder().items():
             if not streams or stream_id in streams:

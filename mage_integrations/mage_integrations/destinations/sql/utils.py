@@ -127,6 +127,7 @@ def column_type_mapping(
             )
 
         mapping[column] = dict(
+            column_settings=column_settings,
             item_type=item_type,
             item_type_converted=item_type_converted,
             type=column_type,
@@ -144,7 +145,10 @@ def build_insert_command(
     column_type_mapping: Dict,
     columns: List[str],
     records: List[Dict],
+    convert_array_func: Callable = None,
     convert_column_to_type_func: Callable = convert_column_to_type,
+    convert_datetime_func: Callable = None,
+    string_parse_func: Callable = None,
 ) -> List[str]:
     values = []
     for row in records:
@@ -155,6 +159,7 @@ def build_insert_command(
             column_type_dict = column_type_mapping[column]
             column_type = column_type_dict['type']
             column_type_converted = column_type_dict['type_converted']
+            column_settings = column_type_dict['column_settings']
 
             value_final = 'NULL'
             if v is not None:
@@ -162,13 +167,20 @@ def build_insert_command(
                     if type(v) is str:
                         v = literal_eval(v)
 
-                    value_final = [str(s).replace("'", "''") for s in v]
-                    value_final = f"'{{{', '.join(value_final)}}}'"
+                    if convert_array_func:
+                        value_final = convert_array_func(v, column_type_dict)
+                    else:
+                        value_final = [str(s).replace("'", "''") for s in v]
+                        value_final = f"'{{{', '.join(value_final)}}}'"
+                elif COLUMN_FORMAT_DATETIME == column_settings.get('format') and convert_datetime_func:
+                    value_final = convert_datetime_func(v, column_type_dict)
                 else:
                     value_final = convert_column_to_type_func(
                         str(v).replace("'", "''"),
                         column_type_converted,
                     )
+                    if string_parse_func:
+                        value_final = string_parse_func(value_final)
 
             vals.append(value_final)
         values.append(f"({', '.join(vals)})")

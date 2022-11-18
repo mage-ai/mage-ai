@@ -1,7 +1,9 @@
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.utils import (
+    convert_array,
     convert_column_to_type,
     convert_column_type,
+    convert_datetime,
 )
 from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.sql.base import Destination, main
@@ -38,7 +40,7 @@ class BigQuery(Destination):
         type_mapping = column_type_mapping(
             schema,
             convert_column_type,
-            lambda item_type_converted: 'ARRAY',
+            lambda item_type_converted: f'ARRAY<{item_type_converted}>',
             number_type='FLOAT64',
             string_type='STRING',
         )
@@ -81,9 +83,9 @@ SELECT
 FROM {schema_name}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}'
         """)
-        current_columns = [r[0] for r in results]
+        current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if c not in current_columns]
+        new_columns = [c for c in schema_columns if c.lower() not in current_columns]
 
         if not new_columns:
             return []
@@ -94,7 +96,7 @@ WHERE TABLE_NAME = '{table_name}'
                 column_type_mapping=column_type_mapping(
                     schema,
                     convert_column_type,
-                    lambda item_type_converted: 'ARRAY',
+                    lambda item_type_converted: f'ARRAY<{item_type_converted}>',
                     number_type='FLOAT64',
                     string_type='STRING',
                 ),
@@ -127,8 +129,11 @@ WHERE TABLE_NAME = '{table_name}'
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=mapping,
             columns=columns,
+            convert_array_func=convert_array,
             convert_column_to_type_func=convert_column_to_type,
+            convert_datetime_func=convert_datetime,
             records=records,
+            string_parse_func=lambda x: x.replace('\n', '\\n')
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -175,7 +180,7 @@ WHERE TABLE_NAME = '{table_name}'
             ]
 
         return [
-            f'INSERT INTO {full_table_name} ({insert_columns}) VALUES {insert_values}',
+            f'INSERT INTO {full_table_name} ({insert_columns}) VALUES {insert_values}; SELECT @@row_count;',
         ]
 
     def does_table_exist(

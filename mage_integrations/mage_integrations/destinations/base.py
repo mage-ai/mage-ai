@@ -326,6 +326,7 @@ class Destination():
                 self.logger.exception(message, tags=tags)
                 raise Exception(message)
 
+        errors = []
         stream_states = {}
         for stream, batches in batches_by_stream.items():
             record_data = batches['record_data']
@@ -340,7 +341,7 @@ class Destination():
                     if len(states) >= 1:
                         stream_states[stream] = states[-1]
                 except Exception as err:
-                    print(f'Error processing record data for stream {stream}: {err}.')
+                    errors.append(err)
 
         if len(stream_states.values()) >= 1:
             bookmarks = {}
@@ -350,6 +351,9 @@ class Destination():
             self.process_state(row={
                 KEY_VALUE: dict(bookmarks=bookmarks),
             })
+
+        for err in errors:
+            raise err
 
     def _emit_state(self, state):
         if state:
