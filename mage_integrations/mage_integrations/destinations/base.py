@@ -1,5 +1,7 @@
 from jsonschema.validators import Draft4Validator
 from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_ARRAY,
+    COLUMN_TYPE_OBJECT,
     KEY_BOOKMARK_PROPERTIES,
     KEY_KEY_PROPERTIES,
     KEY_PARTITION_KEYS,
@@ -26,6 +28,7 @@ from mage_integrations.utils.logger.constants import (
 )
 from os.path import isfile
 from typing import Dict, List
+import ast
 import inspect
 import io
 import json
@@ -414,6 +417,25 @@ class Destination():
 
         record = row.get(KEY_RECORD)
 
-        self.validators[stream].validate(record)
+        record_adjusted = record.copy()
 
-        return flatten_record(record)
+        for k, v in record.items():
+            if COLUMN_TYPE_ARRAY not in schema['properties'][k]['type']:
+                continue
+
+            v1 = record[k]
+            if not v1:
+                continue
+
+            if type(v1) is list:
+                if COLUMN_TYPE_OBJECT in schema['properties'][k]['items']['type']:
+                    record_adjusted[k] = [json.loads(s) if type(s) is str else s for s in v1]
+            elif type(v1) is str:
+                try:
+                    record_adjusted[k] = json.loads(v1)
+                except json.decoder.JSONDecodeError:
+                    record_adjusted[k] = ast.literal_eval(v1)
+
+        self.validators[stream].validate(record_adjusted)
+
+        return flatten_record(record_adjusted)
