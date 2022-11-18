@@ -829,8 +829,8 @@ class Block:
                     print_logs_from_output(output)
                     outputs.append(output)
                 elif BlockType.TRANSFORMER == self.type:
-                    selected_streams = self.template_runtime_configuration.get('selected_streams')
-                    stream = selected_streams[0] if len(selected_streams) else None
+                    selected_streams = self.template_runtime_configuration.get('selected_streams', [])
+                    stream = selected_streams[0] if len(selected_streams) >= 1 else None
 
                     input_from_previous = input_from_output['output'][0]
 

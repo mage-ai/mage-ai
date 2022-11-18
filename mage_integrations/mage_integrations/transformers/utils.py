@@ -1,5 +1,6 @@
-from typing import Dict
+from mage_integrations.sources.constants import COLUMN_TYPE_NUMBER, COLUMN_TYPE_STRING, COLUMN_TYPES
 from pandas.api.types import infer_dtype
+from typing import Dict
 import pandas as pd
 
 
@@ -22,5 +23,16 @@ def write_parquet_file(file_path: str, df: pd.DataFrame) -> None:
                 df_output[c] = series_non_null.astype(str)
     df_output.to_parquet(file_path)
 
+
 def infer_dtypes(df: pd.DataFrame) -> Dict[str, str]:
     return {column: infer_dtype(df[column], skipna=True) for column in df.columns}
+
+
+def convert_data_type(v) -> str:
+    if v in INVALID_DATA_TYPES:
+        return COLUMN_TYPE_STRING
+    elif 'floating' == v:
+        return COLUMN_TYPE_NUMBER
+    elif v not in COLUMN_TYPES:
+        return COLUMN_TYPE_STRING
+    return v

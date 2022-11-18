@@ -3,7 +3,11 @@ from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.constants import KEY_VALUE
 from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
 from mage_integrations.sources.base import Source
-from mage_integrations.transformers.utils import INVALID_DATA_TYPES, infer_dtypes, write_parquet_file
+from mage_integrations.transformers.utils import (
+    convert_data_type,
+    infer_dtypes,
+    write_parquet_file,
+)
 from mage_integrations.utils.logger import Logger
 from typing import Dict, Generator, List
 
@@ -41,7 +45,7 @@ class Transformer(Source, Destination):
                 df_file_path = args.df_file_path
             if args.to_df:
                 to_df = args.to_df
-        
+
         self.bookmark_properties = None
         self.key_properties = None
         self.logger = Logger(caller=self, log_to_stdout=log_to_stdout, logger=logger)
@@ -118,7 +122,7 @@ class Transformer(Source, Destination):
             self._process(input_buffer)
 
             df = pd.DataFrame(data=self.data, columns=self.columns)
-            
+
             if os.path.exists(self.df_file_path):
                 os.remove(self.df_file_path)
 
@@ -151,16 +155,25 @@ class Transformer(Source, Destination):
             current = current + BATCH_FETCH_LIMIT
 
     def process(self, input_buffer) -> None:
-        if self.to_df:
-            self.transform_input(input_buffer)
-        else:
-            catalog = self.catalog or self.discover(streams=self.selected_streams)
-            dtypes = {
-                k: dict(type=['null', 'string' if v in INVALID_DATA_TYPES else v])
-                for k, v in infer_dtypes(self.df).items()
-            }
+        try:
+            if self.to_df:
+                self.transform_input(input_buffer)
+            else:
+                catalog = self.catalog or self.discover(streams=self.selected_streams)
+                dtypes = {
+                    k: dict(type=['null', convert_data_type(v)])
+                    for k, v in infer_dtypes(self.df).items()
+                }
 
-            self.sync(catalog, dtypes)
+                self.sync(catalog, dtypes)
+        except Exception as err:
+            message = f'{self.__class__.__name__} process failed with error {str(err)}.'
+            self.logger.exception(message, tags=dict(
+                error=str(err),
+                errors=traceback.format_stack(),
+                message=traceback.format_exc(),
+            ))
+            raise Exception(message)
 
 
 if __name__ == '__main__':
