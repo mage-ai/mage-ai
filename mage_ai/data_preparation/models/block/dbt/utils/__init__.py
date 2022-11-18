@@ -219,6 +219,8 @@ def get_profile(block, profile_target: str = None) -> Dict:
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
     profile = get_profile(block, profile_target)
 
+    if not profile:
+        raise Exception(f'No profile target named {profile_target}, check the profiles.yml file.')
     profile_type = profile.get('type')
 
     config_file_loader = None
