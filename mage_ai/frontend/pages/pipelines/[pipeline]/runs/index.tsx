@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
-import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
@@ -18,7 +16,6 @@ import PipelineRunType, {
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
-import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
@@ -28,22 +25,13 @@ import usePrevious from '@utils/usePrevious';
 import {
   BlocksSeparated,
   PipelineRun,
-  PlayButton,
 } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
-import {
-  ScheduleIntervalEnum,
-  ScheduleStatusEnum,
-  ScheduleTypeEnum,
-} from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { dateFormatLong } from '@utils/date';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
-import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
-import { randomNameGenerator } from '@utils/string';
 
 const TAB_URL_PARAM = 'tab';
 
@@ -84,7 +72,6 @@ function PipelineRuns({
     pipeline_uuid?: string;
     status?: RunStatusEnum;
   }>(null);
-  const [loadingButton, setLoadingButton] = useState<boolean>(false);
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
@@ -160,20 +147,6 @@ function PipelineRuns({
     selectedTab,
     selectedTabPrev,
   ]);
-
-  const [createSchedule, { isLoading: isLoadingCreateSchedule }] = useMutation(
-    api.pipeline_schedules.pipelines.useCreate(pipelineUUID),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            setLoadingButton(true);
-            setTimeout(() => setLoadingButton(false), 3000);
-          },
-        },
-      ),
-    },
-  );
 
   const tablePipelineRuns = useMemo(() => {
     const page = q?.page ? q.page : 0;
@@ -254,33 +227,6 @@ function PipelineRuns({
       <PageSectionHeader>
         <Spacing py={1}>
           <FlexContainer alignItems="center">
-            <Spacing ml={2}>
-              <Tooltip
-                default
-                fullSize
-                label="Creates an @once trigger and runs it immediately"
-                widthFitContent
-              >
-                <Button
-                  beforeIcon={<PlayButton size={UNIT * 2} />}
-                  loading={isLoadingCreateSchedule || loadingButton}
-                  // @ts-ignore
-                  onClick={() => createSchedule({
-                    pipeline_schedule: {
-                      name: randomNameGenerator(),
-                      schedule_interval: ScheduleIntervalEnum.ONCE,
-                      schedule_type: ScheduleTypeEnum.TIME,
-                      start_time: dateFormatLong(new Date().toISOString(), { utcFormat: true }),
-                      status: ScheduleStatusEnum.ACTIVE,
-                    },
-                  })}
-                  outline
-                  primary
-                >
-                  Run pipeline once
-                </Button>
-              </Tooltip>
-            </Spacing>
             <ButtonTabs
               onClickTab={({ uuid }) => {
                 setQuery(null);
