@@ -21,6 +21,7 @@ type TableProps = {
     as: string;
     href: string;
   };
+  columnBorders?: boolean;
   columnFlex: number[];
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
@@ -37,6 +38,7 @@ type TableProps = {
 function Table({
   alignTop,
   buildLinkProps,
+  columnBorders,
   columnFlex,
   columnMaxWidth,
   columns = [],
@@ -64,6 +66,7 @@ function Table({
     const cellEls = cells.map((cell, colIndex) => (
       <TableDataStyle
         alignTop={alignTop}
+        columnBorders={columnBorders}
         compact={compact}
         key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
         maxWidth={columnMaxWidth?.(colIndex)}
@@ -129,6 +132,7 @@ function Table({
           {columns.map((col, idx) => (
             <TableHeadStyle
               compact={compact}
+              columnBorders={columnBorders}
               key={`${uuid}-col-${col.uuid}-${idx}`}
               noBorder={noBorder}
               sticky={stickyHeader}

@@ -61,6 +61,7 @@ function SchemaSettings({
       <TableContainerStyle>
         <Table
           alignTop
+          columnBorders
           columnFlex={columns.map(_ => 1)}
           columns={columns}
           rows={streams.map(({

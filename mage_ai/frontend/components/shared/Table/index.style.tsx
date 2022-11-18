@@ -19,14 +19,15 @@ export const TableRowStyle = styled.tr<{
   `}
 `;
 
-
-const SHARED_STYLES = css<{
+type SHARED_TABLE_PROPS = {
   alignTop?: boolean;
   compact?: boolean;
   maxWidth?: string;
   noBorder?: boolean;
   selected?: boolean;
-}>`
+};
+
+const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
   text-overflow: ellipsis;
   white-space: nowrap;
 
@@ -55,12 +56,16 @@ const SHARED_STYLES = css<{
   `}
 `;
 
-export const TableHeadStyle = styled.th<{
-  compact?: boolean;
-  noBorder?: boolean;
+export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
+  columnBorders?: boolean;
   sticky?: boolean;
 }>`
   ${SHARED_STYLES}
+
+  ${props => props.columnBorders && `
+    background-color: ${(props.theme || dark).background.panel};
+    border: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
 
   ${props => props.sticky && `
     background-color: ${(props.theme || dark).background.panel};
@@ -70,11 +75,16 @@ export const TableHeadStyle = styled.th<{
   `}
 `;
 
-export const TableDataStyle = styled.td<{
-  selected?: boolean;
+export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
+  columnBorders?: boolean;
   wrapColumns?: boolean;
 }>`
   ${SHARED_STYLES}
+
+  ${props => props.columnBorders && `
+    border-left: 1px solid ${(props.theme.borders || dark.borders).light};
+    border-right: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
 
   ${props => props.selected && `
     background-color: ${(props.theme.interactive || dark.interactive).activeBorder};
