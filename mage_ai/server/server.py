@@ -62,6 +62,7 @@ from mage_ai.server.api.orchestration import (
     ApiBlockRunOutputHandler,
     ApiPipelineRunListHandler,
     ApiPipelineRunLogHandler,
+    ApiPipelineRunVariablesHandler,
     ApiPipelineScheduleDetailHandler,
     ApiPipelineScheduleListHandler,
 )
@@ -509,6 +510,10 @@ def make_app():
             ApiAllBlockRunListHandler,
         ),
         (r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/logs', ApiPipelineRunLogHandler),
+        (
+            r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/variables',
+            ApiPipelineRunVariablesHandler,
+        ),
         (
             r'/api/pipeline_schedules',
             ApiPipelineScheduleListHandler,

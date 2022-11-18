@@ -133,6 +133,7 @@ class Snowflake(Destination):
         data: List[List[Tuple]],
         unique_constraints: List[str] = None,
         unique_conflict_method: str = None,
+        **kwargs,
     ) -> Tuple:
         records_inserted = 0
         records_updated = 0

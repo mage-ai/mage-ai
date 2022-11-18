@@ -261,6 +261,17 @@ class ApiPipelineRunLogHandler(BaseHandler):
         )
 
 
+class ApiPipelineRunVariablesHandler(BaseHandler):
+    def get(self, pipeline_run_id):
+        pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
+
+        self.write(
+            dict(
+                variables=pipeline_run.output_variables,
+            ),
+        )
+
+
 class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
     datetime_keys = ['start_time']
     model_class = PipelineSchedule

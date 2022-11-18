@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from mage_ai.shared.array import find
 from mage_ai.shared.hash import group_by, merge_dict
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from sqlalchemy.orm import joinedload
@@ -10,6 +11,8 @@ import enum
 class MonitorStatsType(str, enum.Enum):
     PIPELINE_RUN_COUNT = 'pipeline_run_count'
     PIPELINE_RUN_TIME = 'pipeline_run_time'
+    PIPELINE_RUN_ROWS_INSERTED = 'pipeline_run_rows_inserted'
+    PIPELINE_RUN_ROWS_UPDATED = 'pipeline_run_rows_updated'
     BLOCK_RUN_COUNT = 'block_run_count'
     BLOCK_RUN_TIME = 'block_run_time'
 
@@ -44,6 +47,10 @@ class MonitorStats:
             return self.get_block_run_count(**new_kwargs)
         elif stats_type == MonitorStatsType.BLOCK_RUN_TIME:
             return self.get_block_run_time(**new_kwargs)
+        elif stats_type == MonitorStatsType.PIPELINE_RUN_ROWS_INSERTED:
+            return self.get_integration_metric('records_inserted', **new_kwargs)
+        elif stats_type == MonitorStatsType.PIPELINE_RUN_ROWS_UPDATED:
+            return self.get_integration_metric('records_updated', **new_kwargs)
 
     def get_pipeline_run_count(
         self,
@@ -150,6 +157,46 @@ class MonitorStats:
             return sum(runtime_list) / len(runtime_list)
 
         return self.__cal_block_run_stats(block_runs, __stats_func)
+
+    def get_integration_metric(
+        self,
+        metric_name,
+        pipeline_uuid: str = None,
+        start_time: datetime = None,
+        end_time: datetime = None,
+        **kwargs,
+    ) -> Dict:
+        pipeline_runs = self.__filter_pipeline_runs(
+            pipeline_uuid=pipeline_uuid,
+            start_time=start_time,
+            end_time=end_time,
+            **kwargs,
+        )
+        pipeline_runs = pipeline_runs.filter(PipelineRun.completed_at != None).all()
+
+        data = dict()
+
+        for p in pipeline_runs:
+            run_variables = p.output_variables
+            for block_name, variables in run_variables.items():
+                stream_name = block_name.split(':')[-1]
+                tags_variable = find(lambda v: v['variable_uuid'] == f'tags_{stream_name}', variables)
+                tags = dict()
+                if tags_variable is not None:
+                    tags = tags_variable['data']
+                if tags is not None and metric_name in tags:
+                    created_at_formatted = p.created_at.strftime('%Y-%m-%d')
+                    if created_at_formatted not in data:
+                        data[created_at_formatted] = dict()
+                    if stream_name not in data[created_at_formatted]:
+                        data[created_at_formatted][stream_name] = tags[metric_name]
+                    else:
+                        data[created_at_formatted][stream_name] += tags[metric_name]
+
+                print(data)
+
+        return data
+                
 
     def __filter_pipeline_runs(
         self,
