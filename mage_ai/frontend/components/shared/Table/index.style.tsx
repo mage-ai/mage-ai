@@ -3,9 +3,15 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export const TableStyle = styled.table`
+export const TableStyle = styled.table<{
+  columnBorders?: boolean;
+}>`
   contain: size;
   width: 100%;
+
+  ${props => props.columnBorders && `
+    border-collapse: separate;
+  `}
 `;
 
 export const TableRowStyle = styled.tr<{
@@ -21,6 +27,7 @@ export const TableRowStyle = styled.tr<{
 
 type SHARED_TABLE_PROPS = {
   alignTop?: boolean;
+  columnBorders?: boolean;
   compact?: boolean;
   maxWidth?: string;
   noBorder?: boolean;
@@ -57,14 +64,18 @@ const SHARED_STYLES = css<SHARED_TABLE_PROPS>`
 `;
 
 export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
-  columnBorders?: boolean;
+  last?: boolean;
   sticky?: boolean;
 }>`
   ${SHARED_STYLES}
 
   ${props => props.columnBorders && `
-    background-color: ${(props.theme || dark).background.panel};
     border: 1px solid ${(props.theme.borders || dark.borders).light};
+    border-right: none;
+  `}
+
+  ${props => props.columnBorders && props.last && `
+    border-right: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
 
   ${props => props.sticky && `
@@ -76,13 +87,16 @@ export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
 `;
 
 export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
-  columnBorders?: boolean;
+  last?: boolean;
   wrapColumns?: boolean;
 }>`
   ${SHARED_STYLES}
 
   ${props => props.columnBorders && `
     border-left: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.columnBorders && props.last && `
     border-right: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
 

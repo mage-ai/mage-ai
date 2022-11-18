@@ -69,6 +69,7 @@ function Table({
         columnBorders={columnBorders}
         compact={compact}
         key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
+        last={colIndex === cells.length - 1}
         maxWidth={columnMaxWidth?.(colIndex)}
         noBorder={noBorder}
         selected={isSelectedRow?.(rowIndex)}
@@ -131,9 +132,10 @@ function Table({
         <TableRowStyle noHover>
           {columns.map((col, idx) => (
             <TableHeadStyle
-              compact={compact}
               columnBorders={columnBorders}
+              compact={compact}
               key={`${uuid}-col-${col.uuid}-${idx}`}
+              last={idx === columns.length - 1}
               noBorder={noBorder}
               sticky={stickyHeader}
             >

@@ -86,7 +86,10 @@ function SchemaSettings({
             ];
 
             return values.map((value: string | string[], idx: number) => (
-              <Text key={idx}>
+              <Text
+                bold={idx === 0}
+                key={idx}
+              >
                 {Array.isArray(value)
                   ? value.join(', ')
                   : value
@@ -94,6 +97,7 @@ function SchemaSettings({
               </Text>
             ));
           })}
+          stickyHeader
           wrapColumns
         />
       </TableContainerStyle>
