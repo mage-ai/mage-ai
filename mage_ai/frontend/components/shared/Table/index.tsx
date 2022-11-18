@@ -30,6 +30,7 @@ type TableProps = {
   noBorder?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
+  stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
   uuid?: string;
   wrapColumns?: boolean;
@@ -47,6 +48,7 @@ function Table({
   noBorder,
   onClickRow,
   rows,
+  stickyFirstColumn,
   stickyHeader,
   uuid,
   wrapColumns,
@@ -73,6 +75,7 @@ function Table({
         maxWidth={columnMaxWidth?.(colIndex)}
         noBorder={noBorder}
         selected={isSelectedRow?.(rowIndex)}
+        stickyFirstColumn={stickyFirstColumn && colIndex === 0}
         width={calculateCellWidth(colIndex)}
         wrapColumns={wrapColumns}
       >
@@ -127,7 +130,7 @@ function Table({
   ]);
 
   return (
-    <TableStyle>
+    <TableStyle columnBorders={columnBorders}>
       {columns?.length >= 1 && (
         <TableRowStyle noHover>
           {columns.map((col, idx) => (

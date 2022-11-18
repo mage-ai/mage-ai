@@ -3,6 +3,8 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+const ROW_HEIGHT = 20 + (UNIT * 2) + 2;
+
 export const TableStyle = styled.table<{
   columnBorders?: boolean;
 }>`
@@ -87,6 +89,7 @@ export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
 `;
 
 export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
+  stickyFirstColumn?: boolean;
   last?: boolean;
   wrapColumns?: boolean;
 }>`
@@ -98,6 +101,14 @@ export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
 
   ${props => props.columnBorders && props.last && `
     border-right: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.stickyFirstColumn && `
+    background-color: ${(props.theme || dark).background.rowHoverBackground};
+    z-index: 1;
+    position: sticky;
+    left: 0;
+    top: ${ROW_HEIGHT}px;
   `}
 
   ${props => props.selected && `
