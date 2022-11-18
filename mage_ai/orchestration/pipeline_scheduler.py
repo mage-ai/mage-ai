@@ -343,7 +343,9 @@ def run_integration_pipeline(
                     index=index,
                     selected_streams=[tap_stream_id],
                 )),
-            ] + [(br, {}) for br in transformer_block_runs] + [
+            ] + [(br, dict(
+                    selected_streams=[tap_stream_id],
+                )) for br in transformer_block_runs] + [
                 (data_exporter_block_run, dict(destination_table=destination_table)),
             ]
 
