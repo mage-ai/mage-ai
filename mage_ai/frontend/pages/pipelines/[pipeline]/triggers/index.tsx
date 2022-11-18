@@ -14,17 +14,29 @@ import Link from '@oracle/elements/Link';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
+  ScheduleIntervalEnum,
   ScheduleStatusEnum,
+  ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import PopupMenu from '@oracle/components/PopupMenu';
 import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import { Add, Edit, Pause, PlayButtonFilled, TodoList, Trash } from '@oracle/icons';
+import {
+  Add,
+  Edit,
+  Pause,
+  PlayButton,
+  PlayButtonFilled,
+  TodoList,
+  Trash,
+} from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { dateFormatLong } from '@utils/date';
 import { getFormattedVariables } from '@components/Sidekick/utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -57,7 +69,7 @@ function PipelineSchedules({
   const pipelinesSchedules: PipelineScheduleType[] =
     useMemo(() => dataPipelineSchedules?.pipeline_schedules || [], [dataPipelineSchedules]);
 
-  const [createSchedule, { isLoading: isLoadingCreateSchedule }] = useMutation(
+  const useCreateScheduleMutation = (onSuccessCallback) => useMutation(
     api.pipeline_schedules.pipelines.useCreate(pipelineUUID),
     {
       onSuccess: (response: any) => onSuccess(
@@ -66,10 +78,9 @@ function PipelineSchedules({
             pipeline_schedule: {
               id,
             },
-          }) => router.push(
-            '/pipelines/[pipeline]/triggers/[...slug]',
-            `/pipelines/${pipeline?.uuid}/triggers/${id}/edit`,
-          ),
+          }) => {
+            onSuccessCallback?.(id);
+          },
           onErrorCallback: ({
             error: {
               errors,
@@ -82,6 +93,14 @@ function PipelineSchedules({
       ),
     },
   );
+  const [createNewSchedule, { isLoading: isLoadingCreateNewSchedule }] = useCreateScheduleMutation(
+    (pipelineScheduleId) => router.push(
+      '/pipelines/[pipeline]/triggers/[...slug]',
+      `/pipelines/${pipeline?.uuid}/triggers/${pipelineScheduleId}/edit`,
+    ),
+  );
+  const [createOnceSchedule, { isLoading: isLoadingCreateOnceSchedule }] =
+    useCreateScheduleMutation(fetchPipelineSchedules);
 
   const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -203,10 +222,10 @@ function PipelineSchedules({
           beforeElement={<Add size={2.5 * UNIT} />}
           blackBorder
           inline
-          loading={isLoadingCreateSchedule}
+          loading={isLoadingCreateNewSchedule}
           noHoverUnderline
           // @ts-ignore
-          onClick={() => createSchedule({
+          onClick={() => createNewSchedule({
             pipeline_schedule: {
               name: randomNameGenerator(),
             },
@@ -222,9 +241,39 @@ function PipelineSchedules({
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-        <Headline level={5}>
-          Pipeline triggers
-        </Headline>
+        <FlexContainer justifyContent="space-between">
+          <Headline level={5}>
+            Pipeline triggers
+          </Headline>
+          <Tooltip
+            appearBefore
+            default
+            fullSize
+            label="Creates an @once trigger and runs it immediately"
+            widthFitContent
+          >
+            <Button
+              beforeIcon={<PlayButton size={UNIT * 2} />}
+              loading={isLoadingCreateOnceSchedule}
+              onClick={() => {
+                // @ts-ignore
+                createOnceSchedule({
+                  pipeline_schedule: {
+                    name: randomNameGenerator(),
+                    schedule_interval: ScheduleIntervalEnum.ONCE,
+                    schedule_type: ScheduleTypeEnum.TIME,
+                    start_time: dateFormatLong(new Date().toISOString(), { utcFormat: true }),
+                    status: ScheduleStatusEnum.ACTIVE,
+                  },
+                });
+              }}
+              outline
+              primary
+            >
+              Run sync now
+            </Button>
+          </Tooltip>
+        </FlexContainer>
       </Spacing>
 
       <Divider light mt={PADDING_UNITS} short />
