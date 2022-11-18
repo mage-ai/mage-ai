@@ -19,6 +19,7 @@ export type TooltipWrapperProps = {
   default?: boolean;
   description?: any | string;
   height?: number;
+  fullSize?: boolean;
   inline?: boolean;
   label?: string | any;
   leftPosition?: number;
@@ -44,6 +45,10 @@ const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
   ${props => props.size && `
     height: ${props.size}px;
   `}
+
+  ${props => props.size && `
+    height: 100%;
+  `}
 `;
 
 const ContainerStyle = styled.div`
@@ -60,6 +65,11 @@ const HoverStyle = styled.a<TooltipWrapperProps>`
   ${props => props.size && `
     height: ${props.size}px;
     width: ${props.size}px;
+  `}
+
+  ${props => props.fullSize && `
+    height: 100%;
+    width: 100%;
   `}
 
   border-radius: 50%;
@@ -141,6 +151,7 @@ function TooltipWrapper({
   center,
   children,
   content,
+  fullSize,
   height,
   inline,
   minWidth,
@@ -162,6 +173,7 @@ function TooltipWrapper({
     // @ts-ignore
     <El
       block={block}
+      fullSize={fullSize}
       href="#"
       noHoverOutline={noHoverOutline}
       onClick={e => e.preventDefault()}
@@ -189,6 +201,7 @@ function TooltipWrapper({
 
   return (
     <ContainerEl
+      fullSize={fullSize}
       height={height}
       onMouseLeave={() => {
         setVisibleInterval(false);

@@ -176,8 +176,8 @@ function Edit({
         const currentDatetime = new Date();
         setDate(currentDatetime);
         setTime({
-          hour: String(currentDatetime.getUTCHours()),
-          minute: String(currentDatetime.getUTCMinutes()),
+          hour: String(currentDatetime.getUTCHours()).padStart(2, '0'),
+          minute: String(currentDatetime.getUTCMinutes()).padStart(2, '0'),
         });
       }
     },
