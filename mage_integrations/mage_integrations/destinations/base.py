@@ -340,7 +340,7 @@ class Destination():
                     if len(states) >= 1:
                         stream_states[stream] = states[-1]
                 except Exception as err:
-                    print(f'Error processing record data for stream {stream}: {err}.')
+                    self.logger.exception(f'Error processing record data for stream {stream}: {err}.', tags=tags)
 
         if len(stream_states.values()) >= 1:
             bookmarks = {}
