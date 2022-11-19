@@ -97,6 +97,7 @@ function SchemaSettings({
               </Text>
             ));
           })}
+          stickyFirstColumn
           stickyHeader
           wrapColumns
         />
