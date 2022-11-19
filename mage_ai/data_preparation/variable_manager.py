@@ -8,7 +8,6 @@ from mage_ai.data_preparation.models.variable import (
     VARIABLE_DIR,
 )
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
-from mage_ai.data_preparation.storage.s3_storage import S3Storage
 from mage_ai.data_preparation.repo_manager import (
     get_repo_path,
     get_variables_dir,
@@ -184,6 +183,8 @@ class VariableManager:
 class S3VariableManager(VariableManager):
     def __init__(self, repo_path=None, variables_dir=None):
         super().__init__(repo_path=repo_path, variables_dir=variables_dir)
+        from mage_ai.data_preparation.storage.s3_storage import S3Storage
+
         self.storage = S3Storage(dirpath=variables_dir)
 
 
