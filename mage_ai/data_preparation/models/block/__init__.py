@@ -788,21 +788,19 @@ class Block:
                         for result in run_results['results']:
                             if 'error' == result['status']:
                                 raise Exception(result['message'])
-
             elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
+                from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
+
+                index = self.template_runtime_configuration.get('index', None)
+                selected_streams = self.template_runtime_configuration.get('selected_streams', [])
+                stream = selected_streams[0] if len(selected_streams) >= 1 else None
+                query_data = runtime_arguments or {}
+
+                if index is not None:
+                    query_data['_limit'] = BATCH_FETCH_LIMIT
+                    query_data['_offset'] = BATCH_FETCH_LIMIT * index
+
                 if BlockType.DATA_LOADER == self.type:
-                    from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-
-                    query_data = runtime_arguments or {}
-
-                    index = self.template_runtime_configuration.get('index', None)
-                    if index is not None:
-                        query_data['_limit'] = BATCH_FETCH_LIMIT
-                        query_data['_offset'] = BATCH_FETCH_LIMIT * index
-
-                    selected_streams = self.template_runtime_configuration.get('selected_streams')
-                    stream = selected_streams[0] if len(selected_streams) else None
-
                     proc = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.source_file_path,
@@ -829,78 +827,96 @@ class Block:
                     print_logs_from_output(output)
                     outputs.append(output)
                 elif BlockType.TRANSFORMER == self.type:
-                    selected_streams = self.template_runtime_configuration.get('selected_streams', [])
-                    stream = selected_streams[0] if len(selected_streams) >= 1 else None
+                    from mage_integrations.sources.constants import COLUMN_TYPE_NULL
+                    from mage_integrations.utils.logger.constants import (
+                        TYPE_RECORD,
+                        TYPE_SCHEMA,
+                    )
+                    from mage_integrations.transformers.utils import (
+                        convert_data_type,
+                        infer_dtypes,
+                    )
 
                     input_from_previous = input_from_output['output'][0]
 
-                    # only supports 1 upstream block for now
-                    upstream_block_uuid = self.upstream_block_uuids[0]
-
-                    upstream_df_var = self.pipeline.variable_manager.get_variable_object(
-                        self.pipeline.uuid,
-                        upstream_block_uuid,
-                        'df',
-                        partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME,
-                    )
-
-                    proc1 = subprocess.run([
-                        PYTHON_COMMAND,
-                        self.pipeline.transformer_file_path,
-                        '--df_file_path',
-                        os.path.join(upstream_df_var.variable_path, DATAFRAME_PARQUET_FILE),
-                        '--log_to_stdout',
-                        '1',
-                        '--to_df',
-                        '1',
-                    ], input=input_from_previous, capture_output=True, text=True)
-                    print_logs_from_output(proc1.stdout)
-
-                    # run transformer code and store it
-                    input_vars = [upstream_df_var.read_data()]
                     exec(self.content, results)
-                    block_function = self.__validate_execution(decorated_functions, input_vars)
-                    if block_function is not None:
-                        df = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
+
+                    # 1. Recreate each record
+                    # 2. Recreate schema
+                    schema_original = None
+                    schema_updated = None
+                    schema_index = None
+                    output_arr = []
+                    records_transformed = 0
+                    df_sample = None
+
+                    for idx, line in enumerate(input_from_previous.strip().split('\n')):
+                        try:
+                            data = json.loads(line)
+                            line_type = data.get('type')
+
+                            if TYPE_SCHEMA == line_type:
+                                schema_index = idx
+                                schema_original = data
+                            elif TYPE_RECORD == line_type:
+                                record = data['record']
+                                existing_columns = list(record.keys())
+                                input_vars = [pd.DataFrame.from_dict([record])]
+                                input_kwargs = merge_dict(
+                                    global_vars,
+                                    dict(
+                                        index=index,
+                                        query=query_data,
+                                        stream=stream,
+                                    ),
+                                )
+                                block_function = self.__validate_execution(decorated_functions, input_vars)
+
+                                if block_function is not None:
+                                    df = self.execute_block_function(
+                                        block_function,
+                                        input_vars,
+                                        input_kwargs,
+                                        test_execution,
+                                    )
+                                    if df_sample is None:
+                                        df_sample = df
+
+                                    if not schema_updated:
+                                        properties_updated = {
+                                            k: dict(type=[COLUMN_TYPE_NULL, convert_data_type(v)])
+                                            for k, v in infer_dtypes(df).items()
+                                        }
+                                        schema_updated = schema_original.copy()
+                                        properties_original = schema_updated['schema']['properties']
+                                        schema_updated['schema']['properties'] = {
+                                            k: properties_original[k]
+                                            if k in properties_original else v
+                                            for k, v in properties_updated.items()
+                                        }
+
+                                    record_transformed = df.to_dict('records')[0]
+                                    line = json.dumps(merge_dict(
+                                        data,
+                                        dict(record=record_transformed),
+                                    ))
+                                    records_transformed += 1
+                        except json.decoder.JSONDecodeError:
+                            pass
+
+                        output_arr.append(line)
+
+                    output_arr[schema_index] = json.dumps(schema_updated)
+                    output = '\n'.join(output_arr)
+                    outputs.append(output)
 
                     self.store_variables(
-                        dict(df=df),
+                        dict(df=df_sample),
                         execution_partition=execution_partition,
                         override_outputs=True,
                     )
 
-                    df_variable = self.pipeline.variable_manager.get_variable_object(
-                        self.pipeline.uuid,
-                        self.uuid,
-                        'df',
-                        partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME,
-                    )
-
-                    proc2 = subprocess.run([
-                        PYTHON_COMMAND,
-                        self.pipeline.transformer_file_path,
-                        '--df_file_path',
-                        os.path.join(df_variable.variable_path, DATAFRAME_PARQUET_FILE),
-                        '--log_to_stdout',
-                        '1',
-                        '--config_json',
-                        build_config_json(
-                            self.pipeline.data_loader.file_path,
-                            global_vars,
-                        ),
-                        '--settings',
-                        self.pipeline.data_loader.file_path,
-                        '--state',
-                        self.pipeline.source_state_file_path(stream),
-                        '--query_json',
-                        json.dumps(runtime_arguments or {}),
-                    ], stdout=subprocess.PIPE)
-
-                    output = proc2.stdout.decode()
-                    print_logs_from_output(output)
-                    outputs.append(output)
+                    print(f'Transformed {records_transformed} records for stream {stream}.')
                 elif BlockType.DATA_EXPORTER == self.type:
                     input_from_previous = input_from_output['output'][0]
 

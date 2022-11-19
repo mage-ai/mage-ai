@@ -1,7 +1,7 @@
 import json
 
 
-def print_logs_from_output(output):
+def print_logs_from_output(output: str):
     from mage_integrations.utils.logger.constants import (
         LOG_LEVEL_ERROR,
         LOG_LEVEL_EXCEPTION,

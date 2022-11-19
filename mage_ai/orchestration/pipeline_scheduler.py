@@ -338,15 +338,17 @@ def run_integration_pipeline(
             index = stream.get('index', idx)
             destination_table = stream.get('destination_table', tap_stream_id)
 
+            shared_dict = dict(
+                index=index,
+                selected_streams=[tap_stream_id],
+            )
             block_runs_and_configs = [
-                (data_loader_block_run, dict(
-                    index=index,
-                    selected_streams=[tap_stream_id],
+                (data_loader_block_run, shared_dict),
+            ] + [(br, shared_dict) for br in transformer_block_runs] + [
+                (data_exporter_block_run, merge_dict(
+                    shared_dict,
+                    dict(destination_table=destination_table),
                 )),
-            ] + [(br, dict(
-                    selected_streams=[tap_stream_id],
-                )) for br in transformer_block_runs] + [
-                (data_exporter_block_run, dict(destination_table=destination_table)),
             ]
 
             update_source_state_from_destination_state(
