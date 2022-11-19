@@ -249,7 +249,7 @@ function PipelineSchedules({
             appearBefore
             default
             fullSize
-            label="Creates an @once trigger and runs it immediately"
+            label="Creates an @once trigger and runs pipeline immediately"
             widthFitContent
           >
             <Button
