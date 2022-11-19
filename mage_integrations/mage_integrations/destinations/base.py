@@ -420,7 +420,21 @@ class Destination():
         record_adjusted = record.copy()
 
         for k, v in record.items():
-            if COLUMN_TYPE_ARRAY not in schema['properties'][k]['type']:
+            prop_k = schema['properties'][k]
+            prop_types = []
+
+            if 'type' in prop_k:
+                prop_types.append(prop_k['type'])
+
+            if 'anyOf' in prop_k:
+                for any_of in prop_k['anyOf']:
+                    any_of_type = any_of['type']
+                    if type(any_of_type) is list:
+                        prop_types += any_of_type
+                    else:
+                        prop_types.append(any_of_type)
+
+            if COLUMN_TYPE_ARRAY not in prop_types:
                 continue
 
             v1 = record[k]
@@ -428,7 +442,21 @@ class Destination():
                 continue
 
             if type(v1) is list:
-                if COLUMN_TYPE_OBJECT in schema['properties'][k]['items']['type']:
+                items_dict = schema['properties'][k]['items']
+                item_types = []
+
+                if 'type' in items_dict:
+                    item_types.append(items_dict['type'])
+
+                if 'anyOf' in items_dict:
+                    for any_of in items_dict['anyOf']:
+                        any_of_type = any_of['type']
+                        if type(any_of_type) is list:
+                            item_types += any_of_type
+                        else:
+                            item_types.append(any_of_type)
+
+                if COLUMN_TYPE_OBJECT in item_types:
                     record_adjusted[k] = [json.loads(s) if type(s) is str else s for s in v1]
             elif type(v1) is str:
                 try:
