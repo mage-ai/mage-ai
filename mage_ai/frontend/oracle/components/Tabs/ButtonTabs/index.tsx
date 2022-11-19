@@ -5,7 +5,8 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import Spacing from '@oracle/elements/Spacing';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { TabsContainerStyle } from './index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type TabType = {
   Icon?: any;
@@ -15,14 +16,18 @@ export type TabType = {
 };
 
 type ButtonTabsProps = {
+  allowScroll?: boolean;
   contained?: boolean;
+  noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
   selectedTabUUID?: string;
   tabs: TabType[];
 };
 
 function ButtonTabs({
+  allowScroll,
   contained,
+  noPadding,
   onClickTab,
   selectedTabUUID,
   tabs,
@@ -62,7 +67,7 @@ function ButtonTabs({
           <div
             key={`spacing-${uuid}`}
             style={{ marginLeft: 1.5 * UNIT }}
-          />
+          />,
         );
       }
 
@@ -79,7 +84,7 @@ function ButtonTabs({
             paddingUnitsVertical={1.25}
           >
             {el}
-          </GradientButton>
+          </GradientButton>,
         );
       } else {
         arr.push(
@@ -93,7 +98,7 @@ function ButtonTabs({
             >
               {el}
             </Button>
-          </div>
+          </div>,
         );
       }
     });
@@ -116,14 +121,12 @@ function ButtonTabs({
   }
 
   return (
-    <div
-      style={{
-        paddingLeft: PADDING_UNITS * UNIT,
-        paddingRight: PADDING_UNITS * UNIT,
-      }}
+    <TabsContainerStyle
+      allowScroll={allowScroll}
+      noPadding={noPadding}
     >
       {el}
-    </div>
+    </TabsContainerStyle>
   );
 }
 

@@ -85,6 +85,11 @@ export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
     z-index: 1;
     position: sticky;
     top: 0;
+
+    &:first-child {
+      left: 0;
+      z-index: 2;
+    }
   `}
 `;
 
@@ -104,11 +109,10 @@ export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
   `}
 
   ${props => props.stickyFirstColumn && `
-    background-color: ${(props.theme || dark).background.rowHoverBackground};
+    background-color: ${(props.theme || dark).background.panel};
     z-index: 1;
     position: sticky;
     left: 0;
-    top: ${ROW_HEIGHT}px;
   `}
 
   ${props => props.selected && `

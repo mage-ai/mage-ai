@@ -97,6 +97,7 @@ function SchemaSettings({
               </Text>
             ));
           })}
+          stickyFirstColumn
           stickyHeader
           wrapColumns
         />
@@ -107,6 +108,8 @@ function SchemaSettings({
   return (
     <>
       <ButtonTabs
+        allowScroll
+        noPadding
         onClickTab={(tab) => {
           setSelectedTab(tab);
           setSelectedStream(tab.uuid);
