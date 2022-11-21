@@ -9,7 +9,7 @@ def start_session_and_run(*target_args):
     target = target_args[0]
     args = target_args[1:]
 
-    db_connection.start_session()
+    db_connection.start_session(force=True)
 
     results = target(*args)
 
