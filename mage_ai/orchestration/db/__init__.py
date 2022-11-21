@@ -35,8 +35,8 @@ class DBConnection:
     def __init__(self):
         self.session = None
 
-    def start_session(self):
-        if self.session is not None and self.session.is_active:
+    def start_session(self, force: bool = False):
+        if self.session is not None and self.session.is_active and not force:
             return
         self.session = scoped_session(session_factory)
 
