@@ -289,7 +289,7 @@ function BlockRuns({
             goToWithQuery({ [LOG_UUID_PARAM]: logUUID });
             setSelectedLog(logUUID ? log : null);
           }}
-          rows={logs.map(({
+          rows={logs?.map(({
             content,
             createdAt,
             data,

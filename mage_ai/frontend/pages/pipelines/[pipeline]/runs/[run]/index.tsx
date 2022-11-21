@@ -59,7 +59,7 @@ function PipelineBlockRuns({
       onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
         const run = blockRuns[rowIndex];
 
-        return prev?.id !== run.id ? run : null
+        return prev?.id !== run.id ? run : null;
       })}
       pipeline={pipeline}
       selectedRun={selectedRun}
