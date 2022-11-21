@@ -54,6 +54,12 @@ resource "google_project_service" "secretmanager" {
   disable_on_destroy = false
 }
 
+# Enable Cloud SQL Admin API
+resource "google_project_service" "secretmanager" {
+  service            = "sqladmin.googleapis.com"
+  disable_on_destroy = false
+}
+
 # #############################################
 # #    Google Artifact Registry Repository    #
 # #############################################
