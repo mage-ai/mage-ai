@@ -54,6 +54,12 @@ resource "google_project_service" "secretmanager" {
   disable_on_destroy = false
 }
 
+# Enable Cloud SQL Admin API
+resource "google_project_service" "sqladmin" {
+  service            = "sqladmin.googleapis.com"
+  disable_on_destroy = false
+}
+
 # #############################################
 # #    Google Artifact Registry Repository    #
 # #############################################
@@ -110,6 +116,10 @@ resource "google_cloud_run_service" "run_service" {
           name  = "FILE_SHARE_NAME"
           value = "share1"
         }
+        env {
+          name  = "MAGE_DATABASE_CONNECTION_URL"
+          value = "postgresql://${var.database_user}:${var.database_password}@/${var.app_name}-db?host=/cloudsql/${google_sql_database_instance.instance.connection_name}"
+        }
         # volume_mounts {
         #   mount_path = "/secrets/bigquery"
         #   name       = "secret-bigquery-key"
@@ -130,6 +140,7 @@ resource "google_cloud_run_service" "run_service" {
     metadata {
       annotations = {
         "autoscaling.knative.dev/minScale"         = "1"
+        "run.googleapis.com/cloudsql-instances"=google_sql_database_instance.instance.connection_name
         "run.googleapis.com/execution-environment" = "gen2"
         "run.googleapis.com/vpc-access-connector"  = google_vpc_access_connector.connector.id
         "run.googleapis.com/vpc-access-egress"     = "private-ranges-only"

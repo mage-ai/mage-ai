@@ -38,6 +38,17 @@ variable "repository" {
   default     = "mage-data-prep"
 }
 
+variable "database_user" {
+  type        = string
+  description = "The username of the Postgres database."
+}
+
+variable "database_password" {
+  type        = string
+  description = "The password of the Postgres database."
+  sensitive   = true
+}
+
 variable "docker_image" {
   type        = string
   description = "The Docker image url in the Artifact Registry repository to be deployed to Cloud Run"
