@@ -16,6 +16,7 @@ from mage_ai.orchestration.db.models import (
 )
 from mage_ai.shared.hash import merge_dict
 from sqlalchemy.orm import aliased, joinedload
+import json
 
 
 class ApiBlockRunDetailHandler(BaseHandler):
@@ -190,7 +191,7 @@ class ApiAllPipelineRunListHandler(BaseHandler):
 
 class ApiPipelineRunDetailHandler(BaseDetailHandler):
     model_class = PipelineRun
-    
+
     def get(self, pipeline_run_id):
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
         block_runs = pipeline_run.block_runs
@@ -231,6 +232,9 @@ class ApiPipelineRunListHandler(BaseHandler):
         pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
 
         payload = self.get_payload()
+        if 'variables' not in payload:
+            payload['variables'] = {}
+
         payload['pipeline_schedule_id'] = pipeline_schedule.id
         payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
         if payload.get('execution_date') is None:
@@ -239,6 +243,13 @@ class ApiPipelineRunListHandler(BaseHandler):
         is_integration = PipelineType.INTEGRATION == pipeline.type
         if is_integration:
             payload['create_block_runs'] = False
+
+        body = self.request.body
+        if body:
+            for k, v in json.loads(body).items():
+                if k == 'pipeline_run':
+                    continue
+                payload['variables'][k] = v
 
         pipeline_run = PipelineRun.create(**payload)
 
