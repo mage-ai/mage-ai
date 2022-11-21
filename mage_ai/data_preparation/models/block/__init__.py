@@ -759,7 +759,18 @@ class Block:
 
                 stdout = None if test_execution else subprocess.PIPE
 
+                cmds = [
+                    'dbt',
+                    dbt_command,
+                ] + args
+
                 if is_sql and test_execution:
+                    print(f'Running DBT command {dbt_command} with arguments {args}.')
+                    subprocess.run(
+                        cmds,
+                        preexec_fn=os.setsid,
+                        stdout=stdout,
+                    )
                     df = query_from_compiled_sql(
                         self,
                         dbt_profile_target,
@@ -771,18 +782,13 @@ class Block:
                     )
                     outputs = [df]
                 elif not test_execution:
-                    cmds = [
-                        'dbt',
-                        dbt_command,
-                    ] + args
-                    proc1 = subprocess.Popen(
+                    with subprocess.Popen(
                         cmds,
                         bufsize=1,
                         preexec_fn=os.setsid,
                         stdout=stdout,
                         universal_newlines=True,
-                    )
-                    with proc1 as p:
+                    ) as p:
                         for line in p.stdout:
                             print(line, end='')
 
