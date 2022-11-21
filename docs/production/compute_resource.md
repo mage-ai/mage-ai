@@ -17,7 +17,7 @@ Mage provides multiple executors to execute blocks.
 Local python exeuctors are running within the same container of Mage web service. You can customize the compute resource with the same way mentioned in the [Customize the compute resource of the Mage web service](#customize-the-compute-resource-of-the-mage-web-service) section.
 
 ### ECS executor
-You can choose to launch separate AWS ECS tasks to executor blocks by specifying block exeuctor_type to be "ecs" in pipeline's metadata.yaml file.
+You can choose to launch separate AWS ECS tasks to executor blocks by specifying block executor_type to be "ecs" in pipeline's metadata.yaml file.
 
 To customize the compute resource of ECS executor, you can update `cpu` and `memory` the `ecs_config` in project's metadata.yaml file.
 
