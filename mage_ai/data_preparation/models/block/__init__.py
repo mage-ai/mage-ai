@@ -48,6 +48,7 @@ import functools
 import json
 import os
 import pandas as pd
+import signal
 import simplejson
 import subprocess
 import sys
@@ -758,11 +759,6 @@ class Block:
 
                 stdout = None if test_execution else subprocess.PIPE
 
-                proc1 = subprocess.run([
-                    'dbt',
-                    dbt_command,
-                ] + args, preexec_fn=os.setsid, stdout=stdout)
-
                 if is_sql and test_execution:
                     df = query_from_compiled_sql(
                         self,
@@ -775,8 +771,20 @@ class Block:
                     )
                     outputs = [df]
                 elif not test_execution:
-                    for line in proc1.stdout.decode().split('\n'):
-                        print(line)
+                    cmds = [
+                        'dbt',
+                        dbt_command,
+                    ] + args
+                    proc1 = subprocess.Popen(
+                        cmds,
+                        bufsize=1,
+                        preexec_fn=os.setsid,
+                        stdout=stdout,
+                        universal_newlines=True,
+                    )
+                    with proc1 as p:
+                        for line in p.stdout:
+                            print(line, end='')
 
                 if not test_execution:
                     with open(f'{project_full_path}/target/run_results.json', 'r') as f:

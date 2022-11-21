@@ -1,5 +1,7 @@
 from mage_ai.orchestration.db.models import PipelineRun
 import multiprocessing
+import os
+import signal
 
 
 class ExecutionProcessManager:
@@ -38,7 +40,7 @@ class ExecutionProcessManager:
         self.terminate_pipeline_process(pipeline_run_id)
         self.pipeline_processes[pipeline_run_id] = proc
 
-    def clean_up_processes(self):
+    def clean_up_processes(self, include_child_processes=True):
         """
         Clean up inactive processes and terminate processes for cancelled pipeline runs
         """
@@ -54,6 +56,10 @@ class ExecutionProcessManager:
                     proc = block_run_procs[block_run_id]
                     if proc.is_alive():
                         proc.terminate()
+
+                        # Kill subprocess children
+                        if include_child_processes:
+                            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                     del block_run_procs[block_run_id]
             else:
                 for block_run_id in list(block_run_procs.keys()):

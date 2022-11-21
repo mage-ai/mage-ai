@@ -69,7 +69,7 @@ class ExecutionProcessManagerTests(DBTestCase):
         manager.set_pipeline_process(pipeline_run2.id, proc_pipeline_cancelled)
         manager.set_pipeline_process(pipeline_run3.id, proc_pipeline_live)
 
-        manager.clean_up_processes()
+        manager.clean_up_processes(include_child_processes=False)
         self.assertEqual(
             manager.block_processes,
             {pipeline_run1.id: {block_runs[2].id: proc_block_live}},
