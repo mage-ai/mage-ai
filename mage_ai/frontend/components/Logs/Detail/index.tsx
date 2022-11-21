@@ -194,9 +194,11 @@ function LogDetail({
           </Spacing>
 
           {error.map((lines: string) => lines.split('\n').map((line: string) => (
-            <Text default key={line} monospace small>
-              {line.split('\n')}
-            </Text>
+            line.split('\\n').map(part => (
+              <Text default key={part} monospace small>
+                {part}
+              </Text>
+            ))
           )))}
 
           {errorStack && (
