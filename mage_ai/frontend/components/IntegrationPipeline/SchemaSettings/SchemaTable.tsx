@@ -672,56 +672,58 @@ function SchemaTable({
           </Spacing>
         )}
 
-        <Spacing mb={SPACING_BOTTOM_UNITS}>
-          <Spacing mb={1}>
-            <Text bold large>
-              Unique conflict method
-            </Text>
-            <Text default>
-              If a new record has the same value as an existing record
-              in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.map((col: string, idx: number) => (
-                <Text
-                  bold
-                  inline
-                  key={col}
-                  monospace
-                >
-                  {idx >= 1 && <>,&nbsp;</>}
-                  {col}
-                </Text>
-              ))}, how do you want to resolve the conflict?
+        {uniqueConstraints?.length > 0 &&
+          <Spacing mb={SPACING_BOTTOM_UNITS}>
+            <Spacing mb={1}>
+              <Text bold large>
+                Unique conflict method
+              </Text>
+              <Text default>
+                If a new record has the same value as an existing record
+                in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.map((col: string, idx: number) => (
+                  <Text
+                    bold
+                    inline
+                    key={col}
+                    monospace
+                  >
+                    {idx >= 1 && <>,&nbsp;</>}
+                    {col}
+                  </Text>
+                ))}, how do you want to resolve the conflict?
 
-              <br />
+                <br />
 
-              The conflict method <Text bold inline monospace>
+                The conflict method <Text bold inline monospace>
+                  {UniqueConflictMethodEnum.IGNORE}
+                </Text> will skip the new record if it’s a duplicate of an existing record.
+                The conflict method <Text bold inline monospace>
+                  {UniqueConflictMethodEnum.UPDATE}
+                </Text> will not save the new record and instead update the existing record
+                with the new record’s properties.
+              </Text>
+            </Spacing>
+
+            <Select
+              onChange={(e) => {
+                updateStream(streamUUID, (stream: StreamType) => ({
+                  ...stream,
+                  unique_conflict_method: e.target.value,
+                }));
+              }}
+              primary
+              value={uniqueConflictMethod}
+            >
+              <option value="" />
+              <option value={UniqueConflictMethodEnum.IGNORE}>
                 {UniqueConflictMethodEnum.IGNORE}
-              </Text> will skip the new record if it’s a duplicate of an existing record.
-              The conflict method <Text bold inline monospace>
+              </option>
+              <option value={UniqueConflictMethodEnum.UPDATE}>
                 {UniqueConflictMethodEnum.UPDATE}
-              </Text> will not save the new record and instead update the existing record
-              with the new record’s properties.
-            </Text>
+              </option>
+            </Select>
           </Spacing>
-
-          <Select
-            onChange={(e) => {
-              updateStream(streamUUID, (stream: StreamType) => ({
-                ...stream,
-                unique_conflict_method: e.target.value,
-              }));
-            }}
-            primary
-            value={uniqueConflictMethod}
-          >
-            <option value="" />
-            <option value={UniqueConflictMethodEnum.IGNORE}>
-              {UniqueConflictMethodEnum.IGNORE}
-            </option>
-            <option value={UniqueConflictMethodEnum.UPDATE}>
-              {UniqueConflictMethodEnum.UPDATE}
-            </option>
-          </Select>
-        </Spacing>
+        }
       </Spacing>
     </>
   );
