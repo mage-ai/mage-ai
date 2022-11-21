@@ -4,7 +4,7 @@
 
 1. [Environment variables](#1-environment-variables)
 1. [Customize Terraform settings](#2-customize-terraform-settings)
-1. [Configurable variables](#3-configurable-variables)
+1. [Configurable environment variables](#3-configurable-variables)
 1. [Deploy](#4-deploy)
 1. [Misc](#misc)
 
