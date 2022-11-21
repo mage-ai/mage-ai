@@ -17,6 +17,7 @@ import {
 import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { formatTimestamp } from '@utils/models/log';
+import { isJsonString } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 const MESSAGE_KEY = 'message';
@@ -161,7 +162,10 @@ function LogDetail({
                   whiteSpaceNormal={isMessageKey && showFullLogMessage}
                   wordBreak={isMessageKey && showFullLogMessage}
                 >
-                  {v}
+                  {(isMessageKey && showFullLogMessage && isJsonString(v))
+                    ? <pre>{JSON.stringify(JSON.parse(v), null, 2)}</pre>
+                    : v
+                  }
                 </Text>
                 {isMessageKey &&
                   <Link
