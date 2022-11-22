@@ -78,6 +78,8 @@ class BaseStream:
 
     @staticmethod
     def dt_to_epoch_seconds(dt_object: datetime) -> float:
+        if dt_object is None:
+            return 0
         return datetime.datetime.timestamp(dt_object)
 
 
