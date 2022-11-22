@@ -2,6 +2,8 @@ import { useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
+import Divider from '@oracle/elements/Divider';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Panel from '@oracle/components/Panel/v2';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -10,6 +12,7 @@ import {
   CatalogType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
+import { TableContainerStyle } from '../index.style';
 import { indexBy } from '@utils/array';
 
 type SelectStreamsProps = {
@@ -38,50 +41,58 @@ function SelectStreams({
         </Text>
       </Spacing>
 
-      <Table
-        columnFlex={[null, null, 1]}
-        columns={[
-          {
-            label: () => '',
-            uuid: 'Selected',
-          },
-          {
-            uuid: 'Stream',
-          },
-        ]}
-        rows={streams.map((stream) => {
-          const {
-            stream: streamID,
-          } = stream;
-          const selected: boolean = !!selectedStreams[streamID];
+      <TableContainerStyle
+        fitContent
+        maxHeight="70vh"
+      >
+        <Table
+          columnFlex={[null, null, 1]}
+          columns={[
+            {
+              label: () => '',
+              uuid: 'Selected',
+            },
+            {
+              uuid: 'Stream',
+            },
+          ]}
+          rows={streams.map((stream) => {
+            const {
+              stream: streamID,
+            } = stream;
+            const selected: boolean = !!selectedStreams[streamID];
 
-          return [
-            <Checkbox
-              key={`selected-${streamID}`}
-              checked={selected}
-              onClick={() => {
-                setSelectedStreams(prev => ({
-                  ...prev,
-                  [streamID]: selected ? null : stream,
-                }));
-              }}
-            />,
-            <Text key={`stream-${streamID}`}>
-              {streamID}
-            </Text>,
-          ];
-        })}
-      />
+            return [
+              <Checkbox
+                checked={selected}
+                key={`selected-${streamID}`}
+                onClick={() => {
+                  setSelectedStreams(prev => ({
+                    ...prev,
+                    [streamID]: selected ? null : stream,
+                  }));
+                }}
+              />,
+              <Text key={`stream-${streamID}`}>
+                {streamID}
+              </Text>,
+            ];
+          })}
+        />
+      </TableContainerStyle>
 
+      <Divider medium />
       <Spacing p={2}>
-        <Button
-          loading={isLoading}
-          onClick={() => onActionCallback(selectedStreams)}
-          primary
-          small
-        >
-          Save and continue
-        </Button>
+        <FlexContainer justifyContent="flex-end">
+          <Button
+            loading={isLoading}
+            onClick={() => onActionCallback(selectedStreams)}
+            primary
+            small
+          >
+            Save and continue
+          </Button>
+        </FlexContainer>
       </Spacing>
     </Panel>
   );

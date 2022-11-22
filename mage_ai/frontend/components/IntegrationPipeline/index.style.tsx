@@ -22,9 +22,20 @@ export const CodeEditorStyle = styled.div`
   `}
 `;
 
-export const TableContainerStyle = styled.div`
+export const TableContainerStyle = styled.div<{
+  fitContent?: boolean;
+  maxHeight?: string;
+}>`
   overflow: auto;
   max-height: 90vh;
-
+  width: 100%;
   ${ScrollbarStyledCss}
+
+  ${props => props.fitContent && `
+    width: fit-content;
+  `}
+
+  ${props => props.maxHeight && `
+    max-height: ${props.maxHeight};
+  `}
 `;
