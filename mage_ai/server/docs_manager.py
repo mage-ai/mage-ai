@@ -1,5 +1,4 @@
 from http.server import SimpleHTTPRequestHandler
-import multiprocessing
 import os
 import socketserver
 import time
@@ -11,21 +10,21 @@ def get_dbt_target_path():
     return os.path.join(get_repo_path(), 'dbt/target')
 
 def run_docs_server():
-    while True:
-        print('Checking if DBT docs have been generated...')
-        if (os.path.exists(get_dbt_target_path())):
-            os.chdir(get_dbt_target_path())
+    target_path = get_dbt_target_path()
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
 
-            httpd = socketserver.TCPServer(('', 7789), SimpleHTTPRequestHandler)
+    os.chdir(target_path)
 
-            try:
-                print('Start DBT docs server.')
-                httpd.serve_forever()
-            finally:
-                httpd.shutdown()
-                httpd.server_close()
-        else:
-            time.sleep(10)
+    httpd = socketserver.TCPServer(('0.0.0.0', 7789), SimpleHTTPRequestHandler)
+
+    try:
+        print('Start DBT docs server.')
+        httpd.serve_forever()
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+        
 
 
 # class DocsManager:
