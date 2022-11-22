@@ -270,7 +270,8 @@ function IntegrationPipeline({
             }));
 
             savePipelineContent().then(() => {
-              fetchPipeline();
+              return fetchPipeline();
+            }).then(() => {
               // @ts-ignore
               loadSampleData({
                 action: 'sample_data',
