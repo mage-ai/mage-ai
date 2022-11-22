@@ -201,7 +201,7 @@ const ContentStyle = styled.div`
   justify-content: center;
   opacity: 1;
   outline: none;
-  overflow: auto;
+  overflow: hidden;
   padding-bottom: ${PADDING_VERTICAL}px;
   padding-top: ${PADDING_VERTICAL}px;
   position: relative;
