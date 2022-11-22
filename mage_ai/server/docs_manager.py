@@ -28,20 +28,20 @@ def run_docs_server():
             time.sleep(10)
 
 
-class DocsManager:
-    def __init__(self):
-        self.docs_process: multiprocessing.Process = None
+# class DocsManager:
+#     def __init__(self):
+#         self.docs_process: multiprocessing.Process = None
 
-    @property
-    def is_alive(self):
-        return self.docs_process is not None and self.docs_process.is_alive()
+#     @property
+#     def is_alive(self):
+#         return self.docs_process is not None and self.docs_process.is_alive()
 
-    def start_docs_server(self):
-        if self.is_alive:
-            return
+#     def start_docs_server(self):
+#         if self.is_alive:
+#             return
 
-        proc = create_process(target=run_docs_server)
-        proc.start()
-        self.docs_process = proc
+#         proc = create_process(target=run_docs_server)
+#         proc.start()
+#         self.docs_process = proc
 
-docs_manager = DocsManager()
+# docs_manager = DocsManager()
