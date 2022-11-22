@@ -279,7 +279,12 @@ WHERE table_schema = '{schema}'
             query_string,
             order_by_statement,
         ]
-        if not count_records:
+
+        if count_records:
+            self.logger.info(f'Counting records for {table_name} started.', tags=dict(
+                stream=table_name,
+            ))
+        else:
             with_limit_query_string += [
                 f'LIMIT {limit}',
                 f'OFFSET {offset}',
@@ -289,6 +294,11 @@ WHERE table_schema = '{schema}'
         rows_temp = self.build_connection().load(with_limit_query_string)
         if count_records:
             rows = [dict(number_of_records=row[0]) for row in rows_temp]
+            self.logger.info(f'Counting records for {table_name} completed.', tags=dict(
+                query=with_limit_query_string,
+                records=rows[0]['number_of_records'],
+                stream=table_name,
+            ))
         else:
             rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
 
