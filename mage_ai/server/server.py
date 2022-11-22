@@ -68,7 +68,7 @@ from mage_ai.server.api.orchestration import (
 from mage_ai.server.api.projects import ApiProjectsHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
-from mage_ai.server.docs_manager import run_docs_server
+from mage_ai.server.docs_server import run_docs_server
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.kernels import (
     DEFAULT_KERNEL_NAME,

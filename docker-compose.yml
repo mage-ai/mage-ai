@@ -16,7 +16,6 @@ services:
       - MAGE_DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
     ports:
       - 6789:6789
-      - 7789:7789
     volumes:
       - .:/home/src
       - ~/.aws:/root/.aws
