@@ -52,3 +52,5 @@ jobs:
           push: true
           tags: mageai/${{ github.event.inputs.name }}:${{ github.event.inputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
