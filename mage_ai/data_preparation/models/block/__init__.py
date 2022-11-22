@@ -925,7 +925,7 @@ class Block:
                     outputs.append(output)
 
                     self.store_variables(
-                        dict(df=df_sample),
+                        dict(output_0=df_sample),
                         execution_partition=execution_partition,
                         override_outputs=True,
                     )
@@ -1258,6 +1258,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         logger: Logger = None,
         update_tests: bool = True,
     ) -> None:
+        if self.pipeline \
+            and PipelineType.INTEGRATION == self.pipeline.type \
+            and self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER]:
+
+            return
+
         if logger is not None:
             stdout = StreamToLogger(logger)
         elif build_block_output_stdout:

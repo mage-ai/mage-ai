@@ -80,7 +80,7 @@ def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFram
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -111,7 +111,7 @@ def load_data(*args, **kwargs):
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -155,7 +155,7 @@ def load_data_from_redshift(*args, **kwargs):
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -193,7 +193,7 @@ def load_from_s3_bucket(*args, **kwargs):
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -230,7 +230,7 @@ def load_data_from_api(*args, **kwargs):
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -293,7 +293,7 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -339,7 +339,7 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -386,7 +386,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -427,7 +427,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -469,7 +469,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -516,7 +516,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -687,7 +687,7 @@ def transform_in_postgres(*args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -729,7 +729,7 @@ def transform_in_bigquery(*args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_output(df, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
