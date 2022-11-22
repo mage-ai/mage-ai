@@ -68,7 +68,7 @@ from mage_ai.server.api.orchestration import (
 from mage_ai.server.api.projects import ApiProjectsHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
-from mage_ai.server.docs_manager import docs_manager, get_dbt_target_path
+from mage_ai.server.docs_manager import run_docs_server
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.kernels import (
     DEFAULT_KERNEL_NAME,
@@ -613,17 +613,13 @@ def start_server(
     set_repo_path(project)
 
     if dbt_docs:
-        if os.path.exists(get_dbt_target_path()):
-            docs_manager.start_docs_server()
+        run_docs_server()
     else:
         if manage:
             os.environ[MANAGE_ENV_VAR] = '1'
         else:
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler()
-
-            if os.path.exists(get_dbt_target_path()):
-                docs_manager.start_docs_server()
 
         enable_pretty_logging()
 
