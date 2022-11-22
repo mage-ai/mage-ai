@@ -81,8 +81,9 @@ function SelectStreams({
       </HeaderRowStyle>
 
       <TableContainerStyle
-        fitContent
-        maxHeight="70vh"
+        height="55vh"
+        hideHorizontalScrollbar
+        width={`${UNIT * 45}px`}
       >
         <Table
           columnFlex={[null, null, 1]}

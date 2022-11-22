@@ -23,16 +23,26 @@ export const CodeEditorStyle = styled.div`
 `;
 
 export const TableContainerStyle = styled.div<{
-  fitContent?: boolean;
+  height?: string;
+  hideHorizontalScrollbar?: boolean;
   maxHeight?: string;
+  width?: string;
 }>`
   overflow: auto;
   max-height: 90vh;
   width: 100%;
   ${ScrollbarStyledCss}
 
-  ${props => props.fitContent && `
-    width: fit-content;
+  ${props => props.hideHorizontalScrollbar && `
+    overflow-x: hidden;
+  `}
+
+  ${props => props.width && `
+    width: ${props.width};
+  `}
+
+  ${props => props.height && `
+    height: ${props.height};
   `}
 
   ${props => props.maxHeight && `
