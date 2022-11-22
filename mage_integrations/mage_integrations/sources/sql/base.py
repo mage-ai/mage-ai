@@ -227,7 +227,7 @@ WHERE table_schema = '{schema}'
 
         order_by_columns = list(order_by_columns)
 
-        if order_by_columns:
+        if order_by_columns and not count_records:
             order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
         else:
             order_by_statement = ''

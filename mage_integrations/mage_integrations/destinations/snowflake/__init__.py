@@ -79,6 +79,7 @@ class Snowflake(Destination):
             ] + self.build_create_table_commands(
                 schema=schema,
                 schema_name=schema_name,
+                stream=None,
                 table_name=f'temp_{table_name}',
                 database_name=database_name,
                 unique_constraints=unique_constraints,
