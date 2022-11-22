@@ -56,6 +56,7 @@ Commands:
         parser.add_argument('--host', nargs='?', type=str)
         parser.add_argument('--port', nargs='?', type=int)
         parser.add_argument('--manage-instance', nargs='?', type=str)
+        parser.add_argument('--dbt-docs-instance', nargs='?', type=str)
 
         args = dict()
         if len(sys.argv) >= 3:
@@ -73,6 +74,7 @@ Commands:
 
         start_server(
             host=args.get('host'),
+            dbt_docs=args.get('dbt_docs_instance') == '1',
             manage=args.get('manage_instance') == '1',
             port=args.get('port'),
             project=project_path,
