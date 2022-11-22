@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { BORDER_WIDTH, BORDER_RADIUS, BORDER_STYLE } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
@@ -37,5 +37,27 @@ export const TableContainerStyle = styled.div<{
 
   ${props => props.maxHeight && `
     max-height: ${props.maxHeight};
+  `}
+`;
+
+export const HeaderRowStyle = styled.div<{
+  horizontalPadding?: number;
+  rounded?: boolean;
+}>`
+  padding: ${UNIT * 2}px;
+
+  ${props => `
+    background-color: ${(props.theme || dark).interactive.defaultBackground};
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium};
+  `}
+
+  ${props => props.horizontalPadding && `
+    padding-left: ${props.horizontalPadding}px;
+    padding-right: ${props.horizontalPadding}px;
+  `}
+
+  ${props => props.rounded && `
+    border-top-left-radius: ${BORDER_RADIUS}px;
+    border-top-right-radius: ${BORDER_RADIUS}px;
   `}
 `;

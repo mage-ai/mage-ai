@@ -8,11 +8,17 @@ import Panel from '@oracle/components/Panel/v2';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import {
   CatalogType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
-import { TableContainerStyle } from '../index.style';
+import {
+  HeaderRowStyle,
+  TableContainerStyle,
+} from '../index.style';
+import { Search } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
 
 type SelectStreamsProps = {
@@ -35,11 +41,31 @@ function SelectStreams({
 
   return (
     <Panel>
-      <Spacing p={2}>
-        <Text>
-          Select the streams you want to sync.
+      <HeaderRowStyle rounded>
+        <Text bold large>
+          Select streams to sync
         </Text>
-      </Spacing>
+      </HeaderRowStyle>
+
+      {/* <HeaderRowStyle
+        horizontalPadding={UNIT * 1.25}
+      >
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <TextInput
+            beforeIcon={<Search />}
+            compact
+            noBackground
+            noBorder
+            onChange={() => {}}
+            value={null}
+          />
+          <Button
+          
+          >
+
+          </Button>
+        </FlexContainer>
+      </HeaderRowStyle> */}
 
       <TableContainerStyle
         fitContent
