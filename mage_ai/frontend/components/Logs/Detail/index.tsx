@@ -142,7 +142,7 @@ function LogDetail({
         <Table
           columnFlex={[null, 1]}
           columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
-          rows={rows.map(([k, v], idx) => {
+          rows={rows?.map(([k, v], idx) => {
             const isMessageKey = k === MESSAGE_KEY;
             return [
               <Text
@@ -193,7 +193,7 @@ function LogDetail({
             </Text>
           </Spacing>
 
-          {error.map((lines: string) => lines.split('\n').map((line: string) => (
+          {error?.map((lines: string) => lines.split('\n').map((line: string) => (
             line.split('\\n').map(part => (
               <Text default key={part} monospace small>
                 {part}
@@ -209,7 +209,7 @@ function LogDetail({
                 </Text>
               </Spacing>
 
-              {errorStack.map((lines: string[]) => lines.map((line: string) => (
+              {errorStack?.map((lines: string[]) => lines?.map((line: string) => (
                 <Text default key={line} monospace small>
                   {line}
                 </Text>

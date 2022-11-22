@@ -1,6 +1,7 @@
 import Ansi from 'ansi-to-react';
 import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
+import { parse } from 'yaml';
 import {
   useContext,
   useEffect,
@@ -9,6 +10,7 @@ import {
   useState,
 } from 'react';
 
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
@@ -33,11 +35,11 @@ import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { calculateStartTimestamp } from '@utils/number';
+import { find, indexBy, sortByKey } from '@utils/array';
 import { formatTimestamp, initializeLogs } from '@utils/models/log';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
-import { indexBy, sortByKey } from '@utils/array';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
@@ -72,8 +74,38 @@ function BlockRuns({
     dataPipeline,
     pipelineUUID,
   ]);
+  const isIntegrationPipeline = pipeline?.type === PipelineTypeEnum.INTEGRATION;
+
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
-  const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
+  const blocksByUUID = useMemo(() => {
+    let indexedBlocks = indexBy(blocks, ({ uuid }) => uuid);
+    if (isIntegrationPipeline) {
+      const dataLoaderBlock: BlockType = find(blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
+      const dataLoaderBlockContent = dataLoaderBlock
+        ? parse(dataLoaderBlock.content)
+        : {};
+      const blockTypesByStreamIds = (dataLoaderBlockContent?.catalog?.streams || [])
+        .reduce((acc, { tap_stream_id }) => {
+          const currentStreamBlockTypeMapping = {};
+          blocks.forEach(({ uuid, type }) => {
+            const currentKey = `${uuid}:${tap_stream_id}`;
+            currentStreamBlockTypeMapping[currentKey] = { type };
+          });
+
+          return {
+            ...acc,
+            ...currentStreamBlockTypeMapping,
+          };
+        }, {});
+
+      indexedBlocks = {
+        ...blockTypesByStreamIds,
+        ...indexedBlocks,
+      };
+    }
+
+    return indexedBlocks;
+  }, [blocks, isIntegrationPipeline]);
 
   const q = queryFromUrl();
   const onlyLoadPastDayLogs = !q?.start_timestamp
@@ -138,7 +170,14 @@ function BlockRuns({
           evals.push(query['level[]'].includes(data?.level));
         }
         if (query['block_type[]']) {
-          evals.push(query['block_type[]'].includes(blocksByUUID[data?.block_uuid]?.type));
+          let blockUUID = data?.block_uuid;
+          if (isIntegrationPipeline) {
+            const blockUUIDWithoutStreamIndex = data?.block_uuid?.split(':')
+              .slice(0, 2)
+              .join(':');
+            blockUUID = blockUUIDWithoutStreamIndex;
+          }
+          evals.push(query['block_type[]'].includes(blocksByUUID[blockUUID]?.type));
         }
 
         return evals.every(v => v);
@@ -289,7 +328,7 @@ function BlockRuns({
             goToWithQuery({ [LOG_UUID_PARAM]: logUUID });
             setSelectedLog(logUUID ? log : null);
           }}
-          rows={logs.map(({
+          rows={logs?.map(({
             content,
             createdAt,
             data,
