@@ -250,7 +250,7 @@ function DependencyGraph({
     }
 
     return displayText;
-  }, [pipeline])
+  }, [pipeline]);
 
   const {
     edges,
