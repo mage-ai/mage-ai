@@ -18,5 +18,8 @@ def start_session_and_run(*target_args):
 
 
 def create_process(target, args=()):
+    from mage_ai.orchestration.db import engine
+
     new_args = [target, *args]
+    engine.dispose()
     return multiprocessing.Process(target=start_session_and_run, args=new_args)
