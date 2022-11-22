@@ -24,6 +24,9 @@ if not db_connection_url:
         db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
     db_kwargs['connect_args'] = {'check_same_thread': False}
 
+if db_connection_url.startswith('postgresql'):
+    db_kwargs['pool_size'] = 50
+
 engine = create_engine(
     db_connection_url,
     **db_kwargs,
