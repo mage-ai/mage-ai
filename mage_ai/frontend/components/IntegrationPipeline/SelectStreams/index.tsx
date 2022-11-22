@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
@@ -13,11 +13,11 @@ import {
   CatalogType,
   StreamType,
 } from '@interfaces/IntegrationSourceType';
+import { Filter, Search } from '@oracle/icons';
 import {
   HeaderRowStyle,
   TableContainerStyle,
 } from '../index.style';
-import { Search } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
 
@@ -38,6 +38,15 @@ function SelectStreams({
 }: SelectStreamsProps) {
   const selectedStreamsInit = indexBy(catalog?.streams || [], ({ stream }) => stream);
   const [selectedStreams, setSelectedStreams] = useState(selectedStreamsInit);
+  const [filterText, setFilterText] = useState<string>(null);
+
+  const filteredStreams = useMemo(() => (filterText
+    ? streams.filter(({ tap_stream_id: stream }) => stream.includes(filterText))
+    : streams
+), [
+    filterText,
+    streams,
+  ]);
 
   return (
     <Panel>
@@ -47,8 +56,8 @@ function SelectStreams({
         </Text>
       </HeaderRowStyle>
 
-      {/* <HeaderRowStyle
-        horizontalPadding={UNIT * 1.25}
+      <HeaderRowStyle
+        padding={UNIT * 1.25}
       >
         <FlexContainer alignItems="center" justifyContent="space-between">
           <TextInput
@@ -56,16 +65,20 @@ function SelectStreams({
             compact
             noBackground
             noBorder
-            onChange={() => {}}
-            value={null}
+            onChange={e => setFilterText(e.target.value)}
+            placeholder="Search"
+            value={filterText}
           />
-          <Button
-          
-          >
-
-          </Button>
+          <Spacing pr={1}>
+            <Button
+              beforeIcon={<Filter />}
+              noBackground
+            >
+              All
+            </Button>
+          </Spacing>
         </FlexContainer>
-      </HeaderRowStyle> */}
+      </HeaderRowStyle>
 
       <TableContainerStyle
         fitContent
@@ -82,7 +95,7 @@ function SelectStreams({
               uuid: 'Stream',
             },
           ]}
-          rows={streams.map((stream) => {
+          rows={filteredStreams.map((stream) => {
             const {
               stream: streamID,
             } = stream;

@@ -41,7 +41,7 @@ export const TableContainerStyle = styled.div<{
 `;
 
 export const HeaderRowStyle = styled.div<{
-  horizontalPadding?: number;
+  padding?: number;
   rounded?: boolean;
 }>`
   padding: ${UNIT * 2}px;
@@ -51,9 +51,8 @@ export const HeaderRowStyle = styled.div<{
     border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium};
   `}
 
-  ${props => props.horizontalPadding && `
-    padding-left: ${props.horizontalPadding}px;
-    padding-right: ${props.horizontalPadding}px;
+  ${props => props.padding && `
+    padding: ${props.padding}px;
   `}
 
   ${props => props.rounded && `
