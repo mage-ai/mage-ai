@@ -7,7 +7,7 @@ USER root
 RUN ${PIP} install --upgrade pip
 RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
-RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git@dy--support_doc_server"
+RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git@dy--support_doc_server"
 
 # Install NFS dependencies
 RUN apt -y update && apt -y install nfs-common
@@ -25,6 +25,7 @@ RUN sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.j
 RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
 
 EXPOSE 6789
+EXPOSE 7789
 
 ENV MAGE_DATA_DIR="/home/src/mage_data"
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
