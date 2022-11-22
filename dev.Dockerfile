@@ -9,13 +9,13 @@ USER root
 RUN apt -y update && apt -y install curl
 
 # Install R
-RUN apt install -y r-base
-RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
+# RUN apt install -y r-base
+# RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
 
 # Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN ${PIP} install --upgrade pip
-RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
+RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
 RUN ${PIP} install -r requirements.txt
 RUN ${PIP} install jupyterlab
