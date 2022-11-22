@@ -79,20 +79,24 @@ function BlockRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => {
     let indexedBlocks = indexBy(blocks, ({ uuid }) => uuid);
-    let dataLoaderBlock: BlockType;
-    let dataExporterBlock: BlockType;
     if (isIntegrationPipeline) {
-      dataLoaderBlock = find(blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
-      dataExporterBlock = find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type);
+      const dataLoaderBlock: BlockType = find(blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
       const dataLoaderBlockContent = dataLoaderBlock
         ? parse(dataLoaderBlock.content)
         : {};
       const blockTypesByStreamIds = (dataLoaderBlockContent?.catalog?.streams || [])
-        .reduce((acc, { tap_stream_id }) => ({
-          ...acc,
-          [`${dataLoaderBlock?.uuid}:${tap_stream_id}`]: { type: BlockTypeEnum.DATA_LOADER },
-          [`${dataExporterBlock?.uuid}:${tap_stream_id}`]: { type: BlockTypeEnum.DATA_EXPORTER },
-        }), {});
+        .reduce((acc, { tap_stream_id }) => {
+          const currentStreamBlockTypeMapping = {};
+          blocks.forEach(({ uuid, type }) => {
+            const currentKey = `${uuid}:${tap_stream_id}`;
+            currentStreamBlockTypeMapping[currentKey] = { type };
+          });
+
+          return {
+            ...acc,
+            ...currentStreamBlockTypeMapping,
+          };
+        }, {});
 
       indexedBlocks = {
         ...blockTypesByStreamIds,

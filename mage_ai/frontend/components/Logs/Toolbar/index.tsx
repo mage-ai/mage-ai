@@ -83,7 +83,7 @@ function LogToolbar({
         });
 
         const secondsAgo = (Math.ceil(Date.now() / 1000) - initialStart);
-        if (Math.abs(secondsAgo - LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]) <= 5) {
+        if (Math.abs(secondsAgo - LOG_RANGE_SEC_INTERVAL_MAPPING[LogRangeEnum.LAST_DAY]) <= 60) {
           setSelectedRange(LogRangeEnum.LAST_DAY);
         }
       }
