@@ -16,6 +16,13 @@ class Destination(BaseDestination):
 
     BATCH_SIZE = 1000
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.attempted_create_table = False
+        self.records_affected = 0
+        self.records_inserted = 0
+        self.records_updated = 0
+
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
@@ -58,7 +65,7 @@ class Destination(BaseDestination):
 
         query_strings = self.build_query_strings(record_data, stream)
 
-        data = self.process_query_strings(
+        data = self.process_queries(
             query_strings,
             record_data=record_data,
             stream=stream,
@@ -69,10 +76,12 @@ class Destination(BaseDestination):
             unique_constraints=unique_constraints,
             unique_conflict_method=unique_conflict_method,
         )
-        if records_inserted is not None:
-            tags.update(records_inserted=records_inserted)
-        if records_updated is not None:
-            tags.update(records_updated=records_updated)
+
+        tags.update(
+            records_affected=self.records_affected,
+            records_inserted=records_inserted,
+            records_updated=records_updated,
+        )
 
         self.logger.info('Export data completed.', tags=tags)
 
@@ -146,6 +155,7 @@ class Destination(BaseDestination):
                     table_name=table_name,
                     unique_constraints=unique_constraints,
                 )
+                self.attempted_create_table = True
         else:
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
@@ -200,7 +210,7 @@ class Destination(BaseDestination):
 
         return query_strings
 
-    def process_query_strings(
+    def process_queries(
         self,
         query_strings: List[str],
         record_data: List[Dict],
@@ -268,8 +278,8 @@ class Destination(BaseDestination):
         data: List[List[Tuple]],
         unique_constraints: List[str] = None,
         unique_conflict_method: str = None,
-    ) -> Tuple:
-        return None, None
+    ) -> Tuple[int, int]:
+        return self.records_inserted, self.records_updated
 
 
 def main(destination_class):

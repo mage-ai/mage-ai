@@ -12,6 +12,7 @@ from mage_integrations.destinations.bigquery.utils import (
     convert_array,
     convert_column_to_type,
     convert_column_type,
+    convert_converted_type_to_parameter_type,
     convert_datetime,
 )
 from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
@@ -104,7 +105,7 @@ WHERE TABLE_NAME = '{table_name}'
         """)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if c.lower() not in current_columns]
+        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
 
         if not new_columns:
             return []
@@ -159,51 +160,65 @@ WHERE table_id = '{table_name}'
     ) -> List[str]:
         return []
 
-    def process_query_strings(
+    def process_queries(
         self,
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
     ) -> List[List[Tuple]]:
         connection = self.build_connection()
-        connection.execute(query_strings, commit=True)
 
-        credentials = service_account.Credentials.from_service_account_file(
-            self.config['path_to_credentials_json_file'],
-        )
-        client = Client(credentials=credentials)
+        try:
+            connection.execute(query_strings, commit=True)
 
-        job = client.query(
-            'SELECT 1',
-            job_config=bigquery.QueryJobConfig(create_session=True),
-        )
-        session_id = job.session_info.session_id
-        job.result()
+            credentials = service_account.Credentials.from_service_account_file(
+                self.config['path_to_credentials_json_file'],
+            )
+            client = Client(credentials=credentials)
 
-        session_id_property = bigquery.query.ConnectionProperty(key='session_id', value=session_id)
-        query_job_config = dict(
-            create_session=False,
-            connection_properties=[session_id_property],
-        )
+            job = client.query(
+                'SELECT 1',
+                job_config=bigquery.QueryJobConfig(create_session=True),
+            )
+            session_id = job.session_info.session_id
+            job.result()
 
-        job = client.query(
-            'BEGIN TRANSACTION',
-            job_config=bigquery.QueryJobConfig(**query_job_config),
-        )
-        job.result()
+            session_id_property = bigquery.query.ConnectionProperty(key='session_id', value=session_id)
+            query_job_config = dict(
+                create_session=False,
+                connection_properties=[session_id_property],
+            )
 
-        results, jobs = self.__insert(client, record_data, stream, query_job_config=query_job_config)
+            job = client.query(
+                'BEGIN TRANSACTION',
+                job_config=bigquery.QueryJobConfig(**query_job_config),
+            )
+            job.result()
 
-        job = client.query(
-            'COMMIT TRANSACTION',
-            job_config=bigquery.QueryJobConfig(**query_job_config),
-        )
-        job.result()
+            results, jobs = self.__insert(client, record_data, stream, query_job_config=query_job_config)
 
-        for job in jobs:
-            print('Number of DML rows affected', job.num_dml_affected_rows)
+            job = client.query(
+                'COMMIT TRANSACTION',
+                job_config=bigquery.QueryJobConfig(**query_job_config),
+            )
+            job.result()
 
-        return results
+            for job in jobs:
+                if job.num_dml_affected_rows:
+                    self.records_affected += job.num_dml_affected_rows
+
+            return results
+        except Exception as err:
+            database_name = self.config.get(self.DATABASE_CONFIG_KEY)
+            schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
+            table_name = self.config.get('table')
+
+            if self.attempted_create_table:
+                connection.execute([
+                    f'DROP TABLE {database_name}.{schema_name}.{table_name}',
+                ], commit=True)
+
+            raise err
 
     def __insert(
         self,
@@ -272,20 +287,19 @@ WHERE table_id = '{table_name}'
                     query,
                     job_config=bigquery.QueryJobConfig(**query_job_config),
                 )
-                jobs.append(job)
                 job.result()
 
             job_results, jobs_from_insert = self.__insert_with_limits(
                 client=client,
                 columns=columns,
                 full_table_name=temp_table_name,
+                insert_columns=insert_columns,
                 insert_values=insert_values,
                 mapping=mapping,
-                count_rows=True,
+                count_rows=False,
                 query_job_config=query_job_config,
                 tags=tags,
             )
-            jobs += jobs_from_insert
 
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
             columns_cleaned = [clean_column_name(col) for col in columns]
@@ -363,13 +377,25 @@ WHERE table_id = '{table_name}'
                     arr.append(f'@r{row_idx}{col_idx}')
                     value = values_for_row[col_idx]
 
-                    query_parameters.append(
-                        bigquery.ScalarQueryParameter(
-                            f'r{row_idx}{col_idx}',
-                            mapping[column]['type_converted'],
+                    variable_name = f'r{row_idx}{col_idx}'
+                    type_converted = mapping[column]['type_converted']
+
+                    if 'ARRAY' in type_converted:
+                        query_param = bigquery.ArrayQueryParameter(
+                            variable_name,
+                            convert_converted_type_to_parameter_type(
+                                mapping[column]['item_type_converted'],
+                            ),
                             value,
-                        ),
-                    )
+                        )
+                    else:
+                        query_param = bigquery.ScalarQueryParameter(
+                            variable_name,
+                            convert_converted_type_to_parameter_type(type_converted),
+                            value,
+                        )
+
+                    query_parameters.append(query_param)
 
                     query_payload_size += sys.getsizeof(value)
 
@@ -378,6 +404,7 @@ WHERE table_id = '{table_name}'
             query_arr = [
                 f"INSERT INTO {full_table_name} ({insert_columns}) VALUES {','.join(row_values)};",
             ]
+
             if count_rows:
                 query_arr.append('SELECT @@row_count;')
             query = '\n'.join(query_arr)
