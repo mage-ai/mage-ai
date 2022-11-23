@@ -379,6 +379,8 @@ WHERE table_id = '{table_name}'
 
                     if type_converted in [
                         'ARRAY',
+                        'BOOLEAN',
+                        'DATETIME',
                         'JSON',
                         'TEXT',
                     ]:

@@ -88,6 +88,8 @@ def convert_converted_type_to_parameter_type(converted_type):
         If there is a column of these types, the raw value will be used in the insert command
         instead of using a query parameter:
             'ARRAY'
+            'BOOLEAN'
+            'DATETIME'
             'JSON'
             'TEXT'
 
@@ -102,9 +104,7 @@ def convert_converted_type_to_parameter_type(converted_type):
         'TIMESTAMP'
 
     """
-    if 'BOOLEAN' == converted_type:
-        return 'BOOL'
-    elif 'BIGINT' == converted_type:
+    if 'BIGINT' == converted_type:
         return 'INT64'
 
     return converted_type
