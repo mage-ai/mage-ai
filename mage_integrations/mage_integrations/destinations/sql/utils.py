@@ -17,6 +17,7 @@ def build_create_table_command(
     columns: List[str],
     full_table_name: str,
     unique_constraints: List[str] = None,
+    create_temporary_table: bool = False,
 ) -> str:
     columns_and_types = [
         f"{clean_column_name(col)} {column_type_mapping[col]['type_converted']}" for col
@@ -33,7 +34,7 @@ def build_create_table_command(
             f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints)})",
         )
 
-    return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
+    return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE {full_table_name} ({', '.join(columns_and_types)})"
 
 
 def build_alter_table_command(
