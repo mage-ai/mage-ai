@@ -12,34 +12,34 @@ Before enabling DBT docs in production, we need to make sure the static files fo
     * Make sure the `/.../<mage_project>/dbt` directory has the files `dbt_project.yml`, `profiles.yml`, and `packages.yml`. These files are needed for DBT to create docs for all the projects within this directory.
         1. `dbt_project.yml`
             ```yaml
-              name: 'base'
-              version: '1.0.0'
-              config-version: 2
+            name: 'base'
+            version: '1.0.0'
+            config-version: 2
 
-              profile: 'base'
+            profile: 'base'
 
-              target-path: "target" 
-              clean-targets:
-                - "target"
-                - "dbt_packages"
+            target-path: "target" 
+            clean-targets:
+              - "target"
+              - "dbt_packages"
             ```
         1. `profiles.yml`: The config in this file is not necessary, but it needs to compile.
             ```yaml
-              base:
-                target: dev
-                outputs:
-                  dev:
-                    <output_config>
+            base:
+              target: dev
+              outputs:
+                dev:
+                  <output_config>
             ```
         1. `packages.yml`: Add all projects that you want to be included in the documentation.
             ```yaml
-              packages:
-                - local: ./project1
-                - local: ./project2
+            packages:
+              - local: ./project1
+              - local: ./project2
             ```
 2. Generate the DBT docs
     ```bash
-      cd ./dbt
+      dbt deps
       dbt docs generate
     ```
 
@@ -48,7 +48,7 @@ Before enabling DBT docs in production, we need to make sure the static files fo
 
 ### GCP
 
-In the [mage-ai-terraform-templates](https://github.com/mage-ai/mage-ai-terraform-templates) repository, the template for GCP has commented out resources for enabling the DBT docs service. If you uncomment those resources, you should see an output at the end of `terraform apply` with the IP to access the DBT docs in the cloud.
+In the [mage-ai-terraform-templates](https://github.com/mage-ai/mage-ai-terraform-templates) repository, the template for GCP has commented out resources for enabling the DBT docs service. If you uncomment those resources, you should see an output `docs_service_ip` at the end of `terraform apply` with the IP to access the DBT docs in the cloud.
 
 ```bash
 Outputs:
