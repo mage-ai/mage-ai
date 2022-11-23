@@ -15,11 +15,12 @@ def build_comparison_statement(
     properties: Dict,
     column_type_mapping: Callable,
     operator: str = '=',
+    column_cleaned: str = None,
 ):
     column_type = find(lambda x: COLUMN_TYPE_NULL != x, properties.get(col)['type'])
     col_type = column_type_mapping(column_type)
 
-    return f"{col} {operator} CAST('{val}' AS {col_type})"
+    return f"{column_cleaned if column_cleaned else col} {operator} CAST('{val}' AS {col_type})"
 
 
 def column_type_mapping(column_type: str) -> str:
@@ -33,3 +34,10 @@ def column_type_mapping(column_type: str) -> str:
         return 'TEXT'
 
     return 'CHAR'
+
+
+def wrap_column_in_quotes(column):
+    if "'" not in column and '"' not in column:
+        return f'"{column}"'
+
+    return column

@@ -16,6 +16,7 @@ from mage_integrations.sources.constants import (
 from mage_integrations.sources.sql.utils import (
     build_comparison_statement,
     column_type_mapping,
+    wrap_column_in_quotes,
 )
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
@@ -225,7 +226,7 @@ WHERE table_schema = '{schema}'
         if unique_constraints:
             order_by_columns.update(unique_constraints)
 
-        order_by_columns = list(order_by_columns)
+        order_by_columns = [wrap_column_in_quotes(col) for col in list(order_by_columns)]
 
         if order_by_columns and not count_records:
             order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
@@ -255,6 +256,7 @@ WHERE table_schema = '{schema}'
                         val,
                         stream.schema.to_dict()['properties'],
                         column_type_mapping,
+                        column_cleaned=wrap_column_in_quotes(col),
                         operator='>',
                     ),
                 )
@@ -268,6 +270,7 @@ WHERE table_schema = '{schema}'
                             val,
                             stream.schema.to_dict()['properties'],
                             column_type_mapping,
+                            column_cleaned=wrap_column_in_quotes(col),
                         ),
                     )
 
@@ -290,6 +293,8 @@ WHERE table_schema = '{schema}'
                 f'OFFSET {offset}',
             ]
         with_limit_query_string = '\n'.join(with_limit_query_string)
+
+        print('WTFFFFFFFFFFF', with_limit_query_string)
 
         rows_temp = self.build_connection().load(with_limit_query_string)
         if count_records:
