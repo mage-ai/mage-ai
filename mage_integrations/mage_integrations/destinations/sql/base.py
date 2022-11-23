@@ -16,6 +16,13 @@ class Destination(BaseDestination):
 
     BATCH_SIZE = 1000
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.attempted_create_table = False
+        self.records_affected = 0
+        self.records_inserted = 0
+        self.records_updated = 0
+
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
@@ -53,9 +60,51 @@ class Destination(BaseDestination):
 
         self.logger.info('Export data started', tags=tags)
 
+        unique_constraints = self.unique_constraints.get(stream)
+        unique_conflict_method = self.unique_conflict_methods.get(stream)
+
+        query_strings = self.build_query_strings(record_data, stream)
+
+        data = self.process_queries(
+            query_strings,
+            record_data=record_data,
+            stream=stream,
+        )
+
+        records_inserted, records_updated = self.calculate_records_inserted_and_updated(
+            data,
+            unique_constraints=unique_constraints,
+            unique_conflict_method=unique_conflict_method,
+        )
+
+        tags.update(
+            records_affected=self.records_affected,
+            records_inserted=records_inserted,
+            records_updated=records_updated,
+        )
+
+        self.logger.info('Export data completed.', tags=tags)
+
+    def build_query_strings(
+        self,
+        record_data: List[Dict],
+        stream: str,
+    ) -> List[str]:
+        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
+        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
+        table_name = self.config.get('table')
+
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
         unique_conflict_method = self.unique_conflict_methods.get(stream)
+
+        tags = dict(
+            database_name=database_name,
+            records=len(record_data),
+            schema_name=schema_name,
+            stream=stream,
+            table_name=table_name,
+        )
 
         query_strings = self.build_create_schema_commands(
             database_name=database_name,
@@ -106,10 +155,35 @@ class Destination(BaseDestination):
                     table_name=table_name,
                     unique_constraints=unique_constraints,
                 )
+                self.attempted_create_table = True
         else:
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
             raise Exception(message)
+
+        query_strings += self.handle_insert_commands(record_data, stream, tags=tags)
+
+        if self.debug:
+            for qs in query_strings:
+                print(qs, '\n')
+
+        return query_strings
+
+    def handle_insert_commands(
+        self,
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = {},
+    ) -> List[str]:
+        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
+        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
+        table_name = self.config.get('table')
+
+        schema = self.schemas[stream]
+        unique_constraints = self.unique_constraints.get(stream)
+        unique_conflict_method = self.unique_conflict_methods.get(stream)
+
+        query_strings = []
 
         for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
             records = [d['record'] for d in sub_batch]
@@ -134,24 +208,16 @@ class Destination(BaseDestination):
                 insert_commands=len(cmds)
             )))
 
-        if self.debug:
-            for qs in query_strings:
-                print(qs, '\n')
+        return query_strings
 
+    def process_queries(
+        self,
+        query_strings: List[str],
+        record_data: List[Dict],
+        stream: str,
+    ) -> List[List[Tuple]]:
         connection = self.build_connection()
-        data = connection.execute(query_strings, commit=True)
-
-        records_inserted, records_updated = self.calculate_records_inserted_and_updated(
-            data,
-            unique_constraints=unique_constraints,
-            unique_conflict_method=unique_conflict_method,
-        )
-        if records_inserted is not None:
-            tags.update(records_inserted=records_inserted)
-        if records_updated is not None:
-            tags.update(records_updated=records_updated)
-
-        self.logger.info('Export data completed.', tags=tags)
+        return connection.execute(query_strings, commit=True)
 
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')
@@ -212,8 +278,8 @@ class Destination(BaseDestination):
         data: List[List[Tuple]],
         unique_constraints: List[str] = None,
         unique_conflict_method: str = None,
-    ) -> Tuple:
-        return None, None
+    ) -> Tuple[int, int]:
+        return self.records_inserted, self.records_updated
 
 
 def main(destination_class):

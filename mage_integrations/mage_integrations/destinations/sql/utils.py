@@ -17,6 +17,7 @@ def build_create_table_command(
     columns: List[str],
     full_table_name: str,
     unique_constraints: List[str] = None,
+    create_temporary_table: bool = False,
 ) -> str:
     columns_and_types = [
         f"{clean_column_name(col)} {column_type_mapping[col]['type_converted']}" for col
@@ -33,7 +34,7 @@ def build_create_table_command(
             f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints)})",
         )
 
-    return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
+    return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE {full_table_name} ({', '.join(columns_and_types)})"
 
 
 def build_alter_table_command(
@@ -149,6 +150,8 @@ def build_insert_command(
     convert_column_to_type_func: Callable = convert_column_to_type,
     convert_datetime_func: Callable = None,
     string_parse_func: Callable = None,
+    stringify_values: bool = True,
+    convert_column_types: bool = True,
 ) -> List[str]:
     values = []
     for row in records:
@@ -175,15 +178,18 @@ def build_insert_command(
                 elif COLUMN_FORMAT_DATETIME == column_settings.get('format') and convert_datetime_func:
                     value_final = convert_datetime_func(v, column_type_dict)
                 else:
-                    value_final = convert_column_to_type_func(
-                        str(v).replace("'", "''"),
-                        column_type_converted,
-                    )
+                    value_final = str(v).replace("'", "''")
+
+                    if convert_column_types:
+                        value_final = convert_column_to_type_func(value_final, column_type_converted)
+
                     if string_parse_func:
                         value_final = string_parse_func(value_final)
 
             vals.append(value_final)
-        values.append(f"({', '.join(vals)})")
+        if stringify_values:
+            vals = f"({', '.join(vals)})"
+        values.append(vals)
 
     return [
         [clean_column_name(col) for col in columns],

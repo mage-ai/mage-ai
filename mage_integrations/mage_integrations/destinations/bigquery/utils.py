@@ -70,3 +70,41 @@ def convert_datetime(value: str, column_type_dict: Dict) -> str:
         arr.append(tz)
 
     return convert_column_to_type('.'.join(arr), column_type_converted)
+
+
+def convert_converted_type_to_parameter_type(converted_type):
+    """
+    https://cloud.google.com/python/docs/reference/bigquery/latest/google.cloud.bigquery.query.ScalarQueryParameterType
+
+    converted_type: one of
+        'BIGINT'
+        'BOOLEAN'
+        'DATETIME'
+        'FLOAT64'
+        'JSON'
+        'STRING'
+        'TEXT'
+
+        If there is a column of these types, the raw value will be used in the insert command
+        instead of using a query parameter:
+            'ARRAY'
+            'BOOLEAN'
+            'DATETIME'
+            'JSON'
+            'TEXT'
+
+    Returns one of
+        'BOOL'
+        'DATE'
+        'DATETIME'
+        'FLOAT64'
+        'INT64'
+        'NUMERIC'
+        'STRING'
+        'TIMESTAMP'
+
+    """
+    if 'BIGINT' == converted_type:
+        return 'INT64'
+
+    return converted_type
