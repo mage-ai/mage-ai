@@ -38,7 +38,7 @@ def files_in_single_path(path):
 def convert_pandas_dtype_to_python_type(dtype):
     if dtype in ['int64', 'integer']:
         return int
-    elif dtype == 'float64':
+    elif 'float' in dtype:
         return float
     elif dtype == 'bool':
         return bool
