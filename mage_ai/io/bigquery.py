@@ -2,6 +2,11 @@ from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
 from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.export_utils import infer_dtypes
+from mage_ai.shared.utils import (
+    convert_pandas_dtype_to_python_type,
+    convert_python_type_to_bigquery_type,
+)
 from pandas import DataFrame
 from typing import Mapping
 
@@ -49,6 +54,61 @@ class BigQuery(BaseSQLDatabase):
                 kwargs.pop('credentials')
         with self.printer.print_msg('Connecting to BigQuery warehouse'):
             self.client = Client(credentials=credentials, **kwargs)
+
+    def alter_table(
+        self,
+        df: DataFrame,
+        table_id: str,
+        database: str = None,
+        verbose: bool = True,
+    ):
+        def __process(database):
+            parts = table_id.split('.')
+            if len(parts) == 2:
+                schema, table_name = parts
+            elif len(parts) == 3:
+                database, schema, table_name = parts
+
+            df_existing = self.client.query(f"""
+    SELECT 1
+    FROM `{database}.{schema}.__TABLES_SUMMARY__`
+    WHERE table_id = '{table_name}'
+    """).to_dataframe()
+
+            full_table_name = f'{database}.{schema}.{table_name}'
+
+            table_doesnt_exist = df_existing.empty
+
+            if table_doesnt_exist:
+                raise ValueError(f'Table \'{table_id}\' doesn\'t exist.')
+
+            results = self.client.query(f"""
+SELECT
+    column_name
+    , data_type
+FROM {schema}.INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '{table_name}'
+            """)
+            current_columns = [r[0].lower() for r in results]
+
+            new_columns = [c for c in df.columns if c not in current_columns]
+            if not new_columns:
+                return
+            dtypes = infer_dtypes(df)
+            dtypes = {k: convert_python_type_to_bigquery_type(convert_pandas_dtype_to_python_type(v))
+                      for k, v in dtypes.items()}
+            columns_and_types = [
+                f"ADD COLUMN {self._clean_column_name(col)} {dtypes[col]}" for col
+                in new_columns
+            ]
+            # TODO: support alter column type and drop columns
+            alter_table_command = f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
+            self.client.query(alter_table_command)
+        if verbose:
+            with self.printer.print_msg(f'Altering table \'{table_id}\''):
+                __process(database=database)
+        else:
+            __process(database=database)
 
     def load(
         self,
