@@ -45,7 +45,7 @@ by typing the following into the terminal in your browser:
 1. Initiate your DBT project using the `init` command (for this tutorial, we’ll use the DBT project name `demo`):
     ```bash
     cd demo_project/dbt
-    dbt init demo
+    dbt init demo -s --project-dir demo
     touch demo/profiles.yml
     ```
 

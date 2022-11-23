@@ -1,1 +1,12 @@
 # https://docs.getdbt.com/reference/profiles.yml
+base:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      dbname: <DBNAME>
+      host: <HOST>
+      password: <PASSWORD>
+      port: 5432
+      schema: <SCHEMA>
+      user: <USER>
