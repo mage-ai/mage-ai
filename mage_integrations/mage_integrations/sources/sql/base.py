@@ -294,8 +294,6 @@ WHERE table_schema = '{schema}'
             ]
         with_limit_query_string = '\n'.join(with_limit_query_string)
 
-        print('WTFFFFFFFFFFF', with_limit_query_string)
-
         rows_temp = self.build_connection().load(with_limit_query_string)
         if count_records:
             rows = [dict(number_of_records=row[0]) for row in rows_temp]
