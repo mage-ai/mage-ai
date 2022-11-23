@@ -17,7 +17,7 @@ class EventsStream(BaseChargebeeStream):
 
     def __init__(self, config, state, catalog, client):
         BaseChargebeeStream.__init__(self, config, state, catalog, client)
-        if self.config['item_model']:
+        if self.config.get('item_model'):
             self.SCHEMA = 'item_model/events'
 
     def get_url(self):
