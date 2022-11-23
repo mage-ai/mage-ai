@@ -680,6 +680,15 @@ class Block:
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
     ) -> Dict:
+        # Add pipeline uuid and block uuid to global_vars
+        global_vars = merge_dict(
+            global_vars or dict(),
+            dict(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=self.uuid,
+            ),
+        )
+
         # Fetch input variables
         upstream_block_uuids = []
         if input_args is None:
