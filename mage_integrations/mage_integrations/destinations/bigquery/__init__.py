@@ -374,30 +374,27 @@ WHERE table_id = '{table_name}'
                 values_for_row = insert_values[row_idx]
                 arr = []
                 for col_idx, column in enumerate(columns):
-                    arr.append(f'@r{row_idx}{col_idx}')
+                    type_converted = mapping[column]['type_converted']
                     value = values_for_row[col_idx]
 
-                    variable_name = f'r{row_idx}{col_idx}'
-                    type_converted = mapping[column]['type_converted']
-
-                    if 'ARRAY' in type_converted:
-                        query_param = bigquery.ArrayQueryParameter(
-                            variable_name,
-                            convert_converted_type_to_parameter_type(
-                                mapping[column]['item_type_converted'],
-                            ),
-                            value,
-                        )
+                    if type_converted in [
+                        'ARRAY',
+                        'JSON',
+                        'TEXT',
+                    ]:
+                        arr.append(value)
                     else:
+                        variable_name = f'r{row_idx}_{col_idx}'
+
                         query_param = bigquery.ScalarQueryParameter(
                             variable_name,
                             convert_converted_type_to_parameter_type(type_converted),
-                            value,
+                            None if 'NULL' in value else value,
                         )
+                        query_parameters.append(query_param)
+                        arr.append(f'@{variable_name}')
 
-                    query_parameters.append(query_param)
-
-                    query_payload_size += sys.getsizeof(value)
+                        query_payload_size += sys.getsizeof(value)
 
                 row_values.append(f'({",".join(arr)})')
 
