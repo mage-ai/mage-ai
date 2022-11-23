@@ -48,7 +48,11 @@ Before enabling DBT docs in production, we need to make sure the static files fo
 
 ### GCP
 
-In the [mage-ai-terraform-templates](https://github.com/mage-ai/mage-ai-terraform-templates) repository, the template for GCP has commented out resources for enabling the DBT docs service. If you uncomment those resources, you should see an output `docs_service_ip` at the end of `terraform apply` with the IP to access the DBT docs in the cloud.
+In the [mage-ai-terraform-templates](https://github.com/mage-ai/mage-ai-terraform-templates) repository, the terraform templates for GCP have commented out resources at the end of the following files for enabling the DBT docs service.
+* [main.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/main.tf#L184)
+* [load_balancer.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/load_balancer.tf#L81)
+
+Once you uncomment those resources, you should see an output `docs_service_ip` at the end of `terraform apply` with the IP to access the DBT docs in the cloud.
 
 ```bash
 Outputs:
