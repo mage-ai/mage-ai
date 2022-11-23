@@ -61,7 +61,7 @@ class Connection(BaseConnection):
         return data
 
     def load(self, query_string: str) -> List[List[tuple]]:
-        tags = self.build_tags()
+        tags = merge_dict(self.build_tags(), dict(query=query_string))
         self.info('Load started.', tags=tags)
         data = self.execute([
             query_string,
