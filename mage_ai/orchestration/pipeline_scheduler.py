@@ -291,6 +291,12 @@ def run_integration_pipeline(
 
     for stream in catalog['streams']:
         tap_stream_id = stream['tap_stream_id']
+        destination_table = stream.get('destination_table', tap_stream_id)
+
+        update_source_state_from_destination_state(
+            integration_pipeline.source_state_file_path(tap_stream_id),
+            integration_pipeline.destination_state_file_path(destination_table),
+        )
 
         block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
         indexes = [0]
@@ -336,7 +342,6 @@ def run_integration_pipeline(
             ]]
 
             index = stream.get('index', idx)
-            destination_table = stream.get('destination_table', tap_stream_id)
 
             shared_dict = dict(
                 index=index,
@@ -350,11 +355,6 @@ def run_integration_pipeline(
                     dict(destination_table=destination_table),
                 )),
             ]
-
-            update_source_state_from_destination_state(
-                integration_pipeline.source_state_file_path(tap_stream_id),
-                integration_pipeline.destination_state_file_path(destination_table),
-            )
 
             outputs = []
             for idx2, tup in enumerate(block_runs_and_configs):
