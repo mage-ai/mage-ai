@@ -11,15 +11,17 @@ def get_dbt_target_path():
 
 def run_docs_server():
     target_path = get_dbt_target_path()
+    print('DBT target path:', target_path)
+    print('DBT target path exists:', os.path.exists(target_path))
     if not os.path.exists(target_path):
         os.makedirs(target_path)
 
     os.chdir(target_path)
 
-    httpd = socketserver.TCPServer(('0.0.0.0', 7789), SimpleHTTPRequestHandler)
+    httpd = socketserver.TCPServer(('', 7789), SimpleHTTPRequestHandler)
 
     try:
-        print('Start DBT docs server.')
+        print('Starting DBT docs server...')
         httpd.serve_forever()
     finally:
         httpd.shutdown()

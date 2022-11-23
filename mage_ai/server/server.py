@@ -597,6 +597,7 @@ def start_server(
     manage: bool = False,
     dbt_docs: bool = False,
 ):
+    print('Configuring server...')
 
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -611,6 +612,8 @@ def start_server(
     if not os.path.exists(project):
         init_repo(project)
     set_repo_path(project)
+
+    print('DBT Docs:', dbt_docs)
 
     if dbt_docs:
         run_docs_server()
