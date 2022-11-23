@@ -216,7 +216,12 @@ def reformat(df, action, **kwargs):
             )
 
     return df
-
+    
+def one_hot_encode(df, action, **kwargs):
+    columns = action['action_arguments']
+    df = pd.concat([df.drop(columns,axis=1), pd.get_dummies(df[columns])], axis=1)
+    
+    return df
 
 def remove_column(df, action, **kwargs):
     cols = action['action_arguments']
