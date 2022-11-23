@@ -5,6 +5,7 @@ from pandas import DataFrame
 from typing import IO, Any, Callable, Union
 import os
 import pandas as pd
+import re
 
 QUERY_ROW_LIMIT = 10_000_000
 
@@ -262,6 +263,9 @@ class BaseSQLDatabase(BaseIO):
             str: Clean query string
         """
         return query_string.strip(' \n\t')
+
+    def _clean_column_name(self, column_name: str) -> str:
+        return re.sub('\W', '_', column_name.lower())
 
 
 class BaseSQLConnection(BaseSQLDatabase):
