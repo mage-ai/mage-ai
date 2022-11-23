@@ -103,8 +103,7 @@ to set up authentication for Docker.
     docker pull mageai/mageai:latest
     ```
 
-    If you’re local workstation is using macOS and a silicon chip (e.g. M1, M2, etc),
-    then run this command instead:
+    If your local workstation is using macOS and a silicon chip (e.g. M1, M2, etc), then run this command instead:
 
         docker pull --platform linux/amd64 mageai/mageai:latest
 

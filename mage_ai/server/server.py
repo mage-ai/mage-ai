@@ -68,6 +68,7 @@ from mage_ai.server.api.orchestration import (
 from mage_ai.server.api.projects import ApiProjectsHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
+from mage_ai.server.docs_server import run_docs_server
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.kernels import (
     DEFAULT_KERNEL_NAME,
@@ -594,6 +595,7 @@ def start_server(
     port: str = None,
     project: str = None,
     manage: bool = False,
+    dbt_docs: bool = False,
 ):
 
     host = host if host else None
@@ -610,22 +612,25 @@ def start_server(
         init_repo(project)
     set_repo_path(project)
 
-    if manage:
-        os.environ[MANAGE_ENV_VAR] = '1'
+    if dbt_docs:
+        run_docs_server()
     else:
-        # Start a subprocess for scheduler
-        scheduler_manager.start_scheduler()
+        if manage:
+            os.environ[MANAGE_ENV_VAR] = '1'
+        else:
+            # Start a subprocess for scheduler
+            scheduler_manager.start_scheduler()
 
-    enable_pretty_logging()
+        enable_pretty_logging()
 
-    # Start web server
-    asyncio.run(
-        main(
-            host=host,
-            port=port,
-            project=project,
+        # Start web server
+        asyncio.run(
+            main(
+                host=host,
+                port=port,
+                project=project,
+            )
         )
-    )
 
 
 if __name__ == '__main__':
@@ -634,16 +639,19 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=str, default=None)
     parser.add_argument('--project', type=str, default=None)
     parser.add_argument('--manage-instance', type=str, default='0')
+    parser.add_argument('--dbt-docs-instance', type=str, default='0')
     args = parser.parse_args()
 
     host = args.host
     port = args.port
     project = args.project
     manage = args.manage_instance == '1'
+    dbt_docs = args.dbt_docs_instance == '1'
 
     start_server(
         host=host,
         port=port,
         project=project,
         manage=manage,
+        dbt_docs=dbt_docs,
     )
