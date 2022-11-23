@@ -19,3 +19,11 @@ export function getStreamAndStreamsFromCatalog(catalog: CatalogType, streamUUID:
     streams,
   };
 }
+
+export function calculateSelectedStreamCount(
+  selectedStreams: { [key: string]: StreamType },
+): number {
+  return Object.values(selectedStreams).reduce((count, currVal) => (
+    currVal !== null ? count + 1 : count
+  ), 0);
+}

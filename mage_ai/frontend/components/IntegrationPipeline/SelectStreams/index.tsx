@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import Panel from '@oracle/components/Panel/v2';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -19,6 +20,7 @@ import {
   TableContainerStyle,
 } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { calculateSelectedStreamCount } from '../utils';
 import { indexBy } from '@utils/array';
 
 type SelectStreamsProps = {
@@ -30,6 +32,12 @@ type SelectStreamsProps = {
   streams: StreamType[];
 };
 
+enum FilterSelectionEnum {
+  ALL = 'All',
+  SELECTED = 'Selected',
+  NOT_SELECTED = 'Not selected',
+}
+
 function SelectStreams({
   catalog,
   isLoading,
@@ -39,14 +47,28 @@ function SelectStreams({
   const selectedStreamsInit = indexBy(catalog?.streams || [], ({ stream }) => stream);
   const [selectedStreams, setSelectedStreams] = useState(selectedStreamsInit);
   const [filterText, setFilterText] = useState<string>(null);
+  const [filterMenuOpen, setFilterMenuOpen] = useState<boolean>(false);
+  const [dropdownFilter, setDropdownFilter] = useState<FilterSelectionEnum>(FilterSelectionEnum.ALL);
+  const filterButtonRef = useRef(null);
 
-  const filteredStreams = useMemo(() => (filterText
-    ? streams.filter(({ tap_stream_id: stream }) => stream.includes(filterText))
-    : streams
-), [
-    filterText,
-    streams,
-  ]);
+  const filteredSearchStreams = useMemo(() => {
+    const selectedStreamIds: string[] = Object.keys(selectedStreams);
+    let filteredStreams: StreamType[] = streams;
+    filteredStreams = filteredStreams.filter(({ tap_stream_id }) => {
+      if (dropdownFilter === FilterSelectionEnum.SELECTED) {
+        return selectedStreamIds.includes(tap_stream_id);
+      } else if (dropdownFilter === FilterSelectionEnum.NOT_SELECTED) {
+        return !selectedStreamIds.includes(tap_stream_id);
+      }
+
+      return true;
+    });
+
+    return filterText
+      ? filteredStreams.filter(({ tap_stream_id: stream }) => (
+        stream.includes(filterText)
+      )) : filteredStreams;
+  }, [dropdownFilter, filterText, selectedStreams, streams]);
 
   return (
     <Panel>
@@ -70,12 +92,41 @@ function SelectStreams({
             value={filterText}
           />
           <Spacing pr={1}>
-            <Button
-              beforeIcon={<Filter />}
-              noBackground
+            <FlyoutMenuWrapper
+              items={[
+                {
+                  label: () => FilterSelectionEnum.ALL,
+                  onClick: () => setDropdownFilter(FilterSelectionEnum.ALL),
+                  uuid: 'all_streams',
+                },
+                {
+                  label: () => FilterSelectionEnum.SELECTED,
+                  onClick: () => setDropdownFilter(FilterSelectionEnum.SELECTED),
+                  uuid: 'selected',
+                },
+                {
+                  label: () => FilterSelectionEnum.NOT_SELECTED,
+                  onClick: () => setDropdownFilter(FilterSelectionEnum.NOT_SELECTED),
+                  uuid: 'unselected',
+                },
+              ]}
+              onClickCallback={() => setFilterMenuOpen(false)}
+              onClickOutside={() => setFilterMenuOpen(false)}
+              open={filterMenuOpen}
+              parentRef={filterButtonRef}
+              uuid="SelectStreams/filter"
             >
-              All
-            </Button>
+              <Button
+                beforeIcon={<Filter />}
+                noBackground
+                onClick={() => setFilterMenuOpen(prevState => !prevState)}
+                ref={filterButtonRef}
+              >
+                <Text>
+                  {dropdownFilter}
+                </Text>
+              </Button>
+            </FlyoutMenuWrapper>
           </Spacing>
         </FlexContainer>
       </HeaderRowStyle>
@@ -96,7 +147,7 @@ function SelectStreams({
               uuid: 'Stream',
             },
           ]}
-          rows={filteredStreams.map((stream) => {
+          rows={filteredSearchStreams.map((stream) => {
             const {
               stream: streamID,
             } = stream;
@@ -128,9 +179,8 @@ function SelectStreams({
             loading={isLoading}
             onClick={() => onActionCallback(selectedStreams)}
             primary
-            small
           >
-            Save and continue
+            {`Confirm ${calculateSelectedStreamCount(selectedStreams)} streams`}
           </Button>
         </FlexContainer>
       </Spacing>
