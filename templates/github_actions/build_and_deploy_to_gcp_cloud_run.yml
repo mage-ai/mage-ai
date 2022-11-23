@@ -50,3 +50,11 @@ jobs:
         service: ${{ env.GOOGLE_CLOUD_RUN_SERVICE_NAME }}
         image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}
         region: ${{ env.GAR_LOCATION }}
+    
+    # Uncomment the step below if you are using a DBT docs service
+    # - id: deploy-docs
+    #   uses: google-github-actions/deploy-cloudrun@v0
+    #   with:
+    #     service: ${{ env.GOOGLE_CLOUD_RUN_SERVICE_NAME }}-docs
+    #     image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.sha }}
+    #     region: ${{ env.GAR_LOCATION }}
