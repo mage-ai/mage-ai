@@ -420,7 +420,10 @@ function PipelineSchedules({
                 <PopupMenu
                   danger
                   onCancel={() => setDeleteConfirmationOpenIdx(null)}
-                  onClick={() => deletePipelineTrigger(id)}
+                  onClick={() => {
+                    setDeleteConfirmationOpenIdx(null);
+                    deletePipelineTrigger(id);
+                  }}
                   right={UNIT * 2}
                   title={`Are you sure you want to delete the trigger ${name}?`}
                   top={(windowHeight / 2) - (UNIT * 16)}
