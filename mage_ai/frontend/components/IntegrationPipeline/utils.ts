@@ -20,10 +20,10 @@ export function getStreamAndStreamsFromCatalog(catalog: CatalogType, streamUUID:
   };
 }
 
-export function calculateSelectedStreamCount(
+export function getSelectedStreamIds(
   selectedStreams: { [key: string]: StreamType },
-): number {
-  return Object.values(selectedStreams).reduce((count, currVal) => (
-    currVal !== null ? count + 1 : count
-  ), 0);
+): string[] {
+  return Object.values(selectedStreams)
+    .filter((val) => val !== null)
+    .map(({ tap_stream_id }) => tap_stream_id);
 }

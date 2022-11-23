@@ -20,7 +20,7 @@ import {
   TableContainerStyle,
 } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { calculateSelectedStreamCount } from '../utils';
+import { getSelectedStreamIds } from '../utils';
 import { indexBy } from '@utils/array';
 
 type SelectStreamsProps = {
@@ -52,7 +52,7 @@ function SelectStreams({
   const filterButtonRef = useRef(null);
 
   const filteredSearchStreams = useMemo(() => {
-    const selectedStreamIds: string[] = Object.keys(selectedStreams);
+    const selectedStreamIds: string[] = getSelectedStreamIds(selectedStreams);
     let filteredStreams: StreamType[] = streams;
     filteredStreams = filteredStreams.filter(({ tap_stream_id }) => {
       if (dropdownFilter === FilterSelectionEnum.SELECTED) {
@@ -137,7 +137,7 @@ function SelectStreams({
         width={`${UNIT * 45}px`}
       >
         <Table
-          columnFlex={[null, null, 1]}
+          columnFlex={[1, 6]}
           columns={[
             {
               label: () => '',
@@ -147,6 +147,7 @@ function SelectStreams({
               uuid: 'Stream',
             },
           ]}
+          noHeader
           rows={filteredSearchStreams.map((stream) => {
             const {
               stream: streamID,
@@ -180,7 +181,7 @@ function SelectStreams({
             onClick={() => onActionCallback(selectedStreams)}
             primary
           >
-            {`Confirm ${calculateSelectedStreamCount(selectedStreams)} streams`}
+            {`Confirm ${getSelectedStreamIds(selectedStreams).length} streams`}
           </Button>
         </FlexContainer>
       </Spacing>
