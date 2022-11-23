@@ -19,3 +19,11 @@ export function getStreamAndStreamsFromCatalog(catalog: CatalogType, streamUUID:
     streams,
   };
 }
+
+export function getSelectedStreamIds(
+  selectedStreams: { [key: string]: StreamType },
+): string[] {
+  return Object.values(selectedStreams)
+    .filter((val) => val !== null)
+    .map(({ tap_stream_id }) => tap_stream_id);
+}

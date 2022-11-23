@@ -7,7 +7,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
-import light from '@oracle/styles/themes/light';
 import { BLUE_GRADIENT, PURPLE_PINK_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,

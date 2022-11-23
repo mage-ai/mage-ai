@@ -2,7 +2,7 @@ import { PanelStyle } from './index.style';
 
 type PanelProps = {
   children: any;
-}
+};
 
 function Panel({
   children,

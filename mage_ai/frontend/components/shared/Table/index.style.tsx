@@ -3,8 +3,6 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-const ROW_HEIGHT = 20 + (UNIT * 2) + 2;
-
 export const TableStyle = styled.table<{
   columnBorders?: boolean;
 }>`

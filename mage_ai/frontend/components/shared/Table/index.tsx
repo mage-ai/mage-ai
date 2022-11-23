@@ -28,6 +28,7 @@ type TableProps = {
   compact?: boolean;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
+  noHeader?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
   stickyFirstColumn?: boolean;
@@ -46,6 +47,7 @@ function Table({
   compact,
   isSelectedRow,
   noBorder,
+  noHeader,
   onClickRow,
   rows,
   stickyFirstColumn,
@@ -131,7 +133,7 @@ function Table({
 
   return (
     <TableStyle columnBorders={columnBorders}>
-      {columns?.length >= 1 && (
+      {columns?.length >= 1 && !noHeader && (
         <TableRowStyle noHover>
           {columns.map((col, idx) => (
             <TableHeadStyle
