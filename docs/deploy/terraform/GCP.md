@@ -8,6 +8,7 @@
 1. [Customize Terraform settings](#4-customize-terraform-settings)
 1. [Deploy](#5-deploy)
 1. [Misc](#misc)
+1. [DBT](#dbt)
 
 <br />
 
@@ -457,3 +458,7 @@ Destroy complete! Resources: 10 destroyed.
 ```
 
 <br />
+
+## DBT
+
+For information about how to serve DBT docs in production, [see here](../../guides/dbt/serve_docs.md).
