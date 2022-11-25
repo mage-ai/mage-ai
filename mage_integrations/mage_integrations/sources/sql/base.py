@@ -262,7 +262,7 @@ WHERE table_schema = '{schema}'
                         stream.schema.to_dict()['properties'],
                         column_type_mapping,
                         column_cleaned=wrap_column_in_quotes(col),
-                        operator='>',
+                        operator='>=',
                     ),
                 )
 
