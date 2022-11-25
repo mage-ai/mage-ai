@@ -21,6 +21,7 @@ import { isJsonString } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 const MESSAGE_KEY = 'message';
+const TAGS_KEY = 'tags';
 const KEYS_TO_SKIP = [
   'error',
   'error_stack',
@@ -143,7 +144,9 @@ function LogDetail({
           columnFlex={[null, 1]}
           columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
           rows={rows?.map(([k, v], idx) => {
-            const isMessageKey = k === MESSAGE_KEY;
+            const isMessageKey = MESSAGE_KEY === k;
+            const isTagsKey = TAGS_KEY === k;
+
             return [
               <Text
                 key={`${k}_${idx}_key`}
@@ -156,16 +159,26 @@ function LogDetail({
                 <Text
                   key={`${k}_${idx}_val`}
                   monospace
-                  small={isMessageKey && showFullLogMessage}
                   textOverflow
-                  title={v}
-                  whiteSpaceNormal={isMessageKey && showFullLogMessage}
-                  wordBreak={isMessageKey && showFullLogMessage}
+                  title={`${v}`}
+                  whiteSpaceNormal={(isMessageKey && showFullLogMessage) || isTagsKey}
+                  wordBreak={(isMessageKey && showFullLogMessage) || isTagsKey}
                 >
-                  {(isMessageKey && showFullLogMessage && isJsonString(v))
+                  {!isTagsKey && ((isMessageKey && showFullLogMessage && isJsonString(v))
                     ? <pre>{JSON.stringify(JSON.parse(v), null, 2)}</pre>
                     : v
-                  }
+                  )}
+
+
+                  {isTagsKey && (
+                    <pre>
+                      {isJsonString(v)
+                        ? JSON.parse(JSON.stringify(v, null, 2))
+                        : JSON.stringify(v, null, 2)
+                      }
+                    </pre>
+                  )}
+
                 </Text>
                 {isMessageKey &&
                   <Link

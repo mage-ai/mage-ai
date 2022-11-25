@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from mage_ai.data_integrations.utils.config import get_catalog
-from mage_ai.data_integrations.utils.scheduler import create_block_runs
+from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -22,6 +21,7 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
 from typing import Any, Dict, List
+import json
 import pytz
 import traceback
 
@@ -243,8 +243,6 @@ def run_integration_pipeline(
     variables: Dict,
     tags: Dict,
 ) -> None:
-    from mage_integrations.sources.utils import update_source_state_from_destination_state
-
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     integration_pipeline = IntegrationPipeline.get(pipeline_scheduler.pipeline.uuid)
@@ -287,16 +285,10 @@ def run_integration_pipeline(
 
     data_loader_block = integration_pipeline.data_loader
     data_exporter_block = integration_pipeline.data_exporter
-    catalog = get_catalog(data_loader_block, variables)
 
-    for stream in catalog['streams']:
+    for stream in integration_pipeline.streams():
         tap_stream_id = stream['tap_stream_id']
         destination_table = stream.get('destination_table', tap_stream_id)
-
-        update_source_state_from_destination_state(
-            integration_pipeline.source_state_file_path(tap_stream_id),
-            integration_pipeline.destination_state_file_path(destination_table),
-        )
 
         block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
         indexes = [0]
@@ -344,16 +336,16 @@ def run_integration_pipeline(
             index = stream.get('index', idx)
 
             shared_dict = dict(
+                destination_table=destination_table,
                 index=index,
-                selected_streams=[tap_stream_id],
+                selected_streams=[
+                    tap_stream_id,
+                ],
             )
             block_runs_and_configs = [
                 (data_loader_block_run, shared_dict),
             ] + [(br, shared_dict) for br in transformer_block_runs] + [
-                (data_exporter_block_run, merge_dict(
-                    shared_dict,
-                    dict(destination_table=destination_table),
-                )),
+                (data_exporter_block_run, shared_dict),
             ]
 
             outputs = []
@@ -511,11 +503,15 @@ def schedule_all():
                 payload['create_block_runs'] = False
 
             pipeline_run = PipelineRun.create(**payload)
+            pipeline_scheduler = PipelineScheduler(pipeline_run)
 
             if is_integration:
-                create_block_runs(pipeline_run)
+                initialize_state_and_runs(
+                    pipeline_run,
+                    pipeline_scheduler.logger,
+                )
 
-            PipelineScheduler(pipeline_run).start(should_schedule=False)
+            pipeline_scheduler.start(should_schedule=False)
 
     active_pipeline_runs = PipelineRun.active_runs(
         pipeline_uuids=repo_pipelines,

@@ -61,7 +61,7 @@ def build_create_table_command(
 
 def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
-        return 'CHAR(52)'
+        return 'VARCHAR(52)'
     elif COLUMN_TYPE_INTEGER == column_type:
         return 'UNSIGNED'
     elif COLUMN_TYPE_NUMBER == column_type:
@@ -71,6 +71,6 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
     elif COLUMN_TYPE_STRING == column_type:
         if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
             # Twice as long as the number of characters in ISO date format
-            return 'CHAR(52)'
+            return 'VARCHAR(52)'
 
-    return 'CHAR(255)'
+    return 'VARCHAR(255)'
