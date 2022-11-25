@@ -208,7 +208,13 @@ function LogDetail({
 
           {error?.map((lines: string) => lines.split('\n').map((line: string) => (
             line.split('\\n').map(part => (
-              <Text default key={part} monospace small>
+              <Text
+                default
+                key={part}
+                monospace
+                preWrap
+                small
+              >
                 {part}
               </Text>
             ))
@@ -223,7 +229,13 @@ function LogDetail({
               </Spacing>
 
               {errorStack?.map((lines: string[]) => lines?.map((line: string) => (
-                <Text default key={line} monospace small>
+                <Text
+                  default
+                  key={line}
+                  monospace
+                  preWrap
+                  small
+                >
                   {line}
                 </Text>
               )))}

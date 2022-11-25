@@ -13,9 +13,23 @@ SQL_SOURCES_UUID = [d.get('uuid', d['name'].lower()) for d in SQL_SOURCES]
 
 
 def initialize_state_and_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[BlockRun]:
-    update_stream_states(pipeline_run, logger)
+    try:
+        update_stream_states(pipeline_run, logger)
 
-    return create_block_runs(pipeline_run, logger)
+        return create_block_runs(pipeline_run, logger)
+    except Exception as err:
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+
+        logger.exception(
+            str(err),
+            error=err,
+            tags=dict(
+                pipeline_run_id=pipeline_run.id,
+                pipeline_uuid=pipeline_run.pipeline_uuid,
+            ),
+        )
+
+        raise err
 
 
 def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[BlockRun]:
