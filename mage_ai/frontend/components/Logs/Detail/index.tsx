@@ -147,6 +147,18 @@ function LogDetail({
             const isMessageKey = MESSAGE_KEY === k;
             const isTagsKey = TAGS_KEY === k;
 
+            let valueToDisplay = v;
+            let valueTitle = v;
+            if (isTagsKey) {
+              valueToDisplay = isJsonString(v)
+                ? JSON.parse(JSON.stringify(v, null, 2))
+                : JSON.stringify(v, null, 2);
+              valueTitle = valueToDisplay;
+            } else if (isMessageKey && showFullLogMessage && isJsonString(v)) {
+              valueTitle = JSON.stringify(JSON.parse(v), null, 2);
+              valueToDisplay = <pre>{valueTitle}</pre>;
+            }
+
             return [
               <Text
                 key={`${k}_${idx}_key`}
@@ -160,22 +172,14 @@ function LogDetail({
                   key={`${k}_${idx}_val`}
                   monospace
                   textOverflow
-                  title={`${v}`}
+                  title={valueTitle}
                   whiteSpaceNormal={(isMessageKey && showFullLogMessage) || isTagsKey}
                   wordBreak={(isMessageKey && showFullLogMessage) || isTagsKey}
                 >
-                  {!isTagsKey && ((isMessageKey && showFullLogMessage && isJsonString(v))
-                    ? <pre>{JSON.stringify(JSON.parse(v), null, 2)}</pre>
-                    : v
-                  )}
-
-
+                  {!isTagsKey && valueToDisplay}
                   {isTagsKey && (
                     <pre>
-                      {isJsonString(v)
-                        ? JSON.parse(JSON.stringify(v, null, 2))
-                        : JSON.stringify(v, null, 2)
-                      }
+                      {valueToDisplay}
                     </pre>
                   )}
 
