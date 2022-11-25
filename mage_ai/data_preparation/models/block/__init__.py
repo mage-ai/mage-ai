@@ -817,6 +817,7 @@ class Block:
                 index = self.template_runtime_configuration.get('index', None)
                 selected_streams = self.template_runtime_configuration.get('selected_streams', [])
                 stream = selected_streams[0] if len(selected_streams) >= 1 else None
+                destination_table = self.template_runtime_configuration.get('destination_table', stream)
                 query_data = runtime_arguments or {}
 
                 if index is not None:
@@ -841,13 +842,16 @@ class Block:
                             selected_streams=selected_streams,
                         ),
                         '--state',
-                        self.pipeline.source_state_file_path(stream),
+                        self.pipeline.source_state_file_path(
+                            destination_table=destination_table,
+                            stream=stream,
+                        ),
                         '--query_json',
                         json.dumps(query_data),
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
 
                     output = proc.stdout.decode()
-                    print_logs_from_output(output)
+                    print_logs_from_output(output, logger=logger)
                     outputs.append(output)
                 elif BlockType.TRANSFORMER == self.type:
                     from mage_integrations.sources.constants import COLUMN_TYPE_NULL
@@ -944,8 +948,8 @@ class Block:
                     input_from_previous = input_from_output['output'][0]
 
                     override = {}
-                    if self.template_runtime_configuration.get('destination_table'):
-                        override['table'] = self.template_runtime_configuration['destination_table']
+                    if destination_table:
+                        override['table'] = destination_table
 
                     proc = subprocess.run([
                         PYTHON_COMMAND,
@@ -961,10 +965,13 @@ class Block:
                         '--settings',
                         self.pipeline.data_exporter.file_path,
                         '--state',
-                        self.pipeline.destination_state_file_path(override.get('table')),
+                        self.pipeline.destination_state_file_path(
+                            destination_table=destination_table,
+                            stream=stream,
+                        ),
                     ], input=input_from_previous, capture_output=True, text=True)
 
-                    print_logs_from_output(proc.stdout)
+                    print_logs_from_output(proc.stdout, logger=logger)
                     outputs.append(proc)
             elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(

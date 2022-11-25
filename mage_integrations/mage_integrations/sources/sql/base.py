@@ -215,16 +215,21 @@ WHERE table_schema = '{schema}'
         unique_constraints = stream.unique_constraints
         bookmark_properties = self._get_bookmark_properties_for_stream(stream)
 
-        order_by_columns = set()
+        # Don’t use a Set; they are unordered
+        order_by_columns = []
 
-        if bookmark_properties:
-            order_by_columns.update(bookmark_properties)
+        # This order is very important, don’t change
+        for arr in [
+            bookmark_properties,
+            key_properties,
+            unique_constraints,
+        ]:
+            if not arr:
+                continue
 
-        if key_properties:
-            order_by_columns.update(key_properties)
-
-        if unique_constraints:
-            order_by_columns.update(unique_constraints)
+            for col in arr:
+                if col not in order_by_columns:
+                    order_by_columns.append(col)
 
         order_by_columns = [wrap_column_in_quotes(col) for col in list(order_by_columns)]
 
@@ -257,7 +262,7 @@ WHERE table_schema = '{schema}'
                         stream.schema.to_dict()['properties'],
                         column_type_mapping,
                         column_cleaned=wrap_column_in_quotes(col),
-                        operator='>',
+                        operator='>=',
                     ),
                 )
 

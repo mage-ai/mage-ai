@@ -1,7 +1,8 @@
+from mage_ai.shared.hash import merge_dict
 import json
 
 
-def print_logs_from_output(output: str):
+def print_logs_from_output(output: str, logger = None):
     from mage_integrations.utils.logger.constants import (
         LOG_LEVEL_ERROR,
         LOG_LEVEL_EXCEPTION,
@@ -11,11 +12,20 @@ def print_logs_from_output(output: str):
     for line in output.split('\n'):
         try:
             data = json.loads(line)
+            message = data.get('message')
+            tags = data.get('tags')
+
             if TYPE_LOG == data.get('type'):
-                print(json.dumps(data))
+                if logger:
+                    data2 = data.copy()
+                    if 'message' in data2:
+                        del data2['message']
+                    if 'tags' in data2:
+                        del data2['tags']
+                    logger.info(message, tags=merge_dict(tags, data2))
+                else:
+                    print(json.dumps(data))
             if data.get('level') in [LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION]:
-                message = data.get('message')
-                tags = data.get('tags')
                 if message:
                     if tags:
                         message = f'{message} {json.dumps(tags)}'

@@ -33,7 +33,7 @@ def column_type_mapping(column_type: str) -> str:
     elif COLUMN_TYPE_OBJECT == column_type:
         return 'TEXT'
 
-    return 'CHAR'
+    return 'VARCHAR'
 
 
 def wrap_column_in_quotes(column):

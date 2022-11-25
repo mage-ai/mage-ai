@@ -93,18 +93,28 @@ class IntegrationPipeline(Pipeline):
         transformer_file = importlib.import_module('mage_integrations.transformers.base')
         return os.path.abspath(transformer_file.__file__)
 
-    def destination_state_file_path(self, uuid: str) -> str:
-        file_path = f'{self.destination_dir}/{clean_name(uuid)}_state'
-        if not os.path.exists(file_path):
-            with open(file_path, 'w') as f:
-                f.write('')
-        return file_path
+    def destination_state_file_path(self, stream: str, destination_table: str) -> str:
+        stream_dir = f'{self.destination_dir}/{clean_name(stream)}'
+        file_path = f'{stream_dir}/{clean_name(destination_table)}_state'
 
-    def source_state_file_path(self, uuid: str) -> str:
-        file_path = f'{self.source_dir}/{clean_name(uuid)}_state.json'
+        os.makedirs(stream_dir, exist_ok=True)
+
         if not os.path.exists(file_path):
             with open(file_path, 'w') as f:
                 f.write(json.dumps(dict(bookmarks={})))
+
+        return file_path
+
+    def source_state_file_path(self, stream: str, destination_table: str) -> str:
+        stream_dir = f'{self.source_dir}/{clean_name(stream)}'
+        file_path = f'{stream_dir}/{clean_name(destination_table)}_state.json'
+
+        os.makedirs(stream_dir, exist_ok=True)
+
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write(json.dumps(dict(bookmarks={})))
+
         return file_path
 
     def test_connection(self, block_type: BlockType, config: str = None):
@@ -121,7 +131,7 @@ class IntegrationPipeline(Pipeline):
                     file_path,
                     '--config_json',
                     simplejson.dumps(
-                        interpolate_variables(config, get_global_variables(self.uuid)),
+                        interpolate_variables(config, self.__global_variables()),
                         default=encode_complex,
                         ignore_nan=True,
                     ),
@@ -149,7 +159,6 @@ class IntegrationPipeline(Pipeline):
     def preview_data(self, block_type: BlockType) -> pd.DataFrame:
         from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
 
-        global_vars = get_global_variables(self.uuid) or dict()
         file_path = None
         if BlockType.DATA_LOADER == block_type:
             file_path = self.source_file_path
@@ -158,18 +167,25 @@ class IntegrationPipeline(Pipeline):
 
         try:
             if file_path:
+                stream_data = find(lambda x: x['tap_stream_id'] == self.data_loader.uuid, self.streams())
+                tap_stream_id = stream_data['tap_stream_id']
+                destination_table = stream_data.get('destination_table', tap_stream_id)
+
                 run_args = [
                     PYTHON,
                     file_path,
                     '--config_json',
-                    build_config_json(self.data_loader.file_path, global_vars),
+                    build_config_json(self.data_loader.file_path, self.__global_variables()),
                     '--load_sample_data',
                     '--log_to_stdout',
                     '1',
                     '--settings',
                     self.data_loader.file_path,
                     '--state',
-                    self.source_state_file_path(self.data_loader.uuid),
+                    self.source_state_file_path(
+                        destination_table=destination_table,
+                        stream=tap_stream_id,
+                    ),
                 ]
 
                 proc = subprocess.run(
@@ -214,26 +230,28 @@ class IntegrationPipeline(Pipeline):
             raise Exception(error)
 
     def count_records(self) -> List[Dict]:
-        global_vars = get_global_variables(self.uuid) or dict()
         arr = []
-        catalog = get_catalog(self.data_loader, global_vars)
 
         if self.source_file_path and self.data_loader.file_path:
-            for stream_data in catalog['streams']:
-                stream = stream_data['tap_stream_id']
+            for stream_data in self.streams():
+                tap_stream_id = stream_data['tap_stream_id']
+                destination_table = stream_data.get('destination_table', tap_stream_id)
 
                 try:
                     run_args = [
                         PYTHON,
                         self.source_file_path,
                         '--config_json',
-                        build_config_json(self.data_loader.file_path, global_vars),
+                        build_config_json(self.data_loader.file_path, self.__global_variables()),
                         '--settings',
                         self.data_loader.file_path,
                         '--state',
-                        self.source_state_file_path(stream),
+                        self.source_state_file_path(
+                            destination_table=destination_table,
+                            stream=tap_stream_id,
+                        ),
                         '--selected_streams_json',
-                        json.dumps([stream]),
+                        json.dumps([tap_stream_id]),
                         '--count_records',
                     ]
 
@@ -248,15 +266,13 @@ class IntegrationPipeline(Pipeline):
         return arr
 
     def discover(self, streams: List[str] = None) -> Dict:
-        global_vars = get_global_variables(self.uuid) or dict()
-
         if self.source_file_path and self.data_loader.file_path:
             try:
                 run_args = [
                     PYTHON,
                     self.source_file_path,
                     '--config_json',
-                    build_config_json(self.data_loader.file_path, global_vars),
+                    build_config_json(self.data_loader.file_path, self.__global_variables()),
                     '--settings',
                     self.data_loader.file_path,
                     '--discover',
@@ -278,14 +294,12 @@ class IntegrationPipeline(Pipeline):
 
     def discover_streams(self) -> List[str]:
         if self.source_file_path and self.data_loader.file_path:
-            global_vars = get_global_variables(self.uuid) or dict()
-
             try:
                 run_args = [
                     PYTHON,
                     self.source_file_path,
                     '--config_json',
-                    build_config_json(self.data_loader.file_path, global_vars),
+                    build_config_json(self.data_loader.file_path, self.__global_variables()),
                     '--settings',
                     self.data_loader.file_path,
                     '--discover',
@@ -299,3 +313,12 @@ class IntegrationPipeline(Pipeline):
             except subprocess.CalledProcessError as e:
                 message = e.stderr.decode('utf-8')
                 raise Exception(message)
+
+    def streams(self) -> List[Dict]:
+        return self.__catalog()['streams']
+
+    def __catalog(self) -> Dict:
+        return get_catalog(self.data_loader, self.__global_variables())
+
+    def __global_variables(self) -> Dict:
+        return get_global_variables(self.uuid) or dict()
