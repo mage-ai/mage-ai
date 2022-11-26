@@ -15,7 +15,7 @@ from mage_integrations.destinations.bigquery.utils import (
     convert_converted_type_to_parameter_type,
     convert_datetime,
 )
-from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import KEY_VALUE, UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
@@ -217,6 +217,17 @@ WHERE table_id = '{table_name}'
                 connection.execute([
                     f'DROP TABLE {database_name}.{schema_name}.{table_name}',
                 ], commit=True)
+                self.process_state(
+                    row={
+                        KEY_VALUE: dict(bookmarks={}),
+                    },
+                    tags=dict(
+                        database_name=database_name,
+                        schema_name=schema_name,
+                        stream=stream,
+                        table_name=table_name,
+                    ),
+                )
 
             raise err
 
