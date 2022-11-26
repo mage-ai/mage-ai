@@ -10,12 +10,28 @@
 
 <br />
 
+## Pre-requisites
+
+### Setup
+
+[Download Mage maintained Terraform scripts](../README.md).
+
+### Permissions
+
+In order to create all the required resources in AWS, your IAM user account must have the following
+[permissions](https://github.com/mage-ai/mage-ai/blob/master/docs/deploy/terraform/AWS/terraform_apply_policy.json).
+
+In order to terminate and remove all the resources created from Terraform, you need the following
+[permissions](https://github.com/mage-ai/mage-ai/blob/master/docs/deploy/terraform/AWS/terraform_destroy_policy.json).
+
+<br />
+
 ## Terraform plan
 
 You can run the following command to see all the resources that will be created by Terraform:
 
 ```bash
-cd scripts/deploy/terraform/aws
+cd aws
 terraform plan
 ```
 
@@ -41,7 +57,7 @@ aws_secret_access_key = XXX
 
 <b>Application name (optional)</b>
 
-In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
+In the file [./aws/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf),
 you can change the default application name that will appear in AWS ECS:
 
 ```
@@ -54,7 +70,7 @@ variable "app_name" {
 
 <b>Docker image (optional)</b>
 
-In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
+In the file [./aws/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf),
 you can change the default Docker image:
 
 ```
@@ -77,7 +93,7 @@ variable "docker_image" {
 
 <b>Region (optional)</b>
 
-In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
+In the file [./aws/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf),
 you can change the region:
 
 ```
@@ -90,7 +106,7 @@ variable "aws_region" {
 
 <b>Availability zones (optional)</b>
 
-In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
+In the file [./aws/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf),
 you must change the availability zones to match your region from above:
 
 ```
@@ -102,14 +118,14 @@ variable "availability_zones" {
 
 <b>More</b>
 
-Other variables defined in [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf)
+Other variables defined in [./aws/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf)
 can also be customized to your needs.
 
 <br />
 
 ## 3. Configurable environment variables
 
-In the [`mage-ai/scripts/deploy/terraform/aws/env_vars.json`](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/env_vars.json)
+In the [`./aws/env_vars.json`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/env_vars.json)
 file, you can edit the following variables, which are used by the tool while running in the cloud:
 
 Change the value of the variables with the following names to match the actual values you want
@@ -132,7 +148,7 @@ You can add any environment variable you want in this file. These will be set on
 
 1. Change directory into scripts folder:
     ```bash
-    cd scripts/deploy/terraform/aws
+    cd aws
     ```
 1. Initialize Terraform:
     ```bash
@@ -174,13 +190,13 @@ From the root directory of Mage, run the following commands:
 
 1. Initialize Terraform:
 ```bash
-docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/aws" \
+docker run -i -t -v $(pwd):/mage --workdir="/absolute_path_to/mage-ai-terraform-templates/aws" \
   hashicorp/terraform:latest init
 ```
 
 2. Deploy:
 ```bash
-docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/aws" \
+docker run -i -t -v $(pwd):/mage --workdir="/absolute_path_to/mage-ai-terraform-templates/aws" \
   --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
   --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   hashicorp/terraform:latest apply

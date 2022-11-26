@@ -14,10 +14,10 @@ Cloud providers currently supported with Mage Terraform scripts:
 
 ## Pre-install
 
-Clone this repository:
+Clone Mage’s [Terraform template repository](https://github.com/mage-ai/mage-ai-terraform-templates):
 
 ```bash
-git clone https://github.com/mage-ai/mage-ai.git
+git clone https://github.com/mage-ai/mage-ai-terraform-templates.git
 ```
 
 <br />

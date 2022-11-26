@@ -11,12 +11,22 @@
 
 <br />
 
+## Pre-requisites
+
+### Setup
+
+[Download Mage maintained Terraform scripts](../README.md).
+
+### Permissions
+
+- TBD
+
 ## Terraform plan
 
 You can run the following command to see all the resources that will be created by Terraform:
 
 ```bash
-cd scripts/deploy/terraform/azure
+cd azure
 terraform plan
 ```
 
@@ -71,7 +81,7 @@ Once completed, your terminal will output something like this:
 
 The `storage_account_name` must be unique globally. Before running any Terraform commands,
 please change the `default` value of variable named `storage_account_name` in the
-[./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf)
+[./azure/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/azure/variables.tf)
 file.
 
 ```
@@ -85,7 +95,7 @@ variable "storage_account_name" {
 
 The `key_vault_name` must be unique globally. Before running any Terraform commands,
 please change the `default` value of variable named `key_vault_name` in the
-[./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf)
+[./azure/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/azure/variables.tf)
 file.
 
 ```
@@ -97,7 +107,7 @@ variable "key_vault_name" {
 
 <b>Virtual network name</b>
 
-In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
+In the file [./azure/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/azure/variables.tf),
 you can change the `default` value under `app_name`:
 
 ```
@@ -110,7 +120,7 @@ variable "app_name" {
 
 <b>Docker image</b>
 
-In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
+In the file [./azure/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/azure/variables.tf),
 you can change the `default` value under `docker_image`:
 
 ```
@@ -128,7 +138,7 @@ variable "docker_image" {
 
 <b>Region</b>
 
-In the file [./scripts/deploy/terraform/azure/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/main.tf),
+In the file [./azure/main.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/azure/main.tf),
 you can change the `location` value under `resource_group`:
 
 ```
@@ -140,8 +150,7 @@ resource "azurerm_resource_group" "resource_group" {
 
 ### More
 
-Other variables defined in [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf)
-can also be customized to your needs.
+Other variables defined in [./azure/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/azure/variables.tf) can also be customized to your needs.
 
 <br />
 
@@ -149,7 +158,7 @@ can also be customized to your needs.
 
 1. Change directory into scripts folder:
 ```bash
-cd scripts/deploy/terraform/azure
+cd azure
 ```
 
 2. Initialize Terraform:
