@@ -147,6 +147,18 @@ function LogDetail({
             const isMessageKey = MESSAGE_KEY === k;
             const isTagsKey = TAGS_KEY === k;
 
+            let valueToDisplay = v;
+            let valueTitle = v;
+            if (isTagsKey) {
+              valueToDisplay = isJsonString(v)
+                ? JSON.parse(JSON.stringify(v, null, 2))
+                : JSON.stringify(v, null, 2);
+              valueTitle = valueToDisplay;
+            } else if (isMessageKey && showFullLogMessage && isJsonString(v)) {
+              valueTitle = JSON.stringify(JSON.parse(v), null, 2);
+              valueToDisplay = <pre>{valueTitle}</pre>;
+            }
+
             return [
               <Text
                 key={`${k}_${idx}_key`}
@@ -160,22 +172,14 @@ function LogDetail({
                   key={`${k}_${idx}_val`}
                   monospace
                   textOverflow
-                  title={`${v}`}
+                  title={valueTitle}
                   whiteSpaceNormal={(isMessageKey && showFullLogMessage) || isTagsKey}
                   wordBreak={(isMessageKey && showFullLogMessage) || isTagsKey}
                 >
-                  {!isTagsKey && ((isMessageKey && showFullLogMessage && isJsonString(v))
-                    ? <pre>{JSON.stringify(JSON.parse(v), null, 2)}</pre>
-                    : v
-                  )}
-
-
+                  {!isTagsKey && valueToDisplay}
                   {isTagsKey && (
                     <pre>
-                      {isJsonString(v)
-                        ? JSON.parse(JSON.stringify(v, null, 2))
-                        : JSON.stringify(v, null, 2)
-                      }
+                      {valueToDisplay}
                     </pre>
                   )}
 
@@ -208,7 +212,13 @@ function LogDetail({
 
           {error?.map((lines: string) => lines.split('\n').map((line: string) => (
             line.split('\\n').map(part => (
-              <Text default key={part} monospace small>
+              <Text
+                default
+                key={part}
+                monospace
+                preWrap
+                small
+              >
                 {part}
               </Text>
             ))
@@ -223,7 +233,13 @@ function LogDetail({
               </Spacing>
 
               {errorStack?.map((lines: string[]) => lines?.map((line: string) => (
-                <Text default key={line} monospace small>
+                <Text
+                  default
+                  key={line}
+                  monospace
+                  preWrap
+                  small
+                >
                   {line}
                 </Text>
               )))}

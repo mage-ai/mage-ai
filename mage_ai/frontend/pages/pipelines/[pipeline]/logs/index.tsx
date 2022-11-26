@@ -415,6 +415,7 @@ function BlockRuns({
               <Text
                 key="log_message"
                 monospace
+                preWrap
                 textOverflow
                 title={message || content}
               >
