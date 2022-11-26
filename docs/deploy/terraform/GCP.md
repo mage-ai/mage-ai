@@ -12,12 +12,33 @@
 
 <br />
 
+## Pre-requisites
+
+### Setup
+
+[Download Mage maintained Terraform scripts](../README.md).
+
+### Permissions
+
+Go to the IAM management dashboard,
+find the service account associated to the account you just logged into, and then
+add these roles to that service account
+(e.g. choose your account as the principal when adding new roles):
+
+1. Artifact Registry Read
+1. Artifact Registry Writer
+1. Cloud Run Developer
+1. Cloud SQL
+1. Service Account Token Creator
+
+<br />
+
 ## Terraform plan
 
 You can run the following command to see all the resources that will be created by Terraform:
 
 ```bash
-cd scripts/deploy/terraform/gcp
+cd gcp
 ```
 
 ```bash
@@ -54,20 +75,6 @@ gcloud init
 ```bash
 gcloud auth application-default login
 ```
-
-### Permissions required for deployment
-
-Go to the IAM management dashboard,
-find the service account associated to the account you just logged into, and then
-add these roles to that service account
-(e.g. choose your account as the principal when adding new roles):
-
-1. Artifact Registry Read
-1. Artifact Registry Writer
-1. Cloud Run Developer
-1. Service Account Token Creator
-
-<br />
 
 ## 3. Push Docker image to GCP Artifact Registry
 
@@ -151,7 +158,7 @@ when following this [CI/CD guide](../ci_cd/README.md):
 
 Before running any Terraform commands,
 please change the `default` value of the variable named `project_id` in the
-[./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf)
+[./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
 file.
 
 ```
@@ -168,7 +175,7 @@ In the repository you created in GCP Artifact Repository, you’ll see a list of
 Click on an image name, then copy the full path to the image
 (e.g. `us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai`).
 
-In the file [./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf),
+In the file [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf),
 you can change the `default` value under `docker_image`:
 
 ```
@@ -181,7 +188,7 @@ variable "docker_image" {
 
 <b>Application Name</b>
 
-In the file [./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf),
+In the file [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf),
 you can change the `default` value under `app_name`:
 
 ```
@@ -194,7 +201,7 @@ variable "app_name" {
 
 <b>Region</b>
 
-In the file [./scripts/deploy/terraform/gcp/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/main.tf),
+In the file [./gcp/main.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/main.tf),
 you can change the `default` value under `region`:
 
 ```
@@ -209,7 +216,7 @@ variable "region" {
 
 Set your environment variables in your running cloud environment by adding the following under
 the resource named `google_cloud_run_service` in the file
-[./scripts/deploy/terraform/gcp/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/main.tf):
+[./gcp/main.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/main.tf):
 
 ```
 resource "google_cloud_run_service" "run_service" {
@@ -265,7 +272,7 @@ an error that looks like this:
 1. Under the field labeled <b>Select a role</b>, enter the value `Secret Manager Secret Accessor`.
 1. Click the button <b>SAVE</b>.
 1. Mount secrets to Google Cloud Run via Terraform in the file
-[./scripts/deploy/terraform/gcp/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/main.tf):
+[./gcp/main.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/main.tf):
     ```
     resource "google_cloud_run_service" "run_service" {
       ...
@@ -330,7 +337,7 @@ to manually mount the secret to the running Mage Cloud Run service and grant the
 
 ### More
 
-Other variables defined in [./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf)
+Other variables defined in [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
 can also be customized to your needs.
 
 <br />
@@ -339,7 +346,7 @@ can also be customized to your needs.
 
 1. Change directory into scripts folder:
     ```bash
-    cd scripts/deploy/terraform/gcp
+    cd gcp
     ```
 1. Initialize Terraform:
     ```bash
@@ -423,7 +430,7 @@ gcloud run deploy [app_name] --image [docker_image]
 > `app_name`
 >
 > This is the value you changed when editing the
-> [./scripts/deploy/terraform/gcp/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/gcp/variables.tf)
+> [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
 > file.
 
 <br />
