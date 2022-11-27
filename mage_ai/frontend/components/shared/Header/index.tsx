@@ -13,6 +13,7 @@ import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import PopupMenu from '@oracle/components/PopupMenu';
+import ProjectType from '@interfaces/ProjectType';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
