@@ -12,6 +12,7 @@ import sys
 class SchemaMessage(SchemaMessageOriginal):
     def __init__(
         self,
+        disable_column_type_check: bool = None,
         partition_keys: List[str] = None,
         replication_method: str = None,
         unique_conflict_method: str = None,
@@ -19,6 +20,7 @@ class SchemaMessage(SchemaMessageOriginal):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.disable_column_type_check = disable_column_type_check
         self.partition_keys = partition_keys
         self.replication_method = replication_method
         self.unique_conflict_method = unique_conflict_method
@@ -27,6 +29,8 @@ class SchemaMessage(SchemaMessageOriginal):
     def asdict(self):
         result = super().asdict()
 
+        if self.disable_column_type_check is not None:
+            result['disable_column_type_check'] = self.disable_column_type_check
         if self.partition_keys:
             result['partition_keys'] = self.partition_keys
         if self.replication_method:
@@ -58,6 +62,7 @@ def write_schema(
     schema,
     key_properties: List[str],
     bookmark_properties: List[str] = None,
+    disable_column_type_check: bool = None,
     partition_keys: List[str] = None,
     replication_method: str = None,
     stream_alias: str = None,
@@ -79,6 +84,7 @@ def write_schema(
     write_message(
         SchemaMessage(
             bookmark_properties=bookmark_properties,
+            disable_column_type_check=disable_column_type_check,
             key_properties=key_properties,
             partition_keys=partition_keys,
             replication_method=replication_method,

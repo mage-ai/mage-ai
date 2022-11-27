@@ -273,6 +273,7 @@ class Destination():
 
     def _process(self, input_buffer) -> None:
         self.bookmark_properties = {}
+        self.disable_column_type_check = {}
         self.key_properties = {}
         self.partition_keys = {}
         self.replication_methods = {}

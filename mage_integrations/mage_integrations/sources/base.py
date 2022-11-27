@@ -324,6 +324,7 @@ class Source:
 
         schema_data = dict(
             bookmark_properties=self._get_bookmark_properties_for_stream(stream),
+            disable_column_type_check=stream.disable_column_type_check,
             key_properties=stream.key_properties,
             partition_keys=stream.partition_keys,
             replication_method=stream.replication_method,
