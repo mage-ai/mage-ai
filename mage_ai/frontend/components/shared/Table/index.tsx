@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { FC, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import Link from '@oracle/elements/Link';
 import Text from '@oracle/elements/Text';
@@ -11,7 +11,7 @@ import {
 } from './index.style';
 
 export type ColumnType = {
-  label?: () => FC | string;
+  label?: () => any | string;
   uuid: string;
 };
 
