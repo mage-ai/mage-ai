@@ -180,7 +180,6 @@ function Header({
               <Spacing mr={2}>
                 <Button
                   borderLess
-                  compact
                   linkProps={{
                     href: 'https://github.com/mage-ai/mage-ai/blob/master/docs/tutorials/quick_start/setup.md#download-new-version-of-mage',
                   }}
