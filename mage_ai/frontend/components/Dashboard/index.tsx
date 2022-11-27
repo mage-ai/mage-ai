@@ -123,6 +123,7 @@ function Dashboard({
       <Header
         breadcrumbs={breadcrumbs}
         menuItems={headerMenuItems}
+        project={projects?.[0]}
         version={projects?.[0]?.version}
       />
 

@@ -2,6 +2,7 @@ import NextLink from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClientOnly from '@hocs/ClientOnly';
@@ -44,12 +45,14 @@ export type MenuItemType = {
 type HeaderProps = {
   breadcrumbs: BreadcrumbType[];
   menuItems?: MenuItemType[];
+  project?: ProjectType;
   version?: string;
 };
 
 function Header({
   breadcrumbs,
   menuItems,
+  project,
   version,
 }: HeaderProps) {
   const [highlightedMenuIndex, setHighlightedMenuIndex] = useState(null);
@@ -134,6 +137,8 @@ function Header({
     return arr;
   }, [breadcrumbs]);
 
+  const { latest_version: latesetVersion } = project || {};
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -170,6 +175,30 @@ function Header({
           </Flex>
 
           <Flex alignItems="center">
+            {latesetVersion && version && latesetVersion !== version && (
+              <Spacing mr={2}>
+                <Button
+                  borderLess
+                  compact
+                  linkProps={{
+                    href: 'https://github.com/mage-ai/mage-ai/blob/master/docs/tutorials/quick_start/setup.md#download-new-version-of-mage',
+                  }}
+                  primary
+                  target="_blank"
+                >
+                  <Text>
+                    🚀 Download new version <Text
+                      bold
+                      inline
+                      monospace
+                    >
+                      {latesetVersion}
+                    </Text>
+                  </Text>
+                </Button>
+              </Spacing>
+            )}
+
             <Spacing mr={2}>
               <KeyboardShortcutButton
                 blackBorder
@@ -245,6 +274,7 @@ function Header({
               <Link
                 default
                 href="https://mage.ai/changelog"
+                monospace
                 openNewWindow
               >
                 {`v${version}`}
