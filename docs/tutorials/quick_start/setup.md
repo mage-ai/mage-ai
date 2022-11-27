@@ -3,6 +3,7 @@
 - [Setup](#setup)
 - [Install](#install)
 - [Development environment](#development-environment)
+- [Update Mage](#update-mage)
 
 <br />
 
@@ -113,6 +114,22 @@ please check out this [document](../../contributing/README.md).
 
 ```bash
 docker build -t mage/dangerous .
+```
+
+<br />
+
+## Update Mage
+
+### Using Docker
+
+```bash
+docker pull mageai/mageai:latest
+```
+
+### Using `pip`
+
+```bash
+pip install -U mage-ai
 ```
 
 <br />
