@@ -163,6 +163,7 @@ function PipelineLayout({
     return (
       <Header
         breadcrumbs={breadcrumbs}
+        project={projects?.[0]}
         version={projects?.[0]?.version}
       />
     );
