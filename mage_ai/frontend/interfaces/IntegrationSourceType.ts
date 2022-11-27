@@ -82,6 +82,7 @@ export interface StreamType {
   auto_add_new_fields: boolean;
   bookmark_properties: string[];
   destination_table?: string;
+  disable_column_type_check?: boolean;
   key_properties: string[];
   metadata: MetadataType[];
   partition_keys: string[];

@@ -161,6 +161,8 @@ function IntegrationPipeline({
     dataLoaderBlockContent,
   ]);
   const autoAddNewFields = (catalog?.streams || []).every(({ auto_add_new_fields }) => auto_add_new_fields);
+  const disableColumnTypeCheck =
+    (catalog?.streams || []).every(({ disable_column_type_check: v }) => v);
 
   const updateSelectedStream = useCallback(
     () => setSelectedStream(catalog?.streams?.[0]?.tap_stream_id),
@@ -373,26 +375,29 @@ function IntegrationPipeline({
     updateStream,
   ]);
 
-  const updateMetadataForColumn = useCallback((
+  const updateMetadataForColumns = useCallback((
     streamUUID: string,
-    columnName: string,
+    columnNames: string[],
     data: PropertyMetadataType,
   ) => {
     updateStream(streamUUID, (stream: StreamType) => {
       const {
         metadata: streamMetadata,
       } = stream;
-      const index = streamMetadata.findIndex(({
-        breadcrumb = [],
-      }) => breadcrumb.length === 2 && breadcrumb[0] === 'properties' && breadcrumb[1] === columnName);
 
-      if (index >= 0) {
-        const metadataForColumn = streamMetadata[index].metadata;
-        stream.metadata[index].metadata = {
-          ...metadataForColumn,
-          ...data,
-        };
-      }
+      columnNames.forEach((columnName: string) => {
+        const index = streamMetadata.findIndex(({
+          breadcrumb = [],
+        }) => breadcrumb.length === 2 && breadcrumb[0] === 'properties' && breadcrumb[1] === columnName);
+
+        if (index >= 0) {
+          const metadataForColumn = streamMetadata[index].metadata;
+          stream.metadata[index].metadata = {
+            ...metadataForColumn,
+            ...data,
+          };
+        }
+      });
 
       return stream;
     });
@@ -710,7 +715,7 @@ function IntegrationPipeline({
                 destination={dataExporterBlockContent?.destination}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
-                updateMetadataForColumn={updateMetadataForColumn}
+                updateMetadataForColumns={updateMetadataForColumns}
                 updateSchemaProperty={updateSchemaProperty}
                 updateStream={updateStream}
               />
@@ -944,32 +949,59 @@ function IntegrationPipeline({
 
                     {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-destination')}
                   </Spacing>
-
-                  <Spacing mb={3}>
-                    <FlexContainer alignItems="center" justifyContent="space-between">
-                      <Spacing mb={1}>
-                        <Text bold large>
-                          Automatically add new fields
-                        </Text>
-                        <Text default>
-                          Turn the toggle on if you want new table columns in each data source stream
-                          to be automatically added and synced with the data destination.
-                        </Text>
-                      </Spacing>
-
-                      <ToggleSwitch
-                        checked={!!autoAddNewFields}
-                        onCheck={() => updateAllStreams((stream: StreamType) => ({
-                          ...stream,
-                          auto_add_new_fields: !autoAddNewFields,
-                        }))}
-                      />
-                    </FlexContainer>
-                  </Spacing>
                 </>
               )}
 
               {dataExporterEditor}
+
+              <Spacing mt={3}>
+                <FlexContainer alignItems="center" justifyContent="space-between">
+                  <Spacing mr={2}>
+                    <Text bold large>
+                      Automatically add new fields
+                    </Text>
+                    <Text default>
+                      Turn the toggle on if you want new table columns in each data source stream
+                      to be automatically added and synced with the data destination.
+                    </Text>
+                  </Spacing>
+
+                  <ToggleSwitch
+                    checked={!!autoAddNewFields}
+                    onCheck={() => updateAllStreams((stream: StreamType) => ({
+                      ...stream,
+                      auto_add_new_fields: !autoAddNewFields,
+                    }))}
+                  />
+                </FlexContainer>
+              </Spacing>
+
+              <Spacing mt={3}>
+                <FlexContainer alignItems="center" justifyContent="space-between">
+                  <Spacing mr={2}>
+                    <Text bold large>
+                      Disable column type check
+                    </Text>
+                    <Text default>
+                      By default, the value for each column is validated according to the schema
+                      property for that column.
+                      <br />
+                      If a value in a column doesn’t match its type,
+                      an error will be raised and the process will be stopped.
+                      <br />
+                      Turn this toggle on if you want to disable this strict type checking.
+                    </Text>
+                  </Spacing>
+
+                  <ToggleSwitch
+                    checked={!!disableColumnTypeCheck}
+                    onCheck={() => updateAllStreams((stream: StreamType) => ({
+                      ...stream,
+                      disable_column_type_check: !disableColumnTypeCheck,
+                    }))}
+                  />
+                </FlexContainer>
+              </Spacing>
             </Spacing>
           )}
         </SectionStyle>

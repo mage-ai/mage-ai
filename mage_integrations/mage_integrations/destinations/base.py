@@ -3,6 +3,7 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
     KEY_BOOKMARK_PROPERTIES,
+    KEY_DISABLE_COLUMN_TYPE_CHECK,
     KEY_KEY_PROPERTIES,
     KEY_PARTITION_KEYS,
     KEY_RECORD,
@@ -87,6 +88,7 @@ class Destination():
         self.bookmark_properties = None
         self.config_file_path = config_file_path
         self.debug = debug
+        self.disable_column_type_check = None
         self.key_properties = None
         self.logger = Logger(caller=self, log_to_stdout=log_to_stdout, logger=logger)
         self.partition_keys = None
@@ -175,7 +177,7 @@ class Destination():
         self.logger.info(f'{self.__class__.__name__} process record started.', tags=tags)
 
         self.export_data(
-            record=self._validate_and_prepare_record(
+            record=self.__validate_and_prepare_record(
                 stream=stream,
                 schema=schema,
                 row=row,
@@ -190,7 +192,7 @@ class Destination():
 
     def process_record_data(self, record_data: List[Dict], stream: str) -> None:
         batch_data = [dict(
-            record=self._validate_and_prepare_record(**rd),
+            record=self.__validate_and_prepare_record(**rd),
             stream=stream,
         ) for rd in record_data]
 
@@ -230,6 +232,7 @@ class Destination():
             raise Exception(message)
 
         self.bookmark_properties[stream] = row.get(KEY_BOOKMARK_PROPERTIES)
+        self.disable_column_type_check[stream] = row.get(KEY_DISABLE_COLUMN_TYPE_CHECK, False)
         self.key_properties[stream] = row.get(KEY_KEY_PROPERTIES)
         self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS, [])
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
@@ -270,6 +273,7 @@ class Destination():
 
     def _process(self, input_buffer) -> None:
         self.bookmark_properties = {}
+        self.disable_column_type_check = {}
         self.key_properties = {}
         self.partition_keys = {}
         self.replication_methods = {}
@@ -398,7 +402,7 @@ class Destination():
                 sys.stdout.write(text)
                 sys.stdout.flush()
 
-    def _validate_and_prepare_record(
+    def __validate_and_prepare_record(
         self,
         stream: str,
         schema: dict,
@@ -416,7 +420,6 @@ class Destination():
             raise Exception(message)
 
         record = row.get(KEY_RECORD)
-
         record_adjusted = record.copy()
 
         for k, v in record.items():
@@ -464,6 +467,7 @@ class Destination():
                 except json.decoder.JSONDecodeError:
                     record_adjusted[k] = ast.literal_eval(v1)
 
-        self.validators[stream].validate(record_adjusted)
+        if not self.disable_column_type_check.get(stream, False):
+            self.validators[stream].validate(record_adjusted)
 
         return flatten_record(record_adjusted)

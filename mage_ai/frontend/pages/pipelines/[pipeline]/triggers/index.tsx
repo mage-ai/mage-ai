@@ -233,10 +233,10 @@ function PipelineSchedules({
           sameColorAsText
           uuid="PipelineDetailPage/add_new_schedule"
         >
-          Create
+          Create new trigger
         </KeyboardShortcutButton>
       }
-      subheaderText={<Text bold large>Set up a new trigger for this pipeline.</Text>}
+      subheaderText={<Text bold large>Run this pipeline using a schedule, event, or API.</Text>}
       title={({ name }) => `${name} triggers`}
       uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
@@ -253,7 +253,7 @@ function PipelineSchedules({
             widthFitContent
           >
             <Button
-              beforeIcon={<PlayButton size={UNIT * 2} />}
+              beforeIcon={<PlayButton inverted size={UNIT * 2} />}
               loading={isLoadingCreateOnceSchedule}
               onClick={() => {
                 // @ts-ignore
@@ -268,9 +268,9 @@ function PipelineSchedules({
                 });
               }}
               outline
-              primary
+              success
             >
-              Run sync now
+              Run pipeline now
             </Button>
           </Tooltip>
         </FlexContainer>

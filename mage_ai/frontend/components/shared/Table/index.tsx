@@ -11,7 +11,7 @@ import {
 } from './index.style';
 
 export type ColumnType = {
-  label?: () => string;
+  label?: () => any | string;
   uuid: string;
 };
 
