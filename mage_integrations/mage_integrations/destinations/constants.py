@@ -8,6 +8,7 @@ COLUMN_TYPE_OBJECT = 'object'
 COLUMN_TYPE_STRING = 'string'
 
 KEY_BOOKMARK_PROPERTIES = 'bookmark_properties'
+KEY_DISABLE_COLUMN_TYPE_CHECK = 'disable_column_type_check'
 KEY_KEY_PROPERTIES = 'key_properties'
 KEY_PARTITION_KEYS = 'partition_keys'
 KEY_RECORD = 'record'
