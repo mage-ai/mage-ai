@@ -1,9 +1,9 @@
 # Setup and install
 
 - [Setup](#setup)
+- [Download new version of Mage](#download-new-version-of-mage)
 - [Install](#install)
 - [Development environment](#development-environment)
-- [Update Mage](#update-mage)
 
 <br />
 
@@ -69,6 +69,22 @@ mage init [project_name]
 
 <br />
 
+## Download new version of Mage
+
+### Using Docker
+
+```bash
+docker pull mageai/mageai:latest
+```
+
+### Using `pip`
+
+```bash
+pip install -U mage-ai
+```
+
+<br />
+
 ## Install
 
 ### Installing extra packages
@@ -114,22 +130,6 @@ please check out this [document](../../contributing/README.md).
 
 ```bash
 docker build -t mage/dangerous .
-```
-
-<br />
-
-## Update Mage
-
-### Using Docker
-
-```bash
-docker pull mageai/mageai:latest
-```
-
-### Using `pip`
-
-```bash
-pip install -U mage-ai
 ```
 
 <br />
