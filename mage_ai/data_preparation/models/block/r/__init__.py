@@ -57,6 +57,12 @@ def execute_r_code(
     output_variable_objects = block.output_variable_objects(
         execution_partition=execution_partition,
     )
+    output_variable_objects = [v for v in output_variable_objects
+                               if os.path.exists(os.path.join(
+                                    output_variable_objects[0].variable_path,
+                                    DATAFRAME_CSV_FILE,
+                                ))]
+
     if len(output_variable_objects) > 0:
         df = pd.read_csv(os.path.join(output_variable_objects[0].variable_path, DATAFRAME_CSV_FILE))
     else:
