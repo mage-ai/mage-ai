@@ -23,7 +23,7 @@ def build_comparison_statement(
 
 
     column_type = find(lambda x: COLUMN_TYPE_NULL != x, column_properties['type'])
-    column_format = column_properties['date-time']
+    column_format = column_properties.get('format')
     col_type = column_type_mapping(column_type, column_format)
 
     return f"{column_cleaned if column_cleaned else col} {operator} CAST('{val}' AS {col_type})"
