@@ -178,7 +178,7 @@ WHERE  c.table_schema = '{schema}'
                         pass  # recalculate timeout and continue
         postgres_connection.close_connection(connection)
 
-    def column_type_mapping(column_type: str, column_format: str = None) -> str:
+    def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         if COLUMN_FORMAT_DATETIME == column_format:
             return 'TIMESTAMP'
 

@@ -200,7 +200,7 @@ WHERE table_schema = '{schema}'
     def test_connection(self):
         self.build_connection().build_connection()
 
-    def column_type_mapping(column_type: str, column_format: str = None) -> str:
+    def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         return column_type_mapping(column_type, column_format)
 
     def __fetch_rows(
