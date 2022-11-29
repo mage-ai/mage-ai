@@ -528,10 +528,12 @@ def schedule_all():
             pipeline_scheduler = PipelineScheduler(pipeline_run)
 
             if is_integration:
-                initialize_state_and_runs(
-                    pipeline_run,
-                    pipeline_scheduler.logger,
-                )
+                block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id).all()
+                if len(block_runs) == 0:
+                    initialize_state_and_runs(
+                        pipeline_run,
+                        pipeline_scheduler.logger,
+                    )
 
             pipeline_scheduler.start(should_schedule=False)
 
