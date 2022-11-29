@@ -102,7 +102,6 @@ class ApiPipelineLogListHandler(BaseHandler):
                 model = PipelineRun()
                 model.execution_date = row.execution_date
                 model.pipeline_schedule_id = row.pipeline_schedule_id
-                model.pipeline_schedule_id = row.pipeline_schedule_id
                 model.pipeline_uuid = row.pipeline_uuid
 
                 pipeline_run_logs.append(model.logs)
@@ -169,7 +168,6 @@ class ApiPipelineLogListHandler(BaseHandler):
         for row in rows:
             model = PipelineRun()
             model.execution_date = row.execution_date
-            model.pipeline_schedule_id = row.pipeline_schedule_id
             model.pipeline_schedule_id = row.pipeline_schedule_id
             model.pipeline_uuid = row.pipeline_uuid
 

@@ -13,6 +13,7 @@ from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
+from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.shared.array import find
@@ -71,6 +72,10 @@ class PipelineScheduler:
     def schedule(self) -> None:
         if PipelineType.STREAMING != self.pipeline.type:
             if self.pipeline_run.all_blocks_completed():
+                self.pipeline_run.update(
+                    status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
+                )
+                calculate_metrics(self.pipeline_run)
                 self.notification_sender.send_pipeline_run_success_message(
                     pipeline=self.pipeline,
                     pipeline_run=self.pipeline_run,
