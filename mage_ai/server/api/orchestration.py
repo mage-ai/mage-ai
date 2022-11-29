@@ -228,6 +228,7 @@ class ApiPipelineRunListHandler(BaseHandler):
         process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id), status=status)
 
     def post(self, pipeline_schedule_id):
+        from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
         pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
 
@@ -252,9 +253,10 @@ class ApiPipelineRunListHandler(BaseHandler):
                 payload['variables'][k] = v
 
         pipeline_run = PipelineRun.create(**payload)
+        pipeline_scheduler = PipelineScheduler(pipeline_run)
 
         if is_integration:
-            create_block_runs(pipeline_run)
+            create_block_runs(pipeline_run, pipeline_scheduler.logger)
 
         from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
         PipelineScheduler(pipeline_run).start(should_schedule=False)
