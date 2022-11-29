@@ -17,13 +17,19 @@ def build_comparison_statement(
     operator: str = '=',
     column_cleaned: str = None,
 ):
-    column_type = find(lambda x: COLUMN_TYPE_NULL != x, properties.get(col)['type'])
-    col_type = column_type_mapping(column_type)
+    column_properties = properties.get(col)
+    if not column_properties:
+        raise Exception(f'There are no properties in the schema for column {col}.')
+
+
+    column_type = find(lambda x: COLUMN_TYPE_NULL != x, column_properties['type'])
+    column_format = column_properties.get('format')
+    col_type = column_type_mapping(column_type, column_format)
 
     return f"{column_cleaned if column_cleaned else col} {operator} CAST('{val}' AS {col_type})"
 
 
-def column_type_mapping(column_type: str) -> str:
+def column_type_mapping(column_type: str, column_format: str = None) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
         return 'BOOL'
     elif COLUMN_TYPE_INTEGER == column_type:

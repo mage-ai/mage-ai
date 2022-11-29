@@ -1,6 +1,7 @@
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.constants import (
+    COLUMN_FORMAT_DATETIME,
     REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.postgresql.decoders import (
@@ -176,6 +177,12 @@ WHERE  c.table_schema = '{schema}'
                     except InterruptedError:
                         pass  # recalculate timeout and continue
         postgres_connection.close_connection(connection)
+
+    def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
+        if COLUMN_FORMAT_DATETIME == column_format:
+            return 'TIMESTAMP'
+
+        return super().column_type_mapping(column_type, column_format)
 
     def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
         if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
