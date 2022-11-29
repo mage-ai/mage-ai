@@ -112,6 +112,21 @@ class PipelineScheduler:
             self.schedule()
 
     @retry(retries=3, delay=5)
+    def on_block_complete_without_schedule(self, block_uuid: str) -> None:
+        block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
+        block_run.update(
+            status=BlockRun.BlockRunStatus.COMPLETED,
+            completed_at=datetime.now(),
+        )
+        self.logger.info(
+            f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
+            **self.__build_tags(
+                block_run_id=block_run.id,
+                block_uuid=block_run.block_uuid,
+            ),
+        )
+
+    @retry(retries=3, delay=5)
     def on_block_failure(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(status=BlockRun.BlockRunStatus.FAILED)
@@ -374,6 +389,7 @@ def run_integration_pipeline(
                     pipeline_type=PipelineType.INTEGRATION,
                     verify_output=False,
                     runtime_arguments=runtime_arguments,
+                    schedule_after_complete=False,
                     template_runtime_configuration=template_runtime_configuration,
                 )
                 outputs.append(output)
@@ -388,6 +404,7 @@ def run_block(
     pipeline_type: PipelineType = None,
     verify_output: bool = True,
     runtime_arguments: Dict = None,
+    schedule_after_complete: bool = True,
     template_runtime_configuration: Dict = None,
 ) -> Any:
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
@@ -402,6 +419,11 @@ def run_block(
                                    f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
                                    **tags)
 
+    if schedule_after_complete:
+        on_complete = pipeline_scheduler.on_block_complete
+    else:
+        on_complete = pipeline_scheduler.on_block_complete_without_schedule
+
     return ExecutorFactory.get_block_executor(
         pipeline,
         block_run.block_uuid,
@@ -411,7 +433,7 @@ def run_block(
         block_run_id=block_run.id,
         global_vars=variables,
         update_status=False,
-        on_complete=pipeline_scheduler.on_block_complete,
+        on_complete=on_complete,
         on_failure=pipeline_scheduler.on_block_failure,
         tags=tags,
         input_from_output=input_from_output,
