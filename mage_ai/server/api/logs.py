@@ -88,6 +88,8 @@ class ApiPipelineLogListHandler(BaseHandler):
                 filter(a.execution_date <= end_timestamp)
             )
 
+        total_pipeline_run_log_count = query.count()
+
         pipeline_run_logs = []
         if not len(block_uuids) and not len(block_run_ids):
             if self.get_argument(META_KEY_LIMIT, None) is not None:
@@ -116,6 +118,7 @@ class ApiPipelineLogListHandler(BaseHandler):
             join(b, a.pipeline_schedule_id == b.id).
             filter(b.pipeline_uuid == pipeline_uuid)
         )
+
 
         if len(block_uuids):
             query = (
@@ -158,6 +161,7 @@ class ApiPipelineLogListHandler(BaseHandler):
         else:
             rows = query.all()
 
+        total_block_run_log_count = query.count()
         block_run_logs = []
 
         for row in rows:
@@ -180,5 +184,7 @@ class ApiPipelineLogListHandler(BaseHandler):
             dict(
                 block_run_logs=block_run_logs,
                 pipeline_run_logs=pipeline_run_logs,
+                total_block_run_log_count=total_block_run_log_count,
+                total_pipeline_run_log_count=total_pipeline_run_log_count,
             ),
         ]))
