@@ -1,3 +1,5 @@
+import asyncio
+import functools
 import os
 import traceback
 from datetime import datetime, timedelta
@@ -624,9 +626,14 @@ def run_integration_pipeline(
     data_exporter_block = integration_pipeline.data_exporter
     executable_block_run_ids = set(executable_block_runs)
 
-    for stream in integration_pipeline.streams(variables):
+    all_streams = integration_pipeline.streams(variables)
+    parallel_streams = list(filter(lambda s: s.get('run_in_parallel'), all_streams))
+    sequential_streams = list(filter(lambda s: not s.get('run_in_parallel'), all_streams))
+
+    for stream in parallel_streams + sequential_streams:
         tap_stream_id = stream['tap_stream_id']
         destination_table = stream.get('destination_table', tap_stream_id)
+        run_in_parallel = stream.get('run_in_parallel')
 
         block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
         if len(block_runs_for_stream) == 0:
@@ -707,81 +714,71 @@ def run_integration_pipeline(
             elif data_loader_block_run.id not in executable_block_run_ids:
                 block_runs_and_configs = block_runs_and_configs[1:]
 
-            block_failed = False
-            for _, tup in enumerate(block_runs_and_configs):
-                block_run, template_runtime_configuration = tup
-
-                tags_updated = merge_dict(tags, dict(
-                    block_run_id=block_run.id,
-                    block_uuid=block_run.block_uuid,
-                ))
-
-                if block_failed:
-                    block_run.update(
-                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED,
-                    )
-                    continue
-
-                pipeline_run.refresh()
-                if pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
-                    return
-
-                block_run.update(
-                    started_at=datetime.now(),
-                    status=BlockRun.BlockRunStatus.RUNNING,
+            asyncio.run(
+                run_integration_blocks(
+                    pipeline_run_id,
+                    block_runs_and_configs,
+                    pipeline_scheduler,
+                    tags,
+                    variables,
+                    runtime_arguments,
+                    run_in_parallel=run_in_parallel,
                 )
-                pipeline_scheduler.logger.info(
-                    f'Start a process for BlockRun {block_run.id}',
-                    **tags_updated,
-                )
+            )
 
-                try:
-                    run_block(
-                        pipeline_run_id,
-                        block_run.id,
-                        variables,
-                        tags_updated,
-                        pipeline_type=PipelineType.INTEGRATION,
-                        verify_output=False,
-                        # Not retry for data integration pipeline blocks
-                        retry_config=dict(retries=0),
-                        runtime_arguments=runtime_arguments,
-                        schedule_after_complete=False,
-                        template_runtime_configuration=template_runtime_configuration,
-                    )
-                except Exception as e:
-                    if pipeline_scheduler.allow_blocks_to_fail:
-                        block_failed = True
-                    else:
-                        raise e
-                else:
-                    if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
-                            f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
 
-                        tags2 = merge_dict(tags_updated.get('tags', {}), dict(
-                            destination_table=destination_table,
-                            index=index,
-                            stream=tap_stream_id,
-                        ))
-                        pipeline_scheduler.logger.info(
-                            f'Calculate metrics for pipeline run {pipeline_run.id} started.',
-                            **tags_updated,
-                            tags=tags2,
-                        )
-                        try:
-                            calculate_metrics(pipeline_run)
-                            pipeline_scheduler.logger.info(
-                                f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
-                                **tags_updated,
-                                tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
-                            )
-                        except Exception:
-                            pipeline_scheduler.logger.error(
-                                f'Failed to calculate metrics for pipeline run {pipeline_run.id}. '
-                                f'{traceback.format_exc()}',
-                                **tags_updated,
-                                tags=tags2,
-                            )
+async def run_integration_blocks(
+    *args,
+    run_in_parallel=False,
+):
+    if run_in_parallel:
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            functools.partial(__run_integration_blocks, *args),
+        )
+    else:
+        return __run_integration_blocks(*args)
+
+
+def __run_integration_blocks(
+    pipeline_run_id,
+    block_runs_and_configs,
+    pipeline_scheduler,
+    tags,
+    variables,
+    runtime_arguments,
+):
+    outputs = []
+    for idx2, tup in enumerate(block_runs_and_configs):
+        block_run, template_runtime_configuration = tup
+
+        tags_updated = merge_dict(tags, dict(
+            block_run_id=block_run.id,
+            block_uuid=block_run.block_uuid,
+        ))
+        block_run.update(
+            started_at=datetime.now(),
+            status=BlockRun.BlockRunStatus.RUNNING,
+        )
+        pipeline_scheduler.logger.info(
+            f'Start a process for BlockRun {block_run.id}',
+            **tags_updated,
+        )
+
+        output = run_block(
+            pipeline_run_id,
+            block_run.id,
+            variables,
+            tags_updated,
+            input_from_output=outputs[idx2 - 1] if idx2 >= 1 else None,
+            pipeline_type=PipelineType.INTEGRATION,
+            verify_output=False,
+            runtime_arguments=runtime_arguments,
+            schedule_after_complete=False,
+            template_runtime_configuration=template_runtime_configuration,
+        )
+        outputs.append(output)
 
 
 def run_block(
