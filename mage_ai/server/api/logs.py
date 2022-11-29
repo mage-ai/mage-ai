@@ -1,3 +1,4 @@
+from .base import META_KEY_LIMIT
 from datetime import datetime
 
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
@@ -89,7 +90,11 @@ class ApiPipelineLogListHandler(BaseHandler):
 
         pipeline_run_logs = []
         if not len(block_uuids) and not len(block_run_ids):
-            rows = query.all()
+            if self.get_argument(META_KEY_LIMIT, None) is not None:
+                rows = self.limit(query)
+            else:
+                rows = query.all()
+
             for row in rows:
                 model = PipelineRun()
                 model.execution_date = row.execution_date
@@ -148,7 +153,11 @@ class ApiPipelineLogListHandler(BaseHandler):
                 filter(a.execution_date <= end_timestamp)
             )
 
-        rows = query.all()
+        if self.get_argument(META_KEY_LIMIT, None) is not None:
+            rows = self.limit(query)
+        else:
+            rows = query.all()
+
         block_run_logs = []
 
         for row in rows:
