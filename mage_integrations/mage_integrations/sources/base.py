@@ -190,6 +190,7 @@ class Source:
         Raises:
             Exception: Failed to fetch data from the source.
         """
+        self.logger.info('Process started.')
         try:
             if self.should_test_connection:
                 self.test_connection()

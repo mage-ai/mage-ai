@@ -4,6 +4,8 @@ from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSched
 from mage_ai.server.api.base import BaseHandler
 from sqlalchemy.orm import aliased
 
+MAX_LOG_FILES = 20
+
 
 class ApiPipelineLogListHandler(BaseHandler):
     def get(self, pipeline_uuid):
@@ -96,6 +98,8 @@ class ApiPipelineLogListHandler(BaseHandler):
                 model.pipeline_uuid = row.pipeline_uuid
 
                 pipeline_run_logs.append(model.logs)
+                if len(pipeline_run_logs) >= MAX_LOG_FILES:
+                    break
 
         c = aliased(BlockRun, name='c')
         query = (
@@ -146,6 +150,7 @@ class ApiPipelineLogListHandler(BaseHandler):
 
         rows = query.all()
         block_run_logs = []
+
         for row in rows:
             model = PipelineRun()
             model.execution_date = row.execution_date
@@ -158,6 +163,9 @@ class ApiPipelineLogListHandler(BaseHandler):
             model2.pipeline_run = model
 
             block_run_logs.append(model2.logs)
+
+            if len(block_run_logs) >= MAX_LOG_FILES:
+                break
 
         self.write(dict(logs=[
             dict(
