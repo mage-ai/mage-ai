@@ -61,7 +61,8 @@ class ApiPipelineLogListHandler(BaseHandler):
             PipelineRun.
             select(*columns).
             join(b, a.pipeline_schedule_id == b.id).
-            filter(b.pipeline_uuid == pipeline_uuid)
+            filter(b.pipeline_uuid == pipeline_uuid).
+            order_by(a.execution_date.desc())
         )
 
         if len(pipeline_schedule_ids):
@@ -116,7 +117,8 @@ class ApiPipelineLogListHandler(BaseHandler):
             ])).
             join(a, a.id == c.pipeline_run_id).
             join(b, a.pipeline_schedule_id == b.id).
-            filter(b.pipeline_uuid == pipeline_uuid)
+            filter(b.pipeline_uuid == pipeline_uuid).
+            order_by(c.started_at.desc())
         )
 
 
