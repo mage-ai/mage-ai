@@ -40,6 +40,7 @@ enum RangeQueryEnum {
 
 type LogToolbarProps = {
   allPastLogsLoaded: boolean;
+  loadNewerLogInterval: () => void;
   loadPastLogInterval: () => void;
   selectedRange: LogRangeEnum;
   setSelectedRange: (range: LogRangeEnum) => void;
@@ -52,6 +53,7 @@ const SHARED_LOG_QUERY_PARAMS = {
 
 function LogToolbar({
   allPastLogsLoaded,
+  loadNewerLogInterval,
   loadPastLogInterval,
   selectedRange,
   setSelectedRange,
@@ -123,6 +125,20 @@ function LogToolbar({
           uuid="logs/load_older_logs"
         >
           {allPastLogsLoaded ? 'All past logs within range loaded' : 'Load older logs'}
+        </KeyboardShortcutButton>
+
+        <Spacing mr={1} />
+
+        <KeyboardShortcutButton
+          blackBorder
+          disabled={q?._offset <= 0}
+          inline
+          onClick={loadNewerLogInterval}
+          paddingBottom={UNIT * 0.75}
+          paddingTop={UNIT * 0.75}
+          uuid="logs/load_newer_logs"
+        >
+          Load newer logs
         </KeyboardShortcutButton>
 
         <Spacing mr={2} />

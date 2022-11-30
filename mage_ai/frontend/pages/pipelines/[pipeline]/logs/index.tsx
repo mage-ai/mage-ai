@@ -212,7 +212,7 @@ function BlockRuns({
         start_timestamp: dayAgoTimestamp,
       });
     }
-  }, []);
+  }, [onlyLoadPastDayLogs]);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
       setQuery(q);
@@ -245,14 +245,14 @@ function BlockRuns({
     isLoading,
   ]);
 
+  const { _limit, _offset } = q;
+  const limit = +(_limit || 0);
+  const offset = +(_offset || 0);
+  const greaterLogCount = Math.max(totalBlockRunLogCount, totalPipelineRunLogCount);
   const loadPastLogInterval = useCallback(() => {
-    const { _limit, _offset } = q;
-    const limit = +(_limit || 0);
-    const offset = +(_offset || 0);
     let newLimit = limit;
     let newOffset = offset;
     if (totalBlockRunLogCount > limit || totalPipelineRunLogCount > limit) {
-      const greaterLogCount = Math.max(totalBlockRunLogCount, totalPipelineRunLogCount);
       newLimit = Math.min(greaterLogCount, (limit + LOG_FILE_COUNT_INTERVAL));
       newOffset = Math.max(
         Math.min((greaterLogCount - LOG_FILE_COUNT_INTERVAL), (offset + LOG_FILE_COUNT_INTERVAL)),
@@ -264,7 +264,20 @@ function BlockRuns({
         [OFFSET_PARAM]: newOffset,
       });
     }
-  }, [q, totalBlockRunLogCount, totalPipelineRunLogCount]);
+  }, [greaterLogCount, limit, offset, q, totalBlockRunLogCount, totalPipelineRunLogCount]);
+  const loadNewerLogInterval = useCallback(() => {
+    let newLimit = limit;
+    let newOffset = offset;
+    if (limit >= LOG_FILE_COUNT_INTERVAL) {
+      newLimit = Math.max(0, (limit - LOG_FILE_COUNT_INTERVAL));
+      newOffset = Math.max(0, (offset - LOG_FILE_COUNT_INTERVAL));
+      goToWithQuery({
+        ...q,
+        [LIMIT_PARAM]: newLimit,
+        [OFFSET_PARAM]: newOffset,
+      });
+    }
+  }, [limit, offset, q, totalBlockRunLogCount, totalPipelineRunLogCount]);
 
   return (
     <PipelineDetailPage
@@ -304,6 +317,7 @@ function BlockRuns({
               {numberWithCommas(filteredLogCount)} logs found
               <LogToolbar
                 allPastLogsLoaded={allPastLogsLoaded}
+                loadNewerLogInterval={loadNewerLogInterval}
                 loadPastLogInterval={loadPastLogInterval}
                 selectedRange={selectedRange}
                 setSelectedRange={setSelectedRange}
