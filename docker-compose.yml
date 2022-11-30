@@ -1,11 +1,16 @@
 version: '3'
+
+networks:
+  elic-zero_backend:
+    external: true
+
 services:
   server:
     image: mage/data
     build:
       context: .
       dockerfile: ./dev.Dockerfile
-    command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
+    # command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
     environment:
       - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
@@ -23,6 +28,8 @@ services:
     restart: on-failure:5
     stdin_open: true # used for interactive debugging
     tty: true # used for interactive debugging
+    networks:
+      - elic-zero_backend
   app:
     image: mage/data
     build:
@@ -30,7 +37,7 @@ services:
       dockerfile: ./dev.Dockerfile
     depends_on:
       - server
-    command: ./scripts/install_and_run.sh
+    # command: ./scripts/install_and_run.sh
     ports:
       - 3000:3000
     volumes:

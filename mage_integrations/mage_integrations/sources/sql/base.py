@@ -3,7 +3,6 @@ from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     BATCH_FETCH_LIMIT,
     COLUMN_FORMAT_DATETIME,
-    COLUMN_FORMAT_UUID,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_NULL,
@@ -76,9 +75,6 @@ class Source(BaseSource):
                 elif 'json' in column_type:
                     column_properties = {}
                     column_types.append(COLUMN_TYPE_OBJECT)
-                elif 'uuid' in column_type:
-                    column_format = COLUMN_FORMAT_UUID
-                    column_types.append(COLUMN_TYPE_STRING)
                 else:
                     # binary, text, varchar
                     column_types.append(COLUMN_TYPE_STRING)
