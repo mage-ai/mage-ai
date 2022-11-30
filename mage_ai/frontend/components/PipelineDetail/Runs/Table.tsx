@@ -14,6 +14,7 @@ import Spinner from '@oracle/components/Spinner';
 import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { Check, ChevronRight, PlayButtonFilled, Subitem, TodoList } from '@oracle/icons';
 import { PopupContainerStyle, TableContainerStyle } from './Table.style';
@@ -22,15 +23,18 @@ import { getTimeInUTC } from '@components/Triggers/utils';
 import { onSuccess } from '@api/utils/response';
 
 function RetryButton({
+  isLoadingCancelPipeline,
   onCancel,
   onSuccess: onSuccessProp,
   pipelineRun,
 }: {
+  isLoadingCancelPipeline: boolean;
   onCancel: (run: PipelineRunType) => void;
   onSuccess: () => void;
   pipelineRun: PipelineRunType,
 }) {
   const { status } = pipelineRun;
+  const isCancelingPipeline = RunStatus.RUNNING === status && isLoadingCancelPipeline;
 
   const [createPipelineRun] = useMutation(
     api.pipeline_runs.pipeline_schedules.useCreate(pipelineRun?.pipeline_schedule_id),
@@ -74,7 +78,6 @@ function RetryButton({
       status: RunStatus.CANCELLED,
     });
   }, [pipelineRun]);
-                  
 
   return (
     <div
@@ -83,15 +86,16 @@ function RetryButton({
       }}
     >
       <Button
+        backgroundColor={isCancelingPipeline && dark.accent.yellow}
         beforeIcon={
           RunStatus.INITIAL !== status && (
             <>
               {RunStatus.COMPLETED === status && <Check size={2 * UNIT} />}
               {[RunStatus.FAILED, RunStatus.CANCELLED].includes(status) && (
-                <PlayButtonFilled size={2 * UNIT} inverted={RunStatus.CANCELLED === status} />
+                <PlayButtonFilled inverted={RunStatus.CANCELLED === status} size={2 * UNIT} />
               )}
               {[RunStatus.RUNNING].includes(status) && (
-                <Spinner color="white" small />
+                <Spinner color={isLoadingCancelPipeline ? dark.status.negative : dark.monotone.white} small />
               )}
             </>
           )
@@ -101,10 +105,12 @@ function RetryButton({
         default={RunStatus.INITIAL === status}
         onClick={() => setShowConfirmation(true)}
         padding="6px"
-        primary={RunStatus.RUNNING === status}
+        primary={RunStatus.RUNNING === status && !isLoadingCancelPipeline}
         warning={RunStatus.CANCELLED === status}
       >
-        {RUN_STATUS_TO_LABEL[status]}
+        {isCancelingPipeline
+          ? 'Canceling'
+          : RUN_STATUS_TO_LABEL[status]}
       </Button>
       <ClickOutside
         onClickOutside={() => setShowConfirmation(false)}
@@ -179,7 +185,7 @@ function PipelineRunsTable({
   pipelineRuns,
   selectedRun,
 }: PipelineRunsTableProps) {
-  const [updatePipelineRun] = useMutation(
+  const [updatePipelineRun, { isLoading: isLoadingCancelPipeline }] = useMutation(
     (pipelineRun: PipelineRunType) =>
       api.pipeline_runs.useUpdate(pipelineRun.id)({
         pipeline_run: pipelineRun,
@@ -324,6 +330,7 @@ function PipelineRunsTable({
                 arr = [
                   <RetryButton
                     key="row_retry_button"
+                    isLoadingCancelPipeline={isLoadingCancelPipeline}
                     onCancel={updatePipelineRun}
                     onSuccess={fetchPipelineRuns}
                     pipelineRun={pipelineRun}
