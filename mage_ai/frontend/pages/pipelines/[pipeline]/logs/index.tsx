@@ -254,9 +254,9 @@ function BlockRuns({
     let newOffset = offset;
     if (totalBlockRunLogCount > limit || totalPipelineRunLogCount > limit) {
       newLimit = Math.min(greaterLogCount, (limit + LOG_FILE_COUNT_INTERVAL));
-      newOffset = Math.max(
-        Math.min((greaterLogCount - LOG_FILE_COUNT_INTERVAL), (offset + LOG_FILE_COUNT_INTERVAL)),
-        0,
+      newOffset = Math.min(
+        (offset + LOG_FILE_COUNT_INTERVAL),
+        greaterLogCount - (greaterLogCount % LOG_FILE_COUNT_INTERVAL),
       );
       goToWithQuery({
         ...q,
@@ -269,7 +269,10 @@ function BlockRuns({
     let newLimit = limit;
     let newOffset = offset;
     if (limit >= LOG_FILE_COUNT_INTERVAL) {
-      newLimit = Math.max(0, (limit - LOG_FILE_COUNT_INTERVAL));
+      newLimit = Math.max(LOG_FILE_COUNT_INTERVAL, (limit - LOG_FILE_COUNT_INTERVAL));
+      if (limit >= greaterLogCount) {
+        newLimit = greaterLogCount - (greaterLogCount % LOG_FILE_COUNT_INTERVAL);
+      }
       newOffset = Math.max(0, (offset - LOG_FILE_COUNT_INTERVAL));
       goToWithQuery({
         ...q,
