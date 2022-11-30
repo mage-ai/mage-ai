@@ -1,6 +1,9 @@
 import { LogRangeEnum } from '@interfaces/LogType';
 
+export const LIMIT_PARAM = '_limit';
+export const OFFSET_PARAM = '_offset';
 export const LOG_ITEMS_PER_PAGE = 100;
+export const LOG_FILE_COUNT_INTERVAL = 20;
 
 export const SPECIFIC_LOG_RANGES = [
   LogRangeEnum.LAST_HOUR,
