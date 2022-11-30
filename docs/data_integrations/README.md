@@ -66,8 +66,8 @@ Read more about Sources:
 - [Redshift (Amazon Web Services)](../../mage_integrations/mage_integrations/sources/redshift/README.md)
 - [Salesforce](../../mage_integrations/mage_integrations/sources/salesforce/README.md)
 - [Stripe](../../mage_integrations/mage_integrations/sources/stripe/README.md)
+- [Chargebee](../../mage_integrations/mage_integrations/sources/chargebee/README.md)
 - *Airtable (coming soon)*
-- *Chargebee (coming soon)*
 - *Google Analytics (coming soon)*
 - *HubSpot (coming soon)*
 - *MongoDB (coming soon)*
