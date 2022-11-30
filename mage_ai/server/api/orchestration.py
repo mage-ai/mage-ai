@@ -213,8 +213,9 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
 
         if payload.get('action') == 'retry_blocks':
             if pipeline_run.status != PipelineRun.PipelineRunStatus.COMPLETED:
-                pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+                pipeline_run.refresh()
                 pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
+                print('block runs:', list(map(lambda br: dict(name=br.block_uuid, status=br.status), pipeline_run.block_runs)))
                 incomplete_block_runs = \
                     list(
                         filter(
@@ -234,8 +235,8 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
                 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
                 pipeline_scheduler = PipelineScheduler(pipeline_run)
 
+                pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
                 pipeline_scheduler.schedule(incomplete_block_runs)
-                pipeline_run.refresh()
         elif payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
             from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
             PipelineScheduler(pipeline_run).stop()

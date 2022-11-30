@@ -303,8 +303,6 @@ def run_integration_pipeline(
                                    **tags)
 
     all_block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run_id)
-    for block_run in all_block_runs:
-        block_run.refresh()
     block_runs = list(filter(lambda br: br.id in executable_block_runs, all_block_runs))
 
     pipeline_schedule = pipeline_run.pipeline_schedule
@@ -346,6 +344,9 @@ def run_integration_pipeline(
         destination_table = stream.get('destination_table', tap_stream_id)
 
         block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
+        if len(block_runs_for_stream) == 0:
+            continue
+        
         indexes = [0]
         for br in block_runs_for_stream:
             parts = br.block_uuid.split(':')
