@@ -1245,7 +1245,19 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 if block.uuid not in visited:
                     queue.put(block)
                     visited.add(block)
-        return visited
+        return list(visited)
+    
+    def get_all_downstream_blocks(self) -> List['Block']:
+        queue = Queue()
+        visited = set()
+        queue.put(self)
+        while not queue.empty():
+            current_block = queue.get()
+            for block in current_block.downstream_blocks:
+                if block.uuid not in visited:
+                    queue.put(block)
+                    visited.add(block)
+        return list(visited)
 
     def run_upstream_blocks(self) -> None:
         def process_upstream_block(
