@@ -12,7 +12,9 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import usePrevious from '@utils/usePrevious';
 import { LogRangeEnum } from '@interfaces/LogType';
 import {
-  LOG_ITEMS_PER_PAGE,
+  LIMIT_PARAM,
+  OFFSET_PARAM,
+  LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
   SPECIFIC_LOG_RANGES,
 } from './constants';
@@ -37,18 +39,23 @@ enum RangeQueryEnum {
 }
 
 type LogToolbarProps = {
-  logCount: number;
-  logOffset: number;
+  allPastLogsLoaded: boolean;
+  loadNewerLogInterval: () => void;
+  loadPastLogInterval: () => void;
   selectedRange: LogRangeEnum;
-  setLogOffset: (func: any) => void;
   setSelectedRange: (range: LogRangeEnum) => void;
 };
 
+const SHARED_LOG_QUERY_PARAMS = {
+  [LIMIT_PARAM]: LOG_FILE_COUNT_INTERVAL,
+  [OFFSET_PARAM]: 0,
+};
+
 function LogToolbar({
-  logCount,
-  logOffset,
+  allPastLogsLoaded,
+  loadNewerLogInterval,
+  loadPastLogInterval,
   selectedRange,
-  setLogOffset,
   setSelectedRange,
 }: LogToolbarProps) {
   const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
@@ -59,7 +66,6 @@ function LogToolbar({
     hour: padTime(String(new Date().getUTCHours())),
     minute: padTime(String(new Date().getUTCMinutes())),
   });
-  const allLogsLoaded = logOffset >= logCount;
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -111,14 +117,28 @@ function LogToolbar({
       <FlexContainer alignItems="center">
         <KeyboardShortcutButton
           blackBorder
-          disabled={allLogsLoaded}
+          disabled={allPastLogsLoaded}
           inline
-          onClick={() => setLogOffset((prev: number) => prev + LOG_ITEMS_PER_PAGE)}
+          onClick={loadPastLogInterval}
           paddingBottom={UNIT * 0.75}
           paddingTop={UNIT * 0.75}
           uuid="logs/load_older_logs"
         >
-          {allLogsLoaded ? 'All logs within range loaded' : 'Load older logs'}
+          {allPastLogsLoaded ? 'All past logs within range loaded' : 'Load older logs'}
+        </KeyboardShortcutButton>
+
+        <Spacing mr={1} />
+
+        <KeyboardShortcutButton
+          blackBorder
+          disabled={q?._offset <= 0}
+          inline
+          onClick={loadNewerLogInterval}
+          paddingBottom={UNIT * 0.75}
+          paddingTop={UNIT * 0.75}
+          uuid="logs/load_newer_logs"
+        >
+          Load newer logs
         </KeyboardShortcutButton>
 
         <Spacing mr={2} />
@@ -136,6 +156,7 @@ function LogToolbar({
                 {
                   [RangeQueryEnum.START]: startTimestamp,
                   [RangeQueryEnum.END]: null,
+                  ...SHARED_LOG_QUERY_PARAMS,
                 },
               );
             }
@@ -219,6 +240,7 @@ function LogToolbar({
                 goToWithQuery({
                   [RangeQueryEnum.START]: unixTimestampFromDate(start),
                   [RangeQueryEnum.END]: unixTimestampFromDate(end),
+                  ...SHARED_LOG_QUERY_PARAMS,
                 });
               }}
               padding={`${UNIT / 2}px`}

@@ -3,6 +3,7 @@ import NextLink from 'next/link';
 import { ThemeContext } from 'styled-components';
 import { parse } from 'yaml';
 import {
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -30,7 +31,12 @@ import LogToolbar from '@components/Logs/Toolbar';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
-import { LOG_ITEMS_PER_PAGE, LOG_RANGE_SEC_INTERVAL_MAPPING } from '@components/Logs/Toolbar/constants';
+import {
+  LIMIT_PARAM,
+  OFFSET_PARAM,
+  LOG_FILE_COUNT_INTERVAL,
+  LOG_RANGE_SEC_INTERVAL_MAPPING,
+} from '@components/Logs/Toolbar/constants';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -60,7 +66,6 @@ function BlockRuns({
   const bottomOfPageButtonRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
 
-  const [offset, setOffset] = useState(LOG_ITEMS_PER_PAGE);
   const [query, setQuery] = useState<FilterQueryType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
@@ -128,26 +133,35 @@ function BlockRuns({
   const {
     blockRunLogs,
     pipelineRunLogs,
+    totalBlockRunLogCount,
+    totalPipelineRunLogCount,
   } = useMemo(() => {
     if (dataLogs?.logs?.[0]) {
       const {
         block_run_logs: brLogs,
         pipeline_run_logs: prLogs,
+        total_block_run_log_count: brLogCount,
+        total_pipeline_run_log_count: prLogCount,
       } = dataLogs.logs?.[0] || {};
 
       return {
         blockRunLogs: brLogs,
         pipelineRunLogs: prLogs,
+        totalBlockRunLogCount: brLogCount,
+        totalPipelineRunLogCount: prLogCount,
       };
     }
 
     return {
       blockRunLogs: [],
       pipelineRunLogs: [],
+      totalBlockRunLogCount: 0,
+      totalPipelineRunLogCount: 0,
     };
   }, [
     dataLogs,
   ]);
+  const allPastLogsLoaded = +q?._limit >= totalBlockRunLogCount && +q?._limit >= totalPipelineRunLogCount;
   const logsAll: LogType[] = useMemo(() => sortByKey(
       blockRunLogs
         .concat(pipelineRunLogs)
@@ -182,30 +196,25 @@ function BlockRuns({
 
         return evals.every(v => v);
       }), [
-    blocksByUUID,
-    logsAll,
-    query,
-  ]);
-  const filteredLogCount = logsFiltered.length;
-  const logs: LogType[] = useMemo(() => logsFiltered.slice(
-    Math.max(0, (filteredLogCount - offset)),
-  ), [
-      filteredLogCount,
-      logsFiltered,
-      offset,
+        blocksByUUID,
+        isIntegrationPipeline,
+        logsAll,
+        query,
     ]);
+  const filteredLogCount = logsFiltered.length;
 
   const qPrev = usePrevious(q);
   useEffect(() => {
     if (onlyLoadPastDayLogs) {
       goToWithQuery({
+        [LIMIT_PARAM]: LOG_FILE_COUNT_INTERVAL,
+        [OFFSET_PARAM]: 0,
         start_timestamp: dayAgoTimestamp,
       });
     }
-  }, []);
+  }, [onlyLoadPastDayLogs]);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
-      setOffset(LOG_ITEMS_PER_PAGE);
       setQuery(q);
     }
   }, [
@@ -235,6 +244,43 @@ function BlockRuns({
     scrollToBottom,
     isLoading,
   ]);
+
+  const { _limit, _offset } = q;
+  const limit = +(_limit || 0);
+  const offset = +(_offset || 0);
+  const greaterLogCount = Math.max(totalBlockRunLogCount, totalPipelineRunLogCount);
+  const loadPastLogInterval = useCallback(() => {
+    let newLimit = limit;
+    let newOffset = offset;
+    if (totalBlockRunLogCount > limit || totalPipelineRunLogCount > limit) {
+      newLimit = Math.min(greaterLogCount, (limit + LOG_FILE_COUNT_INTERVAL));
+      newOffset = Math.min(
+        (offset + LOG_FILE_COUNT_INTERVAL),
+        greaterLogCount - (greaterLogCount % LOG_FILE_COUNT_INTERVAL),
+      );
+      goToWithQuery({
+        ...q,
+        [LIMIT_PARAM]: newLimit,
+        [OFFSET_PARAM]: newOffset,
+      });
+    }
+  }, [greaterLogCount, limit, offset, q, totalBlockRunLogCount, totalPipelineRunLogCount]);
+  const loadNewerLogInterval = useCallback(() => {
+    let newLimit = limit;
+    let newOffset = offset;
+    if (limit >= LOG_FILE_COUNT_INTERVAL) {
+      newLimit = Math.max(LOG_FILE_COUNT_INTERVAL, (limit - LOG_FILE_COUNT_INTERVAL));
+      if (limit >= greaterLogCount && (greaterLogCount % LOG_FILE_COUNT_INTERVAL !== 0)) {
+        newLimit = greaterLogCount - (greaterLogCount % LOG_FILE_COUNT_INTERVAL);
+      }
+      newOffset = Math.max(0, (offset - LOG_FILE_COUNT_INTERVAL));
+      goToWithQuery({
+        ...q,
+        [LIMIT_PARAM]: newLimit,
+        [OFFSET_PARAM]: newOffset,
+      });
+    }
+  }, [greaterLogCount, limit, offset, q]);
 
   return (
     <PipelineDetailPage
@@ -271,12 +317,12 @@ function BlockRuns({
         <Text>
           {!isLoading && (
             <>
-              {numberWithCommas(logs.length)} logs of {numberWithCommas(filteredLogCount)} found
+              {numberWithCommas(filteredLogCount)} logs found
               <LogToolbar
-                logCount={filteredLogCount}
-                logOffset={offset}
+                allPastLogsLoaded={allPastLogsLoaded}
+                loadNewerLogInterval={loadNewerLogInterval}
+                loadPastLogInterval={loadPastLogInterval}
                 selectedRange={selectedRange}
-                setLogOffset={setOffset}
                 setSelectedRange={setSelectedRange}
               />
             </>
@@ -293,7 +339,7 @@ function BlockRuns({
         </Spacing>
       )}
 
-      {!isLoading && logs.length >= 1 && (
+      {!isLoading && logsFiltered.length >= 1 && (
         <Table
           columnFlex={[null, null, 1, 9, null]}
           columnMaxWidth={(idx: number) => idx === 3 ? '100px' : null}
@@ -318,7 +364,7 @@ function BlockRuns({
           ]}
           compact
           onClickRow={(rowIndex: number) => {
-            const log = logs[rowIndex];
+            const log = logsFiltered[rowIndex];
             let logUUID = log.data?.uuid;
 
             if (query[LOG_UUID_PARAM] === logUUID) {
@@ -328,7 +374,7 @@ function BlockRuns({
             goToWithQuery({ [LOG_UUID_PARAM]: logUUID });
             setSelectedLog(logUUID ? log : null);
           }}
-          rows={logs?.map(({
+          rows={logsFiltered?.map(({
             content,
             createdAt,
             data,
@@ -442,7 +488,14 @@ function BlockRuns({
           inline
           onClick={() => {
             setScrollToBottom(true);
-            fetchLogs(null);
+            if (q?._offset === '0' && q?._limit === String(LOG_FILE_COUNT_INTERVAL)) {
+              fetchLogs(null);
+            } else {
+              goToWithQuery({
+                _limit: LOG_FILE_COUNT_INTERVAL,
+                _offset: 0,
+              });
+            }
           }}
           paddingBottom={UNIT * 0.75}
           paddingTop={UNIT * 0.75}
