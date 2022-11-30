@@ -1,8 +1,9 @@
+from datetime import datetime
 from mage_ai.shared.hash import merge_dict
 import json
 
 
-def print_logs_from_output(output: str, logger = None):
+def print_logs_from_output(output: str, logger=None):
     from mage_integrations.utils.logger.constants import (
         LOG_LEVEL_ERROR,
         LOG_LEVEL_EXCEPTION,
@@ -14,6 +15,10 @@ def print_logs_from_output(output: str, logger = None):
             data = json.loads(line)
             message = data.get('message')
             tags = data.get('tags')
+
+            if 'timestamp' in data:
+                message = datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S') \
+                            + ' ' + message
 
             if TYPE_LOG == data.get('type'):
                 if logger:
