@@ -11,6 +11,7 @@ import Text from '@oracle/elements/Text';
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { FilterRowStyle } from './index.style';
+import { LIMIT_PARAM, LOG_FILE_COUNT_INTERVAL, OFFSET_PARAM } from '../Toolbar/constants';
 import { LogLevelEnum, LOG_LEVELS } from '@interfaces/LogType';
 import { LogLevelIndicatorStyle } from '../index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
@@ -41,7 +42,10 @@ function Filter({
   query,
 }: FilterProps) {
   const themeContext = useContext(ThemeContext);
-  const goTo = useCallback((q1, { isList }) => {
+  const goTo = useCallback((
+    q1: any,
+    { isList, resetLimitParams }: { isList: boolean, resetLimitParams?: boolean },
+  ) => {
     let q2 = { ...query };
 
     if (isList) {
@@ -65,6 +69,11 @@ function Filter({
         ...q2,
         ...q1,
       };
+    }
+
+    if (resetLimitParams) {
+      q2[LIMIT_PARAM] = LOG_FILE_COUNT_INTERVAL;
+      q2[OFFSET_PARAM] = 0;
     }
 
     goToWithQuery(q2);
@@ -170,7 +179,10 @@ function Filter({
               noBackground
               noBorder
               noPadding
-              onClick={() => goTo({ block_uuid: block.uuid }, { isList: true })}
+              onClick={() => goTo(
+                { block_uuid: block.uuid },
+                { isList: true, resetLimitParams: true },
+              )}
             >
               <FilterRowStyle>
                 <FlexContainer alignItems="center">

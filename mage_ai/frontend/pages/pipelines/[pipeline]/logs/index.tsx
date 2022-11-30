@@ -277,7 +277,7 @@ function BlockRuns({
         [OFFSET_PARAM]: newOffset,
       });
     }
-  }, [limit, offset, q, totalBlockRunLogCount, totalPipelineRunLogCount]);
+  }, [limit, offset, q]);
 
   return (
     <PipelineDetailPage
