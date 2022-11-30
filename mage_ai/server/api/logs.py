@@ -89,10 +89,10 @@ class ApiPipelineLogListHandler(BaseHandler):
                 filter(a.execution_date <= end_timestamp)
             )
 
-        total_pipeline_run_log_count = query.count()
-
+        total_pipeline_run_log_count = 0
         pipeline_run_logs = []
         if not len(block_uuids) and not len(block_run_ids):
+            total_pipeline_run_log_count = query.count()
             if self.get_argument(META_KEY_LIMIT, None) is not None:
                 rows = self.limit(query)
             else:
