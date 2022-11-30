@@ -270,7 +270,7 @@ function BlockRuns({
     let newOffset = offset;
     if (limit >= LOG_FILE_COUNT_INTERVAL) {
       newLimit = Math.max(LOG_FILE_COUNT_INTERVAL, (limit - LOG_FILE_COUNT_INTERVAL));
-      if (limit >= greaterLogCount) {
+      if (limit >= greaterLogCount && (greaterLogCount % LOG_FILE_COUNT_INTERVAL !== 0)) {
         newLimit = greaterLogCount - (greaterLogCount % LOG_FILE_COUNT_INTERVAL);
       }
       newOffset = Math.max(0, (offset - LOG_FILE_COUNT_INTERVAL));
