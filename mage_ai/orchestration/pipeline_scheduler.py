@@ -21,7 +21,6 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
 from typing import Any, Dict, List
-import json
 import pytz
 import traceback
 
@@ -263,6 +262,9 @@ def run_integration_pipeline(
     integration_pipeline = IntegrationPipeline.get(pipeline_scheduler.pipeline.uuid)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
                                    f'pipeline {integration_pipeline.uuid}',
+                                   **tags)
+
+    pipeline_scheduler.logger.info(f'Executable block runs: {executable_block_runs}',
                                    **tags)
 
     block_runs = BlockRun.query.filter(BlockRun.id.in_(executable_block_runs))
@@ -544,6 +546,7 @@ def schedule_all():
 
     for r in active_pipeline_runs:
         try:
+            r.refresh()
             PipelineScheduler(r).schedule()
         except Exception:
             print(f'Failed to schedule {r}')
