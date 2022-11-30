@@ -62,7 +62,7 @@ class ApiPipelineLogListHandler(BaseHandler):
             select(*columns).
             join(b, a.pipeline_schedule_id == b.id).
             filter(b.pipeline_uuid == pipeline_uuid).
-            order_by(a.execution_date.desc())
+            order_by(a.created_at.desc())
         )
 
         if len(pipeline_schedule_ids):
