@@ -254,7 +254,10 @@ function BlockRuns({
     if (totalBlockRunLogCount > limit || totalPipelineRunLogCount > limit) {
       const greaterLogCount = Math.max(totalBlockRunLogCount, totalPipelineRunLogCount);
       newLimit = Math.min(greaterLogCount, (limit + LOG_FILE_COUNT_INTERVAL));
-      newOffset = Math.min((greaterLogCount - LOG_FILE_COUNT_INTERVAL), (offset + LOG_FILE_COUNT_INTERVAL));
+      newOffset = Math.max(
+        Math.min((greaterLogCount - LOG_FILE_COUNT_INTERVAL), (offset + LOG_FILE_COUNT_INTERVAL)),
+        0,
+      );
       goToWithQuery({
         ...q,
         [LIMIT_PARAM]: newLimit,
