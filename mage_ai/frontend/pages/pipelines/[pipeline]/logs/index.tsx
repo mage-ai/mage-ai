@@ -161,7 +161,7 @@ function BlockRuns({
   }, [
     dataLogs,
   ]);
-  const allPastLogsLoaded = q?._limit >= totalBlockRunLogCount && q?._limit >= totalPipelineRunLogCount;
+  const allPastLogsLoaded = +q?._limit >= totalBlockRunLogCount && +q?._limit >= totalPipelineRunLogCount;
   const logsAll: LogType[] = useMemo(() => sortByKey(
       blockRunLogs
         .concat(pipelineRunLogs)
@@ -468,10 +468,14 @@ function BlockRuns({
           inline
           onClick={() => {
             setScrollToBottom(true);
-            goToWithQuery({
-              _limit: LOG_FILE_COUNT_INTERVAL,
-              _offset: 0,
-            });
+            if (q?._offset === '0' && q?._limit === String(LOG_FILE_COUNT_INTERVAL)) {
+              fetchLogs(null);
+            } else {
+              goToWithQuery({
+                _limit: LOG_FILE_COUNT_INTERVAL,
+                _offset: 0,
+              });
+            }
           }}
           paddingBottom={UNIT * 0.75}
           paddingTop={UNIT * 0.75}
