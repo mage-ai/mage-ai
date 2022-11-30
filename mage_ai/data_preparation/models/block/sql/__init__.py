@@ -33,7 +33,8 @@ def execute_sql_code(
     configuration = configuration if configuration else block.configuration
 
     if not config_file_loader:
-        config_path = path.join(get_repo_path(), 'io_config.yaml')
+        # config_path = path.join(get_repo_path(), 'io_config.yaml')
+        config_path = path.join('/home/src/mage_ai/server/default_repo', 'io_config.yaml')
         config_profile = configuration.get('data_provider_profile')
         config_file_loader = ConfigFileLoader(config_path, config_profile)
 

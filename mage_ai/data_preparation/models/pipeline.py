@@ -32,7 +32,8 @@ class Pipeline:
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.name = None
-        self.repo_path = repo_path or get_repo_path()
+        # self.repo_path = repo_path or get_repo_path()
+        self.repo_path = '/home/src/mage_ai/server/default_repo'
         self.uuid = uuid
         self.type = PipelineType.PYTHON
         self.widget_configs = []
