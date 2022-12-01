@@ -18,6 +18,7 @@ class DataSource(str, Enum):
     KAFKA = 'kafka'
     OPENSEARCH = 'opensearch'
     POSTGRES = 'postgres'
+    MONGODB = 'mongodb'
     REDSHIFT = 'redshift'
     S3 = 's3'
     SNOWFLAKE = 'snowflake'

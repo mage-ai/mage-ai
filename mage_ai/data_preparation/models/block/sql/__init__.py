@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     postgres,
+    mongodb,
     redshift,
     snowflake,
 )
@@ -117,6 +118,38 @@ def execute_sql_code(
                 return [
                     loader.load(
                         f'SELECT * FROM {schema}.{table_name}',
+                        verbose=False,
+                    ),
+                ]
+    elif DataSource.MONGODB.value == data_provider:
+        from mage_ai.io.mongodb import MongoDB
+
+        with MongoDB.with_config(config_file_loader) as loader:
+            mongodb.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                execution_partition=execution_partition,
+            )
+
+            query_string = mongodb.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
+
+            # loader.export(
+            #     None,
+            #     schema,
+            #     table_name,
+            #     drop_table_on_replace=True,
+            #     if_exists=export_write_policy,
+            #     index=False,
+            #     query_string=query_string,
+            #     verbose=BlockType.DATA_EXPORTER == block.type,
+            # )
+
+            if should_query:
+                return [
+                    loader.load(
+                        query_string,
                         verbose=False,
                     ),
                 ]

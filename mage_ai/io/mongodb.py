@@ -8,11 +8,11 @@ from mage_ai.io.export_utils import (
     infer_dtypes,
     PandasTypes,
 )
-from pandas import DataFrame, read_sql, Series
+from pandas import DataFrame, read_sql, Series, read_json
 from psycopg2 import connect
 import numpy as np
 from pymongo import MongoClient
-
+from bson.json_util import dumps
 class MongoDB(BaseSQLConnection):
     """
     Handles data transfer between a MongoDB database and the Mage app.
@@ -57,16 +57,8 @@ class MongoDB(BaseSQLConnection):
         Opens a connection to the MongoDB database specified by the parameters.
         """
         with self.printer.print_msg('Opening connection to MongoDB database'):
-            connectTest = MongoClient(self.settings['host'], self.settings['port'])
-            mydb = connectTest[self.settings['dbname']]
-            mycol = mydb[self.settings['colname']]
-            query = mycol.find().limit(1)
-            for x in query:
-                print(x)
-            # for q in query:
-                
-            # print(list(connectTest.find().limit(1)))
-            # self._ctx = connect(**self.settings)
+            conn = MongoClient(self.settings['host'], self.settings['port'])
+            self._ctx = conn
 
     def execute(self, query_string: str, **query_vars) -> None:
         """
@@ -114,9 +106,18 @@ class MongoDB(BaseSQLConnection):
                 print_message += f'\n{query_string}'
 
         query_string = self._clean_query(query_string)
+    
+        db = self._ctx[self.settings['dbname']]
+        collection = db[self.settings['colname']]
 
         with self.printer.print_msg(print_message):
-            return read_sql(self._enforce_limit(query_string, limit), self.conn, **kwargs)
+            if query_string == "":
+                mongo_data = collection.find()
+            else:
+                mongo_data = eval(query_string)
+            json_data = dumps(list(mongo_data))
+            df = read_json(StringIO(json_data))
+            return df
 
     def export(
         self,
@@ -204,7 +205,7 @@ class MongoDB(BaseSQLConnection):
                         buffer,
                     )
             self.conn.commit()
-
+            
         if verbose:
             with self.printer.print_msg(
                 f'Exporting data to \'{full_table_name}\''
