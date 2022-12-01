@@ -142,7 +142,7 @@ def column_type_mapping(
 def convert_column_to_type(value, column_type) -> str:
     if type(value) is dict:
         value = json.dumps(value)
-    return f"CAST('{value}' AS {column_type})"
+    return f"CAST('1' AS {column_type})"
 
 
 def build_insert_command(
