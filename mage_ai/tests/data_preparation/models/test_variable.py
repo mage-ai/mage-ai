@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.utils import create_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable, VariableType
 from mage_ai.tests.base_test import DBTestCase
@@ -101,8 +100,8 @@ class VariableTest(DBTestCase):
             name,
             repo_path=self.repo_path,
         )
-        block1 = create_block('block1', 'data_loader', self.repo_path)
-        block2 = create_block('block2', 'transformer', self.repo_path)
+        block1 = Block.create('block1', 'data_loader', self.repo_path)
+        block2 = Block.create('block2', 'transformer', self.repo_path)
         pipeline.add_block(block1)
         pipeline.add_block(block2)
         return pipeline

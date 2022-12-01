@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.utils import create_block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
@@ -102,7 +101,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
         """
         pipeline = Pipeline.get(pipeline_uuid)
         payload = json.loads(self.request.body).get('block', {})
-        block = create_block(
+        block = Block.create(
             payload.get('name') or payload.get('uuid'),
             payload.get('type'),
             get_repo_path(),

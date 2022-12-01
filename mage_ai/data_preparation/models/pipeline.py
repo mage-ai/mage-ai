@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
-from mage_ai.data_preparation.models.block.utils import block_class_from_type, get_block
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     ExecutorType,
@@ -128,7 +127,7 @@ class Pipeline:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
             if source_block.type == BlockType.SCRATCHPAD:
                 continue
-            new_block = get_block(source_block.name, source_block.uuid, source_block.type)
+            new_block = Block.get_block(source_block.name, source_block.uuid, source_block.type)
             duplicate_pipeline.add_block(new_block)
         # second pass to make connections
         for block_uuid in source_pipeline.blocks_by_uuid:
@@ -266,6 +265,7 @@ class Pipeline:
                 if len(block.upstream_blocks) == 0 and block.type in [
                     BlockType.DATA_EXPORTER,
                     BlockType.DATA_LOADER,
+                    BlockType.DBT,
                     BlockType.TRANSFORMER,
                     BlockType.SENSOR,
                 ]:
@@ -299,7 +299,8 @@ class Pipeline:
 
         def build_shared_args_kwargs(c):
             block_type = c.get('type')
-            return block_class_from_type(block_type)(
+            language = c.get('language')
+            return Block.block_class_from_type(block_type, language=language, pipeline=self)(
                 c.get('name'),
                 c.get('uuid'),
                 block_type,

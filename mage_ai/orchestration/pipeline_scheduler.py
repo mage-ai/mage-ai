@@ -519,8 +519,6 @@ def run_block(
     pipeline_scheduler = PipelineScheduler(pipeline_run)
 
     pipeline = pipeline_scheduler.pipeline
-    if PipelineType.INTEGRATION == pipeline_type:
-        pipeline = IntegrationPipeline.get(pipeline.uuid)
 
     block_run = BlockRun.query.get(block_run_id)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '

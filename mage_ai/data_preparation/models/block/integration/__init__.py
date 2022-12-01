@@ -1,5 +1,3 @@
-
-
 from logging import Logger
 from typing import Dict, List
 
@@ -96,8 +94,8 @@ class IntegrationBlock(Block):
             test_functions = []
 
             results = {
-                self.type: self.__block_decorator(decorated_functions),
-                'test': self.__block_decorator(test_functions),
+                self.type: self._block_decorator(decorated_functions),
+                'test': self._block_decorator(test_functions),
             }
             results.update(outputs_from_input_vars)
 
@@ -134,7 +132,7 @@ class IntegrationBlock(Block):
                                 stream=stream,
                             ),
                         )
-                        block_function = self.__validate_execution(decorated_functions, input_vars)
+                        block_function = self._validate_execution(decorated_functions, input_vars)
 
                         if block_function is not None:
                             df = self.execute_block_function(
@@ -208,7 +206,7 @@ class IntegrationBlock(Block):
                     destination_table=destination_table,
                     stream=stream,
                 ),
-            ], input=input_from_previous, text=True)
+            ], input=input_from_previous, capture_output=True, text=True)
 
             print_logs_from_output(
                 proc.stdout,
@@ -223,7 +221,9 @@ class SourceBlock(IntegrationBlock):
     def output_variables(self, execution_partition: str = None) -> List[str]:
         return []
 
-
 class DestinationBlock(IntegrationBlock):
     def output_variables(self, execution_partition: str = None) -> List[str]:
         return []
+
+class TransformerBlock(IntegrationBlock):
+    pass

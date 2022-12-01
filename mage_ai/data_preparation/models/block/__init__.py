@@ -282,6 +282,157 @@ class Block:
 
         return table_name
 
+    @classmethod
+    def create(
+        self,
+        name,
+        block_type,
+        repo_path,
+        configuration=None,
+        language=None,
+        pipeline=None,
+        priority=None,
+        upstream_block_uuids=None,
+        config=None,
+        widget=False,
+    ):
+        """
+        1. Create a new folder for block_type if not exist
+        2. Create a new python file with code template
+        """
+        if upstream_block_uuids is None:
+            upstream_block_uuids = []
+        if config is None:
+            config = {}
+
+        uuid = clean_name(name)
+        language = language or BlockLanguage.PYTHON
+
+        if BlockType.DBT != block_type or BlockLanguage.YAML == language:
+            block_dir_path = os.path.join(repo_path, f'{block_type}s')
+            if not os.path.exists(block_dir_path):
+                os.mkdir(block_dir_path)
+                with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
+                    pass
+
+            file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
+            file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
+            if os.path.exists(file_path):
+                if pipeline is not None and pipeline.has_block(uuid):
+                    raise Exception(f'Block {uuid} already exists. Please use a different name.')
+            else:
+                load_template(
+                    block_type,
+                    config,
+                    file_path,
+                    language=language,
+                    pipeline_type=pipeline.type if pipeline is not None else None,
+                )
+
+        block = self.block_class_from_type(block_type, pipeline=pipeline)(
+            name,
+            uuid,
+            block_type,
+            configuration=configuration,
+            language=language,
+            pipeline=pipeline,
+        )
+        self.after_create(
+            block,
+            config=config,
+            pipeline=pipeline,
+            priority=priority,
+            upstream_block_uuids=upstream_block_uuids,
+            widget=widget,
+        )
+        return block
+
+    @classmethod
+    def after_create(self, block: 'Block', **kwargs):
+        from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
+        widget = kwargs.get('widget')
+        pipeline = kwargs.get('pipeline')
+        if pipeline is not None:
+            priority = kwargs.get('priority')
+            upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
+
+            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
+                arr = add_blocks_upstream_from_refs(block)
+                upstream_block_uuids += [b.uuid for b in arr]
+
+            pipeline.add_block(
+                block,
+                upstream_block_uuids,
+                priority=priority if len(upstream_block_uuids) == 0 else None,
+                widget=widget,
+            )
+
+    @classmethod
+    def get_all_blocks(self, repo_path):
+        block_uuids = dict()
+        for t in BlockType:
+            block_dir = os.path.join(repo_path, f'{t.value}s')
+            if not os.path.exists(block_dir):
+                continue
+            block_uuids[t.value] = []
+            for f in os.listdir(block_dir):
+                if (f.endswith('.py') or f.endswith('.sql')) and f != '__init__.py':
+                    block_uuids[t.value].append(f.split('.')[0])
+        return block_uuids
+
+    @classmethod
+    def get_block(
+        self,
+        name,
+        uuid,
+        block_type,
+        configuration=None,
+        content=None,
+        language=None,
+        pipeline=None,
+        status=BlockStatus.NOT_EXECUTED,
+    ):
+        block_class = self.block_class_from_type(
+            block_type,
+            language=language,
+            pipeline=pipeline,
+        ) or Block
+        return block_class(
+            name,
+            uuid,
+            block_type,
+            configuration=configuration,
+            content=content,
+            language=language,
+            pipeline=pipeline,
+            status=status,
+        )
+
+    @classmethod
+    def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
+        from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
+        from mage_ai.data_preparation.models.block.integration import (
+            SourceBlock, DestinationBlock, TransformerBlock
+        )
+        from mage_ai.data_preparation.models.block.r import RBlock
+        from mage_ai.data_preparation.models.block.sql import SQLBlock
+        from mage_ai.data_preparation.models.widget import Widget
+
+        if block_type == BlockType.CHART:
+            return Widget
+        if pipeline and PipelineType.INTEGRATION == pipeline.type:
+            if BlockType.DATA_LOADER == block_type:
+                return SourceBlock
+            elif BlockType.DATA_EXPORTER == block_type:
+                return DestinationBlock
+            else:
+                return TransformerBlock
+        elif BlockLanguage.SQL == language:
+            return SQLBlock
+        elif BlockLanguage.R == language:
+            return RBlock
+        return BLOCK_TYPE_TO_CLASS.get(block_type)
+
     def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]):
         return all(b.uuid in completed_block_uuids for b in self.upstream_blocks)
 
@@ -441,7 +592,7 @@ class Block:
                 update_status=update_status,
             )
 
-    def __validate_execution(self, decorated_functions, input_vars):
+    def _validate_execution(self, decorated_functions, input_vars):
         """
         Validate whether the number of function arguments matches the upstream blocks.
         Only perform the validation for Python functions.
@@ -580,8 +731,8 @@ class Block:
         test_functions = []
 
         results = {
-            self.type: self.__block_decorator(decorated_functions),
-            'test': self.__block_decorator(test_functions),
+            self.type: self._block_decorator(decorated_functions),
+            'test': self._block_decorator(test_functions),
         }
         results.update(outputs_from_input_vars)
 
@@ -604,7 +755,7 @@ class Block:
                 upstream_block_uuids=upstream_block_uuids,
             )
         else:
-            block_function = self.__validate_execution(decorated_functions, input_vars)
+            block_function = self._validate_execution(decorated_functions, input_vars)
             if block_function is not None:
                 outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
 
@@ -929,7 +1080,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         test_functions = []
         if update_tests:
             results = {
-                'test': self.__block_decorator(test_functions),
+                'test': self._block_decorator(test_functions),
             }
             if custom_code is not None:
                 exec(custom_code, results)
@@ -949,6 +1100,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             )
             for variable in self.output_variables(execution_partition=execution_partition)
         ]
+
+        print('outputs length:', len(outputs))
 
         with redirect_stdout(stdout):
             tests_passed = 0
@@ -1151,6 +1304,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             partition=execution_partition,
         )
 
+    def _block_decorator(self, decorated_functions):
+        def custom_code(function):
+            decorated_functions.append(function)
+            return function
+
+        return custom_code
+
     def __is_output_variable(self, variable_uuid):
         return variable_uuid == 'df' or variable_uuid.startswith('output')
 
@@ -1217,13 +1377,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             upstream_block_uuids=upstream_blocks,
             widget=BlockType.CHART == self.type,
         )
-
-    def __block_decorator(self, decorated_functions):
-        def custom_code(function):
-            decorated_functions.append(function)
-            return function
-
-        return custom_code
 
 
 class SensorBlock(Block):

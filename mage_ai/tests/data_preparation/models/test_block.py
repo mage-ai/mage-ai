@@ -1,7 +1,6 @@
 from async_timeout import asyncio
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType
-from mage_ai.data_preparation.models.block.utils import create_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -13,8 +12,8 @@ import pandas as pd
 
 class BlockTest(DBTestCase):
     def test_create(self):
-        block1 = create_block('test_transformer', 'transformer', self.repo_path)
-        block2 = create_block('test data loader', BlockType.DATA_LOADER, self.repo_path)
+        block1 = Block.create('test_transformer', 'transformer', self.repo_path)
+        block2 = Block.create('test data loader', BlockType.DATA_LOADER, self.repo_path)
         self.assertTrue(os.path.exists(f'{self.repo_path}/transformers/test_transformer.py'))
         self.assertTrue(os.path.exists(f'{self.repo_path}/transformers/__init__.py'))
         self.assertTrue(os.path.exists(f'{self.repo_path}/data_loaders/test_data_loader.py'))
@@ -31,8 +30,8 @@ class BlockTest(DBTestCase):
             'test pipeline',
             repo_path=self.repo_path,
         )
-        block1 = create_block('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
-        block2 = create_block(
+        block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+        block2 = Block.create(
             'test_transformer',
             'transformer',
             self.repo_path,
@@ -86,9 +85,9 @@ def remove_duplicate_rows(df):
             'test pipeline 2',
             repo_path=self.repo_path,
         )
-        block1 = create_block('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
-        block2 = create_block('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
-        block3 = create_block(
+        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
+        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
+        block3 = Block.create(
             'test_transformer',
             'transformer',
             self.repo_path,
@@ -155,9 +154,9 @@ def union_datasets(df1, df2):
             'test pipeline 3',
             repo_path=self.repo_path,
         )
-        block1 = create_block('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
-        block2 = create_block('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
-        block3 = create_block(
+        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
+        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
+        block3 = Block.create(
             'test_transformer',
             'transformer',
             self.repo_path,
@@ -201,13 +200,13 @@ def incorrect_function(df1, df2, df3):
             asyncio.run(block3.execute())
 
     def test_to_dict(self):
-        block1 = create_block(
+        block1 = Block.create(
             'test_transformer_2',
             'transformer',
             self.repo_path,
             language='sql',
         )
-        block2 = create_block(
+        block2 = Block.create(
             'test_data_exporter',
             'data_exporter',
             self.repo_path,
