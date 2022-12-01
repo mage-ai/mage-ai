@@ -114,14 +114,11 @@ def __fetch_data_loader_templates(
     else:
         template_folder = 'data_loaders'
 
-    default_template = os.path.join(template_folder, 'default.jinja')
+    default_template = template_folder + '/' + 'default.jinja'
     if data_source is None:
         template_path = default_template
     else:
-        data_source_template = os.path.join(
-            template_folder,
-            f'{data_source.lower()}.{file_extension}',
-        )
+        data_source_template = template_folder + '/' + f'{data_source.lower()}.{file_extension}'
         if template_exists(data_source_template):
             template_path = data_source_template
         else:
@@ -218,14 +215,11 @@ def __fetch_data_exporter_templates(
     else:
         template_folder = 'data_exporters'
 
-    default_template = os.path.join(template_folder, 'default.jinja')
+    default_template = template_folder + '/' + 'default.jinja'
     if data_source is None:
         template_path = default_template
     else:
-        data_source_template = os.path.join(
-            template_folder,
-            f'{data_source.lower()}.{file_extension}',
-        )
+        data_source_template = template_folder + '/' + f'{data_source.lower()}.{file_extension}'
         if template_exists(data_source_template):
             template_path = data_source_template
         else:
