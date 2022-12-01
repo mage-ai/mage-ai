@@ -208,12 +208,36 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
         self.write(dict(pipeline_run=pipeline_run_dict))
 
     def put(self, pipeline_run_id):
-        """
-        Only allow cancelling a pipeline run with this endpoint
-        """
         payload = self.get_payload()
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
-        if payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
+
+        if payload.get('action') == 'retry_blocks':
+            if pipeline_run.status != PipelineRun.PipelineRunStatus.COMPLETED:
+                pipeline_run.refresh()
+                pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
+                print('block runs:', list(map(lambda br: dict(name=br.block_uuid, status=br.status), pipeline_run.block_runs)))
+                incomplete_block_runs = \
+                    list(
+                        filter(
+                            lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
+                            pipeline_run.block_runs
+                        )
+                    )
+
+                from mage_ai.orchestration.execution_process_manager import execution_process_manager
+                if PipelineType.STREAMING != pipeline.type:
+                    if PipelineType.INTEGRATION == pipeline.type:
+                        execution_process_manager.terminate_pipeline_process(pipeline_run.id)
+                    else:
+                        for br in incomplete_block_runs:
+                            execution_process_manager.terminate_block_process(pipeline_run.id, br.id)            
+                
+                from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+                pipeline_scheduler = PipelineScheduler(pipeline_run)
+
+                pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+                pipeline_scheduler.schedule(incomplete_block_runs)
+        elif payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
             from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
             PipelineScheduler(pipeline_run).stop()
         self.write(dict(pipeline_run=pipeline_run.to_dict()))

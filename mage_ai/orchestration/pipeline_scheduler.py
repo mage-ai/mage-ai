@@ -69,8 +69,10 @@ class PipelineScheduler:
         if PipelineType.INTEGRATION == self.pipeline.type:
             execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
 
-    def schedule(self) -> None:
-        if PipelineType.STREAMING != self.pipeline.type:
+    def schedule(self, block_runs: List[BlockRun] = None) -> None:
+        if PipelineType.STREAMING == self.pipeline.type:
+            self.__schedule_pipeline()
+        else:
             if self.pipeline_run.all_blocks_completed():
                 if PipelineType.INTEGRATION == self.pipeline.type:
                     tags = dict(
@@ -102,11 +104,9 @@ class PipelineScheduler:
                 )
                 self.logger_manager.output_logs_to_destination()
             elif PipelineType.INTEGRATION == self.pipeline.type:
-                self.__schedule_integration_pipeline()
+                self.__schedule_integration_pipeline(block_runs)
             else:
-                self.__schedule_blocks()
-        else:
-            self.__schedule_pipeline()
+                self.__schedule_blocks(block_runs)
 
     @retry(retries=3, delay=5)
     def on_block_complete(self, block_uuid: str) -> None:
@@ -212,9 +212,11 @@ class PipelineScheduler:
 
         return variables
 
-    def __schedule_blocks(self) -> None:
+    def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
         # TODO: implement queueing logic
-        for b in self.queued_block_runs:
+        block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
+
+        for b in block_runs_to_schedule:
             tags = dict(
                 block_run_id=b.id,
                 block_uuid=b.block_uuid,
@@ -238,11 +240,13 @@ class PipelineScheduler:
             execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
             proc.start()
 
-    def __schedule_integration_pipeline(self) -> None:
+    def __schedule_integration_pipeline(self, block_runs: List[BlockRun] = None) -> None:
         if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
             return
 
-        if len(self.executable_block_runs) >= 2:
+        block_runs_to_schedule = self.executable_block_runs if block_runs is None else block_runs
+
+        if len(block_runs_to_schedule) >= 2:
             self.logger.info(
                 f'Start a process for PipelineRun {self.pipeline_run.id}',
                 **self.__build_tags(),
@@ -250,7 +254,7 @@ class PipelineScheduler:
 
             proc = create_process(target=run_integration_pipeline, args=(
                 self.pipeline_run.id,
-                [b.id for b in self.executable_block_runs],
+                [b.id for b in block_runs_to_schedule],
                 self.__get_variables(dict(
                     pipeline_uuid=self.pipeline.uuid,
                 )),
@@ -298,7 +302,8 @@ def run_integration_pipeline(
     pipeline_scheduler.logger.info(f'Executable block runs: {executable_block_runs}',
                                    **tags)
 
-    block_runs = BlockRun.query.filter(BlockRun.id.in_(executable_block_runs))
+    all_block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run_id)
+    block_runs = list(filter(lambda br: br.id in executable_block_runs, all_block_runs))
 
     pipeline_schedule = pipeline_run.pipeline_schedule
     schedule_interval = pipeline_schedule.schedule_interval
@@ -339,6 +344,9 @@ def run_integration_pipeline(
         destination_table = stream.get('destination_table', tap_stream_id)
 
         block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
+        if len(block_runs_for_stream) == 0:
+            continue
+        
         indexes = [0]
         for br in block_runs_for_stream:
             parts = br.block_uuid.split(':')
@@ -354,7 +362,7 @@ def run_integration_pipeline(
                 block_runs_in_order.append(
                     find(
                         lambda b: b.block_uuid == f'{current_block.uuid}:{tap_stream_id}:{idx}',
-                        block_runs_for_stream,
+                        all_block_runs,
                     )
                 )
                 downstream_blocks = current_block.downstream_blocks
@@ -367,11 +375,11 @@ def run_integration_pipeline(
 
             data_loader_block_run = find(
                 lambda b: b.block_uuid == data_loader_uuid,
-                block_runs_for_stream,
+                all_block_runs,
             )
             data_exporter_block_run = find(
                 lambda b: b.block_uuid == data_exporter_uuid,
-                block_runs_for_stream,
+                all_block_runs,
             )
             if not data_loader_block_run or not data_exporter_block_run:
                 continue
