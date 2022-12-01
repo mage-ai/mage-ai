@@ -184,11 +184,12 @@ def build_insert_command(
                     else:
                         value_final = str(v).replace("'", "''")
 
+                    if string_parse_func:
+                        value_final = string_parse_func(value_final, column_type_dict)
+
                     if convert_column_types:
                         value_final = convert_column_to_type_func(value_final, column_type_converted)
 
-                    if string_parse_func:
-                        value_final = string_parse_func(value_final)
 
             vals.append(value_final)
         if stringify_values:

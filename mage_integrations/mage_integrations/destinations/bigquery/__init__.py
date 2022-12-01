@@ -265,7 +265,7 @@ WHERE table_id = '{table_name}'
             convert_column_to_type_func=convert_column_to_type,
             convert_datetime_func=convert_datetime,
             records=records,
-            string_parse_func=lambda x: x.replace('\n', '\\n'),
+            string_parse_func=lambda x, y: x.replace('\n', '\\n'),
             stringify_values=False,
             convert_column_types=False,
         )
