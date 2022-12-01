@@ -26,6 +26,12 @@ default:
   POSTGRES_PASSWORD: password
   POSTGRES_HOST: hostname
   POSTGRES_PORT: 5432
+  MONGODB_DBNAME: db
+  MONGODB_COLNAME: col
+  MONGODB_USER: username
+  MONGODB_PASSWORD: password
+  MONGODB_HOST: hostname
+  MONGODB_PORT: 5432
   REDSHIFT_DBNAME: redshift_db_name
   REDSHIFT_HOST: redshift_cluster_id.identifier.region.redshift.amazonaws.com
   REDSHIFT_PORT: 5439
