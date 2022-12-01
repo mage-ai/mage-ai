@@ -203,7 +203,7 @@ class Destination(BaseDestination):
 
             for insert_command in cmds:
                 query_strings.append(insert_command)
-
+            self.logger.info(f'query strings: {query_strings}')
             self.logger.info(f'Build insert commands for batch {idx} completed.', tags=merge_dict(tags2, dict(
                 insert_commands=len(cmds)
             )))
