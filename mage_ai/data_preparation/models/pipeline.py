@@ -1,4 +1,5 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block.utils import get_block
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     ExecutorType,
@@ -127,7 +128,7 @@ class Pipeline:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
             if source_block.type == BlockType.SCRATCHPAD:
                 continue
-            new_block = Block.get_block(source_block.name, source_block.uuid, source_block.type)
+            new_block = get_block(source_block.name, source_block.uuid, source_block.type)
             duplicate_pipeline.add_block(new_block)
         # second pass to make connections
         for block_uuid in source_pipeline.blocks_by_uuid:

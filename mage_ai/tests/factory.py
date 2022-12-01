@@ -1,5 +1,6 @@
 from datetime import datetime
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.utils import create_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import PipelineRun, PipelineSchedule
 
@@ -17,10 +18,10 @@ def create_pipeline_with_blocks(name: str, repo_path: str):
         name,
         repo_path=repo_path,
     )
-    block1 = Block.create('block1', 'data_loader', repo_path, language='python')
-    block2 = Block.create('block2', 'transformer', repo_path, language='python')
-    block3 = Block.create('block3', 'transformer', repo_path, language='python')
-    block4 = Block.create('block4', 'data_exporter', repo_path, language='python')
+    block1 = create_block('block1', 'data_loader', repo_path, language='python')
+    block2 = create_block('block2', 'transformer', repo_path, language='python')
+    block3 = create_block('block3', 'transformer', repo_path, language='python')
+    block4 = create_block('block4', 'data_exporter', repo_path, language='python')
     pipeline.add_block(block1)
     pipeline.add_block(block2, upstream_block_uuids=['block1'])
     pipeline.add_block(block3, upstream_block_uuids=['block1'])
