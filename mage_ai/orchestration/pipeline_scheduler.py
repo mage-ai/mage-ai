@@ -72,17 +72,19 @@ class PipelineScheduler:
     def schedule(self) -> None:
         if PipelineType.STREAMING != self.pipeline.type:
             if self.pipeline_run.all_blocks_completed():
-                self.pipeline_run.update(
-                    status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
-                )
-                calculate_metrics(self.pipeline_run)
-                self.notification_sender.send_pipeline_run_success_message(
-                    pipeline=self.pipeline,
-                    pipeline_run=self.pipeline_run,
-                )
+                if PipelineType.INTEGRATION == self.pipeline.type:
+                    self.pipeline_run.update(
+                        status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
+                    )
+                    calculate_metrics(self.pipeline_run)
+
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
+                )
+                self.notification_sender.send_pipeline_run_success_message(
+                    pipeline=self.pipeline,
+                    pipeline_run=self.pipeline_run,
                 )
                 self.logger_manager.output_logs_to_destination()
             elif PipelineType.INTEGRATION == self.pipeline.type:
