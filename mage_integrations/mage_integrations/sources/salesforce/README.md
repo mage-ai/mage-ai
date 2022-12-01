@@ -17,7 +17,7 @@ You must enter the following settings when configuring this source:
 | `lookback_window` | The `lookback_window` (in seconds) subtracts the desired amount of seconds from the bookmark to sync past data. Recommended value: 10 seconds. | `10` |
 | `refresh_token` | The `refresh_token` is a secret created during the OAuth flow | `ABC1...` |
 | `select_fields_by_default` | If `true`, the fields in a schema of a stream will all be selected by default when setting up a synchronization. | `true`, `false` |
-| `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be an [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) formatted date-time, like "2018-01-08T00:00:00Z". | `2022-01-01T00:00:00Z` |
+| `start_date` | The `start_date` is used by the tap as a bound on SOQL queries when searching for records.  This should be this exact format `YYYY-mm-ddTHH:MM:SS.000000Z`. | `2022-11-30T21:31:20.000000Z` |
 
 <br />
 
