@@ -463,7 +463,8 @@ class Destination():
 
                 if COLUMN_TYPE_OBJECT in item_types:
                     record_adjusted[k] = [json.loads(s) if type(s) is str else s for s in v1]
-
+            elif type(v1) is dict:
+                record_adjusted[k] = json.dumps(v1)
             elif type(v1) is str:
                 try:
                     record_adjusted[k] = json.loads(v1)
