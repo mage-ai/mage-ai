@@ -4,6 +4,7 @@ from mage_integrations.sources.constants import (
     BATCH_FETCH_LIMIT,
     COLUMN_FORMAT_DATETIME,
     COLUMN_FORMAT_UUID,
+    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_NULL,
@@ -65,11 +66,11 @@ class Source(BaseSource):
 
                 if 'bool' in column_type:
                     column_types.append(COLUMN_TYPE_BOOLEAN)
-                elif 'int' in column_type:
+                elif 'int' in column_type or 'bigint' in column_type:
                     column_types.append(COLUMN_TYPE_INTEGER)
-                elif 'double' in column_type or 'float' in column_type:
+                elif 'double' in column_type or 'float' in column_type or 'numeric' in column_type:
                     column_types.append(COLUMN_TYPE_NUMBER)
-                elif 'datetime' in column_type:
+                elif 'datetime' in column_type or 'timestamp' in column_type or 'date' in column_type:
                     column_format = COLUMN_FORMAT_DATETIME
                     column_types.append(COLUMN_TYPE_STRING)
                     valid_replication_keys.append(column_name)
@@ -79,8 +80,13 @@ class Source(BaseSource):
                 elif 'uuid' in column_type:
                     column_format = COLUMN_FORMAT_UUID
                     column_types.append(COLUMN_TYPE_STRING)
+                # TODO: when adding array column type, we also need to add the setting
+                # for items and the item properties and types.
+                # See Stripe’s balance_transactions.json schema for an example.
+                # elif 'array' in column_type:
+                #     column_types.append(COLUMN_TYPE_ARRAY)
                 else:
-                    # binary, text, varchar
+                    # binary, text, varchar, character varying
                     column_types.append(COLUMN_TYPE_STRING)
 
                 properties[column_name] = dict(
