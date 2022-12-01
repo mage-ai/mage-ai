@@ -213,6 +213,7 @@ class VerboseConfigKey(str, Enum):
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
     POSTGRES = 'PostgreSQL'
+    MONGODB = 'MongoDB'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
 
@@ -257,6 +258,12 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),
         ConfigKey.POSTGRES_PORT: (VerboseConfigKey.POSTGRES, 'port'),
         ConfigKey.POSTGRES_USER: (VerboseConfigKey.POSTGRES, 'user'),
+        ConfigKey.MONGODB_DBNAME: (VerboseConfigKey.MONGODB, 'database'),
+        ConfigKey.MONGODB_COLNAME: (VerboseConfigKey.MONGODB, 'collection'),
+        ConfigKey.MONGODB_HOST: (VerboseConfigKey.MONGODB, 'host'),
+        ConfigKey.MONGODB_PASSWORD: (VerboseConfigKey.MONGODB, 'password'),
+        ConfigKey.MONGODB_PORT: (VerboseConfigKey.MONGODB, 'port'),
+        ConfigKey.MONGODB_USER: (VerboseConfigKey.MONGODB, 'user'),
         ConfigKey.SNOWFLAKE_ACCOUNT: (VerboseConfigKey.SNOWFLAKE, 'account'),
         ConfigKey.SNOWFLAKE_DEFAULT_DB: (VerboseConfigKey.SNOWFLAKE, 'database'),
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
