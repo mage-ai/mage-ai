@@ -57,7 +57,14 @@ class MongoDB(BaseSQLConnection):
         Opens a connection to the MongoDB database specified by the parameters.
         """
         with self.printer.print_msg('Opening connection to MongoDB database'):
-            conn = MongoClient(self.settings['host'], self.settings['port'])
+            user = self.settings['user']
+            password = self.settings['password']
+            host = self.settings['host']
+            port = self.settings['port']
+            if user is not None and password is not None:
+                conn = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
+            else:
+                conn = MongoClient(host, port)
             self._ctx = conn
 
     def execute(self, query_string: str, **query_vars) -> None:

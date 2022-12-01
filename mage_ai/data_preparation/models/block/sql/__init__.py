@@ -34,8 +34,7 @@ def execute_sql_code(
     configuration = configuration if configuration else block.configuration
 
     if not config_file_loader:
-        # config_path = path.join(get_repo_path(), 'io_config.yaml')
-        config_path = path.join('/home/src/mage_ai/server/default_repo', 'io_config.yaml')
+        config_path = path.join(get_repo_path(), 'io_config.yaml')
         config_profile = configuration.get('data_provider_profile')
         config_file_loader = ConfigFileLoader(config_path, config_profile)
 
@@ -135,17 +134,6 @@ def execute_sql_code(
 
             query_string = mongodb.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
-
-            # loader.export(
-            #     None,
-            #     schema,
-            #     table_name,
-            #     drop_table_on_replace=True,
-            #     if_exists=export_write_policy,
-            #     index=False,
-            #     query_string=query_string,
-            #     verbose=BlockType.DATA_EXPORTER == block.type,
-            # )
 
             if should_query:
                 return [
