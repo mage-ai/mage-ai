@@ -319,7 +319,7 @@ WHERE table_schema = '{schema}'
             for row in rows_temp:
                 for idx, col in enumerate(columns):
                     self.logger.info(f'{col}: {row[idx]}, type {type(row[idx])}')
-            rows = [{col: json.dumps(row[idx]) if type(row[idx] is dict) else row[idx]
+            rows = [{col: json.dumps(row[idx]) if type(row[idx]) is dict else row[idx]
                      for idx, col in enumerate(columns)} for row in rows_temp]
             self.logger.info(f'rows: {rows}')
             if rows and 'text_data' in rows[0]:
