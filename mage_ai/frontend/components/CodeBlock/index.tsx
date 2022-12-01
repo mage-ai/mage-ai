@@ -213,6 +213,10 @@ function CodeBlockProps({
 
   const isDBT = BlockTypeEnum.DBT === block?.type;
 
+  const isMongo = (DataSourceTypeEnum.MONGODB === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]);
+
+  const baseQueryMongo = 'collection.find()';
+
   const blockPrevious = usePrevious(block);
   useEffect(() => {
     if (JSON.stringify(block) != JSON.stringify(blockPrevious)) {
@@ -988,9 +992,12 @@ function CodeBlockProps({
                     compact
                     label="Data provider"
                     // @ts-ignore
-                    onChange={e => updateDataProviderConfig({
-                      [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
-                    })}
+                    onChange={e => {
+                      updateDataProviderConfig({
+                        [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
+                      });
+                      if( DataSourceTypeEnum.MONGODB === e.target.value ){setContent(baseQueryMongo);}
+                    }}
                     small
                     value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
                   >
@@ -1058,35 +1065,40 @@ function CodeBlockProps({
                     </>
                   )}
 
-                  <Spacing mr={1} />
-
-                  <FlexContainer alignItems="center">
-                    <Text monospace muted small>
-                      Save to schema:
-                    </Text>
-                    <span>&nbsp;</span>
-                    <TextInput
-                      compact
-                      monospace
-                      onBlur={() => setTimeout(() => {
-                        setAnyInputFocused(false);
-                      }, 300)}
-                      onChange={(e) => {
-                        // @ts-ignore
-                        updateDataProviderConfig({
-                          [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
-                        });
-                        e.preventDefault();
-                      }}
-                      onFocus={() => {
-                        setAnyInputFocused(true);
-                      }}
-                      small
-                      value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
-                      width={10 * UNIT}
-                    />
+                {!isMongo && (
+                  <>
+                    <Spacing mr={1} />
+                    
+                    <FlexContainer alignItems="center">
+                      <Text monospace muted small>
+                        Save to schema:
+                      </Text>
+                      <span>&nbsp;</span>
+                      <TextInput
+                        compact
+                        monospace
+                        onBlur={() => setTimeout(() => {
+                          setAnyInputFocused(false);
+                        }, 300)}
+                        onChange={(e) => {
+                          // @ts-ignore
+                          updateDataProviderConfig({
+                            [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
+                          });
+                          e.preventDefault();
+                        }}
+                        onFocus={() => {
+                          setAnyInputFocused(true);
+                        }}
+                        small
+                        value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
+                        width={10 * UNIT}
+                      />
+                    </FlexContainer>
+                    
+                  </>
+                )}
                   </FlexContainer>
-                </FlexContainer>
 
                 <FlexContainer alignItems="center">
                   <Tooltip
