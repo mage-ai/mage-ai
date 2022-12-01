@@ -339,6 +339,7 @@ class Destination():
                 tags.update(schema=schema)
                 self.process_schema(stream, schema, row, tags=tags)
             elif TYPE_RECORD == row_type:
+                self.logger.info(f'Record {row}')
                 record_data = dict(
                     row=row,
                     schema=schema,
