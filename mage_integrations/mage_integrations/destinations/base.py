@@ -439,9 +439,6 @@ class Destination():
                     else:
                         prop_types.append(any_of_type)
 
-            if type(v) is dict:
-                record_adjusted[k] = json.dumps(v)
-
             if COLUMN_TYPE_ARRAY not in prop_types:
                 continue
 

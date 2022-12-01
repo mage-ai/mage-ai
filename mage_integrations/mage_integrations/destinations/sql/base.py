@@ -189,6 +189,8 @@ class Destination(BaseDestination):
 
         query_strings = []
         self.logger.info(f'record data: {record_data}')
+        self.logger.info(f"record data text data type: {type(record_data[0]['text_data'])}')
+
         for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
             records = [d['record'] for d in sub_batch]
 
