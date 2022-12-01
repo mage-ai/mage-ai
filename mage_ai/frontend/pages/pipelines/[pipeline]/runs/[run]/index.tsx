@@ -46,7 +46,7 @@ function PipelineBlockRuns({
     {
       refreshInterval: 3000,
       revalidateOnFocus: true,
-    }
+    },
   );
   const pipelineRun = useMemo(
     () => dataPipelineRun?.pipeline_run, 
@@ -159,7 +159,7 @@ function PipelineBlockRuns({
       <Divider light mt={PADDING_UNITS} short />
       {tableBlockRuns}
     </PipelineDetailPage>
-  )
+  );
 }
 
 PipelineBlockRuns.getInitialProps = async (ctx: any) => {
