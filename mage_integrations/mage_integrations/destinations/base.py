@@ -470,4 +470,4 @@ class Destination():
         if not self.disable_column_type_check.get(stream, False):
             self.validators[stream].validate(record_adjusted)
 
-        return flatten_record(record_adjusted)
+        return record_adjusted

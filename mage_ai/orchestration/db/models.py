@@ -216,6 +216,7 @@ class PipelineRun(BaseModel):
         COMPLETED = 'completed'
         FAILED = 'failed'
         CANCELLED = 'cancelled'
+        CALCULATING_METRICS = 'calculating metrics'
 
     pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
     pipeline_uuid = Column(String(255), index=True)

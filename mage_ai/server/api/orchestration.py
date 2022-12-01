@@ -4,7 +4,7 @@ from .base import (
     BaseHandler,
 )
 from datetime import datetime
-from mage_ai.data_integrations.utils.scheduler import create_block_runs
+from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import (
@@ -259,8 +259,10 @@ class ApiPipelineRunListHandler(BaseHandler):
         pipeline_scheduler = PipelineScheduler(pipeline_run)
 
         if is_integration:
-            create_block_runs(pipeline_run, pipeline_scheduler.logger)
-
+            initialize_state_and_runs(
+                pipeline_run,
+                pipeline_scheduler.logger,
+            )
         pipeline_scheduler.start(should_schedule=False)
 
         self.write(dict(pipeline_run=pipeline_run.to_dict()))

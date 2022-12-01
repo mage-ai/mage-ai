@@ -270,16 +270,18 @@ function Header({
               </>
             }
 
-            <Spacing mr={2}>
-              <Link
-                default
-                href="https://mage.ai/changelog"
-                monospace
-                openNewWindow
-              >
-                {`v${version}`}
-              </Link>
-            </Spacing>
+            {version && typeof(version) !== 'undefined' && (
+              <Spacing mr={2}>
+                <Link
+                  default
+                  href="https://mage.ai/changelog"
+                  monospace
+                  openNewWindow
+                >
+                  {`v${version}`}
+                </Link>
+              </Spacing>
+            )}
 
             <Circle
               color={PURPLE}
