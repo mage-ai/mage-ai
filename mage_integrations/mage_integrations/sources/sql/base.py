@@ -25,6 +25,7 @@ from mage_integrations.utils.schema_helpers import extract_selected_columns
 from singer.schema import Schema
 from time import sleep
 from typing import Any, Dict, Generator, List, Tuple
+import json
 
 
 class Source(BaseSource):
@@ -315,7 +316,8 @@ WHERE table_schema = '{schema}'
                 stream=table_name,
             ))
         else:
-            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
+            rows = [{col: json.dumps(row[idx]) if type(row[idx] is dict) else row[idx]
+                     for idx, col in enumerate(columns)} for row in rows_temp]
             self.logger.info(f'rows: {rows}')
             if rows and 'text_data' in rows[0]:
                 self.logger.info(f"type: {type(rows[0]['text_data'])}")
