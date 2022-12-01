@@ -603,7 +603,7 @@ class Block:
                 results=results,
                 upstream_block_uuids=upstream_block_uuids,
             )
-        elif not self.pipeline:
+        else:
             block_function = self.__validate_execution(decorated_functions, input_vars)
             if block_function is not None:
                 outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
