@@ -21,7 +21,6 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
 from typing import Any, Dict, List
-import json
 import pytz
 import traceback
 
@@ -168,16 +167,26 @@ class PipelineScheduler:
         return queued_block_runs
 
     def __get_variables(self, extra_variables: Dict = {}) -> Dict:
+        pipeline_run_variables = self.pipeline_run.variables or {}
+        event_variables = self.pipeline_run.event_variables or {}
+
         variables = merge_dict(
             merge_dict(
                 get_global_variables(self.pipeline.uuid) or dict(),
                 self.pipeline_run.pipeline_schedule.variables or dict(),
             ),
-            self.pipeline_run.variables or dict(),
+            pipeline_run_variables,
         )
+
+        # For backwards compatibility
+        for k, v in event_variables.items():
+            if k not in variables:
+                variables[k] = v
+
         variables['env'] = ENV_PROD
         variables['execution_date'] = self.pipeline_run.execution_date
         variables['execution_partition'] = self.pipeline_run.execution_partition
+        variables['event'] = event_variables
         variables.update(extra_variables)
 
         return variables
@@ -263,6 +272,9 @@ def run_integration_pipeline(
     integration_pipeline = IntegrationPipeline.get(pipeline_scheduler.pipeline.uuid)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
                                    f'pipeline {integration_pipeline.uuid}',
+                                   **tags)
+
+    pipeline_scheduler.logger.info(f'Executable block runs: {executable_block_runs}',
                                    **tags)
 
     block_runs = BlockRun.query.filter(BlockRun.id.in_(executable_block_runs))
@@ -544,6 +556,7 @@ def schedule_all():
 
     for r in active_pipeline_runs:
         try:
+            r.refresh()
             PipelineScheduler(r).schedule()
         except Exception:
             print(f'Failed to schedule {r}')

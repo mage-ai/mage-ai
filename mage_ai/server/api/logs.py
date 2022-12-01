@@ -1,3 +1,4 @@
+from .base import META_KEY_LIMIT
 from datetime import datetime
 
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
@@ -60,7 +61,8 @@ class ApiPipelineLogListHandler(BaseHandler):
             PipelineRun.
             select(*columns).
             join(b, a.pipeline_schedule_id == b.id).
-            filter(b.pipeline_uuid == pipeline_uuid)
+            filter(b.pipeline_uuid == pipeline_uuid).
+            order_by(a.created_at.desc())
         )
 
         if len(pipeline_schedule_ids):
@@ -87,9 +89,15 @@ class ApiPipelineLogListHandler(BaseHandler):
                 filter(a.execution_date <= end_timestamp)
             )
 
+        total_pipeline_run_log_count = 0
         pipeline_run_logs = []
         if not len(block_uuids) and not len(block_run_ids):
-            rows = query.all()
+            total_pipeline_run_log_count = query.count()
+            if self.get_argument(META_KEY_LIMIT, None) is not None:
+                rows = self.limit(query)
+            else:
+                rows = query.all()
+
             for row in rows:
                 model = PipelineRun()
                 model.execution_date = row.execution_date
@@ -109,8 +117,10 @@ class ApiPipelineLogListHandler(BaseHandler):
             ])).
             join(a, a.id == c.pipeline_run_id).
             join(b, a.pipeline_schedule_id == b.id).
-            filter(b.pipeline_uuid == pipeline_uuid)
+            filter(b.pipeline_uuid == pipeline_uuid).
+            order_by(c.started_at.desc())
         )
+
 
         if len(block_uuids):
             query = (
@@ -148,7 +158,12 @@ class ApiPipelineLogListHandler(BaseHandler):
                 filter(a.execution_date <= end_timestamp)
             )
 
-        rows = query.all()
+        if self.get_argument(META_KEY_LIMIT, None) is not None:
+            rows = self.limit(query)
+        else:
+            rows = query.all()
+
+        total_block_run_log_count = query.count()
         block_run_logs = []
 
         for row in rows:
@@ -171,5 +186,7 @@ class ApiPipelineLogListHandler(BaseHandler):
             dict(
                 block_run_logs=block_run_logs,
                 pipeline_run_logs=pipeline_run_logs,
+                total_block_run_log_count=total_block_run_log_count,
+                total_pipeline_run_log_count=total_pipeline_run_log_count,
             ),
         ]))

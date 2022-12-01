@@ -246,10 +246,12 @@ class ApiPipelineRunListHandler(BaseHandler):
 
         body = self.request.body
         if body:
+            payload['event_variables'] = {}
+
             for k, v in json.loads(body).items():
                 if k == 'pipeline_run':
                     continue
-                payload['variables'][k] = v
+                payload['event_variables'][k] = v
 
         pipeline_run = PipelineRun.create(**payload)
 

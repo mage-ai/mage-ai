@@ -91,7 +91,7 @@ WHERE TABLE_NAME = '{table_name}'
             """)
             current_columns = [r[0].lower() for r in results]
 
-            new_columns = [c for c in df.columns if c not in current_columns]
+            new_columns = [c for c in df.columns if c.lower() not in current_columns]
             if not new_columns:
                 return
             dtypes = infer_dtypes(df)

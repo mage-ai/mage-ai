@@ -17,11 +17,16 @@ export interface PipelineRunReqQueryParamsType {
   status?: RunStatusEnum;
 }
 
+interface Obj {
+  [key: string]: string | Obj;
+}
+
 export default interface PipelineRunType {
   block_runs?: BlockRunType[];
   block_runs_count?: number;
   completed_at?: string;
   created_at?: string;
+  event_variables?: Obj;
   execution_date?: string;
   id?: number;
   pipeline_schedule_id?: number;
@@ -29,7 +34,5 @@ export default interface PipelineRunType {
   pipeline_uuid?: string;
   status?: RunStatusEnum;
   updated_at?: string;
-  variables?: {
-    [key: string]: string;
-  };
+  variables?: Obj;
 }
