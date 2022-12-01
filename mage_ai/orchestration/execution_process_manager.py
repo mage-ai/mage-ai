@@ -15,21 +15,8 @@ class ExecutionProcessManager:
             and self.pipeline_processes[pipeline_run_id].is_alive()
         )
 
-    def set_block_process(
-        self,
-        pipeline_run_id: int,
-        block_run_id: int,
-        proc: multiprocessing.Process,
-    ):
-        if pipeline_run_id not in self.block_processes:
-            self.block_processes[pipeline_run_id] = dict()
-        self.block_processes[pipeline_run_id][block_run_id] = proc
-
     def terminate_pipeline_process(self, pipeline_run_id: int) -> None:
-        if self.has_pipeline_process(
-            pipeline_run_id in self.pipeline_processes
-            and self.pipeline_processes[pipeline_run_id].is_alive()
-        ):
+        if self.has_pipeline_process(pipeline_run_id):
             self.pipeline_processes[pipeline_run_id].terminate()
 
     def set_pipeline_process(
@@ -39,6 +26,28 @@ class ExecutionProcessManager:
     ):
         self.terminate_pipeline_process(pipeline_run_id)
         self.pipeline_processes[pipeline_run_id] = proc
+
+    def has_block_process(self, pipeline_run_id: int, block_run_id: int):
+        return (
+            pipeline_run_id in self.block_processes
+            and block_run_id in self.block_processes[pipeline_run_id]
+            and self.block_processes[pipeline_run_id][block_run_id].is_alive()
+        )
+
+    def set_block_process(
+        self,
+        pipeline_run_id: int,
+        block_run_id: int,
+        proc: multiprocessing.Process,
+    ):
+        self.terminate_block_process(pipeline_run_id, block_run_id)
+        if pipeline_run_id not in self.block_processes:
+            self.block_processes[pipeline_run_id] = dict()
+        self.block_processes[pipeline_run_id][block_run_id] = proc
+
+    def terminate_block_process(self, pipeline_run_id: int, block_run_id: int) -> None:
+        if self.has_block_process(pipeline_run_id, block_run_id):
+            self.block_processes[pipeline_run_id][block_run_id].terminate()
 
     def clean_up_processes(self, include_child_processes=True):
         """
