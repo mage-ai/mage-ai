@@ -171,6 +171,7 @@ def build_insert_command(
             column_settings = column_type_dict['column_settings']
 
             value_final = 'NULL'
+            logger.info(f'Build insert command for {column_type} {v}')
             if v is not None:
                 if COLUMN_TYPE_ARRAY == column_type:
                     if type(v) is str:

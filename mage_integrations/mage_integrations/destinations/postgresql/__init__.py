@@ -54,6 +54,7 @@ class PostgreSQL(Destination):
         unique_constraints: List[str] = None,
     ) -> List[str]:
         columns = list(schema['properties'].keys())
+        self.logger.info('Build postgres sql commands')
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=column_type_mapping(
                 schema,
