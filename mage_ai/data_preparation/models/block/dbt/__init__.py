@@ -1,11 +1,15 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests, update_model_settings
-from typing import Any, Dict, List
-from mage_ai.data_preparation.models.block.dbt.utils import build_command_line_arguments, create_upstream_tables, query_from_compiled_sql
+from mage_ai.data_preparation.models.block.dbt.utils import (
+    build_command_line_arguments,
+    create_upstream_tables,
+    query_from_compiled_sql,
+    run_dbt_tests,
+    update_model_settings,
+)
 from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.repo_manager import get_repo_path
-
 from mage_ai.shared.hash import merge_dict
+from typing import Any, Dict, List
 
 import json
 import os
@@ -27,12 +31,6 @@ class DBTBlock(Block):
         else:
             super().file_path
 
-    def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
-        upstream_blocks_previous = self.upstream_blocks
-        super().update_upstream_blocks(upstream_blocks)
-        if BlockLanguage.SQL == self.language:
-            update_model_settings(self, upstream_blocks, upstream_blocks_previous)
-
     def run_tests(
         self,
         build_block_output_stdout=None,
@@ -44,6 +42,12 @@ class DBTBlock(Block):
             build_block_output_stdout=build_block_output_stdout,
             global_vars=global_vars,
         )
+
+    def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
+        upstream_blocks_previous = self.upstream_blocks
+        super().update_upstream_blocks(upstream_blocks)
+        if BlockLanguage.SQL == self.language:
+            update_model_settings(self, upstream_blocks, upstream_blocks_previous)
 
     def _execute_block(
         self,

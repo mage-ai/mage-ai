@@ -1,16 +1,16 @@
-from logging import Logger
-from typing import Dict, List
-
 from jupyter_server import subprocess
+from logging import Logger
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_integrations.utils.config import build_catalog_json, build_config_json
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.hash import merge_dict
+from typing import Dict, List
 
 import json
 import os
 import pandas as pd
+
 
 class IntegrationBlock(Block):
     def _execute_block(

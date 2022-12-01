@@ -283,6 +283,51 @@ class Block:
         return table_name
 
     @classmethod
+    def after_create(self, block: 'Block', **kwargs):
+        from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
+        widget = kwargs.get('widget')
+        pipeline = kwargs.get('pipeline')
+        if pipeline is not None:
+            priority = kwargs.get('priority')
+            upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
+
+            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
+                arr = add_blocks_upstream_from_refs(block)
+                upstream_block_uuids += [b.uuid for b in arr]
+
+            pipeline.add_block(
+                block,
+                upstream_block_uuids,
+                priority=priority if len(upstream_block_uuids) == 0 else None,
+                widget=widget,
+            )
+
+    @classmethod
+    def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
+        from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
+        from mage_ai.data_preparation.models.block.integration import (
+            SourceBlock, DestinationBlock, TransformerBlock
+        )
+        from mage_ai.data_preparation.models.block.r import RBlock
+        from mage_ai.data_preparation.models.block.sql import SQLBlock
+        from mage_ai.data_preparation.models.widget import Widget
+
+        if block_type == BlockType.CHART:
+            return Widget
+        if pipeline and PipelineType.INTEGRATION == pipeline.type:
+            if BlockType.DATA_LOADER == block_type:
+                return SourceBlock
+            elif BlockType.DATA_EXPORTER == block_type:
+                return DestinationBlock
+            else:
+                return TransformerBlock
+        elif BlockLanguage.SQL == language:
+            return SQLBlock
+        elif BlockLanguage.R == language:
+            return RBlock
+        return BLOCK_TYPE_TO_CLASS.get(block_type)
+
+    @classmethod
     def create(
         self,
         name,
@@ -348,26 +393,6 @@ class Block:
         return block
 
     @classmethod
-    def after_create(self, block: 'Block', **kwargs):
-        from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
-        widget = kwargs.get('widget')
-        pipeline = kwargs.get('pipeline')
-        if pipeline is not None:
-            priority = kwargs.get('priority')
-            upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
-
-            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                arr = add_blocks_upstream_from_refs(block)
-                upstream_block_uuids += [b.uuid for b in arr]
-
-            pipeline.add_block(
-                block,
-                upstream_block_uuids,
-                priority=priority if len(upstream_block_uuids) == 0 else None,
-                widget=widget,
-            )
-
-    @classmethod
     def get_all_blocks(self, repo_path):
         block_uuids = dict()
         for t in BlockType:
@@ -407,31 +432,6 @@ class Block:
             pipeline=pipeline,
             status=status,
         )
-
-    @classmethod
-    def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
-        from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
-        from mage_ai.data_preparation.models.block.integration import (
-            SourceBlock, DestinationBlock, TransformerBlock
-        )
-        from mage_ai.data_preparation.models.block.r import RBlock
-        from mage_ai.data_preparation.models.block.sql import SQLBlock
-        from mage_ai.data_preparation.models.widget import Widget
-
-        if block_type == BlockType.CHART:
-            return Widget
-        if pipeline and PipelineType.INTEGRATION == pipeline.type:
-            if BlockType.DATA_LOADER == block_type:
-                return SourceBlock
-            elif BlockType.DATA_EXPORTER == block_type:
-                return DestinationBlock
-            else:
-                return TransformerBlock
-        elif BlockLanguage.SQL == language:
-            return SQLBlock
-        elif BlockLanguage.R == language:
-            return RBlock
-        return BLOCK_TYPE_TO_CLASS.get(block_type)
 
     def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]):
         return all(b.uuid in completed_block_uuids for b in self.upstream_blocks)
