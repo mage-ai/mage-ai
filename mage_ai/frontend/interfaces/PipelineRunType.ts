@@ -23,7 +23,9 @@ export default interface PipelineRunType {
   completed_at?: string;
   created_at?: string;
   event_variables?: {
-    [key: string]: string;
+    [key: string]: string | {
+      [key: string]: string;
+    };
   };
   execution_date?: string;
   id?: number;
@@ -33,6 +35,8 @@ export default interface PipelineRunType {
   status?: RunStatusEnum;
   updated_at?: string;
   variables?: {
-    [key: string]: string;
+    [key: string]: string | {
+      [key: string]: string;
+    };
   };
 }
