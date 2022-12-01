@@ -7,7 +7,7 @@ import requests
 class ApiProjectsHandler(BaseHandler):
     def get(self):
         try:
-            response = requests.get('https://pypi.org/pypi/mage-ai/json')
+            response = requests.get('https://pypi.org/pypi/mage-ai/json', timeout=3)
             latest_version = response.json().get('info', {}).get('version', None)
         except ConnectionError as err:
             latest_version = VERSION
