@@ -184,7 +184,7 @@ class Destination(BaseDestination):
         unique_conflict_method = self.unique_conflict_methods.get(stream)
 
         query_strings = []
-
+        self.logger.info(f'record data: {record_data}')
         for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
             records = [d['record'] for d in sub_batch]
 
