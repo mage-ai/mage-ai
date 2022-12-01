@@ -1,11 +1,11 @@
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
-from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import COLUMN_TYPE_OBJECT, UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.sql.base import Destination, main
+from mage_integrations.destinations.postgresql.utils import convert_column_type
 from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_command,
     column_type_mapping,
-    convert_column_type,
 )
 from mage_integrations.destinations.utils import clean_column_name
 from typing import Dict, List, Tuple
@@ -62,6 +62,7 @@ class PostgreSQL(Destination):
             ),
             columns=columns,
             records=records,
+            string_parse_func=lambda x, y: x.replace("'", "''") if COLUMN_TYPE_OBJECT == y['type'] else x,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)

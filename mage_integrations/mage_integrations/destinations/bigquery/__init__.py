@@ -14,6 +14,7 @@ from mage_integrations.destinations.bigquery.utils import (
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
+    convert_json_or_string,
 )
 from mage_integrations.destinations.constants import KEY_VALUE, UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.sql.base import Destination, main
@@ -265,7 +266,7 @@ WHERE table_id = '{table_name}'
             convert_column_to_type_func=convert_column_to_type,
             convert_datetime_func=convert_datetime,
             records=records,
-            string_parse_func=lambda x: x.replace('\n', '\\n'),
+            string_parse_func=convert_json_or_string,
             stringify_values=False,
             convert_column_types=False,
         )
