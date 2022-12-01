@@ -34,6 +34,7 @@ class Destination(BaseDestination):
         tags: dict = {},
         **kwargs,
     ) -> None:
+        self.logger.info(f'export data: {record}')
         if 'text_data' in record:
             self.logger.info(f"type of text_data: {type(record['text_data'])}")
         self.export_batch_data([dict(
