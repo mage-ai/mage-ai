@@ -308,7 +308,7 @@ class Destination():
                 message = f'Required key {KEY_TYPE} is missing from row.'
                 self.logger.exception(message, tags=tags)
                 raise Exception(message)
-
+            self.logger.info(f'Process row {row}.')
             stream = row.get(KEY_STREAM)
             if TYPE_STATE == row_type:
                 row_value = row['value']
