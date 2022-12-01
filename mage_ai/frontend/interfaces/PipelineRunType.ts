@@ -22,6 +22,9 @@ export default interface PipelineRunType {
   block_runs_count?: number;
   completed_at?: string;
   created_at?: string;
+  event_variables?: {
+    [key: string]: string;
+  };
   execution_date?: string;
   id?: number;
   pipeline_schedule_id?: number;
