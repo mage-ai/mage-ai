@@ -17,10 +17,12 @@ from mage_ai.data_preparation.models.block.integration import (
     SourceBlock,
     DestinationBlock
 )
+from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.shared.utils import clean_name
 
 import os
+
 
 BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_EXPORTER: Block,
@@ -152,6 +154,8 @@ def get_block(
     )
 
 def block_class_from_type(block_type: str, language=None, pipeline=None) -> str:
+    if block_type == BlockType.CHART:
+        return Widget
     if pipeline and PipelineType.INTEGRATION == pipeline.type:
         if BlockType.DATA_LOADER == block_type:
             return SourceBlock

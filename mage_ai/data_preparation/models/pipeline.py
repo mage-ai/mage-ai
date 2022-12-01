@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
-from mage_ai.data_preparation.models.block.utils import get_block
+from mage_ai.data_preparation.models.block.utils import block_class_from_type, get_block
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     ExecutorType,
@@ -297,9 +297,9 @@ class Pipeline:
         self.block_configs = config.get('blocks') or []
         self.widget_configs = config.get('widgets') or []
 
-        def build_shared_args_kwargs(c, block_class):
+        def build_shared_args_kwargs(c):
             block_type = c.get('type')
-            return block_class.block_class_from_type(block_type)(
+            return block_class_from_type(block_type)(
                 c.get('name'),
                 c.get('uuid'),
                 block_type,
@@ -312,8 +312,8 @@ class Pipeline:
                 status=c.get('status'),
             )
 
-        blocks = [build_shared_args_kwargs(c, Block) for c in self.block_configs]
-        widgets = [build_shared_args_kwargs(c, Widget) for c in self.widget_configs]
+        blocks = [build_shared_args_kwargs(c) for c in self.block_configs]
+        widgets = [build_shared_args_kwargs(c) for c in self.widget_configs]
         all_blocks = blocks + widgets
 
         self.blocks_by_uuid = self.__initialize_blocks_by_uuid(
