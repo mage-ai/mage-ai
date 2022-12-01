@@ -10,6 +10,7 @@ from mage_integrations.destinations.constants import (
 )
 from mage_integrations.destinations.utils import clean_column_name
 from typing import Callable, Dict, List
+import json
 
 
 def build_create_table_command(
@@ -139,6 +140,8 @@ def column_type_mapping(
 
 
 def convert_column_to_type(value, column_type) -> str:
+    if value is dict:
+        value = json.dumps(value)
     return f"CAST('{value}' AS {column_type})"
 
 
