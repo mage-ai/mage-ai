@@ -168,16 +168,21 @@ class PipelineScheduler:
         return queued_block_runs
 
     def __get_variables(self, extra_variables: Dict = {}) -> Dict:
+        pipeline_run_variables = {}
+        if self.pipeline_run.variables:
+            pipeline_run_variables = self.pipeline_run.variables
+
         variables = merge_dict(
             merge_dict(
                 get_global_variables(self.pipeline.uuid) or dict(),
                 self.pipeline_run.pipeline_schedule.variables or dict(),
             ),
-            self.pipeline_run.variables or dict(),
+            pipeline_run_variables,
         )
         variables['env'] = ENV_PROD
         variables['execution_date'] = self.pipeline_run.execution_date
         variables['execution_partition'] = self.pipeline_run.execution_partition
+        variables['event'] = self.pipeline_run.event_variables
         variables.update(extra_variables)
 
         return variables

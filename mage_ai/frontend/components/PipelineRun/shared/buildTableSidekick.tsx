@@ -44,7 +44,10 @@ export default function({
     updatedProps['noStatus'] = true;
   }
 
-  const pattern = selectedRun?.variables;
+  const pattern = selectedRun?.variables || {};
+  if (selectedRun?.event_variables) {
+    pattern['event'] = selectedRun.event_variables;
+  }
   const patternDisplay = [];
   if (pattern) {
     JSON.stringify(pattern, null, 2).split('\n').forEach((line) => {
