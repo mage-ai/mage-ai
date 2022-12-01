@@ -13,6 +13,7 @@ from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
+from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.shared.array import find
@@ -71,13 +72,33 @@ class PipelineScheduler:
     def schedule(self) -> None:
         if PipelineType.STREAMING != self.pipeline.type:
             if self.pipeline_run.all_blocks_completed():
-                self.notification_sender.send_pipeline_run_success_message(
-                    pipeline=self.pipeline,
-                    pipeline_run=self.pipeline_run,
-                )
+                if PipelineType.INTEGRATION == self.pipeline.type:
+                    tags = dict(
+                        pipeline_run_id=self.pipeline_run.id,
+                        pipeline_uuid=self.pipeline.uuid,
+                    )
+
+                    self.pipeline_run.update(
+                        status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
+                    )
+
+                    self.logger.info(
+                        f'Calculate metrics for pipeline run {self.pipeline_run.id} started.',
+                        tags=tags,
+                    )
+                    calculate_metrics(self.pipeline_run)
+                    self.logger.info(
+                        f'Calculate metrics for pipeline run {self.pipeline_run.id} completed.',
+                        tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
+                    )
+
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
+                )
+                self.notification_sender.send_pipeline_run_success_message(
+                    pipeline=self.pipeline,
+                    pipeline_run=self.pipeline_run,
                 )
                 self.logger_manager.output_logs_to_destination()
             elif PipelineType.INTEGRATION == self.pipeline.type:
