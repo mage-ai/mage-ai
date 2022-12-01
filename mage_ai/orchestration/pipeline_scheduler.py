@@ -73,17 +73,24 @@ class PipelineScheduler:
         if PipelineType.STREAMING != self.pipeline.type:
             if self.pipeline_run.all_blocks_completed():
                 if PipelineType.INTEGRATION == self.pipeline.type:
+                    tags = dict(
+                        pipeline_run_id=self.pipeline_run.id,
+                        pipeline_uuid=self.pipeline.uuid,
+                    )
+
                     self.pipeline_run.update(
                         status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
                     )
+
                     self.logger.info(
-                        f'Calculating metrics for pipeline run {self.pipeline_run.id}.',
-                        tags=dict(
-                            pipeline_run_id=self.pipeline_run.id,
-                            pipeline_uuid=self.pipeline.uuid,
-                        ),
+                        f'Calculate metrics for pipeline run {self.pipeline_run.id} started.',
+                        tags=tags,
                     )
                     calculate_metrics(self.pipeline_run)
+                    self.logger.info(
+                        f'Calculate metrics for pipeline run {self.pipeline_run.id} completed.',
+                        tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
+                    )
 
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
