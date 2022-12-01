@@ -70,7 +70,7 @@ class PostgreSQL(Destination):
             f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
             f'VALUES {insert_values}',
         ]
-
+        raise Exception('fail')
         if unique_constraints and unique_conflict_method:
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
             columns_cleaned = [clean_column_name(col) for col in columns]
