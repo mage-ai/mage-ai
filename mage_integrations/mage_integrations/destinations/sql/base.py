@@ -63,6 +63,7 @@ class Destination(BaseDestination):
         unique_constraints = self.unique_constraints.get(stream)
         unique_conflict_method = self.unique_conflict_methods.get(stream)
 
+        self.logger.info(f'Build query string for record: {record_data}')
         query_strings = self.build_query_strings(record_data, stream)
 
         data = self.process_queries(
