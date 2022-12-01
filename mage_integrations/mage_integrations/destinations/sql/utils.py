@@ -179,7 +179,7 @@ def build_insert_command(
                 elif COLUMN_FORMAT_DATETIME == column_settings.get('format') and convert_datetime_func:
                     value_final = convert_datetime_func(v, column_type_dict)
                 else:
-                    if type(v) is dict:
+                    if type(v) is dict or type(v) is list:
                         value_final = json.dumps(v)
                     else:
                         value_final = str(v).replace("'", "''")
@@ -189,7 +189,6 @@ def build_insert_command(
 
                     if convert_column_types:
                         value_final = convert_column_to_type_func(value_final, column_type_converted)
-
 
             vals.append(value_final)
         if stringify_values:
