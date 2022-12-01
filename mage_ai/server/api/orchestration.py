@@ -378,7 +378,8 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                         order_by(PipelineRun.created_at.desc())
                     )
                     latest_run = runs.first()
-                    schedule['latest_run_status'] = latest_run.status
+                    if latest_run is not None:
+                        schedule['latest_run_status'] = latest_run.status
         except Exception as err:
             raise err
             collection = []
