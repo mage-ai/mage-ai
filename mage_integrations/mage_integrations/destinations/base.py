@@ -463,7 +463,7 @@ class Destination():
 
                 if COLUMN_TYPE_OBJECT in item_types:
                     record_adjusted[k] = [json.loads(s) if type(s) is str else s for s in v1]
-                    self.logger.info(f'object type: {k} {v} adjusted {record_adjusted[k]} type {type(record_adjusted[k])}')
+                self.logger.info(f'object type: {k} {v} adjusted {record_adjusted[k]} type {type(record_adjusted[k])} item_types: {item_types}')
 
             elif type(v1) is str:
                 try:
