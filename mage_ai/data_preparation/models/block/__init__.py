@@ -30,7 +30,7 @@ from mage_ai.data_preparation.models.constants import (
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.file import File
-from mage_ai.data_preparation.models.variable import DATAFRAME_PARQUET_FILE, VariableType
+from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
@@ -48,7 +48,6 @@ import functools
 import json
 import os
 import pandas as pd
-import signal
 import simplejson
 import subprocess
 import sys

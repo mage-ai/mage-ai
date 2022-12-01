@@ -54,7 +54,7 @@ class Salesforce(Source):
     def sync(self, catalog: Catalog) -> None:
         catalog_dict = catalog.to_dict()
         state = build_state(self.state, catalog_dict)
-        do_sync(self.client, catalog_dict, state)
+        do_sync(self.client, catalog_dict, state, logger=self.logger)
 
     def discover(self, streams: List[str] = None) -> Catalog:
         try:
