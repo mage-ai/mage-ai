@@ -219,20 +219,21 @@ def do_discover(sf, streams: List[str] = [], logger=LOGGER):
         missing_unsupported_field_names = [f[0] for f in unsupported_fields if f[0] not in field_name_set]
 
         if missing_unsupported_field_names:
-            logger.info("Ignoring the following unsupported fields for object %s as they are missing from the field list: %s",
-                        sobject_name,
-                        ', '.join(sorted(missing_unsupported_field_names)))
+            logger.info(f'Ignoring the following unsupported fields for object {sobject_name} as they'
+                        f" are missing from the field list: {', '.join(sorted(missing_unsupported_field_names))}",
+                        )
 
         if filtered_unsupported_fields:
-            logger.info("Not syncing the following unsupported fields for object %s: %s",
-                        sobject_name,
-                        ', '.join(sorted([k for k, _ in filtered_unsupported_fields])))
+            filtered_unsupported_fields_str = ', '.join(sorted([k for k, _ in filtered_unsupported_fields]))
+            logger.info(f'Not syncing the following unsupported fields for object {sobject_name}:'
+                        f' {filtered_unsupported_fields_str}'
+                        )
 
         # Salesforce Objects are skipped when they do not have an Id field
         if not found_id_field:
             logger.info(
-                "Skipping Salesforce Object %s, as it has no Id field",
-                sobject_name)
+                f'Skipping Salesforce Object {sobject_name}, as it has no Id field',
+                )
             continue
 
         # Any property added to unsupported_fields has metadata generated and
@@ -296,9 +297,9 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
     starting_stream = state.get("current_stream")
 
     if starting_stream:
-        logger.info("Resuming sync from %s", starting_stream)
+        logger.info(f'Resuming sync from {starting_stream}')
     else:
-        logger.info("Starting sync")
+        logger.info('Starting sync')
 
     for catalog_entry in catalog["streams"]:
         stream_version = get_stream_version(catalog_entry, state)
@@ -314,18 +315,18 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
         mdata = metadata.to_map(catalog_entry['metadata'])
 
         if not stream_is_selected(mdata):
-            logger.info("%s: Skipping - not selected", stream_name)
+            logger.info(f'{stream_name}: Skipping - not selected')
             continue
 
         if starting_stream:
             if starting_stream == stream_name:
-                logger.info("%s: Resuming", stream_name)
+                logger.info(f'{stream_name}: Resuming')
                 starting_stream = None
             else:
-                logger.info("%s: Skipping - already synced", stream_name)
+                logger.info(f'{stream_name}: Skipping - already synced' )
                 continue
         else:
-            logger.info("%s: Starting", stream_name)
+            logger.info(f'{stream_name}: Starting')
 
         state["current_stream"] = stream_name
         singer.write_state(state)
@@ -351,10 +352,10 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
         # Checking whether job_id list is not empty and batches list is not empty
         if job_id and batch_ids :
             with metrics.record_counter(stream) as counter:
-                logger.info("Found JobID from previous Bulk Query. Resuming sync for job: %s", job_id)
+                logger.info(f'Found JobID from previous Bulk Query. Resuming sync for job: {job_id}')
                 # Resuming a sync should clear out the remaining state once finished
                 counter = resume_syncing_bulk_query(sf, catalog_entry, job_id, state, counter)
-                logger.info("%s: Completed sync (%s rows)", stream_name, counter.value)
+                logger.info(f'{stream_name}: Completed sync ({counter.value} rows)')
                 if sync_complete_callback:
                     sync_complete_callback(stream_name, counter.value)
                 # Remove Job info from state once we complete this resumed query. One of a few cases could have occurred:
@@ -387,13 +388,14 @@ def do_sync(sf, catalog, state, sync_complete_callback=None, logger=LOGGER):
                                               'version',
                                               stream_version)
             counter = sync_stream(sf, catalog_entry, state)
-            logger.info("%s: Completed sync (%s rows)", stream_name, counter.value)
+            logger.info(f'{stream_name}: Completed sync ({counter.value} rows)')
             if sync_complete_callback:
                 sync_complete_callback(stream_name, counter.value)
 
     state["current_stream"] = None
     singer.write_state(state)
     logger.info("Finished sync")
+
 
 def main_impl():
     args = singer_utils.parse_args(REQUIRED_CONFIG_KEYS)
