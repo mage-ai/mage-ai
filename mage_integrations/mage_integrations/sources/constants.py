@@ -1,4 +1,5 @@
 COLUMN_FORMAT_DATETIME = 'date-time'
+COLUMN_FORMAT_UUID = 'uuid'
 
 COLUMN_TYPE_ARRAY = 'array'
 COLUMN_TYPE_BOOLEAN = 'boolean'

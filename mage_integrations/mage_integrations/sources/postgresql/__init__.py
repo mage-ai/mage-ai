@@ -2,6 +2,7 @@ from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLCon
 from mage_integrations.sources.base import main
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
+    COLUMN_FORMAT_UUID,
     REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.postgresql.decoders import (
@@ -181,6 +182,8 @@ WHERE  c.table_schema = '{schema}'
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         if COLUMN_FORMAT_DATETIME == column_format:
             return 'TIMESTAMP'
+        elif COLUMN_FORMAT_UUID == column_format:
+            return 'UUID'
 
         return super().column_type_mapping(column_type, column_format)
 
