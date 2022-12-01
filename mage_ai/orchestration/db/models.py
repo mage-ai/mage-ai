@@ -224,6 +224,8 @@ class PipelineRun(BaseModel):
     completed_at = Column(DateTime(timezone=True))
     variables = Column(JSON)
     passed_sla = Column(Boolean, default=False)
+    event_variables = Column(JSON)
+    metrics = Column(JSON)
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
