@@ -76,6 +76,13 @@ class PipelineScheduler:
                     self.pipeline_run.update(
                         status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
                     )
+                    self.logger.info(
+                        f'Calculating metrics for pipeline run {self.pipeline_run.id}.',
+                        tags=dict(
+                            pipeline_run_id=self.pipeline_run.id,
+                            pipeline_uuid=self.pipeline.uuid,
+                        ),
+                    )
                     calculate_metrics(self.pipeline_run)
 
                 self.pipeline_run.update(

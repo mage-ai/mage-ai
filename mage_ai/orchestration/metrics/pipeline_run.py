@@ -2,11 +2,12 @@ from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.orchestration.db.models import PipelineRun, BlockRun
 from sqlalchemy import or_
+from typing import Dict, List, Tuple
 import json
 import re
 
 
-def calculate_metrics(pipeline_run: PipelineRun) -> None:
+def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
     if PipelineType.INTEGRATION != pipeline.type:
@@ -82,7 +83,7 @@ def calculate_metrics(pipeline_run: PipelineRun) -> None:
     return pipeline_run.metrics
 
 
-def parse_line(l: str):
+def parse_line(l: str) -> Dict:
     tags = {}
     text = re.sub('^[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}', '', l).strip()
 
@@ -100,7 +101,7 @@ def parse_line(l: str):
     return tags
 
 
-def get_metrics(logs_by_uuid, key_and_key_metrics):
+def get_metrics(logs_by_uuid: Dict, key_and_key_metrics: List[Tuple[str, List[str]]]) -> Dict:
     metrics = {}
 
     for uuid in logs_by_uuid.keys():
