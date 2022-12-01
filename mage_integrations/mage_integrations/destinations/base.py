@@ -463,7 +463,6 @@ class Destination():
 
                 if COLUMN_TYPE_OBJECT in item_types:
                     record_adjusted[k] = [json.loads(s) if type(s) is str else s for s in v1]
-                self.logger.info(f'object type: {k} {v} adjusted {record_adjusted[k]} type {type(record_adjusted[k])} item_types: {item_types}')
 
             elif type(v1) is str:
                 try:
@@ -471,6 +470,7 @@ class Destination():
                 except json.decoder.JSONDecodeError:
                     record_adjusted[k] = ast.literal_eval(v1)
 
+            self.logger.info(f'object type: {k} {v} adjusted {record_adjusted[k]} type {type(record_adjusted[k])}')
         if not self.disable_column_type_check.get(stream, False):
             self.validators[stream].validate(record_adjusted)
 
