@@ -316,5 +316,8 @@ WHERE table_schema = '{schema}'
             ))
         else:
             rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
+            self.logger.info(f'rows: {rows}')
+            if rows and 'text_data' in rows[0]:
+                self.logger.info(f"type: {type(rows[0]['text_data'])}")
 
         return rows, rows_temp
