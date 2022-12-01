@@ -594,6 +594,7 @@ class Block:
             with open(self.file_path) as file:
                 exec(file.read(), results)
 
+        outputs = []
         if BlockType.CHART == self.type:
             variables = self.get_variables_from_code_execution(results)
             outputs = self.post_process_variables(
