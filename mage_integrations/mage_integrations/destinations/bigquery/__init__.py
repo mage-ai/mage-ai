@@ -446,5 +446,6 @@ WHERE table_id = '{table_name}'
 
         return job_results, jobs
 
+
 if __name__ == '__main__':
     main(BigQuery)

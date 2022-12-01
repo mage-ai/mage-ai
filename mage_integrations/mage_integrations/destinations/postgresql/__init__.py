@@ -62,6 +62,7 @@ class PostgreSQL(Destination):
             ),
             columns=columns,
             records=records,
+            logger=self.logger,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)

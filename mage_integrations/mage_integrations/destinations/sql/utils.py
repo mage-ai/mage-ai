@@ -139,10 +139,12 @@ def column_type_mapping(
     return mapping
 
 
-def convert_column_to_type(value, column_type) -> str:
+def convert_column_to_type(value, column_type, logger=None) -> str:
     if type(value) is dict:
         value = json.dumps(value)
-    return f"CAST('1' AS {column_type})"
+    if logger is not None:
+        logger.info(f'Type of value: {type(value)}')
+    return f"CAST('{value}' AS {column_type})"
 
 
 def build_insert_command(
@@ -155,6 +157,7 @@ def build_insert_command(
     string_parse_func: Callable = None,
     stringify_values: bool = True,
     convert_column_types: bool = True,
+    logger=None
 ) -> List[str]:
     values = []
     for row in records:
@@ -184,7 +187,7 @@ def build_insert_command(
                     value_final = str(v).replace("'", "''")
 
                     if convert_column_types:
-                        value_final = convert_column_to_type_func(value_final, column_type_converted)
+                        value_final = convert_column_to_type_func(value_final, column_type_converted, logger=logger)
 
                     if string_parse_func:
                         value_final = string_parse_func(value_final)
