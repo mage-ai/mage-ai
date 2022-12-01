@@ -424,6 +424,7 @@ class Destination():
         record_adjusted = record.copy()
 
         for k, v in record.items():
+            self.logger.info(f'Record k, v: {k} {v} {type(v)}')
             prop_k = schema['properties'][k]
             prop_types = []
 
