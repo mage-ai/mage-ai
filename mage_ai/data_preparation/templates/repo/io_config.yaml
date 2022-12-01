@@ -31,7 +31,7 @@ default:
   MONGODB_USER: username
   MONGODB_PASSWORD: password
   MONGODB_HOST: hostname
-  MONGODB_PORT: 5432
+  MONGODB_PORT: 27017
   REDSHIFT_DBNAME: redshift_db_name
   REDSHIFT_HOST: redshift_cluster_id.identifier.region.redshift.amazonaws.com
   REDSHIFT_PORT: 5439
