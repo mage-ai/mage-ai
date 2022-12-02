@@ -129,17 +129,29 @@ function SchemaTable({
         ? columnTypesInit
         : [columnTypesInit],
       );
+      const columnTypesSetForAllowingPartitionKey = new Set(columnTypesSet);
       columnTypesAnyOf.forEach(({
+        format,
         items,
         type,
       }) => {
         if (Array.isArray(type)) {
-          type.forEach(t => columnTypesSet.add(t));
+          type.forEach(t => {
+            columnTypesSet.add(t);
+            columnTypesSetForAllowingPartitionKey.add(t);
+          });
         } else {
           columnTypesSet.add(type);
+          columnTypesSetForAllowingPartitionKey.add(type);
+          if (format) {
+            columnTypesSetForAllowingPartitionKey.add(format);
+          }
         }
       });
       const columnTypes = Array.from(columnTypesSet);
+      if (columnFormat) {
+        columnTypesSetForAllowingPartitionKey.add(columnFormat);
+      }
 
       const {
         metadata: {
@@ -319,9 +331,11 @@ function SchemaTable({
         row.push(
           <Checkbox
             checked={!!partitionKeys?.includes(columnName)}
-            disabled={validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat}
+            disabled={validKeyProperties.includes(columnName)
+              || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)}
             key={`${streamUUID}/${columnName}/partition_key`}
-            onClick={(validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat)
+            onClick={(validKeyProperties.includes(columnName)
+              || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME))
               ? null
               : () => updateStream(streamUUID, (stream: StreamType) => {
 
