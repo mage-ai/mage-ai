@@ -24,10 +24,14 @@ class BigQuery(Connection):
         if self.credentials_info is None:
             if self.path_to_credentials_json_file is None:
                 raise Exception('No valid crendentials provided.')
-            self.credentials_info = service_account.Credentials.from_service_account_file(
+            credentials = service_account.Credentials.from_service_account_file(
                 self.path_to_credentials_json_file,
             )
-        client = Client(credentials=self.credentials_info)
+        else:
+            credentials = service_account.Credentials.from_service_account_info(
+                self.credentials_info,
+            )
+        client = Client(credentials=credentials)
         return dbapi.Connection(client)
 
     def execute_with_connection(self, connection, query_strings: List[str]) -> List[Tuple]:
