@@ -66,7 +66,7 @@ function SelectStreams({
 
     return filterText
       ? filteredStreams.filter(({ tap_stream_id: stream }) => (
-        stream.includes(filterText)
+        stream?.toLowerCase().includes(filterText?.toLowerCase())
       )) : filteredStreams;
   }, [dropdownFilter, filterText, selectedStreams, streams]);
 
