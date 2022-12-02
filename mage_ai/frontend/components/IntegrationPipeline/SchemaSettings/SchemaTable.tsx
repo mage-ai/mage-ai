@@ -130,6 +130,7 @@ function SchemaTable({
         : [columnTypesInit],
       );
       columnTypesAnyOf.forEach(({
+        format,
         items,
         type,
       }) => {
@@ -137,6 +138,9 @@ function SchemaTable({
           type.forEach(t => columnTypesSet.add(t));
         } else {
           columnTypesSet.add(type);
+          if (format) {
+            columnTypesSet.add(format);
+          }
         }
       });
       const columnTypes = Array.from(columnTypesSet);
@@ -319,9 +323,9 @@ function SchemaTable({
         row.push(
           <Checkbox
             checked={!!partitionKeys?.includes(columnName)}
-            disabled={validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat}
+            disabled={validKeyProperties.includes(columnName) || !columnTypes.includes(ColumnFormatEnum.DATE_TIME)}
             key={`${streamUUID}/${columnName}/partition_key`}
-            onClick={(validKeyProperties.includes(columnName) || ColumnFormatEnum.DATE_TIME !== columnFormat)
+            onClick={(validKeyProperties.includes(columnName) || !columnTypes.includes(ColumnFormatEnum.DATE_TIME))
               ? null
               : () => updateStream(streamUUID, (stream: StreamType) => {
 
