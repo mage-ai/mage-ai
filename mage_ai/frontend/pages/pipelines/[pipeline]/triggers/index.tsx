@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -36,7 +36,6 @@ import {
 } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { dateFormatLong } from '@utils/date';
 import { getFormattedVariables } from '@components/Sidekick/utils';
 import { isEmptyObject } from '@utils/hash';
@@ -66,7 +65,7 @@ function PipelineSchedules({
   const {
     data: dataPipelineSchedules,
     mutate: fetchPipelineSchedules,
-  } = api.pipeline_schedules.pipelines.list(pipelineUUID, {}, { refreshInterval: 7500 });
+  } = api.pipeline_schedules.pipelines.list(pipelineUUID);
   const pipelinesSchedules: PipelineScheduleType[] =
     useMemo(() => dataPipelineSchedules?.pipeline_schedules || [], [dataPipelineSchedules]);
 
@@ -206,29 +205,6 @@ function PipelineSchedules({
     globalVariables,
     selectedSchedule,
   ]);
-
-  useEffect(() => {
-    pipelinesSchedules.forEach(({
-      id: scheduleId,
-      last_pipeline_run_status: lastPipelineRunStatus,
-      pipeline_runs_count: runsCount,
-      schedule_interval: triggerInterval,
-      schedule_type: triggerType,
-      status: triggerStatus,
-    }) => {
-      if (triggerStatus === ScheduleStatusEnum.ACTIVE
-        && triggerType === ScheduleTypeEnum.TIME
-        && triggerInterval === ScheduleIntervalEnum.ONCE
-        && lastPipelineRunStatus === RunStatusEnum.COMPLETED
-        && runsCount === 1
-      ) {
-        updatePipelineSchedule({
-          id: scheduleId,
-          status: ScheduleStatusEnum.INACTIVE,
-        });
-      }
-    });
-  }, [pipelinesSchedules, updatePipelineSchedule]);
 
   return (
     <PipelineDetailPage
