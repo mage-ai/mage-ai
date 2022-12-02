@@ -32,7 +32,7 @@ import {
 } from '@interfaces/IntegrationSourceType';
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { find, indexBy, remove } from '@utils/array';
+import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array';
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;
@@ -118,7 +118,7 @@ function SchemaTable({
     const selectedArr = [];
     const selectableColumns = [];
 
-    const rows = Object.entries(properties).map(([
+    const rows = sortTuplesArrayByFirstItem(Object.entries(properties)).map(([
       columnName, {
         anyOf: columnTypesAnyOf = [],
         format: columnFormat,
