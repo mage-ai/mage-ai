@@ -35,7 +35,7 @@ export default interface PipelineScheduleType {
   created_at?: string;
   event_matchers?: EventMatcherType[];
   id?: string;
-  latest_run_status?: RunStatusEnum;
+  last_pipeline_run_status?: RunStatusEnum;
   name?: string;
   pipeline_runs_count?: number;
   pipeline_uuid?: string;

@@ -366,20 +366,9 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                     order_by(PipelineSchedule.start_time.desc(), PipelineSchedule.id.desc())
                 )
                 results = self.limit(results)
-                collection = [r.to_dict(include_attributes=['event_matchers', 'pipeline_runs_count'])
+                collection = [r.to_dict(include_attributes=['event_matchers', 'pipeline_runs_count', 'last_pipeline_run_status'])
                               for r in results]
                 collection.sort(key=lambda d: d['id'], reverse=True)
-
-                for schedule in collection:
-                    runs = (
-                        PipelineRun.
-                        query.
-                        filter(PipelineRun.pipeline_schedule_id == schedule.get('id')).
-                        order_by(PipelineRun.created_at.desc())
-                    )
-                    latest_run = runs.first()
-                    if latest_run is not None:
-                        schedule['latest_run_status'] = latest_run.status
         except Exception as err:
             raise err
             collection = []

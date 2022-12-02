@@ -320,7 +320,7 @@ function PipelineSchedules({
           const {
             id,
             pipeline_runs_count: pipelineRunsCount,
-            latest_run_status: latestRunStatus,
+            last_pipeline_run_status: lastPipelineRunStatus,
             name,
             schedule_interval: scheduleInterval,
             status,
@@ -390,7 +390,7 @@ function PipelineSchedules({
               {pipelineRunsCount}
             </Text>,
             <Text default key={`latest_run_status_${idx}`} monospace>
-              {latestRunStatus || 'N/A'}
+              {lastPipelineRunStatus || 'N/A'}
             </Text>,
             <Button
               default

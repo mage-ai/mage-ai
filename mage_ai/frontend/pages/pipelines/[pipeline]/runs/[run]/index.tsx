@@ -99,7 +99,7 @@ function PipelineBlockRuns({
     >
       {tableBlockRuns}
     </PipelineDetailPage>
-  )
+  );
 }
 
 PipelineBlockRuns.getInitialProps = async (ctx: any) => {
