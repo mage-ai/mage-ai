@@ -2,5 +2,5 @@
   "path_to_credentials_json_file": "path_to_credentials_json_file",
   "project_id": "",
   "dataset": "",
-  "table": ""
+  "location": ""
 }

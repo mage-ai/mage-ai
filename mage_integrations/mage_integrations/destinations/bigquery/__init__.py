@@ -40,6 +40,7 @@ class BigQuery(Destination):
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
             path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
+            location=self.config.get('location'),
         )
 
     def build_create_table_commands(
@@ -172,10 +173,7 @@ WHERE table_id = '{table_name}'
         try:
             connection.execute(query_strings, commit=True)
 
-            credentials = service_account.Credentials.from_service_account_file(
-                self.config['path_to_credentials_json_file'],
-            )
-            client = Client(credentials=credentials)
+            client = connection.client
 
             job = client.query(
                 'SELECT 1',

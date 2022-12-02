@@ -27,7 +27,12 @@ def print_logs_from_output(output: str, logger=None):
                         del data2['message']
                     if 'tags' in data2:
                         del data2['tags']
-                    logger.info(message, tags=merge_dict(tags, data2))
+                    updated_tags = tags
+                    try:
+                        updated_tags = merge_dict(tags, data2)
+                    except:
+                        pass
+                    logger.info(message, tags=updated_tags)
                 else:
                     print(json.dumps(data))
             if data.get('level') in [LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION]:
