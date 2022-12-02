@@ -166,8 +166,8 @@ class IntegrationPipeline(Pipeline):
             file_path = self.destination_file_path
 
         try:
-            if file_path:
-                stream_data = find(lambda x: x['tap_stream_id'] == self.data_loader.uuid, self.streams())
+            if file_path and len(self.streams()) > 0:
+                stream_data = self.streams()[0]
                 tap_stream_id = stream_data['tap_stream_id']
                 destination_table = stream_data.get('destination_table', tap_stream_id)
 
