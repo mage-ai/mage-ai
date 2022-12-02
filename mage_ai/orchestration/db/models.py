@@ -152,6 +152,12 @@ class PipelineSchedule(BaseModel):
 
         return schedule_interval
 
+    @property
+    def last_pipeline_run_status(self) -> int:
+        if len(self.pipeline_runs) == 0:
+            return None
+        return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+
     @classmethod
     def active_schedules(self, pipeline_uuids: List[str] = None) -> List['PipelineSchedule']:
         query = self.query.filter(self.status == self.ScheduleStatus.ACTIVE)

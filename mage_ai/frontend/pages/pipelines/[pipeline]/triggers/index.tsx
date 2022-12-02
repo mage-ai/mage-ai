@@ -301,6 +301,9 @@ function PipelineSchedules({
             uuid: 'Runs',
           },
           {
+            uuid: 'Latest run status',
+          },
+          {
             uuid: 'Logs',
           },
           {
@@ -310,10 +313,14 @@ function PipelineSchedules({
         ]}
         isSelectedRow={(rowIndex: number) => pipelinesSchedules[rowIndex].id === selectedSchedule?.id}
         onClickRow={(rowIndex: number) => setSelectedSchedule(pipelinesSchedules[rowIndex])}
-        rows={pipelinesSchedules.map((pipelineSchedule: PipelineScheduleType) => {
+        rows={pipelinesSchedules.map((
+          pipelineSchedule: PipelineScheduleType,
+          idx: number,
+        ) => {
           const {
             id,
             pipeline_runs_count: pipelineRunsCount,
+            last_pipeline_run_status: lastPipelineRunStatus,
             name,
             schedule_interval: scheduleInterval,
             status,
@@ -322,7 +329,7 @@ function PipelineSchedules({
           return [
             <Button
               iconOnly
-              key="toggle_trigger"
+              key={`toggle_trigger_${idx}`}
               noBackground
               noBorder
               noPadding
@@ -343,7 +350,7 @@ function PipelineSchedules({
             </Button>,
             <Text
               default={ScheduleStatusEnum.INACTIVE === status}
-              key="trigger_status"
+              key={`trigger_status_${idx}`}
               monospace
               success={ScheduleStatusEnum.ACTIVE === status}
             >
@@ -351,7 +358,7 @@ function PipelineSchedules({
             </Text>,
             <Text
               default
-              key="trigger_type"
+              key={`trigger_type_${idx}`}
               monospace
             >
               {SCHEDULE_TYPE_TO_LABEL[pipelineSchedule.schedule_type]?.()}
@@ -359,7 +366,7 @@ function PipelineSchedules({
             <NextLink
               as={`/pipelines/${pipelineUUID}/triggers/${id}`}
               href={'/pipelines/[pipeline]/triggers/[...slug]'}
-              key="trigger_name"
+              key={`trigger_name_${idx}`}
               passHref
             >
               <Link
@@ -376,16 +383,19 @@ function PipelineSchedules({
                 {name}
               </Link>
             </NextLink>,
-            <Text default key="trigger_frequency" monospace>
+            <Text default key={`trigger_frequency_${idx}`} monospace>
               {scheduleInterval}
             </Text>,
-            <Text default key="trigger_run_count" monospace>
+            <Text default key={`trigger_run_count_${idx}`} monospace>
               {pipelineRunsCount}
+            </Text>,
+            <Text default key={`latest_run_status_${idx}`} monospace>
+              {lastPipelineRunStatus || 'N/A'}
             </Text>,
             <Button
               default
               iconOnly
-              key="logs_button"
+              key={`logs_button_${idx}`}
               noBackground
               onClick={() => router.push(
                 `/pipelines/${pipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
@@ -393,7 +403,7 @@ function PipelineSchedules({
             >
               <TodoList default size={2 * UNIT} />
             </Button>,
-            <FlexContainer key="edit_delete_buttons">
+            <FlexContainer key={`edit_delete_buttons_${idx}`}>
               <Button
                 default
                 iconOnly

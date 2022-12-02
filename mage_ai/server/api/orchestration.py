@@ -390,7 +390,7 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                     order_by(PipelineSchedule.start_time.desc(), PipelineSchedule.id.desc())
                 )
                 results = self.limit(results)
-                collection = [r.to_dict(include_attributes=['event_matchers', 'pipeline_runs_count'])
+                collection = [r.to_dict(include_attributes=['event_matchers', 'pipeline_runs_count', 'last_pipeline_run_status'])
                               for r in results]
                 collection.sort(key=lambda d: d['id'], reverse=True)
         except Exception as err:
