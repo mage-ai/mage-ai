@@ -72,7 +72,13 @@
                 "lambda:ListVersionsByFunction",
                 "logs:CreateLogGroup",
                 "logs:DescribeLogGroups",
-                "logs:ListTagsLogGroup"
+                "logs:ListTagsLogGroup",
+                "rds:AddTagsToResource",
+                "rds:CreateDBInstance",
+                "rds:CreateDBSubnetGroup",
+                "rds:DescribeDBInstances",
+                "rds:DescribeDBSubnetGroups",
+                "rds:ListTagsForResource"
             ],
             "Resource": "*"
         }
