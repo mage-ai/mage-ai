@@ -144,6 +144,7 @@ function SchemaTable({
         }
       });
       const columnTypes = Array.from(columnTypesSet);
+      const columnTypesWithFormat = columnFormat ? columnTypes.concat(columnFormat) : columnTypes;
 
       const {
         metadata: {
@@ -323,9 +324,11 @@ function SchemaTable({
         row.push(
           <Checkbox
             checked={!!partitionKeys?.includes(columnName)}
-            disabled={validKeyProperties.includes(columnName) || !columnTypes.includes(ColumnFormatEnum.DATE_TIME)}
+            disabled={validKeyProperties.includes(columnName)
+              || !columnTypesWithFormat.includes(ColumnFormatEnum.DATE_TIME)}
             key={`${streamUUID}/${columnName}/partition_key`}
-            onClick={(validKeyProperties.includes(columnName) || !columnTypes.includes(ColumnFormatEnum.DATE_TIME))
+            onClick={(validKeyProperties.includes(columnName)
+              || !columnTypesWithFormat.includes(ColumnFormatEnum.DATE_TIME))
               ? null
               : () => updateStream(streamUUID, (stream: StreamType) => {
 
