@@ -115,7 +115,7 @@ function SchemaSettings({
                 key={`${streamId}_cell_${idx}`}
               >
                 {Array.isArray(value)
-                  ? value.join(', ')
+                  ? value.sort().join(', ')
                   : value
                 }
               </Text>

@@ -32,7 +32,7 @@ import {
 } from '@interfaces/IntegrationSourceType';
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { find, indexBy, remove } from '@utils/array';
+import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array';
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;
@@ -118,7 +118,7 @@ function SchemaTable({
     const selectedArr = [];
     const selectableColumns = [];
 
-    const rows = Object.entries(properties).map(([
+    const rows = sortTuplesArrayByFirstItem(Object.entries(properties)).map(([
       columnName, {
         anyOf: columnTypesAnyOf = [],
         format: columnFormat,
@@ -535,7 +535,7 @@ function SchemaTable({
                   use a specific column as a bookmark property.
                 </Text>
               )}
-              {bookmarkProperties?.map((columnName: string) => (
+              {bookmarkProperties?.sort().map((columnName: string) => (
                 <Spacing
                   key={`bookmark_properties/${columnName}`}
                   mb={1}
@@ -580,7 +580,7 @@ function SchemaTable({
                 use a specific column as a unique constraint.
               </Text>
               )}
-            {uniqueConstraints?.map((columnName: string) => (
+            {uniqueConstraints?.sort().map((columnName: string) => (
               <Spacing
                 key={`unique_constraints/${columnName}`}
                 mb={1}
@@ -623,7 +623,7 @@ function SchemaTable({
                 use a specific column as a key property.
               </Text>
               )}
-            {keyProperties?.map((columnName: string) => (
+            {keyProperties?.sort().map((columnName: string) => (
               <Spacing
                 key={`key_properties/${columnName}`}
                 mb={1}
@@ -668,7 +668,7 @@ function SchemaTable({
                   use a specific column as a partition key.
                 </Text>
                 )}
-              {partitionKeys?.map((columnName: string) => (
+              {partitionKeys?.sort().map((columnName: string) => (
                 <Spacing
                   key={`key_properties/${columnName}`}
                   mb={1}
@@ -701,7 +701,7 @@ function SchemaTable({
               </Text>
               <Text default>
                 If a new record has the same value as an existing record
-                in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.map((col: string, idx: number) => (
+                in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.sort().map((col: string, idx: number) => (
                   <Text
                     bold
                     inline
