@@ -39,13 +39,25 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
             sources=sources,
         )
 
+    shared_metric_keys = [
+        'block_tags',
+        'error',
+        'errors',
+        'message',
+    ]
+
     block_metrics_by_stream = get_metrics(block_runs_by_stream, [
-        ('sources', ['records']),
-        ('destinations', [
+        ('sources', shared_metric_keys + [
+            'record',
+            'records',
+        ]),
+        ('destinations', shared_metric_keys + [
+            'record',
             'records',
             'records_affected',
             'records_inserted',
             'records_updated',
+            'state',
         ]),
     ])
 
@@ -68,7 +80,7 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
         logs = pipeline_logs_by_stream.get(stream, [])
 
         pipeline_metrics_by_stream[stream] = get_metrics(dict(pipeline=dict(pipeline=[logs])), [
-            ('pipeline', [
+            ('pipeline', shared_metric_keys + [
                 'bookmarks',
                 'number_of_batches',
                 'record_counts',
@@ -77,7 +89,9 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
 
     pipeline_run.update(metrics=dict(
         blocks=block_metrics_by_stream,
+        destination=pipeline.destination_uuid,
         pipeline=pipeline_metrics_by_stream,
+        source=pipeline.source_uuid,
     ))
 
     return pipeline_run.metrics

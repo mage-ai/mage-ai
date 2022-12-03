@@ -18,7 +18,7 @@ export interface PipelineRunReqQueryParamsType {
 }
 
 interface Obj {
-  [key: string]: string | Obj;
+  [key: string]: number | string | Obj;
 }
 
 export default interface PipelineRunType {
@@ -29,6 +29,8 @@ export default interface PipelineRunType {
   event_variables?: Obj;
   execution_date?: string;
   id?: number;
+  metrics?: Obj;
+  passed_sla?: boolean;
   pipeline_schedule_id?: number;
   pipeline_schedule_name?: string;
   pipeline_uuid?: string;
