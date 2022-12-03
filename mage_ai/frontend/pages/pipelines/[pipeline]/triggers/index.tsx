@@ -65,7 +65,7 @@ function PipelineSchedules({
   const {
     data: dataPipelineSchedules,
     mutate: fetchPipelineSchedules,
-  } = api.pipeline_schedules.pipelines.list(pipelineUUID);
+  } = api.pipeline_schedules.pipelines.list(pipelineUUID, {}, { refreshInterval: 7500 });
   const pipelinesSchedules: PipelineScheduleType[] =
     useMemo(() => dataPipelineSchedules?.pipeline_schedules || [], [dataPipelineSchedules]);
 
