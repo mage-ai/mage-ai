@@ -94,6 +94,14 @@ class PipelineScheduler:
                         tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
                     )
 
+                pipeline_schedule = PipelineSchedule.query.get(self.pipeline_run.pipeline_schedule_id)
+                if pipeline_schedule is not None and \
+                        pipeline_schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
+                        pipeline_schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
+                        pipeline_schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
+                    pipeline_schedule.update(
+                        status=PipelineSchedule.ScheduleStatus.INACTIVE,
+                    )
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
