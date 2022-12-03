@@ -62,7 +62,12 @@
                 "lambda:ListVersionsByFunction",
                 "logs:DeleteLogGroup",
                 "logs:DescribeLogGroups",
-                "logs:ListTagsLogGroup"
+                "logs:ListTagsLogGroup",
+                "rds:DeleteDBInstance",
+                "rds:DeleteDBSubnetGroup",
+                "rds:DescribeDBInstances",
+                "rds:DescribeDBSubnetGroups",
+                "rds:ListTagsForResource"
             ],
             "Resource": "*"
         }

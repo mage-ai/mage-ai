@@ -11,6 +11,7 @@ class BigQuery(Connection):
         self,
         credentials_info: CredentialsInfoType = None,
         path_to_credentials_json_file: str = None,
+        location: str = None,
         **kwargs,
     ):
         if not credentials_info and not path_to_credentials_json_file:
@@ -19,16 +20,18 @@ class BigQuery(Connection):
         super().__init__(**kwargs)
         self.credentials_info = credentials_info
         self.path_to_credentials_json_file = path_to_credentials_json_file
+        self.location = location
 
-    def build_connection(self):
         if self.credentials_info is None:
             if self.path_to_credentials_json_file is None:
                 raise Exception('No valid crendentials provided.')
             self.credentials_info = service_account.Credentials.from_service_account_file(
                 self.path_to_credentials_json_file,
             )
-        client = Client(credentials=self.credentials_info)
-        return dbapi.Connection(client)
+        self.client = Client(credentials=self.credentials_info, location=self.location)
+
+    def build_connection(self):
+        return dbapi.Connection(self.client)
 
     def execute_with_connection(self, connection, query_strings: List[str]) -> List[Tuple]:
         cursor = connection.cursor()

@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { hideScrollBar } from '@oracle/styles/scrollbars';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const TabsContainerStyle = styled.div<{
   allowScroll?: boolean;
@@ -16,7 +16,7 @@ export const TabsContainerStyle = styled.div<{
 
   ${props => props.allowScroll && `
     overflow: auto;
-
-    ${hideScrollBar()}
   `}
+
+  ${ScrollbarStyledCss}
 `;
