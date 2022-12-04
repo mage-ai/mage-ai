@@ -123,6 +123,12 @@ function SyncRowDetail({
         </FlexContainer>
 
         <Spacing mt={2}>
+          <FlexContainer>
+
+          </FlexContainer>
+        </Spacing>
+
+        <Spacing mt={2}>
           {progressBar}
         </Spacing>
       </Spacing>

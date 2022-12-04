@@ -3,11 +3,12 @@ import BlockRunType, { RunStatus as RunStatusEnum } from './BlockRunType';
 export const RunStatus = RunStatusEnum;
 
 export const RUN_STATUS_TO_LABEL = {
-  [RunStatus.COMPLETED]: 'Done',
+  [RunStatus.CALCULATING_METRICS]: 'Calculating metrics',
   [RunStatus.CANCELLED]: 'Cancelled',
+  [RunStatus.COMPLETED]: 'Done',
   [RunStatus.FAILED]: 'Failed',
-  [RunStatus.RUNNING]: 'Running',
   [RunStatus.INITIAL]: 'Ready',
+  [RunStatus.RUNNING]: 'Running',
 };
 
 export interface PipelineRunReqQueryParamsType {

@@ -63,9 +63,7 @@ function SyncRow({
         sources = {},
       } = obj || {};
 
-      if (sources?.records) {
-        recordsInternal += Number(sources.records);
-      }
+      recordsInternal += Number(metricsPipeline?.[stream]?.record_counts || 0);
 
       if (destinations?.records_updated) {
         recordsProcessedInternal += Number(destinations.records_updated);
@@ -101,13 +99,15 @@ function SyncRow({
 
   const progress = useMemo(() => pipelineRunProgress(pipelineRun), [pipelineRun]);
 
+  const completed =
+    useMemo(() => [RunStatus.CALCULATING_METRICS, RunStatus.COMPLETED].includes(status), [status]);
   const statusProps = useMemo(() => ({
     danger: RunStatus.FAILED === status,
     default: RunStatus.INITIAL === status,
     primary: RunStatus.RUNNING === status,
-    success: RunStatus.COMPLETED === status,
+    success: completed,
     warning: RunStatus.CANCELLED === status,
-  }), [status]);
+  }), [completed, status]);
 
   return (
     <RowStyle
@@ -129,7 +129,7 @@ function SyncRow({
                 <FlexContainer alignItems="center">
                   {RunStatus.INITIAL !== status && (
                     <>
-                      {RunStatus.COMPLETED === status && <Check inverted size={2 * UNIT} />}
+                      {completed && <Check inverted size={2 * UNIT} />}
                       {RunStatus.RUNNING === status && <Spinner color={dark.monotone.white} small />}
                       &nbsp;
                     </>
@@ -137,10 +137,12 @@ function SyncRow({
 
                   {RunStatus.RUNNING === status && (
                     <>
+                      &nbsp;
                       {Math.round(progress * 100)}%
                     </>
                   )}
-                  {RunStatus.RUNNING !== status && RUN_STATUS_TO_LABEL[status]}
+                  {![RunStatus.INITIAL, RunStatus.RUNNING].includes(status) && RUN_STATUS_TO_LABEL[status]}
+                  {RunStatus.INITIAL === status && 'Starting'}
                 </FlexContainer>
               </StatusStyle>
             </Spacing>
