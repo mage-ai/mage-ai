@@ -529,7 +529,9 @@ function SyncRowDetail({
                       return (
                         <div key={`${stream}-${conn}`}>
                           <Text monospace>
-                            {stream} <Text inline monospace muted>({conn})</Text>: <Text
+                            {stream}{!!conn && (
+                              <Text inline monospace muted>&nbsp;({conn})</Text>
+                            )}: <Text
                               default
                               inline
                               monospace

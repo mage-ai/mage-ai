@@ -155,9 +155,17 @@ class PipelineScheduler:
         )
 
     @retry(retries=3, delay=5)
-    def on_block_failure(self, block_uuid: str) -> None:
+    def on_block_failure(self, block_uuid: str, **kwargs) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        block_run.update(status=BlockRun.BlockRunStatus.FAILED)
+        metrics = block_run.metrics or {}
+
+        if 'error' in kwargs:
+            metrics['error'] = kwargs['error']
+
+        block_run.update(
+            metrics=metrics,
+            status=BlockRun.BlockRunStatus.FAILED,
+        )
 
         tags = self.__build_tags(
             block_run_id=block_run.id,

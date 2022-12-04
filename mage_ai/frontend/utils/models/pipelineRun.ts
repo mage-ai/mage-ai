@@ -30,6 +30,7 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
   let recordsUpdated = null;
   const errors = {};
 
+  const blockRuns = pipelineRun?.block_runs || [];
   const metricsBlocks = pipelineRun?.metrics?.blocks || {};
   const metricsPipeline = pipelineRun?.metrics?.pipeline || {};
 
@@ -87,6 +88,21 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
         };
       }
     });
+  });
+
+  blockRuns?.forEach(({
+    block_uuid: blockUUID,
+    metrics,
+    status,
+  }) => {
+    if (RunStatusBlockRun.FAILED === status && metrics?.error && blockUUID) {
+      const [uuid, stream, index] = blockUUID.split(':');
+      if (!errors[stream]) {
+        errors[stream] = {};
+      }
+      // TODO (tommy dang): determine if its an error in a source, transformer, or destination.
+      errors[stream][''] = metrics.error;
+    }
   });
 
   return {

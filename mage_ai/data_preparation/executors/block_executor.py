@@ -6,6 +6,7 @@ from mage_ai.shared.hash import merge_dict
 from typing import Callable, Dict
 import json
 import requests
+import traceback
 
 
 class BlockExecutor:
@@ -29,7 +30,7 @@ class BlockExecutor:
         global_vars: Dict = None,
         update_status: bool = False,
         on_complete: Callable[[str], None] = None,
-        on_failure: Callable[[str], None] = None,
+        on_failure: Callable[[str, Dict], None] = None,
         on_start: Callable[[str], None] = None,
         input_from_output: Dict = None,
         verify_output: bool = True,
@@ -64,7 +65,14 @@ class BlockExecutor:
                     error=e,
                 )))
                 if on_failure is not None:
-                    on_failure(self.block_uuid)
+                    on_failure(
+                        self.block_uuid,
+                        error=dict(
+                            error=str(e),
+                            errors=traceback.format_stack(),
+                            message=traceback.format_exc(),
+                        ),
+                    )
                 elif callback_url is not None:
                     self.__update_block_run_status(callback_url, 'failed')
                 raise e
