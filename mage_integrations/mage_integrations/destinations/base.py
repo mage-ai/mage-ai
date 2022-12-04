@@ -295,6 +295,10 @@ class Destination():
                 self.logger.info(f'Unable to parse: {line}', tags=tags)
                 continue
 
+            if not row:
+                self.logger.info(f'No valid row data {row} for line: {line}', tags=tags)
+                continue
+
             row_type = row.get(KEY_TYPE)
             if row_type:
                 tags.update(row_type=row_type)
