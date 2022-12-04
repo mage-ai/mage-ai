@@ -89,8 +89,8 @@ export function getRecordsData(pipelineRun: PipelineRunType): {
   };
 }
 
-export function pipelineRunEstimatedTimeRemaining(pipelineRun: PipelineRunType): {
-  [stream: string]: number;
+export function getBlockRunsByStream(pipelineRun: PipelineRunType): {
+  [stream: string]: BlockRunType[];
 } {
   const {
     block_runs: blockRuns,
@@ -109,6 +109,14 @@ export function pipelineRunEstimatedTimeRemaining(pipelineRun: PipelineRunType):
 
     blockRunsByStream[stream].push(br);
   });
+
+  return blockRunsByStream;
+}
+
+export function pipelineRunEstimatedTimeRemaining(pipelineRun: PipelineRunType): {
+  [stream: string]: number;
+} {
+  const blockRunsByStream = getBlockRunsByStream(pipelineRun);
 
   const etaByStream = {};
   Object.entries(blockRunsByStream).forEach(([stream, blockRunsForStream]) => {

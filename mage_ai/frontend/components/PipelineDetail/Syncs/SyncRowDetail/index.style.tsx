@@ -9,17 +9,20 @@ import { REGULAR } from '@oracle/styles/fonts/sizes';
 export const BarStyle = styled.div<{
   even: boolean;
   fill: boolean;
+  small?: boolean;
 }>`
   display: flex;
   flex: 1;
-  height: ${2 * UNIT}px;
 
   ${props => props.even && props.fill && `
     background-color: ${(props.theme.accent || dark.accent).cyan};
-
   `}
 
   ${props => props.even && !props.fill && `
     background-color: ${(props.theme.accent || dark.accent).cyanTransparent};
+  `}
+
+  ${props => `
+    height: ${(props.small ? 1 : 2) * UNIT}px;
   `}
 `;

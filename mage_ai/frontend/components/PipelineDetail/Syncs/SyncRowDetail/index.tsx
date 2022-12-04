@@ -8,22 +8,26 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import Spacing from '@oracle/elements/Spacing';
+import Table from '@components/shared/Table';
+import Text from '@oracle/elements/Text';
 import {
   BarStyle,
 } from './index.style';
-import Text from '@oracle/elements/Text';
+import { Check, TodoList } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   numberWithCommas,
   pluralize,
   prettyUnitOfTime,
 } from '@utils/string';
 import {
+  getBlockRunsByStream,
   getRecordsData,
   pipelineRunEstimatedTimeRemaining,
   pipelineRunProgress,
   pipelineRunRuntime,
 } from '@utils/models/pipelineRun';
-import { range, sum } from '@utils/array';
+import { range, sortByKey, sum } from '@utils/array';
 
 type SyncRowDetailProps = {
   pipelineRun?: PipelineRunType;
@@ -49,6 +53,8 @@ function SyncRowDetail({
     </FlexContainer>
   ), [progress]);
 
+  const blockRunsByStream =
+    useMemo(() => pipelineRun ? getBlockRunsByStream(pipelineRun) : {}, [pipelineRun]);
   const etaByStream =
     useMemo(() => pipelineRun ? pipelineRunEstimatedTimeRemaining(pipelineRun) : {}, [
       pipelineRun,
@@ -194,6 +200,117 @@ function SyncRowDetail({
     status,
   ]);
 
+  const tableMemo = useMemo(() => {
+    if (!pipelineRun) {
+      return <div />;
+    }
+
+    const metrics = pipelineRun?.metrics || {};
+    const metricsBlocks = metrics.blocks || {};
+    const metricsPipeline = metrics.pipeline || {};
+    const streams = Object.keys(metricsBlocks).sort();
+
+    return (
+      <Table
+        columnFlex={[]}
+        columns={[
+          {
+            uuid: 'Stream',
+          },
+          {
+            uuid: 'Start',
+          },
+          {
+            uuid: 'End',
+          },
+          {
+            uuid: 'Time',
+          },
+          {
+            uuid: 'Progress',
+          },
+          {
+            uuid: 'Logs',
+          },
+        ]}
+        rows={streams.map((stream: string) => {
+          const metricsBlock1 = metricsBlocks[stream] || {};
+          const metricsBlock2 = metricsPipeline[stream] || {};
+          const etaForStream = etaByStream[stream];
+          const {
+            completed,
+            total,
+          } = etaForStream;
+          const progressForStream = completed / total;
+          const done = progressForStream >= 1;
+
+          const brs = blockRunsByStream[stream] || [];
+          const startedAt =
+            sortByKey(brs, ({ started_at: ts }) => ts, { ascending: true})[0]?.started_at;
+
+          let completedAt;
+          let timeText;
+          if (done) {
+            completedAt =
+              sortByKey(brs, ({ completed_at: ts }) => ts, { ascending: false})[0]?.completed_at;
+
+            if (completedAt) {
+              const a = moment.utc(completedAt);
+              const b = moment.utc(startedAt);
+
+              timeText = prettyUnitOfTime(a.diff(b, 'second'));
+            }
+          }
+
+          return [
+            <Text default key="stream" monospace>
+              {stream}
+            </Text>,
+            <Text default key="started_at" monospace>
+              {startedAt ? startedAt.split('.')[0] : '-'}
+            </Text>,
+            <Text default key="completed_at" monospace>
+              {completedAt ? completedAt.split('.')[0] : '-'}
+            </Text>,
+            <Text default key="runtime">
+              {timeText}
+            </Text>,
+            <div key="progress">
+              {done && <Check default size={2 * UNIT} />}
+              {!done && (
+                <FlexContainer>
+                  {range(51).map((i, idx) => (
+                    <BarStyle
+                      fill={progressForStream > 0 && Math.round(progressForStream * 50) >= idx}
+                      even={idx % 2 === 0}
+                      key={idx}
+                      small
+                    />
+                  ))}
+                </FlexContainer>
+              )}
+            </div>,
+            <Button
+              default
+              iconOnly
+              key="logs"
+              noBackground
+              onClick={() => router.push(
+                `/pipelines/${pipelineRun.pipeline_uuid}/logs?pipeline_run_id[]=${pipelineRun.id}`,
+              )}
+            >
+              <TodoList default size={2 * UNIT} />
+            </Button>,
+          ];
+        })}
+        uuid={`{pipelineRun?.id}-streams-table`}
+      />
+    );
+  }, [
+    etaByStream,
+    pipelineRun,
+  ]);
+
   return (
     <>
       <Spacing p={3}>
@@ -301,6 +418,12 @@ function SyncRowDetail({
           </>
         )}
       </Spacing>
+
+      {pipelineRun && (
+        <Spacing my={3}>
+          {tableMemo}
+        </Spacing>
+      )}
     </>
   );
 }
