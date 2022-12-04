@@ -44,7 +44,19 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
       sources = {},
     } = obj || {};
 
-    records += Number(metricsPipeline?.[stream]?.record_counts || 0);
+    if (metricsPipeline?.[stream]?.record_counts) {
+      if (records === null) {
+        records = 0;
+      }
+      records += Number(metricsPipeline?.[stream]?.record_counts);
+    }
+
+    if (sources?.records) {
+      if (records === null) {
+        records = 0;
+      }
+      records += Number(sources.records);
+    }
 
     if (destinations?.records_updated) {
       if (recordsProcessed === null) {
@@ -243,12 +255,12 @@ export function getTimesFromStream(pipelineRun: PipelineRunType, stream: string)
     updatedAt = br.updated_at;
   }
 
-  if (completedAt || updatedAt) {
-    const a = moment.utc(completedAt || updatedAt);
-    const b = moment.utc(startedAt);
+  const a = done
+    ? moment.utc(completedAt || updatedAt)
+    : moment.utc();
+  const b = moment.utc(startedAt);
 
-    runtime = a.diff(b, 'second');
-  }
+  runtime = a.diff(b, 'second');
 
   return {
     completed,

@@ -500,8 +500,8 @@ function SyncRowDetail({
                     Runtime
                   </Text>
                   <Text headline>
-                    {selectedStream && RunStatusBlockRun.RUNNING === timesForStream?.status && runtimeStreamText}
-                    {selectedStream && RunStatusBlockRun.RUNNING !== timesForStream?.status && timesForStream?.timeText}
+                    {selectedStream && [RunStatusBlockRun.INITIAL, RunStatusBlockRun.RUNNING].includes(timesForStream?.status) && runtimeStreamText}
+                    {selectedStream && ![RunStatusBlockRun.INITIAL, RunStatusBlockRun.RUNNING].includes(timesForStream?.status) && timesForStream?.timeText}
                     {!selectedStream && RunStatus.RUNNING === pipelineRun?.status && runtimeText}
                     {!selectedStream && RunStatus.RUNNING !== pipelineRun?.status && runtimeFinal}
                   </Text>
@@ -571,7 +571,7 @@ function SyncRowDetail({
         )}
       </Spacing>
 
-      {pipelineRun && (
+      {pipelineRun && !selectedStream && (
         <Spacing my={3}>
           {tableMemo}
         </Spacing>

@@ -99,13 +99,15 @@ function SyncRow({
             <Spacing fullWidth={false} mt={2}>
               <StatusStyle {...statusProps}>
                 <FlexContainer alignItems="center">
-                  {RunStatus.INITIAL !== status && (
-                    <>
-                      {completed && <Check inverted size={2 * UNIT} />}
-                      {RunStatus.RUNNING === status && <Spinner color={dark.monotone.white} small />}
-                      &nbsp;
-                    </>
+                  {completed && <Check inverted size={2 * UNIT} />}
+                  {[RunStatus.INITIAL, RunStatus.RUNNING].includes(status) && (
+                    <Spinner
+                      color={RunStatus.INITIAL !== status ? dark.monotone.white : null}
+                      inverted={RunStatus.INITIAL === status}
+                      small
+                    />
                   )}
+                  &nbsp;
 
                   {RunStatus.RUNNING === status && (
                     <>
