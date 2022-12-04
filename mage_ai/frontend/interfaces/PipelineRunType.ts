@@ -21,6 +21,57 @@ interface Obj {
   [key: string]: number | string | Obj;
 }
 
+interface BlockTagsType {
+  destination_table: string;
+  index: number;
+  stream: string;
+  type: string;
+  uuid: string;
+}
+
+interface PipelineRunErrorType {
+  error?: string;
+  errors?: string[];
+  message?: string;
+}
+
+interface PipelineRunMetricsType {
+  blocks: {
+    [stream: string]: {
+      sources: PipelineRunErrorType & {
+        block_tags: BlockTagsType;
+        record: {
+          [column: string]: number | string;
+        };
+        records: number;
+      };
+      destinations: PipelineRunErrorType & {
+        block_tags: BlockTagsType;
+        record: {
+          [column: string]: number | string;
+        };
+        records: number;
+        records_affected: number;
+        records_inserted: number;
+        records_updated: number;
+      };
+    };
+  };
+  destination: string;
+  pipeline: {
+    [stream: string]: {
+      bookmarks: {
+        [stream: string]: {
+          [column: string]: number | string;
+        };
+      };
+      number_of_batches: number;
+      record_counts: number;
+    };
+  };
+  source: string;
+}
+
 export default interface PipelineRunType {
   block_runs?: BlockRunType[];
   block_runs_count?: number;
@@ -29,7 +80,7 @@ export default interface PipelineRunType {
   event_variables?: Obj;
   execution_date?: string;
   id?: number;
-  metrics?: Obj;
+  metrics?: PipelineRunMetricsType;
   passed_sla?: boolean;
   pipeline_schedule_id?: number;
   pipeline_schedule_name?: string;
