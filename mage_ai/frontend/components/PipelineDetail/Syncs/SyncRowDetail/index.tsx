@@ -6,14 +6,20 @@ import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
+import Link from '@oracle/elements/Link';
+import PipelineRunType, { RunStatus, RUN_STATUS_TO_LABEL } from '@interfaces/PipelineRunType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import {
   BarStyle,
 } from './index.style';
-import { Check, TodoList } from '@oracle/icons';
+import {
+  ArrowLeft,
+  Check,
+  TodoList,
+} from '@oracle/icons';
+import { RunStatus as RunStatusBlockRun } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   numberWithCommas,
@@ -24,6 +30,7 @@ import {
   getBlockRunsByStream,
   getRecordsData,
   getStreams,
+  getTimesFromStream,
   pipelineRunEstimatedTimeRemaining,
   pipelineRunProgress,
   pipelineRunRuntime,
@@ -44,19 +51,7 @@ function SyncRowDetail({
   const router = useRouter();
 
   const [runtime, setRuntime] = useState<number>(null);
-
-  const progress: number = useMemo(() => pipelineRun ? pipelineRunProgress(pipelineRun) : 0, [pipelineRun]);
-  const progressBar = useMemo(() => (
-    <FlexContainer>
-      {range(101).map((i, idx) => (
-        <BarStyle
-          fill={progress > 0 && Math.round(progress * 100) >= idx}
-          even={idx % 2 === 0}
-          key={idx}
-        />
-      ))}
-    </FlexContainer>
-  ), [progress]);
+  const [runtimeStream, setRuntimeStream] = useState<number>(null);
 
   const blockRunsByStream =
     useMemo(() => pipelineRun ? getBlockRunsByStream(pipelineRun) : {}, [pipelineRun]);
@@ -64,6 +59,7 @@ function SyncRowDetail({
     useMemo(() => pipelineRun ? pipelineRunEstimatedTimeRemaining(pipelineRun) : {}, [
       pipelineRun,
     ]);
+
   const eta = useMemo(() => {
     let timeLeft = 0;
     const runtimes = [];
@@ -98,11 +94,67 @@ function SyncRowDetail({
     return timeLeft;
   }, [etaByStream]);
 
+  const etaForStream =
+    useMemo(() => selectedStream ? etaByStream[selectedStream] : null, [etaByStream, selectedStream]);
+
+  const progress: number = useMemo(() => {
+    if (selectedStream && etaByStream) {
+      const {
+        completed,
+        total,
+      } = etaByStream[selectedStream] || {};
+      if (total >= 1) {
+        return completed / total;
+      }
+    } else if (pipelineRun) {
+      return pipelineRunProgress(pipelineRun);
+    }
+
+    return 0;
+  }, [etaForStream, pipelineRun, selectedStream]);
+
+  const progressBar = useMemo(() => (
+    <FlexContainer>
+      {range(101).map((i, idx) => (
+        <BarStyle
+          fill={progress > 0 && Math.round(progress * 100) >= idx}
+          even={idx % 2 === 0}
+          key={idx}
+        />
+      ))}
+    </FlexContainer>
+  ), [progress]);
+
   const statusMessage = useMemo(() => {
+    if (selectedStream) {
+      const brs = blockRunsByStream[selectedStream] || [];
+      const done = brs.every(({ status }) => RunStatusBlockRun.COMPLETED === status);
+      const br = sortByKey(brs, ({ updated_at: ts }) => ts, { ascending: false })[0];
+      const brStatus = br?.status;
+      const {
+        completed,
+        runtime,
+        total,
+      } = etaForStream || {};
+
+      if (done) {
+        return `Sync complete for ${selectedStream}`;
+      } else if ([RunStatusBlockRun.CANCELLED, RunStatusBlockRun.FAILED].includes(brStatus)) {
+        return RUN_STATUS_TO_LABEL[brStatus];
+      } else if (runtime && total >= 1) {
+        const v = Math.ceil(runtime * (total - completed) / 60)
+        return `${pluralize('minute', v, true)} to completion`;
+      } else {
+        return 'Estimating time remaining for stream...';
+      }
+    }
+
     if (RunStatus.COMPLETED === pipelineRun?.status) {
       return 'Sync complete';
     } else if (pipelineRun) {
-      if (eta === null) {
+      if ([RunStatus.CANCELLED, RunStatus.FAILED].includes(pipelineRun?.status)) {
+        return RUN_STATUS_TO_LABEL[pipelineRun?.status];
+      } else if (eta === null) {
         return 'Estimating time remaining...';
       } else {
         const v = Math.ceil(eta / 60)
@@ -112,9 +164,21 @@ function SyncRowDetail({
 
     return 'Select a sync';
   }, [
+    blockRunsByStream,
     eta,
+    etaForStream,
     pipelineRun,
+    selectedStream,
   ]);
+
+  const timesForStream = useMemo(() => pipelineRun && selectedStream
+      ? getTimesFromStream(pipelineRun, selectedStream)
+      : {},
+    [
+      pipelineRun,
+      selectedStream,
+    ],
+  );
 
   useEffect(() => {
     let interval;
@@ -128,15 +192,35 @@ function SyncRowDetail({
     return () => clearInterval(interval);
   }, [pipelineRun]);
 
+  useEffect(() => {
+    let interval;
+
+    if (pipelineRun && selectedStream && timesForStream) {
+      const seconds = timesForStream?.runtime;
+      setRuntimeStream(seconds);
+      interval = setInterval(() => setRuntimeStream(prev => prev + 1), 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [pipelineRun, selectedStream, timesForStream]);
+
   const runtimeFinal = useMemo(() => {
     if (!pipelineRun) {
       return;
     }
 
+    if (selectedStream) {
+      return timesForStream?.timeText;
+    }
+
     const seconds = pipelineRunRuntime(pipelineRun);
 
     return prettyUnitOfTime(seconds);
-  }, [pipelineRun]);
+  }, [
+    pipelineRun,
+    selectedStream,
+    timesForStream,
+  ]);
   const runtimeText = useMemo(() => {
     const hours = Math.floor((runtime % (1 * 60 * 60 * 24)) / (1 * 60 * 60));
     const minutes = Math.floor((runtime % (1 * 60 * 60)) / (1 * 60));
@@ -148,6 +232,17 @@ function SyncRowDetail({
       seconds >= 10 ? String(seconds) : `0${seconds}`,
     ].join(':');
   }, [runtime]);
+  const runtimeStreamText = useMemo(() => {
+    const hours = Math.floor((runtimeStream % (1 * 60 * 60 * 24)) / (1 * 60 * 60));
+    const minutes = Math.floor((runtimeStream % (1 * 60 * 60)) / (1 * 60));
+    const seconds = Math.floor((runtimeStream % (1 * 60)) / 1);
+
+    return [
+      hours >= 10 ? String(hours) : `0${hours}`,
+      minutes >= 10 ? String(minutes) : `0${minutes}`,
+      seconds >= 10 ? String(seconds) : `0${seconds}`,
+    ].join(':');
+  }, [runtimeStream]);
 
   const {
     errors,
@@ -155,30 +250,44 @@ function SyncRowDetail({
     recordsInserted,
     recordsProcessed,
     recordsUpdated,
-  }: number = useMemo(() => getRecordsData(pipelineRun), [pipelineRun]);
+  } = useMemo(() => pipelineRun
+      ? getRecordsData(pipelineRun)
+      : {},
+    [pipelineRun],
+  );
+  const recordsDataForStream = useMemo(() => pipelineRun && selectedStream
+      ? getRecordsData(pipelineRun, selectedStream)
+      : {},
+    [pipelineRun, selectedStream],
+  );
 
   const stats = useMemo(() => {
+    const records1 = selectedStream ? recordsDataForStream?.records : records;
+    const recordsInserted1 = selectedStream ? recordsDataForStream?.recordsInserted : recordsInserted;
+    const recordsProcessed1 = selectedStream ? recordsDataForStream?.recordsProcessed : recordsProcessed;
+    const recordsUpdated1 = selectedStream ? recordsDataForStream?.recordsUpdated : recordsUpdated;
+
     const arr = [
       {
         label: 'Records fetched',
-        value: records === null ? '-' : numberWithCommas(records),
+        value: records1 === null ? '-' : numberWithCommas(records1),
       },
     ];
 
-    if (recordsInserted === null && recordsUpdated === null) {
+    if (recordsInserted1 === null && recordsUpdated1 === null) {
       arr.push({
         label: 'Records processed',
-        value: recordsProcessed === null ? '-' : numberWithCommas(recordsProcessed),
+        value: recordsProcessed1 === null ? '-' : numberWithCommas(recordsProcessed1),
       });
-    } else if (recordsInserted !== null) {
+    } else if (recordsInserted1 !== null) {
       arr.push({
         label: 'Records inserted',
-        value: numberWithCommas(recordsInserted),
+        value: numberWithCommas(recordsInserted1),
       });
-    } else if (recordsUpdated !== null) {
+    } else if (recordsUpdated1 !== null) {
       arr.push({
         label: 'Records updated',
-        value: numberWithCommas(recordsUpdated),
+        value: numberWithCommas(recordsUpdated1),
       });
     }
 
@@ -197,6 +306,7 @@ function SyncRowDetail({
     ));
   }, [
     records,
+    recordsDataForStream,
     recordsInserted,
     recordsProcessed,
     recordsUpdated,
@@ -241,33 +351,16 @@ function SyncRowDetail({
         isSelectedRow={(rowIndex: number) => selectedStream && selectedStream === streams[rowIndex]}
         onClickRow={onClickRow}
         rows={streams.map((stream: string) => {
-          const metricsBlock1 = metricsBlocks[stream] || {};
-          const metricsBlock2 = metricsPipeline[stream] || {};
-          const etaForStream = etaByStream[stream];
           const {
             completed,
+            completedAt,
+            done,
+            progress: progressForStream,
+            startedAt,
+            timeText,
             total,
-          } = etaForStream;
-          const progressForStream = completed / total;
-          const done = progressForStream >= 1;
+          } = getTimesFromStream(pipelineRun, stream);
 
-          const brs = blockRunsByStream[stream] || [];
-          const startedAt =
-            sortByKey(brs, ({ started_at: ts }) => ts, { ascending: true})[0]?.started_at;
-
-          let completedAt;
-          let timeText;
-          if (done) {
-            completedAt =
-              sortByKey(brs, ({ completed_at: ts }) => ts, { ascending: false})[0]?.completed_at;
-
-            if (completedAt) {
-              const a = moment.utc(completedAt);
-              const b = moment.utc(startedAt);
-
-              timeText = prettyUnitOfTime(a.diff(b, 'second'));
-            }
-          }
           const hasError = !!errors[stream];
 
           return [
@@ -329,6 +422,46 @@ function SyncRowDetail({
   return (
     <>
       <Spacing p={3}>
+        {selectedStream && (
+          <Spacing mb={3}>
+            <FlexContainer alignItems="center">
+              <Link
+                block
+                onClick={() => router.push(
+                  `/pipelines/${pipelineRun.pipeline_uuid}/syncs?pipeline_run_id=${pipelineRun.id}`,
+                )}
+                preventDefault
+              >
+                <FlexContainer alignItems="center">
+                  <ArrowLeft default size={1.5 * UNIT} />
+
+                  <Spacing mr={1} />
+
+                  <Text default>
+                    Syncs
+                  </Text>
+                </FlexContainer>
+              </Link>
+
+              <Spacing mx={1}>
+                <Text
+                  default
+                  monospace
+                >
+                  /
+                </Text>
+              </Spacing>
+
+              <Text
+                bold
+                monospace
+              >
+                {selectedStream}
+              </Text>
+            </FlexContainer>
+          </Spacing>
+        )}
+
         <FlexContainer
           alignItems="center"
           justifyContent="space-between"
@@ -367,8 +500,10 @@ function SyncRowDetail({
                     Runtime
                   </Text>
                   <Text headline>
-                    {RunStatus.RUNNING === pipelineRun?.status && runtimeText}
-                    {RunStatus.RUNNING !== pipelineRun?.status && runtimeFinal}
+                    {selectedStream && RunStatusBlockRun.RUNNING === timesForStream?.status && runtimeStreamText}
+                    {selectedStream && RunStatusBlockRun.RUNNING !== timesForStream?.status && timesForStream?.timeText}
+                    {!selectedStream && RunStatus.RUNNING === pipelineRun?.status && runtimeText}
+                    {!selectedStream && RunStatus.RUNNING !== pipelineRun?.status && runtimeFinal}
                   </Text>
                 </div>
 
@@ -382,7 +517,7 @@ function SyncRowDetail({
                   Errors
                 </Headline>
 
-                {Object.entries(errors).map(([stream, obj1], idx) => (
+                {Object.entries(errors).map(([stream, obj1], idx) => (!selectedStream || selectedStream === stream) && (
                   <Spacing key={stream} mt={idx >= 1 ? 1 : 0}>
                     {Object.entries(obj1).map(([conn, obj2]) => {
                       const {

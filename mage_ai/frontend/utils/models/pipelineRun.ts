@@ -2,6 +2,7 @@ import moment from 'moment';
 
 import BlockRunType, { RunStatus as RunStatusBlockRun } from '@interfaces/BlockRunType';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
+import { prettyUnitOfTime } from '@utils/string';
 import { sortByKey, sum } from '@utils/array';
 
 function completedBlockRuns(pipelineRun: PipelineRunType): BlockRunType[] {
@@ -14,7 +15,7 @@ export function getStreams(pipelineRun: PipelineRunType): string[] {
   return Object.keys(pipelineRun?.metrics?.blocks || {}).sort();
 }
 
-export function getRecordsData(pipelineRun: PipelineRunType): {
+export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: string = null): {
   errors: {
     [key: string]: any;
   };
@@ -33,6 +34,10 @@ export function getRecordsData(pipelineRun: PipelineRunType): {
   const metricsPipeline = pipelineRun?.metrics?.pipeline || {};
 
   Object.entries(metricsBlocks).forEach(([stream, obj]) => {
+    if (streamToSelect && streamToSelect !== stream) {
+      return;
+    }
+
     const {
       destinations = {},
       sources = {},
@@ -184,4 +189,61 @@ export function pipelineRunRuntime(pipelineRun: PipelineRunType): number {
   const b = moment.utc(pipelineRun.created_at);
 
   return a.diff(b, 'second');
+}
+
+export function getTimesFromStream(pipelineRun: PipelineRunType, stream: string) {
+  const blockRunsByStream = getBlockRunsByStream(pipelineRun);
+  const etaByStream = pipelineRunEstimatedTimeRemaining(pipelineRun);
+
+  const metrics = pipelineRun?.metrics || {};
+  const metricsBlocks = metrics.blocks || {};
+  const metricsPipeline = metrics.pipeline || {};
+
+  const metricsBlock1 = metricsBlocks[stream] || {};
+  const metricsBlock2 = metricsPipeline[stream] || {};
+
+  const etaForStream = etaByStream[stream] || {};
+  const {
+    completed,
+    total,
+  } = etaForStream;
+  const progress = completed / total;
+
+  const brs = blockRunsByStream[stream] || [];
+  const done = brs.every(({ status }) => RunStatusBlockRun.COMPLETED === status);
+  const br = sortByKey(brs, ({ updated_at: ts }) => ts, { ascending: false })[0];
+  const startedAt =
+    sortByKey(brs, ({ started_at: ts }) => ts, { ascending: true })[0]?.started_at;
+
+  let completedAt;
+  let runtime = 0;
+  let timeText;
+  let updatedAt;
+
+  if (done) {
+    completedAt =
+      sortByKey(brs, ({ completed_at: ts }) => ts, { ascending: false })[0]?.completed_at;
+  } else if (br) {
+    updatedAt = br.updated_at;
+  }
+
+  if (completedAt || updatedAt) {
+    const a = moment.utc(completedAt || updatedAt);
+    const b = moment.utc(startedAt);
+
+    runtime = a.diff(b, 'second');
+  }
+
+  return {
+    completed,
+    completedAt,
+    done,
+    progress,
+    runtime,
+    startedAt,
+    status: br.status,
+    timeText: prettyUnitOfTime(runtime),
+    total,
+    updatedAt,
+  };
 }
