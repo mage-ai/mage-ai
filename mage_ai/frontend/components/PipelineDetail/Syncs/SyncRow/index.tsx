@@ -143,7 +143,9 @@ function SyncRow({
                 <Text bold muted small>
                   Records processed
                 </Text>
-                <Text monospace>{numberWithCommas(recordsProcessed)}</Text>
+                <Text monospace>
+                  {recordsProcessed >= 1 ? numberWithCommas(recordsProcessed) : '-'}
+                </Text>
               </Spacing>
               <Spacing mb={1}>
                 <Text bold muted small>

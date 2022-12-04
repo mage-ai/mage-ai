@@ -160,7 +160,7 @@ function SyncRowDetail({
   const stats = useMemo(() => {
     const arr = [
       {
-        label: 'Records loaded',
+        label: 'Records fetched',
         value: records === null ? '-' : numberWithCommas(records),
       },
     ];
@@ -367,8 +367,8 @@ function SyncRowDetail({
                     Runtime
                   </Text>
                   <Text headline>
-                    {RunStatus.RUNNING === status && runtimeText}
-                    {RunStatus.RUNNING !== status && runtimeFinal}
+                    {RunStatus.RUNNING === pipelineRun?.status && runtimeText}
+                    {RunStatus.RUNNING !== pipelineRun?.status && runtimeFinal}
                   </Text>
                 </div>
 
