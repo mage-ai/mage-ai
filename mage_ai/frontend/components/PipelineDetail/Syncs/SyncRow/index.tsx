@@ -23,6 +23,7 @@ import {
   numberWithCommas,
   pluralize,
 } from '@utils/string';
+import { pipelineRunProgress } from '@utils/models/pipelineRun';
 
 type SyncRowProps = {
   onSelect: () => void;
@@ -98,13 +99,7 @@ function SyncRow({
     };
   }, [metricsBlocks]);
 
-  const progress = useMemo(() => {
-    const total = blockRuns?.length || 1;
-    const completed =
-      blockRuns?.filter(({ status }) => RunStatusBlockRun.COMPLETED === status)?.length || 0;
-
-    return completed / total;
-  }, [blockRuns]);
+  const progress = useMemo(() => pipelineRunProgress(pipelineRun), [pipelineRun]);
 
   const statusProps = useMemo(() => ({
     danger: RunStatus.FAILED === status,
@@ -117,7 +112,7 @@ function SyncRow({
   return (
     <RowStyle
       {...statusProps}
-      onClick={() => onSelect()}
+      onClick={() => onSelect(selected ? null : pipelineRun.id)}
       selected={selected}
     >
       <FlexContainer fullHeight justifyContent="space-between">
