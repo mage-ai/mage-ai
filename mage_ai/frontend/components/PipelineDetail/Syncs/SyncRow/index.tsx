@@ -22,8 +22,13 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import {
   numberWithCommas,
   pluralize,
+  prettyUnitOfTime,
 } from '@utils/string';
-import { pipelineRunProgress } from '@utils/models/pipelineRun';
+import {
+  getRecordsData,
+  pipelineRunProgress,
+  pipelineRunRuntime,
+} from '@utils/models/pipelineRun';
 
 type SyncRowProps = {
   onSelect: () => void;
@@ -52,50 +57,7 @@ function SyncRow({
     errors,
     records,
     recordsProcessed,
-  }: number = useMemo(() => {
-    let recordsInternal = 0;
-    let recordsProcessedInternal = 0;
-    const errors = {};
-
-    Object.entries(metricsBlocks).forEach(([stream, obj]) => {
-      const {
-        destinations = {},
-        sources = {},
-      } = obj || {};
-
-      recordsInternal += Number(metricsPipeline?.[stream]?.record_counts || 0);
-
-      if (destinations?.records_updated) {
-        recordsProcessedInternal += Number(destinations.records_updated);
-      } else if (destinations?.records_inserted) {
-        recordsProcessedInternal += Number(destinations.records_inserted);
-      } else if (destinations?.records_affected) {
-        recordsProcessedInternal += Number(destinations.records_affected);
-      }
-
-      ['destinations', 'sources'].forEach((key: string) => {
-        const obj2 = obj[key] || {};
-
-        if (obj2?.error) {
-          if (!errors.stream) {
-            errors[stream] = {}
-          }
-
-          errors[stream][key] = {
-            error: obj2?.error,
-            errors: obj2?.errors,
-            message: obj2?.message,
-          };
-        }
-      });
-    });
-
-    return {
-      errors,
-      records: recordsInternal,
-      recordsProcessed: recordsProcessedInternal,
-    };
-  }, [metricsBlocks]);
+  }: number = useMemo(() => getRecordsData(pipelineRun), [pipelineRun]);
 
   const progress = useMemo(() => pipelineRunProgress(pipelineRun), [pipelineRun]);
 
@@ -108,6 +70,16 @@ function SyncRow({
     success: completed,
     warning: RunStatus.CANCELLED === status,
   }), [completed, status]);
+
+  const runtime = useMemo(() => {
+    if (!pipelineRun) {
+      return;
+    }
+
+    const seconds = pipelineRunRuntime(pipelineRun);
+
+    return prettyUnitOfTime(seconds);
+  }, [pipelineRun]);
 
   return (
     <RowStyle
@@ -181,6 +153,16 @@ function SyncRow({
                   {records >= 1 ? numberWithCommas(records - recordsProcessed) : '-'}
                 </Text>
               </Spacing>
+              {RunStatus.RUNNING !== status && (
+                <Spacing mb={1}>
+                  <Text bold muted small>
+                    Runtime
+                  </Text>
+                  <Text monospace>
+                    {runtime}
+                  </Text>
+                </Spacing>
+              )}
             </Spacing>
           </Flex>
 

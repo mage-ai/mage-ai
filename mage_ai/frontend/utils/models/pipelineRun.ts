@@ -1,13 +1,92 @@
 import moment from 'moment';
 
 import BlockRunType, { RunStatus as RunStatusBlockRun } from '@interfaces/BlockRunType';
-import PipelineRunType from '@interfaces/PipelineRunType';
+import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import { sortByKey, sum } from '@utils/array';
 
 function completedBlockRuns(pipelineRun: PipelineRunType): BlockRunType[] {
   const blockRuns = pipelineRun?.block_runs || [];
 
   return blockRuns?.filter(({ status }) => RunStatusBlockRun.COMPLETED === status);
+}
+
+export function getRecordsData(pipelineRun: PipelineRunType): {
+  errors: {
+    [key: string]: any;
+  };
+  records: number;
+  recordsInserted: number;
+  recordsProcessed: number;
+  recordsUpdated: number;
+} {
+  let records = null;
+  let recordsInserted = null;
+  let recordsProcessed = null;
+  let recordsUpdated = null;
+  const errors = {};
+
+  const metricsBlocks = pipelineRun?.metrics?.blocks || {};
+  const metricsPipeline = pipelineRun?.metrics?.pipeline || {};
+
+  Object.entries(metricsBlocks).forEach(([stream, obj]) => {
+    const {
+      destinations = {},
+      sources = {},
+    } = obj || {};
+
+    records += Number(metricsPipeline?.[stream]?.record_counts || 0);
+
+    if (destinations?.records_updated) {
+      if (recordsProcessed === null) {
+        recordsProcessed = 0;
+      }
+      recordsProcessed += Number(destinations.records_updated);
+
+      if (recordsUpdated === null) {
+        recordsUpdated = 0;
+      }
+      recordsUpdated += Number(destinations.records_updated);
+    } else if (destinations?.records_inserted) {
+      if (recordsProcessed === null) {
+        recordsProcessed = 0;
+      }
+      recordsProcessed += Number(destinations.records_inserted);
+
+      if (recordsInserted === null) {
+        recordsInserted = 0;
+      }
+      recordsInserted += Number(destinations.records_inserted);
+    } else if (destinations?.records_affected) {
+      if (recordsProcessed === null) {
+        recordsProcessed = 0;
+      }
+      recordsProcessed += Number(destinations.records_affected);
+    }
+
+    ['destinations', 'sources'].forEach((key: string) => {
+      const obj2 = obj[key] || {};
+
+      if (obj2?.error) {
+        if (!errors.stream) {
+          errors[stream] = {}
+        }
+
+        errors[stream][key] = {
+          error: obj2?.error,
+          errors: obj2?.errors,
+          message: obj2?.message,
+        };
+      }
+    });
+  });
+
+  return {
+    errors,
+    records,
+    recordsInserted,
+    recordsProcessed,
+    recordsUpdated,
+  };
 }
 
 export function pipelineRunEstimatedTimeRemaining(pipelineRun: PipelineRunType): {
@@ -40,8 +119,8 @@ export function pipelineRunEstimatedTimeRemaining(pipelineRun: PipelineRunType):
       completed_at: ca,
       started_at: sa,
     }) => {
-        const a = moment(ca);
-        const b = moment(sa);
+        const a = moment.utc(ca);
+        const b = moment.utc(sa);
 
         return a.diff(b, 'second');
     });
@@ -68,4 +147,29 @@ export function pipelineRunProgress(pipelineRun: PipelineRunType): number {
   const completed = completedBlockRuns(pipelineRun).length || 0;
 
   return completed / total;
+}
+
+export function pipelineRunRuntime(pipelineRun: PipelineRunType): number {
+  const {
+    completed_at: completedAt,
+    block_runs: blockRuns = [],
+    status,
+  } = pipelineRun;
+
+  if (!blockRuns?.length) {
+    return 0;
+  }
+
+  let a = moment.utc();
+  if (completedAt) {
+    a = moment.utc(completedAt);
+  } else if ([RunStatus.CANCELLED, RunStatus.FAILED].includes(status)) {
+    const latestBlockRun =
+      sortByKey(blockRuns, ({ started_at: ts }) => ts, { ascending: false })[0];
+
+    a = moment.utc(latestBlockRun.updated_at);
+  }
+  const b = moment.utc(pipelineRun.created_at);
+
+  return a.diff(b, 'second');
 }

@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import moment from 'moment';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
@@ -9,10 +11,17 @@ import Spacing from '@oracle/elements/Spacing';
 import {
   BarStyle,
 } from './index.style';
-import { pluralize } from '@utils/string';
+import Text from '@oracle/elements/Text';
 import {
+  numberWithCommas,
+  pluralize,
+  prettyUnitOfTime,
+} from '@utils/string';
+import {
+  getRecordsData,
   pipelineRunEstimatedTimeRemaining,
   pipelineRunProgress,
+  pipelineRunRuntime,
 } from '@utils/models/pipelineRun';
 import { range, sum } from '@utils/array';
 
@@ -24,6 +33,8 @@ function SyncRowDetail({
   pipelineRun,
 }: SyncRowDetailProps) {
   const router = useRouter();
+
+  const [runtime, setRuntime] = useState<number>(null);
 
   const progress: number = useMemo(() => pipelineRun ? pipelineRunProgress(pipelineRun) : 0, [pipelineRun]);
   const progressBar = useMemo(() => (
@@ -92,7 +103,96 @@ function SyncRowDetail({
   }, [
     eta,
     pipelineRun,
-  ])
+  ]);
+
+  useEffect(() => {
+    let interval;
+
+    if (pipelineRun) {
+      const seconds = pipelineRunRuntime(pipelineRun);
+      setRuntime(seconds);
+      interval = setInterval(() => setRuntime(prev => prev + 1), 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [pipelineRun]);
+
+  const runtimeFinal = useMemo(() => {
+    if (!pipelineRun) {
+      return;
+    }
+
+    const seconds = pipelineRunRuntime(pipelineRun);
+
+    return prettyUnitOfTime(seconds);
+  }, [pipelineRun]);
+  const runtimeText = useMemo(() => {
+    const hours = Math.floor((runtime % (1 * 60 * 60 * 24)) / (1 * 60 * 60));
+    const minutes = Math.floor((runtime % (1 * 60 * 60)) / (1 * 60));
+    const seconds = Math.floor((runtime % (1 * 60)) / 1);
+
+    return [
+      hours >= 10 ? String(hours) : `0${hours}`,
+      minutes >= 10 ? String(minutes) : `0${minutes}`,
+      seconds >= 10 ? String(seconds) : `0${seconds}`,
+    ].join(':');
+  }, [runtime]);
+
+  const {
+    errors,
+    records,
+    recordsInserted,
+    recordsProcessed,
+    recordsUpdated,
+  }: number = useMemo(() => getRecordsData(pipelineRun), [pipelineRun]);
+
+  const stats = useMemo(() => {
+    const arr = [
+      {
+        label: 'Records loaded',
+        value: records === null ? '-' : numberWithCommas(records),
+      },
+    ];
+
+    if (recordsInserted === null && recordsUpdated === null) {
+      arr.push({
+        label: 'Records processed',
+        value: recordsProcessed === null ? '-' : numberWithCommas(recordsProcessed),
+      });
+    } else if (recordsInserted !== null) {
+      arr.push({
+        label: 'Records inserted',
+        value: numberWithCommas(recordsInserted),
+      });
+    } else if (recordsUpdated !== null) {
+      arr.push({
+        label: 'Records updated',
+        value: numberWithCommas(recordsUpdated),
+      });
+    }
+
+    return arr.map(({
+      label,
+      value,
+    }) => (
+      <div key={label}>
+        <Text bold large muted>
+          {label}
+        </Text>
+        <Text headline>
+          {value}
+        </Text>
+      </div>
+    ));
+  }, [
+    records,
+    recordsInserted,
+    recordsProcessed,
+    recordsUpdated,
+    runtimeFinal,
+    runtimeText,
+    status,
+  ]);
 
   return (
     <>
@@ -126,11 +226,23 @@ function SyncRowDetail({
           {progressBar}
         </Spacing>
 
-        <Spacing mt={2}>
-          <FlexContainer>
+        {pipelineRun && (
+          <Spacing mt={2}>
+            <FlexContainer justifyContent="space-between">
+              <div>
+                <Text bold large muted>
+                  Runtime
+                </Text>
+                <Text headline>
+                  {RunStatus.RUNNING === status && runtimeText}
+                  {RunStatus.RUNNING !== status && runtimeFinal}
+                </Text>
+              </div>
 
-          </FlexContainer>
-        </Spacing>
+              {stats}
+            </FlexContainer>
+          </Spacing>
+        )}
       </Spacing>
     </>
   );

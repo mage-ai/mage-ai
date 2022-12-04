@@ -216,6 +216,33 @@ export function timeRemaining(startAt, timeToCompleteInSec) {
   ].join(':');
 }
 
+export function prettyUnitOfTime(secs) {
+  const arr = [
+    ['second', 60],
+    ['minute', 60],
+    ['hour', 24],
+    ['day', 7],
+    ['week', 4],
+    ['month', 12],
+    ['year', null],
+  ];
+  let value;
+
+  arr.forEach((pair, idx) => {
+    if (value) {
+      return;
+    }
+
+    const [unit, interval] = pair;
+    const intervalPrevious = arr.slice(0, idx).reduce((acc, i) => acc * i[1], 1);
+    if (secs < interval * intervalPrevious) {
+      value = pluralize(unit, Math.round(secs / intervalPrevious));
+    }
+  });
+
+  return value;
+}
+
 export function isNumeric(str) {
   return !isNaN(str);
 }
