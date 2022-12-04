@@ -11,6 +11,7 @@ import SyncRow from '@components/PipelineDetail/Syncs/SyncRow';
 import SyncRowDetail from '@components/PipelineDetail/Syncs/SyncRowDetail';
 import api from '@api';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { getStreams } from '@utils/models/pipelineRun';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl } from '@utils/url';
 
@@ -38,6 +39,7 @@ function PipelineSchedules({
 
   const q = queryFromUrl();
 
+  const [selectedStream, setSelectedStream] = useState<string>(null);
   const [selectedPipelineRun, setSelectedPipelineRun] = useState<PipelineRunType>(null);
 
   useEffect(() => {
@@ -46,25 +48,74 @@ function PipelineSchedules({
     } else if (selectedPipelineRun) {
       setSelectedPipelineRun(null);
     }
+
+    if (q?.stream) {
+      setSelectedStream(q.stream);
+    } else if (selectedStream) {
+      setSelectedStream(null);
+    }
   }, [
     pipelineRuns,
     q,
     selectedPipelineRun,
+    selectedStream,
   ]);
 
-  const buildSidekick = useCallback(() => (
-    <SyncRowDetail
-      pipelineRun={selectedPipelineRun}
-    />
-  ), [selectedPipelineRun]);
+  const buildSidekick = useCallback(() => {
+    const streams = selectedPipelineRun ? getStreams(selectedPipelineRun) : [];
+
+    return (
+      <SyncRowDetail
+        onClickRow={(rowIndex: number) => {
+          const stream = streams[rowIndex];
+
+          goToWithQuery({
+            stream: selectedStream === stream ? null : stream,
+          });
+        }}
+        pipelineRun={selectedPipelineRun}
+        selectedStream={selectedStream}
+      />
+    );
+  }, [
+    selectedPipelineRun,
+    selectedStream,
+  ]);
+
+  const breadcrumbs = useMemo(() => {
+    let asLink = `/pipelines/${pipelineUUID}/syncs`;
+    if (selectedPipelineRun) {
+      asLink = `${asLink}?pipeline_run_id=${selectedPipelineRun.id}`;
+    }
+
+    const arr = [
+      {
+        label: () => 'Syncs',
+        linkProps: selectedStream
+          ? {
+            as: asLink,
+            href: '/pipelines/[pipeline]/syncs',
+          }
+          : null
+        ,
+      },
+    ];
+
+    if (selectedStream) {
+      arr.push({
+        label: () => selectedStream,
+      });
+    }
+
+    return arr;
+  }, [
+    selectedPipelineRun,
+    selectedStream
+  ]);
 
   return (
     <PipelineDetailPage
-      breadcrumbs={[
-        {
-          label: () => 'Syncs',
-        },
-      ]}
+      breadcrumbs={breadcrumbs}
       buildSidekick={buildSidekick}
       pageName={PageNameEnum.SYNCS}
       pipeline={pipeline}
@@ -79,6 +130,7 @@ function PipelineSchedules({
             key={pipelineRun.id}
             onSelect={(id: number) => goToWithQuery({
               pipeline_run_id: id,
+              stream: null,
             })}
             pipelineRun={pipelineRun}
             selected={selected}

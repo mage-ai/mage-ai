@@ -23,6 +23,7 @@ import {
 import {
   getBlockRunsByStream,
   getRecordsData,
+  getStreams,
   pipelineRunEstimatedTimeRemaining,
   pipelineRunProgress,
   pipelineRunRuntime,
@@ -30,11 +31,15 @@ import {
 import { range, sortByKey, sum } from '@utils/array';
 
 type SyncRowDetailProps = {
+  onClickRow: (rowIndex: number) => void
   pipelineRun?: PipelineRunType;
+  selectedStream?: string;
 };
 
 function SyncRowDetail({
+  onClickRow,
   pipelineRun,
+  selectedStream,
 }: SyncRowDetailProps) {
   const router = useRouter();
 
@@ -208,7 +213,7 @@ function SyncRowDetail({
     const metrics = pipelineRun?.metrics || {};
     const metricsBlocks = metrics.blocks || {};
     const metricsPipeline = metrics.pipeline || {};
-    const streams = Object.keys(metricsBlocks).sort();
+    const streams = getStreams(pipelineRun);
 
     return (
       <Table
@@ -233,6 +238,8 @@ function SyncRowDetail({
             uuid: 'Logs',
           },
         ]}
+        isSelectedRow={(rowIndex: number) => selectedStream && selectedStream === streams[rowIndex]}
+        onClickRow={onClickRow}
         rows={streams.map((stream: string) => {
           const metricsBlock1 = metricsBlocks[stream] || {};
           const metricsBlock2 = metricsPipeline[stream] || {};
@@ -261,9 +268,15 @@ function SyncRowDetail({
               timeText = prettyUnitOfTime(a.diff(b, 'second'));
             }
           }
+          const hasError = !!errors[stream];
 
           return [
-            <Text default key="stream" monospace>
+            <Text
+              danger={hasError}
+              default={!hasError}
+              key="stream"
+              monospace
+            >
               {stream}
             </Text>,
             <Text default key="started_at" monospace>
@@ -307,8 +320,10 @@ function SyncRowDetail({
       />
     );
   }, [
+    errors,
     etaByStream,
     pipelineRun,
+    selectedStream,
   ]);
 
   return (

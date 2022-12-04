@@ -10,6 +10,10 @@ function completedBlockRuns(pipelineRun: PipelineRunType): BlockRunType[] {
   return blockRuns?.filter(({ status }) => RunStatusBlockRun.COMPLETED === status);
 }
 
+export function getStreams(pipelineRun: PipelineRunType): string[] {
+  return Object.keys(pipelineRun?.metrics?.blocks || {}).sort();
+}
+
 export function getRecordsData(pipelineRun: PipelineRunType): {
   errors: {
     [key: string]: any;
