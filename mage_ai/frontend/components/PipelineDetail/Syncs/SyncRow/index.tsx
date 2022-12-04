@@ -14,6 +14,7 @@ import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { Check } from '@oracle/icons';
 import {
+  BarStyle,
   RowStyle,
   StatusStyle,
 } from './index.style';
@@ -24,11 +25,15 @@ import {
 } from '@utils/string';
 
 type SyncRowProps = {
+  onSelect: () => void;
   pipelineRun: PipelineRunType;
+  selected: boolean;
 };
 
 function SyncRow({
+  onSelect,
   pipelineRun,
+  selected,
 }: SyncRowProps) {
   const {
     block_runs: blockRuns,
@@ -101,60 +106,70 @@ function SyncRow({
     return completed / total;
   }, [blockRuns]);
 
+  const statusProps = useMemo(() => ({
+    danger: RunStatus.FAILED === status,
+    default: RunStatus.INITIAL === status,
+    primary: RunStatus.RUNNING === status,
+    success: RunStatus.COMPLETED === status,
+    warning: RunStatus.CANCELLED === status,
+  }), [status]);
+
   return (
-    <RowStyle>
-      <FlexContainer justifyContent="space-between">
+    <RowStyle
+      {...statusProps}
+      onClick={() => onSelect()}
+      selected={selected}
+    >
+      <FlexContainer fullHeight justifyContent="space-between">
+        <BarStyle {...statusProps} />
+
         <Flex flex={1} flexDirection="column">
-          <Headline bold level={5} monospace>
-            {createdAt}
-          </Headline>
+          <Spacing ml={3} py={3}>
+            <Headline bold level={5} monospace>
+              {createdAt}
+            </Headline>
 
-          <Spacing fullWidth={false} mt={2}>
-            <StatusStyle
-              danger={RunStatus.FAILED === status}
-              default={RunStatus.INITIAL === status}
-              primary={RunStatus.RUNNING === status}
-              success={RunStatus.COMPLETED === status}
-              warning={RunStatus.CANCELLED === status}
-            >
-              <FlexContainer alignItems="center">
-                {RunStatus.INITIAL !== status && (
-                  <>
-                    {RunStatus.COMPLETED === status && <Check size={2 * UNIT} />}
-                    {RunStatus.RUNNING === status && <Spinner color={dark.monotone.white} small />}
-                    &nbsp;
-                  </>
-                )}
+            <Spacing fullWidth={false} mt={2}>
+              <StatusStyle {...statusProps}>
+                <FlexContainer alignItems="center">
+                  {RunStatus.INITIAL !== status && (
+                    <>
+                      {RunStatus.COMPLETED === status && <Check inverted size={2 * UNIT} />}
+                      {RunStatus.RUNNING === status && <Spinner color={dark.monotone.white} small />}
+                      &nbsp;
+                    </>
+                  )}
 
-                {RunStatus.RUNNING === status && (
-                  <>
-                    {Math.round(progress * 100)}%
-                  </>
-                )}
-                {RunStatus.RUNNING !== status && RUN_STATUS_TO_LABEL[status]}
-              </FlexContainer>
-            </StatusStyle>
-          </Spacing>
-
-          {Object.values(errors).length >= 1 && (
-            <Spacing mt={1}>
-              {Object.entries(errors).map(([stream, obj], idx) => (
-                <Text
-                  key={stream}
-                  monospace
-                  muted
-                  small
-                >
-                  {stream} stream failed
-                </Text>
-              ))}
+                  {RunStatus.RUNNING === status && (
+                    <>
+                      {Math.round(progress * 100)}%
+                    </>
+                  )}
+                  {RunStatus.RUNNING !== status && RUN_STATUS_TO_LABEL[status]}
+                </FlexContainer>
+              </StatusStyle>
             </Spacing>
-          )}
+
+            {Object.values(errors).length >= 1 && (
+              <Spacing mt={1}>
+                {Object.entries(errors).map(([stream, obj], idx) => (
+                  <Text
+                    key={stream}
+                    monospace
+                    muted
+                    small
+                  >
+                    {stream} stream failed
+                  </Text>
+                ))}
+              </Spacing>
+            )}
+          </Spacing>
         </Flex>
 
         <Flex flex={1}>
           <Flex flex={1} flexDirection="column">
-            <Spacing ml={3}>
+            <Spacing ml={3} py={3}>
               <Spacing mb={1}>
                 <Text bold muted small>
                   Records processed
@@ -173,7 +188,7 @@ function SyncRow({
           </Flex>
 
           <Flex flex={1} flexDirection="column">
-            <Spacing ml={3}>
+            <Spacing ml={3} py={3}>
               <Spacing mb={1}>
                 <Text bold muted small>
                   Source

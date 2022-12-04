@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType from '@interfaces/PipelineRunType';
 import SyncRow from '@components/PipelineDetail/Syncs/SyncRow';
 import api from '@api';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { goToWithQuery } from '@utils/routing';
+import { queryFromUrl } from '@utils/url';
 
 type PipelineSchedulesProp = {
   pipeline: {
@@ -28,6 +30,19 @@ function PipelineSchedules({
   });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
 
+  const q = queryFromUrl();
+
+  const [selectedPipelineRun, setSelectedPipelineRun] = useState<PipelineRunType>(null);
+
+  useEffect(() => {
+    if (q?.pipeline_run_id) {
+      setSelectedPipelineRun(pipelineRuns?.find(({ id }) => id === Number(q.pipeline_run_id)));
+    }
+  }, [
+    pipelineRuns,
+    q,
+  ]);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -44,7 +59,11 @@ function PipelineSchedules({
       {pipelineRuns.map((pipelineRun: PipelineRunType) => (
         <SyncRow
           key={pipelineRun.id}
+          onSelect={() => goToWithQuery({
+            pipeline_run_id: pipelineRun.id,
+          })}
           pipelineRun={pipelineRun}
+          selected={selectedPipelineRun?.id === pipelineRun.id}
         />
       ))}
     </PipelineDetailPage>
