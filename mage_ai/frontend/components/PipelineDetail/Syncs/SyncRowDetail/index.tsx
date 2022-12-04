@@ -227,21 +227,78 @@ function SyncRowDetail({
         </Spacing>
 
         {pipelineRun && (
-          <Spacing mt={2}>
-            <FlexContainer justifyContent="space-between">
-              <div>
-                <Text bold large muted>
-                  Runtime
-                </Text>
-                <Text headline>
-                  {RunStatus.RUNNING === status && runtimeText}
-                  {RunStatus.RUNNING !== status && runtimeFinal}
-                </Text>
-              </div>
+          <>
+            <Spacing mt={2}>
+              <FlexContainer justifyContent="space-between">
+                <div>
+                  <Text bold large muted>
+                    Runtime
+                  </Text>
+                  <Text headline>
+                    {RunStatus.RUNNING === status && runtimeText}
+                    {RunStatus.RUNNING !== status && runtimeFinal}
+                  </Text>
+                </div>
 
-              {stats}
-            </FlexContainer>
-          </Spacing>
+                {stats}
+              </FlexContainer>
+            </Spacing>
+
+            {Object.values(errors).length >= 1 && (
+              <Spacing mt={3}>
+                <Headline level={5} muted>
+                  Errors
+                </Headline>
+
+                {Object.entries(errors).map(([stream, obj1], idx) => (
+                  <Spacing key={stream} mt={idx >= 1 ? 1 : 0}>
+                    {Object.entries(obj1).map(([conn, obj2]) => {
+                      const {
+                        error: errorLine,
+                        errors: errorStack,
+                        message: errorTraceback,
+                      } = obj2;
+
+                      return (
+                        <div key={`${stream}-${conn}`}>
+                          <Text monospace>
+                            {stream} <Text inline monospace muted>({conn})</Text>: <Text
+                              default
+                              inline
+                              monospace
+                            >
+                              {errorLine}
+                            </Text>
+                          </Text>
+
+                          <Text
+                            default
+                            monospace
+                            preWrap
+                            small
+                          >
+                            {errorTraceback}
+                          </Text>
+
+                          {errorStack.map(l => (
+                            <Text
+                              default
+                              key={l}
+                              monospace
+                              preWrap
+                              small
+                            >
+                              {l}
+                            </Text>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </Spacing>
+                ))}
+              </Spacing>
+            )}
+          </>
         )}
       </Spacing>
     </>
