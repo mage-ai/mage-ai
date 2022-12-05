@@ -14,7 +14,6 @@ from pandas import DataFrame, read_sql, Series, read_json
 from pymongo import MongoClient, database
 from psycopg2 import connect
 import numpy as np
-
 from optparse import OptionParser
 from sys import stdout, exit as sys_exit
 
@@ -201,7 +200,7 @@ class MongoDB(BaseSQLConnection):
             db = self._ctx[db_name]
             
             collection_exists = self.__collection_exists(db, col_name)
-        
+
             if collection_exists:
                 if ExportWritePolicy.FAIL == if_exists:
                     raise ValueError(
