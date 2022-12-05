@@ -55,7 +55,7 @@ def create_upstream_block_tables(
                 col_name,
                 cascade_on_drop=cascade_on_drop,
                 drop_table_on_replace=True,
-                if_exists='replace',
+                if_exists=configuration.get('export_write_policy'),
                 index=False,
                 verbose=False,
             )
