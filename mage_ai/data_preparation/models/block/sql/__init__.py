@@ -125,21 +125,20 @@ def execute_sql_code(
         from mage_ai.io.mongodb import MongoDB
 
         with MongoDB.with_config(config_file_loader) as loader:
-            # mongodb.create_upstream_block_tables(
-            #     loader,
-            #     block,
-            #     configuration=configuration,
-            #     execution_partition=execution_partition,
-            # )
-            # print(query)
-            # test = 'SELECT * FROM {{ df_1 }}'
-            # if test.__eq__('SELECT * FROM {{ df_1 }}'):
-            #     print('hehehe')
+            mongodb.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                execution_partition=execution_partition,
+            )
+
+            # Init mongoSql
+            if query.strip().__eq__('SELECT * FROM {{ df_1 }}') or query.strip() == '':
+                query = f"SELECT * FROM {loader.settings['colname']}"
             
             query_string = mongodb.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
-            
-            return
+
             if should_query:
                 return [
                     loader.load(
