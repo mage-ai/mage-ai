@@ -355,7 +355,7 @@ function SyncRowDetail({
 
     return (
       <Table
-        columnFlex={[]}
+        columnFlex={[null, null, null, null, null, null]}
         columns={[
           {
             uuid: 'Stream',
@@ -391,8 +391,6 @@ function SyncRowDetail({
           } = getTimesFromStream(pipelineRun, stream);
 
           const hasError = !!errors[stream];
-
-          console.log(stream, status)
 
           return [
             <Text
@@ -446,6 +444,155 @@ function SyncRowDetail({
   }, [
     errors,
     etaByStream,
+    pipelineRun,
+    selectedStream,
+  ]);
+
+  const bookmarksTableMemo = useMemo(() => {
+    if (!pipelineRun || !selectedStream) {
+      return <div />;
+    }
+
+    const metrics = pipelineRun?.metrics || {
+      blocks: null,
+      pipeline: null,
+    };
+    const sourceState =
+      metrics?.pipeline?.[selectedStream]?.bookmarks?.[selectedStream];
+    const destinationState =
+      metrics?.blocks?.[selectedStream]?.destinations?.state?.bookmarks?.[selectedStream];
+
+    const columns = Array.from(
+      new Set(
+        Object.keys(sourceState || {}).concat(Object.keys(destinationState || {})),
+      ),
+    ).sort();
+
+    const rowData = [];
+    columns.forEach((col: string) => {
+      const arr = [
+        <Text bold key={col} monospace muted small>
+          {col}
+        </Text>
+      ];
+
+      [sourceState, destinationState].forEach((obj, idx) => {
+        if (!obj) {
+          return;
+        }
+
+        arr.push(
+          <Text default key={`${col}-${idx}`} monospace small>
+            {obj[col]}
+          </Text>
+        );
+      });
+
+      rowData.push(arr);
+    });
+
+    const columnData = [
+      {
+        label: () => '',
+        uuid: 'column',
+      },
+    ];
+    [
+      [metrics?.source, 'source', sourceState],
+      [metrics?.destination, 'destination', destinationState],
+    ].forEach((tup) => {
+      const [key, type, obj] = tup;
+      if (!obj) {
+        return;
+      }
+
+      columnData.push({
+        uuid: `${key} (${type})`,
+      })
+    });
+
+    return (
+      <Table
+        columnFlex={[null, 1, 1]}
+        columns={columnData}
+        rows={rowData}
+        uuid={`${selectedStream}-bookmark-table`}
+      />
+    );
+  }, [
+    pipelineRun,
+    selectedStream,
+  ]);
+
+  const recentRecordTableMemo = useMemo(() => {
+    if (!pipelineRun || !selectedStream) {
+      return <div />;
+    }
+
+    const metrics = pipelineRun?.metrics || {
+      blocks: null,
+    };
+    const sourceRecord = metrics?.blocks?.[selectedStream]?.sources?.record;
+    const destinationRecord = metrics?.blocks?.[selectedStream]?.destinations?.record;
+
+    const columns = Object.keys(sourceRecord || destinationRecord || {}).sort();
+
+    const rowData = [];
+    columns.forEach((col: string) => {
+      const arr = [
+        <Text bold key={col} monospace muted small>
+          {col}
+        </Text>
+      ];
+
+      [sourceRecord, destinationRecord].forEach((obj, idx) => {
+        if (!obj) {
+          return;
+        }
+
+        arr.push(
+          <Text default key={`${col}-${idx}`} monospace small>
+            {obj[col]}
+          </Text>
+        );
+      });
+
+      rowData.push(arr);
+    });
+
+    const columnData = [
+      {
+        label: () => '',
+        uuid: 'column',
+      },
+    ];
+    [
+      [metrics?.source, 'source', sourceRecord],
+      [metrics?.destination, 'destination', destinationRecord],
+    ].forEach((tup) => {
+      const [key, type, obj] = tup;
+      if (!obj) {
+        return;
+      }
+
+      columnData.push({
+        uuid: `${key} (${type})`,
+      });
+    });
+
+    return (
+      <Table
+        columnFlex={[null, 1, 1]}
+        columns={columnData}
+        rows={rowData.map((arr) => arr.map((val: string) => (
+          <Text default key={val} monospace>
+            {val}
+          </Text>
+        )))}
+        uuid={`${selectedStream}-bookmark-table`}
+      />
+    );
+  }, [
     pipelineRun,
     selectedStream,
   ]);
@@ -610,6 +757,34 @@ function SyncRowDetail({
         <Spacing my={3}>
           {tableMemo}
         </Spacing>
+      )}
+
+      {pipelineRun && selectedStream && (
+        <>
+          <Spacing my={3}>
+            <Spacing px={3}>
+              <Headline level={5}>
+                Bookmarks
+              </Headline>
+            </Spacing>
+
+            <Spacing px={1}>
+              {bookmarksTableMemo}
+            </Spacing>
+          </Spacing>
+
+          <Spacing my={3}>
+            <Spacing px={3}>
+              <Headline level={5}>
+                Sample row
+              </Headline>
+            </Spacing>
+
+            <Spacing px={1}>
+              {recentRecordTableMemo}
+            </Spacing>
+          </Spacing>
+        </>
       )}
     </>
   );

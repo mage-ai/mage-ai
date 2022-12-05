@@ -55,6 +55,11 @@ interface PipelineRunMetricsType {
         records_affected: number;
         records_inserted: number;
         records_updated: number;
+        state: {
+          [stream: string]: {
+            [column: string]: number | string;
+          };
+        };
       };
     };
   };
