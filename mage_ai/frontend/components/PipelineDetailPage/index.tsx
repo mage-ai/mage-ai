@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import ChartGradient from '@oracle/icons/custom/ChartGradient';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
@@ -16,6 +17,7 @@ import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
 
 import {
+  BlocksSeparated,
   BlocksStacked,
   Chart,
   Edit,
@@ -205,6 +207,79 @@ function PipelineDetailPage({
     pipeline,
   ]);
 
+  const navigationItems = [
+    {
+      Icon: Schedule,
+      IconSelected: ScheduleGradient,
+      id: PageNameEnum.TRIGGERS,
+      label: () => 'Triggers',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/triggers`,
+        href: '/pipelines/[pipeline]/triggers',
+      },
+      isSelected: () => PageNameEnum.TRIGGERS === pageName,
+    },
+    {
+      Icon: BlocksStacked,
+      IconSelected: BlocksStackedGradient,
+      id: PageNameEnum.RUNS,
+      label: () => 'Runs',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/runs`,
+        href: '/pipelines/[pipeline]/runs',
+      },
+      isSelected: () => PageNameEnum.RUNS === pageName,
+    },
+    {
+      Icon: TodoList,
+      IconSelected: TodoListGradient,
+      id: PageNameEnum.PIPELINE_LOGS,
+      label: () => 'Logs',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/logs`,
+        href: '/pipelines/[pipeline]/logs',
+      },
+      isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
+    },
+    {
+      Icon: Chart,
+      IconSelected: ChartGradient,
+      id: PageNameEnum.MONITOR,
+      label: () => 'Monitor',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/monitors`,
+        href: '/pipelines/[pipeline]/monitors',
+      },
+      isSelected: () => PageNameEnum.MONITOR === pageName,
+    },
+  ];
+
+  if (PipelineTypeEnum.INTEGRATION === pipeline?.type) {
+    navigationItems.unshift({
+      Icon: BlocksSeparated,
+      IconSelected: BlocksSeparatedGradient,
+      id: PageNameEnum.SYNCS,
+      label: () => 'Syncs',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/syncs`,
+        href: '/pipelines/[pipeline]/syncs',
+      },
+      isSelected: () => PageNameEnum.SYNCS === pageName,
+    });
+  }
+
+  // @ts-ignore
+  navigationItems.unshift({
+    Icon: null,
+    IconSelected: null,
+    id: PageNameEnum.EDIT,
+    label: () => 'Edit pipeline',
+    linkProps: {
+      as: `/pipelines/${pipelineUUID}/edit`,
+      href: '/pipelines/[pipeline]/edit',
+    },
+  });
+
   return (
     <Dashboard
       after={after}
@@ -214,62 +289,7 @@ function PipelineDetailPage({
       beforeWidth={beforeWidth}
       breadcrumbs={breadcrumbs}
       headerMenuItems={headerMenuItems}
-      navigationItems={[
-        {
-          Icon: null,
-          IconSelected: null,
-          id: PageNameEnum.EDIT,
-          label: () => 'Edit pipeline',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/edit`,
-            href: '/pipelines/[pipeline]/edit',
-          },
-        },
-        {
-          Icon: Schedule,
-          IconSelected: ScheduleGradient,
-          id: PageNameEnum.TRIGGERS,
-          label: () => 'Triggers',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/triggers`,
-            href: '/pipelines/[pipeline]/triggers',
-          },
-          isSelected: () => PageNameEnum.TRIGGERS === pageName,
-        },
-        {
-          Icon: BlocksStacked,
-          IconSelected: BlocksStackedGradient,
-          id: PageNameEnum.RUNS,
-          label: () => 'Runs',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/runs`,
-            href: '/pipelines/[pipeline]/runs',
-          },
-          isSelected: () => PageNameEnum.RUNS === pageName,
-        },
-        {
-          Icon: TodoList,
-          IconSelected: TodoListGradient,
-          id: PageNameEnum.PIPELINE_LOGS,
-          label: () => 'Logs',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/logs`,
-            href: '/pipelines/[pipeline]/logs',
-          },
-          isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
-        },
-        {
-          Icon: Chart,
-          IconSelected: ChartGradient,
-          id: PageNameEnum.MONITOR,
-          label: () => 'Monitor',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/monitors`,
-            href: '/pipelines/[pipeline]/monitors',
-          },
-          isSelected: () => PageNameEnum.MONITOR === pageName,
-        },
-      ]}
+      navigationItems={navigationItems}
       subheaderChildren={typeof subheader !== 'undefined' && subheader}
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
       uuid={uuid}

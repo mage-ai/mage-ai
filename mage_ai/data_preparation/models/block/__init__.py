@@ -819,6 +819,14 @@ class Block:
                 destination_table = self.template_runtime_configuration.get('destination_table', stream)
                 query_data = runtime_arguments or {}
 
+                tags = dict(block_tags=dict(
+                    destination_table=destination_table,
+                    index=index,
+                    stream=stream,
+                    type=self.type,
+                    uuid=self.uuid,
+                ))
+
                 if index is not None:
                     query_data['_limit'] = BATCH_FETCH_LIMIT
                     query_data['_offset'] = BATCH_FETCH_LIMIT * index
@@ -850,7 +858,11 @@ class Block:
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
 
                     output = proc.stdout.decode()
-                    print_logs_from_output(output, logger=logger)
+                    print_logs_from_output(
+                        output,
+                        logger=logger,
+                        tags=tags,
+                    )
                     outputs.append(output)
                 elif BlockType.TRANSFORMER == self.type:
                     from mage_integrations.sources.constants import COLUMN_TYPE_NULL
@@ -970,7 +982,11 @@ class Block:
                         ),
                     ], input=input_from_previous, capture_output=True, text=True)
 
-                    print_logs_from_output(proc.stdout, logger=logger)
+                    print_logs_from_output(
+                        proc.stdout,
+                        logger=logger,
+                        tags=tags,
+                    )
                     outputs.append(proc)
             elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(
@@ -1246,7 +1262,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                     queue.put(block)
                     visited.add(block)
         return list(visited)
-    
+
     def get_all_downstream_blocks(self) -> List['Block']:
         queue = Queue()
         visited = set()

@@ -95,7 +95,7 @@ export function pascalize(word) {
     .join('');
 }
 
-export function pluralize(string, n) {
+export function pluralize(string, n, withCommas = false) {
   let number = n;
   const hasNumber = number !== undefined && number !== null;
   if (!hasNumber) {
@@ -117,7 +117,8 @@ export function pluralize(string, n) {
   }
 
   if (hasNumber) {
-    return `${number} ${word}`;
+    const numberText = withCommas ? numberWithCommas(number) : number;
+    return `${numberText} ${word}`;
   }
 
   return word;
@@ -213,6 +214,33 @@ export function timeRemaining(startAt, timeToCompleteInSec) {
     String(minutes < 0 ? 0 : minutes).padStart(2, '0'),
     String(seconds < 0 ? 0 : (seconds - (60 * minutes))).padStart(2, '0'),
   ].join(':');
+}
+
+export function prettyUnitOfTime(secs) {
+  const arr = [
+    ['second', 60],
+    ['minute', 60],
+    ['hour', 24],
+    ['day', 7],
+    ['week', 4],
+    ['month', 12],
+    ['year', null],
+  ];
+  let value;
+
+  arr.forEach((pair, idx) => {
+    if (value) {
+      return;
+    }
+
+    const [unit, interval] = pair;
+    const intervalPrevious = arr.slice(0, idx).reduce((acc, i) => acc * Number(i[1]), 1);
+    if (secs < Number(interval) * intervalPrevious) {
+      value = pluralize(unit, Math.round(secs / intervalPrevious));
+    }
+  });
+
+  return value;
 }
 
 export function isNumeric(str) {

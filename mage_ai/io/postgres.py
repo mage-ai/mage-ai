@@ -54,7 +54,10 @@ class Postgres(BaseSQLConnection):
         Opens a connection to the PostgreSQL database specified by the parameters.
         """
         with self.printer.print_msg('Opening connection to PostgreSQL database'):
-            self._ctx = connect(**self.settings)
+            self._ctx = connect(**self.settings,
+                keepalives=1,
+                keepalives_idle=300,
+            )
 
     def execute(self, query_string: str, **query_vars) -> None:
         """
