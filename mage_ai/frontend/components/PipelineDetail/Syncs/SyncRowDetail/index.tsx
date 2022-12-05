@@ -154,6 +154,8 @@ function SyncRowDetail({
     } else if (pipelineRun) {
       if ([RunStatus.CANCELLED, RunStatus.FAILED].includes(pipelineRun?.status)) {
         return RUN_STATUS_TO_LABEL[pipelineRun?.status];
+      } else if (RunStatus.INITIAL === pipelineRun?.status) {
+        return 'Initializing sync (this can take several minutes)';
       } else if (eta === null) {
         return 'Estimating time remaining...';
       } else {
@@ -357,11 +359,14 @@ function SyncRowDetail({
             done,
             progress: progressForStream,
             startedAt,
+            status,
             timeText,
             total,
           } = getTimesFromStream(pipelineRun, stream);
 
           const hasError = !!errors[stream];
+
+          console.log(stream, status)
 
           return [
             <Text
@@ -379,7 +384,7 @@ function SyncRowDetail({
               {completedAt ? completedAt.split('.')[0] : '-'}
             </Text>,
             <Text default key="runtime">
-              {timeText}
+              {[RunStatusBlockRun.INITIAL, RunStatusBlockRun.RUNNING].includes(status) ? '-' : timeText}
             </Text>,
             <div key="progress">
               {done && <Check default size={2 * UNIT} />}
@@ -502,8 +507,8 @@ function SyncRowDetail({
                   <Text headline>
                     {selectedStream && [RunStatusBlockRun.INITIAL, RunStatusBlockRun.RUNNING].includes(timesForStream?.status) && runtimeStreamText}
                     {selectedStream && ![RunStatusBlockRun.INITIAL, RunStatusBlockRun.RUNNING].includes(timesForStream?.status) && timesForStream?.timeText}
-                    {!selectedStream && RunStatus.RUNNING === pipelineRun?.status && runtimeText}
-                    {!selectedStream && RunStatus.RUNNING !== pipelineRun?.status && runtimeFinal}
+                    {!selectedStream && [RunStatus.INITIAL, RunStatus.RUNNING].includes(pipelineRun?.status) && runtimeText}
+                    {!selectedStream && ![RunStatus.INITIAL, RunStatus.RUNNING].includes(pipelineRun?.status) && runtimeFinal}
                   </Text>
                 </div>
 
