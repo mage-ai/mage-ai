@@ -215,8 +215,6 @@ function CodeBlockProps({
 
   const isMongo = (DataSourceTypeEnum.MONGODB === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]);
 
-  const baseQueryMongo = 'collection.find()';
-
   const blockPrevious = usePrevious(block);
   useEffect(() => {
     if (JSON.stringify(block) != JSON.stringify(blockPrevious)) {
@@ -992,12 +990,9 @@ function CodeBlockProps({
                     compact
                     label="Data provider"
                     // @ts-ignore
-                    onChange={e => {
-                      updateDataProviderConfig({
-                        [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
-                      });
-                      if( DataSourceTypeEnum.MONGODB === e.target.value ){setContent(baseQueryMongo);}
-                    }}
+                    onChange={e => updateDataProviderConfig({
+                      [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
+                    })}
                     small
                     value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
                   >

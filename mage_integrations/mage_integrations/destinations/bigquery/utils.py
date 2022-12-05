@@ -108,3 +108,14 @@ def convert_converted_type_to_parameter_type(converted_type):
         return 'INT64'
 
     return converted_type
+
+
+def convert_json_or_string(value, column_type_dict):
+    value = value.replace('\n', '\\n')
+
+    column_type = column_type_dict['type']
+    if COLUMN_TYPE_OBJECT == column_type:
+        value = f"'{replace_single_quotes_with_double(value)}'"
+        value = f'TO_JSON({value})'
+
+    return value

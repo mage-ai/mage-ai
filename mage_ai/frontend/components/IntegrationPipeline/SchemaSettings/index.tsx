@@ -115,7 +115,7 @@ function SchemaSettings({
                 key={`${streamId}_cell_${idx}`}
               >
                 {Array.isArray(value)
-                  ? value.join(', ')
+                  ? value.sort().join(', ')
                   : value
                 }
               </Text>
@@ -157,15 +157,17 @@ function SchemaSettings({
         </Spacing>
       )}
 
-      <Spacing mt={1}>
-        <SectionStyle>
-          <Headline level={4}>
-            Streams Summary
-          </Headline>
-          <Spacing mt={1} />
-          {summaryTableMemo}
-        </SectionStyle>
-      </Spacing>
+      {streams.length >= 1 &&
+        <Spacing mt={1}>
+          <SectionStyle>
+            <Headline level={4}>
+              Streams Summary
+            </Headline>
+            <Spacing mt={1} />
+            {summaryTableMemo}
+          </SectionStyle>
+        </Spacing>
+      }
     </>
   );
 }

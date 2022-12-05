@@ -33,7 +33,7 @@ def create_upstream_block_tables(
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
-            table_name = upstream_block.table_name
+            col_name = loader.settings['colname']
 
             df = get_variable(
                 upstream_block.pipeline.uuid,
@@ -42,17 +42,17 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
-            schema_name = configuration.get('data_provider_schema')
+            db_name = loader.settings['dbname']
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 attributes_dict = parse_attributes(block)
-                schema_name = attributes_dict['source_name']
-                table_name = source_table_name_for_block(upstream_block)
+                db_name = attributes_dict['source_name']
+                col_name = source_table_name_for_block(upstream_block)
 
             loader.export(
                 df,
-                schema_name,
-                table_name,
+                db_name,
+                col_name,
                 cascade_on_drop=cascade_on_drop,
                 drop_table_on_replace=True,
                 if_exists='replace',

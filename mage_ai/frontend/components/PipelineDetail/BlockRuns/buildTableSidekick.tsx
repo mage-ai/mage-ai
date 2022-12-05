@@ -40,7 +40,7 @@ export default function({
   const updatedProps = { ...props };
   updatedProps['blockStatus'] = createBlockStatus(blockRuns);
 
-  const blockOutputTable = useMemo(() => (
+  const blockOutputTable = (
     <>
       {rows && rows.length > 0 ? (
         <DataTable
@@ -61,13 +61,7 @@ export default function({
         </Spacing>
       )}
     </>
-  ), [
-    columns,
-    height,
-    heightOffset,
-    renderColumnHeader,
-    rows,
-  ]);
+  );
 
   return (
     <>
