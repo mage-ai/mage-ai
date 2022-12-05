@@ -169,7 +169,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if pipeline_uuid:
             global_vars = message.get(
                 'global_vars',
-                get_global_variables(pipeline_uuid, pipeline.repo_path),
+                get_global_variables(pipeline_uuid),
             )
         global_vars['env'] = ENV_DEV
         if 'execution_date' not in global_vars:
