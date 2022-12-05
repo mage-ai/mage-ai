@@ -215,7 +215,6 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
             if pipeline_run.status != PipelineRun.PipelineRunStatus.COMPLETED:
                 pipeline_run.refresh()
                 pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
-                print('block runs:', list(map(lambda br: dict(name=br.block_uuid, status=br.status), pipeline_run.block_runs)))
                 incomplete_block_runs = \
                     list(
                         filter(
