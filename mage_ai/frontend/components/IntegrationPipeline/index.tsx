@@ -229,14 +229,17 @@ function IntegrationPipeline({
               selected_streams: selectedStreamIDs,
               streams: streamsInit,
             } = integrationSource;
-            const streams = streamsInit.filter(({
+
+            const streamsPrevious = (catalog?.streams || []).filter(({
               tap_stream_id: streamID,
             }) => selectedStreamIDs.includes(streamID));
-            const catalogData = {
-              streams,
-            };
+            const streamsPreviousIDs =
+              streamsPrevious.map(({ tap_stream_id: streamID }) => streamID);
+            const streamsNew = streamsInit.filter(({
+              tap_stream_id: streamID,
+            }) => selectedStreamIDs.includes(streamID) && !streamsPreviousIDs.includes(streamID));
 
-            streams.forEach((stream: StreamType) => {
+            streamsNew.forEach((stream: StreamType) => {
               stream.metadata.forEach((md, idx: number) => {
                 const {
                   metadata,
@@ -262,6 +265,10 @@ function IntegrationPipeline({
                 }
               });
             });
+
+            const catalogData = {
+              streams: streamsPrevious.concat(streamsNew),
+            };
 
             setOutputBlocks(() => []);
             setIntegrationStreams(streams.map(({ tap_stream_id }) => tap_stream_id));
