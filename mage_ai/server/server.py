@@ -280,7 +280,7 @@ class ApiPipelineListHandler(BaseHandler):
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         # Get global variables from project's path
-        variable_manager = VariableManager(variables_dir=get_repo_path())
+        variable_manager = VariableManager(variables_dir=get_variables_dir())
 
         def get_variable_value(block_uuid, variable_uuid):
             variable = variable_manager.get_variable_object(pipeline_uuid, block_uuid, variable_uuid)
@@ -330,7 +330,7 @@ class ApiPipelineVariableListHandler(BaseHandler):
 
         # Get global variables from project's path
         variables_dict = VariableManager(
-            variables_dir=get_repo_path(),
+            variables_dir=get_variables_dir(),
         ).get_variables_by_pipeline(pipeline_uuid)
         variables = [
             dict(
