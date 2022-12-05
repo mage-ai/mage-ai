@@ -31,6 +31,12 @@ import sys
 import uuid
 
 
+def convert_column_if_json(value, column_type):
+    if column_type == 'JSON':
+        return f"TO_JSON('{value}')"
+
+    return value
+
 class BigQuery(Destination):
     DATABASE_CONFIG_KEY = 'project_id'
     SCHEMA_CONFIG_KEY = 'dataset'
@@ -261,12 +267,12 @@ WHERE table_id = '{table_name}'
             column_type_mapping=mapping,
             columns=columns,
             convert_array_func=convert_array,
-            convert_column_to_type_func=convert_column_to_type,
+            convert_column_to_type_func=convert_column_if_json,
             convert_datetime_func=convert_datetime,
             records=records,
             string_parse_func=convert_json_or_string,
             stringify_values=False,
-            convert_column_types=False,
+            convert_column_types=True,
         )
         insert_columns = ', '.join(insert_columns)
 
