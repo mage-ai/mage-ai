@@ -451,10 +451,10 @@ Click on that security group and add a new rule with the following values:
 
 To enable HTTPS for Mage app deployed on GCP, you need to firstly make sure you have a domain. Then follow the steps below to set up HTTPS:
 1. In [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
-file, update the `default` value of `ssl` to be `true` and set the domain name in the `default` value of `domain` variable.
+file, update the `default` value of `ssl` to be `true`, and set the `default` value of `domain` variable to be the domain url you want to use.
 1. Run `terraform apply` to create the HTTPS load balancer.
 1. Get the `service_ip` from the output of terraform command.
-1. Update the DNS A and AAAA records to point to the load balancer's IP address: https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs#update-dns
+1. Update the DNS A and AAAA records to point the domain url to the load balancer's IP address: https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs#update-dns
 1. Visit the domain url to access your Mage app.
 
 ### Terminate all resources
