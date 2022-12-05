@@ -54,7 +54,13 @@ class Salesforce(Source):
     def sync(self, catalog: Catalog) -> None:
         catalog_dict = catalog.to_dict()
         state = build_state(self.state, catalog_dict)
-        do_sync(self.client, catalog_dict, state, logger=self.logger)
+        do_sync(
+            self.client,
+            catalog_dict,
+            state,
+            logger=self.logger,
+            sync_complete_callback=self.__sync_complete_callback,
+        )
 
     def discover(self, streams: List[str] = None) -> Catalog:
         try:
@@ -67,6 +73,12 @@ class Salesforce(Source):
 
     def get_stream_ids(self) -> List[str]:
         return discover_objects(self.client)
+
+    def __sync_complete_callback(self, tap_stream_id: str, record_count: int) -> None:
+        self.logger.info(f'Load data for stream {tap_stream_id} completed.', tags=dict(
+            records=record_count,
+            stream=tap_stream_id,
+        ))
 
     def __finally_clean_up(self):
         if self.client:

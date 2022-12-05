@@ -13,20 +13,36 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     if PipelineType.INTEGRATION != pipeline.type:
         return
 
+    stream_ors = []
+    for s in pipeline.streams():
+        stream = s['tap_stream_id']
+        stream_ors += [
+            BlockRun.block_uuid.contains(f'{pipeline.data_loader.uuid}:{stream}'),
+            BlockRun.block_uuid.contains(f'{pipeline.data_exporter.uuid}:{stream}'),
+        ]
+    all_block_runs = BlockRun.query.filter(
+        BlockRun.pipeline_run_id == pipeline_run.id,
+        or_(*stream_ors),
+    ).all()
+
     block_runs_by_stream = {}
+    for br in all_block_runs:
+        block_uuid = br.block_uuid
+        parts = block_uuid.split(':')
+        uuid = parts[0]
+        stream = parts[1]
+        if stream not in block_runs_by_stream:
+            block_runs_by_stream[stream] = []
+        block_runs_by_stream[stream].append(br)
+
     for s in pipeline.streams():
         stream = s['tap_stream_id']
 
         destinations = []
         sources = []
 
-        for br in BlockRun.query.filter(
-            BlockRun.pipeline_run_id == pipeline_run.id,
-            or_(
-                BlockRun.block_uuid.contains(f'{pipeline.data_loader.uuid}:{stream}'),
-                BlockRun.block_uuid.contains(f'{pipeline.data_exporter.uuid}:{stream}'),
-            ),
-        ).all():
+        block_runs = block_runs_by_stream.get(stream, [])
+        for br in block_runs:
             logs_arr = br.logs['content'].split('\n')
 
             if f'{pipeline.data_loader.uuid}:{stream}' in br.block_uuid:
@@ -39,13 +55,25 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
             sources=sources,
         )
 
+    shared_metric_keys = [
+        'block_tags',
+        'error',
+        'errors',
+        'message',
+    ]
+
     block_metrics_by_stream = get_metrics(block_runs_by_stream, [
-        ('sources', ['records']),
-        ('destinations', [
+        ('sources', shared_metric_keys + [
+            'record',
+            'records',
+        ]),
+        ('destinations', shared_metric_keys + [
+            'record',
             'records',
             'records_affected',
             'records_inserted',
             'records_updated',
+            'state',
         ]),
     ])
 
@@ -68,7 +96,7 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
         logs = pipeline_logs_by_stream.get(stream, [])
 
         pipeline_metrics_by_stream[stream] = get_metrics(dict(pipeline=dict(pipeline=[logs])), [
-            ('pipeline', [
+            ('pipeline', shared_metric_keys + [
                 'bookmarks',
                 'number_of_batches',
                 'record_counts',
@@ -77,7 +105,9 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
 
     pipeline_run.update(metrics=dict(
         blocks=block_metrics_by_stream,
+        destination=pipeline.destination_uuid,
         pipeline=pipeline_metrics_by_stream,
+        source=pipeline.source_uuid,
     ))
 
     return pipeline_run.metrics

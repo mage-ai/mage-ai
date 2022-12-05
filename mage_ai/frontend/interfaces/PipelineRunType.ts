@@ -3,11 +3,12 @@ import BlockRunType, { RunStatus as RunStatusEnum } from './BlockRunType';
 export const RunStatus = RunStatusEnum;
 
 export const RUN_STATUS_TO_LABEL = {
-  [RunStatus.COMPLETED]: 'Done',
+  [RunStatus.CALCULATING_METRICS]: 'Calculating metrics',
   [RunStatus.CANCELLED]: 'Cancelled',
+  [RunStatus.COMPLETED]: 'Done',
   [RunStatus.FAILED]: 'Failed',
-  [RunStatus.RUNNING]: 'Running',
   [RunStatus.INITIAL]: 'Ready',
+  [RunStatus.RUNNING]: 'Running',
 };
 
 export interface PipelineRunReqQueryParamsType {
@@ -18,7 +19,63 @@ export interface PipelineRunReqQueryParamsType {
 }
 
 interface Obj {
-  [key: string]: string | Obj;
+  [key: string]: number | string | Obj;
+}
+
+interface BlockTagsType {
+  destination_table: string;
+  index: number;
+  stream: string;
+  type: string;
+  uuid: string;
+}
+
+interface PipelineRunErrorType {
+  error?: string;
+  errors?: string[];
+  message?: string;
+}
+
+interface PipelineRunMetricsType {
+  blocks: {
+    [stream: string]: {
+      sources: PipelineRunErrorType & {
+        block_tags: BlockTagsType;
+        record: {
+          [column: string]: number | string;
+        };
+        records: number;
+      };
+      destinations: PipelineRunErrorType & {
+        block_tags: BlockTagsType;
+        record: {
+          [column: string]: number | string;
+        };
+        records: number;
+        records_affected: number;
+        records_inserted: number;
+        records_updated: number;
+        state: {
+          [stream: string]: {
+            [column: string]: number | string;
+          };
+        };
+      };
+    };
+  };
+  destination: string;
+  pipeline: {
+    [stream: string]: {
+      bookmarks: {
+        [stream: string]: {
+          [column: string]: number | string;
+        };
+      };
+      number_of_batches: number;
+      record_counts: number;
+    };
+  };
+  source: string;
 }
 
 export default interface PipelineRunType {
@@ -29,6 +86,8 @@ export default interface PipelineRunType {
   event_variables?: Obj;
   execution_date?: string;
   id?: number;
+  metrics?: PipelineRunMetricsType;
+  passed_sla?: boolean;
   pipeline_schedule_id?: number;
   pipeline_schedule_name?: string;
   pipeline_uuid?: string;

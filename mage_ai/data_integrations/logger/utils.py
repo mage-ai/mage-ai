@@ -1,9 +1,14 @@
 from datetime import datetime
 from mage_ai.shared.hash import merge_dict
+from typing import Dict
 import json
 
 
-def print_logs_from_output(output: str, logger=None):
+def print_logs_from_output(
+    output: str,
+    logger = None,
+    tags: Dict = {},
+):
     from mage_integrations.utils.logger.constants import (
         LOG_LEVEL_ERROR,
         LOG_LEVEL_EXCEPTION,
@@ -14,7 +19,7 @@ def print_logs_from_output(output: str, logger=None):
         try:
             data = json.loads(line)
             message = data.get('message')
-            tags = data.get('tags')
+            tags1 = data.get('tags')
 
             if 'timestamp' in data:
                 message = datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S') \
@@ -27,18 +32,20 @@ def print_logs_from_output(output: str, logger=None):
                         del data2['message']
                     if 'tags' in data2:
                         del data2['tags']
-                    updated_tags = tags
+
+                    updated_tags = tags1
                     try:
-                        updated_tags = merge_dict(tags, data2)
+                        updated_tags.update(data2)
                     except:
                         pass
-                    logger.info(message, tags=updated_tags)
+
+                    logger.info(message, tags=merge_dict(tags, updated_tags))
                 else:
                     print(json.dumps(data))
             if data.get('level') in [LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION]:
                 if message:
-                    if tags:
-                        message = f'{message} {json.dumps(tags)}'
+                    if tags1:
+                        message = f'{message} {json.dumps(tags1)}'
                 else:
                     message = 'Exception raised, please check logs for more details.'
 

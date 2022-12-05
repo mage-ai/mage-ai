@@ -426,13 +426,17 @@ class Source:
         if properties is not None:
             columns = list(properties.keys())
 
+        final_record = None
         for row in rows:
+            tap_stream_id = stream.tap_stream_id
+            record = {col: row.get(col) for col in columns}
             write_records(
-                stream.tap_stream_id,
+                tap_stream_id,
                 [
-                    {col: row.get(col) for col in columns},
+                    record,
                 ],
             )
+            final_record = record
 
             if REPLICATION_METHOD_INCREMENTAL == stream.replication_method and bookmark_properties:
                 if self.is_sorted:
@@ -441,7 +445,7 @@ class Source:
                     for idx, col in enumerate(bookmark_properties):
                         singer.write_bookmark(
                             state,
-                            stream.tap_stream_id,
+                            tap_stream_id,
                             col,
                             row.get(col),
                         )
@@ -453,6 +457,16 @@ class Source:
                         max_bookmark,
                         [row.get(col) for col in bookmark_properties],
                     )
+
+        if final_record:
+            self.logger.info(
+                f'Final record writing completed.',
+                tags=dict(
+                    record=final_record,
+                    stream=tap_stream_id,
+                ),
+            )
+
         return max_bookmark
 
     def sync(self, catalog: Catalog, properties: Dict = None) -> None:

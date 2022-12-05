@@ -2,6 +2,7 @@ from mage_ai.data_integrations.sources.constants import SQL_SOURCES
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict
 from typing import Dict, List, Tuple
@@ -13,20 +14,34 @@ SQL_SOURCES_UUID = [d.get('uuid', d['name'].lower()) for d in SQL_SOURCES]
 
 
 def initialize_state_and_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[BlockRun]:
+    tags = dict(
+        pipeline_run_id=pipeline_run.id,
+        pipeline_uuid=pipeline_run.pipeline_uuid,
+    )
+
     try:
         update_stream_states(pipeline_run, logger)
 
-        return create_block_runs(pipeline_run, logger)
+        block_runs = create_block_runs(pipeline_run, logger)
+
+        logger.info(
+            f'Calculate metrics for pipeline run {pipeline_run.id} started.',
+            tags=tags,
+        )
+        calculate_metrics(pipeline_run)
+        logger.info(
+            f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
+            tags=merge_dict(tags, dict(metrics=pipeline_run.metrics)),
+        )
+
+        return block_runs
     except Exception as err:
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
         logger.exception(
             str(err),
             error=err,
-            tags=dict(
-                pipeline_run_id=pipeline_run.id,
-                pipeline_uuid=pipeline_run.pipeline_uuid,
-            ),
+            tags=tags,
         )
 
         raise err

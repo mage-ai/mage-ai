@@ -323,6 +323,7 @@ class BlockRun(BaseModel):
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
     started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
+    metrics = Column(JSON)
 
     pipeline_run = relationship(PipelineRun, back_populates='block_runs')
 

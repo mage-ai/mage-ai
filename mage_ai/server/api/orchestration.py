@@ -230,8 +230,8 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
                         execution_process_manager.terminate_pipeline_process(pipeline_run.id)
                     else:
                         for br in incomplete_block_runs:
-                            execution_process_manager.terminate_block_process(pipeline_run.id, br.id)            
-                
+                            execution_process_manager.terminate_block_process(pipeline_run.id, br.id)
+
                 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
                 pipeline_scheduler = PipelineScheduler(pipeline_run)
 

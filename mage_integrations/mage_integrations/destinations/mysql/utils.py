@@ -47,10 +47,12 @@ def build_create_table_command(
         columns_and_types.append(col_statement)
 
     if unique_constraints:
-        cols = [clean_column_name(col) for col in unique_constraints]
-        index_name = '_'.join(cols)
-        index_name = f'unique_{index_name}'[:64]
-        columns_and_types.append(f"CONSTRAINT {index_name} Unique({', '.join(cols)})")
+        unique_constraints = [clean_column_name(col) for col in unique_constraints]
+        index_name = '_'.join([
+            clean_column_name(full_table_name),
+        ] + unique_constraints)
+        index_name = f'unique{index_name}'[:64]
+        columns_and_types.append(f"CONSTRAINT {index_name} Unique({', '.join(unique_constraints)})")
 
     if key_properties and len(key_properties) >= 1:
         col = clean_column_name(key_properties[0])

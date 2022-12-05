@@ -155,21 +155,45 @@ class PipelineScheduler:
         )
 
     @retry(retries=3, delay=5)
-    def on_block_failure(self, block_uuid: str) -> None:
+    def on_block_failure(self, block_uuid: str, **kwargs) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        block_run.update(status=BlockRun.BlockRunStatus.FAILED)
+        metrics = block_run.metrics or {}
+
+        if 'error' in kwargs:
+            metrics['error'] = kwargs['error']
+
+        block_run.update(
+            metrics=metrics,
+            status=BlockRun.BlockRunStatus.FAILED,
+        )
+
+        tags = self.__build_tags(
+            block_run_id=block_run.id,
+            block_uuid=block_run.block_uuid,
+        )
+
         self.logger.info(
             f'BlockRun {block_run.id} (block_uuid: {block_uuid}) failed.',
-            **self.__build_tags(
-                block_run_id=block_run.id,
-                block_uuid=block_run.block_uuid,
-            ),
+            **tags,
         )
+
         self.notification_sender.send_pipeline_run_failure_message(
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
         )
+
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+
+        if PipelineType.INTEGRATION == self.pipeline.type:
+            self.logger.info(
+                f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
+                tags=tags,
+            )
+            calculate_metrics(self.pipeline_run)
+            self.logger.info(
+                f'Calculate metrics for pipeline run {self.pipeline_run.id} error completed.',
+                tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
+            )
 
     @property
     def executable_block_runs(self) -> List[BlockRun]:
@@ -354,7 +378,7 @@ def run_integration_pipeline(
         block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
         if len(block_runs_for_stream) == 0:
             continue
-        
+
         indexes = [0]
         for br in block_runs_for_stream:
             parts = br.block_uuid.split(':')
@@ -442,6 +466,26 @@ def run_integration_pipeline(
                     template_runtime_configuration=template_runtime_configuration,
                 )
                 outputs.append(output)
+
+                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
+                    f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
+
+                    tags2 = merge_dict(tags_updated.get('tags', {}), dict(
+                        destination_table=destination_table,
+                        index=index,
+                        stream=tap_stream_id,
+                    ))
+                    pipeline_scheduler.logger.info(
+                        f'Calculate metrics for pipeline run {pipeline_run.id} started.',
+                        **tags_updated,
+                        tags=tags2,
+                    )
+                    calculate_metrics(pipeline_run)
+                    pipeline_scheduler.logger.info(
+                        f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
+                        **tags_updated,
+                        tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
+                    )
 
 
 def run_block(

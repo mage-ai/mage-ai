@@ -284,6 +284,8 @@ class Destination():
         self.versions = {}
 
         batches_by_stream = {}
+        final_record_data = None
+        final_state_data = None
 
         text_input = io.TextIOWrapper(input_buffer, encoding='utf-8')
         for line in text_input:
@@ -293,6 +295,10 @@ class Destination():
                 row = json.loads(line)
             except json.decoder.JSONDecodeError:
                 self.logger.info(f'Unable to parse: {line}', tags=tags)
+                continue
+
+            if not row:
+                self.logger.info(f'No valid row data {row} for line: {line}', tags=tags)
                 continue
 
             row_type = row.get(KEY_TYPE)
@@ -350,6 +356,7 @@ class Destination():
                     batches_by_stream[stream]['record_data'].append(record_data)
                 else:
                     self.process_record(**record_data)
+                    final_record_data = record_data
             elif TYPE_STATE == row_type:
                 state_data = dict(row=row, tags=tags)
 
@@ -357,6 +364,7 @@ class Destination():
                     batches_by_stream[stream]['state_data'].append(state_data)
                 else:
                     self.process_state(**state_data)
+                    final_state_data = state_data
             else:
                 message = f'Unknown message type {row_type} in message {row}.'
                 self.logger.exception(message, tags=tags)
@@ -372,6 +380,7 @@ class Destination():
                 # be persisted for previously successfully streams
                 try:
                     self.process_record_data(record_data, stream)
+                    final_record_data = record_data[-1]
 
                     states = batches['state_data']
                     if len(states) >= 1:
@@ -384,9 +393,24 @@ class Destination():
             for stream, state in stream_states.items():
                 bookmarks.update(state['row'][KEY_VALUE]['bookmarks'])
 
-            self.process_state(row={
+            state_data = dict(row={
                 KEY_VALUE: dict(bookmarks=bookmarks),
             })
+            self.process_state(**state_data)
+            final_state_data = state_data
+
+        if final_state_data:
+            self.logger.info(
+                f'Final state for bookmark properties update completed.',
+                tags=merge_dict(tags, dict(state=final_state_data['row'][KEY_VALUE])),
+            )
+
+        if final_record_data:
+            record_adjusted = self.__prepare_record(**final_record_data)
+            self.logger.info(
+                f'Final record processing completed.',
+                tags=merge_dict(tags, dict(record=record_adjusted)),
+            )
 
         for err in errors:
             raise err
@@ -402,7 +426,7 @@ class Destination():
                 sys.stdout.write(text)
                 sys.stdout.flush()
 
-    def __validate_and_prepare_record(
+    def __prepare_record(
         self,
         stream: str,
         schema: dict,
@@ -466,6 +490,17 @@ class Destination():
                     record_adjusted[k] = json.loads(v1)
                 except json.decoder.JSONDecodeError:
                     record_adjusted[k] = ast.literal_eval(v1)
+
+        return record_adjusted
+
+    def __validate_and_prepare_record(
+        self,
+        stream: str,
+        schema: dict,
+        row: dict,
+        tags: dict = {},
+    ) -> Dict:
+        record_adjusted = self.__prepare_record(stream, schema, row, tags)
 
         if not self.disable_column_type_check.get(stream, False):
             self.validators[stream].validate(record_adjusted)
