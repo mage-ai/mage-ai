@@ -65,9 +65,7 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
         records = 0;
       }
       records += Number(metricsPipeline?.[stream]?.record_counts);
-    }
-
-    if (sources?.records) {
+    } else if (sources?.records) {
       if (records === null) {
         records = 0;
       }

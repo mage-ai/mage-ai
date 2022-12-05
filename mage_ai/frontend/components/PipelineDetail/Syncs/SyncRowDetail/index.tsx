@@ -35,6 +35,7 @@ import {
   pipelineRunProgress,
   pipelineRunRuntime,
 } from '@utils/models/pipelineRun';
+import { pauseEvent } from '@utils/events';
 import { range, sortByKey, sum } from '@utils/array';
 
 type SyncRowDetailProps = {
@@ -430,9 +431,12 @@ function SyncRowDetail({
               iconOnly
               key="logs"
               noBackground
-              onClick={() => router.push(
-                `/pipelines/${pipelineRun.pipeline_uuid}/logs?pipeline_run_id[]=${pipelineRun.id}`,
-              )}
+              onClick={(e) => {
+                router.push(
+                  `/pipelines/${pipelineRun.pipeline_uuid}/logs?pipeline_run_id[]=${pipelineRun.id}`,
+                );
+                pauseEvent(e);
+              }}
             >
               <TodoList default size={2 * UNIT} />
             </Button>,
@@ -450,7 +454,7 @@ function SyncRowDetail({
 
   const bookmarksTableMemo = useMemo(() => {
     if (!pipelineRun || !selectedStream) {
-      return <div />;
+      return;
     }
 
     const metrics = pipelineRun?.metrics || {
@@ -463,6 +467,10 @@ function SyncRowDetail({
       metrics?.pipeline?.[selectedStream]?.bookmarks?.[selectedStream];
     const destinationState =
       metrics?.blocks?.[selectedStream]?.destinations?.state?.bookmarks?.[selectedStream];
+
+    if (!sourceState && !destinationState) {
+      return;
+    }
 
     const columns = Array.from(
       new Set(
@@ -484,7 +492,7 @@ function SyncRowDetail({
         }
 
         arr.push(
-          <Text default key={`${col}-${idx}`} monospace small>
+          <Text key={`${col}-${idx}`} monospace small>
             {obj[col]}
           </Text>
         );
@@ -529,7 +537,7 @@ function SyncRowDetail({
 
   const recentRecordTableMemo = useMemo(() => {
     if (!pipelineRun || !selectedStream) {
-      return <div />;
+      return;
     }
 
     const metrics = pipelineRun?.metrics || {
@@ -540,6 +548,10 @@ function SyncRowDetail({
     };
     const sourceRecord = metrics?.blocks?.[selectedStream]?.sources?.record;
     const destinationRecord = metrics?.blocks?.[selectedStream]?.destinations?.record;
+
+    if (!sourceRecord && !destinationRecord) {
+      return;
+    }
 
     const columns = Object.keys(sourceRecord || destinationRecord || {}).sort();
 
@@ -556,12 +568,28 @@ function SyncRowDetail({
           return;
         }
 
+        const v = obj[col];
+        const isJSONObject = typeof v === 'object';
+
         arr.push(
-          <Text default key={`${col}-${idx}`} monospace small>
-            {obj[col]}
+          <Text
+            key={`${col}-${idx}`}
+            monospace
+            small
+            textOverflow
+            whiteSpaceNormal
+            wordBreak
+          >
+            {isJSONObject && (
+              <pre>
+                {JSON.stringify(v, null, 2)}
+              </pre>
+            )}
+            {!isJSONObject && v}
           </Text>
         );
       });
+
 
       rowData.push(arr);
     });
@@ -599,6 +627,15 @@ function SyncRowDetail({
         uuid={`${selectedStream}-bookmark-table`}
       />
     );
+  }, [
+    pipelineRun,
+    selectedStream,
+  ]);
+
+  const destinationTable: string = useMemo(() => {
+    const obj = pipelineRun?.metrics?.blocks?.[selectedStream];
+    return obj?.sources?.block_tags?.destination_table ||
+      obj?.destinations?.block_tags?.destination_table;
   }, [
     pipelineRun,
     selectedStream,
@@ -678,7 +715,7 @@ function SyncRowDetail({
 
         {pipelineRun && (
           <>
-            <Spacing mt={2}>
+            <Spacing mt={3}>
               <FlexContainer justifyContent="space-between">
                 <div>
                   <Text bold large muted>
@@ -768,29 +805,49 @@ function SyncRowDetail({
 
       {pipelineRun && selectedStream && (
         <>
-          <Spacing my={3}>
-            <Spacing px={3}>
-              <Headline level={5}>
-                Bookmarks
-              </Headline>
-            </Spacing>
+          {destinationTable && (
+            <Spacing my={3}>
+              <Spacing px={3}>
+                <Headline level={5}>
+                  Table name
+                </Headline>
 
-            <Spacing px={1}>
-              {bookmarksTableMemo}
+                <Spacing mt={1}>
+                  <Text default monospace>
+                    {destinationTable}
+                  </Text>
+                </Spacing>
+              </Spacing>
             </Spacing>
-          </Spacing>
+          )}
 
-          <Spacing my={3}>
-            <Spacing px={3}>
-              <Headline level={5}>
-                Sample row
-              </Headline>
-            </Spacing>
+          {bookmarksTableMemo && (
+            <Spacing my={3}>
+              <Spacing px={3}>
+                <Headline level={5}>
+                  Bookmarks
+                </Headline>
+              </Spacing>
 
-            <Spacing px={1}>
-              {recentRecordTableMemo}
+              <Spacing px={1}>
+                {bookmarksTableMemo}
+              </Spacing>
             </Spacing>
-          </Spacing>
+          )}
+
+          {recentRecordTableMemo && (
+            <Spacing my={3}>
+              <Spacing px={3}>
+                <Headline level={5}>
+                  Sample row
+                </Headline>
+              </Spacing>
+
+              <Spacing px={1}>
+                {recentRecordTableMemo}
+              </Spacing>
+            </Spacing>
+          )}
         </>
       )}
     </>
