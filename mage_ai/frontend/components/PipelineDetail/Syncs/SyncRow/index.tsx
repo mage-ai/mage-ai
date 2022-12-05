@@ -31,7 +31,7 @@ import {
 } from '@utils/models/pipelineRun';
 
 type SyncRowProps = {
-  onSelect: () => void;
+  onSelect: (id: number) => void;
   pipelineRun: PipelineRunType;
   selected: boolean;
 };
@@ -46,7 +46,12 @@ function SyncRow({
     created_at: createdAt,
     status,
   } = pipelineRun;
-  const metrics = useMemo(() => pipelineRun?.metrics || {}, [pipelineRun]);
+  const metrics = useMemo(() => pipelineRun?.metrics || {
+    blocks: {},
+    destination: null,
+    pipeline: {},
+    source: null,
+  }, [pipelineRun]);
   const metricsBlocks = useMemo(() => metrics.blocks || {}, [metrics]);
   const metricsPipeline = useMemo(() => metrics.pipeline || {}, [metrics]);
 
@@ -57,7 +62,7 @@ function SyncRow({
     errors,
     records,
     recordsProcessed,
-  }: number = useMemo(() => getRecordsData(pipelineRun), [pipelineRun]);
+  } = useMemo(() => getRecordsData(pipelineRun), [pipelineRun]);
 
   const progress = useMemo(() => pipelineRunProgress(pipelineRun), [pipelineRun]);
 
@@ -143,7 +148,7 @@ function SyncRow({
             <Spacing ml={3} py={3}>
               <Spacing mb={1}>
                 <Text bold muted small>
-                  Records processed
+                  Rows processed
                 </Text>
                 <Text monospace>
                   {recordsProcessed >= 1 ? numberWithCommas(recordsProcessed) : '-'}
@@ -151,10 +156,10 @@ function SyncRow({
               </Spacing>
               <Spacing mb={1}>
                 <Text bold muted small>
-                  Records remaining
+                  Rows remaining
                 </Text>
                 <Text monospace>
-                  {records >= 1 ? numberWithCommas(records - recordsProcessed) : '-'}
+                  {records >= 1 && records >= recordsProcessed ? numberWithCommas(records - recordsProcessed) : '-'}
                 </Text>
               </Spacing>
               {RunStatus.RUNNING !== status && (
@@ -188,7 +193,9 @@ function SyncRow({
                 <Text bold muted small>
                   Streams
                 </Text>
-                <Text monospace>{numberWithCommas(numberOfStreams)}</Text>
+                <Text monospace>
+                  {numberOfStreams >= 1 ? numberWithCommas(numberOfStreams) : '-'}
+                </Text>
               </Spacing>
             </Spacing>
           </Flex>

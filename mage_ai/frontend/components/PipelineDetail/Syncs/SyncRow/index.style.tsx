@@ -36,7 +36,7 @@ export const RowStyle = styled.div<{
   `}
 
   ${props => props.selected && props.default && `
-    border-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
+    border-color: ${(props.theme.interactive || dark.interactive).focusBackground};
   `}
 
   ${props => props.selected && props.success && `
@@ -57,7 +57,7 @@ export const RowStyle = styled.div<{
     `}
 
     ${props => props.default && `
-      border-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
+      border-color: ${(props.theme.interactive || dark.interactive).focusBackground};
     `}
 
     ${props => props.success && `
@@ -149,4 +149,8 @@ export const BarStyle = styled.div<{
   display: flex;
   height: auto;
   width: 3px;
+
+  ${props => props.default && `
+    background-color: ${(props.theme.interactive || dark.interactive).focusBackground};
+  `}
 `;

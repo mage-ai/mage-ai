@@ -175,7 +175,18 @@ function SyncRowDetail({
 
   const timesForStream = useMemo(() => pipelineRun && selectedStream
       ? getTimesFromStream(pipelineRun, selectedStream)
-      : {},
+      : {
+        completed: null,
+        completedAt: null,
+        done: null,
+        progress: null,
+        runtime: null,
+        startedAt: null,
+        status: null,
+        timeText: null,
+        total: null,
+        updatedAt: null,
+      },
     [
       pipelineRun,
       selectedStream,
@@ -254,12 +265,24 @@ function SyncRowDetail({
     recordsUpdated,
   } = useMemo(() => pipelineRun
       ? getRecordsData(pipelineRun)
-      : {},
+      : {
+        errors: null,
+        records: null,
+        recordsInserted: null,
+        recordsProcessed: null,
+        recordsUpdated: null,
+      },
     [pipelineRun],
   );
   const recordsDataForStream = useMemo(() => pipelineRun && selectedStream
       ? getRecordsData(pipelineRun, selectedStream)
-      : {},
+      : {
+        errors: null,
+        records: null,
+        recordsInserted: null,
+        recordsProcessed: null,
+        recordsUpdated: null,
+      },
     [pipelineRun, selectedStream],
   );
 
@@ -271,24 +294,24 @@ function SyncRowDetail({
 
     const arr = [
       {
-        label: 'Records fetched',
+        label: 'Rows fetched',
         value: records1 === null ? '-' : numberWithCommas(records1),
       },
     ];
 
     if (recordsInserted1 === null && recordsUpdated1 === null) {
       arr.push({
-        label: 'Records processed',
+        label: 'Rows processed',
         value: recordsProcessed1 === null ? '-' : numberWithCommas(recordsProcessed1),
       });
     } else if (recordsInserted1 !== null) {
       arr.push({
-        label: 'Records inserted',
+        label: 'Rows inserted',
         value: numberWithCommas(recordsInserted1),
       });
     } else if (recordsUpdated1 !== null) {
       arr.push({
-        label: 'Records updated',
+        label: 'Rows updated',
         value: numberWithCommas(recordsUpdated1),
       });
     }
@@ -322,7 +345,10 @@ function SyncRowDetail({
       return <div />;
     }
 
-    const metrics = pipelineRun?.metrics || {};
+    const metrics = pipelineRun?.metrics || {
+      blocks: null,
+      pipeline: null,
+    };
     const metricsBlocks = metrics.blocks || {};
     const metricsPipeline = metrics.pipeline || {};
     const streams = getStreams(pipelineRun);
@@ -529,6 +555,10 @@ function SyncRowDetail({
                         error: errorLine,
                         errors: errorStack,
                         message: errorTraceback,
+                      }: {
+                        error?: string;
+                        errors?: string[];
+                        message?: string;
                       } = obj2;
 
                       return (

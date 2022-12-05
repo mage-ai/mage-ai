@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useMutation } from 'react-query';
-import { useRouter } from 'next/router';PageNameEnum.STATUS
+import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
@@ -268,6 +268,7 @@ function PipelineDetailPage({
     });
   }
 
+  // @ts-ignore
   navigationItems.unshift({
     Icon: null,
     IconSelected: null,

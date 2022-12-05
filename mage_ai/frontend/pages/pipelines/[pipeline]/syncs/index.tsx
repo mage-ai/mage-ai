@@ -102,6 +102,7 @@ function PipelineSchedules({
     ];
 
     if (selectedStream) {
+      // @ts-ignore
       arr.push({
         label: () => selectedStream,
       });

@@ -16,9 +16,7 @@ export function getStreams(pipelineRun: PipelineRunType): string[] {
 }
 
 export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: string = null): {
-  errors: {
-    [key: string]: any;
-  };
+  errors: { [key: string]: any };
   records: number;
   recordsInserted: number;
   recordsProcessed: number;
@@ -34,15 +32,33 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
   const metricsBlocks = pipelineRun?.metrics?.blocks || {};
   const metricsPipeline = pipelineRun?.metrics?.pipeline || {};
 
+  const blockRunsByStream = getBlockRunsByStream(pipelineRun);
+
   Object.entries(metricsBlocks).forEach(([stream, obj]) => {
     if (streamToSelect && streamToSelect !== stream) {
       return;
     }
 
     const {
-      destinations = {},
-      sources = {},
+      destinations = {
+        records_affected: null,
+        records_inserted: null,
+        records_updated: null,
+      },
+      sources = {
+        records: null,
+      },
     } = obj || {};
+
+    const blockRunsForStream = blockRunsByStream[stream] || [];
+
+    if (streamToSelect
+      && streamToSelect === stream
+      && blockRunsForStream.every(({ status }) => RunStatusBlockRun.COMPLETED === status)
+      && records === null
+    ) {
+      records = 0
+    }
 
     if (metricsPipeline?.[stream]?.record_counts) {
       if (records === null) {
@@ -89,7 +105,7 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
       const obj2 = obj[key] || {};
 
       if (obj2?.error) {
-        if (!errors.stream) {
+        if (!errors[stream]) {
           errors[stream] = {}
         }
 
@@ -151,7 +167,11 @@ export function getBlockRunsByStream(pipelineRun: PipelineRunType): {
 }
 
 export function pipelineRunEstimatedTimeRemaining(pipelineRun: PipelineRunType): {
-  [stream: string]: number;
+  [stream: string]: {
+    completed: number;
+    runtime: number;
+    total: number;
+  };
 } {
   const blockRunsByStream = getBlockRunsByStream(pipelineRun);
 
@@ -219,23 +239,40 @@ export function pipelineRunRuntime(pipelineRun: PipelineRunType): number {
   return a.diff(b, 'second');
 }
 
-export function getTimesFromStream(pipelineRun: PipelineRunType, stream: string) {
+export function getTimesFromStream(pipelineRun: PipelineRunType, stream: string): {
+  completed: number;
+  completedAt: string;
+  done: boolean;
+  progress: number;
+  runtime: number;
+  startedAt: string;
+  status: RunStatusBlockRun;
+  timeText: string;
+  total: number;
+  updatedAt: string;
+} {
   const blockRunsByStream = getBlockRunsByStream(pipelineRun);
   const etaByStream = pipelineRunEstimatedTimeRemaining(pipelineRun);
 
-  const metrics = pipelineRun?.metrics || {};
+  const metrics = pipelineRun?.metrics || {
+    blocks: null,
+    pipeline: null,
+  };
   const metricsBlocks = metrics.blocks || {};
   const metricsPipeline = metrics.pipeline || {};
 
   const metricsBlock1 = metricsBlocks[stream] || {};
   const metricsBlock2 = metricsPipeline[stream] || {};
 
-  const etaForStream = etaByStream[stream] || {};
+  const etaForStream = etaByStream[stream] || {
+    completed: null,
+    total: null,
+  };
   const {
     completed,
     total,
   } = etaForStream;
-  const progress = completed / total;
+  const progress = completed && total ? completed / total : 0;
 
   const brs = blockRunsByStream[stream] || [];
   const done = brs.every(({ status }) => RunStatusBlockRun.COMPLETED === status);
