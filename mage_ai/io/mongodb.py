@@ -19,6 +19,22 @@ from optparse import OptionParser
 from sys import stdout, exit as sys_exit
 
 
+def debug_print(func):
+    """
+    Just a utility decorator to stay out of the way and help with debugging.
+    
+    Args:
+        func: Name of function.
+
+    Returns:
+        function
+    """
+    def wrapper(*args, **kwargs):
+        ret = func(*args, **kwargs)
+        return ret
+    return wrapper 
+
+
 class MongoDB(BaseSQLConnection):
     """
     Handles data transfer between a MongoDB database and the Mage app.
@@ -185,10 +201,6 @@ class MongoDB(BaseSQLConnection):
             db = self._ctx[db_name]
             
             collection_exists = self.__collection_exists(db, col_name)
-
-            # db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
-            # print(db_dtypes)
-            # return
         
             if collection_exists:
                 if ExportWritePolicy.FAIL == if_exists:
@@ -322,22 +334,7 @@ class MongoDB(BaseSQLConnection):
             password=config[ConfigKey.MONGODB_PASSWORD],
             host=config[ConfigKey.MONGODB_HOST],
             port=config[ConfigKey.MONGODB_PORT],
-        )  
-    
-    def debug_print(func):
-        """
-        Just a utility decorator to stay out of the way and help with debugging.
-        
-        Args:
-            func: Name of function.
-
-        Returns:
-            function
-        """
-        def wrapper(*args, **kwargs):
-            ret = func(*args, **kwargs)
-            return ret
-        return wrapper  
+        )   
     
     def sql_to_spec(self, query: str) -> None or dict:
         """
@@ -350,7 +347,7 @@ class MongoDB(BaseSQLConnection):
         Returns:
             str: None or a dictionary containing a mongo spec.
         """
-        @self.debug_print
+        @debug_print
         def fix_token_list(in_list):
             """
             tokens as List is some times deaply nested and hard to deal with.
@@ -362,17 +359,17 @@ class MongoDB(BaseSQLConnection):
             else:
                 return [item for item in in_list]
 
-        @self.debug_print
+        @debug_print
         def select_count_func(*args):
             tokens = args[2]
             return full_select_func(tokens, 'count')
 
-        @self.debug_print
+        @debug_print
         def select_distinct_func(*args):
             tokens = args[2]
             return full_select_func(tokens, 'distinct')
 
-        @self.debug_print
+        @debug_print
         def select_func(*args):
             tokens = args[2]
             return full_select_func(tokens, 'select')
@@ -397,7 +394,7 @@ class MongoDB(BaseSQLConnection):
                 
             return ret
 
-        @self.debug_print
+        @debug_print
         def where_func(*args):
             """
             Take tokens and return a dictionary.
@@ -428,7 +425,7 @@ class MongoDB(BaseSQLConnection):
 
             return expr
 
-        @self.debug_print
+        @debug_print
         def combine(*args):
             tokens = args[2]
             if tokens:
@@ -551,9 +548,6 @@ class MongoDB(BaseSQLConnection):
         
         if not collection:
             return
-        elif collection == 'MONGODB_COLNAME':
-            collection = self.settings['colname']
-            
         shell_query = "db." + collection + "."
 
         if query_dict.get('find'):
