@@ -88,6 +88,7 @@ setuptools.setup(
             'redshift-connector==2.0.909',
             'requests_aws4auth',
             'snowflake-connector-python==2.7.9',
+            'pymongo==4.3.3'
         ],
     },
 )

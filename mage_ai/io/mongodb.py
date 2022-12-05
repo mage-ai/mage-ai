@@ -1,4 +1,6 @@
+from bson.json_util import dumps
 from io import StringIO
+import json
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import (
@@ -9,10 +11,14 @@ from mage_ai.io.export_utils import (
     PandasTypes,
 )
 from pandas import DataFrame, read_sql, Series, read_json
+from pymongo import MongoClient, database
 from psycopg2 import connect
 import numpy as np
-from pymongo import MongoClient
-from bson.json_util import dumps
+
+from optparse import OptionParser
+from sys import stdout, exit as sys_exit
+
+
 class MongoDB(BaseSQLConnection):
     """
     Handles data transfer between a MongoDB database and the Mage app.
@@ -22,8 +28,8 @@ class MongoDB(BaseSQLConnection):
         self,
         dbname: str,
         colname: str,
-        user: str,
-        password: str,
+        user: str or None,
+        password: str or None,
         host: str,
         port: str = None,
         verbose=True,
@@ -67,18 +73,31 @@ class MongoDB(BaseSQLConnection):
                 conn = MongoClient(host, port)
             self._ctx = conn
 
-    def execute(self, query_string: str, **query_vars) -> None:
+    def execute(self, query_string: str, **query_vars) -> None or dict:
         """
-        Sends query to the connected database.
+        Convert SQL query to Mongo shell -> execute.
 
         Args:
             query_string (str): SQL query string to apply on the connected database.
             query_vars: Variable values to fill in when using format strings in query.
+            
+        Returns:
+            Dict: Mongo data.
         """
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            
             query_string = self._clean_query(query_string)
-            with self.conn.cursor() as cur:
-                cur.execute(query_string, **query_vars)
+
+            db = self._ctx[self.settings['dbname']]
+            
+            # convert SQL query to Mongo query
+            spec_dict = self.sql_to_spec(query_string)
+            query_mongo = self.create_mongo_shell_query(spec_dict)
+            
+            # execute Mongo query
+            mongo_result = eval(query_mongo)
+            
+            return mongo_result
 
     def load(
         self,
@@ -113,24 +132,24 @@ class MongoDB(BaseSQLConnection):
                 print_message += f'\n{query_string}'
 
         query_string = self._clean_query(query_string)
-    
-        db = self._ctx[self.settings['dbname']]
-        collection = db[self.settings['colname']]
-
+        
+        # get mongo_data after execute SQL
+        mongo_data = self.execute(query_string)
+        
+        #convert mongo_data to dataframe
+        json_data = dumps(list(mongo_data))
+        df = read_json(StringIO(json_data))
+        
         with self.printer.print_msg(print_message):
-            if query_string == "":
-                mongo_data = collection.find()
-            else:
-                mongo_data = eval(query_string)
-            json_data = dumps(list(mongo_data))
-            df = read_json(StringIO(json_data))
+            if df.empty:
+                return {}
             return df
 
     def export(
         self,
         df: DataFrame,
-        schema_name: str,
-        table_name: str,
+        db_name: str,
+        col_name: str,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
         verbose: bool = True,
@@ -143,19 +162,18 @@ class MongoDB(BaseSQLConnection):
         exist, the table is automatically created. If the schema doesn't exist, the schema is also created.
 
         Args:
-            schema_name (str): Name of the schema of the table to export data to.
-            table_name (str): Name of the table to insert rows from this data frame into.
-            if_exists (ExportWritePolicy): Specifies export policy if table exists. Either
+            db_name (str): Name of the database of the collection to export data to.
+            col_name (str): Name of the collection to insert rows from this data frame into.
+            if_exists (ExportWritePolicy): Specifies export policy if collection exists. Either
                 - `'fail'`: throw an error.
-                - `'replace'`: drops existing table and creates new table of same name.
-                - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
+                - `'replace'`: drops existing collection and creates new collection of same name.
+                - `'append'`: appends data frame to existing collection. In this case the schema must match the original collection.
             Defaults to `'replace'`.
-            index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
+            index (bool): If true, the data frame index is also exported alongside the collection. Defaults to False.
             **kwargs: Additional query parameters.
         """
-
-        full_table_name = f'{schema_name}.{table_name}'
-
+        full_collection_name = f'{db_name}.{col_name}'
+        
         if not query_string:
             if index:
                 df = df.reset_index()
@@ -164,79 +182,51 @@ class MongoDB(BaseSQLConnection):
             df = clean_df_for_export(df, self.clean, dtypes)
 
         def __process():
-            buffer = StringIO()
-            table_exists = self.__table_exists(schema_name, table_name)
+            db = self._ctx[db_name]
+            
+            collection_exists = self.__collection_exists(db, col_name)
 
-            with self.conn.cursor() as cur:
-                cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
-
-                should_create_table = not table_exists
-
-                if table_exists:
-                    if ExportWritePolicy.FAIL == if_exists:
-                        raise ValueError(
-                            f'Table \'{full_table_name}\' already exists in database.'
-                        )
-                    elif ExportWritePolicy.REPLACE == if_exists:
-                        if drop_table_on_replace:
-                            cmd = f'DROP TABLE {full_table_name}'
-                            if cascade_on_drop:
-                                cmd = f'{cmd} CASCADE'
-                            cur.execute(cmd)
-                            should_create_table = True
-                        else:
-                            cur.execute(f'DELETE FROM {full_table_name}')
-
-                if query_string:
-                    query = 'CREATE TABLE {} AS\n{}'.format(
-                        full_table_name,
-                        query_string,
+            # db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
+            # print(db_dtypes)
+            # return
+        
+            if collection_exists:
+                if ExportWritePolicy.FAIL == if_exists:
+                    raise ValueError(
+                        f'Collection \'{full_collection_name}\' already exists in database.'
                     )
+                elif ExportWritePolicy.REPLACE == if_exists:
+                    db[self.settings['colname']].delete_many({})
 
-                    if ExportWritePolicy.APPEND == if_exists and table_exists:
-                        query = 'INSERT INTO {}\n{}'.format(
-                            full_table_name,
-                            query_string,
-                        )
-                    cur.execute(query)
-                else:
-                    if should_create_table:
-                        db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
-                        query = gen_table_creation_query(db_dtypes, schema_name, table_name)
-                        cur.execute(query)
-
-                    df.to_csv(buffer, index=False, header=False)
-                    buffer.seek(0)
-                    cur.copy_expert(
-                        f'COPY {full_table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
-                        buffer,
-                    )
-            self.conn.commit()
+            data_export = json.loads(df.T.to_json()).values()
+            collection = db[col_name]
+            for data in data_export:
+                collection.insert_one(data)
             
         if verbose:
             with self.printer.print_msg(
-                f'Exporting data to \'{full_table_name}\''
+                f'Exporting data to \'{full_collection_name}\''
             ):
                 __process()
         else:
             __process()
 
-    def __table_exists(self, schema_name: str, table_name: str) -> bool:
+    def __collection_exists(self, db: database.Database, col_name: str) -> bool:
         """
-        Returns whether the specified table exists.
+        Returns whether the specified collection exists.
 
         Args:
-            schema_name (str): Name of the schema the table belongs to.
-            table_name (str): Name of the table to check existence of.
+            db (database.Database): The database the collection belongs to.
+            col_name (str): Name of the collection to check existence of.
 
         Returns:
-            bool: True if the table exists, else False.
+            bool: True if the collection exists, else False.
         """
-        with self.conn.cursor() as cur:
-            cur.execute(
-                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\''
-            )
-            return bool(cur.rowcount)
+        mongo_collection = db.list_collection_names()
+
+        col_exists = bool([True for col in mongo_collection if col_name in col] or False)
+
+        return col_exists
 
     def clean(self, column: Series, dtype: str) -> Series:
         """
@@ -332,4 +322,256 @@ class MongoDB(BaseSQLConnection):
             password=config[ConfigKey.MONGODB_PASSWORD],
             host=config[ConfigKey.MONGODB_HOST],
             port=config[ConfigKey.MONGODB_PORT],
-        )
+        )  
+    
+    def debug_print(func):
+        """
+        Just a utility decorator to stay out of the way and help with debugging.
+        
+        Args:
+            func: Name of function.
+
+        Returns:
+            function
+        """
+        def wrapper(*args, **kwargs):
+            ret = func(*args, **kwargs)
+            return ret
+        return wrapper  
+    
+    def sql_to_spec(self, query: str) -> None or dict:
+        """
+        Convert an SQL query to a mongo spec.
+        This only supports select statements. For now.
+        
+        Args:
+            query: String. A SQL query statement. str
+                    
+        Returns:
+            str: None or a dictionary containing a mongo spec.
+        """
+        @self.debug_print
+        def fix_token_list(in_list):
+            """
+            tokens as List is some times deaply nested and hard to deal with.
+            Improve parser grouping remove this.
+            """
+            if isinstance(in_list, list) and len(in_list) == 1 and \
+            isinstance(in_list[0], list):
+                return fix_token_list(in_list[0])
+            else:
+                return [item for item in in_list]
+
+        @self.debug_print
+        def select_count_func(*args):
+            tokens = args[2]
+            return full_select_func(tokens, 'count')
+
+        @self.debug_print
+        def select_distinct_func(*args):
+            tokens = args[2]
+            return full_select_func(tokens, 'distinct')
+
+        @self.debug_print
+        def select_func(*args):
+            tokens = args[2]
+            return full_select_func(tokens, 'select')
+
+        def full_select_func(tokens=None, method='select'):
+            """
+            Take tokens and return a dictionary.
+            """
+            action = {'distinct': 'distinct',
+                    'count': 'count'
+                    }.get(method, 'find')
+            if tokens is None:
+                return
+            ret = {action: True, 'fields': {item: 1 for item in fix_token_list(tokens.asList())}}
+            if ret['fields'].get('id'):  # Use _id and not id
+                # Drop _id from fields since mongo always return _id
+                del(ret['fields']['id'])
+            else:
+                ret['fields']['_id'] = 0
+            if "*" in ret['fields'].keys():
+                ret['fields'] = {}
+                
+            return ret
+
+        @self.debug_print
+        def where_func(*args):
+            """
+            Take tokens and return a dictionary.
+            """
+            tokens = args[2]
+            if tokens is None:
+                return
+            tokens = fix_token_list(tokens.asList()) + [None, None, None]
+            cond = {'!=': '$ne',
+                    '>': '$gt',
+                    '>=': '$gte',
+                    '<': '$lt',
+                    '<=': '$lte',
+                    'like': '$regex'}.get(tokens[1])
+
+            find_value = tokens[2].strip('"').strip("'")
+            if cond == '$regex':
+                if find_value[0] != '%':
+                    find_value = "^" + find_value
+                if find_value[-1] != '%':
+                    find_value = find_value + "$"
+                find_value = find_value.strip("%")
+
+            if cond is None:
+                expr = {tokens[0]: find_value}
+            else:
+                expr = {tokens[0]: {cond: find_value}}
+
+            return expr
+
+        @self.debug_print
+        def combine(*args):
+            tokens = args[2]
+            if tokens:
+                tokens = fix_token_list(tokens.asList())
+                if len(tokens) == 1:
+                    return tokens
+                else:
+                    return {'${}'.format(tokens[1]): [tokens[0], tokens[2]]}
+
+        # TODO: Reduce list of imported functions.
+        from pyparsing import (Word, alphas, CaselessKeyword, Group, Optional, ZeroOrMore,
+                            Forward, Suppress, alphanums, OneOrMore, quotedString,
+                            Combine, Keyword, Literal, replaceWith, oneOf, nums,
+                            removeQuotes, QuotedString, Dict)
+
+        LPAREN, RPAREN = map(Suppress, "()")
+        EXPLAIN = CaselessKeyword('EXPLAIN'
+                                ).setParseAction(lambda t: {'explain': True})
+        SELECT = Suppress(CaselessKeyword('SELECT'))
+        WHERE = Suppress(CaselessKeyword('WHERE'))
+        FROM = Suppress(CaselessKeyword('FROM'))
+        CONDITIONS = oneOf("= != < > <= >= like", caseless=True)
+        #CONDITIONS = (Keyword("=") | Keyword("!=") |
+        #              Keyword("<") | Keyword(">") |
+        #              Keyword("<=") | Keyword(">="))
+        AND = CaselessKeyword('and')
+        OR = CaselessKeyword('or')
+
+        word_match = Word(alphanums + "._") | quotedString
+        number = Word(nums)
+        statement = Group(word_match + CONDITIONS + word_match
+                        ).setParseAction(where_func)
+        
+        select_fields = Group(SELECT + (word_match | Keyword("*")) +
+                            ZeroOrMore(Suppress(",") +
+                                        (word_match | Keyword("*")))
+                            ).setParseAction(select_func)
+        
+        select_distinct = (SELECT + Suppress(CaselessKeyword('DISTINCT')) + LPAREN
+                                + (word_match | Keyword("*"))
+                                + ZeroOrMore(Suppress(",")
+                                + (word_match | Keyword("*")))
+                                + Suppress(RPAREN)).setParseAction(select_distinct_func)
+
+        select_count = (SELECT + Suppress(CaselessKeyword('COUNT')) + LPAREN
+                                + (word_match | Keyword("*"))
+                                + ZeroOrMore(Suppress(",")
+                                + (word_match | Keyword("*")))
+                                + Suppress(RPAREN)).setParseAction(select_count_func)
+        LIMIT = (Suppress(CaselessKeyword('LIMIT')) + word_match).setParseAction(lambda t: {'limit': t[0]})
+        SKIP = (Suppress(CaselessKeyword('SKIP')) + word_match).setParseAction(lambda t: {'skip': t[0]})
+        from_table = (FROM + word_match).setParseAction(
+            lambda t: {'collection': t.asList()[0]})
+        #word = ~(AND | OR) + word_match
+
+        operation_term = (select_distinct | select_count | select_fields)   # place holder for other SQL statements. ALTER, UPDATE, INSERT
+        expr = Forward()
+        atom = statement | (LPAREN + expr + RPAREN)
+        and_term = (OneOrMore(atom) + ZeroOrMore(AND + atom)
+                    ).setParseAction(combine)
+        or_term = (and_term + ZeroOrMore(OR + and_term)).setParseAction(combine)
+
+        where_clause = (WHERE + or_term
+                        ).setParseAction(lambda t: {'spec': t[0]})
+        list_term = Optional(EXPLAIN) + operation_term + from_table + \
+                    Optional(where_clause) + Optional(LIMIT) + Optional(SKIP)
+        expr << list_term
+        
+        ret = expr.parseString(query.strip())
+        
+        query_dict = {}
+        query_list = ret.asList()
+        
+        for extra in query_list:
+            query_dict.update(extra)
+        
+        return query_dict
+    
+    def spec_str(self, spec):
+        """
+        Change a spec to the json object format used in mongo.
+        eg. Print dict in python gives: {'a':'b'}
+            mongo shell would do {a:'b'}
+            Mongo shell can handle both formats but it looks more like the
+            official docs to keep to their standard.
+        
+        Args:
+            spec: Dictionary. A mongo spec.
+        
+        Returns:
+            str: The spec as it is represended in the mongodb shell.
+        """
+
+        if spec is None:
+            return "{}"
+        if isinstance(spec, list):
+            out_str = "[" + ', '.join([self.spec_str(x) for x in spec]) + "]"
+        elif isinstance(spec, dict):
+            out_str = "{" + ', '.join(["'{}':{}".format(x.replace("'", ""), self.spec_str(spec[x])
+                                                    ) for x in sorted(spec)]) + "}"
+        elif spec and isinstance(spec, str) and not spec.isdigit():
+            out_str = "'" + spec + "'"
+        else:
+            out_str = spec
+
+        return out_str
+
+    @debug_print
+    def create_mongo_shell_query(self, query_dict: dict):
+        """
+        Create the queries similar to what you will us in mongo shell
+        
+        Args:
+            query_dict: Dictionary. Internal data structure. dict
+            
+        Returns:
+            str: The query that you can use in mongo shell.
+        """
+        collection = query_dict.get('collection')
+        
+        if not collection:
+            return
+        elif collection == 'MONGODB_COLNAME':
+            collection = self.settings['colname']
+            
+        shell_query = "db." + collection + "."
+
+        if query_dict.get('find'):
+            shell_query += 'find({}, {})'.format(self.spec_str(query_dict.get('spec')),
+                                                self.spec_str(query_dict.get('fields')))
+        elif query_dict.get('distinct'):
+            shell_query += 'distinct({})'.format(self.spec_str(",".join(
+                [k for k in query_dict.get('fields').keys() if query_dict['fields'][k]])))
+        elif query_dict.get('count'):
+            shell_query += 'count({})'.format(self.spec_str(query_dict.get('spec')))
+        if query_dict.get('skip'):
+            shell_query += ".skip({})".format(query_dict.get('skip'))
+
+        if query_dict.get('limit'):
+            shell_query += ".limit({})".format(query_dict.get('limit'))
+
+        if query_dict.get('explain'):
+            shell_query += ".explain()"
+
+        return shell_query
+
