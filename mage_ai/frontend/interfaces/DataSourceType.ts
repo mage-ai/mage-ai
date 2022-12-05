@@ -42,7 +42,6 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.BIGQUERY,
     DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
     DataSourceTypeEnum.POSTGRES,
-    DataSourceTypeEnum.MONGODB,
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.S3,
     DataSourceTypeEnum.AZURE_BLOB_STORAGE,
@@ -54,7 +53,6 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.BIGQUERY,
     DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
     DataSourceTypeEnum.POSTGRES,
-    DataSourceTypeEnum.MONGODB,
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.S3,
     DataSourceTypeEnum.AZURE_BLOB_STORAGE,
@@ -63,7 +61,6 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
   [BlockTypeEnum.TRANSFORMER]: [
     DataSourceTypeEnum.BIGQUERY,
     DataSourceTypeEnum.POSTGRES,
-    DataSourceTypeEnum.MONGODB,
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.SNOWFLAKE,
   ],
