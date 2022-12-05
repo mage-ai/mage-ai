@@ -247,6 +247,7 @@ class PipelineScheduler:
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
         # TODO: implement queueing logic
         block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
+        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
         for b in block_runs_to_schedule:
             tags = dict(
@@ -277,8 +278,9 @@ class PipelineScheduler:
             return
 
         block_runs_to_schedule = self.executable_block_runs if block_runs is None else block_runs
+        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
-        if len(block_runs_to_schedule) >= 2:
+        if len(block_runs_to_schedule) > 0:
             self.logger.info(
                 f'Start a process for PipelineRun {self.pipeline_run.id}',
                 **self.__build_tags(),
@@ -309,6 +311,19 @@ class PipelineScheduler:
         ))
         execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
         proc.start()
+
+    def __fetch_crashed_block_runs(self) -> None:
+        running_block_runs = [b for b in self.pipeline_run.block_runs if b.status in [
+            BlockRun.BlockRunStatus.RUNNING,
+        ]]
+
+        crashed_runs = []
+        for br in running_block_runs:
+            if not execution_process_manager.has_block_process(self.pipeline_run.id, br.id):
+                br.update(status=BlockRun.BlockRunStatus.INITIAL)
+                crashed_runs.append(br)
+
+        return crashed_runs
 
     def __build_tags(self, **kwargs):
         return merge_dict(kwargs, dict(
