@@ -455,7 +455,9 @@ function SyncRowDetail({
 
     const metrics = pipelineRun?.metrics || {
       blocks: null,
+      destination: null,
       pipeline: null,
+      source: null,
     };
     const sourceState =
       metrics?.pipeline?.[selectedStream]?.bookmarks?.[selectedStream];
@@ -506,6 +508,7 @@ function SyncRowDetail({
         return;
       }
 
+      // @ts-ignore
       columnData.push({
         uuid: `${key} (${type})`,
       })
@@ -531,6 +534,9 @@ function SyncRowDetail({
 
     const metrics = pipelineRun?.metrics || {
       blocks: null,
+      destination: null,
+      pipeline: null,
+      source: null,
     };
     const sourceRecord = metrics?.blocks?.[selectedStream]?.sources?.record;
     const destinationRecord = metrics?.blocks?.[selectedStream]?.destinations?.record;
@@ -575,6 +581,7 @@ function SyncRowDetail({
         return;
       }
 
+      // @ts-ignore
       columnData.push({
         uuid: `${key} (${type})`,
       });

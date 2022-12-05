@@ -235,7 +235,7 @@ export function prettyUnitOfTime(secs) {
 
     const [unit, interval] = pair;
     const intervalPrevious = arr.slice(0, idx).reduce((acc, i) => acc * Number(i[1]), 1);
-    if (secs < interval * intervalPrevious) {
+    if (secs < Number(interval) * intervalPrevious) {
       value = pluralize(unit, Math.round(secs / intervalPrevious));
     }
   });
