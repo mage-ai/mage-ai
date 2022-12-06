@@ -150,6 +150,12 @@ the updated code.
 
 ### GCP
 
+1. You’ll need to add these roles to the service account that you’ll be using to deploy Mage from GitHub:
+    1. Artifact Registry Read
+    1. Artifact Registry Writer
+    1. Cloud Run Admin
+    1. Service Account Token Creator
+    1. Service Account User
 1. In the field labeled <b>Name</b>, enter the value `GCP_CREDENTIALS`.
 1. In the field labeled <b>Secret</b>, enter the JSON string containing your GCP service account
 credentials. It should look something like this:
