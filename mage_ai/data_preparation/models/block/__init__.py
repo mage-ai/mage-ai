@@ -770,7 +770,6 @@ class Block:
             self.test_functions = test_functions
 
         return outputs
-        
 
     def execute_block_function(
         self,

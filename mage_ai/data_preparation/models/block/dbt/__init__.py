@@ -84,6 +84,7 @@ class DBTBlock(Block):
             dbt_command,
         ] + args
 
+        outputs = []
         if is_sql and test_execution:
             print(f'Running DBT command {dbt_command} with arguments {args}.')
             proc = subprocess.run(
