@@ -67,7 +67,7 @@ function SyncRow({
   const progress = useMemo(() => pipelineRunProgress(pipelineRun), [pipelineRun]);
 
   const completed =
-    useMemo(() => [RunStatus.CALCULATING_METRICS, RunStatus.COMPLETED].includes(status), [status]);
+    useMemo(() => [RunStatus.COMPLETED].includes(status), [status]);
   const statusProps = useMemo(() => ({
     danger: RunStatus.FAILED === status,
     default: RunStatus.INITIAL === status,

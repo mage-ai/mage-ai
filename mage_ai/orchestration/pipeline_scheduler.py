@@ -80,10 +80,6 @@ class PipelineScheduler:
                         pipeline_uuid=self.pipeline.uuid,
                     )
 
-                    self.pipeline_run.update(
-                        status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
-                    )
-
                     self.logger.info(
                         f'Calculate metrics for pipeline run {self.pipeline_run.id} started.',
                         tags=tags,

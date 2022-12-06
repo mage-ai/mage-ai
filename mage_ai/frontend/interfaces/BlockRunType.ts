@@ -1,5 +1,4 @@
 export enum RunStatus {
-  CALCULATING_METRICS = 'calculating metrics',
   CANCELLED = 'cancelled',
   COMPLETED = 'completed',
   FAILED = 'failed',
