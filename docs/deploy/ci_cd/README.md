@@ -91,6 +91,16 @@ remote Docker registry.
 
 ### AWS
 
+1. If you haven’t already, create a new AWS ECR repository.
+1. You’ll need AWS credentials with the following policy permissions:
+    ```
+    ecr:CompleteLayerUpload
+    ecr:GetAuthorizationToken
+    ecr:UploadLayerPart
+    ecr:InitiateLayerUpload
+    ecr:BatchCheckLayerAvailability
+    ecr:PutImage
+    ```
 1. In the field labeled <b>Name</b>, enter the value `AWS_ACCESS_KEY_ID`.
 1. In the field labeled <b>Secret</b>, enter your AWS Access Key ID.
 1. Click the button labeled <b>Add secret</b> to save.
