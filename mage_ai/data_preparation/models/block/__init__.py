@@ -1104,8 +1104,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             for variable in self.output_variables(execution_partition=execution_partition)
         ]
 
-        print('outputs length:', len(outputs))
-
         with redirect_stdout(stdout):
             tests_passed = 0
             for func in test_functions:
