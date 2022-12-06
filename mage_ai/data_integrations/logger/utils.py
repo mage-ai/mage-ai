@@ -18,6 +18,12 @@ def print_logs_from_output(
     for line in output.split('\n'):
         try:
             data = json.loads(line)
+
+            if type(data) is not dict:
+                if type(data) is list and len(data) >= 1:
+                    print(json.dumps(data))
+                continue
+
             message = data.get('message')
             tags1 = data.get('tags')
 
