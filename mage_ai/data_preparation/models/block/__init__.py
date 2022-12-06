@@ -305,6 +305,7 @@ class Block:
     @classmethod
     def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
+        from mage_ai.data_preparation.models.block.dbt import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
             SourceBlock, DestinationBlock, TransformerBlock
         )
@@ -312,9 +313,11 @@ class Block:
         from mage_ai.data_preparation.models.block.sql import SQLBlock
         from mage_ai.data_preparation.models.widget import Widget
 
-        if block_type == BlockType.CHART:
+        if BlockType.CHART == block_type:
             return Widget
-        if pipeline and PipelineType.INTEGRATION == pipeline.type:
+        elif BlockType.DBT == block_type:
+            return DBTBlock
+        elif pipeline and PipelineType.INTEGRATION == pipeline.type:
             if BlockType.DATA_LOADER == block_type:
                 return SourceBlock
             elif BlockType.DATA_EXPORTER == block_type:
