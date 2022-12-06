@@ -173,6 +173,7 @@ WHERE table_id = '{table_name}'
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
+        tags: Dict = {},
     ) -> List[List[Tuple]]:
         connection = self.build_connection()
 
