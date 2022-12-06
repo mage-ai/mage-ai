@@ -70,12 +70,20 @@ class BaseModel(Base):
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        self.session.commit()
+        try:
+            self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
     def delete(self, commit: bool = True) -> None:
         self.session.delete(self)
         if commit:
-            self.session.commit()
+            try:
+                self.session.commit()
+            except Exception as e:
+                self.session.rollback()
+                raise e
 
     def refresh(self):
         self.session.refresh(self)
