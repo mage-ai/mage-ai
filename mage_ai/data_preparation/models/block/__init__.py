@@ -2,20 +2,9 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from logging import Logger
-from mage_ai.data_integrations.utils.config import build_catalog_json, build_config_json
-from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
 )
-from mage_ai.data_preparation.models.block.dbt.utils import (
-    add_blocks_upstream_from_refs,
-    build_command_line_arguments,
-    create_upstream_tables,
-    query_from_compiled_sql,
-    run_dbt_tests,
-    update_model_settings,
-)
-from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockStatus,
@@ -49,7 +38,6 @@ import json
 import os
 import pandas as pd
 import simplejson
-import subprocess
 import sys
 import time
 import traceback
@@ -90,18 +78,11 @@ async def run_blocks(
                 )
 
                 if run_tests:
-                    if BlockType.DBT == block.type:
-                        run_dbt_tests(
-                            block=block,
-                            build_block_output_stdout=build_block_output_stdout,
-                            global_vars=global_vars,
-                        )
-                    else:
-                        block.run_tests(
-                            build_block_output_stdout=build_block_output_stdout,
-                            global_vars=global_vars,
-                            update_tests=False,
-                        )
+                    block.run_tests(
+                        build_block_output_stdout=build_block_output_stdout,
+                        global_vars=global_vars,
+                        update_tests=False,
+                    )
 
         return asyncio.create_task(execute_and_run_tests())
 
@@ -201,18 +182,11 @@ def run_blocks_sync(
             )
 
             if run_tests:
-                if BlockType.DBT == block.type:
-                    run_dbt_tests(
-                        block=block,
-                        build_block_output_stdout=build_block_output_stdout,
-                        global_vars=global_vars,
-                    )
-                else:
-                    block.run_tests(
-                        build_block_output_stdout=build_block_output_stdout,
-                        global_vars=global_vars,
-                        update_tests=False,
-                    )
+                block.run_tests(
+                    build_block_output_stdout=build_block_output_stdout,
+                    global_vars=global_vars,
+                    update_tests=False,
+                )
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
@@ -287,15 +261,6 @@ class Block:
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
-        if self.should_treat_as_dbt():
-            file_path = self.configuration.get('file_path')
-
-            return os.path.join(
-                repo_path or os.getcwd(),
-                'dbt',
-                file_path,
-            )
-
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
 
         return os.path.join(
@@ -318,23 +283,15 @@ class Block:
         return table_name
 
     @classmethod
-    def block_class_from_type(self, block_type: str, pipeline = None) -> str:
-        if pipeline and PipelineType.INTEGRATION == pipeline.type:
-            if BlockType.DATA_LOADER == block_type:
-                return SourceBlock
-            elif BlockType.DATA_EXPORTER == block_type:
-                return DestinationBlock
-        return BLOCK_TYPE_TO_CLASS.get(block_type)
-
-    @classmethod
-    def after_create(self, block, **kwargs):
+    def after_create(self, block: 'Block', **kwargs):
+        from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids', [])
 
-            if block.should_treat_as_dbt():
+            if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
                 arr = add_blocks_upstream_from_refs(block)
                 upstream_block_uuids += [b.uuid for b in arr]
 
@@ -344,6 +301,34 @@ class Block:
                 priority=priority if len(upstream_block_uuids) == 0 else None,
                 widget=widget,
             )
+
+    @classmethod
+    def block_class_from_type(self, block_type: str, language=None, pipeline=None) -> 'Block':
+        from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
+        from mage_ai.data_preparation.models.block.dbt import DBTBlock
+        from mage_ai.data_preparation.models.block.integration import (
+            SourceBlock, DestinationBlock, TransformerBlock
+        )
+        from mage_ai.data_preparation.models.block.r import RBlock
+        from mage_ai.data_preparation.models.block.sql import SQLBlock
+        from mage_ai.data_preparation.models.widget import Widget
+
+        if BlockType.CHART == block_type:
+            return Widget
+        elif BlockType.DBT == block_type:
+            return DBTBlock
+        elif pipeline and PipelineType.INTEGRATION == pipeline.type:
+            if BlockType.DATA_LOADER == block_type:
+                return SourceBlock
+            elif BlockType.DATA_EXPORTER == block_type:
+                return DestinationBlock
+            else:
+                return TransformerBlock
+        elif BlockLanguage.SQL == language:
+            return SQLBlock
+        elif BlockLanguage.R == language:
+            return RBlock
+        return BLOCK_TYPE_TO_CLASS.get(block_type)
 
     @classmethod
     def create(
@@ -435,7 +420,11 @@ class Block:
         pipeline=None,
         status=BlockStatus.NOT_EXECUTED,
     ):
-        block_class = self.block_class_from_type(block_type, pipeline=pipeline) or Block
+        block_class = self.block_class_from_type(
+            block_type,
+            language=language,
+            pipeline=pipeline,
+        ) or Block
         return block_class(
             name,
             uuid,
@@ -606,7 +595,7 @@ class Block:
                 update_status=update_status,
             )
 
-    def __validate_execution(self, decorated_functions, input_vars):
+    def _validate_execution(self, decorated_functions, input_vars):
         """
         Validate whether the number of function arguments matches the upstream blocks.
         Only perform the validation for Python functions.
@@ -688,7 +677,125 @@ class Block:
             ),
         )
 
+        # Set up logger
+        if logger is not None:
+            stdout = StreamToLogger(logger)
+        elif build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        else:
+            stdout = sys.stdout
+
         # Fetch input variables
+        input_vars, upstream_block_uuids = self.fetch_input_variables(
+            input_args, execution_partition, global_vars
+        )
+
+        outputs_from_input_vars = {}
+        if input_args is None:
+            for idx, input_var in enumerate(input_vars):
+                upstream_block_uuid = upstream_block_uuids[idx]
+                outputs_from_input_vars[upstream_block_uuid] = input_var
+                outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+        else:
+            outputs_from_input_vars = dict()
+
+        with redirect_stdout(stdout):
+            outputs = self._execute_block(
+                outputs_from_input_vars,
+                custom_code=custom_code,
+                execution_partition=execution_partition,
+                input_vars=input_vars,
+                logger=logger,
+                global_vars=global_vars,
+                test_execution=test_execution,
+                input_from_output=input_from_output,
+                runtime_arguments=runtime_arguments,
+                upstream_block_uuids=upstream_block_uuids
+            )
+
+        output_message = dict(output=outputs)
+
+        return output_message
+
+    def _execute_block(
+        self,
+        outputs_from_input_vars,
+        custom_code: str = None,
+        execution_partition: str = None,
+        input_vars: List = None,
+        logger: Logger = None,
+        global_vars: Dict = None,
+        test_execution: bool = False,
+        input_from_output: Dict = None,
+        runtime_arguments: Dict = None,
+        upstream_block_uuids: List[str] = None,
+    ) -> List:
+        decorated_functions = []
+        test_functions = []
+
+        results = {
+            self.type: self._block_decorator(decorated_functions),
+            'test': self._block_decorator(test_functions),
+        }
+        results.update(outputs_from_input_vars)
+
+        if custom_code is not None:
+            if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
+                exec(custom_code, results)
+        elif self.content is not None:
+            exec(self.content, results)
+        elif os.path.exists(self.file_path):
+            with open(self.file_path) as file:
+                exec(file.read(), results)
+
+        outputs = []
+        if BlockType.CHART == self.type:
+            variables = self.get_variables_from_code_execution(results)
+            outputs = self.post_process_variables(
+                variables,
+                code=custom_code,
+                results=results,
+                upstream_block_uuids=upstream_block_uuids,
+            )
+        else:
+            block_function = self._validate_execution(decorated_functions, input_vars)
+            if block_function is not None:
+                outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
+
+            if outputs is None:
+                outputs = []
+            if type(outputs) is not list:
+                outputs = [outputs]
+
+            self.test_functions = test_functions
+
+        return outputs
+        
+
+    def execute_block_function(
+        self,
+        block_function: Callable,
+        input_vars: List,
+        global_vars: Dict = None,
+        test_execution: bool = False,
+    ) -> Dict:
+        sig = signature(block_function)
+        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+        if has_kwargs and global_vars is not None and len(global_vars) != 0:
+            output = block_function(*input_vars, **global_vars)
+        else:
+            output = block_function(*input_vars)
+        return output
+
+    def exists(self):
+        return os.path.exists(self.file_path)
+
+    def fetch_input_variables(
+        self,
+        input_args,
+        execution_partition: str = None,
+        global_vars: Dict = None,
+    ):
         upstream_block_uuids = []
         if input_args is None:
             input_vars = []
@@ -714,345 +821,7 @@ class Block:
         else:
             input_vars = input_args
 
-        outputs = []
-        decorated_functions = []
-        test_functions = []
-
-        # Set up logger
-        if logger is not None:
-            stdout = StreamToLogger(logger)
-        elif build_block_output_stdout:
-            stdout = build_block_output_stdout(self.uuid)
-        else:
-            stdout = sys.stdout
-        results = {}
-        outputs_from_input_vars = {}
-
-        if input_args is None:
-            for idx, input_var in enumerate(input_vars):
-                upstream_block_uuid = upstream_block_uuids[idx]
-                outputs_from_input_vars[upstream_block_uuid] = input_var
-                outputs_from_input_vars[f'df_{idx + 1}'] = input_var
-        else:
-            outputs_from_input_vars = dict()
-
-        with redirect_stdout(stdout):
-            results = {
-                self.type: self.__block_decorator(decorated_functions),
-                'test': self.__block_decorator(test_functions),
-            }
-            results.update(outputs_from_input_vars)
-
-            outputs = []
-
-            if BlockType.DBT == self.type:
-                variables = merge_dict(global_vars, runtime_arguments or {})
-
-                dbt_command, args, command_line_dict = build_command_line_arguments(
-                    self,
-                    variables,
-                    test_execution=test_execution,
-                )
-                project_full_path = command_line_dict['project_full_path']
-                dbt_profile_target = command_line_dict['profile_target']
-
-                is_sql = BlockLanguage.SQL == self.language
-                if is_sql:
-                    create_upstream_tables(
-                        self,
-                        execution_partition=execution_partition,
-                        profile_target=dbt_profile_target,
-                        cache_upstream_dbt_models=test_execution,
-                    )
-
-                stdout = None if test_execution else subprocess.PIPE
-
-                cmds = [
-                    'dbt',
-                    dbt_command,
-                ] + args
-
-                if is_sql and test_execution:
-                    print(f'Running DBT command {dbt_command} with arguments {args}.')
-                    subprocess.run(
-                        cmds,
-                        preexec_fn=os.setsid,
-                        stdout=stdout,
-                    )
-                    df = query_from_compiled_sql(
-                        self,
-                        dbt_profile_target,
-                    )
-                    self.store_variables(
-                        dict(df=df),
-                        execution_partition=execution_partition,
-                        override_outputs=True,
-                    )
-                    outputs = [df]
-                elif not test_execution:
-                    with subprocess.Popen(
-                        cmds,
-                        bufsize=1,
-                        preexec_fn=os.setsid,
-                        stdout=stdout,
-                        universal_newlines=True,
-                    ) as p:
-                        for line in p.stdout:
-                            print(line, end='')
-
-                if not test_execution:
-                    with open(f'{project_full_path}/target/run_results.json', 'r') as f:
-                        run_results = json.load(f)
-
-                        print('DBT run results:')
-                        print(json.dumps(run_results))
-
-                        for result in run_results['results']:
-                            if 'error' == result['status']:
-                                raise Exception(result['message'])
-            elif self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
-                from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
-
-                index = self.template_runtime_configuration.get('index', None)
-                selected_streams = self.template_runtime_configuration.get('selected_streams', [])
-                stream = selected_streams[0] if len(selected_streams) >= 1 else None
-                destination_table = self.template_runtime_configuration.get('destination_table', stream)
-                query_data = runtime_arguments or {}
-
-                tags = dict(block_tags=dict(
-                    destination_table=destination_table,
-                    index=index,
-                    stream=stream,
-                    type=self.type,
-                    uuid=self.uuid,
-                ))
-
-                if index is not None:
-                    query_data['_limit'] = BATCH_FETCH_LIMIT
-                    query_data['_offset'] = BATCH_FETCH_LIMIT * index
-
-                if BlockType.DATA_LOADER == self.type:
-                    proc = subprocess.run([
-                        PYTHON_COMMAND,
-                        self.pipeline.source_file_path,
-                        '--config_json',
-                        build_config_json(
-                            self.pipeline.data_loader.file_path,
-                            global_vars,
-                        ),
-                        '--log_to_stdout',
-                        '1',
-                        '--catalog_json',
-                        build_catalog_json(
-                            self.pipeline.data_loader.file_path,
-                            global_vars,
-                            selected_streams=selected_streams,
-                        ),
-                        '--state',
-                        self.pipeline.source_state_file_path(
-                            destination_table=destination_table,
-                            stream=stream,
-                        ),
-                        '--query_json',
-                        json.dumps(query_data),
-                    ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
-
-                    output = proc.stdout.decode()
-                    print_logs_from_output(
-                        output,
-                        logger=logger,
-                        tags=tags,
-                    )
-                    outputs.append(output)
-                elif BlockType.TRANSFORMER == self.type:
-                    from mage_integrations.sources.constants import COLUMN_TYPE_NULL
-                    from mage_integrations.utils.logger.constants import (
-                        TYPE_RECORD,
-                        TYPE_SCHEMA,
-                    )
-                    from mage_integrations.transformers.utils import (
-                        convert_data_type,
-                        infer_dtypes,
-                    )
-
-                    input_from_previous = input_from_output['output'][0]
-
-                    exec(self.content, results)
-
-                    # 1. Recreate each record
-                    # 2. Recreate schema
-                    schema_original = None
-                    schema_updated = None
-                    schema_index = None
-                    output_arr = []
-                    records_transformed = 0
-                    df_sample = None
-
-                    for idx, line in enumerate(input_from_previous.strip().split('\n')):
-                        try:
-                            data = json.loads(line)
-                            line_type = data.get('type')
-
-                            if TYPE_SCHEMA == line_type:
-                                schema_index = idx
-                                schema_original = data
-                            elif TYPE_RECORD == line_type:
-                                record = data['record']
-                                existing_columns = list(record.keys())
-                                input_vars = [pd.DataFrame.from_dict([record])]
-                                input_kwargs = merge_dict(
-                                    global_vars,
-                                    dict(
-                                        index=index,
-                                        query=query_data,
-                                        stream=stream,
-                                    ),
-                                )
-                                block_function = self.__validate_execution(decorated_functions, input_vars)
-
-                                if block_function is not None:
-                                    df = self.execute_block_function(
-                                        block_function,
-                                        input_vars,
-                                        input_kwargs,
-                                        test_execution,
-                                    )
-                                    if df_sample is None:
-                                        df_sample = df
-
-                                    if not schema_updated:
-                                        properties_updated = {
-                                            k: dict(type=[COLUMN_TYPE_NULL, convert_data_type(v)])
-                                            for k, v in infer_dtypes(df).items()
-                                        }
-                                        schema_updated = schema_original.copy()
-                                        properties_original = schema_updated['schema']['properties']
-                                        schema_updated['schema']['properties'] = {
-                                            k: properties_original[k]
-                                            if k in properties_original else v
-                                            for k, v in properties_updated.items()
-                                        }
-
-                                    record_transformed = df.to_dict('records')[0]
-                                    line = json.dumps(merge_dict(
-                                        data,
-                                        dict(record=record_transformed),
-                                    ))
-                                    records_transformed += 1
-                        except json.decoder.JSONDecodeError:
-                            pass
-
-                        output_arr.append(line)
-
-                    output_arr[schema_index] = json.dumps(schema_updated)
-                    output = '\n'.join(output_arr)
-                    outputs.append(output)
-
-                    self.store_variables(
-                        dict(output_0=df_sample),
-                        execution_partition=execution_partition,
-                        override_outputs=True,
-                    )
-
-                    print(f'Transformed {records_transformed} records for stream {stream}.')
-                elif BlockType.DATA_EXPORTER == self.type:
-                    input_from_previous = input_from_output['output'][0]
-
-                    override = {}
-                    if destination_table:
-                        override['table'] = destination_table
-
-                    proc = subprocess.run([
-                        PYTHON_COMMAND,
-                        self.pipeline.destination_file_path,
-                        '--config_json',
-                        build_config_json(
-                            self.pipeline.data_exporter.file_path,
-                            global_vars,
-                            override=override,
-                        ),
-                        '--log_to_stdout',
-                        '1',
-                        '--settings',
-                        self.pipeline.data_exporter.file_path,
-                        '--state',
-                        self.pipeline.destination_state_file_path(
-                            destination_table=destination_table,
-                            stream=stream,
-                        ),
-                    ], input=input_from_previous, capture_output=True, text=True)
-
-                    print_logs_from_output(
-                        proc.stdout,
-                        logger=logger,
-                        tags=tags,
-                    )
-                    outputs.append(proc)
-            elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
-                outputs = execute_sql_code(
-                    self,
-                    custom_code or self.content,
-                    execution_partition=execution_partition,
-                    global_vars=global_vars,
-                )
-            elif BlockLanguage.R == self.language and BlockType.CHART != self.type:
-                from mage_ai.data_preparation.models.block.r import execute_r_code
-                outputs = execute_r_code(
-                    self,
-                    custom_code or self.content,
-                    execution_partition=execution_partition,
-                    global_vars=global_vars,
-                )
-            elif custom_code is not None:
-                if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
-                    exec(custom_code, results)
-            elif self.content is not None:
-                exec(self.content, results)
-            elif os.path.exists(self.file_path):
-                with open(self.file_path) as file:
-                    exec(file.read(), results)
-
-            self.test_functions = test_functions
-
-            if BlockType.CHART == self.type:
-                variables = self.get_variables_from_code_execution(results)
-                outputs = self.post_process_variables(
-                    variables,
-                    code=custom_code,
-                    results=results,
-                    upstream_block_uuids=upstream_block_uuids,
-                )
-            elif not self.pipeline or PipelineType.INTEGRATION != self.pipeline.type:
-                block_function = self.__validate_execution(decorated_functions, input_vars)
-                if block_function is not None:
-                    outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
-
-                if outputs is None:
-                    outputs = []
-                if type(outputs) is not list:
-                    outputs = [outputs]
-
-        output_message = dict(output=outputs)
-
-        return output_message
-
-    def execute_block_function(
-        self,
-        block_function: Callable,
-        input_vars: List,
-        global_vars: Dict = None,
-        test_execution: bool = False,
-    ) -> Dict:
-        sig = signature(block_function)
-        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-        if has_kwargs and global_vars is not None and len(global_vars) != 0:
-            output = block_function(*input_vars, **global_vars)
-        else:
-            output = block_function(*input_vars)
-        return output
-
-    def exists(self):
-        return os.path.exists(self.file_path)
+        return input_vars, upstream_block_uuids
 
     def get_analyses(self):
         if self.status == BlockStatus.NOT_EXECUTED:
@@ -1234,10 +1003,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         return self
 
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
-        upstream_blocks_previous = self.upstream_blocks
         self.upstream_blocks = upstream_blocks
-        if self.should_treat_as_dbt():
-            update_model_settings(self, upstream_blocks, upstream_blocks_previous)
 
     def update_content(self, content, widget=False):
         if content != self.content:
@@ -1317,7 +1083,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         test_functions = []
         if update_tests:
             results = {
-                'test': self.__block_decorator(test_functions),
+                'test': self._block_decorator(test_functions),
             }
             if custom_code is not None:
                 exec(custom_code, results)
@@ -1539,8 +1305,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             partition=execution_partition,
         )
 
-    def should_treat_as_dbt(self) -> bool:
-        return BlockType.DBT == self.type and BlockLanguage.SQL == self.language
+    def _block_decorator(self, decorated_functions):
+        def custom_code(function):
+            decorated_functions.append(function)
+            return function
+
+        return custom_code
 
     def __is_output_variable(self, variable_uuid):
         return variable_uuid == 'df' or variable_uuid.startswith('output')
@@ -1609,13 +1379,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             widget=BlockType.CHART == self.type,
         )
 
-    def __block_decorator(self, decorated_functions):
-        def custom_code(function):
-            decorated_functions.append(function)
-            return function
-
-        return custom_code
-
 
 class SensorBlock(Block):
     def execute_block_function(
@@ -1643,23 +1406,3 @@ class SensorBlock(Block):
                 print('Sensor sleeping for 1 minute...')
                 time.sleep(60)
             return []
-
-
-class SourceBlock(Block):
-    def output_variables(self, execution_partition: str = None) -> List[str]:
-        return []
-
-
-class DestinationBlock(Block):
-    def output_variables(self, execution_partition: str = None) -> List[str]:
-        return []
-
-
-BLOCK_TYPE_TO_CLASS = {
-    BlockType.DATA_EXPORTER: Block,
-    BlockType.DATA_LOADER: Block,
-    BlockType.DBT: Block,
-    BlockType.SCRATCHPAD: Block,
-    BlockType.TRANSFORMER: Block,
-    BlockType.SENSOR: SensorBlock,
-}

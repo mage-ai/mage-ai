@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     postgres,
@@ -11,7 +12,7 @@ from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from os import path
 from time import sleep
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 PREVIEWABLE_BLOCK_TYPES = [
     BlockType.DATA_EXPORTER,
@@ -184,3 +185,19 @@ def execute_sql_code(
                 ]
 
     return []
+
+class SQLBlock(Block):
+    def _execute_block(
+        self,
+        outputs_from_input_vars,
+        custom_code=None,
+        execution_partition=None,
+        global_vars=None,
+        **kwargs,
+    ) -> List:
+        return execute_sql_code(
+            self,
+            custom_code or self.content,
+            execution_partition=execution_partition,
+            global_vars=global_vars,
+        )
