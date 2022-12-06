@@ -447,6 +447,11 @@ Click on that security group and add a new rule with the following values:
 | --- | --- | --- | --- |
 | Basic mode | [Enter your IP address](https://whatismyipaddress.com/) | Allow | 100 |
 
+To enable IP addresses access to specific endpoints, you can follow [this example](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/load_balancer.tf#L23-L33) to add rules to security policy. Another way is to add a new rule through UI with the following values:
+| Mode | Match | Action | Priority |
+| --- | --- | --- | --- |
+| Advanced mode | `request.path.startsWith('/api/pipeline_schedules/[pipeline_schedule_id]/pipeline_runs') && inIpRange(origin.ip, '[IP address]/32')` | Allow | 200 |
+
 ### HTTPS enabling
 
 To enable HTTPS for Mage app deployed on GCP, you need to firstly make sure you have a domain. Then follow the steps below to set up HTTPS:
