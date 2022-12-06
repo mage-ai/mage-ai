@@ -117,12 +117,24 @@ class Snowflake(Destination):
             f"INSERT INTO {full_table_name} ({insert_columns}) VALUES {insert_values}",
         ]
 
+    def build_create_schema_commands(
+        self,
+        database_name: str,
+        schema_name: str,
+    ) -> List[str]:
+        return [
+            f'USE DATABASE {database_name}',
+        ] + super().build_create_schema_commands(database_name, schema_name)
+
     def does_table_exist(
         self,
         schema_name: str,
         table_name: str,
         database_name: str = None,
     ) -> bool:
+        # This method will fail if the schema didn’t exist prior to running this destination.
+        # The create schema command will only commit if the entire transaction was successful.
+        # Checking the existence of a table in a non-existent schema will fail.
         data = self.build_connection().execute([
             f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database_name}.{schema_name}',
         ])
