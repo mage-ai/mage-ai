@@ -140,6 +140,10 @@ These variable values are used by the tool to retrieve AWS resources like CloudW
 
 You can add any environment variable you want in this file. These will be set on the running container.
 
+> Values
+>
+> The values in your `env_vars.json` must be strings. Wrap each value in double quotes.
+
 <br />
 
 ## 4. Deploy
