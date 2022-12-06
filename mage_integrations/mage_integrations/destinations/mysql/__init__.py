@@ -14,6 +14,14 @@ from typing import Dict, List, Tuple
 
 
 class MySQL(Destination):
+    def get_full_table_name(
+        self,
+        database_name=None,
+        schema_name=None,
+        table_name=None,
+    ):
+        return f'{database_name}.{table_name}'
+
     def build_connection(self) -> MySQLConnection:
         return MySQLConnection(
             database=self.config['database'],

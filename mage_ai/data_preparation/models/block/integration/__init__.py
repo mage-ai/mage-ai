@@ -2,8 +2,10 @@ from jupyter_server import subprocess
 from logging import Logger
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_integrations.utils.config import build_catalog_json, build_config_json
+from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.hash import merge_dict
 from typing import Dict, List
 
@@ -47,7 +49,13 @@ class IntegrationBlock(Block):
 
         outputs = []
         if BlockType.DATA_LOADER == self.type:
-            proc = subprocess.run([
+            is_first_sync = False
+            try:
+                is_first_sync = self.__is_first_sync(stream, destination_table)
+            except:
+                pass
+
+            args = [
                 PYTHON_COMMAND,
                 self.pipeline.source_file_path,
                 '--config_json',
@@ -70,7 +78,12 @@ class IntegrationBlock(Block):
                 ),
                 '--query_json',
                 json.dumps(query_data),
-            ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
+            ]
+
+            if is_first_sync:
+                args.append('--first_sync')
+
+            proc = subprocess.run(args, preexec_fn=os.setsid, stdout=subprocess.PIPE)
 
             output = proc.stdout.decode()
             print_logs_from_output(
@@ -216,6 +229,72 @@ class IntegrationBlock(Block):
             outputs.append(proc)
 
         return outputs
+
+    def __is_first_sync(self, stream, destination_table) -> bool:
+        result = dict()
+        try:
+            run_args = [
+                PYTHON_COMMAND,
+                self.pipeline.source_file_path,
+                '--config_json',
+                build_config_json(
+                    self.pipeline.data_loader.file_path, 
+                    get_global_variables(self.pipeline.uuid),
+                ),
+                '--settings',
+                self.pipeline.data_loader.file_path,
+                '--state',
+                self.pipeline.source_state_file_path(
+                    destination_table=destination_table,
+                    stream=stream,
+                ),
+                '--selected_streams_json',
+                json.dumps([stream]),
+                '--count_records',
+            ]
+
+            proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc.check_returncode()
+
+            result = json.loads(parse_logs_and_json(proc.stdout.decode()))[0]
+        except subprocess.CalledProcessError as e:
+            message = e.stderr.decode('utf-8')
+            raise Exception(message)
+
+        source_ct = result.get('count', 0)
+
+        result = dict()
+        try:
+            run_args = [
+                PYTHON_COMMAND,
+                self.pipeline.destination_file_path,
+                '--config_json',
+                build_config_json(
+                    self.pipeline.data_exporter.file_path,
+                    get_global_variables(self.pipeline.uuid),
+                    override=dict(table=destination_table),
+                ),
+                '--log_to_stdout',
+                '1',
+                '--settings',
+                self.pipeline.data_exporter.file_path,
+                '--count_existing_records'
+            ]
+
+            proc = subprocess.run(run_args, stdout=subprocess.PIPE)
+            proc.check_returncode()
+
+            result = json.loads(parse_logs_and_json(proc.stdout.decode()))
+        except subprocess.CalledProcessError as e:
+            message = e.stderr.decode('utf-8')
+            raise Exception(message)
+
+        destination_ct = result.get('count')
+
+        if destination_ct is None:
+            return False
+        else:
+            return source_ct >= destination_ct * 2
 
 class SourceBlock(IntegrationBlock):
     def output_variables(self, execution_partition: str = None) -> List[str]:

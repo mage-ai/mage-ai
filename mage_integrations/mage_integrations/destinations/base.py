@@ -49,6 +49,7 @@ class Destination():
         batch_processing: bool = False,
         config: Dict = None,
         config_file_path: str = None,
+        count_existing_records: bool = False,
         debug: bool = False,
         log_to_stdout: bool = False,
         logger=LOGGER,
@@ -65,6 +66,7 @@ class Destination():
             argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
             argument_parser.add_argument('--test_connection', action='store_true')
+            argument_parser.add_argument('--count_existing_records', action='store_true')
             args = argument_parser.parse_args()
 
             if args.config:
@@ -81,6 +83,8 @@ class Destination():
                 state_file_path = args.state
             if args.test_connection:
                 test_connection = args.test_connection
+            if args.count_existing_records:
+                count_existing_records = args.count_existing_records
 
         self.config = config
         self.settings = settings
@@ -96,6 +100,7 @@ class Destination():
         self.schemas = None
         self.settings_file_path = settings_file_path
         self.state_file_path = state_file_path
+        self.should_count_existing_records = count_existing_records
         self.should_test_connection = test_connection
         self.unique_conflict_methods = None
         self.unique_constraints = None
@@ -150,6 +155,9 @@ class Destination():
     @settings.setter
     def settings(self, settings):
         self._settings = settings
+
+    def count_existing_records(self) -> int:
+        raise Exception('Subclasses must implement the count_existing_records method.')
 
     def test_connection(self) -> None:
         raise Exception('Subclasses must implement the test_connection method.')
@@ -258,8 +266,16 @@ class Destination():
             if self.should_test_connection:
                 self.logger.info('Testing connection...')
                 self.test_connection()
+            elif self.should_count_existing_records:
+                self.logger.info('Counting existing records...')
+                try:
+                    count = self.count_existing_records()
+                except Exception:
+                    count = None
+                json.dump(dict(count=count), sys.stdout)
             else:
                 self._process(input_buffer)
+                self.logger.info(f'{class_name} process completed.')
         except Exception as err:
             message = f'{class_name} process failed with error {err}.'
             self.logger.exception(message, tags=dict(
@@ -268,8 +284,6 @@ class Destination():
                 message=traceback.format_exc(),
             ))
             raise Exception(message)
-
-        self.logger.info(f'{class_name} process completed.')
 
     def _process(self, input_buffer) -> None:
         self.bookmark_properties = {}
