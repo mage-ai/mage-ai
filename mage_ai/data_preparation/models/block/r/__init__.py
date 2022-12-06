@@ -120,9 +120,16 @@ class RBlock(Block):
         global_vars: Dict = None,
         **kwargs,
     ) -> List:
-        return execute_r_code(
+        outputs = execute_r_code(
             self,
             custom_code or self.content,
             execution_partition=execution_partition,
             global_vars=global_vars,
         )
+
+        if outputs is None:
+            outputs = []
+        if type(outputs) is not list:
+            outputs = [outputs]
+
+        return outputs
