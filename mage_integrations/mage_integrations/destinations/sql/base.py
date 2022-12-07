@@ -3,6 +3,7 @@ from mage_integrations.destinations.constants import (
     MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
+    REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
@@ -116,6 +117,7 @@ class Destination(BaseDestination):
         if replication_method in [
             REPLICATION_METHOD_FULL_TABLE,
             REPLICATION_METHOD_INCREMENTAL,
+            REPLICATION_METHOD_LOG_BASED,
         ]:
             friendly_table_name = '.'.join([x for x in [
                 database_name,

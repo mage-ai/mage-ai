@@ -128,6 +128,10 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> int:
+        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+            # Not support count records for LOG_BASED replication
+            return 1
+
         rows, rows_temp = self.__fetch_rows(
             stream,
             bookmarks,
