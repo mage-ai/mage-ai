@@ -1,16 +1,12 @@
 from google.cloud import bigquery
-from google.cloud.bigquery import Client, dbapi
-from google.oauth2 import service_account
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
     MAX_QUERY_PARAMETERS,
     MAX_QUERY_PARAMETERS_SIZE,
-    MAX_QUERY_STRING_SIZE,
     QUERY_JOB_MAX_TIMEOUT_SECONDS,
 )
 from mage_integrations.destinations.bigquery.utils import (
     convert_array,
-    convert_column_to_type,
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
@@ -36,6 +32,7 @@ def convert_column_if_json(value, column_type):
         return f"TO_JSON('{value}')"
 
     return value
+
 
 class BigQuery(Destination):
     DATABASE_CONFIG_KEY = 'project_id'
