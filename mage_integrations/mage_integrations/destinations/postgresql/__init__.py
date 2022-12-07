@@ -57,7 +57,7 @@ class PostgreSQL(Destination):
 SELECT
     column_name
     , data_type
-FROM {schema_name}.INFORMATION_SCHEMA.COLUMNS
+FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
