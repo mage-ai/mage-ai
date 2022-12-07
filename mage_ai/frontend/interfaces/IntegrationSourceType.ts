@@ -11,7 +11,15 @@ export enum UniqueConflictMethodEnum {
 
 export enum ColumnFormatEnum {
   DATE_TIME = 'date-time',
+  UUID = 'uuid',
 }
+
+export const COLUMN_TYPE_CUSTOM_DATE_TIME = 'datetime';
+
+export const ColumnFormatMapping = {
+  [ColumnFormatEnum.DATE_TIME]: COLUMN_TYPE_CUSTOM_DATE_TIME,
+  [ColumnFormatEnum.UUID]: ColumnFormatEnum.UUID,
+};
 
 export enum ColumnTypeEnum {
   ARRAY = 'array',
@@ -23,8 +31,6 @@ export enum ColumnTypeEnum {
   STRING = 'string',
 }
 
-export const COLUMN_TYPE_CUSTOM_DATE_TIME = 'datetime';
-
 export const COLUMN_TYPES = [
   ColumnTypeEnum.ARRAY,
   ColumnTypeEnum.BOOLEAN,
@@ -34,6 +40,7 @@ export const COLUMN_TYPES = [
   ColumnTypeEnum.NUMBER,
   ColumnTypeEnum.OBJECT,
   ColumnTypeEnum.STRING,
+  ColumnFormatEnum.UUID,
 ];
 
 enum BreadcrumbEnum {
