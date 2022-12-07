@@ -19,10 +19,12 @@ def build_create_table_command(
     full_table_name: str,
     unique_constraints: List[str] = None,
     create_temporary_table: bool = False,
+    column_identifier: str = '',
 ) -> str:
     columns_and_types = [
-        f"{clean_column_name(col)} {column_type_mapping[col]['type_converted']}" for col
-        in columns
+        f"{column_identifier}{clean_column_name(col)}{column_identifier}" + \
+            f" {column_type_mapping[col]['type_converted']}"
+        for col in columns
     ]
 
     if unique_constraints:
@@ -153,6 +155,7 @@ def build_insert_command(
     string_parse_func: Callable = None,
     stringify_values: bool = True,
     convert_column_types: bool = True,
+    column_identifier: str = '',
 ) -> List[str]:
     values = []
     for row in records:
@@ -196,6 +199,6 @@ def build_insert_command(
         values.append(vals)
 
     return [
-        [clean_column_name(col) for col in columns],
+        [f'{column_identifier}{clean_column_name(col)}{column_identifier}' for col in columns],
         values,
     ]
