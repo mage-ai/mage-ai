@@ -98,13 +98,16 @@ class ApiPipelineLogListHandler(BaseHandler):
             else:
                 rows = query.all()
 
+            processed_pipeline_run_log_files = set()
             for row in rows:
                 model = PipelineRun()
                 model.execution_date = row.execution_date
                 model.pipeline_schedule_id = row.pipeline_schedule_id
                 model.pipeline_uuid = row.pipeline_uuid
-
-                pipeline_run_logs.append(model.logs)
+                pipeline_log_file_path = model.logs.get('path')
+                if pipeline_log_file_path not in processed_pipeline_run_log_files:
+                    pipeline_run_logs.append(model.logs)
+                    processed_pipeline_run_log_files.add(pipeline_log_file_path)
                 if len(pipeline_run_logs) >= MAX_LOG_FILES:
                     break
 
@@ -165,6 +168,7 @@ class ApiPipelineLogListHandler(BaseHandler):
         total_block_run_log_count = query.count()
         block_run_logs = []
 
+        processed_block_run_log_files = set()
         for row in rows:
             model = PipelineRun()
             model.execution_date = row.execution_date
@@ -175,7 +179,10 @@ class ApiPipelineLogListHandler(BaseHandler):
             model2.block_uuid = row.block_uuid
             model2.pipeline_run = model
 
-            block_run_logs.append(model2.logs)
+            block_log_file_path = model2.logs.get('path')
+            if block_log_file_path not in processed_block_run_log_files:
+                block_run_logs.append(model2.logs)
+                processed_block_run_log_files.add(block_log_file_path)
 
             if len(block_run_logs) >= MAX_LOG_FILES:
                 break
