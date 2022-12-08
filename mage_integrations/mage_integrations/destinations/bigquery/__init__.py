@@ -77,6 +77,7 @@ class BigQuery(Destination):
                 # BigQuery doesn't support unique constraints
                 unique_constraints=None,
                 create_temporary_table=create_temporary_table,
+                column_identifier='`',
             )
 
         stream_partition_keys = self.partition_keys.get(stream, [])
@@ -85,7 +86,7 @@ class BigQuery(Destination):
             create_table_command = f'''
 {create_table_command}
 PARTITION BY
-  DATE({partition_col})
+  DATE(`{partition_col}`)
             '''
 
         return [
@@ -271,6 +272,7 @@ WHERE table_id = '{table_name}'
             string_parse_func=convert_json_or_string,
             stringify_values=False,
             convert_column_types=True,
+            column_identifier='`',
         )
         insert_columns = ', '.join(insert_columns)
 
