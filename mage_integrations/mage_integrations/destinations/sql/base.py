@@ -1,5 +1,8 @@
+from datetime import datetime
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
+    INTERNAL_COLUMN_CREATED_AT,
+    INTERNAL_COLUMN_UPDATED_AT,
     MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
@@ -64,6 +67,12 @@ class Destination(BaseDestination):
 
         unique_constraints = self.unique_constraints.get(stream)
         unique_conflict_method = self.unique_conflict_methods.get(stream)
+
+        # Add _mage_created_at and _mage_updated_at columns
+        for r in record_data:
+            curr_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            r['record'][INTERNAL_COLUMN_CREATED_AT] = curr_time
+            r['record'][INTERNAL_COLUMN_UPDATED_AT] = curr_time
 
         query_strings = self.build_query_strings(record_data, stream)
 

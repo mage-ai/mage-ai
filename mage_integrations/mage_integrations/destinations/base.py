@@ -2,6 +2,7 @@ from jsonschema.validators import Draft4Validator
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
+    INTERNAL_COLUMN_SCHEMA,
     KEY_BOOKMARK_PROPERTIES,
     KEY_DISABLE_COLUMN_TYPE_CHECK,
     KEY_KEY_PROPERTIES,
@@ -236,6 +237,8 @@ class Destination():
         self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS, [])
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
         self.schemas[stream] = schema
+        # Add internal columns to schema
+        schema['properties'] = merge_dict(schema['properties'], INTERNAL_COLUMN_SCHEMA)
         self.unique_conflict_methods[stream] = row.get(KEY_UNIQUE_CONFLICT_METHOD)
         self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
         self.validators[stream] = Draft4Validator(schema)

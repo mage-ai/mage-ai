@@ -1,5 +1,8 @@
 from mage_integrations.connections.mysql import MySQL as MySQLConnection
-from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import (
+    INTERNAL_COLUMN_CREATED_AT,
+    UNIQUE_CONFLICT_METHOD_UPDATE
+)
 from mage_integrations.destinations.mysql.utils import (
     build_create_table_command,
     clean_column_name,
@@ -85,7 +88,8 @@ class MySQL(Destination):
         if unique_constraints and unique_conflict_method:
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                 columns_cleaned = [clean_column_name(col) for col in columns]
-                update_command = [f'{col} = new.{col}' for col in columns_cleaned]
+                update_command = [f'{col} = new.{col}' for col in columns_cleaned
+                                  if col != INTERNAL_COLUMN_CREATED_AT]
                 commands_after += [
                     'AS new',
                     f"ON DUPLICATE KEY UPDATE {', '.join(update_command)}",

@@ -22,8 +22,8 @@ def build_create_table_command(
     column_identifier: str = '',
 ) -> str:
     columns_and_types = [
-        f"{column_identifier}{clean_column_name(col)}{column_identifier}" + \
-            f" {column_type_mapping[col]['type_converted']}"
+        f"{column_identifier}{clean_column_name(col)}{column_identifier}" +
+        f" {column_type_mapping[col]['type_converted']}"
         for col in columns
     ]
 
