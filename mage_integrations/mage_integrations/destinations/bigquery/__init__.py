@@ -86,7 +86,7 @@ class BigQuery(Destination):
             create_table_command = f'''
 {create_table_command}
 PARTITION BY
-  DATE(`{partition_col}`)
+  DATE(`{clean_column_name(partition_col)}`)
             '''
 
         return [
