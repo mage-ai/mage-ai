@@ -156,7 +156,7 @@ class IntegrationPipeline(Pipeline):
             error = dig(json_object, 'tags.error')
             raise Exception(error)
 
-    def preview_data(self, block_type: BlockType) -> pd.DataFrame:
+    def preview_data(self, block_type: BlockType, streams: List[str] = None) -> List[str]:
         from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
 
         file_path = None
@@ -165,12 +165,11 @@ class IntegrationPipeline(Pipeline):
         elif BlockType.DATA_EXPORTER == block_type:
             file_path = self.destination_file_path
 
+        streams_updated = set()
         try:
-            if file_path and len(self.streams()) > 0:
-                stream_data = self.streams()[0]
-                tap_stream_id = stream_data['tap_stream_id']
-                destination_table = stream_data.get('destination_table', tap_stream_id)
-
+            streams = streams if streams else \
+                list(map(lambda s: s['tap_stream_id'], self.streams()))
+            if file_path and len(streams) > 0:
                 run_args = [
                     PYTHON,
                     file_path,
@@ -181,11 +180,8 @@ class IntegrationPipeline(Pipeline):
                     '1',
                     '--settings',
                     self.data_loader.file_path,
-                    '--state',
-                    self.source_state_file_path(
-                        destination_table=destination_table,
-                        stream=tap_stream_id,
-                    ),
+                    '--selected_streams_json',
+                    json.dumps(streams),
                 ]
 
                 proc = subprocess.run(
@@ -193,9 +189,9 @@ class IntegrationPipeline(Pipeline):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
+                proc.check_returncode()
 
                 output = proc.stdout.decode()
-
                 print_logs_from_output(output)
 
                 pipeline = Pipeline(self.uuid)
@@ -214,10 +210,11 @@ class IntegrationPipeline(Pipeline):
                             }
 
                             block.store_variables(variables)
+                            streams_updated.add(stream_id)
                     except json.decoder.JSONDecodeError:
                         pass
 
-                proc.check_returncode()
+            return streams_updated
         except subprocess.CalledProcessError as e:
             stderr = e.stderr.decode('utf-8').split('\n')
 

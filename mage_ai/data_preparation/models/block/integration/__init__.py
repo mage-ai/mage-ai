@@ -218,8 +218,7 @@ class IntegrationBlock(Block):
         return outputs
 
 class SourceBlock(IntegrationBlock):
-    def output_variables(self, execution_partition: str = None) -> List[str]:
-        return []
+    pass
 
 class DestinationBlock(IntegrationBlock):
     def output_variables(self, execution_partition: str = None) -> List[str]:

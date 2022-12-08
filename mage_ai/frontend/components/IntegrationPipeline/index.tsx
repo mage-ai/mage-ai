@@ -57,6 +57,7 @@ type IntegrationPipelineProps = {
   blocks: BlockType[];
   codeBlocks?: any;
   fetchPipeline: () => void;
+  fetchSampleData: () => void;
   globalVariables: PipelineVariableType[];
   onChangeCodeBlock: (uuid: string, value: string) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
@@ -81,6 +82,7 @@ function IntegrationPipeline({
   blocks,
   codeBlocks,
   fetchPipeline,
+  fetchSampleData,
   globalVariables,
   onChangeCodeBlock,
   openSidekickView,
@@ -164,11 +166,6 @@ function IntegrationPipeline({
   const disableColumnTypeCheck =
     (catalog?.streams || []).every(({ disable_column_type_check: v }) => v);
 
-  const updateSelectedStream = useCallback(
-    () => setSelectedStream(catalog?.streams?.[0]?.tap_stream_id),
-    [catalog],
-  );
-
   const catalogPrev = usePrevious(catalog);
   useEffect(() => {
     if (!catalogPrev && catalog) {
@@ -176,7 +173,9 @@ function IntegrationPipeline({
         setSelectedOutputBlock(dataLoaderBlock);
         return [dataLoaderBlock];
       });
-      setIntegrationStreams(catalog?.streams?.map(({ tap_stream_id }) => tap_stream_id));
+      // @ts-ignore
+      setIntegrationStreams(prevStreams =>
+        prevStreams || catalog?.streams?.map(({ tap_stream_id }) => tap_stream_id));
     }
   }, [catalog]);
 
@@ -189,12 +188,21 @@ function IntegrationPipeline({
         {
           callback: (res) => {
             if (res['success']) {
-              updateSelectedStream();
-              openSidekickView(ViewKeyEnum.DATA);
+              const streams = res?.['streams'] || []
               setOutputBlocks(() => {
                 setSelectedOutputBlock(dataLoaderBlock);
                 return [dataLoaderBlock];
               });
+              if (streams.length > 0) {
+                setSelectedStream(streams[0]);
+              }
+              // @ts-ignore
+              setIntegrationStreams(prevStreams => {
+                const updatedStreams = (prevStreams || []).concat(streams);
+                return Array.from(new Set(updatedStreams)).sort();
+              });
+              openSidekickView(ViewKeyEnum.DATA);
+              fetchSampleData();
             } else {
               setSourceSampleDataError(res['error']);
             }
@@ -270,7 +278,6 @@ function IntegrationPipeline({
               streams: streamsPrevious.concat(streamsNew),
             };
 
-            setOutputBlocks(() => []);
             setIntegrationStreams(streams.map(({ tap_stream_id }) => tap_stream_id));
 
             onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
@@ -280,12 +287,6 @@ function IntegrationPipeline({
 
             savePipelineContent().then(() => {
               return fetchPipeline();
-            }).then(() => {
-              // @ts-ignore
-              loadSampleData({
-                action: 'sample_data',
-                pipeline_uuid: pipeline?.uuid,
-              });
             });
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -690,16 +691,6 @@ function IntegrationPipeline({
                   </Button>
                 </div>
 
-                {isLoadingLoadSampleData && (
-                  <Spacing mt={1}>
-                    <FlexContainer>
-                      <Spinner color="white" small/>
-                      <Spacing ml={1} />
-                      <Text small> Loading source data preview </Text>
-                    </FlexContainer>
-                  </Spacing>
-                )}
-
                 {sourceSampleDataError && (
                   <Text warning>
                     {sourceSampleDataError}
@@ -720,6 +711,13 @@ function IntegrationPipeline({
               <SchemaSettings
                 catalog={catalog}
                 destination={dataExporterBlockContent?.destination}
+                isLoadingLoadSampleData={isLoadingLoadSampleData}
+                // @ts-ignore
+                loadSampleData={stream => loadSampleData({
+                  action: 'sample_data',
+                  pipeline_uuid: pipeline?.uuid,
+                  streams: [stream],
+                })}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
                 updateMetadataForColumns={updateMetadataForColumns}

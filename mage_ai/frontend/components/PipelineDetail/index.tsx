@@ -72,6 +72,7 @@ type PipelineDetailProps = {
   deleteBlock: (block: BlockType) => Promise<any>;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  fetchSampleData: () => void;
   files: FileType[];
   globalVariables: PipelineVariableType[];
   interruptKernel: () => void;
@@ -129,6 +130,7 @@ function PipelineDetail({
   deleteBlock,
   fetchFileTree,
   fetchPipeline,
+  fetchSampleData,
   files,
   globalVariables,
   interruptKernel,
@@ -454,6 +456,7 @@ function PipelineDetail({
       blocks={blocks}
       codeBlocks={codeBlocks}
       fetchPipeline={fetchPipeline}
+      fetchSampleData={fetchSampleData}
       globalVariables={globalVariables}
       onChangeCodeBlock={onChangeCodeBlock}
       openSidekickView={openSidekickView}

@@ -1285,6 +1285,7 @@ function PipelineDetailPage({
       deleteBlock={deleteBlock}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
+      fetchSampleData={fetchSampleData}
       files={files}
       globalVariables={globalVariables}
       interruptKernel={interruptKernel}
@@ -1358,24 +1359,6 @@ function PipelineDetailPage({
     textareaFocused,
     widgets,
   ]);
-
-  // const orchestrationMemo = useMemo(() => (
-  //   <Orchestration
-  //     newPipelineSchedule={newPipelineSchedule}
-  //     pipeline={pipeline}
-  //     pipelineScheduleAction={pipelineScheduleAction}
-  //     pipelineScheduleId={pipelineScheduleId}
-  //     setErrors={setErrors}
-  //     variables={globalVariables}
-  //   />
-  // ), [
-  //   globalVariables,
-  //   newPipelineSchedule,
-  //   pipeline,
-  //   pipelineScheduleAction,
-  //   pipelineScheduleId,
-  //   setErrors,
-  // ])
 
   const mainContainerHeaderMemo = useMemo(() => {
     if (page === PAGE_NAME_EDIT) {
@@ -1510,6 +1493,29 @@ function PipelineDetailPage({
     widgets,
   ]);
 
+  const integrationOutputsMemo = useMemo(
+    () => integrationStreams
+      ?.filter(stream => find(
+        blockSampleData?.outputs,
+        ({ variable_uuid }) => variable_uuid === `output_sample_data_${stream}`,
+      ))
+      ?.map(stream => (
+        <Spacing key={stream} pl={1}>
+          <KeyboardShortcutButton
+            blackBorder
+            compact
+            muted
+            onClick={() => setSelectedStream(stream)}
+            selected={selectedStream === stream}
+            uuid={stream}
+          >
+            {stream}
+          </KeyboardShortcutButton>
+        </Spacing>
+      )),
+    [blockSampleData, integrationStreams, selectedStream]
+  );
+
   const fileTreeRef = useRef(null);
   const before = useMemo(() => (
     <ContextMenu
@@ -1616,20 +1622,7 @@ function PipelineDetailPage({
                 </Spacing>
               );
             })}
-            {isIntegration && integrationStreams?.map(stream => (
-              <Spacing key={stream} pl={1}>
-                <KeyboardShortcutButton
-                  blackBorder
-                  compact
-                  muted
-                  onClick={() => setSelectedStream(stream)}
-                  selected={selectedStream === stream}
-                  uuid={stream}
-                >
-                  {stream}
-                </KeyboardShortcutButton>
-              </Spacing>
-            ))}
+            {isIntegration && integrationOutputsMemo}
           </FlexContainer>
         )}
         before={before}
