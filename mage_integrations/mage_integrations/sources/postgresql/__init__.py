@@ -163,6 +163,7 @@ WHERE  c.table_schema = '{schema}'
                                 relation['name'] == tap_stream_id
                             ):
                                 payload = dict(zip(relation['columns'], values))
+                                payload['lsn'] = msg.data_start
                                 yield [payload]
                 else:
                     now = datetime.datetime.now()
@@ -189,7 +190,7 @@ WHERE  c.table_schema = '{schema}'
 
     def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
         if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
-            return 'lsn'
+            return ['lsn']
         else:
             return super()._get_bookmark_properties_for_stream(stream)
 

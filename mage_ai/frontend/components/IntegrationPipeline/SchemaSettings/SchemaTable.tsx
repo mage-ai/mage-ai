@@ -20,6 +20,7 @@ import {
   COLUMN_TYPES,
   COLUMN_TYPE_CUSTOM_DATE_TIME,
   ColumnFormatEnum,
+  ColumnFormatMapping,
   ColumnTypeEnum,
   InclusionEnum,
   IntegrationDestinationEnum,
@@ -165,10 +166,10 @@ function SchemaTable({
       }
 
       const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
-        if (columnTypes.indexOf(colType) >= 0 || (
-          COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType)
-            && ColumnFormatEnum.DATE_TIME === columnFormat
-        )) {
+        if (columnTypes.indexOf(colType) >= 0
+          || (COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType) && ColumnFormatEnum.DATE_TIME === columnFormat)
+          || (ColumnFormatEnum.UUID === String(colType) && ColumnFormatEnum.UUID === columnFormat)
+        ) {
           return acc;
         }
 
@@ -217,10 +218,10 @@ function SchemaTable({
                 >
                   <Chip
                     border
-                    label={ColumnFormatEnum.DATE_TIME === columnFormat &&
-                        ColumnTypeEnum.STRING === columnType &&
-                        indexOfFirstStringType === idx
-                      ? COLUMN_TYPE_CUSTOM_DATE_TIME
+                    label={(columnFormat
+                        && ColumnTypeEnum.STRING === columnType
+                        && indexOfFirstStringType === idx)
+                      ? ColumnFormatMapping[columnFormat]
                       : columnType
                     }
                     onClick={() => {
@@ -230,8 +231,8 @@ function SchemaTable({
                           colType !== columnType),
                       };
 
-                      if (ColumnFormatEnum.DATE_TIME === columnFormat &&
-                        ColumnTypeEnum.STRING === columnType
+                      if ((ColumnFormatEnum.DATE_TIME === columnFormat || ColumnFormatEnum.UUID === columnFormat)
+                        && ColumnTypeEnum.STRING === columnType
                       ) {
                         data.format = null;
                       }
@@ -257,6 +258,9 @@ function SchemaTable({
 
                 if (COLUMN_TYPE_CUSTOM_DATE_TIME === String(columnType)) {
                   data.format = ColumnFormatEnum.DATE_TIME;
+                  data.type.push(ColumnTypeEnum.STRING);
+                } else if (ColumnFormatEnum.UUID === String(columnType)) {
+                  data.format = ColumnFormatEnum.UUID;
                   data.type.push(ColumnTypeEnum.STRING);
                 } else {
                   data.type.push(columnType);

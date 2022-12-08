@@ -438,7 +438,11 @@ class Source:
             )
             final_record = record
 
-            if REPLICATION_METHOD_INCREMENTAL == stream.replication_method and bookmark_properties:
+            if (stream.replication_method in [
+                    REPLICATION_METHOD_INCREMENTAL,
+                    REPLICATION_METHOD_LOG_BASED,
+                ]
+                    and bookmark_properties):
                 if self.is_sorted:
                     state = {}
 
@@ -460,7 +464,7 @@ class Source:
 
         if final_record:
             self.logger.info(
-                f'Final record writing completed.',
+                'Final record writing completed.',
                 tags=dict(
                     record=final_record,
                     stream=tap_stream_id,

@@ -70,12 +70,20 @@ class BaseModel(Base):
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        self.session.commit()
+        try:
+            self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
     def delete(self, commit: bool = True) -> None:
         self.session.delete(self)
         if commit:
-            self.session.commit()
+            try:
+                self.session.commit()
+            except Exception as e:
+                self.session.rollback()
+                raise e
 
     def refresh(self):
         self.session.refresh(self)
@@ -222,7 +230,6 @@ class PipelineRun(BaseModel):
         COMPLETED = 'completed'
         FAILED = 'failed'
         CANCELLED = 'cancelled'
-        CALCULATING_METRICS = 'calculating metrics'
 
     pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
     pipeline_uuid = Column(String(255), index=True)

@@ -16,7 +16,6 @@ from mage_integrations.destinations.constants import (
     KEY_VALUE,
     KEY_VERSION,
 )
-from mage_integrations.destinations.utils import flatten_record
 from mage_integrations.utils.dictionary import merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
@@ -246,7 +245,7 @@ class Destination():
         if state:
             self._emit_state(state)
         else:
-            message = f'A state message is missing a state value.'
+            message = 'A state message is missing a state value.'
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
@@ -401,14 +400,14 @@ class Destination():
 
         if final_state_data:
             self.logger.info(
-                f'Final state for bookmark properties update completed.',
+                'Final state for bookmark properties update completed.',
                 tags=merge_dict(tags, dict(state=final_state_data['row'][KEY_VALUE])),
             )
 
         if final_record_data:
             record_adjusted = self.__prepare_record(**final_record_data)
             self.logger.info(
-                f'Final record processing completed.',
+                'Final record processing completed.',
                 tags=merge_dict(tags, dict(record=record_adjusted)),
             )
 

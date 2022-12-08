@@ -3,7 +3,6 @@ import BlockRunType, { RunStatus as RunStatusEnum } from './BlockRunType';
 export const RunStatus = RunStatusEnum;
 
 export const RUN_STATUS_TO_LABEL = {
-  [RunStatus.CALCULATING_METRICS]: 'Calculating metrics',
   [RunStatus.CANCELLED]: 'Cancelled',
   [RunStatus.COMPLETED]: 'Done',
   [RunStatus.FAILED]: 'Failed',
