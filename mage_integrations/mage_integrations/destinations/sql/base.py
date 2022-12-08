@@ -250,9 +250,15 @@ class Destination(BaseDestination):
                     f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
                     tags=tags,
                 )
-                results += self.build_connection().execute(insert_commands, commit=True)
+                results += self.build_connection().execute(query_strings, commit=True)
                 query_strings = []
                 query_string_size = 0
+        if len(query_strings) > 0:
+            self.logger.info(
+                f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
+                tags=tags,
+            )
+            results += self.build_connection().execute(query_strings, commit=True)
         return results
 
     def build_connection(self):
