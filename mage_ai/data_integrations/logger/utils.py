@@ -29,7 +29,7 @@ def print_logs_from_output(
 
             if 'timestamp' in data:
                 message = datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S') \
-                            + ' ' + message
+                            + ' ' + str(message)
 
             if TYPE_LOG == data.get('type'):
                 if logger:
@@ -42,7 +42,7 @@ def print_logs_from_output(
                     updated_tags = tags1
                     try:
                         updated_tags.update(data2)
-                    except:
+                    except Exception:
                         pass
 
                     logger.info(message, tags=merge_dict(tags, updated_tags))
