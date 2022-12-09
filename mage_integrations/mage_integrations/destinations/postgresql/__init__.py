@@ -1,5 +1,9 @@
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
-from mage_integrations.destinations.constants import COLUMN_TYPE_OBJECT, UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_OBJECT,
+    INTERNAL_COLUMN_CREATED_AT,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
+)
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.postgresql.utils import convert_column_type
 from mage_integrations.destinations.sql.utils import (
@@ -99,7 +103,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             ),
             columns=columns,
             records=records,
-            string_parse_func=lambda x, y: x.replace("'", "''") if COLUMN_TYPE_OBJECT == y['type'] else x,
+            string_parse_func=lambda x, y: x.replace("'", "''")
+            if COLUMN_TYPE_OBJECT == y['type'] else x,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -111,7 +116,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
         if unique_constraints and unique_conflict_method:
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns]
+            columns_cleaned = [clean_column_name(col) for col in columns
+                               if col != INTERNAL_COLUMN_CREATED_AT]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
@@ -139,7 +145,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         connection = self.build_connection().build_connection()
         with connection.cursor() as cursor:
             cursor.execute(
-                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\'',
+                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
+                f'tablename = \'{table_name}\'',
             )
             count = cursor.rowcount
 
