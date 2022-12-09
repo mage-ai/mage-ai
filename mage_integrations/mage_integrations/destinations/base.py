@@ -49,6 +49,7 @@ class Destination():
         batch_processing: bool = False,
         config: Dict = None,
         config_file_path: str = None,
+        count_records: bool = False,
         debug: bool = False,
         log_to_stdout: bool = False,
         logger=LOGGER,
@@ -71,6 +72,8 @@ class Destination():
                 config_file_path = args.config
             if args.config_json:
                 config = json.loads(args.config_json)
+            if args.count_records:
+                count_records = args.count_records
             if args.debug:
                 debug = args.debug
             if args.log_to_stdout:
@@ -87,6 +90,7 @@ class Destination():
         self.batch_processing = batch_processing
         self.bookmark_properties = None
         self.config_file_path = config_file_path
+        self.count_records_mode = count_records
         self.debug = debug
         self.disable_column_type_check = None
         self.key_properties = None
@@ -153,6 +157,15 @@ class Destination():
 
     def test_connection(self) -> None:
         raise Exception('Subclasses must implement the test_connection method.')
+
+    def count_records(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        **kwargs,
+    ) -> int:
+        return 0
 
     def export_data(
         self,
@@ -260,6 +273,8 @@ class Destination():
             if self.should_test_connection:
                 self.logger.info('Testing connection...')
                 self.test_connection()
+            elif self.count_records_mode:
+                pass
             else:
                 self._process(input_buffer)
         except Exception as err:

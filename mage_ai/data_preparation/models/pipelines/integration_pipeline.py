@@ -262,6 +262,42 @@ class IntegrationPipeline(Pipeline):
 
         return arr
 
+    def count_destination_records(self) -> List[Dict]:
+        arr = []
+
+        if self.destination_file_path and self.data_exporter.file_path:
+            for stream_data in self.streams():
+                tap_stream_id = stream_data['tap_stream_id']
+                destination_table = stream_data.get('destination_table', tap_stream_id)
+
+                try:
+                    run_args = [
+                        PYTHON,
+                        self.destination_file_path,
+                        '--config_json',
+                        build_config_json(self.data_exporter.file_path, self.__global_variables()),
+                        '--settings',
+                        self.data_exporter.file_path,
+                        '--state',
+                        self.source_state_file_path(
+                            destination_table=destination_table,
+                            stream=tap_stream_id,
+                        ),
+                        '--selected_streams_json',
+                        json.dumps([tap_stream_id]),
+                        '--count_records',
+                    ]
+
+                    proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    proc.check_returncode()
+
+                    arr += json.loads(parse_logs_and_json(proc.stdout.decode()))
+                except subprocess.CalledProcessError as e:
+                    message = e.stderr.decode('utf-8')
+                    raise Exception(message)
+
+        return arr
+
     def discover(self, streams: List[str] = None) -> Dict:
         if self.source_file_path and self.data_loader.file_path:
             try:

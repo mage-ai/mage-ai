@@ -5,7 +5,7 @@ from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict
-from typing import Dict, List, Tuple
+from typing import List
 import json
 import math
 
@@ -173,3 +173,44 @@ def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger) -> None:
                 f'Destination state for stream {tap_stream_id}: {bookmark_values}',
                 tags=merge_dict(tags, d),
             )
+
+
+def validate_sync_results(pipeline_run: PipelineRun, logger: DictLogger) -> None:
+    integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
+
+    is_sql_source = integration_pipeline.source_uuid in SQL_SOURCES_UUID
+    source_record_counts_by_stream = {}
+    destination_record_counts_by_stream = {}
+    if is_sql_source:
+        source_record_counts_by_stream = index_by(
+            lambda x: x['id'],
+            integration_pipeline.count_records(),
+        )
+        destination_record_counts_by_stream = index_by(
+            lambda x: x['id'],
+            integration_pipeline.count_destination_records(),
+        )
+
+    for stream in integration_pipeline.streams():
+        tap_stream_id = stream['tap_stream_id']
+
+        tags = dict(
+            source=integration_pipeline.source_uuid,
+            stream=tap_stream_id,
+        )
+
+        source_record_counts = None
+        destination_record_counts = None
+        if is_sql_source:
+            source_record_counts = source_record_counts_by_stream[tap_stream_id]['count']
+            destination_record_counts = destination_record_counts_by_stream[tap_stream_id]['count']
+        logger.info(
+            f"Number of records for source of stream {tap_stream_id}: "
+            f"{'N/A' if source_record_counts is None else source_record_counts}.",
+            tags=tags,
+        )
+        logger.info(
+            f"Number of records for destination of stream {tap_stream_id}: "
+            f"{'N/A' if destination_record_counts is None else destination_record_counts}.",
+            tags=tags,
+        )
