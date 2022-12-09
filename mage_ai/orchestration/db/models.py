@@ -66,15 +66,16 @@ class BaseModel(Base):
                 self.session.rollback()
                 raise e
 
-    def update(self, **kwargs) -> None:
+    def update(self, commit=True, **kwargs) -> None:
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        try:
-            self.session.commit()
-        except Exception as e:
-            self.session.rollback()
-            raise e
+        if commit:
+            try:
+                self.session.commit()
+            except Exception as e:
+                self.session.rollback()
+                raise e
 
     def delete(self, commit: bool = True) -> None:
         self.session.delete(self)
