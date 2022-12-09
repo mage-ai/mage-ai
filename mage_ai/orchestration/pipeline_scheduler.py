@@ -479,7 +479,7 @@ def run_integration_pipeline(
                 outputs.append(output)
 
                 if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
-                    f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
+                   f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
 
                     tags2 = merge_dict(tags_updated.get('tags', {}), dict(
                         destination_table=destination_table,
@@ -508,7 +508,7 @@ def run_block(
     pipeline_type: PipelineType = None,
     verify_output: bool = True,
     runtime_arguments: Dict = None,
-    schedule_after_complete: bool = True,
+    schedule_after_complete: bool = False,
     template_runtime_configuration: Dict = None,
 ) -> Any:
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
