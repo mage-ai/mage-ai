@@ -74,11 +74,12 @@ class ApiIntegrationSourcesHandler(BaseHandler):
                 self.write(dict(success=False, error_message=str(e)))
         elif action == 'sample_data':
             pipeline_uuid = payload['pipeline_uuid']
+            streams = payload.get('streams')
             pipeline = IntegrationPipeline.get(pipeline_uuid)
 
             try:
-                pipeline.preview_data(BlockType.DATA_LOADER)
-                self.write(dict(success=True))
+                streams_updated = pipeline.preview_data(BlockType.DATA_LOADER, streams=streams)
+                self.write(dict(success=True, streams=list(streams_updated)))
             except Exception as e:
                 self.write(dict(success=False, error_message=str(e)))
 

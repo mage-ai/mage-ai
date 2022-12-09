@@ -196,7 +196,10 @@ class Source:
                 self.test_connection()
             elif self.load_sample_data:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
-                for stream in catalog.get_selected_streams(self.state):
+                streams = [
+                    catalog.get_stream(tap_stream_id) for tap_stream_id in self.selected_streams
+                ]
+                for stream in streams:
                     gen = self.load_data(stream, sample_data=True)
                     if gen is not None:
                         data = next(gen)

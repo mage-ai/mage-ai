@@ -5,6 +5,7 @@ import {
   useState,
 } from 'react';
 
+import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
 import Flex from '@oracle/components/Flex';
@@ -40,6 +41,8 @@ const SPACING_BOTTOM_UNITS = 5;
 
 export type SchemaTableProps = {
   destination: IntegrationDestinationEnum;
+  isLoadingLoadSampleData: boolean;
+  loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
   updateMetadataForColumns: (
     streamUUID: string,
@@ -65,6 +68,8 @@ const PARTITION_KEY_DESTINATIONS = ['bigquery'];
 
 function SchemaTable({
   destination,
+  isLoadingLoadSampleData,
+  loadSampleData,
   source,
   stream,
   updateMetadataForColumns,
@@ -472,6 +477,17 @@ function SchemaTable({
       </Spacing>
 
       {tableMemo}
+      
+      <Spacing mt={2}>
+        <Button
+          loading={isLoadingLoadSampleData}
+          onClick={() => loadSampleData(streamUUID)}
+          primary
+          small
+        >
+          Load sample data
+        </Button>
+      </Spacing>
 
       <Spacing mt={5}>
         <Headline condensed level={4} spacingBelow>
