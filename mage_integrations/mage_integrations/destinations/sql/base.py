@@ -173,10 +173,6 @@ class Destination(BaseDestination):
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
-        if self.debug:
-            for qs in query_strings:
-                print(qs, '\n')
-
         return query_strings
 
     def handle_insert_commands(
@@ -262,12 +258,18 @@ class Destination(BaseDestination):
                 results += self.build_connection().execute(query_strings, commit=True)
                 query_strings = []
                 query_string_size = 0
+
+        if self.debug:
+            for qs in query_strings:
+                print(qs, '\n')
+
         if len(query_strings) > 0:
             self.logger.info(
                 f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
                 tags=tags,
             )
             results += self.build_connection().execute(query_strings, commit=True)
+
         return results
 
     def build_connection(self):
