@@ -1,7 +1,10 @@
+from collections import Counter
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
+    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_STRING,
     REPLICATION_METHOD_FULL_TABLE,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
@@ -33,11 +36,28 @@ class Api(Source):
                 for col in df.columns:
                     df_filtered = df[df[col].notnull()][[col]]
 
+
                     for k, v in infer_dtypes(df_filtered).items():
+                        if 'mixed' == v:
+                            counter = Counter(map(type, df_filtered[col].values))
+                            dtype, count = sorted(
+                                [(k, v) for k, v in dict(counter).items()],
+                                key=lambda t: t[1],
+                                reverse=True,
+                            )[0]
+
+                            if dtype is list:
+                                col_type = COLUMN_TYPE_ARRAY
+                            elif dtype is dict:
+                                col_type = COLUMN_TYPE_OBJECT
+                            else:
+                                col_type = COLUMN_TYPE_STRING
+                        else:
+                            col_type = convert_data_type(v)
                         properties[k] = dict(
                             type=[
                                 'null',
-                                COLUMN_TYPE_OBJECT if v == 'mixed' else convert_data_type(v),
+                                col_type,
                             ],
                         )
 
