@@ -57,16 +57,17 @@ Read more about Sources:
 ### Available sources
 
 - [Amplitude](../../mage_integrations/mage_integrations/sources/amplitude/README.md)
+- [Api](../../mage_integrations/mage_integrations/sources/api/README.md)
 - [BigQuery](../../mage_integrations/mage_integrations/sources/bigquery/README.md)
+- [Chargebee](../../mage_integrations/mage_integrations/sources/chargebee/README.md)
 - [Google Search Console](../../mage_integrations/mage_integrations/sources/google_search_console/README.md)
 - [Google Sheets](../../mage_integrations/mage_integrations/sources/google_sheets/README.md)
-- [Intercom](../../mage_integrations/mage_integrations/sources/intercom/README.md) 
+- [Intercom](../../mage_integrations/mage_integrations/sources/intercom/README.md)
 - [MySQL](../../mage_integrations/mage_integrations/sources/mysql/README.md)
 - [PostgreSQL](../../mage_integrations/mage_integrations/sources/postgresql/README.md)
 - [Redshift (Amazon Web Services)](../../mage_integrations/mage_integrations/sources/redshift/README.md)
 - [Salesforce](../../mage_integrations/mage_integrations/sources/salesforce/README.md)
 - [Stripe](../../mage_integrations/mage_integrations/sources/stripe/README.md)
-- [Chargebee](../../mage_integrations/mage_integrations/sources/chargebee/README.md)
 - *Airtable (coming soon)*
 - *Google Analytics (coming soon)*
 - *HubSpot (coming soon)*
