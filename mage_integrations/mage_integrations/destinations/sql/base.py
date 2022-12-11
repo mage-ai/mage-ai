@@ -173,10 +173,6 @@ class Destination(BaseDestination):
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
-        if self.debug:
-            for qs in query_strings:
-                print(qs, '\n')
-
         return query_strings
 
     def handle_insert_commands(
@@ -242,6 +238,10 @@ class Destination(BaseDestination):
         results = []
         results += self.build_connection().execute(query_strings, commit=True)
 
+        if self.debug:
+            for qs in query_strings:
+                print(qs, '\n')
+
         query_string_size = 0
         query_strings = []
         for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
@@ -259,15 +259,36 @@ class Destination(BaseDestination):
                     f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
                     tags=tags,
                 )
-                results += self.build_connection().execute(query_strings, commit=True)
+
+                if self.debug:
+                    for qs in query_strings:
+                        try:
+                            results += self.build_connection().execute([qs], commit=True)
+                        except Exception as err:
+                            print(qs)
+                            raise err
+                else:
+                    results += self.build_connection().execute(query_strings, commit=True)
+
                 query_strings = []
                 query_string_size = 0
+
         if len(query_strings) > 0:
             self.logger.info(
                 f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
                 tags=tags,
             )
-            results += self.build_connection().execute(query_strings, commit=True)
+
+            if self.debug:
+                for qs in query_strings:
+                    try:
+                        results += self.build_connection().execute([qs], commit=True)
+                    except Exception as err:
+                        print(qs)
+                        raise err
+            else:
+                results += self.build_connection().execute(query_strings, commit=True)
+
         return results
 
     def build_connection(self):
