@@ -214,7 +214,7 @@ class Titanic(Source):
     def load_data(
         self,
         **kwargs,
-    ) -> List[Dict]:
+    ) -> Generator[List[Dict], None, None]:
         url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/titanic_survival.csv'
         text = requests.get(url).text
 
@@ -226,7 +226,7 @@ class Titanic(Source):
             values = line.split(',')
             rows.append({col: values[idx] for idx, col in enumerate(columns)})
 
-        return rows
+        yield rows
 
 
 if __name__ == '__main__':
