@@ -24,7 +24,8 @@ def get_collection(key: str, available_options: List[Dict]):
             d['templates'] = mod.templates()
         except FileNotFoundError:
             d['templates'] = {}
-        except Exception:
+        except Exception as err:
+            print(err)
             continue
 
         collection.append(d)
