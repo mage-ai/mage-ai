@@ -100,6 +100,7 @@ class Api(Source):
 
     def load_data(
         self,
+        *args,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         url = self.config['url']
