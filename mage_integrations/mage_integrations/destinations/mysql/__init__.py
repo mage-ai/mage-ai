@@ -50,7 +50,7 @@ class MySQL(Destination):
                 column_type_mapping=column_type_mapping(
                     schema,
                     convert_column_type,
-                    lambda item_type_converted: 'JSON',
+                    lambda item_type_converted: 'LONGTEXT',
                 ),
                 columns=schema['properties'].keys(),
                 full_table_name=f'{database_name}.{table_name}',
@@ -75,7 +75,7 @@ class MySQL(Destination):
             column_type_mapping=column_type_mapping(
                 schema,
                 convert_column_type,
-                lambda item_type_converted: 'JSON',
+                lambda item_type_converted: 'LONGTEXT',
             ),
             columns=columns,
             records=records,
