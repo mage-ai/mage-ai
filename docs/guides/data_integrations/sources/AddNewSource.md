@@ -205,7 +205,7 @@ Your final file should look like this:
 
 ```python
 from mage_integrations.sources.base import Source, main
-from typing import Dict, List
+from typing import Dict, Generator, List
 import csv
 import requests
 
