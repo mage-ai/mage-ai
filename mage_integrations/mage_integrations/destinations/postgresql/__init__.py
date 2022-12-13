@@ -17,6 +17,14 @@ from typing import Dict, List, Tuple
 
 
 class PostgreSQL(Destination):
+    def get_full_table_name(
+        self,
+        database_name=None,
+        schema_name=None,
+        table_name=None,
+    ) -> str:
+        return f'{schema_name}.{table_name}'
+
     def build_connection(self) -> PostgreSQLConnection:
         return PostgreSQLConnection(
             database=self.config['database'],

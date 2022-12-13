@@ -28,6 +28,36 @@ class Destination(BaseDestination):
         self.records_inserted = 0
         self.records_updated = 0
 
+        self.database_name = self.config.get(self.DATABASE_CONFIG_KEY)
+        self.schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
+        self.table_name = self.config.get('table')
+
+    def count_existing_records(self) -> int:
+        if not self.does_table_exist(
+            database_name=self.database_name,
+            schema_name=self.schema_name,
+            table_name=self.table_name
+        ):
+            return 0
+        else:
+            full_table_name = self.get_full_table_name(
+                database_name=self.database_name,
+                schema_name=self.schema_name,
+                table_name=self.table_name
+            )
+            result = self.build_connection().execute([
+                f'SELECT COUNT(*) AS number_of_records FROM {full_table_name}'
+            ])
+            return result[0][0]['number_of_records']
+
+    def get_full_table_name(
+        self,
+        database_name=None,
+        schema_name=None,
+        table_name=None,
+    ) -> str:
+        return f'{database_name}.{schema_name}.{table_name}'
+
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
@@ -51,16 +81,12 @@ class Destination(BaseDestination):
         record_data: List[Dict],
         stream: str,
     ) -> None:
-        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
-        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
-
         tags = dict(
-            database_name=database_name,
+            database_name=self.database_name,
             records=len(record_data),
-            schema_name=schema_name,
+            schema_name=self.schema_name,
             stream=stream,
-            table_name=table_name,
+            table_name=self.table_name,
         )
 
         self.logger.info('Export data started', tags=tags)
@@ -102,24 +128,20 @@ class Destination(BaseDestination):
         record_data: List[Dict],
         stream: str,
     ) -> List[str]:
-        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
-        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
-
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
 
         tags = dict(
-            database_name=database_name,
+            database_name=self.database_name,
             records=len(record_data),
-            schema_name=schema_name,
+            schema_name=self.schema_name,
             stream=stream,
-            table_name=table_name,
+            table_name=self.table_name,
         )
 
         query_strings = self.build_create_schema_commands(
-            database_name=database_name,
-            schema_name=schema_name,
+            database_name=self.database_name,
+            schema_name=self.schema_name,
         )
 
         replication_method = self.replication_methods[stream]
@@ -129,17 +151,17 @@ class Destination(BaseDestination):
             REPLICATION_METHOD_LOG_BASED,
         ]:
             friendly_table_name = '.'.join([x for x in [
-                database_name,
-                schema_name,
-                table_name,
+                self.database_name,
+                self.schema_name,
+                self.table_name,
             ] if x])
 
             self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
 
             table_exists = self.does_table_exist(
-                database_name=database_name,
-                schema_name=schema_name,
-                table_name=table_name,
+                database_name=self.database_name,
+                schema_name=self.schema_name,
+                table_name=self.table_name,
             )
 
             if table_exists:
@@ -148,11 +170,11 @@ class Destination(BaseDestination):
                 Check whether any new columns are added
                 """
                 alter_table_commands = self.build_alter_table_commands(
-                    database_name=database_name,
+                    database_name=self.database_name,
                     schema=schema,
-                    schema_name=schema_name,
+                    schema_name=self.schema_name,
                     stream=stream,
-                    table_name=table_name,
+                    table_name=self.table_name,
                     unique_constraints=unique_constraints,
                 )
                 if len(alter_table_commands) > 0:
@@ -160,11 +182,11 @@ class Destination(BaseDestination):
             else:
                 self.logger.info(f'Table {friendly_table_name} doesn’t exists.', tags=tags)
                 query_strings += self.build_create_table_commands(
-                    database_name=database_name,
+                    database_name=self.database_name,
                     schema=schema,
-                    schema_name=schema_name,
+                    schema_name=self.schema_name,
                     stream=stream,
-                    table_name=table_name,
+                    table_name=self.table_name,
                     unique_constraints=unique_constraints,
                 )
                 self.attempted_create_table = True
@@ -200,10 +222,6 @@ class Destination(BaseDestination):
         idx: int = 0,
         tags: Dict = {},
     ):
-        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
-        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
-
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
         unique_conflict_method = self.unique_conflict_methods.get(stream)
@@ -214,11 +232,11 @@ class Destination(BaseDestination):
         self.logger.info(f'Build insert commands for batch {idx} started.', tags=tags2)
 
         cmds = self.build_insert_commands(
-            database_name=database_name,
+            database_name=self.database_name,
             records=records,
             schema=schema,
-            schema_name=schema_name,
-            table_name=table_name,
+            schema_name=self.schema_name,
+            table_name=self.table_name,
             unique_conflict_method=unique_conflict_method,
             unique_constraints=unique_constraints,
         )

@@ -13,6 +13,14 @@ from typing import Dict, List, Tuple
 
 
 class Snowflake(Destination):
+    def get_full_table_name(
+        self,
+        database_name=None,
+        schema_name=None,
+        table_name=None,
+    ) -> str:
+        return f'"{database_name}"."{schema_name}"."{table_name}"'
+
     def build_connection(self) -> SnowflakeConnection:
         return SnowflakeConnection(
             account=self.config['account'],

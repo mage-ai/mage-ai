@@ -43,6 +43,7 @@ class Source:
         count_records: bool = False,
         discover_mode: bool = False,
         discover_streams_mode: bool = False,
+        is_first_sync: bool = False,
         is_sorted: bool = True,
         load_sample_data: bool = False,
         log_to_stdout: bool = False,
@@ -79,12 +80,15 @@ class Source:
                 test_connection = args.test_connection
             if args.load_sample_data:
                 load_sample_data = args.load_sample_data
+            if args.first_sync:
+                is_first_sync = args.first_sync
 
         self.catalog = catalog
         self.config = config
         self.count_records_mode = count_records
         self.discover_mode = discover_mode
         self.discover_streams_mode = discover_streams_mode
+        self.is_first_sync = is_first_sync
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
         self.load_sample_data = load_sample_data

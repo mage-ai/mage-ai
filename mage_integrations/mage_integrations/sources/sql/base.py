@@ -236,11 +236,14 @@ WHERE table_schema = '{schema}'
         order_by_columns = []
 
         # This order is very important, don’t change
-        for arr in [
-            bookmark_properties,
+        order_by_properties = [
             key_properties,
             unique_constraints,
-        ]:
+        ]
+        if not self.is_first_sync:
+            order_by_properties = [bookmark_properties] + order_by_properties
+
+        for arr in order_by_properties:
             if not arr:
                 continue
 
