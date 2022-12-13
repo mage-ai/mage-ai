@@ -79,6 +79,7 @@ class DeltaLakeS3(BaseDeltaLake):
         return has_logs
 
     def test_connection(self) -> None:
+        client = self.build_client()
         client.head_bucket(Bucket=self.bucket)
 
 
