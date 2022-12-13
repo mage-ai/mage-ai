@@ -11,11 +11,13 @@ import Chip from '@oracle/components/Chip';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
 import usePrevious from '@utils/usePrevious';
 import {
   COLUMN_TYPES,
@@ -32,6 +34,7 @@ import {
   StreamType,
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
+import { Info } from '@oracle/icons';
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array';
@@ -446,37 +449,54 @@ function SchemaTable({
       </Headline>
 
       <Spacing mb={3}>
-        <Text bold large>
-          Table name (optional)
-        </Text>
-        <Text default>
-          By default, this stream will be saved to your destination under the
-          table named <Text bold inline monospace>
-            {streamUUID}
-          </Text>.
-          <br />
-          To change the table name, enter in a different value below.
-        </Text>
+        <Panel
+          headerTitle="Output"
+        >
+          <FlexContainer alignItems="center">
+            <Text>
+              Destination table name
+            </Text>
+            <Spacing ml="4px" />
+            <Tooltip
+              default
+              label={(
+                <Text>
+                  By default, this stream will be saved to your destination under the
+                  table named <Text bold inline monospace>
+                    {streamUUID}
+                  </Text>.
+                  <br />
+                  To change the table name, enter in a different value.
+                </Text>
+              )}
+              lightBackground
+              widthFitContent
+            >
+              <Info
+                primary
+                size={UNIT * 2}
+              />
+            </Tooltip>
+            <Spacing ml={1} />
+            <TextInput
+              compact
+              monospace
+              onChange={(e) => {
+                const val = e.target.value;
+                setDestinationTable(val);
 
-        <Spacing mt={1}>
-          <TextInput
-            label="Table name"
-            monospace
-            onChange={(e) => {
-              const val = e.target.value;
-              setDestinationTable(val);
-
-              clearTimeout(timeout.current);
-              timeout.current = setTimeout(() => {
-                updateStream(streamUUID, (streamCurrent: StreamType) => ({
-                  ...streamCurrent,
-                  destination_table: val,
-                }));
-              }, 300);
-            }}
-            value={destinationTable || ''}
-          />
-        </Spacing>
+                clearTimeout(timeout.current);
+                timeout.current = setTimeout(() => {
+                  updateStream(streamUUID, (streamCurrent: StreamType) => ({
+                    ...streamCurrent,
+                    destination_table: val,
+                  }));
+                }, 300);
+              }}
+              value={destinationTable || ''}
+            />
+          </FlexContainer>
+        </Panel>
       </Spacing>
 
       {tableMemo}
