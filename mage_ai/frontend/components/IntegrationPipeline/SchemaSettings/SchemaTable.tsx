@@ -451,6 +451,7 @@ function SchemaTable({
       <Spacing mb={3}>
         <Panel
           headerTitle="Output"
+          overflowVisible
         >
           <FlexContainer alignItems="center">
             <Text>
@@ -464,13 +465,10 @@ function SchemaTable({
                   By default, this stream will be saved to your destination under the
                   table named <Text bold inline monospace>
                     {streamUUID}
-                  </Text>.
-                  <br />
-                  To change the table name, enter in a different value.
+                  </Text>. To change the table name, enter in a different value.
                 </Text>
               )}
               lightBackground
-              widthFitContent
             >
               <Info
                 primary
@@ -499,6 +497,146 @@ function SchemaTable({
         </Panel>
       </Spacing>
 
+      <Spacing mb={3}>
+        <Panel
+          headerTitle="Usage"
+          overflowVisible
+        >
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <Flex alignItems="center">
+              <Text>
+                Replication method
+              </Text>
+              <Spacing ml="4px" />
+              <Tooltip
+                default
+                label={(
+                  <Text>
+                    Do you want to synchronize the entire stream (<Text bold inline monospace>
+                      {ReplicationMethodEnum.FULL_TABLE}
+                    </Text>)
+                    on each integration pipeline run or
+                    only new records (<Text bold inline monospace>
+                      {ReplicationMethodEnum.INCREMENTAL}
+                    </Text>)?
+                    {source === IntegrationSourceEnum.POSTGRESQL &&
+                      <Text>
+                        Log-based incremental replication (<Text bold inline monospace>
+                          {ReplicationMethodEnum.LOG_BASED}
+                        </Text>)
+                        is also available for PostgreSQL sources.
+                      </Text>
+                    }
+                  </Text>
+                )}
+                lightBackground
+              >
+                <Info
+                  primary
+                  size={UNIT * 2}
+                />
+              </Tooltip>
+              <Spacing ml={1} />
+              <Select
+                compact
+                onChange={(e) => {
+                  updateStream(streamUUID, (stream: StreamType) => ({
+                    ...stream,
+                    replication_method: e.target.value,
+                  }));
+                }}
+                primary
+                value={replicationMethod}
+              >
+                <option value="" />
+                {Object.values(ReplicationMethodEnum)
+                  .filter(method => (source === IntegrationSourceEnum.POSTGRESQL
+                    ? true
+                    : method !== ReplicationMethodEnum.LOG_BASED))
+                  .map(method => (
+                    <option key={method} value={method}>
+                      {method}
+                    </option>
+                ))}
+              </Select>
+
+              <Spacing ml={3} />
+
+              <Text>
+                Unique conflict method
+              </Text>
+              <Spacing ml="4px" />
+              <Tooltip
+                default
+                label={(
+                  <Text>
+                    If a new record has the same value as an existing record in
+                    the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.sort().map((col: string, idx: number) => (
+                      <Text
+                        bold
+                        inline
+                        key={col}
+                        monospace
+                      >
+                        {idx >= 1 && <>,&nbsp;</>}
+                        {col}
+                      </Text>
+                    ))}, how do you want to resolve the conflict?
+                    The conflict method <Text bold inline monospace>
+                      {UniqueConflictMethodEnum.IGNORE}
+                    </Text> will skip the new record if it’s a duplicate of an existing record.
+                    The conflict method <Text bold inline monospace>
+                      {UniqueConflictMethodEnum.UPDATE}
+                    </Text> will not save the new record and instead update the existing record
+                    with the new record’s properties.
+                  </Text>
+                )}
+                lightBackground
+              >
+                <Info
+                  primary
+                  size={UNIT * 2}
+                />
+              </Tooltip>
+              <Spacing ml={1} />
+              <Select
+                compact
+                inputWidth={UNIT * 11}
+                onChange={(e) => {
+                  updateStream(streamUUID, (stream: StreamType) => ({
+                    ...stream,
+                    unique_conflict_method: e.target.value,
+                  }));
+                }}
+                primary
+                value={uniqueConflictMethod}
+              >
+                <option value="" />
+                <option value={UniqueConflictMethodEnum.IGNORE}>
+                  {UniqueConflictMethodEnum.IGNORE}
+                </option>
+                <option value={UniqueConflictMethodEnum.UPDATE}>
+                  {UniqueConflictMethodEnum.UPDATE}
+                </option>
+              </Select>
+            </Flex>
+            <Flex alignItems="center">
+              <Text default>
+                All streams
+              </Text>
+              <Spacing ml={1} />
+              <Button
+                compact
+                pill
+                secondary
+              >
+                Apply
+              </Button>
+            </Flex>
+          </FlexContainer>
+        </Panel>
+      </Spacing>
+
       {tableMemo}
 
       <Spacing mt={2}>
@@ -516,53 +654,6 @@ function SchemaTable({
         <Headline condensed level={4} spacingBelow>
           Settings
         </Headline>
-
-        <Spacing mb={SPACING_BOTTOM_UNITS}>
-          <Spacing mb={1}>
-            <Text bold large>
-              Replication method
-            </Text>
-            <Text default>
-              Do you want to synchronize the entire stream (<Text bold inline monospace>
-                {ReplicationMethodEnum.FULL_TABLE}
-              </Text>)
-              on each integration pipeline run or
-              only new records (<Text bold inline monospace>
-                {ReplicationMethodEnum.INCREMENTAL}
-              </Text>)?
-              {source === IntegrationSourceEnum.POSTGRESQL &&
-                <Text default>
-                  Log-based incremental replication (<Text bold inline monospace>
-                    {ReplicationMethodEnum.LOG_BASED}
-                  </Text>)
-                  is also available for PostgreSQL sources.
-                </Text>
-              }
-            </Text>
-          </Spacing>
-
-          <Select
-            onChange={(e) => {
-              updateStream(streamUUID, (stream: StreamType) => ({
-                ...stream,
-                replication_method: e.target.value,
-              }));
-            }}
-            primary
-            value={replicationMethod}
-          >
-            <option value="" />
-            {Object.values(ReplicationMethodEnum)
-              .filter(method => (source === IntegrationSourceEnum.POSTGRESQL
-                ? true
-                : method !== ReplicationMethodEnum.LOG_BASED))
-              .map(method => (
-                <option key={method} value={method}>
-                  {method}
-                </option>
-            ))}
-          </Select>
-        </Spacing>
 
         {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
           <Spacing mb={SPACING_BOTTOM_UNITS}>
@@ -749,59 +840,6 @@ function SchemaTable({
             </FlexContainer>
           </Spacing>
         )}
-
-        {uniqueConstraints?.length > 0 &&
-          <Spacing mb={SPACING_BOTTOM_UNITS}>
-            <Spacing mb={1}>
-              <Text bold large>
-                Unique conflict method
-              </Text>
-              <Text default>
-                If a new record has the same value as an existing record
-                in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.sort().map((col: string, idx: number) => (
-                  <Text
-                    bold
-                    inline
-                    key={col}
-                    monospace
-                  >
-                    {idx >= 1 && <>,&nbsp;</>}
-                    {col}
-                  </Text>
-                ))}, how do you want to resolve the conflict?
-
-                <br />
-
-                The conflict method <Text bold inline monospace>
-                  {UniqueConflictMethodEnum.IGNORE}
-                </Text> will skip the new record if it’s a duplicate of an existing record.
-                The conflict method <Text bold inline monospace>
-                  {UniqueConflictMethodEnum.UPDATE}
-                </Text> will not save the new record and instead update the existing record
-                with the new record’s properties.
-              </Text>
-            </Spacing>
-
-            <Select
-              onChange={(e) => {
-                updateStream(streamUUID, (stream: StreamType) => ({
-                  ...stream,
-                  unique_conflict_method: e.target.value,
-                }));
-              }}
-              primary
-              value={uniqueConflictMethod}
-            >
-              <option value="" />
-              <option value={UniqueConflictMethodEnum.IGNORE}>
-                {UniqueConflictMethodEnum.IGNORE}
-              </option>
-              <option value={UniqueConflictMethodEnum.UPDATE}>
-                {UniqueConflictMethodEnum.UPDATE}
-              </option>
-            </Select>
-          </Spacing>
-        }
       </Spacing>
     </>
   );
