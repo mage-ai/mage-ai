@@ -40,6 +40,7 @@ export type ButtonProps = {
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
+  compact?: boolean;
   danger?: boolean;
   default?: boolean;
   disabled?: boolean;
@@ -63,10 +64,12 @@ export type ButtonProps = {
   outline?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
+  pill?: boolean;
   pointerEventsEnabled?: boolean;
   primary?: boolean;
   primaryGradient?: boolean;
   sameColorAsText?: boolean;
+  secondary?: boolean;
   secondaryGradient?: boolean;
   selected?: boolean;
   selectedAlt?: boolean;
@@ -133,6 +136,10 @@ const SHARED_STYLES = css<{
     padding: ${props.padding} !important;
   `}
 
+  ${props => !props.noPadding && props.compact && `
+    padding: ${UNIT / 2}px ${UNIT}px;
+  `}
+
   ${props => props.noPadding && `
     padding: 0;
   `}
@@ -151,6 +158,10 @@ const SHARED_STYLES = css<{
 
   ${props => !props.borderRadiusLeft && !props.borderRadiusRight && !props.noBorder && `
     border-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.pill && `
+    border-radius: ${UNIT * 3}px;
   `}
 
   ${props => (props.noBorder || props.borderLess) && `
@@ -242,6 +253,11 @@ const SHARED_STYLES = css<{
     &:active {
       border-color: ${(props.theme.content || dark.content).active};
     }
+  `}
+
+  ${props => props.secondary && !props.disabled && `
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
+    border-color: ${(props.theme || dark).borders.dark};
   `}
 
   ${props => props.primary && !props.disabled && `
