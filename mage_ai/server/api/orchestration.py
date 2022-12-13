@@ -7,6 +7,7 @@ from datetime import datetime
 from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import (
     BlockRun,
     EventMatcher,
@@ -22,6 +23,7 @@ import json
 class ApiBlockRunDetailHandler(BaseHandler):
     model_class = BlockRun
 
+    @safe_db_query
     def put(self, block_run_id):
         payload = self.get_payload()
         # Only allow update block run status
@@ -36,6 +38,7 @@ class ApiBlockRunDetailHandler(BaseHandler):
 class ApiAllBlockRunListHandler(BaseHandler):
     model_class = BlockRun
 
+    @safe_db_query
     def get(self):
         query = BlockRun.query
 
@@ -89,6 +92,7 @@ class ApiAllBlockRunListHandler(BaseHandler):
 class ApiBlockRunListHandler(BaseHandler):
     model_class = BlockRun
 
+    @safe_db_query
     def get(self, pipeline_run_id):
         block_runs = BlockRun.query.filter(
             BlockRun.pipeline_run_id == int(pipeline_run_id),
@@ -100,6 +104,7 @@ class ApiBlockRunListHandler(BaseHandler):
 
 
 class ApiBlockRunLogHandler(BaseHandler):
+    @safe_db_query
     def get(self, block_run_id):
         block_run = BlockRun.query.get(int(block_run_id))
         self.write(
@@ -110,6 +115,7 @@ class ApiBlockRunLogHandler(BaseHandler):
 
 
 class ApiBlockRunOutputHandler(BaseHandler):
+    @safe_db_query
     def get(self, block_run_id):
         block_run = BlockRun.query.get(int(block_run_id))
         outputs = block_run.get_outputs()
@@ -192,6 +198,7 @@ class ApiAllPipelineRunListHandler(BaseHandler):
 class ApiPipelineRunDetailHandler(BaseDetailHandler):
     model_class = PipelineRun
 
+    @safe_db_query
     def get(self, pipeline_run_id):
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
         block_runs = pipeline_run.block_runs
@@ -207,6 +214,7 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
 
         self.write(dict(pipeline_run=pipeline_run_dict))
 
+    @safe_db_query
     def put(self, pipeline_run_id):
         payload = self.get_payload()
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
@@ -246,10 +254,12 @@ class ApiPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
     model_class = PipelineRun
 
+    @safe_db_query
     def get(self, pipeline_schedule_id):
         status = self.get_argument('status', None)
         process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id), status=status)
 
+    @safe_db_query
     def post(self, pipeline_schedule_id):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
         pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
@@ -292,6 +302,7 @@ class ApiPipelineRunListHandler(BaseHandler):
 
 
 class ApiPipelineRunLogHandler(BaseHandler):
+    @safe_db_query
     def get(self, pipeline_run_id):
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
         self.write(
@@ -305,12 +316,14 @@ class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
     datetime_keys = ['start_time']
     model_class = PipelineSchedule
 
+    @safe_db_query
     def get(self, pipeline_schedule_id):
         include_attributes = []
         if self.get_bool_argument('include_event_matchers', False):
             include_attributes.append('event_matchers')
         super().get(pipeline_schedule_id, include_attributes=include_attributes)
 
+    @safe_db_query
     def put(self, pipeline_schedule_id):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
         payload = self.get_payload()
@@ -373,6 +386,7 @@ class ApiPipelineScheduleListHandler(BaseHandler):
     datetime_keys = ['start_time']
     model_class = PipelineSchedule
 
+    @safe_db_query
     def get(self, pipeline_uuid=None):
         try:
             if pipeline_uuid is None:
@@ -399,6 +413,7 @@ class ApiPipelineScheduleListHandler(BaseHandler):
         self.write(dict(pipeline_schedules=collection))
         self.finish()
 
+    @safe_db_query
     def post(self, pipeline_uuid):
         pipeline = Pipeline.get(pipeline_uuid)
 
