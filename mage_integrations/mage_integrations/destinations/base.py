@@ -162,7 +162,12 @@ class Destination():
         tags: dict = {},
         **kwargs,
     ) -> None:
-        raise Exception('Subclasses must implement the export_data method.')
+        self.export_batch_data([dict(
+            record=record,
+            schema=schema,
+            stream=stream,
+            tags=tags,
+        )], stream)
 
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         raise Exception('Subclasses must implement the export_batch_data method.')

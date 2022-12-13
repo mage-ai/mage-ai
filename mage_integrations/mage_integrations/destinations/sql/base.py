@@ -1,13 +1,11 @@
-from datetime import datetime
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
-    INTERNAL_COLUMN_CREATED_AT,
-    INTERNAL_COLUMN_UPDATED_AT,
     MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
     REPLICATION_METHOD_LOG_BASED,
 )
+from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Dict, List, Tuple
@@ -31,26 +29,7 @@ class Destination(BaseDestination):
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
-    def export_data(
-        self,
-        stream: str,
-        schema: dict,
-        record: dict,
-        tags: dict = {},
-        **kwargs,
-    ) -> None:
-        self.export_batch_data([dict(
-            record=record,
-            schema=schema,
-            stream=stream,
-            tags=tags,
-        )], stream)
-
-    def export_batch_data(
-        self,
-        record_data: List[Dict],
-        stream: str,
-    ) -> None:
+    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get('table')
@@ -70,9 +49,7 @@ class Destination(BaseDestination):
 
         # Add _mage_created_at and _mage_updated_at columns
         for r in record_data:
-            curr_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-            r['record'][INTERNAL_COLUMN_CREATED_AT] = curr_time
-            r['record'][INTERNAL_COLUMN_UPDATED_AT] = curr_time
+            r['record'] = update_record_with_internal_columns(r['record'])
 
         query_strings = self.build_query_strings(record_data, stream)
 
