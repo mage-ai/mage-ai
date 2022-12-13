@@ -8,7 +8,6 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 
-const HEADERS_HEIGHT_OFFSET = 14;
 const HEADER_PADDING_Y_UNITS = 1.5;
 const PADDING_UNITS = 1.75;
 
@@ -24,7 +23,7 @@ const PanelStyle = styled.div<any>`
   width: 100%;
   
   ${props => `
-    background-color: ${(props.theme.background || light.background).page};
+    background-color: ${(props.theme.background || light.background).panel};
     border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
@@ -39,7 +38,7 @@ const PanelStyle = styled.div<any>`
 
 const HeaderStyle = styled.div<any>`
   ${props => `
-    background-color: ${(props.theme.background || light.background).header};
+    background-color: ${(props.theme.background || light.background).chartBlock};
     border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
@@ -53,6 +52,7 @@ const HeaderStyle = styled.div<any>`
 const ContentStyle = styled.div<any>`
   overflow-y: auto;
   padding: ${PADDING_UNITS * UNIT}px;
+  height: 100%;
 
   ${props => props.height && `
     height: ${props.height}px;
@@ -80,9 +80,6 @@ export type PanelProps = {
   subtitle?: JSX.Element;
 };
 
-const PANEL_HEADER_HEIGHT = 6.5 * UNIT;
-const PANEL_FOOTER_HEIGHT = 6.5 * UNIT;
-
 function Panel({
   borderless,
   children,
@@ -97,15 +94,6 @@ function Panel({
   items,
   subtitle,
 }: PanelProps) {
-  let contentSectionHeight = HEADERS_HEIGHT_OFFSET;
-
-  if (headerTitle || header) {
-    contentSectionHeight -= (headerHeight || PANEL_HEADER_HEIGHT);
-  }
-  if (footer) {
-    contentSectionHeight -= PANEL_FOOTER_HEIGHT;
-  }
-
   return (
     <PanelStyle borderless={borderless} fullHeight={fullHeight} ref={containerRef}>
       {(header || headerTitle) &&
@@ -116,7 +104,7 @@ function Panel({
               <FlexContainer alignItems="center">
                 {headerIcon && headerIcon}
                 <Spacing ml={headerIcon ? 1 : 0}>
-                  <Text bold>
+                  <Text bold default>
                     {headerTitle}
                   </Text>
                 </Spacing>
@@ -138,7 +126,7 @@ function Panel({
           }
         </HeaderStyle>
       }
-      <ContentStyle height={fullHeight ? contentSectionHeight : null} ref={contentContainerRef}>
+      <ContentStyle ref={contentContainerRef}>
         {children}
       </ContentStyle>
       {footer &&
