@@ -81,6 +81,7 @@ Read more tech docs here. Got questions?
     - [Redshift](integrations/Redshift.md)
     - [S3](integrations/S3.md)
     - [Snowflake](integrations/Snowflake.md)
+    - [Delta Lake](integrations/DeltaLake.md)
 - Existing tools
     - [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
     - [Prefect](production/prefect.md)

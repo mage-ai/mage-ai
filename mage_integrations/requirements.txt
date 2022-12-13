@@ -1,9 +1,11 @@
+deltalake==0.6.4
 google-analytics-data==0.14.2
 google-api-python-client==2.65.0
 google-cloud-bigquery-storage==2.16.2
 google-cloud-bigquery~=2.34.4
 mysql-connector-python==8.0.31
 psycopg2-binary~=2.8
+pyarrow==10.0.1
 python-dateutil==2.8.2
 redshift-connector==2.0.909
 requests~=2.27.0

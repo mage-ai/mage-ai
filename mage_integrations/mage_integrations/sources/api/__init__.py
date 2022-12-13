@@ -90,7 +90,10 @@ class Api(Source):
         url = self.config['url']
         query = self.config.get('query')
         payload = self.config.get('payload')
-        headers = self.config.get('headers')
+        headers = {
+            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36',
+        }
+        headers.update(self.config.get('headers', {}))
 
         tags = dict(
             headers=headers,
@@ -110,11 +113,19 @@ class Api(Source):
 
         self.logger.info(f'API request {self.http_method} {url} started.', tags=tags)
 
-        return getattr(requests, self.http_method)(
+        import requests
+        s = requests.Session()
+        a = requests.adapters.HTTPAdapter(max_retries=100)
+        b = requests.adapters.HTTPAdapter(max_retries=100)
+        s.mount('http://', a)
+        s.mount('https://', b)
+
+        return getattr(s, self.http_method)(
             url,
             data=payload,
             headers=headers,
             timeout=12,
+            verify=False,
         )
 
 
