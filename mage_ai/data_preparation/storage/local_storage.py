@@ -31,7 +31,10 @@ class LocalStorage(BaseStorage):
         if not self.path_exists(file_path):
             return default_value
         with open(file_path) as file:
-            return json.load(file)
+            try:
+                return json.load(file)
+            except Exception:
+                return dict()
 
     def write_json_file(self, file_path: str, data) -> None:
         with open(file_path, 'w') as file:
