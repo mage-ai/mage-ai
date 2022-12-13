@@ -579,7 +579,7 @@ async def main(
 
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
-    db_connection.start_session()
+    db_connection.start_session(force=True)
 
     get_messages(
         lambda content: WebSocketServer.send_message(
