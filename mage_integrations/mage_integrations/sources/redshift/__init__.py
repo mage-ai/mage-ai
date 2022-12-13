@@ -179,6 +179,8 @@ FROM {database_name}.{schema_name}.{table_name}"""
             where_statements = []
             if bookmarks:
                 for col, val in bookmarks.items():
+                    if col not in bookmark_properties:
+                        continue
                     where_statements.append(
                         build_comparison_statement(
                             col,
