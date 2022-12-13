@@ -17,7 +17,11 @@ const HEADER_STYLES = css`
   padding-top: ${HEADER_PADDING_Y_UNITS * UNIT}px;
 `;
 
-const PanelStyle = styled.div<any>`
+const PanelStyle = styled.div<{
+  borderless?: boolean;
+  fullHeight?: boolean;
+  overflowVisible?: boolean;
+}>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
   width: 100%;
@@ -31,12 +35,19 @@ const PanelStyle = styled.div<any>`
     height: fit-content;
   `}
   
-  ${props =>  props.borderless &&`
+  ${props => props.borderless && `
     border: none;
+  `}
+
+  ${props => props.overflowVisible && `
+    overflow: visible;
   `}
 `;
 
 const HeaderStyle = styled.div<any>`
+  border-top-left-radius: ${BORDER_RADIUS}px;
+  border-top-right-radius: ${BORDER_RADIUS}px;
+
   ${props => `
     background-color: ${(props.theme.background || light.background).chartBlock};
     border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
@@ -56,6 +67,10 @@ const ContentStyle = styled.div<any>`
 
   ${props => props.height && `
     height: ${props.height}px;
+  `}
+
+  ${props => props.overflowVisible && `
+    overflow: visible;
   `}
 `;
 
@@ -77,6 +92,7 @@ export type PanelProps = {
   footer?: JSX.Element;
   fullHeight?: boolean;
   items?: JSX.Element;
+  overflowVisible?: boolean;
   subtitle?: JSX.Element;
 };
 
@@ -92,10 +108,16 @@ function Panel({
   headerIcon,
   headerTitle,
   items,
+  overflowVisible,
   subtitle,
 }: PanelProps) {
   return (
-    <PanelStyle borderless={borderless} fullHeight={fullHeight} ref={containerRef}>
+    <PanelStyle
+      borderless={borderless}
+      fullHeight={fullHeight}
+      overflowVisible={overflowVisible}
+      ref={containerRef}
+    >
       {(header || headerTitle) &&
         <HeaderStyle height={headerHeight}>
           {header && header}
@@ -126,7 +148,10 @@ function Panel({
           }
         </HeaderStyle>
       }
-      <ContentStyle ref={contentContainerRef}>
+      <ContentStyle
+        overflowVisible={overflowVisible}
+        ref={contentContainerRef}
+      >
         {children}
       </ContentStyle>
       {footer &&

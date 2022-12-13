@@ -112,6 +112,7 @@ function Tooltip({
           </FlexContainer>
         </TextEl>
       }
+      lightBackground={lightBackground}
       minWidth={minWidth}
       noHoverOutline={!!children}
       size={size}

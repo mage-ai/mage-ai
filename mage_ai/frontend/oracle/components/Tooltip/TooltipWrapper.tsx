@@ -109,6 +109,10 @@ const ContentStyle = styled.div<TooltipWrapperProps>`
     box-shadow: ${(props.theme.shadow || dark.shadow).base};
   `}
 
+  ${props => props.lightBackground && `
+    box-shadow: ${(props.theme.shadow || dark.shadow).window};
+  `}
+
   ${props => props.appearAbove && !props.size && `
     bottom: 0;
   `}
@@ -155,6 +159,7 @@ function TooltipWrapper({
   fullSize,
   height,
   inline,
+  lightBackground,
   minWidth,
   noHoverOutline,
   size = UNIT * 2,
@@ -217,6 +222,7 @@ function TooltipWrapper({
           appearAbove={appearAbove}
           appearBefore={appearBefore}
           leftPosition={center ? leftPosition : null}
+          lightBackground={lightBackground}
           minWidth={autoWidth ? minWidth : null}
           rightPosition={alignLeft}
           size={size}
