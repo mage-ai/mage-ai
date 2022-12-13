@@ -23,6 +23,7 @@ export type TooltipWrapperProps = {
   inline?: boolean;
   label?: string | any;
   leftPosition?: number;
+  lightBackground?: boolean;
   maxWidth?: number;
   minWidth?: number;
   muted?: boolean;
@@ -46,7 +47,7 @@ const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
     height: ${props.size}px;
   `}
 
-  ${props => props.size && `
+  ${props => props.fullSize && `
     height: 100%;
   `}
 `;

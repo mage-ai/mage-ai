@@ -23,8 +23,11 @@ const SHARED_STYLES = css<{
 
   ${props => `
     box-shadow: ${(props.theme.shadow || dark.shadow).popup};
-
     background-color: ${(props.theme.background || dark.background).popup};
+  `}
+
+  ${props => props.lightBackground && `
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
   `}
 
   ${props => props.width && !(props.widthFitContent || props.autoWidth) && `
@@ -56,6 +59,7 @@ function Tooltip({
   inverted,
   keyboardShortcuts,
   label,
+  lightBackground,
   maxWidth,
   muted,
   size = UNIT * 2,
@@ -73,7 +77,7 @@ function Tooltip({
       keyboardShortcutsEls.push(
         <Text default>
           +
-        </Text>
+        </Text>,
       );
     }
     keyboardShortcutsEls.push(el);
@@ -93,6 +97,7 @@ function Tooltip({
       content={
         <TextEl
           autoWidth={autoWidth}
+          lightBackground={lightBackground}
           width={maxWidth}
           widthFitContent={widthFitContent}
         >
