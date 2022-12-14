@@ -32,8 +32,18 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    --database_connection_url)
-    DATABASE_CONNECTION_URL="$3"
+    --gcp_project_id)
+    GCP_PROJECT_ID="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --gcp_path_to_credentials)
+    GCP_PATH_TO_CREDENTIALS="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --gcp_region)
+    GCP_REGION="$3"
     shift # past argument
     shift # past value
     ;;
@@ -71,6 +81,10 @@ export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+
+export GCP_PROJECT_ID=$GCP_PROJECT_ID
+export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
+export GCP_REGION=$GCP_REGION
 
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
 
