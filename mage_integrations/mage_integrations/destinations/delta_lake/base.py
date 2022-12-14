@@ -1,5 +1,5 @@
 from deltalake import PyDeltaTableError
-from deltalake.writer import try_get_deltatable, write_deltalake
+from deltalake.writer import try_get_deltatable
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
@@ -15,6 +15,7 @@ from mage_integrations.destinations.constants import (
 from mage_integrations.destinations.delta_lake.constants import MODE_APPEND, MODE_OVERWRITE
 from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
 from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
+from mage_integrations.destinations.delta_lake.writer import write_deltalake
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import find
 from mage_integrations.utils.dictionary import merge_dict
@@ -26,8 +27,7 @@ import pandas as pd
 import pyarrow as pa
 import sys
 
-# Add 10% buffer
-MAX_BYTE_SIZE_PER_WRITE = (5 * (1024 * 1024 * 1024)) * 0.9
+MAX_BYTE_SIZE_PER_WRITE = (5 * (1024 * 1024))
 
 
 class DeltaLake(BaseDestination):
@@ -159,9 +159,6 @@ class DeltaLake(BaseDestination):
         df = pd.DataFrame([d[KEY_RECORD] for d in record_data])
         df_count = len(df.index)
 
-        total_byte_size = int(df.memory_usage(deep=True).sum())
-        batches = math.ceil(total_byte_size / MAX_BYTE_SIZE_PER_WRITE)
-        records_per_batch = math.ceil(df_count / batches)
 
         if self.disable_column_type_check.get(stream):
             for column_name in self.schemas[stream]['properties'].keys():
@@ -171,40 +168,27 @@ class DeltaLake(BaseDestination):
         else:
             df, schema = self.build_schema(stream, df)
 
-        records_remaining = df_count
-        for idx in range(batches):
-            idx_start = idx * records_per_batch
-            idx_end = (idx + 1) * records_per_batch
-            df_batch = df.iloc[idx_start:idx_end]
-            batch_size = len(df_batch.index)
+        idx = 0
+        total_byte_size = int(df.memory_usage(deep=True).sum())
+        tags2 = merge_dict(tags, dict(
+            total_byte_size=total_byte_size,
+        ))
 
-            tags2 = merge_dict(tags, dict(
-                batch_byte_size=int(df_batch.memory_usage(deep=True).sum()),
-                batch_size=batch_size,
-                batches=batches,
-                index=idx,
-                records_per_batch=records_per_batch,
-                total_byte_size=total_byte_size,
-            ))
+        self.logger.info(f'Inserting records for batch {idx} started.', tags=tags2)
 
-            self.logger.info(f'Inserting records for batch {idx} started.', tags=tags2)
+        write_deltalake(
+            table or table_uri,
+            data=df,
+            mode=self.mode,
+            overwrite_schema=True,
+            partition_by=self.partition_keys.get(stream, []),
+            schema=schema,
+            storage_options=storage_options,
+        )
 
-            write_deltalake(
-                table or table_uri,
-                data=df_batch,
-                mode=MODE_APPEND if idx >= 1 else self.mode,
-                overwrite_schema=True,
-                partition_by=self.partition_keys.get(stream, []),
-                schema=schema,
-                storage_options=storage_options if not table else None,
-            )
+        self.logger.info(f'Inserting records for batch {idx} completed.', tags=tags2)
 
-            tags3 = merge_dict(tags2, dict(
-                records_remaining=records_remaining - batch_size,
-            ))
-            self.logger.info(f'Inserting records for batch {idx} completed.', tags=tags3)
-
-            self.__after_write_for_batch(stream, idx, tags=tags3)
+        self.__after_write_for_batch(stream, idx, tags=tags2)
 
         tags.update(records_inserted=df_count)
 
