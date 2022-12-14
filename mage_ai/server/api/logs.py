@@ -1,6 +1,6 @@
 from .base import META_KEY_LIMIT
 from datetime import datetime
-
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
 from mage_ai.server.api.base import BaseHandler
 from sqlalchemy.orm import aliased
@@ -9,6 +9,7 @@ MAX_LOG_FILES = 20
 
 
 class ApiPipelineLogListHandler(BaseHandler):
+    @safe_db_query
     def get(self, pipeline_uuid):
         start_timestamp = self.get_argument('start_timestamp', None)
         end_timestamp = self.get_argument('end_timestamp', None)
@@ -122,7 +123,6 @@ class ApiPipelineLogListHandler(BaseHandler):
             filter(b.pipeline_uuid == pipeline_uuid).
             order_by(c.started_at.desc())
         )
-
 
         if len(block_uuids):
             query = (
