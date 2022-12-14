@@ -103,16 +103,12 @@ function SchemaTable({
   } = stream;
 
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
-  const [replicationMethodState, setReplicationMethodState] = useState<ReplicationMethodEnum>(replicationMethod);
-  const [uniqueConflictMethodState, setUniqueConflictMethodState] = useState<UniqueConflictMethodEnum>(uniqueConflictMethod);
   const [isApplyingToAllStreams, setIsApplyingToAllStreams] = useState<boolean>(false);
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
     if (streamUUIDPrev !== streamUUID) {
       setDestinationTable(destinationTableInit);
-      setReplicationMethodState(replicationMethod);
-      setUniqueConflictMethodState(uniqueConflictMethod);
     }
   }, [
     destinationTableInit,
@@ -540,7 +536,6 @@ function SchemaTable({
               <Select
                 compact
                 onChange={(e) => {
-                  setReplicationMethodState(e.target.value);
                   updateStream(streamUUID, (stream: StreamType) => ({
                     ...stream,
                     replication_method: e.target.value,
@@ -599,7 +594,6 @@ function SchemaTable({
                 compact
                 inputWidth={UNIT * 11}
                 onChange={(e) => {
-                  setUniqueConflictMethodState(e.target.value);
                   updateStream(streamUUID, (stream: StreamType) => ({
                     ...stream,
                     unique_conflict_method: e.target.value,
@@ -642,8 +636,8 @@ function SchemaTable({
                   setTimeout(() => setIsApplyingToAllStreams(false), 2000);
                   updateAllStreams((stream: StreamType) => ({
                     ...stream,
-                    replication_method: replicationMethodState,
-                    unique_conflict_method: uniqueConflictMethodState,
+                    replication_method: replicationMethod,
+                    unique_conflict_method: uniqueConflictMethod,
                   }));
                 }}
                 pill
