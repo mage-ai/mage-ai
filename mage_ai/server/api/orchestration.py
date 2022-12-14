@@ -189,6 +189,7 @@ class ApiAllPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
     model_class = PipelineRun
 
+    @safe_db_query
     def get(self):
         pipeline_uuid = self.get_argument('pipeline_uuid', None)
         status = self.get_argument('status', None)
