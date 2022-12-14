@@ -652,6 +652,9 @@ def schedule_with_event(event: Dict = dict()):
 
 
 def get_variables(pipeline_run, extra_variables: Dict = {}) -> Dict:
+    if not pipeline_run:
+        return {}
+
     pipeline_run_variables = pipeline_run.variables or {}
     event_variables = pipeline_run.event_variables or {}
 
