@@ -14,7 +14,7 @@ from mage_ai.data_preparation.variable_manager import (
     delete_global_variable,
     set_global_variable,
 )
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models import PipelineSchedule
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -161,6 +161,7 @@ class ApiPipelineHandler(BaseHandler):
         )
         self.finish()
 
+    @safe_db_query
     def put(self, pipeline_uuid):
         """
         Allow updating pipeline name, uuid, status
@@ -215,6 +216,7 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 
 class ApiPipelineListHandler(BaseHandler):
+    @safe_db_query
     def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
