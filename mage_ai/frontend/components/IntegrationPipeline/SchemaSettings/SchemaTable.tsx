@@ -34,7 +34,6 @@ import {
   StreamType,
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
-import { Info } from '@oracle/icons';
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array';
@@ -488,6 +487,7 @@ function SchemaTable({
     if (hasMultipleStreams) {
       columnFlex.push(null);
       columns.push({
+        tooltipMessage: 'This will apply this individual feature\'s schema settings to all selected streams that have the same feature.',
         uuid: 'All streams',
       });
     }
