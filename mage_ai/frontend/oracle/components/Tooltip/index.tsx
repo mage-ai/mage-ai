@@ -12,6 +12,7 @@ import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 export type TooltipProps = {
   keyboardShortcuts?: any[];
   inverted?: boolean;
+  primary?: boolean;
 } & TooltipWrapperProps;
 
 const MAX_WIDTH = UNIT * 42;
@@ -62,6 +63,7 @@ function Tooltip({
   lightBackground,
   maxWidth,
   muted,
+  primary,
   size = UNIT * 2,
   warning,
   widthFitContent,
@@ -123,6 +125,7 @@ function Tooltip({
           default={defaultProp}
           inverted={inverted}
           muted={muted}
+          primary={primary}
           size={size}
           warning={warning}
         />

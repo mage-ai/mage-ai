@@ -720,6 +720,7 @@ function IntegrationPipeline({
                 })}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
+                updateAllStreams={updateAllStreams}
                 updateMetadataForColumns={updateMetadataForColumns}
                 updateSchemaProperty={updateSchemaProperty}
                 updateStream={updateStream}

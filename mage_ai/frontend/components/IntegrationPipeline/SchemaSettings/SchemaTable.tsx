@@ -41,12 +41,14 @@ import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array'
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;
+const TOOLTIP_LEFT_SPACING = '4px';
 
 export type SchemaTableProps = {
   destination: IntegrationDestinationEnum;
   isLoadingLoadSampleData: boolean;
   loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
+  updateAllStreams: (streamDataTransformer: (stream: StreamType) => StreamType) => void;
   updateMetadataForColumns: (
     streamUUID: string,
     columnNames: string[],
@@ -78,6 +80,7 @@ function SchemaTable({
   loadSampleData,
   source,
   stream,
+  updateAllStreams,
   updateMetadataForColumns,
   updateSchemaProperty,
   updateStream,
@@ -100,16 +103,22 @@ function SchemaTable({
   } = stream;
 
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
+  const [replicationMethodState, setReplicationMethodState] = useState<ReplicationMethodEnum>(replicationMethod);
+  const [uniqueConflictMethodState, setUniqueConflictMethodState] = useState<UniqueConflictMethodEnum>(uniqueConflictMethod);
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
     if (streamUUIDPrev !== streamUUID) {
       setDestinationTable(destinationTableInit);
+      setReplicationMethodState(replicationMethod);
+      setUniqueConflictMethodState(uniqueConflictMethod);
     }
   }, [
     destinationTableInit,
+    replicationMethod,
     streamUUID,
     streamUUIDPrev,
+    uniqueConflictMethod,
   ]);
 
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
@@ -457,9 +466,8 @@ function SchemaTable({
             <Text>
               Destination table name
             </Text>
-            <Spacing ml="4px" />
+            <Spacing ml={TOOLTIP_LEFT_SPACING} />
             <Tooltip
-              default
               label={(
                 <Text>
                   By default, this stream will be saved to your destination under the
@@ -469,12 +477,8 @@ function SchemaTable({
                 </Text>
               )}
               lightBackground
-            >
-              <Info
-                primary
-                size={UNIT * 2}
-              />
-            </Tooltip>
+              primary
+            />
             <Spacing ml={1} />
             <TextInput
               compact
@@ -507,9 +511,8 @@ function SchemaTable({
               <Text>
                 Replication method
               </Text>
-              <Spacing ml="4px" />
+              <Spacing ml={TOOLTIP_LEFT_SPACING} />
               <Tooltip
-                default
                 label={(
                   <Text>
                     Do you want to synchronize the entire stream (<Text bold inline monospace>
@@ -530,16 +533,13 @@ function SchemaTable({
                   </Text>
                 )}
                 lightBackground
-              >
-                <Info
-                  primary
-                  size={UNIT * 2}
-                />
-              </Tooltip>
+                primary
+              />
               <Spacing ml={1} />
               <Select
                 compact
                 onChange={(e) => {
+                  setReplicationMethodState(e.target.value);
                   updateStream(streamUUID, (stream: StreamType) => ({
                     ...stream,
                     replication_method: e.target.value,
@@ -565,9 +565,8 @@ function SchemaTable({
               <Text>
                 Unique conflict method
               </Text>
-              <Spacing ml="4px" />
+              <Spacing ml={TOOLTIP_LEFT_SPACING} />
               <Tooltip
-                default
                 label={(
                   <Text>
                     If a new record has the same value as an existing record in
@@ -592,17 +591,14 @@ function SchemaTable({
                   </Text>
                 )}
                 lightBackground
-              >
-                <Info
-                  primary
-                  size={UNIT * 2}
-                />
-              </Tooltip>
+                primary
+              />
               <Spacing ml={1} />
               <Select
                 compact
                 inputWidth={UNIT * 11}
                 onChange={(e) => {
+                  setUniqueConflictMethodState(e.target.value);
                   updateStream(streamUUID, (stream: StreamType) => ({
                     ...stream,
                     unique_conflict_method: e.target.value,
@@ -624,9 +620,26 @@ function SchemaTable({
               <Text default>
                 All streams
               </Text>
+              <Spacing ml={TOOLTIP_LEFT_SPACING} />
+              <Tooltip
+                appearBefore
+                label={(
+                  <Text>
+                    This will apply this stream&#39;s replication method and
+                    unique conflict method settings to all selected streams.
+                  </Text>
+                )}
+                lightBackground
+                primary
+              />
               <Spacing ml={1} />
               <Button
                 compact
+                onClick={() => updateAllStreams((stream: StreamType) => ({
+                  ...stream,
+                  replication_method: replicationMethodState,
+                  unique_conflict_method: uniqueConflictMethodState,
+                }))}
                 pill
                 secondary
               >
