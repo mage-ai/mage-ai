@@ -48,6 +48,7 @@ export type SchemaTableProps = {
   isLoadingLoadSampleData: boolean;
   loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
+  streams: StreamType[];
   updateAllStreams: (streamDataTransformer: (stream: StreamType) => StreamType) => void;
   updateMetadataForColumns: (
     streamUUID: string,
@@ -80,6 +81,7 @@ function SchemaTable({
   loadSampleData,
   source,
   stream,
+  streams,
   updateAllStreams,
   updateMetadataForColumns,
   updateSchemaProperty,
@@ -104,11 +106,13 @@ function SchemaTable({
 
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
   const [isApplyingToAllStreams, setIsApplyingToAllStreams] = useState<boolean>(false);
+  const [isApplyingToAllStreamsIdx, setIsApplyingToAllStreamsIdx] = useState<number>(null);
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
     if (streamUUIDPrev !== streamUUID) {
       setDestinationTable(destinationTableInit);
+      setIsApplyingToAllStreamsIdx(null);
     }
   }, [
     destinationTableInit,
@@ -131,6 +135,7 @@ function SchemaTable({
   ]);
 
   const showPartitionKey = PARTITION_KEY_DESTINATIONS.includes(destination);
+  const hasMultipleStreams = streams.length > 1;
 
   const tableMemo = useMemo(() => {
     const selectedArr = [];
@@ -142,7 +147,7 @@ function SchemaTable({
         format: columnFormat,
         type: columnTypesInit = [],
       },
-    ]) => {
+    ], rowIdx: number) => {
       const columnTypesSet = new Set(Array.isArray(columnTypesInit)
         ? columnTypesInit
         : [columnTypesInit],
@@ -379,6 +384,64 @@ function SchemaTable({
         );
       }
 
+      if (hasMultipleStreams) {
+        const isApplyingToAllStreamsWithFeature = isApplyingToAllStreamsIdx === rowIdx;
+        row.push(
+          <Button
+            compact
+            disabled={isApplyingToAllStreamsWithFeature}
+            onClick={() => {
+              setIsApplyingToAllStreamsIdx(rowIdx);
+              setTimeout(() => setIsApplyingToAllStreamsIdx(null), 2000);
+              updateAllStreams((stream: StreamType) => {
+                if (stream?.tap_stream_id !== streamUUID && stream?.schema?.properties?.[columnName]) {
+                  stream.schema.properties[columnName] = {
+                    format: columnFormat || null,
+                    type: columnTypes,
+                  };
+
+                  if (uniqueConstraints?.includes(columnName) && !stream?.unique_constraints?.includes(columnName)) {
+                    stream.unique_constraints = [columnName].concat(stream.unique_constraints || []);
+                  } else if (!uniqueConstraints?.includes(columnName) && stream?.unique_constraints?.includes(columnName)) {
+                    stream.unique_constraints = remove(stream.unique_constraints, col => columnName === col);
+                  }
+
+                  if (bookmarkProperties?.includes(columnName) && !stream?.bookmark_properties?.includes(columnName)) {
+                    stream.bookmark_properties = [columnName].concat(stream.bookmark_properties || []);
+                  } else if (!bookmarkProperties?.includes(columnName) && stream?.bookmark_properties?.includes(columnName)) {
+                    stream.bookmark_properties = remove(stream.bookmark_properties, col => columnName === col);
+                  }
+
+                  if (keyProperties?.includes(columnName) && !stream?.key_properties?.includes(columnName)) {
+                    stream.key_properties = [columnName].concat(stream.key_properties || []);
+                  } else if (!keyProperties?.includes(columnName) && stream?.key_properties?.includes(columnName)) {
+                    stream.key_properties = remove(stream.key_properties, col => columnName === col);
+                  }
+
+                  if (partitionKeys?.includes(columnName) && !stream?.partition_keys?.includes(columnName)) {
+                    stream.partition_keys = [columnName].concat(stream.partition_keys || []);
+                  } else if (!partitionKeys?.includes(columnName) && stream?.partition_keys?.includes(columnName)) {
+                    stream.partition_keys = remove(stream.partition_keys, col => columnName === col);
+                  }
+                }
+
+                return {
+                  ...stream,
+                };
+              });
+            }}
+            pill
+            secondary
+          >
+            <Text
+              success={isApplyingToAllStreamsWithFeature}
+            >
+              {isApplyingToAllStreamsWithFeature ? 'Applied!' : 'Apply'}
+            </Text>
+          </Button>,
+        );
+      }
+
       return row;
     });
 
@@ -422,6 +485,13 @@ function SchemaTable({
       });
     }
 
+    if (hasMultipleStreams) {
+      columnFlex.push(null);
+      columns.push({
+        uuid: 'All streams',
+      });
+    }
+
     return (
       <TableContainerStyle>
         <Table
@@ -435,10 +505,21 @@ function SchemaTable({
       </TableContainerStyle>
     );
   }, [
+    bookmarkProperties,
+    isApplyingToAllStreamsIdx,
+    keyProperties,
+    metadataByColumn,
+    partitionKeys,
     properties,
     showPartitionKey,
-    stream,
     streamUUID,
+    uniqueConstraints,
+    updateAllStreams,
+    updateMetadataForColumns,
+    updateSchemaProperty,
+    updateStream,
+    validKeyProperties,
+    validReplicationKeys,
   ]);
 
   return (
@@ -611,51 +692,59 @@ function SchemaTable({
                 </option>
               </Select>
             </Flex>
-            <Flex alignItems="center">
-              <Text default>
-                All streams
-              </Text>
-              <Spacing ml={TOOLTIP_LEFT_SPACING} />
-              <Tooltip
-                appearBefore
-                label={(
-                  <Text>
-                    This will apply this stream&#39;s replication method and
-                    unique conflict method settings to all selected streams.
-                  </Text>
-                )}
-                lightBackground
-                primary
-              />
-              <Spacing ml={1} />
-              <Button
-                compact
-                disabled={isApplyingToAllStreams}
-                onClick={() => {
-                  setIsApplyingToAllStreams(true);
-                  setTimeout(() => setIsApplyingToAllStreams(false), 2000);
-                  updateAllStreams((stream: StreamType) => ({
-                    ...stream,
-                    replication_method: replicationMethod,
-                    unique_conflict_method: uniqueConflictMethod,
-                  }));
-                }}
-                pill
-                secondary
-              >
-                <Text
-                  bold={!isApplyingToAllStreams}
-                  success={isApplyingToAllStreams}
-                >
-                  {isApplyingToAllStreams ? 'Applied!' : 'Apply'}
+
+            {hasMultipleStreams && (
+              <Flex alignItems="center">
+                <Text default>
+                  All streams
                 </Text>
-              </Button>
-            </Flex>
+                <Spacing ml={TOOLTIP_LEFT_SPACING} />
+                <Tooltip
+                  appearBefore
+                  label={(
+                    <Text>
+                      This will apply this stream&#39;s replication method and
+                      unique conflict method settings to all selected streams.
+                    </Text>
+                  )}
+                  lightBackground
+                  primary
+                />
+                <Spacing ml={1} />
+                <Button
+                  compact
+                  disabled={isApplyingToAllStreams}
+                  onClick={() => {
+                    setIsApplyingToAllStreams(true);
+                    setTimeout(() => setIsApplyingToAllStreams(false), 2000);
+                    updateAllStreams((stream: StreamType) => ({
+                      ...stream,
+                      replication_method: replicationMethod,
+                      unique_conflict_method: uniqueConflictMethod,
+                    }));
+                  }}
+                  pill
+                  secondary
+                >
+                  <Text
+                    bold={!isApplyingToAllStreams}
+                    success={isApplyingToAllStreams}
+                  >
+                    {isApplyingToAllStreams ? 'Applied!' : 'Apply'}
+                  </Text>
+                </Button>
+              </Flex>
+            )}
           </FlexContainer>
         </Panel>
       </Spacing>
 
-      {tableMemo}
+      <Panel
+        headerTitle="Features"
+        noPadding
+      >
+        {tableMemo}
+      </Panel>
 
       <Spacing mt={2}>
         <Button
