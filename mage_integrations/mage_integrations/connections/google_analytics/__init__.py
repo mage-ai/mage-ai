@@ -63,10 +63,10 @@ class GoogleAnalytics(Connection):
         metrics: Literal[METRICS] = None,
         offset: int = None,
     ):
-        if not re.match(DATE_STRING_PATTERN, start_date):
-            raise Exception(f'start_date must match {DATE_STRING_PATTERN}')
-        if not re.match(DATE_STRING_PATTERN, end_date):
-            raise Exception(f'end_date must match {DATE_STRING_PATTERN}')
+        # if not re.match(DATE_STRING_PATTERN, start_date):
+        #     raise Exception(f'start_date must match {DATE_STRING_PATTERN}')
+        # if not re.match(DATE_STRING_PATTERN, end_date):
+        #     raise Exception(f'end_date must match {DATE_STRING_PATTERN}')
 
         tags = self.build_tags(
             dimensions=dimensions,
