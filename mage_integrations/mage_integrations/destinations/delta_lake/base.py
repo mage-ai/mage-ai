@@ -1,5 +1,5 @@
 from deltalake import PyDeltaTableError
-from deltalake.writer import write_deltalake, try_get_deltatable
+from deltalake.writer import try_get_deltatable, write_deltalake
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
@@ -12,7 +12,9 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_STRING,
     KEY_RECORD,
 )
+from mage_integrations.destinations.delta_lake.constants import MODE_APPEND, MODE_OVERWRITE
 from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
+# from mage_integrations.destinations.delta_lake.writer import write_deltalake
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import find
 from mage_integrations.utils.dictionary import merge_dict
@@ -30,7 +32,7 @@ MAX_BYTE_SIZE_PER_WRITE = (5 * (1024 * 1024 * 1024)) * 0.9
 class DeltaLake(BaseDestination):
     @property
     def mode(self):
-        return self.config.get('mode', 'append')
+        return self.config.get('mode', MODE_APPEND)
 
     @property
     def table_name(self):
@@ -92,6 +94,17 @@ class DeltaLake(BaseDestination):
     def check_and_create_delta_log(self, stream: str) -> bool:
         raise Exception('Subclasses must implement the check_and_create_delta_log method.')
 
+    def get_table_for_stream(self, stream: str):
+        storage_options = self.build_storage_options()
+        table_uri = self.build_table_uri(stream)
+        table = try_get_deltatable(table_uri, storage_options)
+
+        if table:
+            raw_dt = table._table
+            table._table = RawDeltaTable(raw_dt)
+
+        return table
+
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         storage_options = self.build_storage_options()
         friendly_table_name = self.config['table']
@@ -114,16 +127,10 @@ class DeltaLake(BaseDestination):
             self.logger.info(f'No delta logs exist.', tags=tags)
 
         self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
-        try:
-            table = try_get_deltatable(table_uri, storage_options)
-            if table:
-                self.logger.info(f'Table {friendly_table_name} already exists.', tags=tags)
-                raw_dt = table._table
-                table._table = RawDeltaTable(raw_dt)
-        except PyDeltaTableError:
-            table = None
-
-        if not table:
+        table = self.get_table_for_stream(stream)
+        if table:
+            self.logger.info(f'Table {friendly_table_name} already exists.', tags=tags)
+        else:
             self.logger.info(f'Table {friendly_table_name} doesn’t exists.', tags=tags)
 
         for r in record_data:
@@ -157,8 +164,8 @@ class DeltaLake(BaseDestination):
             write_deltalake(
                 table or table_uri,
                 data=df_batch,
-                mode=self.mode,
-                overwrite_schema='overwrite' == self.mode,
+                mode=MODE_APPEND if idx >= 1 else self.mode,
+                overwrite_schema=MODE_OVERWRITE == self.mode,
                 partition_by=self.partition_keys.get(stream, []),
                 schema=schema,
                 storage_options=storage_options if not table else None,
@@ -169,9 +176,21 @@ class DeltaLake(BaseDestination):
             ))
             self.logger.info(f'Inserting records for batch {idx} completed.', tags=tags3)
 
+            self.__after_write_for_batch(stream, idx, tags=tags3)
+
         tags.update(records_inserted=df_count)
 
         self.logger.info('Export data completed.', tags=tags)
+
+    def after_write_for_batch(self, stream, index, **kwargs) -> None:
+        pass
+
+    def __after_write_for_batch(self, stream, index, **kwargs) -> None:
+        tags = kwargs.get('tags', {})
+
+        self.logger.info(f'Handle after write callback for batch {index} started.', tags=tags)
+        self.after_write_for_batch(stream, index, **kwargs)
+        self.logger.info(f'Handle after write callback for batch {index} completed.', tags=tags)
 
 
 def main(destination_class):

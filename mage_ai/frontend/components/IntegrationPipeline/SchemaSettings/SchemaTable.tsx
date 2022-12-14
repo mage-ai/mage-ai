@@ -64,7 +64,7 @@ type SchemaTablePropsInternal = {
   stream: StreamType;
 } & SchemaTableProps;
 
-const PARTITION_KEY_DESTINATIONS = ['bigquery'];
+const PARTITION_KEY_DESTINATIONS = ['bigquery', 'delta_lake_s3'];
 
 function SchemaTable({
   destination,
@@ -337,17 +337,17 @@ function SchemaTable({
       ];
 
       if (showPartitionKey) {
+        const disabled = destination !== 'delta_lake_s3' &&(
+          validKeyProperties.includes(columnName)
+            || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)
+        );
+
         row.push(
           <Checkbox
             checked={!!partitionKeys?.includes(columnName)}
-            disabled={validKeyProperties.includes(columnName)
-              || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)}
+            disabled={disabled}
             key={`${streamUUID}/${columnName}/partition_key`}
-            onClick={(validKeyProperties.includes(columnName)
-              || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME))
-              ? null
-              : () => updateStream(streamUUID, (stream: StreamType) => {
-
+            onClick={disabled ? null : () => updateStream(streamUUID, (stream: StreamType) => {
               if (stream.partition_keys?.includes(columnName)) {
                 stream.partition_keys =
                   remove(stream.partition_keys, col => columnName === col);
@@ -477,7 +477,7 @@ function SchemaTable({
       </Spacing>
 
       {tableMemo}
-      
+
       <Spacing mt={2}>
         <Button
           loading={isLoadingLoadSampleData}

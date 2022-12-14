@@ -72,14 +72,18 @@ def interpolate_variables_for_block_settings(
         return interpolate_variables(f.read(), variables)
 
 
-def interpolate_variables(
-    text: str,
-    variables: Dict,
-) -> Dict:
-    settings_string = Template(text).render(
+def interpolate_string(text: str, variables: Dict) -> str:
+    return Template(text).render(
         env_var=os.getenv,
         variables=lambda x: variables.get(x),
         n_days_ago=n_days_ago,
     )
+
+
+def interpolate_variables(
+    text: str,
+    variables: Dict,
+) -> Dict:
+    settings_string = interpolate_string(text, variables)
 
     return yaml.full_load(settings_string)
