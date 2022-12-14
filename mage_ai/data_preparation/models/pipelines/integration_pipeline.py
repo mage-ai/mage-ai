@@ -311,11 +311,13 @@ class IntegrationPipeline(Pipeline):
                 message = e.stderr.decode('utf-8')
                 raise Exception(message)
 
-    def streams(self) -> List[Dict]:
-        return self.__catalog()['streams']
+    def streams(self, variables: Dict = {}) -> List[Dict]:
+        return self.__catalog(variables)['streams']
 
-    def __catalog(self) -> Dict:
-        return get_catalog(self.data_loader, self.__global_variables())
+    def __catalog(self, variables: Dict = {}) -> Dict:
+        return get_catalog(self.data_loader, self.__global_variables(variables))
 
-    def __global_variables(self) -> Dict:
-        return get_global_variables(self.uuid) or dict()
+    def __global_variables(self, variables: Dict = {}) -> Dict:
+        d = get_global_variables(self.uuid) or dict()
+        d.update(variables)
+        return d

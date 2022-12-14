@@ -16,6 +16,7 @@ You must enter the following credentials when configuring this source:
 | `bucket` | Name of the AWS S3 bucket to save data in. | `mage_spark` |
 | `mode` | `append` will add more rows to the table but will error if schema changes. `overwrite` will remove all existing rows and recreate the table. | `append` (default value) or `overwrite` |
 | `object_key_path` | The path of the location you want to store your data. Don’t include the `s3`, the bucket name, or the table name in this path value.  | `users/ds/20221225` |
+| `overwrite_partitions_only` | If `true`, the data in the destination will be overwritten only for partitions that are present in the source data currently being synced. The `mode` must also be set to `overwrite` and the source schema mustn’t have empty `partition_keys`. | `false` |
 | `table` | Name of the table that will be created to store data from your source. | `dim_profiles_v1` |
 
 <br />

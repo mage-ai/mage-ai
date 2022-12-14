@@ -1,19 +1,45 @@
 from jinja2 import Template
 from mage_ai.shared.dates import n_days_ago
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List
 import os
 import simplejson
 import yaml
 
+KEY_PATTERNS = '_patterns'
+PATTERN_KEY_DESTINATION_TABLE = 'destination_table'
+
 
 def get_settings(block, variables: Dict = {}) -> Dict:
-    absolute_file_path = block.file_path
+    return __get_settings(block.file_path, variables)
 
-    return interpolate_variables_for_block_settings(
-        absolute_file_path,
-        variables,
-    )
+
+def __get_settings(absolute_file_path, variables: Dict = {}) -> Dict:
+    settings = interpolate_variables_for_block_settings(absolute_file_path, variables)
+
+    settings_raw = interpolate_variables_for_block_settings(absolute_file_path, None)
+    config = settings_raw['config']
+    patterns = config.get(KEY_PATTERNS, {})
+    destination_table_pattern = patterns.get(PATTERN_KEY_DESTINATION_TABLE)
+
+    if destination_table_pattern:
+        for stream in settings['catalog']['streams']:
+            tap_stream_id = stream['tap_stream_id']
+            destination_table_init = stream.get(PATTERN_KEY_DESTINATION_TABLE)
+
+            stream[PATTERN_KEY_DESTINATION_TABLE] = interpolate_string(
+                destination_table_pattern,
+                merge_dict(
+                    variables,
+                    {
+                        'stream': tap_stream_id,
+                        PATTERN_KEY_DESTINATION_TABLE: destination_table_init,
+                    },
+                ),
+            )
+
+    return settings
 
 
 def get_catalog(block, variables: Dict = {}) -> Dict:
@@ -27,10 +53,8 @@ def build_catalog_json(
 ) -> str:
     streams = []
 
-    for stream in interpolate_variables_for_block_settings(
-        absolute_file_path,
-        variables,
-    )['catalog']['streams']:
+    settings = __get_settings(absolute_file_path, variables)
+    for stream in settings['catalog']['streams']:
         tap_stream_id = stream['tap_stream_id']
         if not selected_streams or tap_stream_id in selected_streams:
             streams.append(stream)
@@ -72,14 +96,18 @@ def interpolate_variables_for_block_settings(
         return interpolate_variables(f.read(), variables)
 
 
-def interpolate_variables(
-    text: str,
-    variables: Dict,
-) -> Dict:
-    settings_string = Template(text).render(
+def interpolate_string(text: str, variables: Dict) -> str:
+    return Template(text).render(
         env_var=os.getenv,
         variables=lambda x: variables.get(x),
         n_days_ago=n_days_ago,
     )
+
+
+def interpolate_variables(
+    text: str,
+    variables: Dict,
+) -> Dict:
+    settings_string = text if variables is None else interpolate_string(text, variables)
 
     return yaml.full_load(settings_string)
