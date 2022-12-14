@@ -5,7 +5,7 @@ Follow the instructions in this [doc](../deploy/terraform/README.md) to deploy M
 ## 1. Customize the compute resource of the Mage web service
 
 Mage web serivce is responsbile for running Mage web backend, scheduler service and local block executions. You can customize the CPU and memory of the Mage web service by updating the Terraform variables and then running `terraform apply`
-- AWS: Update the `ecs_task_cpu` and `ecs_task_memory` variables in the [`mage-ai/scripts/deploy/terraform/aws/variables.tf`](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf) file.
+- AWS: Update the `ecs_task_cpu` and `ecs_task_memory` variables in the [`mage-ai/scripts/deploy/terraform/aws/variables.tf`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf) file.
 - GCP (coming soon)
 
 
