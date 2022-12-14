@@ -8,7 +8,7 @@ RUN ${PIP} install --upgrade pip
 RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
 # RUN ${PIP} install --no-cache "mage-ai[all]"
-RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git@dy--support_doc_server"
+RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git@dy--gcp_multi_dev_test"
 
 # Install NFS dependencies
 RUN apt -y update && apt -y install nfs-common
