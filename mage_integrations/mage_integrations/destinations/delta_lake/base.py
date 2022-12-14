@@ -14,12 +14,14 @@ from mage_integrations.destinations.constants import (
 )
 from mage_integrations.destinations.delta_lake.constants import MODE_APPEND, MODE_OVERWRITE
 from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
+from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import find
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Dict, List
 import argparse
 import math
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 import sys
@@ -41,10 +43,10 @@ class DeltaLake(BaseDestination):
         raise Exception('Subclasses must implement the build_client method.')
 
     def build_schema(self, stream: str, df: 'pd.DataFrame'):
-        schema = self.schemas[stream]
+        number_of_rows = len(df.index)
 
         schema_out = []
-        for column_name, properties in schema['properties'].items():
+        for column_name, properties in self.schemas[stream]['properties'].items():
             column_types = properties.get('type', [])
             column_format = properties.get('format')
 
@@ -56,23 +58,41 @@ class DeltaLake(BaseDestination):
 
             # pa.long_string() is not supported by Delta Lake library as of 2022/12/12
             column_type = pa.string()
+            column_type_df = str
 
-            if df[column_name].dropna().count() == 0:
-                df[column_name] = df[column_name].fillna('')
-            elif COLUMN_TYPE_ARRAY == col_type:
+            if COLUMN_TYPE_ARRAY == col_type:
                 column_type = pa.list_(pa.string())
+                column_type_df = str
             elif COLUMN_TYPE_BOOLEAN == col_type:
                 column_type = pa.bool_()
+                column_type_df = bool
             elif COLUMN_TYPE_INTEGER == col_type:
                 column_type = pa.int64()
+                column_type_df = int
             elif COLUMN_TYPE_NUMBER == col_type:
                 column_type = pa.float64()
+                column_type_df = float
             elif COLUMN_TYPE_OBJECT == col_type:
                 column_type = pa.map_(pa.string(), pa.string())
+                column_type_df = str
             elif COLUMN_TYPE_STRING == col_type and COLUMN_FORMAT_DATETIME == column_format:
                 column_type = pa.string()
+                column_type_df = str
             elif COLUMN_TYPE_STRING == col_type:
                 column_type = pa.string()
+                column_type_df = str
+
+            non_null = df[column_name].notnull()
+            df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
+                lambda x: str(column_type_df(x)),
+            )
+
+            if df[column_name].dropna().count() != number_of_rows:
+                df[column_name] = df[column_name].fillna('')
+                column_type = pa.string()
+                column_type_df = str
+
+            df[column_name] = df[column_name].map(column_type_df)
 
             f = pa.field(
                 name=column_name,
@@ -144,7 +164,10 @@ class DeltaLake(BaseDestination):
         records_per_batch = math.ceil(df_count / batches)
 
         if self.disable_column_type_check.get(stream):
-            schema = None
+            for column_name in self.schemas[stream]['properties'].keys():
+                df[column_name] = df[column_name].fillna('')
+            dt, schema = delta_arrow_schema_from_pandas(df)
+            df = dt.to_pandas()
         else:
             df, schema = self.build_schema(stream, df)
 
