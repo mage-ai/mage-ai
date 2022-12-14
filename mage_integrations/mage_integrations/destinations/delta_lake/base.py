@@ -14,6 +14,7 @@ from mage_integrations.destinations.constants import (
 )
 from mage_integrations.destinations.delta_lake.constants import MODE_APPEND, MODE_OVERWRITE
 from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
+# from mage_integrations.destinations.delta_lake.writer import write_deltalake
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import find
 from mage_integrations.utils.dictionary import merge_dict
