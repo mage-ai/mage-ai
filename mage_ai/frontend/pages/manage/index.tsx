@@ -26,9 +26,11 @@ import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style
 function MoreActions({
   fetchInstances,
   instance,
+  instanceType,
 }: {
   fetchInstances: any;
   instance: any;
+  instanceType: string;
 }) {
   const refMoreActions = useRef(null);
   const [showMoreActions, setShowMoreActions] = useState<boolean>();
@@ -45,7 +47,7 @@ function MoreActions({
   }
 
   const [updateInstance] = useMutation(
-    api.instances.clusters.useUpdate('ecs', name),
+    api.instances.clusters.useUpdate(instanceType, name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -67,7 +69,7 @@ function MoreActions({
   )
 
   const [deleteInstance] = useMutation(
-    api.instances.clusters.useDelete('ecs', name, query),
+    api.instances.clusters.useDelete(instanceType, name, query),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -207,8 +209,11 @@ function InstanceListPage() {
   const [create, setCreate] = useState<boolean>();
   const [newInstanceName, setNewInstanceName] = useState<string>();
 
+  const { data: dataStatus } = api.status.list();
+  const instanceType = dataStatus?.status?.['instance_type'] || 'ecs';
+
   const { data: dataInstances, mutate: fetchInstances } = api.instances.clusters.list(
-    'ecs',
+    instanceType,
     {},
     {
       refreshInterval: 3000,
@@ -217,7 +222,7 @@ function InstanceListPage() {
   );
 
   const [createInstance, { isLoading: isLoadingCreateInstance }] = useMutation(
-    api.instances.clusters.useCreate('ecs'),
+    api.instances.clusters.useCreate(instanceType),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -363,6 +368,11 @@ function InstanceListPage() {
             status,
             type,
           } = instance
+          
+          let link = `http://${ip}`;
+          if (instanceType === 'ecs') {
+            link = `http://${ip}:6789`;
+          }
 
           return [
             <Button
@@ -387,13 +397,14 @@ function InstanceListPage() {
             </Text>,
             <Button
               iconOnly
-              onClick={() => window.open(`http://${ip}:6789`)}
+              onClick={() => window.open(link)}
             >
               <Expand size={2 * UNIT} />
             </Button>,
             <MoreActions
               fetchInstances={fetchInstances}
               instance={instance}
+              instanceType={instanceType}
             />
           ]
         })}
