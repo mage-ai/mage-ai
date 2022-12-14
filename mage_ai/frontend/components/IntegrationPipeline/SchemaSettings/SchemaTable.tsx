@@ -105,6 +105,7 @@ function SchemaTable({
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
   const [replicationMethodState, setReplicationMethodState] = useState<ReplicationMethodEnum>(replicationMethod);
   const [uniqueConflictMethodState, setUniqueConflictMethodState] = useState<UniqueConflictMethodEnum>(uniqueConflictMethod);
+  const [isApplyingToAllStreams, setIsApplyingToAllStreams] = useState<boolean>(false);
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
@@ -635,15 +636,25 @@ function SchemaTable({
               <Spacing ml={1} />
               <Button
                 compact
-                onClick={() => updateAllStreams((stream: StreamType) => ({
-                  ...stream,
-                  replication_method: replicationMethodState,
-                  unique_conflict_method: uniqueConflictMethodState,
-                }))}
+                disabled={isApplyingToAllStreams}
+                onClick={() => {
+                  setIsApplyingToAllStreams(true);
+                  setTimeout(() => setIsApplyingToAllStreams(false), 2000);
+                  updateAllStreams((stream: StreamType) => ({
+                    ...stream,
+                    replication_method: replicationMethodState,
+                    unique_conflict_method: uniqueConflictMethodState,
+                  }));
+                }}
                 pill
                 secondary
               >
-                Apply
+                <Text
+                  bold={!isApplyingToAllStreams}
+                  success={isApplyingToAllStreams}
+                >
+                  {isApplyingToAllStreams ? 'Applied!' : 'Apply'}
+                </Text>
               </Button>
             </Flex>
           </FlexContainer>
