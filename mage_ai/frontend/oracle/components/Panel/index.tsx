@@ -69,6 +69,10 @@ const ContentStyle = styled.div<any>`
     height: ${props.height}px;
   `}
 
+  ${props => props.noPadding && `
+    padding: 0;
+  `}
+
   ${props => props.overflowVisible && `
     overflow: visible;
   `}
@@ -91,7 +95,7 @@ export type PanelProps = {
   headerTitle?: string;
   footer?: JSX.Element;
   fullHeight?: boolean;
-  items?: JSX.Element;
+  noPadding?: boolean;
   overflowVisible?: boolean;
   subtitle?: JSX.Element;
 };
@@ -107,7 +111,7 @@ function Panel({
   headerHeight,
   headerIcon,
   headerTitle,
-  items,
+  noPadding,
   overflowVisible,
   subtitle,
 }: PanelProps) {
@@ -131,11 +135,6 @@ function Panel({
                   </Text>
                 </Spacing>
               </FlexContainer>
-              { items &&
-                <>
-                  {items}
-                </> 
-              }
             </FlexContainer>
           }
           { subtitle &&
@@ -149,6 +148,7 @@ function Panel({
         </HeaderStyle>
       }
       <ContentStyle
+        noPadding={noPadding}
         overflowVisible={overflowVisible}
         ref={contentContainerRef}
       >
