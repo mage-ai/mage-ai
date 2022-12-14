@@ -48,7 +48,7 @@ export type SchemaTableProps = {
   isLoadingLoadSampleData: boolean;
   loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
-  streams: StreamType[];
+  streams?: StreamType[];
   updateAllStreams: (streamDataTransformer: (stream: StreamType) => StreamType) => void;
   updateMetadataForColumns: (
     streamUUID: string,
