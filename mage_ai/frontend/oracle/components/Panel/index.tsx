@@ -8,7 +8,6 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 
-const HEADERS_HEIGHT_OFFSET = 14;
 const HEADER_PADDING_Y_UNITS = 1.5;
 const PADDING_UNITS = 1.75;
 
@@ -18,13 +17,17 @@ const HEADER_STYLES = css`
   padding-top: ${HEADER_PADDING_Y_UNITS * UNIT}px;
 `;
 
-const PanelStyle = styled.div<any>`
+const PanelStyle = styled.div<{
+  borderless?: boolean;
+  fullHeight?: boolean;
+  overflowVisible?: boolean;
+}>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
   width: 100%;
   
   ${props => `
-    background-color: ${(props.theme.background || light.background).page};
+    background-color: ${(props.theme.background || light.background).panel};
     border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
@@ -32,14 +35,21 @@ const PanelStyle = styled.div<any>`
     height: fit-content;
   `}
   
-  ${props =>  props.borderless &&`
+  ${props => props.borderless && `
     border: none;
+  `}
+
+  ${props => props.overflowVisible && `
+    overflow: visible;
   `}
 `;
 
 const HeaderStyle = styled.div<any>`
+  border-top-left-radius: ${BORDER_RADIUS}px;
+  border-top-right-radius: ${BORDER_RADIUS}px;
+
   ${props => `
-    background-color: ${(props.theme.background || light.background).header};
+    background-color: ${(props.theme.background || light.background).chartBlock};
     border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
@@ -53,9 +63,18 @@ const HeaderStyle = styled.div<any>`
 const ContentStyle = styled.div<any>`
   overflow-y: auto;
   padding: ${PADDING_UNITS * UNIT}px;
+  height: 100%;
 
   ${props => props.height && `
     height: ${props.height}px;
+  `}
+
+  ${props => props.noPadding && `
+    padding: 0;
+  `}
+
+  ${props => props.overflowVisible && `
+    overflow: visible;
   `}
 `;
 
@@ -76,12 +95,10 @@ export type PanelProps = {
   headerTitle?: string;
   footer?: JSX.Element;
   fullHeight?: boolean;
-  items?: JSX.Element;
+  noPadding?: boolean;
+  overflowVisible?: boolean;
   subtitle?: JSX.Element;
 };
-
-const PANEL_HEADER_HEIGHT = 6.5 * UNIT;
-const PANEL_FOOTER_HEIGHT = 6.5 * UNIT;
 
 function Panel({
   borderless,
@@ -94,20 +111,17 @@ function Panel({
   headerHeight,
   headerIcon,
   headerTitle,
-  items,
+  noPadding,
+  overflowVisible,
   subtitle,
 }: PanelProps) {
-  let contentSectionHeight = HEADERS_HEIGHT_OFFSET;
-
-  if (headerTitle || header) {
-    contentSectionHeight -= (headerHeight || PANEL_HEADER_HEIGHT);
-  }
-  if (footer) {
-    contentSectionHeight -= PANEL_FOOTER_HEIGHT;
-  }
-
   return (
-    <PanelStyle borderless={borderless} fullHeight={fullHeight} ref={containerRef}>
+    <PanelStyle
+      borderless={borderless}
+      fullHeight={fullHeight}
+      overflowVisible={overflowVisible}
+      ref={containerRef}
+    >
       {(header || headerTitle) &&
         <HeaderStyle height={headerHeight}>
           {header && header}
@@ -116,16 +130,11 @@ function Panel({
               <FlexContainer alignItems="center">
                 {headerIcon && headerIcon}
                 <Spacing ml={headerIcon ? 1 : 0}>
-                  <Text bold>
+                  <Text bold default>
                     {headerTitle}
                   </Text>
                 </Spacing>
               </FlexContainer>
-              { items &&
-                <>
-                  {items}
-                </> 
-              }
             </FlexContainer>
           }
           { subtitle &&
@@ -138,7 +147,11 @@ function Panel({
           }
         </HeaderStyle>
       }
-      <ContentStyle height={fullHeight ? contentSectionHeight : null} ref={contentContainerRef}>
+      <ContentStyle
+        noPadding={noPadding}
+        overflowVisible={overflowVisible}
+        ref={contentContainerRef}
+      >
         {children}
       </ContentStyle>
       {footer &&
