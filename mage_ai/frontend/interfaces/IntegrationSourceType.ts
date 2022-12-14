@@ -127,6 +127,7 @@ export enum IntegrationSourceEnum {
 
 export enum IntegrationDestinationEnum {
   BIGQUERY = 'bigquery',
+  DELTA_LAKE_S3 = 'delta_lake_s3',
   MYSQL = 'mysql',
   POSTGRESQL = 'postgresql',
   SNOWFLAKE = 'snowflake',

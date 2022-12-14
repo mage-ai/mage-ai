@@ -64,7 +64,10 @@ type SchemaTablePropsInternal = {
   stream: StreamType;
 } & SchemaTableProps;
 
-const PARTITION_KEY_DESTINATIONS = ['bigquery', 'delta_lake_s3'];
+const PARTITION_KEY_DESTINATIONS = [
+  IntegrationDestinationEnum.BIGQUERY,
+  IntegrationDestinationEnum.DELTA_LAKE_S3,
+];
 
 function SchemaTable({
   destination,
@@ -337,7 +340,7 @@ function SchemaTable({
       ];
 
       if (showPartitionKey) {
-        const disabled = destination !== 'delta_lake_s3' &&(
+        const disabled = destination !== IntegrationDestinationEnum.DELTA_LAKE_S3 && (
           validKeyProperties.includes(columnName)
             || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)
         );
