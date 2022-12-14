@@ -40,7 +40,7 @@ class DeltaLake(BaseDestination):
     def build_client(self):
         raise Exception('Subclasses must implement the build_client method.')
 
-    def build_schema(self, stream: str):
+    def build_schema(self, stream: str, df: 'pd.DataFrame'):
         schema = self.schemas[stream]
 
         schema_out = []
@@ -57,7 +57,9 @@ class DeltaLake(BaseDestination):
             # pa.long_string() is not supported by Delta Lake library as of 2022/12/12
             column_type = pa.string()
 
-            if COLUMN_TYPE_ARRAY == col_type:
+            if df[column_name].dropna().count() == 0:
+                df[column_name] = df[column_name].fillna('')
+            elif COLUMN_TYPE_ARRAY == col_type:
                 column_type = pa.list_(pa.string())
             elif COLUMN_TYPE_BOOLEAN == col_type:
                 column_type = pa.bool_()
@@ -82,7 +84,7 @@ class DeltaLake(BaseDestination):
 
         schema = pa.schema(schema_out, metadata={})
 
-        return schema
+        return df, schema
 
     def build_storage_options(self) -> Dict:
         raise Exception('Subclasses must implement the build_storage_options method.')
@@ -108,7 +110,6 @@ class DeltaLake(BaseDestination):
         storage_options = self.build_storage_options()
         friendly_table_name = self.config['table']
         table_uri = self.build_table_uri(stream)
-        schema = self.build_schema(stream)
 
         tags = dict(
             records=len(record_data),
@@ -142,6 +143,11 @@ class DeltaLake(BaseDestination):
         batches = math.ceil(total_byte_size / MAX_BYTE_SIZE_PER_WRITE)
         records_per_batch = math.ceil(df_count / batches)
 
+        if self.disable_column_type_check.get(stream):
+            schema = None
+        else:
+            df, schema = self.build_schema(stream, df)
+
         records_remaining = df_count
         for idx in range(batches):
             idx_start = idx * records_per_batch
@@ -164,7 +170,7 @@ class DeltaLake(BaseDestination):
                 table or table_uri,
                 data=df_batch,
                 mode=MODE_APPEND if idx >= 1 else self.mode,
-                overwrite_schema=MODE_OVERWRITE == self.mode,
+                overwrite_schema=True,
                 partition_by=self.partition_keys.get(stream, []),
                 schema=schema,
                 storage_options=storage_options if not table else None,
