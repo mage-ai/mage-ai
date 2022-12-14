@@ -671,12 +671,14 @@ def get_variables(pipeline_run, extra_variables: Dict = {}) -> Dict:
         if k not in variables:
             variables[k] = v
 
-    variables['ds'] = pipeline_run.execution_date.strftime('%Y-%m-%d')
+    if pipeline_run.execution_date:
+        variables['ds'] = pipeline_run.execution_date.strftime('%Y-%m-%d')
+        variables['hr'] = pipeline_run.execution_date.strftime('%H')
+
     variables['env'] = ENV_PROD
     variables['event'] = event_variables
     variables['execution_date'] = pipeline_run.execution_date
     variables['execution_partition'] = pipeline_run.execution_partition
-    variables['hr'] = pipeline_run.execution_date.strftime('%H')
     variables.update(extra_variables)
 
     return variables
