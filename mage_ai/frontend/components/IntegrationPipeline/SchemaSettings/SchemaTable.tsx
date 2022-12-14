@@ -14,7 +14,7 @@ import Headline from '@oracle/elements/Headline';
 import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
+import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
@@ -446,7 +446,7 @@ function SchemaTable({
 
     const allColumnsSelected: boolean = selectedArr.every(s => s);
     const columnFlex = [null, 2, 1, null, null, null];
-    const columns = [
+    const columns: ColumnType[] = [
       {
         label: () => (
           <Checkbox
