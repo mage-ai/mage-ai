@@ -16,7 +16,7 @@
 
 ### Setup
 
-[Download Mage maintained Terraform scripts](../README.md).
+[Download Mage maintained Terraform scripts](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/gcp).
 
 ### Permissions
 
