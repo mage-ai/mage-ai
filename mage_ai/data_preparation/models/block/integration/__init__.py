@@ -1,7 +1,11 @@
 from jupyter_server import subprocess
 from logging import Logger
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
-from mage_ai.data_integrations.utils.config import build_catalog_json, build_config_json
+from mage_ai.data_integrations.utils.config import (
+    build_catalog_json,
+    build_config_json,
+    get_catalog_by_stream,
+)
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.hash import merge_dict
@@ -42,8 +46,29 @@ class IntegrationBlock(Block):
         ))
 
         if index is not None:
+            source_state_file_path = self.pipeline.source_state_file_path(
+                destination_table=destination_table,
+                stream=stream,
+            )
+            destination_state_file_path = self.pipeline.destination_state_file_path(
+                destination_table=destination_table,
+                stream=stream,
+            )
+            stream_catalog = get_catalog_by_stream(
+                self.pipeline.data_loader.file_path,
+                stream,
+                global_vars,
+            ) or dict()
+            if stream_catalog.get('replication_method') == 'INCREMENTAL':
+                from mage_integrations.sources.utils import update_source_state_from_destination_state
+                update_source_state_from_destination_state(
+                    source_state_file_path,
+                    destination_state_file_path,
+                )
+            else:
+                query_data['_offset'] = BATCH_FETCH_LIMIT * index
+
             query_data['_limit'] = BATCH_FETCH_LIMIT
-            query_data['_offset'] = BATCH_FETCH_LIMIT * index
 
         outputs = []
         if BlockType.DATA_LOADER == self.type:
@@ -64,10 +89,7 @@ class IntegrationBlock(Block):
                     selected_streams=selected_streams,
                 ),
                 '--state',
-                self.pipeline.source_state_file_path(
-                    destination_table=destination_table,
-                    stream=stream,
-                ),
+                source_state_file_path,
                 '--query_json',
                 json.dumps(query_data),
             ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
