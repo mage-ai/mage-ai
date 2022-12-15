@@ -56,7 +56,8 @@ class CloudRunServiceManager:
             services.append(dict(
                 ip=ip_map.get(name),
                 name=name,
-                type='run service'
+                type='run service',
+                status='RUNNING',
             ))
 
         return services

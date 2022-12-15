@@ -19,6 +19,10 @@ export function isString(data) {
   return (typeof data === 'string');
 }
 
+export function replaceSpaces(string, replacement='_') {
+  return string.split(' ').join(replacement);
+}
+
 export function addUnderscores(string) {
   return string.split(' ').join('_');
 }
