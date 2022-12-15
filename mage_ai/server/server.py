@@ -8,7 +8,11 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
     set_repo_path,
 )
-from mage_ai.data_preparation.shared.constants import ECS_CLUSTER_NAME, GCP_PROJECT_ID, MANAGE_ENV_VAR
+from mage_ai.data_preparation.shared.constants import (
+    ECS_CLUSTER_NAME,
+    GCP_PROJECT_ID,
+    MANAGE_ENV_VAR,
+)
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
     delete_global_variable,
