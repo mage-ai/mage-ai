@@ -1,7 +1,11 @@
 from jupyter_server import subprocess
 from logging import Logger
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
-from mage_ai.data_integrations.utils.config import build_catalog_json, build_config_json
+from mage_ai.data_integrations.utils.config import (
+    build_catalog_json,
+    build_config_json,
+    get_catalog_by_stream,
+)
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.hash import merge_dict
@@ -50,15 +54,16 @@ class IntegrationBlock(Block):
                 destination_table=destination_table,
                 stream=stream,
             )
-            with open(destination_state_file_path, 'r') as f:
-                text = f.read()
-                d = json.loads(text) if text else {}
-                bookmark_values = d.get('bookmarks', {}).get(stream)
-            if bookmark_values:
+            stream_catalog = get_catalog_by_stream(
+                self.pipeline.data_loader.file_path,
+                stream,
+                global_vars,
+            ) or dict()
+            if stream_catalog.get('replication_method') == 'INCREMENTAL':
                 from mage_integrations.sources.utils import update_source_state_from_destination_state
                 update_source_state_from_destination_state(
-                        source_state_file_path,
-                        destination_state_file_path,
+                    source_state_file_path,
+                    destination_state_file_path,
                 )
             else:
                 query_data['_offset'] = BATCH_FETCH_LIMIT * index
