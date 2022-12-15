@@ -44,6 +44,8 @@ on Linux, run the following commands:
     ```sql
     SELECT pg_create_logical_replication_slot('mage_slot', 'pgoutput');
     ```
+    
+    <sub>`mage_slot` is used in Mage’s [code](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/postgresql/__init__.py#L85)</sub>
 
     The result should looking something like this:
 
@@ -74,6 +76,8 @@ on Linux, run the following commands:
     | `pubname` | `schemaname` | `tablename` |
     | --- | --- | --- |
     | `mage_pub` | `public` | `users` |
+    
+    <sub>`mage_pub` is used in Mage’s [code](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/postgresql/__init__.py#L126)</sub>
 
 <br />
 
