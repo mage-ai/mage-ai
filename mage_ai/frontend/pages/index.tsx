@@ -9,20 +9,19 @@ const Home = () => {
   const basePath = completePath.split('?')[0];
 
   const { data: dataStatus } = api.status.list();
-  const manage = dataStatus?.status?.['is_instance_manager'];
-
-  let pathname = completePath;
-  if (basePath === '/') {
-    pathname = manage ? '/manage' : '/pipelines';
-  }
 
   console.log('data status:', dataStatus);
 
-  // useEffect(() => {
-  //   if (dataStatus) {
-  //     router.replace(pathname);
-  //   }
-  // }, [dataStatus]);
+  useEffect(() => {
+    if (dataStatus) {
+      let pathname = completePath;
+      const manage = dataStatus.status?.['is_instance_manager'];
+      if (basePath === '/') {
+        pathname = manage ? '/manage' : '/pipelines';
+      }
+      router.replace(pathname);
+    }
+  }, [dataStatus]);
 };
 
 export default Home;
