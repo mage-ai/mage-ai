@@ -43,6 +43,9 @@ WHERE table_schema = '{database}'
             query = f'{query}\nAND TABLE_NAME IN ({table_names})'
         return query
 
+    def update_column_names(self, columns: List[str]) -> List[str]:
+        return list(map(lambda column: f'"{column}"', columns))
+
 
 if __name__ == '__main__':
     main(MySQL)
