@@ -8,7 +8,11 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
     set_repo_path,
 )
-from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
+from mage_ai.data_preparation.shared.constants import (
+    ECS_CLUSTER_NAME,
+    GCP_PROJECT_ID,
+    MANAGE_ENV_VAR,
+)
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
     delete_global_variable,
@@ -412,9 +416,16 @@ class KernelsHandler(BaseHandler):
 
 class ApiStatusHandler(BaseHandler):
     def get(self):
+        instance_type = None
+        if os.getenv(ECS_CLUSTER_NAME):
+            instance_type = 'ecs'
+        elif os.getenv(GCP_PROJECT_ID):
+            instance_type = 'cloud_run'
+
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
             'scheduler_status': scheduler_manager.get_status(),
+            'instance_type': instance_type,
         }
         self.write(dict(status=status))
 
