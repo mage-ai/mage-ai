@@ -574,6 +574,7 @@ function SchemaTable({
                 }, 300);
               }}
               value={destinationTable || ''}
+              width={45 * UNIT}
             />
           </FlexContainer>
         </Panel>
