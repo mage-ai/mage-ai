@@ -1,4 +1,3 @@
-from turtle import forward
 from google.api import launch_stage_pb2
 from google.cloud import run_v2
 from google.iam.v1 import iam_policy_pb2, policy_pb2
@@ -188,20 +187,13 @@ class CloudRunServiceManager:
             'defaultService': backend_service_url,
         }
         url_maps_service = self.compute_service.urlMaps()
-        attempts = 0
-        while attempts < 20:
-            attempts += 1
-            try:
-                url_maps_response = url_maps_service.insert(
-                    project=self.project_id,
-                    body=url_map_body
-                ).execute()
-                break
-            except Exception as err:
-                print(err)
-                print('Backend service is not ready, sleeping for 60 seconds...')
-                time.sleep(60)
-        print('Url map created!')
+        url_maps_response = self.__try_creating_resource(
+            url_maps_service.insert(
+                project=self.project_id,
+                body=url_map_body
+            ),
+            'Url map'
+        )
         
         url_map_link = url_maps_response.get('targetLink')
 
@@ -212,19 +204,13 @@ class CloudRunServiceManager:
             'urlMap': url_map_link,
         }
         http_proxy_service = self.compute_service.targetHttpProxies()
-        while attempts < 20:
-            attempts += 1
-            try:
-                http_proxy_response = http_proxy_service.insert(
-                    project=self.project_id,
-                    body=http_proxy_body
-                ).execute()
-                break
-            except Exception as err:
-                print(err)
-                print('Url map is not ready, sleeping for 60 seconds...')
-                time.sleep(60)
-        print('Target http proxy created!')
+        http_proxy_response = self.__try_creating_resource(
+            http_proxy_service.insert(
+                project=self.project_id,
+                body=http_proxy_body
+            ),
+            'Target http proxy'
+        )
         http_proxy_link = http_proxy_response.get('targetLink')
 
         # Create forwarding rules
@@ -239,16 +225,24 @@ class CloudRunServiceManager:
         }
 
         forwarding_rules_service = self.compute_service.globalForwardingRules()
-        while attempts < 20:
+        self.__try_creating_resource(
+            forwarding_rules_service.insert(
+                project=self.project_id,
+                body=forwarding_rules_body
+            ),
+            'Forwarding rule'
+        )
+
+    def __try_creating_resource(self, request, resource: str):
+        attempts = 0
+        while attempts < 10:
             attempts += 1
             try:
-                forwarding_rules_service.insert(
-                    project=self.project_id,
-                    body=forwarding_rules_body
-                ).execute()
-                break
-            except Exception as err:
-                print(err)
-                print('Target http proxy is not ready, sleeping for 60 seconds...')
-                time.sleep(60)
-        print('Forwarding rule created!')
+                response = request.execute()
+                print(f'{resource} created!')
+                return response
+            except Exception:
+                print(f'{resource}: still creating..., sleeping for 30 seconds')
+                time.sleep(30)
+        raise Exception(f'Creating {resource} timed out')
+
