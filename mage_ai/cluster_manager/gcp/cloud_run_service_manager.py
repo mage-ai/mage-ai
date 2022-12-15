@@ -62,10 +62,14 @@ class CloudRunServiceManager:
         return services
 
     def create_service(self, service_id) -> None:
-        existing_service = services_client.get_service(run_v2.GetServiceRequest(name=os.getenv('GCP_SERVICE_NAME')))
+        existing_service = self.services_client.get_service(
+            run_v2.GetServiceRequest(
+                name=f"projects/{self.project_id}/locations/{self.region}/services/{os.getenv('GCP_SERVICE_NAME')}"
+            )
+        )
         existing_service.name = None
         existing_service.template.revision = None
-        existing_service.containers[0].command = None
+        existing_service.template.containers[0].command = None
 
         service_request = run_v2.CreateServiceRequest(
             parent=f'projects/{self.project_id}/locations/{self.region}',
