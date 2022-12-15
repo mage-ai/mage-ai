@@ -62,47 +62,14 @@ class CloudRunServiceManager:
         return services
 
     def create_service(self, service_id) -> None:
-        service = run_v2.types.Service(
-            description='GCP Mage development environment',
-            ingress=run_v2.types.IngressTraffic.INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER,
-            launch_stage=launch_stage_pb2.BETA,
-            template=run_v2.types.RevisionTemplate(
-                containers=[
-                    run_v2.types.Container(
-                        image=os.getenv('GCP_DOCKER_IMAGE_URL'), # TODO: docker image
-                        ports=[
-                            run_v2.types.ContainerPort(container_port=6789)
-                        ],
-                        env=[
-                            run_v2.types.EnvVar(
-                                name='PROJECT_PATH',
-                                value=service_id,
-                            ),
-                            run_v2.types.EnvVar(
-                                name='FILESTORE_IP_ADDRESS',
-                                value=os.getenv('FILESTORE_IP_ADDRESS')
-                            ),
-                            run_v2.types.EnvVar(
-                                name='FILE_SHARE_NAME',
-                                value=os.getenv('FILE_SHARE_NAME')
-                            ),
-                            run_v2.types.EnvVar(
-                                name='MAGE_DATABASE_CONNECTION_URL',
-                                value=os.getenv('MAGE_DATABASE_CONNECTION_URL')
-                            ),
-                            run_v2.types.EnvVar(
-                                name='path_to_keyfile',
-                                value=os.getenv('path_to_keyfile')
-                            ),
-                        ]
-                    )
-                ]
-            )
-        )
+        existing_service = services_client.get_service(run_v2.GetServiceRequest(name=os.getenv('GCP_SERVICE_NAME')))
+        existing_service.name = None
+        existing_service.template.revision = None
+        existing_service.containers[0].command = None
 
         service_request = run_v2.CreateServiceRequest(
             parent=f'projects/{self.project_id}/locations/{self.region}',
-            service=service,
+            service=existing_service,
             service_id=service_id,
         )
 
@@ -245,4 +212,3 @@ class CloudRunServiceManager:
                 print(f'{resource}: still creating..., sleeping for 30 seconds')
                 time.sleep(30)
         raise Exception(f'Creating {resource} timed out')
-
