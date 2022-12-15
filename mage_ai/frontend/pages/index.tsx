@@ -16,11 +16,13 @@ const Home = () => {
     pathname = manage ? '/manage' : '/pipelines';
   }
 
-  useEffect(() => {
-    if (dataStatus) {
-      router.replace(pathname);
-    }
-  }, [dataStatus]);
+  console.log('data status:', dataStatus);
+
+  // useEffect(() => {
+  //   if (dataStatus) {
+  //     router.replace(pathname);
+  //   }
+  // }, [dataStatus]);
 };
 
 export default Home;
