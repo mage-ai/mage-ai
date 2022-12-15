@@ -1,17 +1,5 @@
 import React, { useContext, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
-
-/* ACE EDITOR ADD ONS
-  // Import the style and colors for Python code.
-  import 'ace-builds/src-noconflict/ace';
-  import 'ace-builds/src-noconflict/mode-python';
-
-  Extensions if we want to make our coding editor even better.
-  import 'ace-builds/src-noconflict/ext-language_tools';
-  import 'ace-builds/src-noconflict/ext-beautify';
-  // Note these would go under the dynamic function, due to NextJs Render issues.
-*/
 
 import ActionPayloadType, {
   ActionPayloadOverrideType,
@@ -20,6 +8,7 @@ import ActionPayloadType, {
   AxisEnum,
 } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
+import CodeEditor from '@components/CodeEditor';
 import Divider from '@oracle/elements/Divider';
 import FeatureType, { FeatureResponseType } from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -35,17 +24,13 @@ import {
   OptionStyle,
 } from './index.style';
 import {
-  CODE_EXAMPLE,
   FormConfigType,
   VALUES_TYPE_COLUMNS,
   VALUES_TYPE_USER_INPUT,
 } from './constants';
-import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
-import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { evaluateCondition } from './utils';
 import { getCustomCodeState, setCustomCodeState } from '@storage/localStorage';
 import { removeAtIndex } from '@utils/array';
-import { EDIT_ONLY, MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 type ActionFormProps = {
   actionType: ActionTypeEnum;
@@ -62,18 +47,6 @@ type ActionFormProps = {
   shadow?: boolean;
 };
 
-const CodeEditor = dynamic(
-  async () => {
-    const ace = await import('react-ace');
-    require('ace-builds/src-noconflict/mode-python');
-    require('ace-builds/src-noconflict/ace');
-    return ace;
-  },
-  {
-    ssr: false,
-  },
-);
-
 function ActionForm({
   actionType,
   axis,
@@ -88,7 +61,6 @@ function ActionForm({
   setPayload,
   shadow,
 }: ActionFormProps) {
-  const themeContext = useContext(ThemeContext);
   const [actionCodeState, setActionCodeState] = useState(payload?.action_code);
 
   const {
@@ -195,9 +167,7 @@ function ActionForm({
           <Spacing mb={3}>
             {code.values === VALUES_TYPE_USER_INPUT && (
               <CodeEditor
-                maxLines={MAX_LINES_ACTIONS}
-                minLines={MIN_LINES_ACTIONS}
-                mode="python"
+                language="python"
                 onChange={e => {
                   payload['action_code'] = e;
                   setActionCodeState(payload.action_code ?? actionCode);
@@ -207,18 +177,9 @@ function ActionForm({
                     newValue: e,
                   });
                 }}
-                setOptions={EDIT_ONLY}
-                style={{
-                  backgroundColor: themeContext.monotone.grey100,
-                  fontFamily: MONO_FONT_FAMILY_REGULAR,
-                  fontSize: REGULAR_FONT_SIZE,
-                  overflow: 'auto',
-                  width: 'inherit',
-                }}
                 value={actionCode
                   ?? (getCustomCodeState({ actionType, featureSetId }) ?? code.default)
                 }
-                wrapEnabled
               />
             )}
           </Spacing>
