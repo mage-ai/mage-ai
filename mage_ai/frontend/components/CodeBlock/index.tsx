@@ -52,6 +52,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
+
 import {
   ArrowDown,
   ChevronDown,
@@ -67,6 +68,12 @@ import {
   TimeTrackerStyle,
 } from './index.style';
 import {
+  BlockHeaderStyle,
+  ContainerStyle,
+  CodeContainerStyle,
+  getColorsForBlockType,
+} from './index.style';
+import {
   CONFIG_KEY_DATA_PROVIDER,
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
@@ -75,11 +82,6 @@ import {
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_EXPORT_WRITE_POLICY,
 } from '@interfaces/ChartBlockType';
-import {
-  ContainerStyle,
-  CodeContainerStyle,
-  getColorsForBlockType,
-} from './index.style';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
   KEY_CODE_CONTROL,
@@ -652,205 +654,205 @@ function CodeBlockProps({
       position: 'relative',
       zIndex: blockIdx === addNewBlockMenuOpenIdx ? 11 : null,
     }}>
-      <FlexContainer
-        alignItems="center"
-        justifyContent="space-between"
-        style={{
-          marginBottom: UNIT / 2,
-        }}
-      >
-        <Flex alignItems="center" flex={1}>
-          <FlexContainer alignItems="center">
-            <Badge>
-              {ABBREV_BLOCK_LANGUAGE_MAPPING[block.language]}
-            </Badge>
+      <BlockHeaderStyle {...borderColorShareProps}>
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Flex alignItems="center" flex={1}>
+            <FlexContainer alignItems="center">
+              <Badge>
+                {ABBREV_BLOCK_LANGUAGE_MAPPING[block.language]}
+              </Badge>
 
-            <Spacing mr={1} />
+              <Spacing mr={1} />
 
-            <Circle
-              color={color}
-              size={UNIT * 1.5}
-              square
-            />
-
-            <Spacing mr={1} />
-
-            <FlyoutMenuWrapper
-              items={buildBlockMenu(block)}
-              onClickCallback={closeBlockMenu}
-              onClickOutside={closeBlockMenu}
-              open={blockMenuVisible}
-              parentRef={blockMenuRef}
-              uuid="CodeBlock/block_menu"
-            >
-              <Text
+              <Circle
                 color={color}
-                monospace
-              >
-                {(
-                  isDBT
-                    ? BlockTypeEnum.DBT
-                    : BLOCK_TYPE_NAME_MAPPING[block.type]
-                )?.toUpperCase()}
-              </Text>
-            </FlyoutMenuWrapper>
+                size={UNIT * 1.5}
+                square
+              />
 
-            {BlockTypeEnum.SCRATCHPAD === block.type && (
-              <>
-                &nbsp;
-                <Button
-                  basic
-                  iconOnly
-                  noPadding
-                  onClick={() => setBlockMenuVisible(true)}
-                  transparent
+              <Spacing mr={1} />
+
+              <FlyoutMenuWrapper
+                items={buildBlockMenu(block)}
+                onClickCallback={closeBlockMenu}
+                onClickOutside={closeBlockMenu}
+                open={blockMenuVisible}
+                parentRef={blockMenuRef}
+                uuid="CodeBlock/block_menu"
+              >
+                <Text
+                  color={color}
+                  monospace
                 >
-                  <ArrowDown muted />
-                </Button>
-              </>
-            )}
+                  {(
+                    isDBT
+                      ? BlockTypeEnum.DBT
+                      : BLOCK_TYPE_NAME_MAPPING[block.type]
+                  )?.toUpperCase()}
+                </Text>
+              </FlyoutMenuWrapper>
+
+              {BlockTypeEnum.SCRATCHPAD === block.type && (
+                <>
+                  &nbsp;
+                  <Button
+                    basic
+                    iconOnly
+                    noPadding
+                    onClick={() => setBlockMenuVisible(true)}
+                    transparent
+                  >
+                    <ArrowDown muted />
+                  </Button>
+                </>
+              )}
+
+              <Spacing mr={1} />
+            </FlexContainer>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <FileFill size={UNIT * 1.5} />
 
             <Spacing mr={1} />
-          </FlexContainer>
 
-          <Spacing mr={PADDING_UNITS} />
+            <FlexContainer alignItems="center">
+              {isDBT && (
+                <Text muted monospace>
+                  {getModelName(block)}
+                </Text>
+              )}
 
-          <FileFill size={UNIT * 1.5} />
+              {!isDBT && (
+                <LabelWithValueClicker
+                  bold={false}
+                  inputValue={newBlockUuid}
+                  monospace
+                  muted
+                  notRequired
+                  onBlur={() => setTimeout(() => {
+                    setAnyInputFocused(false);
+                    setIsEditingBlock(false);
+                  }, 300)}
+                  onChange={(e) => {
+                    setNewBlockUuid(e.target.value);
+                    e.preventDefault();
+                  }}
+                  onClick={() => {
+                    setAnyInputFocused(true);
+                    setIsEditingBlock(true);
+                  }}
+                  onFocus={() => {
+                    setAnyInputFocused(true);
+                    setIsEditingBlock(true);
+                  }}
+                  stacked
+                  value={!isEditingBlock && block.uuid}
+                />
+              )}
 
+              {isEditingBlock && !isDBT && (
+                <>
+                  <Spacing ml={1} />
+                  <Link
+                    // @ts-ignore
+                    onClick={() => savePipelineContent({
+                      block: {
+                        name: newBlockUuid,
+                        uuid: block.uuid,
+                      },
+                    }).then(() => {
+                      setIsEditingBlock(false);
+                      fetchPipeline();
+                      fetchFileTree();
+                    })}
+                    preventDefault
+                    sameColorAsText
+                    small
+                  >
+                    Update name
+                  </Link>
+                </>
+              )}
+            </FlexContainer>
+          </Flex>
+
+          {!BLOCK_TYPES_WITH_NO_PARENTS.includes(block.type) && (
+            <FlexContainer alignItems="center">
+              <Tooltip
+                appearBefore
+                block
+                label={`
+                  ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
+                `}
+                size={null}
+                widthFitContent
+              >
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => {
+                    setSelected(true);
+                    setEditingBlock({
+                      upstreamBlocks: {
+                        block,
+                        values: block.upstream_blocks?.map(uuid => ({ uuid })),
+                      },
+                    });
+                  }}
+                  >
+                  <FlexContainer alignItems="center">
+                    <Text
+                      monospace={numberOfParentBlocks >= 1}
+                      underline={numberOfParentBlocks === 0}
+                      >
+                      {numberOfParentBlocks === 0 && 'Edit parent blocks'}
+                      {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
+                    </Text>
+
+                    <Spacing mr={1} />
+
+                    <Stack size={UNIT * 2} />
+                  </FlexContainer>
+                </Button>
+              </Tooltip>
+            </FlexContainer>
+          )}
           <Spacing mr={1} />
 
-          <FlexContainer alignItems="center">
-            {isDBT && (
-              <Text muted monospace>
-                {getModelName(block)}
-              </Text>
-            )}
-
-            {!isDBT && (
-              <LabelWithValueClicker
-                bold={false}
-                inputValue={newBlockUuid}
-                monospace
-                muted
-                notRequired
-                onBlur={() => setTimeout(() => {
-                  setAnyInputFocused(false);
-                  setIsEditingBlock(false);
-                }, 300)}
-                onChange={(e) => {
-                  setNewBlockUuid(e.target.value);
-                  e.preventDefault();
-                }}
-                onClick={() => {
-                  setAnyInputFocused(true);
-                  setIsEditingBlock(true);
-                }}
-                onFocus={() => {
-                  setAnyInputFocused(true);
-                  setIsEditingBlock(true);
-                }}
-                stacked
-                value={!isEditingBlock && block.uuid}
-              />
-            )}
-
-            {isEditingBlock && !isDBT && (
-              <>
-                <Spacing ml={1} />
-                <Link
-                  // @ts-ignore
-                  onClick={() => savePipelineContent({
-                    block: {
-                      name: newBlockUuid,
-                      uuid: block.uuid,
-                    },
-                  }).then(() => {
-                    setIsEditingBlock(false);
-                    fetchPipeline();
-                    fetchFileTree();
-                  })}
-                  preventDefault
-                  sameColorAsText
-                  small
-                >
-                  Update name
-                </Link>
-              </>
-            )}
-          </FlexContainer>
-        </Flex>
-
-        {!BLOCK_TYPES_WITH_NO_PARENTS.includes(block.type) && (
-          <FlexContainer alignItems="center">
-            <Tooltip
-              appearBefore
-              block
-              label={`
-                ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
-              `}
-              size={null}
-              widthFitContent
-            >
-              <Button
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => {
-                  setSelected(true);
-                  setEditingBlock({
-                    upstreamBlocks: {
-                      block,
-                      values: block.upstream_blocks?.map(uuid => ({ uuid })),
-                    },
-                  });
-                }}
-                >
-                <FlexContainer alignItems="center">
-                  <Text
-                    monospace={numberOfParentBlocks >= 1}
-                    underline={numberOfParentBlocks === 0}
-                    >
-                    {numberOfParentBlocks === 0 && 'Edit parent blocks'}
-                    {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
-                  </Text>
-
-                  <Spacing mr={1} />
-
-                  <Stack size={UNIT * 2} />
-                </FlexContainer>
-              </Button>
-            </Tooltip>
-          </FlexContainer>
-        )}
-        <Spacing mr={1} />
-
-        <Spacing px={1}>
-          <Button
-            basic
-            iconOnly
-            noPadding
-            onClick={() => {
-              setCodeCollapsed((collapsedPrev) => {
-                set(codeCollapsedUUID, !collapsedPrev);
-                return !collapsedPrev;
-              });
-
-              if (!codeCollapsed) {
-                setOutputCollapsed(() => {
-                  set(outputCollapsedUUID, true);
-                  return true;
+          <Spacing px={1}>
+            <Button
+              basic
+              iconOnly
+              noPadding
+              onClick={() => {
+                setCodeCollapsed((collapsedPrev) => {
+                  set(codeCollapsedUUID, !collapsedPrev);
+                  return !collapsedPrev;
                 });
+
+                if (!codeCollapsed) {
+                  setOutputCollapsed(() => {
+                    set(outputCollapsedUUID, true);
+                    return true;
+                  });
+                }
+              }}
+              transparent
+            >
+              {codeCollapsed
+                ? <ChevronDown muted size={UNIT * 2} />
+                : <ChevronUp muted size={UNIT * 2} />
               }
-            }}
-            transparent
-          >
-            {codeCollapsed
-              ? <ChevronDown muted size={UNIT * 2} />
-              : <ChevronUp muted size={UNIT * 2} />
-            }
-          </Button>
-        </Spacing>
-      </FlexContainer>
+            </Button>
+          </Spacing>
+        </FlexContainer>
+
+      </BlockHeaderStyle>
 
       {(selected || isInProgress) && (
         <CommandButtons
