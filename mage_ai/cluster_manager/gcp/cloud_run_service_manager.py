@@ -1,4 +1,3 @@
-from google.api import launch_stage_pb2
 from google.cloud import run_v2
 from google.iam.v1 import iam_policy_pb2, policy_pb2
 from google.oauth2 import service_account
@@ -62,20 +61,35 @@ class CloudRunServiceManager:
         return services
 
     def create_service(self, service_id) -> None:
-        existing_service = services_client.get_service(run_v2.GetServiceRequest(name=os.getenv('GCP_SERVICE_NAME')))
+        resource_prefix = f'projects/{self.project_id}/locations/{self.region}'
+        existing_service_name = os.getenv('GCP_SERVICE_NAME')
+        existing_service = self.services_client.get_service(
+            run_v2.GetServiceRequest(
+                name=f'{resource_prefix}/services/{existing_service_name}'
+            )
+        )
         existing_service.name = None
         existing_service.template.revision = None
-        existing_service.containers[0].command = None
+        existing_service.template.containers[0].command = None
+
+        env_vars = existing_service.template.containers[0].env
+        env_vars.append(
+            run_v2.types.EnvVar(
+                name='USER_CODE_PATH',
+                value=service_id
+            )
+        )
+        existing_service.template.containers[0].env=env_vars
 
         service_request = run_v2.CreateServiceRequest(
-            parent=f'projects/{self.project_id}/locations/{self.region}',
+            parent=resource_prefix,
             service=existing_service,
             service_id=service_id,
         )
 
         self.services_client.create_service(service_request)
 
-        resource = f'projects/{self.project_id}/locations/{self.region}/resources/{service_id}'
+        resource = f'{resource_prefix}/resources/{service_id}'
         iam_request = iam_policy_pb2.GetIamPolicyRequest(resource=resource)
         policy = self.services_client.get_iam_policy(request=iam_request)
 
