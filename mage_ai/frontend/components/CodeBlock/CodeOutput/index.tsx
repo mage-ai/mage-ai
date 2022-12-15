@@ -187,7 +187,7 @@ function CodeOutput({
         const borderTop = idx >= 1;
 
         if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
-          const parts = data.split('[__internal_output__]')
+          const parts = data.split('[__internal_output__]');
           let rawString = parts[parts.length - 1];
 
           // Sometimes the FloatProgress is appended to the end of the table data
@@ -243,7 +243,7 @@ function CodeOutput({
                 <Text
                   // @ts-ignore
                   dangerouslySetInnerHTML={{
-                    __html: data
+                    __html: data,
                   }}
                   monospace
                 />
@@ -278,11 +278,14 @@ function CodeOutput({
 
     if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK) {
       arrContent.unshift([
-        <OutputRowStyle contained>
+        <OutputRowStyle
+          contained
+          key="progress_bar"
+        >
           <Spacing mt={1}>
             {progressBar}
           </Spacing>
-        </OutputRowStyle>
+        </OutputRowStyle>,
       ]);
     }
 
@@ -295,6 +298,11 @@ function CodeOutput({
     progressBar,
     selected,
   ]);
+
+  const columnCount = dataFrameShape?.[1] || 0;
+  const columnsPreviewMessage = columnCount > 30
+    ? ` (30 out of ${columnCount} columns displayed)`
+    : '';
 
   return (
     <>
@@ -342,7 +350,7 @@ function CodeOutput({
                       {dataFrameShape && (
                         <Spacing ml={2}>
                           <Text>
-                            {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns`}
+                            {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns${columnsPreviewMessage}`}
                           </Text>
                         </Spacing>
                       )}
