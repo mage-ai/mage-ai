@@ -42,8 +42,28 @@ class IntegrationBlock(Block):
         ))
 
         if index is not None:
+            source_state_file_path = self.pipeline.source_state_file_path(
+                destination_table=destination_table,
+                stream=stream,
+            )
+            destination_state_file_path = self.pipeline.destination_state_file_path(
+                destination_table=destination_table,
+                stream=stream,
+            )
+            with open(destination_state_file_path, 'r') as f:
+                text = f.read()
+                d = json.loads(text) if text else {}
+                bookmark_values = d.get('bookmarks', {}).get(stream)
+            if bookmark_values:
+                from mage_integrations.sources.utils import update_source_state_from_destination_state
+                update_source_state_from_destination_state(
+                        source_state_file_path,
+                        destination_state_file_path,
+                )
+            else:
+                query_data['_offset'] = BATCH_FETCH_LIMIT * index
+
             query_data['_limit'] = BATCH_FETCH_LIMIT
-            query_data['_offset'] = BATCH_FETCH_LIMIT * index
 
         outputs = []
         if BlockType.DATA_LOADER == self.type:
@@ -64,10 +84,7 @@ class IntegrationBlock(Block):
                     selected_streams=selected_streams,
                 ),
                 '--state',
-                self.pipeline.source_state_file_path(
-                    destination_table=destination_table,
-                    stream=stream,
-                ),
+                source_state_file_path,
                 '--query_json',
                 json.dumps(query_data),
             ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
