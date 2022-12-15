@@ -17,6 +17,16 @@ You can install Mage using Docker or `pip`:
     docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
       mage start [project_name]
     ```
+
+    > Windows
+    >
+    > If you are running Mage in Docker on Windows OS, `$(pwd)` won’t work. Instead, use the following
+    > command:
+    ```bash
+    docker run -it -p 6789:6789 -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai \
+      mage start [project_name]
+    ```
+
 1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 1. Run pipeline after building it in the tool
     ```bash
@@ -84,6 +94,25 @@ pip install -U mage-ai
 ```
 
 <br />
+
+## Environment variables
+
+If you’re running Mage using `pip` or `conda`, your local machine’s environment variables
+are accessible within the running Mage app.
+
+If you’re running Mage using Docker, you must add the following command line flags:
+
+```bash
+-e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2
+```
+
+The command to run Mage using Docker could look like this:
+
+```bash
+docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+    -e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2 \
+    mage start demo_project
+```
 
 ## Install
 

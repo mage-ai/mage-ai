@@ -29,6 +29,7 @@ Read more tech docs here. Got questions?
 - [Setup and install](tutorials/quick_start/setup.md)
 - [Data pipeline management](features/orchestration/README.md)
 - [Kernels](kernels/README.md)
+- [Environment variables](tutorials/quick_start/setup.md#environment-variables)
 
 ### Tutorials
 - [Tutorials](tutorials/README.md)
