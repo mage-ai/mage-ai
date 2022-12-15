@@ -58,11 +58,15 @@ on Linux, run the following commands:
     CREATE PUBLICATION mage_pub FOR ALL TABLES;
     ```
 
+    <sub>`mage_pub` is used in Mage’s [code](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/postgresql/__init__.py#L126)</sub>
+
+
     or for 1 table:
 
     ```sql
     CREATE PUBLICATION mage_pub FOR TABLE some_schema.some_table_name;
     ```
+
     <sub>Replace `some_schema` with the schema of the table and `some_table_name` with the name
     of the table you want to replicate.</sub>
 
@@ -76,8 +80,6 @@ on Linux, run the following commands:
     | `pubname` | `schemaname` | `tablename` |
     | --- | --- | --- |
     | `mage_pub` | `public` | `users` |
-    
-    <sub>`mage_pub` is used in Mage’s [code](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/postgresql/__init__.py#L126)</sub>
 
 <br />
 
