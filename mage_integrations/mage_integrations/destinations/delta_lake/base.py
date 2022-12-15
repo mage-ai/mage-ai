@@ -73,7 +73,7 @@ class DeltaLake(BaseDestination):
                 column_type = pa.float64()
                 column_type_df = float
             elif COLUMN_TYPE_OBJECT == col_type:
-                column_type = pa.map_(pa.string(), pa.string())
+                column_type = pa.string()
                 column_type_df = str
             elif COLUMN_TYPE_STRING == col_type and COLUMN_FORMAT_DATETIME == column_format:
                 column_type = pa.string()
@@ -159,14 +159,14 @@ class DeltaLake(BaseDestination):
         df = pd.DataFrame([d[KEY_RECORD] for d in record_data])
         df_count = len(df.index)
 
+        # if self.disable_column_type_check.get(stream):
+        #     for column_name in self.schemas[stream]['properties'].keys():
+        #         df[column_name] = df[column_name].fillna('')
+        #     dt, schema = delta_arrow_schema_from_pandas(df)
+        #     df = dt.to_pandas()
+        # else:
 
-        if self.disable_column_type_check.get(stream):
-            for column_name in self.schemas[stream]['properties'].keys():
-                df[column_name] = df[column_name].fillna('')
-            dt, schema = delta_arrow_schema_from_pandas(df)
-            df = dt.to_pandas()
-        else:
-            df, schema = self.build_schema(stream, df)
+        df, schema = self.build_schema(stream, df)
 
         idx = 0
         total_byte_size = int(df.memory_usage(deep=True).sum())

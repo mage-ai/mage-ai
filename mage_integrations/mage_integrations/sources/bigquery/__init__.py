@@ -34,6 +34,9 @@ FROM {dataset}.INFORMATION_SCHEMA.COLUMNS
             query = f'{query}\nWHERE TABLE_NAME IN ({table_names})'
         return query
 
+    def update_column_names(self, columns: List[str]) -> List[str]:
+        return list(map(lambda column: f'`{column}`', columns))
+
 
 if __name__ == '__main__':
     main(BigQuery)

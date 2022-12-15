@@ -17,7 +17,6 @@ def delta_arrow_schema_from_pandas(
     :return: A PyArrow Table and the inferred schema for the Delta Table
     """
 
-    print('WTFFFFFFFFFFFFFFFFFFFFFF', data.dtypes)
     table = pa.Table.from_pandas(data)
     schema = table.schema
     schema_out = []
