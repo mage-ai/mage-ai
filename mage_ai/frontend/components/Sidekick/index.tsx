@@ -146,7 +146,7 @@ function Sidekick({
     columnTypes,
     statistics,
   });
-  const hasData = sampleData && insights && Object.keys(statistics).length > 0;
+  const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
