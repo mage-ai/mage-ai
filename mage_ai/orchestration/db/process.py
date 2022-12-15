@@ -11,9 +11,10 @@ def start_session_and_run(*target_args):
 
     db_connection.start_session(force=True)
 
-    results = target(*args)
-
-    db_connection.close_session()
+    try:
+        results = target(*args)
+    finally:
+        db_connection.close_session()
     return results
 
 
