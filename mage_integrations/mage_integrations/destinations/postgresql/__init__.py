@@ -166,6 +166,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
         return records_inserted, 0
 
+    def update_soft_delete_flag(self, min_updated_at: str):
+        pass
+
 
 if __name__ == '__main__':
     main(PostgreSQL)

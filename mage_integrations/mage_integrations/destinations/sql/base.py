@@ -266,6 +266,10 @@ class Destination(BaseDestination):
             else:
                 results += self.build_connection().execute(query_strings, commit=True)
 
+        replication_method = self.replication_methods[stream]
+        if replication_method == REPLICATION_METHOD_FULL_TABLE:
+            self.update_soft_delete_flag()
+
         return results
 
     def build_connection(self):
@@ -329,6 +333,9 @@ class Destination(BaseDestination):
         unique_conflict_method: str = None,
     ) -> Tuple[int, int]:
         return self.records_inserted, self.records_updated
+
+    def update_soft_delete_flag(self, min_updated_at: str):
+        pass
 
 
 def main(destination_class):

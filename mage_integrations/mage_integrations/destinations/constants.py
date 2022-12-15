@@ -14,12 +14,17 @@ STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY = 'partition_keys'
 
 INTERNAL_COLUMN_CREATED_AT = '_mage_created_at'
 INTERNAL_COLUMN_UPDATED_AT = '_mage_updated_at'
+INTERNAL_COLUMN_DELETED_AT = '_mage_deleted_at'
 INTERNAL_COLUMN_SCHEMA = {
     INTERNAL_COLUMN_CREATED_AT: {
         "format": "date-time",
         "type": ["null", "string"]
     },
     INTERNAL_COLUMN_UPDATED_AT: {
+        "format": "date-time",
+        "type": ["null", "string"]
+    },
+    INTERNAL_COLUMN_DELETED_AT: {
         "format": "date-time",
         "type": ["null", "string"]
     },

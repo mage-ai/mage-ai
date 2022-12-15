@@ -1,4 +1,5 @@
 from ast import literal_eval
+from datetime import datetime
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_ARRAY,
@@ -54,6 +55,14 @@ def build_alter_table_command(
     ]
     # TODO: support add new unique constraints
     return f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
+
+
+def build_update_soft_delete_flag_command(full_table_name: str, min_updated_at: str):
+    deleted_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
+    return f"""UPDATE {full_table_name}
+    SET _mage_deleted_at = {deleted_time}
+    WHERE _mage_updated_at < {min_updated_at};
+    """
 
 
 def convert_column_type(
