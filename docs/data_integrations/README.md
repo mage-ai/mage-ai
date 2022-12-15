@@ -17,6 +17,8 @@ Data integration is synchronizing data from an external system to an internal sy
     - [Available destinations](#available-destinations)
     - [Add a new destination](../guides/data_integrations/destinations/AddNewDestination.md)
     - [Adapt an existing destination](../guides/data_integrations/destinations/AdaptExistingDestination.md)
+- Guides
+    - [Change Data Capture (CDC) with PostgreSQL](../guides/data_integrations/sources/PostgreSQL.md)
 
 <br />
 
