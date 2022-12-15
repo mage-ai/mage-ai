@@ -5,6 +5,8 @@ Mage supports 2 types of change data capture with PostgreSQL:
 1. Batch query
 1. Log replication
 
+![](https://user-images.githubusercontent.com/78053898/198754309-2ef713a7-62c8-4ea8-9ebb-8c24ed038cb3.png)
+
 ## Batch query
 
 Mage will query PostgreSQL in batches using `SELECT`, `WHERE`, and `ORDER BY`
