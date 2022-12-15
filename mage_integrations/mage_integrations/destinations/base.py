@@ -2,6 +2,7 @@ from jsonschema.validators import Draft4Validator
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_STRING,
     INTERNAL_COLUMN_SCHEMA,
     KEY_BOOKMARK_PROPERTIES,
     KEY_DISABLE_COLUMN_TYPE_CHECK,
@@ -16,6 +17,9 @@ from mage_integrations.destinations.constants import (
     KEY_UNIQUE_CONSTRAINTS,
     KEY_VALUE,
     KEY_VERSION,
+    STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY,
+    STREAM_OVERRIDE_SETTINGS_KEY,
+    STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY,
 )
 from mage_integrations.utils.dictionary import merge_dict
 from mage_integrations.utils.files import get_abs_path
@@ -151,6 +155,10 @@ class Destination():
     def settings(self, settings):
         self._settings = settings
 
+    @property
+    def streams_override_settings(self) -> Dict:
+        return self.config.get(STREAM_OVERRIDE_SETTINGS_KEY, {})
+
     def test_connection(self) -> None:
         raise Exception('Subclasses must implement the test_connection method.')
 
@@ -244,6 +252,18 @@ class Destination():
         self.schemas[stream] = schema
         # Add internal columns to schema
         schema['properties'] = merge_dict(schema['properties'], INTERNAL_COLUMN_SCHEMA)
+
+        if STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY in self.streams_override_settings:
+            static_columns_schema = {}
+            for k in self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY].keys():
+                static_columns_schema[k] = dict(type=[
+                    COLUMN_TYPE_STRING,
+                ])
+            schema['properties'] = merge_dict(schema['properties'], static_columns_schema)
+
+        if STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY in self.streams_override_settings:
+            self.partition_keys[stream] += self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY]
+
         self.unique_conflict_methods[stream] = row.get(KEY_UNIQUE_CONFLICT_METHOD)
         self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
         self.validators[stream] = Draft4Validator(schema)
@@ -497,6 +517,10 @@ class Destination():
                     record_adjusted[k] = json.loads(v1)
                 except json.decoder.JSONDecodeError:
                     record_adjusted[k] = ast.literal_eval(v1)
+
+        if STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY in self.streams_override_settings:
+            for k, v in self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY].items():
+                record_adjusted[k] = v
 
         return record_adjusted
 
