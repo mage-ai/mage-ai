@@ -553,7 +553,7 @@ function SyncRowDetail({
       return;
     }
 
-    const columns = Object.keys(sourceRecord || destinationRecord || {}).sort();
+    const columns = Object.keys(destinationRecord || sourceRecord || {}).sort();
 
     const rowData = [];
     columns.forEach((col: string) => {
