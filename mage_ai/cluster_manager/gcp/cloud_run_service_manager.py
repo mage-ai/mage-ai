@@ -56,7 +56,8 @@ class CloudRunServiceManager:
             services.append(dict(
                 ip=ip_map.get(name),
                 name=name,
-                type='run service'
+                status='RUNNING',
+                type='run service',
             ))
 
         return services
@@ -73,8 +74,11 @@ class CloudRunServiceManager:
                         ports=[
                             run_v2.types.ContainerPort(container_port=6789)
                         ],
-                        command=['mage', 'start', service_id],
                         env=[
+                            run_v2.types.EnvVar(
+                                name='PROJECT_PATH',
+                                value=service_id,
+                            ),
                             run_v2.types.EnvVar(
                                 name='FILESTORE_IP_ADDRESS',
                                 value=os.getenv('FILESTORE_IP_ADDRESS')
@@ -144,7 +148,8 @@ class CloudRunServiceManager:
             'loadBalancingScheme': 'EXTERNAL',
             'backends': [{ 'group': group_url }],
             'enableCDN': False,
-            'securityPolicy': 'david-test-security-policy', # TODO: update the security group
+            # TODO: create a new security policy
+            'securityPolicy': f"{os.getenv('GCP_SERVICE_NAME')}-security-policy",
             'iap': {
                 'enable': False,
                 'oauth2ClientId': '',
@@ -247,206 +252,3 @@ class CloudRunServiceManager:
                 print('Target http proxy is not ready, sleeping for 60 seconds...')
                 time.sleep(60)
         print('Forwarding rule created!')
-
-
-# from google.oauth2 import service_account
-# from google.cloud import run_v2
-# from google.cloud import filestore_v1
-
-# path_to_credentials_json_file = './another_repo/mage-341100-194879a7613d.json'
-
-# scopes = [
-#     'https://www.googleapis.com/auth/cloud-platform',
-#     'https://www.googleapis.com/auth/compute',
-# ]
-# credentials = service_account.Credentials.from_service_account_file(
-#     path_to_credentials_json_file,
-# )
-# # auth_req = google.auth.transport.requests.Request()
-# # credentials.refresh(auth_req)
-
-# client = run_v2.ServicesClient(credentials=credentials)
-
-# project_id = 'mage-341100'
-# region = 'us-west2'
-# service_id = 'multi-dev-test-service'
-
-# # create service
-# service = run_v2.types.Service(
-#     description='gcp multi dev environment test',
-#     ingress=run_v2.types.IngressTraffic.INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER,
-#     launch_stage=launch_stage_pb2.BETA,
-#     template=run_v2.types.RevisionTemplate(
-#         containers=[
-#             run_v2.types.Container(
-#                 image='us-west2-docker.pkg.dev/mage-341100/mage/mage',
-#                 ports=[
-#                     run_v2.types.ContainerPort(container_port=6789)
-#                 ],
-#                 command=['mage', 'start', service_id]
-#             )
-#         ]
-#     )
-# )
-# service_request = run_v2.CreateServiceRequest(
-#     parent=f'projects/{project_id}/locations/{region}',
-#     service=service,
-#     service_id=service_id,
-# )
-
-# response = client.create_service(service_request)
-
-# resource = f'projects/{project_id}/locations/{region}/resources/{service_id}'
-# iam_request = iam_policy_pb2.GetIamPolicyRequest(resource=resource)
-# policy = client.get_iam_policy(request=iam_request)
-
-# policy.bindings.append(policy_pb2.Binding(role='roles/run.invoker', members=['allUsers']))
-
-# set_iam_request = iam_policy_pb2.SetIamPolicyRequest(
-#     resource=f'projects/{project_id}/locations/{region}/resources/{service_id}',
-#     policy=policy
-# )
-# iam_response = client.set_iam_policy(request=set_iam_request)
-
-
-
-# get filestore instance name, can just get env vars from manage instance
-# fs_client = filestore_v1.CloudFilestoreManagerClient(credentials=credentials)
-
-# instance = 'eng-test'
-
-# get_instance_request = filestore_v1.types.cloud_filestore_service.GetInstanceRequest(
-#     name=f'projects/{project_id}/locations/us-west2-a/instances/{instance}'
-# )
-
-# instance = fs_client.get_instance(request=get_instance_request)
-# instances = fs_client.list_instances(parent='projects/mage-341100/locations/-')
-
-# create neg for service
-# zone = 'us-west2-a'
-# url = f'https://compute.googleapis.com/compute/v1/projects/{project_id}/zones/{zone}/networkEndpointGroups'
-
-# request_obj = {
-#     'name': f'{service_id}-neg',
-#     'networkEndpointType': 'SERVERLESS',
-#     'cloudRun': {
-#         'service': service_id
-#     }
-# }
-
-# scopes = [
-#     'https://www.googleapis.com/auth/cloud-platform',
-#     'https://www.googleapis.com/auth/compute',
-# ]
-# credentials = service_account.Credentials.from_service_account_file(
-#     path_to_credentials_json_file,
-#     scopes=scopes
-# )
-# auth_req = google.auth.transport.requests.Request()
-# credentials.refresh(auth_req)
-
-# scopes = [
-#     'https://www.googleapis.com/auth/cloud-platform',
-#     'https://www.googleapis.com/auth/compute',
-# ]
-# credentials = service_account.Credentials.from_service_account_file(
-#     path_to_credentials_json_file,
-#     scopes=scopes
-# )
-
-# neg_service = build('compute', 'v1', credentials=credentials).networkEndpointGroups()
-# neg_service.insert(project=project_id, zone=zone, body=request_obj)
-
-# neg
-# request_obj = {
-#     'name': f'{service_id}-neg',
-#     'networkEndpointType': 'SERVERLESS',
-#     'cloudRun': {
-#         'service': service_id
-#     }
-# }
-
-# neg_service = build('compute', 'v1', credentials=credentials).regionNetworkEndpointGroups()
-# response = neg_service.insert(project=project_id, region=region, body=request_obj).execute()
-
-# # backend services
-# backend_body = {
-#     'name': f'{service_id}-urlmap-backend-default',
-#     'loadBalancingScheme': 'EXTERNAL',
-#     'backends': [{
-#         'group': 'https://www.googleapis.com/compute/v1/projects/mage-341100/regions/us-west2/networkEndpointGroups/multi-dev-test-service-neg'
-#     }],
-#     'enableCDN': False,
-#     'securityPolicy': 'david-test-security-policy',
-#     'iap': {
-#         'enable': False,
-#         'oauth2ClientId': '',
-#         'oauth2ClientSecret': '',
-#     },
-#     'logConfig': {
-#         'enable': True,
-#         'sampleRate': None
-#     }
-# }
-
-# backends_service = build('compute', 'v1', credentials=credentials).backendServices()
-# response = backends_service.insert(project=project_id, body=backend_body).execute()
-
-# # create external ip address
-
-# address_name = f'{service_id}-urlmap-address'
-# addresses_service = build('compute', 'v1', credentials=credentials).globalAddresses()
-# response = addresses_service.insert(project=project_id, body={ 'name': address_name }).execute()
-
-# ip_address = addresses_service.get(project=project_id, address=address_name).execute().get('address')
-
-# # url map
-
-# url_map_body = {
-#     'name': f'{service_id}-urlmap-url-map',
-#     'defaultService': 'https://www.googleapis.com/compute/v1/projects/mage-341100/global/backendServices/multi-dev-test-service-urlmap-backend-default',
-# }
-# url_maps_service = build('compute', 'v1', credentials=credentials).urlMaps()
-# response = url_maps_service.insert(project=project_id, body=url_map_body).execute()
-
-
-# # http proxy
-
-# http_proxy_body = {
-#     'name': f'{service_id}-urlmap-http-proxy',
-#     'urlMap': 'https://www.googleapis.com/compute/v1/projects/mage-341100/global/urlMaps/multi-dev-test-service-urlmap-url-map',
-# }
-# http_proxy_service = build('compute', 'v1', credentials=credentials).targetHttpProxies()
-# response = http_proxy_service.insert(project=project_id, body=http_proxy_body).execute()
-
-
-# # forwarding rules
-
-# forwarding_rules_body = {
-#     'name': f'{service_id}-urlmap',
-#     'IPAddress': ip_address,
-#     'IPProtocol': 'TCP',
-#     'portRange': '80-80',
-#     'target': 'https://www.googleapis.com/compute/v1/projects/mage-341100/global/targetHttpProxies/multi-dev-test-service-urlmap-http-proxy',
-#     'loadBalancingScheme': 'EXTERNAL'
-# }
-
-# forwarding_rules_service = build('compute', 'v1', credentials=credentials).globalForwardingRules()
-# response = forwarding_rules_service.insert(project=project_id, body=forwarding_rules_body).execute()
-
-
-# """
-# % gcloud compute network-endpoint-groups create multi-dev-test-service-neg --region=us-west2 \
-#     --network-endpoint-type=serverless --cloud-run-service=multi-dev-test-service
-
-# % gcloud compute 
-
-# """
-
-# print(response)
-
-# backend_health = backends_service.getHealth(
-#     project=project_id,
-#     backendService=f'{service_id}-urlmap-backend-default',
-#     body={ 'group': 'https://www.googleapis.com/compute/v1/projects/mage-341100/regions/us-west2/networkEndpointGroups/multi-dev-test-service-neg' },
-# ).execute()

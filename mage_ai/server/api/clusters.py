@@ -76,7 +76,7 @@ class ApiInstancesHandler(BaseHandler):
         elif cluster_type == 'cloud_run':
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
             project_id = os.getenv('GCP_PROJECT_ID')
-            path_to_credentials = os.getenv('GCP_PATH_TO_CREDENTIALS')
+            path_to_credentials = os.getenv('path_to_keyfile')
             region = os.getenv('GCP_REGION')
             cloud_run_service_manager = CloudRunServiceManager(
                 project_id,
