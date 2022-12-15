@@ -351,6 +351,10 @@ function IntegrationPipeline({
   const updateAllStreams = useCallback((
     streamDataTransformer: (stream: StreamType) => StreamType,
   ) => {
+    if (!catalog?.streams) {
+      return;
+    }
+
     onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
       ...dataLoaderBlockContent,
       catalog: {
@@ -974,6 +978,7 @@ function IntegrationPipeline({
 
                   <ToggleSwitch
                     checked={!!autoAddNewFields}
+                    disabled={!catalog?.streams}
                     onCheck={() => updateAllStreams((stream: StreamType) => ({
                       ...stream,
                       auto_add_new_fields: !autoAddNewFields,
@@ -1001,6 +1006,7 @@ function IntegrationPipeline({
 
                   <ToggleSwitch
                     checked={!!disableColumnTypeCheck}
+                    disabled={!catalog?.streams}
                     onCheck={() => updateAllStreams((stream: StreamType) => ({
                       ...stream,
                       disable_column_type_check: !disableColumnTypeCheck,
