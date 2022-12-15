@@ -251,7 +251,7 @@ function InstanceListPage() {
   );
 
   const updateInstanceName = (name) => {
-    if (instanceType === 'cloud-run') {
+    if (instanceType === 'cloud_run') {
       return replaceSpaces(name, '-');
     } else {
       return replaceSpaces(name, '_');
@@ -259,7 +259,7 @@ function InstanceListPage() {
   }
 
   const instanceNameLabel = () => {
-    if (instanceType === 'cloud-run') {
+    if (instanceType === 'cloud_run') {
       return "Spaces will be replaced by hyphens";
     } else {
       return "Spaces will be replaced by underscores";
