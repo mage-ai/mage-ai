@@ -1,4 +1,4 @@
-from bson.json_util import dumps
+from json import dumps
 from io import StringIO
 import json
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
