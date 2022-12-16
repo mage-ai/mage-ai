@@ -82,10 +82,16 @@ class MongoDB(BaseSQLConnection):
             password = self.settings['password']
             host = self.settings['host']
             port = self.settings['port']
-            if user is not None and password is not None:
-                conn = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
+            if port is not None:
+                if user is not None and password is not None:
+                    conn = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
+                else:
+                    conn = MongoClient(host, port)
             else:
-                conn = MongoClient(host, port)
+                if user is not None and password is not None:
+                    conn = MongoClient(f'mongodb+srv://{user}:{password}@{host}/')
+                else:
+                    conn = MongoClient(f'mongodb+srv://{host}/')
             self._ctx = conn
 
     def execute(self, query_string: str, **query_vars) -> None or dict:
