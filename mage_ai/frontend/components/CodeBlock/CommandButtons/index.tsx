@@ -378,7 +378,6 @@ function CommandButtons({
             rightOffset={UNIT * 4.75}
             topOffset={UNIT * 2}
             uuid="FileHeaderMenu/file_items"
-            width={UNIT * 25}
           />
         </ClickOutside>
       </>
