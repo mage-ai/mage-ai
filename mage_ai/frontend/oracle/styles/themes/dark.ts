@@ -74,6 +74,7 @@ export default {
     chartBlock: '#2E3036',
     codeArea: '#1E1F24',
     codeTextarea: '#000000',
+    content: '#1B1C20',
     danger: RED_XLIGHT,
     dark: GRAY,
     header: '#1B1B1B',

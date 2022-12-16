@@ -63,3 +63,43 @@ export const buildConvertBlockMenuItems = (
     }))
   );
 };
+
+export const getMoreActionsItems = (
+  block: BlockType,
+  runBlock: (payload: {
+    block: BlockType;
+    runTests?: boolean;
+    runUpstream?: boolean;
+  }) => void,
+  deleteBlock: (block: BlockType) => void,
+  setOutputCollapsed: (outputCollapsed: boolean) => void,
+  isStreamingPipeline: boolean,
+
+): FlyoutMenuItemType[] => {
+  const items: FlyoutMenuItemType[] = [
+    {
+      label: () => 'Execute with upstream blocks',
+      onClick: () => runBlock({ block, runUpstream: true }),
+      uuid: 'execute_upstream',
+    },
+    {
+      label: () => 'Execute block and run tests',
+      onClick: () => runBlock({ block, runTests: true }),
+      uuid: 'run_tests',
+    },
+    {
+      label: () => 'Delete block',
+      onClick: () => {
+        deleteBlock(block);
+        setOutputCollapsed(false);
+      },
+      uuid: 'delete_block',
+    },
+  ];
+
+  if (isStreamingPipeline) {
+    return [items.pop()];
+  }
+
+  return items;
+};

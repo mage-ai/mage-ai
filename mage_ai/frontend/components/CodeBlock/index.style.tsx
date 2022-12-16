@@ -1,7 +1,11 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import {
+  BORDER_RADIUS,
+  BORDER_STYLE,
+  BORDER_WIDTH_THICK,
+} from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -80,19 +84,36 @@ export const ContainerStyle = styled.div`
   position: relative;
 `;
 
+export const BlockHeaderStyle = styled.div<BorderColorShareProps>`
+  ${BORDER_COLOR_SHARED_STYLES}
+
+  border-top-left-radius: ${BORDER_RADIUS}px;
+  border-top-right-radius: ${BORDER_RADIUS}px;
+  border-top-style: ${BORDER_STYLE};
+  border-top-width: ${BORDER_WIDTH_THICK}px;
+  border-left-style: ${BORDER_STYLE};
+  border-left-width: ${BORDER_WIDTH_THICK}px;
+  border-right-style: ${BORDER_STYLE};
+  border-right-width: ${BORDER_WIDTH_THICK}px;
+  padding: ${UNIT}px;
+  position: sticky;
+  top: -5px;
+  z-index: 5;
+
+  ${props => `
+    background-color: ${(props.theme || dark).background.content};
+  `}
+`;
+
 export const CodeContainerStyle = styled.div<{
   hasOutput: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
-  border-left-style: solid;
-  border-left-width: 2px;
-  border-right-style: solid;
-  border-right-width: 2px;
-  border-top-left-radius: ${BORDER_RADIUS}px;
-  border-top-right-radius: ${BORDER_RADIUS}px;
-  border-top-style: solid;
-  border-top-width: 2px;
+  border-left-style: ${BORDER_STYLE};
+  border-left-width: ${BORDER_WIDTH_THICK}px;
+  border-right-style: ${BORDER_STYLE};
+  border-right-width: ${BORDER_WIDTH_THICK}px;
   padding-bottom: ${UNIT}px;
   padding-top: ${UNIT}px;
   position: relative;
@@ -104,8 +125,8 @@ export const CodeContainerStyle = styled.div<{
   ${props => !props.hasOutput && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
-    border-bottom-style: solid;
-    border-bottom-width: 2px;
+    border-bottom-style: ${BORDER_STYLE};
+    border-bottom-width: ${BORDER_WIDTH_THICK}px;
   `}
 
   .line-numbers {
@@ -122,7 +143,7 @@ export const CodeContainerStyle = styled.div<{
 export const BlockDivider = styled.div`
   align-items: center;
   display: flex;
-  height: ${UNIT * 2}px;
+  height: ${UNIT}px;
   justify-content: center;
   position: relative;
   z-index: 10;
