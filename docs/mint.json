@@ -16,7 +16,7 @@
     }
   },
   "metadata": {
-    "og:image": "hhttps://mintlify.s3-us-west-1.amazonaws.com/mage/images/social-media-image-mage.png",
+    "og:image": "https://mintlify.s3-us-west-1.amazonaws.com/mage/images/social-media-image-mage.png",
     "twitter:site": "@mage_ai"
   },
   "topbarCtaButton": {
