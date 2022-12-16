@@ -198,7 +198,7 @@ function CommandButtons({
               onClickCallback={() => setShowExecuteActions(false)}
               open={showExecuteActions}
               parentRef={refExecuteActions}
-              rightOffset={UNIT * 18}
+              rightOffset={UNIT * 13.25}
               topOffset={UNIT * 4.5}
               uuid="execute_actions"
               width={UNIT * 25}
@@ -321,7 +321,7 @@ function CommandButtons({
               onClickCallback={() => setShowAddCharts(false)}
               open={showAddCharts}
               parentRef={refAddChart}
-              rightOffset={UNIT * 13.75}
+              rightOffset={UNIT * 9}
               runBlock={runBlock}
               topOffset={UNIT * 2}
             />
