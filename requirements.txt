@@ -10,11 +10,11 @@ jupyter_client==7.3.4
 jupyter-server-proxy==3.2.1
 numpy~=1.21.0
 pandas~=1.3.0
-pyarrow==6.0.0
+pyarrow==10.0.1
 python-dateutil==2.8.2
 pytz==2022.1
 pyyaml~=6.0
-requests==2.27.0
+requests==2.27.1
 scikit-learn>=1.0
 simplejson
 six>=1.15.0
@@ -25,7 +25,7 @@ tornado==6.1
 # extras
 botocore==1.27.19
 boto3==1.24.19
-db-dtypes==1.0.2
+db-dtypes==1.0.5
 google-api-python-client==2.70.0
 google-cloud-bigquery~=2.34.4
 google-cloud-iam==2.9.0
