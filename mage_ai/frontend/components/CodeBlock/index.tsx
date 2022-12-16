@@ -59,6 +59,8 @@ import {
   ChevronUp,
   FileFill,
   Info,
+  ParentEmpty,
+  ParentLinked,
   Stack,
 } from '@oracle/icons';
 import {
@@ -783,46 +785,46 @@ function CodeBlockProps({
             <Spacing mr={2} />
 
             {!BLOCK_TYPES_WITH_NO_PARENTS.includes(block.type) && (
-              <FlexContainer alignItems="center">
-                <Tooltip
-                  appearBefore
-                  block
-                  label={`
-                    ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
-                  `}
-                  size={null}
-                  widthFitContent
-                >
-                  <Button
-                    noBackground
-                    noBorder
-                    noPadding
-                    onClick={() => {
-                      setSelected(true);
-                      setEditingBlock({
-                        upstreamBlocks: {
-                          block,
-                          values: block.upstream_blocks?.map(uuid => ({ uuid })),
-                        },
-                      });
-                    }}
+              <Tooltip
+                appearBefore
+                block
+                label={`
+                  ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
+                `}
+                size={null}
+                widthFitContent={numberOfParentBlocks >= 1}
+              >
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => {
+                    setSelected(true);
+                    setEditingBlock({
+                      upstreamBlocks: {
+                        block,
+                        values: block.upstream_blocks?.map(uuid => ({ uuid })),
+                      },
+                    });
+                  }}
+                  >
+                  <FlexContainer alignItems="center">
+                    <Text
+                      monospace={numberOfParentBlocks >= 1}
+                      small={numberOfParentBlocks >= 1}
+                      underline={numberOfParentBlocks === 0}
                     >
-                    <FlexContainer alignItems="center">
-                      <Text
-                        monospace={numberOfParentBlocks >= 1}
-                        underline={numberOfParentBlocks === 0}
-                        >
-                        {numberOfParentBlocks === 0 && 'Edit parent blocks'}
-                        {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
-                      </Text>
+                      {numberOfParentBlocks === 0 && 'Edit parent blocks'}
+                      {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
+                    </Text>
 
-                      <Spacing mr={1} />
+                    <Spacing mr={1} />
 
-                      <Stack size={UNIT * 2} />
-                    </FlexContainer>
-                  </Button>
-                </Tooltip>
-              </FlexContainer>
+                    {numberOfParentBlocks === 0 && <ParentEmpty size={UNIT * 3} />}
+                    {numberOfParentBlocks >= 1 &&  <ParentLinked size={UNIT * 3} />}
+                  </FlexContainer>
+                </Button>
+              </Tooltip>
             )}
           </Flex>
 
