@@ -36,7 +36,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { buildConvertBlockMenuItems } from '../utils';
+import { buildConvertBlockMenuItems, getMoreActionsItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
 
 export type CommandButtonsSharedProps = {
@@ -65,7 +65,7 @@ type CommandButtonsProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
-  setOutputCollapsed: (value: boolean) => void;
+  setOutputCollapsed: (outputCollapsed: boolean) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
@@ -333,102 +333,59 @@ function CommandButtons({
           </>
         )}
 
-        <Spacing ml={PADDING_UNITS}>
-          <Tooltip
-            appearBefore
-            default
-            label={(
-              <Text>
-                Delete block and file
-                &nbsp;
-                &nbsp;
-                <KeyboardTextGroup
-                  inline
-                  keyTextGroups={[[KEY_SYMBOL_D], [KEY_SYMBOL_D]]}
-                  monospace
-                  uuidForKey={uuid}
-                />
-              </Text>
-            )}
-            size={UNIT * 2.5}
-            widthFitContent
-          >
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => {
-                deleteBlock(block);
-                setOutputCollapsed(false);
-              }}
-            >
-              <Trash size={UNIT * 2.5} />
-            </Button>
-          </Tooltip>
-        </Spacing>
-
-        {!isStreamingPipeline &&
-          <>
-            <div ref={refMoreActions}>
-              <Spacing ml={PADDING_UNITS}>
-                <Tooltip
-                  appearBefore
-                  default
-                  label={(
-                    <Text>
-                      More actions
-                    </Text>
-                  )}
-                  size={UNIT * 2.5}
-                  widthFitContent
+        <>
+          <div ref={refMoreActions}>
+            <Spacing ml={PADDING_UNITS}>
+              <Tooltip
+                appearBefore
+                default
+                label={(
+                  <Text>
+                    More actions
+                  </Text>
+                )}
+                size={UNIT * 2.5}
+                widthFitContent
+              >
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setShowMoreActions(currState => !currState)}
                 >
-                  <Button
-                    noBackground
-                    noBorder
-                    noPadding
-                    onClick={() => setShowMoreActions(currState => !currState)}
+                  <Circle
+                    borderSize={1.5}
+                    size={UNIT * 2.5}
                   >
-                    <Circle
-                      borderSize={1.5}
-                      size={UNIT * 2.5}
-                    >
-                      <Ellipsis size={UNIT} />
-                    </Circle>
-                  </Button>
-                </Tooltip>
-              </Spacing>
-            </div>
-            <ClickOutside
-              disableEscape
-              onClickOutside={() => setShowMoreActions(false)}
+                    <Ellipsis size={UNIT} />
+                  </Circle>
+                </Button>
+              </Tooltip>
+            </Spacing>
+          </div>
+          <ClickOutside
+            disableEscape
+            onClickOutside={() => setShowMoreActions(false)}
+            open={showMoreActions}
+          >
+            <FlyoutMenu
+              items={getMoreActionsItems(
+                block,
+                runBlock,
+                deleteBlock,
+                setOutputCollapsed,
+                isStreamingPipeline,
+              )}
+              onClickCallback={() => setShowMoreActions(false)}
               open={showMoreActions}
-            >
-              <FlyoutMenu
-                items={
-                  [
-                    {
-                      label: () => 'Execute with upstream blocks',
-                      onClick: () => runBlock({ block, runUpstream: true }),
-                      uuid: 'execute_upstream',
-                    },
-                    {
-                      label: () => 'Execute block and run tests',
-                      onClick: () => runBlock({ block, runTests: true }),
-                      uuid: 'run_tests',
-                    },
-                  ]
-                }
-                onClickCallback={() => setShowMoreActions(false)}
-                open={showMoreActions}
-                parentRef={refMoreActions}
-                rightOffset={UNIT * 4.75}
-                topOffset={UNIT * 2}
-                uuid="FileHeaderMenu/file_items"
-                width={UNIT * 25}
-              />
-            </ClickOutside>
-          </>
-        }
+              parentRef={refMoreActions}
+              rightOffset={UNIT * 4.75}
+              topOffset={UNIT * 2}
+              uuid="FileHeaderMenu/file_items"
+              width={UNIT * 25}
+            />
+          </ClickOutside>
+        </>
       </FlexContainer>
     </ContainerStyle>
   );
