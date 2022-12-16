@@ -16,7 +16,7 @@
 
 ### Setup
 
-[Download Mage maintained Terraform scripts](../README.md).
+[Download Mage maintained Terraform scripts](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/gcp).
 
 ### Permissions
 
@@ -447,14 +447,19 @@ Click on that security group and add a new rule with the following values:
 | --- | --- | --- | --- |
 | Basic mode | [Enter your IP address](https://whatismyipaddress.com/) | Allow | 100 |
 
+To enable IP addresses access to specific endpoints, you can follow [this example](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/load_balancer.tf#L23-L33) to add rules to security policy. Another way is to add a new rule through UI with the following values:
+| Mode | Match | Action | Priority |
+| --- | --- | --- | --- |
+| Advanced mode | `request.path.startsWith('/api/pipeline_schedules/123/pipeline_runs') && inIpRange(origin.ip, '[IP address]/32')` | Allow | 200 |
+
 ### HTTPS enabling
 
 To enable HTTPS for Mage app deployed on GCP, you need to firstly make sure you have a domain. Then follow the steps below to set up HTTPS:
 1. In [./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
-file, update the `default` value of `ssl` to be `true` and set the domain name in the `default` value of `domain` variable.
+file, update the `default` value of `ssl` to be `true`, and set the `default` value of `domain` variable to be the domain url you want to use.
 1. Run `terraform apply` to create the HTTPS load balancer.
 1. Get the `service_ip` from the output of terraform command.
-1. Update the DNS A and AAAA records to point to the load balancer's IP address: https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs#update-dns
+1. Update the DNS A and AAAA records to point the domain url to the load balancer's IP address: https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs#update-dns
 1. Visit the domain url to access your Mage app.
 
 ### Terminate all resources

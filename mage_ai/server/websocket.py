@@ -162,14 +162,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = None
         if pipeline_uuid:
-            pipeline = Pipeline(pipeline_uuid, get_repo_path())
+            pipeline = Pipeline.get(pipeline_uuid, get_repo_path())
 
         # Add default trigger runtime variables so the code can run successfully.
         global_vars = {}
         if pipeline_uuid:
             global_vars = message.get(
                 'global_vars',
-                get_global_variables(pipeline_uuid, pipeline.repo_path),
+                get_global_variables(pipeline_uuid),
             )
         global_vars['env'] = ENV_DEV
         if 'execution_date' not in global_vars:

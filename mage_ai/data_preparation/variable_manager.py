@@ -190,17 +190,18 @@ class S3VariableManager(VariableManager):
 
 def get_global_variables(
     pipeline_uuid: str,
-    repo_path: str = None,
 ) -> Dict[str, Any]:
     """
     Get all global variables. Global variables are stored together with project's code.
     """
-    if repo_path is None:
-        repo_path = get_repo_path()
-    variables = VariableManager(repo_path).get_variables_by_block(pipeline_uuid, 'global')
+    variables_dir = get_variables_dir()
+    variables = VariableManager(variables_dir=variables_dir).get_variables_by_block(
+        pipeline_uuid,
+        'global',
+    )
     global_variables = dict()
     for variable in variables:
-        global_variables[variable] = get_global_variable(pipeline_uuid, variable, repo_path)
+        global_variables[variable] = get_global_variable(pipeline_uuid, variable)
 
     return global_variables
 
@@ -208,14 +209,15 @@ def get_global_variables(
 def get_global_variable(
     pipeline_uuid: str,
     key: str,
-    repo_path: str = None,
 ) -> Any:
     """
     Get global variable by key. Global variables are stored together with project's code.
     """
-    if repo_path is None:
-        repo_path = get_repo_path()
-    return VariableManager(repo_path).get_variable(pipeline_uuid, 'global', key)
+    return VariableManager(variables_dir=get_variables_dir()).get_variable(
+        pipeline_uuid,
+        'global',
+        key,
+    )
 
 
 def get_variable(
@@ -240,24 +242,23 @@ def set_global_variable(
     pipeline_uuid: str,
     key: str,
     value: Any,
-    repo_path: str = None,
 ) -> None:
     """
     Set global variable by key. Global variables are stored together with project's code.
     """
-    if repo_path is None:
-        repo_path = get_repo_path()
-    VariableManager(repo_path).add_variable(pipeline_uuid, 'global', key, value)
+    VariableManager(variables_dir=get_variables_dir()).add_variable(
+        pipeline_uuid,
+        'global',
+        key,
+        value,
+    )
 
 
 def delete_global_variable(
     pipeline_uuid: str,
     key: str,
-    repo_path: str = None,
 ) -> None:
     """
     Delete global variable by key. Global variables are stored together with project's code.
     """
-    if repo_path is None:
-        repo_path = get_repo_path()
-    VariableManager(repo_path).delete_variable(pipeline_uuid, 'global', key)
+    VariableManager(variables_dir=get_variables_dir()).delete_variable(pipeline_uuid, 'global', key)

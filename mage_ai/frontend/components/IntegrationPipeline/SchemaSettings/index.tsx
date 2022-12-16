@@ -152,6 +152,7 @@ function SchemaSettings({
             <SchemaTable
               {...props}
               stream={selectedStream}
+              streams={streams}
             />
           </SectionStyle>
         </Spacing>

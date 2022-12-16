@@ -13,14 +13,18 @@ import math
 SQL_SOURCES_UUID = [d.get('uuid', d['name'].lower()) for d in SQL_SOURCES]
 
 
-def initialize_state_and_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[BlockRun]:
+def initialize_state_and_runs(
+    pipeline_run: PipelineRun,
+    logger: DictLogger,
+    variables: Dict,
+) -> List[BlockRun]:
     tags = dict(
         pipeline_run_id=pipeline_run.id,
         pipeline_uuid=pipeline_run.pipeline_uuid,
     )
 
     try:
-        update_stream_states(pipeline_run, logger)
+        update_stream_states(pipeline_run, logger, variables)
 
         block_runs = create_block_runs(pipeline_run, logger)
 
@@ -123,12 +127,12 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
     return arr
 
 
-def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger) -> None:
+def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger, variables: Dict) -> None:
     from mage_integrations.sources.utils import update_source_state_from_destination_state
 
     integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
 
-    for stream in integration_pipeline.streams():
+    for stream in integration_pipeline.streams(variables):
         tap_stream_id = stream['tap_stream_id']
         destination_table = stream.get('destination_table', tap_stream_id)
 

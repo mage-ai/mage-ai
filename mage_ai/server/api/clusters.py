@@ -66,9 +66,25 @@ class ApiInstancesHandler(BaseHandler):
         if cluster_type == 'ecs':
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
 
-            cluster_name = self.get_argument('cluster_name', os.getenv('ECS_CLUSTER_NAME'))
-            ecs_instance_manager = EcsTaskManager(cluster_name)
-            instances = ecs_instance_manager.list_tasks()
+            try:
+                cluster_name = self.get_argument('cluster_name', os.getenv('ECS_CLUSTER_NAME'))
+                ecs_instance_manager = EcsTaskManager(cluster_name)
+                instances = ecs_instance_manager.list_tasks()
+            except Exception as e:
+                print(str(e))
+                instances = list()
+        elif cluster_type == 'cloud_run':
+            from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
+            project_id = os.getenv('GCP_PROJECT_ID')
+            path_to_credentials = os.getenv('path_to_keyfile')
+            region = os.getenv('GCP_REGION')
+            cloud_run_service_manager = CloudRunServiceManager(
+                project_id,
+                path_to_credentials,
+                region=region
+            )
+
+            instances = cloud_run_service_manager.list_services()
 
         self.write(dict(instances=instances))
 
@@ -89,10 +105,33 @@ class ApiInstancesHandler(BaseHandler):
                 container_name,
             )
 
-        self.write(dict(
-            instance=instance,
-            success=True,
-        ))
+            self.write(dict(
+                instance=instance,
+                success=True,
+            ))
+
+        elif cluster_type == 'cloud_run':
+            from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
+            instance_payload = self.get_payload().get('instance')
+            name = instance_payload.get('name')
+            project_id = instance_payload.get('project_id', os.getenv('GCP_PROJECT_ID'))
+            path_to_credentials = instance_payload.get(
+                'path_to_credentials',
+                os.getenv('path_to_keyfile')
+            )
+            region = instance_payload.get('region', os.getenv('GCP_REGION'))
+
+            cloud_run_service_manager = CloudRunServiceManager(
+                project_id,
+                path_to_credentials,
+                region=region
+            )
+
+            cloud_run_service_manager.create_service(name)
+
+            self.write(dict(
+                success=True,
+            ))
 
 
 class ApiInstanceDetailHandler(BaseHandler):

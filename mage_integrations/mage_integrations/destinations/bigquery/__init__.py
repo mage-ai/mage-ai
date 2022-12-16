@@ -1,16 +1,12 @@
 from google.cloud import bigquery
-from google.cloud.bigquery import Client, dbapi
-from google.oauth2 import service_account
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
     MAX_QUERY_PARAMETERS,
     MAX_QUERY_PARAMETERS_SIZE,
-    MAX_QUERY_STRING_SIZE,
     QUERY_JOB_MAX_TIMEOUT_SECONDS,
 )
 from mage_integrations.destinations.bigquery.utils import (
     convert_array,
-    convert_column_to_type,
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
@@ -29,6 +25,13 @@ from mage_integrations.utils.dictionary import merge_dict
 from typing import Any, Dict, List, Tuple
 import sys
 import uuid
+
+
+def convert_column_if_json(value, column_type):
+    if column_type == 'JSON':
+        return f"TO_JSON('{value}')"
+
+    return value
 
 
 class BigQuery(Destination):
@@ -74,6 +77,7 @@ class BigQuery(Destination):
                 # BigQuery doesn't support unique constraints
                 unique_constraints=None,
                 create_temporary_table=create_temporary_table,
+                column_identifier='`',
             )
 
         stream_partition_keys = self.partition_keys.get(stream, [])
@@ -82,7 +86,7 @@ class BigQuery(Destination):
             create_table_command = f'''
 {create_table_command}
 PARTITION BY
-  DATE({partition_col})
+  DATE(`{clean_column_name(partition_col)}`)
             '''
 
         return [
@@ -167,6 +171,7 @@ WHERE table_id = '{table_name}'
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
+        tags: Dict = {},
     ) -> List[List[Tuple]]:
         connection = self.build_connection()
 
@@ -261,12 +266,13 @@ WHERE table_id = '{table_name}'
             column_type_mapping=mapping,
             columns=columns,
             convert_array_func=convert_array,
-            convert_column_to_type_func=convert_column_to_type,
+            convert_column_to_type_func=convert_column_if_json,
             convert_datetime_func=convert_datetime,
             records=records,
             string_parse_func=convert_json_or_string,
             stringify_values=False,
-            convert_column_types=False,
+            convert_column_types=True,
+            column_identifier='`',
         )
         insert_columns = ', '.join(insert_columns)
 

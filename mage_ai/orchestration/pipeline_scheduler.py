@@ -80,10 +80,6 @@ class PipelineScheduler:
                         pipeline_uuid=self.pipeline.uuid,
                     )
 
-                    self.pipeline_run.update(
-                        status=PipelineRun.PipelineRunStatus.CALCULATING_METRICS,
-                    )
-
                     self.logger.info(
                         f'Calculate metrics for pipeline run {self.pipeline_run.id} started.',
                         tags=tags,
@@ -219,34 +215,10 @@ class PipelineScheduler:
 
         return queued_block_runs
 
-    def __get_variables(self, extra_variables: Dict = {}) -> Dict:
-        pipeline_run_variables = self.pipeline_run.variables or {}
-        event_variables = self.pipeline_run.event_variables or {}
-
-        variables = merge_dict(
-            merge_dict(
-                get_global_variables(self.pipeline.uuid) or dict(),
-                self.pipeline_run.pipeline_schedule.variables or dict(),
-            ),
-            pipeline_run_variables,
-        )
-
-        # For backwards compatibility
-        for k, v in event_variables.items():
-            if k not in variables:
-                variables[k] = v
-
-        variables['env'] = ENV_PROD
-        variables['execution_date'] = self.pipeline_run.execution_date
-        variables['execution_partition'] = self.pipeline_run.execution_partition
-        variables['event'] = event_variables
-        variables.update(extra_variables)
-
-        return variables
-
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
         # TODO: implement queueing logic
         block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
+        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
         for b in block_runs_to_schedule:
             tags = dict(
@@ -266,7 +238,7 @@ class PipelineScheduler:
             proc = create_process(run_block, (
                 self.pipeline_run.id,
                 b.id,
-                self.__get_variables(),
+                get_variables(self.pipeline_run),
                 self.__build_tags(**tags),
             ))
             execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
@@ -277,8 +249,9 @@ class PipelineScheduler:
             return
 
         block_runs_to_schedule = self.executable_block_runs if block_runs is None else block_runs
+        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
-        if len(block_runs_to_schedule) >= 2:
+        if len(block_runs_to_schedule) > 0:
             self.logger.info(
                 f'Start a process for PipelineRun {self.pipeline_run.id}',
                 **self.__build_tags(),
@@ -287,7 +260,7 @@ class PipelineScheduler:
             proc = create_process(target=run_integration_pipeline, args=(
                 self.pipeline_run.id,
                 [b.id for b in block_runs_to_schedule],
-                self.__get_variables(dict(
+                get_variables(self.pipeline_run, dict(
                     pipeline_uuid=self.pipeline.uuid,
                 )),
                 self.__build_tags(),
@@ -304,11 +277,24 @@ class PipelineScheduler:
         )
         proc = create_process(run_pipeline, (
             self.pipeline_run.id,
-            self.__get_variables(),
+            get_variables(self.pipeline_run),
             self.__build_tags(),
         ))
         execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
         proc.start()
+
+    def __fetch_crashed_block_runs(self) -> None:
+        running_block_runs = [b for b in self.pipeline_run.block_runs if b.status in [
+            BlockRun.BlockRunStatus.RUNNING,
+        ]]
+
+        crashed_runs = []
+        for br in running_block_runs:
+            if not execution_process_manager.has_block_process(self.pipeline_run.id, br.id):
+                br.update(status=BlockRun.BlockRunStatus.INITIAL)
+                crashed_runs.append(br)
+
+        return crashed_runs
 
     def __build_tags(self, **kwargs):
         return merge_dict(kwargs, dict(
@@ -371,7 +357,7 @@ def run_integration_pipeline(
     data_loader_block = integration_pipeline.data_loader
     data_exporter_block = integration_pipeline.data_exporter
 
-    for stream in integration_pipeline.streams():
+    for stream in integration_pipeline.streams(variables):
         tap_stream_id = stream['tap_stream_id']
         destination_table = stream.get('destination_table', tap_stream_id)
 
@@ -468,7 +454,7 @@ def run_integration_pipeline(
                 outputs.append(output)
 
                 if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
-                    f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
+                   f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
 
                     tags2 = merge_dict(tags_updated.get('tags', {}), dict(
                         destination_table=destination_table,
@@ -497,15 +483,13 @@ def run_block(
     pipeline_type: PipelineType = None,
     verify_output: bool = True,
     runtime_arguments: Dict = None,
-    schedule_after_complete: bool = True,
+    schedule_after_complete: bool = False,
     template_runtime_configuration: Dict = None,
 ) -> Any:
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
 
     pipeline = pipeline_scheduler.pipeline
-    if PipelineType.INTEGRATION == pipeline_type:
-        pipeline = IntegrationPipeline.get(pipeline.uuid)
 
     block_run = BlockRun.query.get(block_run_id)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
@@ -626,6 +610,7 @@ def schedule_all():
                     initialize_state_and_runs(
                         pipeline_run,
                         pipeline_scheduler.logger,
+                        get_variables(pipeline_run),
                     )
 
             pipeline_scheduler.start(should_schedule=False)
@@ -664,3 +649,36 @@ def schedule_with_event(event: Dict = dict()):
                 PipelineScheduler(pipeline_run).start(should_schedule=True)
         else:
             print(f'Event not matched with {e}')
+
+
+def get_variables(pipeline_run, extra_variables: Dict = {}) -> Dict:
+    if not pipeline_run:
+        return {}
+
+    pipeline_run_variables = pipeline_run.variables or {}
+    event_variables = pipeline_run.event_variables or {}
+
+    variables = merge_dict(
+        merge_dict(
+            get_global_variables(pipeline_run.pipeline_uuid) or dict(),
+            pipeline_run.pipeline_schedule.variables or dict(),
+        ),
+        pipeline_run_variables,
+    )
+
+    # For backwards compatibility
+    for k, v in event_variables.items():
+        if k not in variables:
+            variables[k] = v
+
+    if pipeline_run.execution_date:
+        variables['ds'] = pipeline_run.execution_date.strftime('%Y-%m-%d')
+        variables['hr'] = pipeline_run.execution_date.strftime('%H')
+
+    variables['env'] = ENV_PROD
+    variables['event'] = event_variables
+    variables['execution_date'] = pipeline_run.execution_date
+    variables['execution_partition'] = pipeline_run.execution_partition
+    variables.update(extra_variables)
+
+    return variables

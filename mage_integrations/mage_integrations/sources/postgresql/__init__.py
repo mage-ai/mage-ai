@@ -28,6 +28,11 @@ class PostgreSQL(Source):
         schema = self.config['schema']
         return f'{schema}.'
 
+    def build_table_name(self, stream) -> str:
+        table_name = stream.tap_stream_id
+
+        return f'{self.table_prefix}"{table_name}"'
+
     def build_connection(self, connection_factory=None) -> PostgreSQLConnection:
         connect_kwargs = dict(
             database=self.config['database'],
@@ -163,6 +168,7 @@ WHERE  c.table_schema = '{schema}'
                                 relation['name'] == tap_stream_id
                             ):
                                 payload = dict(zip(relation['columns'], values))
+                                payload['lsn'] = msg.data_start
                                 yield [payload]
                 else:
                     now = datetime.datetime.now()
@@ -189,7 +195,7 @@ WHERE  c.table_schema = '{schema}'
 
     def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
         if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
-            return 'lsn'
+            return ['lsn']
         else:
             return super()._get_bookmark_properties_for_stream(stream)
 

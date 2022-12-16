@@ -1,8 +1,11 @@
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
+    MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
+    REPLICATION_METHOD_LOG_BASED,
 )
+from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Dict, List, Tuple
@@ -26,26 +29,7 @@ class Destination(BaseDestination):
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
-    def export_data(
-        self,
-        stream: str,
-        schema: dict,
-        record: dict,
-        tags: dict = {},
-        **kwargs,
-    ) -> None:
-        self.export_batch_data([dict(
-            record=record,
-            schema=schema,
-            stream=stream,
-            tags=tags,
-        )], stream)
-
-    def export_batch_data(
-        self,
-        record_data: List[Dict],
-        stream: str,
-    ) -> None:
+    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get('table')
@@ -63,12 +47,17 @@ class Destination(BaseDestination):
         unique_constraints = self.unique_constraints.get(stream)
         unique_conflict_method = self.unique_conflict_methods.get(stream)
 
+        # Add _mage_created_at and _mage_updated_at columns
+        for r in record_data:
+            r['record'] = update_record_with_internal_columns(r['record'])
+
         query_strings = self.build_query_strings(record_data, stream)
 
         data = self.process_queries(
             query_strings,
             record_data=record_data,
             stream=stream,
+            tags=tags,
         )
 
         records_inserted, records_updated = self.calculate_records_inserted_and_updated(
@@ -96,7 +85,6 @@ class Destination(BaseDestination):
 
         schema = self.schemas[stream]
         unique_constraints = self.unique_constraints.get(stream)
-        unique_conflict_method = self.unique_conflict_methods.get(stream)
 
         tags = dict(
             database_name=database_name,
@@ -115,6 +103,7 @@ class Destination(BaseDestination):
         if replication_method in [
             REPLICATION_METHOD_FULL_TABLE,
             REPLICATION_METHOD_INCREMENTAL,
+            REPLICATION_METHOD_LOG_BASED,
         ]:
             friendly_table_name = '.'.join([x for x in [
                 database_name,
@@ -161,12 +150,6 @@ class Destination(BaseDestination):
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
-        query_strings += self.handle_insert_commands(record_data, stream, tags=tags)
-
-        if self.debug:
-            for qs in query_strings:
-                print(qs, '\n')
-
         return query_strings
 
     def handle_insert_commands(
@@ -175,6 +158,25 @@ class Destination(BaseDestination):
         stream: str,
         tags: Dict = {},
     ) -> List[str]:
+        query_strings = []
+
+        for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
+            query_strings += self._handle_insert_commands_single_batch(
+                sub_batch,
+                stream,
+                idx=idx,
+                tags=tags,
+            )
+
+        return query_strings
+
+    def _handle_insert_commands_single_batch(
+        self,
+        record_data: List[Dict],
+        stream: str,
+        idx: int = 0,
+        tags: Dict = {},
+    ):
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get('table')
@@ -183,41 +185,88 @@ class Destination(BaseDestination):
         unique_constraints = self.unique_constraints.get(stream)
         unique_conflict_method = self.unique_conflict_methods.get(stream)
 
-        query_strings = []
+        records = [d['record'] for d in record_data]
 
-        for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
-            records = [d['record'] for d in sub_batch]
+        tags2 = merge_dict(tags, dict(index=idx))
+        self.logger.info(f'Build insert commands for batch {idx} started.', tags=tags2)
 
-            tags2 = merge_dict(tags, dict(index=idx))
-            self.logger.info(f'Build insert commands for batch {idx} started.', tags=tags2)
+        cmds = self.build_insert_commands(
+            database_name=database_name,
+            records=records,
+            schema=schema,
+            schema_name=schema_name,
+            table_name=table_name,
+            unique_conflict_method=unique_conflict_method,
+            unique_constraints=unique_constraints,
+        )
 
-            cmds = self.build_insert_commands(
-                database_name=database_name,
-                records=records,
-                schema=schema,
-                schema_name=schema_name,
-                table_name=table_name,
-                unique_conflict_method=unique_conflict_method,
-                unique_constraints=unique_constraints,
-            )
-
-            for insert_command in cmds:
-                query_strings.append(insert_command)
-
-            self.logger.info(f'Build insert commands for batch {idx} completed.', tags=merge_dict(tags2, dict(
-                insert_commands=len(cmds)
-            )))
-
-        return query_strings
+        self.logger.info(f'Build insert commands for batch {idx} completed.', tags=merge_dict(tags2, dict(
+            insert_commands=len(cmds)
+        )))
+        return cmds
 
     def process_queries(
         self,
         query_strings: List[str],
         record_data: List[Dict],
         stream: str,
+        tags: Dict = {},
     ) -> List[List[Tuple]]:
-        connection = self.build_connection()
-        return connection.execute(query_strings, commit=True)
+        results = []
+        results += self.build_connection().execute(query_strings, commit=True)
+
+        if self.debug:
+            for qs in query_strings:
+                print(qs, '\n')
+
+        query_string_size = 0
+        query_strings = []
+        for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
+            insert_commands = self._handle_insert_commands_single_batch(
+                sub_batch,
+                stream,
+                idx=idx,
+                tags=tags,
+            )
+            query_strings += insert_commands
+            for c in insert_commands:
+                query_string_size += len(c)
+            if query_string_size >= MAX_QUERY_STRING_SIZE:
+                self.logger.info(
+                    f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
+                    tags=tags,
+                )
+
+                if self.debug:
+                    for qs in query_strings:
+                        try:
+                            results += self.build_connection().execute([qs], commit=True)
+                        except Exception as err:
+                            print(qs)
+                            raise err
+                else:
+                    results += self.build_connection().execute(query_strings, commit=True)
+
+                query_strings = []
+                query_string_size = 0
+
+        if len(query_strings) > 0:
+            self.logger.info(
+                f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
+                tags=tags,
+            )
+
+            if self.debug:
+                for qs in query_strings:
+                    try:
+                        results += self.build_connection().execute([qs], commit=True)
+                    except Exception as err:
+                        print(qs)
+                        raise err
+            else:
+                results += self.build_connection().execute(query_strings, commit=True)
+
+        return results
 
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')

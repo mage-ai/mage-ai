@@ -15,7 +15,8 @@ RUN apt -y update && apt -y install curl
 # Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN ${PIP} install --upgrade pip
-RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
+COPY mage_integrations mage_integrations
+RUN ${PIP} install mage_integrations/
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
 RUN ${PIP} install -r requirements.txt
 RUN ${PIP} install jupyterlab

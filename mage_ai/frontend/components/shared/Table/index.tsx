@@ -1,8 +1,11 @@
 import NextLink from 'next/link';
 import { useCallback, useMemo } from 'react';
 
+import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import {
   TableDataStyle,
   TableHeadStyle,
@@ -12,6 +15,7 @@ import {
 
 export type ColumnType = {
   label?: () => any | string;
+  tooltipMessage?: string
   uuid: string;
 };
 
@@ -144,9 +148,25 @@ function Table({
               noBorder={noBorder}
               sticky={stickyHeader}
             >
-              <Text bold leftAligned monospace muted>
-                {col.label ? col.label() : col.uuid}
-              </Text>
+              <FlexContainer alignItems="center">
+                <Text bold leftAligned monospace muted>
+                  {col.label ? col.label() : col.uuid}
+                </Text>
+                {col.tooltipMessage && (
+                  <Spacing ml="4px">
+                    <Tooltip
+                      appearBefore
+                      label={(
+                        <Text leftAligned>
+                          {col.tooltipMessage}
+                        </Text>
+                      )}
+                      lightBackground
+                      primary
+                    />
+                  </Spacing>
+                )}
+              </FlexContainer>
             </TableHeadStyle>
           ))}
         </TableRowStyle>

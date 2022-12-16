@@ -5,21 +5,25 @@ import {
   useState,
 } from 'react';
 
+import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
+import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import Tooltip from '@oracle/components/Tooltip';
 import usePrevious from '@utils/usePrevious';
 import {
   COLUMN_TYPES,
   COLUMN_TYPE_CUSTOM_DATE_TIME,
   ColumnFormatEnum,
+  ColumnFormatMapping,
   ColumnTypeEnum,
   InclusionEnum,
   IntegrationDestinationEnum,
@@ -36,10 +40,15 @@ import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array'
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;
+const TOOLTIP_LEFT_SPACING = '4px';
 
 export type SchemaTableProps = {
   destination: IntegrationDestinationEnum;
+  isLoadingLoadSampleData: boolean;
+  loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
+  streams?: StreamType[];
+  updateAllStreams: (streamDataTransformer: (stream: StreamType) => StreamType) => void;
   updateMetadataForColumns: (
     streamUUID: string,
     columnNames: string[],
@@ -60,12 +69,19 @@ type SchemaTablePropsInternal = {
   stream: StreamType;
 } & SchemaTableProps;
 
-const PARTITION_KEY_DESTINATIONS = ['bigquery'];
+const PARTITION_KEY_DESTINATIONS = [
+  IntegrationDestinationEnum.BIGQUERY,
+  IntegrationDestinationEnum.DELTA_LAKE_S3,
+];
 
 function SchemaTable({
   destination,
+  isLoadingLoadSampleData,
+  loadSampleData,
   source,
   stream,
+  streams,
+  updateAllStreams,
   updateMetadataForColumns,
   updateSchemaProperty,
   updateStream,
@@ -88,16 +104,21 @@ function SchemaTable({
   } = stream;
 
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
+  const [isApplyingToAllStreams, setIsApplyingToAllStreams] = useState<boolean>(false);
+  const [isApplyingToAllStreamsIdx, setIsApplyingToAllStreamsIdx] = useState<number>(null);
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
     if (streamUUIDPrev !== streamUUID) {
       setDestinationTable(destinationTableInit);
+      setIsApplyingToAllStreamsIdx(null);
     }
   }, [
     destinationTableInit,
+    replicationMethod,
     streamUUID,
     streamUUIDPrev,
+    uniqueConflictMethod,
   ]);
 
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
@@ -113,6 +134,7 @@ function SchemaTable({
   ]);
 
   const showPartitionKey = PARTITION_KEY_DESTINATIONS.includes(destination);
+  const hasMultipleStreams = streams.length > 1;
 
   const tableMemo = useMemo(() => {
     const selectedArr = [];
@@ -124,7 +146,7 @@ function SchemaTable({
         format: columnFormat,
         type: columnTypesInit = [],
       },
-    ]) => {
+    ], rowIdx: number) => {
       const columnTypesSet = new Set(Array.isArray(columnTypesInit)
         ? columnTypesInit
         : [columnTypesInit],
@@ -165,10 +187,10 @@ function SchemaTable({
       }
 
       const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
-        if (columnTypes.indexOf(colType) >= 0 || (
-          COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType)
-            && ColumnFormatEnum.DATE_TIME === columnFormat
-        )) {
+        if (columnTypes.indexOf(colType) >= 0
+          || (COLUMN_TYPE_CUSTOM_DATE_TIME === String(colType) && ColumnFormatEnum.DATE_TIME === columnFormat)
+          || (ColumnFormatEnum.UUID === String(colType) && ColumnFormatEnum.UUID === columnFormat)
+        ) {
           return acc;
         }
 
@@ -217,10 +239,10 @@ function SchemaTable({
                 >
                   <Chip
                     border
-                    label={ColumnFormatEnum.DATE_TIME === columnFormat &&
-                        ColumnTypeEnum.STRING === columnType &&
-                        indexOfFirstStringType === idx
-                      ? COLUMN_TYPE_CUSTOM_DATE_TIME
+                    label={(columnFormat
+                        && ColumnTypeEnum.STRING === columnType
+                        && indexOfFirstStringType === idx)
+                      ? ColumnFormatMapping[columnFormat]
                       : columnType
                     }
                     onClick={() => {
@@ -230,8 +252,8 @@ function SchemaTable({
                           colType !== columnType),
                       };
 
-                      if (ColumnFormatEnum.DATE_TIME === columnFormat &&
-                        ColumnTypeEnum.STRING === columnType
+                      if ((ColumnFormatEnum.DATE_TIME === columnFormat || ColumnFormatEnum.UUID === columnFormat)
+                        && ColumnTypeEnum.STRING === columnType
                       ) {
                         data.format = null;
                       }
@@ -257,6 +279,9 @@ function SchemaTable({
 
                 if (COLUMN_TYPE_CUSTOM_DATE_TIME === String(columnType)) {
                   data.format = ColumnFormatEnum.DATE_TIME;
+                  data.type.push(ColumnTypeEnum.STRING);
+                } else if (ColumnFormatEnum.UUID === String(columnType)) {
+                  data.format = ColumnFormatEnum.UUID;
                   data.type.push(ColumnTypeEnum.STRING);
                 } else {
                   data.type.push(columnType);
@@ -328,17 +353,17 @@ function SchemaTable({
       ];
 
       if (showPartitionKey) {
+        const disabled = destination !== IntegrationDestinationEnum.DELTA_LAKE_S3 && (
+          validKeyProperties.includes(columnName)
+            || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)
+        );
+
         row.push(
           <Checkbox
             checked={!!partitionKeys?.includes(columnName)}
-            disabled={validKeyProperties.includes(columnName)
-              || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)}
+            disabled={disabled}
             key={`${streamUUID}/${columnName}/partition_key`}
-            onClick={(validKeyProperties.includes(columnName)
-              || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME))
-              ? null
-              : () => updateStream(streamUUID, (stream: StreamType) => {
-
+            onClick={disabled ? null : () => updateStream(streamUUID, (stream: StreamType) => {
               if (stream.partition_keys?.includes(columnName)) {
                 stream.partition_keys =
                   remove(stream.partition_keys, col => columnName === col);
@@ -358,12 +383,70 @@ function SchemaTable({
         );
       }
 
+      if (hasMultipleStreams) {
+        const isApplyingToAllStreamsWithFeature = isApplyingToAllStreamsIdx === rowIdx;
+        row.push(
+          <Button
+            compact
+            disabled={isApplyingToAllStreamsWithFeature}
+            onClick={() => {
+              setIsApplyingToAllStreamsIdx(rowIdx);
+              setTimeout(() => setIsApplyingToAllStreamsIdx(null), 2000);
+              updateAllStreams((stream: StreamType) => {
+                if (stream?.tap_stream_id !== streamUUID && stream?.schema?.properties?.[columnName]) {
+                  stream.schema.properties[columnName] = {
+                    format: columnFormat || null,
+                    type: columnTypes,
+                  };
+
+                  if (uniqueConstraints?.includes(columnName) && !stream?.unique_constraints?.includes(columnName)) {
+                    stream.unique_constraints = [columnName].concat(stream.unique_constraints || []);
+                  } else if (!uniqueConstraints?.includes(columnName) && stream?.unique_constraints?.includes(columnName)) {
+                    stream.unique_constraints = remove(stream.unique_constraints, col => columnName === col);
+                  }
+
+                  if (bookmarkProperties?.includes(columnName) && !stream?.bookmark_properties?.includes(columnName)) {
+                    stream.bookmark_properties = [columnName].concat(stream.bookmark_properties || []);
+                  } else if (!bookmarkProperties?.includes(columnName) && stream?.bookmark_properties?.includes(columnName)) {
+                    stream.bookmark_properties = remove(stream.bookmark_properties, col => columnName === col);
+                  }
+
+                  if (keyProperties?.includes(columnName) && !stream?.key_properties?.includes(columnName)) {
+                    stream.key_properties = [columnName].concat(stream.key_properties || []);
+                  } else if (!keyProperties?.includes(columnName) && stream?.key_properties?.includes(columnName)) {
+                    stream.key_properties = remove(stream.key_properties, col => columnName === col);
+                  }
+
+                  if (partitionKeys?.includes(columnName) && !stream?.partition_keys?.includes(columnName)) {
+                    stream.partition_keys = [columnName].concat(stream.partition_keys || []);
+                  } else if (!partitionKeys?.includes(columnName) && stream?.partition_keys?.includes(columnName)) {
+                    stream.partition_keys = remove(stream.partition_keys, col => columnName === col);
+                  }
+                }
+
+                return {
+                  ...stream,
+                };
+              });
+            }}
+            pill
+            secondary
+          >
+            <Text
+              success={isApplyingToAllStreamsWithFeature}
+            >
+              {isApplyingToAllStreamsWithFeature ? 'Applied!' : 'Apply'}
+            </Text>
+          </Button>,
+        );
+      }
+
       return row;
     });
 
     const allColumnsSelected: boolean = selectedArr.every(s => s);
     const columnFlex = [null, 2, 1, null, null, null];
-    const columns = [
+    const columns: ColumnType[] = [
       {
         label: () => (
           <Checkbox
@@ -401,6 +484,14 @@ function SchemaTable({
       });
     }
 
+    if (hasMultipleStreams) {
+      columnFlex.push(null);
+      columns.push({
+        tooltipMessage: 'This will apply this individual feature\'s schema settings to all selected streams that have the same feature.',
+        uuid: 'All streams',
+      });
+    }
+
     return (
       <TableContainerStyle>
         <Table
@@ -414,10 +505,21 @@ function SchemaTable({
       </TableContainerStyle>
     );
   }, [
+    bookmarkProperties,
+    isApplyingToAllStreamsIdx,
+    keyProperties,
+    metadataByColumn,
+    partitionKeys,
     properties,
     showPartitionKey,
-    stream,
     streamUUID,
+    uniqueConstraints,
+    updateAllStreams,
+    updateMetadataForColumns,
+    updateSchemaProperty,
+    updateStream,
+    validKeyProperties,
+    validReplicationKeys,
   ]);
 
   return (
@@ -434,92 +536,231 @@ function SchemaTable({
       </Headline>
 
       <Spacing mb={3}>
-        <Text bold large>
-          Table name (optional)
-        </Text>
-        <Text default>
-          By default, this stream will be saved to your destination under the
-          table named <Text bold inline monospace>
-            {streamUUID}
-          </Text>.
-          <br />
-          To change the table name, enter in a different value below.
-        </Text>
+        <Panel
+          headerTitle="Output"
+          overflowVisible
+        >
+          <FlexContainer alignItems="center">
+            <Text>
+              Destination table name
+            </Text>
+            <Spacing ml={TOOLTIP_LEFT_SPACING} />
+            <Tooltip
+              label={(
+                <Text>
+                  By default, this stream will be saved to your destination under the
+                  table named <Text bold inline monospace>
+                    {streamUUID}
+                  </Text>. To change the table name, enter in a different value.
+                </Text>
+              )}
+              lightBackground
+              primary
+            />
+            <Spacing ml={1} />
+            <TextInput
+              compact
+              monospace
+              onChange={(e) => {
+                const val = e.target.value;
+                setDestinationTable(val);
 
-        <Spacing mt={1}>
-          <TextInput
-            label="Table name"
-            monospace
-            onChange={(e) => {
-              const val = e.target.value;
-              setDestinationTable(val);
-
-              clearTimeout(timeout.current);
-              timeout.current = setTimeout(() => {
-                updateStream(streamUUID, (streamCurrent: StreamType) => ({
-                  ...streamCurrent,
-                  destination_table: val,
-                }));
-              }, 300);
-            }}
-            value={destinationTable || ''}
-          />
-        </Spacing>
+                clearTimeout(timeout.current);
+                timeout.current = setTimeout(() => {
+                  updateStream(streamUUID, (streamCurrent: StreamType) => ({
+                    ...streamCurrent,
+                    destination_table: val,
+                  }));
+                }, 300);
+              }}
+              value={destinationTable || ''}
+            />
+          </FlexContainer>
+        </Panel>
       </Spacing>
 
-      {tableMemo}
+      <Spacing mb={3}>
+        <Panel
+          headerTitle="Usage"
+          overflowVisible
+        >
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <Flex alignItems="center">
+              <Text>
+                Replication method
+              </Text>
+              <Spacing ml={TOOLTIP_LEFT_SPACING} />
+              <Tooltip
+                label={(
+                  <Text>
+                    Do you want to synchronize the entire stream (<Text bold inline monospace>
+                      {ReplicationMethodEnum.FULL_TABLE}
+                    </Text>)
+                    on each integration pipeline run or
+                    only new records (<Text bold inline monospace>
+                      {ReplicationMethodEnum.INCREMENTAL}
+                    </Text>)?
+                    {source === IntegrationSourceEnum.POSTGRESQL &&
+                      <Text>
+                        Log-based incremental replication (<Text bold inline monospace>
+                          {ReplicationMethodEnum.LOG_BASED}
+                        </Text>)
+                        is also available for PostgreSQL sources.
+                      </Text>
+                    }
+                  </Text>
+                )}
+                lightBackground
+                primary
+              />
+              <Spacing ml={1} />
+              <Select
+                compact
+                onChange={(e) => {
+                  updateStream(streamUUID, (stream: StreamType) => ({
+                    ...stream,
+                    replication_method: e.target.value,
+                  }));
+                }}
+                primary
+                value={replicationMethod}
+              >
+                <option value="" />
+                {Object.values(ReplicationMethodEnum)
+                  .filter(method => (source === IntegrationSourceEnum.POSTGRESQL
+                    ? true
+                    : method !== ReplicationMethodEnum.LOG_BASED))
+                  .map(method => (
+                    <option key={method} value={method}>
+                      {method}
+                    </option>
+                ))}
+              </Select>
+
+              <Spacing ml={3} />
+
+              <Text>
+                Unique conflict method
+              </Text>
+              <Spacing ml={TOOLTIP_LEFT_SPACING} />
+              <Tooltip
+                label={(
+                  <Text>
+                    If a new record has the same value as an existing record in
+                    the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.sort().map((col: string, idx: number) => (
+                      <Text
+                        bold
+                        inline
+                        key={col}
+                        monospace
+                      >
+                        {idx >= 1 && <>,&nbsp;</>}
+                        {col}
+                      </Text>
+                    ))}, how do you want to resolve the conflict?
+                    The conflict method <Text bold inline monospace>
+                      {UniqueConflictMethodEnum.IGNORE}
+                    </Text> will skip the new record if it’s a duplicate of an existing record.
+                    The conflict method <Text bold inline monospace>
+                      {UniqueConflictMethodEnum.UPDATE}
+                    </Text> will not save the new record and instead update the existing record
+                    with the new record’s properties.
+                  </Text>
+                )}
+                lightBackground
+                primary
+              />
+              <Spacing ml={1} />
+              <Select
+                compact
+                inputWidth={UNIT * 11}
+                onChange={(e) => {
+                  updateStream(streamUUID, (stream: StreamType) => ({
+                    ...stream,
+                    unique_conflict_method: e.target.value,
+                  }));
+                }}
+                primary
+                value={uniqueConflictMethod}
+              >
+                <option value="" />
+                <option value={UniqueConflictMethodEnum.IGNORE}>
+                  {UniqueConflictMethodEnum.IGNORE}
+                </option>
+                <option value={UniqueConflictMethodEnum.UPDATE}>
+                  {UniqueConflictMethodEnum.UPDATE}
+                </option>
+              </Select>
+            </Flex>
+
+            {hasMultipleStreams && (
+              <Flex alignItems="center">
+                <Text default>
+                  All streams
+                </Text>
+                <Spacing ml={TOOLTIP_LEFT_SPACING} />
+                <Tooltip
+                  appearBefore
+                  label={(
+                    <Text>
+                      This will apply this stream&#39;s replication method and
+                      unique conflict method settings to all selected streams.
+                    </Text>
+                  )}
+                  lightBackground
+                  primary
+                />
+                <Spacing ml={1} />
+                <Button
+                  compact
+                  disabled={isApplyingToAllStreams}
+                  onClick={() => {
+                    setIsApplyingToAllStreams(true);
+                    setTimeout(() => setIsApplyingToAllStreams(false), 2000);
+                    updateAllStreams((stream: StreamType) => ({
+                      ...stream,
+                      replication_method: replicationMethod,
+                      unique_conflict_method: uniqueConflictMethod,
+                    }));
+                  }}
+                  pill
+                  secondary
+                >
+                  <Text
+                    bold={!isApplyingToAllStreams}
+                    success={isApplyingToAllStreams}
+                  >
+                    {isApplyingToAllStreams ? 'Applied!' : 'Apply'}
+                  </Text>
+                </Button>
+              </Flex>
+            )}
+          </FlexContainer>
+        </Panel>
+      </Spacing>
+
+      <Panel
+        headerTitle="Features"
+        noPadding
+      >
+        {tableMemo}
+      </Panel>
+
+      <Spacing mt={2}>
+        <Button
+          loading={isLoadingLoadSampleData}
+          onClick={() => loadSampleData(streamUUID)}
+          primary
+          small
+        >
+          Load sample data
+        </Button>
+      </Spacing>
 
       <Spacing mt={5}>
         <Headline condensed level={4} spacingBelow>
           Settings
         </Headline>
-
-        <Spacing mb={SPACING_BOTTOM_UNITS}>
-          <Spacing mb={1}>
-            <Text bold large>
-              Replication method
-            </Text>
-            <Text default>
-              Do you want to synchronize the entire stream (<Text bold inline monospace>
-                {ReplicationMethodEnum.FULL_TABLE}
-              </Text>)
-              on each integration pipeline run or
-              only new records (<Text bold inline monospace>
-                {ReplicationMethodEnum.INCREMENTAL}
-              </Text>)?
-              {source === IntegrationSourceEnum.POSTGRESQL &&
-                <Text default>
-                  Log-based incremental replication (<Text bold inline monospace>
-                    {ReplicationMethodEnum.LOG_BASED}
-                  </Text>)
-                  is also available for PostgreSQL sources.
-                </Text>
-              }
-            </Text>
-          </Spacing>
-
-          <Select
-            onChange={(e) => {
-              updateStream(streamUUID, (stream: StreamType) => ({
-                ...stream,
-                replication_method: e.target.value,
-              }));
-            }}
-            primary
-            value={replicationMethod}
-          >
-            <option value="" />
-            {Object.values(ReplicationMethodEnum)
-              .filter(method => (source === IntegrationSourceEnum.POSTGRESQL
-                ? true
-                : method !== ReplicationMethodEnum.LOG_BASED))
-              .map(method => (
-                <option key={method} value={method}>
-                  {method}
-                </option>
-            ))}
-          </Select>
-        </Spacing>
 
         {ReplicationMethodEnum.INCREMENTAL === replicationMethod && (
           <Spacing mb={SPACING_BOTTOM_UNITS}>
@@ -706,59 +947,6 @@ function SchemaTable({
             </FlexContainer>
           </Spacing>
         )}
-
-        {uniqueConstraints?.length > 0 &&
-          <Spacing mb={SPACING_BOTTOM_UNITS}>
-            <Spacing mb={1}>
-              <Text bold large>
-                Unique conflict method
-              </Text>
-              <Text default>
-                If a new record has the same value as an existing record
-                in the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.sort().map((col: string, idx: number) => (
-                  <Text
-                    bold
-                    inline
-                    key={col}
-                    monospace
-                  >
-                    {idx >= 1 && <>,&nbsp;</>}
-                    {col}
-                  </Text>
-                ))}, how do you want to resolve the conflict?
-
-                <br />
-
-                The conflict method <Text bold inline monospace>
-                  {UniqueConflictMethodEnum.IGNORE}
-                </Text> will skip the new record if it’s a duplicate of an existing record.
-                The conflict method <Text bold inline monospace>
-                  {UniqueConflictMethodEnum.UPDATE}
-                </Text> will not save the new record and instead update the existing record
-                with the new record’s properties.
-              </Text>
-            </Spacing>
-
-            <Select
-              onChange={(e) => {
-                updateStream(streamUUID, (stream: StreamType) => ({
-                  ...stream,
-                  unique_conflict_method: e.target.value,
-                }));
-              }}
-              primary
-              value={uniqueConflictMethod}
-            >
-              <option value="" />
-              <option value={UniqueConflictMethodEnum.IGNORE}>
-                {UniqueConflictMethodEnum.IGNORE}
-              </option>
-              <option value={UniqueConflictMethodEnum.UPDATE}>
-                {UniqueConflictMethodEnum.UPDATE}
-              </option>
-            </Select>
-          </Spacing>
-        }
       </Spacing>
     </>
   );

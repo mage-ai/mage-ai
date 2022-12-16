@@ -32,7 +32,6 @@ export const Subtitle = Template.bind({});
 Subtitle.args = {
   children: <Text> 1.00 </Text>,
   headerTitle: 'Quality Metrics',
-  items: <Check />,
   subtitle: <Text disabled large> Good </Text>,
 };
 
@@ -41,7 +40,6 @@ Footer.args = {
   children: <Text> 1.00 </Text>,
   footer: <Text large>12 results</Text>,
   headerTitle: 'Quality Metrics',
-  items: <Check />,
   subtitle: <Text disabled large> Good </Text>,
 };
 

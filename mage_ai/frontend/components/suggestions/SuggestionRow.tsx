@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType, { ActionStatusEnum, ActionTypeEnum } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
+import CodeEditor from '@components/CodeEditor';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -15,9 +15,6 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { ArrowDown, ArrowUp, Close, Edit, PreviewOpen } from '@oracle/icons';
 import { FeatureResponseType } from '@interfaces/FeatureType';
-import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
-import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
-import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { TABS_QUERY_PARAM, TAB_DATA } from '@components/datasets/overview/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
@@ -38,18 +35,6 @@ export type SuggestionRowProps = {
   showIdx?: boolean;
   suggestionPreviewIdx?: number;
 };
-
-const CodeEditor = dynamic(
-  async () => {
-    const ace = await import('react-ace');
-    require('ace-builds/src-noconflict/mode-python');
-    require('ace-builds/src-noconflict/ace');
-    return ace;
-  },
-  {
-    ssr: false,
-  },
-);
 
 const ICON_SIZE = UNIT * 2;
 
@@ -264,18 +249,8 @@ const SuggestionRow = ({
 
         {actionCode && !editing && (
           <CodeEditor
-            maxLines={MAX_LINES_ACTIONS}
-            mode="python"
-            setOptions={READ_ONLY}
-            style={{
-              backgroundColor: themeContext.monotone.grey100,
-              fontFamily: MONO_FONT_FAMILY_REGULAR,
-              fontSize: REGULAR_FONT_SIZE,
-              overflow: 'auto',
-              width: 'inherit',
-            }}
+            language="python"
             value={actionCode}
-            wrapEnabled
           />
         )}
 

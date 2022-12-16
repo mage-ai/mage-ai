@@ -265,6 +265,7 @@ class Pipeline:
                 if len(block.upstream_blocks) == 0 and block.type in [
                     BlockType.DATA_EXPORTER,
                     BlockType.DATA_LOADER,
+                    BlockType.DBT,
                     BlockType.TRANSFORMER,
                     BlockType.SENSOR,
                 ]:
@@ -296,9 +297,10 @@ class Pipeline:
         self.block_configs = config.get('blocks') or []
         self.widget_configs = config.get('widgets') or []
 
-        def build_shared_args_kwargs(c, block_class):
+        def build_shared_args_kwargs(c):
             block_type = c.get('type')
-            return block_class.block_class_from_type(block_type)(
+            language = c.get('language')
+            return Block.block_class_from_type(block_type, language=language, pipeline=self)(
                 c.get('name'),
                 c.get('uuid'),
                 block_type,
@@ -311,8 +313,8 @@ class Pipeline:
                 status=c.get('status'),
             )
 
-        blocks = [build_shared_args_kwargs(c, Block) for c in self.block_configs]
-        widgets = [build_shared_args_kwargs(c, Widget) for c in self.widget_configs]
+        blocks = [build_shared_args_kwargs(c) for c in self.block_configs]
+        widgets = [build_shared_args_kwargs(c) for c in self.widget_configs]
         all_blocks = blocks + widgets
 
         self.blocks_by_uuid = self.__initialize_blocks_by_uuid(

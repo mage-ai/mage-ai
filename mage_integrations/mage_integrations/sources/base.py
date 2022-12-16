@@ -196,7 +196,10 @@ class Source:
                 self.test_connection()
             elif self.load_sample_data:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
-                for stream in catalog.get_selected_streams(self.state):
+                streams = [
+                    catalog.get_stream(tap_stream_id) for tap_stream_id in self.selected_streams
+                ]
+                for stream in streams:
                     gen = self.load_data(stream, sample_data=True)
                     if gen is not None:
                         data = next(gen)
@@ -438,7 +441,11 @@ class Source:
             )
             final_record = record
 
-            if REPLICATION_METHOD_INCREMENTAL == stream.replication_method and bookmark_properties:
+            if (stream.replication_method in [
+                    REPLICATION_METHOD_INCREMENTAL,
+                    REPLICATION_METHOD_LOG_BASED,
+                ]
+                    and bookmark_properties):
                 if self.is_sorted:
                     state = {}
 
@@ -460,7 +467,7 @@ class Source:
 
         if final_record:
             self.logger.info(
-                f'Final record writing completed.',
+                'Final record writing completed.',
                 tags=dict(
                     record=final_record,
                     stream=tap_stream_id,

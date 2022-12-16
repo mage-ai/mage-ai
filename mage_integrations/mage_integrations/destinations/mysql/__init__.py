@@ -1,5 +1,9 @@
 from mage_integrations.connections.mysql import MySQL as MySQLConnection
-from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_OBJECT,
+    INTERNAL_COLUMN_CREATED_AT,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
+)
 from mage_integrations.destinations.mysql.utils import (
     build_create_table_command,
     clean_column_name,
@@ -46,7 +50,7 @@ class MySQL(Destination):
                 column_type_mapping=column_type_mapping(
                     schema,
                     convert_column_type,
-                    lambda item_type_converted: 'TEXT',
+                    lambda item_type_converted: 'LONGTEXT',
                 ),
                 columns=schema['properties'].keys(),
                 full_table_name=f'{database_name}.{table_name}',
@@ -71,10 +75,12 @@ class MySQL(Destination):
             column_type_mapping=column_type_mapping(
                 schema,
                 convert_column_type,
-                lambda item_type_converted: 'TEXT',
+                lambda item_type_converted: 'LONGTEXT',
             ),
             columns=columns,
             records=records,
+            string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
+            if COLUMN_TYPE_OBJECT == y['type'] else x,
         )
         insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
         insert_values = ', '.join(insert_values)
@@ -85,7 +91,8 @@ class MySQL(Destination):
         if unique_constraints and unique_conflict_method:
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                 columns_cleaned = [clean_column_name(col) for col in columns]
-                update_command = [f'{col} = new.{col}' for col in columns_cleaned]
+                update_command = [f'{col} = new.{col}' for col in columns_cleaned
+                                  if col != INTERNAL_COLUMN_CREATED_AT]
                 commands_after += [
                     'AS new',
                     f"ON DUPLICATE KEY UPDATE {', '.join(update_command)}",

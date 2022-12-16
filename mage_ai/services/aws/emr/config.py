@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from mage_ai.shared.config import BaseConfig
 from typing import Dict
+import os
 
 DEFAULT_DRIVER_MEMORY = '32000M'
 DEFAULT_INSTANCE_TYPE = 'r5.4xlarge'
@@ -72,6 +73,8 @@ class EmrConfig(BaseConfig):
                 ),
             ],
         }
+        if os.getenv('MAGE_EC2_SUBNET_ID'):
+            instances_config['Ec2SubnetId'] = os.getenv('MAGE_EC2_SUBNET_ID')
         if self.ec2_key_name is not None:
             instances_config['Ec2KeyName'] = self.ec2_key_name
         if self.master_security_group is not None:

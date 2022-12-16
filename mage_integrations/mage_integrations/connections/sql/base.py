@@ -48,10 +48,14 @@ class Connection(BaseConnection):
             self.logger.info(f'{message} started.')
             now1 = datetime.utcnow().timestamp()
 
-            cursor.execute(clean_query(query_string))
-            description = cursor.description
-            if description:
-                data.append(cursor.fetchall())
+            try:
+                cursor.execute(clean_query(query_string))
+                description = cursor.description
+                if description:
+                    data.append(cursor.fetchall())
+            except Exception as err:
+                self.logger.error(f'Error while executing query: {str(err)}')
+                raise err
 
             now2 = datetime.utcnow().timestamp()
             self.logger.info(f'{message} completed.', tags=dict(

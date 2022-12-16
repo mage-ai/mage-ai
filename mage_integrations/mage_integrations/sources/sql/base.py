@@ -128,6 +128,10 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> int:
+        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+            # Not support count records for LOG_BASED replication
+            return 1
+
         rows, rows_temp = self.__fetch_rows(
             stream,
             bookmarks,
@@ -213,6 +217,11 @@ WHERE table_schema = '{schema}'
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         return column_type_mapping(column_type, column_format)
 
+    def build_table_name(self, stream) -> str:
+        table_name = stream.tap_stream_id
+
+        return f'{self.table_prefix}{table_name}'
+
     def __fetch_rows(
         self,
         stream,
@@ -262,12 +271,14 @@ WHERE table_schema = '{schema}'
         query_string = '\n'.join([
             'SELECT',
             columns_statement,
-            f'FROM {self.table_prefix}{table_name}',
+            f'FROM {self.build_table_name(stream)}',
         ])
 
         where_statements = []
         if bookmarks:
             for col, val in bookmarks.items():
+                if col not in bookmark_properties:
+                    continue
                 where_statements.append(
                     build_comparison_statement(
                         col,

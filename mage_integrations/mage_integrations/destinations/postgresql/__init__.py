@@ -1,8 +1,13 @@
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
-from mage_integrations.destinations.constants import COLUMN_TYPE_OBJECT, UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_OBJECT,
+    INTERNAL_COLUMN_CREATED_AT,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
+)
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.postgresql.utils import convert_column_type
 from mage_integrations.destinations.sql.utils import (
+    build_alter_table_command,
     build_create_table_command,
     build_insert_command,
     column_type_mapping,
@@ -43,6 +48,42 @@ class PostgreSQL(Destination):
             ),
         ]
 
+    def build_alter_table_commands(
+        self,
+        schema: Dict,
+        schema_name: str,
+        stream: str,
+        table_name: str,
+        database_name: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        results = self.build_connection().load(f"""
+SELECT
+    column_name
+    , data_type
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+        """)
+        current_columns = [r[0].lower() for r in results]
+        schema_columns = schema['properties'].keys()
+        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+
+        if not new_columns:
+            return []
+
+        # TODO: Support alter column types
+        return [
+            build_alter_table_command(
+                column_type_mapping=column_type_mapping(
+                    schema,
+                    convert_column_type,
+                    lambda item_type_converted: f'{item_type_converted}[]',
+                ),
+                columns=new_columns,
+                full_table_name=f'{schema_name}.{table_name}',
+            ),
+        ]
+
     def build_insert_commands(
         self,
         records: List[Dict],
@@ -62,7 +103,8 @@ class PostgreSQL(Destination):
             ),
             columns=columns,
             records=records,
-            string_parse_func=lambda x, y: x.replace("'", "''") if COLUMN_TYPE_OBJECT == y['type'] else x,
+            string_parse_func=lambda x, y: x.replace("'", "''")
+            if COLUMN_TYPE_OBJECT == y['type'] else x,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -74,7 +116,8 @@ class PostgreSQL(Destination):
 
         if unique_constraints and unique_conflict_method:
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns]
+            columns_cleaned = [clean_column_name(col) for col in columns
+                               if col != INTERNAL_COLUMN_CREATED_AT]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
@@ -102,7 +145,8 @@ class PostgreSQL(Destination):
         connection = self.build_connection().build_connection()
         with connection.cursor() as cursor:
             cursor.execute(
-                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\'',
+                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
+                f'tablename = \'{table_name}\'',
             )
             count = cursor.rowcount
 

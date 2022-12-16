@@ -35,6 +35,25 @@ class GoogleAnalytics(Connection):
         self.path_to_credentials_json_file = path_to_credentials_json_file
         self.property_id = property_id
 
+    def connect(self):
+        """
+        Create a connection to the Google Analytics API and return client object.
+        """
+        if self.credentials_info:
+            client = BetaAnalyticsDataClient.from_service_account_info(self.credentials_info)
+        elif self.path_to_credentials_json_file:
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.path_to_credentials_json_file
+            client = BetaAnalyticsDataClient()
+        return client
+
+    def get_metadata(self):
+        client = self.connect()
+        response = client.get_metadata(name=f'properties/{self.property_id}/metadata')
+        return dict(
+            dimensions=response.dimensions,
+            metrics=response.metrics,
+        )
+
     def load(
         self,
         start_date: str,
@@ -42,11 +61,12 @@ class GoogleAnalytics(Connection):
         dimensions: Literal[DIMENSIONS] = None,
         limit: int = None,
         metrics: Literal[METRICS] = None,
+        offset: int = None,
     ):
-        if not re.match(DATE_STRING_PATTERN, start_date):
-            raise Exception(f'start_date must match {DATE_STRING_PATTERN}')
-        if not re.match(DATE_STRING_PATTERN, end_date):
-            raise Exception(f'end_date must match {DATE_STRING_PATTERN}')
+        # if not re.match(DATE_STRING_PATTERN, start_date):
+        #     raise Exception(f'start_date must match {DATE_STRING_PATTERN}')
+        # if not re.match(DATE_STRING_PATTERN, end_date):
+        #     raise Exception(f'end_date must match {DATE_STRING_PATTERN}')
 
         tags = self.build_tags(
             dimensions=dimensions,
@@ -56,11 +76,7 @@ class GoogleAnalytics(Connection):
             start_date=start_date,
         )
 
-        if self.credentials_info:
-            client = BetaAnalyticsDataClient.from_service_account_info(self.credentials_info)
-        elif self.path_to_credentials_json_file:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.path_to_credentials_json_file
-            client = BetaAnalyticsDataClient()
+        client = self.connect()
 
         self.info('Loading started.', tags=tags)
         request = RunReportRequest(
@@ -69,6 +85,7 @@ class GoogleAnalytics(Connection):
             limit=limit,
             metrics=([Metric(name=d) for d in metrics] if metrics else None),
             property=f'properties/{self.property_id}',
+            offset=offset,
         )
 
         data = []

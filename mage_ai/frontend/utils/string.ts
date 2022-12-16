@@ -19,6 +19,10 @@ export function isString(data) {
   return (typeof data === 'string');
 }
 
+export function replaceSpaces(string, replacement='_') {
+  return string.split(' ').join(replacement);
+}
+
 export function addUnderscores(string) {
   return string.split(' ').join('_');
 }
@@ -283,5 +287,5 @@ export function randomSimpleHashGenerator() {
 }
 
 export function cleanName(name: string): string {
-  return name.toLowerCase().replace(/\W+/g, '_')
+  return name.toLowerCase().replace(/\W+/g, '_');
 }

@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
-import dynamic from 'next/dynamic';
 import styled, { ThemeContext } from 'styled-components';
 
 import Button from '@oracle/elements/Button';
+import CodeEditor from '@components/CodeEditor';
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -12,37 +12,14 @@ import PanelOld from '@oracle/components/PanelOld';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api/cleaner';
-import {
-  MAX_LINES_EXPORT_1,
-  MAX_LINES_EXPORT_2,
-  MAX_LINES_LAUNCH,
-  MAX_LINES_USE,
-  MIN_LINES_LAUNCH,
-  MIN_LINES_USE,
-  READ_ONLY,
-} from '@oracle/styles/editor/rules';
-import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { PADDING } from '@oracle/styles/units/spacing';
-import { REGULAR_FONT_SIZE, REGULAR_LINE_HEIGHT} from '@oracle/styles/fonts/sizes';
-
-const CodeEditor = dynamic(
-  async () => {
-    const ace = await import('react-ace');
-    require('ace-builds/src-noconflict/mode-python');
-    require('ace-builds/src-noconflict/ace');
-    return ace;
-  },
-  {
-    ssr: false,
-  },
-);
 
 const ImageStyle = styled.img`
   margin-top: ${PADDING}px;
   max-width: 900px;
   object-fit: contain;
   width: 100%;
-`
+`;
 
 function download(content, fileName, contentType) {
   const a = document.createElement('a');
@@ -176,20 +153,7 @@ function Export({
 
           <Spacing mt={2}>
             <CodeEditor
-              maxLines={MAX_LINES_EXPORT_1}
-              minLines={MAX_LINES_EXPORT_1}
-              mode="python"
-              readOnly
-              setOptions={READ_ONLY}
-              style={{
-                backgroundColor: themeContext.monotone.grey100,
-                fontFamily: MONO_FONT_FAMILY_REGULAR,
-                fontSize: REGULAR_FONT_SIZE,
-                lineHeight: `${REGULAR_LINE_HEIGHT}px`,
-                overflow: 'auto',
-                tabSize: 4,
-                width: 'inherit',
-              }}
+              language="python"
               value={SAMPLE_CLEAN_CODE_EXAMPLE_PIPELINE_ID(pipeline?.id)}
             />
           </Spacing>
@@ -282,20 +246,7 @@ function Export({
 
           <Spacing mt={2}>
             <CodeEditor
-              maxLines={MAX_LINES_EXPORT_2}
-              minLines={MAX_LINES_EXPORT_2}
-              mode="python"
-              readOnly
-              setOptions={READ_ONLY}
-              style={{
-                backgroundColor: themeContext.monotone.grey100,
-                fontFamily: MONO_FONT_FAMILY_REGULAR,
-                fontSize: REGULAR_FONT_SIZE,
-                lineHeight: `${REGULAR_LINE_HEIGHT}px`,
-                overflow: 'auto',
-                tabSize: 4,
-                width: 'inherit',
-              }}
+              language="python"
               value={SAMPLE_CLEAN_CODE_EXAMPLE}
             />
           </Spacing>
@@ -352,39 +303,13 @@ function Export({
                 )}
               <Spacing mt={2}>
                 <CodeEditor
-                  maxLines={6}
-                  minLines={5}
-                  mode="python"
-                  readOnly
-                  setOptions={READ_ONLY}
-                  style={{
-                    backgroundColor: themeContext.monotone.grey100,
-                    fontFamily: MONO_FONT_FAMILY_REGULAR,
-                    fontSize: REGULAR_FONT_SIZE,
-                    lineHeight: `${REGULAR_LINE_HEIGHT}px`,
-                    overflow: 'auto',
-                    tabSize: 4,
-                    width: 'inherit',
-                  }}
+                  language="python"
                   value={SAMPLE_USE_API_KEY_EXAMPLE_1(pipelineMetadata?.remote_id)}
                 />
               </Spacing>
               <Spacing mt={2}>
                 <CodeEditor
-                  maxLines={7}
-                  minLines={6}
-                  mode="python"
-                  readOnly
-                  setOptions={READ_ONLY}
-                  style={{
-                    backgroundColor: themeContext.monotone.grey100,
-                    fontFamily: MONO_FONT_FAMILY_REGULAR,
-                    fontSize: REGULAR_FONT_SIZE,
-                    lineHeight: `${REGULAR_LINE_HEIGHT}px`,
-                    overflow: 'auto',
-                    tabSize: 4,
-                    width: 'inherit',
-                  }}
+                  language="python"
                   value={SAMPLE_USE_API_KEY_EXAMPLE_2(pipelineMetadata?.remote_id)}
                 />
               </Spacing>
@@ -445,39 +370,13 @@ function Export({
                   )}
                 <Spacing mt={2}>
                   <CodeEditor
-                    maxLines={4}
-                    minLines={5}
-                    mode="python"
-                    readOnly
-                    setOptions={READ_ONLY}
-                    style={{
-                      backgroundColor: themeContext.monotone.grey100,
-                      fontFamily: MONO_FONT_FAMILY_REGULAR,
-                      fontSize: REGULAR_FONT_SIZE,
-                      lineHeight: `${REGULAR_LINE_HEIGHT}px`,
-                      overflow: 'auto',
-                      tabSize: 4,
-                      width: 'inherit',
-                    }}
+                    language="python"
                     value={SAMPLE_LAUNCH_API_KEY_EXAMPLE_1(pipelineMetadata?.remote_id)}
                   />
                 </Spacing>
                 <Spacing mt={2}>
                   <CodeEditor
-                    maxLines={6}
-                    minLines={7}
-                    mode="python"
-                    readOnly
-                    setOptions={READ_ONLY}
-                    style={{
-                      backgroundColor: themeContext.monotone.grey100,
-                      fontFamily: MONO_FONT_FAMILY_REGULAR,
-                      fontSize: REGULAR_FONT_SIZE,
-                      lineHeight: `${REGULAR_LINE_HEIGHT}px`,
-                      overflow: 'auto',
-                      tabSize: 4,
-                      width: 'inherit',
-                    }}
+                    language="python"
                     value={SAMPLE_LAUNCH_API_KEY_EXAMPLE_2(pipelineMetadata?.remote_id)}
                   />
                 </Spacing>

@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.variable import (
     DATAFRAME_CSV_FILE,
@@ -109,3 +110,26 @@ def __execute_r_code(file_path: str):
         ],
         check=True,
     )
+
+class RBlock(Block):
+    def _execute_block(
+        self,
+        output_from_input_vars,
+        custom_code: str = None,
+        execution_partition: str = None,
+        global_vars: Dict = None,
+        **kwargs,
+    ) -> List:
+        outputs = execute_r_code(
+            self,
+            custom_code or self.content,
+            execution_partition=execution_partition,
+            global_vars=global_vars,
+        )
+
+        if outputs is None:
+            outputs = []
+        if type(outputs) is not list:
+            outputs = [outputs]
+
+        return outputs

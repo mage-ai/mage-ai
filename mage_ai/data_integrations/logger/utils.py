@@ -6,7 +6,7 @@ import json
 
 def print_logs_from_output(
     output: str,
-    logger = None,
+    logger=None,
     tags: Dict = {},
 ):
     from mage_integrations.utils.logger.constants import (
@@ -18,12 +18,18 @@ def print_logs_from_output(
     for line in output.split('\n'):
         try:
             data = json.loads(line)
+
+            if type(data) is not dict:
+                if type(data) is list and len(data) >= 1:
+                    print(json.dumps(data))
+                continue
+
             message = data.get('message')
             tags1 = data.get('tags')
 
             if 'timestamp' in data:
                 message = datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S') \
-                            + ' ' + message
+                            + ' ' + str(message)
 
             if TYPE_LOG == data.get('type'):
                 if logger:
@@ -36,7 +42,7 @@ def print_logs_from_output(
                     updated_tags = tags1
                     try:
                         updated_tags.update(data2)
-                    except:
+                    except Exception:
                         pass
 
                     logger.info(message, tags=merge_dict(tags, updated_tags))

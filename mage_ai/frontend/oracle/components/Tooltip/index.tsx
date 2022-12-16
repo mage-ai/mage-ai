@@ -12,6 +12,7 @@ import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 export type TooltipProps = {
   keyboardShortcuts?: any[];
   inverted?: boolean;
+  primary?: boolean;
 } & TooltipWrapperProps;
 
 const MAX_WIDTH = UNIT * 42;
@@ -23,8 +24,11 @@ const SHARED_STYLES = css<{
 
   ${props => `
     box-shadow: ${(props.theme.shadow || dark.shadow).popup};
-
     background-color: ${(props.theme.background || dark.background).popup};
+  `}
+
+  ${props => props.lightBackground && `
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
   `}
 
   ${props => props.width && !(props.widthFitContent || props.autoWidth) && `
@@ -56,8 +60,10 @@ function Tooltip({
   inverted,
   keyboardShortcuts,
   label,
+  lightBackground,
   maxWidth,
   muted,
+  primary,
   size = UNIT * 2,
   warning,
   widthFitContent,
@@ -73,7 +79,7 @@ function Tooltip({
       keyboardShortcutsEls.push(
         <Text default>
           +
-        </Text>
+        </Text>,
       );
     }
     keyboardShortcutsEls.push(el);
@@ -93,6 +99,7 @@ function Tooltip({
       content={
         <TextEl
           autoWidth={autoWidth}
+          lightBackground={lightBackground}
           width={maxWidth}
           widthFitContent={widthFitContent}
         >
@@ -107,6 +114,7 @@ function Tooltip({
           </FlexContainer>
         </TextEl>
       }
+      lightBackground={lightBackground}
       minWidth={minWidth}
       noHoverOutline={!!children}
       size={size}
@@ -117,6 +125,7 @@ function Tooltip({
           default={defaultProp}
           inverted={inverted}
           muted={muted}
+          primary={primary}
           size={size}
           warning={warning}
         />

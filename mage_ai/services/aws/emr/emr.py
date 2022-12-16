@@ -54,7 +54,7 @@ def create_a_new_cluster(
 
     emr_kwargs = dict(
         Name=f'{datetime.utcnow().isoformat()}-{cluster_name}',
-        ReleaseLabel='emr-6.5.0',
+        ReleaseLabel='emr-6.9.0',
         Instances=emr_config.get_instances_config(
             get_running_cluster_count(emr_client),
             idle_timeout=idle_timeout,
