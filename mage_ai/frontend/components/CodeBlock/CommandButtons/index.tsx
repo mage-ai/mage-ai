@@ -122,7 +122,6 @@ function CommandButtons({
     <ContainerStyle>
       <FlexContainer
         alignItems="center"
-        flexDirection="column"
       >
         {ExecutionStateEnum.QUEUED === executionState && (
           <Spinner
@@ -139,7 +138,6 @@ function CommandButtons({
         {(!isInProgress && !isStreamingPipeline) &&  (
           <>
             <Tooltip
-              appearAbove
               appearBefore
               default
               label={(
@@ -201,11 +199,11 @@ function CommandButtons({
                     },
                   ]
                 }
-                left={-UNIT * 25}
                 onClickCallback={() => setShowExecuteActions(false)}
                 open={showExecuteActions}
                 parentRef={refExecuteActions}
-                topOffset={-UNIT * 2}
+                rightOffset={UNIT * 18}
+                topOffset={UNIT * 4.5}
                 uuid="execute_actions"
                 width={UNIT * 25}
               />
@@ -213,125 +211,8 @@ function CommandButtons({
           </>
         )}
 
-        {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreamingPipeline) && (
-          <Spacing mt={PADDING_UNITS}>
-            <FlyoutMenuWrapper
-              items={convertBlockMenuItems}
-              left={-UNIT * 22}
-              onClickCallback={() => setShowConvertMenu(false)}
-              onClickOutside={() => setShowConvertMenu(false)}
-              open={showConvertMenu}
-              parentRef={refConvertBlock}
-              topOffset={-UNIT * 3}
-              uuid="CommandButtons/convert_block"
-            >
-              <Tooltip
-                appearBefore
-                default
-                label={(
-                  <Text>
-                    Convert block
-                  </Text>
-                )}
-                size={UNIT * 2.5}
-                widthFitContent
-              >
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => setShowConvertMenu(!showConvertMenu)}
-                  ref={refConvertBlock}
-                >
-                  <Convert size={UNIT * 2.5} />
-                </Button>
-              </Tooltip>
-            </FlyoutMenuWrapper>
-          </Spacing>
-        )}
-
-        {([
-          BlockTypeEnum.DATA_LOADER,
-          BlockTypeEnum.TRANSFORMER,
-        ].includes(block.type) && !isStreamingPipeline) && (
-          <>
-            <Spacing
-              mt={PADDING_UNITS}
-              ref={refAddChart}
-            >
-              <Tooltip
-                appearBefore
-                default
-                label="Add chart"
-                size={UNIT * 2.25}
-                widthFitContent
-              >
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => setShowAddCharts(true)}
-                >
-                  <NavGraph size={UNIT * 2.25} />
-                </Button>
-              </Tooltip>
-            </Spacing>
-
-            <ClickOutside
-              disableEscape
-              onClickOutside={() => setShowAddCharts(false)}
-              open={showAddCharts}
-            >
-              <AddChartMenu
-                addWidget={addWidget}
-                block={block}
-                left={-UNIT * 25}
-                onClickCallback={() => setShowAddCharts(false)}
-                open={showAddCharts}
-                parentRef={refAddChart}
-                runBlock={runBlock}
-                topOffset={UNIT * 6}
-              />
-            </ClickOutside>
-          </>
-        )}
-
-        <Spacing mt={isStreamingPipeline ? 0 : PADDING_UNITS}>
-          <Tooltip
-            appearBefore
-            default
-            label={(
-              <Text>
-                Delete block and file
-                &nbsp;
-                &nbsp;
-                <KeyboardTextGroup
-                  inline
-                  keyTextGroups={[[KEY_SYMBOL_D], [KEY_SYMBOL_D]]}
-                  monospace
-                  uuidForKey={uuid}
-                />
-              </Text>
-            )}
-            size={UNIT * 2.5}
-            widthFitContent
-          >
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => {
-                deleteBlock(block);
-                setOutputCollapsed(false);
-              }}
-            >
-              <Trash size={UNIT * 2.5} />
-            </Button>
-          </Tooltip>
-        </Spacing>
-
         {isInProgress && (
-          <Spacing mt={PADDING_UNITS}>
+          <Spacing ml={PADDING_UNITS}>
             <Tooltip
               appearAbove
               appearBefore
@@ -369,10 +250,127 @@ function CommandButtons({
           </Spacing>
         )}
 
+        {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreamingPipeline) && (
+          <Spacing ml={PADDING_UNITS}>
+            <FlyoutMenuWrapper
+              items={convertBlockMenuItems}
+              onClickCallback={() => setShowConvertMenu(false)}
+              onClickOutside={() => setShowConvertMenu(false)}
+              open={showConvertMenu}
+              parentRef={refConvertBlock}
+              rightOffset={0}
+              topOffset={4}
+              uuid="CommandButtons/convert_block"
+            >
+              <Tooltip
+                appearBefore
+                default
+                label={(
+                  <Text>
+                    Convert block
+                  </Text>
+                )}
+                size={UNIT * 2.5}
+                widthFitContent
+              >
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setShowConvertMenu(!showConvertMenu)}
+                  ref={refConvertBlock}
+                >
+                  <Convert size={UNIT * 2.5} />
+                </Button>
+              </Tooltip>
+            </FlyoutMenuWrapper>
+          </Spacing>
+        )}
+
+        {([
+          BlockTypeEnum.DATA_LOADER,
+          BlockTypeEnum.TRANSFORMER,
+        ].includes(block.type) && !isStreamingPipeline) && (
+          <>
+            <Spacing
+              ml={PADDING_UNITS}
+              ref={refAddChart}
+            >
+              <Tooltip
+                appearBefore
+                default
+                label="Add chart"
+                size={UNIT * 2.25}
+                widthFitContent
+              >
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setShowAddCharts(currState => !currState)}
+                >
+                  <NavGraph size={UNIT * 2.25} />
+                </Button>
+              </Tooltip>
+            </Spacing>
+
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowAddCharts(false)}
+              open={showAddCharts}
+            >
+              <AddChartMenu
+                addWidget={addWidget}
+                block={block}
+                onClickCallback={() => setShowAddCharts(false)}
+                open={showAddCharts}
+                parentRef={refAddChart}
+                rightOffset={UNIT * 13.75}
+                runBlock={runBlock}
+                topOffset={UNIT * 2}
+              />
+            </ClickOutside>
+          </>
+        )}
+
+        <Spacing ml={PADDING_UNITS}>
+          <Tooltip
+            appearBefore
+            default
+            label={(
+              <Text>
+                Delete block and file
+                &nbsp;
+                &nbsp;
+                <KeyboardTextGroup
+                  inline
+                  keyTextGroups={[[KEY_SYMBOL_D], [KEY_SYMBOL_D]]}
+                  monospace
+                  uuidForKey={uuid}
+                />
+              </Text>
+            )}
+            size={UNIT * 2.5}
+            widthFitContent
+          >
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => {
+                deleteBlock(block);
+                setOutputCollapsed(false);
+              }}
+            >
+              <Trash size={UNIT * 2.5} />
+            </Button>
+          </Tooltip>
+        </Spacing>
+
         {!isStreamingPipeline &&
           <>
             <div ref={refMoreActions}>
-              <Spacing mt={PADDING_UNITS}>
+              <Spacing ml={PADDING_UNITS}>
                 <Tooltip
                   appearBefore
                   default
@@ -388,7 +386,7 @@ function CommandButtons({
                     noBackground
                     noBorder
                     noPadding
-                    onClick={() => setShowMoreActions(!showMoreActions)}
+                    onClick={() => setShowMoreActions(currState => !currState)}
                   >
                     <Circle
                       borderSize={1.5}
@@ -420,11 +418,11 @@ function CommandButtons({
                     },
                   ]
                 }
-                left={-UNIT * 25}
                 onClickCallback={() => setShowMoreActions(false)}
                 open={showMoreActions}
                 parentRef={refMoreActions}
-                topOffset={UNIT * 6}
+                rightOffset={UNIT * 4.75}
+                topOffset={UNIT * 2}
                 uuid="FileHeaderMenu/file_items"
                 width={UNIT * 25}
               />

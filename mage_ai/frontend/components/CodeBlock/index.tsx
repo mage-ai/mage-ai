@@ -651,6 +651,7 @@ function CodeBlockProps({
 
   return (
     <div ref={ref} style={{
+      marginTop: '8px',
       position: 'relative',
       zIndex: blockIdx === addNewBlockMenuOpenIdx ? 11 : null,
     }}>
@@ -778,51 +779,68 @@ function CodeBlockProps({
                 </>
               )}
             </FlexContainer>
+
+            <Spacing mr={2} />
+
+            {!BLOCK_TYPES_WITH_NO_PARENTS.includes(block.type) && (
+              <FlexContainer alignItems="center">
+                <Tooltip
+                  appearBefore
+                  block
+                  label={`
+                    ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
+                  `}
+                  size={null}
+                  widthFitContent
+                >
+                  <Button
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={() => {
+                      setSelected(true);
+                      setEditingBlock({
+                        upstreamBlocks: {
+                          block,
+                          values: block.upstream_blocks?.map(uuid => ({ uuid })),
+                        },
+                      });
+                    }}
+                    >
+                    <FlexContainer alignItems="center">
+                      <Text
+                        monospace={numberOfParentBlocks >= 1}
+                        underline={numberOfParentBlocks === 0}
+                        >
+                        {numberOfParentBlocks === 0 && 'Edit parent blocks'}
+                        {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
+                      </Text>
+
+                      <Spacing mr={1} />
+
+                      <Stack size={UNIT * 2} />
+                    </FlexContainer>
+                  </Button>
+                </Tooltip>
+              </FlexContainer>
+            )}
           </Flex>
 
-          {!BLOCK_TYPES_WITH_NO_PARENTS.includes(block.type) && (
-            <FlexContainer alignItems="center">
-              <Tooltip
-                appearBefore
-                block
-                label={`
-                  ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
-                `}
-                size={null}
-                widthFitContent
-              >
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => {
-                    setSelected(true);
-                    setEditingBlock({
-                      upstreamBlocks: {
-                        block,
-                        values: block.upstream_blocks?.map(uuid => ({ uuid })),
-                      },
-                    });
-                  }}
-                  >
-                  <FlexContainer alignItems="center">
-                    <Text
-                      monospace={numberOfParentBlocks >= 1}
-                      underline={numberOfParentBlocks === 0}
-                      >
-                      {numberOfParentBlocks === 0 && 'Edit parent blocks'}
-                      {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
-                    </Text>
-
-                    <Spacing mr={1} />
-
-                    <Stack size={UNIT * 2} />
-                  </FlexContainer>
-                </Button>
-              </Tooltip>
-            </FlexContainer>
+          {(selected || isInProgress) && (
+            <CommandButtons
+              addNewBlock={addNewBlock}
+              addWidget={addWidget}
+              block={block}
+              blocks={blocks}
+              deleteBlock={deleteBlock}
+              executionState={executionState}
+              interruptKernel={interruptKernel}
+              pipelineType={pipeline?.type}
+              runBlock={runBlockAndTrack}
+              savePipelineContent={savePipelineContent}
+              setOutputCollapsed={setOutputCollapsed}
+            />
           )}
-          <Spacing mr={1} />
 
           <Spacing px={1}>
             <Button
@@ -851,24 +869,7 @@ function CodeBlockProps({
             </Button>
           </Spacing>
         </FlexContainer>
-
       </BlockHeaderStyle>
-
-      {(selected || isInProgress) && (
-        <CommandButtons
-          addNewBlock={addNewBlock}
-          addWidget={addWidget}
-          block={block}
-          blocks={blocks}
-          deleteBlock={deleteBlock}
-          executionState={executionState}
-          interruptKernel={interruptKernel}
-          pipelineType={pipeline?.type}
-          runBlock={runBlockAndTrack}
-          savePipelineContent={savePipelineContent}
-          setOutputCollapsed={setOutputCollapsed}
-        />
-      )}
 
       <ContainerStyle onClick={() => onClickSelectBlock()}>
         <CodeContainerStyle
