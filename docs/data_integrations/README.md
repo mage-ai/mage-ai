@@ -62,6 +62,7 @@ Read more about Sources:
 - [Api](../../mage_integrations/mage_integrations/sources/api/README.md)
 - [BigQuery](../../mage_integrations/mage_integrations/sources/bigquery/README.md)
 - [Chargebee](../../mage_integrations/mage_integrations/sources/chargebee/README.md)
+- [Google Analytics](../../mage_integrations/mage_integrations/sources/google_analytics/README.md)
 - [Google Search Console](../../mage_integrations/mage_integrations/sources/google_search_console/README.md)
 - [Google Sheets](../../mage_integrations/mage_integrations/sources/google_sheets/README.md)
 - [Intercom](../../mage_integrations/mage_integrations/sources/intercom/README.md)
@@ -71,7 +72,6 @@ Read more about Sources:
 - [Salesforce](../../mage_integrations/mage_integrations/sources/salesforce/README.md)
 - [Stripe](../../mage_integrations/mage_integrations/sources/stripe/README.md)
 - *Airtable (coming soon)*
-- *Google Analytics (coming soon)*
 - *HubSpot (coming soon)*
 - *MongoDB (coming soon)*
 - *Shopify (coming soon)*
