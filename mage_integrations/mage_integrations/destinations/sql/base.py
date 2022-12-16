@@ -1,13 +1,11 @@
-from datetime import datetime
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
-    INTERNAL_COLUMN_CREATED_AT,
-    INTERNAL_COLUMN_UPDATED_AT,
     MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
     REPLICATION_METHOD_LOG_BASED,
 )
+from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Dict, List, Tuple
@@ -31,26 +29,7 @@ class Destination(BaseDestination):
     def test_connection(self) -> None:
         self.build_connection().build_connection()
 
-    def export_data(
-        self,
-        stream: str,
-        schema: dict,
-        record: dict,
-        tags: dict = {},
-        **kwargs,
-    ) -> None:
-        self.export_batch_data([dict(
-            record=record,
-            schema=schema,
-            stream=stream,
-            tags=tags,
-        )], stream)
-
-    def export_batch_data(
-        self,
-        record_data: List[Dict],
-        stream: str,
-    ) -> None:
+    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         database_name = self.config.get(self.DATABASE_CONFIG_KEY)
         schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
         table_name = self.config.get('table')
@@ -70,9 +49,7 @@ class Destination(BaseDestination):
 
         # Add _mage_created_at and _mage_updated_at columns
         for r in record_data:
-            curr_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-            r['record'][INTERNAL_COLUMN_CREATED_AT] = curr_time
-            r['record'][INTERNAL_COLUMN_UPDATED_AT] = curr_time
+            r['record'] = update_record_with_internal_columns(r['record'])
 
         query_strings = self.build_query_strings(record_data, stream)
 
@@ -173,10 +150,6 @@ class Destination(BaseDestination):
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
-        if self.debug:
-            for qs in query_strings:
-                print(qs, '\n')
-
         return query_strings
 
     def handle_insert_commands(
@@ -242,6 +215,10 @@ class Destination(BaseDestination):
         results = []
         results += self.build_connection().execute(query_strings, commit=True)
 
+        if self.debug:
+            for qs in query_strings:
+                print(qs, '\n')
+
         query_string_size = 0
         query_strings = []
         for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
@@ -259,15 +236,36 @@ class Destination(BaseDestination):
                     f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
                     tags=tags,
                 )
-                results += self.build_connection().execute(query_strings, commit=True)
+
+                if self.debug:
+                    for qs in query_strings:
+                        try:
+                            results += self.build_connection().execute([qs], commit=True)
+                        except Exception as err:
+                            print(qs)
+                            raise err
+                else:
+                    results += self.build_connection().execute(query_strings, commit=True)
+
                 query_strings = []
                 query_string_size = 0
+
         if len(query_strings) > 0:
             self.logger.info(
                 f'Execute {len(query_strings)} insert commands, length: {query_string_size}',
                 tags=tags,
             )
-            results += self.build_connection().execute(query_strings, commit=True)
+
+            if self.debug:
+                for qs in query_strings:
+                    try:
+                        results += self.build_connection().execute([qs], commit=True)
+                    except Exception as err:
+                        print(qs)
+                        raise err
+            else:
+                results += self.build_connection().execute(query_strings, commit=True)
+
         return results
 
     def build_connection(self):

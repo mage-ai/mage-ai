@@ -29,6 +29,7 @@ Read more tech docs here. Got questions?
 - [Setup and install](tutorials/quick_start/setup.md)
 - [Data pipeline management](features/orchestration/README.md)
 - [Kernels](kernels/README.md)
+- [Environment variables](tutorials/quick_start/setup.md#environment-variables)
 
 ### Tutorials
 - [Tutorials](tutorials/README.md)
@@ -66,6 +67,17 @@ Read more tech docs here. Got questions?
 
 ### Integrations
 - [Data integrations: syncing data between 3rd party sources and destinations](data_integrations/README.md)
+    - [How to build a data integration pipeline](guides/pipelines/DataIntegrationPipeline.md)
+    - [Sources](data_integrations/README.md#sources)
+        - [Available sources](data_integrations/README.md#available-sources)
+        - [Add a new source](guides/data_integrations/sources/AddNewSource.md)
+        - [Adapt an existing source](guides/data_integrations/sources/AdaptExistingSource.md)
+    - [Destinations](data_integrations/README.md#destinations)
+        - [Available destinations](data_integrations/README.md#available-destinations)
+        - [Add a new destination](guides/data_integrations/destinations/AddNewDestination.md)
+        - [Adapt an existing destination](guides/data_integrations/destinations/AdaptExistingDestination.md)
+    - Guides
+        - [Change Data Capture (CDC) with PostgreSQL](guides/data_integrations/sources/PostgreSQL.md)
 - [DBT: orchestrate your DBT runs and build pipelines that depend on non-DBT tasks](dbt/README.md)
     - [Add an existing DBT project to Mage](guides/dbt/add_existing_project.md)
     - [Connection profiles](guides/dbt/connection_profiles.md)
@@ -81,6 +93,7 @@ Read more tech docs here. Got questions?
     - [Redshift](integrations/Redshift.md)
     - [S3](integrations/S3.md)
     - [Snowflake](integrations/Snowflake.md)
+    - [Delta Lake](integrations/DeltaLake.md)
 - Existing tools
     - [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
     - [Prefect](production/prefect.md)
@@ -90,6 +103,8 @@ Read more tech docs here. Got questions?
     - [Batch pipeline](tutorials/quick_start/etl_restaurant/README.md)
     - [Streaming pipeline](guides/pipelines/StreamingPipeline.md)
     - [Data integration pipeline](guides/pipelines/DataIntegrationPipeline.md)
+- Data integrations
+    - [Change Data Capture (CDC) with PostgreSQL](guides/data_integrations/sources/PostgreSQL.md)
 - [SQL blocks](guides/blocks/SQL.md)
 - [R blocks](guides/blocks/R.md)
 - [Sensors: blocks depending on external pipelines](guides/blocks/Sensors.md)

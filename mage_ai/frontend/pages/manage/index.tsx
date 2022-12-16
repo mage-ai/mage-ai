@@ -17,7 +17,7 @@ import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { addUnderscores, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
+import { addUnderscores, capitalizeRemoveUnderscoreLower, randomNameGenerator, replaceSpaces } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
@@ -26,9 +26,11 @@ import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style
 function MoreActions({
   fetchInstances,
   instance,
+  instanceType,
 }: {
   fetchInstances: any;
   instance: any;
+  instanceType: string;
 }) {
   const refMoreActions = useRef(null);
   const [showMoreActions, setShowMoreActions] = useState<boolean>();
@@ -45,7 +47,7 @@ function MoreActions({
   }
 
   const [updateInstance] = useMutation(
-    api.instances.clusters.useUpdate('ecs', name),
+    api.instances.clusters.useUpdate(instanceType, name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -67,7 +69,7 @@ function MoreActions({
   )
 
   const [deleteInstance] = useMutation(
-    api.instances.clusters.useDelete('ecs', name, query),
+    api.instances.clusters.useDelete(instanceType, name, query),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -133,72 +135,74 @@ function MoreActions({
 
   return (
     <>
-      <div
-        ref={refMoreActions}
-        style={{
-          position: 'relative',
-          zIndex: '1',
-        }}
-      >
-        <Button
-          iconOnly
-          onClick={() => setShowMoreActions(!showMoreActions)}
-        >
-          <Ellipsis size={2 * UNIT} />
-        </Button>
-        <ClickOutside
-          disableEscape
-          onClickOutside={() => {
-            setShowMoreActions(false);
-            setConfirmDelete(false);
+      {instanceType === 'ecs' && (
+        <div
+          ref={refMoreActions}
+          style={{
+            position: 'relative',
+            zIndex: '1',
           }}
-          open={showMoreActions}
         >
-          {confirmDelete ? (
-            <PopupContainerStyle
-              leftOffset={-UNIT * 30}
-              topOffset={-UNIT * 3}
-              width={UNIT * 30}
-            >
-              <Text>
-                Are you sure you want to delete
-              </Text>
-              <Text>
-                this instance? You may not be
-              </Text>
-              <Text>
-                able to recover your data.
-              </Text>
-              <Spacing mt={1} />
-              <FlexContainer>
-                <Button
-                  danger
-                  onClick={deleteInstance}
-                >
-                  Confirm
-                </Button>
-                <Spacing ml={1} />
-                <Button
-                  default
-                  onClick={() => setConfirmDelete(false)}
-                >
-                  Cancel
-                </Button>
-              </FlexContainer>
-            </PopupContainerStyle>
-          ) : (
-            <FlyoutMenu
-              items={actions}
-              left={-UNIT * 25}
-              open={showMoreActions}
-              parentRef={refMoreActions}
-              topOffset={-UNIT * 3}
-              uuid="Manage/more_actions"
-              width={UNIT * 25}
-            />
-          )}
-        </ClickOutside>
-      </div>
+          <Button
+            iconOnly
+            onClick={() => setShowMoreActions(!showMoreActions)}
+          >
+            <Ellipsis size={2 * UNIT} />
+          </Button>
+          <ClickOutside
+            disableEscape
+            onClickOutside={() => {
+              setShowMoreActions(false);
+              setConfirmDelete(false);
+            }}
+            open={showMoreActions}
+          >
+            {confirmDelete ? (
+              <PopupContainerStyle
+                leftOffset={-UNIT * 30}
+                topOffset={-UNIT * 3}
+                width={UNIT * 30}
+              >
+                <Text>
+                  Are you sure you want to delete
+                </Text>
+                <Text>
+                  this instance? You may not be
+                </Text>
+                <Text>
+                  able to recover your data.
+                </Text>
+                <Spacing mt={1} />
+                <FlexContainer>
+                  <Button
+                    danger
+                    onClick={deleteInstance}
+                  >cd
+                    Confirm
+                  </Button>
+                  <Spacing ml={1} />
+                  <Button
+                    default
+                    onClick={() => setConfirmDelete(false)}
+                  >
+                    Cancel
+                  </Button>
+                </FlexContainer>
+              </PopupContainerStyle>
+            ) : (
+              <FlyoutMenu
+                items={actions}
+                left={-UNIT * 25}
+                open={showMoreActions}
+                parentRef={refMoreActions}
+                topOffset={-UNIT * 3}
+                uuid="Manage/more_actions"
+                width={UNIT * 25}
+              />
+            )}
+          </ClickOutside>
+        </div>
+      )}
     </>
   );
 }
@@ -207,8 +211,11 @@ function InstanceListPage() {
   const [create, setCreate] = useState<boolean>();
   const [newInstanceName, setNewInstanceName] = useState<string>();
 
+  const { data: dataStatus } = api.status.list();
+  const instanceType = dataStatus?.status?.['instance_type'] || 'ecs';
+
   const { data: dataInstances, mutate: fetchInstances } = api.instances.clusters.list(
-    'ecs',
+    instanceType,
     {},
     {
       refreshInterval: 3000,
@@ -217,7 +224,7 @@ function InstanceListPage() {
   );
 
   const [createInstance, { isLoading: isLoadingCreateInstance }] = useMutation(
-    api.instances.clusters.useCreate('ecs'),
+    api.instances.clusters.useCreate(instanceType),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -242,6 +249,22 @@ function InstanceListPage() {
     () => dataInstances?.instances?.filter(({ name }) => name),
     [dataInstances],
   );
+
+  const updateInstanceName = (name) => {
+    if (instanceType === 'cloud_run') {
+      return replaceSpaces(name, '-');
+    } else {
+      return replaceSpaces(name, '_');
+    }
+  }
+
+  const instanceNameLabel = () => {
+    if (instanceType === 'cloud_run') {
+      return "Spaces will be replaced by hyphens";
+    } else {
+      return "Spaces will be replaced by underscores";
+    }
+  }
 
   return (
     <Dashboard
@@ -269,7 +292,7 @@ function InstanceListPage() {
                       Instance name
                     </Text>,
                     <TextInput
-                      label="Spaces will be replaced by underscores"
+                      label={instanceNameLabel()}
                       monospace
                       onChange={(e) => {
                         e.preventDefault();
@@ -281,6 +304,13 @@ function InstanceListPage() {
                   ],
                 ]}
               />
+              {isLoadingCreateInstance && (
+                <Spacing mt={1}>
+                  <Text warning>
+                    This may take a few minutes... Once the service is created, it may take another 5-10 minutes for the service to be accessible.
+                  </Text>
+                </Spacing>
+              )}
               <Spacing my={2}>
                 <FlexContainer>
                   <KeyboardShortcutButton
@@ -291,7 +321,7 @@ function InstanceListPage() {
                     // @ts-ignore
                     onClick={() => createInstance({
                       instance: {
-                        name: addUnderscores(newInstanceName),
+                        name: updateInstanceName(newInstanceName),
                       }
                     })}
                     uuid="EnvironmentListPage/new"
@@ -363,6 +393,11 @@ function InstanceListPage() {
             status,
             type,
           } = instance
+          
+          let link = `http://${ip}`;
+          if (instanceType === 'ecs') {
+            link = `http://${ip}:6789`;
+          }
 
           return [
             <Button
@@ -387,13 +422,14 @@ function InstanceListPage() {
             </Text>,
             <Button
               iconOnly
-              onClick={() => window.open(`http://${ip}:6789`)}
+              onClick={() => window.open(link)}
             >
               <Expand size={2 * UNIT} />
             </Button>,
             <MoreActions
               fetchInstances={fetchInstances}
               instance={instance}
+              instanceType={instanceType}
             />
           ]
         })}

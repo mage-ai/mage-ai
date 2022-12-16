@@ -23,6 +23,7 @@ export type TooltipWrapperProps = {
   inline?: boolean;
   label?: string | any;
   leftPosition?: number;
+  lightBackground?: boolean;
   maxWidth?: number;
   minWidth?: number;
   muted?: boolean;
@@ -46,7 +47,7 @@ const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
     height: ${props.size}px;
   `}
 
-  ${props => props.size && `
+  ${props => props.fullSize && `
     height: 100%;
   `}
 `;
@@ -108,6 +109,10 @@ const ContentStyle = styled.div<TooltipWrapperProps>`
     box-shadow: ${(props.theme.shadow || dark.shadow).base};
   `}
 
+  ${props => props.lightBackground && `
+    box-shadow: ${(props.theme.shadow || dark.shadow).window};
+  `}
+
   ${props => props.appearAbove && !props.size && `
     bottom: 0;
   `}
@@ -154,6 +159,7 @@ function TooltipWrapper({
   fullSize,
   height,
   inline,
+  lightBackground,
   minWidth,
   noHoverOutline,
   size = UNIT * 2,
@@ -216,6 +222,7 @@ function TooltipWrapper({
           appearAbove={appearAbove}
           appearBefore={appearBefore}
           leftPosition={center ? leftPosition : null}
+          lightBackground={lightBackground}
           minWidth={autoWidth ? minWidth : null}
           rightPosition={alignLeft}
           size={size}

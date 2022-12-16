@@ -6,7 +6,7 @@ import json
 
 def print_logs_from_output(
     output: str,
-    logger = None,
+    logger=None,
     tags: Dict = {},
 ):
     from mage_integrations.utils.logger.constants import (

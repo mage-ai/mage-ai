@@ -1,3 +1,8 @@
+from datetime import datetime
+from mage_integrations.destinations.constants import (
+    INTERNAL_COLUMN_CREATED_AT,
+    INTERNAL_COLUMN_UPDATED_AT,
+)
 import re
 import sys
 
@@ -21,3 +26,10 @@ def flatten_record(d, parent_key='', sep='__'):
             items.append((new_key, str(v) if type(v) is list else v))
 
     return dict(items)
+
+
+def update_record_with_internal_columns(record):
+    curr_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
+    record[INTERNAL_COLUMN_CREATED_AT] = curr_time
+    record[INTERNAL_COLUMN_UPDATED_AT] = curr_time
+    return record

@@ -40,7 +40,6 @@ import { ChevronDown, ChevronUp } from '@oracle/icons';
 import { SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { cleanName } from '@utils/string';
 import { find, indexBy } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
@@ -260,7 +259,7 @@ function IntegrationPipeline({
                     stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
                   }
                   if (!stream.destination_table) {
-                    stream.destination_table = cleanName(stream.tap_stream_id);
+                    stream.destination_table = stream?.tap_stream_id?.replace(/\W+/g, '_');
                   }
 
                   stream.metadata[idx] = {
@@ -351,6 +350,10 @@ function IntegrationPipeline({
   const updateAllStreams = useCallback((
     streamDataTransformer: (stream: StreamType) => StreamType,
   ) => {
+    if (!catalog?.streams) {
+      return;
+    }
+
     onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
       ...dataLoaderBlockContent,
       catalog: {
@@ -720,6 +723,7 @@ function IntegrationPipeline({
                 })}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
+                updateAllStreams={updateAllStreams}
                 updateMetadataForColumns={updateMetadataForColumns}
                 updateSchemaProperty={updateSchemaProperty}
                 updateStream={updateStream}
@@ -973,6 +977,7 @@ function IntegrationPipeline({
 
                   <ToggleSwitch
                     checked={!!autoAddNewFields}
+                    disabled={!catalog?.streams}
                     onCheck={() => updateAllStreams((stream: StreamType) => ({
                       ...stream,
                       auto_add_new_fields: !autoAddNewFields,
@@ -1000,6 +1005,7 @@ function IntegrationPipeline({
 
                   <ToggleSwitch
                     checked={!!disableColumnTypeCheck}
+                    disabled={!catalog?.streams}
                     onCheck={() => updateAllStreams((stream: StreamType) => ({
                       ...stream,
                       disable_column_type_check: !disableColumnTypeCheck,

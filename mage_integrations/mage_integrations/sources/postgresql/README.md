@@ -18,3 +18,9 @@ You must enter the following credentials when configuring this source:
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
 
 <br />
+
+## Change Data Capture (CDC) with PostgreSQL
+
+Please read this [document](https://github.com/mage-ai/mage-ai/blob/master/docs/guides/data_integrations/sources/PostgreSQL.md).
+
+<br />

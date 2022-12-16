@@ -8,13 +8,17 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
     set_repo_path,
 )
-from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
+from mage_ai.data_preparation.shared.constants import (
+    ECS_CLUSTER_NAME,
+    GCP_PROJECT_ID,
+    MANAGE_ENV_VAR,
+)
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
     delete_global_variable,
     set_global_variable,
 )
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models import PipelineSchedule
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -161,6 +165,7 @@ class ApiPipelineHandler(BaseHandler):
         )
         self.finish()
 
+    @safe_db_query
     def put(self, pipeline_uuid):
         """
         Allow updating pipeline name, uuid, status
@@ -215,6 +220,7 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 
 class ApiPipelineListHandler(BaseHandler):
+    @safe_db_query
     def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
@@ -410,9 +416,16 @@ class KernelsHandler(BaseHandler):
 
 class ApiStatusHandler(BaseHandler):
     def get(self):
+        instance_type = None
+        if os.getenv(ECS_CLUSTER_NAME):
+            instance_type = 'ecs'
+        elif os.getenv(GCP_PROJECT_ID):
+            instance_type = 'cloud_run'
+
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
             'scheduler_status': scheduler_manager.get_status(),
+            'instance_type': instance_type,
         }
         self.write(dict(status=status))
 
@@ -579,7 +592,7 @@ async def main(
 
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
-    db_connection.start_session()
+    db_connection.start_session(force=True)
 
     get_messages(
         lambda content: WebSocketServer.send_message(
