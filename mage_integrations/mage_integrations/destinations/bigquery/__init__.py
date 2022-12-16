@@ -28,7 +28,7 @@ import uuid
 
 
 def convert_column_if_json(value, column_type):
-    if column_type == 'JSON':
+    if column_type == 'JSON' and 'TO_JSON' not in value:
         return f"TO_JSON('{value}')"
 
     return value
