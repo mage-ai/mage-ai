@@ -28,6 +28,11 @@ class PostgreSQL(Source):
         schema = self.config['schema']
         return f'{schema}.'
 
+    def build_table_name(self, stream) -> str:
+        table_name = stream.tap_stream_id
+
+        return f'{self.table_prefix}"{table_name}"'
+
     def build_connection(self, connection_factory=None) -> PostgreSQLConnection:
         connect_kwargs = dict(
             database=self.config['database'],

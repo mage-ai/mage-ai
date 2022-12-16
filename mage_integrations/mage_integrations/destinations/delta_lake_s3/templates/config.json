@@ -5,6 +5,5 @@
   "bucket": null,
   "mode": "append",
   "object_key_path": null,
-  "overwrite_partitions_only": false,
   "table": null
 }
