@@ -1,0 +1,81 @@
+---
+title: "Features"
+---
+
+![](/images/features.svg)
+
+<CardGroup>
+  <Card
+    title="Data pipeline management"
+    icon="diagram-project"
+    href="https://github.com/mage-ai/mage-ai/blob/master/docs/features/README.md#data-pipeline-management"
+  ></Card>
+  <Card
+    title="Notebook for building data pipelines"
+    icon="notebook"
+    href="https://github.com/mage-ai/mage-ai/blob/master/docs/features/README.md#notebook-for-building-data-pipelines"
+  ></Card>
+  <Card
+    title="Roadmap"
+    icon="map"
+    href="https://airtable.com/shrJS0cDOmQywb8vp"
+  ></Card>
+  <Card
+    title="Changelog"
+    icon="list-check"
+    href="https://mageai.notion.site/What-s-new-7cc355e38e9c42839d23fdbef2dabd2c"
+  ></Card>
+</CardGroup>
+
+## Data pipeline management
+
+👉 See more
+[**details here**](https://github.com/mage-ai/mage-ai/blob/master/docs/features/orchestration/README.md).
+
+![](https://github.com/mage-ai/assets/blob/main/orchestration-overview.gif?raw=true)
+
+## Notebook for building data pipelines
+
+### 1\. Data centric editor
+
+An interactive coding experience designed for preparing data to train ML models.
+
+Visualize the impact of your code every time you load, clean, and transform
+data.
+
+![](/images/data-centric-editor.png)
+
+### 2\. Production ready code
+
+No more writing throw away code or trying to turn notebooks into scripts.
+
+Each block (aka cell) in this editor is a modular file that can be tested,
+reused, and chained together to create an executable data pipeline locally or in
+any environment.
+
+Read more about [blocks](/design/blocks) and how they work.
+
+![](/images/data-pipeline.png)
+
+Run your data pipeline end-to-end using the command line function:
+`$ mage run [project] [pipeline]`
+
+You can run your pipeline in production environments with the orchestration
+tools
+
+- [Airflow](https://github.com/mage-ai/mage-ai/blob/master/docs/features/docs/production/airflow.md)
+
+- [Prefect](https://github.com/mage-ai/mage-ai/blob/master/docs/features/docs/production/prefect.md)
+
+- Dagster (Tutorial coming soon)
+
+### 3\. Extensible
+
+Easily add new functionality directly in the source code or through plug-ins
+(coming soon).
+
+Adding new API endpoints ([Tornado](https://www.tornadoweb.org/en/stable/)),
+transformations (Python, PySpark, SQL), and charts (using
+[React](https://reactjs.org/)) is easy to do (tutorial coming soon).
+
+![](/images/extensible-charts.gif)

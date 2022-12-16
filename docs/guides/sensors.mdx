@@ -1,0 +1,22 @@
+---
+title: "Sensors"
+description: "Blocks depending on external pipelines"
+---
+
+![](/images/sensors.gif)
+
+In your pipeline, you can add sensors that run continuously and only complete
+when an external pipeline or external block is successfully ran for a particular
+partition.
+
+Then, you can add a block in your pipeline that depends on that sensor.
+
+Therefore, your block won’t start running until the external pipeline or
+external block has successfully ran.
+
+---
+
+## Setup
+
+1. [Add a sensor to your pipeline](/guides/sensors)
+2. [Configuring a sensor](/design/core-abstractions)
