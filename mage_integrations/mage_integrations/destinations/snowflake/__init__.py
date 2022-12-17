@@ -1,5 +1,6 @@
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
 from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
@@ -15,6 +16,14 @@ from mage_integrations.destinations.sql.utils import (
 from mage_integrations.destinations.utils import clean_column_name
 from mage_integrations.utils.array import batch
 from typing import Dict, List, Tuple
+
+
+def convert_array(value, column_settings):
+    if type(value) is list:
+        value_string = ', '.join([str(i) for i in value])
+        return value_string
+
+    return 'NULL'
 
 
 def convert_column_if_json(value, column_type):
@@ -84,6 +93,7 @@ class Snowflake(Destination):
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=mapping,
             columns=columns,
+            convert_array_func=convert_array,
             convert_column_to_type_func=convert_column_if_json,
             records=records,
         )
@@ -94,8 +104,13 @@ class Snowflake(Destination):
         select_values = []
         for idx, column in enumerate(columns):
             col = f'column{idx + 1}'
-            if COLUMN_TYPE_OBJECT == mapping[column].get('type'):
+            col_type = mapping[column].get('type')
+
+            if COLUMN_TYPE_OBJECT == col_type:
                 col = f'TO_VARIANT(PARSE_JSON({col}))'
+            elif COLUMN_TYPE_ARRAY == col_type:
+                col = f'ARRAY_CONSTRUCT({col})'
+
             select_values.append(col)
         select_values = ', '.join(select_values)
 
