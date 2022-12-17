@@ -985,6 +985,10 @@ function PipelineDetailPage({
         const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
         blockRef?.current?.scrollIntoView();
       }
+      goToWithQuery({
+        file_path: null,
+        'file_paths[]': [],
+      });
     } else if (blockType === BlockTypeEnum.CHART) {
       const chart = widgets.find(({ uuid }) => uuid === blockUUID);
       if (chart) {
