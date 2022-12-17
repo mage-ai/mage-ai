@@ -1,15 +1,32 @@
 from mage_integrations.connections.snowflake import Snowflake as SnowflakeConnection
-from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_OBJECT,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
+)
+from mage_integrations.destinations.snowflake.constants import SNOWFLAKE_COLUMN_TYPE_VARIANT
 from mage_integrations.destinations.snowflake.utils import convert_column_type
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_create_table_command,
     build_insert_command,
     column_type_mapping,
+    convert_column_to_type,
 )
 from mage_integrations.destinations.utils import clean_column_name
 from mage_integrations.utils.array import batch
 from typing import Dict, List, Tuple
+
+
+def convert_column_if_json(value, column_type):
+    if SNOWFLAKE_COLUMN_TYPE_VARIANT == column_type:
+        value = (value.
+            replace("'", "\\'").
+            replace('\\"', '\\\\"').
+            replace('\\n', '\\\\n')
+        )
+        return f"'{value}'"
+
+    return convert_column_to_type(value, column_type)
 
 
 class Snowflake(Destination):
@@ -67,10 +84,20 @@ class Snowflake(Destination):
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=mapping,
             columns=columns,
+            convert_column_to_type_func=convert_column_if_json,
             records=records,
         )
+
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
+
+        select_values = []
+        for idx, column in enumerate(columns):
+            col = f'column{idx + 1}'
+            if COLUMN_TYPE_OBJECT == mapping[column].get('type'):
+                col = f'TO_VARIANT(PARSE_JSON({col}))'
+            select_values.append(col)
+        select_values = ', '.join(select_values)
 
         if unique_constraints and unique_conflict_method:
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
@@ -83,9 +110,11 @@ class Snowflake(Destination):
                 table_name=f'temp_{table_name}',
                 database_name=database_name,
                 unique_constraints=unique_constraints,
-            ) + [
-                f"INSERT INTO {full_table_name_temp} ({insert_columns}) VALUES {insert_values}",
-            ]
+            ) + '\n'.join([
+                f'INSERT INTO {full_table_name_temp} ({insert_columns})',
+                f'SELECT {select_values}',
+                f'FROM VALUES {insert_values}',
+            ])
 
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
             columns_cleaned = [clean_column_name(col) for col in columns]
@@ -114,7 +143,11 @@ class Snowflake(Destination):
             ]
 
         return [
-            f"INSERT INTO {full_table_name} ({insert_columns}) VALUES {insert_values}",
+            '\n'.join([
+                f'INSERT INTO {full_table_name} ({insert_columns})',
+                f'SELECT {select_values}',
+                f'FROM VALUES {insert_values}',
+            ]),
         ]
 
     def build_create_schema_commands(
