@@ -54,6 +54,7 @@
     * [Sources](docs/data\_integrations/sources/README.md)
       * [Adapt an existing source](docs/guides/data\_integrations/sources/AdaptExistingSource.md)
       * [Add a new source](docs/guides/data\_integrations/sources/AddNewSource.md)
+      * [Change Data Capture (CDC) with PostgreSQL](docs/guides/data\_integrations/sources/PostgreSQL.md)
     * [Destinations](docs/data\_integrations/destinations/README.md)
       * [Adapt an existing destination](docs/guides/data\_integrations/destinations/AdaptExistingDestination.md)
       * [Add a new destination](docs/guides/data\_integrations/destinations/AddNewDestination.md)
