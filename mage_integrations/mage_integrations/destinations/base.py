@@ -245,7 +245,10 @@ class Destination():
             raise Exception(message)
 
         self.bookmark_properties[stream] = row.get(KEY_BOOKMARK_PROPERTIES)
-        self.disable_column_type_check[stream] = row.get(KEY_DISABLE_COLUMN_TYPE_CHECK, False)
+
+        should_disable = row.get(KEY_DISABLE_COLUMN_TYPE_CHECK)
+        self.disable_column_type_check[stream] = True if should_disable is None else should_disable
+
         self.key_properties[stream] = row.get(KEY_KEY_PROPERTIES)
         self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS, [])
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
@@ -532,8 +535,22 @@ class Destination():
         tags: dict = {},
     ) -> Dict:
         record_adjusted = self.__prepare_record(stream, schema, row, tags)
+        schema_properties = schema['properties']
 
         if not self.disable_column_type_check.get(stream, False):
-            self.validators[stream].validate(record_adjusted)
+            for col, value in record_adjusted.items():
+                column_properties = schema_properties[col]
+                column_types = column_properties.get('type', [])
+
+                valid = False
+                if COLUMN_TYPE_OBJECT in column_types:
+                    valid = type(value) is dict or type(value) is list
+                elif COLUMN_TYPE_ARRAY in column_types:
+                    valid = type(value) is list
+
+                if not valid:
+                    self.validators[stream].validate({
+                        col: value,
+                    })
 
         return record_adjusted
