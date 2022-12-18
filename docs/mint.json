@@ -186,7 +186,9 @@
           "group": "Testing",
           "pages": ["guides/data-validation"]
         },
-        "guides/templates"
+        "guides/templates",
+        "guides/load-data-s3",
+        "guides/export-data-s3"
       ]
     },
     {
