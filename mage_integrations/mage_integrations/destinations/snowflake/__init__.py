@@ -29,10 +29,17 @@ def convert_array(value, column_settings):
 def convert_column_if_json(value, column_type):
     if SNOWFLAKE_COLUMN_TYPE_VARIANT == column_type:
         value = (value.
+            encode('unicode_escape').
+            decode().
             replace("'", "\\'").
             replace('\\"', '\\\\"').
             replace('\\n', '\\\\n')
         )
+        # Arrêté N°2018-61
+        # Arr\u00eat\u00e9 N\u00b02018-61
+        # b'Arr\\xeat\\xe9 N\\xb02018-61'
+        # Arr\\xeat\\xe9 N\\xb02018-61
+
         return f"'{value}'"
 
     return convert_column_to_type(value, column_type)
