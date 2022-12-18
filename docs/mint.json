@@ -74,7 +74,13 @@
       "pages": [
         "design/core-design-principles",
         "design/core-abstractions",
-        "design/blocks"
+        {
+          "group": "Blocks",
+          "pages": [
+            "design/blocks",
+            "design/data-loading"
+          ]
+        }
       ]
     },
     {
