@@ -125,6 +125,7 @@
       "group": "Integrations",
       "pages": [
         "integrations/data-integrations",
+        "integrations/add-new-source",
         {
           "group": "DBT",
           "pages": [
