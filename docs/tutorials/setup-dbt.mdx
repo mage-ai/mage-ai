@@ -4,7 +4,7 @@ title: "Set up DBT models & orchestrate DBT runs"
 
 <img alt="DBT" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
 
-## 1) Set up new Mage project
+## 1. Set up new Mage project
 
 Read the [setup guide](/getting-started/setup) to initialize a new project and
 start the Mage tool locally.
@@ -13,7 +13,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ---
 
-## 2) Set up DBT project
+## 2. Set up DBT project
 
 ### Install DBT
 
@@ -47,7 +47,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ---
 
-## 3) Create standard pipeline
+## 3. Create standard pipeline
 
 1. Go to the [Mage dashboard](http://localhost:6789/) and click the button
    **`+ New pipeline`** and select the option labeled `Standard (batch)`.
@@ -56,7 +56,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ---
 
-## 4) Create DBT profile for database connections
+## 4. Create DBT profile for database connections
 
 1. On the left side of the page in the file browser, expand the folder
    `demo_project/dbt/demo/`.
@@ -81,7 +81,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ---
 
-## 5) Add data loader block to pipeline
+## 5. Add data loader block to pipeline
 
 1. Click the **`+ Data loader`** button, select `Python`, then click `API`.
 2. At the top of the block, on the right of `DATA LOADER`, click the name of the
@@ -106,7 +106,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ---
 
-## 6) Add DBT model block to pipeline
+## 6. Add DBT model block to pipeline
 
 1. Under the data loader block you just added, click the button **`DBT model`**,
    then click the option `Single model`.
@@ -119,7 +119,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
 
-### 6a) Edit DBT model `my_first_dbt_model`
+### 6a. Edit DBT model `my_first_dbt_model`
 
 1. In the DBT block named `my_first_dbt_model`, next to the label
    `DBT profile target` at the top is an input field, enter `dev`.
@@ -142,7 +142,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ![](https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true)
 
-### 6b) Edit DBT model `my_second_dbt_model`
+### 6b. Edit DBT model `my_second_dbt_model`
 
 1. In the DBT block named `my_second_dbt_model`, next to the label
    `DBT profile target` at the top is an input field, enter `dev`.
@@ -175,7 +175,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ---
 
-## 7) Add test for DBT model
+## 7. Add test for DBT model
 
 1. On the right side of the screen, click the tab labeled **`Terminal`**.
 2. Create a new DBT test file by running the following command:
@@ -197,7 +197,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 ---
 
-## 8) Execute pipeline end-to-end
+## 8. Execute pipeline end-to-end
 
 1.  Click the name of the pipeline in the header breadcrumbs to go back to the
     detail page.
@@ -245,4 +245,4 @@ models.
 ## Support
 
 If you get stuck, run into problems, or just want someone to walk you through
-these steps, please join our [slack](https://www.mage.ai/chat).
+these steps, please join our [Slack](https://www.mage.ai/chat).
