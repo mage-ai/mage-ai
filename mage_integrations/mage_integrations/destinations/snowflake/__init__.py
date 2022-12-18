@@ -29,11 +29,11 @@ def convert_array(value, column_settings):
 def convert_column_if_json(value, column_type):
     if SNOWFLAKE_COLUMN_TYPE_VARIANT == column_type:
         value = (value.
+            replace('\\n', '\\\\n').
             encode('unicode_escape').
             decode().
             replace("'", "\\'").
-            replace('\\"', '\\\\"').
-            replace('\\n', '\\\\n')
+            replace('\\"', '\\\\"')
         )
         # Arrêté N°2018-61
         # Arr\u00eat\u00e9 N\u00b02018-61
