@@ -124,8 +124,10 @@
     {
       "group": "Integrations",
       "pages": [
-        "integrations/data-integrations",
-        "integrations/add-new-source",
+        {
+          "group": "Data Integrations",
+          "pages": ["integrations/data-integrations", "integrations/add-new-source"]
+        },
         {
           "group": "DBT",
           "pages": [
