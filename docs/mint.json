@@ -192,6 +192,10 @@
       "pages": ["community/contributing", "community/support"]
     },
     {
+      "group": "Contributing",
+      "pages": ["contributing/charts/how-to-add", "contributing/testing"]
+    },
+    {
       "group": "About",
       "pages": ["about/features", "about/roadmap", "about/changelog"]
     }
