@@ -1,0 +1,56 @@
+---
+title: "Overview"
+---
+
+## Trigger
+
+A trigger is a set of instructions that determine when or how a pipeline should
+run. A pipeline can have 1 or more triggers.
+
+There are 3 types of triggers:
+
+1. Schedule
+2. Event
+3. API
+
+#### Schedule
+
+A schedule-type trigger will instruct the pipeline to run after a start date and
+on a set interval.
+
+Currently, the frequency pipelines can be scheduled for include:
+
+- Run exactly once
+- Hourly
+- Daily
+- Weekly
+- Monthly
+- Every N minutes (coming soon)
+
+#### Event
+
+An event-type trigger will instruct the pipeline to run whenever a specific
+event occurs.
+
+For example, you can have a pipeline start running when a database query is
+finished executing or when a new object is created in Amazon S3 or Google
+Storage.
+
+You can also trigger a pipeline using your own custom event by making a `POST`
+request to the `http://localhost/api/events` endpoint with a custom event
+payload.
+
+<sub>
+  Check out this
+  [tutorial](/getting-started/data-pipeline-management#create-trigger) on how to
+  create an event trigger.
+</sub>
+
+#### API
+
+An API-type trigger will instruct the pipeline to run after a specific API call
+is made.
+
+You can make a POST request to an endpoint provided in the UI when creating or
+editing a trigger. You can optionally include runtime variables in your request
+payload.
