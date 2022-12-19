@@ -93,7 +93,7 @@ class Snowflake(Destination):
 SELECT
     column_name
     , data_type
-FROM INFORMATION_SCHEMA.COLUMNS
+FROM {database_name}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         current_columns = [r[0].lower() for r in results]
@@ -170,11 +170,11 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 table_name=f'temp_{table_name}',
                 database_name=database_name,
                 unique_constraints=unique_constraints,
-            ) + '\n'.join([
+            ) + ['\n'.join([
                 f'INSERT INTO {full_table_name_temp} ({insert_columns})',
                 f'SELECT {select_values}',
                 f'FROM VALUES {insert_values}',
-            ])
+            ])]
 
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
             columns_cleaned = [clean_column_name(col) for col in columns]
