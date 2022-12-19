@@ -45,28 +45,15 @@
       "group": "Introduction",
       "pages": [
         "introduction/overview",
-        "introduction/setup",
-        "introduction/tutorials",
-        "introduction/features",
-        "introduction/core-design-principles",
-        "introduction/core-abstractions"
-      ]
-    },
-    {
-      "group": "Getting Started",
-      "pages": [
-        "getting-started/setup",
-        "getting-started/data-pipeline-management",
-        "getting-started/kernels"
+        "getting-started/setup"
       ]
     },
     {
       "group": "Tutorials",
       "pages": [
-        "tutorials/train-model",
         "tutorials/load-api-data",
-        "tutorials/integrate-to-airflow",
-        "tutorials/setup-dbt"
+        "tutorials/setup-dbt",
+        "tutorials/train-model"
       ]
     },
     {
@@ -74,13 +61,42 @@
       "pages": [
         "design/core-design-principles",
         "design/core-abstractions",
+        "design/data-pipeline-management",
+        "design/blocks"
+      ]
+    },
+    {
+      "group": "Data integrations",
+      "pages": [
+        "data-integrations/overview",
         {
-          "group": "Blocks",
+          "group": "Sources",
           "pages": [
-            "design/blocks",
-            "design/data-loading"
+            "data-integrations/sources/overview",
+            "data-integrations/sources/add-new-source",
+            "data-integrations/sources/adapt-existing-source"
+          ]
+        },
+        {
+          "group": "Destinations",
+          "pages": [
+            "data-integrations/destinations/overview",
+            "data-integrations/destinations/add-new-destination",
+            "data-integrations/destinations/adapt-existing-destination"
           ]
         }
+      ]
+    },
+    {
+      "group": "DBT",
+      "pages": [
+        "dbt/overview",
+        "dbt/add-existing-dbt",
+        "dbt/run-single-model",
+        "dbt/run-selected-model",
+        "dbt/running-dbt-tests",
+        "dbt/sources",
+        "dbt/connection-profiles"
       ]
     },
     {
@@ -150,42 +166,8 @@
       ]
     },
     {
-      "group": "Data integrations",
-      "pages": [
-        "data-integrations/overview",
-        {
-          "group": "Sources",
-          "pages": [
-            "data-integrations/sources/overview",
-            "data-integrations/sources/add-new-source",
-            "data-integrations/sources/adapt-existing-source"
-          ]
-        },
-        {
-          "group": "Destinations",
-          "pages": [
-            "data-integrations/destinations/overview",
-            "data-integrations/destinations/add-new-destination",
-            "data-integrations/destinations/adapt-existing-destination"
-          ]
-        }
-      ]
-    },
-    {
       "group": "Integrations",
       "pages": [
-        {
-          "group": "DBT",
-          "pages": [
-            "integrations/dbt",
-            "integrations/add-existing-dbt",
-            "integrations/connection-profiles",
-            "integrations/dbt-models",
-            "integrations/run-single-model",
-            "integrations/run-selected-model",
-            "integrations/running-dbt-tests"
-          ]
-        },
         "integrations/spark-pyspark",
         {
           "group": "Databases, Data Warehouses, Data Lakes, etc.",
@@ -221,6 +203,7 @@
         {
           "group": "Blocks",
           "pages": [
+            "design/data-loading",
             "guides/transformer-blocks",
             "guides/sql-blocks",
             "guides/r-blocks",
