@@ -150,12 +150,30 @@
       ]
     },
     {
+      "group": "Data integrations",
+      "pages": [
+        "data-integrations/overview",
+        {
+          "group": "Sources",
+          "pages": [
+            "data-integrations/sources/overview",
+            "data-integrations/sources/add-new-source",
+            "data-integrations/sources/adapt-existing-source"
+          ]
+        },
+        {
+          "group": "Destinations",
+          "pages": [
+            "data-integrations/destinations/overview",
+            "data-integrations/destinations/add-new-destination",
+            "data-integrations/destinations/adapt-existing-destination"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Integrations",
       "pages": [
-        {
-          "group": "Data Integrations",
-          "pages": ["integrations/data-integrations", "integrations/add-new-source"]
-        },
         {
           "group": "DBT",
           "pages": [
@@ -182,7 +200,10 @@
         },
         {
           "group": "Existing Tools",
-          "pages": ["integrations/airflow", "integrations/prefect"]
+          "pages": [
+            "integrations/airflow",
+            "integrations/prefect"
+          ]
         }
       ]
     },
@@ -218,7 +239,9 @@
         },
         {
           "group": "Testing",
-          "pages": ["guides/data-validation"]
+          "pages": [
+            "guides/data-validation"
+          ]
         },
         "guides/templates",
         "guides/load-data-s3",
@@ -227,15 +250,25 @@
     },
     {
       "group": "Community",
-      "pages": ["community/contributing", "community/support"]
+      "pages": [
+        "community/contributing",
+        "community/support"
+      ]
     },
     {
       "group": "Contributing",
-      "pages": ["contributing/charts/how-to-add", "contributing/testing"]
+      "pages": [
+        "contributing/charts/how-to-add",
+        "contributing/testing"
+      ]
     },
     {
       "group": "About",
-      "pages": ["about/features", "about/roadmap", "about/changelog"]
+      "pages": [
+        "about/features",
+        "about/roadmap",
+        "about/changelog"
+      ]
     }
   ],
   "backgroundImage": "/background.png",
