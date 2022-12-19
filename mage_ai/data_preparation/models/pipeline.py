@@ -321,6 +321,7 @@ class Pipeline:
 
         self.block_configs = config.get('blocks') or []
         self.widget_configs = config.get('widgets') or []
+        self.ecs_config = config.get('ecs_config') or dict()
 
         def build_shared_args_kwargs(c):
             block_type = c.get('type')

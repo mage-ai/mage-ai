@@ -35,7 +35,7 @@ class EcsTaskManager:
             json.dump(metadata, file)
 
     def list_tasks(self):
-        region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+        region_name = 'us-west-1'
         config = Config(region_name=region_name)
         ec2_client = boto3.client('ec2', config=config)
 
@@ -71,8 +71,15 @@ class EcsTaskManager:
 
         return tasks + stopped_instances
 
-    def create_task(self, name: str, task_definition: str, container_name: str):
-        region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    def create_task(
+        self,
+        name: str,
+        task_definition: str,
+        container_name: str,
+        command: str = None,
+        **kwargs,
+    ):
+        region_name = 'us-west-1'
         config = Config(region_name=region_name)
         ec2_client = boto3.client('ec2', config=config)
 
@@ -98,6 +105,7 @@ class EcsTaskManager:
                     'value': name,
                 }
             ],
+            **kwargs,
         )
 
         self.instance_metadata = {
@@ -105,7 +113,10 @@ class EcsTaskManager:
             name: dict()
         }
 
-        return run_task(f'mage start {name}', ecs_config=ecs_config)
+        if command is None:
+            command = f'mage start {name}'
+
+        return run_task(command, ecs_config=ecs_config)
 
     def stop_task(self, task_arn: str):
         return stop_task(task_arn, self.cluster_name)

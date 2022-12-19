@@ -53,6 +53,11 @@ class ExecutorType(str, Enum):
     PYSPARK = 'pyspark'
 
 
+class StreamExecutorType(str, Enum):
+    ECS = 'ecs'
+    STANDARD = 'standard'
+
+
 class PipelineType(str, Enum):
     INTEGRATION = 'integration'
     PYTHON = 'python'

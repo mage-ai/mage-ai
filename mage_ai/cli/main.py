@@ -90,7 +90,9 @@ Commands:
         parser.add_argument('--execution_partition', nargs='?', type=str)
         parser.add_argument('--executor_type', nargs='?', type=str)
         parser.add_argument('--callback_url', nargs='?', type=str)
+        parser.add_argument('--pipeline_run_id', nargs='?', type=int)
         parser.add_argument('--block_run_id', nargs='?', type=int)
+        parser.add_argument('--stream', nargs='?', type=str)
         parser.add_argument('--runtime-vars', nargs="+")
         parser.add_argument('--skip-sensors', type=bool)
 
@@ -101,6 +103,9 @@ Commands:
         execution_partition = args.get('execution_partition')
         executor_type = args.get('executor_type')
         callback_url = args.get('callback_url')
+        pipeline_run_id = args.get('pipeline_run_id')
+        block_run_id = args.get('block_run_id')
+        stream = args.get('stream')
         runtime_vars = args.get('runtime_vars')
         skip_sensors = args.get('skip_sensors', False)
 
@@ -124,7 +129,19 @@ Commands:
         from mage_ai.orchestration.db import db_connection
         db_connection.start_session()
 
-        if block_uuid is None:
+        if stream is not None:
+            ExecutorFactory.get_stream_executor(
+                pipeline,
+                stream,
+                execution_partition=execution_partition,
+                executor_type=executor_type,
+            ).execute(
+                callback_url=callback_url,
+                variables=default_variables,
+                runtime_variables=runtime_variables,
+                pipeline_run_id=pipeline_run_id,
+            )
+        elif block_uuid is None:
             ExecutorFactory.get_pipeline_executor(pipeline).execute(
                 analyze_outputs=False,
                 global_vars=global_vars,

@@ -1,9 +1,12 @@
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
+from mage_ai.data_preparation.executors.stream_executor import StreamExecutor
+from mage_ai.data_preparation.executors.stream_executor.ecs_stream_executor import EcsStreamExecutor
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     ExecutorType,
     PipelineType,
+    StreamExecutorType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.code import is_pyspark_code
@@ -26,6 +29,19 @@ class ExecutorFactory:
             return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
             return PipelineExecutor(pipeline)
+
+    @classmethod
+    def get_stream_executor(
+        self,
+        pipeline: Pipeline,
+        stream: str,
+        execution_partition: str = None,
+        executor_type: StreamExecutorType = None,
+    ) -> StreamExecutor:
+        if executor_type == StreamExecutorType.ECS:
+            return EcsStreamExecutor(pipeline, stream, execution_partition)
+        else:
+            return StreamExecutor(pipeline, stream, execution_partition)
 
     @classmethod
     def get_block_executor(

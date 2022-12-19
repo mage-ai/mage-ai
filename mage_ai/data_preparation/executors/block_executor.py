@@ -61,7 +61,6 @@ class BlockExecutor:
             try:
                 result = self._execute(
                     analyze_outputs=analyze_outputs,
-                    callback_url=callback_url,
                     global_vars=global_vars,
                     update_status=update_status,
                     input_from_output=input_from_output,
@@ -93,7 +92,7 @@ class BlockExecutor:
             if on_complete is not None:
                 on_complete(self.block_uuid)
             elif callback_url is not None:
-                self.__update_block_run_status(callback_url, 'completed', tags)
+                self.__update_block_run_status(callback_url, 'completed', tags=tags)
 
             return result
         finally:
@@ -102,7 +101,6 @@ class BlockExecutor:
     def _execute(
         self,
         analyze_outputs: bool = False,
-        callback_url: str = None,
         global_vars: Dict = None,
         update_status: bool = False,
         input_from_output: Dict = None,
@@ -148,7 +146,7 @@ class BlockExecutor:
 
         return result
 
-    def __update_block_run_status(self, callback_url: str, status: str, tags: dict):
+    def __update_block_run_status(self, callback_url: str, status: str, tags: dict = None):
         """Update the status of block run by edither updating the BlockRun db object or making API call
 
         Args:

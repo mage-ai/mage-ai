@@ -8,7 +8,7 @@ from mage_ai.data_preparation.models.block.utils import (
     create_block_runs_from_dynamic_block,
     is_dynamic_block,
 )
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.constants import PipelineType, StreamExecutorType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
@@ -440,139 +440,27 @@ def run_integration_pipeline(
         _start_date=start_date,
     )
 
-    data_loader_block = integration_pipeline.data_loader
-    data_exporter_block = integration_pipeline.data_exporter
+    # data_loader_block = integration_pipeline.data_loader
+    # data_exporter_block = integration_pipeline.data_exporter
 
     for stream in integration_pipeline.streams(variables):
         tap_stream_id = stream['tap_stream_id']
-        destination_table = stream.get('destination_table', tap_stream_id)
-
-        block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
-        if len(block_runs_for_stream) == 0:
-            continue
-
-        indexes = [0]
-        for br in block_runs_for_stream:
-            parts = br.block_uuid.split(':')
-            if len(parts) >= 3:
-                indexes.append(int(parts[2]))
-        max_index = max(indexes)
-
-        all_block_runs_for_stream = list(filter(
-            lambda br: tap_stream_id in br.block_uuid,
-            all_block_runs,
-        ))
-        all_indexes = [0]
-        for br in all_block_runs_for_stream:
-            parts = br.block_uuid.split(':')
-            if len(parts) >= 3:
-                all_indexes.append(int(parts[2]))
-        max_index_for_stream = max(all_indexes)
-
-        for idx in range(max_index + 1):
-            block_runs_in_order = []
-            current_block = data_loader_block
-
-            while True:
-                block_runs_in_order.append(
-                    find(
-                        lambda b: b.block_uuid == f'{current_block.uuid}:{tap_stream_id}:{idx}',
-                        all_block_runs,
-                    )
-                )
-                downstream_blocks = current_block.downstream_blocks
-                if len(downstream_blocks) == 0:
-                    break
-                current_block = downstream_blocks[0]
-
-            data_loader_uuid = f'{data_loader_block.uuid}:{tap_stream_id}:{idx}'
-            data_exporter_uuid = f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}'
-
-            data_loader_block_run = find(
-                lambda b: b.block_uuid == data_loader_uuid,
-                all_block_runs,
-            )
-            data_exporter_block_run = find(
-                lambda b: b.block_uuid == data_exporter_uuid,
-                block_runs_for_stream,
-            )
-            if not data_loader_block_run or not data_exporter_block_run:
-                continue
-
-            transformer_block_runs = [br for br in block_runs_in_order if br.block_uuid not in [
-                data_loader_uuid,
-                data_exporter_uuid,
-            ]]
-
-            index = stream.get('index', idx)
-
-            shared_dict = dict(
-                destination_table=destination_table,
-                index=index,
-                is_last_block_run=(index == max_index_for_stream),
-                selected_streams=[
-                    tap_stream_id,
-                ],
-            )
-            block_runs_and_configs = [
-                (data_loader_block_run, shared_dict),
-            ] + [(br, shared_dict) for br in transformer_block_runs] + [
-                (data_exporter_block_run, shared_dict),
-            ]
-
-            for idx2, tup in enumerate(block_runs_and_configs):
-                block_run, template_runtime_configuration = tup
-
-                tags_updated = merge_dict(tags, dict(
-                    block_run_id=block_run.id,
-                    block_uuid=block_run.block_uuid,
-                ))
-                block_run.update(
-                    started_at=datetime.now(),
-                    status=BlockRun.BlockRunStatus.RUNNING,
-                )
-                pipeline_scheduler.logger.info(
-                    f'Start a process for BlockRun {block_run.id}',
-                    **tags_updated,
-                )
-
-                output = run_block(
-                    pipeline_run_id,
-                    block_run.id,
-                    variables,
-                    tags_updated,
-                    pipeline_type=PipelineType.INTEGRATION,
-                    verify_output=False,
-                    runtime_arguments=runtime_arguments,
-                    schedule_after_complete=False,
-                    template_runtime_configuration=template_runtime_configuration,
-                )
-                if 'output' in output and len(output['output']) >= 1:
-                    execution_process_manager.set_block_process(
-                        pipeline_run_id,
-                        block_run.id,
-                        output['output'][0],
-                    )
-
-                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
-                   f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
-
-                    tags2 = merge_dict(tags_updated.get('tags', {}), dict(
-                        destination_table=destination_table,
-                        index=index,
-                        stream=tap_stream_id,
-                    ))
-                    pipeline_scheduler.logger.info(
-                        f'Calculate metrics for pipeline run {pipeline_run.id} started.',
-                        **tags_updated,
-                        tags=tags2,
-                    )
-                    calculate_metrics(pipeline_run)
-                    pipeline_scheduler.logger.info(
-                        f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
-                        **tags_updated,
-                        tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
-                    )
+        executor_type = StreamExecutorType.STANDARD
+        if integration_pipeline.ecs_config:
+            executor_type = StreamExecutorType.ECS
+        return ExecutorFactory.get_stream_executor(
+            integration_pipeline,
+            tap_stream_id,
+            execution_partition=pipeline_run.execution_partition,
+            executor_type=executor_type,
+        ).execute(
+            variables=variables,
+            runtime_arguments=runtime_arguments,
+            pipeline_run_id=pipeline_run_id,
+            executable_block_runs=block_runs,
+            tags=tags,
+            all_block_runs=all_block_runs,
+        )
 
 
 def run_block(
@@ -580,6 +468,7 @@ def run_block(
     block_run_id,
     variables,
     tags,
+    callback_url: str = None,
     input_from_output: Dict = None,
     pipeline_type: PipelineType = None,
     verify_output: bool = True,
@@ -613,6 +502,7 @@ def run_block(
     ).execute(
         analyze_outputs=False,
         block_run_id=block_run.id,
+        callback_url=callback_url,
         global_vars=variables,
         update_status=False,
         on_complete=on_complete,
@@ -736,6 +626,7 @@ def schedule_all():
     for r in active_pipeline_runs:
         try:
             r.refresh()
+            print('pipeline run:', r)
             PipelineScheduler(r).schedule()
         except Exception:
             print(f'Failed to schedule {r}')
