@@ -67,7 +67,7 @@ class AmazonS3(Source):
 
             key = d['Key']
             parts = key.split('/')
-            stream_id = '/'.join(parts[:-1])
+            stream_id = '_'.join(parts[:-1])
 
             df = self.__build_df(key)
 
