@@ -45,7 +45,8 @@
       "group": "Introduction",
       "pages": [
         "introduction/overview",
-        "getting-started/setup"
+        "getting-started/setup",
+        "community/contributing"
       ]
     },
     {
@@ -172,10 +173,9 @@
       "pages": [
         "integrations/spark-pyspark",
         {
-          "group": "Databases, Data Warehouses, Data Lakes, etc.",
+          "group": "Data",
           "pages": [
             "integrations/databases/BigQuery",
-            "integrations/databases/DeltaLake",
             "integrations/databases/PostgreSQL",
             "integrations/databases/Redshift",
             "integrations/databases/S3",
@@ -183,10 +183,9 @@
           ]
         },
         {
-          "group": "Existing Tools",
+          "group": "Others",
           "pages": [
             "integrations/airflow",
-            "integrations/airflow2",
             "integrations/prefect"
           ]
         }
@@ -229,24 +228,12 @@
             "guides/data-validation"
           ]
         },
+        "guides/integrate-mage-airflow",
         "guides/templates",
         "guides/load-data-s3",
-        "guides/export-data-s3"
-      ]
-    },
-    {
-      "group": "Community",
-      "pages": [
-        "community/contributing",
-        "community/support"
-      ]
-    },
-    {
-      "group": "Contributing",
-      "pages": [
         "contributing/charts/how-to-add",
-        "contributing/testing",
-        "getting-started/kernels"
+        "getting-started/kernels",
+        "guides/export-data-s3"
       ]
     },
     {
