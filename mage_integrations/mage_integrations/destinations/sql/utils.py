@@ -44,12 +44,14 @@ def build_alter_table_command(
     column_type_mapping: Dict,
     columns: List[str],
     full_table_name: str,
+    column_identifier: str = '',
 ) -> str:
     if not columns:
         return None
 
     columns_and_types = [
-        f"ADD COLUMN {clean_column_name(col)} {column_type_mapping[col]['type_converted']}" for col
+        f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
+        f"{column_type_mapping[col]['type_converted']}" for col
         in columns
     ]
     # TODO: support add new unique constraints
