@@ -20,7 +20,7 @@ from typing import Dict, List, Tuple
 
 
 def convert_array(value, column_settings):
-    if type(value) is list:
+    if type(value) is list and value:
         value_string = ', '.join([str(i) for i in value])
         return value_string
 

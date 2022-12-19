@@ -124,6 +124,13 @@ def column_type_mapping(
                     string_type=string_type,
                 )
                 column_type_converted = convert_array_column_type_func(item_type_converted)
+            else:
+                column_type_converted = convert_column_type_func(
+                    column_type,
+                    column_settings,
+                    number_type=number_type,
+                    string_type=string_type,
+                )
         else:
             column_type_converted = convert_column_type_func(
                 column_type,
