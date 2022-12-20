@@ -25,19 +25,19 @@
   },
   "anchors": [
     {
-      "name": "Watch Demo",
+      "name": "Watch 2 min demo",
       "icon": "circle-play",
       "url": "https://www.youtube.com/watch?v=hrsErfPDits"
     },
     {
-      "name": "Community",
-      "icon": "slack",
-      "url": "https://www.mage.ai/chat"
+      "name": "Play with live tool",
+      "icon": "bullseye-pointer",
+      "url": "https://demo.mage.ai"
     },
     {
-      "name": "Contact Us",
-      "icon": "envelope",
-      "url": "mailto:hello@mage.ai"
+      "name": "Get instant help",
+      "icon": "slack",
+      "url": "https://www.mage.ai/chat"
     }
   ],
   "navigation": [
@@ -271,11 +271,22 @@
       ]
     },
     {
+      "group": "Community",
+      "pages": [
+        "community/github",
+        "community/slack",
+        "community/linkedin",
+        "community/twitter",
+        "community/blog",
+        "community/contact"
+      ]
+    },
+    {
       "group": "About",
       "pages": [
-        "about/roadmap",
+        "about/features",
         "about/changelog",
-        "about/features"
+        "about/roadmap"
       ]
     }
   ],
