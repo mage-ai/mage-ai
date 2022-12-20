@@ -260,8 +260,8 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
   src="media/data-pipeline-overview.jpg"
 />
 
-New? We recommend reading about <b>[blocks](docs/blocks/README.md)</b> and
-learning from a <b>[hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/README.md)</b>.
+New? We recommend reading about <b>[blocks](https://docs.mage.ai/design/blocks)</b> and
+learning from a <b>[hands-on tutorial](https://docs.mage.ai/tutorials/load-api-data)</b>.
 
 [![Ask us questions on Slack](https://img.shields.io/badge/%20-Ask%20us%20questions%20on%20Slack-purple?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
