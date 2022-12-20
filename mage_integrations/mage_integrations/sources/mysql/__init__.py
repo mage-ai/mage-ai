@@ -44,7 +44,7 @@ WHERE table_schema = '{database}'
         return query
 
     def update_column_names(self, columns: List[str]) -> List[str]:
-        return list(map(lambda column: f'"{column}"', columns))
+        return list(map(lambda column: f'`{column}`', columns))
 
 
 if __name__ == '__main__':
