@@ -308,6 +308,7 @@ function CodeOutput({
     <>
       {contained && (
         <ContainerStyle
+          addBottomPadding={isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK}
           blockType={blockType}
           executedAndIdle={executedAndIdle}
           hasError={hasError}
