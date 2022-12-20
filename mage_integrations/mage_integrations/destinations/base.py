@@ -498,7 +498,7 @@ class Destination():
             if not v1:
                 continue
 
-            if type(v1) is list:
+            if type(v1) is list and schema['properties'][k].get('items'):
                 items_dict = schema['properties'][k]['items']
                 item_types = []
 

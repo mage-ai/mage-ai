@@ -20,7 +20,7 @@ from typing import Dict, List, Tuple
 
 
 def convert_array(value, column_settings):
-    if type(value) is list:
+    if type(value) is list and value:
         value_string = ', '.join([str(i) for i in value])
         return value_string
 
@@ -77,6 +77,8 @@ class Snowflake(Destination):
                 columns=schema['properties'].keys(),
                 full_table_name=f'"{database_name}"."{schema_name}"."{table_name}"',
                 unique_constraints=unique_constraints,
+                column_identifier='"',
+
             ),
         ]
 
@@ -113,6 +115,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 ),
                 columns=new_columns,
                 full_table_name=f'"{database_name}"."{schema_name}"."{table_name}"',
+                column_identifier='"',
             ),
         ]
 
@@ -141,6 +144,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             convert_array_func=convert_array,
             convert_column_to_type_func=convert_column_if_json,
             records=records,
+            column_identifier='"'
         )
 
         insert_columns = ', '.join(insert_columns)
@@ -176,8 +180,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 f'FROM VALUES {insert_values}',
             ])]
 
-            unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns]
+            unique_constraints = [f'"{clean_column_name(col)}"' for col in unique_constraints]
+            columns_cleaned = [f'"{clean_column_name(col)}"' for col in columns]
 
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',

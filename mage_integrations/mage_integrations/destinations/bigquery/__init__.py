@@ -128,6 +128,7 @@ WHERE TABLE_NAME = '{table_name}'
                 ),
                 columns=new_columns,
                 full_table_name=f'{schema_name}.{table_name}',
+                column_identifier='`',
             ),
         ]
 
@@ -383,7 +384,7 @@ WHERE table_id = '{table_name}'
 
             while query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * 0.75) and \
                 len(query_parameters) < (MAX_QUERY_PARAMETERS * 0.75) and \
-                row_idx + 1 < len(insert_values):
+                    row_idx + 1 < len(insert_values):
 
                 row_idx += 1
 
@@ -450,6 +451,7 @@ WHERE table_id = '{table_name}'
             job_results.append(result)
 
         return job_results, jobs
+
 
 if __name__ == '__main__':
     main(BigQuery)
