@@ -183,9 +183,15 @@
           ]
         },
         {
-          "group": "Misc",
+          "group": "Airflow",
           "pages": [
             "integrations/airflow",
+            "guides/integrate-mage-airflow"
+          ]
+        },
+        {
+          "group": "Prefect",
+          "pages": [
             "integrations/prefect"
           ]
         }
@@ -195,31 +201,53 @@
       "group": "Guides",
       "pages": [
         {
-          "group": "Building pipelines",
+          "group": "Pipelines",
           "pages": [
             "guides/batch-pipeline",
-            "guides/streaming-pipeline",
-            "guides/data-integration-pipeline"
+            "guides/data-integration-pipeline",
+            "guides/streaming-pipeline"
           ]
         },
         {
           "group": "Blocks",
           "pages": [
-            "design/data-loading",
-            "guides/transformer-blocks",
+            {
+              "group": "Data loader",
+              "pages": [
+                "design/data-loading",
+                "guides/load-data-s3",
+                "guides/io_config"
+              ]
+            },
+            {
+              "group": "Transformer",
+              "pages": [
+                "guides/transformer-blocks"
+              ]
+            },
+            {
+              "group": "Data exporter",
+              "pages": [
+                "guides/export-data-s3"
+              ]
+            },
+            {
+              "group": "Sensors",
+              "pages": [
+                "guides/sensors"
+              ]
+            },
             "guides/sql-blocks",
-            "guides/r-blocks",
-            "guides/sensors"
+            "guides/r-blocks"
           ]
         },
         {
-          "group": "Triggering pipelines",
+          "group": "Schedules and triggers",
           "pages": [
             "guides/triggering-pipelines",
             "guides/schedule-pipelines",
             "guides/trigger-pipeline-event",
-            "guides/trigger-pipeline-api",
-            "guides/trigger-pipeline-aws"
+            "guides/trigger-pipeline-api"
           ]
         },
         {
@@ -228,20 +256,26 @@
             "guides/data-validation"
           ]
         },
-        "guides/integrate-mage-airflow",
-        "guides/templates",
-        "guides/load-data-s3",
-        "contributing/charts/how-to-add",
-        "getting-started/kernels",
-        "guides/export-data-s3"
+        {
+          "group": "Visualizations",
+          "pages": [
+            "contributing/charts/how-to-add"
+          ]
+        },
+        {
+          "group": "Misc",
+          "pages": [
+            "getting-started/kernels"
+          ]
+        }
       ]
     },
     {
       "group": "About",
       "pages": [
-        "about/features",
         "about/roadmap",
-        "about/changelog"
+        "about/changelog",
+        "about/features"
       ]
     }
   ],
