@@ -289,7 +289,7 @@ These are the fundamental concepts that Mage uses to operate.
 | [Project](https://docs.mage.ai/design/core-abstractions#project) | Like a repository on GitHub; this is where you write all your code. |
 | [Pipeline](https://docs.mage.ai/design/core-abstractions#pipeline) | Contains references to all the blocks of code you want to run, charts for visualizing data, and organizes the dependency between each block of code. |
 | [Block](https://docs.mage.ai/design/core-abstractions#block) | A file with code that can be executed independently or within a pipeline. |
-| [Data product]https://docs.mage.ai(/design/core-abstractions#data-product) | Every block produces data after it's been executed. These are called data products in Mage. |
+| [Data product](https://docs.mage.ai/design/core-abstractions#data-product) | Every block produces data after it's been executed. These are called data products in Mage. |
 | [Trigger](https://docs.mage.ai/design/core-abstractions#trigger) | A set of instructions that determine when or how a pipeline should run. |
 | [Run](https://docs.mage.ai/design/core-abstractions#run) | Stores information about when it was started, its status, when it was completed, any runtime variables used in the execution of the pipeline or block, etc. |
 
