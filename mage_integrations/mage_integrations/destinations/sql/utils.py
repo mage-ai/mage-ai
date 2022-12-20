@@ -28,13 +28,15 @@ def build_create_table_command(
     ]
 
     if unique_constraints:
-        unique_constraints = [clean_column_name(col) for col in unique_constraints]
+        unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
+        unique_constraints_escaped = [f'{column_identifier}{col}{column_identifier}'
+                                      for col in unique_constraints_clean]
         index_name = '_'.join([
             clean_column_name(full_table_name),
-        ] + unique_constraints)
+        ] + unique_constraints_clean)
         index_name = f'unique{index_name}'[:64]
         columns_and_types.append(
-            f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints)})",
+            f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints_escaped)})",
         )
 
     return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE {full_table_name} ({', '.join(columns_and_types)})"

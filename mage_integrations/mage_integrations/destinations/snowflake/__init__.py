@@ -180,13 +180,13 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 f'FROM VALUES {insert_values}',
             ])]
 
-            unique_constraints = [f'"{clean_column_name(col)}"' for col in unique_constraints]
+            unique_constraints_clean = [f'"{clean_column_name(col)}"' for col in unique_constraints]
             columns_cleaned = [f'"{clean_column_name(col)}"' for col in columns]
 
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
                 f'USING (SELECT * FROM {full_table_name_temp}) AS b',
-                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints])}",
+                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
             ]
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
