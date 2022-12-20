@@ -412,6 +412,7 @@ def run_integration_pipeline(
             shared_dict = dict(
                 destination_table=destination_table,
                 index=index,
+                is_last_block_run=(index == max_index),
                 selected_streams=[
                     tap_stream_id,
                 ],
