@@ -1,0 +1,453 @@
+---
+title: "Mage"
+description: "🧙 A modern replacement for Airflow."
+---
+
+<div
+  style={{
+    display: "flex",
+    flexWrap: "wrap",
+  }}
+>
+  <a
+    style={{
+      borderStyle: "none",
+      marginTop: "0.125rem",
+      marginBottom: "0.125rem",
+    }}
+    href="https://pypi.org/project/mage-ai/"
+  >
+    <img
+      style={{
+        margin: 0,
+      }}
+      src="https://img.shields.io/pypi/v/mage-ai?color=orange"
+      alt="Python package version"
+    />
+  </a>
+  <a
+    style={{
+      borderStyle: "none",
+      marginTop: "0.125rem",
+      marginBottom: "0.125rem",
+      marginLeft: "0.25rem",
+    }}
+    href="https://anaconda.org/conda-forge/mage-ai"
+  >
+    <img
+      style={{
+        margin: 0,
+      }}
+      src="https://anaconda.org/conda-forge/mage-ai/badges/version.svg"
+      alt="Anaconda version"
+    />
+  </a>
+  <a
+    style={{
+      borderStyle: "none",
+      marginTop: "0.125rem",
+      marginBottom: "0.125rem",
+      marginLeft: "0.25rem",
+    }}
+    href="https://opensource.org/licenses/Apache-2.0"
+  >
+    <img
+      style={{
+        margin: 0,
+      }}
+      src="https://img.shields.io/github/license/mage-ai/mage-ai?color=red"
+      alt="Apache version"
+    />
+  </a>
+  <a
+    style={{
+      borderStyle: "none",
+      marginTop: "0.125rem",
+      marginBottom: "0.125rem",
+      marginLeft: "0.25rem",
+    }}
+    href="https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A"
+  >
+    <img
+      style={{
+        margin: 0,
+      }}
+      src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack"
+      alt="Slack community"
+    />
+  </a>
+  <a
+    style={{
+      borderStyle: "none",
+      marginTop: "0.125rem",
+      marginBottom: "0.125rem",
+      marginLeft: "0.25rem",
+    }}
+    href="https://github.com/mage-ai/mage-ai"
+  >
+    <img
+      style={{
+        margin: 0,
+      }}
+      src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github"
+      alt="GitHub Stars"
+    />
+  </a>
+</div>
+
+![Mage](https://github.com/mage-ai/assets/blob/main/mascots/mascots-shorter.jpeg?raw=true)
+
+<CardGroup>
+  <Card
+    title="Watch demo"
+    icon="circle-play"
+    href="https://www.youtube.com/watch?v=hrsErfPDits"
+  >
+    Watch our 2 min video
+  </Card>
+  <Card title="Live demo" icon="bullseye-pointer" href="https://demo.mage.ai">
+    Open our interactive demo
+  </Card>
+  <Card
+    title="Documentation"
+    icon="book-open-cover"
+    href="/introduction/overview#intro"
+  >
+    Learn more about Mage
+  </Card>
+  <Card title="Community chat" icon="messages" href="https://www.mage.ai/chat">
+    Join our Slack community
+  </Card>
+</CardGroup>
+
+## Give your data team `magical` powers
+
+- **Integrate** and synchronize data from 3rd party sources.
+
+- Build real-time and batch pipelines to **transform** data using Python, SQL, and R.
+
+- Run, monitor, and **orchestrate** thousands of pipelines without losing sleep
+
+## `01 Build`
+
+Have you met anyone who said they loved developing in Airflow? That’s why we
+designed an easy developer experience that you’ll enjoy.
+
+- **Easy developer experience**: Start developing locally with a single command
+  or launch a dev environment in your cloud using Terraform.
+- **Language of choice**Write code in Python, SQL, or R in the same data
+  pipeline for ultimate flexibility.
+- **Engineering best practices built-in**: Each step in your pipeline is a
+  standalone file containing modular code that’s reusable and testable with data
+  validations. No more DAGs with spaghetti code.
+
+<img src="https://github.com/mage-ai/assets/blob/main/mage-build.gif?raw=true" />
+
+## `02 Preview`
+
+Stop wasting time waiting around for your DAGs to finish testing. Get instant
+feedback from your code each time you run it.
+
+- **Interactive code**: Immediately see results from your code’s output with an
+  interactive notebook UI.
+- **Data is a first-class citizen**: Each block of code in your pipeline
+  produces data that can be versioned, partitioned, and cataloged for future
+  use.
+- **Collaborate on cloud**: Develop collaboratively on cloud resources, version
+  control with Git, and test pipelines without waiting for an available shared
+  staging environment.
+
+<img src="https://github.com/mage-ai/assets/blob/main/mage-preview2.gif?raw=true" />
+
+## `03 Launch`
+
+Don't have a large team dedicated to Airflow? Mage makes it easy for a single
+developer or small team to scale up and manage thousands of pipelines.
+
+- **Fast deploy**: Deploy Mage to AWS, GCP, or Azure with only 2 commands using
+  maintained Terraform templates.
+- **Scaling made simple**: Transform very large datasets directly in your data
+  warehouse or through a native integration with Spark.
+- **Observability**: Operationalize your pipelines with built-in monitoring,
+  alerting, and observability through an intuitive UI.
+
+<img src="https://github.com/mage-ai/assets/blob/main/mage-launch.gif?raw=true" />
+
+---
+
+## 🧙 Intro
+
+Mage is an open-source data pipeline tool for transforming and integrating data.
+
+<CardGroup>
+  <Card title="Quick start" icon="person-running" href="#quick-start"></Card>
+  <Card title="Demo" icon="circle-play" href="#demo"></Card>
+  <Card title="Tutorials" icon="chalkboard-user" href="#tutorials"></Card>
+  <Card
+    title="Documentation"
+    icon="book-open-cover"
+    href="/introduction/overview"
+  ></Card>
+  <Card title="Features" icon="wand-magic-sparkles" href="#features"></Card>
+  <Card
+    title="Core design principles"
+    icon="palette"
+    href="/introduction/core-design-principles"
+  ></Card>
+  <Card
+    title="Core abstractions"
+    icon="layer-group"
+    href="/introduction/core-abstractions"
+  ></Card>
+  <Card title="Contributing" icon="hand" href="/community/contributing"></Card>
+</CardGroup>
+
+---
+
+## 🏃‍♀️ Quick start
+
+You can install and run Mage using Docker (recommended), `pip`, or `conda`.
+
+### Install using Docker
+
+1. Create a new project and launch tool (change `demo_project` to any other name
+   if you want):
+
+```bash
+docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+  mage start demo_project
+```
+
+2. Open http://localhost:6789 in your browser and build a pipeline.
+
+### Using `pip` or `conda`
+
+1. Install Mage
+
+```bash
+pip install mage-ai
+```
+
+or
+
+```bash
+conda install -c conda-forge mage-ai
+```
+
+For additional packages (e.g. `spark`, `postgres`, etc), please see
+[Installing extra packages](/getting-started/setup#installing-extra-packages).
+If you run into errors, please see
+[Install errors](/getting-started/setup#errors).
+
+2. Create new project and launch tool (change `demo_project` to any other name
+   if you want):
+
+```bash
+mage start demo_project
+```
+
+3. Open http://localhost:6789 in your browser and build a pipeline.
+
+---
+
+
+## 🎮 Demo
+
+Build and run a data pipeline with our [live demo app](https://demo.mage.ai/).
+
+<Warning>
+  The live demo is public to everyone, please don’t save anything sensitive
+  (e.g. passwords, secrets, etc).
+</Warning>
+
+### Demo video (2 min)
+
+<iframe
+  src="https://www.youtube.com/embed/hrsErfPDits"
+  title="Build and deploy data pipelines with Mage"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  className="w-full aspect-video"
+  allowfullscreen
+></iframe>
+
+---
+
+## 👩‍🏫 Tutorials
+
+<CardGroup>
+  <Card
+    title="Load data from API, transform it, and export it to PostgreSQL"
+    icon="database"
+    href="/tutorials/load-api-data"
+  ></Card>
+  <Card
+    title="Set up DBT models and orchestrate DBT runs"
+    icon="folder-gear"
+    href="/integrations/dbt-models"
+  ></Card>
+  <Card
+    title="Train model on Titanic dataset"
+    icon="ship"
+    href="/tutorials/train-model"
+  ></Card>
+  <Card
+    title="Integrate Mage into an existing Airflow project"
+    icon="file-import"
+    href="/integrations/airflow"
+  ></Card>
+</CardGroup>
+
+<img className="w-80" src="/media/mage-fire-charging-up.svg" alt="Fire mage" />
+
+---
+
+## 🔮 [Features](/about/features)
+
+| 🎶  | [Orchestration](/getting-started/data-pipeline-management)                                 | Schedule and manage data pipelines with observability.                 |
+| --- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 📓  | [Notebook](/about/features#notebook-for-building-data-pipelines) | Interactive Python, SQL, & R editor for coding data pipelines.         |
+| 🏗️  | [Data integrations](/integrations/data-integrations)             | Synchronize data from 3rd party sources to your internal destinations. |
+| 🚰  | [Streaming pipelines](/guides/streaming-pipeline)                | Ingest and transform real-time data.                                   |
+| ❎  | [DBT](integrations/dbt)                                          | Build, run, and manage your DBT models with Mage.                      |
+
+**A sample data pipeline defined across 3 files ➝**
+
+1. Load data ➝
+
+```bash
+@data_loader
+def load_csv_from_file():
+    return pd.read_csv('default_repo/titanic.csv')
+```
+
+2. Transform data ➝
+
+```bash
+@transformer
+def select_columns_from_df(df, *args):
+    return df[['Age', 'Fare', 'Survived']]
+```
+
+3. Export data ➝
+
+```bash
+@data_exporter
+def export_titanic_data_to_disk(df) -> None:
+    df.to_csv('default_repo/titanic_transformed.csv')
+```
+
+**What the data pipeline looks like in the UI ➝**
+
+<img
+  alt="data pipeline overview"
+  src="/media/data-pipeline-overview.jpg"
+/>
+
+New? We recommend reading about [blocks](/design/blocks) and learning from a
+[hands-on tutorial](/tutorials/load-api-data).
+
+<Card
+  title="Ask us questions on Slack"
+  icon="slack"
+  href="https://www.mage.ai/chat"
+></Card>
+
+---
+
+## 🏔️ [Core design principles](/design/core-design-principles)
+
+Every user experience and technical design decision adheres to these principles.
+
+| 💻  | [Easy developer experience](/design/core-design-principles#easy-developer-experience) | Open-source engine that comes with a custom notebook UI for building data pipelines.                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 🚢  | [Engineering best practices built-in](/design/core-design-principles#engineering-best-practices-built-in)                                                                 | Build and deploy data pipelines using modular code. No more writing throwaway code or trying to turn notebooks into scripts. |
+| 💳  | [Data is a first-class citizen](/design/core-design-principles#data-is-a-first-class-citizen)                                                                       | Designed from the ground up specifically for running data-intensive workflows.                                               |
+| 🪐  | [Scaling is made simple](/design/core-design-principles#scaling-is-made-simple)                                                                              | Analyze and process large data quickly for rapid iteration.                                                                  |
+
+---
+
+## 🛸 [Core abstractions](/design/core-abstractions)
+
+These are the fundamental concepts that Mage uses to operate.
+
+| [Project](/design/core-abstractions#project)           | Like a repository on GitHub; this is where you write all your code.                                                                                         |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Pipeline](/design/core-abstractions#pipeline)         | Contains references to all the blocks of code you want to run, charts for visualizing data, and organizes the dependency between each block of code.        |
+| [Block](/design/core-abstractions#block)               | A file with code that can be executed independently or within a pipeline.                                                                                   |
+| [Data product](/design/core-abstractions#data-product) | Every block produces data after it's been executed. These are called data products in Mage.                                                                 |
+| [Trigger](/design/core-abstractions#trigger)           | A set of instructions that determine when or how a pipeline should run.                                                                                     |
+| [Run](/design/core-abstractions#run)                   | Stores information about when it was started, its status, when it was completed, any runtime variables used in the execution of the pipeline or block, etc. |
+
+---
+
+## 🙋‍♀️ Contributing and developing
+
+Add features and instantly improve the experience for everyone.
+
+Check out the [contributing guide](/community/contributing) to setup your
+development environment and start building.
+
+---
+
+## 👨‍👩‍👧‍👦 Community
+
+Individually, we’re a mage.
+
+> 🧙 Mage
+>
+> Magic is indistinguishable from advanced technology. A mage is someone who
+> uses magic (aka advanced technology). Together, we’re Magers!
+
+> 🧙‍♂️🧙 Magers (`/ˈmājər/`)
+>
+> A group of mages who help each other realize their full potential! Let’s hang
+> out and chat together ➝
+
+<Card
+  title="Hang out on Slack"
+  icon="slack"
+  href="https://www.mage.ai/chat"
+></Card>
+
+For real-time news, fun memes, data engineering topics, and more, join us on ➝
+
+<Card
+  title="Twitter"
+  icon="twitter"
+  href="https://twitter.com/mage%5Fai"
+></Card>
+
+<Card
+  title="LinkedIn"
+  icon="linkedin"
+  href="https://www.linkedin.com/company/magetech"
+></Card>
+
+<Card
+  title="GitHub"
+  icon="github"
+  href="https://github.com/mage-ai/mage-ai"
+></Card>
+
+---
+
+## 🤔 Frequently Asked Questions (FAQs)
+
+Check out our
+[FAQ page](https://www.notion.so/mageai/Mage-FAQs-33d93ee65f934ed39568f8a4bc823b39)
+to find answers to some of our most asked questions.
+
+---
+
+## 🪪 License
+
+See the
+[LICENSE](https://github.com/mage-ai/mage-ai/blob/master/LICENSE) file
+for licensing information.
+
+<img
+  className="w-80"
+  src="/media/mage-water-charging-up.svg"
+  alt="Water mage"
+/>

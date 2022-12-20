@@ -17,22 +17,22 @@
 
 <p align="center">
   <a
+    href="https://docs.mage.ai"
+    target="_blank"
+  ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
+  <a
     href="https://www.youtube.com/watch?v=hrsErfPDits"
     target="_blank"
-  ><b>Watch demo</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
+  ><b>Watch 2 min demo</b></a>&nbsp;&nbsp;&nbsp;🌊&nbsp;&nbsp;&nbsp;
   <a
     href="https://demo.mage.ai"
     target="_blank"
-  ><b>Live demo</b></a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
-  <a
-    href="docs/README.md"
-    target="_blank"
-  ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
+  ><b>Play with live tool</b></a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
   <a
     href="https://www.mage.ai/chat"
     target="_blank"
   >
-    <b>Community chat</b>
+    <b>Get instant help</b>
   </a>
 </p>
 <div align="center">
@@ -145,11 +145,11 @@ Mage is an open-source data pipeline tool for transforming and integrating data.
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
-1. [Documentation](docs/README.md)
+1. [Documentation](https://docs.mage.ai)
 1. [Features](#-features)
-1. [Core design principles](docs/core/design_principles.md)
-1. [Core abstractions](docs/core/abstractions.md)
-1. [Contributing](docs/contributing/README.md)
+1. [Core design principles](https://docs.mage.ai/design/core-design-principles)
+1. [Core abstractions](https://docs.mage.ai/design/core-abstractions)
+1. [Contributing](https://docs.mage.ai/community/contributing)
 
 <br />
 
@@ -165,7 +165,7 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
       mage start demo_project
     ```
 
-    <sub>Want to use Spark or other integrations? Read more about [integrations](docs/README.md#integrations).</sub>
+    <sub>Want to use Spark or other integrations? Read more about [integrations](https://docs.mage.ai/data-integrations/overview).</sub>
 
 1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
@@ -182,9 +182,9 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
     conda install -c conda-forge mage-ai
     ```
 
-    <sub>For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](docs/README.md#installing-extra-packages).</sub>
+    <sub>For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](https://docs.mage.ai/getting-started/setup#installing-extra-packages).</sub>
 
-    <sub>If you run into errors, please see [Install errors](docs/tutorials/quick_start/setup.md#errors).</sub>
+    <sub>If you run into errors, please see [Install errors](https://docs.mage.ai/getting-started/setup#errors).</sub>
 
 1. Create new project and launch tool (change `demo_project` to any other name if you want):
     ```bash
@@ -213,24 +213,24 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 
 # 👩‍🏫 Tutorials
 
-- [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
-- [Load data from API, transform it, and export it to PostgreSQL](docs/tutorials/quick_start/etl_restaurant/README.md)
-- [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate_into_existing_project/README.md)
-- [Set up DBT models and orchestrate DBT runs](docs/tutorials/dbt/quick_start.md)
+- [Load data from API, transform it, and export it to PostgreSQL](https://docs.mage.ai/tutorials/load-api-data)
+- [Integrate Mage into an existing Airflow project](https://docs.mage.ai/integrations/dbt-models)
+- [Train model on Titanic dataset](https://docs.mage.ai/tutorials/train-model)
+- [Set up DBT models and orchestrate DBT runs](https://docs.mage.ai/integrations/airflow)
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
 <br />
 
-# 🔮 [Features](docs/features/README.md)
+# 🔮 [Features](https://docs.mage.ai/about/features)
 
 |   |   |   |
 | --- | --- | --- |
-| 🎶 | <b>[Orchestration](docs/features/orchestration/README.md)</b> | Schedule and manage data pipelines with observability. |
-| 📓 | <b>[Notebook](docs/features/README.md#notebook-for-building-data-pipelines)</b> | Interactive Python, SQL, & R editor for coding data pipelines. |
-| 🏗️ | <b>[Data integrations](docs/data_integrations/README.md)</b> | Synchronize data from 3rd party sources to your internal destinations. |
-| 🚰 | <b>[Streaming pipelines](docs/guides/pipelines/StreamingPipeline.md)</b> | Ingest and transform real-time data. |
-| ❎ | <b>[DBT](docs/dbt/README.md)</b> | Build, run, and manage your DBT models with Mage. |
+| 🎶 | <b>[Orchestration](https://docs.mage.ai/design/data-pipeline-management)</b> | Schedule and manage data pipelines with observability. |
+| 📓 | <b>[Notebook](https://docs.mage.ai/about/features#notebook-for-building-data-pipelines)</b> | Interactive Python, SQL, & R editor for coding data pipelines. |
+| 🏗️ | <b>[Data integrations](https://docs.mage.ai/data-integrations/overview)</b> | Synchronize data from 3rd party sources to your internal destinations. |
+| 🚰 | <b>[Streaming pipelines](https://docs.mage.ai/guides/streaming-pipeline)</b> | Ingest and transform real-time data. |
+| ❎ | <b>[DBT](https://docs.mage.ai/dbt/overview)</b> | Build, run, and manage your DBT models with Mage. |
 
 <b>A sample data pipeline defined across 3 files ➝</b>
 
@@ -267,31 +267,31 @@ learning from a <b>[hands-on tutorial](docs/tutorials/quick_start/etl_restaurant
 
 <br />
 
-# 🏔️ [Core design principles](docs/core/design_principles.md)
+# 🏔️ [Core design principles](https://docs.mage.ai/design/core-design-principles)
 
 Every user experience and technical design decision adheres to these principles.
 
 |   |   |   |
 | --- | --- | --- |
-| 💻 | [Easy developer experience](docs/core/design_principles.md#-easy-developer-experience) | Open-source engine that comes with a custom notebook UI for building data pipelines. |
-| 🚢 | [Engineering best practices built-in](docs/core/design_principles.md#engineering-best-practices-built-in) | Build and deploy data pipelines using modular code. No more writing throwaway code or trying to turn notebooks into scripts. |
-| 💳 | [Data is a first-class citizen](docs/core/design_principles.md#data-is-a-first-class-citizen) | Designed from the ground up specifically for running data-intensive workflows. |
-| 🪐 | [Scaling is made simple](docs/core/design_principles.md#scaling-is-made-simple) | Analyze and process large data quickly for rapid iteration. |
+| 💻 | [Easy developer experience](https://docs.mage.ai/design/core-design-principles#easy-developer-experience) | Open-source engine that comes with a custom notebook UI for building data pipelines. |
+| 🚢 | [Engineering best practices built-in](https://docs.mage.ai/design/core-design-principles#engineering-best-practices-built-in) | Build and deploy data pipelines using modular code. No more writing throwaway code or trying to turn notebooks into scripts. |
+| 💳 | [Data is a first-class citizen](https://docs.mage.ai/design/core-design-principles#data-is-a-first-class-citizen) | Designed from the ground up specifically for running data-intensive workflows. |
+| 🪐 | [Scaling is made simple](https://docs.mage.ai/design/core-design-principles#scaling-is-made-simple) | Analyze and process large data quickly for rapid iteration. |
 
 <br />
 
-# 🛸 [Core abstractions](docs/core/abstractions.md)
+# 🛸 [Core abstractions](https://docs.mage.ai/design/core-abstractions)
 
 These are the fundamental concepts that Mage uses to operate.
 
 |   |   |
 | --- | --- |
-| [Project](docs/core/abstractions.md#project) | Like a repository on GitHub; this is where you write all your code. |
-| [Pipeline](docs/core/abstractions.md#pipeline) | Contains references to all the blocks of code you want to run, charts for visualizing data, and organizes the dependency between each block of code. |
-| [Block](docs/core/abstractions.md#block) | A file with code that can be executed independently or within a pipeline. |
-| [Data product](docs/core/abstractions.md#data-product) | Every block produces data after it's been executed. These are called data products in Mage. |
-| [Trigger](docs/core/abstractions.md#trigger) | A set of instructions that determine when or how a pipeline should run. |
-| [Run](docs/core/abstractions.md#run) | Stores information about when it was started, its status, when it was completed, any runtime variables used in the execution of the pipeline or block, etc. |
+| [Project](https://docs.mage.ai/design/core-abstractions#project) | Like a repository on GitHub; this is where you write all your code. |
+| [Pipeline](https://docs.mage.ai/design/core-abstractions#pipeline) | Contains references to all the blocks of code you want to run, charts for visualizing data, and organizes the dependency between each block of code. |
+| [Block](https://docs.mage.ai/design/core-abstractions#block) | A file with code that can be executed independently or within a pipeline. |
+| [Data product]https://docs.mage.ai(/design/core-abstractions#data-product) | Every block produces data after it's been executed. These are called data products in Mage. |
+| [Trigger](https://docs.mage.ai/design/core-abstractions#trigger) | A set of instructions that determine when or how a pipeline should run. |
+| [Run](https://docs.mage.ai/design/core-abstractions#run) | Stores information about when it was started, its status, when it was completed, any runtime variables used in the execution of the pipeline or block, etc. |
 
 <br />
 
@@ -299,7 +299,7 @@ These are the fundamental concepts that Mage uses to operate.
 
 Add features and instantly improve the experience for everyone.
 
-Check out the <b>[contributing guide](docs/contributing/README.md)</b>
+Check out the <b>[contributing guide](https://docs.mage.ai/community/contributing)</b>
 to setup your development environment and start building.
 
 <br />

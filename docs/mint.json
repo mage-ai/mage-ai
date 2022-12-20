@@ -1,0 +1,300 @@
+{
+  "name": "Mage",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#7E53F8",
+    "light": "#BFA8FF",
+    "dark": "#4C22C0",
+    "ultraLight": "#E4DAFF",
+    "ultraDark": "#270A7A",
+    "background": {
+      "dark": "#121212"
+    }
+  },
+  "metadata": {
+    "og:image": "https://mintlify.s3-us-west-1.amazonaws.com/mage/media/social-media-image-mage.png",
+    "twitter:site": "@mage_ai"
+  },
+  "topbarCtaButton": {
+    "type": "github",
+    "url": "https://github.com/mage-ai/mage-ai"
+  },
+  "anchors": [
+    {
+      "name": "Watch 2 min demo",
+      "icon": "circle-play",
+      "url": "https://www.youtube.com/watch?v=hrsErfPDits"
+    },
+    {
+      "name": "Play with live tool",
+      "icon": "bullseye-pointer",
+      "url": "https://demo.mage.ai"
+    },
+    {
+      "name": "Get instant help",
+      "icon": "slack",
+      "url": "https://www.mage.ai/chat"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Introduction",
+      "pages": [
+        "introduction/overview",
+        "getting-started/setup",
+        "community/contributing"
+      ]
+    },
+    {
+      "group": "Tutorials",
+      "pages": [
+        "tutorials/load-api-data",
+        "tutorials/setup-dbt",
+        "tutorials/train-model"
+      ]
+    },
+    {
+      "group": "Design",
+      "pages": [
+        "design/core-design-principles",
+        "design/core-abstractions",
+        "design/data-pipeline-management",
+        "design/blocks"
+      ]
+    },
+    {
+      "group": "Data integrations",
+      "pages": [
+        "data-integrations/overview",
+        {
+          "group": "Sources",
+          "pages": [
+            "data-integrations/sources/overview",
+            "data-integrations/sources/add-new-source",
+            "data-integrations/sources/adapt-existing-source",
+            "data-integrations/sources/postgresql"
+          ]
+        },
+        {
+          "group": "Destinations",
+          "pages": [
+            "data-integrations/destinations/overview",
+            "data-integrations/destinations/add-new-destination",
+            "data-integrations/destinations/adapt-existing-destination"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "DBT",
+      "pages": [
+        "dbt/overview",
+        "dbt/add-existing-dbt",
+        "dbt/run-single-model",
+        "dbt/run-selected-model",
+        "dbt/running-dbt-tests",
+        "dbt/sources",
+        "dbt/connection-profiles",
+        "dbt/docs"
+      ]
+    },
+    {
+      "group": "Development",
+      "pages": [
+        "production/configuring-production-settings/runtime-variable",
+        "developing-in-the-cloud/setting-up-git",
+        "developing-in-the-cloud/multi-development-environment"
+      ]
+    },
+    {
+      "group": "Production",
+      "pages": [
+        "production/ci-cd",
+        {
+          "group": "Deployment",
+          "pages": [
+            "production/deploying-to-cloud/using-terraform",
+            {
+              "group": "AWS",
+              "pages": [
+                "production/deploying-to-cloud/aws/setup",
+                "production/deploying-to-cloud/aws/resources",
+                "production/deploying-to-cloud/aws/terraform-apply-policy",
+                "production/deploying-to-cloud/aws/terraform-destroy-policy",
+                "production/deploying-to-cloud/aws/emr-policy",
+                "production/deploying-to-cloud/aws-without-terraform"
+              ]
+            },
+            {
+              "group": "GCP",
+              "pages": [
+                "production/deploying-to-cloud/gcp/setup",
+                "production/deploying-to-cloud/gcp/resources"
+              ]
+            },
+            {
+              "group": "Azure",
+              "pages": [
+                "production/deploying-to-cloud/azure/setup",
+                "production/deploying-to-cloud/azure/resources"
+              ]
+            }
+          ]
+        },
+        {
+          "group": "Configuration",
+          "pages": [
+            "production/configuring-production-settings/compute-resource",
+            "production/databases/default"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Observability",
+      "pages": [
+        "production/observability/logging",
+        "production/observability/monitoring",
+        {
+          "group": "Alerting",
+          "pages": [
+            "production/observability/alerting-slack",
+            "production/observability/alerting-email"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Integrations",
+      "pages": [
+        "integrations/spark-pyspark",
+        {
+          "group": "Data",
+          "pages": [
+            "integrations/databases/BigQuery",
+            "integrations/databases/PostgreSQL",
+            "integrations/databases/Redshift",
+            "integrations/databases/S3",
+            "integrations/databases/Snowflake"
+          ]
+        },
+        {
+          "group": "Airflow",
+          "pages": [
+            "integrations/airflow",
+            "guides/integrate-mage-airflow"
+          ]
+        },
+        {
+          "group": "Prefect",
+          "pages": [
+            "integrations/prefect"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        {
+          "group": "Pipelines",
+          "pages": [
+            "guides/batch-pipeline",
+            "guides/data-integration-pipeline",
+            "guides/streaming-pipeline"
+          ]
+        },
+        {
+          "group": "Blocks",
+          "pages": [
+            {
+              "group": "Data loader",
+              "pages": [
+                "design/data-loading",
+                "guides/load-data-s3",
+                "guides/io_config"
+              ]
+            },
+            {
+              "group": "Transformer",
+              "pages": [
+                "guides/transformer-blocks"
+              ]
+            },
+            {
+              "group": "Data exporter",
+              "pages": [
+                "guides/export-data-s3"
+              ]
+            },
+            {
+              "group": "Sensors",
+              "pages": [
+                "guides/sensors"
+              ]
+            },
+            "guides/sql-blocks",
+            "guides/r-blocks"
+          ]
+        },
+        {
+          "group": "Schedules and triggers",
+          "pages": [
+            "guides/triggering-pipelines",
+            "guides/schedule-pipelines",
+            "guides/trigger-pipeline-event",
+            "guides/trigger-pipeline-api"
+          ]
+        },
+        {
+          "group": "Testing",
+          "pages": [
+            "guides/data-validation"
+          ]
+        },
+        {
+          "group": "Visualizations",
+          "pages": [
+            "contributing/charts/how-to-add"
+          ]
+        },
+        {
+          "group": "Misc",
+          "pages": [
+            "getting-started/kernels"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Community",
+      "pages": [
+        "community/github",
+        "community/slack",
+        "community/linkedin",
+        "community/twitter",
+        "community/blog",
+        "community/contact"
+      ]
+    },
+    {
+      "group": "About",
+      "pages": [
+        "about/features",
+        "about/changelog",
+        "about/roadmap"
+      ]
+    }
+  ],
+  "backgroundImage": "/background.png",
+  "footerSocials": {
+    "linkedin": "https://www.linkedin.com/company/magetech/",
+    "twitter": "https://twitter.com/mage_ai",
+    "facebook": "https://www.facebook.com/mageai",
+    "instagram": "https://www.instagram.com/mage_ai/"
+  }
+}
