@@ -192,6 +192,7 @@ class Source:
         """
         self.logger.info('Process started.')
         try:
+            raise Exception('test exception')
             if self.should_test_connection:
                 self.test_connection()
             elif self.load_sample_data:
