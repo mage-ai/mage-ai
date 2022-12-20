@@ -41,6 +41,7 @@ class StreamExecutor:
         all_block_runs: List[BlockRun] = None,
         callback_url: str = None,
     ):
+        print('---------------EXECUTING STREAM EXECUTOR!---------------')
         from mage_ai.orchestration.pipeline_scheduler import run_block
         pipeline_run = PipelineRun.query.get(pipeline_run_id)
         all_streams = self.pipeline.streams(variables)
