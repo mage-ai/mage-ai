@@ -192,7 +192,7 @@ class StreamExecutor:
                         tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
                     )
 
-    def __update_block_run_status(self, callback_url: str, status: str, tags: dict = None):
+    def _update_block_run_status(self, callback_url: str, status: str, tags: dict = None):
         response = requests.put(
             callback_url,
             data=json.dumps({

@@ -121,7 +121,7 @@ Commands:
         from mage_ai.data_preparation.variable_manager import get_global_variables
 
         sys.path.append(os.path.dirname(project_path))
-        pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
         default_variables = get_global_variables(pipeline_uuid)
         global_vars = merge_dict(default_variables, runtime_variables)

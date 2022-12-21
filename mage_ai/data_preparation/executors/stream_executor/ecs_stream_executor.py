@@ -5,6 +5,8 @@ from requests import get
 
 import json
 
+from mage_ai.orchestration.db.models import BlockRun
+
 
 class EcsStreamExecutor(StreamExecutor):
     def __init__(self, pipeline, stream_id: str, execution_partition: str = None):
@@ -15,6 +17,7 @@ class EcsStreamExecutor(StreamExecutor):
         self,
         **kwargs,
     ) -> None:
+        block_runs = kwargs.get('executable_block_runs', [])
         execution_partition = kwargs.get('execution_partition')
         pipeline_run_id = kwargs.get('pipeline_run_id')
         cmd = f'mage run {self.pipeline.repo_config.repo_name} {self.pipeline.uuid}'
@@ -35,7 +38,12 @@ class EcsStreamExecutor(StreamExecutor):
         callback_url = f'http://{ip}:6789/api/block_runs'
         options.append(f'--callback_url {callback_url}')
         options_str = ' '.join(options)
-        print('ecs config:', self.pipeline.ecs_config)
+
+        block_runs_for_stream = \
+            list(filter(lambda br: self.stream_id in br.block_uuid, block_runs))
+        for block_run in block_runs_for_stream:
+            block_run.update(status=BlockRun.BlockRunStatus.RUNNING)
+
         ecs_config = self.pipeline.ecs_config
         ecs_task_manager = EcsTaskManager(ecs_config.get('cluster'))
         ecs_task_manager.create_task(
