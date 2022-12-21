@@ -30,4 +30,8 @@ class GcpCloudRunBlockExecutor(BlockExecutor):
             callback_url = f'http://{ip}:6789/api/block_runs/{block_run_id}'
             options.append(f'--callback_url {callback_url}')
         options_str = ' '.join(options)
-        cloud_run.run_job(f'{cmd} {options_str}', cloud_run_xonfig=self.executor_config)
+        cloud_run.run_job(
+            f'{cmd} {options_str}',
+            f'mage-data-prep-{block_run_id}',
+            cloud_run_xonfig=self.executor_config,
+        )

@@ -47,6 +47,7 @@ class BlockType(str, Enum):
 class ExecutorType(str, Enum):
     LOCAL_PYTHON = 'local_python'
     ECS = 'ecs'
+    GCP_CLOUD_RUN = 'gcp_cloud_run'
     K8S = 'k8s'
     PYSPARK = 'pyspark'
 
