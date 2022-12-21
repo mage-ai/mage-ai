@@ -74,7 +74,7 @@ class BlockExecutor:
                         ),
                     )
                 elif callback_url is not None:
-                    self.__update_block_run_status(callback_url, 'failed')
+                    self.__update_block_run_status(callback_url, 'failed', tags)
                 raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:

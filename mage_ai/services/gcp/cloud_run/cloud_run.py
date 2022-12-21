@@ -1,3 +1,4 @@
+from google.api_core.exceptions import AlreadyExists
 from google.api.launch_stage_pb2 import LaunchStage
 from google.cloud import run_v2
 from google.oauth2 import service_account
@@ -57,13 +58,14 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
         job=job,
         job_id=job_id,
     )
+    try:
+        response = jobs_client.create_job(request=request)
+        print(json.dumps(response, indent=4, default=str))
+    except AlreadyExists:
+        pass
 
-    response = jobs_client.create_job(request=request)
-
-    print(json.dumps(response, indent=4, default=str))
-    
     # Run job
-    jobs_client.run_job(request=run_v2.RunJobRequest(
+    response = jobs_client.run_job(request=run_v2.RunJobRequest(
         name=f'{resource_prefix}/jobs/{job_id}'
     ))
     print(json.dumps(response, indent=4, default=str))
