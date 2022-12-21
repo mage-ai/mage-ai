@@ -273,6 +273,10 @@ function FileEditor({
             uuid: DEFAULT_TERMINAL_UUID,
           }));
         }}
+        title={!repoPath
+          ? 'Please use right panel terminal to install packages.'
+          : 'Pip install packages from your saved requirements.txt file (⌘+S to save).'
+        }
         uuid="FileEditor/InstallPackages"
       >
         Install packages
