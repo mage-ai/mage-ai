@@ -4,7 +4,7 @@ sidebarTitle: "Setup"
 description: "You can install Mage using Docker, pip, or conda."
 ---
 
-### Using Docker
+## Using Docker
 
 1. Create new project and launch tool
 
@@ -32,7 +32,7 @@ description: "You can install Mage using Docker, pip, or conda."
      mage run [project_name] [pipeline]
    ```
 
-#### Initialize new project
+### Initialize new project
 
 If you want to create a different project with a different name, run the
 following:
@@ -42,9 +42,39 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
   mage init [project_name]
 ```
 
+### Using PostgreSQL as database
+
+Mage uses SQLite as the default database engine. To use PostgreSQL as 
+the database engine, you'll need to run your Docker container slightly differently:
+
+1. Create Docker network
+
+   ```bash
+   docker network create mage-app
+   ```
+
+1. Start PostgreSQL Docker container in a separate window
+
+   ```bash
+   docker run --network mage-app --network-alias postgres_db \
+      -it -p 5432:5432 -v pgdata:/var/lib/postgresql/data \
+      -e POSTGRES_USER=<username> -e POSTGRES_PASSWORD=<password> \
+      -e POSTGRES_DB=<database> -e PG_DATA=/var/lib/postgresql/data/pgdata \
+      postgres:13-alpine3.17 postgres
+   ```
+
+1. Launch Mage with `MAGE_DATABASE_CONNECTION_URL` environment variable
+
+   ```bash
+   docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
+      -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
+      mageai/mageai \
+      mage start another_repo
+   ```
+
 ---
 
-### Using `pip` or [`conda`](https://github.com/conda-forge/mage-ai-feedstock)
+## Using `pip` or [`conda`](https://github.com/conda-forge/mage-ai-feedstock)
 
 1. Install Mage
 
@@ -73,7 +103,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
    mage run [project_name] [pipeline]
    ```
 
-#### Initialize new project
+### Initialize new project
 
 If you want to create a different project with a different name, run the
 following:
