@@ -265,7 +265,7 @@ function FileEditor({
         onClick={() => {
           openSidekickView(ViewKeyEnum.TERMINAL);
           sendMessage(JSON.stringify({
-            code: `!pip install -r ~/../home/src/${projectName}/requirements.txt`,
+            install_packages: true,
             uuid: DEFAULT_TERMINAL_UUID,
           }));
         }}
