@@ -183,10 +183,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             # Need to use Python magic command for changing directories
             code = re.sub(r'^!%cd|^!cd', '%cd', code)
 
-            install_packages = message.get('install_packages')
-            if install_packages:
-                code = f'!pip install -r {get_repo_path()}/requirements.txt'
-
             client = self.init_kernel_client(DEFAULT_KERNEL_NAME)
             msg_id = client.execute(code)
             uuid = message.get('uuid')

@@ -66,6 +66,9 @@ function FileEditor({
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const containerRef = useRef(null);
+
+  const { data: serverStatus } = api.status.list();
+  const repoPath = serverStatus?.status?.repo_path;
   const { data } = api.file_contents.detail(filePath);
   useEffect(() => {
     if (data?.file_content) {
@@ -260,12 +263,13 @@ function FileEditor({
   const installPackagesButtonEl = (
     <Spacing m={2}>
       <KeyboardShortcutButton
+        disabled={!repoPath}
         inline
         loading={loading}
         onClick={() => {
           openSidekickView(ViewKeyEnum.TERMINAL);
           sendMessage(JSON.stringify({
-            install_packages: true,
+            code: `!pip install -r ${repoPath}/requirements.txt`,
             uuid: DEFAULT_TERMINAL_UUID,
           }));
         }}
