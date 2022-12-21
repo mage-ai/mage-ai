@@ -454,10 +454,9 @@ To enable IP addresses access to specific endpoints, you can follow
 to add rules to security policy. Another way is to add a new rule through UI
 with the following values:
 
-| Mode | Match | Action | Priority | | --- | --- |
---- | --- | | Advanced mode |
-`request.path.startsWith('/api/pipeline_schedules/123/pipeline_runs') && inIpRange(origin.ip, '[IP address]/32')`
-| Allow | 200 |
+| Mode | Match | Action | Priority |
+| --- | --- | --- | --- |
+| Advanced mode | `request.path.startsWith('/api/pipeline_schedules/123/pipeline_runs') && inIpRange(origin.ip, '[IP address]/32')` | Allow | 200 |
 
 ### HTTPS enabling
 
