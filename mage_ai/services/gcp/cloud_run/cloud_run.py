@@ -1,3 +1,4 @@
+from google.api.launch_stage_pb2 import LaunchStage
 from google.cloud import run_v2
 from google.oauth2 import service_account
 from mage_ai.services.gcp.cloud_run.config import CloudRunConfig
@@ -5,7 +6,7 @@ import json
 import os
 
 
-def run_job(command: str, cloud_run_config: CloudRunConfig) -> None:
+def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None:
     if type(cloud_run_config) is dict:
         cloud_run_config = CloudRunConfig.load(config=cloud_run_config)
 
@@ -29,30 +30,42 @@ def run_job(command: str, cloud_run_config: CloudRunConfig) -> None:
     )
     service_template = existing_service.template
 
+    # Create job
     jobs_client = run_v2.JobsClient(credentials=credentials)
+
+    containers_with_cmd = service_template.containers
+    for c in containers_with_cmd:
+        c.command = command.split(' ')
     execution_template = run_v2.ExecutionTemplate(
         task_count=1,
         template=run_v2.TaskTemplate(
-            containers=service_template.containers,
+            containers=containers_with_cmd,
             volumes=service_template.volumes,
-            service_account=service_template.service_template,
+            service_account=service_template.service_account,
             execution_environment=service_template.execution_environment,
             encryption_key=service_template.encryption_key,
             vpc_access=service_template.vpc_access
         )
     )
-    job = run_v2.Job(execution_template=execution_template)
-    job.template = existing_service.template
-    job.template.revision = None
-    job.template.template.max_retries = 1187
+    job = run_v2.Job(
+        launch_stage=LaunchStage.BETA,
+        template=execution_template,
+    )
 
     request = run_v2.CreateJobRequest(
         parent=resource_prefix,
         job=job,
-        job_id='mage_data_prep',
+        job_id=job_id,
+        launch_stage=LaunchStage.BETA,
     )
 
     response = jobs_client.create_job(request=request)
+
+    print(json.dumps(response, indent=4, default=str))
     
+    # Run job
+    jobs_client.run_job(request=run_v2.RunJobRequest(
+        name=f'{resource_prefix}/jobs/{job_id}'
+    ))
     print(json.dumps(response, indent=4, default=str))
     return response
