@@ -262,7 +262,10 @@ function PipelineSchedules({
                     name: randomNameGenerator(),
                     schedule_interval: ScheduleIntervalEnum.ONCE,
                     schedule_type: ScheduleTypeEnum.TIME,
-                    start_time: dateFormatLong(new Date().toISOString(), { utcFormat: true }),
+                    start_time: dateFormatLong(
+                      new Date().toISOString(),
+                      { dayAgo: true, utcFormat: true },
+                    ),
                     status: ScheduleStatusEnum.ACTIVE,
                   },
                 });
