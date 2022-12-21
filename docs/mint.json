@@ -52,9 +52,21 @@
     {
       "group": "Tutorials",
       "pages": [
-        "tutorials/load-api-data",
+        {
+          "group": "ETL",
+          "pages": [
+            "tutorials/load-api-data",
+            "tutorials/etl/complete-project"
+          ]
+        },
         "tutorials/setup-dbt",
-        "tutorials/train-model"
+        {
+          "group": "ML",
+          "pages": [
+            "tutorials/train-model",
+            "tutorials/train/complete-project"
+          ]
+        }
       ]
     },
     {
