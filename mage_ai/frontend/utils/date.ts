@@ -13,13 +13,17 @@ export function dateFormatShort(text) {
 }
 
 export function dateFormatLong(text, opts?) {
-  const { utcFormat } = opts;
+  const { utcFormat, dayAgo } = opts;
+  let momentObj = moment(text);
 
   if (utcFormat) {
-    return moment(text).utc().format(DATE_FORMAT_LONG_NO_SEC);
+    momentObj = momentObj.utc();
+  }
+  if (dayAgo) {
+    momentObj = momentObj.subtract(1, 'days');
   }
 
-  return moment(text).format(DATE_FORMAT_LONG_NO_SEC);
+  return momentObj.format(DATE_FORMAT_LONG_NO_SEC);
 }
 
 export function dateFormatLongFromUnixTimestamp(text) {
