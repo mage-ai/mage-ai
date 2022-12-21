@@ -1,0 +1,386 @@
+---
+title: "Spark and PySpark"
+sidebarTitle: "Spark"
+description:
+  "This is a guide for using Spark (PySpark) with Mage in different cloud
+  providers (see a specific section for the cloud provider you use)."
+---
+
+Want to become a
+[Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/front/0/3/030f4058-54e5-4333-bd6c-2789c334bf12.jpg)?
+
+![](https://user-images.githubusercontent.com/78053898/199308674-afd8860e-09de-4003-a7ed-9ab2db221b0c.png)
+
+## AWS
+
+Here is an overview of the steps required to use Mage locally with Spark in AWS:
+
+1. [Create an EC2 key pair](#1-create-an-ec2-key-pair)
+2. [Create an S3 bucket for Spark](#2-create-an-s3-bucket-for-spark)
+3. [Start Mage](#3-start-mage)
+4. [Configure project’s metadata settings](#4-configure-projects-metadata-settings)
+5. [Launch EMR cluster](#5-launch-emr-cluster)
+6. [Allow EMR connection permissions](#6-allow-emr-connection-permissions)
+7. [Sample pipeline with PySpark code](#7-sample-pipeline-with-pyspark-code)
+8. [Debugging](#8-debugging)
+9. [Clean up](#9-clean-up)
+
+If you get stuck, run into problems, or just want someone to walk you through
+these steps, please join our [Slack](https://www.mage.ai/chat)
+
+### 1. Create an EC2 key pair
+
+If you don’t have an existing EC2 key pair that you use to SSH into EC2
+instances, follow
+[AWS’s guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html)
+on how to create an EC2 key pair.
+
+Once you created an EC2 key pair, note the name of the EC2 key pair and the full
+path of where you saved it on your local machine (we’ll need it later).
+
+### 2. Create an S3 bucket for Spark
+
+Using Spark on AWS EMR requires an AWS S3 bucket to store logs, scripts, etc.
+
+Follow
+[AWS’s guide](https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-overview.html)
+to create an S3 bucket. You don’t need to add any special permissions or
+policies to this bucket.
+
+Once you created an S3 bucket, note the name of the bucket (we’ll need it
+later).
+
+### 3. Start Mage
+
+Using Mage with Spark is much easier if you use Docker.
+
+Type this command in your terminal to start Mage using docker (Note:
+`demo_project` is the name of your project, you can change it to anything you
+want):
+
+```bash
+docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+  mage start demo_project
+```
+
+### 4. Configure project’s metadata settings
+
+Open your project’s `metadata.yaml` file located at the root of your project’s
+directory: `demo_project/metadata.yaml` (presuming your project is named
+`demo_project`).
+
+Change the values for the keys mentioned in the following steps.
+
+#### 4a. `ec2_key_name`
+
+Change the value for key `ec2_key_name` to equal the name of the EC2 key pair
+you created in an earlier step.
+
+For example, if your EC2 key pair is named `aws-ec2.pem` or `aws-ec2.pub`, then
+the value for the key `ec2_key_name` should be `aws-ec2`.
+
+#### 4b. `remote_variables_dir`
+
+Change the value for key `remote_variables_dir` to equal the S3 bucket you
+created in an earlier step.
+
+For example, if your S3 bucket is named `my-awesome-bucket`, then the value for
+the key `remote_variables_dir` should be `s3://my-awesome-bucket`.
+
+#### 4c. Remove optional settings
+
+You can remove the following 2 keys:
+
+1. `master_security_group`
+2. `slave_security_group`
+
+---
+
+Your final `metadata.yaml` file could look like this:
+
+```yaml
+variables_dir: ./
+remote_variables_dir: s3://my-awesome-bucket
+
+emr_config:
+  master_instance_type: "r5.4xlarge"
+  slave_instance_type: "r5.4xlarge"
+  ec2_key_name: aws-ec2
+```
+
+<Note>
+You may need to request an increase in quota limits for using those instance
+types.
+
+For more information on how to view your quota limits and request an increase,
+check out this
+[AWS document](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).
+
+</Note>
+
+### 5. Launch EMR cluster
+
+You’ll need an AWS Access Key ID and an AWS Secret Access Key. This is provided
+from AWS’s IAM Management console.
+
+Once you’ve acquired those credentials, do the following:
+
+#### 5a. Create IAM roles for EMR
+
+The following steps will create 2 IAM roles required for EMR.
+
+1. Install
+   [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+1. Run this command in your terminal
+   ([reference](https://docs.aws.amazon.com/cli/latest/reference/emr/create-default-roles.html))
+
+```bash
+aws emr create-default-roles
+```
+
+#### 5b. Run script to create cluster
+
+Using your AWS Access Key ID and an AWS Secret Access Key, run the following
+command in your terminal to launch an EMR cluster:
+
+<b>Using `pip`:</b>
+
+Note: You must have your AWS Access Key ID and an AWS Secret Access Key in your
+environment variables as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+respectively.
+
+```bash
+mage create_spark_cluster demo_project
+```
+
+<b>Using Docker:</b>
+
+```bash
+docker run -it \
+  -v $(pwd):/home/src mageai/mageai \
+  --env AWS_ACCESS_KEY_ID=your_key_id \
+  --env AWS_SECRET_ACCESS_KEY=your_access_key \
+  mage create_spark_cluster demo_project
+```
+
+This script will take a few minutes to complete. Once finished, your terminal
+will output something like this:
+
+```bash
+Creating EMR cluster for project: /home/src/demo_project
+Creating cluster...
+
+{
+  "JobFlowId": "j-3500M6WJOND9Q",
+  "ClusterArn": "...",
+  "ResponseMetadata": {
+    "RequestId": "...,
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "x-amzn-requestid": "...,
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "118",
+      "date": "Wed, 17 Aug 2022 04:32:33 GMT"
+    },
+    "RetryAttempts": 0
+  }
+}
+
+Cluster ID: j-3500M6WJOND9Q
+Waiting for cluster, this typically takes several minutes...
+Current status: STARTING..BOOTSTRAPPING.....WAITING
+Cluster j-3500M6WJOND9Q is created
+```
+
+### 6. Allow EMR connection permissions
+
+There are 2 ways to connect to your EMR remotely:
+
+1. Whitelist your IP
+1. SSH into EMR master node
+
+### Whitelist your IP
+
+1. Open the EC2 dashboard in AWS
+1. Click on "Security Groups" on the left side panel under the section "Network
+   & Security"
+1. Find the security group named "ElasticMapReduce-master"
+1. Add a new inbound rule with the following values:
+
+| Type       | Protocol | Port range | Source |
+| ---------- | -------- | ---------- | ------ |
+| Custom TCP | TCP      | 8998       | My IP  |
+
+This will allow your locally running Mage to remotely access AWS EMR.
+
+### SSH into EMR master node
+
+#### 1. Allow SSH access to EMR
+
+Add an inbound rule to the EMR master node’s security group to allow SSH access
+by following these steps:
+
+1. Go to
+   [Amazon EMR](https://us-west-2.console.aws.amazon.com/elasticmapreduce/home).
+2. Click on the cluster you just created.
+3. Under the section **Security and access**, click the link next to **Security
+   groups for Master:**. The link could look like this `sg-0bb79fd041def8c5d`
+   (depending on your security group ID).
+4. In the "Security Groups" page that just opened up, click on the row with the
+   "Security group name" value of "ElasticMapReduce-master".
+5. Under the section "Inbound rules", click the button on the right labeled
+   "Edit inbound rules".
+6. Scroll down and click "Add rule".
+7. Change the "type" dropdown from `Custom TCP` to `SSH`.
+8. Change the "Source" dropdown from `Custom` to `My IP`.
+9. Click "Save rules" in the bottom right corner of the page.
+
+#### 2. SSH into master node
+
+1. Go to
+   [Amazon EMR](https://us-west-2.console.aws.amazon.com/elasticmapreduce/home).
+2. Click on the cluster you just created.
+3. Find the **Master public DNS**, it should look something like this:
+   `ec2-some-ip.us-west-2.compute.amazonaws.com`.
+4. Make sure your EC2 key pair is read-only. Run the following command (change
+   the location to wherever you saved your EC2 key pair locally):
+   `chmod 400 ~/.ssh/aws-ec2.pem`
+5. In a separate terminal session, run the following command:
+
+```bash
+ssh -i [location of EC2 key pair file] \
+  -L 0.0.0.0:9999:localhost:8998 \
+  hadoop@[Master public DNS]
+```
+
+The command could look like this:
+
+```bash
+ssh -i ~/.ssh/aws-ec2.pem \
+  -L 0.0.0.0:9999:localhost:8998 \
+  hadoop@ec2-44-234-41-39.us-west-2.compute.amazonaws.com
+```
+
+### 7. Sample pipeline with PySpark code
+
+If you aren’t using Docker and you installed Mage using `pip`, you must run the
+following commands in your terminal to use the `pyspark` kernel:
+
+```bash
+pip install sparkmagic
+mkdir ~/.sparkmagic
+wget https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json
+mv example_config.json ~/.sparkmagic/config.json
+sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json
+```
+
+---
+
+1. Create a new pipeline by going to `File` in the top left corner of the page
+   and then clicking `New pipeline`.
+2. Change the pipeline’s kernel from `python` to `pyspark`. Click the button
+   with the green dot and the word `python` next to it. This is located at the
+   top of the page on the right side of your header.
+3. Click `+ Data loader`, then `Generic (no template)` to add a new data loader
+   block.
+4. Paste the following sample code in the new data loader block:
+
+```python
+from pandas import DataFrame
+import io
+import pandas as pd
+import requests
+
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+def data_from_internet():
+    url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
+
+    response = requests.get(url)
+    return pd.read_csv(io.StringIO(response.text), sep=',')
+
+
+@data_loader
+def load_data(**kwargs) -> DataFrame:
+    df_spark = kwargs['spark'].createDataFrame(data_from_internet())
+
+    return df_spark
+```
+
+1. Click `+ Data exporter`, then `Generic (no template)` to add a new data
+   exporter block.
+2. Paste the following sample code in the new data exporter block (change the
+   `s3://bucket-name` to the bucket you created from a previous step):
+
+```python
+from pandas import DataFrame
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data(df: DataFrame, **kwargs) -> None:
+    (
+        df.write
+        .option('delimiter', ',')
+        .option('header', 'True')
+        .mode('overwrite')
+        .csv('s3://mage-spark-cluster/demo_project/demo_pipeline/')
+    )
+```
+
+#### Verify everything worked
+
+Let’s load the data from S3 that we just created using Spark:
+
+1. Click `+ Data loader`, then `Generic (no template)` to add a new data loader
+   block.
+2. Paste the following sample code in the new data loader block (change the
+   `s3://bucket-name` to the bucket you created from a previous step):
+
+```python
+from pandas import DataFrame
+
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data(**kwargs) -> DataFrame:
+    df = (
+        kwargs['spark'].read
+        .format('csv')
+        .option('header', 'true')
+        .option('inferSchema', 'true')
+        .option('delimiter', ',')
+        .load('s3://mage-spark-cluster/demo_project/demo_pipeline/*')
+    )
+
+    return df
+```
+
+### 8. Debugging
+
+If you run into any problems, 1st thing to try is restarting the kernel: `Run` >
+`Restart kernel`.
+
+If that doesn’t work, restart the app by stopping the docker container and
+starting it again.
+
+### 9. Clean up
+
+Please make sure to terminate your EMR cluster when you’re done using it so you
+can save money.
+
+## [WIP] GCP
+
+Coming soon...
+
+## [WIP] Azure
+
+Coming soon...

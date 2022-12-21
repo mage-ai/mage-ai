@@ -8,6 +8,7 @@ from mage_integrations.destinations.snowflake.constants import SNOWFLAKE_COLUMN_
 from mage_integrations.destinations.snowflake.utils import convert_column_type
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
+    build_alter_table_command,
     build_create_table_command,
     build_insert_command,
     column_type_mapping,
@@ -19,7 +20,7 @@ from typing import Dict, List, Tuple
 
 
 def convert_array(value, column_settings):
-    if type(value) is list:
+    if type(value) is list and value:
         value_string = ', '.join([str(i) for i in value])
         return value_string
 
@@ -28,12 +29,13 @@ def convert_array(value, column_settings):
 
 def convert_column_if_json(value, column_type):
     if SNOWFLAKE_COLUMN_TYPE_VARIANT == column_type:
-        value = (value.
+        value = (
+            value.
+            replace('\\n', '\\\\n').
             encode('unicode_escape').
             decode().
             replace("'", "\\'").
-            replace('\\"', '\\\\"').
-            replace('\\n', '\\\\n')
+            replace('\\"', '\\\\"')
         )
         # Arrêté N°2018-61
         # Arr\u00eat\u00e9 N\u00b02018-61
@@ -75,6 +77,45 @@ class Snowflake(Destination):
                 columns=schema['properties'].keys(),
                 full_table_name=f'"{database_name}"."{schema_name}"."{table_name}"',
                 unique_constraints=unique_constraints,
+                column_identifier='"',
+
+            ),
+        ]
+
+    def build_alter_table_commands(
+        self,
+        schema: Dict,
+        schema_name: str,
+        stream: str,
+        table_name: str,
+        database_name: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        results = self.build_connection().load(f"""
+SELECT
+    column_name
+    , data_type
+FROM {database_name}.INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+        """)
+        current_columns = [r[0].lower() for r in results]
+        schema_columns = schema['properties'].keys()
+        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+
+        if not new_columns:
+            return []
+
+        # TODO: Support alter column types
+        return [
+            build_alter_table_command(
+                column_type_mapping=column_type_mapping(
+                    schema,
+                    convert_column_type,
+                    lambda item_type_converted: 'ARRAY',
+                ),
+                columns=new_columns,
+                full_table_name=f'"{database_name}"."{schema_name}"."{table_name}"',
+                column_identifier='"',
             ),
         ]
 
@@ -103,6 +144,7 @@ class Snowflake(Destination):
             convert_array_func=convert_array,
             convert_column_to_type_func=convert_column_if_json,
             records=records,
+            column_identifier='"'
         )
 
         insert_columns = ', '.join(insert_columns)
@@ -132,19 +174,19 @@ class Snowflake(Destination):
                 table_name=f'temp_{table_name}',
                 database_name=database_name,
                 unique_constraints=unique_constraints,
-            ) + '\n'.join([
+            ) + ['\n'.join([
                 f'INSERT INTO {full_table_name_temp} ({insert_columns})',
                 f'SELECT {select_values}',
                 f'FROM VALUES {insert_values}',
-            ])
+            ])]
 
-            unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns]
+            unique_constraints_clean = [f'"{clean_column_name(col)}"' for col in unique_constraints]
+            columns_cleaned = [f'"{clean_column_name(col)}"' for col in columns]
 
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
                 f'USING (SELECT * FROM {full_table_name_temp}) AS b',
-                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints])}",
+                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
             ]
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:

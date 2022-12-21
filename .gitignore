@@ -147,6 +147,7 @@ testfiles/
 .npm/
 .python_history
 mage_ai/frontend/package-lock.json
+docker-compose.override.yml
 
 # DB files
 *.db

@@ -415,7 +415,7 @@ function Table({
       if (columnHeaderHeight) {
         val += columnHeaderHeight;
       } else {
-        val += BASE_ROW_HEIGHT;
+        val += BASE_ROW_HEIGHT - REGULAR_LINE_HEIGHT;
       }
     } else {
       val = height;
@@ -571,7 +571,7 @@ function DataTable({
       columnHeaderHeight={columnHeaderHeight}
       disableScrolling={disableScrolling}
       height={height}
-      maxHeight={maxHeight}
+      maxHeight={maxHeight + 37}    // Add 37px so horizontal scrollbar is visible
       noBorderBottom={noBorderBottom}
       noBorderLeft={noBorderLeft}
       noBorderRight={noBorderRight}

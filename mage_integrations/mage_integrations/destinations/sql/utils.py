@@ -28,13 +28,15 @@ def build_create_table_command(
     ]
 
     if unique_constraints:
-        unique_constraints = [clean_column_name(col) for col in unique_constraints]
+        unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
+        unique_constraints_escaped = [f'{column_identifier}{col}{column_identifier}'
+                                      for col in unique_constraints_clean]
         index_name = '_'.join([
             clean_column_name(full_table_name),
-        ] + unique_constraints)
+        ] + unique_constraints_clean)
         index_name = f'unique{index_name}'[:64]
         columns_and_types.append(
-            f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints)})",
+            f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints_escaped)})",
         )
 
     return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE {full_table_name} ({', '.join(columns_and_types)})"
@@ -44,12 +46,14 @@ def build_alter_table_command(
     column_type_mapping: Dict,
     columns: List[str],
     full_table_name: str,
+    column_identifier: str = '',
 ) -> str:
     if not columns:
         return None
 
     columns_and_types = [
-        f"ADD COLUMN {clean_column_name(col)} {column_type_mapping[col]['type_converted']}" for col
+        f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
+        f"{column_type_mapping[col]['type_converted']}" for col
         in columns
     ]
     # TODO: support add new unique constraints
@@ -122,6 +126,13 @@ def column_type_mapping(
                     string_type=string_type,
                 )
                 column_type_converted = convert_array_column_type_func(item_type_converted)
+            else:
+                column_type_converted = convert_column_type_func(
+                    column_type,
+                    column_settings,
+                    number_type=number_type,
+                    string_type=string_type,
+                )
         else:
             column_type_converted = convert_column_type_func(
                 column_type,

@@ -653,7 +653,6 @@ function CodeBlockProps({
 
   return (
     <div ref={ref} style={{
-      marginTop: '8px',
       position: 'relative',
       zIndex: blockIdx === addNewBlockMenuOpenIdx ? 11 : null,
     }}>

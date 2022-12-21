@@ -10,6 +10,7 @@ import {
 } from '../index.style';
 
 export const ContainerStyle = styled.div<{
+  addBottomPadding?: boolean;
   executedAndIdle: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
@@ -20,7 +21,9 @@ export const ContainerStyle = styled.div<{
   border-right-width: 2px;
   overflow: hidden;
 
-  padding-bottom: ${2 * PADDING}px;
+  ${props => props.addBottomPadding && `
+    padding-bottom: ${2 * PADDING}px;
+  `}
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).table};
@@ -66,7 +69,7 @@ export const HTMLOutputStyle = styled.div<any>`
     padding: 0 8px;
   }
   a {
-  
+
     ${props => `
       color: ${(props.theme.interactive || dark.interactive).linkPrimary};
     `}

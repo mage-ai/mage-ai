@@ -1,0 +1,208 @@
+---
+title: "Data loader utilities"
+sidebarTitle: "Utilities"
+---
+
+Mage provides data loading clients that simplify loading and exporting data in your pipelines, allowing you to spend more time analyzing and transforming your data for ML tasks. Currently, Mage includes clients for the following data sources:
+
+-   AWS Redshift
+-   AWS S3
+-   Azure Blob Storage
+-   Filesystem
+-   Google BigQuery
+-   Google Cloud Storage
+-   PostgreSQL Database
+-   Snowflake
+
+Mage's data loading clients fall into two categories:
+
+-   **File-Loading Clients** - import/export data between files and your pipeline. Includes both local filesystem storage and external filesystem storage (like AWS S3)
+-   **Database Clients** - imports data from an external database into your pipeline and exports data frames back into that database. These database clients include the `execute` method which execute your queries in the connected database. The Google BigQuery client follows this structure.
+    -   A subcategory of database clients are **connection-based clients**, which wrap a connection to the database. This connection is used to execute transactions (sets of queries) on the database, which are either committed (saved to database) or rolled-back (deleted). Clients for PostgreSQL, Redshift, and Snowflake follow this structure.
+
+## Example: Loading data from a file
+
+While traditional Pandas IO procedures can be utilized to load files into your pipeline, Mage provides the `mage_ai.io.file.FileIO` client as a convenience wrapper.
+
+The following code uses the `load` function of the `FileIO` client to load the Titanic survival dataset from a CSV file into a Pandas DataFrame for use in your pipeline. All data loaders can be initialized with the `verbose = True` parameter, which will print the current action the data loading client is performing. This parameter defaults to `False`.
+
+```python
+loader = FileIO(verbose=True)
+df = loader.load(
+    'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv'
+)
+```
+
+Then the `export` function is used to save this data frame back to file, this time in JSON format
+
+```python
+loader.export(df, './titanic_survival.json', orient='records')
+```
+
+Any formatting settings (such as specifying the data frame _orient_) can be passed as keyword arguments to `load` and `export`. These arguments are passed to Pandas IO procedures for the requested file format, enabling fine-grained control over how your data is loaded and exported.
+
+As the data loader was constructed with the verbose parameter set to `True`, the above operations would print the following output describing the actions of the data loader.
+
+```bash
+FileIO initialized
+├─ Loading data frame from 'https://raw.githubusercontent.com/datasciencedojodatasets/master/titanic.csv'...DONE
+└─ Exporting data frame to './titanic_survival.json'...DONE
+```
+
+See the [FileIO](#fileio) API to learn more about loading data from filesystem.
+
+## Example: Loading data from Snowflake warehouse
+
+Loading data from a Snowflake data warehouse is made easy using the `mage_ai.io.snowflake.Snowflake` data loading client. In order to authenticate access to a Snowflake warehouse, the client requires the associated Snowflake credentials:
+
+-   Account Username
+-   Account Password
+-   Account ID (including your region) (Ex: _example.us-west-2_)
+
+These parameters can be manually specified as input to the data loading client (see [Snowflake](#snowflake) API). However we recommend using a [Configuration Loader](#configuration-settings) to handle loading these secrets. If you used `mage init` to create your project repository, you can store these values in your `io_config.yaml` file and use `mage_ai.io.config.ConfigFileLoader` to construct the data loader client.
+
+An example `io_config.yaml` file in this instance would be:
+
+```yaml
+default:
+    SNOWFLAKE_USER: my_username
+    SNOWFLAKE_PASSWORD: my_password
+    SNOWFLAKE_ACCOUNT_ID: example.us-west-2
+```
+
+with which a Snowflake data loading client can be constructed as:
+
+```python
+config = ConfigFileLoader('io_config.yaml', 'default')
+loader = Snowflake.with_config(config, verbose=True)
+```
+
+To learn more about using configuration settings, see [Configuration Settings](#configuration-settings).
+
+Then the following code uses the functions:
+
+-   `execute()` - executes an arbitrary query on your data warehouse. In this case, the warehouse, database, and schema to use are selected.
+-   `load()` - loads the results of a `SELECT` query into a Pandas DataFrame.
+-   `export()` - stores data frame as a table in your data warehouse. If the table exists, then the data is appended by default (and can be configured with other behavior, see [Snowflake](#snowflake) API). If the table doesn't exist, then the table is created with the given schema name and table name (the table data types are inferred from the Python data type).
+
+```python
+with loader:
+    loader.execute('USE WAREHOUSE my_warehouse;')
+    loader.execute('USE DATABASE my_database;')
+    loader.execute('USE SCHEMA my_schema;')
+    df = loader.load('SELECT * FROM test_table;')
+    loader.export(df, 'my_schema', 'test_table')
+```
+
+The `loader` object manages a direct connection to your Snowflake data warehouse, so it is important to make sure that your connection is closed once your operations are completed. You can manually use `loader.open()` and `loader.close()` to open and close the connection to your data warehouse or automatically manage the connection with a context manager.
+
+To learn more about loading data from Snowflake, see the [Snowflake](#snowflake) API for more details on member functions and usage.
+
+# Client APIs
+
+This section covers the API for using the following data loaders.
+
+## Redshift
+
+`mage_ai.io.redshift.Redshift`
+
+Handles data transfer between a Redshift cluster and the Mage app. Mage uses temporary credentials to authenticate access to a Redshift cluster. There are two ways to specify these credentials:
+
+1. Pre-generate temporary credentials and specify them in the configuration settings. Add the following keys to the configuration settings for `Redshift` to use the temporary credentials:
+    ```yaml
+    REDSHIFT_DBNAME: Name of Redshift database to connect to
+    REDSHIFT_HOST: Redshift Cluster hostname
+    REDSHIFT_PORT: Redshift Cluster port. Optional, defaults to 5439
+    REDSHIFT_TEMP_CRED_USER: Redshift temp credentials username
+    REDSHIFT_TEMP_CRED_PASSWORD: Redshift temp credentials password
+    ```
+2. Provide an IAM Profile to automatically generate temporary credentials for connection. The IAM profile is read from `~/.aws/` and is used with the `GetClusterCredentials` endpoint to generate temporary credentials. Add the following keys to the configuration settings for `Redshift` to generate temporary credentials
+
+    ```yaml
+    REDSHIFT_DBNAME: Name of Redshift database to connect toName of Redshift database to connect to
+    REDSHIFT_DBUSER: Redshift database user to generate credentials for
+    REDSHIFT_CLUSTER_ID: Redshift cluster ID
+    REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with `
+    ```
+
+    If an IAM profile is not setup using `aws configure`, manually specify the AWS credentials in the configuration settings as well.
+
+    ```yaml
+    AWS_ACCESS_KEY_ID: AWS Access Key ID credential
+    AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
+    AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
+    AWS_REGION: AWS Region `
+    ```
+
+<h3> Constructor </h3>
+
+`__init__(**kwargs)`
+
+-   **Args**
+
+    -   `verbose`: Enables verbose output. Defaults to `False`.
+
+    See other keyword arguments in [Redshift's Python connector](https://docs.aws.amazon.com/redshift/latest/mgmt/python-configuration-options.html) docs.
+
+<h3> Attributes </h3>
+
+-   _conn_ (`redshift_connector.Connection`) - the underlying [Redshift Connection](https://docs.aws.amazon.com/redshift/latest/mgmt/python-api-reference.html#python-api-connection) object.
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Redshift`
+
+Initializes Redshift client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor.
+-   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
+
+**_with_temporary_credentials_** - `with_temporary_credentials(database: str, host: str, user: str, password: str, port: int = 5439, **kwargs) -> Redshift`
+
+Creates a Redshift data loader with temporary database credentials.
+
+-   **Args**:
+    -   `database (str)`: Name of the database to connect to.
+    -   `host (str)`: The hostname of the Redshift cluster which the database belongs to.
+    -   `user (str)`: Temporary credentials username for use in authentication.
+    -   `password (str)`: Temporary credentials password for use in authentication.
+    -   `port (int, optional)`: Port number of the Redshift cluster. Defaults to 5439.
+    -   `**kwargs`: Additional parameters passed to the loader constructor.
+-   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
+
+**_with_iam_** - `with_iam(cluster_identifier: str, database: str, db_user: str, profile: str, **kwargs) -> Redshift`
+
+Creates a Redshift data loader using an IAM profile from `~/.aws`.
+
+The IAM Profile settings can also be manually specified as keyword arguments to this constructor, but is not recommended. If credentials are manually specified, the region of the Redshift cluster must also be specified.
+
+-   **Args**:
+    -   `cluster_identifier (str)`: Identifier of the cluster to connect to.
+    -   `database (str)`: The database to connect to within the specified cluster.
+    -   `db_user (str)`: Database username
+    -   `profile (str, optional)`: The profile to use from stored credentials file.
+        Defaults to 'default'.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to the Redshift cluster specified in the loader configuration.
+
+**_commit_** - `commit()`
+
+Saves all changes made to the database since the last transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected Redshift cluster. Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the Redshift cluster.
+    -   `**kwargs`: Additional parameters to pass to the query. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
+
+**_export_** - `export(df: DataFrame, table_name: str) -> None`

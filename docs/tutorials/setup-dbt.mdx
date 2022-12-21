@@ -1,0 +1,249 @@
+---
+title: "Set up DBT models & orchestrate DBT runs"
+sidebarTitle: "DBT orchestration"
+---
+
+<img alt="DBT" src="https://www.getdbt.com/ui/img/social/facebook.png" width="500" />
+
+## 1. Set up new Mage project
+
+Read the [setup guide](/getting-started/setup) to initialize a new project and
+start the Mage tool locally.
+
+For the rest of this tutorial, we’ll use the project name `demo_project`.
+
+---
+
+## 2. Set up DBT project
+
+### Install DBT
+
+1. Open Mage and go to the terminal page: http://localhost:6789/terminal
+2. Add `dbt-postgres` to your project’s dependencies file (`requirements.txt`)
+   by typing the following into the terminal in your browser:
+   `bash echo dbt-postgres > demo_project/requirements.txt `
+3. Install your project’s dependencies using `pip` by typing the following:
+
+   ```bash
+   pip install -r demo_project/requirements.txt
+   ```
+
+   For more information on installing DBT, read their
+   [documentation](https://docs.getdbt.com/docs/get-started/pip-install).
+
+### Create DBT project
+
+1. Open Mage and go to the terminal page: http://localhost:6789/terminal
+2. Initiate your DBT project using the `init` command (for this tutorial, we’ll
+   use the DBT project name `demo`):
+
+   ```bash
+   cd demo_project/dbt
+   dbt init demo
+   touch demo/profiles.yml
+   ```
+
+   For more information on creating a DBT project, read their
+   [documentation](https://docs.getdbt.com/docs/get-started/getting-started-dbt-core#create-a-project).
+
+---
+
+## 3. Create standard pipeline
+
+1. Go to the [Mage dashboard](http://localhost:6789/) and click the button
+   **`+ New pipeline`** and select the option labeled `Standard (batch)`.
+2. Near the top of the page, click the pipeline name and change it to
+   `dbt demo pipeline`.
+
+---
+
+## 4. Create DBT profile for database connections
+
+1. On the left side of the page in the file browser, expand the folder
+   `demo_project/dbt/demo/`.
+2. Click the file named `profiles.yml`.
+3. Paste the following credentials in that file:
+   ```yaml
+   demo:
+     target: dev
+     outputs:
+       dev:
+         dbname: mage/demo2
+         host: db.bit.io
+         password: v2_3upzD_eMSdiu5AMjgzSbi3K7KTAuE
+         port: 5432
+         schema: dbt_demo
+         type: postgres
+         user: mage
+   ```
+4. Save the `profiles.yml` file by pressing `Command (⌘)` + `S`.
+5. Close the file by pressing the **`X`** button on the right side of the file
+   name `dbt/demo/profiles.yml`.
+
+---
+
+## 5. Add data loader block to pipeline
+
+1. Click the **`+ Data loader`** button, select `Python`, then click `API`.
+2. At the top of the block, on the right of `DATA LOADER`, click the name of the
+   block.
+3. Change the name to `load data`.
+4. Paste the following code in that block:
+
+   ```python
+   import io
+   import pandas as pd
+   import requests
+   from pandas import DataFrame
+
+
+   @data_loader
+   def load_data_from_api(**kwargs) -> DataFrame:
+       url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
+
+       response = requests.get(url)
+       return pd.read_csv(io.StringIO(response.text), sep=',')
+   ```
+
+---
+
+## 6. Add DBT model block to pipeline
+
+1. Under the data loader block you just added, click the button **`DBT model`**,
+   then click the option `Single model`.
+2. In the file browser that pops up, click the file named
+   `my_second_dbt_model.sql` under the folders `demo/models/example/`. 1. This
+   will add 2 DBT blocks to your pipeline: 1 for the DBT model named
+   `my_first_dbt_model` and the 2nd for the DBT model named
+   `my_second_dbt_model`. 1. The model named `my_first_dbt_model` was added to
+   the pipeline because `my_second_dbt_model` references it.
+
+![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
+
+### 6a. Edit DBT model `my_first_dbt_model`
+
+1. In the DBT block named `my_first_dbt_model`, next to the label
+   `DBT profile target` at the top is an input field, enter `dev`.
+2. Paste the following SQL into the DBT model named `my_first_dbt_model`:
+
+   ```sql
+   WITH source_data AS (
+       SELECT 1 AS id
+       UNION ALL
+       SELECT 2 AS id
+   )
+
+   SELECT *
+   FROM source_data
+   ```
+
+3. Run the DBT model block by pressing the play button on the top right of the
+   block or by pressing `Command` + `Enter`.
+4. You should see a preview of the query results.
+
+![](https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true)
+
+### 6b. Edit DBT model `my_second_dbt_model`
+
+1. In the DBT block named `my_second_dbt_model`, next to the label
+   `DBT profile target` at the top is an input field, enter `dev`.
+2. Paste the following SQL into the DBT model named `my_second_dbt_model`:
+
+   ```sql
+   SELECT
+       a.*
+       , b.*
+   FROM {{ ref('my_first_dbt_model') }} AS a
+
+   LEFT JOIN {{ source('mage_demo', 'dbt_demo_pipeline_load_data') }} AS b
+   ON 1 = 1
+
+   WHERE a.id = 1
+   ```
+
+   > [DBT sources](https://docs.getdbt.com/docs/build/sources)
+   >
+   > When a DBT model depends on an upstream block that isn’t a DBT model, a
+   > source for that block is automatically added to the
+   > `demo_project/dbt/demo/models/example/mage_sources.yml` file.
+   >
+   > Read more about DBT sources in their
+   > [documentation](https://docs.getdbt.com/docs/build/sources).
+
+3. Run the DBT model block by pressing the play button on the top right of the
+   block or by pressing `Command` + `Enter`.
+4. You should see a preview of the query results.
+
+---
+
+## 7. Add test for DBT model
+
+1. On the right side of the screen, click the tab labeled **`Terminal`**.
+2. Create a new DBT test file by running the following command:
+   ```bash
+   touch demo_project/dbt/demo/tests/test_my_second_dbt_model.sql
+   ```
+3. On the left side of the page in the file browser, expand the folder
+   `demo_project/dbt/demo/tests/` and click the file named
+   `test_my_second_dbt_model.sql`. If you don’t see it, refresh the page.
+4. Paste the following SQL in the file:
+   ```sql
+   SELECT id
+   FROM {{ ref('my_second_dbt_model') }}
+   GROUP BY id
+   HAVING (id = 0)
+   ```
+5. Read more about DBT tests in their
+   [documentation](https://docs.getdbt.com/docs/build/tests).
+
+---
+
+## 8. Execute pipeline end-to-end
+
+1.  Click the name of the pipeline in the header breadcrumbs to go back to the
+    detail page.
+2.  Create a new trigger (you can use any interval you want for this tutorial).
+    For more details, follow these
+    [steps](getting-started/data-pipeline-management#create-trigger).
+3.  After your trigger is created, click the **`Start trigger`** button at the
+    top of the page.
+4.  The pipeline will eventually fail because a DBT test failed. This means
+    everything is working as expected.
+5.  Open the file `demo_project/dbt/demo/models/example/schema.yml` and remove
+    the tests named `unique` under both models. Your file should look like this:
+
+    ````yaml version: 2
+
+        models:
+          - name: my_first_dbt_model
+            description: "A starter dbt model"
+            columns:
+              - name: id
+                description: "The primary key for this table"
+                tests:
+                  - not_null
+
+          - name: my_second_dbt_model
+            description: "A starter dbt model"
+            columns:
+              - name: id
+                description: "The primary key for this table"
+                tests:
+                  - not_null
+        ```
+
+    ````
+
+6.  Click on the **`Failed`** button next to the pipeline run and click
+    **`Retry run`**. It should complete running successfully after a few
+    minutes.
+
+Congratulations! You’ve created a data pipeline that orchestrates your DBT
+models.
+
+---
+
+## Support
+
+If you get stuck, run into problems, or just want someone to walk you through
+these steps, please join our [Slack](https://www.mage.ai/chat).

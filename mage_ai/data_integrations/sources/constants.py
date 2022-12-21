@@ -6,8 +6,9 @@ SQL_SOURCES = [
 ]
 
 SOURCES = sorted([
-    dict(name='Api'),
+    dict(name='Amazon S3'),
     dict(name='Amplitude'),
+    dict(name='Api'),
     dict(name='Chargebee'),
     dict(name='Google Analytics'),
     dict(name='Google Search Console'),

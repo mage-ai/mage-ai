@@ -15,6 +15,7 @@ from mage_ai.orchestration.db.models import (
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
+from mage_ai.orchestration.pipeline_scheduler import get_variables
 from mage_ai.shared.hash import merge_dict
 from sqlalchemy.orm import aliased, joinedload
 import json
@@ -296,6 +297,7 @@ class ApiPipelineRunListHandler(BaseHandler):
             initialize_state_and_runs(
                 pipeline_run,
                 pipeline_scheduler.logger,
+                get_variables(pipeline_run),
             )
         pipeline_scheduler.start(should_schedule=False)
 

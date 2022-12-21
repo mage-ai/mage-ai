@@ -32,10 +32,12 @@ class IntegrationBlock(Block):
         from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
 
         index = self.template_runtime_configuration.get('index', None)
+        is_last_block_run = self.template_runtime_configuration.get('is_last_block_run', False)
         selected_streams = self.template_runtime_configuration.get('selected_streams', [])
         stream = selected_streams[0] if len(selected_streams) >= 1 else None
         destination_table = self.template_runtime_configuration.get('destination_table', stream)
         query_data = runtime_arguments or {}
+        query_data = query_data.copy()
 
         tags = dict(block_tags=dict(
             destination_table=destination_table,
@@ -67,8 +69,8 @@ class IntegrationBlock(Block):
                 )
             else:
                 query_data['_offset'] = BATCH_FETCH_LIMIT * index
-
-            query_data['_limit'] = BATCH_FETCH_LIMIT
+            if not is_last_block_run:
+                query_data['_limit'] = BATCH_FETCH_LIMIT
 
         outputs = []
         if BlockType.DATA_LOADER == self.type:

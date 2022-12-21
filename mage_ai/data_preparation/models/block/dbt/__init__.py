@@ -18,7 +18,7 @@ import subprocess
 
 class DBTBlock(Block):
     @property
-    def file_path(self):
+    def file_path(self) -> str:
         if BlockLanguage.SQL == self.language:
             repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
             file_path = self.configuration.get('file_path')
@@ -28,8 +28,8 @@ class DBTBlock(Block):
                 'dbt',
                 file_path,
             )
-        else:
-            super().file_path
+
+        return super().file_path
 
     def run_tests(
         self,

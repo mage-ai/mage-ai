@@ -193,14 +193,14 @@ function BlockRuns({
           }
           evals.push(query['block_type[]'].includes(blocksByUUID[blockUUID]?.type));
         }
-        if (query[PIPELINE_RUN_ID_PARAM]) {
-          const pipelineRunId = data?.pipeline_run_id;
-          evals.push(query[PIPELINE_RUN_ID_PARAM].includes(String(pipelineRunId)));
-        }
-        if (query[BLOCK_RUN_ID_PARAM]) {
-          const blockRunId = data?.block_run_id;
-          evals.push(query[BLOCK_RUN_ID_PARAM].includes(String(blockRunId)));
-        }
+        // if (query[PIPELINE_RUN_ID_PARAM]) {
+        //   const pipelineRunId = data?.pipeline_run_id;
+        //   evals.push(query[PIPELINE_RUN_ID_PARAM].includes(String(pipelineRunId)));
+        // }
+        // if (query[BLOCK_RUN_ID_PARAM]) {
+        //   const blockRunId = data?.block_run_id;
+        //   evals.push(query[BLOCK_RUN_ID_PARAM].includes(String(blockRunId)));
+        // }
 
         return evals.every(v => v);
       }), [

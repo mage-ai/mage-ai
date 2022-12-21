@@ -80,7 +80,6 @@ Commands:
             project=project_path,
         )
     elif command == 'run' or command == 'test':
-
         from mage_ai.data_preparation.repo_manager import set_repo_path
         from mage_ai.shared.hash import merge_dict
 
@@ -121,6 +120,9 @@ Commands:
 
         default_variables = get_global_variables(pipeline_uuid)
         global_vars = merge_dict(default_variables, runtime_variables)
+
+        from mage_ai.orchestration.db import db_connection
+        db_connection.start_session()
 
         if block_uuid is None:
             ExecutorFactory.get_pipeline_executor(pipeline).execute(
