@@ -527,12 +527,19 @@ class Block:
                 variable_mapping = dict(zip(variable_keys, block_output))
 
             if store_variables and self.pipeline.type != PipelineType.INTEGRATION:
-                self.store_variables(
-                    variable_mapping,
-                    execution_partition=execution_partition,
-                    override_outputs=True,
-                    spark=(global_vars or dict()).get('spark'),
-                )
+                try:
+                    self.store_variables(
+                        variable_mapping,
+                        execution_partition=execution_partition,
+                        override_outputs=True,
+                        spark=(global_vars or dict()).get('spark'),
+                    )
+                except ValueError as e:
+                    if str(e) == 'Circular reference detected':
+                        raise ValueError(
+                            'Please provide dataframe or json serializable data as output.'
+                        )
+                    raise e
             # Reset outputs cache
             self._outputs = None
 
