@@ -11,6 +11,7 @@ export enum FileExtensionEnum {
 
 export enum SpecialFileEnum {
   INIT_PY = '__init__.py',
+  REQS_TXT = 'requirements.txt',
 }
 
 export const CODE_BLOCK_FILE_EXTENSIONS = [
