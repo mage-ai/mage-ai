@@ -57,9 +57,9 @@ class ExecutorFactory:
                 import EcsBlockExecutor
             return EcsBlockExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.GCP_CLOUD_RUN:
-            from mage_ai.data_preparation.executors.gcp_cloud_run_executor \
-                import GcpCloudRunExecutor
-            return GcpCloudRunExecutor(**executor_kwargs)
+            from mage_ai.data_preparation.executors.gcp_cloud_run_block_executor \
+                import GcpCloudRunBlockExecutor
+            return GcpCloudRunBlockExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.K8S:
             from mage_ai.data_preparation.executors.k8s_block_executor \
                 import K8sBlockExecutor
