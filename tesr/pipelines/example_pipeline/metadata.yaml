@@ -8,11 +8,11 @@ blocks:
   executor_type: local_python
   language: python
   name: load_titanic
-  status: not_executed
+  status: executed
   type: data_loader
   upstream_blocks: []
   uuid: load_titanic
-- all_upstream_blocks_executed: false
+- all_upstream_blocks_executed: true
   configuration: {}
   downstream_blocks:
   - export_titanic_clean
@@ -20,19 +20,19 @@ blocks:
   executor_type: local_python
   language: python
   name: fill_in_missing_values
-  status: not_executed
+  status: executed
   type: transformer
   upstream_blocks:
   - load_titanic
   uuid: fill_in_missing_values
-- all_upstream_blocks_executed: false
+- all_upstream_blocks_executed: true
   configuration: {}
   downstream_blocks: []
   executor_config: null
   executor_type: local_python
   language: python
   name: export_titanic_clean
-  status: updated
+  status: executed
   type: data_exporter
   upstream_blocks:
   - fill_in_missing_values
