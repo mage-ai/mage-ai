@@ -1678,7 +1678,9 @@ function PipelineDetailPage({
               }}
               fetchPipeline={fetchPipeline}
               filePath={filePath}
+              openSidekickView={openSidekickView}
               pipeline={pipeline}
+              projectName={projectName}
               selectedFilePath={selectedFilePath}
               setFilesTouched={setFilesTouched}
               setSelectedBlock={setSelectedBlock}

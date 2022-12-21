@@ -1,3 +1,4 @@
+import useWebSocket from 'react-use-websocket';
 import {
   useEffect,
   useMemo,
@@ -8,20 +9,29 @@ import { useMutation } from 'react-query';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import CodeEditor from '@components/CodeEditor';
-import FileType, { FileExtensionEnum, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
+import FileType, {
+  FileExtensionEnum,
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING,
+  SpecialFileEnum,
+} from '@interfaces/FileType';
+import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
+
+import { DEFAULT_TERMINAL_UUID } from '@components/Terminal';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { find } from '@utils/array';
 import { getBlockType, getBlockUUID } from './utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
+import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -31,7 +41,9 @@ type FileEditorProps = {
   addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
   fetchPipeline: () => void;
   filePath: string;
+  openSidekickView: (newView: ViewKeyEnum) => void;
   pipeline: PipelineType;
+  projectName: string;
   selectedFilePath: string;
   setFilesTouched: (data: {
     [path: string]: boolean;
@@ -44,13 +56,19 @@ function FileEditor({
   addNewBlock,
   fetchPipeline,
   filePath,
+  openSidekickView,
   pipeline,
+  projectName,
   selectedFilePath,
   setFilesTouched,
   setSelectedBlock,
 }: FileEditorProps) {
   const [file, setFile] = useState<FileType>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const containerRef = useRef(null);
+
+  const { data: serverStatus } = api.status.list();
+  const repoPath = serverStatus?.status?.repo_path;
   const { data } = api.file_contents.detail(filePath);
   useEffect(() => {
     if (data?.file_content) {
@@ -167,7 +185,7 @@ function FileEditor({
     || ((fileExtension === FileExtensionEnum.YAML || fileExtension === FileExtensionEnum.R)
       && getNonPythonBlockFromFile(file, file?.path))
     ) && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD && (
-    <Spacing p={2}>
+    <Spacing m={2}>
       <KeyboardShortcutButton
         inline
         onClick={() => {
@@ -215,6 +233,57 @@ function FileEditor({
     </Spacing>
   );
 
+  const {
+    lastJsonMessage,
+    sendMessage,
+  } = useWebSocket(getWebSocket(), {
+    shouldReconnect: () => true,
+  });
+
+  useEffect(() => {
+    if (lastJsonMessage) {
+      // @ts-ignore
+      const jsonMessage: KernelOutputType = lastJsonMessage;
+      const executionState = jsonMessage?.execution_state;
+      const messageUUID = jsonMessage?.uuid;
+
+      if (messageUUID === DEFAULT_TERMINAL_UUID) {
+        if (ExecutionStateEnum.BUSY === executionState) {
+          setLoading(true);
+        } else if (ExecutionStateEnum.IDLE === executionState) {
+          setLoading(false);
+        }
+      }
+    }
+  }, [
+    lastJsonMessage,
+    setLoading,
+  ]);
+
+  const installPackagesButtonEl = (
+    <Spacing m={2}>
+      <KeyboardShortcutButton
+        disabled={!repoPath}
+        inline
+        loading={loading}
+        onClick={() => {
+          openSidekickView(ViewKeyEnum.TERMINAL);
+          sendMessage(JSON.stringify({
+            code: `!pip install -r ${repoPath}/requirements.txt`,
+            uuid: DEFAULT_TERMINAL_UUID,
+          }));
+        }}
+        title={!repoPath
+          ? 'Please use right panel terminal to install packages.'
+          : 'Pip install packages from your saved requirements.txt file (⌘+S to save).'
+        }
+        uuid="FileEditor/InstallPackages"
+      >
+        Install packages
+      </KeyboardShortcutButton>
+    </Spacing>
+  );
+
   const uuidKeyboard = `FileEditor/${file?.path}`;
   const {
     registerOnKeyDown,
@@ -254,6 +323,7 @@ function FileEditor({
     <div ref={containerRef}>
       {codeEditorEl}
       {addToPipelineEl}
+      {filePath === SpecialFileEnum.REQS_TXT && installPackagesButtonEl}
     </div>
   );
 }

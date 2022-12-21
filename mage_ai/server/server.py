@@ -424,6 +424,7 @@ class ApiStatusHandler(BaseHandler):
 
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
+            'repo_path': get_repo_path(),
             'scheduler_status': scheduler_manager.get_status(),
             'instance_type': instance_type,
         }
