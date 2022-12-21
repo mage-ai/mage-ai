@@ -33,5 +33,5 @@ class GcpCloudRunBlockExecutor(BlockExecutor):
         cloud_run.run_job(
             f'{cmd} {options_str}',
             f'mage-data-prep-{block_run_id}',
-            cloud_run_xonfig=self.executor_config,
+            cloud_run_config=self.executor_config,
         )

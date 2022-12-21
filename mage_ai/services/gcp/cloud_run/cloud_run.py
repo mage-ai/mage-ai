@@ -56,7 +56,6 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
         parent=resource_prefix,
         job=job,
         job_id=job_id,
-        launch_stage=LaunchStage.BETA,
     )
 
     response = jobs_client.create_job(request=request)
