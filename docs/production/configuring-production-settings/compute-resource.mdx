@@ -50,11 +50,16 @@ ecs_config:
 
 ### GCP Cloud Run executor
 
-If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to executor blocks by specifying
-block executor_type to be `gcp` in pipeline's metadata.yaml file. Customizing compute resource
-for GCP Cloud Run executor is coming soon.
+If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to executor blocks.
 
-Example pipeline block config:
+How to configure pipeline to use GCP cloud run executor:
+1. Update Project's metadata.yaml
+```yaml
+gcp_cloud_run_config:
+  path_to_credentials_json_file: "/path/to/credentials_json_file"
+```
+
+2. Update the `executor_type` of block to `gcp_cloud_run` in pipeline's metadata.yaml:
 
 ```yaml
 blocks:
@@ -63,10 +68,10 @@ blocks:
   upstream_blocks: []
   downstream_blocks: []
   executor_type: gcp_cloud_run
-  executor_config: 
-    path_to_credentials_json_file: "/path/to/credentials_json_file"
   ...
 ```
+Customizing compute resource for GCP Cloud Run executor is coming soon.
+
 
 ### PySpark executor
 
