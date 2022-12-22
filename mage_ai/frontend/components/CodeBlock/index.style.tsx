@@ -103,6 +103,10 @@ export const BlockHeaderStyle = styled.div<BorderColorShareProps>`
   ${props => `
     background-color: ${(props.theme || dark).background.content};
   `}
+
+  ${props => props.selected && `
+    z-index: 11;
+  `}
 `;
 
 export const CodeContainerStyle = styled.div<{
