@@ -14,9 +14,11 @@ and local block executions. You can customize the CPU and memory of the Mage web
 service by updating the Terraform variables and then running `terraform apply`
 
 - AWS: Update the `ecs_task_cpu` and `ecs_task_memory` variables in the
-  [`mage-ai/scripts/deploy/terraform/aws/variables.tf`](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf)
+  [`mage-ai-terraform-templates/aws/variables.tf`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf)
   file.
-- GCP (coming soon)
+- GCP: Update the `container_cpu` and `container_memory` variables in the
+  [`mage-ai-terraform-templates/gcp/variables.tf`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
+  file.
 
 ## 2. Customize the compute resource of the Mage executor
 
@@ -30,10 +32,10 @@ the
 [Customize the compute resource of the Mage web service](#customize-the-compute-resource-of-the-mage-web-service)
 section.
 
-### ECS executor
+### AWS ECS executor
 
 You can choose to launch separate AWS ECS tasks to executor blocks by specifying
-block executor_type to be "ecs" in pipeline's metadata.yaml file.
+block executor_type to be `ecs` in pipeline's metadata.yaml file.
 
 To customize the compute resource of ECS executor, you can update `cpu` and
 `memory` the `ecs_config` in project's metadata.yaml file.
@@ -44,6 +46,26 @@ Example config:
 ecs_config:
   cpu: 1024
   memory: 2048
+```
+
+### GCP Cloud Run executor
+
+If your Mage app is deployed on GCP, you can choose to launch separate GCP Cloud Run jobs to executor blocks by specifying
+block executor_type to be `gcp` in pipeline's metadata.yaml file. Customizing compute resource
+for GCP Cloud Run executor is coming soon.
+
+Example pipeline block config:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: gcp_cloud_run
+  executor_config: 
+    path_to_credentials_json_file: "/path/to/credentials_json_file"
+  ...
 ```
 
 ### PySpark executor
