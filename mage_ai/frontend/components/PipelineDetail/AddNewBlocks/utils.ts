@@ -4,7 +4,7 @@ import {
   ActionGroupingEnum,
 } from '@interfaces/TransformerActionType';
 import { ActionTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
-import {
+import BlockType, {
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -168,4 +168,20 @@ export function createActionMenuGroupings(
   });
 
   return menuItems;
+}
+
+export function addScratchpadNote(
+  block: BlockType,
+  content?: string,
+) {
+  let updatedContent = content;
+  if (BlockTypeEnum.SCRATCHPAD === block.type) {
+    updatedContent = `"""
+NOTE: Scratchpad blocks are used only for experimentation and testing out code.
+The code written here will not be executed as part of the pipeline.
+"""
+` + (content || '');
+  }
+
+  return updatedContent;
 }
