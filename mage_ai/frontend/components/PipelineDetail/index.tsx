@@ -49,6 +49,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { addScratchpadNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { addUnderscores, randomNameGenerator } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -511,6 +512,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             };
           }
         }
+        content = addScratchpadNote(newBlock, content);
 
         addNewBlockAtIndex({
           ...newBlock,
