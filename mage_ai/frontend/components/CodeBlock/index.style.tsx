@@ -151,6 +151,7 @@ export const BlockDivider = styled.div`
   justify-content: center;
   position: relative;
   z-index: 10;
+  bottom: ${UNIT * 0.75}px;
 
   &:hover {
     .block-divider-inner {
@@ -166,6 +167,7 @@ export const BlockDividerInner = styled.div`
   width: 100%;
   position: absolute;
   z-index: -1;
+  top: ${UNIT * 1.5}px;
 `;
 
 export const CodeHelperStyle = styled.div`
