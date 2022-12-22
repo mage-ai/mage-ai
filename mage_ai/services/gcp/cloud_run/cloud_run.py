@@ -59,14 +59,19 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
         job_id=job_id,
     )
     try:
-        response = jobs_client.create_job(request=request)
+        operation = jobs_client.create_job(request=request)
+        print("Waiting for create_job operation to complete...")
+        response = operation.result()
         print(json.dumps(response, indent=4, default=str))
     except AlreadyExists:
         pass
 
     # Run job
-    response = jobs_client.run_job(request=run_v2.RunJobRequest(
+    operation = jobs_client.run_job(request=run_v2.RunJobRequest(
         name=f'{resource_prefix}/jobs/{job_id}'
     ))
+    print("Waiting for run_job operation to complete...")
+
+    response = operation.result()
     print(json.dumps(response, indent=4, default=str))
     return response
