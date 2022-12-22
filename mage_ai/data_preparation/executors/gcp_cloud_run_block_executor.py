@@ -23,7 +23,7 @@ class GcpCloudRunBlockExecutor(BlockExecutor):
         global_vars: Dict = None,
         **kwargs,
     ) -> None:
-        cmd = f'/bin/sh -c /app/run_app.sh '\
+        cmd = f'/app/run_app.sh '\
               f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
         options = [
             f'--block_uuid {self.block_uuid}',
