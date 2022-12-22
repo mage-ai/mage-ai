@@ -504,7 +504,6 @@ function PipelineDetail({
 df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 `;
           }
-          content = addScratchpadNote(newBlock, content);
 
           if (BlockLanguageEnum.SQL === block.language) {
             configuration = {
@@ -513,6 +512,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             };
           }
         }
+        content = addScratchpadNote(newBlock, content);
 
         addNewBlockAtIndex({
           ...newBlock,
