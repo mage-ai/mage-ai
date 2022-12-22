@@ -29,7 +29,7 @@ db-dtypes==1.0.5
 google-api-python-client==2.70.0
 google-cloud-bigquery~=2.34.4
 google-cloud-iam==2.9.0
-google-cloud-run==0.4.2
+google-cloud-run==0.5.0
 google-cloud-storage==2.5.0
 psycopg2-binary==2.9.3
 redshift-connector==2.0.909

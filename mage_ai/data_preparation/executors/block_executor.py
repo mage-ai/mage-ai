@@ -74,7 +74,7 @@ class BlockExecutor:
                         ),
                     )
                 elif callback_url is not None:
-                    self.__update_block_run_status(callback_url, 'failed')
+                    self.__update_block_run_status(callback_url, 'failed', tags)
                 raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
@@ -125,6 +125,24 @@ class BlockExecutor:
         return result
 
     def __update_block_run_status(self, callback_url: str, status: str, tags: dict):
+        """Update the status of block run by edither updating the BlockRun db object or making API call
+
+        Args:
+            callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]
+            status (str): 'completed' or 'failed'
+            tags (dict): tags used in logging
+        """
+        try:
+            block_run_id = int(callback_url.split('/')[-1])
+            from mage_ai.orchestration.db.models import BlockRun
+
+            block_run = BlockRun.query.get(block_run_id)
+            block_run.update(status=status)
+            return
+        except Exception:
+            pass
+
+        # Fall back to making API calls
         response = requests.put(
             callback_url,
             data=json.dumps({
