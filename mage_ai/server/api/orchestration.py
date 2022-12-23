@@ -212,6 +212,7 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
             block_run['pipeline_schedule_id'] = pipeline_run.pipeline_schedule_id
             block_run['pipeline_schedule_name'] = pipeline_run.pipeline_schedule.name
             block_runs_json.append(block_run)
+        block_runs_json.sort(key=lambda b: b.get('created_at'))
         pipeline_run_dict['block_runs'] = block_runs_json
 
         self.write(dict(pipeline_run=pipeline_run_dict))
