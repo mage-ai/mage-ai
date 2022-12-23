@@ -372,6 +372,17 @@ def run_integration_pipeline(
                 indexes.append(int(parts[2]))
         max_index = max(indexes)
 
+        all_block_runs_for_stream = list(filter(
+            lambda br: tap_stream_id in br.block_uuid,
+            all_block_runs,
+        ))
+        all_indexes = [0]
+        for br in all_block_runs_for_stream:
+            parts = br.block_uuid.split(':')
+            if len(parts) >= 3:
+                all_indexes.append(int(parts[2]))
+        max_index_for_stream = max(all_indexes)
+
         for idx in range(max_index + 1):
             block_runs_in_order = []
             current_block = data_loader_block
@@ -397,7 +408,7 @@ def run_integration_pipeline(
             )
             data_exporter_block_run = find(
                 lambda b: b.block_uuid == data_exporter_uuid,
-                all_block_runs,
+                block_runs_for_stream,
             )
             if not data_loader_block_run or not data_exporter_block_run:
                 continue
@@ -412,7 +423,7 @@ def run_integration_pipeline(
             shared_dict = dict(
                 destination_table=destination_table,
                 index=index,
-                is_last_block_run=(index == max_index),
+                is_last_block_run=(index == max_index_for_stream),
                 selected_streams=[
                     tap_stream_id,
                 ],
