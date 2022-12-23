@@ -1,4 +1,5 @@
 from .base import BaseHandler
+from enum import Enum
 from mage_ai.server.active_kernel import (
     get_active_kernel_name,
 )
@@ -7,11 +8,17 @@ from mage_ai.shared.hash import merge_dict
 
 import os
 
+class ClusterType(str, Enum):
+    EMR = 'emr'
+    ECS = 'ecs'
+    CLOUD_RUN = 'cloud_run'
+    K8S = 'k8s'
+
 
 class ApiClustersHandler(BaseHandler):
     def get(self, cluster_type):
         clusters = []
-        if cluster_type == 'emr' and get_active_kernel_name() == KernelName.PYSPARK:
+        if cluster_type == ClusterType.EMR and get_active_kernel_name() == KernelName.PYSPARK:
             from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
             clusters = emr_cluster_manager.list_clusters()
         self.write(dict(clusters=clusters))
@@ -19,7 +26,7 @@ class ApiClustersHandler(BaseHandler):
     def post(self, cluster_type):
         success = False
 
-        if cluster_type == 'emr':
+        if cluster_type == ClusterType.EMR:
             from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
             cluster_payload = self.get_payload().get('cluster')
             if cluster_payload is None:
@@ -41,7 +48,7 @@ class ApiClustersHandler(BaseHandler):
         ))
 
     def put(self, cluster_type):
-        if cluster_type == 'emr':
+        if cluster_type == ClusterType.EMR:
             from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
             cluster_payload = self.get_payload().get('cluster')
             if cluster_payload is None:
@@ -63,7 +70,7 @@ class ApiClustersHandler(BaseHandler):
 class ApiInstancesHandler(BaseHandler):
     def get(self, cluster_type):
         instances = []
-        if cluster_type == 'ecs':
+        if cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
 
             try:
@@ -73,7 +80,7 @@ class ApiInstancesHandler(BaseHandler):
             except Exception as e:
                 print(str(e))
                 instances = list()
-        elif cluster_type == 'cloud_run':
+        elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
             project_id = os.getenv('GCP_PROJECT_ID')
             path_to_credentials = os.getenv('path_to_keyfile')
@@ -85,6 +92,12 @@ class ApiInstancesHandler(BaseHandler):
             )
 
             instances = cloud_run_service_manager.list_services()
+        elif cluster_type == ClusterType.K8S:
+            from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+            namespace = os.getenv('K8S_NAMESPACE')
+            workload_manager = WorkloadManager(namespace)
+
+            instances = workload_manager.list_services()
 
         self.write(dict(instances=instances))
 
@@ -129,9 +142,24 @@ class ApiInstancesHandler(BaseHandler):
 
             cloud_run_service_manager.create_service(name)
 
-            self.write(dict(
-                success=True,
-            ))
+            self.write(dict(success=True))
+        elif cluster_type == ClusterType.K8S:
+            from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+            instance_payload = self.get_payload().get('instance')
+            name = instance_payload.get('name')
+            namespace = instance_payload.get('namespace', os.getenv('K8S_NAMESPACE'))
+            storage_class_name = instance_payload.get(
+                'storage_class_name',
+                os.getenv('K8S_STORAGE_CLASS_NAME')
+            )
+
+            k8s_workload_manager = WorkloadManager(namespace)
+            k8s_workload_manager.create_stateful_set(
+                name,
+                storage_class_name=storage_class_name
+            )
+
+            self.write(dict(success=True))
 
 
 class ApiInstanceDetailHandler(BaseHandler):

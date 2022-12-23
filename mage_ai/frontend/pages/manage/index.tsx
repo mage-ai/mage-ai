@@ -17,7 +17,7 @@ import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { addUnderscores, capitalizeRemoveUnderscoreLower, randomNameGenerator, replaceSpaces } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower, randomNameGenerator, replaceSpaces } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
@@ -251,18 +251,18 @@ function InstanceListPage() {
   );
 
   const updateInstanceName = (name) => {
-    if (instanceType === 'cloud_run') {
-      return replaceSpaces(name, '-');
-    } else {
+    if (instanceType === 'ecs') {
       return replaceSpaces(name, '_');
+    } else {
+      return replaceSpaces(name, '-');
     }
   }
 
   const instanceNameLabel = () => {
-    if (instanceType === 'cloud_run') {
-      return "Spaces will be replaced by hyphens";
-    } else {
+    if (instanceType === 'ecs') {
       return "Spaces will be replaced by underscores";
+    } else {
+      return "Spaces will be replaced by hyphens";
     }
   }
 
