@@ -6,20 +6,24 @@ from mage_ai.services.hightouch.constants import (
     PENDING_STATUSES,
     SUCCESS,
     TERMINAL_STATUSES,
-    WARNING,
 )
+from mage_ai.shared.http_client import HttpClient
 from typing import Dict, Optional, Union
-import json
-import requests
 import time
 
 
-class HightouchClient:
+class HightouchClient(HttpClient):
+    BASE_URL = HIGHTOUCH_BASE_URL
+
     def __init__(self, config: Union[Dict, HightouchConfig]):
         if type(config) is dict:
             self.config = HightouchConfig.load(config=config)
         else:
             self.config = config
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.config.api_key}',
+        }
 
     def list_sources(self):
         return self.make_request('/sources')
@@ -91,33 +95,3 @@ class HightouchClient:
                     f"{datetime.now() - poll_start}. Last status was {sync_run['status']}."
                 )
             time.sleep(poll_interval)
-
-    def make_request(
-        self,
-        url_path: str,
-        method: str = 'GET',
-        params: Dict = dict(),
-        payload: Dict = dict()
-    ):
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {self.config.api_key}',
-        }
-        url = HIGHTOUCH_BASE_URL + url_path
-        response = None
-        if method == 'GET':
-            response = requests.get(
-                url,
-                headers=headers,
-                params=params,
-            )
-        elif method == 'POST':
-            response = requests.post(
-                url,
-                data=json.dumps(payload),
-                headers=headers,
-            )
-        if response is not None:
-            response.raise_for_status()
-            return response.json()
-        return response
