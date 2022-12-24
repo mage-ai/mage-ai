@@ -206,7 +206,10 @@
           "pages": [
             "integrations/prefect"
           ]
-        }
+        },
+        "integrations/airbyte",
+        "integrations/dbt-cloud",
+        "integrations/hightouch"
       ]
     },
     {
