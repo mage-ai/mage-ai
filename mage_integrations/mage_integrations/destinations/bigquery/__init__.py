@@ -23,6 +23,7 @@ from mage_integrations.destinations.sql.utils import (
 from mage_integrations.destinations.utils import clean_column_name
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Any, Dict, List, Tuple
+import google
 import sys
 import uuid
 
@@ -168,6 +169,90 @@ WHERE table_id = '{table_name}'
         return []
 
     def process_queries(
+        self,
+        query_strings: List[str],
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = {},
+        **kwargs,
+    ) -> List[List[Tuple]]:
+        tries = kwargs.get('tries', 0)
+
+        try:
+            return self.__process_queries(
+                query_strings=query_strings,
+                record_data=record_data,
+                stream=stream,
+                tags=tags,
+            )
+        except google.api_core.exceptions.BadRequest as err:
+            if 'Transaction is aborted due to concurrent update against table' in str(err):
+                if tries < 2:
+                    tries += 1
+
+                    tags2 = merge_dict(tags, dict(tries=tries))
+
+                    self.logger.info(
+                        f'Transaction is aborted due to concurrent update, retry {tries}.',
+                        tags=tags2,
+                    )
+                    self.__recreate_table(tags=tags2)
+
+                    return self.process_queries(
+                        query_strings=query_strings,
+                        record_data=record_data,
+                        stream=stream,
+                        tags=tags,
+                        tries=tries,
+                    )
+                else:
+                    raise err
+            else:
+                raise err
+
+    def __recreate_table(self, tags: Dict = {}):
+        self.logger.info('Recreating table started.', tags)
+
+        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
+        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
+        table_name = self.config.get('table')
+
+        full_table_name = f'{database_name}.{schema_name}.{table_name}'
+        table_name_delete = f'_delete_{table_name}'
+        full_table_name_delete = f'{database_name}.{schema_name}.{table_name_delete}'
+
+        connection = self.build_connection()
+        client = connection.client
+
+        job = client.query(
+            'SELECT 1',
+            job_config=bigquery.QueryJobConfig(create_session=True),
+        )
+        session_id = job.session_info.session_id
+        job.result()
+
+        session_id_property = bigquery.query.ConnectionProperty(key='session_id', value=session_id)
+        query_job_config = dict(
+            create_session=False,
+            connection_properties=[session_id_property],
+        )
+
+        commands = [
+            f'ALTER TABLE {full_table_name} RENAME TO {table_name_delete}',
+            f'CREATE TABLE {full_table_name} AS (SELECT * FROM {full_table_name_delete})',
+            f'DROP TABLE {full_table_name_delete}',
+        ]
+
+        for query in commands:
+            job = client.query(
+                query,
+                job_config=bigquery.QueryJobConfig(**query_job_config),
+            )
+            job.result()
+
+        self.logger.info('Recreating table completed.', tags)
+
+    def __process_queries(
         self,
         query_strings: List[str],
         record_data: List[Dict],
@@ -321,10 +406,16 @@ WHERE table_id = '{table_name}'
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
             columns_cleaned = [clean_column_name(col) for col in columns]
 
+            on_conditions = []
+            for col in unique_constraints:
+                on_conditions.append(
+                    f'((a.{col} IS NULL AND b.{col} IS NULL) OR a.{col} = b.{col})',
+                )
+
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
                 f'USING (SELECT * FROM {temp_table_name}) AS b',
-                f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints])}",
+                f"ON {' AND '.join(on_conditions)}",
             ]
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
