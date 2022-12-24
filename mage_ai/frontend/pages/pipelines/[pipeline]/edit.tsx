@@ -43,12 +43,14 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
 import { Add, Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   get,
 } from '@storage/localStorage';
+import { SpecialFileEnum } from '@interfaces/FileType';
 import {
   NAV_ICON_MAPPING,
   SIDEKICK_VIEWS,
@@ -62,12 +64,10 @@ import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
   initializeContentAndMessages,
-  redirectToFirstPipeline,
-  removeCollapsedBlockStates,
   removeDataOutputBlockUUID,
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
-import { equals, find, pushAtIndex, removeAtIndex } from '@utils/array';
+import { equals, find, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
@@ -620,6 +620,17 @@ function PipelineDetailPage({
           }
           updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
         }
+      } else if (resp?.data?.error) {
+        setErrors(err => ({
+          ...err,
+          links: [{
+            label: 'Check pipeline configuration',
+            onClick: () => {
+              openFile(`pipelines/${pipelineUUID}/${SpecialFileEnum.METADATA_YAML}`);
+              setErrors(null);
+            },
+          }],
+        }));
       }
     }), [
     blocks,

@@ -11,6 +11,7 @@ export enum FileExtensionEnum {
 
 export enum SpecialFileEnum {
   INIT_PY = '__init__.py',
+  METADATA_YAML = 'metadata.yaml',
   REQS_TXT = 'requirements.txt',
 }
 
