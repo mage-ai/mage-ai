@@ -1,3 +1,4 @@
+from mage_ai.shared.hash import ignore_keys_with_blank_values
 from typing import Dict
 import json
 import requests
@@ -18,19 +19,18 @@ class HttpClient:
         params: Dict = dict(),
         payload: Dict = dict()
     ):
-
         url = self.BASE_URL + url_path
         response = None
         if method == 'GET':
             response = requests.get(
                 url,
                 headers=self.headers,
-                params=params,
+                params=ignore_keys_with_blank_values(params),
             )
         elif method == 'POST':
             response = requests.post(
                 url,
-                data=json.dumps(payload),
+                data=json.dumps(ignore_keys_with_blank_values(payload)),
                 headers=self.headers,
             )
         if response is not None:
