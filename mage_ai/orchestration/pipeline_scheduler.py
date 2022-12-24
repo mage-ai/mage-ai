@@ -565,8 +565,9 @@ def check_sla():
         ).all()
 
     if pipeline_runs:
-        notification_sender = \
-            NotificationSender(get_repo_config(get_repo_path()).notification_config)
+        notification_sender = NotificationSender(
+             NotificationConfig.load(config=get_repo_config(get_repo_path()).notification_config),
+        )
 
         current_time = datetime.now(tz=pytz.UTC)
         # TODO: combine all SLA alerts in one notification

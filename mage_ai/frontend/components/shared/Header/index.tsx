@@ -181,7 +181,7 @@ function Header({
                 <Button
                   borderLess
                   linkProps={{
-                    href: 'https://github.com/mage-ai/mage-ai/blob/master/docs/tutorials/quick_start/setup.md#download-new-version-of-mage',
+                    href: 'https://docs.mage.ai/getting-started/setup#download-new-version-of-mage',
                   }}
                   primary
                   target="_blank"
