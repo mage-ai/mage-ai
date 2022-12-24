@@ -654,7 +654,7 @@ function CodeBlockProps({
   return (
     <div ref={ref} style={{
       position: 'relative',
-      zIndex: blockIdx === addNewBlockMenuOpenIdx ? 11 : null,
+      zIndex: blockIdx === addNewBlockMenuOpenIdx ? 12 : null,
     }}>
       <BlockHeaderStyle {...borderColorShareProps}>
         <FlexContainer
