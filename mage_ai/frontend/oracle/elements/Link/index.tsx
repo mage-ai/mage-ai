@@ -104,6 +104,17 @@ export const SHARED_LINK_STYLES = css<any>`
     text-align: center;
   `}
 
+  ${props => props.secondary && `
+    color: ${(props.theme.interactive || dark.interactive).linkSecondary};
+    &:hover {
+      color: ${(props.theme.interactive || dark.interactive).linkSecondary};
+    }
+  `}
+
+  ${props => props.warning && `
+    color: ${(props.theme || dark).accent.yellow};
+  `}
+
   ${props => props.danger && `
     color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
 
@@ -114,20 +125,9 @@ export const SHARED_LINK_STYLES = css<any>`
     }
   `}
 
-  ${props => props.secondary && `
-    color: ${(props.theme.interactive || dark.interactive).linkSecondary};
-    &:hover {
-      color: ${(props.theme.interactive || dark.interactive).linkSecondary};
-    }
-  `}
-
   ${props => props.selected && `
     background: ${(props.theme.interactive || dark.monotone.black)};
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).focusBorder};
-  `}
-
-  ${props => props.danger && `
-    color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
   `}
 
   ${props => props.transparentBorder && `

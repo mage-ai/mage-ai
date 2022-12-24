@@ -1,22 +1,34 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ErrorPopupStyle = styled.div`
-  bottom: 0;
-  left: 0;
-  max-height: 100vh;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-height: 95vh;
   max-width: 100vw;
   overflow: auto;
   padding: ${UNIT * PADDING_UNITS}px;
   position: fixed;
   z-index: 100;
+  border-radius: ${BORDER_RADIUS}px;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).page};
-    border-right: 1px solid ${(props.theme.accent || dark.accent).negative};
-    border-top: 1px solid ${(props.theme.accent || dark.accent).negative};
+    background-color: ${(props.theme || dark).background.page};
+    border: 1px solid ${(props.theme || dark).accent.negative};
+    box-shadow: ${(props.theme || dark).shadow.window};
   `}
+
+  ${ScrollbarStyledCss}
+`;
+
+export const CloseButtonContainerStyle = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  position: sticky;
+  top: 0;
 `;
