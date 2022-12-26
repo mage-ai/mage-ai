@@ -1,6 +1,7 @@
 from croniter import croniter
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.utils import get_leaf_nodes, is_dynamic_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
@@ -309,7 +310,13 @@ class PipelineRun(BaseModel):
     def create_block_runs(self) -> List['BlockRun']:
         blocks = self.pipeline.get_executable_blocks()
 
-        return [self.create_block_run(b.uuid) for b in blocks]
+        arr = []
+        for block in blocks:
+            ancestors = get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
+            if not find(is_dynamic_block, ancestors):
+                arr.append(block)
+
+        return [self.create_block_run(b.uuid) for b in arr]
 
     def all_blocks_completed(self) -> bool:
         return all(b.status == BlockRun.BlockRunStatus.COMPLETED
