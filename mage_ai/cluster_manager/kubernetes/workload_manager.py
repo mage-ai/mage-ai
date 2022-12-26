@@ -2,7 +2,10 @@ from kubernetes import client, config
 
 class WorkloadManager:
     def __init__(self, namespace: str = 'default'):
-        config.load_kube_config()
+        try:
+            config.load_incluster_config()
+        except:
+            config.load_kube_config()
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
 
