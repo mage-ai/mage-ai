@@ -307,7 +307,7 @@ function InstanceListPage() {
               {isLoadingCreateInstance && (
                 <Spacing mt={1}>
                   <Text warning>
-                    This may take a few minutes... Once the service is created, it may take another 5-10 minutes for the service to be accessible.
+                    This may take up to a few minutes... Once the service is created, it may take another 5-10 minutes for the service to be accessible.
                   </Text>
                 </Spacing>
               )}

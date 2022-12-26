@@ -2,31 +2,40 @@ from kubernetes import client, config
 
 class WorkloadManager:
     def __init__(self, namespace: str = 'default'):
-        try:
-            config.load_incluster_config()
-        except:
-            config.load_kube_config()
+        self.load_config()
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
 
         self.namespace = namespace
+
+    
+    def load_config(self) -> bool:
+        try:
+            config.load_incluster_config()
+            return True
+        except:
+            config.load_kube_config()
+            return False
 
 
     def list_services(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
         services_list = []
         for service in services:
-            labels = service.metadata.labels
-            if not labels.get('dev-instance'):
-                continue
-            ip_address = service.status.load_balancer.ingress[0].ip
-            conditions = service.status.conditions or list()
-            services_list.append(dict(
-                ip=ip_address,
-                name=labels.get('app'),
-                status='RUNNING' if len(conditions) == 0 else conditions[0].status,
-                type='kubernetes',
-            ))
+            try:
+                labels = service.metadata.labels
+                if not labels.get('dev-instance'):
+                    continue
+                ip_address = service.status.load_balancer.ingress[0].ip
+                conditions = service.status.conditions or list()
+                services_list.append(dict(
+                    ip=ip_address,
+                    name=labels.get('app'),
+                    status='RUNNING' if len(conditions) == 0 else conditions[0].status,
+                    type='kubernetes',
+                ))
+            except:
+                pass
 
         return services_list
 
