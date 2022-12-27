@@ -5,6 +5,7 @@ from logging import Logger
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
 )
+from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockStatus,
@@ -486,6 +487,7 @@ class Block:
         verify_output: bool = True,
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
+        dynamic_block_index: int = None,
     ) -> Dict:
         try:
             if not run_all_blocks:
@@ -508,6 +510,7 @@ class Block:
                 test_execution=test_execution,
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
+                dynamic_block_index=dynamic_block_index,
             )
             block_output = output['output']
             variable_mapping = dict()
@@ -674,6 +677,7 @@ class Block:
         test_execution: bool = False,
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
+        dynamic_block_index: int = None,
     ) -> Dict:
         # Add pipeline uuid and block uuid to global_vars
         global_vars = merge_dict(
@@ -694,7 +698,10 @@ class Block:
 
         # Fetch input variables
         input_vars, upstream_block_uuids = self.fetch_input_variables(
-            input_args, execution_partition, global_vars
+            input_args,
+            execution_partition,
+            global_vars,
+            dynamic_block_index=dynamic_block_index,
         )
 
         outputs_from_input_vars = {}
@@ -801,6 +808,7 @@ class Block:
         input_args,
         execution_partition: str = None,
         global_vars: Dict = None,
+        dynamic_block_index: int = None,
     ):
         upstream_block_uuids = []
         if input_args is None:
@@ -820,7 +828,17 @@ class Block:
                         )
                         for var in variables
                     ]
-                    if len(variables) == 1:
+
+                    upstream_block = self.pipeline.get_block(upstream_block_uuid)
+                    if is_dynamic_block(upstream_block):
+                        val = None
+                        if len(variable_values) >= 1:
+                            arr = variable_values[0]
+                            index_to_use = 0 if dynamic_block_index is None else dynamic_block_index
+                            if type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
+                                val = arr[index_to_use]
+                        input_vars.append(val)
+                    elif len(variables) == 1:
                         input_vars += variable_values
                     else:
                         input_vars.append(variable_values)

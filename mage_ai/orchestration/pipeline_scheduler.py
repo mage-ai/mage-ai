@@ -4,6 +4,10 @@ from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.utils import (
+    create_block_runs_from_dynamic_block,
+    is_dynamic_block,
+)
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
@@ -137,6 +141,10 @@ class PipelineScheduler:
 
     @retry(retries=3, delay=5)
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
+        block = self.pipeline.blocks_by_uuid.get(block_uuid)
+        if block and is_dynamic_block(block):
+            create_block_runs_from_dynamic_block(block, self.pipeline_run)
+
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(
             status=BlockRun.BlockRunStatus.COMPLETED,
@@ -513,6 +521,8 @@ def run_block(
     else:
         on_complete = pipeline_scheduler.on_block_complete_without_schedule
 
+    dynamic_block_index = (block_run.metrics or {}).get('dynamic_block_index', None)
+
     return ExecutorFactory.get_block_executor(
         pipeline,
         block_run.block_uuid,
@@ -529,6 +539,7 @@ def run_block(
         verify_output=verify_output,
         runtime_arguments=runtime_arguments,
         template_runtime_configuration=template_runtime_configuration,
+        dynamic_block_index=dynamic_block_index,
     )
 
 

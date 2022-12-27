@@ -36,6 +36,7 @@ class BlockExecutor:
         verify_output: bool = True,
         runtime_arguments: Dict = None,
         template_runtime_configuration: Dict = None,
+        dynamic_block_index: int = None,
         **kwargs,
     ) -> Dict:
         if template_runtime_configuration:
@@ -58,6 +59,7 @@ class BlockExecutor:
                     input_from_output=input_from_output,
                     verify_output=verify_output,
                     runtime_arguments=runtime_arguments,
+                    dynamic_block_index=dynamic_block_index,
                     **kwargs,
                 )
             except Exception as e:
@@ -95,6 +97,7 @@ class BlockExecutor:
         input_from_output: Dict = None,
         verify_output: bool = True,
         runtime_arguments: Dict = None,
+        dynamic_block_index: int = None,
         **kwargs,
     ) -> Dict:
         result = self.block.execute_sync(
@@ -107,6 +110,7 @@ class BlockExecutor:
             input_from_output=input_from_output,
             verify_output=verify_output,
             runtime_arguments=runtime_arguments,
+            dynamic_block_index=dynamic_block_index,
         )
 
         if BlockType.DBT == self.block.type:
