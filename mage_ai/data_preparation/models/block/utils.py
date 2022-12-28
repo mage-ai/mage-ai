@@ -4,21 +4,25 @@ from typing import Any, Dict, List
 import pandas as pd
 
 
+def dynamic_block_uuid(
+    block_uuid: str,
+    metadata: Dict,
+    index: int,
+) -> str:
+    block_uuid_subname = metadata.get('block_uuid', index)
+    return f'{block_uuid}:{block_uuid_subname}'
+
+
 def create_block_run_from_dynamic_child(
     block: 'Block',
     pipeline_run: 'PipelineRun',
     block_metadata: Dict,
     index: int,
 ) -> 'BlockRun':
-    block_uuid_original = block.uuid
     metadata = block_metadata.copy()
-    metadata.update(dict(
-        block_uuid_original=block_uuid_original,
-        dynamic_block_index=index,
-    ))
+    metadata.update(dict(dynamic_block_index=index))
 
-    block_uuid_subname = metadata.get('block_uuid', index)
-    block_uuid = f"{block_uuid_original}:{block_uuid_subname}"
+    block_uuid = dynamic_block_uuid(block.uuid, metadata, index)
     block_run = pipeline_run.create_block_run(block_uuid, metrics=metadata)
 
     return block_run
@@ -49,11 +53,13 @@ def create_block_runs_from_dynamic_block(
             )
 
     all_block_runs = []
+    # Dynamic child blocks (aka created from a dynamic block)
     for downstream_block in block.downstream_blocks:
         is_dynamic = is_dynamic_block(downstream_block)
         should_reduce = should_reduce_output(downstream_block)
         descendants = get_all_descendants(downstream_block)
 
+        block_runs_created_by_block_uuid = {}
         dynamic_child_block_runs = []
         for idx, value in enumerate(values):
             if idx < len(block_metadata):
@@ -75,20 +81,38 @@ def create_block_runs_from_dynamic_block(
 
             # Schedule all descendants
             for b in descendants:
+                # If block has dynamic upstream, skip since creation of downstream
+                # is handled in pipeline scheduler
                 if find(lambda x: is_dynamic_block(x), b.upstream_blocks):
                     continue
 
-                # If block has no dynamic upstream
-                all_block_runs.append(create_block_run_from_dynamic_child(
+                arr = []
+                for upstream_block in b.upstream_blocks:
+                    ancestors = get_all_ancestors(upstream_block)
+                    # If the upstream block has the current dynamic child as an ancestor,
+                    # then have this block depend on a block UUID with the dynamic UUID suffix;
+                    # e.g. block_uuid:index
+                    if downstream_block.uuid in [a.uuid for a in ancestors]:
+                        arr.append(dynamic_block_uuid(upstream_block.uuid, metadata, idx))
+                    elif downstream_block.uuid == upstream_block.uuid:
+                        arr.append(block_run.block_uuid)
+                    else:
+                        arr.append(upstream_block.uuid)
+
+                b_uuid = dynamic_block_uuid(b.uuid, metadata, idx)
+                if b_uuid in block_runs_created_by_block_uuid:
+                    continue
+                block_runs_created_by_block_uuid[b_uuid] = True
+
+                br = create_block_run_from_dynamic_child(
                     b,
                     pipeline_run,
                     merge_dict(metadata, dict(
-                        dynamic_upstream_block_uuids=[
-                            block_run.block_uuid,
-                        ],
+                        dynamic_upstream_block_uuids=arr,
                     )),
                     idx,
-                ))
+                )
+                all_block_runs.append(br)
 
         if should_reduce:
             for b in descendants:
@@ -108,12 +132,22 @@ def create_block_runs_from_dynamic_block(
                     down_uuids_as_ancestors = [i for i in down_uuids if i in ancestors_uuids]
                     skip_creating_downstream = len(down_uuids_as_ancestors) >= 2
 
-                if not skip_creating_downstream:
-                    arr = [b.block_uuid for b in dynamic_child_block_runs]
-                    all_block_runs.append(pipeline_run.create_block_run(
-                        b.uuid,
-                        metrics=dict(dynamic_upstream_block_uuids=arr),
-                    ))
+                # Only create downstream block runs if it doesn’t have dynamically created upstream
+                # blocks (aka dynamic child) that were created by a 2nd ancestor that is a dynamic block
+                if skip_creating_downstream:
+                    continue
+
+                arr = []
+                for upstream_block in b.upstream_blocks:
+                    if downstream_block.uuid == upstream_block.uuid:
+                        arr += [b.block_uuid for b in dynamic_child_block_runs]
+                    else:
+                        arr.append(upstream_block.uuid)
+
+                all_block_runs.append(pipeline_run.create_block_run(
+                    b.uuid,
+                    metrics=dict(dynamic_upstream_block_uuids=arr),
+                ))
 
     return all_block_runs
 

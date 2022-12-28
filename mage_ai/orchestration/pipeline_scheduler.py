@@ -220,6 +220,8 @@ class PipelineScheduler:
             dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
                 'dynamic_upstream_block_uuids',
             )
+
+            print('WTFFFFFFFFFFFFF', block_run.block_uuid, dynamic_upstream_block_uuids)
             if dynamic_upstream_block_uuids:
                 completed = all(uuid in completed_block_uuids for uuid in dynamic_upstream_block_uuids)
             else:
