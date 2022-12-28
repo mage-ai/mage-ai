@@ -141,9 +141,9 @@ class PipelineScheduler:
 
     @retry(retries=3, delay=5)
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
-        block = self.pipeline.blocks_by_uuid.get(block_uuid)
+        block = self.pipeline.get_block(block_uuid)
         if block and is_dynamic_block(block):
-            create_block_runs_from_dynamic_block(block, self.pipeline_run)
+            create_block_runs_from_dynamic_block(block, self.pipeline_run, block_uuid=block_uuid)
 
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(

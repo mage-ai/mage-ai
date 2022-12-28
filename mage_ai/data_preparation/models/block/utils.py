@@ -31,7 +31,10 @@ def create_block_run_from_dynamic_child(
 def create_block_runs_from_dynamic_block(
     block: 'Block',
     pipeline_run: 'PipelineRun',
+    block_uuid: str = None,
 ) -> List['BlockRun']:
+    block_uuid_original = block.uuid
+    block_uuid = block_uuid_original if block_uuid is None else block_uuid
     execution_partition = pipeline_run.execution_partition
 
     values = []
@@ -40,14 +43,14 @@ def create_block_runs_from_dynamic_block(
         if idx == 0:
             values = block.pipeline.variable_manager.get_variable(
                 block.pipeline.uuid,
-                block.uuid,
+                block_uuid,
                 output_name,
                 partition=execution_partition,
             )
         elif idx == 1:
             block_metadata = block.pipeline.variable_manager.get_variable(
                 block.pipeline.uuid,
-                block.uuid,
+                block_uuid,
                 output_name,
                 partition=execution_partition,
             )
@@ -67,10 +70,18 @@ def create_block_runs_from_dynamic_block(
             else:
                 metadata = {}
 
+            arr = []
+            for upstream_block in downstream_block.upstream_blocks:
+                if block_uuid_original == upstream_block.uuid and block_uuid_original != block_uuid:
+                    arr.append(block_uuid)
+                else:
+                    arr.append(upstream_block.uuid)
             block_run = create_block_run_from_dynamic_child(
                 downstream_block,
                 pipeline_run,
-                metadata,
+                merge_dict(metadata, dict(
+                    dynamic_upstream_block_uuids=arr,
+                )),
                 idx,
             )
             all_block_runs.append(block_run)
@@ -311,6 +322,7 @@ def fetch_input_variables(
 
                 upstream_block = pipeline.get_block(upstream_block_uuid)
                 should_reduce = should_reduce_output(upstream_block)
+                upstream_is_dynamic = is_dynamic_block(upstream_block)
 
                 uuids = list(
                     filter(lambda x: upstream_block_uuid in x, dynamic_upstream_block_uuids),
@@ -320,9 +332,11 @@ def fetch_input_variables(
                     uuids,
                     execution_partition,
                 )
+
                 final_value = []
                 for key, variables in input_variables_by_uuid.items():
-                    for var in variables:
+                    end_idx = 1 if upstream_is_dynamic else len(variables)
+                    for var in variables[:end_idx]:
                         variable_values = pipeline.variable_manager.get_variable(
                             pipeline.uuid,
                             key,
@@ -344,10 +358,19 @@ def fetch_input_variables(
                 if len(final_value) >= 1 and type(final_value[0]) is pd.DataFrame:
                     final_value = pd.concat(final_value)
 
-                if not should_reduce and \
-                    type(final_value) is not pd.DataFrame and \
-                    len(final_value) == 1:
-                    final_value = final_value[0]
+
+                if not should_reduce:
+                    # Only get the 1st output of a dynamic block;
+                    # the 2nd output is the dynamic child block’s metadata
+                    if upstream_is_dynamic and dynamic_block_index is not None:
+                        final_value = final_value[dynamic_block_index]
+
+                    if type(final_value) is not pd.DataFrame and \
+                        len(final_value) == 1:
+                        final_value = final_value[0]
+
+
+                print('WTFFFFFFFFFFFFFFFFF', upstream_block_uuid, uuids, input_variables_by_uuid, final_value)
 
                 input_vars[idx] = final_value
 

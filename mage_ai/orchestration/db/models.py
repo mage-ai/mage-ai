@@ -318,7 +318,7 @@ class PipelineRun(BaseModel):
         arr = []
         for block in blocks:
             ancestors = get_all_ancestors(block)
-            if not find(is_dynamic_block, ancestors):
+            if len(block.upstream_blocks) == 0 or not find(is_dynamic_block, ancestors):
                 arr.append(block)
 
         return [self.create_block_run(b.uuid) for b in arr]
