@@ -3,7 +3,7 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.shared.hash import merge_dict
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 import json
 import requests
 import traceback
@@ -37,6 +37,8 @@ class BlockExecutor:
         runtime_arguments: Dict = None,
         template_runtime_configuration: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_uuid: str = None,
+        dynamic_upstream_block_uuids: List[str] = None,
         **kwargs,
     ) -> Dict:
         if template_runtime_configuration:
@@ -60,6 +62,8 @@ class BlockExecutor:
                     verify_output=verify_output,
                     runtime_arguments=runtime_arguments,
                     dynamic_block_index=dynamic_block_index,
+                    dynamic_block_uuid=dynamic_block_uuid,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                     **kwargs,
                 )
             except Exception as e:
@@ -98,6 +102,8 @@ class BlockExecutor:
         verify_output: bool = True,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_uuid: str = None,
+        dynamic_upstream_block_uuids: List[str] = None,
         **kwargs,
     ) -> Dict:
         result = self.block.execute_sync(
@@ -111,6 +117,8 @@ class BlockExecutor:
             verify_output=verify_output,
             runtime_arguments=runtime_arguments,
             dynamic_block_index=dynamic_block_index,
+            dynamic_block_uuid=dynamic_block_uuid,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
         )
 
         if BlockType.DBT == self.block.type:

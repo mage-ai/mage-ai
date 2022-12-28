@@ -5,7 +5,14 @@ from logging import Logger
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
 )
-from mage_ai.data_preparation.models.block.utils import is_dynamic_block
+from mage_ai.data_preparation.models.block.utils import (
+    fetch_input_variables,
+    input_variables,
+    is_dynamic_block,
+    is_output_variable,
+    output_variables,
+    should_reduce_output,
+)
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockStatus,
@@ -488,6 +495,8 @@ class Block:
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_block_uuid: str = None,
+        dynamic_upstream_block_uuids: List[str] = None,
     ) -> Dict:
         try:
             if not run_all_blocks:
@@ -511,6 +520,7 @@ class Block:
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
                 dynamic_block_index=dynamic_block_index,
+                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             )
             block_output = output['output']
             variable_mapping = dict()
@@ -536,6 +546,7 @@ class Block:
                         execution_partition=execution_partition,
                         override_outputs=True,
                         spark=(global_vars or dict()).get('spark'),
+                        dynamic_block_uuid=dynamic_block_uuid,
                     )
                 except ValueError as e:
                     if str(e) == 'Circular reference detected':
@@ -678,6 +689,7 @@ class Block:
         input_from_output: Dict = None,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
     ) -> Dict:
         # Add pipeline uuid and block uuid to global_vars
         global_vars = merge_dict(
@@ -702,6 +714,7 @@ class Block:
             execution_partition,
             global_vars,
             dynamic_block_index=dynamic_block_index,
+            dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
         )
 
         outputs_from_input_vars = {}
@@ -809,43 +822,17 @@ class Block:
         execution_partition: str = None,
         global_vars: Dict = None,
         dynamic_block_index: int = None,
+        dynamic_upstream_block_uuids: List[str] = None,
     ):
-        upstream_block_uuids = []
-        if input_args is None:
-            input_vars = []
-            if self.pipeline is not None:
-                for upstream_block_uuid, variables in self.input_variables(
-                    execution_partition=execution_partition,
-                ).items():
-                    upstream_block_uuids.append(upstream_block_uuid)
-                    variable_values = [
-                        self.pipeline.variable_manager.get_variable(
-                            self.pipeline.uuid,
-                            upstream_block_uuid,
-                            var,
-                            partition=execution_partition,
-                            spark=(global_vars or dict()).get('spark'),
-                        )
-                        for var in variables
-                    ]
-
-                    upstream_block = self.pipeline.get_block(upstream_block_uuid)
-                    if is_dynamic_block(upstream_block):
-                        val = None
-                        if len(variable_values) >= 1:
-                            arr = variable_values[0]
-                            index_to_use = 0 if dynamic_block_index is None else dynamic_block_index
-                            if type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
-                                val = arr[index_to_use]
-                        input_vars.append(val)
-                    elif len(variables) == 1:
-                        input_vars += variable_values
-                    else:
-                        input_vars.append(variable_values)
-        else:
-            input_vars = input_args
-
-        return input_vars, upstream_block_uuids
+        return fetch_input_variables(
+            self.pipeline,
+            self.upstream_block_uuids,
+            input_args,
+            execution_partition,
+            global_vars,
+            dynamic_block_index,
+            dynamic_upstream_block_uuids,
+        )
 
     def get_analyses(self):
         if self.status == BlockStatus.NOT_EXECUTED:
@@ -975,7 +962,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             if o is None:
                 continue
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
-                    not self.__is_output_variable(o['variable_uuid']):
+                    not is_output_variable(o['variable_uuid']):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
@@ -1196,12 +1183,15 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         override: bool = False,
         override_outputs: bool = False,
         spark=None,
+        dynamic_block_uuid: str = None,
     ):
+        uuid_to_use = dynamic_block_uuid or self.uuid
+
         if self.pipeline is None:
             return
         all_variables = self.pipeline.variable_manager.get_variables_by_block(
             self.pipeline.uuid,
-            self.uuid,
+            uuid_to_use,
             partition=execution_partition,
         )
         removed_variables = []
@@ -1209,17 +1199,17 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             # Not remove dataframe variables
             removed_variables = [v for v in all_variables
                                  if v not in variable_mapping.keys()
-                                 and not self.__is_output_variable(v)]
+                                 and not is_output_variable(v)]
         elif override_outputs:
             removed_variables = [v for v in all_variables
                                  if v not in variable_mapping.keys() and
-                                 self.__is_output_variable(v)]
+                                 is_output_variable(v)]
         for uuid, data in variable_mapping.items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                uuid_to_use,
                 uuid,
                 data,
                 partition=execution_partition,
@@ -1228,7 +1218,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         for uuid in removed_variables:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
-                self.uuid,
+                uuid_to_use,
                 uuid,
             )
 
@@ -1240,8 +1230,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         Returns:
             Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
         """
-        return {b.uuid: b.output_variables(execution_partition=execution_partition)
-                for b in self.upstream_blocks}
+        return input_variables(self.pipeline, self.upstream_block_uuids, execution_partition)
+
 
     def input_variable_objects(self, execution_partition: str = None) -> List:
         """Get input variable objects from upstream blocks' output variables.
@@ -1266,23 +1256,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         return objs
 
     def output_variables(self, execution_partition: str = None) -> List[str]:
-        """Return output variables in dictionary.
-        The key is the variable name, and the value is variable data type.
-
-        Args:
-            execution_partition (str, optional): The execution paratition string.
-
-        Returns:
-            List[str]: List of variable names.
-        """
-        all_variables = self.pipeline.variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
+        return output_variables(
+            self.pipeline,
             self.uuid,
-            partition=execution_partition,
+            execution_partition,
         )
-        output_variables = [v for v in all_variables if self.__is_output_variable(v)]
-        output_variables.sort()
-        return output_variables
 
     def output_variable_objects(
         self,
@@ -1335,9 +1313,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             return function
 
         return custom_code
-
-    def __is_output_variable(self, variable_uuid):
-        return variable_uuid == 'df' or variable_uuid.startswith('output')
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):

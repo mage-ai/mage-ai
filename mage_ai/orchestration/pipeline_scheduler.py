@@ -213,13 +213,23 @@ class PipelineScheduler:
     @property
     def queued_block_runs(self) -> List[BlockRun]:
         queued_block_runs = []
-        for b in self.executable_block_runs:
+        for block_run in self.executable_block_runs:
+            completed = False
             completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
-            block = self.pipeline.get_block(b.block_uuid)
-            if block is not None and \
-                    block.all_upstream_blocks_completed(completed_block_uuids):
-                b.update(status=BlockRun.BlockRunStatus.QUEUED)
-                queued_block_runs.append(b)
+
+            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
+                'dynamic_upstream_block_uuids',
+            )
+            if dynamic_upstream_block_uuids:
+                completed = all(uuid in completed_block_uuids for uuid in dynamic_upstream_block_uuids)
+            else:
+                block = self.pipeline.get_block(block_run.block_uuid)
+                completed = block is not None and \
+                    block.all_upstream_blocks_completed(completed_block_uuids)
+
+            if completed:
+                block_run.update(status=BlockRun.BlockRunStatus.QUEUED)
+                queued_block_runs.append(block_run)
 
         return queued_block_runs
 
@@ -521,7 +531,9 @@ def run_block(
     else:
         on_complete = pipeline_scheduler.on_block_complete_without_schedule
 
-    dynamic_block_index = (block_run.metrics or {}).get('dynamic_block_index', None)
+    block_run_data = block_run.metrics or {}
+    dynamic_block_index = block_run_data.get('dynamic_block_index', None)
+    dynamic_upstream_block_uuids = block_run_data.get('dynamic_upstream_block_uuids', None)
 
     return ExecutorFactory.get_block_executor(
         pipeline,
@@ -540,6 +552,8 @@ def run_block(
         runtime_arguments=runtime_arguments,
         template_runtime_configuration=template_runtime_configuration,
         dynamic_block_index=dynamic_block_index,
+        dynamic_block_uuid=None if dynamic_block_index is None else block_run.block_uuid,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )
 
 
