@@ -322,32 +322,30 @@ def fetch_input_variables(
                 )
                 final_value = []
                 for key, variables in input_variables_by_uuid.items():
-                    if len(variables) == 0:
-                        continue
+                    for var in variables:
+                        variable_values = pipeline.variable_manager.get_variable(
+                            pipeline.uuid,
+                            key,
+                            var,
+                            partition=execution_partition,
+                            spark=spark,
+                        )
 
-                    var = variables[0]
-                    variable_values = pipeline.variable_manager.get_variable(
-                        pipeline.uuid,
-                        key,
-                        var,
-                        partition=execution_partition,
-                        spark=spark,
-                    )
+                        if type(variable_values) is list and len(variable_values) == 1:
+                            val = variable_values[0]
+                        else:
+                            val = variable_values
 
-                    if type(variable_values) is list and len(variable_values) == 1:
-                        val = variable_values[0]
-                    else:
-                        val = variable_values
+                        if type(val) is list:
+                            final_value += val
+                        else:
+                            final_value.append(val)
 
-                    if type(val) is list:
-                        final_value += val
-                    else:
-                        final_value.append(val)
-
-                    if len(final_value) >= 1 and type(final_value[0]) is pd.DataFrame:
-                        final_value = pd.concat(final_value)
+                if len(final_value) >= 1 and type(final_value[0]) is pd.DataFrame:
+                    final_value = pd.concat(final_value)
 
                 if not should_reduce and \
+                    type(final_value) is not pd.DataFrame and \
                     len(final_value) == 1:
                     final_value = final_value[0]
 
