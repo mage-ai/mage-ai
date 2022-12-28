@@ -75,10 +75,15 @@ export const getMoreActionsItems = (
   deleteBlock: (block: BlockType) => void,
   setOutputCollapsed: (outputCollapsed: boolean) => void,
   isStreamingPipeline: boolean,
-  savePipelineContent: (payload?: {
-    block?: BlockType;
-    pipeline?: PipelineType;
-  }) => Promise<any>,
+  opts?: {
+    blocksMapping: {
+      [uuid: string]: BlockType;
+    };
+    savePipelineContent: (payload?: {
+      block?: BlockType;
+      pipeline?: PipelineType;
+    }) => Promise<any>;
+  },
 ): FlyoutMenuItemType[] => {
   const items: FlyoutMenuItemType[] = [
     {
@@ -95,24 +100,55 @@ export const getMoreActionsItems = (
 
   const {
     configuration,
+    upstream_blocks: upstreamBlocks,
   } = block || {};
   const {
     dynamic,
+    reduce_output: reduceOutput,
   } = configuration || {};
 
-  items.push({
-    label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
-    onClick: () => savePipelineContent({
-      block: {
-        ...block,
-        configuration: {
-          ...configuration,
-          dynamic: !dynamic,
+  const {
+    blocksMapping,
+    savePipelineContent,
+  } = opts || {};
+
+  if (savePipelineContent) {
+    items.push({
+      label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
+      onClick: () => savePipelineContent({
+        block: {
+          ...block,
+          configuration: {
+            ...configuration,
+            dynamic: !dynamic,
+          },
         },
-      },
-    }),
-    uuid: 'dynamic',
-  });
+      }),
+      uuid: 'dynamic',
+    });
+  }
+
+  if (blocksMapping) {
+    const dynamicChildBlock = upstreamBlocks?.find(
+      (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
+    );
+
+    if (dynamicChildBlock) {
+      items.push({
+        label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
+        onClick: () => savePipelineContent({
+          block: {
+            ...block,
+            configuration: {
+              ...configuration,
+              dynamic: !reduceOutput,
+            },
+          },
+        }),
+        uuid: 'reduce_output',
+      });
+    }
+  }
 
   items.push({
     label: () => 'Delete block',
