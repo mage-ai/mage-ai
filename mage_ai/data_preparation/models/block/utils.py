@@ -348,7 +348,6 @@ def fetch_input_variables(
                         final_value = pd.concat(final_value)
 
                 if not should_reduce and \
-                    len(dynamic_upstream_block_uuids) == 1 and \
                     len(final_value) == 1:
                     final_value = final_value[0]
 
