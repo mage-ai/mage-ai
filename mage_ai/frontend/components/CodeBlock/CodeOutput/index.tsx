@@ -58,6 +58,8 @@ function CodeOutput({
   block,
   collapsed,
   contained = true,
+  dynamicBlock,
+  dynamicChildBlock,
   hasError,
   hideExtraInfo,
   isInProgress,
@@ -310,6 +312,8 @@ function CodeOutput({
         <ContainerStyle
           addBottomPadding={isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK}
           blockType={blockType}
+          dynamicBlock={dynamicBlock}
+          dynamicChildBlock={dynamicChildBlock}
           executedAndIdle={executedAndIdle}
           hasError={hasError}
           selected={selected}
@@ -323,6 +327,8 @@ function CodeOutput({
       {executedAndIdle && !hideExtraInfo && (
         <ExtraInfoStyle
           blockType={blockType}
+          dynamicBlock={dynamicBlock}
+          dynamicChildBlock={dynamicChildBlock}
           hasError={hasError}
           selected={selected}
         >

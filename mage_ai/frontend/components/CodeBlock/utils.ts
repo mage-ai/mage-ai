@@ -4,6 +4,7 @@ import BlockType, {
   BlockTypeEnum,
   CONVERTIBLE_BLOCK_TYPES,
 } from '@interfaces/BlockType';
+import PipelineType from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { lowercase } from '@utils/string';
 
@@ -74,7 +75,10 @@ export const getMoreActionsItems = (
   deleteBlock: (block: BlockType) => void,
   setOutputCollapsed: (outputCollapsed: boolean) => void,
   isStreamingPipeline: boolean,
-
+  savePipelineContent: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>,
 ): FlyoutMenuItemType[] => {
   const items: FlyoutMenuItemType[] = [
     {
@@ -87,15 +91,37 @@ export const getMoreActionsItems = (
       onClick: () => runBlock({ block, runTests: true }),
       uuid: 'run_tests',
     },
-    {
-      label: () => 'Delete block',
-      onClick: () => {
-        deleteBlock(block);
-        setOutputCollapsed(false);
-      },
-      uuid: 'delete_block',
-    },
   ];
+
+  const {
+    configuration,
+  } = block || {};
+  const {
+    dynamic,
+  } = configuration || {};
+
+  items.push({
+    label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
+    onClick: () => savePipelineContent({
+      block: {
+        ...block,
+        configuration: {
+          ...configuration,
+          dynamic: !dynamic,
+        },
+      },
+    }),
+    uuid: 'dynamic',
+  });
+
+  items.push({
+    label: () => 'Delete block',
+    onClick: () => {
+      deleteBlock(block);
+      setOutputCollapsed(false);
+    },
+    uuid: 'delete_block',
+  });
 
   if (isStreamingPipeline) {
     return [items.pop()];

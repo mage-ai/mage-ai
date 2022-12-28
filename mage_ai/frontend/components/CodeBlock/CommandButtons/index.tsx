@@ -371,6 +371,7 @@ function CommandButtons({
               deleteBlock,
               setOutputCollapsed,
               isStreamingPipeline,
+              savePipelineContent,
             )}
             onClickCallback={() => setShowMoreActions(false)}
             open={showMoreActions}

@@ -527,7 +527,7 @@ function PipelineDetailPage({
 
           if (blockOverride?.uuid === block.uuid) {
             Object.entries(blockOverride).forEach(([k, v]) => {
-              if (typeof v === 'object' && !Array.isArray(v)) {
+              if (typeof v === 'object' && !Array.isArray(v) && !!v) {
                 Object.entries(v).forEach(([k2, v2]) => {
                   if (!blockPayload[k]) {
                     blockPayload[k] = {};

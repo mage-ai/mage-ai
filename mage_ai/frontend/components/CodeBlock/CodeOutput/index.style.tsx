@@ -58,11 +58,11 @@ export const OutputRowStyle = styled.div<{
 
 export const HTMLOutputStyle = styled.div<any>`
   table {
+    ${BORDER_COLOR_SHARED_STYLES}
     border-left-style: solid;
     border-left-width: 2px;
     border-right-style: solid;
     border-right-width: 2px;
-    ${BORDER_COLOR_SHARED_STYLES}
   }
 
   td, th {
