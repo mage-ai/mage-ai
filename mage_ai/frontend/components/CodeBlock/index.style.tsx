@@ -55,6 +55,8 @@ export function getColorsForBlockType(
 
 export type BorderColorShareProps = {
   blockType?: BlockTypeEnum;
+  dynamicBlock?: boolean;
+  dynamicChildBlock?: boolean;
   hasError?: boolean;
   selected: boolean;
 };
@@ -76,6 +78,14 @@ export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
 
   ${props => props.selected && props.hasError && `
     border-color: ${(props.theme.borders || dark.borders).danger};
+  `}
+
+  ${props => props.dynamicBlock && `
+    border-style: dashed !important;
+  `}
+
+  ${props => props.dynamicChildBlock && `
+    border-style: dotted !important;
   `}
 `;
 

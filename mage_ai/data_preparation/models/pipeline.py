@@ -1,4 +1,6 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block.errors import NoMultipleDynamicUpstreamBlocks
+from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     ExecutorType,
@@ -406,48 +408,66 @@ class Pipeline:
             for key in ['blocks', 'widgets']:
                 if key in data:
                     for block_data in data[key]:
-                        if 'uuid' in block_data:
-                            widget = key == 'widgets'
-                            mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
-                            block = mapping.get(block_data['uuid'])
-                            if block is None:
-                                continue
-                            if 'content' in block_data:
-                                block.update_content(block_data['content'], widget=widget)
-                            if 'outputs' in block_data:
-                                block.save_outputs(block_data['outputs'], override=True)
+                        if 'uuid' not in block_data:
+                            continue
 
-                            should_save = False
-                            name = block_data.get('name')
+                        widget = key == 'widgets'
+                        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+                        block = mapping.get(block_data['uuid'])
+                        if block is None:
+                            continue
+                        if 'content' in block_data:
+                            block.update_content(block_data['content'], widget=widget)
+                        if 'outputs' in block_data:
+                            block.save_outputs(block_data['outputs'], override=True)
 
-                            if block_data.get('configuration'):
-                                block.configuration = block_data['configuration']
-                                should_save = True
+                        should_save = False
+                        name = block_data.get('name')
 
-                            if widget:
-                                keys_to_update = []
+                        configuration = block_data.get('configuration')
+                        if configuration:
+                            if configuration.get('dynamic') and not is_dynamic_block(block):
+                                for downstream_block in block.downstream_blocks:
+                                    dynamic_blocks = list(filter(
+                                        is_dynamic_block,
+                                        downstream_block.upstream_blocks,
+                                    ))
 
-                                if name and name != block.name:
-                                    keys_to_update.append('name')
+                                    if len(dynamic_blocks) >= 1:
+                                        db_uuids = [block.uuid] + [b.uuid for b in dynamic_blocks]
+                                        raise NoMultipleDynamicUpstreamBlocks(
+                                            f'Block {downstream_block.uuid} can only have 1 upstream block that is dynamic. '
+                                            'Current request is trying to set the following dynamic blocks as upstream: '
+                                            f"{', '.join(db_uuids)}.",
+                                        )
 
-                                if block_data.get('upstream_blocks'):
-                                    keys_to_update.append('upstream_blocks')
-                                    block_data['upstream_blocks'] = [
-                                        block_uuid_mapping.get(b, b)
-                                        for b in block_data['upstream_blocks']
-                                    ]
+                            block.configuration = configuration
+                            should_save = True
 
-                                if len(keys_to_update) >= 1:
-                                    block.update(extract(block_data, keys_to_update))
+                        if widget:
+                            keys_to_update = []
 
-                                should_save = True
-                            elif name and name != block.name:
-                                block.update(extract(block_data, ['name']))
-                                block_uuid_mapping[block_data.get('uuid')] = block.uuid
-                                should_save = True
+                            if name and name != block.name:
+                                keys_to_update.append('name')
 
-                            if should_save:
-                                self.save(widget=widget)
+                            if block_data.get('upstream_blocks'):
+                                keys_to_update.append('upstream_blocks')
+                                block_data['upstream_blocks'] = [
+                                    block_uuid_mapping.get(b, b)
+                                    for b in block_data['upstream_blocks']
+                                ]
+
+                            if len(keys_to_update) >= 1:
+                                block.update(extract(block_data, keys_to_update))
+
+                            should_save = True
+                        elif name and name != block.name:
+                            block.update(extract(block_data, ['name']))
+                            block_uuid_mapping[block_data.get('uuid')] = block.uuid
+                            should_save = True
+
+                        if should_save:
+                            self.save(widget=widget)
 
     def __add_block_to_mapping(
         self,
@@ -515,6 +535,19 @@ class Pipeline:
         save_kwargs = dict()
 
         if upstream_block_uuids is not None:
+            mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+            dynamic_upstream_blocks = list(filter(
+                is_dynamic_block,
+                [mapping[b_uuid] for b_uuid in upstream_block_uuids if b_uuid in mapping],
+            ))
+
+            if len(dynamic_upstream_blocks) >= 2:
+                raise NoMultipleDynamicUpstreamBlocks(
+                    f'Block {block.uuid} can only have 1 upstream block that is dynamic. '
+                    'Current request is trying to set the following dynamic blocks as upstream: '
+                    f"{', '.join([b.uuid for b in dynamic_upstream_blocks])}.",
+                )
+
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
             if curr_upstream_block_uuids != new_upstream_block_uuids:

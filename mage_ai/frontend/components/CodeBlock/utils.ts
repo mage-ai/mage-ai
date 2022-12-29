@@ -4,6 +4,7 @@ import BlockType, {
   BlockTypeEnum,
   CONVERTIBLE_BLOCK_TYPES,
 } from '@interfaces/BlockType';
+import PipelineType from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { lowercase } from '@utils/string';
 
@@ -74,7 +75,15 @@ export const getMoreActionsItems = (
   deleteBlock: (block: BlockType) => void,
   setOutputCollapsed: (outputCollapsed: boolean) => void,
   isStreamingPipeline: boolean,
-
+  opts?: {
+    blocksMapping: {
+      [uuid: string]: BlockType;
+    };
+    savePipelineContent: (payload?: {
+      block?: BlockType;
+      pipeline?: PipelineType;
+    }) => Promise<any>;
+  },
 ): FlyoutMenuItemType[] => {
   const items: FlyoutMenuItemType[] = [
     {
@@ -87,15 +96,83 @@ export const getMoreActionsItems = (
       onClick: () => runBlock({ block, runTests: true }),
       uuid: 'run_tests',
     },
-    {
-      label: () => 'Delete block',
-      onClick: () => {
-        deleteBlock(block);
-        setOutputCollapsed(false);
-      },
-      uuid: 'delete_block',
-    },
   ];
+
+  const {
+    configuration,
+    downstream_blocks: downstreamBlocks,
+    upstream_blocks: upstreamBlocks,
+  } = block || {};
+  const {
+    dynamic,
+    reduce_output: reduceOutput,
+  } = configuration || {};
+
+  const {
+    blocksMapping,
+    savePipelineContent,
+  } = opts || {};
+
+  // If current block’s downstream has other dynamic blocks,
+  // disable this button
+  const otherDynamicBlocks = [];
+  downstreamBlocks.forEach((uuid1: string) => {
+    const b = blocksMapping?.[uuid1];
+    if (b) {
+      b.upstream_blocks.forEach((uuid2: string) => {
+        if (blocksMapping?.[uuid2]?.configuration?.dynamic) {
+          otherDynamicBlocks.push(blocksMapping[uuid2]);
+        }
+      });
+    }
+  });
+
+  if (savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
+    items.push({
+      label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
+      onClick: () => savePipelineContent({
+        block: {
+          ...block,
+          configuration: {
+            ...configuration,
+            dynamic: !dynamic,
+          },
+        },
+      }),
+      uuid: 'dynamic',
+    });
+  }
+
+  if (blocksMapping) {
+    const dynamicChildBlock = upstreamBlocks?.find(
+      (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
+    );
+
+    if (dynamicChildBlock) {
+      items.push({
+        label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
+        onClick: () => savePipelineContent({
+          block: {
+            ...block,
+            configuration: {
+              ...configuration,
+              reduce_output: !reduceOutput,
+            },
+          },
+        }),
+        uuid: 'reduce_output',
+      });
+    }
+  }
+
+  items.push({
+    label: () => 'Delete block',
+    onClick: () => {
+      deleteBlock(block);
+      setOutputCollapsed(false);
+    },
+    uuid: 'delete_block',
+  });
 
   if (isStreamingPipeline) {
     return [items.pop()];

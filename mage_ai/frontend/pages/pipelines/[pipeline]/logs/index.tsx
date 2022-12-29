@@ -401,14 +401,18 @@ function BlockRuns({
 
             let streamID;
             let index;
+            const parts = blockUUID.split(':');
             if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
-              const parts = blockUUID.split(':');
               blockUUID = parts[0];
               streamID = parts[1];
               index = parts[2];
             }
 
-            const block = blocksByUUID[blockUUID];
+            let block = blocksByUUID[blockUUID];
+            if (!block) {
+              block = blocksByUUID[parts[0]];
+            }
+
             if (block) {
               const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
 

@@ -31,3 +31,15 @@ def sample(arr):
 def subtract(arr1, arr2):
     arr2_lookup = set(arr2)
     return [i for i in arr1 if i not in arr2_lookup]
+
+
+def unique_by(arr1, key):
+    mapping = {}
+    arr2 = []
+    for item in arr1:
+        k = key(item)
+        if k in mapping:
+            continue
+        arr2.append(item)
+        mapping[k] = True
+    return arr2

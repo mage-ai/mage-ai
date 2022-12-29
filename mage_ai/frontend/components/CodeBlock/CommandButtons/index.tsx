@@ -35,6 +35,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { buildConvertBlockMenuItems, getMoreActionsItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
+import { indexBy } from '@utils/array';
 
 export type CommandButtonsSharedProps = {
   addWidget: (widget: BlockType, opts?: {
@@ -114,6 +115,8 @@ function CommandButtons({
       blocks,
       savePipelineContent,
     ]);
+
+  const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   return (
     <FlexContainer
@@ -371,6 +374,10 @@ function CommandButtons({
               deleteBlock,
               setOutputCollapsed,
               isStreamingPipeline,
+              {
+                blocksMapping,
+                savePipelineContent,
+              },
             )}
             onClickCallback={() => setShowMoreActions(false)}
             open={showMoreActions}

@@ -75,6 +75,10 @@ export type SidekickProps = {
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
   selectedBlock: BlockType;
+  setErrors: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   statistics: StatisticsType;
 } & SetEditingBlockType & ChartsPropsShared;
 
@@ -108,6 +112,7 @@ function Sidekick({
   selectedBlock,
   setAnyInputFocused,
   setEditingBlock,
+  setErrors,
   setSelectedBlock,
   setTextareaFocused,
   statistics,
@@ -241,6 +246,7 @@ function Sidekick({
               runningBlocks={runningBlocks}
               selectedBlock={selectedBlock}
               setEditingBlock={setEditingBlock}
+              setErrors={setErrors}
               setSelectedBlock={setSelectedBlock}
             />
             {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
@@ -309,7 +315,7 @@ function Sidekick({
         }
         {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
 
-        {(isIntegration 
+        {(isIntegration
           || (selectedBlock && hasData)
           || (!selectedBlock && hasData && activeView === ViewKeyEnum.DATA))
           ? null

@@ -101,7 +101,9 @@ export interface ConfigurationType {
   [VARIABLE_NAME_Y]?: string;
   [VARIABLE_NAME_Y_SORT_ORDER]?: SortOrderEnum;
   chart_type?: ChartTypeEnum;
+  dynamic?: boolean;
   file_path?: string;
+  reduce_output?: boolean;
 }
 
 export function buildMetricName(metric: MetricType) {

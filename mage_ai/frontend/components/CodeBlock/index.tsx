@@ -392,12 +392,26 @@ function CodeBlockProps({
 
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
-  const borderColorShareProps = useMemo(() => ({
-    blockType: block.type,
-    hasError,
-    selected,
-  }), [
-    block.type,
+  const borderColorShareProps = useMemo(() => {
+    const {
+      configuration,
+      type: blockType,
+      upstream_blocks: upstreamBlocks,
+    }  = block || {};
+    const dynamicChildBlock = upstreamBlocks?.find(
+      (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
+    );
+
+    return {
+      blockType: blockType,
+      dynamicBlock: configuration?.dynamic,
+      dynamicChildBlock: !!dynamicChildBlock,
+      hasError,
+      selected,
+    };
+  }, [
+    block,
+    blocksMapping,
     hasError,
     selected,
   ]);

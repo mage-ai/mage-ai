@@ -108,6 +108,10 @@ export type DependencyGraphProps = {
   pipeline: PipelineType;
   runningBlocks?: BlockType[];
   selectedBlock?: BlockType;
+  setErrors?: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   setSelectedBlock?: (block: BlockType) => void;
 } & SetEditingBlockType;
 
@@ -123,6 +127,7 @@ function DependencyGraph({
   runningBlocks = [],
   selectedBlock,
   setEditingBlock,
+  setErrors,
   setSelectedBlock,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -160,14 +165,10 @@ function DependencyGraph({
             });
             fetchPipeline?.();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
         },
       ),
     },
