@@ -1,6 +1,7 @@
 from google.cloud import bigquery
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
+    MAX_QUERY_BUFFER,
     MAX_QUERY_PARAMETERS,
     MAX_QUERY_PARAMETERS_SIZE,
     QUERY_JOB_MAX_TIMEOUT_SECONDS,
@@ -473,8 +474,8 @@ WHERE table_id = '{table_name}'
             row_values = []
             row_idx = -1
 
-            while query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * 0.75) and \
-                len(query_parameters) < (MAX_QUERY_PARAMETERS * 0.75) and \
+            while query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * MAX_QUERY_BUFFER) and \
+                len(query_parameters) < (MAX_QUERY_PARAMETERS * MAX_QUERY_BUFFER) and \
                     row_idx + 1 < len(insert_values):
 
                 row_idx += 1
@@ -537,6 +538,7 @@ WHERE table_id = '{table_name}'
                     query_parameters=query_parameters,
                 ))),
             )
+
             jobs.append(job)
             result = job.result(timeout=QUERY_JOB_MAX_TIMEOUT_SECONDS)
             job_results.append(result)
