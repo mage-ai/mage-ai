@@ -12,6 +12,5 @@ def send_teams_message(config: TeamsConfig, message: str ,title = 'Mage pipeline
                 "activityTitle": title,
                 "activitySubtitle": message
             }],
-            
         }
     )
