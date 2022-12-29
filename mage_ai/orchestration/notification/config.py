@@ -31,7 +31,6 @@ class NotificationConfig(BaseConfig):
                 notification_config.teams_config = TeamsConfig.load(
                     config=notification_config.teams_config,
                 )
-    
             except Exception:
                 traceback.print_exc()
                 notification_config.teams_config = None
