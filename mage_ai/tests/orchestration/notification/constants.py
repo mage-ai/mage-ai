@@ -13,3 +13,10 @@ SLACK_NOTIFICATION_CONFIG = dict(
         webhook_url='test_webhook_url',
     )
 )
+
+
+TEAMS_NOTIFICATION_CONFIG = dict(
+    teams_config=dict(
+        webhook_url='test_webhook_url',
+    )
+)

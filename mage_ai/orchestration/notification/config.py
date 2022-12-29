@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from mage_ai.services.email.config import EmailConfig
 from mage_ai.services.slack.config import SlackConfig
+from mage_ai.services.teams.config import TeamsConfig
 from mage_ai.shared.config import BaseConfig
 from typing import Dict
 import traceback
@@ -10,6 +11,7 @@ import traceback
 class NotificationConfig(BaseConfig):
     email_config: EmailConfig = None
     slack_config: SlackConfig = None
+    teams_config: TeamsConfig = None
 
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
@@ -23,6 +25,15 @@ class NotificationConfig(BaseConfig):
             except Exception:
                 traceback.print_exc()
                 notification_config.slack_config = None
+        if notification_config.teams_config is not None and \
+                type(notification_config.teams_config) is dict:
+            try:
+                notification_config.teams_config = TeamsConfig.load(
+                    config=notification_config.teams_config,
+                )
+            except Exception:
+                traceback.print_exc()
+                notification_config.teams_config = None
         if notification_config.email_config is not None and \
                 type(notification_config.email_config) is dict:
             try:
