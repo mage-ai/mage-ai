@@ -1,6 +1,7 @@
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.services.email.email import send_email
 from mage_ai.services.slack.slack import send_slack_message
+from mage_ai.services.teams.teams import send_teams_message
 import os
 
 
@@ -18,6 +19,10 @@ class NotificationSender:
             return
         if self.config.slack_config is not None and self.config.slack_config.is_valid:
             send_slack_message(self.config.slack_config, message)
+
+        if self.config.teams_config is not None and self.config.teams_config.is_valid:
+            send_teams_message(self.config.teams_config, message)
+            
         if self.config.email_config is not None and email_subject is not None:
             send_email(
                 self.config.email_config,

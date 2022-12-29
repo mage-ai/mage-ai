@@ -5,6 +5,7 @@ from mage_ai.tests.factory import create_pipeline, create_pipeline_run_with_sche
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
+    TEAMS_NOTIFICATION_CONFIG,
 )
 from unittest.mock import patch
 
@@ -17,6 +18,7 @@ class NotificationSenderTests(DBTestCase):
         self.pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
 
     @patch('mage_ai.orchestration.notification.sender.send_slack_message')
+    @patch('mage_ai.orchestration.notification.sender.send_teams_message')
     @patch('mage_ai.orchestration.notification.sender.send_email')
     def test_send_pipeline_run_success_message(self, mock_send_email, mock_send_slack):
         notification_config = NotificationConfig.load(config=EMAIL_NOTIFICATION_CONFIG)
@@ -42,6 +44,7 @@ class NotificationSenderTests(DBTestCase):
         )
 
     @patch('mage_ai.orchestration.notification.sender.send_slack_message')
+    @patch('mage_ai.orchestration.notification.sender.send_teams_message')
     @patch('mage_ai.orchestration.notification.sender.send_email')
     def test_send_pipeline_run_failure_message(self, mock_send_email, mock_send_slack):
         notification_config = NotificationConfig.load(config=SLACK_NOTIFICATION_CONFIG)
