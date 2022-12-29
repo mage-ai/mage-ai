@@ -18,7 +18,6 @@ class NotificationSenderTests(DBTestCase):
         self.pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
 
     @patch('mage_ai.orchestration.notification.sender.send_slack_message')
-    @patch('mage_ai.orchestration.notification.sender.send_teams_message')
     @patch('mage_ai.orchestration.notification.sender.send_email')
     def test_send_pipeline_run_success_message(self, mock_send_email, mock_send_slack):
         notification_config = NotificationConfig.load(config=EMAIL_NOTIFICATION_CONFIG)
@@ -44,7 +43,6 @@ class NotificationSenderTests(DBTestCase):
         )
 
     @patch('mage_ai.orchestration.notification.sender.send_slack_message')
-    @patch('mage_ai.orchestration.notification.sender.send_teams_message')
     @patch('mage_ai.orchestration.notification.sender.send_email')
     def test_send_pipeline_run_failure_message(self, mock_send_email, mock_send_slack):
         notification_config = NotificationConfig.load(config=SLACK_NOTIFICATION_CONFIG)
@@ -60,5 +58,24 @@ class NotificationSenderTests(DBTestCase):
         )
         mock_send_slack.assert_called_once_with(
             notification_config.slack_config,
+            message,
+        )
+
+    @patch('mage_ai.orchestration.notification.sender.send_teams_message')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_send_pipeline_run_failure_message_using_teams(self, mock_send_email, mock_send_teams_message):
+        notification_config = NotificationConfig.load(config=TEAMS_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
+        self.assertEqual(mock_send_email.call_count, 0)
+        message = (
+            'Failed to run Pipeline `test_pipeline` '
+            f'with Trigger {pipeline_run.pipeline_schedule.id} '
+            f'`{pipeline_run.pipeline_schedule.name}` '
+            f'at execution time `{pipeline_run.execution_date}`.'
+        )
+        mock_send_teams_message.assert_called_once_with(
+            notification_config.teams_config,
             message,
         )
