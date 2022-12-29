@@ -287,7 +287,7 @@ export function getTimesFromStream(pipelineRun: PipelineRunType, stream: string)
     completedAt =
       sortByKey(brs, ({ completed_at: ts }) => ts, { ascending: false })[0]?.completed_at;
   } else if (br) {
-    updatedAt = br.updated_at;
+    updatedAt = br?.updated_at;
   }
 
   const a = done
@@ -304,7 +304,7 @@ export function getTimesFromStream(pipelineRun: PipelineRunType, stream: string)
     progress,
     runtime,
     startedAt,
-    status: br.status,
+    status: br?.status,
     timeText: prettyUnitOfTime(runtime),
     total,
     updatedAt,
