@@ -10,7 +10,7 @@ def send_teams_message(config: TeamsConfig, message: str ,title = 'Mage pipeline
             'summary': title,
             'sections': [{
                 'activityTitle': title,
-                'activitySubtitle': message
+                'activitySubtitle': message,
             }],
         }
     )
