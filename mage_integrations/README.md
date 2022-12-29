@@ -41,7 +41,7 @@ python3 mage_integrations/sources/salesforce/__init__.py \
 python3 mage_integrations/sources/salesforce/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
-  --selected_streams '["ContactHistory"]' > mage_integrations/TEST_CATALOG.json
+  --selected_streams '["Event"]' > mage_integrations/TEST_CATALOG.json
 ```
 
 ### Count records

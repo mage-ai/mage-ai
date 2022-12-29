@@ -97,6 +97,9 @@ def column_type_mapping(
             arr = [arr]
 
         for any_of in column_settings.get('anyOf', []):
+            if 'format' not in column_settings and 'format' in any_of:
+                column_settings['format'] = any_of['format']
+
             arr2 = any_of.get('type', [])
             if type(arr2) is not list:
                 arr2 = [arr2]
