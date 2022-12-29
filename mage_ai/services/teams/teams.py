@@ -3,14 +3,14 @@ import json
 import requests
 
 
-def send_teams_message(config: TeamsConfig, message: str ,title = 'Mage pipeline run status logs',) -> None:
+def send_teams_message(config: TeamsConfig, message: str, title = 'Mage pipeline run status logs') -> None:
     requests.post(
-        url = config.webhook_url,
-        json = {
+        url=config.webhook_url,
+        json={
             'summary': title,
             'sections': [{
                 'activityTitle': title,
                 'activitySubtitle': message,
             }],
-        }
+        },
     )
