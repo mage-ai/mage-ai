@@ -34,6 +34,5 @@ class NotificationConfigTests(TestCase):
         self.assertIsNone(config2.slack_config)
 
         self.assertIsNone(config3.email_config)
-        self.assertIsNone(config4.teams_config)
         self.assertEqual(config3.slack_config.webhook_url, 'test_webhook_url')
         self.assertEqual(config4.teams_config.webhook_url, 'test_webhook_url')
