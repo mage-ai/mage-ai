@@ -78,11 +78,17 @@ function BlockRunsTable({
 
         let streamID;
         let index;
+        const parts = blockUUID.split(':');
+
         if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
-          const parts = blockUUID.split(':');
           blockUUID = parts[0];
           streamID = parts[1];
           index = parts[2];
+        }
+
+        let block = blocksByUUID[blockUUID];
+        if (!block) {
+          block = blocksByUUID[parts[0]];
         }
 
         return [
@@ -119,7 +125,7 @@ function BlockRunsTable({
               verticalAlignContent
             >
               <Circle
-                color={getColorsForBlockType(blocksByUUID[blockUUID]?.type, {
+                color={getColorsForBlockType(block?.type, {
                   theme: themeContext,
                 }).accent}
                 size={UNIT * 1.5}
