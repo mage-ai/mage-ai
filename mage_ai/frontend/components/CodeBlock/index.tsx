@@ -405,7 +405,7 @@ function CodeBlockProps({
     return {
       blockType: blockType,
       dynamicBlock: configuration?.dynamic,
-      dynamicChildBlock,
+      dynamicChildBlock: !!dynamicChildBlock,
       hasError,
       selected,
     };
