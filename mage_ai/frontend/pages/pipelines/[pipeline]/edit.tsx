@@ -1239,6 +1239,7 @@ function PipelineDetailPage({
       selectedBlock={selectedBlock}
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
+      setErrors={setErrors}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}
@@ -1273,6 +1274,7 @@ function PipelineDetailPage({
     sendMessage,
     setAnyInputFocused,
     setEditingBlock,
+    setErrors,
     setPipelineMessages,
     setTextareaFocused,
     statistics,

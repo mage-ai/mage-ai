@@ -100,6 +100,7 @@ export const getMoreActionsItems = (
 
   const {
     configuration,
+    downstream_blocks: downstreamBlocks,
     upstream_blocks: upstreamBlocks,
   } = block || {};
   const {
@@ -112,7 +113,21 @@ export const getMoreActionsItems = (
     savePipelineContent,
   } = opts || {};
 
-  if (savePipelineContent) {
+  // If current block’s downstream has other dynamic blocks,
+  // disable this button
+  const otherDynamicBlocks = [];
+  downstreamBlocks.forEach((uuid1: string) => {
+    const b = blocksMapping?.[uuid1];
+    if (b) {
+      b.upstream_blocks.forEach((uuid2: string) => {
+        if (blocksMapping?.[uuid2]?.configuration?.dynamic) {
+          otherDynamicBlocks.push(blocksMapping[uuid2]);
+        }
+      });
+    }
+  });
+
+  if (savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
     items.push({
       label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
       onClick: () => savePipelineContent({
@@ -141,7 +156,7 @@ export const getMoreActionsItems = (
             ...block,
             configuration: {
               ...configuration,
-              dynamic: !reduceOutput,
+              reduce_output: !reduceOutput,
             },
           },
         }),
