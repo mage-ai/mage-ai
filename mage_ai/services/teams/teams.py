@@ -7,10 +7,10 @@ def send_teams_message(config: TeamsConfig, message: str ,title = 'Mage pipeline
     requests.post(
         url = config.webhook_url,
         json = {
-            "summary": title,
-            "sections": [{
-                "activityTitle": title,
-                "activitySubtitle": message
+            'summary': title,
+            'sections': [{
+                'activityTitle': title,
+                'activitySubtitle': message
             }],
         }
     )

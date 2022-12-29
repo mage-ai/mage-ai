@@ -5,8 +5,7 @@ from mage_ai.tests.factory import create_pipeline, create_pipeline_run_with_sche
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
-    TEAMS_NOTIFICATION_CONFIG
-    
+    TEAMS_NOTIFICATION_CONFIG,
 )
 from unittest.mock import patch
 

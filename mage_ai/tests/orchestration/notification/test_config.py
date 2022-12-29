@@ -3,7 +3,7 @@ from mage_ai.tests.base_test import TestCase
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
-    TEAMS_NOTIFICATION_CONFIG
+    TEAMS_NOTIFICATION_CONFIG,
 )
 
 
