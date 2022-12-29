@@ -46,11 +46,11 @@ def get_catalog(block, variables: Dict = {}) -> Dict:
     return get_settings(block, variables)['catalog']
 
 
-def get_catalog_by_stream(absolute_file_path, stream: str, variables: Dict = {}, ) -> Dict:
+def get_catalog_by_stream(absolute_file_path, stream_id: str, variables: Dict = {}, ) -> Dict:
     catalog = __get_settings(absolute_file_path, variables)['catalog']
     for stream in catalog['streams']:
         tap_stream_id = stream['tap_stream_id']
-        if tap_stream_id == stream:
+        if tap_stream_id == stream_id:
             return stream
     return None
 
