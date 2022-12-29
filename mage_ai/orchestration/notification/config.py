@@ -16,7 +16,6 @@ class NotificationConfig(BaseConfig):
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
         notification_config = super().load(config_path=config_path, config=config)
-        print(notification_config ,'hell')
         if notification_config.slack_config is not None and \
                 type(notification_config.slack_config) is dict:
             try:
@@ -32,7 +31,7 @@ class NotificationConfig(BaseConfig):
                 notification_config.teams_config = TeamsConfig.load(
                     config=notification_config.teams_config,
                 )
-                print(notification_config.teams_config ,'hello')
+    
             except Exception:
                 traceback.print_exc()
                 notification_config.teams_config = None
