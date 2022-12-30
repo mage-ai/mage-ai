@@ -31,6 +31,7 @@ from mage_integrations.utils.logger.constants import (
     TYPE_SCHEMA,
     TYPE_STATE,
 )
+from mage_integrations.utils.memory import get_size
 from os.path import isfile
 from typing import Dict, List
 import ast
@@ -44,6 +45,7 @@ import traceback
 import yaml
 
 LOGGER = singer.get_logger()
+MAXIMUM_BATCH_BYTE_SIZE = 1 * 1024 * 1024
 
 
 class Destination():
@@ -289,6 +291,17 @@ class Destination():
         class_name = self.__class__.__name__
         self.logger.info(f'{class_name} process started.')
 
+        self.bookmark_properties = {}
+        self.disable_column_type_check = {}
+        self.key_properties = {}
+        self.partition_keys = {}
+        self.replication_methods = {}
+        self.schemas = {}
+        self.unique_conflict_methods = {}
+        self.unique_constraints = {}
+        self.validators = {}
+        self.versions = {}
+
         try:
             if self.should_test_connection:
                 self.logger.info('Testing connection...')
@@ -310,17 +323,6 @@ class Destination():
         return row_data
 
     def _process(self, input_buffer) -> None:
-        self.bookmark_properties = {}
-        self.disable_column_type_check = {}
-        self.key_properties = {}
-        self.partition_keys = {}
-        self.replication_methods = {}
-        self.schemas = {}
-        self.unique_conflict_methods = {}
-        self.unique_constraints = {}
-        self.validators = {}
-        self.versions = {}
-
         batches_by_stream = {}
         final_record_data = None
         final_state_data = None
@@ -407,6 +409,36 @@ class Destination():
                 self.logger.exception(message, tags=tags)
                 raise Exception(message)
 
+            batche_byte_size = get_size(batches_by_stream)
+            if batche_byte_size >= MAXIMUM_BATCH_BYTE_SIZE:
+                self.__process_batch_set(
+                    batches_by_stream,
+                    final_record_data,
+                    final_state_data,
+                    tags=merge_dict(tags, dict(
+                        batche_byte_size=batche_byte_size,
+                    )),
+                )
+                batches_by_stream = {}
+                final_record_data = None
+                final_state_data = None
+
+        self.__process_batch_set(
+            batches_by_stream,
+            final_record_data,
+            final_state_data,
+            tags=tags,
+        )
+
+    def __process_batch_set(
+        self,
+        batches_by_stream: Dict,
+        final_record_data: Dict = None,
+        final_state_data: Dict = None,
+        tags: Dict = {},
+    ) -> None:
+        self.logger.info('Process batch set started.', tags=tags)
+
         errors = []
         stream_states = {}
         for stream, batches in batches_by_stream.items():
@@ -454,6 +486,8 @@ class Destination():
 
         for err in errors:
             raise err
+
+        self.logger.info('Process batch set completed.', tags=tags)
 
     def _emit_state(self, state):
         if state:
