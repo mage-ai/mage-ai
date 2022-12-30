@@ -127,6 +127,9 @@ def remove_duplicate_rows(
     logger = None,
     tags: Dict = {}
 ) -> List[Dict]:
+    if not unique_constraints or len(unique_constraints) == 0:
+        return row_data
+
     arr = []
     mapping = {}
 
