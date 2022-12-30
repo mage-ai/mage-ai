@@ -79,7 +79,7 @@ class IntegrationBlock(Block):
         outputs = []
         if BlockType.DATA_LOADER == self.type:
             with open(source_output_file_path, 'w') as f:
-                proc = subprocess.run([
+                proc = subprocess.Popen([
                     PYTHON_COMMAND,
                     self.pipeline.source_file_path,
                     '--config_json',
@@ -99,17 +99,17 @@ class IntegrationBlock(Block):
                     source_state_file_path,
                     '--query_json',
                     json.dumps(query_data),
-                ], preexec_fn=os.setsid, stdout=f)
+                ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-                outputs.append(proc)
-
-            with open(source_output_file_path, 'r') as f:
-                for line in f:
+                for line in proc.stdout:
+                    f.write(line.decode())
                     print_log_from_line(
                         line,
                         logger=logger,
                         tags=tags,
                     )
+
+                outputs.append(proc)
         elif BlockType.TRANSFORMER == self.type:
             from mage_integrations.sources.constants import COLUMN_TYPE_NULL
             from mage_integrations.utils.logger.constants import (

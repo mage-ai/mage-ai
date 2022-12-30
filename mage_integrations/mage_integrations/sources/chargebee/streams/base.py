@@ -7,14 +7,14 @@ from mage_integrations.sources.chargebee.state import (
 )
 from mage_integrations.sources.chargebee.streams.util import Util
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
-from mage_integrations.sources.messages import write_records, write_schema
+from mage_integrations.sources.messages import write_schema
 import inspect
 import json
 import os
 import pytz
 import singer
 import time
-    
+
 
 LOGGER = singer.get_logger()
 
@@ -83,14 +83,14 @@ class BaseChargebeeStream():
             content = record['content']
             words = record['event_type'].split("_")
             sl = slice(len(words) - 1)
-            content_obj = "_".join(words[sl])     
-            
+            content_obj = "_".join(words[sl])
+
             if content_obj in list_of_custom_field_obj:
                 for k in record['content'][content_obj].keys():
                     if "cf_" in k:
                         event_custom_fields[k] = record['content'][content_obj][k]
-                record['content'][content_obj]['custom_fields'] = json.dumps(event_custom_fields)    
-        
+                record['content'][content_obj]['custom_fields'] = json.dumps(event_custom_fields)
+
 
         for key in record.keys():
             if "cf_" in key:
@@ -103,9 +103,9 @@ class BaseChargebeeStream():
     def transform_record(self, record):
         with singer.Transformer(integer_datetime_fmt="unix-seconds-integer-datetime-parsing") as tx:
             metadata = {}
-            
+
             record = self.append_custom_fields(record)
-                
+
             if self.catalog.metadata is not None:
                 metadata = singer.metadata.to_map(self.catalog.metadata)
 
