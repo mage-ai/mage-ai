@@ -1,6 +1,6 @@
 from jupyter_server import subprocess
 from logging import Logger
-from mage_ai.data_integrations.logger.utils import print_logs_from_output
+from mage_ai.data_integrations.logger.utils import print_log_from_line, print_logs_from_output
 from mage_ai.data_integrations.utils.config import (
     build_catalog_json,
     build_config_json,
@@ -56,11 +56,14 @@ class IntegrationBlock(Block):
                 destination_table=destination_table,
                 stream=stream,
             )
+            source_output_file_path = self.pipeline.source_output_file_path(stream, index)
+
             stream_catalog = get_catalog_by_stream(
                 self.pipeline.data_loader.file_path,
                 stream,
                 global_vars,
             ) or dict()
+
             if stream_catalog.get('replication_method') == 'INCREMENTAL':
                 from mage_integrations.sources.utils import update_source_state_from_destination_state
                 update_source_state_from_destination_state(
@@ -72,37 +75,41 @@ class IntegrationBlock(Block):
             if not is_last_block_run:
                 query_data['_limit'] = BATCH_FETCH_LIMIT
 
+
         outputs = []
         if BlockType.DATA_LOADER == self.type:
-            proc = subprocess.run([
-                PYTHON_COMMAND,
-                self.pipeline.source_file_path,
-                '--config_json',
-                build_config_json(
-                    self.pipeline.data_loader.file_path,
-                    global_vars,
-                ),
-                '--log_to_stdout',
-                '1',
-                '--catalog_json',
-                build_catalog_json(
-                    self.pipeline.data_loader.file_path,
-                    global_vars,
-                    selected_streams=selected_streams,
-                ),
-                '--state',
-                source_state_file_path,
-                '--query_json',
-                json.dumps(query_data),
-            ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
+            with open(source_output_file_path, 'w') as f:
+                proc = subprocess.run([
+                    PYTHON_COMMAND,
+                    self.pipeline.source_file_path,
+                    '--config_json',
+                    build_config_json(
+                        self.pipeline.data_loader.file_path,
+                        global_vars,
+                    ),
+                    '--log_to_stdout',
+                    '1',
+                    '--catalog_json',
+                    build_catalog_json(
+                        self.pipeline.data_loader.file_path,
+                        global_vars,
+                        selected_streams=selected_streams,
+                    ),
+                    '--state',
+                    source_state_file_path,
+                    '--query_json',
+                    json.dumps(query_data),
+                ], preexec_fn=os.setsid, stdout=f)
 
-            output = proc.stdout.decode()
-            print_logs_from_output(
-                output,
-                logger=logger,
-                tags=tags,
-            )
-            outputs.append(output)
+                outputs.append(proc)
+
+            with open(source_output_file_path, 'r') as f:
+                for line in f:
+                    print_log_from_line(
+                        line,
+                        logger=logger,
+                        tags=tags,
+                    )
         elif BlockType.TRANSFORMER == self.type:
             from mage_integrations.sources.constants import COLUMN_TYPE_NULL
             from mage_integrations.utils.logger.constants import (
@@ -123,8 +130,6 @@ class IntegrationBlock(Block):
             }
             results.update(outputs_from_input_vars)
 
-            input_from_previous = input_from_output['output'][0]
-
             exec(self.content, results)
 
             # 1. Recreate each record
@@ -136,83 +141,95 @@ class IntegrationBlock(Block):
             records_transformed = 0
             df_sample = None
 
-            for idx, line in enumerate(input_from_previous.strip().split('\n')):
-                try:
-                    data = json.loads(line)
-                    line_type = data.get('type')
+            with open(source_output_file_path, 'r') as f:
+                idx = 0
+                for line in f:
+                    line = line.strip() if line else ''
+                    if len(line) == 0:
+                        continue
 
-                    if TYPE_SCHEMA == line_type:
-                        schema_index = idx
-                        schema_original = data
-                    elif TYPE_RECORD == line_type:
-                        record = data['record']
-                        existing_columns = list(record.keys())
-                        input_vars = [pd.DataFrame.from_dict([record])]
-                        input_kwargs = merge_dict(
-                            global_vars,
-                            dict(
-                                index=index,
-                                query=query_data,
-                                stream=stream,
-                            ),
-                        )
-                        block_function = self._validate_execution(decorated_functions, input_vars)
+                    try:
+                        data = json.loads(line)
+                        line_type = data.get('type')
 
-                        if block_function is not None:
-                            df = self.execute_block_function(
-                                block_function,
-                                input_vars,
-                                input_kwargs,
-                                test_execution,
+                        if TYPE_SCHEMA == line_type:
+                            schema_index = idx
+                            schema_original = data
+                        elif TYPE_RECORD == line_type:
+                            record = data['record']
+                            existing_columns = list(record.keys())
+                            input_vars = [pd.DataFrame.from_dict([record])]
+                            input_kwargs = merge_dict(
+                                global_vars,
+                                dict(
+                                    index=index,
+                                    query=query_data,
+                                    stream=stream,
+                                ),
                             )
-                            if df_sample is None:
-                                df_sample = df
+                            block_function = self._validate_execution(decorated_functions, input_vars)
 
-                            if not schema_updated:
-                                properties_updated = {
-                                    k: dict(type=[COLUMN_TYPE_NULL, convert_data_type(v)])
-                                    for k, v in infer_dtypes(df).items()
-                                }
-                                schema_updated = schema_original.copy()
-                                properties_original = schema_updated['schema']['properties']
-                                schema_updated['schema']['properties'] = {
-                                    k: properties_original[k]
-                                    if k in properties_original else v
-                                    for k, v in properties_updated.items()
-                                }
+                            if block_function is not None:
+                                df = self.execute_block_function(
+                                    block_function,
+                                    input_vars,
+                                    input_kwargs,
+                                    test_execution,
+                                )
+                                if df_sample is None:
+                                    df_sample = df
 
-                            record_transformed = df.to_dict('records')[0]
-                            line = json.dumps(merge_dict(
-                                data,
-                                dict(record=record_transformed),
-                            ))
-                            records_transformed += 1
-                except json.decoder.JSONDecodeError:
-                    pass
+                                if not schema_updated:
+                                    properties_updated = {
+                                        k: dict(type=[COLUMN_TYPE_NULL, convert_data_type(v)])
+                                        for k, v in infer_dtypes(df).items()
+                                    }
+                                    schema_updated = schema_original.copy()
+                                    properties_original = schema_updated['schema']['properties']
+                                    schema_updated['schema']['properties'] = {
+                                        k: properties_original[k]
+                                        if k in properties_original else v
+                                        for k, v in properties_updated.items()
+                                    }
 
-                output_arr.append(line)
+                                record_transformed = df.to_dict('records')[0]
+                                line = json.dumps(merge_dict(
+                                    data,
+                                    dict(record=record_transformed),
+                                ))
+                                records_transformed += 1
+
+                                if records_transformed % 1000 == 0:
+                                    msg = f'{records_transformed} records have been transformed...'
+                                    if logger:
+                                        logger.info(msg, tags=tags)
+                                    else:
+                                        print(msg)
+                    except json.decoder.JSONDecodeError:
+                        pass
+
+                    output_arr.append(line)
+                    idx += 1
 
             output_arr[schema_index] = json.dumps(schema_updated)
-            output = '\n'.join(output_arr)
-            outputs.append(output)
 
-            self.store_variables(
-                dict(output_0=df_sample),
-                execution_partition=execution_partition,
-                override_outputs=True,
-            )
+            with open(source_output_file_path, 'w') as f:
+                output = '\n'.join(output_arr)
+                f.write(output)
 
             self.test_functions = test_functions
 
-            print(f'Transformed {records_transformed} records for stream {stream}.')
+            msg = f'Transformed {records_transformed} total records for stream {stream}.'
+            if logger:
+                logger.info(msg, tags=tags)
+            else:
+                print(msg)
         elif BlockType.DATA_EXPORTER == self.type:
-            input_from_previous = input_from_output['output'][0]
-
             override = {}
             if destination_table:
                 override['table'] = destination_table
 
-            proc = subprocess.run([
+            proc = subprocess.Popen([
                 PYTHON_COMMAND,
                 self.pipeline.destination_file_path,
                 '--config_json',
@@ -230,13 +247,17 @@ class IntegrationBlock(Block):
                     destination_table=destination_table,
                     stream=stream,
                 ),
-            ], input=input_from_previous, capture_output=True, text=True)
+                '--input_file_path',
+                source_output_file_path,
+            ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-            print_logs_from_output(
-                proc.stdout,
-                logger=logger,
-                tags=tags,
-            )
+            for line in proc.stdout:
+                print_log_from_line(
+                    line,
+                    logger=logger,
+                    tags=tags,
+                )
+
             outputs.append(proc)
 
         return outputs
