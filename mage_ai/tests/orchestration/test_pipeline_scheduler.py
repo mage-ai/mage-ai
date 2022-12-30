@@ -53,7 +53,8 @@ class PipelineSchedulerTests(DBTestCase):
         mock_proc = MagicMock()
         mock_create_process.return_value = mock_proc
         scheduler.schedule()
-        self.assertEqual(mock_create_process.call_count, 2)
+        # TODO (tommy dang): change to 2 when we resume running heartbeat in pipeline scheduler
+        self.assertEqual(mock_create_process.call_count, 1)
         for b in pipeline_run.block_runs:
             if b.block_uuid == 'block1':
                 self.assertEqual(b.status, BlockRun.BlockRunStatus.RUNNING)
