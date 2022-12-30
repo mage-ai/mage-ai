@@ -32,6 +32,10 @@ import time
 import traceback
 
 
+HEARTBEAT_INTERVAL_SECONDS = 60
+MEMORY_USAGE_MAXIMUM = 0.95
+
+
 class PipelineScheduler:
     def __init__(
         self,
@@ -210,6 +214,29 @@ class PipelineScheduler:
                 tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
             )
 
+    def memory_usage_failure(self, tags: Dict = {}) -> None:
+        msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum limit of ' \
+            f'{int(MEMORY_USAGE_MAXIMUM * 100)}%.'
+        self.logger.info(msg, tags=tags)
+
+        self.stop()
+
+        self.notification_sender.send_pipeline_run_failure_message(
+            pipeline=self.pipeline,
+            pipeline_run=self.pipeline_run,
+            message=msg,
+        )
+
+        if PipelineType.INTEGRATION == self.pipeline.type:
+            self.logger.info(
+                f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
+                tags=tags,
+            )
+            calculate_metrics(self.pipeline_run)
+            self.logger.info(
+                f'Calculate metrics for pipeline run {self.pipeline_run.id} error completed.',
+                tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
+            )
 
     @property
     def executable_block_runs(self) -> List[BlockRun]:
@@ -291,7 +318,10 @@ class PipelineScheduler:
     def __stop_heartbeat(self):
         process_id = f'{self.pipeline_run.id}_heartbeat'
         if execution_process_manager.has_pipeline_process(process_id):
-            execution_process_manager.terminate_pipeline_process(process_id)
+            try:
+                execution_process_manager.terminate_pipeline_process(process_id)
+            except AttributeError:
+                pass
 
     def __schedule_integration_pipeline(self, block_runs: List[BlockRun] = None) -> None:
         if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
@@ -542,20 +572,28 @@ def run_heartbeat(pipeline_run_id: int, variables: Dict, tags: Dict) -> None:
     while pipeline_run and pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
         load1, load5, load15, cpu_count = get_compute()
         free_memory, used_memory, total_memory = get_memory()
+        memory_usage = used_memory / total_memory
+
+        tags2 = merge_dict(tags, dict(
+            cpu=load15,
+            cpu_total=cpu_count,
+            cpu_usage=load15 / cpu_count,
+            memory=used_memory,
+            memory_total=total_memory,
+            memory_usage=memory_usage,
+        ))
+
         pipeline_scheduler.logger.info(
             f'Pipeline {pipeline_run.pipeline_uuid} for run {pipeline_run.id} '
             f'in schedule {pipeline_run.pipeline_schedule_id} is alive.',
-            tags=merge_dict(tags, dict(
-                cpu=load15,
-                cpu_total=cpu_count,
-                cpu_usage=load15 / cpu_count,
-                memory=used_memory,
-                memory_total=total_memory,
-                memory_usage=used_memory / total_memory,
-            )),
+            tags=tags2,
         )
 
-        time.sleep(60)
+        if memory_usage >= MEMORY_USAGE_MAXIMUM:
+            pipeline_scheduler.memory_usage_failure(tags2)
+            break
+
+        time.sleep(HEARTBEAT_INTERVAL_SECONDS)
 
 
 def run_block(
