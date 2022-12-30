@@ -301,6 +301,9 @@ class Destination():
 
         self.logger.info(f'{class_name} process completed.')
 
+    def remove_duplicate_rows(self, row_data: List[Dict], stream: str) -> List[Dict]:
+        return row_data
+
     def _process(self, input_buffer) -> None:
         self.bookmark_properties = {}
         self.disable_column_type_check = {}
@@ -404,6 +407,9 @@ class Destination():
         stream_states = {}
         for stream, batches in batches_by_stream.items():
             record_data = batches['record_data']
+
+            if len(record_data) >= 1:
+                record_data = self.remove_duplicate_rows(record_data, stream)
 
             if len(record_data) >= 1:
                 # If there is an error with a stream, catch error so that state can still

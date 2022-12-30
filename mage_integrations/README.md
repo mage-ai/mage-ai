@@ -29,7 +29,7 @@ Run
 ### Discover streams
 
 ```bash
-python3 mage_integrations/sources/salesforce/__init__.py \
+python3 mage_integrations/sources/chargebee/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
   --discover_streams
@@ -38,10 +38,10 @@ python3 mage_integrations/sources/salesforce/__init__.py \
 ### Get schema
 
 ```bash
-python3 mage_integrations/sources/salesforce/__init__.py \
+python3 mage_integrations/sources/chargebee/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
-  --selected_streams '["Event"]' > mage_integrations/TEST_CATALOG.json
+  --selected_streams '["customers"]' > mage_integrations/TEST_CATALOG.json
 ```
 
 ### Count records
@@ -66,7 +66,7 @@ python3 mage_integrations/sources/mysql/__init__.py \
 ## Save source records to file
 
 ```bash
-python3 mage_integrations/sources/salesforce/__init__.py \
+python3 mage_integrations/sources/chargebee/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
@@ -84,7 +84,7 @@ python3 mage_integrations/test.py | python3 mage_integrations/destinations/bigqu
 ## Source to destination end-to-end
 
 ```bash
-python3 mage_integrations/sources/salesforce/__init__.py \
+python3 mage_integrations/sources/chargebee/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/bigquery/__init__.py \

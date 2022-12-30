@@ -4,7 +4,7 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_STRING,
 )
 from mage_integrations.destinations.sql.utils import convert_column_type as convert_column_type_orig
-from typing import Dict
+from typing import Dict, List
 import json
 
 
@@ -119,3 +119,64 @@ def convert_json_or_string(value, column_type_dict):
         value = f'TO_JSON({value})'
 
     return value
+
+
+def remove_duplicate_rows(
+    row_data: List[Dict],
+    unique_constraints: List[str],
+    logger = None,
+    tags: Dict = {}
+) -> List[Dict]:
+    arr = []
+    mapping = {}
+
+    for data in row_data:
+        record = data['row']['record']
+        values_for_unique_constraints = [str(record[col]) for col in unique_constraints]
+        key = '_'.join(values_for_unique_constraints)
+
+        non_null_values = len(list(filter(lambda x: x, record.values())))
+
+        existing_record = mapping.get(key)
+        if existing_record:
+            if logger:
+                logger.info(
+                    f"Duplicate record found for unique constraints {', '.join(unique_constraints)} "
+                    f"with values {', '.join(values_for_unique_constraints)}: {record}.",
+                    tags=tags,
+                )
+
+            existing_non_null_values = existing_record['non_null_values']
+            idx = existing_record['index']
+            record_previous = arr[idx]
+            tags.update(
+                record=record,
+                record_previous=record_previous,
+            )
+
+            if non_null_values > existing_non_null_values:
+                if logger:
+                    logger.info(
+                        'Replacing previous record with duplicate record because duplicate record '
+                        f'has {non_null_values} non-null values, '
+                        f'which is greater than or equal to the previous record {existing_non_null_values} non-null values.',
+                        tags=tags,
+                    )
+
+                existing_record['non_null_values'] = non_null_values
+                arr[idx] = data
+            elif logger:
+                logger.info(
+                    'Skipping duplicate record because previous record has '
+                    f'{existing_non_null_values} non-null values, '
+                    f'which is greater than or equal to the duplicate record {non_null_values} non-null values.',
+                    tags=tags,
+                )
+        else:
+            mapping[key] = dict(
+                non_null_values=non_null_values,
+                index=len(arr),
+            )
+            arr.append(data)
+
+    return arr

@@ -12,6 +12,7 @@ from mage_integrations.destinations.bigquery.utils import (
     convert_converted_type_to_parameter_type,
     convert_datetime,
     convert_json_or_string,
+    remove_duplicate_rows,
 )
 from mage_integrations.destinations.constants import KEY_VALUE, UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_integrations.destinations.sql.base import Destination, main
@@ -211,6 +212,16 @@ WHERE table_id = '{table_name}'
             else:
                 raise err
 
+    def remove_duplicate_rows(self, row_data: List[Dict], stream: str) -> List[Dict]:
+        unique_constraints = self.unique_constraints.get(stream)
+
+        return remove_duplicate_rows(
+            row_data,
+            unique_constraints,
+            logger=self.logger,
+            tags=dict(stream=stream),
+        )
+
     def __recreate_table(self, tags: Dict = {}):
         self.logger.info('Recreating table started.', tags)
 
@@ -339,6 +350,14 @@ WHERE table_id = '{table_name}'
         unique_constraints = self.unique_constraints.get(stream)
         unique_conflict_method = self.unique_conflict_methods.get(stream)
 
+        tags = dict(
+            database_name=database_name,
+            records=len(records),
+            schema_name=schema_name,
+            stream=stream,
+            table_name=table_name,
+        )
+
         full_table_name = f'{database_name}.{schema_name}.{table_name}'
 
         columns = list(schema['properties'].keys())
@@ -362,14 +381,6 @@ WHERE table_id = '{table_name}'
             column_identifier='`',
         )
         insert_columns = ', '.join(insert_columns)
-
-        tags = dict(
-            database_name=database_name,
-            records=len(record_data),
-            schema_name=schema_name,
-            stream=stream,
-            table_name=table_name,
-        )
 
         if unique_constraints and unique_conflict_method:
             temp_table_name = f'{table_name}_{uuid.uuid4().hex}'
