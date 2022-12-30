@@ -78,6 +78,8 @@ class IntegrationBlock(Block):
 
         outputs = []
         if BlockType.DATA_LOADER == self.type:
+            lines_in_file = 0
+
             with open(source_output_file_path, 'w') as f:
                 proc = subprocess.Popen([
                     PYTHON_COMMAND,
@@ -108,8 +110,16 @@ class IntegrationBlock(Block):
                         logger=logger,
                         tags=tags,
                     )
+                    lines_in_file += 1
 
                 outputs.append(proc)
+
+            file_size = os.path.getsize(source_output_file_path)
+            msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output file {source_output_file_path}.'
+            if logger:
+                logger.info(msg, tags=tags)
+            else:
+                print(msg)
         elif BlockType.TRANSFORMER == self.type:
             from mage_integrations.sources.constants import COLUMN_TYPE_NULL
             from mage_integrations.utils.logger.constants import (
@@ -217,17 +227,28 @@ class IntegrationBlock(Block):
                 output = '\n'.join(output_arr)
                 f.write(output)
 
-            self.test_functions = test_functions
-
             msg = f'Transformed {records_transformed} total records for stream {stream}.'
+            file_size = os.path.getsize(source_output_file_path)
+            msg2 = f'Finished writing {file_size} bytes with {len(output_arr)} lines to output file {source_output_file_path}.'
             if logger:
                 logger.info(msg, tags=tags)
+                logger.info(msg2, tags=tags)
             else:
                 print(msg)
+                print(msg2)
+
+            self.test_functions = test_functions
         elif BlockType.DATA_EXPORTER == self.type:
             override = {}
             if destination_table:
                 override['table'] = destination_table
+
+            file_size = os.path.getsize(source_output_file_path)
+            msg = f'Reading {file_size} bytes from {source_output_file_path} as input file.'
+            if logger:
+                logger.info(msg, tags=tags)
+            else:
+                print(msg)
 
             proc = subprocess.Popen([
                 PYTHON_COMMAND,
