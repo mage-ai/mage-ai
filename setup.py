@@ -86,6 +86,7 @@ setuptools.setup(
             'google-cloud-run==0.4.2',
             'google-cloud-storage==2.5.0',
             'kafka-python',
+            'kubernetes==25.3.0',
             'opensearch-py',
             'psycopg2-binary==2.9.3',
             'redshift-connector==2.0.909',
