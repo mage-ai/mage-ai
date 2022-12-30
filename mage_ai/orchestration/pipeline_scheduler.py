@@ -31,8 +31,6 @@ import pytz
 import time
 import traceback
 
-
-HEARTBEAT_INTERVAL_SECONDS = 60
 MEMORY_USAGE_MAXIMUM = 0.95
 
 
@@ -80,9 +78,9 @@ class PipelineScheduler:
             execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
             execution_process_manager.clean_up_processes()
 
-        self.__stop_heartbeat()
-
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
+        self.__run_heartbeat()
+
         if PipelineType.STREAMING == self.pipeline.type:
             self.__schedule_pipeline()
         else:
@@ -92,7 +90,6 @@ class PipelineScheduler:
                         pipeline_run_id=self.pipeline_run.id,
                         pipeline_uuid=self.pipeline.uuid,
                     )
-
                     self.logger.info(
                         f'Calculate metrics for pipeline run {self.pipeline_run.id} started.',
                         tags=tags,
@@ -122,14 +119,10 @@ class PipelineScheduler:
                     pipeline_run=self.pipeline_run,
                 )
                 self.logger_manager.output_logs_to_destination()
-
-                self.__stop_heartbeat()
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
-                self.__start_heartbeat()
             else:
                 self.__schedule_blocks(block_runs)
-                self.__start_heartbeat()
 
     @retry(retries=3, delay=5)
     def on_block_complete(self, block_uuid: str) -> None:
@@ -202,7 +195,6 @@ class PipelineScheduler:
         )
 
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
-        self.__stop_heartbeat()
 
         if PipelineType.INTEGRATION == self.pipeline.type:
             self.logger.info(
@@ -303,31 +295,6 @@ class PipelineScheduler:
             execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
             proc.start()
 
-    def __start_heartbeat(self) -> None:
-        # TODO (tommy dang): for some reason, running the heartbeat in cloud
-        # prevents other tasks to run.
-        return None
-
-        process_id = f'{self.pipeline_run.id}_heartbeat'
-        if execution_process_manager.has_pipeline_process(process_id):
-            return
-
-        proc = create_process(run_heartbeat, (
-            self.pipeline_run.id,
-            get_variables(self.pipeline_run),
-            self.__build_tags(),
-        ))
-        execution_process_manager.set_pipeline_process(process_id, proc)
-        proc.start()
-
-    def __stop_heartbeat(self):
-        process_id = f'{self.pipeline_run.id}_heartbeat'
-        if execution_process_manager.has_pipeline_process(process_id):
-            try:
-                execution_process_manager.terminate_pipeline_process(process_id)
-            except AttributeError:
-                pass
-
     def __schedule_integration_pipeline(self, block_runs: List[BlockRun] = None) -> None:
         if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
             return
@@ -386,6 +353,29 @@ class PipelineScheduler:
             pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
             pipeline_uuid=self.pipeline.uuid,
         ))
+
+    def __run_heartbeat(self) -> None:
+        load1, load5, load15, cpu_count = get_compute()
+        free_memory, used_memory, total_memory = get_memory()
+        memory_usage = used_memory / total_memory
+
+        tags = dict(
+            cpu=load15,
+            cpu_total=cpu_count,
+            cpu_usage=load15 / cpu_count,
+            memory=used_memory,
+            memory_total=total_memory,
+            memory_usage=memory_usage,
+        )
+
+        self.logger.info(
+            f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
+            f'in schedule {self.pipeline_run.pipeline_schedule_id} is alive.',
+            tags=tags,
+        )
+
+        if memory_usage >= MEMORY_USAGE_MAXIMUM:
+            self.memory_usage_failure(tags)
 
 
 def run_integration_pipeline(
@@ -571,37 +561,6 @@ def run_integration_pipeline(
                         **tags_updated,
                         tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
                     )
-
-
-def run_heartbeat(pipeline_run_id: int, variables: Dict, tags: Dict) -> None:
-    pipeline_run = PipelineRun.query.get(pipeline_run_id)
-    pipeline_scheduler = PipelineScheduler(pipeline_run)
-
-    while pipeline_run and pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
-        load1, load5, load15, cpu_count = get_compute()
-        free_memory, used_memory, total_memory = get_memory()
-        memory_usage = used_memory / total_memory
-
-        tags2 = merge_dict(tags, dict(
-            cpu=load15,
-            cpu_total=cpu_count,
-            cpu_usage=load15 / cpu_count,
-            memory=used_memory,
-            memory_total=total_memory,
-            memory_usage=memory_usage,
-        ))
-
-        pipeline_scheduler.logger.info(
-            f'Pipeline {pipeline_run.pipeline_uuid} for run {pipeline_run.id} '
-            f'in schedule {pipeline_run.pipeline_schedule_id} is alive.',
-            tags=tags2,
-        )
-
-        if memory_usage >= MEMORY_USAGE_MAXIMUM:
-            pipeline_scheduler.memory_usage_failure(tags2)
-            break
-
-        time.sleep(HEARTBEAT_INTERVAL_SECONDS)
 
 
 def run_block(
