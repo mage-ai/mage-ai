@@ -22,7 +22,7 @@ class NotificationSender:
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
             send_teams_message(self.config.teams_config, message)
-            
+
         if self.config.email_config is not None and email_subject is not None:
             send_email(
                 self.config.email_config,
@@ -47,8 +47,8 @@ class NotificationSender:
             email_content=email_content,
         )
 
-    def send_pipeline_run_failure_message(self, pipeline, pipeline_run) -> None:
-        message = (
+    def send_pipeline_run_failure_message(self, pipeline, pipeline_run, message: str = None) -> None:
+        message = message or (
             f'Failed to run Pipeline `{pipeline.uuid}` '
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
