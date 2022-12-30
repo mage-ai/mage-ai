@@ -20,6 +20,7 @@ from mage_ai.orchestration.execution_process_manager import execution_process_ma
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
@@ -27,6 +28,7 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
 from typing import Any, Dict, List
 import pytz
+import time
 import traceback
 
 
@@ -73,6 +75,8 @@ class PipelineScheduler:
         if PipelineType.INTEGRATION == self.pipeline.type:
             execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
 
+        self.__stop_heartbeat()
+
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
         if PipelineType.STREAMING == self.pipeline.type:
             self.__schedule_pipeline()
@@ -94,6 +98,7 @@ class PipelineScheduler:
                         tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
                     )
 
+                # If running once, update the schedule to inactive when pipeline run is done
                 pipeline_schedule = PipelineSchedule.query.get(self.pipeline_run.pipeline_schedule_id)
                 if pipeline_schedule is not None and \
                         pipeline_schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
@@ -102,6 +107,7 @@ class PipelineScheduler:
                     pipeline_schedule.update(
                         status=PipelineSchedule.ScheduleStatus.INACTIVE,
                     )
+
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
@@ -111,10 +117,14 @@ class PipelineScheduler:
                     pipeline_run=self.pipeline_run,
                 )
                 self.logger_manager.output_logs_to_destination()
+
+                self.__stop_heartbeat()
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
+                self.__start_heartbeat()
             else:
                 self.__schedule_blocks(block_runs)
+                self.__start_heartbeat()
 
     @retry(retries=3, delay=5)
     def on_block_complete(self, block_uuid: str) -> None:
@@ -187,6 +197,7 @@ class PipelineScheduler:
         )
 
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+        self.__stop_heartbeat()
 
         if PipelineType.INTEGRATION == self.pipeline.type:
             self.logger.info(
@@ -198,6 +209,7 @@ class PipelineScheduler:
                 f'Calculate metrics for pipeline run {self.pipeline_run.id} error completed.',
                 tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
             )
+
 
     @property
     def executable_block_runs(self) -> List[BlockRun]:
@@ -262,6 +274,24 @@ class PipelineScheduler:
             ))
             execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
             proc.start()
+
+    def __start_heartbeat(self):
+        process_id = f'{self.pipeline_run.id}_heartbeat'
+        if execution_process_manager.has_pipeline_process(process_id):
+            return
+
+        proc = create_process(run_heartbeat, (
+            self.pipeline_run.id,
+            get_variables(self.pipeline_run),
+            self.__build_tags(),
+        ))
+        execution_process_manager.set_pipeline_process(process_id, proc)
+        proc.start()
+
+    def __stop_heartbeat(self):
+        process_id = f'{self.pipeline_run.id}_heartbeat'
+        if execution_process_manager.has_pipeline_process(process_id):
+            execution_process_manager.terminate_pipeline_process(process_id)
 
     def __schedule_integration_pipeline(self, block_runs: List[BlockRun] = None) -> None:
         if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
@@ -503,6 +533,29 @@ def run_integration_pipeline(
                         **tags_updated,
                         tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
                     )
+
+
+def run_heartbeat(pipeline_run_id: int, variables: Dict, tags: Dict) -> None:
+    pipeline_run = PipelineRun.query.get(pipeline_run_id)
+    pipeline_scheduler = PipelineScheduler(pipeline_run)
+
+    while pipeline_run and pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
+        load1, load5, load15, cpu_count = get_compute()
+        free_memory, used_memory, total_memory = get_memory()
+        pipeline_scheduler.logger.info(
+            f'Pipeline {pipeline_run.pipeline_uuid} for run {pipeline_run.id} '
+            f'in schedule {pipeline_run.pipeline_schedule_id} is alive.',
+            tags=merge_dict(tags, dict(
+                cpu=load15,
+                cpu_total=cpu_count,
+                cpu_usage=load15 / cpu_count,
+                memory=used_memory,
+                memory_total=total_memory,
+                memory_usage=used_memory / total_memory,
+            )),
+        )
+
+        time.sleep(60)
 
 
 def run_block(

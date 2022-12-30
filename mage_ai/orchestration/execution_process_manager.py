@@ -84,7 +84,7 @@ class ExecutionProcessManager:
                 del self.pipeline_processes[pipeline_run_id]
             else:
                 pipeline_run = PipelineRun.query.get(pipeline_run_id)
-                if pipeline_run.status == PipelineRun.PipelineRunStatus.CANCELLED:
+                if pipeline_run and pipeline_run.status == PipelineRun.PipelineRunStatus.CANCELLED:
                     pipeline_run_proc.terminate()
                     del self.pipeline_processes[pipeline_run_id]
 
