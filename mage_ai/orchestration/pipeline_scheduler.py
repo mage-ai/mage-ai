@@ -16,7 +16,6 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
-from mage_ai.orchestration.errors import MaximumMemoryUsageException
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
