@@ -16,12 +16,14 @@ fi
 echo $#
 
 if [ "$#" -gt 0 ]; then
-    echo "Excute command: ${@}"
+    echo "Execute command: ${@}"
     $@
 else
     echo "Starting project at ${PROJECT_PATH}"
     if [[ ! -z "${DBT_DOCS_INSTANCE}" ]]; then
         mage start $PROJECT_PATH --dbt-docs-instance 1
+    elif [[ ! -z "${MANAGE_INSTANCE}" ]]; then
+        mage start $PROJECT_PATH --manage-instance 1
     else
         mage start $PROJECT_PATH
     fi

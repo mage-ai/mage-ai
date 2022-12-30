@@ -9,8 +9,6 @@ from mage_ai.data_preparation.repo_manager import (
     set_repo_path,
 )
 from mage_ai.data_preparation.shared.constants import (
-    ECS_CLUSTER_NAME,
-    GCP_PROJECT_ID,
     MANAGE_ENV_VAR,
 )
 from mage_ai.data_preparation.variable_manager import (
@@ -40,6 +38,7 @@ from mage_ai.server.api.clusters import (
     ApiClustersHandler,
     ApiInstanceDetailHandler,
     ApiInstancesHandler,
+    ClusterType,
 )
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.events import (
@@ -82,7 +81,7 @@ from mage_ai.server.kernels import (
 )
 from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.server.subscriber import get_messages
-from mage_ai.server.websocket import WebSocketServer
+from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.shared.hash import group_by, merge_dict
 from sqlalchemy.orm import aliased
 from tornado import autoreload
@@ -416,11 +415,20 @@ class KernelsHandler(BaseHandler):
 
 class ApiStatusHandler(BaseHandler):
     def get(self):
+        from mage_ai.cluster_manager.constants import (
+            ECS_CLUSTER_NAME,
+            GCP_PROJECT_ID,
+            KUBE_NAMESPACE,
+        )
+        from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+        
         instance_type = None
         if os.getenv(ECS_CLUSTER_NAME):
-            instance_type = 'ecs'
+            instance_type = ClusterType.ECS
+        elif WorkloadManager().load_config() or os.getenv(KUBE_NAMESPACE):
+            instance_type = ClusterType.K8S
         elif os.getenv(GCP_PROJECT_ID):
-            instance_type = 'cloud_run'
+            instance_type = ClusterType.CLOUD_RUN
 
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
