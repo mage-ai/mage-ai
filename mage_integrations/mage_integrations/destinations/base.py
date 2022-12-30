@@ -31,7 +31,6 @@ from mage_integrations.utils.logger.constants import (
     TYPE_SCHEMA,
     TYPE_STATE,
 )
-from mage_integrations.utils.memory import get_size
 from os.path import isfile
 from typing import Dict, List
 import ast
@@ -326,9 +325,11 @@ class Destination():
         batches_by_stream = {}
         final_record_data = None
         final_state_data = None
+        current_byte_size = 0
 
         for line in self.__text_input(input_buffer):
             tags = dict()
+            record_data = None
 
             try:
                 row = json.loads(line)
@@ -409,19 +410,23 @@ class Destination():
                 self.logger.exception(message, tags=tags)
                 raise Exception(message)
 
-            batche_byte_size = get_size(batches_by_stream)
-            if batche_byte_size >= MAXIMUM_BATCH_BYTE_SIZE:
-                self.__process_batch_set(
-                    batches_by_stream,
-                    final_record_data,
-                    final_state_data,
-                    tags=merge_dict(tags, dict(
-                        batche_byte_size=batche_byte_size,
-                    )),
-                )
-                batches_by_stream = {}
-                final_record_data = None
-                final_state_data = None
+            if self.batch_processing:
+                if record_data:
+                    current_byte_size += sys.getsizeof(json.dumps(record_data))
+
+                    if current_byte_size >= MAXIMUM_BATCH_BYTE_SIZE:
+                        self.__process_batch_set(
+                            batches_by_stream,
+                            final_record_data,
+                            final_state_data,
+                            tags=merge_dict(tags, dict(
+                                batch_byte_size=current_byte_size,
+                            )),
+                        )
+                        batches_by_stream = {}
+                        final_record_data = None
+                        final_state_data = None
+                        current_byte_size = 0
 
         self.__process_batch_set(
             batches_by_stream,
