@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
+from mage_ai.data_integrations.utils.scheduler import clear_source_output_files, initialize_state_and_runs
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -78,6 +78,7 @@ class PipelineScheduler:
 
         if PipelineType.INTEGRATION == self.pipeline.type:
             execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
+            execution_process_manager.clean_up_processes()
 
         self.__stop_heartbeat()
 
@@ -302,7 +303,11 @@ class PipelineScheduler:
             execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
             proc.start()
 
-    def __start_heartbeat(self):
+    def __start_heartbeat(self) -> None:
+        # TODO (tommy dang): for some reason, running the heartbeat in cloud
+        # prevents other tasks to run.
+        return None
+
         process_id = f'{self.pipeline_run.id}_heartbeat'
         if execution_process_manager.has_pipeline_process(process_id):
             return
@@ -513,7 +518,6 @@ def run_integration_pipeline(
                 (data_exporter_block_run, shared_dict),
             ]
 
-            outputs = []
             for idx2, tup in enumerate(block_runs_and_configs):
                 block_run, template_runtime_configuration = tup
 
@@ -535,14 +539,18 @@ def run_integration_pipeline(
                     block_run.id,
                     variables,
                     tags_updated,
-                    input_from_output=outputs[idx2 - 1] if idx2 >= 1 else None,
                     pipeline_type=PipelineType.INTEGRATION,
                     verify_output=False,
                     runtime_arguments=runtime_arguments,
                     schedule_after_complete=False,
                     template_runtime_configuration=template_runtime_configuration,
                 )
-                outputs.append(output)
+                if 'output' in output and len(output['output']) >= 1:
+                    execution_process_manager.set_block_process(
+                        pipeline_run_id,
+                        block_run.id,
+                        output['output'][0],
+                    )
 
                 if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
                    f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
@@ -737,6 +745,10 @@ def schedule_all():
             if is_integration:
                 block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id).all()
                 if len(block_runs) == 0:
+                    clear_source_output_files(
+                        pipeline_run,
+                        pipeline_scheduler.logger,
+                    )
                     initialize_state_and_runs(
                         pipeline_run,
                         pipeline_scheduler.logger,

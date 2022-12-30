@@ -4,6 +4,7 @@ from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipelines.utils import number_string
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig
@@ -102,6 +103,21 @@ class IntegrationPipeline(Pipeline):
         if not os.path.exists(file_path):
             with open(file_path, 'w') as f:
                 f.write(json.dumps(dict(bookmarks={})))
+
+        return file_path
+
+    def source_output_folder(self, stream: str) -> str:
+        return f'{self.source_dir}/{clean_name(stream)}/output'
+
+    def source_output_file_path(self, stream: str, index: int = 0) -> str:
+        stream_dir = self.source_output_folder(stream)
+        file_path = f'{stream_dir}/{number_string(index)}'
+
+        os.makedirs(stream_dir, exist_ok=True)
+
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write('')
 
         return file_path
 

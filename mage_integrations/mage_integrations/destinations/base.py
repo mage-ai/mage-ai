@@ -54,6 +54,7 @@ class Destination():
         config: Dict = None,
         config_file_path: str = None,
         debug: bool = False,
+        input_file_path: str = None,
         log_to_stdout: bool = False,
         logger=LOGGER,
         settings: Dict = None,
@@ -65,6 +66,7 @@ class Destination():
             argument_parser.add_argument('--config', type=str, default=None)
             argument_parser.add_argument('--config_json', type=str, default=None)
             argument_parser.add_argument('--debug', action='store_true')
+            argument_parser.add_argument('--input_file_path', type=str, default=None)
             argument_parser.add_argument('--log_to_stdout', type=bool, default=False)
             argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
@@ -77,6 +79,8 @@ class Destination():
                 config = json.loads(args.config_json)
             if args.debug:
                 debug = args.debug
+            if args.input_file_path:
+                input_file_path = args.input_file_path
             if args.log_to_stdout:
                 log_to_stdout = args.log_to_stdout
             if args.settings:
@@ -94,6 +98,7 @@ class Destination():
         self.debug = debug
         self.disable_column_type_check = None
         self.key_properties = None
+        self.input_file_path = input_file_path
         self.logger = Logger(caller=self, log_to_stdout=log_to_stdout, logger=logger)
         self.partition_keys = None
         self.replication_methods = None
@@ -320,8 +325,7 @@ class Destination():
         final_record_data = None
         final_state_data = None
 
-        text_input = io.TextIOWrapper(input_buffer, encoding='utf-8')
-        for line in text_input:
+        for line in self.__text_input(input_buffer):
             tags = dict()
 
             try:
@@ -532,6 +536,18 @@ class Destination():
                 record_adjusted[k] = v
 
         return record_adjusted
+
+    def __text_input(self, input_buffer):
+        if self.input_file_path:
+            self.logger.info(f'Reading input from file path {self.input_file_path}.')
+
+            with open(self.input_file_path) as f:
+                for line in f:
+                    yield line
+        else:
+            text_input = io.TextIOWrapper(input_buffer, encoding='utf-8')
+            for line in text_input:
+                yield line
 
     def __validate_and_prepare_record(
         self,

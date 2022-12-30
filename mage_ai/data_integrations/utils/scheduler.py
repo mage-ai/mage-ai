@@ -8,9 +8,35 @@ from mage_ai.shared.hash import index_by, merge_dict
 from typing import Dict, List, Tuple
 import json
 import math
+import os
+import shutil
 
 
 SQL_SOURCES_UUID = [d.get('uuid', d['name'].lower()) for d in SQL_SOURCES]
+
+
+def clear_source_output_files(
+    pipeline_run: PipelineRun,
+    logger: DictLogger,
+) -> None:
+    tags = dict(
+        pipeline_run_id=pipeline_run.id,
+        pipeline_uuid=pipeline_run.pipeline_uuid,
+    )
+
+    integration_pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
+
+    for stream in integration_pipeline.streams():
+        tap_stream_id = stream['tap_stream_id']
+        source_output_folder = integration_pipeline.source_output_folder(tap_stream_id)
+        if os.path.exists(source_output_folder):
+            logger.info(
+                f'Removing source output directory for stream {tap_stream_id} at {source_output_folder}.',
+                tags=merge_dict(tags, dict(
+                    source_output_folder=source_output_folder,
+                )),
+            )
+            shutil.rmtree(source_output_folder)
 
 
 def initialize_state_and_runs(
