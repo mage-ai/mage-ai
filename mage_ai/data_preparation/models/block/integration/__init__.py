@@ -144,7 +144,8 @@ class IntegrationBlock(Block):
             with open(source_output_file_path, 'r') as f:
                 idx = 0
                 for line in f:
-                    if not line or len(line.strip()) == 0:
+                    line = line.strip() if line else ''
+                    if len(line) == 0:
                         continue
 
                     try:
