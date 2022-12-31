@@ -168,6 +168,12 @@ class Destination():
     def test_connection(self) -> None:
         raise Exception('Subclasses must implement the test_connection method.')
 
+    def before_process(self) -> None:
+        pass
+
+    def after_process(self) -> None:
+        pass
+
     def export_data(
         self,
         stream: str,
@@ -287,6 +293,8 @@ class Destination():
             raise Exception(message)
 
     def process(self, input_buffer) -> None:
+        self.before_process()
+
         class_name = self.__class__.__name__
         self.logger.info(f'{class_name} process started.')
 
@@ -315,6 +323,8 @@ class Destination():
                 message=traceback.format_exc(),
             ))
             raise Exception(message)
+
+        self.after_process()
 
         self.logger.info(f'{class_name} process completed.')
 

@@ -6,15 +6,19 @@ from mage_integrations.destinations.delta_lake_s3.utils import fix_overwritten_p
 from typing import Dict
 import boto3
 import json
+import os
 
 
+"""
+WARNING:
+If you get this error EndpointConnectionError occasionally,
+it’s because you have an ~/.aws/credentials file. Remove that file or else this error
+occurs occasionally from boto3.
+"""
 class DeltaLakeS3(BaseDeltaLake):
-    """
-    WARNING:
-    If you get this error EndpointConnectionError occasionally,
-    it’s because you have an ~/.aws/credentials file. Remove that file or else this error
-    occurs occasionally from boto3.
-    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.aws_region = None
 
     @property
     def bucket(self) -> str:
@@ -31,6 +35,22 @@ class DeltaLakeS3(BaseDeltaLake):
     @property
     def table_object_key_path(self) -> str:
         return f"{self.config['object_key_path']}/{self.config['table']}"
+
+    # PyDeltaTableError: Failed to load checkpoint: Failed to read checkpoint content:
+    # Generic S3 error: Error performing get request ../_delta_log/_last_checkpoint:
+    # response error "Received redirect without LOCATION,
+    # this normally indicates an incorrectly configured region", after 0 retries
+    # The above error is caused having AWS environment variables with values that
+    # don’t match the S3 storage options when using Delta Lake to read and write from S3.
+    def before_process(self) -> None:
+        self.aws_region = os.getenv('AWS_DEFAULT_REGION')
+        if self.aws_region:
+            os.environ['AWS_DEFAULT_REGION'] = self.region
+
+    def after_process(self) -> None:
+        if self.aws_region:
+            os.environ['AWS_DEFAULT_REGION'] = self.aws_region
+        self.aws_region = None
 
     def after_write_for_batch(self, stream, index, **kwargs) -> None:
         if MODE_OVERWRITE != self.mode or len(self.partition_keys.get(stream, [])) == 0:
