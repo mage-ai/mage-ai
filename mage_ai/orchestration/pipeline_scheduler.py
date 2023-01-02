@@ -197,6 +197,10 @@ class PipelineScheduler:
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
         if PipelineType.INTEGRATION == self.pipeline.type:
+            # If a block/stream fails, stop all other streams
+            execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
+            execution_process_manager.clean_up_processes()
+
             self.logger.info(
                 f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
                 tags=tags,
