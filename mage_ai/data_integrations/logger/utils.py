@@ -31,8 +31,13 @@ def print_log_from_line(
             message = datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S') \
                         + ' ' + str(message)
 
-        if re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} Unable to parse:', message) or \
-            re.match('Unable to parse:', message):
+        if message and (
+            re.match(
+                '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} Unable to parse:',
+                message,
+            ) or \
+            re.match('Unable to parse:', message)
+        ):
             return
 
         if TYPE_LOG == data.get('type'):
