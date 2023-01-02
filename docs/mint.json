@@ -120,7 +120,7 @@
         "production/configuring-production-settings/runtime-variable",
         "developing-in-the-cloud/setting-up-git",
         {
-          "group": "Team Management",
+          "group": "Team management",
           "pages": [
             "developing-in-the-cloud/cloud-dev-environments/overview",
             "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
