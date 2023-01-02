@@ -1,3 +1,4 @@
+from functools import reduce
 from google.cloud import bigquery
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
@@ -112,28 +113,66 @@ SELECT
 FROM {schema_name}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}'
         """)
-        current_columns = [r[0].lower() for r in results]
+
         schema_columns = schema['properties'].keys()
+
+        current_mapping = reduce(
+            lambda obj, tup: merge_dict(obj, {
+                clean_column_name(tup[0]): tup[1],
+            }),
+            results,
+            {},
+        )
+        current_columns = list(current_mapping.keys())
+        new_mapping = column_type_mapping(
+            schema,
+            convert_column_type,
+            lambda item_type_converted: f'ARRAY<{item_type_converted}>',
+            number_type='FLOAT64',
+            string_type='STRING',
+        )
+
+        new_mapping_column_types = {}
+        for col, obj in new_mapping.items():
+            new_mapping_column_types[clean_column_name(col)] = obj['type_converted']
+
+
+        new_column_types = {}
+        for col, col_type in current_mapping.items():
+            if col not in new_mapping_column_types:
+                continue
+
+            new_col_type = new_mapping_column_types[col]
+            if col_type != new_col_type:
+                new_column_types[col] = new_col_type
+
+        full_table_name = f'{schema_name}.{table_name}'
+        alter_table_commands = []
+
+        # Check to see if column data types have changed
+        if not self.config.get('disable_update_column_types') and len(new_column_types) >= 1:
+            cmds = []
+            for col, new_col_type in new_column_types.items():
+                cmds.append(f'ALTER COLUMN {col} SET DATA TYPE {new_col_type}')
+            alter_table_commands.append('\n'.join([
+                f'ALTER TABLE {full_table_name}',
+                ', '.join(cmds),
+            ]))
+
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
-
-        if not new_columns:
-            return []
-
-        # TODO: Support alter column types
-        return [
-            build_alter_table_command(
-                column_type_mapping=column_type_mapping(
-                    schema,
-                    convert_column_type,
-                    lambda item_type_converted: f'ARRAY<{item_type_converted}>',
-                    number_type='FLOAT64',
-                    string_type='STRING',
-                ),
+        if new_columns:
+            alter_table_commands.append(build_alter_table_command(
+                column_type_mapping=new_mapping,
                 columns=new_columns,
-                full_table_name=f'{schema_name}.{table_name}',
+                full_table_name=full_table_name,
                 column_identifier='`',
-            ),
-        ]
+            ))
+
+        print('\n')
+        print(alter_table_commands)
+        print('\n')
+
+        return alter_table_commands
 
     def does_table_exist(
         self,

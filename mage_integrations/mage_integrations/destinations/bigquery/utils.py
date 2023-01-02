@@ -1,5 +1,7 @@
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_BOOLEAN,
+    COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
 )
@@ -51,6 +53,10 @@ def convert_column_type(
         and COLUMN_FORMAT_DATETIME == column_settings.get('format'):
 
         return 'DATETIME'
+    elif COLUMN_TYPE_BOOLEAN == column_type:
+        return 'BOOL'
+    elif COLUMN_TYPE_INTEGER == column_type:
+        return 'INT64'
 
     return convert_column_type_orig(column_type, column_settings, **kwargs)
 
