@@ -18,8 +18,15 @@ class WorkloadManager:
             config.load_incluster_config()
             return True
         except:
-            config.load_kube_config()
-            return False
+            pass
+
+        # try:
+        config.load_kube_config()
+        return True
+        # except:
+        #     pass
+
+        return False
 
 
     def list_services(self):
@@ -75,10 +82,10 @@ class WorkloadManager:
                                 "name": f"{deployment_name}-container",
                                 "image": "mageai/mageai:latest",
                                 "command": ["mage", "start", deployment_name],
-                                "environment": [
+                                "env": [
                                     {
                                         "name": DATABASE_CONNECTION_URL_ENV_VAR,
-                                        "value": os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
+                                        "value": "postgresql://postgres:magetest@/postgres?host=/cloudsql/mage-341100:us-west2:david-test"
                                     },
                                 ],
                                 "ports": [
