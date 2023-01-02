@@ -2,5 +2,6 @@
   "path_to_credentials_json_file": "path_to_credentials_json_file",
   "project_id": "",
   "dataset": "",
-  "location": ""
+  "location": "",
+  "disable_update_column_types": false
 }

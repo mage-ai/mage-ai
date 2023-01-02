@@ -150,13 +150,14 @@ WHERE TABLE_NAME = '{table_name}'
         alter_table_commands = []
 
         # Check to see if column data types have changed
-        if 'update_column_types' in self.config and len(new_column_types) >= 1:
-            cmds = [
-                f'ALTER TABLE {full_table_name}',
-            ]
+        if not self.config.get('disable_update_column_types') and len(new_column_types) >= 1:
+            cmds = []
             for col, new_col_type in new_column_types.items():
                 cmds.append(f'ALTER COLUMN {col} SET DATA TYPE {new_col_type}')
-            alter_table_commands.append('\n'.join(cmds))
+            alter_table_commands.append('\n'.join([
+                f'ALTER TABLE {full_table_name}',
+                ', '.join(cmds),
+            ]))
 
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
         if new_columns:
@@ -166,6 +167,10 @@ WHERE TABLE_NAME = '{table_name}'
                 full_table_name=full_table_name,
                 column_identifier='`',
             ))
+
+        print('\n')
+        print(alter_table_commands)
+        print('\n')
 
         return alter_table_commands
 
