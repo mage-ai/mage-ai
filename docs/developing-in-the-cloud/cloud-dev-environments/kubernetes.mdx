@@ -1,0 +1,76 @@
+---
+title: "Kubernetes"
+sidebarTitle: "Kubernetes"
+---
+
+# Google Kubernetes Engine
+
+## Pre-requisites
+
+You need to already have a Kubernetes cluster with a namespace running.
+
+### Permissions
+
+In order for Mage to create the dev resources, the namespace service account
+needs to have certain permissions. To create the `ClusterRole` required for the
+service account, you can run the following command:
+
+```bash
+cat <<EOF | kubectl apply -f -
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manage-role
+rules:
+  - apiGroups:
+        - ""
+        - apps
+    resources:
+      - services
+      - statefulsets
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+EOF
+```
+
+Once the cluster role is created, you will need to bind the role to the 
+service account. You will need to change the service account name if it is
+different:
+
+```bash
+kubectl create clusterrolebinding manage-role-binding \
+  --clusterrole=manage-role  \
+  --serviceaccount=default:default
+```
+
+### PostgreSQL Database
+
+By default, Mage will use a SQLite database for each dev environment. SQLite
+does not perform well in the cloud, so we recommend using a Postgres database
+instead. Once the Postgres database is created, you will need to provide the 
+connection url as an environment variable.
+
+If you are using Google Cloud SQL, then the connection url will be in the following
+form:
+
+```
+postgresql://{db_user}:{db_password}@/{db_name}?host=/cloudsql/${connection_name}
+```
+
+## Configuring the manager workload
+
+Currently, you will need to create the manager workload on your own. You can create
+a `Deployment` with the following environment variables:
+
+* MANAGE_INSTANCE=1
+* KUBE_NAMESPACE=<your_namespace>
+* MAGE_DATABASE_CONNECTION_URL=<your_connection_url>
+
+You can also create a service to create an ip address to access the deployment. You will
+need your service to point to port 6789.
+
+## Creating instances
+
+Once the manager workload is created, you can create your development instances. If all the
+prerequisites were completed successfully, you should be able to simply enter a name for the
+StatefulSet workload, and press the `Create` button. 

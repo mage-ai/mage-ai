@@ -210,6 +210,7 @@ function MoreActions({
 function InstanceListPage() {
   const [create, setCreate] = useState<boolean>();
   const [newInstanceName, setNewInstanceName] = useState<string>();
+  const [error, setError] = useState<string>();
 
   const { data: dataStatus } = api.status.list();
   const instanceType = dataStatus?.status?.['instance_type'] || 'ecs';

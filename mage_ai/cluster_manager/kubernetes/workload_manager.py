@@ -1,4 +1,8 @@
 from kubernetes import client, config
+from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
+
+import os
+
 
 class WorkloadManager:
     def __init__(self, namespace: str = 'default'):
@@ -71,6 +75,12 @@ class WorkloadManager:
                                 "name": f"{deployment_name}-container",
                                 "image": "mageai/mageai:latest",
                                 "command": ["mage", "start", deployment_name],
+                                "environment": [
+                                    {
+                                        "name": DATABASE_CONNECTION_URL_ENV_VAR,
+                                        "value": os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
+                                    },
+                                ],
                                 "ports": [
                                     {
                                         "containerPort": 6789,
