@@ -2,6 +2,7 @@ from datetime import datetime
 from mage_ai.shared.hash import merge_dict
 from typing import Dict
 import json
+import re
 
 
 def print_log_from_line(
@@ -29,6 +30,15 @@ def print_log_from_line(
         if 'timestamp' in data:
             message = datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S') \
                         + ' ' + str(message)
+
+        if message and (
+            re.match(
+                '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} Unable to parse:',
+                message,
+            ) or \
+            re.match('Unable to parse:', message)
+        ):
+            return
 
         if TYPE_LOG == data.get('type'):
             if logger:
