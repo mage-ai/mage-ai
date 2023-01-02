@@ -19,6 +19,7 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+import uuid
 
 
 Base = declarative_base()
@@ -143,6 +144,7 @@ class PipelineSchedule(BaseModel):
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
     variables = Column(JSON)
     sla = Column(Integer, default=None) # in seconds
+    token = Column(String(255), index=True, default=None)
 
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
 
@@ -177,6 +179,13 @@ class PipelineSchedule(BaseModel):
         if pipeline_uuids is not None:
             query = query.filter(PipelineSchedule.pipeline_uuid.in_(pipeline_uuids))
         return query.all()
+
+    @classmethod
+    def create(self, **kwargs) -> 'PipelineSchedule':
+        if 'token' not in kwargs:
+            kwargs['token'] = uuid.uuid4().hex
+        model = super().create(**kwargs)
+        return model
 
     def current_execution_date(self) -> datetime:
         if self.schedule_interval is None:

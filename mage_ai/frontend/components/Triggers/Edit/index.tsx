@@ -129,6 +129,7 @@ function Edit({
     schedule_type: scheduleType,
     sla,
     start_time: startTime,
+    token,
     variables: scheduleVariablesInit = {},
   } = schedule || {};
 
@@ -230,7 +231,7 @@ function Edit({
             setSchedule(pipelineSchedule);
           }
         }
-        
+
         const slaFromSchedule = pipelineSchedule.sla;
 
         if (slaFromSchedule) {
@@ -282,7 +283,7 @@ function Edit({
         );
         return;
       }
-  
+
       data.sla = convertToSeconds(slaAmount, slaUnit);
     } else if (pipelineSchedule?.sla) {
       data.sla = 0;
@@ -691,9 +692,14 @@ function Edit({
   ]);
 
   const apiMemo = useMemo(() => {
-    let url = typeof window === 'undefined'
-      ? ''
-      : `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
+    let url = ''
+    if (typeof window !== 'undefined') {
+      url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
+
+      if (pipelineSchedule?.token) {
+        url = `${url}/${pipelineSchedule.token}`;
+      }
+    }
 
     let port;
     if (typeof window !== 'undefined') {

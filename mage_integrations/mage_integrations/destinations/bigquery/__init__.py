@@ -168,10 +168,6 @@ WHERE TABLE_NAME = '{table_name}'
                 column_identifier='`',
             ))
 
-        print('\n')
-        print(alter_table_commands)
-        print('\n')
-
         return alter_table_commands
 
     def does_table_exist(

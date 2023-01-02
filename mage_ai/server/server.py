@@ -421,7 +421,7 @@ class ApiStatusHandler(BaseHandler):
             KUBE_NAMESPACE,
         )
         from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
-        
+
         instance_type = None
         if os.getenv(ECS_CLUSTER_NAME):
             instance_type = ClusterType.ECS
@@ -542,6 +542,10 @@ def make_app():
         ),
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs',
+            ApiPipelineRunListHandler,
+        ),
+        (
+            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
             ApiPipelineRunListHandler,
         ),
         (
