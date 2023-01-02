@@ -431,9 +431,7 @@ class Destination():
                             batches_by_stream,
                             final_record_data,
                             final_state_data,
-                            tags=merge_dict(tags, dict(
-                                batch_byte_size=current_byte_size,
-                            )),
+                            tags=dict(batch_byte_size=current_byte_size),
                         )
                         batches_by_stream = {}
                         final_record_data = None
