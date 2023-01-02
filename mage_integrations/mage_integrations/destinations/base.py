@@ -337,6 +337,8 @@ class Destination():
         final_state_data = None
         current_byte_size = 0
 
+        tags = dict()
+
         for line in self.__text_input(input_buffer):
             tags = dict()
             record_data = None
