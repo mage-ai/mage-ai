@@ -119,7 +119,15 @@
       "pages": [
         "production/configuring-production-settings/runtime-variable",
         "developing-in-the-cloud/setting-up-git",
-        "developing-in-the-cloud/multi-development-environment"
+        {
+          "group": "Team Management",
+          "pages": [
+            "developing-in-the-cloud/cloud-dev-environments/overview",
+            "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
+            "developing-in-the-cloud/cloud-dev-environments/cloud-run",
+            "developing-in-the-cloud/cloud-dev-environments/kubernetes"
+          ]
+        }
       ]
     },
     {
