@@ -16,6 +16,7 @@ from mage_ai.orchestration.db.models import (
     pipeline_schedule_event_matcher_association_table,
 )
 from mage_ai.orchestration.pipeline_scheduler import get_variables
+from mage_ai.server.api.errors import UnauthenticatedRequestException
 from mage_ai.shared.hash import merge_dict
 from sqlalchemy.orm import aliased, joinedload
 import json
@@ -263,8 +264,12 @@ class ApiPipelineRunListHandler(BaseHandler):
         process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id), status=status)
 
     @safe_db_query
-    def post(self, pipeline_schedule_id):
+    def post(self, pipeline_schedule_id, token: str = None):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
+
+        if pipeline_schedule.token and pipeline_schedule.token != token:
+            raise UnauthenticatedRequestException(f'Invalid token for pipeline schedule ID {pipeline_schedule_id}.')
+
         pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
 
         payload = self.get_payload()

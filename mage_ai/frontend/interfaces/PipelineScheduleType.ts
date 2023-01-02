@@ -44,6 +44,7 @@ export default interface PipelineScheduleType {
   sla?: number;
   start_time?: string;
   status?: ScheduleStatusEnum;
+  token?: string;
   updated_at?: string;
   variables?: {
     [key: string]: string | number;
