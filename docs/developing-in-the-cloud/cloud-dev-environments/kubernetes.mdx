@@ -13,9 +13,9 @@ You need to already have a Kubernetes cluster with a namespace running.
 
 In order for Mage to create the dev resources, the namespace service account
 needs to have certain permissions. To create the `ClusterRole` required for the
-service account, you can run the following command:
+service account, you can run the following `kubectl` command:
 
-```bash
+```
 cat <<EOF | kubectl apply -f -
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -37,7 +37,7 @@ Once the cluster role is created, you will need to bind the role to the
 service account. You will need to change the service account name if it is
 different:
 
-```bash
+```
 kubectl create clusterrolebinding manage-role-binding \
   --clusterrole=manage-role  \
   --serviceaccount=default:default
@@ -73,4 +73,4 @@ need your service to point to port 6789.
 
 Once the manager workload is created, you can create your development instances. If all the
 prerequisites were completed successfully, you should be able to simply enter a name for the
-StatefulSet workload, and press the `Create` button. 
+StatefulSet workload, and press the `Create` button.
