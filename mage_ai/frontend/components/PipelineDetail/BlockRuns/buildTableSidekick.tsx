@@ -120,7 +120,7 @@ export default function({
               </Spacing>
             )}
             {(!loadingData && dataType === DataTypeEnum.TABLE) && blockOutputTable}
-            {(!loadingData && dataType === DataTypeEnum.TEXT) && blockOutputText}
+            {(!loadingData && dataType !== DataTypeEnum.TABLE) && blockOutputText}
           </div>
         </>
       )}
