@@ -44,10 +44,20 @@ export function getBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
 ) {
+  // parts example:
+  // ['default_repo', 'data_loaders', 'team', 'foo.py']
   const parts = getFullPath(file, currentPathInit).split('/');
   // This assumes path default_repo/[block_type]s/..
   const blockType = singularize(parts[1]);
-  const fileName = parts[parts.length - 1];
+
+  let fileName = '';
+  if (parts.length >= 3) {
+    // ['default_repo', 'data_loaders', 'team', 'foo.py'] becomes
+    // team/foo.py
+    fileName = parts.slice(2, parts.length).join('/');
+  } else {
+    fileName = parts[parts.length - 1];
+  }
 
   const pyRegex = new RegExp(`\.${FileExtensionEnum.PY}$`);
   if (BLOCK_TYPES.includes(blockType) && fileName.match(pyRegex)) {

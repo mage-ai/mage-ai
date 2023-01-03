@@ -90,8 +90,7 @@ def test_output(df, *args) -> None:
         self.assertEqual(expected_string, new_string)
 
     def test_template_generation_data_loader_default(self):
-        expected_template = """
-if 'data_loader' not in globals():
+        expected_template = """if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
 if 'test' not in globals():
     from mage_ai.data_preparation.decorators import test
@@ -131,7 +130,6 @@ def test_output(df, *args) -> None:
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from os import path
-
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
 if 'test' not in globals():
@@ -165,7 +163,6 @@ def test_output(df, *args) -> None:
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from os import path
-
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
 if 'test' not in globals():
@@ -211,7 +208,6 @@ def test_output(df, *args) -> None:
         expected_template = """import io
 import pandas as pd
 import requests
-
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
 if 'test' not in globals():

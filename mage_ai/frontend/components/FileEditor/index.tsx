@@ -8,6 +8,7 @@ import {
 import { useMutation } from 'react-query';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import CodeEditor from '@components/CodeEditor';
 import FileType, {
   FileExtensionEnum,
@@ -185,12 +186,25 @@ function FileEditor({
     || ((fileExtension === FileExtensionEnum.YAML || fileExtension === FileExtensionEnum.R)
       && getNonPythonBlockFromFile(file, file?.path))
     ) && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD && (
-    <Spacing m={2}>
-      <KeyboardShortcutButton
-        inline
+    <Spacing p={2}>
+      <Button
+        borderLess
+        compact
         onClick={() => {
           const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
-          const blockUUID = getBlockUUID(file.path.split('/'));
+
+          // Examples:
+          // data_loaders/foo.py
+          // data_loaders/team/foo.py
+          // data_loaders/team/growth/foo.py
+          const parts = file.path.replace(repoPath, '').split('/');
+          let blockUUID = getBlockUUID(parts);
+
+          if (parts.length >= 3) {
+            const nestedFolders = parts.slice(1, parts.length - 1).join('/');
+            blockUUID = `${nestedFolders}/${blockUUID}`;
+          }
+
           const blockReqPayload: BlockRequestPayloadType = {
             configuration: {
               file_path: file.path.split('/')[0] === BlockTypeEnum.DBT
@@ -226,10 +240,11 @@ function FileEditor({
             },
           );
         }}
-        uuid="FileEditor/AddToCurrentPipeline"
+        primary
+        small
       >
         Add to current pipeline
-      </KeyboardShortcutButton>
+      </Button>
     </Spacing>
   );
 
@@ -321,8 +336,8 @@ function FileEditor({
 
   return (
     <div ref={containerRef}>
-      {codeEditorEl}
       {addToPipelineEl}
+      {codeEditorEl}
       {filePath === SpecialFileEnum.REQS_TXT && installPackagesButtonEl}
     </div>
   );

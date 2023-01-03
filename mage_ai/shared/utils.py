@@ -1,12 +1,28 @@
 from datetime import datetime
+from mage_ai.shared.strings import replacer
+from typing import List
 import os
 import re
 
 
-def clean_name(name):
+def clean_name(name, allow_characters: List[str] = []):
     for c in ['\ufeff', '\uFEFF', '"', '$', '\n', '\r', '\t']:
         name = name.replace(c, '')
+
+    indexes_of_allowed_characters = {}
+    for allowed_char in allow_characters:
+        if allowed_char not in indexes_of_allowed_characters:
+            indexes_of_allowed_characters[allowed_char] = []
+
+        for idx, char in enumerate(name):
+            if char == allowed_char:
+                indexes_of_allowed_characters[allowed_char].append(idx)
+
     name = re.sub('\W', '_', name)
+
+    for allowed_char, indexes in indexes_of_allowed_characters.items():
+        for idx in indexes:
+            name = replacer(name, allowed_char, idx)
 
     if name and re.match('\d', name[0]):
         name = f'letter_{name}'

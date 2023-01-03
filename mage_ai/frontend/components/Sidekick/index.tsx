@@ -45,7 +45,7 @@ import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
 
-const MAX_COLUMNS = 40;
+const MAX_COLUMNS = 100;
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;

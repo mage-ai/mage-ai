@@ -155,7 +155,10 @@ function DependencyGraph({
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, blockEditing?.uuid),
+    api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      encodeURIComponent(blockEditing?.uuid),
+    ),
     {
       onSuccess: (response: any) => onSuccess(
         response, {

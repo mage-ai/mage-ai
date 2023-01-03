@@ -13,6 +13,7 @@ from mage_ai.data_preparation.repo_manager import (
     get_variables_dir,
 )
 from mage_ai.shared.constants import S3_PREFIX
+from mage_ai.shared.utils import clean_name
 from typing import Any, Dict, List
 import os
 import pandas as pd
@@ -59,7 +60,7 @@ class VariableManager:
         elif is_geo_dataframe(data):
             variable_type = VariableType.GEO_DATAFRAME
         variable = Variable(
-            variable_uuid,
+            clean_name(variable_uuid),
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
             partition=partition,

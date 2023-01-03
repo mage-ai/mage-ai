@@ -1,7 +1,12 @@
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.utils import clean_name as clean_name_orig
 from typing import Any, Dict, List
 import pandas as pd
+
+
+def clean_name(name: str, **kwargs) -> str:
+    return clean_name_orig(name, allow_characters=['/'], **kwargs)
 
 
 def dynamic_block_uuid(
