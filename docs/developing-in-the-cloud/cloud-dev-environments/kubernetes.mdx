@@ -65,6 +65,15 @@ creating your manager workload.
 Currently, you will need to create the manager workload on your own. You can create
 a `Deployment` workload with the following environment variables:
 
+| Variable                             | Value                                                               |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| MANAGE_INSTANCES                     | 1                                                                   |
+| KUBE_NAMESPACE                       | Your Kubernetes namespace                                           |
+| CLOUD_SQL_CONNECTION_NAME            | Cloud SQL instance connection name (required for PostgreSQL DB)     |
+| DB_SECRETS_NAME                      | DB secrets name (required for PostgreSQL DB)                        |
+| SERVICE_ACCOUNT_SECRETS_NAME         | Service account secrets name (required for PostgreSQL DB)           |
+| SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH | Credentials file path in previous step (required for PostgreSQL DB) |
+
 * MANAGE_INSTANCE=1
 * KUBE_NAMESPACE="your namespace"
 * CLOUD_SQL_CONNECTION_NAME="cloud sql instance connection name (required for PostgreSQL DB)"
