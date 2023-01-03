@@ -12,6 +12,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
+from mage_ai.shared.utils import clean_name
 from sqlalchemy import Column, Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import joinedload, relationship, validates
@@ -360,7 +361,7 @@ class BlockRun(BaseModel):
         pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
         return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
-            block_uuid=self.block_uuid,
+            block_uuid=clean_name(self.block_uuid),
             partition=self.pipeline_run.execution_partition,
             repo_config=pipeline.repo_config,
         ).get_logs()
