@@ -17,24 +17,25 @@ db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
 db_kwargs = dict(pool_pre_ping=True)
 
 if not db_connection_url:
-    # to connect to K8s CloudSQL sidecar
+    # connect to K8s CloudSQL sidecar
     if os.getenv(DB_USER):
         db_user = os.getenv(DB_USER)
         db_pass = os.getenv(DB_PASS)
         db_name = os.getenv(DB_NAME)
         db_connection_url = f'postgresql+psycopg2://{db_user}:{db_pass}@127.0.0.1:5432/{db_name}'
-    elif is_test():
-        db_connection_url = f'sqlite:///{TEST_DB}'
-    elif os.path.exists('mage_ai/orchestration/db/'):
-        # For local dev environment
-        db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
-    elif os.path.exists('mage-ai.db'):
-        # For backward compatiblility
-        db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
     else:
-        # For new projects, create mage-ai.db in variables idr
-        db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
-    db_kwargs['connect_args'] = {'check_same_thread': False}
+        if is_test():
+            db_connection_url = f'sqlite:///{TEST_DB}'
+        elif os.path.exists('mage_ai/orchestration/db/'):
+            # For local dev environment
+            db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
+        elif os.path.exists('mage-ai.db'):
+            # For backward compatiblility
+            db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
+        else:
+            # For new projects, create mage-ai.db in variables idr
+            db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
+        db_kwargs['connect_args'] = {'check_same_thread': False}
 
 if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50
