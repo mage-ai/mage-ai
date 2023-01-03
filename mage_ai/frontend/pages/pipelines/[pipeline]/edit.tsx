@@ -322,6 +322,7 @@ function PipelineDetailPage({
     !afterHidden && pipelineUUID,
     selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
+      && selectedOutputBlock?.uuid
       && encodeURIComponent(selectedOutputBlock?.uuid),
   );
   const sampleData: SampleDataType = useMemo(() => {
@@ -341,6 +342,7 @@ function PipelineDetailPage({
     !afterHidden && pipelineUUID,
     selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
+      && selectedOutputBlock?.uuid
       && encodeURIComponent(selectedOutputBlock?.uuid),
   );
   const {
