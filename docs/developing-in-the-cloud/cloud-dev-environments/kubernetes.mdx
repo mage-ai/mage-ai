@@ -15,7 +15,7 @@ In order for Mage to create the dev resources, the namespace service account
 needs to have certain permissions. To create the `ClusterRole` required for the
 service account, you can run the following `kubectl` command:
 
-```
+```bash
 cat <<EOF | kubectl apply -f -
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -37,7 +37,7 @@ Once the cluster role is created, you will need to bind the role to the
 service account. You will need to change the service account name if it is
 different:
 
-```
+```bash
 kubectl create clusterrolebinding manage-role-binding \
   --clusterrole=manage-role  \
   --serviceaccount=default:default
@@ -55,7 +55,7 @@ need to follow these steps. These steps can be found in the
 
 * [Create your DB secrets](https://cloud.google.com/sql/docs/postgres/connect-kubernetes-engine#create_a_secret_object)
 * [Create your service account secrets](https://cloud.google.com/sql/docs/postgres/connect-kubernetes-engine#service-account-key-file)
-  * Make sure to record the name of the service account credential file. 
+  * Make sure to record the path of the service account credential file. 
 
 You'll need to add the names of the secrets you created above as environment variables when
 creating your manager workload.
@@ -65,7 +65,7 @@ creating your manager workload.
 Currently, you will need to create the manager workload on your own. You can create
 a `Deployment` workload with the following environment variables:
 
-| Variable                             | Value                                                               |
+| Variable Name                        | Value                                                               |
 | ------------------------------------ | ------------------------------------------------------------------- |
 | MANAGE_INSTANCES                     | 1                                                                   |
 | KUBE_NAMESPACE                       | Your Kubernetes namespace                                           |
@@ -73,13 +73,6 @@ a `Deployment` workload with the following environment variables:
 | DB_SECRETS_NAME                      | DB secrets name (required for PostgreSQL DB)                        |
 | SERVICE_ACCOUNT_SECRETS_NAME         | Service account secrets name (required for PostgreSQL DB)           |
 | SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH | Credentials file path in previous step (required for PostgreSQL DB) |
-
-* MANAGE_INSTANCE=1
-* KUBE_NAMESPACE="your namespace"
-* CLOUD_SQL_CONNECTION_NAME="cloud sql instance connection name (required for PostgreSQL DB)"
-* DB_SECRETS_NAME="db secrets name (required for PostgreSQL DB)"
-* SERVICE_ACCOUNT_SECRETS_NAME="service account secrets name (required for PostgreSQL DB)"
-* SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH="credential file path (required for PostgreSQL DB)"
 
 You can also create a service to create an ip address to access the deployment. You will
 need your service to point to port 6789 in order to access Mage.
