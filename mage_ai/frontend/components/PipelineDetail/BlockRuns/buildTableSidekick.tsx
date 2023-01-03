@@ -10,6 +10,7 @@ import Text from '@oracle/elements/Text';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
 import { createBlockStatus } from '@components/Triggers/utils';
+import { isJsonString } from '@utils/string';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default function({
@@ -67,11 +68,16 @@ export default function({
     ) : emptyOutputMessageEl
   );
 
+  const parsedText = isJsonString(textData)
+    ? JSON.stringify(JSON.parse(textData), null, 2)
+    : textData;
   const blockOutputText = (!!textData
     ? (
       <Spacing ml={2}>
         <Text monospace>
-          {textData}
+          <pre>
+            {parsedText}
+          </pre>
         </Text>
       </Spacing>
     )
