@@ -85,8 +85,35 @@ class WorkloadManager:
                                 "env": [
                                     {
                                         "name": DATABASE_CONNECTION_URL_ENV_VAR,
-                                        "value": "postgresql://postgres:magetest@/postgres?host=/cloudsql/mage-341100:us-west2:david-test"
+                                        "value": os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
                                     },
+                                    {
+                                        "name": "DB_USER",
+                                        "valueFrom": {
+                                            "secretKeyRef": {
+                                                "name": "db-secrets",
+                                                "key": "username"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "DB_PASS",
+                                        "valueFrom": {
+                                            "secretKeyRef": {
+                                                "name": "db-secrets",
+                                                "key": "password"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "name": "DB_NAME",
+                                        "valueFrom": {
+                                            "secretKeyRef": {
+                                                "name": "db-secrets",
+                                                "key": "database"
+                                            }
+                                        }
+                                    }
                                 ],
                                 "ports": [
                                     {
@@ -100,6 +127,40 @@ class WorkloadManager:
                                         "mountPath": "/home/src"
                                     }
                                 ]
+                            },
+                            {
+                                "name": "cloud-sql-proxy",
+                                "image": "gcr.io/cloudsql-docker/gce-proxy:1.28.0",
+                                "command": [
+                                    "/cloud_sql_proxy",
+                                    "-log_debug_stdout",
+                                    "-instances=mage-341100:us-west2:david-test=tcp:5432",
+                                    "-credential_file=/secrets/service_account.json"
+                                ],
+                                "securityContext": {
+                                    "runAsNonRoot": True
+                                },
+                                "resources": {
+                                    "requests": {
+                                        "memory": "2Gi",
+                                        "cpu": "1"
+                                    }
+                                },
+                                "volumeMounts": [
+                                    {
+                                        "name": "service-account-volume",
+                                        "mountPath": "/secrets/",
+                                        "readOnly": True
+                                    }
+                                ]
+                            }
+                        ],
+                        "volumes": [
+                            {
+                                "name": "service-account-volume",
+                                "secret": {
+                                    "secretName": "service-account-secret"
+                                }
                             }
                         ]
                     }
