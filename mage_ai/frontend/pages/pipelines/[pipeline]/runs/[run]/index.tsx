@@ -12,6 +12,7 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import buildTableSidekick from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
+import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
@@ -83,10 +84,13 @@ function PipelineBlockRuns({
     loading: loadingOutput,
     mutate: fetchOutput,
   } = api.outputs.block_runs.list(selectedRun?.id);
+  console.log('dataOutput:', dataOutput);
 
   const {
-    sample_data: blockSampleData
-  } = dataOutput?.outputs?.[0] || {};
+    sample_data: blockSampleData,
+    text_data: textData,
+    type: dataType,
+  }: OutputType = dataOutput?.outputs?.[0] || {};
 
   const blockRuns = useMemo(() => pipelineRun?.block_runs, [pipelineRun]);
 
@@ -112,14 +116,6 @@ function PipelineBlockRuns({
 
   return (
     <PipelineDetailPage
-      buildSidekick={props => buildTableSidekick({
-        ...props,
-        blockRuns,
-        columns,
-        loadingData: loadingOutput,
-        rows,
-        selectedRun,
-      })}
       breadcrumbs={[
         {
           label: () => 'Runs',
@@ -132,6 +128,16 @@ function PipelineBlockRuns({
           label: () => pipelineRun?.execution_date,
         },
       ]}
+      buildSidekick={props => buildTableSidekick({
+        ...props,
+        blockRuns,
+        columns,
+        dataType,
+        loadingData: loadingOutput,
+        rows,
+        selectedRun,
+        textData,
+      })}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       subheader={pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED && (

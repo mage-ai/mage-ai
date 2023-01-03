@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import BlockRunType from '@interfaces/BlockRunType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -9,12 +7,15 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import { DataTypeEnum } from '@interfaces/KernelOutputType';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
 import { createBlockStatus } from '@components/Triggers/utils';
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default function({
   blockRuns,
   columns,
+  dataType,
   height,
   heightOffset,
   loadingData,
@@ -22,10 +23,12 @@ export default function({
   renderColumnHeader,
   rows,
   selectedRun,
+  textData,
   ...props
 }: {
   blockRuns: BlockRunType[];
   columns: string[],
+  dataType: DataTypeEnum,
   height: number;
   heightOffset?: number;
   loadingData?: boolean;
@@ -35,32 +38,44 @@ export default function({
   }) => any;
   rows: string[][] | number[][];
   selectedRun?: BlockRunType;
+  textData?: string;
 }) {
 
   const updatedProps = { ...props };
   updatedProps['blockStatus'] = createBlockStatus(blockRuns);
 
-  const blockOutputTable = (
-    <>
-      {rows && rows.length > 0 ? (
-        <DataTable
-          columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
-          columns={columns}
-          height={height - heightOffset - 90}
-          noBorderBottom
-          noBorderLeft
-          noBorderRight
-          renderColumnHeader={renderColumnHeader}
-          rows={rows}
-        />
-      ) : (
-        <Spacing ml={2}>
-          <Text>
-            This block run has no output
-          </Text>
-        </Spacing>
-      )}
-    </>
+  const emptyOutputMessageEl = (
+    <Spacing ml={2}>
+      <Text>
+        This block run has no output.
+      </Text>
+    </Spacing>
+  );
+
+  const blockOutputTable = (rows && rows.length > 0
+    ? (
+      <DataTable
+        columnHeaderHeight={renderColumnHeader ? TABLE_COLUMN_HEADER_HEIGHT : 0}
+        columns={columns}
+        height={height - heightOffset - 90}
+        noBorderBottom
+        noBorderLeft
+        noBorderRight
+        renderColumnHeader={renderColumnHeader}
+        rows={rows}
+      />
+    ) : emptyOutputMessageEl
+  );
+
+  const blockOutputText = (!!textData
+    ? (
+      <Spacing ml={2}>
+        <Text monospace>
+          {textData}
+        </Text>
+      </Spacing>
+    )
+    : emptyOutputMessageEl
   );
 
   return (
@@ -98,7 +113,8 @@ export default function({
                 </FlexContainer>
               </Spacing>
             )}
-            {!loadingData && blockOutputTable}
+            {(!loadingData && dataType === DataTypeEnum.TABLE) && blockOutputTable}
+            {(!loadingData && dataType === DataTypeEnum.TEXT) && blockOutputText}
           </div>
         </>
       )}
