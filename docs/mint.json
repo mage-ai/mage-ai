@@ -16,7 +16,7 @@
     }
   },
   "metadata": {
-    "og:image": "https://mintlify.s3-us-west-1.amazonaws.com/mage/media/social-media-image-mage.png",
+    "og:image": "https://media.graphassets.com/output=format:jpg/resize=height:800,fit:max/ECmj2405TUi2JDVK20Ox",
     "twitter:site": "@mage_ai"
   },
   "topbarCtaButton": {
@@ -320,5 +320,10 @@
     "twitter": "https://twitter.com/mage_ai",
     "facebook": "https://www.facebook.com/mageai",
     "instagram": "https://www.instagram.com/mage_ai/"
+  },
+  "analytics": {
+    "amplitude": {
+      "apiKey": "b3c3b09423fea2abaae92c08b44de1c3"
+    }
   }
 }
