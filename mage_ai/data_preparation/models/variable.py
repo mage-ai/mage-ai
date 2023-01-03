@@ -6,6 +6,7 @@ from mage_ai.data_cleaner.shared.utils import (
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,
+    DATAFRAME_SAMPLE_MAX_COLUMNS,
     VARIABLE_DIR,
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
@@ -266,7 +267,10 @@ class Variable:
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE),
         )
         try:
-            df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
+            df_sample_output = df_output.iloc[
+                :DATAFRAME_SAMPLE_COUNT,
+                :DATAFRAME_SAMPLE_MAX_COLUMNS
+            ]
             self.storage.write_parquet(
                 df_sample_output,
                 os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE),

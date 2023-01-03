@@ -910,9 +910,9 @@ class Block:
                     analysis = None
                 if analysis is not None:
                     stats = analysis.get('statistics', {})
-                    column_types = analysis.get('metadata', {}).get('column_types', {})
+                    column_types = (analysis.get('metadata') or {}).get('column_types', {})
                     row_count = stats.get('original_row_count', stats.get('count'))
-                    column_count = len(column_types)
+                    column_count = stats.get('original_column_count', len(column_types))
                 else:
                     row_count, column_count = data.shape
 
@@ -1140,6 +1140,18 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         for uuid, data in variable_mapping.items():
             if type(data) is pd.DataFrame:
                 if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS:
+                    self.pipeline.variable_manager.add_variable(
+                        self.pipeline.uuid,
+                        self.uuid,
+                        uuid,
+                        dict(
+                            statistics=dict(
+                                original_row_count=data.shape[0],
+                                original_column_count=data.shape[1],
+                            ),
+                        ),
+                        variable_type=VariableType.DATAFRAME_ANALYSIS,
+                    )
                     continue
                 if data.shape[0] > DATAFRAME_ANALYSIS_MAX_ROWS:
                     data_for_analysis = data.sample(DATAFRAME_ANALYSIS_MAX_ROWS).reset_index(
