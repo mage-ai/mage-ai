@@ -486,15 +486,15 @@ def make_app():
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
         (r'/api/pipelines', ApiPipelineListHandler),
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)/execute',
             ApiPipelineBlockExecuteHandler,
         ),
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
         ),
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/outputs',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)/outputs',
             ApiPipelineBlockOutputHandler,
         ),
         (
@@ -507,7 +507,7 @@ def make_app():
         ),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables', ApiPipelineVariableListHandler),
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets/(?P<block_uuid>\w+)',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets/(?P<block_uuid>[\w\%2f]+)',
             ApiPipelineWidgetDetailHandler,
         ),
         (
@@ -563,7 +563,7 @@ def make_app():
         (r'/api/status', ApiStatusHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w/]+)',
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)',
             ApiPipelineBlockHandler,
         ),
     ]

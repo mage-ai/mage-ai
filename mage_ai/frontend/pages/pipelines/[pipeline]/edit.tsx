@@ -322,7 +322,7 @@ function PipelineDetailPage({
     !afterHidden && pipelineUUID,
     selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
-      && selectedOutputBlock?.uuid,
+      && encodeURIComponent(selectedOutputBlock?.uuid),
   );
   const sampleData: SampleDataType = useMemo(() => {
     if (isIntegration) {
@@ -341,7 +341,7 @@ function PipelineDetailPage({
     !afterHidden && pipelineUUID,
     selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
-      && selectedOutputBlock?.uuid,
+      && encodeURIComponent(selectedOutputBlock?.uuid),
   );
   const {
     insights = {},
@@ -641,7 +641,12 @@ function PipelineDetailPage({
   ]);
 
   const [deleteBlock] = useMutation(
-    ({ uuid }: BlockType) => api.blocks.pipelines.useDelete(pipelineUUID, uuid)(),
+    ({
+      uuid,
+    }: BlockType) => api.blocks.pipelines.useDelete(
+      pipelineUUID,
+      encodeURIComponent(uuid),
+    )(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
