@@ -47,27 +47,33 @@ kubectl create clusterrolebinding manage-role-binding \
 
 By default, Mage will use a SQLite database for each dev environment. SQLite
 does not perform well in the cloud, so we recommend using a Postgres database
-instead. Once the Postgres database is created, you will need to provide the 
-connection url as an environment variable.
+instead.
 
-If you are using Google Cloud SQL, then the connection url will be in the following
-form:
+To connect to a Cloud SQL PostgreSQL database from your GKE workload, you'll 
+need to follow these steps. These steps can be found in the
+[official Google documentation](https://cloud.google.com/sql/docs/postgres/connect-kubernetes-engine)
 
-```
-postgresql://{db_user}:{db_password}@/{db_name}?host=/cloudsql/${connection_name}
-```
+* [Create your DB secrets](https://cloud.google.com/sql/docs/postgres/connect-kubernetes-engine#create_a_secret_object)
+* [Create your service account secrets](https://cloud.google.com/sql/docs/postgres/connect-kubernetes-engine#service-account-key-file)
+  * Make sure to record the name of the service account credential file. 
+
+You'll need to add the names of the secrets you created above as environment variables when
+creating your manager workload.
 
 ## Configuring the manager workload
 
 Currently, you will need to create the manager workload on your own. You can create
-a `Deployment` with the following environment variables:
+a `Deployment` workload with the following environment variables:
 
 * MANAGE_INSTANCE=1
-* KUBE_NAMESPACE=<your_namespace>
-* MAGE_DATABASE_CONNECTION_URL=<your_connection_url>
+* KUBE_NAMESPACE="your namespace"
+* CLOUD_SQL_CONNECTION_NAME="cloud sql instance connection name (required for PostgreSQL DB)"
+* DB_SECRETS_NAME="db secrets name (required for PostgreSQL DB)"
+* SERVICE_ACCOUNT_SECRETS_NAME="service account secrets name (required for PostgreSQL DB)"
+* SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH="credential file path (required for PostgreSQL DB)"
 
 You can also create a service to create an ip address to access the deployment. You will
-need your service to point to port 6789.
+need your service to point to port 6789 in order to access Mage.
 
 ## Creating instances
 

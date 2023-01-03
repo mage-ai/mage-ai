@@ -104,7 +104,7 @@ class ApiInstancesHandler(BaseHandler):
             instances = cloud_run_service_manager.list_services()
         elif cluster_type == ClusterType.K8S:
             from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
-            namespace = os.getenv(KUBE_NAMESPACE, 'default')
+            namespace = os.getenv(KUBE_NAMESPACE)
             workload_manager = WorkloadManager(namespace)
 
             instances = workload_manager.list_services()
