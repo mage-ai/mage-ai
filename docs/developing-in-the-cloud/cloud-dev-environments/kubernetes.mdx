@@ -3,13 +3,13 @@ title: "Kubernetes"
 sidebarTitle: "Kubernetes"
 ---
 
-# Google Kubernetes Engine
+## Google Kubernetes Engine
 
-## Pre-requisites
+### Pre-requisites
 
 You need to already have a Kubernetes cluster with a namespace running.
 
-### Permissions
+#### Permissions
 
 In order for Mage to create the dev resources, the namespace service account
 needs to have certain permissions. To create the `ClusterRole` required for the
@@ -43,7 +43,7 @@ kubectl create clusterrolebinding manage-role-binding \
   --serviceaccount=default:default
 ```
 
-### PostgreSQL Database
+#### PostgreSQL Database
 
 By default, Mage will use a SQLite database for each dev environment. SQLite
 does not perform well in the cloud, so we recommend using a Postgres database
@@ -60,7 +60,7 @@ need to follow these steps. These steps can be found in the
 You'll need to add the names of the secrets you created above as environment variables when
 creating your manager workload.
 
-## Configuring the manager workload
+### Configuring the manager workload
 
 Currently, you will need to create the manager workload on your own. You can create
 a `Deployment` workload with the following environment variables:
@@ -75,7 +75,7 @@ a `Deployment` workload with the following environment variables:
 You can also create a service to create an ip address to access the deployment. You will
 need your service to point to port 6789 in order to access Mage.
 
-## Creating instances
+### Creating instances
 
 Once the manager workload is created, you can create your development instances. If all the
 prerequisites were completed successfully, you should be able to simply enter a name for the
