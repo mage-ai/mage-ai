@@ -3,6 +3,7 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.utils import clean_name
 from typing import Callable, Dict, List
 import json
 import requests
@@ -17,7 +18,7 @@ class BlockExecutor:
         self.execution_partition = execution_partition
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
-            block_uuid=self.block_uuid,
+            block_uuid=clean_name(self.block_uuid),
             partition=self.execution_partition,
             repo_config=self.pipeline.repo_config,
         )
