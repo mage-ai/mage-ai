@@ -6,6 +6,7 @@ from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
 )
 from mage_ai.data_preparation.models.block.utils import (
+    clean_name,
     fetch_input_variables,
     input_variables,
     is_dynamic_block,
@@ -37,7 +38,7 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
-from mage_ai.shared.utils import clean_name
+from mage_ai.shared.utils import clean_name as clean_name_orig
 from queue import Queue
 from typing import Any, Callable, Dict, List, Set
 import asyncio
@@ -1194,16 +1195,17 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             uuid_to_use,
             partition=execution_partition,
         )
+
+        variable_names = [clean_name_orig(v) for v in variable_mapping]
         removed_variables = []
-        if override:
-            # Not remove dataframe variables
-            removed_variables = [v for v in all_variables
-                                 if v not in variable_mapping.keys()
-                                 and not is_output_variable(v)]
-        elif override_outputs:
-            removed_variables = [v for v in all_variables
-                                 if v not in variable_mapping.keys() and
-                                 is_output_variable(v)]
+        for v in all_variables:
+            if v in variable_names:
+                continue
+
+            is_output_var = is_output_variable(v)
+            if (override and not is_output_var) or (override_outputs and is_output_var):
+                removed_variables.append(v)
+
         for uuid, data in variable_mapping.items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
@@ -1334,6 +1336,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 )
         if os.path.exists(new_file_path):
             raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
+
+        file_path_parts = new_file_path.split('/')
+        parent_dir = '/'.join(file_path_parts[:-1])
+        os.makedirs(parent_dir, exist_ok=True)
+
         os.rename(old_file_path, new_file_path)
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid)

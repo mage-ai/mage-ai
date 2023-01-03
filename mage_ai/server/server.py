@@ -490,10 +490,6 @@ def make_app():
             ApiPipelineBlockExecuteHandler,
         ),
         (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
-            ApiPipelineBlockHandler,
-        ),
-        (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',
             ApiPipelineBlockAnalysisHandler,
         ),
@@ -501,7 +497,6 @@ def make_app():
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/outputs',
             ApiPipelineBlockOutputHandler,
         ),
-        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/pipeline_schedules',
             ApiPipelineScheduleListHandler,
@@ -566,6 +561,11 @@ def make_app():
         (r'/api/projects', ApiProjectsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
         (r'/api/status', ApiStatusHandler),
+        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w/]+)',
+            ApiPipelineBlockHandler,
+        ),
     ]
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(

@@ -113,7 +113,7 @@ class Variable:
     ) -> Any:
         """
         Read variable data.
-        
+
         Args:
             dataframe_analysis_keys (List[str], optional): For DATAFRAME_ANALYSIS variable,
                 only read the selected keys.
