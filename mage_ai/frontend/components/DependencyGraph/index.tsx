@@ -21,6 +21,13 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+
+import {
+  EdgeType,
+  NodeType,
+  PortType,
+  SideEnum,
+  SHARED_PORT_PROPS } from './constants';
 import { GraphContainerStyle } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -145,12 +152,6 @@ function DependencyGraph({
     ],
   );
   const blockUUIDMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
-  const upstreamBlocksEditingMapping = useMemo(
-    () => indexBy(upstreamBlocksEditing, ({ uuid }) => uuid),
-    [
-      upstreamBlocksEditing,
-    ],
-  );
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
 
@@ -166,6 +167,32 @@ function DependencyGraph({
             setEditingBlock({
               upstreamBlocks: null,
             });
+            fetchPipeline?.();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const [updateBlockByDragAndDrop] = useMutation(
+    // @ts-ignore
+    ({ fromBlock, toBlock }) => api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      encodeURIComponent(toBlock.uuid),
+    )({
+      block: {
+        ...toBlock,
+        upstream_blocks: toBlock.upstream_blocks.concat(fromBlock.uuid),
+      },
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
             fetchPipeline?.();
           },
           onErrorCallback: (response, errors) => setErrors?.({
@@ -260,34 +287,47 @@ function DependencyGraph({
     edges,
     nodes,
   } = useMemo(() => {
-    const nodesInner = [];
-    const edgesInner = [];
+    const nodesInner: NodeType[] = [];
+    const edgesInner: EdgeType[] = [];
 
     blocks.forEach((block: BlockType) => {
       const displayText = displayTextForBlock(block);
 
       const {
+        type: blockType,
         upstream_blocks: upstreamBlocks = [],
         uuid,
       } = block;
       const downstreamBlocks = downstreamBlocksMapping[uuid];
-      const ports = [];
+      const ports: PortType[] = [];
 
       if (downstreamBlocks) {
         ports.push(...downstreamBlocks.map((block2: BlockType) => ({
-          height: 10,
+          ...SHARED_PORT_PROPS,
           id: `${uuid}-${block2.uuid}-from`,
-          side: 'SOUTH',
-          width: 10,
+          side: SideEnum.SOUTH,
         })));
+      } else if (blockType !== BlockTypeEnum.DATA_EXPORTER) {
+        ports.push({
+          ...SHARED_PORT_PROPS,
+          id: `${uuid}-from`,
+          side: SideEnum.SOUTH,
+        });
+      }
+
+      if (upstreamBlocks.length === 0 && blockType !== BlockTypeEnum.DATA_LOADER) {
+        ports.push({
+          ...SHARED_PORT_PROPS,
+          id: `${uuid}-to`,
+          side: SideEnum.NORTH,
+        });
       }
 
       upstreamBlocks?.forEach((uuidUp: string) => {
         ports.push({
-          height: 10,
+          ...SHARED_PORT_PROPS,
           id: `${uuidUp}-${uuid}-to`,
-          side: 'NORTH',
-          width: 10,
+          side: SideEnum.NORTH,
         });
 
         edgesInner.push({
@@ -319,10 +359,11 @@ function DependencyGraph({
       nodes: nodesInner,
     };
   }, [
-    blockEditing,
+    blockEditing?.uuid,
     blockStatus,
     blocks,
-    pipeline,
+    displayTextForBlock,
+    downstreamBlocksMapping,
   ]);
 
   const getBlockStatus = useCallback((block: BlockType) => {
@@ -453,28 +494,40 @@ function DependencyGraph({
           node={(node) => (
             <Node
               {...node}
-              linkable={false}
-              onClick={(event, {
-                data: {
-                  block,
-                },
-              }) => {
-                const disabled = blockEditing?.uuid === block.uuid;
-                if (!disabled) {
-                  if (blockEditing) {
-                    onClickWhenEditingUpstreamBlocks(block);
-                  } else {
-                    onClick(block);
+                dragType="port"
+                draggable
+                linkable
+                onClick={(event, {
+                  data: {
+                    block,
+                  },
+                }) => {
+                  const disabled = blockEditing?.uuid === block.uuid;
+                  if (!disabled) {
+                    if (blockEditing) {
+                      onClickWhenEditingUpstreamBlocks(block);
+                    } else {
+                      onClick(block);
+                    }
                   }
+                }}
+                port={
+                  <Port
+                    rx={10}
+                    ry={10}
+                    style={{
+                      fill: getColorsForBlockType(node?.properties?.data?.block?.type, { theme: themeContext }).accent,
+                      stroke: 'white',
+                      strokeWidth: '1px',
+                    }}
+                  />
                 }
-              }}
-              port={null}
-              style={{
-                fill: 'transparent',
-                stroke: 'transparent',
-                strokeWidth: 0,
-              }}
-            >
+                style={{
+                  fill: 'transparent',
+                  stroke: 'transparent',
+                  strokeWidth: 0,
+                }}
+              >
               {(event) => {
                 const {
                   node: {
@@ -515,6 +568,18 @@ function DependencyGraph({
             </Node>
           )}
           nodes={nodes}
+          
+          onNodeLink={(_event, from, to, port) => {
+            const fromBlock: BlockType = blockUUIDMapping[from.id];
+            const toBlock: BlockType = blockUUIDMapping[to.id];
+            if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)) {
+              return;
+            }
+
+            // @ts-ignore
+            updateBlockByDragAndDrop({ fromBlock, toBlock });
+          }}
+          onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
           zoomable
         />
       </GraphContainerStyle>
