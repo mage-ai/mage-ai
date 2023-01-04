@@ -84,7 +84,6 @@ function PipelineBlockRuns({
     loading: loadingOutput,
     mutate: fetchOutput,
   } = api.outputs.block_runs.list(selectedRun?.id);
-  console.log('dataOutput:', dataOutput);
 
   const {
     sample_data: blockSampleData,
