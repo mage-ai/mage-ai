@@ -142,7 +142,7 @@ class StreamExecutor:
                     block_uuid=block_run.block_uuid,
                 ))
                 if callback_url:
-                    self.__update_block_run_status(block_run_callback_url, BlockRun.BlockRunStatus.RUNNING)
+                    self._update_block_run_status(block_run_callback_url, BlockRun.BlockRunStatus.RUNNING)
                 else:
                     block_run.update(
                         started_at=datetime.now(),
