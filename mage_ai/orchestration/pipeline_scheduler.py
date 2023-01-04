@@ -28,7 +28,6 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
 from typing import Any, Dict, List
 import pytz
-import time
 import traceback
 
 MEMORY_USAGE_MAXIMUM = 0.95

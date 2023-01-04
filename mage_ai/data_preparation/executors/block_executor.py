@@ -11,7 +11,12 @@ import traceback
 
 
 class BlockExecutor:
-    def __init__(self, pipeline, block_uuid, execution_partition=None):
+    def __init__(
+        self,
+        pipeline,
+        block_uuid,
+        execution_partition=None
+    ):
         self.pipeline = pipeline
         self.block_uuid = block_uuid
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
@@ -60,6 +65,7 @@ class BlockExecutor:
                     global_vars=global_vars,
                     update_status=update_status,
                     input_from_output=input_from_output,
+                    logging_tags=tags,
                     verify_output=verify_output,
                     runtime_arguments=runtime_arguments,
                     dynamic_block_index=dynamic_block_index,
@@ -100,6 +106,7 @@ class BlockExecutor:
         global_vars: Dict = None,
         update_status: bool = False,
         input_from_output: Dict = None,
+        logging_tags: Dict = dict(),
         verify_output: bool = True,
         runtime_arguments: Dict = None,
         dynamic_block_index: int = None,
@@ -112,6 +119,7 @@ class BlockExecutor:
             execution_partition=self.execution_partition,
             global_vars=global_vars,
             logger=self.logger,
+            logging_tags=logging_tags,
             run_all_blocks=True,
             update_status=update_status,
             input_from_output=input_from_output,
@@ -127,11 +135,13 @@ class BlockExecutor:
                 block=self.block,
                 global_vars=global_vars,
                 logger=self.logger,
+                logging_tags=logging_tags,
             )
         else:
             self.block.run_tests(
                 execution_partition=self.execution_partition,
                 logger=self.logger,
+                logging_tags=logging_tags,
                 update_tests=False,
             )
 

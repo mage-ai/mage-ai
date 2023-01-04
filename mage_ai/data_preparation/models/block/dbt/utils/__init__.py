@@ -542,9 +542,10 @@ def run_dbt_tests(
     build_block_output_stdout: Callable[..., object] = None,
     global_vars: Dict = {},
     logger: Logger = None,
+    logging_tags: Dict = dict(),
 ) -> None:
     if logger is not None:
-        stdout = StreamToLogger(logger)
+        stdout = StreamToLogger(logger, logging_tags=logging_tags)
     elif build_block_output_stdout:
         stdout = build_block_output_stdout(block.uuid)
     else:
