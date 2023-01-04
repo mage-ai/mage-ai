@@ -571,7 +571,8 @@ function DependencyGraph({
           onNodeLink={(_event, from, to, port) => {
             const fromBlock: BlockType = blockUUIDMapping[from.id];
             const toBlock: BlockType = blockUUIDMapping[to.id];
-            if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)) {
+            if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
+             || from.id === to.id) {
               return;
             }
 
