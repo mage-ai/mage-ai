@@ -39,6 +39,21 @@ docker pull hashicorp/terraform:latest
 
 </CodeGroup>
 
+### Errors
+
+If you’re installing Terraform using Homebrew on an Apple M1 laptop, you may get this error:
+
+```
+Error: Incompatible provider version
+
+Provider registry.terraform.io/hashicorp/template v2.2.0 does not have a package available for your current platform, darwin_arm64.
+
+Provider releases are separate from Terraform CLI releases, so not all providers are available for all platforms. 
+Other versions of this provider may have different platforms supported.
+```
+
+Follow this [guide](https://blog.sanjayhona.com.np/terraform-error-incompatible-provider-version-m1-or-darwin-arm64-fae0159f913f) to fix the issue.
+
 ## Cloud specific Terraform instructions
 
 Read the following documentation for the cloud provider of your choice:
