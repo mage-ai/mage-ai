@@ -541,7 +541,7 @@ function DependencyGraph({
                     }
                   }
                 }}
-                onEnter={() => setShowPorts(true)}
+                onEnter={() => !editingBlock?.upstreamBlocks && setShowPorts(true)}
                 onLeave={() => setShowPorts(false)}
                 port={showPorts
                   ?
