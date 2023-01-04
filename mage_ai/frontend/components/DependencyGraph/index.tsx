@@ -140,6 +140,7 @@ function DependencyGraph({
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
+  const [showPorts, setShowPorts] = useState<boolean>(false);
   const {
     block: blockEditing,
     values: upstreamBlocksEditing = [],
@@ -540,16 +541,23 @@ function DependencyGraph({
                     }
                   }
                 }}
-                port={
-                  <Port
-                    rx={10}
-                    ry={10}
-                    style={{
-                      fill: getColorsForBlockType(node?.properties?.data?.block?.type, { theme: themeContext }).accent,
-                      stroke: 'white',
-                      strokeWidth: '1px',
-                    }}
-                  />
+                onEnter={() => setShowPorts(true)}
+                onLeave={() => setShowPorts(false)}
+                port={showPorts
+                  ?
+                    <Port
+                      onDrag={() => setShowPorts(true)}
+                      onDragEnd={() => setShowPorts(false)}
+                      onEnter={() => setShowPorts(true)}
+                      rx={10}
+                      ry={10}
+                      style={{
+                        fill: getColorsForBlockType(node?.properties?.data?.block?.type, { theme: themeContext }).accent,
+                        stroke: 'white',
+                        strokeWidth: '1px',
+                      }}
+                    />
+                  : null
                 }
                 style={{
                   fill: 'transparent',
