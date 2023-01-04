@@ -267,7 +267,7 @@ class ApiPipelineRunListHandler(BaseHandler):
     def post(self, pipeline_schedule_id, token: str = None):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
 
-        if ScheduleType.ScheduleType.API == pipeline_schedule.schedule_type and \
+        if PipelineSchedule.ScheduleType.API == pipeline_schedule.schedule_type and \
             pipeline_schedule.token and \
             pipeline_schedule.token != token:
             raise UnauthenticatedRequestException(f'Invalid token for pipeline schedule ID {pipeline_schedule_id}.')
