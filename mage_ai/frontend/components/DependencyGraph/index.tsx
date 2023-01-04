@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useState,
 } from 'react';
 import { useMutation } from 'react-query';
 
@@ -138,6 +139,7 @@ function DependencyGraph({
   setSelectedBlock,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
+  const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
   const {
     block: blockEditing,
     values: upstreamBlocksEditing = [],
@@ -180,13 +182,21 @@ function DependencyGraph({
 
   const [updateBlockByDragAndDrop] = useMutation(
     // @ts-ignore
-    ({ fromBlock, toBlock }) => api.blocks.pipelines.useUpdate(
+    ({ fromBlock, toBlock, removeDependency }:
+      {
+        fromBlock: BlockType;
+        toBlock: BlockType;
+        removeDependency?: boolean;
+      },
+    ) => api.blocks.pipelines.useUpdate(
       pipeline?.uuid,
       encodeURIComponent(toBlock.uuid),
     )({
       block: {
         ...toBlock,
-        upstream_blocks: toBlock.upstream_blocks.concat(fromBlock.uuid),
+        upstream_blocks: removeDependency
+          ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
+          : toBlock.upstream_blocks.concat(fromBlock.uuid),
       },
     }),
     {
@@ -483,6 +493,20 @@ function DependencyGraph({
             return (
               <Edge
                 {...edge}
+                onClick={(event, edge) => {
+                  setEdgeSelections([edge.id]);
+                }}
+                onRemove={(event, edge) => {
+                  const fromBlock = blockUUIDMapping[edge.from];
+                  const toBlock = blockUUIDMapping[edge.to];
+
+                  updateBlockByDragAndDrop({
+                    fromBlock,
+                    removeDependency: true,
+                    toBlock,
+                  });
+                  setEdgeSelections([]);
+                }}
                 style={{
                   stroke: getColorsForBlockType(block?.type, { theme: themeContext })?.accent,
                 }}
@@ -567,7 +591,6 @@ function DependencyGraph({
             </Node>
           )}
           nodes={nodes}
-          
           onNodeLink={(_event, from, to, port) => {
             const fromBlock: BlockType = blockUUIDMapping[from.id];
             const toBlock: BlockType = blockUUIDMapping[to.id];
@@ -580,6 +603,7 @@ function DependencyGraph({
             updateBlockByDragAndDrop({ fromBlock, toBlock });
           }}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
+          selections={edgeSelections}
           zoomable
         />
       </GraphContainerStyle>
