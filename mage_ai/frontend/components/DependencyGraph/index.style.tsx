@@ -60,4 +60,4 @@ export const RuntimeStyle = styled.div<{
 
   background: rgba(0, 0, 0, 0.2);
   background-blend-mode: soft-light;
-`
+`;

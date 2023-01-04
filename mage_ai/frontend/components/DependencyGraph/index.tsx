@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useState,
 } from 'react';
 import { useMutation } from 'react-query';
 
@@ -21,6 +22,13 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+
+import {
+  EdgeType,
+  NodeType,
+  PortType,
+  SideEnum,
+  SHARED_PORT_PROPS } from './constants';
 import { GraphContainerStyle } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -131,6 +139,8 @@ function DependencyGraph({
   setSelectedBlock,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
+  const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
+  const [showPorts, setShowPorts] = useState<boolean>(false);
   const {
     block: blockEditing,
     values: upstreamBlocksEditing = [],
@@ -145,12 +155,6 @@ function DependencyGraph({
     ],
   );
   const blockUUIDMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
-  const upstreamBlocksEditingMapping = useMemo(
-    () => indexBy(upstreamBlocksEditing, ({ uuid }) => uuid),
-    [
-      upstreamBlocksEditing,
-    ],
-  );
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
 
@@ -177,12 +181,47 @@ function DependencyGraph({
     },
   );
 
+  const [updateBlockByDragAndDrop] = useMutation(
+    // @ts-ignore
+    ({ fromBlock, toBlock, removeDependency }:
+      {
+        fromBlock: BlockType;
+        toBlock: BlockType;
+        removeDependency?: boolean;
+      },
+    ) => api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      encodeURIComponent(toBlock.uuid),
+    )({
+      block: {
+        ...toBlock,
+        upstream_blocks: removeDependency
+          ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
+          : toBlock.upstream_blocks.concat(fromBlock.uuid),
+      },
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline?.();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const onClick = useCallback((block: BlockType) => {
     const {
       type,
       uuid,
     } = block;
     setSelectedBlock?.(block);
+    setEdgeSelections([]);
     if (blockRefs?.current) {
       const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
       blockRef?.current?.scrollIntoView();
@@ -192,6 +231,7 @@ function DependencyGraph({
     setSelectedBlock,
   ]);
   const onClickWhenEditingUpstreamBlocks = useCallback((block: BlockType) => {
+    setEdgeSelections([]);
     // @ts-ignore
     setEditingBlock((prev) => {
       const values = prev.upstreamBlocks.values || [];
@@ -260,34 +300,47 @@ function DependencyGraph({
     edges,
     nodes,
   } = useMemo(() => {
-    const nodesInner = [];
-    const edgesInner = [];
+    const nodesInner: NodeType[] = [];
+    const edgesInner: EdgeType[] = [];
 
     blocks.forEach((block: BlockType) => {
       const displayText = displayTextForBlock(block);
 
       const {
+        type: blockType,
         upstream_blocks: upstreamBlocks = [],
         uuid,
       } = block;
       const downstreamBlocks = downstreamBlocksMapping[uuid];
-      const ports = [];
+      const ports: PortType[] = [];
 
       if (downstreamBlocks) {
         ports.push(...downstreamBlocks.map((block2: BlockType) => ({
-          height: 10,
+          ...SHARED_PORT_PROPS,
           id: `${uuid}-${block2.uuid}-from`,
-          side: 'SOUTH',
-          width: 10,
+          side: SideEnum.SOUTH,
         })));
+      } else if (blockType !== BlockTypeEnum.DATA_EXPORTER) {
+        ports.push({
+          ...SHARED_PORT_PROPS,
+          id: `${uuid}-from`,
+          side: SideEnum.SOUTH,
+        });
+      }
+
+      if (upstreamBlocks.length === 0 && blockType !== BlockTypeEnum.DATA_LOADER) {
+        ports.push({
+          ...SHARED_PORT_PROPS,
+          id: `${uuid}-to`,
+          side: SideEnum.NORTH,
+        });
       }
 
       upstreamBlocks?.forEach((uuidUp: string) => {
         ports.push({
-          height: 10,
+          ...SHARED_PORT_PROPS,
           id: `${uuidUp}-${uuid}-to`,
-          side: 'NORTH',
-          width: 10,
+          side: SideEnum.NORTH,
         });
 
         edgesInner.push({
@@ -319,10 +372,11 @@ function DependencyGraph({
       nodes: nodesInner,
     };
   }, [
-    blockEditing,
+    blockEditing?.uuid,
     blockStatus,
     blocks,
-    pipeline,
+    displayTextForBlock,
+    downstreamBlocksMapping,
   ]);
 
   const getBlockStatus = useCallback((block: BlockType) => {
@@ -421,9 +475,12 @@ function DependencyGraph({
               compact
               inline
               noBackground
-              onClick={() => setEditingBlock({
-                upstreamBlocks: null,
-              })}
+              onClick={() => {
+                setEdgeSelections([]);
+                setEditingBlock({
+                  upstreamBlocks: null,
+                });
+              }}
               uuid="DependencyGraph/cancel_save_parents"
             >
               Cancel
@@ -442,6 +499,21 @@ function DependencyGraph({
             return (
               <Edge
                 {...edge}
+                onClick={(event, edge) => {
+                  setEdgeSelections([edge.id]);
+                }}
+                onRemove={(event, edge) => {
+                  const fromBlock = blockUUIDMapping[edge.from];
+                  const toBlock = blockUUIDMapping[edge.to];
+
+                  updateBlockByDragAndDrop({
+                    fromBlock,
+                    removeDependency: true,
+                    toBlock,
+                  });
+                  setEdgeSelections([]);
+                }}
+                removable={!editingBlock?.upstreamBlocks}
                 style={{
                   stroke: getColorsForBlockType(block?.type, { theme: themeContext })?.accent,
                 }}
@@ -453,28 +525,46 @@ function DependencyGraph({
           node={(node) => (
             <Node
               {...node}
-              linkable={false}
-              onClick={(event, {
-                data: {
-                  block,
-                },
-              }) => {
-                const disabled = blockEditing?.uuid === block.uuid;
-                if (!disabled) {
-                  if (blockEditing) {
-                    onClickWhenEditingUpstreamBlocks(block);
-                  } else {
-                    onClick(block);
+                dragType="port"
+                linkable
+                onClick={(event, {
+                  data: {
+                    block,
+                  },
+                }) => {
+                  const disabled = blockEditing?.uuid === block.uuid;
+                  if (!disabled) {
+                    if (blockEditing) {
+                      onClickWhenEditingUpstreamBlocks(block);
+                    } else {
+                      onClick(block);
+                    }
                   }
+                }}
+                onEnter={() => !editingBlock?.upstreamBlocks && setShowPorts(true)}
+                onLeave={() => setShowPorts(false)}
+                port={showPorts
+                  ?
+                    <Port
+                      onDrag={() => setShowPorts(true)}
+                      onDragEnd={() => setShowPorts(false)}
+                      onEnter={() => setShowPorts(true)}
+                      rx={10}
+                      ry={10}
+                      style={{
+                        fill: getColorsForBlockType(node?.properties?.data?.block?.type, { theme: themeContext }).accent,
+                        stroke: 'white',
+                        strokeWidth: '1px',
+                      }}
+                    />
+                  : null
                 }
-              }}
-              port={null}
-              style={{
-                fill: 'transparent',
-                stroke: 'transparent',
-                strokeWidth: 0,
-              }}
-            >
+                style={{
+                  fill: 'transparent',
+                  stroke: 'transparent',
+                  strokeWidth: 0,
+                }}
+              >
               {(event) => {
                 const {
                   node: {
@@ -515,6 +605,29 @@ function DependencyGraph({
             </Node>
           )}
           nodes={nodes}
+          onNodeLink={(_event, from, to, port) => {
+            const fromBlock: BlockType = blockUUIDMapping[from.id];
+            const toBlock: BlockType = blockUUIDMapping[to.id];
+
+            const isConnectingIntegrationSourceAndDestination = (
+              pipeline?.type === PipelineTypeEnum.INTEGRATION
+                && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
+                  || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
+                    && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
+                  )
+            );
+            if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
+             || from.id === to.id
+             || isConnectingIntegrationSourceAndDestination
+            ) {
+              return;
+            }
+
+            // @ts-ignore
+            updateBlockByDragAndDrop({ fromBlock, toBlock });
+          }}
+          onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
+          selections={edgeSelections}
           zoomable
         />
       </GraphContainerStyle>
