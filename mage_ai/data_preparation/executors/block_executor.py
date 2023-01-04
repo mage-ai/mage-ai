@@ -135,6 +135,7 @@ class BlockExecutor:
                 block=self.block,
                 global_vars=global_vars,
                 logger=self.logger,
+                logging_tags=logging_tags,
             )
         else:
             self.block.run_tests(
