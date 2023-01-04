@@ -7,7 +7,6 @@ from mage_integrations.sources.constants import (
 )
 from mage_integrations.sources.postgresql.decoders import (
     Insert,
-    Relation,
     decode_message
 )
 from mage_integrations.sources.sql.base import Source
@@ -74,6 +73,17 @@ WHERE  c.table_schema = '{schema}'
             query = f'{query}\nAND c.TABLE_NAME IN ({table_names})'
         return query
 
+    def get_columns(self, table_name: str) -> List[str]:
+        schema_name = self.config['schema']
+        results = self.build_connection().load(f"""
+SELECT
+    column_name
+    , data_type
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+        """)
+        return [r[0].lower() for r in results]
+
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
 
@@ -137,8 +147,7 @@ WHERE  c.table_schema = '{schema}'
             except psycopg2.ProgrammingError:
                 raise Exception("unable to start replication with logical replication slot {}".format(slot))
 
-            # Relation id to schema mapping
-            relations = dict()
+            columns = self.get_columns(tap_stream_id)
             while True:
                 poll_duration = (datetime.datetime.now() - begin_ts).total_seconds()
                 if poll_duration > poll_total_seconds:
@@ -153,23 +162,15 @@ WHERE  c.table_schema = '{schema}'
                         break
 
                     decoded_payload = decode_message(msg.payload)
-                    if type(decoded_payload) is Relation:
-                        relations[decoded_payload.relation_id] = dict(
-                            schema=decoded_payload.namespace,
-                            name=decoded_payload.relation_name,
-                            columns=[c[1] for c in decoded_payload.columns]
-                        )
-                    elif type(decoded_payload) is Insert:
+                    if msg.data_start < start_lsn:
+                        LOGGER.info(f"Msg lsn {msg.data_start} smaller than start lsn {start_lsn}")
+                        continue
+                    if type(decoded_payload) is Insert:
                         values = [c.col_data for c in decoded_payload.new_tuple.column_data]
-                        if decoded_payload.relation_id in relations:
-                            relation = relations[decoded_payload.relation_id]
-                            if (
-                                relation['schema'] == self.config['schema'] and
-                                relation['name'] == tap_stream_id
-                            ):
-                                payload = dict(zip(relation['columns'], values))
-                                payload['lsn'] = msg.data_start
-                                yield [payload]
+                        payload = dict(zip(columns, values))
+                        payload['lsn'] = msg.data_start
+                        yield [payload]
+                    cur.send_feedback(flush_lsn=msg.data_start)
                 else:
                     now = datetime.datetime.now()
                     timeout = keep_alive_time - (now - cur.io_timestamp).total_seconds()
