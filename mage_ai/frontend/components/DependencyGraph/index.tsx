@@ -495,7 +495,6 @@ function DependencyGraph({
             <Node
               {...node}
                 dragType="port"
-                draggable
                 linkable
                 onClick={(event, {
                   data: {
