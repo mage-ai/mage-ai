@@ -30,11 +30,9 @@ Scratchpad
 
 Write your code for fetching data from a remote source or loading it from disk.
 
+```python
 from pandas import DataFrame
 
-```bash
-if 'data_loader' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
 
 @data_loader
 def load_data() -> DataFrame:
@@ -48,6 +46,8 @@ def load_data() -> DataFrame:
     return DataFrame({})
 ```
 
+The object that is returned from the function `load_data` will be made available in all blocks that depend on this block.
+
 To read about Mage's data loading clients that interface with popular data
 storage systems, see docs on [Data Loading](/design/data-loading).
 
@@ -55,11 +55,8 @@ storage systems, see docs on [Data Loading](/design/data-loading).
 
 Use these blocks to clean, transform, and enhance data from other blocks.
 
-```bash
+```python
 from pandas import DataFrame
-
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
 
 
 @transformer
@@ -80,12 +77,18 @@ def transform_df(df: DataFrame, *args) -> DataFrame:
     return df
 ```
 
+If this block depends on the previous data loader block, then the object returned from the data loader block via the `load_data` function
+will be accessible within this transformer block via the 1st positional argument (in thise case, `df`).
+
+If this transformer block depends on more than 1 block, then each upstream block’s output is accessible via positional arguments. 
+For example, if you have 10 upstream blocks, than there will be 10 positional arguments available within the `transform_df` function.
+
 ### 4\. Data exporter
 
 Once you’re done transforming your data, write code in these types of blocks to
 store that data or to train models and store those models elsewhere.
 
-```bash
+```python
 from pandas import DataFrame
 
 if 'data_exporter' not in globals():
@@ -112,7 +115,7 @@ Read more about sensors in [Core abstractions](/design/core-abstractions).
 
 You can add sensors to a pipeline the same way you add other types of blocks.
 
-```bash
+```python
 from mage_ai.orchestration.run_status_checker import check_status
 
 if 'sensor' not in globals():
