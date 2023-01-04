@@ -49,6 +49,10 @@ class IntegrationBlock(Block):
             type=self.type,
             uuid=self.uuid,
         ))
+        updated_logging_tags = merge_dict(
+            logging_tags,
+            dict(tags=tags),
+        )
 
         if index is not None:
             source_state_file_path = self.pipeline.source_state_file_path(
@@ -120,7 +124,7 @@ class IntegrationBlock(Block):
             file_size = os.path.getsize(source_output_file_path)
             msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output file {source_output_file_path}.'
             if logger:
-                logger.info(msg, tags=tags)
+                logger.info(msg, **updated_logging_tags)
             else:
                 print(msg)
         elif BlockType.TRANSFORMER == self.type:
@@ -215,7 +219,7 @@ class IntegrationBlock(Block):
                                 if records_transformed % 1000 == 0:
                                     msg = f'{records_transformed} records have been transformed...'
                                     if logger:
-                                        logger.info(msg, tags=tags)
+                                        logger.info(msg, **updated_logging_tags)
                                     else:
                                         print(msg)
                     except json.decoder.JSONDecodeError:
@@ -233,10 +237,10 @@ class IntegrationBlock(Block):
             msg = f'Transformed {records_transformed} total records for stream {stream}.'
             file_size = os.path.getsize(source_output_file_path)
             msg2 = f'Finished writing {file_size} bytes with {len(output_arr)} lines to '\
-                   'output file {source_output_file_path}.'
+                   f'output file {source_output_file_path}.'
             if logger:
-                logger.info(msg, tags=tags)
-                logger.info(msg2, tags=tags)
+                logger.info(msg, **updated_logging_tags)
+                logger.info(msg2, **updated_logging_tags)
             else:
                 print(msg)
                 print(msg2)
@@ -250,7 +254,7 @@ class IntegrationBlock(Block):
             file_size = os.path.getsize(source_output_file_path)
             msg = f'Reading {file_size} bytes from {source_output_file_path} as input file.'
             if logger:
-                logger.info(msg, tags=tags)
+                logger.info(msg, **updated_logging_tags)
             else:
                 print(msg)
 
