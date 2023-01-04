@@ -19,6 +19,19 @@ export function fetchCreateWithParent(
   return buildFetchV2(url, { ...opts, body, method: POST });
 }
 
+export function fetchCreateWithParentAndChild(
+  resource: string,
+  parentResource: string,
+  parentId: string,
+  id: string,
+  body: object,
+  opts: any = {},
+) {
+  const url: string = buildUrl(parentResource, parentId, resource, id);
+
+  return buildFetchV2(url, { ...opts, body, method: POST });
+};
+
 export function fetchUpdateWithParent(
   resource: string,
   parentResource: string,

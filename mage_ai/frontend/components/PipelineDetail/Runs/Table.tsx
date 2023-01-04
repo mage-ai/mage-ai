@@ -18,6 +18,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { Check, ChevronRight, PlayButtonFilled, Subitem, TodoList } from '@oracle/icons';
 import { PopupContainerStyle, TableContainerStyle } from './Table.style';
+import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTC } from '@components/Triggers/utils';
 import { onSuccess } from '@api/utils/response';
@@ -36,8 +37,15 @@ function RetryButton({
   const { status } = pipelineRun;
   const isCancelingPipeline = RunStatus.RUNNING === status && isLoadingCancelPipeline;
 
+  const pipelineScheduleId = pipelineRun?.pipeline_schedule_id;
+  const { data } = api.pipeline_schedules.detail(pipelineScheduleId);
+  const pipelineSchedule = data?.pipeline_schedule;
+
   const [createPipelineRun] = useMutation(
-    api.pipeline_runs.pipeline_schedules.useCreate(pipelineRun?.pipeline_schedule_id),
+    ScheduleTypeEnum.API === pipelineSchedule?.schedule_type
+      && pipelineSchedule?.token
+      ? api.pipeline_runs.pipeline_schedules.useCreateWithParent(pipelineScheduleId, pipelineSchedule?.token)
+      : api.pipeline_runs.pipeline_schedules.useCreate(pipelineScheduleId),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -103,6 +111,7 @@ function RetryButton({
         borderRadius={BORDER_RADIUS_XXXLARGE}
         danger={RunStatus.FAILED === status}
         default={RunStatus.INITIAL === status}
+        loading={!pipelineSchedule}
         onClick={() => setShowConfirmation(true)}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isLoadingCancelPipeline}
