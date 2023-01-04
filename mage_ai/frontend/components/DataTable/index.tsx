@@ -449,7 +449,7 @@ function Table({
     >
       {renderRow}
     </VariableSizeList>
-  ), [listHeight, refListOuter, renderRow, rows])
+  ), [listHeight, refListOuter, renderRow, rows]);
 
   return (
     <div
@@ -571,7 +571,7 @@ function DataTable({
       columnHeaderHeight={columnHeaderHeight}
       disableScrolling={disableScrolling}
       height={height}
-      maxHeight={maxHeight + 37}    // Add 37px so horizontal scrollbar is visible
+      maxHeight={(maxHeight || 0) + 37}    // Add 37px so horizontal scrollbar is visible
       noBorderBottom={noBorderBottom}
       noBorderLeft={noBorderLeft}
       noBorderRight={noBorderRight}
