@@ -53,7 +53,7 @@ def build_alter_table_command(
 
     columns_and_types = [
         f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
-        f"{column_type_mapping[col]['type_converted']}" for col
+        f" {column_type_mapping[col]['type_converted']}" for col
         in columns
     ]
     # TODO: support add new unique constraints
