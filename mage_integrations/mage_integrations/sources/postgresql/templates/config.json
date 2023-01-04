@@ -4,5 +4,6 @@
   "password": "",
   "port": 5432,
   "schema": "",
-  "username": ""
+  "username": "",
+  "replication_slot": ""
 }

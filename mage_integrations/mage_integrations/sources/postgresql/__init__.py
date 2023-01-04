@@ -97,7 +97,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         tap_stream_id = stream.tap_stream_id
         bookmarks = bookmarks or dict()
         start_lsn = bookmarks.get('lsn') or 0
-        slot = 'mage_slot'
+        slot = self.config.get('replication_slot', 'mage_slot')
 
         # We are willing to poll for a total of 1 minute without finding a record
         poll_total_seconds = self.config.get('logical_poll_total_seconds') or 60 * 1
