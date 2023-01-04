@@ -1,11 +1,18 @@
 from kubernetes import client, config
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
+    CONNECTION_URL_SECRETS_NAME,
     DB_SECRETS_NAME,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME
 )
-from mage_ai.orchestration.constants import DB_NAME, DB_PASS, DB_USER
+from mage_ai.orchestration.constants import (
+    DATABASE_CONNECTION_URL_ENV_VAR,
+    DB_NAME,
+    DB_PASS,
+    DB_USER
+)
+from typing import List
 
 import os
 
@@ -59,39 +66,7 @@ class WorkloadManager:
 
 
     def create_stateful_set(self, deployment_name, storage_class_name: str = None):
-        env_vars = []
-
-        db_secrets_name = os.getenv(DB_SECRETS_NAME)
-        if db_secrets_name:
-            env_vars.extend([
-                {
-                    'name': DB_USER,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'username'
-                        }
-                    }
-                },
-                {
-                    'name': DB_PASS,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'password'
-                        }
-                    }
-                },
-                {
-                    'name': DB_NAME,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'database'
-                        }
-                    }
-                }
-            ])
+        env_vars = self.__populate_env_vars()
         
         containers = [
             {
@@ -233,3 +208,56 @@ class WorkloadManager:
         }
 
         self.core_client.create_namespaced_service(self.namespace, service)
+
+    
+    def __populate_env_vars(self) -> List:
+        env_vars = []
+
+        connection_url_secrets_name = os.getenv(CONNECTION_URL_SECRETS_NAME)
+        if connection_url_secrets_name:
+            env_vars.append(
+                {
+                    'name': DATABASE_CONNECTION_URL_ENV_VAR,
+                    'valueFrom': {
+                        'secretKeyRef': {
+                            'name': connection_url_secrets_name,
+                            'key': 'connection_url'
+                        }
+                    }
+                }
+            )
+
+        # For connecting to CloudSQL PostgreSQL database.
+        db_secrets_name = os.getenv(DB_SECRETS_NAME)
+        if db_secrets_name:
+            env_vars.extend([
+                {
+                    'name': DB_USER,
+                    'valueFrom': {
+                        'secretKeyRef': {
+                            'name': db_secrets_name,
+                            'key': 'username'
+                        }
+                    }
+                },
+                {
+                    'name': DB_PASS,
+                    'valueFrom': {
+                        'secretKeyRef': {
+                            'name': db_secrets_name,
+                            'key': 'password'
+                        }
+                    }
+                },
+                {
+                    'name': DB_NAME,
+                    'valueFrom': {
+                        'secretKeyRef': {
+                            'name': db_secrets_name,
+                            'key': 'database'
+                        }
+                    }
+                }
+            ])
+
+        return env_vars
