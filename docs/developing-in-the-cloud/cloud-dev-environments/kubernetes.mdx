@@ -65,14 +65,18 @@ creating your manager workload.
 Currently, you will need to create the manager workload on your own. You can create
 a `Deployment` workload with the following environment variables:
 
-| Variable Name                        | Value                                                               |
-| ------------------------------------ | ------------------------------------------------------------------- |
-| MANAGE_INSTANCES                     | 1                                                                   |
-| KUBE_NAMESPACE                       | Your Kubernetes namespace                                           |
-| CLOUD_SQL_CONNECTION_NAME            | Cloud SQL instance connection name (required for PostgreSQL DB)     |
-| DB_SECRETS_NAME                      | DB secrets name (required for PostgreSQL DB)                        |
-| SERVICE_ACCOUNT_SECRETS_NAME         | Service account secrets name (required for PostgreSQL DB)           |
-| SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH | Credentials file path in previous step (required for PostgreSQL DB) |
+| Variable Name                        | Value                                                                                              |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| MANAGE_INSTANCES                     | 1                                                                                                  |
+| KUBE_NAMESPACE                       | Your Kubernetes namespace                                                                          |
+| KUBE_SERVICE_TYPE                    | Service type for Kubernetes Service (default = 'LoadBalancer')                                     |
+| KUBE_SERVICE_GCP_BACKEND_CONFIG      | Identifier for GCP Service backend config annotation: 'cloud.google.com/backend-config' (optional) |
+| KUBE_STORAGE_CLASS_NAME              | Kubernetes storage class name for stateful set storage (optional, uses cluster default if empty)   |
+| CLOUD_SQL_CONNECTION_NAME            | Cloud SQL instance connection name (required for PostgreSQL DB)                                    |
+| CONNECTION_URL_SECRETS_NAME          | Connection url secrets name (required for PostgreSQL DB if DB_SECRETS_NAME is empty)               |
+| DB_SECRETS_NAME                      | DB secrets name (required for PostgreSQL DB if CONNECTION_URL_SECRETS_NAME is empty)               |
+| SERVICE_ACCOUNT_SECRETS_NAME         | Service account secrets name (required for PostgreSQL DB)                                          |
+| SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH | Credentials file path in previous step (required for PostgreSQL DB)                                |
 
 You can also create a service to create an ip address to access the deployment. You will
 need your service to point to port 6789 in order to access Mage.

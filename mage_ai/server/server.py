@@ -425,7 +425,7 @@ class ApiStatusHandler(BaseHandler):
         instance_type = None
         if os.getenv(ECS_CLUSTER_NAME):
             instance_type = ClusterType.ECS
-        elif WorkloadManager().load_config() or os.getenv(KUBE_NAMESPACE):
+        elif WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
             instance_type = ClusterType.K8S
         elif os.getenv(GCP_PROJECT_ID):
             instance_type = ClusterType.CLOUD_RUN

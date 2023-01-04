@@ -3,6 +3,10 @@ from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
     CONNECTION_URL_SECRETS_NAME,
     DB_SECRETS_NAME,
+    GCP_BACKEND_CONFIG_ANNOTATION,
+    KUBE_SERVICE_GCP_BACKEND_CONFIG,
+    KUBE_SERVICE_TYPE,
+    LOAD_BALANCER_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME
 )
@@ -28,7 +32,8 @@ class WorkloadManager:
             self.namespace = 'default'
 
     
-    def load_config(self) -> bool:
+    @classmethod
+    def load_config(cls) -> bool:
         try:
             config.load_incluster_config()
             return True
@@ -182,6 +187,12 @@ class WorkloadManager:
         self.apps_client.create_namespaced_stateful_set(self.namespace, stateful_set)
 
         service_name = f'{deployment_name}-service'
+
+        annotations = {}
+        if os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG):
+            annotations[GCP_BACKEND_CONFIG_ANNOTATION] = \
+                os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG)
+
         service = {
             'apiVersion': 'v1',
             'kind': 'Service',
@@ -190,7 +201,8 @@ class WorkloadManager:
                 'labels': {
                     'app': deployment_name,
                     'dev-instance': '1',
-                }
+                },
+                'annotations': annotations
             },
             'spec': {
                 'ports': [
@@ -203,7 +215,7 @@ class WorkloadManager:
                 'selector': {
                     'app': deployment_name
                 },
-                'type': 'LoadBalancer'
+                'type': os.getenv(KUBE_SERVICE_TYPE, LOAD_BALANCER_SERVICE_TYPE)
             }
         }
 
