@@ -382,15 +382,27 @@ class Source:
         self.logger.info(f'Load data for stream {tap_stream_id} started.', tags=tags)
 
         record_count = 0
+        final_record = None
         for rows in self.load_data(
             bookmarks=self.__get_bookmarks_for_stream(stream),
             query=self.query,
             start_date=start_date,
             stream=stream,
         ):
-            max_bookmark_tmp = self.write_records(stream, rows, properties)
+            result = self.write_records(stream, rows, properties)
+            max_bookmark_tmp = result['max_bookmark']
+            final_record = result['final_record']
             max_bookmark = max(max_bookmark, max_bookmark_tmp)
             record_count += len(rows)
+
+        if final_record:
+            self.logger.info(
+                'Final record writing completed.',
+                tags=dict(
+                    record=final_record,
+                    stream=tap_stream_id,
+                ),
+            )
 
         if bookmark_properties and not self.is_sorted:
             if max_bookmark:
@@ -465,16 +477,10 @@ class Source:
                         [row.get(col) for col in bookmark_properties],
                     )
 
-        if final_record:
-            self.logger.info(
-                'Final record writing completed.',
-                tags=dict(
-                    record=final_record,
-                    stream=tap_stream_id,
-                ),
-            )
-
-        return max_bookmark
+        return dict(
+            final_record=final_record,
+            max_bookmark=max_bookmark,
+        )
 
     def sync(self, catalog: Catalog, properties: Dict = None) -> None:
         """
