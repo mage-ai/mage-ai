@@ -220,6 +220,7 @@ function DependencyGraph({
       uuid,
     } = block;
     setSelectedBlock?.(block);
+    setEdgeSelections([]);
     if (blockRefs?.current) {
       const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
       blockRef?.current?.scrollIntoView();
@@ -229,6 +230,7 @@ function DependencyGraph({
     setSelectedBlock,
   ]);
   const onClickWhenEditingUpstreamBlocks = useCallback((block: BlockType) => {
+    setEdgeSelections([]);
     // @ts-ignore
     setEditingBlock((prev) => {
       const values = prev.upstreamBlocks.values || [];
@@ -472,9 +474,12 @@ function DependencyGraph({
               compact
               inline
               noBackground
-              onClick={() => setEditingBlock({
-                upstreamBlocks: null,
-              })}
+              onClick={() => {
+                setEdgeSelections([]);
+                setEditingBlock({
+                  upstreamBlocks: null,
+                });
+              }}
               uuid="DependencyGraph/cancel_save_parents"
             >
               Cancel
@@ -507,6 +512,7 @@ function DependencyGraph({
                   });
                   setEdgeSelections([]);
                 }}
+                removable={!editingBlock?.upstreamBlocks}
                 style={{
                   stroke: getColorsForBlockType(block?.type, { theme: themeContext })?.accent,
                 }}
@@ -594,8 +600,18 @@ function DependencyGraph({
           onNodeLink={(_event, from, to, port) => {
             const fromBlock: BlockType = blockUUIDMapping[from.id];
             const toBlock: BlockType = blockUUIDMapping[to.id];
+
+            const isConnectingIntegrationSourceAndDestination = (
+              pipeline?.type === PipelineTypeEnum.INTEGRATION
+                && (fromBlock?.type === BlockTypeEnum.DATA_EXPORTER
+                  || (fromBlock?.type === BlockTypeEnum.DATA_LOADER
+                    && toBlock?.type === BlockTypeEnum.DATA_EXPORTER)
+                  )
+            );
             if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
-             || from.id === to.id) {
+             || from.id === to.id
+             || isConnectingIntegrationSourceAndDestination
+            ) {
               return;
             }
 
