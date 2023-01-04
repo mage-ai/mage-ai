@@ -21,7 +21,6 @@ from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
-from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
