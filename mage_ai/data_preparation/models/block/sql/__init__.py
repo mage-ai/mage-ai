@@ -186,6 +186,7 @@ def execute_sql_code(
 
     return []
 
+
 class SQLBlock(Block):
     def _execute_block(
         self,

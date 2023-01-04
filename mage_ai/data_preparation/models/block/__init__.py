@@ -9,10 +9,8 @@ from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     fetch_input_variables,
     input_variables,
-    is_dynamic_block,
     is_output_variable,
     output_variables,
-    should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -488,6 +486,7 @@ class Block:
         execution_partition: str = None,
         global_vars: Dict = None,
         logger: Logger = None,
+        logging_tags: Dict = dict(),
         run_all_blocks: bool = False,
         test_execution: bool = False,
         update_status: bool = True,
@@ -517,6 +516,7 @@ class Block:
                 execution_partition=execution_partition,
                 global_vars=global_vars,
                 logger=logger,
+                logging_tags=logging_tags,
                 test_execution=test_execution,
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
@@ -569,9 +569,11 @@ class Block:
             if logger is not None:
                 logger.exception(
                     f'Failed to execute block {self.uuid}',
-                    block_type=self.type,
-                    block_uuid=self.uuid,
-                    error=err,
+                    **merge_dict(logging_tags, dict(
+                        block_type=self.type,
+                        block_uuid=self.uuid,
+                        error=err,
+                    ))
                 )
             raise err
         finally:
@@ -685,6 +687,7 @@ class Block:
         execution_partition: str = None,
         input_args: List = None,
         logger: Logger = None,
+        logging_tags: Dict = dict(),
         global_vars: Dict = None,
         test_execution: bool = False,
         input_from_output: Dict = None,
@@ -703,7 +706,7 @@ class Block:
 
         # Set up logger
         if logger is not None:
-            stdout = StreamToLogger(logger)
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
         elif build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
         else:
@@ -734,6 +737,7 @@ class Block:
                 execution_partition=execution_partition,
                 input_vars=input_vars,
                 logger=logger,
+                logging_tags=logging_tags,
                 global_vars=global_vars,
                 test_execution=test_execution,
                 input_from_output=input_from_output,
@@ -752,6 +756,7 @@ class Block:
         execution_partition: str = None,
         input_vars: List = None,
         logger: Logger = None,
+        logging_tags: Dict = dict(),
         global_vars: Dict = None,
         test_execution: bool = False,
         input_from_output: Dict = None,
@@ -1077,16 +1082,17 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         execution_partition: str = None,
         global_vars: Dict = {},
         logger: Logger = None,
+        logging_tags: Dict = dict(),
         update_tests: bool = True,
     ) -> None:
         if self.pipeline \
             and PipelineType.INTEGRATION == self.pipeline.type \
-            and self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER]:
+                and self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER]:
 
             return
 
         if logger is not None:
-            stdout = StreamToLogger(logger)
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
         elif build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
         else:

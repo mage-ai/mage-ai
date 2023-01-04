@@ -1,6 +1,8 @@
 from jupyter_server import subprocess
 from logging import Logger
-from mage_ai.data_integrations.logger.utils import print_log_from_line, print_logs_from_output
+from mage_ai.data_integrations.logger.utils import (
+    print_log_from_line,
+)
 from mage_ai.data_integrations.utils.config import (
     build_catalog_json,
     build_config_json,
@@ -23,6 +25,7 @@ class IntegrationBlock(Block):
         execution_partition: str = None,
         input_vars: List = None,
         logger: Logger = None,
+        logging_tags: Dict = dict(),
         global_vars: Dict = None,
         test_execution: bool = False,
         input_from_output: Dict = None,
@@ -75,7 +78,6 @@ class IntegrationBlock(Block):
             if not is_last_block_run:
                 query_data['_limit'] = BATCH_FETCH_LIMIT
 
-
         outputs = []
         if BlockType.DATA_LOADER == self.type:
             lines_in_file = 0
@@ -108,6 +110,7 @@ class IntegrationBlock(Block):
                     print_log_from_line(
                         line,
                         logger=logger,
+                        logging_tags=logging_tags,
                         tags=tags,
                     )
                     lines_in_file += 1
@@ -229,7 +232,8 @@ class IntegrationBlock(Block):
 
             msg = f'Transformed {records_transformed} total records for stream {stream}.'
             file_size = os.path.getsize(source_output_file_path)
-            msg2 = f'Finished writing {file_size} bytes with {len(output_arr)} lines to output file {source_output_file_path}.'
+            msg2 = f'Finished writing {file_size} bytes with {len(output_arr)} lines to '\
+                   'output file {source_output_file_path}.'
             if logger:
                 logger.info(msg, tags=tags)
                 logger.info(msg2, tags=tags)
@@ -276,6 +280,7 @@ class IntegrationBlock(Block):
                 print_log_from_line(
                     line,
                     logger=logger,
+                    logging_tags=logging_tags,
                     tags=tags,
                 )
 
@@ -283,12 +288,15 @@ class IntegrationBlock(Block):
 
         return outputs
 
+
 class SourceBlock(IntegrationBlock):
     pass
+
 
 class DestinationBlock(IntegrationBlock):
     def output_variables(self, execution_partition: str = None) -> List[str]:
         return []
+
 
 class TransformerBlock(IntegrationBlock):
     pass

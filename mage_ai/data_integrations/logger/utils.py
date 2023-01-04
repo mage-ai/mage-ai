@@ -7,7 +7,8 @@ import re
 
 def print_log_from_line(
     line: str,
-    logger = None,
+    logger=None,
+    logging_tags: Dict = dict(),
     tags: Dict = {},
 ):
     from mage_integrations.utils.logger.constants import (
@@ -35,7 +36,7 @@ def print_log_from_line(
             re.match(
                 '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} Unable to parse:',
                 message,
-            ) or \
+            ) or
             re.match('Unable to parse:', message)
         ):
             return
@@ -53,8 +54,13 @@ def print_log_from_line(
                     updated_tags.update(data2)
                 except Exception:
                     pass
-
-                logger.info(message, tags=merge_dict(tags, updated_tags))
+                logger.info(
+                    message,
+                    **merge_dict(
+                        logging_tags,
+                        dict(tags=merge_dict(tags, updated_tags)),
+                    )
+                )
             else:
                 print(json.dumps(data))
         if data.get('level') in [LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION]:
@@ -71,12 +77,14 @@ def print_log_from_line(
 
 def print_logs_from_output(
     output: str,
-    logger = None,
+    logger=None,
+    logging_tags: Dict = dict(),
     tags: Dict = {},
 ):
     for line in output.split('\n'):
         print_log_from_line(
             line,
             logger=logger,
+            logging_tags=logging_tags,
             tags=tags,
         )
