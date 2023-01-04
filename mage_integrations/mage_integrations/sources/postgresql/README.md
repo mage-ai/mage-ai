@@ -16,6 +16,7 @@ You must enter the following credentials when configuring this source:
 | `port` | Port of the running database (typically 5432). | `5432` |
 | `schema` | Schema of the data you want to export to. | `public` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
+| `replication_slot` | Name of the slot used in logical replication. | `mage_slot` |
 
 <br />
 
