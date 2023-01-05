@@ -142,7 +142,7 @@ def load_data_from_redshift(*args, **kwargs):
     Template for loading data from a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#redshift
+    Docs: https://docs.mage.ai/design/data-loading#redshift
     \"\"\"
     query = 'your_redshift_selection_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -175,7 +175,7 @@ def load_from_s3_bucket(*args, **kwargs):
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#s3
+    Docs: https://docs.mage.ai/design/data-loading
     \"\"\"
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -410,7 +410,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.FILTER
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#filter
+    Docs: https://docs.mage.ai/guides/transformer-blocks#filter
     \"\"\"
     action = build_transformer_action(
         df,
@@ -451,7 +451,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.REFORMAT
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#reformat-values
+    Docs: https://docs.mage.ai/guides/transformer-blocks#reformat-values
     \"\"\"
     action = build_transformer_action(
         df,
@@ -493,7 +493,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.FIRST
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#aggregation-actions
+    Docs: https://docs.mage.ai/guides/transformer-blocks#aggregation-actions
     \"\"\"
     action = build_transformer_action(
         df,
@@ -570,7 +570,7 @@ def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#bigquery
+    Docs: https://docs.mage.ai/design/data-loading
     \"\"\"
     table_id = 'your-project.your_dataset.your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -598,7 +598,7 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Snowflake warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#snowflake
+    Docs: https://docs.mage.ai/design/data-loading
     \"\"\"
     table_name = 'your_table_name'
     database = 'your_database_name'

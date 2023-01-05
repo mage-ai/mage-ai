@@ -10,7 +10,7 @@ def export_data_to_file(df: DataFrame, **kwargs) -> None:
     """
     Template for exporting data to filesystem.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#fileio
+    Docs: https://docs.mage.ai/design/data-loading#example-loading-data-from-a-file
     """
     filepath = 'titanic_clean.csv'
     FileIO().export(df, filepath)

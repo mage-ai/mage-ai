@@ -14,7 +14,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a PostgreSQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#postgresql
+    Docs: https://docs.mage.ai/design/data-loading
     """
     schema_name = 'your_schema_name'  # Specify the name of the schema to export data to
     table_name = 'your_table_name'  # Specify the name of the table to export data to

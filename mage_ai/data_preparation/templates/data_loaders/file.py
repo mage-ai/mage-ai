@@ -11,7 +11,7 @@ def load_data_from_file(*args, **kwargs):
     """
     Template for loading data from filesystem.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#fileio
+    Docs: https://docs.mage.ai/design/data-loading
     """
     filepath = 'path/to/your/file.csv'
     return FileIO().load(filepath)
