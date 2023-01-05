@@ -111,7 +111,7 @@ function RetryButton({
         borderRadius={BORDER_RADIUS_XXXLARGE}
         danger={RunStatus.FAILED === status}
         default={RunStatus.INITIAL === status}
-        loading={!pipelineSchedule}
+        loading={!!pipelineScheduleId && !pipelineSchedule}
         onClick={() => setShowConfirmation(true)}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isLoadingCancelPipeline}
