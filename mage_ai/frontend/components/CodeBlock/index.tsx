@@ -98,6 +98,7 @@ import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
+import { getAllAncestors } from '@utils/models/block';
 import { getModelName } from '@utils/models/dbt';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
@@ -394,19 +395,28 @@ function CodeBlockProps({
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
   const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
 
-  const dynamicChildBlock = useMemo(() => block?.upstream_blocks?.find(
-    (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
-  ), [
+
+  const dynamicChildBlock = useMemo(() => getAllAncestors(block, blocks).find(
+      ({ configuration }) => configuration?.dynamic,
+    ), [
     block,
-    blocksMapping,
+    blocks?.map(({ configuration }) => configuration?.dynamic),
+    blocks?.map(({ upstream_blocks: ub }) => ub),
   ]);
-  const borderColorShareProps = {
-    blockType: block?.type,
-    dynamicBlock: block?.configuration?.dynamic,
-    dynamicChildBlock: !!dynamicChildBlock,
+  const borderColorShareProps = useMemo(() => {
+    return {
+      blockType: block?.type,
+      dynamicBlock: block?.configuration?.dynamic,
+      dynamicChildBlock: dynamicChildBlock && dynamicChildBlock.uuid !== block?.uuid,
+      hasError,
+      selected,
+    };
+  }, [
+    block,
+    dynamicChildBlock,
     hasError,
     selected,
-  };
+  ]);
   const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
