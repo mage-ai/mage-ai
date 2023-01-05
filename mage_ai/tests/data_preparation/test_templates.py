@@ -410,7 +410,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.FILTER
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#filter
+    Docs: https://docs.mage.ai/guides/transformer-blocks#filter
     \"\"\"
     action = build_transformer_action(
         df,
@@ -451,7 +451,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.REFORMAT
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#reformat-values
+    Docs: https://docs.mage.ai/guides/transformer-blocks#reformat-values
     \"\"\"
     action = build_transformer_action(
         df,
@@ -493,7 +493,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.FIRST
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#aggregation-actions
+    Docs: https://docs.mage.ai/guides/transformer-blocks#aggregation-actions
     \"\"\"
     action = build_transformer_action(
         df,
