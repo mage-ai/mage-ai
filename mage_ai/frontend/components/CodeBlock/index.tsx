@@ -670,7 +670,10 @@ function CodeBlockProps({
       position: 'relative',
       zIndex: blockIdx === addNewBlockMenuOpenIdx ? 12 : null,
     }}>
-      <BlockHeaderStyle {...borderColorShareProps}>
+      <BlockHeaderStyle
+        {...borderColorShareProps}
+        onClick={() => onClickSelectBlock()}
+      >
         <FlexContainer
           alignItems="center"
           justifyContent="space-between"
