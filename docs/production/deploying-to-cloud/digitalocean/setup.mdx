@@ -31,7 +31,8 @@ Set the token in `DIGITALOCEAN_ACCESS_TOKEN` environment variable
 
 ## 2. Create ssh key
 
-Create ssh key with command: `ssh-keygen`. Update the value of `ssh_pub_key` to your path of public key https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/digitalocean/variables.tf#L32
+Create ssh key with command: `ssh-keygen`. In the file
+[./digitalocean/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/digitalocean/variables.tf), update the value of `ssh_pub_key` to your path of public key.
 
 ---
 
@@ -68,7 +69,7 @@ variable "region" {
 **More**
 
 Other variables defined in
-[./aws/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf)
+[./digitalocean/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/digitalocean/variables.tf)
 can also be customized to your needs.
 
 ---
