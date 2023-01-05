@@ -66,6 +66,7 @@ def create_block_runs_from_dynamic_block(
         is_dynamic = is_dynamic_block(downstream_block)
         should_reduce = should_reduce_output(downstream_block)
         descendants = get_all_descendants(downstream_block)
+        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', downstream_block.uuid, [b.uuid for b in descendants])
 
         block_runs_created_by_block_uuid = {}
         dynamic_child_block_runs = []
@@ -169,11 +170,19 @@ def create_block_runs_from_dynamic_block(
 
 
 def get_all_ancestors(block: 'Block') -> List['Block']:
-    return get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
+    arr = get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
+    return list(filter(
+        lambda x: x.uuid != block.uuid,
+        arr,
+    ))
 
 
 def get_all_descendants(block: 'Block') -> List['Block']:
-    return get_leaf_nodes(block, 'downstream_blocks', include_all_nodes=True)
+    arr = get_leaf_nodes(block, 'downstream_blocks', include_all_nodes=True)
+    return list(filter(
+        lambda x: x.uuid != block.uuid,
+        arr,
+    ))
 
 
 def get_leaf_nodes(
@@ -188,7 +197,7 @@ def get_leaf_nodes(
         if condition is None or condition(b):
             if b is not None:
                 arr = getattr(b, attribute_key)
-                if len(arr) == 0 or (include_all_nodes and b != block):
+                if len(arr) == 0 or (include_all_nodes and b.uuid != block.uuid):
                     leafs.append(b)
 
                 for n in arr:

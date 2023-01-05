@@ -75,7 +75,18 @@
         "design/core-design-principles",
         "design/core-abstractions",
         "design/data-pipeline-management",
-        "design/blocks"
+        {
+          "group": "Blocks",
+          "pages": [
+            "design/blocks",
+            "design/blocks/data-loader",
+            "design/blocks/transformer",
+            "design/blocks/data-exporter",
+            "design/blocks/scratchpad",
+            "design/blocks/sensor",
+            "design/blocks/dynamic-blocks"
+          ]
+        }
       ]
     },
     {
@@ -241,6 +252,7 @@
         {
           "group": "Blocks",
           "pages": [
+            "guides/blocks/dynamic-blocks",
             {
               "group": "Data loader",
               "pages": [
