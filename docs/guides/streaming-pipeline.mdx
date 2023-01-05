@@ -170,10 +170,13 @@ Start Mage using Docker. If you haven’t done this before, refer to the
    bootstrap_server: "localhost:9092"
    topic: test
    consumer_group: unique_consumer_group
+   batch_size: 100
    ```
    1. By default, the `bootstrap_server` is set to `localhost:9092`. If you’re
       running Mage in a container, the `bootstrap_server` should be
       `kafka:9093`.
+   1. Messages are consumed from source in micro batch mode for better efficiency.
+      The default batch size is 100. You can adjust the batch size in the source config.
 4. Add a transformer block and paste the following:
 
    ```python
