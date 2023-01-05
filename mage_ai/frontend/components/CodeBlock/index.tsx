@@ -98,13 +98,13 @@ import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
-import { getAllAncestors } from '@utils/models/block';
 import { getModelName } from '@utils/models/dbt';
 import { indexBy } from '@utils/array';
+import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
-import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
@@ -396,28 +396,17 @@ function CodeBlockProps({
   const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
 
   const {
+    dynamic,
+    dynamicUpstreamBlock,
+    reduceOutput,
+    reduceOutputUpstreamBlock,
+  } = useDynamicUpstreamBlocks([block], blocks)[0];
+
+  const {
     borderColorShareProps,
     tags,
   } = useMemo(() => {
-    const ancestors = getAllAncestors(block, blocks);
-    const dynamicUpstreamBlock = ancestors.find(({
-      configuration,
-      uuid,
-    }) => configuration?.dynamic && uuid !== block?.uuid);
-    const reduceOutputUpstreamBlock = ancestors.find(({
-      configuration,
-      uuid,
-    }) => configuration?.reduce_output && uuid !== block?.uuid);
-
     const arr = [];
-
-    const {
-      configuration
-    } = block || {};
-    const {
-      dynamic,
-      reduce_output: reduceOutput,
-    } = configuration || {};
 
     if (dynamic) {
       arr.push({
@@ -426,7 +415,7 @@ function CodeBlockProps({
       });
     }
 
-    const dynamicChildBlock = dynamicUpstreamBlock && !reduceOutputUpstreamBlock
+    const dynamicChildBlock = dynamicUpstreamBlock && !reduceOutputUpstreamBlock;
     if (dynamicChildBlock) {
       arr.push({
         title: 'Dynamic child',
@@ -436,7 +425,7 @@ function CodeBlockProps({
       if (reduceOutput) {
         arr.push({
           title: 'Reduce output',
-          description: 'Reduce output from all dynamically created blocks into a single array input.',
+          description: 'Reduce output from all dynamically created blocks into a single array output.',
         });
       }
     }
@@ -452,15 +441,11 @@ function CodeBlockProps({
       tags: arr,
     }
   }, [
-    block,
-    block?.configuration?.dynamic,
-    block?.configuration?.reduce_output,
-    blocks,
-    blocks?.map(({ configuration }) => configuration?.dynamic),
-    blocks?.map(({ configuration }) => configuration?.reduce_output),
-    blocks?.map(({ upstream_blocks: ub }) => ub),
-    blocksMapping,
+    dynamic,
+    dynamicUpstreamBlock,
     hasError,
+    reduceOutput,
+    reduceOutputUpstreamBlock,
     selected,
   ]);
 

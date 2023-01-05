@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import BlockType from '@interfaces/BlockType';
 import { indexBy } from '@utils/array';
 
@@ -42,4 +44,60 @@ export function getAllAncestors(block: BlockType, blocks: BlockType[]): BlockTyp
   return getLeafNodes(block, 'upstream_blocks', blocks, {
     includeAllNodes: true,
   });
+}
+
+function getUpstreamDynamicAndReduceOuput(block: BlockType, blocks: BlockType[]): {
+  dynamicUpstreamBlock?: BlockType;
+  reduceOutputUpstreamBlock?: BlockType;
+} {
+  const ancestors = getAllAncestors(block, blocks);
+  const dynamicUpstreamBlock = ancestors.find(({
+    configuration,
+    uuid,
+  }) => configuration?.dynamic && uuid !== block?.uuid);
+  const reduceOutputUpstreamBlock = ancestors.find(({
+    configuration,
+    uuid,
+  }) => configuration?.reduce_output && uuid !== block?.uuid);
+
+  return {
+    dynamicUpstreamBlock,
+    reduceOutputUpstreamBlock,
+  };
+}
+
+export function useDynamicUpstreamBlocks(blocksToUse: BlockType[], blocks: BlockType[]): {
+  block: BlockType,
+  dynamic: boolean;
+  dynamicUpstreamBlock?: BlockType;
+  reduceOutput: boolean;
+  reduceOutputUpstreamBlock?: BlockType;
+}[] {
+  return useMemo(() => blocksToUse.map((block: BlockType) => {
+    const {
+      dynamicUpstreamBlock,
+      reduceOutputUpstreamBlock,
+    } = getUpstreamDynamicAndReduceOuput(block, blocks);
+
+    const {
+      configuration
+    } = block || {};
+    const {
+      dynamic,
+      reduce_output: reduceOutput,
+    } = configuration || {};
+
+    return {
+      block,
+      dynamic: !!dynamic,
+      dynamicUpstreamBlock,
+      reduceOutput: !!reduceOutput,
+      reduceOutputUpstreamBlock,
+    };
+  }), [
+    blocks,
+    blocks?.map(({ configuration }) => configuration?.dynamic),
+    blocks?.map(({ configuration }) => configuration?.reduce_output),
+    blocks?.map(({ upstream_blocks: ub }) => ub),
+  ]);
 }
