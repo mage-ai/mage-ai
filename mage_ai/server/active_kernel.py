@@ -35,7 +35,7 @@ def switch_active_kernel(kernel_name: KernelName) -> None:
         if kernel_name == KernelName.PYSPARK:
             raise Exception(
                 'PySpark kernel is not installed. Please follow the instructions in '
-                'https://github.com/mage-ai/mage-ai/blob/master/docs/spark/setup/README.md '
+                'https://docs.mage.ai/integrations/spark-pyspark '
                 'to install it.'
             ) from e
         else:
