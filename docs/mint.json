@@ -162,6 +162,12 @@
                 "production/deploying-to-cloud/azure/setup",
                 "production/deploying-to-cloud/azure/resources"
               ]
+            },
+            {
+              "group": "DigitalOcean",
+              "pages": [
+                "production/deploying-to-cloud/digitalocean/setup"
+              ]
             }
           ]
         },
