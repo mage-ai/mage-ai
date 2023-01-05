@@ -166,7 +166,7 @@
             {
               "group": "DigitalOcean",
               "pages": [
-                "production/deploying-to-cloud/digitalocean/setup",
+                "production/deploying-to-cloud/digitalocean/setup"
               ]
             }
           ]
