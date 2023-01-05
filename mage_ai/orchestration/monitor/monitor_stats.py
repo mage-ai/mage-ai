@@ -61,6 +61,8 @@ class MonitorStats:
         pipeline_runs = pipeline_runs.all()
         stats_by_schedule_id = dict()
         for p in pipeline_runs:
+            if p.pipeline_schedule is None:
+                continue
             if p.pipeline_schedule_id not in stats_by_schedule_id:
                 stats_by_schedule_id[p.pipeline_schedule_id] = dict(
                     name=p.pipeline_schedule_name,
