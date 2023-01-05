@@ -15,7 +15,7 @@ def load_from_google_cloud_storage(*args, **kwargs):
     Template for loading data from a Google Cloud Storage bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#googlecloudstorage
+    Docs: https://docs.mage.ai/design/data-loading
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
