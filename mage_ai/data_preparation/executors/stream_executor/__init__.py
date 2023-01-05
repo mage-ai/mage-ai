@@ -39,7 +39,6 @@ class StreamExecutor:
         executable_block_runs: List[BlockRun] = None,
         tags: Dict = dict(),
         all_block_runs: List[BlockRun] = None,
-        callback_url: str = None,
     ):
         print('---------------EXECUTING STREAM EXECUTOR!---------------')
         from mage_ai.orchestration.pipeline_scheduler import run_block
@@ -135,19 +134,14 @@ class StreamExecutor:
             for idx2, tup in enumerate(block_runs_and_configs):
                 block_run, template_runtime_configuration = tup
 
-                block_run_callback_url = f'{callback_url}/{block_run.id}'
-
                 tags_updated = merge_dict(tags, dict(
                     block_run_id=block_run.id,
                     block_uuid=block_run.block_uuid,
                 ))
-                if callback_url:
-                    self._update_block_run_status(block_run_callback_url, BlockRun.BlockRunStatus.RUNNING)
-                else:
-                    block_run.update(
-                        started_at=datetime.now(),
-                        status=BlockRun.BlockRunStatus.RUNNING,
-                    )
+                block_run.update(
+                    started_at=datetime.now(),
+                    status=BlockRun.BlockRunStatus.RUNNING,
+                )
                 self.logger.info(
                     f'Start a process for BlockRun {block_run.id}',
                     **tags_updated,
@@ -158,7 +152,6 @@ class StreamExecutor:
                     block_run.id,
                     variables,
                     tags_updated,
-                    callback_url=block_run_callback_url,
                     pipeline_type=PipelineType.INTEGRATION,
                     verify_output=False,
                     runtime_arguments=runtime_arguments,

@@ -34,13 +34,16 @@ class EcsStreamExecutor(StreamExecutor):
                 runtime_var_arg += f' {k} {json.dumps(v)}'
             options.append(runtime_var_arg)
 
-        ip = get('https://api.ipify.org').content.decode('utf8')
-        callback_url = f'http://{ip}:6789/api/block_runs'
-        options.append(f'--callback_url {callback_url}')
+        # ip = get('https://api.ipify.org').content.decode('utf8')
+        # callback_url = f'http://{ip}:6789/api/block_runs'
+        # options.append(f'--callback_url {callback_url}')
         options_str = ' '.join(options)
 
         block_runs_for_stream = \
             list(filter(lambda br: self.stream_id in br.block_uuid, block_runs))
+        if any(br.status != BlockRun.BlockRunStatus.INITIAL for br in block_runs_for_stream):
+            return
+
         for block_run in block_runs_for_stream:
             block_run.update(status=BlockRun.BlockRunStatus.RUNNING)
 

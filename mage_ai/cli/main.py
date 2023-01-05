@@ -136,7 +136,6 @@ Commands:
                 execution_partition=execution_partition,
                 executor_type=executor_type,
             ).execute(
-                callback_url=callback_url,
                 variables=default_variables,
                 runtime_arguments=runtime_variables,
                 pipeline_run_id=pipeline_run_id,
