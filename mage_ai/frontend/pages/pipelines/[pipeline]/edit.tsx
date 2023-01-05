@@ -1016,7 +1016,7 @@ function PipelineDetailPage({
           chartRef?.current?.scrollIntoView();
         }
       }
-    } else {
+    } else if (filePath) {
       openFile(filePath);
     }
   }, [
@@ -1029,10 +1029,14 @@ function PipelineDetailPage({
       if (block) {
         onSelectBlockFile(block.uuid, block.type, null);
       }
+    } else if (blocksPrevious?.length !== blocks?.length && selectedBlock) {
+      onSelectBlockFile(selectedBlock.uuid, selectedBlock.type, null);
     }
   }, [
     blockUUIDFromUrl,
+    blocksPrevious?.length,
     blocks,
+    onSelectBlockFile,
     selectedBlock,
   ]);
 
