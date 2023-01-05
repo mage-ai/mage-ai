@@ -844,21 +844,20 @@ function CodeBlockProps({
             )}
           </Flex>
 
-          {(selected || isInProgress) && (
-            <CommandButtons
-              addNewBlock={addNewBlock}
-              addWidget={addWidget}
-              block={block}
-              blocks={blocks}
-              deleteBlock={deleteBlock}
-              executionState={executionState}
-              interruptKernel={interruptKernel}
-              pipelineType={pipeline?.type}
-              runBlock={runBlockAndTrack}
-              savePipelineContent={savePipelineContent}
-              setOutputCollapsed={setOutputCollapsed}
-            />
-          )}
+          <CommandButtons
+            addNewBlock={addNewBlock}
+            addWidget={addWidget}
+            block={block}
+            blocks={blocks}
+            deleteBlock={deleteBlock}
+            executionState={executionState}
+            interruptKernel={interruptKernel}
+            pipelineType={pipeline?.type}
+            runBlock={runBlockAndTrack}
+            savePipelineContent={savePipelineContent}
+            setOutputCollapsed={setOutputCollapsed}
+            visible={selected || isInProgress}
+          />
 
           <Spacing px={1}>
             <Button

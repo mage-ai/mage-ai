@@ -143,6 +143,7 @@ class BlockExecutor:
                 logger=self.logger,
                 logging_tags=logging_tags,
                 update_tests=False,
+                dynamic_block_uuid=dynamic_block_uuid,
             )
 
         return result

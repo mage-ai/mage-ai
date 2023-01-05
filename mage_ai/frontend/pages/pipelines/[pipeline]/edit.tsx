@@ -487,7 +487,7 @@ function PipelineDetailPage({
           }
 
           let outputs;
-          const messagesForBlock = messages[block.uuid];
+          const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
           const hasError = messagesForBlock?.find(({ error }) => error);
 
           if (messagesForBlock) {

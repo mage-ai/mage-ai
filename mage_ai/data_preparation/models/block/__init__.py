@@ -218,7 +218,7 @@ class Block:
         configuration: Dict = dict(),
     ):
         self.name = name or uuid
-        self.uuid = uuid
+        self._uuid = uuid
         self.type = block_type
         self._content = content
         self.executor_config = executor_config
@@ -235,6 +235,19 @@ class Block:
         self.test_functions = []
         self.global_vars = {}
         self.template_runtime_configuration = {}
+
+        self.dynamic_block_index = None
+        self.dynamic_block_uuid = None
+        self.dynamic_upstream_block_uuids = None
+
+    @property
+    def uuid(self):
+        return self.dynamic_block_uuid or self._uuid
+
+    @uuid.setter
+    def uuid(self, x):
+        self.dynamic_block_uuid = None
+        self._uuid = x
 
     @property
     def content(self):
@@ -1084,7 +1097,10 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         logger: Logger = None,
         logging_tags: Dict = dict(),
         update_tests: bool = True,
+        dynamic_block_uuid: str = None,
     ) -> None:
+        self.dynamic_block_uuid = dynamic_block_uuid
+
         if self.pipeline \
             and PipelineType.INTEGRATION == self.pipeline.type \
                 and self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER]:
@@ -1204,13 +1220,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         spark=None,
         dynamic_block_uuid: str = None,
     ):
-        uuid_to_use = dynamic_block_uuid or self.uuid
+        self.dynamic_block_uuid = dynamic_block_uuid
 
         if self.pipeline is None:
             return
         all_variables = self.pipeline.variable_manager.get_variables_by_block(
             self.pipeline.uuid,
-            uuid_to_use,
+            self.uuid,
             partition=execution_partition,
         )
 
@@ -1229,7 +1245,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
-                uuid_to_use,
+                self.uuid,
                 uuid,
                 data,
                 partition=execution_partition,
@@ -1238,7 +1254,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         for uuid in removed_variables:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
-                uuid_to_use,
+                self.uuid,
                 uuid,
             )
 
