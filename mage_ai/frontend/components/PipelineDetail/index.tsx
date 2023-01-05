@@ -592,7 +592,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
                   type: BlockTypeEnum.DBT,
                 };
                 if (creatingNewDBTModel) {
-                  newBlock.content = `--Docs: https://docs.mage.ai/docs/guides/dbt/dependencies
+                  newBlock.content = `--Docs: https://docs.mage.ai/dbt/sources
 `;
                 }
 

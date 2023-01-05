@@ -305,7 +305,7 @@ class Block:
             pipeline.add_block(
                 block,
                 upstream_block_uuids,
-                priority=priority if len(upstream_block_uuids) == 0 else None,
+                priority=priority if len(upstream_block_uuids) > 0 else None,
                 widget=widget,
             )
 
