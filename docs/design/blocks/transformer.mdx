@@ -1,0 +1,46 @@
+---
+title: "Transformer"
+description: "Use these blocks to clean, transform, and enhance data from other blocks."
+---
+
+## Example
+
+```python
+from pandas import DataFrame
+
+
+@transformer
+def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
+    return df.iloc[:10]
+```
+
+## How data is received from upstream blocks
+
+All blocks (except Scratchpads and Sensors) pass their data from the return statement in their
+decorated function to all their downstream blocks.
+
+In order to access the data from an upstream block within a current block,
+use the positional arguments of the decorated function.
+
+For example, in the above function named `transform_df`, the output data from its upstream block
+is accessed by the positional argument named `df`.
+
+## Getting data from multiple upstream blocks
+
+If a block has more than 1 upstream block,
+then each upstream block’s output is accessible via positional arguments.
+
+For example, if you have 3 upstream blocks,
+than there will be 3 positional arguments available within the `transform_df` function.
+
+See below for an example:
+
+```python
+from pandas import DataFrame
+import pandas as pd
+
+
+@transformer
+def transform_df(df1, df2, df3, **kwargs) -> DataFrame:
+    return pd.concat([df1, df2, df3])
+```
