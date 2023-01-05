@@ -289,6 +289,8 @@ function Edit({
       data.sla = 0;
     }
 
+    console.log('trigger data', data);
+
     // @ts-ignore
     updateSchedule({
       pipeline_schedule: data,
