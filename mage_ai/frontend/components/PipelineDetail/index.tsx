@@ -493,8 +493,6 @@ function PipelineDetail({
         const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
         if (block) {
-          configuration = block.configuration;
-
           if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
             && BlockTypeEnum.SCRATCHPAD === newBlock.type
           ) {
