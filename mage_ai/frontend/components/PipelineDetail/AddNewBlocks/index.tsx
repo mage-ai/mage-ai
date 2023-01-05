@@ -125,7 +125,7 @@ function AddNewBlocks({
   if (!hideTransformerDataSources) {
     allActionMenuItems.splice(
       1,
-      0, 
+      0,
       {
         bold: true,
         items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
@@ -405,7 +405,7 @@ function AddNewBlocks({
             </>
           )}
 
-          {!hideRecommendations && (
+          {/*{!hideRecommendations && (
             <KeyboardShortcutButton
               {...sharedProps}
               beforeElement={
@@ -421,7 +421,7 @@ function AddNewBlocks({
             >
               Recs
             </KeyboardShortcutButton>
-          )}
+          )}*/}
         </>
       }
     </FlexContainer>

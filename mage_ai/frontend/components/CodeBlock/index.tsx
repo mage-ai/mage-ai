@@ -395,28 +395,75 @@ function CodeBlockProps({
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
   const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
 
+  const {
+    borderColorShareProps,
+    tags,
+  } = useMemo(() => {
+    const ancestors = getAllAncestors(block, blocks);
+    const dynamicUpstreamBlock = ancestors.find(({
+      configuration,
+      uuid,
+    }) => configuration?.dynamic && uuid !== block?.uuid);
+    const reduceOutputUpstreamBlock = ancestors.find(({
+      configuration,
+      uuid,
+    }) => configuration?.reduce_output && uuid !== block?.uuid);
 
-  const dynamicChildBlock = useMemo(() => getAllAncestors(block, blocks).find(
-      ({ configuration }) => configuration?.dynamic,
-    ), [
-    block,
-    blocks?.map(({ configuration }) => configuration?.dynamic),
-    blocks?.map(({ upstream_blocks: ub }) => ub),
-  ]);
-  const borderColorShareProps = useMemo(() => {
+    const arr = [];
+
+    const {
+      configuration
+    } = block || {};
+    const {
+      dynamic,
+      reduce_output: reduceOutput,
+    } = configuration || {};
+
+    if (dynamic) {
+      arr.push({
+        title: 'Dynamic',
+        description: 'This block will create N blocks for each of its downstream blocks.',
+      });
+    }
+
+    const dynamicChildBlock = dynamicUpstreamBlock && !reduceOutputUpstreamBlock
+    if (dynamicChildBlock) {
+      arr.push({
+        title: 'Dynamic child',
+        description: 'This block is dynamically created by its upstream parent block that is dynamic.',
+      });
+
+      if (reduceOutput) {
+        arr.push({
+          title: 'Reduce output',
+          description: 'Reduce output from all dynamically created blocks into a single array input.',
+        });
+      }
+    }
+
     return {
-      blockType: block?.type,
-      dynamicBlock: block?.configuration?.dynamic,
-      dynamicChildBlock: dynamicChildBlock && dynamicChildBlock.uuid !== block?.uuid,
-      hasError,
-      selected,
-    };
+      borderColorShareProps: {
+        blockType: block?.type,
+        dynamicBlock: dynamic,
+        dynamicChildBlock,
+        hasError,
+        selected,
+      },
+      tags: arr,
+    }
   }, [
     block,
-    dynamicChildBlock,
+    block?.configuration?.dynamic,
+    block?.configuration?.reduce_output,
+    blocks,
+    blocks?.map(({ configuration }) => configuration?.dynamic),
+    blocks?.map(({ configuration }) => configuration?.reduce_output),
+    blocks?.map(({ upstream_blocks: ub }) => ub),
+    blocksMapping,
     hasError,
     selected,
   ]);
+
   const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
@@ -1166,6 +1213,30 @@ function CodeBlockProps({
             </CodeHelperStyle>
           )}
 
+          {tags.length >= 1 && (
+            <CodeHelperStyle normalPadding>
+              <FlexContainer>
+                {tags.map(({
+                  description,
+                  title,
+                }, idx) => (
+                  <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
+                    <Tooltip
+                      block
+                      description={description}
+                      size={null}
+                      widthFitContent
+                    >
+                      <Badge>
+                        {title}
+                      </Badge>
+                    </Tooltip>
+                  </Spacing>
+                ))}
+              </FlexContainer>
+            </CodeHelperStyle>
+          )}
+
           {block.upstream_blocks.length >= 1
             && !codeCollapsed
             && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(block.type)
@@ -1233,6 +1304,7 @@ function CodeBlockProps({
               </Spacing>
             </CodeHelperStyle>
           )}
+
           {!codeCollapsed
             ? codeEditorEl
             : (

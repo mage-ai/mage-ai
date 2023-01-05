@@ -5,7 +5,7 @@ export function getLeafNodes(
   block: BlockType,
   attributeKey: string,
   blocks: BlockType[],
-  opts?: {
+  opts: {
     includeAllNodes: boolean;
   } = {
     includeAllNodes: false,
