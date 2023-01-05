@@ -94,7 +94,9 @@ export const ContainerStyle = styled.div`
   position: relative;
 `;
 
-export const BlockHeaderStyle = styled.div<BorderColorShareProps>`
+export const BlockHeaderStyle = styled.div<BorderColorShareProps & {
+  zIndex: Number;
+}>`
   ${BORDER_COLOR_SHARED_STYLES}
 
   border-top-left-radius: ${BORDER_RADIUS}px;
@@ -108,14 +110,13 @@ export const BlockHeaderStyle = styled.div<BorderColorShareProps>`
   padding: ${UNIT}px;
   position: sticky;
   top: -5px;
-  z-index: 5;
 
   ${props => `
     background-color: ${(props.theme || dark).background.content};
   `}
 
-  ${props => props.selected && `
-    z-index: 11;
+  ${props => props.zIndex && `
+    z-index: ${6 + (props.zIndex || 0)};
   `}
 `;
 

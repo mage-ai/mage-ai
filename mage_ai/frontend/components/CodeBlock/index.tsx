@@ -392,29 +392,21 @@ function CodeBlockProps({
 
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
-  const borderColorShareProps = useMemo(() => {
-    const {
-      configuration,
-      type: blockType,
-      upstream_blocks: upstreamBlocks,
-    }  = block || {};
-    const dynamicChildBlock = upstreamBlocks?.find(
-      (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
-    );
+  const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
 
-    return {
-      blockType: blockType,
-      dynamicBlock: configuration?.dynamic,
-      dynamicChildBlock: !!dynamicChildBlock,
-      hasError,
-      selected,
-    };
-  }, [
+  const dynamicChildBlock = useMemo(() => block?.upstream_blocks?.find(
+    (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
+  ), [
     block,
     blocksMapping,
+  ]);
+  const borderColorShareProps = {
+    blockType: block?.type,
+    dynamicBlock: block?.configuration?.dynamic,
+    dynamicChildBlock: !!dynamicChildBlock,
     hasError,
     selected,
-  ]);
+  };
   const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
@@ -665,6 +657,8 @@ function CodeBlockProps({
     || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
   );
 
+  const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
+
   return (
     <div ref={ref} style={{
       position: 'relative',
@@ -673,6 +667,7 @@ function CodeBlockProps({
       <BlockHeaderStyle
         {...borderColorShareProps}
         onClick={() => onClickSelectBlock()}
+        zIndex={blocksLength - (blockIdx || 0)}
       >
         <FlexContainer
           alignItems="center"
