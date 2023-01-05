@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.shared.hash import merge_dict
@@ -137,7 +137,7 @@ class BlockExecutor:
                 logger=self.logger,
                 logging_tags=logging_tags,
             )
-        else:
+        elif PipelineType.INTEGRATION != self.pipeline.type:
             self.block.run_tests(
                 execution_partition=self.execution_partition,
                 logger=self.logger,
