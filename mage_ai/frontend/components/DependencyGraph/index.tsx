@@ -550,7 +550,7 @@ function DependencyGraph({
                   });
                   setEdgeSelections([]);
                 }}
-                removable={!editingBlock?.upstreamBlocks}
+                removable={enablePorts && !editingBlock?.upstreamBlocks}
                 style={{
                   stroke: getColorsForBlockType(block?.type, { theme: themeContext })?.accent,
                 }}
