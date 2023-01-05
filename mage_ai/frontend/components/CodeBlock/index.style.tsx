@@ -182,7 +182,7 @@ export const BlockDividerInner = styled.div`
 `;
 
 export const CodeHelperStyle = styled.div<{
-  normalPadding: boolean;
+  normalPadding?: boolean;
 }>`
   margin-bottom: ${PADDING_UNITS * UNIT}px;
   padding-bottom: ${UNIT}px;
