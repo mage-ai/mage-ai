@@ -55,7 +55,6 @@ class ApiPipelineBlockHandler(BaseHandler):
         self.write(dict(block=block.to_dict(include_content=True)))
 
     def delete(self, pipeline_uuid, block_uuid):
-        print('WTFFFFFFFFFFFFFFFFFFFFFF', block_uuid)
         pipeline = Pipeline.get(pipeline_uuid)
         block = pipeline.get_block(block_uuid)
         if block is None:

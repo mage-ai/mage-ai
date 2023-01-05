@@ -100,10 +100,11 @@ import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts
 import { get, set } from '@storage/localStorage';
 import { getModelName } from '@utils/models/dbt';
 import { indexBy } from '@utils/array';
+import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
-import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
@@ -392,29 +393,62 @@ function CodeBlockProps({
 
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
-  const borderColorShareProps = useMemo(() => {
-    const {
-      configuration,
-      type: blockType,
-      upstream_blocks: upstreamBlocks,
-    }  = block || {};
-    const dynamicChildBlock = upstreamBlocks?.find(
-      (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
-    );
+  const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
+
+  const {
+    dynamic,
+    dynamicUpstreamBlock,
+    reduceOutput,
+    reduceOutputUpstreamBlock,
+  } = useDynamicUpstreamBlocks([block], blocks)[0];
+
+  const {
+    borderColorShareProps,
+    tags,
+  } = useMemo(() => {
+    const arr = [];
+
+    if (dynamic) {
+      arr.push({
+        title: 'Dynamic',
+        description: 'This block will create N blocks for each of its downstream blocks.',
+      });
+    }
+
+    const dynamicChildBlock = dynamicUpstreamBlock && !reduceOutputUpstreamBlock;
+    if (dynamicChildBlock) {
+      arr.push({
+        title: 'Dynamic child',
+        description: 'This block is dynamically created by its upstream parent block that is dynamic.',
+      });
+
+      if (reduceOutput) {
+        arr.push({
+          title: 'Reduce output',
+          description: 'Reduce output from all dynamically created blocks into a single array output.',
+        });
+      }
+    }
 
     return {
-      blockType: blockType,
-      dynamicBlock: configuration?.dynamic,
-      dynamicChildBlock: !!dynamicChildBlock,
-      hasError,
-      selected,
-    };
+      borderColorShareProps: {
+        blockType: block?.type,
+        dynamicBlock: dynamic,
+        dynamicChildBlock,
+        hasError,
+        selected,
+      },
+      tags: arr,
+    }
   }, [
-    block,
-    blocksMapping,
+    dynamic,
+    dynamicUpstreamBlock,
     hasError,
+    reduceOutput,
+    reduceOutputUpstreamBlock,
     selected,
   ]);
+
   const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
@@ -665,6 +699,8 @@ function CodeBlockProps({
     || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
   );
 
+  const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
+
   return (
     <div ref={ref} style={{
       position: 'relative',
@@ -673,6 +709,7 @@ function CodeBlockProps({
       <BlockHeaderStyle
         {...borderColorShareProps}
         onClick={() => onClickSelectBlock()}
+        zIndex={blocksLength - (blockIdx || 0)}
       >
         <FlexContainer
           alignItems="center"
@@ -844,21 +881,20 @@ function CodeBlockProps({
             )}
           </Flex>
 
-          {(selected || isInProgress) && (
-            <CommandButtons
-              addNewBlock={addNewBlock}
-              addWidget={addWidget}
-              block={block}
-              blocks={blocks}
-              deleteBlock={deleteBlock}
-              executionState={executionState}
-              interruptKernel={interruptKernel}
-              pipelineType={pipeline?.type}
-              runBlock={runBlockAndTrack}
-              savePipelineContent={savePipelineContent}
-              setOutputCollapsed={setOutputCollapsed}
-            />
-          )}
+          <CommandButtons
+            addNewBlock={addNewBlock}
+            addWidget={addWidget}
+            block={block}
+            blocks={blocks}
+            deleteBlock={deleteBlock}
+            executionState={executionState}
+            interruptKernel={interruptKernel}
+            pipelineType={pipeline?.type}
+            runBlock={runBlockAndTrack}
+            savePipelineContent={savePipelineContent}
+            setOutputCollapsed={setOutputCollapsed}
+            visible={selected || isInProgress}
+          />
 
           <Spacing px={1}>
             <Button
@@ -1162,6 +1198,30 @@ function CodeBlockProps({
             </CodeHelperStyle>
           )}
 
+          {tags.length >= 1 && (
+            <CodeHelperStyle normalPadding>
+              <FlexContainer>
+                {tags.map(({
+                  description,
+                  title,
+                }, idx) => (
+                  <Spacing key={title} ml={idx >= 1 ? 1 : 0}>
+                    <Tooltip
+                      block
+                      description={description}
+                      size={null}
+                      widthFitContent
+                    >
+                      <Badge>
+                        {title}
+                      </Badge>
+                    </Tooltip>
+                  </Spacing>
+                ))}
+              </FlexContainer>
+            </CodeHelperStyle>
+          )}
+
           {block.upstream_blocks.length >= 1
             && !codeCollapsed
             && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(block.type)
@@ -1229,6 +1289,7 @@ function CodeBlockProps({
               </Spacing>
             </CodeHelperStyle>
           )}
+
           {!codeCollapsed
             ? codeEditorEl
             : (

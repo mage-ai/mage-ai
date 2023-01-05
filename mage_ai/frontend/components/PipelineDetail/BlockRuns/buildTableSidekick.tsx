@@ -39,6 +39,7 @@ export default function({
   }) => any;
   rows: string[][] | number[][];
   selectedRun?: BlockRunType;
+  showDynamicBlocks?: boolean;
   textData?: string;
 }) {
 

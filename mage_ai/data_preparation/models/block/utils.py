@@ -374,9 +374,6 @@ def fetch_input_variables(
                         len(final_value) == 1:
                         final_value = final_value[0]
 
-
-                print('WTFFFFFFFFFFFFFFFFF', upstream_block_uuid, uuids, input_variables_by_uuid, final_value)
-
                 input_vars[idx] = final_value
 
     return input_vars, upstream_block_uuids_final

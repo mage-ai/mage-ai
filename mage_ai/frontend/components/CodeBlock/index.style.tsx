@@ -94,7 +94,9 @@ export const ContainerStyle = styled.div`
   position: relative;
 `;
 
-export const BlockHeaderStyle = styled.div<BorderColorShareProps>`
+export const BlockHeaderStyle = styled.div<{
+  zIndex: number;
+} & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
   border-top-left-radius: ${BORDER_RADIUS}px;
@@ -108,14 +110,13 @@ export const BlockHeaderStyle = styled.div<BorderColorShareProps>`
   padding: ${UNIT}px;
   position: sticky;
   top: -5px;
-  z-index: 5;
 
   ${props => `
     background-color: ${(props.theme || dark).background.content};
   `}
 
-  ${props => props.selected && `
-    z-index: 11;
+  ${props => props.zIndex && `
+    z-index: ${6 + (props.zIndex || 0)};
   `}
 `;
 
@@ -180,13 +181,15 @@ export const BlockDividerInner = styled.div`
   top: ${UNIT * 1.5}px;
 `;
 
-export const CodeHelperStyle = styled.div`
+export const CodeHelperStyle = styled.div<{
+  normalPadding?: boolean;
+}>`
   margin-bottom: ${PADDING_UNITS * UNIT}px;
   padding-bottom: ${UNIT}px;
-  padding-left: ${LEFT_PADDING}px;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+    padding-left: ${props.normalPadding ? UNIT : LEFT_PADDING}px;
   `}
 `;
 

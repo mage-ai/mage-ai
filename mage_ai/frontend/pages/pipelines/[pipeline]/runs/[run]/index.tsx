@@ -50,7 +50,7 @@ function PipelineBlockRuns({
     },
   );
   const pipelineRun = useMemo(
-    () => dataPipelineRun?.pipeline_run, 
+    () => dataPipelineRun?.pipeline_run,
     [dataPipelineRun],
   );
 
@@ -135,6 +135,7 @@ function PipelineBlockRuns({
         loadingData: loadingOutput,
         rows,
         selectedRun,
+        showDynamicBlocks: true,
         textData,
       })}
       pageName={PageNameEnum.RUNS}

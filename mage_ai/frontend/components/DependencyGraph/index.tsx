@@ -41,6 +41,7 @@ import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getModelName } from '@utils/models/dbt';
 import { onSuccess } from '@api/utils/response';
+import { useDynamicUpstreamBlocks } from '@utils/models/block';
 
 const Canvas = dynamic(
   async () => {
@@ -109,6 +110,7 @@ export type DependencyGraphProps = {
       values: BlockType[];
     };
   };
+  enablePorts?: boolean;
   fetchPipeline?: () => void;
   height: number;
   heightOffset?: number;
@@ -121,12 +123,14 @@ export type DependencyGraphProps = {
     response: any;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  showDynamicBlocks?: boolean;
 } & SetEditingBlockType;
 
 function DependencyGraph({
   blockRefs,
   blockStatus,
   editingBlock,
+  enablePorts = false,
   fetchPipeline,
   height,
   heightOffset = UNIT * 10,
@@ -137,10 +141,12 @@ function DependencyGraph({
   setEditingBlock,
   setErrors,
   setSelectedBlock,
+  showDynamicBlocks = false,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
-  const [showPorts, setShowPorts] = useState<boolean>(false);
+  const [showPortsState, setShowPorts] = useState<boolean>(false);
+  const showPorts = enablePorts && showPortsState;
   const {
     block: blockEditing,
     values: upstreamBlocksEditing = [],
@@ -148,12 +154,28 @@ function DependencyGraph({
   const upstreamBlocksEditingCount = useMemo(() => upstreamBlocksEditing.length, [
     upstreamBlocksEditing,
   ]);
-  const blocks = useMemo(
-    () => pipeline?.blocks?.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type) || [],
-    [
-      pipeline?.blocks,
-    ],
-  );
+
+  const blocksInit = useMemo(() => pipeline?.blocks?.filter(({
+    type,
+  }) => BlockTypeEnum.SCRATCHPAD !== type) || [], [
+    pipeline?.blocks,
+  ]);
+  const dynamicUpstreamBlocksData =
+    indexBy(useDynamicUpstreamBlocks(blocksInit, blocksInit), ({ block }) => block.uuid);
+
+  const blocks = useMemo(() => {
+    const arr = blocksInit;
+
+    if (showDynamicBlocks) {
+      // TODO (tommy dang): recreate all the blocks to include all the dynamically created blocks
+    }
+
+    return arr;
+  }, [
+    blocksInit,
+    dynamicUpstreamBlocksData,
+    showDynamicBlocks,
+  ]);
   const blockUUIDMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
@@ -267,7 +289,6 @@ function DependencyGraph({
     return mapping;
   }, [blocks]);
 
-
   const displayTextForBlock = useCallback((block: BlockType): string => {
     let displayText;
 
@@ -289,12 +310,28 @@ function DependencyGraph({
       displayText = getModelName(block);
     }
 
+    const {
+      dynamic,
+      dynamicUpstreamBlock,
+      reduceOutput,
+      reduceOutputUpstreamBlock,
+    } = dynamicUpstreamBlocksData?.[block.uuid] || {};
+
     if (!displayText) {
       displayText = block.uuid;
+
+      if (dynamic) {
+        displayText = `[dynamic] ${displayText}`;
+      } else if (dynamicUpstreamBlock && !reduceOutputUpstreamBlock) {
+        displayText = `[dynamic child] ${displayText}`;
+      }
     }
 
     return displayText;
-  }, [pipeline]);
+  }, [
+    dynamicUpstreamBlocksData,
+    pipeline,
+  ]);
 
   const {
     edges,
@@ -597,7 +634,7 @@ function DependencyGraph({
                       }
                       {...blockStatus}
                     >
-                      {displayTextForBlock(block)}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
+                      {displayTextForBlock(block)}{blockEditing?.uuid === block.uuid && ' (editing)'}
                     </GraphNode>
                   </foreignObject>
                 );
