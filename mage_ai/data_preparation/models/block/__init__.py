@@ -1098,6 +1098,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         logging_tags: Dict = dict(),
         update_tests: bool = True,
         dynamic_block_uuid: str = None,
+        from_notebook: bool = False,
     ) -> None:
         self.dynamic_block_uuid = dynamic_block_uuid
 
@@ -1144,13 +1145,33 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 try:
                     func(*outputs)
                     tests_passed += 1
-                except AssertionError:
-                    print('==============================================================')
-                    print(f'FAIL: {func.__name__} (block: {self.uuid})')
-                    print('--------------------------------------------------------------')
-                    print(traceback.format_exc())
-            print('--------------------------------------------------------------')
-            print(f'{tests_passed}/{len(test_functions)} tests passed.')
+                except AssertionError as err:
+                    error_message = f'FAIL: {func.__name__} (block: {self.uuid})'
+                    stacktrace = traceback.format_exc()
+
+                    if from_notebook:
+                        error_json = json.dumps(dict(
+                            error=str(err),
+                            message=error_message,
+                            stacktrace=stacktrace.split('\n'),
+                        ))
+                        print(f'[__internal_test__]{error_json}')
+                    else:
+                        print('==============================================================')
+                        print(error_message)
+                        print('--------------------------------------------------------------')
+                        print(stacktrace)
+
+            message = f'{tests_passed}/{len(test_functions)} tests passed.'
+            if from_notebook:
+                if len(test_functions) >= 1:
+                    success_json = json.dumps(dict(
+                        message=message,
+                    ))
+                    print(f'[__internal_test__]{success_json}')
+            else:
+                print('--------------------------------------------------------------')
+                print(message)
         if tests_passed != len(test_functions):
             raise Exception(f'Failed to pass tests for block {self.uuid}')
 
