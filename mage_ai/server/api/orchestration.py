@@ -248,11 +248,7 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
                         for br in incomplete_block_runs:
                             execution_process_manager.terminate_block_process(pipeline_run.id, br.id)
 
-                from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-                pipeline_scheduler = PipelineScheduler(pipeline_run)
-
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
-                pipeline_scheduler.schedule(incomplete_block_runs)
         elif payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
             from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
             PipelineScheduler(pipeline_run).stop()
