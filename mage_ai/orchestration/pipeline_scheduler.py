@@ -91,12 +91,12 @@ class PipelineScheduler:
                     )
                     self.logger.info(
                         f'Calculate metrics for pipeline run {self.pipeline_run.id} started.',
-                        tags=tags,
+                        **tags,
                     )
                     calculate_metrics(self.pipeline_run)
                     self.logger.info(
                         f'Calculate metrics for pipeline run {self.pipeline_run.id} completed.',
-                        tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
+                        **merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
                     )
 
                 # If running once, update the schedule to inactive when pipeline run is done
@@ -369,12 +369,14 @@ class PipelineScheduler:
             memory=used_memory,
             memory_total=total_memory,
             memory_usage=memory_usage,
+            pipeline_run_id=self.pipeline_run.id,
+            pipeline_uuid=self.pipeline.uuid,
         )
 
         self.logger.info(
             f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
             f'in schedule {self.pipeline_run.pipeline_schedule_id} is alive.',
-            tags=tags,
+            **tags,
         )
 
         if memory_usage >= MEMORY_USAGE_MAXIMUM:
