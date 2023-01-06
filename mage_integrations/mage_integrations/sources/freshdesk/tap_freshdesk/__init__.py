@@ -37,31 +37,35 @@ def get_url(endpoint, **kwargs):
     return BASE_URL.format(CONFIG['domain']) + endpoints[endpoint].format(**kwargs)
 
 
-@backoff.on_exception(backoff.expo,
-                      (requests.exceptions.RequestException),
-                      max_tries=5,
-                      giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
-                      factor=2)
 @utils.ratelimit(1, 2)
 def request(url, params=None):
-    params = params or {}
-    headers = {}
-    if 'user_agent' in CONFIG:
-        headers['User-Agent'] = CONFIG['user_agent']
+    @backoff.on_exception(backoff.expo,
+                          (requests.exceptions.RequestException),
+                          max_tries=5,
+                          giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
+                          factor=2)
 
-    req = requests.Request('GET', url, params=params, auth=(CONFIG['api_key'], ""), headers=headers).prepare()
-    logger.info("GET {}".format(req.url))
-    resp = session.send(req)
+    def _request(url, params=None):
+        params = params or {}
+        headers = {}
+        if 'user_agent' in CONFIG:
+            headers['User-Agent'] = CONFIG['user_agent']
 
-    if 'Retry-After' in resp.headers:
-        retry_after = int(resp.headers['Retry-After'])
-        logger.info("Rate limit reached. Sleeping for {} seconds".format(retry_after))
-        time.sleep(retry_after)
-        return request(url, params)
+        req = requests.Request('GET', url, params=params, auth=(CONFIG['api_key'], ""), headers=headers).prepare()
+        logger.info("GET {}".format(req.url))
+        resp = session.send(req)
 
-    resp.raise_for_status()
+        if 'Retry-After' in resp.headers:
+            retry_after = int(resp.headers['Retry-After'])
+            logger.info("Rate limit reached. Sleeping for {} seconds".format(retry_after))
+            time.sleep(retry_after)
+            return request(url, params)
 
-    return resp
+        resp.raise_for_status()
+
+        return resp
+
+    return _request(url, params)
 
 
 def get_start(entity):
@@ -98,15 +102,17 @@ def transform_dict(d, key_key="name", value_key="value", force_str=False):
     return rtn
 
 
-def sync_tickets(stream: Dict = None, tap_stream_id: str = None):
+def sync_tickets(tap_stream_id: str = None, stream: Dict = None):
     bookmark_property = 'updated_at'
 
     if stream:
+        bookmark_properties = stream.get('bookmark_properties', [bookmark_property])
+        key_properties = stream.get('key_properties', ['id'])
         write_schema(
             stream_name=tap_stream_id,
             schema=stream['schema'],
-            key_properties=["id"],
-            bookmark_properties=[bookmark_property],
+            key_properties=key_properties,
+            bookmark_properties=bookmark_properties,
             disable_column_type_check=stream.get('disable_column_type_check'),
             partition_keys=stream.get('partition_keys'),
             replication_method=stream.get('replication_method'),
@@ -159,7 +165,7 @@ def sync_tickets_by_filter(bookmark_property, predefined_filter=None, tap_stream
         'include': "requester,company,stats"
     }
 
-    if predefined_filter:
+    if predefined_filter and (not tap_stream_id or 'tickets' == tap_stream_id):
         logger.info("Syncing tickets with filter {}".format(predefined_filter))
 
     if predefined_filter:
@@ -170,10 +176,9 @@ def sync_tickets_by_filter(bookmark_property, predefined_filter=None, tap_stream
         row.pop('attachments', None)
         row['custom_fields'] = transform_dict(row['custom_fields'], force_str=True)
 
-        # get all sub-entities and save them
-        logger.info("Ticket {}: Syncing conversations".format(row['id']))
-
         if not tap_stream_id or 'conversations' == tap_stream_id:
+            # get all sub-entities and save them
+            logger.info("Ticket {}: Syncing conversations".format(row['id']))
             try:
                 for subrow in gen_request(get_url("sub_ticket", id=row['id'], entity="conversations")):
                     subrow.pop("attachments", None)
@@ -226,11 +231,13 @@ def sync_time_filtered(entity, stream: Dict = None):
     bookmark_property = 'updated_at'
 
     if stream:
+        bookmark_properties = stream.get('bookmark_properties', [bookmark_property])
+        key_properties = stream.get('key_properties', ['id'])
         write_schema(
             stream_name=entity,
             schema=stream['schema'],
-            key_properties=["id"],
-            bookmark_properties=[bookmark_property],
+            key_properties=key_properties,
+            bookmark_properties=bookmark_properties,
             disable_column_type_check=stream.get('disable_column_type_check'),
             partition_keys=stream.get('partition_keys'),
             replication_method=stream.get('replication_method'),
@@ -272,9 +279,9 @@ def do_sync(catalog: Dict = None):
                     'tickets',
                     'time_entries',
                 ]:
-                    sync_tickets(stream, tap_stream_id)
+                    sync_tickets(tap_stream_id, stream)
                 else:
-                    sync_time_filtered(tap_schema_id, stream)
+                    sync_time_filtered(tap_stream_id, stream)
         else:
             sync_tickets()
             sync_time_filtered("agents")

@@ -5,7 +5,7 @@ from mage_integrations.destinations.constants import (
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.sql.base import Destination, main
-from mage_integrations.destinations.postgresql.utils import convert_column_type
+from mage_integrations.destinations.postgresql.utils import convert_column_type, convert_array
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
@@ -103,6 +103,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             ),
             columns=columns,
             records=records,
+            convert_array_func=convert_array,
             string_parse_func=lambda x, y: x.replace("'", "''")
             if COLUMN_TYPE_OBJECT == y['type'] else x,
         )

@@ -25,7 +25,7 @@ def get_collection(key: str, available_options: List[Dict]):
         except FileNotFoundError:
             d['templates'] = {}
         except Exception as err:
-            print(err)
+            print(f"Failed to load source {d['uuid']}: {err}")
             continue
 
         collection.append(d)
