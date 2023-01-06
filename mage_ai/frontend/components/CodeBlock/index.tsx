@@ -700,9 +700,6 @@ function CodeBlockProps({
   );
 
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
-  console.log('blockIdx', blockIdx);
-  console.log('addNewBlockMenuOpenIdx', addNewBlockMenuOpenIdx);
-  console.log('blocksLength:', blocksLength);
 
   return (
     <div ref={ref} style={{
