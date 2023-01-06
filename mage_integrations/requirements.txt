@@ -1,3 +1,4 @@
+backoff==1.8.0
 deltalake==0.6.4
 google-analytics-data==0.14.2
 google-api-python-client==2.70.0

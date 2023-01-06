@@ -536,6 +536,9 @@ class Destination():
         record_adjusted = record.copy()
 
         for k, v in record.items():
+            if k not in schema['properties']:
+                continue
+
             prop_k = schema['properties'][k]
             prop_types = []
 

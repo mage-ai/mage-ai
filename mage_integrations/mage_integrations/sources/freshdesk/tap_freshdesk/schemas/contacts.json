@@ -1,0 +1,165 @@
+{
+  "type": "object", 
+  "properties": {
+    "custom_fields": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "name": {
+            "type": ["null", "string"]
+          },
+          "value": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "other_companies": {
+      "items": {
+        "type": [
+          "null", 
+          "string"
+        ]
+      }, 
+      "type": [
+        "null", 
+        "array"
+      ]
+    }, 
+    "view_all_tickets": {
+      "type": [
+        "null", 
+        "boolean"
+      ]
+    }, 
+    "id": {
+      "type": [
+        "null", 
+        "integer"
+      ]
+    }, 
+    "other_emails": {
+      "items": {
+        "type": [
+          "null", 
+          "string"
+        ]
+      }, 
+      "type": [
+        "null", 
+        "array"
+      ]
+    }, 
+    "company_id": {
+      "type": [
+        "null", 
+        "number"
+      ]
+    }, 
+    "email": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "job_title": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "description": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "tags": {
+      "items": {
+        "type": [
+          "null", 
+          "string"
+        ]
+      }, 
+      "type": [
+        "null", 
+        "array"
+      ]
+    }, 
+    "deleted": {
+      "type": [
+        "null", 
+        "boolean"
+      ]
+    }, 
+    "updated_at": {
+      "type": [
+        "null", 
+        "string"
+      ], 
+      "format": "date-time"
+    }, 
+    "phone": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "address": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "active": {
+      "type": [
+        "null", 
+        "boolean"
+      ]
+    }, 
+    "name": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "language": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "mobile": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "created_at": {
+      "type": [
+        "null", 
+        "string"
+      ], 
+      "format": "date-time"
+    }, 
+    "twitter_id": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "time_zone": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "avatar": {
+      "type": [
+        "null", 
+        "object"
+      ]
+    }
+  }
+}
