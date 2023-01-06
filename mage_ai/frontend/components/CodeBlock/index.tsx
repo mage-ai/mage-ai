@@ -439,7 +439,7 @@ function CodeBlockProps({
         selected,
       },
       tags: arr,
-    }
+    };
   }, [
     dynamic,
     dynamicUpstreamBlock,
@@ -700,11 +700,14 @@ function CodeBlockProps({
   );
 
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
+  console.log('blockIdx', blockIdx);
+  console.log('addNewBlockMenuOpenIdx', addNewBlockMenuOpenIdx);
+  console.log('blocksLength:', blocksLength);
 
   return (
     <div ref={ref} style={{
       position: 'relative',
-      zIndex: blockIdx === addNewBlockMenuOpenIdx ? 12 : null,
+      zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 6) : null,
     }}>
       <BlockHeaderStyle
         {...borderColorShareProps}

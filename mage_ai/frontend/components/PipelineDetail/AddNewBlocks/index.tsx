@@ -136,9 +136,13 @@ function AddNewBlocks({
   }
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
-  const handleBlockZIndex = useCallback(() =>
-    setAddNewBlockMenuOpenIdx?.(idx => idx === null ? blockIdx : null),
-    [blockIdx, setAddNewBlockMenuOpenIdx],
+  const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
+    setAddNewBlockMenuOpenIdx?.(idx => (
+      (idx === null || buttonMenuOpenIndex !== newButtonMenuOpenIndex)
+        ? blockIdx
+        : null
+    )),
+    [blockIdx, buttonMenuOpenIndex, setAddNewBlockMenuOpenIdx],
   );
 
   const isPySpark = PipelineTypeEnum.PYSPARK === pipelineType;
@@ -174,7 +178,7 @@ function AddNewBlocks({
                         ? null
                         : DATA_LOADER_BUTTON_INDEX,
                     );
-                    handleBlockZIndex();
+                    handleBlockZIndex(DATA_LOADER_BUTTON_INDEX);
                   }}
                   uuid="AddNewBlocks/Data_loader"
                 >
@@ -231,7 +235,7 @@ function AddNewBlocks({
                         ? null
                         : TRANSFORMER_BUTTON_INDEX,
                     );
-                    handleBlockZIndex();
+                    handleBlockZIndex(TRANSFORMER_BUTTON_INDEX);
                   }}
                   uuid="AddNewBlocks/Transformer"
                 >
@@ -270,7 +274,7 @@ function AddNewBlocks({
                         ? null
                         : DATA_EXPORTER_BUTTON_INDEX,
                     );
-                    handleBlockZIndex();
+                    handleBlockZIndex(DATA_EXPORTER_BUTTON_INDEX);
                   }}
                   uuid="AddNewBlocks/Data_exporter"
                 >
@@ -326,7 +330,7 @@ function AddNewBlocks({
                         ? null
                         : DBT_BUTTON_INDEX,
                     );
-                    handleBlockZIndex();
+                    handleBlockZIndex(DBT_BUTTON_INDEX);
                   }}
                   uuid="AddNewBlocks/DBT"
                 >

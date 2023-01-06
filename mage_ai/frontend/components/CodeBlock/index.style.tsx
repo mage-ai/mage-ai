@@ -161,7 +161,7 @@ export const BlockDivider = styled.div`
   height: ${UNIT * 2}px;
   justify-content: center;
   position: relative;
-  z-index: 10;
+  z-index: 5;
   bottom: ${UNIT * 0.75}px;
 
   &:hover {
