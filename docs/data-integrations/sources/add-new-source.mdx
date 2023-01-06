@@ -220,4 +220,8 @@ class Titanic(Source):
             values = line.split(',')
             rows.append({col: values[idx] for idx, col in enumerate(columns)})
         yield rows
+
+
+if __name__ == '__main__':
+    main(Titanic)
 ```
