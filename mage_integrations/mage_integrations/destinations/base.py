@@ -232,7 +232,16 @@ class Destination():
         )
 
         if len(batch_data) >= 1:
-            self.export_batch_data(batch_data, stream)
+            try:
+                self.export_batch_data(batch_data, stream)
+            except Exception as err:
+                message = f'{self.__class__.__name__} failed to export batch data with error {err}.'
+                self.logger.exception(message, tags=dict(
+                    error=str(err),
+                    errors=traceback.format_stack(),
+                    message=traceback.format_exc(),
+                ))
+                raise Exception(message)
 
             self.logger.info(
                 f'{self.__class__.__name__} process record data for stream {stream} completed.',
