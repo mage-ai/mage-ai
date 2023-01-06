@@ -8,6 +8,7 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import DataTable from '@components/DataTable';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
@@ -29,7 +30,12 @@ import {
   HTMLOutputStyle,
   OutputRowStyle,
 } from './index.style';
-import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
+import {
+  INTERNAL_OUTPUT_REGEX,
+  INTERNAL_OUTPUT_STRING,
+  INTERNAL_TEST_REGEX,
+  INTERNAL_TEST_STRING,
+} from '@utils/models/output';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
@@ -100,10 +106,12 @@ function CodeOutput({
 
     if (DATA_TYPE_TEXTLIKE.includes(last?.type)
       && last?.type === curr.type
-      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)) {
+      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+      ) {
       last.data += combineTextData(curr.data);
     } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
-      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)) {
+      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
+      ) {
       arr.push({
         ...curr,
         data: combineTextData(curr.data),
@@ -127,7 +135,10 @@ function CodeOutput({
     progress,
   ]);
 
-  const content = useMemo(() => {
+  const {
+    content,
+    testContent,
+  } = useMemo(() => {
     const createDataTableElement = ({
       columns,
       index,
@@ -159,7 +170,10 @@ function CodeOutput({
 
     let isTable = false;
 
-    const arrContent = combinedMessages?.map(({
+    const arrContent = [];
+    const testMessages = [];
+
+    combinedMessages?.forEach(({
       data: dataInit,
       type: dataType,
     }: KernelOutputType, idx: number) => {
@@ -188,8 +202,32 @@ function CodeOutput({
 
         const borderTop = idx >= 1;
 
-        if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
-          const parts = data.split('[__internal_output__]');
+        if (typeof data === 'string' && data.match(INTERNAL_TEST_REGEX)) {
+          const parts = data.split('\n');
+          const partsNonTest = [];
+          parts.forEach((part: string) => {
+            if (part.match(INTERNAL_TEST_REGEX)) {
+              const parts = part.split(INTERNAL_TEST_STRING);
+              const rawString = parts[parts.length - 1];
+              if (isJsonString(rawString)) {
+                testMessages.push(JSON.parse(rawString));
+              }
+            } else {
+              partsNonTest.push(part);
+            }
+
+            if (partsNonTest.length >= 1) {
+              data = partsNonTest.join('\n');
+            } else {
+              data = null;
+            }
+          });
+        }
+
+        if (data === null) {
+          return;
+        } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
+          const parts = data.split(INTERNAL_OUTPUT_STRING);
           let rawString = parts[parts.length - 1];
 
           // Sometimes the FloatProgress is appended to the end of the table data
@@ -275,7 +313,9 @@ function CodeOutput({
         }
       });
 
-      return arr;
+      if (arr.length >= 1) {
+        arrContent.push(arr);
+      }
     });
 
     if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK) {
@@ -291,7 +331,10 @@ function CodeOutput({
       ]);
     }
 
-    return arrContent;
+    return {
+      content: arrContent,
+      testContent: testMessages,
+    };
   }, [
     combinedMessages,
     contained,
@@ -318,6 +361,39 @@ function CodeOutput({
           hasError={hasError}
           selected={selected}
         >
+          {!collapsed && testContent?.length >= 1 && (
+            <>
+              <Spacing py={2}>
+                <OutputRowStyle contained>
+                  {testContent.map(({
+                    error,
+                    message,
+                    stacktrace,
+                  }, idx) => (
+                    <Spacing key={message} mt={idx >= 1 ? 3 : 0}>
+                      <Text monospace preWrap>
+                        <Ansi>
+                          {`${message}${error ? ' ' + error : ''}`}
+                        </Ansi>
+                      </Text>
+
+                      {stacktrace?.map((line: string) => (
+                        <Text default key={line} monospace preWrap small>
+                          <Ansi>
+                            {line}
+                          </Ansi>
+                        </Text>
+                      ))}
+                    </Spacing>
+                  ))}
+                </OutputRowStyle>
+              </Spacing>
+
+              <Spacing mb={hasError ? 2 : 0}>
+                <Divider medium />
+              </Spacing>
+            </>
+          )}
           {!collapsed && content}
         </ContainerStyle>
       )}

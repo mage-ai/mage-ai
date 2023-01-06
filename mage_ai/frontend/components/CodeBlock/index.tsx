@@ -296,8 +296,21 @@ function CodeBlockProps({
         disableReset,
         runDownstream,
         runUpstream,
-        runTests,
+        runTests: runTestsInit,
       } = payload || {};
+
+      let runTests = runTestsInit;
+      if (runTests === null || typeof runTests === 'undefined') {
+        const {
+          type: blockType,
+        } = blockPayload || {};
+        runTests = [
+          BlockTypeEnum.DATA_LOADER,
+          BlockTypeEnum.DATA_EXPORTER,
+          BlockTypeEnum.TRANSFORMER,
+        ].includes(blockType);
+      }
+
       runBlock({
         block: blockPayload,
         code: code || content,
