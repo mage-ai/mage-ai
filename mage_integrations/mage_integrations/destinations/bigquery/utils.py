@@ -1,3 +1,4 @@
+from dateutil.parser import ParserError
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
@@ -7,6 +8,7 @@ from mage_integrations.destinations.constants import (
 )
 from mage_integrations.destinations.sql.utils import convert_column_type as convert_column_type_orig
 from typing import Dict, List
+import dateutil.parser
 import json
 
 
@@ -74,8 +76,11 @@ def convert_datetime(value: str, column_type_dict: Dict) -> str:
         arr = parts[:-1]
         tz = parts[-1][:3]
         arr.append(tz)
+        final_value = '.'.join(arr)
+    else:
+        final_value = dateutil.parser.parse(value).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
 
-    return convert_column_to_type('.'.join(arr), column_type_converted)
+    return convert_column_to_type(final_value, column_type_converted)
 
 
 def convert_converted_type_to_parameter_type(converted_type):

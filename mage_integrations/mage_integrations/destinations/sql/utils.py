@@ -8,9 +8,17 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
 )
-from mage_integrations.destinations.utils import clean_column_name
+from mage_integrations.destinations.sql.constants import SQL_RESERVED_WORDS_SUBSET
+from mage_integrations.destinations.utils import clean_column_name as clean_column_name_orig
 from typing import Callable, Dict, List
 import json
+
+
+def clean_column_name(col):
+    col_new = clean_column_name_orig(col)
+    if col_new.upper() in SQL_RESERVED_WORDS_SUBSET:
+        col_new = f'_{col_new}'
+    return col_new
 
 
 def build_create_table_command(
@@ -92,6 +100,7 @@ def column_type_mapping(
     mapping = {}
     for column, column_settings in schema['properties'].items():
         arr = column_settings.get('type', [])
+        column_types_for_array_type = []
 
         if type(arr) is not list:
             arr = [arr]
@@ -103,6 +112,16 @@ def column_type_mapping(
             arr2 = any_of.get('type', [])
             if type(arr2) is not list:
                 arr2 = [arr2]
+
+            any_of_items = any_of.get('items', {})
+            if any_of_items:
+                if type(any_of_items) is not list:
+                    any_of_items = [any_of_items]
+                for aoi in any_of_items:
+                    aoi_type = aoi.get('type')
+                    if aoi_type:
+                        column_types_for_array_type.append(aoi_type)
+
             arr += arr2
 
         column_types = [t for t in arr if 'null' != t]
@@ -119,7 +138,7 @@ def column_type_mapping(
         item_type_converted = None
 
         if COLUMN_TYPE_ARRAY == column_type:
-            item_types = [t for t in column_settings.get('items', {}).get('type', []) if 'null' != t]
+            item_types = column_types_for_array_type + [t for t in column_settings.get('items', {}).get('type', []) if 'null' != t]
             if len(item_types):
                 item_type = item_types[0]
                 item_type_converted = convert_column_type_func(

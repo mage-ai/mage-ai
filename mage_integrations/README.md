@@ -29,7 +29,7 @@ Run
 ### Discover streams
 
 ```bash
-python3 mage_integrations/sources/chargebee/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
   --discover_streams
@@ -38,10 +38,28 @@ python3 mage_integrations/sources/chargebee/__init__.py \
 ### Get schema
 
 ```bash
-python3 mage_integrations/sources/chargebee/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
-  --selected_streams '["customers"]' > mage_integrations/TEST_CATALOG.json
+  --selected_streams '["tickets"]' > mage_integrations/TEST_CATALOG.json
+```
+
+## Save source records to file
+
+```bash
+python3 mage_integrations/sources/freshdesk/__init__.py \
+  --config mage_integrations/TEST_CONFIG1.json \
+  --catalog mage_integrations/TEST_CATALOG.json \
+  --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
+```
+
+## Pipe records into destination
+
+```bash
+python3 mage_integrations/test.py | python3 mage_integrations/destinations/postgresql/__init__.py \
+  --config mage_integrations/TEST_CONFIG2.json \
+  --state mage_integrations/STATE \
+  --debug
 ```
 
 ### Count records
@@ -63,31 +81,21 @@ python3 mage_integrations/sources/mysql/__init__.py \
   --state mage_integrations/TEST_STATE.json
 ```
 
-## Save source records to file
-
 ```bash
-python3 mage_integrations/sources/chargebee/__init__.py \
-  --config mage_integrations/TEST_CONFIG1.json \
-  --catalog mage_integrations/TEST_CATALOG.json \
-  --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
-```
-
-## Pipe records into destination
-
-```bash
-python3 mage_integrations/test.py | python3 mage_integrations/destinations/bigquery/__init__.py \
+python3 mage_integrations/destinations/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG2.json \
   --state mage_integrations/STATE \
+  --input_file_path mage_integrations/TEST_OUTPUT \
   --debug
 ```
 
 ## Source to destination end-to-end
 
 ```bash
-python3 mage_integrations/sources/chargebee/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
-  --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/bigquery/__init__.py \
+  --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/postgresql/__init__.py \
   --config mage_integrations/TEST_CONFIG2.json \
   --state mage_integrations/STATE \
   --debug
