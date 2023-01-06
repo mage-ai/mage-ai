@@ -234,6 +234,11 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
                             pipeline_run.block_runs
                         )
                     )
+                # Update block run status to INITIAL
+                BlockRun.batch_update_status(
+                    [b.id for b in incomplete_block_runs],
+                    BlockRun.BlockRunStatus.INITIAL,
+                )
 
                 from mage_ai.orchestration.execution_process_manager import execution_process_manager
                 if PipelineType.STREAMING != pipeline.type:
@@ -269,8 +274,10 @@ class ApiPipelineRunListHandler(BaseHandler):
 
         if PipelineSchedule.ScheduleType.API == pipeline_schedule.schedule_type and \
             pipeline_schedule.token and \
-            pipeline_schedule.token != token:
-            raise UnauthenticatedRequestException(f'Invalid token for pipeline schedule ID {pipeline_schedule_id}.')
+                pipeline_schedule.token != token:
+            raise UnauthenticatedRequestException(
+                f'Invalid token for pipeline schedule ID {pipeline_schedule_id}.',
+            )
 
         pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
 
