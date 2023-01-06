@@ -389,11 +389,23 @@ class Source:
             start_date=start_date,
             stream=stream,
         ):
+            self.logger.info(
+                'Start writing batch.',
+                tags=dict(
+                    stream=tap_stream_id,
+                ),
+            )
             result = self.write_records(stream, rows, properties)
             max_bookmark_tmp = result['max_bookmark']
             final_record = result['final_record']
             max_bookmark = max(max_bookmark, max_bookmark_tmp)
             record_count += len(rows)
+            self.logger.info(
+                'Finish writing batch.',
+                tags=dict(
+                    stream=tap_stream_id,
+                ),
+            )
 
         if final_record:
             self.logger.info(
