@@ -65,13 +65,18 @@ class PipelineScheduler:
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
 
         # Cancel all the block runs
+        block_runs_to_cancel = []
         for b in self.pipeline_run.block_runs:
             if b.status in [
                 BlockRun.BlockRunStatus.INITIAL,
                 BlockRun.BlockRunStatus.QUEUED,
                 BlockRun.BlockRunStatus.RUNNING,
             ]:
-                b.update(status=BlockRun.BlockRunStatus.CANCELLED)
+                block_runs_to_cancel.append(b)
+        BlockRun.batch_update_status(
+            [b.id for b in block_runs_to_cancel],
+            BlockRun.BlockRunStatus.CANCELLED,
+        )
 
         if PipelineType.INTEGRATION == self.pipeline.type:
             execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)

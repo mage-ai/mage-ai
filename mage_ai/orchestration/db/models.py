@@ -367,6 +367,17 @@ class BlockRun(BaseModel):
         ).get_logs()
 
     @classmethod
+    def batch_update_status(self, block_run_ids: List[int], status):
+        BlockRun.query.filter(BlockRun.id.in_(block_run_ids)).update({
+            BlockRun.status: status
+        }, synchronize_session=False)
+        try:
+            db_connection.session.commit()
+        except Exception as e:
+            db_connection.rollback()
+            raise e
+
+    @classmethod
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':
         block_runs = self.query.filter(
             BlockRun.pipeline_run_id == pipeline_run_id,
