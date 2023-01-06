@@ -121,8 +121,13 @@ class IntegrationBlock(Block):
 
                 outputs.append(proc)
 
+            proc.communicate()
+            if proc.returncode != 0 and proc.returncode is not None:
+                raise subprocess.CalledProcessError(proc.returncode, proc.args)
+
             file_size = os.path.getsize(source_output_file_path)
-            msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output file {source_output_file_path}.'
+            msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output '\
+                  f'file {source_output_file_path}.'
             if logger:
                 logger.info(msg, **updated_logging_tags)
             else:
@@ -174,7 +179,6 @@ class IntegrationBlock(Block):
                             schema_original = data
                         elif TYPE_RECORD == line_type:
                             record = data['record']
-                            existing_columns = list(record.keys())
                             input_vars = [pd.DataFrame.from_dict([record])]
                             input_kwargs = merge_dict(
                                 global_vars,
@@ -287,6 +291,10 @@ class IntegrationBlock(Block):
                     logging_tags=logging_tags,
                     tags=tags,
                 )
+
+            proc.communicate()
+            if proc.returncode != 0 and proc.returncode is not None:
+                raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
             outputs.append(proc)
 
