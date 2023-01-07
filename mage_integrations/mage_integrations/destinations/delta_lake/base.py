@@ -1,4 +1,3 @@
-from deltalake import PyDeltaTableError
 from deltalake.writer import try_get_deltatable
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
@@ -12,17 +11,14 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_STRING,
     KEY_RECORD,
 )
-from mage_integrations.destinations.delta_lake.constants import MODE_APPEND, MODE_OVERWRITE
+from mage_integrations.destinations.delta_lake.constants import MODE_APPEND
 from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
-from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
 from mage_integrations.destinations.delta_lake.writer import write_deltalake
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.array import find
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Dict, List
 import argparse
-import math
-import numpy as np
 import pandas as pd
 import pyarrow as pa
 import sys
@@ -140,11 +136,11 @@ class DeltaLake(BaseDestination):
 
         self.logger.info('Export data started.', tags=tags)
 
-        self.logger.info(f'Checking if delta logs exist...', tags=tags)
+        self.logger.info('Checking if delta logs exist...', tags=tags)
         if self.check_and_create_delta_log(stream):
-            self.logger.info(f'Existing delta logs exist.', tags=tags)
+            self.logger.info('Existing delta logs exist.', tags=tags)
         else:
-            self.logger.info(f'No delta logs exist.', tags=tags)
+            self.logger.info('No delta logs exist.', tags=tags)
 
         self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
         table = self.get_table_for_stream(stream)
@@ -155,9 +151,12 @@ class DeltaLake(BaseDestination):
 
         for r in record_data:
             r['record'] = update_record_with_internal_columns(r['record'])
+        self.logger.info(f'Finish adding internal data for {len(record_data)} records.', tags=tags)
 
         df = pd.DataFrame([d[KEY_RECORD] for d in record_data])
         df_count = len(df.index)
+
+        self.logger.info(f'Finish converting record data to dataframe {df.shape}.', tags=tags)
 
         # if self.disable_column_type_check.get(stream):
         #     for column_name in self.schemas[stream]['properties'].keys():
@@ -167,6 +166,8 @@ class DeltaLake(BaseDestination):
         # else:
 
         df, schema = self.build_schema(stream, df)
+
+        self.logger.info('Finish building schema.', tags=tags)
 
         idx = 0
         total_byte_size = int(df.memory_usage(deep=True).sum())
