@@ -85,12 +85,11 @@ class DeltaLake(BaseDestination):
             self.logger.info(
                 f'Build schema for {column_name} {properties}. 2. column_type_df {column_type_df}', tags=tags)
             self.logger.info(f'not null: {non_null}', tags=tags)
-            self.logger.info(f'{df[non_null][column_name].head(10)}', tags=tags)
             self.logger.info(f'{df[non_null][column_name].apply(lambda x: str(column_type_df(x)))}', tags=tags)
 
-            df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
-                lambda x: str(column_type_df(x)),
-            )
+            # df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
+            #     lambda x: str(column_type_df(x)),
+            # )
             self.logger.info(f'Build schema for {column_name} {properties}. 3', tags=tags)
 
             if df[column_name].dropna().count() != number_of_rows:
