@@ -87,9 +87,13 @@ class DeltaLake(BaseDestination):
             self.logger.info(f'not null: {non_null}', tags=tags)
             self.logger.info(f'{df[non_null][column_name].apply(lambda x: str(column_type_df(x)))}', tags=tags)
 
-            # df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
-            #     lambda x: str(column_type_df(x)),
-            # )
+            try:
+                df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
+                    lambda x: str(column_type_df(x)),
+                )
+            except Exception as err:
+                self.logger.info(f'Fail to convert type with err: {err}', tags=tags)
+
             self.logger.info(f'Build schema for {column_name} {properties}. 3', tags=tags)
 
             if df[column_name].dropna().count() != number_of_rows:
