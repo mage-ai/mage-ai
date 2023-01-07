@@ -80,17 +80,24 @@ class DeltaLake(BaseDestination):
                 column_type = pa.string()
                 column_type_df = str
 
+            self.logger.info(f'Build schema for {column_name} {properties}. 2', tags=tags)
+
             non_null = df[column_name].notnull()
             df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
                 lambda x: str(column_type_df(x)),
             )
+            self.logger.info(f'Build schema for {column_name} {properties}. 3', tags=tags)
 
             if df[column_name].dropna().count() != number_of_rows:
                 df[column_name] = df[column_name].fillna('')
                 column_type = pa.string()
                 column_type_df = str
 
+            self.logger.info(f'Build schema for {column_name} {properties}. 4', tags=tags)
+
             df[column_name] = df[column_name].map(column_type_df)
+
+            self.logger.info(f'Build schema for {column_name} {properties}. 5', tags=tags)
 
             f = pa.field(
                 name=column_name,
