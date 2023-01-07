@@ -85,7 +85,7 @@ class DeltaLake(BaseDestination):
             self.logger.info(
                 f'Build schema for {column_name} {properties}. 2. column_type_df {column_type_df}', tags=tags)
             self.logger.info(f'not null: {non_null}', tags=tags)
-            self.logger.info(f'{df[non_null][column_name].head(10)}')
+            self.logger.info(f'{df[non_null][column_name].head(10)}', tags=tags)
 
             df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
                 lambda x: str(column_type_df(x)),
