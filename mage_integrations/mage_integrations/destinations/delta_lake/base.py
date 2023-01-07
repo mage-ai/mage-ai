@@ -86,6 +86,7 @@ class DeltaLake(BaseDestination):
                 f'Build schema for {column_name} {properties}. 2. column_type_df {column_type_df}', tags=tags)
             self.logger.info(f'not null: {non_null}', tags=tags)
             self.logger.info(f'{df[non_null][column_name].head(10)}', tags=tags)
+            self.logger.info(f'{df[non_null][column_name].apply(lambda x: str(column_type_df(x)))}', tags=tags)
 
             df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
                 lambda x: str(column_type_df(x)),
@@ -169,7 +170,11 @@ class DeltaLake(BaseDestination):
         df = pd.DataFrame([d[KEY_RECORD] for d in record_data])
         df_count = len(df.index)
 
-        self.logger.info(f'Finish converting record data to dataframe {df.shape}.', tags=tags)
+        total_byte_size = int(df.memory_usage(deep=True).sum())
+        tags2 = merge_dict(tags, dict(
+            total_byte_size=total_byte_size,
+        ))
+        self.logger.info(f'Finish converting record data to dataframe {df.shape}.', tags=tags2)
 
         # if self.disable_column_type_check.get(stream):
         #     for column_name in self.schemas[stream]['properties'].keys():
@@ -178,7 +183,7 @@ class DeltaLake(BaseDestination):
         #     df = dt.to_pandas()
         # else:
 
-        df, schema = self.build_schema(stream, df, tags=tags)
+        df, schema = self.build_schema(stream, df, tags=tags2)
 
         self.logger.info('Finish building schema.', tags=tags)
 
