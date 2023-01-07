@@ -322,7 +322,6 @@ class Destination():
                 errors=traceback.format_stack(),
                 message=traceback.format_exc(),
             ))
-            raise Exception(message)
 
         self.after_process()
 
