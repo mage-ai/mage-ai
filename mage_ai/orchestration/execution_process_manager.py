@@ -1,8 +1,8 @@
 from mage_ai.orchestration.db.models import PipelineRun
+from multiprocessing import Process
 import multiprocessing
 import os
 import signal
-
 
 class ExecutionProcessManager:
     def __init__(self):

@@ -15,7 +15,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
-from mage_ai.orchestration.db.process import create_process
+from mage_ai.orchestration.db.process import create_process, worker_manager
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
@@ -269,7 +269,6 @@ class PipelineScheduler:
                     block.all_upstream_blocks_completed(completed_block_uuids)
 
             if completed:
-                block_run.update(status=BlockRun.BlockRunStatus.QUEUED)
                 queued_block_runs.append(block_run)
 
         return queued_block_runs
@@ -279,6 +278,8 @@ class PipelineScheduler:
         block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
         block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
+        print('block runs to schedule:', block_runs_to_schedule)
+
         for b in block_runs_to_schedule:
             tags = dict(
                 block_run_id=b.id,
@@ -286,22 +287,27 @@ class PipelineScheduler:
             )
 
             b.update(
-                started_at=datetime.now(),
-                status=BlockRun.BlockRunStatus.RUNNING,
+                status=BlockRun.BlockRunStatus.QUEUED,
             )
 
             self.logger.info(
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-            proc = create_process(run_block, (
+            worker_manager.add_job(run_block, (
                 self.pipeline_run.id,
                 b.id,
                 get_variables(self.pipeline_run),
                 self.__build_tags(**tags),
             ))
-            execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
-            proc.start()
+            # proc = create_process(run_block, (
+            #     self.pipeline_run.id,
+            #     b.id,
+            #     get_variables(self.pipeline_run),
+            #     self.__build_tags(**tags),
+            # ))
+            # execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
+            # proc.start()
 
     def __schedule_integration_pipeline(self, block_runs: List[BlockRun] = None) -> None:
         if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
@@ -591,6 +597,10 @@ def run_block(
     pipeline = pipeline_scheduler.pipeline
 
     block_run = BlockRun.query.get(block_run_id)
+    block_run.update(
+        started_at=datetime.now(),
+        status=BlockRun.BlockRunStatus.RUNNING,
+    )
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
                                    f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
                                    **tags)
