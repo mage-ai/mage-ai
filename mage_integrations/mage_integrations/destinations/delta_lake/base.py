@@ -38,11 +38,13 @@ class DeltaLake(BaseDestination):
     def build_client(self):
         raise Exception('Subclasses must implement the build_client method.')
 
-    def build_schema(self, stream: str, df: 'pd.DataFrame'):
+    def build_schema(self, stream: str, df: 'pd.DataFrame', tags=[]):
         number_of_rows = len(df.index)
 
         schema_out = []
         for column_name, properties in self.schemas[stream]['properties'].items():
+            self.logger.info(f'Build schema for {column_name} {properties}.', tags=tags)
+
             column_types = properties.get('type', [])
             column_format = properties.get('format')
 
@@ -165,7 +167,7 @@ class DeltaLake(BaseDestination):
         #     df = dt.to_pandas()
         # else:
 
-        df, schema = self.build_schema(stream, df)
+        df, schema = self.build_schema(stream, df, tags=tags)
 
         self.logger.info('Finish building schema.', tags=tags)
 
