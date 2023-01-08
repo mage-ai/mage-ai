@@ -11,34 +11,31 @@ You can write R language to transform data in blocks.
 1. Add a data loader, transformer, or data exporter block.
 1. Select `R`.
 
----
-
 ## Example pipeline
 
-<CodeGroup>
+1. Data loader
+    ```R
+    load_data <- function() {
+        # Specify your data loading logic here
+        # Return value: loaded dataframe
+        df <- read.csv(url('https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv'))
+        df
+    }
+    ```
+1. Transformer
+    ```R 
+    library("pacman")
+    p_load(dplyr)
 
-```R Data loader
-load_data <- function() {
-    # Specify your data loading logic here
-    # Return value: loaded dataframe
-    df <- read.csv(url('https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv'))
-    df
-}
-```
-
-```R Transformer
-library("pacman")
-p_load(dplyr)
-
-transform <- function(df_1, ...) {
-    # Specify your transformation logic here
-    # Return value: transformed dataframe.
-    df_1 <- filter(df_1, Pclass < 3)
-    df_1
-}
-```
-
-```R Data exporter
+    transform <- function(df_1, ...) {
+        # Specify your transformation logic here
+        # Return value: transformed dataframe.
+        df_1 <- filter(df_1, Pclass < 3)
+        df_1
+    }
+    ```
+1. Data exporter
+```R
 export_data <- function(df_1, ...) {
     # Specify your data exporting logic here
     # Return value: exported dataframe
@@ -46,4 +43,17 @@ export_data <- function(df_1, ...) {
 }
 ```
 
-</CodeGroup>
+## Install R packages
+
+Add the following at the start of your code in your R block:
+
+```R
+pacman::p_load(package1, package2, package3)
+```
+
+Or
+
+```R
+library("pacman")
+p_load(dplyr)
+```
