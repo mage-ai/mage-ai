@@ -243,7 +243,7 @@ class BaseSQLDatabase(BaseIO):
 
         Args:
             schema (str): The schema to select the table from.
-            size (int): The number of rows to sample. Defaults to 100,000
+            size (int): The number of rows to sample. Defaults to 10,000,000.
             table (str): The table to sample from in the connected database.
 
         Returns:

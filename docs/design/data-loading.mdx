@@ -217,12 +217,12 @@ Exports a Pandas data frame to a Redshift cluster under the specified table. The
 
 Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
 
-This function will load at maximum 100,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse using `execute`.
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse using `execute`.
 
 -   **Args**:
 
     -   `query_string (str)`: Query to fetch a table or subset of a table.
-    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 100,000.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
     -   `*args, **kwargs`: Additional parameters to send to query, including parameters
         for use with format strings. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
 
@@ -243,7 +243,7 @@ Sample data from a table in the selected database in the Redshift cluster. Sampl
 -   **Args**:
 
     -   `schema (str)`: The schema to select the table from.
-    -   `size (int)`: The number of rows to sample. Defaults to 100,000.
+    -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
     -   `table (str)`: The table to sample from in the connected database.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
@@ -318,14 +318,14 @@ If the format is HDF5, the default key under which the data frame is stored is t
 
 **_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
 
-Loads data from object in S3 bucket into a Pandas data frame. This function will load at maximum 100,000 rows of data from the specified file (this limit is configurable).
+Loads data from object in S3 bucket into a Pandas data frame. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
 
 -   **Args**:
 
     -   `bucket_name (str)`: Name of the bucket to load data from.
     -   `object_key (str)`: Key of the object in S3 bucket to load data from.
     -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
-    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 100,000.
+    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
     -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
 
         | Format  | Pandas Reader                                                                                         |
@@ -381,13 +381,13 @@ If the format is HDF5, the default key under which the data frame is stored is t
 
 **_load_** - `load(filepath: os.PathLike, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
 
-Loads the data frame from the filepath specified. This function will load at maximum 100,000 rows of data from the specified file (this limit is configurable).
+Loads the data frame from the filepath specified. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
 
 -   **Args**:
 
     -   `filepath (os.PathLike)`: Filepath to load data frame from.
     -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
-    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 100,000.
+    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
     -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
 
         | Format  | Pandas Reader                                                                                         |
@@ -489,11 +489,11 @@ Exports a data frame to a Google BigQuery warehouse. If table doesn't exist, the
 
 Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
 
-When a select query is provided, this function will load at maximum 100,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+When a select query is provided, this function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
 
 -   **Args**:
     -   `query_string (str)`: Query to fetch a table or subset of a table.
-    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 100,000.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
     -   `**kwargs`: Additional parameters to pass to the query. See [Google BigQuery Python client](https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.client.Client.html?highlight=client#google.cloud.bigquery.client.Client.query) docs for additional arguments.
 
 **_sample_** - `sample(schema: str, table: str, size: int, **kwargs) -> DataFrame`
@@ -503,7 +503,7 @@ Sample data from a table in the BigQuery warehouse. Sample is not guaranteed to 
 -   **Args**:
 
     -   `schema (str)`: The schema to select the table from.
-    -   `size (int)`: The number of rows to sample. Defaults to 100,000
+    -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
     -   `table (str)`: The table to sample from in the connected database.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
@@ -597,11 +597,11 @@ Any changes made to the database will not be saved unless `commit()` is called a
 
 Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
 
-This function will load at maximum 100,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
 
 -   **Args**:
     -   `query_string (str)`: Query to fetch a table or subset of a table.
-    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 100,000.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
     -   `**kwargs`: Additional parameters to pass to the query. See [`psycopg2` docs](https://www.psycopg.org/docs/usage.html#query-parameters) for configuring query parameters.
 -   **Returns**: (`DataFrame`) Data frame containing the queried data.
 
@@ -620,7 +620,7 @@ Sample data from a table in the PostgreSQL database. Sample is not guaranteed to
 -   **Args**:
 
     -   `schema (str)`: The schema to select the table from.
-    -   `size (int)`: The number of rows to sample. Defaults to 100,000.
+    -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
     -   `table (str)`: The table to sample from in the connected database.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
@@ -720,11 +720,11 @@ Any changes made to the database will not be saved unless `commit()` is called a
 
 Loads data from Snowflake into a Pandas data frame based on the query given. This will fail unless a `SELECT` query is provided.
 
-This function will load at maximum 100,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse using `execute`.
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse using `execute`.
 
 -   **Args**:
     -   `query_string (str)`: Query to fetch a table or subset of a table.
-    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 100,000.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
     -   `*args, **kwargs`: Additional parameters to pass to the query. See [Snowflake Connector Docs](https://docs.snowflake.com/en/user-guide/python-connector-api.html#execute) for additional parameters.
 -   **Returns**: (`DataFrame`) Data frame containing the queried data
 
@@ -743,7 +743,7 @@ Sample data from a table in the Snowflake warehouse. Sample is not guaranteed to
 -   **Args**:
 
     -   `schema (str)`: The schema to select the table from.
-    -   `size (int)`: The number of rows to sample. Defaults to 100,000
+    -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
     -   `table (str)`: The table to sample from in the connected database.
 
 -   **Returns**: (`DataFrame`) Sampled data from the data frame.

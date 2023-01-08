@@ -83,12 +83,12 @@ class Postgres(BaseSQLConnection):
         """
         Loads data from the connected database into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. This function will load at
-        maximum 100,000 rows of data. To operate on more data, consider performing data
+        maximum 10,000,000 rows of data. To operate on more data, consider performing data
         transformations in warehouse.
 
         Args:
             query_string (str): Query to execute on the database.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
             **kwargs: Additional query parameters.
 
         Returns:

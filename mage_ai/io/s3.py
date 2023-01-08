@@ -48,12 +48,12 @@ class S3(BaseFile):
     ) -> DataFrame:
         """
         Loads data from S3 into a Pandas data frame. This function will load at
-        maximum 100,000 rows of data from the specified file.
+        maximum 10,000,000 rows of data from the specified file.
 
         Args:
             import_config (Mapping, optional): Configuration settings for importing file from
             S3. Defaults to None.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
             read_config (Mapping, optional): Configuration settings for reading file into data
             frame. Defaults to None.
 

@@ -54,13 +54,13 @@ class Redshift(BaseSQLConnection):
         """
         Uses query to load data from Redshift cluster into a Pandas data frame.
         This will fail if the query returns no data from the database. When a
-        select query is provided, this function will load at maximum 100,000 rows of data.
+        select query is provided, this function will load at maximum 10,000,000 rows of data.
         To operate on more data, consider performing data transformations in warehouse.
 
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
             *args, **kwargs: Additional parameters to send to query, including parameters
             for use with format strings. See `redshift-connector` docs for more options.
 
