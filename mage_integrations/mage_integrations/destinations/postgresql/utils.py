@@ -4,6 +4,15 @@ from typing import Dict
 import json
 
 
+def escape_quotes(line: str, single: bool = True, double: bool = True) -> str:
+    new_line = str(line)
+    if single:
+        new_line = new_line.replace("'", "''")
+    if double:
+        new_line = new_line.replace('\"', '\\"')
+    return new_line
+
+
 def convert_array(v: str, column_type_dict: Dict):
     item_type_converted = column_type_dict['item_type_converted']
 
@@ -14,10 +23,10 @@ def convert_array(v: str, column_type_dict: Dict):
                 if type(v2) is dict:
                     v2 = json.dumps(v2)
             arr.append(v2)
-        arr_joined = ', '.join([f"'{v2}'" for v2 in arr])
+        arr_joined = ', '.join([f"'{escape_quotes(v2, double=False)}'" for v2 in arr])
         value_final = f"ARRAY[{arr_joined}]::JSONB[]"
     else:
-        value_final = [str(s).replace("'", "''").replace('\"', '\\"') for s in v]
+        value_final = [escape_quotes(s) for s in v]
         strings_joined = ', '.join(value_final)
         value_final = f"'{{{strings_joined}}}'"
 
