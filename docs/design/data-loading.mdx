@@ -400,7 +400,92 @@ Loads the data frame from the filepath specified. This function will load at max
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
 ## GoogleCloudStorage
-WIP
+
+`mage_ai.io.google_cloud_storage.GoogleCloudStorage`
+
+Handles data transfer between a Google Cloud Storage bucket and the Mage app. Supports loading files of any of the following types:
+
+-   CSV
+-   JSON
+-   Parquet
+-   HDF5
+
+If `GOOGLE_APPLICATION_CREDENTIALS` environment is set, no further arguments are needed other than those specified below. Otherwise, use the factory method `with_config` to construct the data loader using manually specified credentials.
+
+To authenticate (and authorize) access to Google Cloud Storage, credentials must be provided.
+Below are the different ways to access those credentials:
+-   Define the `GOOGLE_APPLICATION_CREDENTIALS` environment variable holding the filepath to your service account key
+-   Define the `GOOGLE_SERVICE_ACC_KEY_FILEPATH` key with your [configuration loader](#configuration-settings) or the `path_to_credentials` keyword argument with the client constructor holding the filepath to your service account key
+-   Define the `GOOGLE_SERVICE_ACC_KEY` key with your [configuration loader](#configuration-settings) or the `credentials_mapping` keyword argument with the client constructor holding a mapping sharing the same contents as your service key
+    -   if using a configuration file, be careful to wrap your service key values in quotes so the YAML parser reads the settings correctly
+-   Manually pass the `google.oauth2.service_account.Credentials` object with the keyword argument `credentials`
+
+<h3> Constructor </h3>
+
+`__init__(self, verbose: bool = False, **kwargs)`
+
+
+Initializes the GoogleCloudStorage data loading client.
+
+-   **Args**
+
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `False`.
+    -   `credentials_mapping (Mapping[str, str])` - Mapping object corresponding to your service account key. See instructions above on when to use this keyword argument
+    -   `path_to_credentials (str)` - Filepath to service account key. See instructions above on when to use this keyword argument.
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> GoogleCloudStorage`
+
+Creates GoogleCloudStorage data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`GoogleCloudStorage`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_export_** - `export(df: DataFrame, bucket_name: str, object_key: str, format: FileFormat | str = None, **kwargs) -> None:`
+
+Exports data frame to a GoogleCloudStorage bucket.
+
+-   **Args**:
+
+    -   `df (DataFrame)`: Data frame to export.
+    -   `bucket_name (str)`: Name of the bucket to export data frame to.
+    -   `object_key (str)`: Object key in GoogleCloudStorage bucket to export data frame to.
+    -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to `None`, in which case the format is inferred.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        | Format  | Pandas Writer                                                                                                         |
+        | ------- | --------------------------------------------------------------------------------------------------------------------- |
+        | CSV     | [_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)         |
+        | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
+        | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
+        | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+
+**_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
+
+Loads data from object in GoogleCloudStorage bucket into a Pandas data frame. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
+
+-   **Args**:
+
+    -   `bucket_name (str)`: Name of the bucket to load data from.
+    -   `object_key (str)`: Key of the object in GoogleCloudStorage bucket to load data from.
+    -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
+    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        | Format  | Pandas Reader                                                                                         |
+        | ------- | ----------------------------------------------------------------------------------------------------- |
+        | CSV     | [_read_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)         |
+        | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
+        | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
+        | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
+
+-   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
+
 
 ## AzureBlobStorage
 WIP

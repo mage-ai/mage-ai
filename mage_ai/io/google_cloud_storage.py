@@ -104,10 +104,10 @@ class GoogleCloudStorage(BaseFile):
 
         Args:
             df (DataFrame): Data frame to export
-            write_config (Mapping, optional): Configuration settings for writing data frame to
-            specified format. Defaults to None.
-            export_config (Mapping, optional): Configuration settings for exporting data frame
-            to Google Cloud Storage. Defaults to None.
+            bucket_name (str): Name of the bucket to export data frame to.
+            object_key (str): Object key in GoogleCloudStorage bucket to export data frame to.
+            format (FileFormat, optional): Format of the file to export data frame to.
+                Defaults to None, in which case the format is inferred.
         """
         if format is None:
             format = self._get_file_format(object_key)
