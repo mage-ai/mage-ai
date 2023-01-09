@@ -66,9 +66,13 @@ db_connection = DBConnection()
 
 def safe_db_query(func):
     def func_with_rollback(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.PendingRollbackError) as e:
-            db_connection.session.rollback()
-            raise e
+        retry_count = 0
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.PendingRollbackError) as e:
+                db_connection.session.rollback()
+                if retry_count >= 1:
+                    raise e
+                retry_count += 1
     return func_with_rollback
