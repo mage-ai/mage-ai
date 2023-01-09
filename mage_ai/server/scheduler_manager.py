@@ -2,10 +2,9 @@ from enum import Enum
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 import multiprocessing
-import threading
 import traceback
 
-SCHEDULER_AUTO_RESTART_INTERVAL = 30.0
+SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
 
 
 def run_scheduler():
@@ -66,9 +65,5 @@ scheduler_manager = SchedulerManager()
 
 
 def check_scheduler_status():
-    threading.Timer(SCHEDULER_AUTO_RESTART_INTERVAL, check_scheduler_status).start()
     status = scheduler_manager.get_status(auto_restart=True)
     print(f'Scheduler status: {status}.')
-
-
-check_scheduler_status()
