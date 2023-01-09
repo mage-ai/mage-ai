@@ -1,4 +1,3 @@
-from deltalake import PyDeltaTableError
 from deltalake.writer import try_get_deltatable
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
@@ -12,17 +11,14 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_STRING,
     KEY_RECORD,
 )
-from mage_integrations.destinations.delta_lake.constants import MODE_APPEND, MODE_OVERWRITE
+from mage_integrations.destinations.delta_lake.constants import MODE_APPEND
 from mage_integrations.destinations.delta_lake.raw_delta_table import RawDeltaTable
-from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
 from mage_integrations.destinations.delta_lake.writer import write_deltalake
 from mage_integrations.destinations.utils import update_record_with_internal_columns
-from mage_integrations.utils.array import find
+from mage_integrations.utils.array import batch, find
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Dict, List
 import argparse
-import math
-import numpy as np
 import pandas as pd
 import pyarrow as pa
 import sys
@@ -31,6 +27,8 @@ MAX_BYTE_SIZE_PER_WRITE = (5 * (1024 * 1024))
 
 
 class DeltaLake(BaseDestination):
+    BATCH_SIZE = 1000
+
     @property
     def mode(self):
         return self.config.get('mode', MODE_APPEND)
@@ -140,11 +138,11 @@ class DeltaLake(BaseDestination):
 
         self.logger.info('Export data started.', tags=tags)
 
-        self.logger.info(f'Checking if delta logs exist...', tags=tags)
+        self.logger.info('Checking if delta logs exist...', tags=tags)
         if self.check_and_create_delta_log(stream):
-            self.logger.info(f'Existing delta logs exist.', tags=tags)
+            self.logger.info('Existing delta logs exist.', tags=tags)
         else:
-            self.logger.info(f'No delta logs exist.', tags=tags)
+            self.logger.info('No delta logs exist.', tags=tags)
 
         self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
         table = self.get_table_for_stream(stream)
@@ -156,41 +154,41 @@ class DeltaLake(BaseDestination):
         for r in record_data:
             r['record'] = update_record_with_internal_columns(r['record'])
 
-        df = pd.DataFrame([d[KEY_RECORD] for d in record_data])
-        df_count = len(df.index)
+        for idx, sub_batch in enumerate(batch(record_data, self.BATCH_SIZE)):
 
-        # if self.disable_column_type_check.get(stream):
-        #     for column_name in self.schemas[stream]['properties'].keys():
-        #         df[column_name] = df[column_name].fillna('')
-        #     dt, schema = delta_arrow_schema_from_pandas(df)
-        #     df = dt.to_pandas()
-        # else:
+            df = pd.DataFrame([d[KEY_RECORD] for d in sub_batch])
 
-        df, schema = self.build_schema(stream, df)
+            # if self.disable_column_type_check.get(stream):
+            #     for column_name in self.schemas[stream]['properties'].keys():
+            #         df[column_name] = df[column_name].fillna('')
+            #     dt, schema = delta_arrow_schema_from_pandas(df)
+            #     df = dt.to_pandas()
+            # else:
 
-        idx = 0
-        total_byte_size = int(df.memory_usage(deep=True).sum())
-        tags2 = merge_dict(tags, dict(
-            total_byte_size=total_byte_size,
-        ))
+            df, schema = self.build_schema(stream, df)
 
-        self.logger.info(f'Inserting records for batch {idx} started.', tags=tags2)
+            total_byte_size = int(df.memory_usage(deep=True).sum())
+            tags2 = merge_dict(tags, dict(
+                total_byte_size=total_byte_size,
+            ))
 
-        write_deltalake(
-            table or table_uri,
-            data=df,
-            mode=self.mode,
-            overwrite_schema=True,
-            partition_by=self.partition_keys.get(stream, []),
-            schema=schema,
-            storage_options=storage_options,
-        )
+            self.logger.info(f'Inserting records for batch {idx} started.', tags=tags2)
 
-        self.logger.info(f'Inserting records for batch {idx} completed.', tags=tags2)
+            write_deltalake(
+                table or table_uri,
+                data=df,
+                mode=self.mode,
+                overwrite_schema=True,
+                partition_by=self.partition_keys.get(stream, []),
+                schema=schema,
+                storage_options=storage_options,
+            )
 
-        self.__after_write_for_batch(stream, idx, tags=tags2)
+            self.logger.info(f'Inserting records for batch {idx} completed.', tags=tags2)
 
-        tags.update(records_inserted=df_count)
+            self.__after_write_for_batch(stream, idx, tags=tags2)
+
+        tags.update(records_inserted=len(record_data))
 
         self.logger.info('Export data completed.', tags=tags)
 

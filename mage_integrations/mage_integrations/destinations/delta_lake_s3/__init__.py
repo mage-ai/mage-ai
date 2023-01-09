@@ -1,21 +1,19 @@
 from botocore.config import Config
-from datetime import datetime
 from mage_integrations.destinations.delta_lake.base import DeltaLake as BaseDeltaLake, main
 from mage_integrations.destinations.delta_lake.constants import MODE_OVERWRITE
 from mage_integrations.destinations.delta_lake_s3.utils import fix_overwritten_partitions
 from typing import Dict
 import boto3
-import json
 import os
 
 
-"""
-WARNING:
-If you get this error EndpointConnectionError occasionally,
-it’s because you have an ~/.aws/credentials file. Remove that file or else this error
-occurs occasionally from boto3.
-"""
 class DeltaLakeS3(BaseDeltaLake):
+    """
+    WARNING:
+    If you get this error EndpointConnectionError occasionally,
+    it’s because you have an ~/.aws/credentials file. Remove that file or else this error
+    occurs occasionally from boto3.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.aws_region = None
@@ -61,7 +59,6 @@ class DeltaLakeS3(BaseDeltaLake):
         version = int(table.version())
         tags = kwargs.get('tags', {})
         tags.update(version=version)
-
 
         if version == 0:
             self.logger.info(f'Fix overwritten partitions for batch {index} skipped.', tags=tags)
