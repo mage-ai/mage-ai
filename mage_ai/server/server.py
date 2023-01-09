@@ -79,12 +79,17 @@ from mage_ai.server.kernels import (
     KernelName,
     PIPELINE_TO_KERNEL_NAME,
 )
-from mage_ai.server.scheduler_manager import scheduler_manager
+from mage_ai.server.scheduler_manager import (
+    SCHEDULER_AUTO_RESTART_INTERVAL,
+    check_scheduler_status,
+    scheduler_manager,
+)
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.shared.hash import group_by, merge_dict
 from sqlalchemy.orm import aliased
 from tornado import autoreload
+from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
 import argparse
 import asyncio
@@ -606,6 +611,13 @@ async def main(
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
     db_connection.start_session(force=True)
+
+    # Check scheduler status periodically
+    periodic_callback = PeriodicCallback(
+        check_scheduler_status,
+        SCHEDULER_AUTO_RESTART_INTERVAL,
+    )
+    periodic_callback.start()
 
     get_messages(
         lambda content: WebSocketServer.send_message(
