@@ -121,14 +121,14 @@ WHERE TABLE_NAME = '{table_name}'
         """
         Loads data from BigQuery into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. When a select query
-        is provided, this function will load at maximum 100,000 rows of data. To operate on more data,
+        is provided, this function will load at maximum 10,000,000 rows of data. To operate on more data,
         consider performing data transformations in warehouse.
 
 
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
             **kwargs: Additional arguments to pass to query, such as query configurations
 
         Returns:

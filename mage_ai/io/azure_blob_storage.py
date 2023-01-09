@@ -55,7 +55,7 @@ class AzureBlobStorage(BaseFile):
     ) -> DataFrame:
         """
         Loads data from Azure Blob Storage into a Pandas data frame. This function will load at
-        maximum 100,000 rows of data from the specified file.
+        maximum 10,000,000 rows of data from the specified file.
 
         Returns:
             DataFrame: The data frame constructed from the file in the Azure Blob Storage container.
