@@ -17,7 +17,7 @@ def convert_array(v: str, column_type_dict: Dict):
         arr_joined = ', '.join([f"'{v2}'" for v2 in arr])
         value_final = f"ARRAY[{arr_joined}]::JSONB[]"
     else:
-        value_final = [str(s).replace("'", "''") for s in v]
+        value_final = [str(s).replace("'", "''").replace('\"', '\\"') for s in v]
         strings_joined = ', '.join(value_final)
         value_final = f"'{{{strings_joined}}}'"
 
