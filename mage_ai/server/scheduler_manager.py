@@ -1,6 +1,6 @@
 from enum import Enum
 from mage_ai.orchestration.db.database_manager import database_manager
-from mage_ai.orchestration.db.process import create_process, worker_manager
+from mage_ai.orchestration.execution_process_manager import create_process
 import multiprocessing
 import traceback
 
@@ -11,7 +11,6 @@ def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
 
     database_manager.run_migrations()
-    worker_manager.start_workers()
     try:
         LoopTimeTrigger().start()
     except Exception as e:

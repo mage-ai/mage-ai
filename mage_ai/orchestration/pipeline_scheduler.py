@@ -15,8 +15,12 @@ from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
-from mage_ai.orchestration.db.process import create_process, worker_manager
-from mage_ai.orchestration.execution_process_manager import execution_process_manager
+from mage_ai.orchestration.execution_process_manager import (
+    create_process,
+    execution_job_manager,
+    execution_process_manager,
+    worker_manager,
+)
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -243,7 +247,6 @@ class PipelineScheduler:
     def executable_block_runs(self) -> List[BlockRun]:
         return [b for b in self.pipeline_run.block_runs if b.status in [
             BlockRun.BlockRunStatus.INITIAL,
-            BlockRun.BlockRunStatus.QUEUED,
         ]]
 
     @property
@@ -276,16 +279,13 @@ class PipelineScheduler:
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
         # TODO: implement queueing logic
         block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
-        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
-
-        print('block runs to schedule:', block_runs_to_schedule)
+        # block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
         for b in block_runs_to_schedule:
             tags = dict(
                 block_run_id=b.id,
                 block_uuid=b.block_uuid,
             )
-
             b.update(
                 status=BlockRun.BlockRunStatus.QUEUED,
             )
@@ -294,20 +294,13 @@ class PipelineScheduler:
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-            worker_manager.add_job(run_block, (
+            job_uuid = worker_manager.add_job(run_block, (
                 self.pipeline_run.id,
                 b.id,
                 get_variables(self.pipeline_run),
                 self.__build_tags(**tags),
             ))
-            # proc = create_process(run_block, (
-            #     self.pipeline_run.id,
-            #     b.id,
-            #     get_variables(self.pipeline_run),
-            #     self.__build_tags(**tags),
-            # ))
-            # execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
-            # proc.start()
+            execution_job_manager.set_block_job(self.pipeline_run.id, b.id, job_uuid)
 
     def __schedule_integration_pipeline(self, block_runs: List[BlockRun] = None) -> None:
         if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
@@ -592,6 +585,8 @@ def run_block(
     template_runtime_configuration: Dict = None,
 ) -> Any:
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
+    if pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
+        return {}
     pipeline_scheduler = PipelineScheduler(pipeline_run)
 
     pipeline = pipeline_scheduler.pipeline
@@ -741,14 +736,20 @@ def schedule_all():
         include_block_runs=True,
     )
 
-    for r in active_pipeline_runs:
-        try:
-            r.refresh()
-            PipelineScheduler(r).schedule()
-        except Exception:
-            print(f'Failed to schedule {r}')
-            traceback.print_exc()
-            continue
+    if len(active_pipeline_runs) > 0:
+        worker_manager.start_workers()
+        for r in active_pipeline_runs:
+            try:
+                r.refresh()
+                for br in r.block_runs:
+                    br.refresh()
+                PipelineScheduler(r).schedule()
+            except Exception:
+                print(f'Failed to schedule {r}')
+                traceback.print_exc()
+                continue
+    else:
+        worker_manager.terminate_workers()
     execution_process_manager.clean_up_processes()
 
 
