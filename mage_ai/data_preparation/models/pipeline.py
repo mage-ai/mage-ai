@@ -17,6 +17,7 @@ from mage_ai.shared.hash import extract
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 from typing import Callable, List
+import aiofiles
 import asyncio
 import os
 import shutil
@@ -167,6 +168,29 @@ class Pipeline:
         if PipelineType.INTEGRATION == pipeline.type:
             pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
 
+        return pipeline
+
+    @classmethod
+    async def get_async(self, uuid, repo_path: str = None):
+        from mage_ai.data_preparation.models.pipelines.integration_pipeline \
+            import IntegrationPipeline
+        repo_path = repo_path or get_repo_path()
+        config_path = os.path.join(
+            repo_path,
+            PIPELINES_FOLDER,
+            uuid,
+            PIPELINE_CONFIG_FILE,
+        )
+
+        if not os.path.exists(config_path):
+            raise Exception(f'Pipeline {uuid} does not exist.')
+        async with aiofiles.open(config_path, mode='r') as f:
+            config = yaml.safe_load(await f.read())
+
+        if PipelineType.INTEGRATION == config.get('type'):
+            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
+        else:
+            pipeline = self(uuid, repo_path=repo_path, config=config)
         return pipeline
 
     @classmethod
