@@ -151,6 +151,42 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
 
 ---
 
+## Using secret credential files in Docker
+
+If you have files containing secret credentials (e.g. GCP credentials JSON files), 
+you’ll need to mount them as a volume so that those files appear in your running Docker container.
+
+## macOS
+
+If you have a file at this location `/Users/dragon/secrets/credentials.json` on your local machine, 
+then run the following Docker command to start Mage and add files in the `secrets/` folder into your Docker container:
+
+```bash
+docker run -it -p 6789:6789 
+    -v /Users/dragon/secrets:/home/secrets \
+    -v $(pwd):/home/src mageai/mageai mageai/mageai \
+    mage start demo_project
+```
+
+This flag in the command `-v /Users/dragon/secrets:/home/secrets` takes all the files from `/Users/dragon/secrets` 
+and puts them in the Docker container under the folder `/home/secrets`.
+
+Now inside Mage, you can load or refer to your `credentials.json` file using the absolute path:
+`/home/secrets/credentials.json`.
+
+## Windows
+
+Alter the Docker command slightly to work for Windows file path syntax:
+
+```bash
+docker run -it -p 6789:6789 
+    -v "C:\Some Path\dragon\secrets\credentials.json":/home/secrets
+    -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai \
+    mage start [project_name]
+```
+
+---
+
 ## Install
 
 ### Installing extra packages
