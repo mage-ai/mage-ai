@@ -18,7 +18,7 @@ from mage_ai.orchestration.db.models import (
 from mage_ai.orchestration.pipeline_scheduler import get_variables
 from mage_ai.server.api.errors import UnauthenticatedRequestException
 from mage_ai.shared.hash import merge_dict
-from sqlalchemy.orm import aliased, joinedload
+from sqlalchemy.orm import aliased, selectinload
 import json
 
 
@@ -133,8 +133,8 @@ def process_pipeline_runs(
     results = (
         PipelineRun.
         query.
-        options(joinedload(PipelineRun.block_runs)).
-        options(joinedload(PipelineRun.pipeline_schedule))
+        options(selectinload(PipelineRun.block_runs)).
+        options(selectinload(PipelineRun.pipeline_schedule))
     )
     if pipeline_schedule_id is not None:
         results = results.filter(PipelineRun.pipeline_schedule_id == pipeline_schedule_id)
@@ -183,7 +183,10 @@ def process_pipeline_runs(
         collection = \
             list(filter(lambda x: x['execution_date'] not in filter_dates, collection)) + addons
 
-    handler.write(dict(pipeline_runs=collection, total_count=initial_results.count()))
+    handler.write(dict(
+        pipeline_runs=collection,
+        total_count=initial_results.count(),
+    ))
     handler.finish()
 
 
@@ -411,8 +414,8 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                 results = (
                     PipelineSchedule.
                     query.
-                    options(joinedload(PipelineSchedule.event_matchers)).
-                    options(joinedload(PipelineSchedule.pipeline_runs)).
+                    options(selectinload(PipelineSchedule.event_matchers)).
+                    options(selectinload(PipelineSchedule.pipeline_runs)).
                     filter(PipelineSchedule.pipeline_uuid == pipeline.uuid).
                     order_by(PipelineSchedule.start_time.desc(), PipelineSchedule.id.desc())
                 )
