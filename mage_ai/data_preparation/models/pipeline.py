@@ -185,7 +185,7 @@ class Pipeline:
             config = yaml.safe_load(await f.read())
 
         if PipelineType.INTEGRATION == config.get('type'):
-            pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
+            pipeline = IntegrationPipeline(uuid, repo_path=repo_path, config=config)
         else:
             pipeline = self(uuid, repo_path=repo_path, config=config)
         return pipeline
