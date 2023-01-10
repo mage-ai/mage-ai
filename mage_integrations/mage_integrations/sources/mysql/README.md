@@ -10,12 +10,11 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value
 | --- | --- | --- |
-| `database` | The name of the database you want to export data to. | `demo` |
+| `database` | The name of the database you want to read data from. | `demo` |
 | `host` | The host name of your database. | `mage.abc.us-west-2.rds.amazonaws.com` |
 | `port` | Port of the running database (typically 3306). | `3306` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `root` |
 | `password` | Password for the user to access the database. | `abc123...` |
-| `table` | Name of the table that will be created to store data from your source. | `dim_users_v1` |
 | `connection_method` | The method used to connect to MySQL server, either "direct" or "ssh_tunnel". | `direct` or `ssh_tunnel` |
 | `ssh_host` | (Optional) The host of the intermediate bastion server. | `123.45.67.89` |
 | `ssh_port` | (Optional) The port of the intermediate bastion server. Default value: 22 | `22` |

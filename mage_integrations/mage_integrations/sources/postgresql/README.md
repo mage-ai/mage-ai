@@ -10,11 +10,11 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value
 | --- | --- | --- |
-| `database` | The name of the database you want to export data to. | `demo` |
+| `database` | The name of the database you want to read data from. | `demo` |
 | `host` | The host name of your PostgreSQL database. | [`db.bit.io`](https://bit.io/) |
 | `password` | Password for the PostgreSQL user to access the database. | `abc123...` |
 | `port` | Port of the running database (typically 5432). | `5432` |
-| `schema` | Schema of the data you want to export to. | `public` |
+| `schema` | Schema of the data you want to read data from. | `public` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
 | `replication_slot` | Name of the slot used in logical replication. | `mage_slot` |
 
@@ -22,6 +22,6 @@ You must enter the following credentials when configuring this source:
 
 ## Change Data Capture (CDC) with PostgreSQL
 
-Please read this [document](https://github.com/mage-ai/mage-ai/blob/master/docs/guides/data_integrations/sources/PostgreSQL.md).
+Please read this [document](https://docs.mage.ai/data-integrations/sources/postgresql).
 
 <br />

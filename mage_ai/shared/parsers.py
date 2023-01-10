@@ -18,7 +18,7 @@ INTS = (
 
 
 def encode_complex(obj):
-    if hasattr(obj, 'isoformat'):
+    if hasattr(obj, 'isoformat') and type(obj.isoformat).__name__ == 'method':
         return obj.isoformat()
     elif isinstance(obj, np.integer):
         return int(obj)
