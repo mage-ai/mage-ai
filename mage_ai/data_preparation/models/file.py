@@ -1,5 +1,6 @@
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Dict
+import aiofiles
 import os
 
 BLACKLISTED_DIRS = frozenset([
@@ -51,6 +52,15 @@ class File:
         try:
             with open(self.file_path) as fp:
                 file_content = fp.read()
+            return file_content
+        except FileNotFoundError as err:
+            print(err)
+        return ''
+
+    async def content_async(self):
+        try:
+            async with aiofiles.open(self.file_path, mode='r') as fp:
+                file_content = await fp.read()
             return file_content
         except FileNotFoundError as err:
             print(err)

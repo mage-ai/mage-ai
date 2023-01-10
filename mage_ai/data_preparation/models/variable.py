@@ -134,6 +134,31 @@ class Variable:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
         return self.__read_json()
 
+    async def read_data_async(
+        self,
+        dataframe_analysis_keys: List[str] = None,
+        sample: bool = False,
+        sample_count: int = None,
+        spark=None,
+    ):
+        """
+        Read variable data asynchronously.
+
+        Args:
+            dataframe_analysis_keys (List[str], optional): For DATAFRAME_ANALYSIS variable,
+                only read the selected keys.
+            sample (bool, optional): Whether to sample the rows of a dataframe, used for
+                DATAFRAME variable.
+            sample_count (int, optional): The number of rows to sample, used for
+                DATAFRAME variable.
+            spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
+        """
+        if self.variable_type == VariableType.DATAFRAME:
+            return await self.__read_parquet_async(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+            return await self.__read_dataframe_analysis_async(dataframe_analysis_keys=dataframe_analysis_keys)
+        return await self.__read_json_async()
+
     def write_data(self, data: Any) -> None:
         """
         Write variable data to the persistent storage.
@@ -181,6 +206,10 @@ class Variable:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         return self.storage.read_json_file(file_path, default_value)
 
+    async def __read_json_async(self, default_value={}) -> Dict:
+        file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
+        return await self.storage.read_json_file_async(file_path, default_value)
+
     def __write_json(self, data) -> None:
         if not self.storage.isdir(self.variable_dir_path):
             self.storage.makedirs(self.variable_dir_path)
@@ -223,6 +252,28 @@ class Variable:
         if not read_sample_success:
             try:
                 df = self.storage.read_parquet(file_path, engine='pyarrow')
+            except Exception:
+                df = pd.DataFrame()
+        if sample:
+            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
+            if df.shape[0] > sample_count:
+                df = df.iloc[:sample_count]
+        return df
+
+    async def __read_parquet_async(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
+        file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
+        sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
+
+        read_sample_success = False
+        if sample:
+            try:
+                df = await self.storage.read_parquet_async(sample_file_path, engine='pyarrow')
+                read_sample_success = True
+            except Exception:
+                pass
+        if not read_sample_success:
+            try:
+                df = await self.storage.read_parquet_async(file_path, engine='pyarrow')
             except Exception:
                 df = pd.DataFrame()
         if sample:
@@ -304,6 +355,27 @@ class Variable:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
             result[k] = self.storage.read_json_file(os.path.join(self.variable_path, f'{k}.json'))
+        return result
+
+    async def __read_dataframe_analysis_async(
+        self,
+        dataframe_analysis_keys: List[str] = None,
+    ) -> Dict[str, Dict]:
+        """
+        Read the following files
+        1. metadata.json
+        2. statistics.json
+        3. insights.json
+        4. suggestions.json
+        """
+        if not self.storage.path_exists(self.variable_path):
+            return dict()
+        result = dict()
+        for k in DATAFRAME_ANALYSIS_KEYS:
+            if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
+                continue
+            result[k] = await self.storage.read_json_file_async(
+                os.path.join(self.variable_path, f'{k}.json'))
         return result
 
     def __write_dataframe_analysis(self, data: Dict[str, Dict]) -> None:

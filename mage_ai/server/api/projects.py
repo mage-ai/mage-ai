@@ -14,7 +14,7 @@ class ApiProjectsHandler(BaseHandler):
                 ) as response:
                     response_json = await response.json()
                     latest_version = response_json.get('info', {}).get('version', None)
-        except ConnectionError:
+        except Exception:
             latest_version = VERSION
         parts = get_repo_path().split('/')
         collection = [

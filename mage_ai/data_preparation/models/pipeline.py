@@ -406,6 +406,34 @@ class Pipeline:
             ],
         )
 
+    async def to_dict_async(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+    ):
+        blocks_data = await asyncio.gather(
+            *[b.to_dict_async(
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+              ) for b in self.blocks_by_uuid.values()]
+        )
+        widgets_data = await asyncio.gather(
+            *[b.to_dict_async(
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+              ) for b in self.widgets_by_uuid.values()]
+        )
+        return dict(
+            name=self.name,
+            uuid=self.uuid,
+            type=self.type.value if type(self.type) is not str else self.type,
+            blocks=blocks_data,
+            widgets=widgets_data,
+        )
+
     def update(self, data, update_content=False):
         if 'name' in data and data['name'] != self.name:
             """

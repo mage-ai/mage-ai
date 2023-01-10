@@ -153,14 +153,14 @@ class ApiPipelineHandler(BaseHandler):
         pipeline.delete()
         self.write(response)
 
-    def get(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+    async def get(self, pipeline_uuid):
+        pipeline = await Pipeline.get_async(pipeline_uuid)
         include_content = self.get_bool_argument('include_content', True)
         include_outputs = self.get_bool_argument('include_outputs', True)
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
         self.write(
             dict(
-                pipeline=pipeline.to_dict(
+                pipeline=await pipeline.to_dict_async(
                     include_content=include_content,
                     include_outputs=include_outputs,
                     sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
