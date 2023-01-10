@@ -17,6 +17,7 @@ from mage_ai.shared.hash import extract
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 from typing import Callable, List
+import aiofiles
 import asyncio
 import os
 import shutil
@@ -28,8 +29,6 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
-    pipelines_cache = dict()
-
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -114,7 +113,6 @@ class Pipeline:
             uuid,
             repo_path=repo_path,
         )
-        self.pipelines_cache[pipeline.uuid] = pipeline
         return pipeline
 
     @classmethod
@@ -167,6 +165,29 @@ class Pipeline:
         if PipelineType.INTEGRATION == pipeline.type:
             pipeline = IntegrationPipeline(uuid, repo_path=repo_path)
 
+        return pipeline
+
+    @classmethod
+    async def get_async(self, uuid, repo_path: str = None):
+        from mage_ai.data_preparation.models.pipelines.integration_pipeline \
+            import IntegrationPipeline
+        repo_path = repo_path or get_repo_path()
+        config_path = os.path.join(
+            repo_path,
+            PIPELINES_FOLDER,
+            uuid,
+            PIPELINE_CONFIG_FILE,
+        )
+
+        if not os.path.exists(config_path):
+            raise Exception(f'Pipeline {uuid} does not exist.')
+        async with aiofiles.open(config_path, mode='r') as f:
+            config = yaml.safe_load(await f.read())
+
+        if PipelineType.INTEGRATION == config.get('type'):
+            pipeline = IntegrationPipeline(uuid, repo_path=repo_path, config=config)
+        else:
+            pipeline = self(uuid, repo_path=repo_path, config=config)
         return pipeline
 
     @classmethod
@@ -382,7 +403,35 @@ class Pipeline:
             ],
         )
 
-    def update(self, data, update_content=False):
+    async def to_dict_async(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+    ):
+        blocks_data = await asyncio.gather(
+            *[b.to_dict_async(
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+              ) for b in self.blocks_by_uuid.values()]
+        )
+        widgets_data = await asyncio.gather(
+            *[b.to_dict_async(
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+              ) for b in self.widgets_by_uuid.values()]
+        )
+        return dict(
+            name=self.name,
+            uuid=self.uuid,
+            type=self.type.value if type(self.type) is not str else self.type,
+            blocks=blocks_data,
+            widgets=widgets_data,
+        )
+
+    async def update(self, data, update_content=False):
         if 'name' in data and data['name'] != self.name:
             """
             Rename pipeline folder
@@ -417,9 +466,9 @@ class Pipeline:
                         if block is None:
                             continue
                         if 'content' in block_data:
-                            block.update_content(block_data['content'], widget=widget)
+                            await block.update_content_async(block_data['content'], widget=widget)
                         if 'outputs' in block_data:
-                            block.save_outputs(block_data['outputs'], override=True)
+                            await block.save_outputs_async(block_data['outputs'], override=True)
 
                         should_save = False
                         name = block_data.get('name')
@@ -465,9 +514,8 @@ class Pipeline:
                             block.update(extract(block_data, ['name']))
                             block_uuid_mapping[block_data.get('uuid')] = block.uuid
                             should_save = True
-
                         if should_save:
-                            self.save(widget=widget)
+                            await self.save_async(widget=widget)
 
     def __add_block_to_mapping(
         self,
@@ -607,8 +655,6 @@ class Pipeline:
                 self.delete_block(block)
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
-        if self.uuid in Pipeline.pipelines_cache:
-            del Pipeline.pipelines_cache[self.uuid]
 
     def delete_block(self, block, widget=False, commit=True):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
@@ -667,7 +713,20 @@ class Pipeline:
             pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
-        Pipeline.pipelines_cache[self.uuid] = self
+
+    async def save_async(self, block_uuid: str = None, widget: bool = False):
+        if block_uuid is not None:
+            current_pipeline = await Pipeline.get_async(self.uuid, self.repo_path)
+            block = self.get_block(block_uuid, widget=widget)
+            if widget:
+                current_pipeline.widgets_by_uuid[block_uuid] = block
+            else:
+                current_pipeline.blocks_by_uuid[block_uuid] = block
+            pipeline_dict = current_pipeline.to_dict()
+        else:
+            pipeline_dict = self.to_dict()
+        async with aiofiles.open(self.config_path, mode='w') as fp:
+            await fp.write(yaml.dump(pipeline_dict))
 
     def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
         """

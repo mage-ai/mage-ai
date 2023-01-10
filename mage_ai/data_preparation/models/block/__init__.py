@@ -255,6 +255,11 @@ class Block:
             self._content = self.file.content()
         return self._content
 
+    async def content_async(self):
+        if self._content is None:
+            self._content = await self.file.content_async()
+        return self._content
+
     @property
     def executable(self):
         return (
@@ -267,6 +272,12 @@ class Block:
         if not self._outputs_loaded:
             if self._outputs is None or len(self._outputs) == 0:
                 self._outputs = self.get_outputs()
+        return self._outputs
+
+    async def outputs_async(self):
+        if not self._outputs_loaded:
+            if self._outputs is None or len(self._outputs) == 0:
+                self._outputs = await self.get_outputs_async()
         return self._outputs
 
     @property
@@ -975,7 +986,109 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             outputs.append(data)
         return outputs + data_products
 
-    def save_outputs(self, outputs, override=False):
+    async def get_outputs_async(
+        self,
+        execution_partition: str = None,
+        include_print_outputs: bool = True,
+        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        variable_type: VariableType = None,
+    ) -> List[Dict]:
+        if self.pipeline is None:
+            return
+        if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
+            if self.status == BlockStatus.NOT_EXECUTED:
+                return []
+
+        data_products = []
+        outputs = []
+        variable_manager = self.pipeline.variable_manager
+
+        all_variables = variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            self.uuid,
+            partition=execution_partition,
+        )
+
+        if not include_print_outputs:
+            all_variables = self.output_variables(execution_partition=execution_partition)
+
+        for v in all_variables:
+            variable_object = variable_manager.get_variable_object(
+                self.pipeline.uuid,
+                self.uuid,
+                v,
+                partition=execution_partition,
+            )
+
+            if variable_type is not None and variable_object.variable_type != variable_type:
+                continue
+
+            data = await variable_object.read_data_async(
+                sample=True,
+                sample_count=sample_count,
+            )
+            if type(data) is pd.DataFrame:
+                try:
+                    analysis = variable_manager.get_variable(
+                        self.pipeline.uuid,
+                        self.uuid,
+                        v,
+                        dataframe_analysis_keys=['metadata', 'statistics'],
+                        partition=execution_partition,
+                        variable_type=VariableType.DATAFRAME_ANALYSIS,
+                    )
+                except Exception:
+                    analysis = None
+                if analysis is not None:
+                    stats = analysis.get('statistics', {})
+                    column_types = (analysis.get('metadata') or {}).get('column_types', {})
+                    row_count = stats.get('original_row_count', stats.get('count'))
+                    column_count = stats.get('original_column_count', len(column_types))
+                else:
+                    row_count, column_count = data.shape
+
+                columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+                data = dict(
+                    sample_data=dict(
+                        columns=columns_to_display,
+                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
+                    ),
+                    shape=[row_count, column_count],
+                    type=DataType.TABLE,
+                    variable_uuid=v,
+                )
+                data_products.append(data)
+                continue
+            elif is_geo_dataframe(data):
+                data = dict(
+                    text_data=f''' Use the following code in a scratchpad to get the output of the block:
+
+from mage_ai.data_preparation.variable_manager import get_variable
+df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
+''',
+                    type=DataType.TEXT,
+                    variable_uuid=v,
+                )
+            elif type(data) is str:
+                data = dict(
+                    text_data=data,
+                    type=DataType.TEXT,
+                    variable_uuid=v,
+                )
+            elif type(data) is dict or type(data) is list:
+                data = dict(
+                    text_data=simplejson.dumps(
+                        data,
+                        default=datetime.isoformat,
+                        ignore_nan=True,
+                    ),
+                    type=DataType.TEXT,
+                    variable_uuid=v,
+                )
+            outputs.append(data)
+        return outputs + data_products
+
+    def __save_outputs_prepare(self, outputs):
         variable_mapping = dict()
         for o in outputs:
             if o is None:
@@ -986,9 +1099,17 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
         self._outputs = outputs
         self._outputs_loaded = True
+        return variable_mapping
+
+    def save_outputs(self, outputs, override=False):
+        variable_mapping = self.__save_outputs_prepare(outputs)
         self.store_variables(variable_mapping, override=override)
 
-    def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
+    async def save_outputs_async(self, outputs, override=False):
+        variable_mapping = self.__save_outputs_prepare(outputs)
+        await self.store_variables_async(variable_mapping, override=override)
+
+    def to_dict_base(self):
         language = self.language
         if language and type(self.language) is not str:
             language = self.language.value
@@ -1008,10 +1129,23 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             upstream_blocks=self.upstream_block_uuids,
             uuid=self.uuid,
         )
+        return data
+
+    def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
+        data = self.to_dict_base()
         if include_content:
             data['content'] = self.content
         if include_outputs:
             data['outputs'] = self.outputs
+        return data
+
+    async def to_dict_async(self, include_content=False, include_outputs=False, sample_count=None):
+        data = self.to_dict_base()
+
+        if include_content:
+            data['content'] = await self.content_async()
+        if include_outputs:
+            data['outputs'] = await self.outputs_async()
         return data
 
     def update(self, data):
@@ -1040,6 +1174,15 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.status = BlockStatus.UPDATED
             self._content = content
             self.file.update_content(content)
+            self.__update_pipeline_block(widget=widget)
+        return self
+
+    async def update_content_async(self, content, widget=False):
+        block_content = await self.content_async()
+        if content != block_content:
+            self.status = BlockStatus.UPDATED
+            self._content = content
+            await self.file.update_content_async(content)
             self.__update_pipeline_block(widget=widget)
         return self
 
@@ -1232,13 +1375,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         for upstream_block in self.upstream_blocks:
             upstream_block.global_vars = global_vars
 
-    def store_variables(
+    def __store_variables_prepare(
         self,
         variable_mapping: Dict,
         execution_partition: str = None,
         override: bool = False,
         override_outputs: bool = False,
-        spark=None,
         dynamic_block_uuid: str = None,
     ):
         self.dynamic_block_uuid = dynamic_block_uuid
@@ -1250,6 +1392,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.uuid,
             partition=execution_partition,
         )
+        # Not store empty json if the variable is not output variable
+        variable_mapping = {k: v for k, v in variable_mapping.items()
+                            if not (type(v) is str and v == '{}') or is_output_variable(k)}
 
         variable_names = [clean_name_orig(v) for v in variable_mapping]
         removed_variables = []
@@ -1260,11 +1405,62 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             is_output_var = is_output_variable(v)
             if (override and not is_output_var) or (override_outputs and is_output_var):
                 removed_variables.append(v)
+        return dict(removed_variables=removed_variables)
 
+    def store_variables(
+        self,
+        variable_mapping: Dict,
+        execution_partition: str = None,
+        override: bool = False,
+        override_outputs: bool = False,
+        spark=None,
+        dynamic_block_uuid: str = None,
+    ):
+        removed_variables = self.__store_variables_prepare(
+            variable_mapping,
+            execution_partition,
+            override,
+            override_outputs,
+            dynamic_block_uuid,
+        )['removed_variables']
         for uuid, data in variable_mapping.items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
+                self.pipeline.uuid,
+                self.uuid,
+                uuid,
+                data,
+                partition=execution_partition,
+            )
+
+        for uuid in removed_variables:
+            self.pipeline.variable_manager.delete_variable(
+                self.pipeline.uuid,
+                self.uuid,
+                uuid,
+            )
+
+    async def store_variables_async(
+        self,
+        variable_mapping: Dict,
+        execution_partition: str = None,
+        override: bool = False,
+        override_outputs: bool = False,
+        spark=None,
+        dynamic_block_uuid: str = None,
+    ):
+        removed_variables = self.__store_variables_prepare(
+            variable_mapping,
+            execution_partition,
+            override,
+            override_outputs,
+            dynamic_block_uuid,
+        )['removed_variables']
+        for uuid, data in variable_mapping.items():
+            if spark is not None and type(data) is pd.DataFrame:
+                data = spark.createDataFrame(data)
+            await self.pipeline.variable_manager.add_variable_async(
                 self.pipeline.uuid,
                 self.uuid,
                 uuid,
@@ -1288,7 +1484,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
         """
         return input_variables(self.pipeline, self.upstream_block_uuids, execution_partition)
-
 
     def input_variable_objects(self, execution_partition: str = None) -> List:
         """Get input variable objects from upstream blocks' output variables.

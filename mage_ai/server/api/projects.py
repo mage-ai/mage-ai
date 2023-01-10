@@ -1,15 +1,20 @@
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.constants import VERSION
-import requests
+import aiohttp
 
 
 class ApiProjectsHandler(BaseHandler):
-    def get(self):
+    async def get(self):
         try:
-            response = requests.get('https://pypi.org/pypi/mage-ai/json', timeout=3)
-            latest_version = response.json().get('info', {}).get('version', None)
-        except ConnectionError as err:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    'https://pypi.org/pypi/mage-ai/json',
+                    timeout=3,
+                ) as response:
+                    response_json = await response.json()
+                    latest_version = response_json.get('info', {}).get('version', None)
+        except Exception:
             latest_version = VERSION
         parts = get_repo_path().split('/')
         collection = [

@@ -72,6 +72,34 @@ class VariableManager:
         variable.variable_type = variable_type
         variable.write_data(data)
 
+    async def add_variable_async(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        data: Any,
+        partition: str = None,
+        variable_type: VariableType = None
+    ) -> None:
+        if type(data) is pd.DataFrame:
+            variable_type = VariableType.DATAFRAME
+        elif is_spark_dataframe(data):
+            variable_type = VariableType.SPARK_DATAFRAME
+        elif is_geo_dataframe(data):
+            variable_type = VariableType.GEO_DATAFRAME
+        variable = Variable(
+            clean_name(variable_uuid),
+            self.__pipeline_path(pipeline_uuid),
+            block_uuid,
+            partition=partition,
+            storage=self.storage,
+            variable_type=variable_type,
+        )
+        # Delete data if it exists
+        variable.delete()
+        variable.variable_type = variable_type
+        await variable.write_data_async(data)
+
     def delete_variable(
         self,
         pipeline_uuid: str,

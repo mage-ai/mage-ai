@@ -53,8 +53,22 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
+    async def read_json_file_async(self, file_path: str, default_value={}) -> Dict:
+        """
+        Read json from a file with file path asynchronously.
+        """
+        pass
+
+    @abstractmethod
     def write_json_file(self, file_path: str, data) -> None:
         """
         Write json to a file with file path.
+        """
+        pass
+
+    @abstractmethod
+    async def write_json_file_async(self, file_path: str, data) -> None:
+        """
+        Write json to a file with file path asynchronously.
         """
         pass

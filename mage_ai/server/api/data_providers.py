@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource
 from mage_ai.server.api.base import BaseHandler
+import aiofiles
 import yaml
 
 
@@ -13,12 +14,12 @@ DATA_PROVIDERS = [
 
 
 class ApiDataProvidersHandler(BaseHandler):
-    def get(self):
+    async def get(self):
         profiles = []
 
-        with open(f'{get_repo_path()}/io_config.yaml', 'r') as stream:
+        async with aiofiles.open(f'{get_repo_path()}/io_config.yaml', mode='r') as file:
             try:
-                profiles = list(yaml.safe_load(stream).keys())
+                profiles = list(yaml.safe_load(await file.read()).keys())
             except yaml.YAMLError as exc:
                 print(exc)
 

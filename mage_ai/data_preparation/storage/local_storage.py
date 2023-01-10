@@ -1,6 +1,8 @@
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List
+import aiofiles
+import io
 import json
 import os
 import pandas as pd
@@ -36,6 +38,15 @@ class LocalStorage(BaseStorage):
             except Exception:
                 return dict()
 
+    async def read_json_file_async(self, file_path: str, default_value={}) -> Dict:
+        if not self.path_exists(file_path):
+            return default_value
+        async with aiofiles.open(file_path, mode='r') as file:
+            try:
+                return json.loads(await file.read())
+            except Exception:
+                return dict()
+
     def write_json_file(self, file_path: str, data) -> None:
         with open(file_path, 'w') as file:
             simplejson.dump(
@@ -44,6 +55,15 @@ class LocalStorage(BaseStorage):
                 default=encode_complex,
                 ignore_nan=True,
             )
+
+    async def write_json_file_async(self, file_path: str, data) -> None:
+        async with aiofiles.open(file_path, mode='w') as file:
+            fcontent = simplejson.dumps(
+                data,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+            await file.write(fcontent)
 
     def read_parquet(self, file_path: str, **kwargs) -> pd.DataFrame:
         return pd.read_parquet(file_path, engine='pyarrow')

@@ -1,5 +1,6 @@
 from functools import reduce
 from mage_ai.shared.utils import files_in_path
+import aiofiles
 import importlib
 import os
 import pathlib
@@ -73,17 +74,16 @@ def extract_all_imports(file_content, ignore_nesting=False):
     return [s.strip() for s in re.findall(regex, file_content)]
 
 
-def build_file_content_mapping(paths, files):
+async def build_file_content_mapping(paths, files):
     file_content_mapping = {}
     file_names = reduce(add_file, paths, files)
 
+    cwd = os.getcwd()
     for file_name in file_names:
-        file_content = ''
-        with open(file_name, 'r') as f:
-            file_content = f.read()
-            f.close()
+        async with aiofiles.open(file_name, mode='r') as f:
+            file_content = await f.read()
 
-        file_name = file_name.replace(f'{os.getcwd()}/', '').replace(f'{root_path}/', '')
+        file_name = file_name.replace(f'{cwd}/', '').replace(f'{root_path}/', '')
         files = []
         parts = file_name.split('/')
         module_name = '.'.join(parts).replace('.py', '')

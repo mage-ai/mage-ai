@@ -153,14 +153,14 @@ class ApiPipelineHandler(BaseHandler):
         pipeline.delete()
         self.write(response)
 
-    def get(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
+    async def get(self, pipeline_uuid):
+        pipeline = await Pipeline.get_async(pipeline_uuid)
         include_content = self.get_bool_argument('include_content', True)
         include_outputs = self.get_bool_argument('include_outputs', True)
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
         self.write(
             dict(
-                pipeline=pipeline.to_dict(
+                pipeline=await pipeline.to_dict_async(
                     include_content=include_content,
                     include_outputs=include_outputs,
                     sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
@@ -169,22 +169,20 @@ class ApiPipelineHandler(BaseHandler):
         )
         self.finish()
 
-    @safe_db_query
-    def put(self, pipeline_uuid):
+    async def put(self, pipeline_uuid):
         """
         Allow updating pipeline name, uuid, status
         """
-        pipeline = Pipeline.get(pipeline_uuid)
+        pipeline = await Pipeline.get_async(pipeline_uuid)
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
-        pipeline.update(data, update_content=update_content)
+        await pipeline.update(data, update_content=update_content)
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
 
         status = data.get('status')
-        if status and status in [
-            PipelineSchedule.ScheduleStatus.ACTIVE.value,
-            PipelineSchedule.ScheduleStatus.INACTIVE.value,
-        ]:
+
+        @safe_db_query
+        def update_schedule_status(status):
             schedules = (
                 PipelineSchedule.
                 query.
@@ -193,8 +191,14 @@ class ApiPipelineHandler(BaseHandler):
             for schedule in schedules:
                 schedule.update(status=status)
 
+        if status and status in [
+            PipelineSchedule.ScheduleStatus.ACTIVE.value,
+            PipelineSchedule.ScheduleStatus.INACTIVE.value,
+        ]:
+            update_schedule_status(status)
+
         resp = dict(
-            pipeline=pipeline.to_dict(
+            pipeline=await pipeline.to_dict_async(
                 include_content=update_content,
                 include_outputs=update_content,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
@@ -224,21 +228,24 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 
 class ApiPipelineListHandler(BaseHandler):
-    @safe_db_query
-    def get(self):
+    async def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
-        pipelines = []
-        for uuid in pipeline_uuids:
-            try:
-                pipeline = Pipeline.get(uuid)
-                pipelines.append(pipeline)
-            except Exception:
-                pass
 
-        mapping = {}
-        if include_schedules:
+        async def get_pipeline(uuid):
+            try:
+                return await Pipeline.get_async(uuid)
+            except Exception:
+                return None
+
+        pipelines = await asyncio.gather(
+            *[get_pipeline(uuid) for uuid in pipeline_uuids]
+        )
+        pipelines = [p for p in pipelines if p is not None]
+
+        @safe_db_query
+        def query_pipeline_schedules(pipeline_uuids):
             a = aliased(PipelineSchedule, name='a')
             result = (
                 PipelineSchedule.
@@ -255,7 +262,11 @@ class ApiPipelineListHandler(BaseHandler):
                 ]).
                 filter(a.pipeline_uuid.in_(pipeline_uuids))
             ).all()
-            mapping = group_by(lambda x: x.pipeline_uuid, result)
+            return group_by(lambda x: x.pipeline_uuid, result)
+
+        mapping = {}
+        if include_schedules:
+            mapping = query_pipeline_schedules(pipeline_uuids)
 
         collection = []
         for pipeline in pipelines:
