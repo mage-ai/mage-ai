@@ -207,12 +207,9 @@ class BaseFile(BaseIO):
             return df.to_csv
         elif format == FileFormat.JSON:
             return df.to_json
-        elif format == FileFormat.PARQUET:
-            return df.to_parquet
         elif format == FileFormat.HDF5:
             return df.to_hdf
-        else:
-            raise ValueError(f'Unexpected format provided: {self.format}')
+        return df.to_parquet
 
     def __del__(self):
         if self.verbose and self.printer.exists_previous_message:
