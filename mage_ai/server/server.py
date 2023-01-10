@@ -169,7 +169,6 @@ class ApiPipelineHandler(BaseHandler):
         )
         self.finish()
 
-    @safe_db_query
     async def put(self, pipeline_uuid):
         """
         Allow updating pipeline name, uuid, status
@@ -181,10 +180,9 @@ class ApiPipelineHandler(BaseHandler):
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
 
         status = data.get('status')
-        if status and status in [
-            PipelineSchedule.ScheduleStatus.ACTIVE.value,
-            PipelineSchedule.ScheduleStatus.INACTIVE.value,
-        ]:
+
+        @safe_db_query
+        def update_schedule_status(status):
             schedules = (
                 PipelineSchedule.
                 query.
@@ -192,6 +190,12 @@ class ApiPipelineHandler(BaseHandler):
             ).all()
             for schedule in schedules:
                 schedule.update(status=status)
+
+        if status and status in [
+            PipelineSchedule.ScheduleStatus.ACTIVE.value,
+            PipelineSchedule.ScheduleStatus.INACTIVE.value,
+        ]:
+            update_schedule_status(status)
 
         resp = dict(
             pipeline=await pipeline.to_dict_async(
@@ -224,7 +228,6 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 
 class ApiPipelineListHandler(BaseHandler):
-    @safe_db_query
     async def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
@@ -241,8 +244,8 @@ class ApiPipelineListHandler(BaseHandler):
         )
         pipelines = [p for p in pipelines if p is not None]
 
-        mapping = {}
-        if include_schedules:
+        @safe_db_query
+        def query_pipeline_schedules(pipeline_uuids):
             a = aliased(PipelineSchedule, name='a')
             result = (
                 PipelineSchedule.
@@ -259,7 +262,11 @@ class ApiPipelineListHandler(BaseHandler):
                 ]).
                 filter(a.pipeline_uuid.in_(pipeline_uuids))
             ).all()
-            mapping = group_by(lambda x: x.pipeline_uuid, result)
+            return group_by(lambda x: x.pipeline_uuid, result)
+
+        mapping = {}
+        if include_schedules:
+            mapping = query_pipeline_schedules(pipeline_uuids)
 
         collection = []
         for pipeline in pipelines:
