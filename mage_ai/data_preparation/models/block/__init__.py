@@ -1415,7 +1415,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         """
         return input_variables(self.pipeline, self.upstream_block_uuids, execution_partition)
 
-
     def input_variable_objects(self, execution_partition: str = None) -> List:
         """Get input variable objects from upstream blocks' output variables.
 

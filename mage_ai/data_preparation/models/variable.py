@@ -154,7 +154,7 @@ class Variable:
             spark (None, optional): Spark context, used to read SPARK_DATAFRAME variable.
         """
         if self.variable_type == VariableType.DATAFRAME:
-            return await self.__read_parquet_async(sample=sample, sample_count=sample_count)
+            return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return await self.__read_dataframe_analysis_async(dataframe_analysis_keys=dataframe_analysis_keys)
         return await self.__read_json_async()
@@ -252,28 +252,6 @@ class Variable:
         if not read_sample_success:
             try:
                 df = self.storage.read_parquet(file_path, engine='pyarrow')
-            except Exception:
-                df = pd.DataFrame()
-        if sample:
-            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
-            if df.shape[0] > sample_count:
-                df = df.iloc[:sample_count]
-        return df
-
-    async def __read_parquet_async(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
-        file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
-        sample_file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE)
-
-        read_sample_success = False
-        if sample:
-            try:
-                df = await self.storage.read_parquet_async(sample_file_path, engine='pyarrow')
-                read_sample_success = True
-            except Exception:
-                pass
-        if not read_sample_success:
-            try:
-                df = await self.storage.read_parquet_async(file_path, engine='pyarrow')
             except Exception:
                 df = pd.DataFrame()
         if sample:

@@ -43,7 +43,7 @@ class LocalStorage(BaseStorage):
             return default_value
         async with aiofiles.open(file_path, mode='r') as file:
             try:
-                return json.load(await file.read())
+                return json.loads(await file.read())
             except Exception:
                 return dict()
 
@@ -58,11 +58,6 @@ class LocalStorage(BaseStorage):
 
     def read_parquet(self, file_path: str, **kwargs) -> pd.DataFrame:
         return pd.read_parquet(file_path, engine='pyarrow')
-
-    async def read_parquet_async(self, file_path: str, **kwargs) -> pd.DataFrame:
-        async with aiofiles.open(file_path, mode='r') as file:
-            with io.StringIO(await file.read()) as text_io:
-                return pd.read_parquet(text_io)
 
     def write_csv(self, df: pd.DataFrame, file_path: str) -> None:
         df.to_csv(file_path, index=False)
