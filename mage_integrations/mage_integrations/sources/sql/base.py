@@ -164,8 +164,8 @@ class Source(BaseSource):
             if loops >= 1:
                 sleep(1)
 
-            has_custom_limit = query.get('_limit', None) is not None
-            limit = query.get('_limit', SUBBATCH_FETCH_LIMIT)
+            custom_limit = query.get('_limit')
+            limit = SUBBATCH_FETCH_LIMIT
             offset = query.get('_offset', 0) + SUBBATCH_FETCH_LIMIT * loops
 
             rows, rows_temp = self.__fetch_rows(
@@ -179,7 +179,8 @@ class Source(BaseSource):
 
             loops += 1
 
-            if has_custom_limit or len(rows_temp) < SUBBATCH_FETCH_LIMIT:
+            if (custom_limit is not None and limit * loops >= custom_limit) or \
+                    len(rows_temp) < SUBBATCH_FETCH_LIMIT:
                 break
 
     def load_data_from_logs(
