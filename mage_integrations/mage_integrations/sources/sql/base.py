@@ -1,10 +1,8 @@
 from mage_integrations.sources.base import Source as BaseSource
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
-    BATCH_FETCH_LIMIT,
     COLUMN_FORMAT_DATETIME,
     COLUMN_FORMAT_UUID,
-    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_NULL,
@@ -13,6 +11,7 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_STRING,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_LOG_BASED,
+    SUBBATCH_FETCH_LIMIT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.sources.sql.utils import (
@@ -165,9 +164,9 @@ class Source(BaseSource):
             if loops >= 1:
                 sleep(1)
 
-            has_custom_limit = query.get('_limit', None) is not None
-            limit = query.get('_limit', BATCH_FETCH_LIMIT)
-            offset = query.get('_offset', BATCH_FETCH_LIMIT * loops)
+            custom_limit = query.get('_limit')
+            limit = SUBBATCH_FETCH_LIMIT
+            offset = query.get('_offset', 0) + SUBBATCH_FETCH_LIMIT * loops
 
             rows, rows_temp = self.__fetch_rows(
                 stream,
@@ -180,7 +179,8 @@ class Source(BaseSource):
 
             loops += 1
 
-            if has_custom_limit or len(rows_temp) < BATCH_FETCH_LIMIT:
+            if (custom_limit is not None and limit * loops >= custom_limit) or \
+                    len(rows_temp) < SUBBATCH_FETCH_LIMIT:
                 break
 
     def load_data_from_logs(
@@ -229,7 +229,7 @@ WHERE table_schema = '{schema}'
         bookmarks: Dict = None,
         query: Dict = {},
         count_records: bool = False,
-        limit: int = BATCH_FETCH_LIMIT,
+        limit: int = SUBBATCH_FETCH_LIMIT,
         offset: int = 0,
     ) -> Tuple[List[Dict], List[Any]]:
         table_name = stream.tap_stream_id
