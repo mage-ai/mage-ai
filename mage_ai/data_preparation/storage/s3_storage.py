@@ -55,6 +55,12 @@ class S3Storage(BaseStorage):
         except Exception:
             return default_value
 
+    async def read_json_file_async(self, file_path: str, default_value={}) -> Dict:
+        """
+        TODO: Implement async http call.
+        """
+        return self.read_json_file(file_path, default_value=default_value)
+
     def write_json_file(self, file_path: str, data) -> None:
         self.client.upload(
             s3_url_path(file_path),
@@ -64,6 +70,12 @@ class S3Storage(BaseStorage):
                 ignore_nan=True,
             ),
         )
+
+    async def write_json_file_async(self, file_path: str, data) -> None:
+        """
+        TODO: Implement async http call.
+        """
+        return self.write_json_file(file_path, data)
 
     def read_parquet(self, file_path: str, **kwargs) -> pd.DataFrame:
         buffer = io.BytesIO(self.client.get_object(s3_url_path(file_path)).read())

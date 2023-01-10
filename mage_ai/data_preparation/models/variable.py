@@ -184,6 +184,31 @@ class Variable:
         else:
             self.__write_json(data)
 
+    async def write_data_async(self, data: Any) -> None:
+        """
+        Write variable data to the persistent storage.
+
+        Args:
+            data (Any): Variable data to be written to storage.
+        """
+        if self.variable_type is None and type(data) is pd.DataFrame:
+            self.variable_type = VariableType.DATAFRAME
+        elif is_spark_dataframe(data):
+            self.variable_type = VariableType.SPARK_DATAFRAME
+        elif is_geo_dataframe(data):
+            self.variable_type = VariableType.GEO_DATAFRAME
+
+        if self.variable_type == VariableType.DATAFRAME:
+            self.__write_parquet(data)
+        elif self.variable_type == VariableType.SPARK_DATAFRAME:
+            self.__write_spark_parquet(data)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            self.__write_geo_dataframe(data)
+        elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+            self.__write_dataframe_analysis(data)
+        else:
+            await self.__write_json_async(data)
+
     def __delete_dataframe_analysis(self) -> None:
         for k in DATAFRAME_ANALYSIS_KEYS:
             file_path = os.path.join(self.variable_path, f'{k}.json')
@@ -214,6 +239,14 @@ class Variable:
         if not self.storage.isdir(self.variable_dir_path):
             self.storage.makedirs(self.variable_dir_path)
         self.storage.write_json_file(
+            os.path.join(self.variable_dir_path, f'{self.uuid}.json'),
+            data,
+        )
+
+    async def __write_json_async(self, data) -> None:
+        if not self.storage.isdir(self.variable_dir_path):
+            self.storage.makedirs(self.variable_dir_path)
+        await self.storage.write_json_file_async(
             os.path.join(self.variable_dir_path, f'{self.uuid}.json'),
             data,
         )

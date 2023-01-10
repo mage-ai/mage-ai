@@ -70,6 +70,10 @@ class File:
         with open(self.file_path, 'w') as fp:
             fp.write(content)
 
+    async def update_content_async(self, content):
+        async with aiofiles.open(self.file_path, mode='w') as fp:
+            await fp.write(content)
+
     def delete(self):
         os.remove(self.file_path)
 

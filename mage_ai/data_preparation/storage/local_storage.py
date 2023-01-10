@@ -56,6 +56,15 @@ class LocalStorage(BaseStorage):
                 ignore_nan=True,
             )
 
+    async def write_json_file_async(self, file_path: str, data) -> None:
+        async with aiofiles.open(file_path, mode='w') as file:
+            fcontent = simplejson.dumps(
+                data,
+                default=encode_complex,
+                ignore_nan=True,
+            )
+            await file.write(fcontent)
+
     def read_parquet(self, file_path: str, **kwargs) -> pd.DataFrame:
         return pd.read_parquet(file_path, engine='pyarrow')
 

@@ -29,8 +29,6 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
-    pipelines_cache = dict()
-
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -115,7 +113,6 @@ class Pipeline:
             uuid,
             repo_path=repo_path,
         )
-        self.pipelines_cache[pipeline.uuid] = pipeline
         return pipeline
 
     @classmethod
@@ -434,7 +431,7 @@ class Pipeline:
             widgets=widgets_data,
         )
 
-    def update(self, data, update_content=False):
+    async def update(self, data, update_content=False):
         if 'name' in data and data['name'] != self.name:
             """
             Rename pipeline folder
@@ -469,9 +466,9 @@ class Pipeline:
                         if block is None:
                             continue
                         if 'content' in block_data:
-                            block.update_content(block_data['content'], widget=widget)
+                            await block.update_content_async(block_data['content'], widget=widget)
                         if 'outputs' in block_data:
-                            block.save_outputs(block_data['outputs'], override=True)
+                            await block.save_outputs_async(block_data['outputs'], override=True)
 
                         should_save = False
                         name = block_data.get('name')
@@ -517,9 +514,8 @@ class Pipeline:
                             block.update(extract(block_data, ['name']))
                             block_uuid_mapping[block_data.get('uuid')] = block.uuid
                             should_save = True
-
                         if should_save:
-                            self.save(widget=widget)
+                            await self.save_async(widget=widget)
 
     def __add_block_to_mapping(
         self,
@@ -659,8 +655,6 @@ class Pipeline:
                 self.delete_block(block)
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
-        if self.uuid in Pipeline.pipelines_cache:
-            del Pipeline.pipelines_cache[self.uuid]
 
     def delete_block(self, block, widget=False, commit=True):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
@@ -719,7 +713,20 @@ class Pipeline:
             pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
-        Pipeline.pipelines_cache[self.uuid] = self
+
+    async def save_async(self, block_uuid: str = None, widget: bool = False):
+        if block_uuid is not None:
+            current_pipeline = await Pipeline.get_async(self.uuid, self.repo_path)
+            block = self.get_block(block_uuid, widget=widget)
+            if widget:
+                current_pipeline.widgets_by_uuid[block_uuid] = block
+            else:
+                current_pipeline.blocks_by_uuid[block_uuid] = block
+            pipeline_dict = current_pipeline.to_dict()
+        else:
+            pipeline_dict = self.to_dict()
+        async with aiofiles.open(self.config_path, mode='w') as fp:
+            await fp.write(yaml.dump(pipeline_dict))
 
     def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
         """
