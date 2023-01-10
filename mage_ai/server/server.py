@@ -223,34 +223,23 @@ class ApiPipelineExecuteHandler(BaseHandler):
         self.finish()
 
 
-async def get_pipeline(uuid):
-    try:
-        return await Pipeline.get_async(uuid)
-    except Exception:
-        return None
-
-
-async def load_pipeline_data(pipeline_uuids):
-    pipelines = await asyncio.gather(
-        *[get_pipeline(uuid) for uuid in pipeline_uuids]
-    )
-    return pipelines
-
-
 class ApiPipelineListHandler(BaseHandler):
     @safe_db_query
-    def get(self):
-        import time
+    async def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
-        time1 = time.time()
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
-        time2 = time.time()
-        pipelines = asyncio.run(load_pipeline_data(pipeline_uuids))
-        pipelines = [p for p in pipelines if p is not None]
+        async def get_pipeline(uuid):
+            try:
+                return await Pipeline.get_async(uuid)
+            except Exception:
+                return None
 
-        time3 = time.time()
+        pipelines = await asyncio.gather(
+            *[get_pipeline(uuid) for uuid in pipeline_uuids]
+        )
+        pipelines = [p for p in pipelines if p is not None]
 
         mapping = {}
         if include_schedules:
@@ -271,7 +260,6 @@ class ApiPipelineListHandler(BaseHandler):
                 filter(a.pipeline_uuid.in_(pipeline_uuids))
             ).all()
             mapping = group_by(lambda x: x.pipeline_uuid, result)
-        time4 = time.time()
 
         collection = []
         for pipeline in pipelines:
@@ -283,13 +271,7 @@ class ApiPipelineListHandler(BaseHandler):
                 dict(schedules=schedules),
             ))
 
-        time5 = time.time()
-        self.write(dict(pipelines=collection, times=dict(
-            time_get_all_pipeline_uuids=(time2-time1)*1000,
-            time_get_all_pipeline_data=(time3-time2)*1000,
-            time_load_pipeline_schedule_data=(time4-time3)*1000,
-            time_format_response=(time5-time4)*1000,
-        )))
+        self.write(dict(pipelines=collection))
         self.finish()
 
     def post(self):
