@@ -2,6 +2,7 @@ from mage_ai.server.api.base import BaseHandler
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import get_repo_path
+import asyncio
 
 
 class ApiPipelineWidgetDetailHandler(BaseHandler):
@@ -34,15 +35,16 @@ class ApiPipelineWidgetDetailHandler(BaseHandler):
 class ApiPipelineWidgetListHandler(BaseHandler):
     model_class = Widget
 
-    def get(self, pipeline_uuid):
+    async def get(self, pipeline_uuid):
         include_outputs = self.get_bool_argument('include_outputs', True)
 
-        pipeline = Pipeline.get(pipeline_uuid)
-        collection = [widget.to_dict(
-            include_content=True,
-            include_outputs=include_outputs,
-        ) for widget in pipeline.widgets_by_uuid.values()]
-
+        pipeline = await Pipeline.get_async(pipeline_uuid)
+        collection = await asyncio.gather(
+            *[widget.to_dict_async(
+                include_content=True,
+                include_outputs=include_outputs,
+              ) for widget in pipeline.widgets_by_uuid.values()]
+        )
         self.write(dict(widgets=collection))
         self.finish()
 
