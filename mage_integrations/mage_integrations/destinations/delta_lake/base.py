@@ -26,8 +26,27 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import sys
+from typing import Tuple
+import os
+
 
 MAX_BYTE_SIZE_PER_WRITE = (5 * (1024 * 1024))
+
+
+def get_memory() -> Tuple[float, float, float]:
+    free_memory = None
+    total_memory = None
+    used_memory = None
+
+    try:
+        total_memory, used_memory, free_memory = map(
+            int,
+            os.popen('free -t -m').readlines()[-1].split()[1:],
+        )
+    except Exception as err:
+        print(err)
+
+    return free_memory, used_memory, total_memory
 
 
 class DeltaLake(BaseDestination):
@@ -83,9 +102,16 @@ class DeltaLake(BaseDestination):
                 column_type_df = str
 
             non_null = df[column_name].notnull()
+            self.logger.info(f'Before apply column {column_name}')
+            free_memory, used_memory, total_memory = get_memory()
+            self.logger.info(f'Memory usage: {free_memory} {used_memory} {total_memory}')
+
             df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
                 lambda x: str(column_type_df(x)),
             )
+            self.logger.info(f'After apply column {column_name}')
+            free_memory, used_memory, total_memory = get_memory()
+            self.logger.info(f'Memory usage: {free_memory} {used_memory} {total_memory}')
 
             if df[column_name].dropna().count() != number_of_rows:
                 df[column_name] = df[column_name].fillna('')
@@ -158,6 +184,10 @@ class DeltaLake(BaseDestination):
 
         df = pd.DataFrame([d[KEY_RECORD] for d in record_data])
         df_count = len(df.index)
+
+        total_byte_size = int(df.memory_usage(deep=True).sum())
+
+        self.logger.info(f'Dataframe size {total_byte_size}', tags=tags)
 
         # if self.disable_column_type_check.get(stream):
         #     for column_name in self.schemas[stream]['properties'].keys():
