@@ -22,7 +22,7 @@ from typing import Dict, List
 from singer import catalog
 
 
-class Mongodb(Source):
+class MongoDB(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
         client = build_client(self.config)
 
@@ -130,4 +130,4 @@ class Mongodb(Source):
 
 
 if __name__ == '__main__':
-    main(Mongodb)
+    main(MongoDB)

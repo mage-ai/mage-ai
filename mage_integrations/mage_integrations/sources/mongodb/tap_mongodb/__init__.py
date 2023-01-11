@@ -10,10 +10,10 @@ from bson import timestamp
 import singer
 from singer import metadata, metrics, utils
 
-import tap_mongodb.sync_strategies.common as common
-import tap_mongodb.sync_strategies.full_table as full_table
-import tap_mongodb.sync_strategies.oplog as oplog
-import tap_mongodb.sync_strategies.incremental as incremental
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.full_table as full_table
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.oplog as oplog
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.incremental as incremental
 from mage_integrations.sources.messages import write_schema
 
 

@@ -4,8 +4,8 @@ import time
 import pymongo
 import singer
 from singer import metadata, utils
-import tap_mongodb.sync_strategies.common as common
-from tap_mongodb.sync_strategies.utils import build_find_filter, get_replication_key_name
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
+from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import build_find_filter, get_replication_key_name
 
 LOGGER = singer.get_logger()
 

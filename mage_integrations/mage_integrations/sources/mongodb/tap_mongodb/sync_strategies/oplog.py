@@ -5,7 +5,7 @@ import singer
 from singer import metadata, utils
 
 from bson import timestamp
-import tap_mongodb.sync_strategies.common as common
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 LOGGER = singer.get_logger()
 

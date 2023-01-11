@@ -4,7 +4,7 @@ import time
 import pymongo
 import singer
 from singer import metadata, utils
-import tap_mongodb.sync_strategies.common as common
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 LOGGER = singer.get_logger()
 

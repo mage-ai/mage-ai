@@ -1,6 +1,6 @@
 from singer import metadata
 from typing import Dict
-import tap_mongodb.sync_strategies.common as common
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 
 def build_find_filter(stream: Dict, state: Dict = {}) -> Dict:

@@ -6,6 +6,7 @@ from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.hash import merge_dict
 from typing import List, Dict
 import importlib
+import traceback
 
 
 def get_collection(key: str, available_options: List[Dict]):
@@ -26,6 +27,7 @@ def get_collection(key: str, available_options: List[Dict]):
             d['templates'] = {}
         except Exception as err:
             print(f"Failed to load source {d['uuid']}: {err}")
+            print(traceback.format_exc())
             continue
 
         collection.append(d)
