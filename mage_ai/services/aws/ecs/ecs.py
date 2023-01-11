@@ -1,17 +1,25 @@
 from botocore.config import Config
 from mage_ai.services.aws.ecs.config import EcsConfig
-from typing import List
 import boto3
 import json
 import os
 
 
-def run_task(command: str, ecs_config: EcsConfig) -> None:
+def run_task(
+    command: str,
+    ecs_config: EcsConfig,
+    wait_for_completion: bool = True,
+) -> None:
     if type(ecs_config) is dict:
         ecs_config = EcsConfig.load(config=ecs_config)
     client = boto3.client('ecs')
     response = client.run_task(**ecs_config.get_task_config(command=command))
     
+    if wait_for_completion:
+        arn = response['tasks'][0]['taskArn']
+        waiter = client.get_waiter('tasks_stopped')
+        waiter.wait(cluster=ecs_config.cluster, tasks=[arn])
+
     print(json.dumps(response, indent=4, default=str))
     return response
 
