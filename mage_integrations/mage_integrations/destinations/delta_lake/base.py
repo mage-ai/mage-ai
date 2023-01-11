@@ -102,16 +102,11 @@ class DeltaLake(BaseDestination):
                 column_type_df = str
 
             non_null_indices = df[df[column_name].notnull()].index
-            self.logger.info(f'Before apply column {column_name}')
-            free_memory, used_memory, total_memory = get_memory()
-            self.logger.info(f'Memory usage: {free_memory} {used_memory} {total_memory}')
+            self.logger.info(f'Before apply column {column_name}, memory: {get_memory()}')
 
             df.loc[non_null_indices, column_name] = df.loc[non_null_indices, column_name].apply(
                 lambda x: str(column_type_df(x)),
             )
-            self.logger.info(f'After apply column {column_name}')
-            free_memory, used_memory, total_memory = get_memory()
-            self.logger.info(f'Memory usage: {free_memory} {used_memory} {total_memory}')
 
             if df[column_name].dropna().count() != number_of_rows:
                 df[column_name] = df[column_name].fillna('')
