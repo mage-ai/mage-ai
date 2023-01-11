@@ -52,3 +52,9 @@ class S3LoggerManager(LoggerManager):
             path=s3_object_key,
             content=s3_object,
         )
+
+    async def get_logs_async(self):
+        """
+        TODO: Implement this method
+        """
+        return self.get_logs()

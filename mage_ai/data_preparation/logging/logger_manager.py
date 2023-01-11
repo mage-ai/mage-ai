@@ -102,3 +102,7 @@ class LoggerManager:
     def get_logs(self):
         file = File.from_path(self.get_log_filepath())
         return file.to_dict(include_content=True)
+
+    async def get_logs_async(self):
+        file = File.from_path(self.get_log_filepath())
+        return await file.to_dict_async(include_content=True)

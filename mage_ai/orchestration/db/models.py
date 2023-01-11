@@ -289,6 +289,13 @@ class PipelineRun(BaseModel):
             repo_config=self.pipeline.repo_config,
         ).get_logs()
 
+    async def logs_async(self):
+        return await LoggerManagerFactory.get_logger_manager(
+            pipeline_uuid=self.pipeline_uuid,
+            partition=self.execution_partition,
+            repo_config=self.pipeline.repo_config,
+        ).get_logs_async()
+
     @property
     def pipeline_schedule_name(self):
         return self.pipeline_schedule.name
@@ -365,6 +372,15 @@ class BlockRun(BaseModel):
             partition=self.pipeline_run.execution_partition,
             repo_config=pipeline.repo_config,
         ).get_logs()
+
+    async def logs_async(self):
+        pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid)
+        return await LoggerManagerFactory.get_logger_manager(
+            pipeline_uuid=pipeline.uuid,
+            block_uuid=clean_name(self.block_uuid),
+            partition=self.pipeline_run.execution_partition,
+            repo_config=pipeline.repo_config,
+        ).get_logs_async()
 
     @classmethod
     def batch_update_status(self, block_run_ids: List[int], status):
