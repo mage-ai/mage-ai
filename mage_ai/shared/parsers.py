@@ -18,7 +18,7 @@ INTS = (
 
 
 def encode_complex(obj):
-    if hasattr(obj, 'isoformat') and type(obj.isoformat).__name__ == 'method':
+    if hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
         return obj.isoformat()
     elif isinstance(obj, np.integer):
         return int(obj)
@@ -42,6 +42,7 @@ def encode_complex(obj):
         return None
 
     return obj
+
 
 def extract_json_objects(text, decoder=JSONDecoder()):
     """Find JSON objects in text, and yield the decoded JSON data
