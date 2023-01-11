@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
@@ -18,8 +19,9 @@ from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import 
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import index_by
 from pymongo_schema.extract import extract_pymongo_client_schema
-from typing import Dict, List
+from typing import Dict, Generator, List
 from singer import catalog
+import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 
 class MongoDB(Source):
@@ -117,12 +119,62 @@ class MongoDB(Source):
         client = build_client(self.config)
         db = client[self.config['database']]
         collection = db[stream.tap_stream_id]
+
+        state = {}
+        if query:
+            state = query
+        elif bookmarks:
+            state = dict(bookmarks={
+                stream.tap_stream_id: bookmarks,
+            })
+
         find_filter = build_find_filter(
             stream.to_dict(),
-            query or self.state or {},
+            state,
         )
 
         return collection.count_documents(find_filter)
+
+    def load_data(
+        self,
+        stream,
+        bookmarks: Dict = None,
+        query: Dict = {},
+        sample_data: bool = False,
+        start_date: datetime = None,
+        **kwargs,
+    ) -> Generator[List[Dict], None, None]:
+        client = build_client(self.config)
+        db = client[self.config['database']]
+        collection = db[stream.tap_stream_id]
+
+        state = {}
+        if query:
+            state = query
+        elif bookmarks:
+            state = dict(bookmarks={
+                stream.tap_stream_id: bookmarks,
+            })
+
+        find_filter = build_find_filter(
+            stream.to_dict(),
+            state,
+        )
+
+        arr = []
+
+        if sample_data:
+            with collection.find(find_filter).limit(100) as cursor:
+                for row in cursor:
+                    record_message = common.row_to_singer_record(
+                        stream.to_dict(),
+                        row,
+                        None,
+                        None,
+                    )
+                    arr.append(record_message.record)
+
+        yield arr
 
     def test_connection(self):
         client = build_client(self.config)
