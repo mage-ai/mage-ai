@@ -3,11 +3,10 @@ from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
-    get_leaf_nodes,
     is_dynamic_block,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
@@ -175,6 +174,7 @@ class PipelineSchedule(BaseModel):
         return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
 
     @classmethod
+    @safe_db_query
     def active_schedules(self, pipeline_uuids: List[str] = None) -> List['PipelineSchedule']:
         query = self.query.filter(self.status == self.ScheduleStatus.ACTIVE)
         if pipeline_uuids is not None:
@@ -301,6 +301,7 @@ class PipelineRun(BaseModel):
         return self.pipeline_schedule.name
 
     @classmethod
+    @safe_db_query
     def active_runs(
         self,
         pipeline_uuids: List[str] = None,
