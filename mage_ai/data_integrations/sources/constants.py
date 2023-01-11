@@ -10,6 +10,7 @@ SOURCES = sorted([
     dict(name='Amazon S3'),
     dict(name='Amplitude'),
     dict(name='Api'),
+    dict(name='Azure Blob Storage'),
     dict(name='Chargebee'),
     dict(name='Freshdesk'),
     dict(name='Google Analytics'),

@@ -1,3 +1,4 @@
+azure-storage-blob==12.14.1
 backoff==1.8.0
 deltalake==0.6.4
 google-analytics-data==0.14.2

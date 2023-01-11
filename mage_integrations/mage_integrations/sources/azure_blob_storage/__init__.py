@@ -1,6 +1,7 @@
-from botocore.config import Config
+from azure.storage.blob import BlobServiceClient
 from collections import Counter
 from mage_integrations.sources.base import Source, main
+from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
@@ -8,69 +9,46 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
-from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.transformers.utils import convert_data_type, infer_dtypes
 from singer.schema import Schema
 from typing import Dict, Generator, List
-import boto3
 import io
 import pandas as pd
+import singer
+
+LOGGER = singer.get_logger()
 
 
-class AmazonS3(Source):
+class AzureBlobStorage(Source):
     @property
-    def bucket(self) -> str:
-        return self.config['bucket']
+    def container_name(self) -> str:
+        return self.config['container_name']
 
     @property
     def prefix(self) -> str:
         return self.config['prefix']
 
-    @property
-    def region(self) -> str:
-        return self.config.get('aws_region', 'us-west-2')
-
-    @property
-    def single_stream_in_prefix(self) -> bool:
-        val = self.config.get('single_stream_in_prefix')
-
-        return False if val is None else val
-
     def build_client(self):
-        config = Config(
-           retries={
-              'max_attempts': 10,
-              'mode': 'standard',
-           },
-        )
-
-        return boto3.client(
-            's3',
-            aws_access_key_id=self.config['aws_access_key_id'],
-            aws_secret_access_key=self.config['aws_secret_access_key'],
-            config=config,
-            region_name=self.region,
-        )
+        return BlobServiceClient.from_connection_string(self.config['connection_string'])
 
     def discover(self, streams: List[str] = None) -> Catalog:
         client = self.build_client()
-        resp = client.list_objects_v2(
-            Bucket=self.bucket,
-            MaxKeys=1000,
-            Prefix=self.prefix,
-        )
+        container_client = client.get_container_client(self.container_name)
 
         streams = []
-        for d in resp.get('Contents', []):
-            if int(d.get('Size', 0)) == 0:
+        for b in container_client.list_blobs(self.prefix):
+            """
+            All files under the prefix path will be synced
+            """
+            if int(b.get('size', 0)) == 0:
                 continue
 
-            key = d['Key']
-            parts = key.split('/')
+            name = b['name']
+            parts = name.split('/')
             stream_id = '_'.join(parts[:-1])
 
-            df = self.__build_df(key)
+            df = self.__build_df(name)
 
             properties = {}
             for col in df.columns:
@@ -123,6 +101,8 @@ class AmazonS3(Source):
 
             streams.append(catalog_entry)
 
+            break
+
         return Catalog(streams)
 
     def load_data(
@@ -132,41 +112,39 @@ class AmazonS3(Source):
     ) -> Generator[List[Dict], None, None]:
         client = self.build_client()
 
-        resp = client.list_objects_v2(
-            Bucket=self.bucket,
-            MaxKeys=1000,
-            Prefix=self.prefix,
-        )
+        container_client = client.get_container_client(self.container_name)
 
-        df_rows = pd.DataFrame()
-
-        for d in resp.get('Contents', []):
-            if int(d.get('Size', 0)) == 0:
+        for b in container_client.list_blobs(self.prefix):
+            if int(b.get('size', 0)) == 0:
                 continue
-
-            df = self.__build_df(d['Key'])
-            df_rows = pd.concat([df_rows, df])
-
-        yield df_rows.to_dict('records')
+            df = self.__build_df(b['name'])
+            yield df.to_dict('records')
 
     def test_connection(self) -> None:
         client = self.build_client()
-        client.head_bucket(Bucket=self.bucket)
+        container_client = client.get_container_client(self.container_name)
+        container_exists = container_client.exists()
+        if not container_exists:
+            raise Exception(f'Container {self.container_name} does not exist.')
+        container_client.list_blobs(self.prefix).next()
 
     def __build_df(self, key: str) -> 'pd.DataFrame':
         client = self.build_client()
         df = pd.DataFrame()
-
+        blob_client = client.get_blob_client(
+            self.container_name,
+            key,
+        )
+        if not blob_client.exists():
+            return df
+        blob_data = blob_client.download_blob()
+        buffer = io.BytesIO(blob_data.readall())
         if '.parquet' in key:
-            data_buffer = io.BytesIO()
-            client.download_fileobj(self.bucket, key, data_buffer)
-            df = pd.read_parquet(data_buffer)
+            df = pd.read_parquet(buffer)
         elif '.csv' in key:
-            obj = client.get_object(Bucket=self.bucket, Key=key)
-            df = pd.read_csv(io.BytesIO(obj['Body'].read()))
-
+            df = pd.read_csv(buffer)
         return df
 
 
 if __name__ == '__main__':
-    main(AmazonS3)
+    main(AzureBlobStorage)
