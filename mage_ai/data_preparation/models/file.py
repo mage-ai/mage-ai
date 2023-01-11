@@ -83,6 +83,12 @@ class File:
             data['content'] = self.content()
         return data
 
+    async def to_dict_async(self, include_content=False):
+        data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
+        if include_content:
+            data['content'] = await self.content_async()
+        return data
+
 
 def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:
     tree_entry = dict(name=name)
