@@ -161,8 +161,10 @@ def write_deltalake(
 
     if _has_pandas and isinstance(data, pd.DataFrame):
         if schema is not None:
+            logger.info(f'Write to delta lake 0 with schema {get_memory()}')
             data = pa.Table.from_pandas(data, schema=schema)
         else:
+            logger.info(f'Write to delta lake 0 no schema {get_memory()}')
             data, schema = delta_arrow_schema_from_pandas(data)
 
     logger.info(f'Write to delta lake 1 {get_memory()}')
