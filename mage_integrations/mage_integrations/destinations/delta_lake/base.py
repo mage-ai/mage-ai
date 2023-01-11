@@ -214,6 +214,7 @@ class DeltaLake(BaseDestination):
             partition_by=self.partition_keys.get(stream, []),
             schema=schema,
             storage_options=storage_options,
+            logger=self.logger,
         )
 
         self.logger.info(f'Inserting records for batch {idx} completed.', tags=tags2)

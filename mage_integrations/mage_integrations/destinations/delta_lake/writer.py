@@ -1,5 +1,4 @@
 import json
-import os.path
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -42,6 +41,9 @@ from deltalake._internal import PyDeltaTableError
 from deltalake._internal import write_new_deltalake as _write_new_deltalake
 from deltalake.table import MAX_SUPPORTED_WRITER_VERSION, DeltaTable, DeltaTableProtocolError
 
+from typing import Tuple
+import os
+
 try:
     import pandas as pd
 except ModuleNotFoundError:
@@ -65,6 +67,22 @@ class AddAction:
     modification_time: int
     data_change: bool
     stats: str
+
+
+def get_memory() -> Tuple[float, float, float]:
+    free_memory = None
+    total_memory = None
+    used_memory = None
+
+    try:
+        total_memory, used_memory, free_memory = map(
+            int,
+            os.popen('free -t -m').readlines()[-1].split()[1:],
+        )
+    except Exception as err:
+        print(err)
+
+    return free_memory, used_memory, total_memory
 
 
 def write_deltalake(
@@ -91,6 +109,7 @@ def write_deltalake(
     configuration: Optional[Mapping[str, Optional[str]]] = None,
     overwrite_schema: bool = False,
     storage_options: Optional[Dict[str, str]] = None,
+    logger = None,
 ) -> None:
     """Write to a Delta Lake table (Experimental)
 
@@ -146,6 +165,8 @@ def write_deltalake(
         else:
             data, schema = delta_arrow_schema_from_pandas(data)
 
+    logger.info(f'Write to delta lake 1 {get_memory()}')
+
     if schema is None:
         if isinstance(data, RecordBatchReader):
             schema = data.schema
@@ -167,6 +188,8 @@ def write_deltalake(
     else:
         table = table_or_uri
         table_uri = table._table.table_uri()
+
+    logger.info(f'Write to delta lake 2 {get_memory()}')
 
     __enforce_append_only(table=table, configuration=configuration, mode=mode)
 
@@ -205,6 +228,8 @@ def write_deltalake(
     else:  # creating a new table
         current_version = -1
 
+    logger.info(f'Write to delta lake 3 {get_memory()}')
+
     if partition_by:
         partition_schema = pa.schema([schema.field(name) for name in partition_by])
         partitioning = ds.partitioning(partition_schema, flavor="hive")
@@ -234,6 +259,8 @@ def write_deltalake(
             )
         )
 
+    logger.info(f'Write to delta lake 4 {get_memory()}')
+
     if table is not None:
         # We don't currently provide a way to set invariants
         # (and maybe never will), so only enforce if already exist.
@@ -257,6 +284,8 @@ def write_deltalake(
             schema, (validate_batch(batch) for batch in batch_iter)
         )
 
+    logger.info(f'Write to delta lake 5 {get_memory()}')
+
     ds.write_dataset(
         data,
         base_dir="/",
@@ -274,6 +303,8 @@ def write_deltalake(
         max_rows_per_group=max_rows_per_group,
         filesystem=filesystem,
     )
+
+    logger.info(f'Write to delta lake 6 {get_memory()}')
 
     if table is None:
         _write_new_deltalake(
