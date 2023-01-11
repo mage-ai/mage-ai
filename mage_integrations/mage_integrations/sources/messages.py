@@ -44,12 +44,15 @@ class SchemaMessage(SchemaMessageOriginal):
 
 
 def format_message(message):
-    return simplejson.dumps(
-        message.asdict(),
-        default=encode_complex,
-        ignore_nan=True,
-        use_decimal=True,
-    )
+    try:
+        return simplejson.dumps(
+            message.asdict(),
+            default=encode_complex,
+            ignore_nan=True,
+            use_decimal=True,
+        )
+    except ValueError as err:
+        raise Exception(f'Fail to serialize message {message}') from err
 
 
 def write_message(message):
