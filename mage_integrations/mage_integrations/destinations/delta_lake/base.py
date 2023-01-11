@@ -101,12 +101,12 @@ class DeltaLake(BaseDestination):
                 column_type = pa.string()
                 column_type_df = str
 
-            non_null = df[column_name].notnull()
+            non_null_indices = df[df[column_name].notnull()].index
             self.logger.info(f'Before apply column {column_name}')
             free_memory, used_memory, total_memory = get_memory()
             self.logger.info(f'Memory usage: {free_memory} {used_memory} {total_memory}')
 
-            df[non_null][column_name] = df[non_null][column_name].apply(
+            df.loc[non_null_indices, column_name] = df.loc[non_null_indices, column_name].apply(
                 lambda x: str(column_type_df(x)),
             )
             self.logger.info(f'After apply column {column_name}')
