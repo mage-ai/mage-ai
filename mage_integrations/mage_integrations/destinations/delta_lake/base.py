@@ -106,7 +106,7 @@ class DeltaLake(BaseDestination):
             free_memory, used_memory, total_memory = get_memory()
             self.logger.info(f'Memory usage: {free_memory} {used_memory} {total_memory}')
 
-            df.loc[non_null, [column_name]] = df[non_null][column_name].apply(
+            df[non_null][column_name] = df[non_null][column_name].apply(
                 lambda x: str(column_type_df(x)),
             )
             self.logger.info(f'After apply column {column_name}')
