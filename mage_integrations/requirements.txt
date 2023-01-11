@@ -7,6 +7,8 @@ google-cloud-bigquery==2.34.4
 mysql-connector-python==8.0.31
 psycopg2-binary==2.9.3
 pyarrow==10.0.1
+pymongo==4.3.3
+pymongo_schema==0.4.1
 python-dateutil==2.8.2
 redshift-connector==2.0.909
 requests==2.27.1
@@ -14,4 +16,5 @@ simplejson==3.11.1
 snowflake-connector-python==2.9.0
 sshtunnel==0.4.0
 stripe==4.2.0
+tzlocal==4.2
 xmltodict==0.13.0

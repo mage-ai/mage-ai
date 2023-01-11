@@ -223,7 +223,8 @@ class Source:
                         json.dump(catalog, sys.stdout)
             elif self.count_records_mode:
                 arr = []
-                streams = [stream for stream in self.catalog.get_selected_streams(self.state) if stream.tap_stream_id in self.selected_streams]
+                selected_streams_arr = self.catalog.get_selected_streams(self.state or {}) or []
+                streams = [stream for stream in selected_streams_arr if stream.tap_stream_id in self.selected_streams]
                 for stream in streams:
                     tap_stream_id = stream.tap_stream_id
                     count = self.count_records(
@@ -661,7 +662,8 @@ class Source:
             REPLICATION_METHOD_INCREMENTAL,
             REPLICATION_METHOD_LOG_BASED,
         ]:
-            return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
+            data = self.state or {}
+            return data.get('bookmarks', {}).get(stream.tap_stream_id, None)
 
 
 @utils.handle_top_exception(LOGGER)
