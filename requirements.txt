@@ -36,7 +36,7 @@ google-cloud-storage==2.5.0
 kubernetes==25.3.0
 psycopg2-binary==2.9.3
 redshift-connector==2.0.909
-snowflake-connector-python==2.7.9
+snowflake-connector-python>=2.7.9
 tables==3.7.0
 
 # Azure
