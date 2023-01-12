@@ -29,7 +29,7 @@ Run
 ### Discover streams
 
 ```bash
-python3 mage_integrations/sources/mongodb/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
   --discover_streams
@@ -38,16 +38,16 @@ python3 mage_integrations/sources/mongodb/__init__.py \
 ### Get schema
 
 ```bash
-python3 mage_integrations/sources/mongodb/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --discover \
-  --selected_streams '["test"]' > mage_integrations/TEST_CATALOG.json
+  --selected_streams '["tickets"]' > mage_integrations/TEST_CATALOG.json
 ```
 
 ## Save source records to file
 
 ```bash
-python3 mage_integrations/sources/mongodb/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json > mage_integrations/TEST_OUTPUT
@@ -65,7 +65,7 @@ python3 mage_integrations/test.py | python3 mage_integrations/destinations/postg
 ### Count records
 
 ```bash
-python3 mage_integrations/sources/mongodb/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json \
@@ -74,7 +74,7 @@ python3 mage_integrations/sources/mongodb/__init__.py \
 ```
 
 ```bash
-python3 mage_integrations/sources/mongodb/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --query_json '{"_end_date": null, "_execution_date": "2022-11-17T21:05:53.341319", "_execution_partition": "444/20221117T210443", "_start_date": null, "_limit": 1000, "_offset": 0}' \
@@ -92,7 +92,7 @@ python3 mage_integrations/destinations/postgresql/__init__.py \
 ## Source to destination end-to-end
 
 ```bash
-python3 mage_integrations/sources/mongodb/__init__.py \
+python3 mage_integrations/sources/freshdesk/__init__.py \
   --config mage_integrations/TEST_CONFIG1.json \
   --catalog mage_integrations/TEST_CATALOG.json \
   --state mage_integrations/TEST_STATE.json | python3 mage_integrations/destinations/postgresql/__init__.py \
