@@ -94,14 +94,30 @@ title: "CI/CD"
 
 1. If you haven’t already, create a new AWS ECR repository.
 2. You’ll need AWS credentials with the following policy permissions:
-   ```
-   ecr:CompleteLayerUpload
-   ecr:GetAuthorizationToken
-   ecr:UploadLayerPart
-   ecr:InitiateLayerUpload
-   ecr:BatchCheckLayerAvailability
-   ecr:PutImage
-   ```
+    ```json
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "ecs:DeregisterTaskDefinition",
+            "ecs:DescribeClusters",
+            "ecs:DescribeServices",
+            "ecs:DescribeTaskDefinition",
+            "ecs:UpdateService",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:UploadLayerPart",
+            "ecr:InitiateLayerUpload",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:PutImage"
+          ],
+          "Resource": "*"
+        }
+      ]
+    }
+    ```
 3. In the field labeled **Name**, enter the value `AWS_ACCESS_KEY_ID`.
 4. In the field labeled **Secret**, enter your AWS Access Key ID.
 5. Click the button labeled **Add secret** to save.
@@ -195,3 +211,27 @@ env:
 ### Azure
 
 _Coming soon..._
+
+---
+
+## Using GitLab CI/CD
+
+_Coming soon..._
+
+### AWS
+
+_Coming soon..._
+
+---
+
+### GCP
+
+_Coming soon..._
+
+---
+
+### Azure
+
+_Coming soon..._
+
+---

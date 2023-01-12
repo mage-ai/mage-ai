@@ -44,7 +44,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
 
 ### Using PostgreSQL as database
 
-Mage uses SQLite as the default database engine. To use PostgreSQL as 
+Mage uses SQLite as the default database engine. To use PostgreSQL as
 the database engine, you'll need to run your Docker container slightly differently:
 
 1. Create Docker network
@@ -153,36 +153,55 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
 
 ## Using secret credential files in Docker
 
-If you have files containing secret credentials (e.g. GCP credentials JSON files), 
+If you have files containing secret credentials (e.g. GCP credentials JSON files),
 you’ll need to mount them as a volume so that those files appear in your running Docker container.
 
-## macOS
+### macOS
 
-If you have a file at this location `/Users/dragon/secrets/credentials.json` on your local machine, 
+If you have a file at this location `/Users/dragon/secrets/credentials.json` on your local machine,
 then run the following Docker command to start Mage and add files in the `secrets/` folder into your Docker container:
 
 ```bash
-docker run -it -p 6789:6789 
+docker run -it -p 6789:6789
     -v /Users/dragon/secrets:/home/secrets \
     -v $(pwd):/home/src mageai/mageai mageai/mageai \
     mage start demo_project
 ```
 
-This flag in the command `-v /Users/dragon/secrets:/home/secrets` takes all the files from `/Users/dragon/secrets` 
+This flag in the command `-v /Users/dragon/secrets:/home/secrets` takes all the files from `/Users/dragon/secrets`
 and puts them in the Docker container under the folder `/home/secrets`.
 
 Now inside Mage, you can load or refer to your `credentials.json` file using the absolute path:
 `/home/secrets/credentials.json`.
 
-## Windows
+### Windows
 
 Alter the Docker command slightly to work for Windows file path syntax:
 
 ```bash
-docker run -it -p 6789:6789 
+docker run -it -p 6789:6789
     -v "C:\Some Path\dragon\secrets\credentials.json":/home/secrets
     -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai \
     mage start [project_name]
+```
+
+---
+
+## Local Docker resources
+
+### Memory
+
+When running Mage locally using Docker, you may need to increase your Docker container’s
+memory limit. Add the following flag and value to your Docker run command:
+`-m 2048m` (this sets the memory limit to 2,048 megabytes).
+
+Your Docker run command could look like this:
+
+```bash
+docker run -it -p 6789:6789 \
+    -v $(pwd):/home/src mageai/mageai \
+    -m 2048m \
+    mage start demo_project
 ```
 
 ---
@@ -223,7 +242,7 @@ apt install libkrb5-dev
 
 ---
 
-## Development environment
+## Source code development
 
 To setup a development environment for editing source code, please check out
 this [document](/community/contributing).
