@@ -1335,8 +1335,6 @@ function PipelineDetailPage({
         ? addNewBlockAtIndex
         : opts => new Promise((resolve, reject) => {
             showModal(opts);
-            resolve?.();
-            reject?.();
           })
       }
       addWidget={(
