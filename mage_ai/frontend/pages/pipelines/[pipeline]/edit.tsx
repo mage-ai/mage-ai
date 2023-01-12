@@ -858,7 +858,7 @@ function PipelineDetailPage({
       defaultName={name}
       onClose={hideModal}
       onSave={(opts: {
-        name: string;
+        name?: string;
       } = {}) => addNewBlockAtIndex(
         block,
         idx,
@@ -1331,7 +1331,14 @@ function PipelineDetailPage({
 
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
-      addNewBlockAtIndex={automaticallyNameBlocks ? addNewBlockAtIndex : showModal}
+      addNewBlockAtIndex={automaticallyNameBlocks
+        ? addNewBlockAtIndex
+        : opts => new Promise((resolve, reject) => {
+            showModal(opts);
+            resolve?.();
+            reject?.();
+          })
+      }
       addWidget={(
         widget: BlockType,
         {

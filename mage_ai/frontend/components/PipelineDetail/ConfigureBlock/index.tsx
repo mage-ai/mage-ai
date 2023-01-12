@@ -56,17 +56,18 @@ function ConfigureBlock({
         <FlexContainer alignItems="center">
           <Checkbox
             checked={automaticallyNameBlocks}
+            label={
+              <Text muted small>
+                Automatically use randomly generated name
+                <br/>
+                for blocks created in the future
+              </Text>
+            }
             onClick={() => {
               setAutomaticallyNameBlocks(!automaticallyNameBlocks);
               set(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS, !automaticallyNameBlocks);
             }}
           />
-          <Spacing mr={1} />
-          <Text muted small>
-            Automatically use randomly generated name
-            <br/>
-            for blocks created in the future
-          </Text>
         </FlexContainer>
       </Spacing>
 

@@ -205,6 +205,7 @@ function FlyoutMenu({
           }
 
           const el = (
+            // @ts-ignore
             <ElToUse
               alternateBackground={alternateBackground || roundedStyle}
               disabled={disabled}

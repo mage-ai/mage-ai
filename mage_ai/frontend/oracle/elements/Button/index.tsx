@@ -75,6 +75,7 @@ export type ButtonProps = {
   selectedAlt?: boolean;
   small?: boolean;
   success?: boolean;
+  tabIndex?: number;
   target?: string;
   title?: string;
   transparent?: boolean;
