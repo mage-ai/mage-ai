@@ -128,8 +128,7 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> int:
-        if REPLICATION_METHOD_LOG_BASED == stream.replication_method and \
-                self.replication_method_override is None:
+        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
             # Not support count records for LOG_BASED replication
             return 1
 
@@ -148,7 +147,7 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks):
+        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
             for data in self.load_data_from_logs(
                 stream,
                 bookmarks=bookmarks,
