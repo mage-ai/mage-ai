@@ -1,4 +1,5 @@
 from jinja2 import Template
+from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
@@ -119,4 +120,4 @@ def interpolate_variables(
 ) -> Dict:
     settings_string = text if variables is None else interpolate_string(text, variables)
 
-    return yaml.full_load(settings_string)
+    return yaml.load(settings_string, Loader=NoDatesSafeLoader)

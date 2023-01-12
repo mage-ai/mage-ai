@@ -20,3 +20,4 @@ stripe==4.2.0
 trino==0.321.0
 tzlocal==4.2
 xmltodict==0.13.0
+zenpy==2.0.25
