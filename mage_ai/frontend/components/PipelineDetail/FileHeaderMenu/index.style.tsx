@@ -4,7 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
-  highlighted: boolean;
+  highlighted?: boolean;
 };
 
 export const LinkStyle = styled.div<LinkProps>`

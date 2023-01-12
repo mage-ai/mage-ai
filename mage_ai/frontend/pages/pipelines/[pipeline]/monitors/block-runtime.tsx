@@ -34,7 +34,10 @@ function BlockRuntimeMonitor({
 
   const pipelineUUID = pipelineProp.uuid;
 
-  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
+    includes_content: false,
+    includes_outputs: false,
+  });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,
     uuid: pipelineUUID,
@@ -44,7 +47,7 @@ function BlockRuntimeMonitor({
   ]);
 
   const { data: dataPipelineSchedules } = api.pipeline_schedules.pipelines.list(pipelineUUID);
-  const pipelineSchedules = useMemo( 
+  const pipelineSchedules = useMemo(
     () => dataPipelineSchedules?.pipeline_schedules,
     [dataPipelineSchedules],
   );
@@ -102,7 +105,7 @@ function BlockRuntimeMonitor({
               y: date in runtimeStats ? [runtimeStats[date]] : null,
             }))
           };
-        }, 
+        },
         {},
       );
     }

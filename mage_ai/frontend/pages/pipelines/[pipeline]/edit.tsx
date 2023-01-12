@@ -17,6 +17,7 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import DataProviderType from '@interfaces/DataProviderType';
 import FileBrowser from '@components/FileBrowser';
@@ -46,6 +47,7 @@ import usePrevious from '@utils/usePrevious';
 
 import { Add, Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
+import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   get,
@@ -73,6 +75,7 @@ import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -839,6 +842,38 @@ function PipelineDetailPage({
     setBlocks,
   ]);
 
+  const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(false);
+  useEffect(() => {
+    setAutomaticallyNameBlocks(!!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS));
+  }, []);
+
+  const [showModal, hideModal] = useModal((
+    block: BlockRequestPayloadType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name: string = randomNameGenerator(),
+  ) => (
+    <ConfigureBlock
+      block={block}
+      defaultName={name}
+      onClose={hideModal}
+      onSave={(opts: {
+        name?: string;
+      } = {}) => addNewBlockAtIndex(
+        block,
+        idx,
+        onCreateCallback,
+        opts?.name,
+      ).then(() => hideModal())}
+    />
+  ), {
+  }, [
+    addNewBlockAtIndex,
+  ], {
+    background: true,
+    uuid: 'configure_block_name_and_create',
+  });
+
   // Widgets
   const {
     data: dataWidgets,
@@ -1296,7 +1331,12 @@ function PipelineDetailPage({
 
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
-      addNewBlockAtIndex={addNewBlockAtIndex}
+      addNewBlockAtIndex={automaticallyNameBlocks
+        ? addNewBlockAtIndex
+        : opts => new Promise((resolve, reject) => {
+            showModal(opts);
+          })
+      }
       addWidget={(
         widget: BlockType,
         {
@@ -1351,6 +1391,7 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     addWidgetAtIndex,
+    automaticallyNameBlocks,
     anyInputFocused,
     autocompleteItems,
     blockRefs,
@@ -1384,6 +1425,7 @@ function PipelineDetailPage({
     setRunningBlocks,
     setSelectedBlock,
     setTextareaFocused,
+    showModal,
     textareaFocused,
     widgets,
   ]);
@@ -1723,7 +1765,7 @@ function PipelineDetailPage({
         />
       </PipelineLayout>
 
-      {recsWindowOpenBlockIdx !== null &&
+      {/*{recsWindowOpenBlockIdx !== null &&
         <RecommendationsWindow
           addNewBlockAtIndex={addNewBlockAtIndex}
           blockInsertionIndex={recsWindowOpenBlockIdx}
@@ -1741,7 +1783,7 @@ function PipelineDetailPage({
             />
           ))}
         </RecommendationsWindow>
-      }
+      }*/}
     </>
   );
 }

@@ -9,12 +9,14 @@ import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
+import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
+import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PopupMenu from '@oracle/components/PopupMenu';
 import ProjectType from '@interfaces/ProjectType';
-import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -23,7 +25,7 @@ import {
   LOGO_HEIGHT,
 } from './index.style';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
-import { PURPLE } from '@oracle/styles/colors/main';
+import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type BreadcrumbType = {
@@ -56,10 +58,12 @@ function Header({
   project,
   version,
 }: HeaderProps) {
+  const [userMenuVisible, setUserMenuVisible] = useState<boolean>(false);
   const [highlightedMenuIndex, setHighlightedMenuIndex] = useState(null);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
   const menuRef = useRef(null);
+  const refUserMenu = useRef(null);
   const router = useRouter();
   const { pipeline: pipelineUUID } = router.query;
   const breadcrumbEls = useMemo(() => {
@@ -183,6 +187,7 @@ function Header({
                   linkProps={{
                     href: 'https://docs.mage.ai/getting-started/setup#download-new-version-of-mage',
                   }}
+                  noHoverUnderline
                   primary
                   target="_blank"
                 >
@@ -274,7 +279,7 @@ function Header({
               <Spacing mr={2}>
                 <Link
                   default
-                  href="https://mage.ai/changelog"
+                  href="https://www.mage.ai/changelog"
                   monospace
                   openNewWindow
                 >
@@ -283,12 +288,46 @@ function Header({
               </Spacing>
             )}
 
-            <Circle
-              color={PURPLE}
-              size={4 * UNIT}
+            <ClickOutside
+              onClickOutside={() => setUserMenuVisible(false)}
+              open
+              style={{
+                position: 'relative',
+              }}
             >
-              🤖
-            </Circle>
+              <FlexContainer>
+                <LinkStyle
+                  onClick={() => setUserMenuVisible(true)}
+                  ref={refUserMenu}
+                >
+                  <Circle
+                    color={BLUE_TRANSPARENT}
+                    size={4 * UNIT}
+                  >
+                    <Mage8Bit />
+                  </Circle>
+                </LinkStyle>
+
+                <FlyoutMenu
+                  alternateBackground
+                  items={[
+                    {
+                      label: () => 'User settings',
+                      linkProps: {
+                        href: '/users/settings',
+                      },
+                      uuid: 'settings',
+                    },
+                  ]}
+                  onClickCallback={() => setUserMenuVisible(false)}
+                  open={userMenuVisible}
+                  parentRef={refUserMenu}
+                  rightOffset={0}
+                  uuid="shared/Header/user_menu"
+                />
+              </FlexContainer>
+            </ClickOutside>
+
           </Flex>
         </FlexContainer>
       </ClientOnly>

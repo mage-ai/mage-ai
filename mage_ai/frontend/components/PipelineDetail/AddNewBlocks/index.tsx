@@ -148,14 +148,14 @@ function AddNewBlocks({
   const isPySpark = PipelineTypeEnum.PYSPARK === pipelineType;
 
   return (
-    <FlexContainer inline>
+    <FlexContainer flexWrap="wrap" inline>
       <ClickOutside
         onClickOutside={closeButtonMenu}
         open
       >
-        <FlexContainer>
+        <FlexContainer flexWrap="wrap">
           {!hideDataExporter && (
-            <>
+            <Spacing mb={1} mr={1}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType)}
@@ -185,13 +185,11 @@ function AddNewBlocks({
                   Data loader
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-
-              <Spacing ml={1} />
-            </>
+            </Spacing>
           )}
 
           {!hideTransformer && (
-            <>
+            <Spacing mb={1} mr={1}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType
@@ -242,13 +240,11 @@ function AddNewBlocks({
                   Transformer
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-
-              <Spacing ml={1} />
-            </>
+            </Spacing>
           )}
 
           {!hideDataExporter && (
-            <>
+            <Spacing mb={1} mr={1}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType)}
@@ -281,13 +277,11 @@ function AddNewBlocks({
                   Data exporter
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-
-              <Spacing ml={1} />
-            </>
+            </Spacing>
           )}
 
           {!hideDbt && (
-            <>
+            <Spacing mb={1} mr={1}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={[
@@ -337,97 +331,91 @@ function AddNewBlocks({
                   DBT model
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-
-              <Spacing ml={1} />
-            </>
+            </Spacing>
           )}
-        </FlexContainer>
-      </ClickOutside>
 
-      {!hideScratchpad && (
-        <>
-          <Tooltip
-            block
-            label="Write experimental code that doesn’t get executed when you run your pipeline."
-            size={null}
-            widthFitContent
-          >
-            <KeyboardShortcutButton
-              {...sharedProps}
-              beforeElement={
-                <IconContainerStyle border compact={compact}>
-                  <Add size={iconSize} />
-                </IconContainerStyle>
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                addNewBlock({
-                  type: BlockTypeEnum.SCRATCHPAD,
-                });
-              }}
-              uuid="AddNewBlocks/Scratchpad"
-            >
-              Scratchpad
-            </KeyboardShortcutButton>
-          </Tooltip>
-
-          <Spacing ml={1} />
-        </>
-      )}
-
-      {!isStreamingPipeline &&
-        <>
-          {!hideSensor && (
-            <>
+          {!hideScratchpad && (
+            <Spacing mb={1} mr={1}>
               <Tooltip
                 block
-                label="Add a sensor so that other blocks only run when sensor is complete."
+                label="Write experimental code that doesn’t get executed when you run your pipeline."
                 size={null}
                 widthFitContent
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
                   beforeElement={
-                    <IconContainerStyle compact={compact}>
-                      <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                    <IconContainerStyle border compact={compact}>
+                      <Add size={iconSize} />
                     </IconContainerStyle>
                   }
                   onClick={(e) => {
                     e.preventDefault();
                     addNewBlock({
-                      language: BlockLanguageEnum.PYTHON,
-                      type: BlockTypeEnum.SENSOR,
+                      type: BlockTypeEnum.SCRATCHPAD,
                     });
                   }}
-                  uuid="AddNewBlocks/Sensor"
+                  uuid="AddNewBlocks/Scratchpad"
                 >
-                  Sensor
+                  Scratchpad
                 </KeyboardShortcutButton>
               </Tooltip>
-
-              <Spacing ml={1} />
-            </>
+            </Spacing>
           )}
 
-          {/*{!hideRecommendations && (
-            <KeyboardShortcutButton
-              {...sharedProps}
-              beforeElement={
-                <IconContainerStyle compact={compact}>
-                  <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-                </IconContainerStyle>
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                setRecsWindowOpenBlockIdx(blockIdx);
-              }}
-              uuid="AddNewBlocks/Recommendations"
-            >
-              Recs
-            </KeyboardShortcutButton>
-          )}*/}
-        </>
-      }
+          {!isStreamingPipeline &&
+            <Spacing mb={1} mr={1}>
+              {!hideSensor && (
+                <>
+                  <Tooltip
+                    block
+                    label="Add a sensor so that other blocks only run when sensor is complete."
+                    size={null}
+                    widthFitContent
+                  >
+                    <KeyboardShortcutButton
+                      {...sharedProps}
+                      beforeElement={
+                        <IconContainerStyle compact={compact}>
+                          <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                        </IconContainerStyle>
+                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        addNewBlock({
+                          language: BlockLanguageEnum.PYTHON,
+                          type: BlockTypeEnum.SENSOR,
+                        });
+                      }}
+                      uuid="AddNewBlocks/Sensor"
+                    >
+                      Sensor
+                    </KeyboardShortcutButton>
+                  </Tooltip>
+                </>
+              )}
+
+              {/*{!hideRecommendations && (
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact}>
+                      <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setRecsWindowOpenBlockIdx(blockIdx);
+                  }}
+                  uuid="AddNewBlocks/Recommendations"
+                >
+                  Recs
+                </KeyboardShortcutButton>
+              )}*/}
+            </Spacing>
+          }
+        </FlexContainer>
+      </ClickOutside>
     </FlexContainer>
   );
 }

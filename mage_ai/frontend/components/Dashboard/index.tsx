@@ -74,6 +74,9 @@ function Dashboard({
     breadcrumbs.push(...[
       {
         label: () => projects[0]?.name,
+        linkProps: {
+          href: '/',
+        },
       },
       {
         // gradientColor: PURPLE_BLUE,

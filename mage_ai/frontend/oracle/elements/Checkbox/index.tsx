@@ -15,7 +15,7 @@ export type CheckboxProps = {
   checked?: boolean;
   disabled?: boolean;
   errorMessage?: string[];
-  label?: string;
+  label?: string | any;
   labelDescription?: string;
   large?: boolean;
   meta?: MetaType;
@@ -188,15 +188,18 @@ const Checkbox = ({
 
         {label && (
           <Spacing pl={1}>
-            <Text
-              disabled={disabled}
-              lineThrough={disabled}
-              monospace={monospace}
-              small={small}
-              xsmall={xsmall}
-            >
-              {label}
-            </Text>
+            {typeof label === 'string' && (
+              <Text
+                disabled={disabled}
+                lineThrough={disabled}
+                monospace={monospace}
+                small={small}
+                xsmall={xsmall}
+              >
+                {label}
+              </Text>
+            )}
+            {typeof label !== 'string' && label}
             {labelDescription && <Text muted small>{labelDescription}</Text>}
           </Spacing>
         )}

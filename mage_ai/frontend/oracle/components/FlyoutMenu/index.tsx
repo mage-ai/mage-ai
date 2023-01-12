@@ -1,4 +1,5 @@
 import React, { createRef, useEffect, useRef, useState } from 'react';
+import NextLink from 'next/link';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
@@ -8,6 +9,7 @@ import Text from '@oracle/elements/Text';
 import { ArrowRight } from '@oracle/icons';
 import {
   FlyoutMenuContainerStyle,
+  LinkAnchorStyle,
   LinkStyle,
   TitleContainerStyle,
 } from './index.style';
@@ -178,16 +180,19 @@ function FlyoutMenu({
           isGroupingTitle,
           keyTextGroups,
           label,
+          linkProps,
           onClick,
           openConfirmationDialogue,
           uuid,
         }: FlyoutMenuItemType, idx0: number) => {
           refArg.current[uuid] = createRef();
 
+          const ElToUse = linkProps ? LinkAnchorStyle : LinkStyle;
+
           const labelToRender = label();
 
-          return (isGroupingTitle
-            ?
+          if (isGroupingTitle) {
+            return (
               <TitleContainerStyle>
                 {typeof labelToRender === 'string' && (
                   <Text bold key={uuid} muted noWrapping>
@@ -196,84 +201,103 @@ function FlyoutMenu({
                 )}
                 {typeof labelToRender !== 'string' && labelToRender}
               </TitleContainerStyle>
-            :
-              <LinkStyle
-                alternateBackground={alternateBackground || roundedStyle}
-                disabled={disabled}
-                highlighted={highlightedIndices[0] === idx0}
-                indent={indent}
-                key={uuid}
-                largePadding={roundedStyle}
-                onClick={(e) => {
+            );
+          }
+
+          const el = (
+            // @ts-ignore
+            <ElToUse
+              alternateBackground={alternateBackground || roundedStyle}
+              disabled={disabled}
+              highlighted={highlightedIndices[0] === idx0}
+              indent={indent}
+              key={uuid}
+              largePadding={roundedStyle}
+              onClick={(e) => {
+                if (!linkProps) {
                   e.preventDefault();
+                }
 
-                  if (openConfirmationDialogue) {
-                    setConfirmationDialogueOpen(true);
-                    setConfirmationAction(() => onClick);
-                    onClickCallback?.();
-                  } else if (onClick && !disabled) {
-                    onClick?.();
-                    onClickCallback?.();
-                  }
-                }}
-                onMouseEnter={() => {
-                  setSubmenuVisible((prevState) => ({
-                    ...prevState,
-                    [uuid]: true,
-                  }));
-                  if (depth === 1) {
-                    setSubmenuTopOffset(refArg.current[uuid]?.current?.offsetTop || 0);
-                  } else if (depth === 2) {
-                    setSubmenuTopOffset2(refArg.current[uuid]?.current?.offsetTop || 0);
-                  }
-                }}
-                onMouseLeave={() => {
-                  setSubmenuVisible((prevState) => ({
-                    ...prevState,
-                    [uuid]: false,
-                  }));
-                }}
-                ref={refArg.current[uuid]}
+                if (openConfirmationDialogue) {
+                  setConfirmationDialogueOpen(true);
+                  setConfirmationAction(() => onClick);
+                  onClickCallback?.();
+                } else if (onClick && !disabled) {
+                  onClick?.();
+                  onClickCallback?.();
+                }
+              }}
+              onMouseEnter={() => {
+                setSubmenuVisible((prevState) => ({
+                  ...prevState,
+                  [uuid]: true,
+                }));
+                if (depth === 1) {
+                  setSubmenuTopOffset(refArg.current[uuid]?.current?.offsetTop || 0);
+                } else if (depth === 2) {
+                  setSubmenuTopOffset2(refArg.current[uuid]?.current?.offsetTop || 0);
+                }
+              }}
+              onMouseLeave={() => {
+                setSubmenuVisible((prevState) => ({
+                  ...prevState,
+                  [uuid]: false,
+                }));
+              }}
+              ref={refArg.current[uuid]}
+            >
+              <FlexContainer
+                alignItems="center"
+                fullWidth
+                justifyContent="space-between"
               >
-                <FlexContainer
-                  alignItems="center"
-                  fullWidth
-                  justifyContent="space-between"
-                >
-                  {typeof labelToRender === 'string' && (
-                    <Text
-                      bold={bold}
-                      disabled={disabled}
-                      noWrapping
-                    >
-                      {labelToRender}
-                    </Text>
-                  )}
-                  {typeof labelToRender !== 'string' && labelToRender}
-
-                  {items && (
-                    <Spacing ml={2}>
-                      <ArrowRight />
-                    </Spacing>
-                  )}
-
-                  {keyTextGroups && (
-                    <Spacing ml={4} ref={keyTextGroupRef}>
-                      <KeyboardTextGroup keyTextGroups={keyTextGroups} />
-                    </Spacing>
-                  )}
-                </FlexContainer>
-                {items && (
-                  buildMenuEl(
-                    items,
-                    uuid,
-                    false,
-                    depth,
-                    refArg,
-                  )
+                {typeof labelToRender === 'string' && (
+                  <Text
+                    bold={bold}
+                    disabled={disabled}
+                    noWrapping
+                  >
+                    {labelToRender}
+                  </Text>
                 )}
-              </LinkStyle>
+                {typeof labelToRender !== 'string' && labelToRender}
+
+                {items && (
+                  <Spacing ml={2}>
+                    <ArrowRight />
+                  </Spacing>
+                )}
+
+                {keyTextGroups && (
+                  <Spacing ml={4} ref={keyTextGroupRef}>
+                    <KeyboardTextGroup keyTextGroups={keyTextGroups} />
+                  </Spacing>
+                )}
+              </FlexContainer>
+              {items && (
+                buildMenuEl(
+                  items,
+                  uuid,
+                  false,
+                  depth,
+                  refArg,
+                )
+              )}
+            </ElToUse>
           );
+
+          if (linkProps) {
+            return (
+              <NextLink
+                {...linkProps}
+                passHref
+              >
+                {el}
+              </NextLink>
+            );
+          }
+
+          return el;
         })}
       </FlyoutMenuContainerStyle>
     );

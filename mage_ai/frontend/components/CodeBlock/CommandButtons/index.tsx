@@ -124,229 +124,151 @@ function CommandButtons({
     <FlexContainer
       alignItems="center"
     >
-      {visible && (
+      {ExecutionStateEnum.QUEUED === executionState && (
+        <Spinner
+          color={(themeContext || dark).content.active}
+          type="cylon"
+        />
+      )}
+      {ExecutionStateEnum.BUSY === executionState && (
+        <Spinner
+          color={(themeContext || dark).content.active}
+        />
+      )}
+
+      {(!isInProgress && !isStreamingPipeline) &&  (
         <>
-          {ExecutionStateEnum.QUEUED === executionState && (
-            <Spinner
-              color={(themeContext || dark).content.active}
-              type="cylon"
-            />
-          )}
-          {ExecutionStateEnum.BUSY === executionState && (
-            <Spinner
-              color={(themeContext || dark).content.active}
-            />
-          )}
-
-          {(!isInProgress && !isStreamingPipeline) &&  (
-            <>
-              <Tooltip
-                appearBefore
-                default
-                label={(
-                  <Text>
-                    Run block
-                    &nbsp;
-                    &nbsp;
-                    <KeyboardTextGroup
-                      inline
-                      keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
-                      monospace
-                      uuidForKey={uuid}
-                    />
-                  </Text>
-                )}
+          <Tooltip
+            appearBefore
+            default
+            label={(
+              <Text>
+                Run block
+                &nbsp;
+                &nbsp;
+                <KeyboardTextGroup
+                  inline
+                  keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+                  monospace
+                  uuidForKey={uuid}
+                />
+              </Text>
+            )}
+            size={UNIT * 3}
+            widthFitContent
+          >
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => {
+                if (upstreamBlocksExecuted) {
+                  runBlock({ block });
+                } else {
+                  setShowExecuteActions(true);
+                }
+              }}
+            >
+              <Circle
+                color={color}
                 size={UNIT * 3}
-                widthFitContent
               >
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => {
-                    if (upstreamBlocksExecuted) {
-                      runBlock({ block });
-                    } else {
-                      setShowExecuteActions(true);
-                    }
-                  }}
-                >
-                  <Circle
-                    color={color}
-                    size={UNIT * 3}
-                  >
-                    <PlayButtonFilled
-                      black
-                      size={UNIT * 1.5}
-                    />
-                  </Circle>
-                </Button>
-              </Tooltip>
-              <ClickOutside
-                disableEscape
-                onClickOutside={() => setShowExecuteActions(false)}
-                open={showExecuteActions}
-              >
-                <FlyoutMenu
-                  items={
-                    [
-                      {
-                        label: () => 'Execute block',
-                        onClick: () => runBlock({ block }),
-                        uuid: 'execute_block',
-                      },
-                      {
-                        label: () => 'Execute with upstream blocks',
-                        onClick: () => runBlock({ block, runUpstream: true }),
-                        uuid: 'execute_upstream',
-                      },
-                    ]
-                  }
-                  onClickCallback={() => setShowExecuteActions(false)}
-                  open={showExecuteActions}
-                  parentRef={refExecuteActions}
-                  rightOffset={UNIT * 13.25}
-                  topOffset={UNIT * 4.5}
-                  uuid="execute_actions"
-                  width={UNIT * 25}
+                <PlayButtonFilled
+                  black
+                  size={UNIT * 1.5}
                 />
-              </ClickOutside>
-            </>
-          )}
-
-          {isInProgress && (
-            <Spacing ml={PADDING_UNITS}>
-              <Tooltip
-                appearAbove
-                appearBefore
-                default
-                label={(
-                  <Text>
-                    Interrupt kernel
-                    &nbsp;
-                    &nbsp;
-                    <KeyboardTextGroup
-                      inline
-                      keyTextGroups={[[KEY_SYMBOL_I], [KEY_SYMBOL_I]]}
-                      monospace
-                      uuidForKey={uuid}
-                    />
-                  </Text>
-                )}
-                size={UNIT * 2.5}
-                widthFitContent
-              >
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => interruptKernel()}
-                >
-                  <Circle
-                    borderSize={1.5}
-                    size={UNIT * 2.5}
-                  >
-                    <Close size={UNIT * 1} />
-                  </Circle>
-                </Button>
-              </Tooltip>
-            </Spacing>
-          )}
-
-          {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreamingPipeline) && (
-            <Spacing ml={PADDING_UNITS}>
-              <FlyoutMenuWrapper
-                items={convertBlockMenuItems}
-                onClickCallback={() => setShowConvertMenu(false)}
-                onClickOutside={() => setShowConvertMenu(false)}
-                open={showConvertMenu}
-                parentRef={refConvertBlock}
-                rightOffset={0}
-                topOffset={4}
-                uuid="CommandButtons/convert_block"
-              >
-                <Tooltip
-                  appearBefore
-                  default
-                  label={(
-                    <Text>
-                      Convert block
-                    </Text>
-                  )}
-                  size={UNIT * 2.5}
-                  widthFitContent
-                >
-                  <Button
-                    noBackground
-                    noBorder
-                    noPadding
-                    onClick={() => setShowConvertMenu(!showConvertMenu)}
-                    ref={refConvertBlock}
-                  >
-                    <Convert size={UNIT * 2.5} />
-                  </Button>
-                </Tooltip>
-              </FlyoutMenuWrapper>
-            </Spacing>
-          )}
-
-          {([
-            BlockTypeEnum.DATA_LOADER,
-            BlockTypeEnum.TRANSFORMER,
-          ].includes(block.type) && !isStreamingPipeline) && (
-            <>
-              <Spacing
-                ml={PADDING_UNITS}
-                ref={refAddChart}
-              >
-                <Tooltip
-                  appearBefore
-                  default
-                  label="Add chart"
-                  size={UNIT * 2.25}
-                  widthFitContent
-                >
-                  <Button
-                    noBackground
-                    noBorder
-                    noPadding
-                    onClick={() => setShowAddCharts(currState => !currState)}
-                  >
-                    <NavGraph size={UNIT * 2.25} />
-                  </Button>
-                </Tooltip>
-              </Spacing>
-
-              <ClickOutside
-                disableEscape
-                onClickOutside={() => setShowAddCharts(false)}
-                open={showAddCharts}
-              >
-                <AddChartMenu
-                  addWidget={addWidget}
-                  block={block}
-                  onClickCallback={() => setShowAddCharts(false)}
-                  open={showAddCharts}
-                  parentRef={refAddChart}
-                  rightOffset={UNIT * 9}
-                  runBlock={runBlock}
-                  topOffset={UNIT * 2}
-                />
-              </ClickOutside>
-            </>
-          )}
+              </Circle>
+            </Button>
+          </Tooltip>
+          <ClickOutside
+            disableEscape
+            onClickOutside={() => setShowExecuteActions(false)}
+            open={showExecuteActions}
+          >
+            <FlyoutMenu
+              items={
+                [
+                  {
+                    label: () => 'Execute block',
+                    onClick: () => runBlock({ block }),
+                    uuid: 'execute_block',
+                  },
+                  {
+                    label: () => 'Execute with upstream blocks',
+                    onClick: () => runBlock({ block, runUpstream: true }),
+                    uuid: 'execute_upstream',
+                  },
+                ]
+              }
+              onClickCallback={() => setShowExecuteActions(false)}
+              open={showExecuteActions}
+              parentRef={refExecuteActions}
+              rightOffset={UNIT * 13.25}
+              topOffset={UNIT * 4.5}
+              uuid="execute_actions"
+              width={UNIT * 25}
+            />
+          </ClickOutside>
         </>
       )}
 
-      <>
-        <div ref={refMoreActions}>
-          <Spacing ml={PADDING_UNITS}>
+      {isInProgress && (
+        <Spacing ml={PADDING_UNITS}>
+          <Tooltip
+            appearAbove
+            appearBefore
+            default
+            label={(
+              <Text>
+                Interrupt kernel
+                &nbsp;
+                &nbsp;
+                <KeyboardTextGroup
+                  inline
+                  keyTextGroups={[[KEY_SYMBOL_I], [KEY_SYMBOL_I]]}
+                  monospace
+                  uuidForKey={uuid}
+                />
+              </Text>
+            )}
+            size={UNIT * 2.5}
+            widthFitContent
+          >
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => interruptKernel()}
+            >
+              <Circle
+                borderSize={1.5}
+                size={UNIT * 2.5}
+              >
+                <Close size={UNIT * 1} />
+              </Circle>
+            </Button>
+          </Tooltip>
+        </Spacing>
+      )}
+
+      {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreamingPipeline) && (
+        <Spacing ml={PADDING_UNITS}>
+          <FlyoutMenuWrapper
+            items={convertBlockMenuItems}
+            onClickCallback={() => setShowConvertMenu(false)}
+            onClickOutside={() => setShowConvertMenu(false)}
+            open={showConvertMenu}
+            parentRef={refConvertBlock}
+            rightOffset={0}
+            topOffset={4}
+            uuid="CommandButtons/convert_block"
+          >
             <Tooltip
               appearBefore
               default
               label={(
                 <Text>
-                  More actions
+                  Convert block
                 </Text>
               )}
               size={UNIT * 2.5}
@@ -356,44 +278,116 @@ function CommandButtons({
                 noBackground
                 noBorder
                 noPadding
-                onClick={() => setShowMoreActions(currState => !currState)}
+                onClick={() => setShowConvertMenu(!showConvertMenu)}
+                ref={refConvertBlock}
               >
-                <Circle
-                  borderSize={1.5}
-                  size={UNIT * 2.5}
-                >
-                  <Ellipsis size={UNIT} />
-                </Circle>
+                <Convert size={UNIT * 2.5} />
+              </Button>
+            </Tooltip>
+          </FlyoutMenuWrapper>
+        </Spacing>
+      )}
+
+      {([
+        BlockTypeEnum.DATA_LOADER,
+        BlockTypeEnum.TRANSFORMER,
+      ].includes(block.type) && !isStreamingPipeline) && (
+        <>
+          <Spacing
+            ml={PADDING_UNITS}
+            ref={refAddChart}
+          >
+            <Tooltip
+              appearBefore
+              default
+              label="Add chart"
+              size={UNIT * 2.25}
+              widthFitContent
+            >
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => setShowAddCharts(currState => !currState)}
+              >
+                <NavGraph size={UNIT * 2.25} />
               </Button>
             </Tooltip>
           </Spacing>
-        </div>
-        <ClickOutside
-          disableEscape
-          onClickOutside={() => setShowMoreActions(false)}
-          open={showMoreActions}
-        >
-          <FlyoutMenu
-            items={getMoreActionsItems(
-              block,
-              runBlock,
-              deleteBlock,
-              setOutputCollapsed,
-              isStreamingPipeline,
-              {
-                blocksMapping,
-                savePipelineContent,
-              },
+
+          <ClickOutside
+            disableEscape
+            onClickOutside={() => setShowAddCharts(false)}
+            open={showAddCharts}
+          >
+            <AddChartMenu
+              addWidget={addWidget}
+              block={block}
+              onClickCallback={() => setShowAddCharts(false)}
+              open={showAddCharts}
+              parentRef={refAddChart}
+              rightOffset={UNIT * 9}
+              runBlock={runBlock}
+              topOffset={UNIT * 2}
+            />
+          </ClickOutside>
+        </>
+      )}
+
+      <div ref={refMoreActions}>
+        <Spacing ml={PADDING_UNITS}>
+          <Tooltip
+            appearBefore
+            default
+            label={(
+              <Text>
+                More actions
+              </Text>
             )}
-            onClickCallback={() => setShowMoreActions(false)}
-            open={showMoreActions}
-            parentRef={refMoreActions}
-            rightOffset={UNIT * 4.75}
-            topOffset={UNIT * 2}
-            uuid="FileHeaderMenu/file_items"
-          />
-        </ClickOutside>
-      </>
+            size={UNIT * 2.5}
+            widthFitContent
+          >
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => setShowMoreActions(currState => !currState)}
+            >
+              <Circle
+                borderSize={1.5}
+                size={UNIT * 2.5}
+              >
+                <Ellipsis size={UNIT} />
+              </Circle>
+            </Button>
+          </Tooltip>
+        </Spacing>
+      </div>
+      <ClickOutside
+        disableEscape
+        onClickOutside={() => setShowMoreActions(false)}
+        open={showMoreActions}
+      >
+        <FlyoutMenu
+          items={getMoreActionsItems(
+            block,
+            runBlock,
+            deleteBlock,
+            setOutputCollapsed,
+            isStreamingPipeline,
+            {
+              blocksMapping,
+              savePipelineContent,
+            },
+          )}
+          onClickCallback={() => setShowMoreActions(false)}
+          open={showMoreActions}
+          parentRef={refMoreActions}
+          rightOffset={UNIT * 4.75}
+          topOffset={UNIT * 2}
+          uuid="FileHeaderMenu/file_items"
+        />
+      </ClickOutside>
     </FlexContainer>
   );
 }
