@@ -213,11 +213,12 @@ class Destination(BaseDestination):
         tags: Dict = {},
     ) -> List[List[Tuple]]:
         results = []
-        results += self.build_connection().execute(query_strings, commit=True)
 
         if self.debug:
             for qs in query_strings:
                 print(qs, '\n')
+
+        results += self.build_connection().execute(query_strings, commit=True)
 
         query_string_size = 0
         query_strings = []
@@ -261,7 +262,7 @@ class Destination(BaseDestination):
                     try:
                         results += self.build_connection().execute([qs], commit=True)
                     except Exception as err:
-                        print(qs)
+                        print(qs, '\n')
                         raise err
             else:
                 results += self.build_connection().execute(query_strings, commit=True)

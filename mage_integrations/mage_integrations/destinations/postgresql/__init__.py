@@ -10,10 +10,10 @@ from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
     build_create_table_command,
     build_insert_command,
-    column_type_mapping,
+    column_type_mapping as column_type_mapping_orig,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 
 class PostgreSQL(Destination):
@@ -37,13 +37,10 @@ class PostgreSQL(Destination):
     ) -> List[str]:
         return [
             build_create_table_command(
-                column_type_mapping=column_type_mapping(
-                    schema,
-                    convert_column_type,
-                    lambda item_type_converted: f'{item_type_converted}[]',
-                ),
+                column_type_mapping=self.column_type_mapping(schema),
                 columns=schema['properties'].keys(),
                 full_table_name=f'{schema_name}.{table_name}',
+                if_not_exists=True,
                 unique_constraints=unique_constraints,
             ),
         ]
@@ -74,11 +71,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         # TODO: Support alter column types
         return [
             build_alter_table_command(
-                column_type_mapping=column_type_mapping(
-                    schema,
-                    convert_column_type,
-                    lambda item_type_converted: f'{item_type_converted}[]',
-                ),
+                column_type_mapping=self.column_type_mapping(schema),
                 columns=new_columns,
                 full_table_name=f'{schema_name}.{table_name}',
             ),
@@ -96,16 +89,11 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
     ) -> List[str]:
         columns = list(schema['properties'].keys())
         insert_columns, insert_values = build_insert_command(
-            column_type_mapping=column_type_mapping(
-                schema,
-                convert_column_type,
-                lambda item_type_converted: f'{item_type_converted}[]',
-            ),
+            column_type_mapping=self.column_type_mapping(schema),
             columns=columns,
             records=records,
-            convert_array_func=convert_array,
-            string_parse_func=lambda x, y: x.replace("'", "''")
-            if COLUMN_TYPE_OBJECT == y['type'] else x,
+            convert_array_func=self.convert_array,
+            string_parse_func=self.string_parse_func,
         )
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
@@ -129,6 +117,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             else:
                 commands.append('DO NOTHING')
 
+        return self.wrap_insert_commands(commands)
+
+    def wrap_insert_commands(self, commands: List[str]) -> List[str]:
         commands_string = '\n'.join(commands)
         return [
             '\n'.join([
@@ -136,6 +127,22 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 'SELECT COUNT(*) FROM insert_rows_and_count',
             ]),
         ]
+
+    def column_type_mapping(self, schema: Dict) -> Dict:
+        return column_type_mapping_orig(
+            schema,
+            convert_column_type,
+            lambda item_type_converted: f'{item_type_converted}[]',
+        )
+
+    def convert_array(self, value: str, column_type_dict: Dict) -> str:
+        return convert_array(value, column_type_dict)
+
+    def string_parse_func(self, value: str, column_type_dict: Dict) -> str:
+        if COLUMN_TYPE_OBJECT == column_type_dict['type']:
+            return value.replace("'", "''")
+
+        return value
 
     def does_table_exist(
         self,

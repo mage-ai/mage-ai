@@ -1331,7 +1331,7 @@ function PipelineDetailPage({
 
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
-      addNewBlockAtIndex={automaticallyNameBlocks
+      addNewBlockAtIndex={automaticallyNameBlocks || PipelineTypeEnum.INTEGRATION === pipeline?.type
         ? addNewBlockAtIndex
         : opts => new Promise((resolve, reject) => {
             showModal(opts);
