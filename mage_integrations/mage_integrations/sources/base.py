@@ -328,7 +328,8 @@ class Source:
             )
 
         schema_data = dict(
-            bookmark_properties=self._get_bookmark_properties_for_stream(stream),
+            bookmark_properties=self._get_bookmark_properties_for_stream(
+                stream, bookmarks=self.__get_bookmarks_for_stream(stream)),
             disable_column_type_check=stream.disable_column_type_check,
             key_properties=stream.key_properties,
             partition_keys=stream.partition_keys,
@@ -647,7 +648,7 @@ class Source:
 
         return schemas
 
-    def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
+    def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
         bookmark_properties = []
 
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:

@@ -3,8 +3,10 @@ from mage_integrations.sources.base import main
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_FORMAT_UUID,
+    REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_LOG_BASED,
 )
+from mage_integrations.sources.messages import write_state
 from mage_integrations.sources.postgresql.decoders import (
     Insert,
     decode_message
@@ -110,18 +112,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         connection = postgres_connection.build_connection()
 
         with connection.cursor() as cur:
-            # Fetch current lsn
-            version = self.__get_pg_version(cur)
-            if version == 9:
-                cur.execute("SELECT pg_current_xlog_location()")
-            elif version > 9:
-                cur.execute("SELECT pg_current_wal_lsn()")
-            else:
-                raise Exception('unable to fetch current lsn for PostgresQL version {}'.format(version))
-
-            current_lsn = cur.fetchone()[0]
-            file, index = current_lsn.split('/')
-            end_lsn = (int(file, 16) << 32) + int(index, 16)
+            end_lsn = self.__get_current_lsn(cur)
 
             LOGGER.info(
                 'Starting Logical Replication for %s(%s): %s -> %s. poll_total_seconds: %s',
@@ -194,11 +185,52 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
         return super().column_type_mapping(column_type, column_format)
 
-    def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
+    def _after_load_data(self, stream):
         if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+            # Write current lsn to db and bookmarks
+            postgres_connection = self.build_connection(
+                connection_factory=psycopg2.extras.LogicalReplicationConnection,
+            )
+            connection = postgres_connection.build_connection()
+
+            with connection.cursor() as cur:
+                current_lsn = self.__get_current_lsn(cur)
+
+            state = singer.write_bookmark({}, stream.tap_stream_id, 'lsn', current_lsn)
+            write_state(state)
+
+    def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
+        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
             return ['lsn']
         else:
             return super()._get_bookmark_properties_for_stream(stream)
+
+    def _replication_method(self, stream, bookmarks: Dict = None):
+        if REPLICATION_METHOD_LOG_BASED != stream.replication_method:
+            return stream.replication_method
+        # Ues full table sync for the initial sync of log based replcation
+        if not bookmarks or not bookmarks.get('lsn'):
+            return REPLICATION_METHOD_FULL_TABLE
+
+        return stream.replication_method
+
+    def __get_current_lsn(self, cur):
+        # Fetch current lsn
+        version = self.__get_pg_version(cur)
+        if version == 9:
+            cur.execute("SELECT pg_current_xlog_location()")
+        elif version > 9:
+            cur.execute("SELECT pg_current_wal_lsn()")
+        else:
+            raise Exception('unable to fetch current lsn for PostgresQL version {}'.format(version))
+
+        current_lsn = cur.fetchone()[0]
+        if not current_lsn:
+            return None
+
+        file, index = current_lsn.split('/')
+        current_lsn = (int(file, 16) << 32) + int(index, 16)
+        return current_lsn
 
     def __get_pg_version(self, cur):
         cur.execute("SELECT version()")

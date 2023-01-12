@@ -128,7 +128,8 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> int:
-        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+        if REPLICATION_METHOD_LOG_BASED == stream.replication_method and \
+                self.replication_method_override is None:
             # Not support count records for LOG_BASED replication
             return 1
 
@@ -147,7 +148,7 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks):
             for data in self.load_data_from_logs(
                 stream,
                 bookmarks=bookmarks,
@@ -182,6 +183,10 @@ class Source(BaseSource):
             if (custom_limit is not None and limit * loops >= custom_limit) or \
                     len(rows_temp) < SUBBATCH_FETCH_LIMIT:
                 break
+
+        # If the query params doesn't have limit, then that's the last query in the batch.
+        if not query.get('_limit'):
+            self._after_load_data(stream)
 
     def load_data_from_logs(
         self,
@@ -222,6 +227,12 @@ WHERE table_schema = '{schema}'
         table_name = stream.tap_stream_id
 
         return f'{self.table_prefix}{table_name}'
+
+    def _after_load_data(self, stream):
+        pass
+
+    def _replication_method(self, stream, bookmarks: Dict = None):
+        return stream.replication_method
 
     def __fetch_rows(
         self,
