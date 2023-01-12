@@ -173,7 +173,6 @@ def sync_tickets_by_filter(bookmark_property, predefined_filter=None, tap_stream
 
     for i, row in enumerate(gen_request(get_url(endpoint), params)):
         logger.info("Ticket {}: Syncing".format(row['id']))
-        row.pop('attachments', None)
         row['custom_fields'] = transform_dict(row['custom_fields'], force_str=True)
 
         if not tap_stream_id or 'conversations' == tap_stream_id:
@@ -181,7 +180,6 @@ def sync_tickets_by_filter(bookmark_property, predefined_filter=None, tap_stream
             logger.info("Ticket {}: Syncing conversations".format(row['id']))
             try:
                 for subrow in gen_request(get_url("sub_ticket", id=row['id'], entity="conversations")):
-                    subrow.pop("attachments", None)
                     subrow.pop("body", None)
                     if subrow[bookmark_property] >= start:
                         singer.write_record("conversations", subrow, time_extracted=singer.utils.now())

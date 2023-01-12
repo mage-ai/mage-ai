@@ -1,243 +1,229 @@
 {
   "type": "object",
   "properties": {
-    "custom_fields": {
-      "type": ["null", "array"],
-      "items": {
-        "type": ["null", "object"],
-        "properties": {
-          "name": {
-            "type": ["null", "string"]
-          },
-          "value": {
-            "type": ["null", "string"]
-          }
-        }
-      }
-    },
     "cc_emails": {
       "items": {
         "type": [
-          "null", 
+          "null",
           "string"
         ]
-      }, 
+      },
       "type": [
-        "null", 
+        "null",
         "array"
       ]
-    }, 
+    },
     "updated_at": {
       "type": [
-        "null", 
+        "null",
         "string"
-      ], 
+      ],
       "format": "date-time"
-    }, 
+    },
     "type": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "to_emails": {
       "items": {
         "type": [
-          "null", 
+          "null",
           "string"
         ]
-      }, 
+      },
       "type": [
-        "null", 
+        "null",
         "array"
       ]
-    }, 
+    },
     "id": {
       "type": [
-        "null", 
+        "null",
         "integer"
       ]
-    }, 
+    },
     "fwd_emails": {
       "items": {
         "type": [
-          "null", 
+          "null",
           "string"
         ]
-      }, 
+      },
       "type": [
-        "null", 
+        "null",
         "array"
       ]
-    }, 
+    },
     "source": {
       "type": [
-        "null", 
+        "null",
         "number"
       ]
-    }, 
+    },
     "due_by": {
       "type": [
-        "null", 
+        "null",
         "string"
-      ], 
+      ],
       "format": "date-time"
-    }, 
+    },
     "company_id": {
       "type": [
-        "null", 
+        "null",
         "integer"
       ]
-    }, 
+    },
     "responder_id": {
       "type": [
-        "null", 
+        "null",
         "integer"
       ]
-    }, 
+    },
     "priority": {
       "type": [
-        "null", 
+        "null",
         "number"
       ]
-    }, 
+    },
     "deleted": {
       "type": [
-        "null", 
+        "null",
         "boolean"
       ]
-    }, 
+    },
     "facebook_id": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "subject": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "fr_due_by": {
       "type": [
-        "null", 
+        "null",
         "string"
-      ], 
+      ],
       "format": "date-time"
-    }, 
+    },
     "email": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "status": {
       "type": [
-        "null", 
+        "null",
         "number"
       ]
-    }, 
+    },
     "is_escalated": {
       "type": [
-        "null", 
+        "null",
         "boolean"
       ]
-    }, 
+    },
     "reply_cc_emails": {
       "items": {
         "type": [
-          "null", 
+          "null",
           "string"
         ]
-      }, 
+      },
       "type": [
-        "null", 
+        "null",
         "array"
       ]
-    }, 
+    },
     "description": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "tags": {
       "items": {
         "type": [
-          "null", 
+          "null",
           "string"
         ]
-      }, 
+      },
       "type": [
-        "null", 
+        "null",
         "array"
       ]
-    }, 
+    },
     "email_config_id": {
       "type": [
-        "null", 
+        "null",
         "integer"
       ]
-    }, 
+    },
     "phone": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "description_text": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "requester_id": {
       "type": [
-        "null", 
+        "null",
         "integer"
       ]
-    }, 
+    },
     "name": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "product_id": {
       "type": [
-        "null", 
+        "null",
         "integer"
       ]
-    }, 
+    },
     "fr_escalated": {
       "type": [
-        "null", 
+        "null",
         "boolean"
       ]
-    }, 
+    },
     "created_at": {
       "type": [
-        "null", 
+        "null",
         "string"
-      ], 
+      ],
       "format": "date-time"
-    }, 
+    },
     "spam": {
       "type": [
-        "null", 
+        "null",
         "boolean"
       ]
-    }, 
+    },
     "twitter_id": {
       "type": [
-        "null", 
+        "null",
         "string"
       ]
-    }, 
+    },
     "group_id": {
       "type": [
-        "null", 
+        "null",
         "integer"
       ]
     },
@@ -275,8 +261,8 @@
         },
         "id": {
           "type": [
-          "null",
-          "integer"
+            "null",
+            "integer"
           ]
         },
         "mobile": {
