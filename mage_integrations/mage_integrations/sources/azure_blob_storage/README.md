@@ -1,5 +1,7 @@
 # Azure Blob Storage
 
+![Azure Blob Storage](https://user-images.githubusercontent.com/80284865/212203409-7f9660ba-abf1-4a1c-9e86-0d699ed04381.png)
+
 <br />
 
 ## Config
