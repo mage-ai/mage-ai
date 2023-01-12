@@ -148,7 +148,7 @@ class Source(BaseSource):
         query: Dict = {},
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
-        if REPLICATION_METHOD_LOG_BASED == self.replication_method(stream, bookmarks):
+        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks):
             for data in self.load_data_from_logs(
                 stream,
                 bookmarks=bookmarks,
@@ -184,9 +184,9 @@ class Source(BaseSource):
                     len(rows_temp) < SUBBATCH_FETCH_LIMIT:
                 break
 
-        # If the query params has offset but has no limit, then that's the last query in the batch.
-        if query.get('_offset') and not query.get('_limit'):
-            self._after_load_data()
+        # If the query params doesn't have limit, then that's the last query in the batch.
+        if not query.get('_limit'):
+            self._after_load_data(stream)
 
     def load_data_from_logs(
         self,

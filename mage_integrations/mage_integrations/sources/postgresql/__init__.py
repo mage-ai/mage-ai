@@ -199,8 +199,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             state = singer.write_bookmark({}, stream.tap_stream_id, 'lsn', current_lsn)
             write_state(state)
 
-    def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
-        if REPLICATION_METHOD_LOG_BASED == stream.replication_method:
+    def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
+        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
             return ['lsn']
         else:
             return super()._get_bookmark_properties_for_stream(stream)
