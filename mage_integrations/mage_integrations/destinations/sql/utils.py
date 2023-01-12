@@ -28,6 +28,7 @@ def build_create_table_command(
     unique_constraints: List[str] = None,
     create_temporary_table: bool = False,
     column_identifier: str = '',
+    if_not_exists: bool = False,
 ) -> str:
     columns_and_types = [
         f"{column_identifier}{clean_column_name(col)}{column_identifier}" +
@@ -47,7 +48,11 @@ def build_create_table_command(
             f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints_escaped)})",
         )
 
-    return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE {full_table_name} ({', '.join(columns_and_types)})"
+    if_not_exists_command = ''
+    if if_not_exists:
+        if_not_exists_command = ' IF NOT EXISTS'
+
+    return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE{if_not_exists_command} {full_table_name} ({', '.join(columns_and_types)})"
 
 
 def build_alter_table_command(
