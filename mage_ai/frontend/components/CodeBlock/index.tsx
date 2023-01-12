@@ -1335,45 +1335,46 @@ function CodeBlockProps({
           }}
         >
           {addNewBlocksVisible && (
-            <AddNewBlocks
-              addNewBlock={(newBlock: BlockRequestPayloadType) => {
-                let content = newBlock.content;
-                let configuration = newBlock.configuration;
-                const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
+            <Spacing mt={2}>
+              <AddNewBlocks
+                addNewBlock={(newBlock: BlockRequestPayloadType) => {
+                  let content = newBlock.content;
+                  let configuration = newBlock.configuration;
+                  const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
 
-                if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
-                  && BlockTypeEnum.SCRATCHPAD === newBlock.type
-                ) {
-                  content = `from mage_ai.data_preparation.variable_manager import get_variable
+                  if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
+                    && BlockTypeEnum.SCRATCHPAD === newBlock.type
+                  ) {
+                    content = `from mage_ai.data_preparation.variable_manager import get_variable
 
 
-df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
-`;
-                }
-                content = addScratchpadNote(newBlock, content);
+df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
+                  }
+                  content = addScratchpadNote(newBlock, content);
 
-                if (BlockLanguageEnum.SQL === block.language) {
-                  configuration = {
-                    ...block.configuration,
-                    ...configuration,
-                  };
-                }
+                  if (BlockLanguageEnum.SQL === block.language) {
+                    configuration = {
+                      ...block.configuration,
+                      ...configuration,
+                    };
+                  }
 
-                return addNewBlock({
-                  ...newBlock,
-                  configuration,
-                  content,
-                  upstream_blocks: upstreamBlocks,
-                });
-              }}
-              blockIdx={blockIdx}
-              compact
-              onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-              pipeline={pipeline}
-              setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-              setCreatingNewDBTModel={setCreatingNewDBTModel}
-              setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
-            />
+                  return addNewBlock({
+                    ...newBlock,
+                    configuration,
+                    content,
+                    upstream_blocks: upstreamBlocks,
+                  });
+                }}
+                blockIdx={blockIdx}
+                compact
+                onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+                pipeline={pipeline}
+                setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+                setCreatingNewDBTModel={setCreatingNewDBTModel}
+                setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
+              />
+            </Spacing>
           )}
           <BlockDividerInner className="block-divider-inner" />
         </BlockDivider>

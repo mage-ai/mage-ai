@@ -25,7 +25,14 @@ export function getLeafNodes(
       return;
     }
 
-    const arr: BlockType[] = (blockInner[attributeKey] || []).map((uuid: string) => blocksMapping[uuid]);
+    const arr: BlockType[] = (blockInner[attributeKey] || [])
+      .reduce((acc, uuid: string) => {
+        if (block.uuid === uuid) {
+          return acc;
+        }
+
+        return acc.concat(blocksMapping[uuid]);
+      }, []);
     if (arr.length === 0 || (includeAllNodes && block.uuid !== blockInner.uuid)) {
       leafs.push(blockInner);
     }

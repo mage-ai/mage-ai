@@ -247,7 +247,8 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => !props.disabled && !props.notClickable && !props.outline && `
-    &:hover {
+    &:hover,
+    &:focus {
       border-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
     }
     &:active {
@@ -265,9 +266,11 @@ const SHARED_STYLES = css<{
     border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
     color: ${(props.theme.monotone || dark.monotone).white};
 
-    &:hover {
-      background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover};
-      border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover} !important;
+      border-color: ${(props.theme.interactive || dark.interactive).linkPrimary} !important;
     }
   `}
 

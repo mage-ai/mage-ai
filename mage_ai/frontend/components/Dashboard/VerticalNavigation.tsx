@@ -46,7 +46,7 @@ function VerticalNavigation({
         id: 'pipelines',
         label: () => 'Pipelines',
         linkProps: {
-          href: 'pipelines',
+          href: '/pipelines',
         },
       },
       {
@@ -55,7 +55,7 @@ function VerticalNavigation({
         id: 'pipeline-runs',
         label: () => 'Pipelines runs',
         linkProps: {
-          href: 'pipeline-runs',
+          href: '/pipeline-runs',
         },
       },
     ];

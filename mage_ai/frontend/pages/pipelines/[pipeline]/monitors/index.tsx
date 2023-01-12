@@ -46,7 +46,7 @@ function PipelineRunsMonitor({
   const pipelineUUID = pipelineProp.uuid;
 
   const { data: dataPipelineSchedules } = api.pipeline_schedules.pipelines.list(pipelineUUID);
-  const pipelineSchedules = useMemo( 
+  const pipelineSchedules = useMemo(
     () => dataPipelineSchedules?.pipeline_schedules,
     [dataPipelineSchedules],
   );
@@ -59,7 +59,10 @@ function PipelineRunsMonitor({
     {},
   ), [pipelineSchedules]);
 
-  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
+    includes_content: false,
+    includes_outputs: false,
+  });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,
     uuid: pipelineUUID,
@@ -110,7 +113,7 @@ function PipelineRunsMonitor({
               ...updatedStats,
             };
           });
-  
+
           return {
             ...obj,
             ...updated,
@@ -170,7 +173,7 @@ function PipelineRunsMonitor({
       breadcrumbs={breadcrumbs}
       monitorType={MonitorTypeEnum.PIPELINE_RUNS}
       pipeline={pipeline}
-    > 
+    >
       <Spacing mt={2} mx={2}>
         <Spacing ml={1}>
           <GradientTextStyle>

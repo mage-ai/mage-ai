@@ -74,7 +74,10 @@ function PipelineRuns({
   }>(null);
 
   const pipelineUUID = pipelineProp.uuid;
-  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
+    includes_content: false,
+    includes_outputs: false,
+  });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,
     uuid: pipelineUUID,

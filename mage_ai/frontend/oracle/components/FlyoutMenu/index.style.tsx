@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
@@ -53,8 +53,7 @@ export const TitleContainerStyle = styled.div`
   `}
 `;
 
-export const LinkStyle = styled.div<LinkProps>`
-  align-items: center;
+const SHARED_STYLES = css<LinkProps>`
   justify-content: space-between;
   padding: ${UNIT}px;
 
@@ -63,10 +62,10 @@ export const LinkStyle = styled.div<LinkProps>`
     padding-right: ${UNIT * 6}px;
   `}
 
-  ${props => !props.disabled && `  
+  ${props => !props.disabled && `
     &:hover {
-      cursor: default;
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+      cursor: pointer;
     }
   `}
 
@@ -94,4 +93,13 @@ export const LinkStyle = styled.div<LinkProps>`
   ${props => props.highlighted && `
     background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
+`;
+
+export const LinkStyle = styled.div<LinkProps>`
+  ${SHARED_STYLES}
+`;
+
+export const LinkAnchorStyle = styled.a<LinkProps>`
+  ${SHARED_STYLES}
+  display: block;
 `;

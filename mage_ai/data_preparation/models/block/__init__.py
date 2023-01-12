@@ -1197,6 +1197,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         while not queue.empty():
             current_block = queue.get()
             for block in current_block.upstream_blocks:
+                if block.uuid == self.uuid:
+                    continue
                 if block.uuid not in visited:
                     queue.put(block)
                     visited.add(block)
@@ -1209,6 +1211,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         while not queue.empty():
             current_block = queue.get()
             for block in current_block.downstream_blocks:
+                if block.uuid == self.uuid:
+                    continue
                 if block.uuid not in visited:
                     queue.put(block)
                     visited.add(block)
