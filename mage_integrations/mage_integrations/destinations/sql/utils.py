@@ -152,6 +152,7 @@ def column_type_mapping(
                     number_type=number_type,
                     string_type=string_type,
                 )
+
                 column_type_converted = convert_array_column_type_func(item_type_converted)
             else:
                 column_type_converted = convert_column_type_func(
@@ -160,6 +161,12 @@ def column_type_mapping(
                     number_type=number_type,
                     string_type=string_type,
                 )
+
+            if not item_type_converted:
+                if string_type == 'VARCHAR':
+                    item_type_converted = 'VARCHAR(255)'
+                else:
+                    item_type_converted = string_type
         else:
             column_type_converted = convert_column_type_func(
                 column_type,
@@ -167,6 +174,12 @@ def column_type_mapping(
                 number_type=number_type,
                 string_type=string_type,
             )
+
+        if not column_type_converted:
+            if string_type == 'VARCHAR':
+                column_type_converted = 'VARCHAR(255)'
+            else:
+                column_type_converted = string_type
 
         mapping[column] = dict(
             column_settings=column_settings,

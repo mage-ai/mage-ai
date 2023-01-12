@@ -12,7 +12,7 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     column_type_mapping as column_type_mapping_orig,
 )
-from mage_integrations.destinations.utils import clean_column_name
+from mage_integrations.destinations.sql.utils import clean_column_name
 from typing import Callable, Dict, List, Tuple
 
 

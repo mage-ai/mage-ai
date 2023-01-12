@@ -12,7 +12,6 @@ from mage_integrations.sources.constants import (
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.mongodb.tap_mongodb import (
     build_client,
-    do_discover,
     do_sync,
 )
 from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import build_find_filter
