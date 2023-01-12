@@ -60,8 +60,8 @@ function PipelineRunsMonitor({
   ), [pipelineSchedules]);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
-    includes_content: false,
-    includes_outputs: false,
+    include_content: false,
+    include_outputs: false,
   });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,
