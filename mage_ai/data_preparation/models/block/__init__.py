@@ -893,9 +893,6 @@ class Block:
     ) -> List[Dict]:
         if self.pipeline is None:
             return
-        if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
-            if self.status == BlockStatus.NOT_EXECUTED:
-                return []
 
         data_products = []
         outputs = []
@@ -995,9 +992,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
     ) -> List[Dict]:
         if self.pipeline is None:
             return
-        if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
-            if self.status == BlockStatus.NOT_EXECUTED:
-                return []
 
         data_products = []
         outputs = []
