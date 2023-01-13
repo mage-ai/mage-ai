@@ -325,11 +325,14 @@ class Block:
             if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
                 arr = add_blocks_upstream_from_refs(block)
                 upstream_block_uuids += [b.uuid for b in arr]
+                priority_final = priority if len(upstream_block_uuids) == 0 else None
+            else:
+                priority_final = priority if len(upstream_block_uuids) > 0 else None
 
             pipeline.add_block(
                 block,
                 upstream_block_uuids,
-                priority=priority if len(upstream_block_uuids) > 0 else None,
+                priority=priority_final,
                 widget=widget,
             )
 
