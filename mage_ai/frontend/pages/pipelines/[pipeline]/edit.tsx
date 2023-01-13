@@ -1332,8 +1332,13 @@ function PipelineDetailPage({
     <PipelineDetail
       addNewBlockAtIndex={automaticallyNameBlocks || PipelineTypeEnum.INTEGRATION === pipeline?.type
         ? addNewBlockAtIndex
-        : opts => new Promise((resolve, reject) => {
-            showModal(opts);
+        : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
+            if (BlockTypeEnum.DBT === block?.type) {
+              addNewBlockAtIndex(block, idx, onCreateCallback, name)
+            } else {
+              // @ts-ignore
+              showModal(block, idx, onCreateCallback, name);
+            }
           })
       }
       addWidget={(
