@@ -248,7 +248,8 @@
         },
         "integrations/airbyte",
         "integrations/dbt-cloud",
-        "integrations/hightouch"
+        "integrations/hightouch",
+        "integrations/stitch"
       ]
     },
     {
