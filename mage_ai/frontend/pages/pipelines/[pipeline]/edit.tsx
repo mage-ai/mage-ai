@@ -1333,7 +1333,15 @@ function PipelineDetailPage({
       addNewBlockAtIndex={automaticallyNameBlocks || PipelineTypeEnum.INTEGRATION === pipeline?.type
         ? addNewBlockAtIndex
         : opts => new Promise((resolve, reject) => {
-            showModal(opts);
+            const {
+              block,
+            } = opts;
+
+            if (BlockTypeEnum.DBT === block?.type) {
+              addNewBlockAtIndex(opts);
+            } else {
+              showModal(opts);
+            }
           })
       }
       addWidget={(
