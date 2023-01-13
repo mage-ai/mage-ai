@@ -144,7 +144,20 @@
     {
       "group": "Production",
       "pages": [
-        "production/ci-cd",
+        {
+          "group": "CI/CD",
+          "pages": [
+            "production/ci-cd/overview",
+            {
+              "group": "Local to cloud",
+              "pages": [
+                "production/ci-cd/local-cloud/repository-setup",
+                "production/ci-cd/local-cloud/github-actions",
+                "production/ci-cd/local-cloud/gitlab-ci-cd"
+              ]
+            }
+          ]
+        },
         {
           "group": "Deployment",
           "pages": [
