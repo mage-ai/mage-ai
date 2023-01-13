@@ -11,4 +11,4 @@ DATAFRAME_OUTPUT_SAMPLE_COUNT = 10
 # Dockerfile depends on it because it runs ./scripts/install_mage.sh and uses
 # the last line to determine the version to install.
 VERSION = \
-'0.7.64'
+'0.7.65'
