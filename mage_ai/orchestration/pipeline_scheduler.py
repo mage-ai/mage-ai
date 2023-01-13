@@ -118,10 +118,10 @@ class PipelineScheduler:
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
                 )
-                self.notification_sender.send_pipeline_run_success_message(
-                    pipeline=self.pipeline,
-                    pipeline_run=self.pipeline_run,
-                )
+                # self.notification_sender.send_pipeline_run_success_message(
+                #     pipeline=self.pipeline,
+                #     pipeline_run=self.pipeline_run,
+                # )
                 self.logger_manager.output_logs_to_destination()
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
