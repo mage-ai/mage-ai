@@ -40,7 +40,7 @@ deploy:
     - NEW_CONTAINER_DEFINTIION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URL:$IMAGE_TAG" '.taskDefinition.containerDefinitions[0].image = $IMAGE | .taskDefinition.containerDefinitions[0]')
     - VOLUMES=$(echo $TASK_DEFINITION | jq '.taskDefinition.volumes')
     - echo "Registering new container definition..."
-    - aws ecs register-task-definition --region "${AWS_DEFAULT_REGION}" --family "${TASK_DEFINITION_NAME}" --container-definitions "${NEW_CONTAINER_DEFINTIION}" --volumes "${VOLUMES}"
+    - aws ecs register-task-definition --region "${AWS_DEFAULT_REGION}" --family "${TASK_DEFINITION_NAME}" --container-definitions "${NEW_CONTAINER_DEFINTIION}" --volumes "${VOLUMES}" --requires-compatibilities "FARGATE"
     - echo "Updating the service..."
     - aws ecs update-service --region "${AWS_DEFAULT_REGION}" --cluster "${CLUSTER_NAME}" --service "${SERVICE_NAME}"  --task-definition "${TASK_DEFINITION_NAME}"
   only:
