@@ -1332,15 +1332,12 @@ function PipelineDetailPage({
     <PipelineDetail
       addNewBlockAtIndex={automaticallyNameBlocks || PipelineTypeEnum.INTEGRATION === pipeline?.type
         ? addNewBlockAtIndex
-        : opts => new Promise((resolve, reject) => {
-            const {
-              block,
-            } = opts;
-
+        : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
             if (BlockTypeEnum.DBT === block?.type) {
-              addNewBlockAtIndex(opts);
+              addNewBlockAtIndex(block, idx, onCreateCallback, name)
             } else {
-              showModal(opts);
+              // @ts-ignore
+              showModal(block, idx, onCreateCallback, name);
             }
           })
       }
