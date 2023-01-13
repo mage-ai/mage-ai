@@ -33,8 +33,8 @@ function PipelineBlockRuns({
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
-    include_content: false,
-    include_outputs: false,
+    includes_content: false,
+    includes_outputs: false,
   });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,

@@ -28,8 +28,8 @@ function TriggerDetailPage({
   const pipelineSchedule = pipelineScheduleData?.pipeline_schedule;
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
-    include_content: false,
-    include_outputs: false,
+    includes_content: false,
+    includes_outputs: false,
   });
   const pipeline = {
     ...dataPipeline?.pipeline,
