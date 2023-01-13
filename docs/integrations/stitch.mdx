@@ -22,13 +22,17 @@ from mage_ai.services.stitch.stitch import StitchClient
 
 
 client = StitchClient(config=dict(access_token='access_token'))
+
 sources = client.list_sources()
 source_id = sources[0]['id'] # Get source id
-client.start_replication_job(source_id)    # Start replication job
+
+client.start_replication_job(source_id) # Start replication job
 ```
 
 Sample output:
 
 ```
-{'job_name': '111111.222222.sync.abcd1234-a96e-4b48-a10c-9de147a72d64'}
+{
+  "job_name": "111111.222222.sync.abcd1234-a96e-4b48-a10c-9de147a72d64"
+}
 ```
