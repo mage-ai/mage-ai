@@ -64,7 +64,7 @@ function Dashboard({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
 
-  const { data: dataProjects } = api.projects.list();
+  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
   const projects = dataProjects?.projects;
 
   const breadcrumbs = [];

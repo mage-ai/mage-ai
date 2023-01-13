@@ -59,11 +59,18 @@ export function getBlockFromFile(
     fileName = parts[parts.length - 1];
   }
 
-  const pyRegex = new RegExp(`\.${FileExtensionEnum.PY}$`);
-  if (BLOCK_TYPES.includes(blockType) && fileName.match(pyRegex)) {
+  const extensions = [
+    `\.${FileExtensionEnum.PY}`,
+    `\.${FileExtensionEnum.R}`,
+    `\.${FileExtensionEnum.SQL}`,
+    `\.${FileExtensionEnum.YAML}`,
+    `\.${FileExtensionEnum.YML}`,
+  ].join('|');
+  const extensionRegex = new RegExp(`${extensions}$`);
+  if (BLOCK_TYPES.includes(blockType) && fileName.match(extensionRegex)) {
     return {
       type: blockType,
-      uuid: fileName.replace(pyRegex, ''),
+      uuid: fileName.replace(extensionRegex, ''),
     };
   }
 }

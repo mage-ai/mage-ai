@@ -131,6 +131,10 @@ export default interface BlockType {
   content?: string;
   converted_from?: string;
   downstream_blocks?: string[];
+  error?: {
+    error: string;
+    message: string;
+  };
   file?: string;
   language?: BlockLanguageEnum;
   name?: string;

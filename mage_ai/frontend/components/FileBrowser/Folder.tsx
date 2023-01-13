@@ -60,26 +60,35 @@ export type FolderSharedProps = {
 };
 
 type FolderProps = {
+  containerRef: any;
   file: FileType;
   level: number;
   pipelineBlockUuids: string[];
   theme: ThemeType;
+  setCoordinates: (coordinates: {
+    x: number;
+    y: number;
+  }) => void;
+  setSelectedFile: (file: FileType) => void;
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
   allowSelectingFolders,
+  containerRef,
   disableContextMenu,
   file,
   isFileDisabled,
   level,
-  onlyShowChildren,
   onSelectBlockFile,
+  onlyShowChildren,
   openFile,
   openPipeline,
   openSidekickView,
   pipelineBlockUuids,
   selectFile,
   setContextItem,
+  setCoordinates,
+  setSelectedFile,
   theme,
   uncollapsed,
   useRootFolder,
@@ -141,6 +150,7 @@ function Folder({
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
       allowSelectingFolders={allowSelectingFolders}
+      containerRef={containerRef}
       disableContextMenu={disableContextMenu}
       file={{
         ...f,
@@ -156,12 +166,15 @@ function Folder({
       pipelineBlockUuids={pipelineBlockUuids}
       selectFile={selectFile}
       setContextItem={setContextItem}
+      setCoordinates={setCoordinates}
+      setSelectedFile={setSelectedFile}
       theme={theme}
       uncollapsed={uncollapsed}
       useRootFolder={useRootFolder}
     />
   )), [
     allowSelectingFolders,
+    containerRef,
     children,
     disableContextMenu,
     file,
@@ -237,35 +250,47 @@ function Folder({
             }
           }}
           onContextMenu={(e) => {
-            e.preventDefault();
-            if (disableContextMenu) {
+            const block = getBlockFromFile(file);
+
+            if (containerRef.current.contains(e.target) && !disableContextMenu && block) {
+              e.preventDefault();
+            } else {
               return;
             }
 
-            if (disabled) {
-              setContextItem({ type: FileContextEnum.DISABLED });
-            } else if (isPipelineFolder) {
-              setContextItem({
-                data: {
-                  name,
-                },
-                type: FileContextEnum.PIPELINE,
-              });
-            } else if (children) {
-              setContextItem({ type: FileContextEnum.FOLDER });
-            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
-              setContextItem({ type: FileContextEnum.FILE });
-            } else {
-              if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {
-                setContextItem({ type: FileContextEnum.FILE });
-              } else {
-                setContextItem({
-                  data: {
-                    block: getBlockFromFile(file),
-                  },
-                  type: FileContextEnum.BLOCK_FILE,
-                });
+            setCoordinates(disabled
+              ? null
+              : {
+                x: e.pageX,
+                y: e.pageY,
               }
+            );
+            setSelectedFile(disabled ? null : file);
+
+            if (disabled) {
+              // setContextItem({ type: FileContextEnum.DISABLED });
+            } else if (isPipelineFolder) {
+              // setContextItem({
+              //   data: {
+              //     name,
+              //   },
+              //   type: FileContextEnum.PIPELINE,
+              // });
+            } else if (children) {
+              // setContextItem({ type: FileContextEnum.FOLDER });
+            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
+              // setContextItem({ type: FileContextEnum.FILE });
+            } else {
+              // if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {
+              //   setContextItem({ type: FileContextEnum.FILE });
+              // } else {
+              //   setContextItem({
+              //     data: {
+              //       block: getBlockFromFile(file),
+              //     },
+              //     type: FileContextEnum.BLOCK_FILE,
+              //   });
+              // }
             }
           }}
           style={{

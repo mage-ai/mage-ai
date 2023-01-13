@@ -18,7 +18,6 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
-import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import DataProviderType from '@interfaces/DataProviderType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
@@ -1588,27 +1587,21 @@ function PipelineDetailPage({
 
   const fileTreeRef = useRef(null);
   const before = useMemo(() => (
-    <ContextMenu
-      areaRef={fileTreeRef}
+    <FileBrowser
+      blocks={blocks}
       deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
-      enableContextItem
-      type={ContextMenuEnum.FILE_BROWSER}
-    >
-      <FileBrowser
-        blocks={blocks}
-        files={files}
-        onSelectBlockFile={onSelectBlockFile}
-        openFile={openFile}
-        openPipeline={(uuid: string) => {
-          resetState();
-          router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
-        }}
-        openSidekickView={openSidekickView}
-        ref={fileTreeRef}
-        widgets={widgets}
-      />
-    </ContextMenu>
+      files={files}
+      onSelectBlockFile={onSelectBlockFile}
+      openFile={openFile}
+      openPipeline={(uuid: string) => {
+        resetState();
+        router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
+      }}
+      openSidekickView={openSidekickView}
+      ref={fileTreeRef}
+      widgets={widgets}
+    />
   ), [
     blocks,
     files,

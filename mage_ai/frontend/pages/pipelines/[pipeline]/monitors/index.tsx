@@ -62,6 +62,8 @@ function PipelineRunsMonitor({
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
     includes_outputs: false,
+  }, {
+    revalidateOnFocus: false,
   });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,

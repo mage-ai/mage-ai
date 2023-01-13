@@ -1125,21 +1125,51 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         )
         return data
 
-    def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
+    def to_dict(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+        check_if_file_exists: bool = False,
+    ):
         data = self.to_dict_base()
         if include_content:
             data['content'] = self.content
         if include_outputs:
             data['outputs'] = self.outputs
+            if check_if_file_exists:
+                file_path = self.file.file_path
+                if not os.path.isfile(file_path):
+                    data['error'] = dict(
+                        error=f'No such file or directory',
+                        message='You may have moved it or changed it’s filename. ' \
+                        'Delete the current block to remove it from the pipeline or write code ' +
+                        f'and save the pipeline to create a new file at {file_path}.',
+                    )
         return data
 
-    async def to_dict_async(self, include_content=False, include_outputs=False, sample_count=None):
+    async def to_dict_async(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+        check_if_file_exists: bool = False,
+    ):
         data = self.to_dict_base()
 
         if include_content:
             data['content'] = await self.content_async()
         if include_outputs:
             data['outputs'] = await self.outputs_async()
+            if check_if_file_exists:
+                file_path = self.file.file_path
+                if not os.path.isfile(file_path):
+                    data['error'] = dict(
+                        error=f'No such file or directory',
+                        message='You may have moved it or changed it’s filename. ' \
+                        'Delete the current block to remove it from the pipeline or write code ' +
+                        f'and save the pipeline to create a new file at {file_path}.',
+                    )
         return data
 
     def update(self, data):
