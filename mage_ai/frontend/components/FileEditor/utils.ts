@@ -1,11 +1,11 @@
+import BlockType, {
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
 } from '@interfaces/FileType';
-import {
-  BlockRequestPayloadType,
-  BlockTypeEnum,
-} from '@interfaces/BlockType';
 import { find } from '@utils/array';
 
 export const getBlockFilename = (path: string[]) => path.at(-1);

@@ -48,7 +48,7 @@ export function getBlockFromFile(
   // ['default_repo', 'data_loaders', 'team', 'foo.py']
   const parts = getFullPath(file, currentPathInit).split('/');
   // This assumes path default_repo/[block_type]s/..
-  const blockType = singularize(parts[1]);
+  const blockType = singularize(parts[1] || '');
 
   let fileName = '';
   if (parts.length >= 3) {

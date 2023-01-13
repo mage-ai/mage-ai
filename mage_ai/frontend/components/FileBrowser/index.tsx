@@ -10,7 +10,7 @@ import { ThemeContext } from 'styled-components';
 import { useRouter } from 'next/router';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import FileType from '@interfaces/FileType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
@@ -29,14 +29,14 @@ import { onSuccess } from '@api/utils/response';
 const MENU_WIDTH: number = UNIT * 20;
 
 type FileBrowserProps = {
-  addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
+  addNewBlock?: (b: BlockRequestPayloadType, cb: any) => void;
   blocks?: BlockType[];
   deleteBlockFile?: (b: BlockType) => void;
   deleteWidget?: (b: BlockType) => void;
   fetchPipeline?: () => void;
   files?: FileType[];
-  pipeline: PipelineType;
-  setSelectedBlock: (block: BlockType) => void;
+  pipeline?: PipelineType;
+  setSelectedBlock?: (block: BlockType) => void;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
 
@@ -93,14 +93,14 @@ function FileBrowser({
       clearTimeout(timeout.current);
       setDraggingFile(null);
 
-      if (draggingFile) {
+      if (draggingFile && pipeline && addNewBlock) {
         const {
           width,
           x,
         } = ref?.current?.getBoundingClientRect?.() || {};
 
         if (e.pageX > x + width) {
-          const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
+          const isIntegrationPipeline = pipeline?.type === PipelineTypeEnum.INTEGRATION;
 
           const blockReqPayload = buildAddBlockRequestPayload(
             {
@@ -111,7 +111,7 @@ function FileBrowser({
             pipeline,
           );
 
-          addNewBlock(
+          addNewBlock?.(
             blockReqPayload,
             block => {
               if (isIntegrationPipeline && dataExporterBlock) {
@@ -123,7 +123,7 @@ function FileBrowser({
                   },
                 });
               }
-              setSelectedBlock(block);
+              setSelectedBlock?.(block);
             },
           );
         }

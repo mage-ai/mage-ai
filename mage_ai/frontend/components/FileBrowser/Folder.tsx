@@ -260,11 +260,14 @@ function Folder({
             clearTimeout(timeout.current);
             const block = getBlockFromFile(file);
 
-            if (containerRef.current.contains(e.target) && !disableContextMenu && block) {
-              e.preventDefault();
-            } else {
+            if (!containerRef?.current?.contains(e.target)
+              || !block
+              || disableContextMenu
+            ) {
               return;
             }
+
+            e.preventDefault();
 
             setCoordinates(disabled
               ? null
@@ -305,9 +308,10 @@ function Folder({
           onMouseDown={(e) => {
             const block = getBlockFromFile(file);
 
-            if (!containerRef.current.contains(e.target)
+            if (!containerRef?.current?.contains(e.target)
               || !block
               || children?.length >= 1
+              || disableContextMenu
               || disabled
               || isPipelineFolder
             ) {
