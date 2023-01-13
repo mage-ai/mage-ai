@@ -29,8 +29,13 @@ import {
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import {
+  buildAddBlockRequestPayload,
+  buildFileExtensionRegExp,
+  getBlockType,
+  getBlockUUID,
+} from './utils';
 import { find } from '@utils/array';
-import { getBlockType, getBlockUUID } from './utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
@@ -122,13 +127,7 @@ function FileEditor({
     setTouched(false);
   };
 
-  const regex = useMemo(() => (
-    new RegExp(
-      Object
-        .keys(FILE_EXTENSION_TO_LANGUAGE_MAPPING)
-        .map(ext => `\.(${ext})$`).join('|'),
-    )
-  ), []);
+  const regex = useMemo(() => buildFileExtensionRegExp(), []);
 
   const fileExtension = useMemo(() => file?.path.match(regex)[0]?.split('.')[1], [regex, file]);
 
@@ -193,36 +192,11 @@ function FileEditor({
         onClick={() => {
           const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
 
-          // Examples:
-          // data_loaders/foo.py
-          // data_loaders/team/foo.py
-          // data_loaders/team/growth/foo.py
-          const parts = file.path.replace(repoPath, '').split('/');
-          let blockUUID = getBlockUUID(parts);
-
-          if (parts.length >= 3) {
-            const nestedFolders = parts.slice(1, parts.length - 1).join('/');
-            blockUUID = `${nestedFolders}/${blockUUID}`;
-          }
-
-          const blockReqPayload: BlockRequestPayloadType = {
-            configuration: {
-              file_path: file.path.split('/')[0] === BlockTypeEnum.DBT
-                ? blockUUID
-                : null,
-            },
-            language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
-            name: blockUUID,
-            type: getBlockType(file.path.split('/')),
-          };
-
-          if (isIntegrationPipeline) {
-            const dataLoaderBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
-            const upstreamBlocks = dataExporterBlock?.upstream_blocks
-              ? dataExporterBlock.upstream_blocks
-              : (dataLoaderBlock ? [dataLoaderBlock.uuid] : []);
-            blockReqPayload.upstream_blocks = upstreamBlocks;
-          }
+          const blockReqPayload = buildAddBlockRequestPayload(
+            file,
+            repoPath,
+            pipeline,
+          );
 
           addNewBlock(
             blockReqPayload,

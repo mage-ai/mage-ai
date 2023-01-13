@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
@@ -65,10 +65,12 @@ type FolderProps = {
   level: number;
   pipelineBlockUuids: string[];
   theme: ThemeType;
+  timeout?: any;
   setCoordinates: (coordinates: {
     x: number;
     y: number;
   }) => void;
+  setDraggingFile: (file: FileType) => void;
   setSelectedFile: (file: FileType) => void;
 } & FolderSharedProps & ContextAreaProps;
 
@@ -88,8 +90,10 @@ function Folder({
   selectFile,
   setContextItem,
   setCoordinates,
+  setDraggingFile,
   setSelectedFile,
   theme,
+  timeout,
   uncollapsed,
   useRootFolder,
 }: FolderProps) {
@@ -167,8 +171,10 @@ function Folder({
       selectFile={selectFile}
       setContextItem={setContextItem}
       setCoordinates={setCoordinates}
+      setDraggingFile={setDraggingFile}
       setSelectedFile={setSelectedFile}
       theme={theme}
+      timeout={timeout}
       uncollapsed={uncollapsed}
       useRootFolder={useRootFolder}
     />
@@ -189,6 +195,7 @@ function Folder({
     selectFile,
     setContextItem,
     theme,
+    timeout,
     uncollapsed,
     useRootFolder,
     uuid,
@@ -250,6 +257,7 @@ function Folder({
             }
           }}
           onContextMenu={(e) => {
+            clearTimeout(timeout.current);
             const block = getBlockFromFile(file);
 
             if (containerRef.current.contains(e.target) && !disableContextMenu && block) {
@@ -265,6 +273,7 @@ function Folder({
                 y: e.pageY,
               }
             );
+            setDraggingFile(null);
             setSelectedFile(disabled ? null : file);
 
             if (disabled) {
@@ -292,6 +301,30 @@ function Folder({
               //   });
               // }
             }
+          }}
+          onMouseDown={(e) => {
+            const block = getBlockFromFile(file);
+
+            if (!containerRef.current.contains(e.target)
+              || !block
+              || children?.length >= 1
+              || disabled
+              || isPipelineFolder
+            ) {
+              return;
+            }
+
+            e.preventDefault();
+
+            clearTimeout(timeout.current);
+            timeout.current = setTimeout(() => {
+              setCoordinates({
+                x: e.pageX,
+                y: e.pageY,
+              });
+              setDraggingFile(file);
+              setSelectedFile(null);
+            }, 300);
           }}
           style={{
             alignItems: 'center',

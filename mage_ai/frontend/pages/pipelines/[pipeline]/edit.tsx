@@ -1588,9 +1588,24 @@ function PipelineDetailPage({
   const fileTreeRef = useRef(null);
   const before = useMemo(() => (
     <FileBrowser
+      addNewBlock={(
+        b: BlockRequestPayloadType,
+        cb: (block: BlockType) => void,
+      ) => {
+        addNewBlockAtIndex(
+          b,
+          blocks.length,
+          cb,
+          b.name,
+        );
+        if (filePathsFromUrl?.length >= 1) {
+          router.push(`/pipelines/${pipelineUUID}/edit`);
+        }
+      }}
       blocks={blocks}
       deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
+      fetchPipeline={fetchPipeline}
       files={files}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
@@ -1599,13 +1614,26 @@ function PipelineDetailPage({
         router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
       }}
       openSidekickView={openSidekickView}
+      pipeline={pipeline}
       ref={fileTreeRef}
+      setSelectedBlock={setSelectedBlock}
       widgets={widgets}
     />
   ), [
+    addNewBlockAtIndex,
     blocks,
+    fetchPipeline,
+    filePathsFromUrl,
+    fileTreeRef,
     files,
     onSelectBlockFile,
+    openFile,
+    openSidekickView,
+    pipeline,
+    pipelineUUID,
+    resetState,
+    setSelectedBlock,
+    widgets,
   ]);
 
   const beforeHeader = useMemo(() => {

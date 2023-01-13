@@ -30,6 +30,7 @@ export type TextProps = {
   center?: boolean;
   children?: any;
   color?: string;
+  cursor?: string;
   danger?: boolean;
   default?: boolean;
   disableWordBreak?: boolean;
@@ -181,6 +182,10 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => props.wind && !props.disabled && `
     color: ${(props.theme.brand || light.brand).wind500} !important;
+  `}
+
+  ${props => props.cursor && `
+    cursor: ${props.cursor};
   `}
 `;
 
