@@ -28,7 +28,7 @@ build:
     - docker push $REPOSITORY_URL:latest
     - docker push $REPOSITORY_URL:$IMAGE_TAG
   only:
-    - master
+    - main
 
 deploy:
   stage: deploy
@@ -41,4 +41,4 @@ deploy:
     - echo "Updating the service..."
     - aws ecs update-service --region "${AWS_DEFAULT_REGION}" --cluster "${CLUSTER_NAME}" --service "${SERVICE_NAME}"  --task-definition "${TASK_DEFINITION_NAME}"
   only:
-    - master
+    - main
