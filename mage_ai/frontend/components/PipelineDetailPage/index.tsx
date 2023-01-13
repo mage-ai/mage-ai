@@ -86,6 +86,8 @@ function PipelineDetailPage({
   const { data } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
     includes_outputs: false,
+  }, {
+    revalidateOnFocus: false,
   });
   const pipeline = data?.pipeline;
 

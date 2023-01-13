@@ -18,7 +18,6 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
-import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import DataProviderType from '@interfaces/DataProviderType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
@@ -1588,31 +1587,53 @@ function PipelineDetailPage({
 
   const fileTreeRef = useRef(null);
   const before = useMemo(() => (
-    <ContextMenu
-      areaRef={fileTreeRef}
+    <FileBrowser
+      addNewBlock={(
+        b: BlockRequestPayloadType,
+        cb: (block: BlockType) => void,
+      ) => {
+        addNewBlockAtIndex(
+          b,
+          blocks.length,
+          cb,
+          b.name,
+        );
+        if (filePathsFromUrl?.length >= 1) {
+          router.push(`/pipelines/${pipelineUUID}/edit`);
+        }
+      }}
+      blocks={blocks}
       deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
-      enableContextItem
-      type={ContextMenuEnum.FILE_BROWSER}
-    >
-      <FileBrowser
-        blocks={blocks}
-        files={files}
-        onSelectBlockFile={onSelectBlockFile}
-        openFile={openFile}
-        openPipeline={(uuid: string) => {
-          resetState();
-          router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
-        }}
-        openSidekickView={openSidekickView}
-        ref={fileTreeRef}
-        widgets={widgets}
-      />
-    </ContextMenu>
+      fetchPipeline={fetchPipeline}
+      files={files}
+      onSelectBlockFile={onSelectBlockFile}
+      openFile={openFile}
+      openPipeline={(uuid: string) => {
+        resetState();
+        router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
+      }}
+      openSidekickView={openSidekickView}
+      pipeline={pipeline}
+      ref={fileTreeRef}
+      setSelectedBlock={setSelectedBlock}
+      widgets={widgets}
+    />
   ), [
+    addNewBlockAtIndex,
     blocks,
+    fetchPipeline,
+    filePathsFromUrl,
+    fileTreeRef,
     files,
     onSelectBlockFile,
+    openFile,
+    openSidekickView,
+    pipeline,
+    pipelineUUID,
+    resetState,
+    setSelectedBlock,
+    widgets,
   ]);
 
   const beforeHeader = useMemo(() => {

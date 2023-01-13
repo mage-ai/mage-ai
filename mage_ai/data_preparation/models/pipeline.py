@@ -390,6 +390,7 @@ class Pipeline:
                     include_content=include_content,
                     include_outputs=include_outputs,
                     sample_count=sample_count,
+                    check_if_file_exists=True,
                 )
                 for b in self.blocks_by_uuid.values()
             ],
@@ -414,6 +415,7 @@ class Pipeline:
                 include_content=include_content,
                 include_outputs=include_outputs,
                 sample_count=sample_count,
+                check_if_file_exists=True,
               ) for b in self.blocks_by_uuid.values()]
         )
         widgets_data = await asyncio.gather(

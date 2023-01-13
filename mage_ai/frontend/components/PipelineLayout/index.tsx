@@ -123,7 +123,7 @@ function PipelineLayout({
     beforeWidth,
   ]);
 
-  const { data: dataProjects } = api.projects.list();
+  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
   const projects = dataProjects?.projects;
   const headerMemo = useMemo(() => {
     const breadcrumbs: BreadcrumbType[] = [

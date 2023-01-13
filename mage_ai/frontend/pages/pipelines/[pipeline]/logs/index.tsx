@@ -71,7 +71,10 @@ function BlockRuns({
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
   const [scrollToBottom, setScrollToBottom] = useState(false);
 
-  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {}, {
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
+    includes_content: false,
+    includes_outputs: false,
+  }, {
     revalidateOnFocus: false,
   });
   const pipeline: PipelineType = useMemo(() => ({

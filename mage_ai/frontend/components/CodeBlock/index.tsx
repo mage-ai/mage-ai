@@ -1303,16 +1303,31 @@ function CodeBlockProps({
             </CodeHelperStyle>
           )}
 
-          {!codeCollapsed
-            ? codeEditorEl
-            : (
-              <Spacing px={1}>
-                <Text monospace muted>
-                  ({pluralize('line', content?.split(/\r\n|\r|\n/).length)} collapsed)
-                </Text>
-              </Spacing>
-            )
-          }
+          {!block?.error && (
+            <>
+              {!codeCollapsed
+                ? codeEditorEl
+                : (
+                  <Spacing px={1}>
+                    <Text monospace muted>
+                      ({pluralize('line', content?.split(/\r\n|\r|\n/).length)} collapsed)
+                    </Text>
+                  </Spacing>
+                )
+              }
+            </>
+          )}
+
+          {block?.error && (
+            <Spacing p={PADDING_UNITS}>
+              <Text bold danger>
+                {block?.error?.error}
+              </Text>
+              <Text muted>
+                {block?.error?.message}
+              </Text>
+            </Spacing>
+          )}
 
           {isInProgress && currentTime && currentTime > runStartTime && (
             <TimeTrackerStyle>

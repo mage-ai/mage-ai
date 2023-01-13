@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
@@ -60,27 +60,40 @@ export type FolderSharedProps = {
 };
 
 type FolderProps = {
+  containerRef: any;
   file: FileType;
   level: number;
   pipelineBlockUuids: string[];
   theme: ThemeType;
+  timeout?: any;
+  setCoordinates: (coordinates: {
+    x: number;
+    y: number;
+  }) => void;
+  setDraggingFile: (file: FileType) => void;
+  setSelectedFile: (file: FileType) => void;
 } & FolderSharedProps & ContextAreaProps;
 
 function Folder({
   allowSelectingFolders,
+  containerRef,
   disableContextMenu,
   file,
   isFileDisabled,
   level,
-  onlyShowChildren,
   onSelectBlockFile,
+  onlyShowChildren,
   openFile,
   openPipeline,
   openSidekickView,
   pipelineBlockUuids,
   selectFile,
   setContextItem,
+  setCoordinates,
+  setDraggingFile,
+  setSelectedFile,
   theme,
+  timeout,
   uncollapsed,
   useRootFolder,
 }: FolderProps) {
@@ -141,6 +154,7 @@ function Folder({
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
       allowSelectingFolders={allowSelectingFolders}
+      containerRef={containerRef}
       disableContextMenu={disableContextMenu}
       file={{
         ...f,
@@ -156,12 +170,17 @@ function Folder({
       pipelineBlockUuids={pipelineBlockUuids}
       selectFile={selectFile}
       setContextItem={setContextItem}
+      setCoordinates={setCoordinates}
+      setDraggingFile={setDraggingFile}
+      setSelectedFile={setSelectedFile}
       theme={theme}
+      timeout={timeout}
       uncollapsed={uncollapsed}
       useRootFolder={useRootFolder}
     />
   )), [
     allowSelectingFolders,
+    containerRef,
     children,
     disableContextMenu,
     file,
@@ -176,6 +195,7 @@ function Folder({
     selectFile,
     setContextItem,
     theme,
+    timeout,
     uncollapsed,
     useRootFolder,
     uuid,
@@ -237,36 +257,78 @@ function Folder({
             }
           }}
           onContextMenu={(e) => {
-            e.preventDefault();
-            if (disableContextMenu) {
+            clearTimeout(timeout.current);
+            const block = getBlockFromFile(file);
+
+            if (!containerRef?.current?.contains(e.target)
+              || !block
+              || disableContextMenu
+            ) {
               return;
             }
 
-            if (disabled) {
-              setContextItem({ type: FileContextEnum.DISABLED });
-            } else if (isPipelineFolder) {
-              setContextItem({
-                data: {
-                  name,
-                },
-                type: FileContextEnum.PIPELINE,
-              });
-            } else if (children) {
-              setContextItem({ type: FileContextEnum.FOLDER });
-            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
-              setContextItem({ type: FileContextEnum.FILE });
-            } else {
-              if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {
-                setContextItem({ type: FileContextEnum.FILE });
-              } else {
-                setContextItem({
-                  data: {
-                    block: getBlockFromFile(file),
-                  },
-                  type: FileContextEnum.BLOCK_FILE,
-                });
+            e.preventDefault();
+
+            setCoordinates(disabled
+              ? null
+              : {
+                x: e.pageX,
+                y: e.pageY,
               }
+            );
+            setDraggingFile(null);
+            setSelectedFile(disabled ? null : file);
+
+            if (disabled) {
+              // setContextItem({ type: FileContextEnum.DISABLED });
+            } else if (isPipelineFolder) {
+              // setContextItem({
+              //   data: {
+              //     name,
+              //   },
+              //   type: FileContextEnum.PIPELINE,
+              // });
+            } else if (children) {
+              // setContextItem({ type: FileContextEnum.FOLDER });
+            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
+              // setContextItem({ type: FileContextEnum.FILE });
+            } else {
+              // if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {
+              //   setContextItem({ type: FileContextEnum.FILE });
+              // } else {
+              //   setContextItem({
+              //     data: {
+              //       block: getBlockFromFile(file),
+              //     },
+              //     type: FileContextEnum.BLOCK_FILE,
+              //   });
+              // }
             }
+          }}
+          onMouseDown={(e) => {
+            const block = getBlockFromFile(file);
+
+            if (!containerRef?.current?.contains(e.target)
+              || !block
+              || children?.length >= 1
+              || disableContextMenu
+              || disabled
+              || isPipelineFolder
+            ) {
+              return;
+            }
+
+            e.preventDefault();
+
+            clearTimeout(timeout.current);
+            timeout.current = setTimeout(() => {
+              setCoordinates({
+                x: e.pageX,
+                y: e.pageY,
+              });
+              setDraggingFile(file);
+              setSelectedFile(null);
+            }, 300);
           }}
           style={{
             alignItems: 'center',
