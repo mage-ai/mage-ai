@@ -1423,9 +1423,23 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.uuid,
             partition=execution_partition,
         )
+
         # Not store empty json if the variable is not output variable
+        def is_valid_print_variable(v):
+            if type(v) is not str:
+                return False
+            if v == '{}' or v == '':
+                return False
+            try:
+                json_data = json.loads(v)
+                if 'data' in json_data and json_data['data'] is None:
+                    return False
+            except Exception:
+                pass
+            return True
+
         variable_mapping = {k: v for k, v in variable_mapping.items()
-                            if not (type(v) is str and v == '{}') or is_output_variable(k)}
+                            if is_valid_print_variable(v) or is_output_variable(k)}
 
         variable_names = [clean_name_orig(v) for v in variable_mapping]
         removed_variables = []
@@ -1436,7 +1450,10 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             is_output_var = is_output_variable(v)
             if (override and not is_output_var) or (override_outputs and is_output_var):
                 removed_variables.append(v)
-        return dict(removed_variables=removed_variables)
+        return dict(
+            removed_variables=removed_variables,
+            variable_mapping=variable_mapping,
+        )
 
     def store_variables(
         self,
@@ -1447,14 +1464,14 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         spark=None,
         dynamic_block_uuid: str = None,
     ):
-        removed_variables = self.__store_variables_prepare(
+        variables_data = self.__store_variables_prepare(
             variable_mapping,
             execution_partition,
             override,
             override_outputs,
             dynamic_block_uuid,
-        )['removed_variables']
-        for uuid, data in variable_mapping.items():
+        )
+        for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
@@ -1465,7 +1482,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 partition=execution_partition,
             )
 
-        for uuid in removed_variables:
+        for uuid in variables_data['removed_variables']:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
                 self.uuid,
@@ -1481,14 +1498,14 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         spark=None,
         dynamic_block_uuid: str = None,
     ):
-        removed_variables = self.__store_variables_prepare(
+        variables_data = self.__store_variables_prepare(
             variable_mapping,
             execution_partition,
             override,
             override_outputs,
             dynamic_block_uuid,
-        )['removed_variables']
-        for uuid, data in variable_mapping.items():
+        )
+        for uuid, data in variables_data['variable_mapping'].items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
             await self.pipeline.variable_manager.add_variable_async(
@@ -1499,7 +1516,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 partition=execution_partition,
             )
 
-        for uuid in removed_variables:
+        for uuid in variables_data['removed_variables']:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
                 self.uuid,
