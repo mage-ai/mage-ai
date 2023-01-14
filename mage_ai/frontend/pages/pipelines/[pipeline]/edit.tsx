@@ -864,10 +864,12 @@ function PipelineDetailPage({
         onCreateCallback,
         opts?.name,
       ).then(() => hideModal())}
+      pipeline={pipeline}
     />
   ), {
   }, [
     addNewBlockAtIndex,
+    pipeline,
   ], {
     background: true,
     uuid: 'configure_block_name_and_create',
@@ -1330,7 +1332,7 @@ function PipelineDetailPage({
 
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
-      addNewBlockAtIndex={automaticallyNameBlocks || PipelineTypeEnum.INTEGRATION === pipeline?.type
+      addNewBlockAtIndex={automaticallyNameBlocks
         ? addNewBlockAtIndex
         : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
             if (BlockTypeEnum.DBT === block?.type) {
