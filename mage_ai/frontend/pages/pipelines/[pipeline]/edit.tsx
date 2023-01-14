@@ -1673,7 +1673,6 @@ function PipelineDetailPage({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       ref={fileTreeRef}
-      setErrors={setErrors}
       setSelectedBlock={setSelectedBlock}
       widgets={widgets}
     />
@@ -1690,7 +1689,6 @@ function PipelineDetailPage({
     pipeline,
     pipelineUUID,
     resetState,
-    setErrors,
     setSelectedBlock,
     widgets,
   ]);

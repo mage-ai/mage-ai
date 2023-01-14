@@ -34,8 +34,6 @@ def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline
             variables,
         )
 
-    print('WTFFFFFFFFFFFFFFFFFFFFF', pipeline, pipeline.data_integration, settings)
-
     if destination_table_pattern:
         for stream in settings['catalog']['streams']:
             tap_stream_id = stream['tap_stream_id']

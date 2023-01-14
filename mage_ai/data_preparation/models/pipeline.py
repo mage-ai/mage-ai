@@ -32,7 +32,7 @@ class Pipeline:
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
-        self.data_integration = {}
+        self.data_integration = None
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
