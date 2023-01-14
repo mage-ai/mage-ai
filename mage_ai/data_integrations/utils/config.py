@@ -4,6 +4,7 @@ from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List
+import json
 import os
 import simplejson
 import yaml
@@ -12,17 +13,26 @@ KEY_PATTERNS = '_patterns'
 PATTERN_KEY_DESTINATION_TABLE = 'destination_table'
 
 
-def get_settings(block, variables: Dict = {}) -> Dict:
-    return __get_settings(block.file_path, variables)
+def get_settings(block, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Dict:
+    return __get_settings(block.file_path, variables, pipeline=pipeline)
 
 
-def __get_settings(absolute_file_path, variables: Dict = {}) -> Dict:
+def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Dict:
     settings = interpolate_variables_for_block_settings(absolute_file_path, variables)
-
     settings_raw = interpolate_variables_for_block_settings(absolute_file_path, None)
+
     config = settings_raw['config']
     patterns = config.get(KEY_PATTERNS, {})
     destination_table_pattern = patterns.get(PATTERN_KEY_DESTINATION_TABLE)
+
+    if 'catalog' not in settings \
+        and pipeline \
+        and pipeline.data_integration \
+        and 'catalog' in pipeline.data_integration:
+        settings['catalog'] = interpolate_variables(
+            json.dumps(pipeline.data_integration['catalog']),
+            variables,
+        )
 
     if destination_table_pattern:
         for stream in settings['catalog']['streams']:
@@ -43,12 +53,17 @@ def __get_settings(absolute_file_path, variables: Dict = {}) -> Dict:
     return settings
 
 
-def get_catalog(block, variables: Dict = {}) -> Dict:
-    return get_settings(block, variables)['catalog']
+def get_catalog(block, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Dict:
+    return get_settings(block, variables, pipeline=pipeline)['catalog']
 
 
-def get_catalog_by_stream(absolute_file_path, stream_id: str, variables: Dict = {}, ) -> Dict:
-    catalog = __get_settings(absolute_file_path, variables)['catalog']
+def get_catalog_by_stream(
+    absolute_file_path,
+    stream_id: str,
+    variables: Dict = {},
+    pipeline: 'Pipeline' = None,
+) -> Dict:
+    catalog = __get_settings(absolute_file_path, variables, pipeline=pipeline)['catalog']
     for stream in catalog['streams']:
         tap_stream_id = stream['tap_stream_id']
         if tap_stream_id == stream_id:
@@ -60,10 +75,11 @@ def build_catalog_json(
     absolute_file_path: str,
     variables: Dict,
     selected_streams: List[str] = None,
+    pipeline: 'Pipeline' =  None,
 ) -> str:
     streams = []
 
-    settings = __get_settings(absolute_file_path, variables)
+    settings = __get_settings(absolute_file_path, variables, pipeline=pipeline)
     for stream in settings['catalog']['streams']:
         tap_stream_id = stream['tap_stream_id']
         if not selected_streams or tap_stream_id in selected_streams:

@@ -69,6 +69,7 @@ class IntegrationBlock(Block):
                 self.pipeline.data_loader.file_path,
                 stream,
                 global_vars,
+                pipeline=self.pipeline,
             ) or dict()
 
             if stream_catalog.get('replication_method') == 'INCREMENTAL':
@@ -101,6 +102,7 @@ class IntegrationBlock(Block):
                     build_catalog_json(
                         self.pipeline.data_loader.file_path,
                         global_vars,
+                        pipeline=self.pipeline,
                         selected_streams=selected_streams,
                     ),
                     '--state',

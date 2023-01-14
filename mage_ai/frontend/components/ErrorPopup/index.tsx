@@ -37,7 +37,7 @@ function ErrorPopup({
   response,
 }: ErrorPopupProps) {
   const [stackTraceVisible, setStackTraceVisible] = useState(false);
-  const { messages } = errorsProp;
+  const { messages } = errorsProp || {};
 
   const {
     errors,

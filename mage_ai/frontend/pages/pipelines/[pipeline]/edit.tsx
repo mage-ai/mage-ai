@@ -11,6 +11,7 @@ import { useRouter } from 'next/router';
 
 import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
 import BlockType, {
+  BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
   SampleDataType,
@@ -68,7 +69,7 @@ import {
   removeDataOutputBlockUUID,
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
-import { equals, find, removeAtIndex } from '@utils/array';
+import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
@@ -802,6 +803,53 @@ function PipelineDetailPage({
       blockContent = contentByBlockUUID.current[block.converted_from];
     }
 
+    const {
+      language: blockLanguage,
+      type: blockType,
+    } = block;
+
+    const isIntegrationPipeline = PipelineTypeEnum.INTEGRATION === pipeline?.type;
+
+    if (isIntegration) {
+      const blocksByType = indexBy(pipeline?.blocks || [], ({ type }) => type);
+      const dataExporterBlock = blocksByType[BlockTypeEnum.DATA_EXPORTER];
+      const dataLoaderBlock = blocksByType[BlockTypeEnum.DATA_LOADER];
+      const transformerBlock = blocksByType[BlockTypeEnum.TRANSFORMER];
+
+      if (BlockTypeEnum.DATA_LOADER === blockType) {
+        if (BlockLanguageEnum.YAML !== blockLanguage) {
+          setErrors({
+            displayMessage: `The source you’re trying to add must contain the language ${BlockLanguageEnum.YAML} and not ${blockLanguage}.`,
+          });
+          return;
+        } else if (dataLoaderBlock) {
+          setErrors({
+            displayMessage: `Pipeline ${pipeline?.uuid} already has a source: ${dataLoaderBlock?.uuid}.`,
+          });
+          return;
+        }
+      } else if (BlockTypeEnum.TRANSFORMER === blockType) {
+        if (transformerBlock) {
+          setErrors({
+            displayMessage: `Pipeline ${pipeline?.uuid} already has a transformer: ${transformerBlock?.uuid}.`,
+          });
+          return;
+        }
+      } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
+        if (BlockLanguageEnum.YAML !== blockLanguage) {
+          setErrors({
+            displayMessage: `The destination you’re trying to add must contain the language ${BlockLanguageEnum.YAML} and not ${blockLanguage}.`,
+          });
+          return;
+        } else if (dataExporterBlock) {
+          setErrors({
+            displayMessage: `Pipeline ${pipeline?.uuid} already has a destination: ${dataExporterBlock?.uuid}.`,
+          });
+          return;
+        }
+      }
+    }
+
     // @ts-ignore
     return createBlock({
       block: {
@@ -839,6 +887,8 @@ function PipelineDetailPage({
     contentByBlockUUID.current,
     createBlock,
     setBlocks,
+    setErrors,
+    pipeline,
   ]);
 
   const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(false);
@@ -864,10 +914,12 @@ function PipelineDetailPage({
         onCreateCallback,
         opts?.name,
       ).then(() => hideModal())}
+      pipeline={pipeline}
     />
   ), {
   }, [
     addNewBlockAtIndex,
+    pipeline,
   ], {
     background: true,
     uuid: 'configure_block_name_and_create',
@@ -1330,7 +1382,7 @@ function PipelineDetailPage({
 
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
-      addNewBlockAtIndex={automaticallyNameBlocks || PipelineTypeEnum.INTEGRATION === pipeline?.type
+      addNewBlockAtIndex={automaticallyNameBlocks
         ? addNewBlockAtIndex
         : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
             if (BlockTypeEnum.DBT === block?.type) {

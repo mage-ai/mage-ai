@@ -22,6 +22,7 @@ class PipelineTest(DBTestCase):
         pipeline = Pipeline('test_pipeline_2', self.repo_path)
 
         self.assertEqual(pipeline.to_dict(), dict(
+            data_integration=None,
             name='test pipeline 2',
             uuid='test_pipeline_2',
             type='python',
@@ -104,6 +105,7 @@ class PipelineTest(DBTestCase):
         pipeline.delete_block(block)
         pipeline = Pipeline('test_pipeline_3', self.repo_path)
         self.assertEqual(pipeline.to_dict(), dict(
+            data_integration=None,
             name='test pipeline 3',
             uuid='test_pipeline_3',
             type='python',
@@ -166,6 +168,7 @@ class PipelineTest(DBTestCase):
         pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
+            data_integration=None,
             name='test pipeline 4',
             uuid='test_pipeline_4',
             type='python',
@@ -247,6 +250,7 @@ class PipelineTest(DBTestCase):
         pipeline.add_block(block7, upstream_block_uuids=['block2', 'block3', 'block6'])
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
+            data_integration=None,
             name='test pipeline 5',
             uuid='test_pipeline_5',
             type='python',

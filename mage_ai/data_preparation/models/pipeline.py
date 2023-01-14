@@ -13,10 +13,10 @@ from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
-from mage_ai.shared.hash import extract
+from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
-from typing import Callable, List
+from typing import Callable, Dict, List
 import aiofiles
 import asyncio
 import os
@@ -32,6 +32,7 @@ class Pipeline:
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
+        self.data_integration = None
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
@@ -314,6 +315,7 @@ class Pipeline:
         self.load_config(self.get_config_from_yaml())
 
     def load_config(self, config):
+        self.data_integration = config.get('data_integration')
         self.name = config.get('name')
         self.type = config.get('type') or self.type
 
@@ -375,16 +377,21 @@ class Pipeline:
 
         return blocks_by_uuid
 
+    def to_dict_base(self) -> Dict:
+        return dict(
+            data_integration=self.data_integration,
+            name=self.name,
+            type=self.type.value if type(self.type) is not str else self.type,
+            uuid=self.uuid,
+        )
+
     def to_dict(
         self,
         include_content=False,
         include_outputs=False,
         sample_count=None,
-    ):
-        return dict(
-            name=self.name,
-            uuid=self.uuid,
-            type=self.type.value if type(self.type) is not str else self.type,
+    ) -> Dict:
+        return merge_dict(self.to_dict_base(), dict(
             blocks=[
                 b.to_dict(
                     include_content=include_content,
@@ -402,7 +409,7 @@ class Pipeline:
                 )
                 for b in self.widgets_by_uuid.values()
             ],
-        )
+        ))
 
     async def to_dict_async(
         self,
@@ -425,13 +432,10 @@ class Pipeline:
                 sample_count=sample_count,
               ) for b in self.widgets_by_uuid.values()]
         )
-        return dict(
-            name=self.name,
-            uuid=self.uuid,
-            type=self.type.value if type(self.type) is not str else self.type,
+        return merge_dict(self.to_dict_base(), dict(
             blocks=blocks_data,
             widgets=widgets_data,
-        )
+        ))
 
     async def update(self, data, update_content=False):
         if 'name' in data and data['name'] != self.name:
@@ -452,6 +456,10 @@ class Pipeline:
             Update kernel
             """
             self.type = data['type']
+            self.save()
+
+        if 'data_integration' in data:
+            self.data_integration = data['data_integration']
             self.save()
 
         if update_content:

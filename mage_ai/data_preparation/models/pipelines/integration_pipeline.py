@@ -1,5 +1,10 @@
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
-from mage_ai.data_integrations.utils.config import build_config_json, get_catalog, interpolate_variables
+from mage_ai.data_integrations.utils.config import (
+    build_catalog_json,
+    build_config_json,
+    get_catalog,
+    interpolate_variables,
+)
 from mage_ai.data_integrations.utils.parsers import parse_logs_and_json
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
@@ -194,8 +199,13 @@ class IntegrationPipeline(Pipeline):
                     '--load_sample_data',
                     '--log_to_stdout',
                     '1',
-                    '--settings',
-                    self.data_loader.file_path,
+                    '--catalog_json',
+                    build_catalog_json(
+                        self.data_loader.file_path,
+                        self.__global_variables(),
+                        pipeline=self,
+                        selected_streams=streams,
+                    ),
                     '--selected_streams_json',
                     json.dumps(streams),
                 ]
@@ -256,8 +266,13 @@ class IntegrationPipeline(Pipeline):
                         self.source_file_path,
                         '--config_json',
                         build_config_json(self.data_loader.file_path, self.__global_variables()),
-                        '--settings',
-                        self.data_loader.file_path,
+                        '--catalog_json',
+                        build_catalog_json(
+                            self.data_loader.file_path,
+                            self.__global_variables(),
+                            pipeline=self,
+                            selected_streams=[tap_stream_id],
+                        ),
                         '--state',
                         self.source_state_file_path(
                             destination_table=destination_table,
@@ -286,8 +301,13 @@ class IntegrationPipeline(Pipeline):
                     self.source_file_path,
                     '--config_json',
                     build_config_json(self.data_loader.file_path, self.__global_variables()),
-                    '--settings',
-                    self.data_loader.file_path,
+                    '--catalog_json',
+                    build_catalog_json(
+                        self.data_loader.file_path,
+                        self.__global_variables(),
+                        pipeline=self,
+                        selected_streams=streams or [],
+                    ),
                     '--discover',
                 ]
                 if streams:
@@ -313,8 +333,12 @@ class IntegrationPipeline(Pipeline):
                     self.source_file_path,
                     '--config_json',
                     build_config_json(self.data_loader.file_path, self.__global_variables()),
-                    '--settings',
-                    self.data_loader.file_path,
+                    '--catalog_json',
+                    build_catalog_json(
+                        self.data_loader.file_path,
+                        self.__global_variables(),
+                        pipeline=self,
+                    ),
                     '--discover',
                     '--discover_streams',
                 ]
@@ -331,7 +355,11 @@ class IntegrationPipeline(Pipeline):
         return self.__catalog(variables)['streams']
 
     def __catalog(self, variables: Dict = {}) -> Dict:
-        return get_catalog(self.data_loader, self.__global_variables(variables))
+        return get_catalog(
+            self.data_loader,
+            self.__global_variables(variables),
+            pipeline=self,
+        )
 
     def __global_variables(self, variables: Dict = {}) -> Dict:
         d = get_global_variables(self.uuid) or dict()

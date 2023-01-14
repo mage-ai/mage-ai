@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import BlockType, { BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Panel from '@oracle/components/Panel';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -18,16 +19,18 @@ type ConfigureBlockProps = {
   onSave: (opts: {
     name: string;
   }) => void;
-}
+  pipeline: PipelineType;
+};
 
 function ConfigureBlock({
   block,
   defaultName,
   onClose,
   onSave,
+  pipeline,
 }: ConfigureBlockProps) {
   const refTextInput = useRef(null);
-  const [blockName, setBlockName] = useState<string>('');
+  const [blockName, setBlockName] = useState<string>(defaultName);
   const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(
     !!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS),
   );
@@ -36,17 +39,34 @@ function ConfigureBlock({
     refTextInput?.current?.focus();
   }, []);
 
+  const isIntegrationPipeline = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [
+    pipeline,
+  ]);
+
+  const title = useMemo(() => {
+    const blockType = block?.type;
+
+    if (isIntegrationPipeline) {
+      if (BlockTypeEnum.DATA_LOADER === blockType) {
+        return 'Source';
+      } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
+        return 'Destination';
+      }
+    }
+
+    return BLOCK_TYPE_NAME_MAPPING[blockType];
+  }, [block, isIntegrationPipeline])
+
   return (
     <Panel>
       <Text bold>
-        {BLOCK_TYPE_NAME_MAPPING[block?.type]} block name
+        {title} block name
       </Text>
 
       <Spacing mt={1}>
         <TextInput
           monospace
           onChange={e => setBlockName(e.target.value)}
-          placeholder={defaultName}
           ref={refTextInput}
           value={blockName}
         />

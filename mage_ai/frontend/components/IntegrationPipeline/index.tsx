@@ -158,9 +158,11 @@ function IntegrationPipeline({
     dataExporterBlockContent,
   ]);
 
-  const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
-    dataLoaderBlockContent,
-  ]);
+  const catalog: CatalogType =
+    useMemo(() => dataLoaderBlockContent?.catalog || pipeline?.data_integration?.catalog, [
+      dataLoaderBlockContent,
+      pipeline?.data_integration?.catalog,
+    ]);
   const autoAddNewFields = (catalog?.streams || []).every(({ auto_add_new_fields }) => auto_add_new_fields);
   const disableColumnTypeCheck =
     (catalog?.streams || []).every(({ disable_column_type_check: v }) => v);
@@ -279,12 +281,26 @@ function IntegrationPipeline({
 
             setIntegrationStreams(streams.map(({ tap_stream_id }) => tap_stream_id));
 
-            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-              ...dataLoaderBlockContent,
-              catalog: catalogData,
-            }));
+            let payload;
+            const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+            if (dataLoaderBlockContentCatalog) {
+              onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                ...dataLoaderBlockContent,
+                catalog: catalogData,
+              }));
+            } else {
+              payload = {
+                pipeline: {
+                  ...pipeline,
+                  data_integration: {
+                    ...(pipeline?.data_integration || {}),
+                    catalog: catalogData,
+                  },
+                },
+              };
+            }
 
-            savePipelineContent().then(() => {
+            savePipelineContent(payload).then(() => {
               return fetchPipeline();
             });
           },
@@ -329,16 +345,31 @@ function IntegrationPipeline({
       stream,
       streams,
     } = getStreamAndStreamsFromCatalog(catalog, streamUUID);
+    const catalogUpdate = {
+      ...catalog,
+      streams: streams.concat(streamDataTransformer(stream)),
+    };
 
-    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-      ...dataLoaderBlockContent,
-      catalog: {
-        ...catalog,
-        streams: streams.concat(streamDataTransformer(stream)),
-      },
-    }));
+    let payload;
+    const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+    if (dataLoaderBlockContentCatalog) {
+      onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+        ...dataLoaderBlockContent,
+        catalog: catalogUpdate,
+      }));
+    } else {
+      payload = {
+        pipeline: {
+          ...pipeline,
+          data_integration: {
+            ...(pipeline?.data_integration || {}),
+            catalog: catalogUpdate,
+          },
+        },
+      };
+    }
 
-    savePipelineContent().then(() => fetchPipeline());
+    savePipelineContent(payload).then(() => fetchPipeline());
   }, [
     catalog,
     dataLoaderBlock,

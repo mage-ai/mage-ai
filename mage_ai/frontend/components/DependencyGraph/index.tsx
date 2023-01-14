@@ -302,9 +302,9 @@ function DependencyGraph({
       }
 
       if (BlockTypeEnum.DATA_LOADER === block.type) {
-        displayText = `Source: ${contentParsed?.source}`;
+        displayText = `${block.uuid}: ${contentParsed?.source}`;
       } else if (BlockTypeEnum.DATA_EXPORTER === block.type) {
-        displayText = `Destination: ${contentParsed?.destination}`;
+        displayText = `${block.uuid}: ${contentParsed?.destination}`;
       }
     } else if (BlockTypeEnum.DBT === block.type) {
       displayText = getModelName(block);
