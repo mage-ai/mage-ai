@@ -10,10 +10,10 @@ import { addTriggerVariables, getFormattedVariable } from '@components/Sidekick/
 type RuntimeVariablesProps = {
   hasOverride?: boolean;
   variables: {
-    [key: string]: string;
+    [key: string]: string | number;
   };
   variablesOverride: {
-    [key: string]: string;
+    [key: string]: string | number;
   };
   scheduleType: ScheduleTypeEnum;
 };
