@@ -91,7 +91,7 @@ class StitchClient(HttpClient):
                 else:
                     error_message = extraction['discovery_description']
                     raise Exception(
-                        f'Extraction for source {source_id} failed with message {error_message}.'
+                        f'Extraction for source {source_id} failed with message: \"{error_message}\".'
                     )
             if (
                 poll_timeout
@@ -115,9 +115,10 @@ class StitchClient(HttpClient):
             succeeded_streams = []
             for load in loads:
                 if load['error_state'] is not None:
-                    error_message = load['error_state']['exception_chain']['message']
+                    error_message = load['error_state']['notification_data']['warehouse_message']
                     raise Exception(
-                        f"Failed to load data for stream {load['stream_name']} with message error_state."
+                        f"Failed to load data for stream {load['stream_name']} with "
+                        f"message: \"{error_message}\"."
                     )
                 elif load['last_batch_loaded_at'] >= extraction_completion_time:
                     succeeded_streams.append(load['stream_name'])
