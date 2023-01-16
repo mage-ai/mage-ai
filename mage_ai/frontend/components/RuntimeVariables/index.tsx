@@ -10,7 +10,10 @@ import { addTriggerVariables, getFormattedVariable } from '@components/Sidekick/
 type RuntimeVariablesProps = {
   hasOverride?: boolean;
   variables: {
-    [key: string]: string;
+    [key: string]: string | number;
+  };
+  variablesOverride: {
+    [key: string]: string | number;
   };
   scheduleType: ScheduleTypeEnum;
 };
@@ -19,12 +22,15 @@ function RuntimeVariables({
   hasOverride,
   scheduleType,
   variables,
+  variablesOverride,
 }: RuntimeVariablesProps) {
   const variablesArr = [];
   Object.entries(variables).forEach(([k, v]) => {
+    const override = variablesOverride?.[k];
+
     variablesArr.push({
       uuid: k,
-      value: getFormattedVariable(v),
+      value: getFormattedVariable(override || v),
     });
   });
   addTriggerVariables(variablesArr, scheduleType);

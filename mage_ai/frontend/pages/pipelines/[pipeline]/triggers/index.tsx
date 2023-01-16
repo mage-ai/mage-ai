@@ -169,7 +169,8 @@ function PipelineSchedules({
             <RuntimeVariables
               hasOverride={hasOverride}
               scheduleType={selectedSchedule?.schedule_type}
-              variables={showVariables}
+              variables={variablesOrig}
+              variablesOverride={variablesOverride}
             />
           )}
           {!showVariables && (
