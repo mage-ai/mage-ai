@@ -107,6 +107,7 @@ function ConfigureBlock({
             })}
             primary
             tabIndex={0}
+            uuid="ConfigureBlock/SaveAndAddBlock"
           >
             Save and add block
           </KeyboardShortcutButton>
