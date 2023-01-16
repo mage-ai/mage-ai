@@ -80,10 +80,11 @@ def build_catalog_json(
     streams = []
 
     settings = __get_settings(absolute_file_path, variables, pipeline=pipeline)
-    for stream in settings['catalog']['streams']:
-        tap_stream_id = stream['tap_stream_id']
-        if not selected_streams or tap_stream_id in selected_streams:
-            streams.append(stream)
+    if 'catalog' in settings and 'streams' in settings['catalog']:
+        for stream in settings['catalog']['streams']:
+            tap_stream_id = stream['tap_stream_id']
+            if not selected_streams or tap_stream_id in selected_streams:
+                streams.append(stream)
 
     catalog = dict(streams=streams)
 
