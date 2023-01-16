@@ -108,20 +108,32 @@ class StitchClient(HttpClient):
         streams = self.list_streams(source_id)
         stream_names = [s['stream_name'] for s in streams]
         while True:
-            loads = self.list_loads(stitch_client_id)['data']
-            loads = [load for load in loads if load['source_name'] == source['name']
-                     and load['stream_name'] in stream_names]
-
             succeeded_streams = []
-            for load in loads:
-                if load['error_state'] is not None:
-                    error_message = load['error_state']['notification_data']['warehouse_message']
-                    raise Exception(
-                        f"Failed to load data for stream {load['stream_name']} with "
-                        f"message: \"{error_message}\"."
-                    )
-                elif load['last_batch_loaded_at'] >= extraction_completion_time:
-                    succeeded_streams.append(load['stream_name'])
+            total_loads_count = None
+            current_count = 0
+            page = 1
+            while True:
+                # Fetch loads with pagination
+                loads_response = self.list_loads(stitch_client_id, page=page)
+                loads = loads_response['data']
+                if total_loads_count is None:
+                    total_loads_count = loads_response['total']
+                current_count += len(loads)
+                loads = [load for load in loads if load['source_name'] == source['name']
+                         and load['stream_name'] in stream_names]
+                for load in loads:
+                    if load['error_state'] is not None:
+                        error_message = load['error_state']['notification_data']['warehouse_message']
+                        raise Exception(
+                            f"Failed to load data for stream {load['stream_name']} with "
+                            f"message: \"{error_message}\"."
+                        )
+                    elif load['last_batch_loaded_at'] >= extraction_completion_time:
+                        succeeded_streams.append(load['stream_name'])
+                page += 1
+                if current_count >= total_loads_count:
+                    break
+
             if len(succeeded_streams) == len(stream_names):
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
                 break
