@@ -85,6 +85,7 @@ class StitchClient(HttpClient):
                         'Current status: running.'
                     )
                 elif extraction['discovery_exit_status'] == 0:
+                    extraction_completion_time = extraction['completion_time']
                     print(f'Extraction for source {source_id} completed.')
                     break
                 else:
@@ -118,7 +119,7 @@ class StitchClient(HttpClient):
                     raise Exception(
                         f"Failed to load data for stream {load['stream_name']} with message error_state."
                     )
-                else:
+                elif load['last_batch_loaded_at'] >= extraction_completion_time:
                     succeeded_streams.append(load['stream_name'])
             if len(succeeded_streams) == len(stream_names):
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
