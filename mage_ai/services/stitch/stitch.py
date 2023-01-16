@@ -61,6 +61,8 @@ class StitchClient(HttpClient):
         if 'error' in response:
             raise Exception(response['error']['message'])
         job_name = response['job_name']
+        print(f'Start replication job for source {source_id}. Job name: {job_name}.')
+
         source = self.get_source(source_id)
         stitch_client_id = source['stitch_client_id']
 
@@ -124,9 +126,10 @@ class StitchClient(HttpClient):
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
                 break
             else:
+                running_streams = [s for s in stream_names if s not in succeeded_streams]
                 print(
-                    f'Polling Stitch load status for source {source_id}. Completed streams: {succeeded_streams}.'
-                    f'Running streams: {[s for s in stream_names if s not in succeeded_streams]}.'
+                    f'Polling Stitch load status for source {source_id}. Completed streams: '
+                    f'{succeeded_streams}. Running streams: {running_streams}.'
                 )
             if (
                 poll_timeout
