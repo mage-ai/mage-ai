@@ -85,7 +85,6 @@ class StitchClient(HttpClient):
                         'Current status: running.'
                     )
                 elif extraction['discovery_exit_status'] == 0:
-                    extraction_completion_time = extraction['completion_time']
                     print(f'Extraction for source {source_id} completed.')
                     break
                 else:
@@ -110,7 +109,6 @@ class StitchClient(HttpClient):
         while True:
             loads = self.list_loads(stitch_client_id)['data']
             loads = [load for load in loads if load['source_name'] == source['name']
-                     and load['last_batch_loaded_at'] >= extraction_completion_time
                      and load['stream_name'] in stream_names]
 
             succeeded_streams = []
