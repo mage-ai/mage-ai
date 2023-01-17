@@ -183,8 +183,6 @@ function FileBrowser({
     timeout,
   ]);
 
-  console.log(selectedFile)
-
   const selectedBlock = useMemo(() => selectedFile && getBlockFromFile(selectedFile), [
     selectedFile,
   ]);

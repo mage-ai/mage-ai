@@ -57,3 +57,10 @@ export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
   [FileExtensionEnum.YAML]: BlockLanguageEnum.YAML,
   [FileExtensionEnum.YML]: BlockLanguageEnum.YAML,
 };
+export const FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE = {
+  [BlockLanguageEnum.PYTHON]: FileExtensionEnum.PY,
+  [BlockLanguageEnum.R]: FileExtensionEnum.R,
+  [BlockLanguageEnum.SQL]: FileExtensionEnum.SQL,
+  [BlockLanguageEnum.YAML]: FileExtensionEnum.YAML,
+  text: FileExtensionEnum.TXT,
+}

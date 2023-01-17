@@ -11,7 +11,6 @@ import { useRouter } from 'next/router';
 
 import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
 import BlockType, {
-  ABBREV_BLOCK_LANGUAGE_MAPPING,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -53,7 +52,10 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   get,
 } from '@storage/localStorage';
-import { SpecialFileEnum } from '@interfaces/FileType';
+import {
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
+  SpecialFileEnum,
+} from '@interfaces/FileType';
 import {
   NAV_ICON_MAPPING,
   SIDEKICK_VIEWS,
@@ -741,8 +743,8 @@ function PipelineDetailPage({
       uuid,
     }: BlockType) => {
       let path = `${type}/${uuid}`;
-      if (language && ABBREV_BLOCK_LANGUAGE_MAPPING[language]) {
-        path = `${path}.${ABBREV_BLOCK_LANGUAGE_MAPPING[language].toLowerCase()}`;
+      if (language && FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language]) {
+        path = `${path}.${FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language].toLowerCase()}`;
       }
 
       return api.blocks.useDelete(encodeURIComponent(path))();

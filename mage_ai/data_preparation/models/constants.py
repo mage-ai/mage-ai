@@ -67,6 +67,13 @@ BLOCK_LANGUAGE_TO_FILE_EXTENSION = {
     BlockLanguage.YAML: 'yaml',
 }
 
+FILE_EXTENSION_TO_BLOCK_LANGUAGE = {
+    'py': BlockLanguage.PYTHON,
+    'r': BlockLanguage.R,
+    'sql': BlockLanguage.SQL,
+    'yaml': BlockLanguage.YAML,
+}
+
 CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.CHART,
     BlockType.DATA_EXPORTER,

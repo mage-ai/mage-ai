@@ -1410,7 +1410,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
     def __consolidate_variables(self, variable_mapping: Dict):
         # Consolidate print variables
         output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
-        print_variables = {k: v for k, v in variable_mapping.items() 
+        print_variables = {k: v for k, v in variable_mapping.items()
                            if is_valid_print_variable(k, v, self.uuid)}
 
         print_variables_keys = sorted(print_variables.keys(), key=lambda k: int(k.split('_')[-1]))
