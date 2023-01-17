@@ -10,6 +10,7 @@ from mage_ai.data_preparation.models.block.utils import (
     fetch_input_variables,
     input_variables,
     is_output_variable,
+    is_valid_print_variable,
     output_variables,
 )
 from mage_ai.data_preparation.models.constants import (
@@ -1406,6 +1407,67 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         for upstream_block in self.upstream_blocks:
             upstream_block.global_vars = global_vars
 
+    def __consolidate_variables(self, variable_mapping: Dict):
+        # Consolidate print variables
+        output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
+        print_variables = {k: v for k, v in variable_mapping.items() 
+                           if is_valid_print_variable(k, v, self.uuid)}
+
+        print_variables_keys = sorted(print_variables.keys(), key=lambda k: int(k.split('_')[-1]))
+
+        consolidated_print_variables = dict()
+        state = dict(
+            msg_key=None,
+            msg_value=None,
+            msg_type=None,
+            consolidated_data=None,
+        )
+
+        def save_variable_and_reset_state():
+            if state['msg_key'] is not None and state['msg_value'] is not None:
+                state['msg_value']['data'] = state['consolidated_data']
+                consolidated_print_variables[state['msg_key']] = json.dumps(state['msg_value'])
+            state['msg_key'] = None
+            state['msg_value'] = None
+            state['msg_type'] = None
+            state['consolidated_data'] = None
+
+        for k in print_variables_keys:
+            value = print_variables[k]
+            try:
+                json_value = json.loads(value)
+            except Exception:
+                consolidated_print_variables[k] = value
+                save_variable_and_reset_state()
+                continue
+
+            if 'msg_type' not in json_value or 'data' not in json_value:
+                consolidated_print_variables[k] = value
+                save_variable_and_reset_state()
+                continue
+
+            if state['msg_key'] is not None and json_value['msg_type'] != state['msg_type']:
+                save_variable_and_reset_state()
+
+            data = json_value['data'] if type(json_value['data']) is list else [json_value['data']]
+            if state['msg_key'] is None:
+                state['msg_key'] = k
+                state['msg_type'] = json_value['msg_type']
+                state['msg_value'] = json_value
+                state['consolidated_data'] = data
+            else:
+                if state['consolidated_data'][-1] == '':
+                    # New line
+                    state['consolidated_data'] = state['consolidated_data'][:-1] + data
+                else:
+                    # Not new line
+                    state['consolidated_data'][-1] += data[0]
+                    state['consolidated_data'] += data[1:]
+        save_variable_and_reset_state()
+
+        variable_mapping = merge_dict(output_variables, consolidated_print_variables)
+        return variable_mapping
+
     def __store_variables_prepare(
         self,
         variable_mapping: Dict,
@@ -1424,22 +1486,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             partition=execution_partition,
         )
 
-        # Not store empty json if the variable is not output variable
-        def is_valid_print_variable(v):
-            if type(v) is not str:
-                return False
-            if v == '{}' or v == '':
-                return False
-            try:
-                json_data = json.loads(v)
-                if 'data' in json_data and json_data['data'] is None:
-                    return False
-            except Exception:
-                pass
-            return True
-
-        variable_mapping = {k: v for k, v in variable_mapping.items()
-                            if is_valid_print_variable(v) or is_output_variable(k)}
+        variable_mapping = self.__consolidate_variables(variable_mapping)
 
         variable_names = [clean_name_orig(v) for v in variable_mapping]
         removed_variables = []

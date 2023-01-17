@@ -2,6 +2,7 @@ from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from typing import Any, Dict, List
+import json
 import pandas as pd
 
 
@@ -66,7 +67,6 @@ def create_block_runs_from_dynamic_block(
         is_dynamic = is_dynamic_block(downstream_block)
         should_reduce = should_reduce_output(downstream_block)
         descendants = get_all_descendants(downstream_block)
-        print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', downstream_block.uuid, [b.uuid for b in descendants])
 
         block_runs_created_by_block_uuid = {}
         dynamic_child_block_runs = []
@@ -245,6 +245,24 @@ def is_output_variable(variable_uuid: str) -> bool:
     return variable_uuid == 'df' or variable_uuid.startswith('output')
 
 
+def is_valid_print_variable(k, v, block_uuid):
+    if f'{block_uuid}_' not in k:
+        return False
+    if type(v) is not str:
+        return False
+    # Not store empty json
+    if v == '{}' or v == '':
+        return False
+    try:
+        json_data = json.loads(v)
+        # Not store empty data in json object
+        if 'data' in json_data and not json_data['data']:
+            return False
+    except Exception:
+        pass
+    return True
+
+
 def input_variables(
     pipeline: 'Pipeline',
     upstream_block_uuids: List[str],
@@ -258,7 +276,7 @@ def input_variables(
         Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
     """
     return {block_uuid: output_variables(pipeline, block_uuid, execution_partition)
-        for block_uuid in upstream_block_uuids}
+            for block_uuid in upstream_block_uuids}
 
 
 def fetch_input_variables(
