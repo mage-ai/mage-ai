@@ -1,5 +1,8 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.constants import (
+        DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        FILE_EXTENSION_TO_BLOCK_LANGUAGE,
+    )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -18,7 +21,13 @@ class ApiBlockHandler(BaseHandler):
             raise Exception('The url path should be in block_type/block_uuid format.')
         block_type = parts[0]
         block_uuid = parts[1]
-        block = Block(block_uuid, block_uuid, block_type)
+        parts2 = block_uuid.split('.')
+        language = None
+        if len(parts2) >= 2:
+            block_uuid = parts2[0]
+            language = FILE_EXTENSION_TO_BLOCK_LANGUAGE[parts2[1]]
+
+        block = Block(block_uuid, block_uuid, block_type, language=language)
         if not block.exists():
             raise Exception(f'Block {block_uuid} does not exist')
         block.delete()

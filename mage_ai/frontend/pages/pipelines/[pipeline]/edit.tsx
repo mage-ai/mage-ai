@@ -52,7 +52,10 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   get,
 } from '@storage/localStorage';
-import { SpecialFileEnum } from '@interfaces/FileType';
+import {
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
+  SpecialFileEnum,
+} from '@interfaces/FileType';
 import {
   NAV_ICON_MAPPING,
   SIDEKICK_VIEWS,
@@ -734,9 +737,18 @@ function PipelineDetailPage({
   );
 
   const [deleteBlockFile] = useMutation(
-    ({ type, uuid }: BlockType) => (
-      api.blocks.useDelete(encodeURIComponent(`${type}/${uuid}`))()
-    ),
+    ({
+      language,
+      type,
+      uuid,
+    }: BlockType) => {
+      let path = `${type}/${uuid}`;
+      if (language && FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language]) {
+        path = `${path}.${FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language].toLowerCase()}`;
+      }
+
+      return api.blocks.useDelete(encodeURIComponent(path))();
+    },
     {
       onSuccess: (response: any) => onSuccess(
         response, {

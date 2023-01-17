@@ -7,8 +7,9 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import FileType, {
   CODE_BLOCK_FILE_EXTENSIONS,
-  FileExtensionEnum,
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING,
   FOLDER_NAME_PIPELINES,
+  FileExtensionEnum,
   METADATA_FILENAME,
 } from '@interfaces/FileType';
 import { prependArray, removeAtIndex } from '@utils/array';
@@ -68,9 +69,13 @@ export function getBlockFromFile(
   ].join('|');
   const extensionRegex = new RegExp(`${extensions}$`);
   if (BLOCK_TYPES.includes(blockType) && fileName.match(extensionRegex)) {
+    const parts = fileName.split('.');
+    const extension = parts[1];
+
     return {
+      language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[extension],
       type: blockType,
-      uuid: fileName.replace(extensionRegex, ''),
+      uuid: parts[0],
     };
   }
 }

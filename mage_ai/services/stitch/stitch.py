@@ -56,12 +56,17 @@ class StitchClient(HttpClient):
         source_id: int,
         poll_interval: float = DEFAULT_POLL_INTERVAL,
         poll_timeout: Optional[float] = DEFAULT_POLL_TIMEOUT,
+        autocomplete_after_seconds: int = None,
+        disable_polling: bool = False,
     ):
         response = self.make_request(f'/sources/{source_id}/sync', method='POST', payload=dict())
         if 'error' in response:
             raise Exception(response['error']['message'])
         job_name = response['job_name']
         print(f'Start replication job for source {source_id}. Job name: {job_name}.')
+
+        if disable_polling:
+            return response
 
         source = self.get_source(source_id)
         stitch_client_id = source['stitch_client_id']
@@ -137,8 +142,13 @@ class StitchClient(HttpClient):
             total_streams = len(stream_names)
             completed_streams = len(succeeded_streams)
 
+
             if completed_streams == total_streams:
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
+                break
+            elif autocomplete_after_seconds and \
+                datetime.now().timestamp() - autocomplete_after_seconds >= poll_start.timestamp():
+                print(f'Automatically setting job as complete after {autocomplete_after_seconds} seconds.')
                 break
             else:
                 percent_complete = round(
