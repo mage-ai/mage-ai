@@ -65,10 +65,6 @@ class ExecutionProcessManager:
                     proc = block_run_procs[block_run_id]
                     if proc.is_alive():
                         proc.terminate()
-
-                        # Kill subprocess children
-                        if include_child_processes:
-                            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                     del block_run_procs[block_run_id]
             else:
                 for block_run_id in list(block_run_procs.keys()):
