@@ -11,6 +11,7 @@ import { useRouter } from 'next/router';
 
 import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
 import BlockType, {
+  ABBREV_BLOCK_LANGUAGE_MAPPING,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -734,9 +735,18 @@ function PipelineDetailPage({
   );
 
   const [deleteBlockFile] = useMutation(
-    ({ type, uuid }: BlockType) => (
-      api.blocks.useDelete(encodeURIComponent(`${type}/${uuid}`))()
-    ),
+    ({
+      language,
+      type,
+      uuid,
+    }: BlockType) => {
+      let path = `${type}/${uuid}`;
+      if (language && ABBREV_BLOCK_LANGUAGE_MAPPING[language]) {
+        path = `${path}.${ABBREV_BLOCK_LANGUAGE_MAPPING[language].toLowerCase()}`;
+      }
+
+      return api.blocks.useDelete(encodeURIComponent(path))();
+    },
     {
       onSuccess: (response: any) => onSuccess(
         response, {
