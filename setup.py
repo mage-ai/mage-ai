@@ -69,6 +69,7 @@ setuptools.setup(
             'requests_aws4auth',
         ],
         'all': [
+            'aws-secretsmanager-caching==1.1.1.5',
             'azure-identity',
             'azure-keyvault-secrets',
             'azure-keyvault-certificates',

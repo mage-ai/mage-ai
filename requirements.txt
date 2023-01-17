@@ -25,6 +25,7 @@ aiofiles==22.1.0
 
 
 # extras
+aws-secretsmanager-caching==1.1.1.5
 botocore==1.27.19
 boto3==1.24.19
 db-dtypes==1.0.5
