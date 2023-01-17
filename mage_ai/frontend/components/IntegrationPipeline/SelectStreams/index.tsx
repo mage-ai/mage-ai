@@ -70,6 +70,8 @@ function SelectStreams({
       )) : filteredStreams;
   }, [dropdownFilter, filterText, selectedStreams, streams]);
 
+  const allStreamsSelected = streams.every(({ stream }) => !!selectedStreams[stream]);
+
   return (
     <Panel>
       <HeaderRowStyle rounded>
@@ -137,17 +139,29 @@ function SelectStreams({
         width={`${UNIT * 45}px`}
       >
         <Table
+          borderCollapseSeparate
           columnFlex={[1, 6]}
           columns={[
             {
-              label: () => '',
+              label: () => (
+                <Checkbox
+                  checked={allStreamsSelected}
+                  onClick={() => {
+                    const allStreamsIndexed = indexBy(streams || [], ({ stream }) => stream);
+                    if (allStreamsSelected) {
+                      setSelectedStreams({});
+                    } else {
+                      setSelectedStreams(allStreamsIndexed);
+                    }
+                  }}
+                />
+              ),
               uuid: 'Selected',
             },
             {
-              uuid: 'Stream',
+              uuid: 'Stream name',
             },
           ]}
-          noHeader
           rows={filteredSearchStreams.map((stream) => {
             const {
               stream: streamID,
@@ -170,6 +184,7 @@ function SelectStreams({
               </Text>,
             ];
           })}
+          stickyHeader
         />
       </TableContainerStyle>
 

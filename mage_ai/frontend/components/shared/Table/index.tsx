@@ -21,6 +21,7 @@ export type ColumnType = {
 
 type TableProps = {
   alignTop?: boolean;
+  borderCollapseSeparate?: boolean;
   buildLinkProps?: (rowIndex: number) => {
     as: string;
     href: string;
@@ -43,6 +44,7 @@ type TableProps = {
 
 function Table({
   alignTop,
+  borderCollapseSeparate,
   buildLinkProps,
   columnBorders,
   columnFlex,
@@ -103,6 +105,7 @@ function Table({
       return (
         <NextLink
           {...linkProps}
+          key={`${uuid}-row-link-${rowIndex}`}
           passHref
         >
           <Link
@@ -136,7 +139,10 @@ function Table({
   ]);
 
   return (
-    <TableStyle columnBorders={columnBorders}>
+    <TableStyle
+      borderCollapseSeparate={borderCollapseSeparate}
+      columnBorders={columnBorders}
+    >
       {columns?.length >= 1 && !noHeader && (
         <TableRowStyle noHover>
           {columns.map((col, idx) => (
