@@ -4,13 +4,16 @@ import BlockType, { BlockTypeEnum, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/B
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Panel from '@oracle/components/Panel';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
 import { get, set } from '@storage/localStorage';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 type ConfigureBlockProps = {
   block: BlockType;
@@ -93,15 +96,21 @@ function ConfigureBlock({
 
       <Spacing mt={3}>
         <FlexContainer>
-          <Button
+          <KeyboardShortcutButton
+            bold
+            inline
+            keyboardShortcutValidation={({
+              keyMapping,
+            }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
             onClick={() => onSave({
               name: blockName || defaultName,
             })}
             primary
             tabIndex={0}
+            uuid="ConfigureBlock/SaveAndAddBlock"
           >
             Save and add block
-          </Button>
+          </KeyboardShortcutButton>
 
           <Spacing ml={1}>
             <Button

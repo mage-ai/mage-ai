@@ -83,6 +83,7 @@ export type KeyboardShortcutButtonProps = {
   paddingBottom?: number;
   paddingTop?: number;
   pill?: boolean;
+  primary?: boolean;
   primaryGradient?: boolean;
   secondary?: boolean;
   selected?: boolean;
@@ -141,6 +142,19 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   ${props => !props.secondary && `
     font-family: ${FONT_FAMILY_REGULAR};
     justify-content: space-between;
+  `}
+
+  ${props => props.primary && !props.disabled && `
+    background-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    color: ${(props.theme.monotone || dark.monotone).white};
+
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover} !important;
+      border-color: ${(props.theme.interactive || dark.interactive).linkPrimary} !important;
+    }
   `}
 
   ${props => props.center && `
@@ -279,7 +293,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     background-color: ${(props.theme.monotone || dark.monotone).black};
   `}
 
-  ${props => !props.inverted && !props.noBackground && `
+  ${props => !props.inverted && !props.noBackground && !props.primary && `
     background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
 
     &:hover {

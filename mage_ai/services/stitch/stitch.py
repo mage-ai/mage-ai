@@ -134,14 +134,22 @@ class StitchClient(HttpClient):
                 if current_count >= total_loads_count:
                     break
 
-            if len(succeeded_streams) == len(stream_names):
+            total_streams = len(stream_names)
+            completed_streams = len(succeeded_streams)
+
+            if completed_streams == total_streams:
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
                 break
             else:
+                percent_complete = round(
+                    100 * (completed_streams / total_streams),
+                    2,
+                ) if total_streams else 0
                 running_streams = [s for s in stream_names if s not in succeeded_streams]
                 print(
-                    f'Polling Stitch load status for source {source_id}. Completed streams: '
-                    f'{succeeded_streams}. Running streams: {running_streams}.'
+                    f'Polling Stitch load status for source {source_id}: {percent_complete}% ({completed_streams}/{total_streams}). '
+                    f'Completed streams: {succeeded_streams}. '
+                    f'Running streams: {running_streams}.'
                 )
             if (
                 poll_timeout
