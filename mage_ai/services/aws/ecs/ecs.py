@@ -12,7 +12,7 @@ def run_task(
 ) -> None:
     if type(ecs_config) is dict:
         ecs_config = EcsConfig.load(config=ecs_config)
-    region_name = 'us-west-1'
+    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     client = boto3.client('ecs', config=config)
     response = client.run_task(**ecs_config.get_task_config(command=command))
@@ -35,7 +35,7 @@ def stop_task(task_arn: str, cluster: str = None) -> None:
 
 
 def list_tasks(cluster):
-    region_name = 'us-west-1'
+    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     ecs_client = boto3.client('ecs', config=config)
 
