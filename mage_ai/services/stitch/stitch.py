@@ -133,19 +133,8 @@ class StitchClient(HttpClient):
                             f"Failed to load data for stream {load['stream_name']} with "
                             f"message: \"{error_message}\"."
                         )
-
-                    stream_name = load['stream_name']
-                    is_completed = False
-                    if autocomplete_after_seconds and \
-                        datetime.now().timestamp() - autocomplete_after_seconds >= poll_start.timestamp():
-                        is_completed = True
-                        print(f'Automatically set stream {stream_name} to completed after {autocomplete_after_seconds} seconds.')
-                    elif load.get('last_batch_loaded_at') and \
-                        load['last_batch_loaded_at'] >= extraction_completion_time:
-                        is_completed = True
-
-                    if is_completed:
-                        succeeded_streams.append(stream_name)
+                    elif load['last_batch_loaded_at'] >= extraction_completion_time:
+                        succeeded_streams.append(load['stream_name'])
                 page += 1
                 if current_count >= total_loads_count:
                     break
@@ -153,8 +142,13 @@ class StitchClient(HttpClient):
             total_streams = len(stream_names)
             completed_streams = len(succeeded_streams)
 
+
             if completed_streams == total_streams:
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
+                break
+            elif autocomplete_after_seconds and \
+                datetime.now().timestamp() - autocomplete_after_seconds >= poll_start.timestamp():
+                print(f'Automatically setting job as complete after {autocomplete_after_seconds} seconds.')
                 break
             else:
                 percent_complete = round(
