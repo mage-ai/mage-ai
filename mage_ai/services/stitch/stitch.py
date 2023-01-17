@@ -56,12 +56,17 @@ class StitchClient(HttpClient):
         source_id: int,
         poll_interval: float = DEFAULT_POLL_INTERVAL,
         poll_timeout: Optional[float] = DEFAULT_POLL_TIMEOUT,
+        autocomplete_after_seconds: int = None,
+        disable_polling: bool = False,
     ):
         response = self.make_request(f'/sources/{source_id}/sync', method='POST', payload=dict())
         if 'error' in response:
             raise Exception(response['error']['message'])
         job_name = response['job_name']
         print(f'Start replication job for source {source_id}. Job name: {job_name}.')
+
+        if disable_polling:
+            return response
 
         source = self.get_source(source_id)
         stitch_client_id = source['stitch_client_id']
@@ -128,8 +133,19 @@ class StitchClient(HttpClient):
                             f"Failed to load data for stream {load['stream_name']} with "
                             f"message: \"{error_message}\"."
                         )
-                    elif load['last_batch_loaded_at'] >= extraction_completion_time:
-                        succeeded_streams.append(load['stream_name'])
+
+                    stream_name = load['stream_name']
+                    is_completed = False
+                    if autocomplete_after_seconds and \
+                        datetime.now().timestamp() - autocomplete_after_seconds >= poll_start.timestamp():
+                        is_completed = True
+                        print(f'Automatically set stream {stream_name} to completed after {autocomplete_after_seconds} seconds.')
+                    elif load.get('last_batch_loaded_at') and \
+                        load['last_batch_loaded_at'] >= extraction_completion_time:
+                        is_completed = True
+
+                    if is_completed:
+                        succeeded_streams.append(stream_name)
                 page += 1
                 if current_count >= total_loads_count:
                     break
