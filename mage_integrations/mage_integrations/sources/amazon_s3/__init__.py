@@ -18,6 +18,7 @@ from typing import Dict, Generator, List
 import boto3
 import io
 import pandas as pd
+import re
 
 VALID_FILE_TYPES = [
     FILE_TYPE_CSV,
@@ -41,6 +42,10 @@ class AmazonS3(Source):
     @property
     def region(self) -> str:
         return self.config.get('aws_region', 'us-west-2')
+
+    @property
+    def search_pattern(self) -> str:
+        return self.config.get('search_pattern')
 
     @property
     def single_stream_in_prefix(self) -> bool:
@@ -145,11 +150,17 @@ class AmazonS3(Source):
 
         paginator = client.get_paginator('list_objects_v2')
         pages = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
+        if self.search_pattern is None:
+            matcher = None
+        else:
+            matcher = re.compile(self.search_pattern)
 
         for page in pages:
             df_rows = pd.DataFrame()
             for d in page.get('Contents', []):
                 if int(d.get('Size', 0)) == 0:
+                    continue
+                if matcher is not None and not matcher.search(d['Key']):
                     continue
 
                 df = self.__build_df(d['Key'])
