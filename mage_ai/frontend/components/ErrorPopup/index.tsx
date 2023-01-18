@@ -37,6 +37,7 @@ function ErrorPopup({
   response,
 }: ErrorPopupProps) {
   const [stackTraceVisible, setStackTraceVisible] = useState(false);
+  const [tracebackVisible, setTracebackVisible] = useState(false);
   const { messages } = errorsProp || {};
 
   const {
@@ -59,65 +60,63 @@ function ErrorPopup({
         </Button>
       </CloseButtonContainerStyle>
 
-      <Spacing mt={1}>
-        <Text bold large>
-          Error
-        </Text>
+      <Text bold large>
+        Error
+      </Text>
 
-        {displayMessage && (
-          <Spacing mt={1}>
-            <Text default>
-              {displayMessage}
-            </Text>
-          </Spacing>
-        )}
-
-        {exception && (
-          <Spacing mt={1}>
-            <Text
-              default
-              disableWordBreak
-              monospace
-            >
-              {exception}
-            </Text>
-          </Spacing>
-        )}
-
-        {/* {messages?.length && (
-          <Spacing mt={1}>
-            {messages.map(msg => (
-              <Text
-                // @ts-ignore
-                dangerouslySetInnerHTML={{
-                  __html: msg.replaceAll(' ', '&nbsp;'),
-                }}
-                default
-                disableWordBreak
-                key={msg}
-                monospace
-              />
-            ))}
-          </Spacing>
-        )} */}
-      </Spacing>
-
-      {links?.map(({ label, onClick }, idx) => (
-        <Spacing key={label} mt={2}>
-          <Link
-            large
-            onClick={onClick}
-            underline
-            warning
-          >
-            {label}
-          </Link>
+      {displayMessage && (
+        <Spacing mt={1}>
+          <Text default>
+            {displayMessage}
+          </Text>
         </Spacing>
-      ))}
+      )}
 
+      {exception && (
+        <Spacing mt={1}>
+          <Text
+            default
+            disableWordBreak
+            monospace
+          >
+            {exception}
+          </Text>
+        </Spacing>
+      )}
+
+      {messages?.length > 0 && (
+        <Spacing mt={2}>
+          <Text bold large>
+            Traceback (<Link
+              onClick={() => setTracebackVisible(prev => !prev)}
+              preventDefault
+              warning
+            >
+              {tracebackVisible ? 'hide' : 'show'} traceback
+            </Link>)
+          </Text>
+
+          {tracebackVisible &&
+            <Spacing mt={1}>
+              {messages.map(msg => (
+                <Text
+                  // @ts-ignore
+                  dangerouslySetInnerHTML={{
+                    __html: msg.replaceAll(' ', '&nbsp;'),
+                  }}
+                  default
+                  disableWordBreak
+                  key={msg}
+                  monospace
+                />
+              ))}
+            </Spacing>
+          }
+        </Spacing>
+      )}
 
       {errors && (
-        <Spacing mt={3}>
+        <Spacing mt={2}>
           <Text bold large>
             Stack trace (<Link
               onClick={() => setStackTraceVisible(prev => !prev)}
@@ -146,6 +145,19 @@ function ErrorPopup({
           )}
         </Spacing>
       )}
+
+      {links?.map(({ label, onClick }, idx) => (
+        <Spacing key={label} mt={2}>
+          <Link
+            large
+            onClick={onClick}
+            underline
+            warning
+          >
+            {label}
+          </Link>
+        </Spacing>
+      ))}
     </ErrorPopupStyle>
   );
 }
