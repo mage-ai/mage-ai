@@ -10,7 +10,7 @@ export const ErrorPopupStyle = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   max-height: 95vh;
-  max-width: 100vw;
+  max-width: 95vw;
   overflow: auto;
   padding: ${UNIT * PADDING_UNITS}px;
   position: fixed;
