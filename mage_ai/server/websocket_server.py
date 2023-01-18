@@ -32,6 +32,7 @@ from mage_ai.server.utils.output_display import (
     get_pipeline_execution_code,
 )
 from mage_ai.shared.hash import merge_dict
+from mage_ai.utils.code import reload_all_repo_modules
 from jupyter_client import KernelClient
 from typing import Dict
 import asyncio
@@ -269,6 +270,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         widget = BlockType.CHART == block_type
 
         block = pipeline.get_block(block_uuid, widget=widget)
+
+        reload_all_repo_modules(custom_code)
+
         code = custom_code
 
         client = self.init_kernel_client(kernel_name)

@@ -36,6 +36,7 @@ import {
   getBlockUUID,
 } from './utils';
 import { find } from '@utils/array';
+import { getBlockFromFile } from '../FileBrowser/utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
@@ -181,10 +182,17 @@ function FileEditor({
     },
   );
 
-  const addToPipelineEl = (fileExtension === FileExtensionEnum.PY || fileExtension === FileExtensionEnum.SQL
-    || ((fileExtension === FileExtensionEnum.YAML || fileExtension === FileExtensionEnum.R)
-      && getNonPythonBlockFromFile(file, file?.path))
-    ) && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD && (
+  const addToPipelineEl = (
+    fileExtension === FileExtensionEnum.PY
+    || fileExtension === FileExtensionEnum.SQL
+    || (
+      (fileExtension === FileExtensionEnum.YAML || fileExtension === FileExtensionEnum.R)
+        && getNonPythonBlockFromFile(file, file?.path)
+      )
+    )
+    && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD
+    && getBlockFromFile(file)
+    && (
     <Spacing p={2}>
       <Button
         borderLess

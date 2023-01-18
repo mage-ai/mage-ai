@@ -47,9 +47,17 @@ export function getBlockFromFile(
 ) {
   // parts example:
   // ['default_repo', 'data_loaders', 'team', 'foo.py']
-  const parts = getFullPath(file, currentPathInit).split('/');
-  // This assumes path default_repo/[block_type]s/..
-  const blockType = singularize(parts[1] || '');
+  let parts = getFullPath(file, currentPathInit).split('/');
+
+  let blockType;
+  // This happens when you open a file from the file browser and edit it on the notebook UI
+  if (parts.length === 1) {
+    parts = file.path.split('/');
+    blockType = singularize(parts[0] || '');
+  } else {
+    // This assumes path default_repo/[block_type]s/..
+    blockType = singularize(parts[1] || '');
+  }
 
   let fileName = '';
   if (parts.length >= 3) {
