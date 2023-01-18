@@ -70,18 +70,8 @@ class AmazonS3(Source):
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:
-        client = self.build_client()
-        resp = client.list_objects_v2(
-            Bucket=self.bucket,
-            MaxKeys=1000,
-            Prefix=self.prefix,
-        )
-
         streams = []
-        for d in resp.get('Contents', []):
-            if int(d.get('Size', 0)) == 0:
-                continue
-
+        for d in self.list_objects():
             key = d['Key']
             parts = key.split('/')
             stream_id = '_'.join(parts[:-1])
@@ -141,11 +131,7 @@ class AmazonS3(Source):
 
         return Catalog(streams)
 
-    def load_data(
-        self,
-        *args,
-        **kwargs,
-    ) -> Generator[List[Dict], None, None]:
+    def list_objects(self):
         client = self.build_client()
 
         paginator = client.get_paginator('list_objects_v2')
@@ -156,17 +142,21 @@ class AmazonS3(Source):
             matcher = re.compile(self.search_pattern)
 
         for page in pages:
-            df_rows = pd.DataFrame()
             for d in page.get('Contents', []):
                 if int(d.get('Size', 0)) == 0:
                     continue
                 if matcher is not None and not matcher.search(d['Key']):
                     continue
+                yield d
 
-                df = self.__build_df(d['Key'])
-                df_rows = pd.concat([df_rows, df])
-
-            yield df_rows.to_dict('records')
+    def load_data(
+        self,
+        *args,
+        **kwargs,
+    ) -> Generator[List[Dict], None, None]:
+        for d in self.list_objects():
+            df = self.__build_df(d['Key'])
+            yield df.to_dict('records')
 
     def test_connection(self) -> None:
         client = self.build_client()
