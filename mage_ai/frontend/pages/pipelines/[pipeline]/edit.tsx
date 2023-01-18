@@ -64,7 +64,6 @@ import {
 } from '@components/Sidekick/constants';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { addUnderscores, randomNameGenerator } from '@utils/string';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
@@ -78,6 +77,7 @@ import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { randomNameGenerator } from '@utils/string';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
 
@@ -136,7 +136,6 @@ function PipelineDetailPage({
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
   const {
     data,
-    isLoading,
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
     include_outputs: isEmptyObject(messages),
@@ -820,8 +819,6 @@ function PipelineDetailPage({
       type: blockType,
     } = block;
 
-    const isIntegrationPipeline = PipelineTypeEnum.INTEGRATION === pipeline?.type;
-
     if (isIntegration) {
       const blocksByType = indexBy(pipeline?.blocks || [], ({ type }) => type);
       const dataExporterBlock = blocksByType[BlockTypeEnum.DATA_EXPORTER];
@@ -898,6 +895,7 @@ function PipelineDetailPage({
   }, [
     contentByBlockUUID.current,
     createBlock,
+    isIntegration,
     setBlocks,
     setErrors,
     pipeline,
@@ -908,12 +906,17 @@ function PipelineDetailPage({
     setAutomaticallyNameBlocks(!!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS));
   }, []);
 
-  const [showModal, hideModal] = useModal((
+  const [showModal, hideModal] = useModal(({
+    block,
+    idx,
+    name = randomNameGenerator(),
+    onCreateCallback,
+  }:{
     block: BlockRequestPayloadType,
     idx: number,
+    name: string,
     onCreateCallback?: (block: BlockType) => void,
-    name: string = randomNameGenerator(),
-  ) => (
+  }) => (
     <ConfigureBlock
       block={block}
       defaultName={name}
@@ -1401,7 +1404,7 @@ function PipelineDetailPage({
               addNewBlockAtIndex(block, idx, onCreateCallback, name);
             } else {
               // @ts-ignore
-              showModal(block, idx, onCreateCallback, name);
+              showModal({ block, idx, name, onCreateCallback });
             }
           })
       }
