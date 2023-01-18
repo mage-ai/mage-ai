@@ -198,6 +198,7 @@
         {
           "group": "Configuration",
           "pages": [
+            "production/configuring-production-settings/secrets",
             "production/configuring-production-settings/compute-resource",
             "production/databases/default"
           ]
