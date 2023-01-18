@@ -1398,7 +1398,7 @@ function PipelineDetailPage({
         ? addNewBlockAtIndex
         : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
             if (BlockTypeEnum.DBT === block?.type) {
-              addNewBlockAtIndex(block, idx, onCreateCallback, name)
+              addNewBlockAtIndex(block, idx, onCreateCallback, name);
             } else {
               // @ts-ignore
               showModal(block, idx, onCreateCallback, name);
