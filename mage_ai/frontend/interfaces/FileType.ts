@@ -21,6 +21,7 @@ export const CODE_BLOCK_FILE_EXTENSIONS = [
 ];
 
 const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
+  FileExtensionEnum.PY,
   FileExtensionEnum.R,
   FileExtensionEnum.SQL,
   FileExtensionEnum.TXT,
