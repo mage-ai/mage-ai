@@ -328,7 +328,7 @@ class Block:
                 upstream_block_uuids += [b.uuid for b in arr]
                 priority_final = priority if len(upstream_block_uuids) == 0 else None
             else:
-                priority_final = priority if len(upstream_block_uuids) > 0 else None
+                priority_final = priority
 
             pipeline.add_block(
                 block,
