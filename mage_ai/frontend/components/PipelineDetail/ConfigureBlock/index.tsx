@@ -58,7 +58,7 @@ function ConfigureBlock({
     }
 
     return BLOCK_TYPE_NAME_MAPPING[blockType];
-  }, [block, isIntegrationPipeline])
+  }, [block, isIntegrationPipeline]);
 
   return (
     <Panel>

@@ -471,6 +471,7 @@ function PipelineDetail({
       setSelectedStream={setSelectedStream}
     />
   ), [
+    addNewBlockAtIndex,
     blocks,
     codeBlocks,
     fetchPipeline,
