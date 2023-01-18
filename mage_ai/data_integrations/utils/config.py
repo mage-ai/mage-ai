@@ -129,7 +129,7 @@ def interpolate_string(text: str, variables: Dict) -> str:
         env_var=os.getenv,
         variables=lambda x: variables.get(x),
         n_days_ago=n_days_ago,
-        secret_var=get_secret,
+        aws_secret_var=get_secret,
     )
 
 
