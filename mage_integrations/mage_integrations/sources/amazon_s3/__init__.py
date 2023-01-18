@@ -23,6 +23,8 @@ import re
 
 COLUMN_LAST_MODIFIED = '_s3_last_modified'
 
+REQUIRED_TABLE_CONFIG_KEYS = ['prefix', 'search_pattern', 'table_name']
+
 VALID_FILE_TYPES = [
     FILE_TYPE_CSV,
     FILE_TYPE_PARQUET,
@@ -56,6 +58,15 @@ class AmazonS3(Source):
 
         return False if val is None else val
 
+    @property
+    def table_configs(self):
+        """
+        Used for multiple streams. Each table config has the keys: prefix, search_pattern, table_name
+        """
+        configs = self.config.get('table_configs', [])
+        configs = [c for c in configs if all(k in c for k in REQUIRED_TABLE_CONFIG_KEYS)]
+        return configs
+
     def build_client(self):
         config = Config(
            retries={
@@ -74,10 +85,33 @@ class AmazonS3(Source):
 
     def discover(self, streams: List[str] = None) -> Catalog:
         streams = []
-        for d in self.list_objects():
+        if self.table_configs:
+            for c in self.table_configs:
+                catalog_entry = self.discover_stream(
+                    c['prefix'],
+                    c['search_pattern'],
+                    table_name=c['table_name'],
+                )
+                if catalog_entry is not None:
+                    streams.append(catalog_entry)
+        else:
+            catalog_entry = self.discover_stream(
+                self.prefix,
+                self.search_pattern,
+            )
+            if catalog_entry is not None:
+                streams.append(catalog_entry)
+        return Catalog(streams)
+
+    def discover_stream(self, prefix: str, search_pattern: str, table_name: str = None):
+        catalog_entry = None
+        for d in self.list_objects(prefix, search_pattern):
             key = d['Key']
-            parts = key.split('/')
-            stream_id = '_'.join(parts[:-1])
+            if table_name is None:
+                parts = key.split('/')
+                stream_id = '_'.join(parts[:-1])
+            else:
+                stream_id = table_name
 
             df = self.__build_df(key)
 
@@ -135,20 +169,17 @@ class AmazonS3(Source):
                 tap_stream_id=stream_id,
                 unique_conflict_method=UNIQUE_CONFLICT_METHOD_UPDATE,
             )
+        return catalog_entry
 
-            streams.append(catalog_entry)
-
-        return Catalog(streams)
-
-    def list_objects(self):
+    def list_objects(self, prefix, search_pattern):
         client = self.build_client()
 
         paginator = client.get_paginator('list_objects_v2')
-        pages = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
-        if self.search_pattern is None:
+        pages = paginator.paginate(Bucket=self.bucket, Prefix=prefix)
+        if search_pattern is None:
             matcher = None
         else:
-            matcher = re.compile(self.search_pattern)
+            matcher = re.compile(search_pattern)
 
         for page in pages:
             for d in page.get('Contents', []):
@@ -160,15 +191,29 @@ class AmazonS3(Source):
 
     def load_data(
         self,
+        stream,
         bookmarks: Dict = None,
         *args,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        table_name = stream.tap_stream_id
+        table_config = None
+        if self.table_configs:
+            table_configs = [t for t in self.table_configs if t['table_name'] == table_name]
+            table_config = table_configs[0] if len(table_configs) > 0 else None
+
+        if table_config:
+            prefix = table_config['prefix']
+            search_pattern = table_config['search_pattern']
+        else:
+            prefix = self.prefix
+            search_pattern = self.search_pattern
+
         bookmark_last_modified = None
         if bookmarks is not None and bookmarks.get(COLUMN_LAST_MODIFIED) is not None:
             bookmark_last_modified = bookmarks.get(COLUMN_LAST_MODIFIED)
 
-        for d in self.list_objects():
+        for d in self.list_objects(prefix, search_pattern):
             last_modified = d['LastModified'].strftime('%Y-%m-%d %H:%M:%S.%f')
             if bookmark_last_modified is not None and \
                last_modified <= bookmark_last_modified:
