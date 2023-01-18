@@ -169,6 +169,7 @@ class AmazonS3(Source):
                 tap_stream_id=stream_id,
                 unique_conflict_method=UNIQUE_CONFLICT_METHOD_UPDATE,
             )
+            break
         return catalog_entry
 
     def list_objects(self, prefix, search_pattern):
