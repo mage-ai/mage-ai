@@ -436,15 +436,19 @@ class ApiStatusHandler(BaseHandler):
             GCP_PROJECT_ID,
             KUBE_NAMESPACE,
         )
-        from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
 
         instance_type = None
         if os.getenv(ECS_CLUSTER_NAME):
             instance_type = ClusterType.ECS
-        elif WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
-            instance_type = ClusterType.K8S
         elif os.getenv(GCP_PROJECT_ID):
             instance_type = ClusterType.CLOUD_RUN
+        else:
+            try:
+                from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+                if WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
+                    instance_type = ClusterType.K8S
+            except ModuleNotFoundError:
+                pass
 
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',

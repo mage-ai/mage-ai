@@ -1,6 +1,5 @@
 from jinja2 import Template
 from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
-from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
@@ -125,12 +124,19 @@ def interpolate_variables_for_block_settings(
 
 
 def interpolate_string(text: str, variables: Dict) -> str:
-    return Template(text).render(
+    kwargs = dict(
         env_var=os.getenv,
         variables=lambda x: variables.get(x),
         n_days_ago=n_days_ago,
-        aws_secret_var=get_secret,
     )
+
+    try:
+        from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
+        kwargs['aws_secret_var'] = get_secret
+    except ModuleNotFoundError:
+        pass
+
+    return Template(text).render(**kwargs)
 
 
 def interpolate_variables(
