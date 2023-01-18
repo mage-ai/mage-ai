@@ -3,6 +3,7 @@ from collections import Counter
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.constants import (
     COLUMN_TYPE_ARRAY,
+    COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
     FILE_TYPE_CSV,
@@ -19,6 +20,8 @@ import boto3
 import io
 import pandas as pd
 import re
+
+COLUMN_LAST_MODIFIED = '_s3_last_modified'
 
 VALID_FILE_TYPES = [
     FILE_TYPE_CSV,
@@ -105,6 +108,11 @@ class AmazonS3(Source):
                             col_type,
                         ],
                     )
+            properties[COLUMN_LAST_MODIFIED] = dict(
+                properties=None,
+                format=COLUMN_FORMAT_DATETIME,
+                type=[COLUMN_TYPE_STRING],
+            )
 
             schema = Schema.from_dict(dict(
                 properties=properties,
@@ -116,6 +124,7 @@ class AmazonS3(Source):
                 replication_method=REPLICATION_METHOD_FULL_TABLE,
                 schema=schema.to_dict(),
                 stream_id=stream_id,
+                valid_replication_keys=[COLUMN_LAST_MODIFIED],
             )
             catalog_entry = CatalogEntry(
                 key_properties=[],
@@ -151,11 +160,21 @@ class AmazonS3(Source):
 
     def load_data(
         self,
+        bookmarks: Dict = None,
         *args,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        bookmark_last_modified = None
+        if bookmarks is not None and bookmarks.get(COLUMN_LAST_MODIFIED) is not None:
+            bookmark_last_modified = bookmarks.get(COLUMN_LAST_MODIFIED)
+
         for d in self.list_objects():
+            last_modified = d['LastModified'].strftime('%Y-%m-%d %H:%M:%S.%f')
+            if bookmark_last_modified is not None and \
+               last_modified <= bookmark_last_modified:
+                continue
             df = self.__build_df(d['Key'])
+            df[COLUMN_LAST_MODIFIED] = last_modified
             yield df.to_dict('records')
 
     def test_connection(self) -> None:
