@@ -84,7 +84,7 @@ function ErrorPopup({
         </Spacing>
       )}
 
-      {messages?.length && (
+      {messages?.length > 0 && (
         <Spacing mt={2}>
           <Text bold large>
             Traceback (<Link
