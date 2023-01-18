@@ -143,22 +143,19 @@ class AmazonS3(Source):
     ) -> Generator[List[Dict], None, None]:
         client = self.build_client()
 
-        resp = client.list_objects_v2(
-            Bucket=self.bucket,
-            MaxKeys=1000,
-            Prefix=self.prefix,
-        )
+        paginator = client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
 
-        df_rows = pd.DataFrame()
+        for page in pages:
+            df_rows = pd.DataFrame()
+            for d in page.get('Contents', []):
+                if int(d.get('Size', 0)) == 0:
+                    continue
 
-        for d in resp.get('Contents', []):
-            if int(d.get('Size', 0)) == 0:
-                continue
+                df = self.__build_df(d['Key'])
+                df_rows = pd.concat([df_rows, df])
 
-            df = self.__build_df(d['Key'])
-            df_rows = pd.concat([df_rows, df])
-
-        yield df_rows.to_dict('records')
+            yield df_rows.to_dict('records')
 
     def test_connection(self) -> None:
         client = self.build_client()
