@@ -124,11 +124,19 @@ def interpolate_variables_for_block_settings(
 
 
 def interpolate_string(text: str, variables: Dict) -> str:
-    return Template(text).render(
+    kwargs = dict(
         env_var=os.getenv,
         variables=lambda x: variables.get(x),
         n_days_ago=n_days_ago,
     )
+
+    try:
+        from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
+        kwargs['aws_secret_var'] = get_secret
+    except ModuleNotFoundError:
+        pass
+
+    return Template(text).render(**kwargs)
 
 
 def interpolate_variables(
