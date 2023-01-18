@@ -3,6 +3,7 @@
   "aws_region": "us-west-2",
   "aws_secret_access_key": null,
   "bucket": null,
+  "file_type": "infer",
   "prefix": null,
   "single_stream_in_prefix": false
 }

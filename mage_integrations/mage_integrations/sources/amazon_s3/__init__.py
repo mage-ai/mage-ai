@@ -5,6 +5,8 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
+    FILE_TYPE_CSV,
+    FILE_TYPE_PARQUET,
     REPLICATION_METHOD_FULL_TABLE,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
@@ -17,11 +19,20 @@ import boto3
 import io
 import pandas as pd
 
+VALID_FILE_TYPES = [
+    FILE_TYPE_CSV,
+    FILE_TYPE_PARQUET,
+]
+
 
 class AmazonS3(Source):
     @property
     def bucket(self) -> str:
         return self.config['bucket']
+
+    @property
+    def file_type(self) -> str:
+        return self.config.get('file_type')
 
     @property
     def prefix(self) -> str:
@@ -157,11 +168,19 @@ class AmazonS3(Source):
         client = self.build_client()
         df = pd.DataFrame()
 
-        if '.parquet' in key:
+        file_type = None
+        if self.file_type in VALID_FILE_TYPES:
+            file_type = self.file_type
+        elif '.parquet' in key:
+            file_type = FILE_TYPE_PARQUET
+        elif '.csv' in key:
+            file_type = FILE_TYPE_CSV
+
+        if file_type == FILE_TYPE_PARQUET:
             data_buffer = io.BytesIO()
             client.download_fileobj(self.bucket, key, data_buffer)
             df = pd.read_parquet(data_buffer)
-        elif '.csv' in key:
+        elif file_type == FILE_TYPE_CSV:
             obj = client.get_object(Bucket=self.bucket, Key=key)
             df = pd.read_csv(io.BytesIO(obj['Body'].read()))
 
