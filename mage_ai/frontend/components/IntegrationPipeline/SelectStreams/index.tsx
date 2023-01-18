@@ -38,6 +38,8 @@ enum FilterSelectionEnum {
   NOT_SELECTED = 'Not selected',
 }
 
+const TABLE_WIDTH = UNIT * 45;
+
 function SelectStreams({
   catalog,
   isLoading,
@@ -51,8 +53,8 @@ function SelectStreams({
   const [dropdownFilter, setDropdownFilter] = useState<FilterSelectionEnum>(FilterSelectionEnum.ALL);
   const filterButtonRef = useRef(null);
 
+  const selectedStreamIds: string[] = getSelectedStreamIds(selectedStreams);
   const filteredSearchStreams = useMemo(() => {
-    const selectedStreamIds: string[] = getSelectedStreamIds(selectedStreams);
     let filteredStreams: StreamType[] = streams;
     filteredStreams = filteredStreams.filter(({ tap_stream_id }) => {
       if (dropdownFilter === FilterSelectionEnum.SELECTED) {
@@ -68,7 +70,12 @@ function SelectStreams({
       ? filteredStreams.filter(({ tap_stream_id: stream }) => (
         stream?.toLowerCase().includes(filterText?.toLowerCase())
       )) : filteredStreams;
-  }, [dropdownFilter, filterText, selectedStreams, streams]);
+  }, [dropdownFilter, filterText, selectedStreamIds, streams]);
+
+  const allStreamsSelected = useMemo(() =>
+    streams.every(({ stream }) => !!selectedStreams[stream]),
+    [selectedStreams, streams],
+  );
 
   return (
     <Panel>
@@ -134,20 +141,32 @@ function SelectStreams({
       <TableContainerStyle
         height="55vh"
         hideHorizontalScrollbar
-        width={`${UNIT * 45}px`}
+        width={`${TABLE_WIDTH}px`}
       >
         <Table
+          borderCollapseSeparate
           columnFlex={[1, 6]}
           columns={[
             {
-              label: () => '',
+              label: () => (
+                <Checkbox
+                  checked={allStreamsSelected}
+                  onClick={() => {
+                    const allStreamsIndexed = indexBy(streams || [], ({ stream }) => stream);
+                    if (allStreamsSelected) {
+                      setSelectedStreams({});
+                    } else {
+                      setSelectedStreams(allStreamsIndexed);
+                    }
+                  }}
+                />
+              ),
               uuid: 'Selected',
             },
             {
-              uuid: 'Stream',
+              uuid: 'Stream name',
             },
           ]}
-          noHeader
           rows={filteredSearchStreams.map((stream) => {
             const {
               stream: streamID,
@@ -170,11 +189,26 @@ function SelectStreams({
               </Text>,
             ];
           })}
+          stickyHeader
         />
       </TableContainerStyle>
 
       <Divider medium />
       <Spacing p={2}>
+        {selectedStreamIds?.length > 50 &&
+          <Spacing pb={2}>
+            <Text
+              danger
+              maxWidth={TABLE_WIDTH - UNIT * 4}
+              rightAligned
+              whiteSpaceNormal
+            >
+              WARNING: Selecting too many streams (e.g. &gt;50)
+              <br />
+              may cause app performance issues.
+            </Text>
+          </Spacing>
+        }
         <FlexContainer justifyContent="flex-end">
           <Button
             loading={isLoading}

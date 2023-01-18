@@ -4,12 +4,13 @@ import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const TableStyle = styled.table<{
+  borderCollapseSeparate?: boolean;
   columnBorders?: boolean;
 }>`
   contain: size;
   width: 100%;
 
-  ${props => props.columnBorders && `
+  ${props => (props.columnBorders || props.borderCollapseSeparate) && `
     border-collapse: separate;
   `}
 `;
@@ -80,6 +81,7 @@ export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
 
   ${props => props.sticky && `
     background-color: ${(props.theme || dark).background.panel};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
     z-index: 1;
     position: sticky;
     top: 0;
