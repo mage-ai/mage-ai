@@ -9,6 +9,7 @@ from mage_integrations.sources.constants import (
 from mage_integrations.sources.messages import write_state
 from mage_integrations.sources.postgresql.decoders import (
     Insert,
+    Update,
     decode_message
 )
 from mage_integrations.sources.sql.base import Source
@@ -156,7 +157,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                     if msg.data_start < start_lsn:
                         LOGGER.info(f"Msg lsn {msg.data_start} smaller than start lsn {start_lsn}")
                         continue
-                    if type(decoded_payload) is Insert:
+                    if type(decoded_payload) in [Insert, Update]:
                         values = [c.col_data for c in decoded_payload.new_tuple.column_data]
                         payload = dict(zip(columns, values))
                         payload['lsn'] = msg.data_start
