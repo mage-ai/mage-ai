@@ -1,4 +1,5 @@
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType from '@interfaces/BlockType';
+import { SideEnum } from './constants';
 import { roundNumber } from '@utils/string';
 
 export const getFinalLevelIndex = (
@@ -34,4 +35,19 @@ export const getRuntimeText = (runtime: number) => {
     runtimeUnit = 'm';
   }
   return `${runtimeValue}${runtimeUnit}`;
-}
+};
+
+export const isActivePort = (
+  activePort: { id: string, side: SideEnum },
+  node: { id: string },
+): boolean => {
+  const { id: portId, side: portSide } = activePort || {};
+  const nodeId = node?.id;
+  if (portSide === SideEnum.NORTH) {
+    return portId?.endsWith(`${nodeId}-to`);
+  } else if (portSide === SideEnum.SOUTH) {
+    return portId?.startsWith(nodeId);
+  }
+
+  return false;
+};
