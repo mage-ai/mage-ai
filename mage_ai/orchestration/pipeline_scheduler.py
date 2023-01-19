@@ -118,23 +118,28 @@ class PipelineScheduler:
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
                 )
-                # self.notification_sender.send_pipeline_run_success_message(
-                #     pipeline=self.pipeline,
-                #     pipeline_run=self.pipeline_run,
-                # )
+                self.notification_sender.send_pipeline_run_success_message(
+                    pipeline=self.pipeline,
+                    pipeline_run=self.pipeline_run,
+                )
                 self.logger_manager.output_logs_to_destination()
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
             else:
                 self.__schedule_blocks(block_runs)
 
-    @retry(retries=3, delay=5)
     def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        block_run.update(
-            status=BlockRun.BlockRunStatus.COMPLETED,
-            completed_at=datetime.now(),
-        )
+
+        @retry(retries=3, delay=5)
+        def update_status():
+            block_run.update(
+                status=BlockRun.BlockRunStatus.COMPLETED,
+                completed_at=datetime.now(),
+            )
+
+        update_status()
+
         self.logger.info(
             f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
             **self.__build_tags(
@@ -151,17 +156,22 @@ class PipelineScheduler:
                 b.refresh()
             self.schedule()
 
-    @retry(retries=3, delay=5)
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
         block = self.pipeline.get_block(block_uuid)
         if block and is_dynamic_block(block):
             create_block_runs_from_dynamic_block(block, self.pipeline_run, block_uuid=block_uuid)
 
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        block_run.update(
-            status=BlockRun.BlockRunStatus.COMPLETED,
-            completed_at=datetime.now(),
-        )
+
+        @retry(retries=3, delay=5)
+        def update_status():
+            block_run.update(
+                status=BlockRun.BlockRunStatus.COMPLETED,
+                completed_at=datetime.now(),
+            )
+
+        update_status()
+
         self.logger.info(
             f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
             **self.__build_tags(
@@ -170,18 +180,22 @@ class PipelineScheduler:
             ),
         )
 
-    @retry(retries=3, delay=5)
     def on_block_failure(self, block_uuid: str, **kwargs) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         metrics = block_run.metrics or {}
 
+        @retry(retries=3, delay=5)
+        def update_status():
+            block_run.update(
+                metrics=metrics,
+                status=BlockRun.BlockRunStatus.FAILED,
+            )
+            self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+
+        update_status()
+
         if 'error' in kwargs:
             metrics['error'] = kwargs['error']
-
-        block_run.update(
-            metrics=metrics,
-            status=BlockRun.BlockRunStatus.FAILED,
-        )
 
         tags = self.__build_tags(
             block_run_id=block_run.id,
@@ -197,8 +211,6 @@ class PipelineScheduler:
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
         )
-
-        self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
         if PipelineType.INTEGRATION == self.pipeline.type:
             # If a block/stream fails, stop all other streams

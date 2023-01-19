@@ -1,4 +1,4 @@
-from mage_ai.orchestration.notification.config import NotificationConfig
+from mage_ai.orchestration.notification.config import AlertOn, NotificationConfig
 from mage_ai.services.email.email import send_email
 from mage_ai.services.slack.slack import send_slack_message
 from mage_ai.services.teams.teams import send_teams_message
@@ -31,55 +31,58 @@ class NotificationSender:
             )
 
     def send_pipeline_run_success_message(self, pipeline, pipeline_run) -> None:
-        message = (
-            f'Successfully ran Pipeline `{pipeline.uuid}` '
-            f'with Trigger {pipeline_run.pipeline_schedule.id} '
-            f'`{pipeline_run.pipeline_schedule.name}` '
-            f'at execution time `{pipeline_run.execution_date}`.'
-        )
-        email_content = f'{message}\n'
-        if os.getenv('ENV') != 'production':
-            email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                                'to check pipeline run results and logs.'
-        self.send(
-            message=message,
-            email_subject=f'Successfully ran Pipeline {pipeline.uuid}',
-            email_content=email_content,
-        )
+        if AlertOn.PIPELINE_RUN_SUCCESS in self.config.alert_on:
+            message = (
+                f'Successfully ran Pipeline `{pipeline.uuid}` '
+                f'with Trigger {pipeline_run.pipeline_schedule.id} '
+                f'`{pipeline_run.pipeline_schedule.name}` '
+                f'at execution time `{pipeline_run.execution_date}`.'
+            )
+            email_content = f'{message}\n'
+            if os.getenv('ENV') != 'production':
+                email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
+                                    'to check pipeline run results and logs.'
+            self.send(
+                message=message,
+                email_subject=f'Successfully ran Pipeline {pipeline.uuid}',
+                email_content=email_content,
+            )
 
     def send_pipeline_run_failure_message(self, pipeline, pipeline_run, message: str = None) -> None:
-        message = message or (
-            f'Failed to run Pipeline `{pipeline.uuid}` '
-            f'with Trigger {pipeline_run.pipeline_schedule.id} '
-            f'`{pipeline_run.pipeline_schedule.name}` '
-            f'at execution time `{pipeline_run.execution_date}`.'
-        )
-        email_content = f'{message}\n'
-        if os.getenv('ENV') != 'production':
-            email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                                'to check pipeline run results and logs.'
-        self.send(
-            message=message,
-            email_subject=f'Failed to run Mage pipeline {pipeline.uuid}',
-            email_content=email_content,
-        )
+        if AlertOn.PIPELINE_RUN_FAILURE in self.config.alert_on:
+            message = message or (
+                f'Failed to run Pipeline `{pipeline.uuid}` '
+                f'with Trigger {pipeline_run.pipeline_schedule.id} '
+                f'`{pipeline_run.pipeline_schedule.name}` '
+                f'at execution time `{pipeline_run.execution_date}`.'
+            )
+            email_content = f'{message}\n'
+            if os.getenv('ENV') != 'production':
+                email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
+                                    'to check pipeline run results and logs.'
+            self.send(
+                message=message,
+                email_subject=f'Failed to run Mage pipeline {pipeline.uuid}',
+                email_content=email_content,
+            )
 
     def send_pipeline_run_sla_passed_message(self, pipeline, pipeline_run) -> None:
-        message = (
-            f'SLA passed for pipeline `{pipeline.uuid}` '
-            f'with Trigger {pipeline_run.pipeline_schedule.id} '
-            f'`{pipeline_run.pipeline_schedule.name}` '
-            f'at execution time `{pipeline_run.execution_date}`.'
-        )
-        email_content = f'{message}\n'
-        if os.getenv('ENV') != 'production':
-            email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                                'to check pipeline run results and logs.'
-        self.send(
-            message=message,
-            email_subject=f'SLA passed for Mage pipeline {pipeline.uuid}',
-            email_content=email_content,
-        )
+        if AlertOn.PIPELINE_RUN_PASSED_SLA in self.config.alert_on:
+            message = (
+                f'SLA passed for pipeline `{pipeline.uuid}` '
+                f'with Trigger {pipeline_run.pipeline_schedule.id} '
+                f'`{pipeline_run.pipeline_schedule.name}` '
+                f'at execution time `{pipeline_run.execution_date}`.'
+            )
+            email_content = f'{message}\n'
+            if os.getenv('ENV') != 'production':
+                email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
+                                    'to check pipeline run results and logs.'
+            self.send(
+                message=message,
+                email_subject=f'SLA passed for Mage pipeline {pipeline.uuid}',
+                email_content=email_content,
+            )
 
     def __pipeline_run_url(self, pipeline, pipeline_run):
         return f'http://localhost:6789/pipelines/{pipeline.uuid}/triggers/'\
