@@ -51,6 +51,7 @@ class Source:
         schemas_folder: str = 'schemas',
         selected_streams: List[str] = None,
         settings: Dict = None,
+        show_templates: bool = False,
         state: Dict = None,
         test_connection: bool = False,
         verbose: int = 1,
@@ -73,6 +74,8 @@ class Source:
                 query = args.query
             if args.selected_streams:
                 selected_streams = args.selected_streams
+            if args.show_templates:
+                show_templates = args.show_templates
             if args.state:
                 state = args.state
             if args.test_connection:
@@ -97,6 +100,7 @@ class Source:
         self.schemas_folder = schemas_folder
         self.selected_streams = selected_streams
         self.settings = settings
+        self.show_templates = show_templates
         self.should_test_connection = test_connection
         self.state = state
 
@@ -238,6 +242,8 @@ class Source:
                         stream=tap_stream_id,
                     ))
                 json.dump(arr, sys.stdout)
+            elif self.show_templates:
+                json.dump(self.templates(), sys.stdout)
             else:
                 if not self.catalog:
                     catalog = self.discover(streams=self.selected_streams)

@@ -1,11 +1,14 @@
+attrs==17.4.0
 azure-storage-blob==12.14.1
 backoff==1.8.0
 deltalake==0.6.4
+facebook_business==15.0.2
 google-analytics-data==0.14.2
 google-api-python-client==2.70.0
 google-cloud-bigquery-storage==2.16.2
 google-cloud-bigquery==2.34.4
 mysql-connector-python==8.0.31
+pendulum==1.2.0
 psycopg2-binary==2.9.3
 pyarrow==10.0.1
 pymongo==4.3.3

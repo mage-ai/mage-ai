@@ -1,11 +1,14 @@
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_integrations.sources.constants import SOURCES
+from mage_ai.data_preparation.models.block import PYTHON_COMMAND
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.hash import merge_dict
 from typing import List, Dict
 import importlib
+import json
+import subprocess
 import traceback
 
 
@@ -17,18 +20,33 @@ def get_collection(key: str, available_options: List[Dict]):
         if not d.get('uuid'):
             d['uuid'] = d['name'].lower().replace(' ', '_')
         module_name = d.get('module_name', d['name'].replace(' ', ''))
+        uuid = d['uuid']
         try:
-            mod = getattr(
-                importlib.import_module(f"mage_integrations.{key}.{d['uuid']}"),
-                module_name,
-            )
+            module = importlib.import_module(f"mage_integrations.{key}.{uuid}")
+            mod = getattr(module, module_name)
             d['templates'] = mod.templates()
         except FileNotFoundError:
             d['templates'] = {}
-        except Exception as err:
-            print(f"Failed to load source {d['uuid']}: {err}")
-            print(traceback.format_exc())
-            continue
+        except Exception:
+            try:
+                absolute_file_path = '/'.join(module.__file__.split('/')[:-2])
+                absolute_file_path = f'{absolute_file_path}/{uuid}/__init__.py'
+                proc = subprocess.run([
+                    PYTHON_COMMAND,
+                    absolute_file_path,
+                    '--config_json',
+                    json.dumps({}),
+                    '--show_templates',
+                ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                for line in proc.stdout.decode().split('\n'):
+                    try:
+                        d['templates'] = json.loads(line)
+                    except:
+                        pass
+            except Exception as err:
+                print(f"Failed to load source {d['uuid']}: {err}")
+                print(traceback.format_exc())
+                continue
 
         collection.append(d)
 
@@ -80,11 +98,8 @@ class ApiIntegrationSourcesHandler(BaseHandler):
             streams = payload.get('streams')
             pipeline = IntegrationPipeline.get(pipeline_uuid)
 
-            try:
-                streams_updated = pipeline.preview_data(BlockType.DATA_LOADER, streams=streams)
-                self.write(dict(success=True, streams=list(streams_updated)))
-            except Exception as e:
-                self.write(dict(success=False, error_message=str(e)))
+            streams_updated = pipeline.preview_data(BlockType.DATA_LOADER, streams=streams)
+            self.write(dict(success=True, streams=list(streams_updated)))
 
         self.finish()
 

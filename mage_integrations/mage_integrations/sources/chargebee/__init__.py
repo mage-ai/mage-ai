@@ -19,7 +19,7 @@ class Chargebee(Source):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.client = ChargebeeClient(self.config)
+        self.client = ChargebeeClient(self.config or {})
 
     def load_data(
         self,
@@ -70,7 +70,7 @@ class Chargebee(Source):
         else:
             LOGGER.error("Incorrect Product Catalog version {}".format(product_catalog_version))
             raise RuntimeError("Incorrect Product Catalog version")
-        
+
         return {
             stream.TABLE: Schema.from_dict(
                 stream(self.config, self.state, None, None).get_schema())

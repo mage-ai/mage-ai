@@ -208,14 +208,10 @@ function IntegrationPipeline({
               setSourceSampleDataError(res['error']);
             }
           },
-          onErrorCallBack: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },

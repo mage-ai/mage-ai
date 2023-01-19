@@ -143,7 +143,11 @@ def column_type_mapping(
         item_type_converted = None
 
         if COLUMN_TYPE_ARRAY == column_type:
-            item_types = column_types_for_array_type + [t for t in column_settings.get('items', {}).get('type', []) if 'null' != t]
+            item_types = column_types_for_array_type.copy()
+            items_types = column_settings.get('items', {}).get('type', [])
+            if type(items_types) is not list:
+                items_types = [items_types]
+            item_types += [t for t in items_types if 'null' != t]
             if len(item_types):
                 item_type = item_types[0]
                 item_type_converted = convert_column_type_func(
@@ -180,6 +184,8 @@ def column_type_mapping(
                 column_type_converted = 'VARCHAR(255)'
             else:
                 column_type_converted = string_type
+
+        print(column, column_type, column_type_converted, item_type, item_type_converted, '\n')
 
         mapping[column] = dict(
             column_settings=column_settings,
