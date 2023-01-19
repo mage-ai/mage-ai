@@ -10,10 +10,10 @@ class Trino(Destination):
             argument_parser=argument_parser_copy,
             **kwargs,
         ).config
-        catalog = config['catalog']
+        connector = config['connector']
 
         klass = TrinoPostgreSQL
-        if 'postgresql' == catalog:
+        if 'postgresql' == connector:
             klass = TrinoPostgreSQL
 
         return klass(argument_parser=argument_parser, **kwargs)
