@@ -206,6 +206,12 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--show_templates',
+        action='store_true',
+        help='Show files in templates folder.',
+    )
+
+    parser.add_argument(
         '--query',
         help='File containing query parameters for source’s load_data method.',
     )
@@ -276,7 +282,9 @@ def parse_args(required_config_keys):
             if args.settings.get('config') and not args.config:
                 config.update(args.settings['config'])
 
-            if args.settings.get('catalog') and not args.catalog:
+            if args.settings.get('data_integration', {}).get('catalog') and not args.catalog:
+                args.catalog = Catalog.from_dict(args.settings['data_integration']['catalog'])
+            elif args.settings.get('catalog') and not args.catalog:
                 args.catalog = Catalog.from_dict(args.settings['catalog'])
 
     if args.catalog_json:

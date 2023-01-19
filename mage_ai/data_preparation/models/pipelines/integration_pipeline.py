@@ -64,8 +64,15 @@ class IntegrationPipeline(Pipeline):
 
     @property
     def destination_file_path(self) -> str:
-        if self.destination:
-            return os.path.abspath(self.destination.__file__)
+        try:
+            if self.destination:
+                return os.path.abspath(self.destination.__file__)
+        except Exception:
+            if self.destination_uuid:
+                mod1 = importlib.import_module('mage_integrations.destinations')
+                absolute_path = '/'.join(mod1.__file__.split('/')[:-1])
+                absolute_path = f'{absolute_path}/{self.destination_uuid}/__init__.py'
+                return absolute_path
 
     @property
     def source_config(self) -> Dict:
@@ -91,8 +98,21 @@ class IntegrationPipeline(Pipeline):
 
     @property
     def source_file_path(self) -> str:
-        if self.source:
-            return os.path.abspath(self.source.__file__)
+        try:
+            if self.source:
+                return os.path.abspath(self.source.__file__)
+        except Exception:
+            if self.source_uuid:
+                mod1 = importlib.import_module('mage_integrations.sources')
+                absolute_path = '/'.join(mod1.__file__.split('/')[:-1])
+                absolute_path = f'{absolute_path}/{self.source_uuid}/__init__.py'
+                return absolute_path
+
+    @property
+    def settings_file_path(self) -> str:
+        if self.data_integration and 'catalog' in self.data_integration:
+            return self.config_path
+        return self.data_loader.file_path
 
     @property
     def transformer_file_path(self) -> str:
@@ -113,6 +133,9 @@ class IntegrationPipeline(Pipeline):
 
     def source_output_folder(self, stream: str) -> str:
         return f'{self.source_dir}/{clean_name(stream)}/output'
+
+    def catalog_file_path(self, stream: str, index: int = 0) -> str:
+        pass
 
     def source_output_file_path(self, stream: str, index: int = 0) -> str:
         stream_dir = self.source_output_folder(stream)
@@ -199,13 +222,8 @@ class IntegrationPipeline(Pipeline):
                     '--load_sample_data',
                     '--log_to_stdout',
                     '1',
-                    '--catalog_json',
-                    build_catalog_json(
-                        self.data_loader.file_path,
-                        self.__global_variables(),
-                        pipeline=self,
-                        selected_streams=streams,
-                    ),
+                    '--settings',
+                    self.settings_file_path,
                     '--selected_streams_json',
                     json.dumps(streams),
                 ]
@@ -266,13 +284,8 @@ class IntegrationPipeline(Pipeline):
                         self.source_file_path,
                         '--config_json',
                         build_config_json(self.data_loader.file_path, self.__global_variables()),
-                        '--catalog_json',
-                        build_catalog_json(
-                            self.data_loader.file_path,
-                            self.__global_variables(),
-                            pipeline=self,
-                            selected_streams=[tap_stream_id],
-                        ),
+                        '--settings',
+                        self.settings_file_path,
                         '--state',
                         self.source_state_file_path(
                             destination_table=destination_table,
@@ -301,13 +314,6 @@ class IntegrationPipeline(Pipeline):
                     self.source_file_path,
                     '--config_json',
                     build_config_json(self.data_loader.file_path, self.__global_variables()),
-                    '--catalog_json',
-                    build_catalog_json(
-                        self.data_loader.file_path,
-                        self.__global_variables(),
-                        pipeline=self,
-                        selected_streams=streams or [],
-                    ),
                     '--discover',
                 ]
                 if streams:
@@ -333,12 +339,6 @@ class IntegrationPipeline(Pipeline):
                     self.source_file_path,
                     '--config_json',
                     build_config_json(self.data_loader.file_path, self.__global_variables()),
-                    '--catalog_json',
-                    build_catalog_json(
-                        self.data_loader.file_path,
-                        self.__global_variables(),
-                        pipeline=self,
-                    ),
                     '--discover',
                     '--discover_streams',
                 ]
