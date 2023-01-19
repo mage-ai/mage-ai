@@ -1142,10 +1142,16 @@ function Edit({
 
       </PipelineDetailPage>
       {errors && (
-        <ErrorPopup
-          {...errors}
-          onClose={() => setErrors(null)}
-        />
+        <ClickOutside
+          disableClickOutside
+          isOpen
+          onClickOutside={() => setErrors(null)}
+        >
+          <ErrorPopup
+            {...errors}
+            onClose={() => setErrors(null)}
+          />
+        </ClickOutside>
       )}
     </>
   );

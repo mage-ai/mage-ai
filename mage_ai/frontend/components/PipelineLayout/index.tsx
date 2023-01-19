@@ -1,10 +1,10 @@
 import React, {
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
+import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
 import Head from '@oracle/elements/Head';
 import Header, { BreadcrumbType } from '@components/shared/Header';
@@ -205,10 +205,16 @@ function PipelineLayout({
       </TripleLayout>
 
       {errors && (
-        <ErrorPopup
-          {...errors}
-          onClose={() => setErrors(null)}
-        />
+        <ClickOutside
+          disableClickOutside
+          isOpen
+          onClickOutside={() => setErrors(null)}
+        >
+          <ErrorPopup
+            {...errors}
+            onClose={() => setErrors(null)}
+          />
+        </ClickOutside>
       )}
     </>
   );

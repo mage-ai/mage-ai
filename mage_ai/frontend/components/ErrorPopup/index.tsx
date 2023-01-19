@@ -19,8 +19,8 @@ type ErrorPopupProps = {
     label: string;
     onClick: () => void;
   }[];
-  onClose: () => void;
-  response: {
+  onClose?: () => void;
+  response?: {
     error: {
       errors: string[];
       exception: string;
