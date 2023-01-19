@@ -73,7 +73,7 @@ class PipelineSchedulerTests(DBTestCase):
         ) as mock_send_message:
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
-            self.assertEqual(mock_send_message.call_count, 0)
+            self.assertEqual(mock_send_message.call_count, 1)
 
     @patch('mage_ai.orchestration.pipeline_scheduler.run_pipeline')
     @patch('mage_ai.orchestration.pipeline_scheduler.create_process')

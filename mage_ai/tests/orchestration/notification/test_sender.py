@@ -6,6 +6,7 @@ from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG,
+    TEAMS_NOTIFICATION_CONFIG_NO_ALERT_ON,
 )
 from unittest.mock import patch
 
@@ -83,14 +84,13 @@ class NotificationSenderTests(DBTestCase):
     @patch('mage_ai.orchestration.notification.sender.send_teams_message')
     @patch('mage_ai.orchestration.notification.sender.send_email')
     def test_alert_on_configuration(self, mock_send_email, mock_send_teams_message):
-        config = TEAMS_NOTIFICATION_CONFIG
-        notification_config = NotificationConfig.load(config=config)
+        notification_config = NotificationConfig.load(config=TEAMS_NOTIFICATION_CONFIG)
         sender = NotificationSender(config=notification_config)
         pipeline_run = self.__class__.pipeline_run
-        sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
+        sender.send_pipeline_run_success_message(self.__class__.pipeline, pipeline_run)
         self.assertEqual(mock_send_email.call_count, 0)
         message = (
-            'Failed to run Pipeline `test_pipeline` '
+            'Successfully ran Pipeline `test_pipeline` '
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
             f'at execution time `{pipeline_run.execution_date}`.'
@@ -100,9 +100,10 @@ class NotificationSenderTests(DBTestCase):
             message,
         )
 
-        config = TEAMS_NOTIFICATION_CONFIG
-        config['alert_on'] = []
-        notification_config = NotificationConfig.load(config=config)
+    @patch('mage_ai.orchestration.notification.sender.send_teams_message')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_alert_on_configuration_empty(self, mock_send_email, mock_send_teams_message):
+        notification_config = NotificationConfig.load(config=TEAMS_NOTIFICATION_CONFIG_NO_ALERT_ON)
         sender = NotificationSender(config=notification_config)
         pipeline_run = self.__class__.pipeline_run
         sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
