@@ -240,7 +240,7 @@ function Sidekick({
             <DependencyGraph
               blockRefs={blockRefs}
               editingBlock={editingBlock}
-              enablePorts
+              enablePorts={!isIntegration}
               fetchPipeline={fetchPipeline}
               height={heightWindow - heightOffset - OUTPUT_HEIGHT}
               pipeline={pipeline}
