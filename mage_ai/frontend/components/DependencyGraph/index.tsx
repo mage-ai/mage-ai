@@ -40,6 +40,7 @@ import {
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getModelName } from '@utils/models/dbt';
+import { isActivePort } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { useDynamicUpstreamBlocks } from '@utils/models/block';
 
@@ -146,6 +147,7 @@ function DependencyGraph({
   const themeContext: ThemeType = useContext(ThemeContext);
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
   const [showPortsState, setShowPorts] = useState<boolean>(false);
+  const [activePort, setActivePort] = useState<{ id: string, side: SideEnum }>(null);
   const showPorts = enablePorts && showPortsState;
   const {
     block: blockEditing,
@@ -537,6 +539,7 @@ function DependencyGraph({
               <Edge
                 {...edge}
                 onClick={(event, edge) => {
+                  setActivePort(null);
                   setEdgeSelections([edge.id]);
                 }}
                 onRemove={(event, edge) => {
@@ -569,6 +572,7 @@ function DependencyGraph({
                     block,
                   },
                 }) => {
+                  setActivePort(null);
                   const disabled = blockEditing?.uuid === block.uuid;
                   if (!disabled) {
                     if (blockEditing) {
@@ -578,13 +582,25 @@ function DependencyGraph({
                     }
                   }
                 }}
-                onEnter={() => !editingBlock?.upstreamBlocks && setShowPorts(true)}
+                onEnter={() => {
+                  if (!editingBlock?.upstreamBlocks) {
+                    setShowPorts(true);
+                  }
+                }}
                 onLeave={() => setShowPorts(false)}
-                port={showPorts
+                port={(showPorts && (
+                  activePort === null || isActivePort(activePort, node)))
                   ?
                     <Port
                       onDrag={() => setShowPorts(true)}
-                      onDragEnd={() => setShowPorts(false)}
+                      onDragEnd={() => {
+                        setShowPorts(false);
+                        setActivePort(null);
+                      }}
+                      onDragStart={(e, initial, port) => {
+                        // @ts-ignore
+                        setActivePort({ id: port?.id, side: port?.side });
+                      }}
                       onEnter={() => setShowPorts(true)}
                       rx={10}
                       ry={10}
