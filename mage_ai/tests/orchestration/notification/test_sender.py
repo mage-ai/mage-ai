@@ -79,3 +79,32 @@ class NotificationSenderTests(DBTestCase):
             notification_config.teams_config,
             message,
         )
+
+    @patch('mage_ai.orchestration.notification.sender.send_teams_message')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_alert_on_configuration(self, mock_send_email, mock_send_teams_message):
+        config = TEAMS_NOTIFICATION_CONFIG
+        notification_config = NotificationConfig.load(config=config)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
+        self.assertEqual(mock_send_email.call_count, 0)
+        message = (
+            'Failed to run Pipeline `test_pipeline` '
+            f'with Trigger {pipeline_run.pipeline_schedule.id} '
+            f'`{pipeline_run.pipeline_schedule.name}` '
+            f'at execution time `{pipeline_run.execution_date}`.'
+        )
+        mock_send_teams_message.assert_called_once_with(
+            notification_config.teams_config,
+            message,
+        )
+
+        config = TEAMS_NOTIFICATION_CONFIG
+        config['alert_on'] = []
+        notification_config = NotificationConfig.load(config=config)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
+        self.assertEqual(mock_send_email.call_count, 0)
+        self.assertEqual(mock_send_teams_message.call_count, 0)
