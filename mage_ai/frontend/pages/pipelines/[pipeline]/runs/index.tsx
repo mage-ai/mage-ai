@@ -52,7 +52,7 @@ const TABS = [
   TAB_BLOCK_RUNS,
 ];
 
-const LIMIT = 30;
+const LIMIT = 25;
 
 type PipelineRunsProp = {
   pipeline: {

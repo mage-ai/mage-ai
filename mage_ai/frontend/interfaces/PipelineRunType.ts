@@ -1,4 +1,5 @@
 import BlockRunType, { RunStatus as RunStatusEnum } from './BlockRunType';
+import { ScheduleTypeEnum } from './PipelineScheduleType';
 
 export const RunStatus = RunStatusEnum;
 
@@ -89,6 +90,8 @@ export default interface PipelineRunType {
   passed_sla?: boolean;
   pipeline_schedule_id?: number;
   pipeline_schedule_name?: string;
+  pipeline_schedule_token?: string;
+  pipeline_schedule_type?: ScheduleTypeEnum;
   pipeline_uuid?: string;
   status?: RunStatusEnum;
   updated_at?: string;

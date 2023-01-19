@@ -151,6 +151,8 @@ def process_pipeline_runs(
                                 'block_runs',
                                 'block_runs_count',
                                 'pipeline_schedule_name',
+                                'pipeline_schedule_token',
+                                'pipeline_schedule_type',
                             ])
                   for r in results]
 
@@ -176,6 +178,8 @@ def process_pipeline_runs(
                         'block_runs',
                         'block_runs_count',
                         'pipeline_schedule_name',
+                        'pipeline_schedule_token',
+                        'pipeline_schedule_type',
                     ])
             for r in additional_results
         ]

@@ -34,17 +34,18 @@ function RetryButton({
   onSuccess: () => void;
   pipelineRun: PipelineRunType,
 }) {
-  const { status } = pipelineRun;
+  const {
+    pipeline_schedule_id: pipelineScheduleId,
+    pipeline_schedule_token: pipelineScheduleToken,
+    pipeline_schedule_type: pipelineScheduleType,
+    status,
+  } = pipelineRun;
   const isCancelingPipeline = RunStatus.RUNNING === status && isLoadingCancelPipeline;
 
-  const pipelineScheduleId = pipelineRun?.pipeline_schedule_id;
-  const { data } = api.pipeline_schedules.detail(pipelineScheduleId);
-  const pipelineSchedule = data?.pipeline_schedule;
-
   const [createPipelineRun] = useMutation(
-    ScheduleTypeEnum.API === pipelineSchedule?.schedule_type
-      && pipelineSchedule?.token
-      ? api.pipeline_runs.pipeline_schedules.useCreateWithParent(pipelineScheduleId, pipelineSchedule?.token)
+    ScheduleTypeEnum.API === pipelineScheduleType
+      && pipelineScheduleToken
+      ? api.pipeline_runs.pipeline_schedules.useCreateWithParent(pipelineScheduleId, pipelineScheduleToken)
       : api.pipeline_runs.pipeline_schedules.useCreate(pipelineScheduleId),
     {
       onSuccess: (response: any) => onSuccess(
@@ -111,7 +112,7 @@ function RetryButton({
         borderRadius={BORDER_RADIUS_XXXLARGE}
         danger={RunStatus.FAILED === status}
         default={RunStatus.INITIAL === status}
-        loading={!!pipelineScheduleId && !pipelineSchedule}
+        loading={!pipelineRun}
         onClick={() => setShowConfirmation(true)}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isLoadingCancelPipeline}

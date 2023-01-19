@@ -300,6 +300,14 @@ class PipelineRun(BaseModel):
     def pipeline_schedule_name(self):
         return self.pipeline_schedule.name
 
+    @property
+    def pipeline_schedule_token(self):
+        return self.pipeline_schedule.token
+
+    @property
+    def pipeline_schedule_type(self):
+        return self.pipeline_schedule.schedule_type
+
     @classmethod
     @safe_db_query
     def active_runs(
