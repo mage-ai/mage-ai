@@ -6,8 +6,11 @@ from mage_ai.services.stitch.constants import (
     STITCH_BASE_URL,
 )
 from mage_ai.shared.http_client import HttpClient
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
+import requests
 import time
+
+LOG_TEXT_FOR_STREAMS_WITH_EXTRACTED_ROWS = 'com.stitchdata.target-stitch-avro.flush-pipeline - send-stream-record-count-impl'
 
 
 class StitchClient(HttpClient):
@@ -51,23 +54,14 @@ class StitchClient(HttpClient):
     def list_loads(self, stitch_client_id: int, page: int = 1):
         return self.make_request(f'/{stitch_client_id}/loads', params=dict(page=page))
 
-    def start_replication_job(
+    def check_sync_completion(
         self,
-        source_id: int,
+        source_id: str,
+        job_name: str,
         poll_interval: float = DEFAULT_POLL_INTERVAL,
         poll_timeout: Optional[float] = DEFAULT_POLL_TIMEOUT,
         autocomplete_after_seconds: int = None,
-        disable_polling: bool = False,
     ):
-        response = self.make_request(f'/sources/{source_id}/sync', method='POST', payload=dict())
-        if 'error' in response:
-            raise Exception(response['error']['message'])
-        job_name = response['job_name']
-        print(f'Start replication job for source {source_id}. Job name: {job_name}.')
-
-        if disable_polling:
-            return response
-
         source = self.get_source(source_id)
         stitch_client_id = source['stitch_client_id']
 
@@ -110,10 +104,9 @@ class StitchClient(HttpClient):
 
         # Poll status for Load job
         poll_start = datetime.now()
-        streams = self.list_streams(source_id)
-        stream_names = [s['stream_name'] for s in streams]
+        stream_names = self.__get_streams_extracted_from_extraction_job(stitch_client_id, job_name)
         while True:
-            succeeded_streams = []
+            succeeded_streams = set()
             total_loads_count = None
             current_count = 0
             page = 1
@@ -134,14 +127,14 @@ class StitchClient(HttpClient):
                             f"message: \"{error_message}\"."
                         )
                     elif load['last_batch_loaded_at'] >= extraction_completion_time:
-                        succeeded_streams.append(load['stream_name'])
+                        succeeded_streams.add(load['stream_name'])
                 page += 1
                 if current_count >= total_loads_count:
                     break
 
+            succeeded_streams = list(succeeded_streams)
             total_streams = len(stream_names)
             completed_streams = len(succeeded_streams)
-
 
             if completed_streams == total_streams:
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
@@ -171,4 +164,47 @@ class StitchClient(HttpClient):
                 )
             time.sleep(poll_interval)
 
+    def start_replication_job(
+        self,
+        source_id: int,
+        poll_interval: float = DEFAULT_POLL_INTERVAL,
+        poll_timeout: Optional[float] = DEFAULT_POLL_TIMEOUT,
+        autocomplete_after_seconds: int = None,
+        disable_polling: bool = False,
+    ):
+        response = self.make_request(f'/sources/{source_id}/sync', method='POST', payload=dict())
+        if 'error' in response:
+            raise Exception(response['error']['message'])
+        job_name = response['job_name']
+        print(f'Start replication job for source {source_id}. Job name: {job_name}.')
+
+        if disable_polling:
+            return response
+
+        self.check_sync_completion(
+            source_id,
+            job_name,
+            poll_interval=poll_interval,
+            poll_timeout=poll_timeout,
+            autocomplete_after_seconds=autocomplete_after_seconds,
+        )
+
         return response
+
+    def __get_logs_for_extraction(self, stitch_client_id: int, job_name: str) -> str:
+        url = f'{STITCH_BASE_URL}/{stitch_client_id}/extractions/{job_name}'
+        response = requests.get(url, headers=self.headers)
+        return response.text
+
+    def __get_streams_extracted_from_extraction_job(
+        self,
+        stitch_client_id: int,
+        job_name: str,
+    ) -> List[str]:
+        logs = self.__get_logs_for_extraction(stitch_client_id, job_name)
+        streams = set()
+        for line in logs.split('\n'):
+            if LOG_TEXT_FOR_STREAMS_WITH_EXTRACTED_ROWS in line:
+                stream_name = line.split(LOG_TEXT_FOR_STREAMS_WITH_EXTRACTED_ROWS)[1].strip()
+                streams.add(stream_name)
+        return streams
