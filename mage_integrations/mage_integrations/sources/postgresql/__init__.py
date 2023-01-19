@@ -1,4 +1,8 @@
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
+from mage_integrations.destinations.constants import (
+    DATETIME_COLUMN_SCHEMA,
+    INTERNAL_COLUMN_DELETED_AT,
+)
 from mage_integrations.sources.base import main
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,
@@ -8,6 +12,7 @@ from mage_integrations.sources.constants import (
 )
 from mage_integrations.sources.messages import write_state
 from mage_integrations.sources.postgresql.decoders import (
+    Delete,
     Insert,
     Update,
     decode_message
@@ -21,7 +26,7 @@ import psycopg2.extras
 import re
 import singer
 
-LOGGER = singer.get_logger()
+INTERNAL_COLUMN_LSN = 'lsn'
 
 
 class PostgreSQL(Source):
@@ -87,6 +92,14 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """)
         return [r[0].lower() for r in results]
 
+    def internal_column_schema(self, stream, bookmarks: Dict = None) -> Dict[str, Dict]:
+        if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
+            return {
+                INTERNAL_COLUMN_DELETED_AT: DATETIME_COLUMN_SCHEMA,
+                INTERNAL_COLUMN_LSN: {'type': ['integer']},
+            }
+        return dict()
+
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
 
@@ -99,7 +112,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
     ) -> Generator[List[Dict], None, None]:
         tap_stream_id = stream.tap_stream_id
         bookmarks = bookmarks or dict()
-        start_lsn = bookmarks.get('lsn') or 0
+        start_lsn = bookmarks.get(INTERNAL_COLUMN_LSN) or 0
         slot = self.config.get('replication_slot', 'mage_slot')
 
         # We are willing to poll for a total of 1 minute without finding a record
@@ -115,13 +128,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         with connection.cursor() as cur:
             end_lsn = self.__get_current_lsn(cur)
 
-            LOGGER.info(
-                'Starting Logical Replication for %s(%s): %s -> %s. poll_total_seconds: %s',
-                tap_stream_id,
-                slot,
-                start_lsn,
-                end_lsn,
-                poll_total_seconds,
+            self.logger.info(
+                f'Starting Logical Replication for {tap_stream_id}({slot}): {start_lsn} '
+                f'-> {end_lsn}. poll_total_seconds: {poll_total_seconds}',
             )
 
             replication_params = dict(
@@ -137,30 +146,37 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             try:
                 cur.start_replication(**replication_params)
             except psycopg2.ProgrammingError:
-                raise Exception("unable to start replication with logical replication slot {}".format(slot))
+                raise Exception(f'Unable to start replication with logical replication slot {slot}')
 
             columns = self.get_columns(tap_stream_id)
             while True:
                 poll_duration = (datetime.datetime.now() - begin_ts).total_seconds()
                 if poll_duration > poll_total_seconds:
-                    LOGGER.info("breaking after %s seconds of polling with no data", poll_duration)
+                    self.logger.info(f'Breaking after {poll_duration} seconds of polling with no data')
                     break
 
                 msg = cur.read_message()
                 if msg:
                     begin_ts = datetime.datetime.now()
                     if msg.data_start > end_lsn:
-                        LOGGER.info("gone past end_lsn %s for run. breaking", end_lsn)
+                        self.logger.info(f'Gone past end_lsn {end_lsn} for run. breaking')
                         break
 
                     decoded_payload = decode_message(msg.payload)
                     if msg.data_start < start_lsn:
-                        LOGGER.info(f"Msg lsn {msg.data_start} smaller than start lsn {start_lsn}")
+                        self.logger.info(f'Msg lsn {msg.data_start} smaller than start lsn {start_lsn}')
                         continue
                     if type(decoded_payload) in [Insert, Update]:
                         values = [c.col_data for c in decoded_payload.new_tuple.column_data]
                         payload = dict(zip(columns, values))
-                        payload['lsn'] = msg.data_start
+                        payload[INTERNAL_COLUMN_LSN] = msg.data_start
+                        yield [payload]
+                    elif type(decoded_payload) is Delete:
+                        values = [c.col_data for c in decoded_payload.old_tuple.column_data]
+                        payload = dict(zip(columns, values))
+                        payload[INTERNAL_COLUMN_LSN] = msg.data_start
+                        payload[INTERNAL_COLUMN_DELETED_AT] = \
+                            datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
                         yield [payload]
                     cur.send_feedback(flush_lsn=msg.data_start)
                 else:
@@ -169,9 +185,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                     try:
                         sel = select([cur], [], [], max(0, timeout))
                         if not any(sel):
-                            LOGGER.info(
-                                "no data for %s seconds. sending feedback to server with NO "
-                                "flush_lsn. just a keep-alive", timeout)
+                            self.logger.info(
+                                f'No data for {timeout} seconds. sending feedback to server with NO'
+                                ' flush_lsn. just a keep-alive')
                             cur.send_feedback()
 
                     except InterruptedError:
@@ -197,12 +213,17 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             with connection.cursor() as cur:
                 current_lsn = self.__get_current_lsn(cur)
 
-            state = singer.write_bookmark({}, stream.tap_stream_id, 'lsn', current_lsn)
+            state = singer.write_bookmark(
+                {},
+                stream.tap_stream_id,
+                INTERNAL_COLUMN_LSN,
+                current_lsn,
+            )
             write_state(state)
 
     def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
         if REPLICATION_METHOD_LOG_BASED == self._replication_method(stream, bookmarks=bookmarks):
-            return ['lsn']
+            return [INTERNAL_COLUMN_LSN]
         else:
             return super()._get_bookmark_properties_for_stream(stream)
 
@@ -210,7 +231,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         if REPLICATION_METHOD_LOG_BASED != stream.replication_method:
             return stream.replication_method
         # Ues full table sync for the initial sync of log based replcation
-        if not bookmarks or not bookmarks.get('lsn'):
+        if not bookmarks or not bookmarks.get(INTERNAL_COLUMN_LSN):
             return REPLICATION_METHOD_FULL_TABLE
 
         return stream.replication_method
@@ -241,7 +262,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             raise Exception('unable to determine PostgreSQL version from {}'.format(res))
 
         version = int(version_match.group(1))
-        LOGGER.info("Detected PostgresSQL version: %s", version)
+        self.logger.info(f'Detected PostgresSQL version: {version}')
         return version
 
 

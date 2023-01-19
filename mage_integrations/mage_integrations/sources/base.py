@@ -184,6 +184,9 @@ class Source:
 
         return stream_ids
 
+    def internal_column_schema(self, stream, bookmarks: Dict = None) -> Dict[str, Dict]:
+        return dict()
+
     def process(self) -> None:
         """
         Main method to fetch data from the source with the following steps:
@@ -333,9 +336,16 @@ class Source:
                 extract_selected_columns(stream.metadata),
             )
 
+        bookmarks = self.__get_bookmarks_for_stream(stream)
+
+        schema_dict['properties'] = merge_dict(
+            schema_dict['properties'],
+            self.internal_column_schema(stream, bookmarks=bookmarks),
+        )
+
         schema_data = dict(
             bookmark_properties=self._get_bookmark_properties_for_stream(
-                stream, bookmarks=self.__get_bookmarks_for_stream(stream)),
+                stream, bookmarks=bookmarks),
             disable_column_type_check=stream.disable_column_type_check,
             key_properties=stream.key_properties,
             partition_keys=stream.partition_keys,
@@ -442,12 +452,17 @@ class Source:
         Returns:
             List: Bookmark values.
         """
-        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
+        bookmarks = self.__get_bookmarks_for_stream(stream)
+        bookmark_properties = self._get_bookmark_properties_for_stream(
+            stream,
+            bookmarks=bookmarks,
+        )
         max_bookmark = []
 
         columns = extract_selected_columns(stream.metadata)
         if properties is not None:
             columns = list(properties.keys())
+        columns += self.internal_column_schema(stream, bookmarks=bookmarks).keys()
 
         final_record = None
         for row in rows:
