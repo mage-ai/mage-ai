@@ -717,12 +717,12 @@ function CodeBlockProps({
   return (
     <div ref={ref} style={{
       position: 'relative',
-      zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 6) : null,
+      zIndex: blockIdx === addNewBlockMenuOpenIdx ? (blocksLength + 9) : null,
     }}>
       <BlockHeaderStyle
         {...borderColorShareProps}
         onClick={() => onClickSelectBlock()}
-        zIndex={blocksLength - (blockIdx || 0)}
+        zIndex={blocksLength + 1 - (blockIdx || 0)}
       >
         <FlexContainer
           alignItems="center"
@@ -1343,6 +1343,7 @@ function CodeBlockProps({
 
       {!noDivider && (
         <BlockDivider
+          additionalZIndex={blocksLength - blockIdx}
           onMouseEnter={() => setAddNewBlocksVisible(true)}
           onMouseLeave={() => {
             setAddNewBlocksVisible(false);
