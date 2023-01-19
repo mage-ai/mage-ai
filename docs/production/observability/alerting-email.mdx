@@ -9,7 +9,7 @@ description: "Get status updates sent to your email inbox."
   src="https://yourreclaimedlife.com/wp-content/uploads/2018/12/email-marketing-without-permission.jpg"
 />
 
-## Configure email settings
+## Create notification_config
 
 In the root of your project’s folder (e.g. `default_repo/`), open the file
 `metadata.yaml`.
@@ -21,10 +21,32 @@ In the root of your project’s folder (e.g. `default_repo/`), open the file
 > didn’t customize it.
 
 In the `default_repo/metadata.yaml` file, add a section with the following
-configuration:
+configuration or update the existing `notification_config` section:
 
 ```yaml
 notification_config:
+  alert_on:
+    - trigger_failure
+    - trigger_passed_sla
+```
+
+If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
+
+Options:
+
+- `trigger_failure`: alert when a run of a trigger fails
+- `trigger_success`: alert when a run of a trigger succeeds
+- `trigger_passed_sla`: alert when a run of a trigger passes sla
+
+## Configure email settings
+
+In the `default_repo/metadata.yaml` file, add a section with the following
+configuration or update the existing `notification_config` section:
+
+```yaml
+notification_config:
+  alert_on:
+    ...
   email_config:
     smtp_host: ...
     smtp_mail_from: ...
