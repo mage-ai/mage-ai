@@ -10,7 +10,8 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value
 | --- | --- | --- |
-| `catalog` | A Trino catalog contains schemas and references a data source via a connector. | `postgresql` |
+| `catalog` | A Trino catalog contains schemas and references a data source via a connector. | `my_prod_pg` |
+| `connector` | Allows Trino to connect to other databases, data warehouses, data lakes, etc. | `postgresql` |
 | `host` | The host name of your database. | [`127.0.0.1`](127.0.0.1) |
 | `schema` | Schema of the data you want to export to. | `public` |
 | `table` | Name of the table that will be created to store data from your source. | `dim_users_v1` |
@@ -19,11 +20,12 @@ You must enter the following credentials when configuring this source:
 | `port` | Port of the running database (typically 8080). | `8080` (default value) |
 | `ssl` | In order to disable SSL verification, set the verify parameter to `false`. | `false` (default value) |
 
-### Catalogs
+### Connectors
 
-Currently supported catalogs:
+Currently supported connectors:
 
 - [`postgresql`](https://trino.io/docs/current/connector/postgresql.html)
+- [Coming soon] S3 (Iceberg)
 
 <br />
 
