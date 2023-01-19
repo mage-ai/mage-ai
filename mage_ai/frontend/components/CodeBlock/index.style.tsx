@@ -155,7 +155,9 @@ export const CodeContainerStyle = styled.div<{
   }
 `;
 
-export const BlockDivider = styled.div`
+export const BlockDivider = styled.div<{
+  additionalZIndex?: number;
+}>`
   align-items: center;
   display: flex;
   height: ${UNIT * 2}px;
@@ -165,6 +167,10 @@ export const BlockDivider = styled.div`
   bottom: ${UNIT * 0.5}px;
 
   &:hover {
+    ${props => props.additionalZIndex > 0 && `
+      z-index: ${8 + props.additionalZIndex};
+    `}
+
     .block-divider-inner {
       ${props => `
         background-color: ${(props.theme.text || dark.text).fileBrowser};
