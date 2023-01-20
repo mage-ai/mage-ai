@@ -13,7 +13,11 @@ if [[ ! -z "${USER_CODE_PATH}" ]]; then
     PROJECT_PATH=$USER_CODE_PATH
 fi
 
-echo $#
+REQUIREMENTS_FILE="${PROJECT_PATH}/requirements.txt"
+if [ -f "$REQUIREMENTS_FILE" ]; then
+    echo "$REQUIREMENTS_FILE exists."
+    pip3 install -r $REQUIREMENTS_FILE
+fi
 
 if [ "$#" -gt 0 ]; then
     echo "Execute command: ${@}"
