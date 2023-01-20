@@ -8,7 +8,7 @@
 
 You must enter the following credentials when configuring this source:
 
-| Key | Description | Sample value
+| Key | Description | Sample value |
 | --- | --- | --- |
 | `account_id` | The Facebook Ad account ID use when extracting data. | `abc123...` |
 | `access_token` | OAuth token to access API endpoints. | `abc123...` |
