@@ -16,13 +16,24 @@ from mage_integrations.destinations.sql.utils import (
 )
 from mage_integrations.destinations.utils import clean_column_name
 from mage_integrations.utils.array import batch
+from mage_integrations.utils.strings import is_number
 from typing import Dict, List, Tuple
+import json
 
 
 def convert_array(value, column_settings):
+    def format_value(val):
+        val_str = str(val)
+        if type(val) is list or type(val) is dict:
+            return f"'{json.dumps(val)}'"
+        elif is_number(val_str):
+            return val_str
+        else:
+            return f"'{val_str}'"
+
     if type(value) is list and value:
-        value_string = ', '.join([str(i) for i in value])
-        return value_string
+        value_string = ', '.join([format_value(i) for i in value])
+        return f'({value_string})'
 
     return 'NULL'
 
@@ -78,7 +89,6 @@ class Snowflake(Destination):
                 full_table_name=f'"{database_name}"."{schema_name}"."{table_name}"',
                 unique_constraints=unique_constraints,
                 column_identifier='"',
-
             ),
         ]
 
