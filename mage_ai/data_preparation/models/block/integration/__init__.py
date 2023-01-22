@@ -99,7 +99,7 @@ class IntegrationBlock(Block):
                     '--log_to_stdout',
                     '1',
                     '--settings',
-                    self.settings_file_path,
+                    self.pipeline.settings_file_path,
                     '--state',
                     source_state_file_path,
                     '--query_json',
