@@ -42,6 +42,9 @@ class Hubspot(Source):
             workflows=['updatedAt'],
         ).get(stream_id, ['N/A'])
 
+    def test_connection(self):
+        pass
+
 
 if __name__ == '__main__':
     main(Hubspot, schemas_folder='tap_hubspot/schemas')
