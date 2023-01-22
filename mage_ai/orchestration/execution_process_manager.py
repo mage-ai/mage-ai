@@ -17,7 +17,10 @@ class ExecutionProcessManager:
 
     def terminate_pipeline_process(self, pipeline_run_id: int) -> None:
         if self.has_pipeline_process(pipeline_run_id):
-            self.pipeline_processes[pipeline_run_id].terminate()
+            try:
+                self.pipeline_processes[pipeline_run_id].terminate()
+            except AttributeError as err:
+                print(err)
 
     def set_pipeline_process(
         self,
@@ -69,7 +72,7 @@ class ExecutionProcessManager:
             else:
                 for block_run_id in list(block_run_procs.keys()):
                     proc = block_run_procs[block_run_id]
-                    if not proc.is_alive():
+                    if proc and hasattr(proc, 'is_alive') and not proc.is_alive():
                         del block_run_procs[block_run_id]
             if not block_run_procs:
                 del self.block_processes[pipeline_run_id]
