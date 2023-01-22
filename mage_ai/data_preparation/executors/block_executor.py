@@ -140,6 +140,7 @@ class BlockExecutor:
         elif PipelineType.INTEGRATION != self.pipeline.type:
             self.block.run_tests(
                 execution_partition=self.execution_partition,
+                global_vars=global_vars,
                 logger=self.logger,
                 logging_tags=logging_tags,
                 update_tests=False,
