@@ -1,0 +1,10 @@
+{
+  "access_token": "",
+  "client_id": "",
+  "client_secret": "",
+  "disable_collection": false,
+  "redirect_uri": "",
+  "refresh_token": "",
+  "request_timeout": 300,
+  "start_date": "2023-01-01T00:00:00Z"
+}

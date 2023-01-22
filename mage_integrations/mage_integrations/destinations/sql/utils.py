@@ -185,8 +185,6 @@ def column_type_mapping(
             else:
                 column_type_converted = string_type
 
-        print(column, column_type, column_type_converted, item_type, item_type_converted, '\n')
-
         mapping[column] = dict(
             column_settings=column_settings,
             item_type=item_type,
