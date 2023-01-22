@@ -1,0 +1,922 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "addedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "addressCity": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "addressCountry": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "addressState": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "addressStreet": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "addressStreet2": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "addressZip": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "angelListUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "availableAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "callOptedOut": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "callsOptStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "callsOptedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "campaignName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "clickCount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "contactHistogram": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "array"
+        ],
+        "items": {
+          "type": [
+            "integer"
+          ]
+        }
+      }
+    },
+    "createdAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "custom1": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom2": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom3": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom4": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom5": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom6": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom7": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom8": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom9": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom10": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom11": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom12": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom13": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom14": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom15": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom16": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom17": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom18": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom19": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom20": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom21": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom22": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom23": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom24": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom25": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom26": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom27": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom28": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom29": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom30": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom31": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom32": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom33": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom34": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom35": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom36": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom37": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom38": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom39": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom40": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom41": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom42": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom43": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom44": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom45": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom46": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom47": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom48": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom49": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom50": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom51": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom52": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom53": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom54": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "custom55": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "dateOfBirth": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "degree": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "emailOptedOut": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "emails": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "emailsOptStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "emailsOptedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "engagedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "engagedScore": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "eventName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "externalId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "externalOwner": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "externalSource": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "facebookUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "firstName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "gender": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "githubUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "githubUsername": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "googlePlusUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "graduationDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "homePhones": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "jobStartDate": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "lastName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "linkedInConnections": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "linkedInId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "linkedInSlug": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "linkedInUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "middleName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "mobilePhones": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "nickname": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "occupation": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "openCount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "optedOut": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "optedOutAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "otherPhones": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "personalNote1": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "personalNote2": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "preferredContact": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "quoraUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "region": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "replyCount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "school": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "score": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "smsOptStatus": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "smsOptedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "smsOptedOut": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "source": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "specialties": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stackOverflowId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stackOverflowUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "tags": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "timeZone": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "timeZoneIana": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "timeZoneInferred": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "title": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "touchedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "twitterUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "twitterUsername": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "updatedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "voipPhones": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "websiteUrl1": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "websiteUrl2": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "websiteUrl3": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "workPhones": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "accountId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "creatorId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "defaultPluginMappingId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ownerId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "personaId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "stageId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "updaterId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    }
+  }
+} 
