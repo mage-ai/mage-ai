@@ -1,0 +1,46 @@
+{
+	"selected": true,
+	"type": [
+		"null",
+		"object"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"id": {
+			"type": "number",
+			"format": "integer"
+		},
+		"date": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"desktop": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"mobile": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"unknown": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"webmail": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		}
+	}
+}

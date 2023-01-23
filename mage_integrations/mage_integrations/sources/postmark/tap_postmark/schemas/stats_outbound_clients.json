@@ -1,0 +1,19 @@
+{	"selected": true,
+	"type": [
+		"null",
+		"object"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"date": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"client_type": {
+			"type": "string"
+		},
+		"count": {
+			"type":	"number"
+		}
+	}
+}

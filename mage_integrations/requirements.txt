@@ -7,6 +7,7 @@ google-analytics-data==0.14.2
 google-api-python-client==2.70.0
 google-cloud-bigquery-storage==2.16.2
 google-cloud-bigquery==2.34.4
+httpx==0.23.1
 mysql-connector-python==8.0.31
 pendulum==1.2.0
 psycopg2-binary==2.9.3
