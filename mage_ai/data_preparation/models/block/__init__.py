@@ -1318,7 +1318,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             tests_passed = 0
             for func in test_functions:
                 try:
-                    func(*outputs)
+                    sig = signature(func)
+                    has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+                    if has_kwargs and global_vars is not None and len(global_vars) != 0:
+                        func(*outputs, **global_vars)
+                    else:
+                        func(*outputs)
                     tests_passed += 1
                 except AssertionError as err:
                     error_message = f'FAIL: {func.__name__} (block: {self.uuid})'

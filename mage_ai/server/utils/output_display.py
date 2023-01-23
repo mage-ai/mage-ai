@@ -275,7 +275,12 @@ def execute_custom_code():
         test_execution=True,
     )
     if {run_tests}:
-        block.run_tests(custom_code=code, from_notebook=True, update_tests=False)
+        block.run_tests(
+            custom_code=code,
+            global_vars=global_vars,
+            from_notebook=True,
+            update_tests=False,
+        )
     output = block_output['output']
 
     if {widget}:
