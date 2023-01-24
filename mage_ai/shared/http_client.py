@@ -35,5 +35,6 @@ class HttpClient:
             )
         if response is not None:
             response.raise_for_status()
-            return response.json()
+            if response.text:
+                return response.json()
         return response
