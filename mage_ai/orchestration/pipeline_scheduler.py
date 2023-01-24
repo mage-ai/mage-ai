@@ -13,7 +13,6 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
@@ -665,12 +664,7 @@ def check_sla():
             for s in PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
         ])
 
-    pipeline_runs = \
-        PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id.in_(pipeline_schedules),
-            PipelineRun.status.in_(IN_PROGRESS_STATUSES),
-            PipelineRun.passed_sla.is_(False),
-        ).all()
+    pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
 
     if pipeline_runs:
         notification_sender = NotificationSender(
