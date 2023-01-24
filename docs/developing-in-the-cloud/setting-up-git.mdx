@@ -50,6 +50,11 @@ git config --global core.editor emacs
    ```
    bash ssh-keygen -t rsa -C "your_email@example.com" -f ~/.ssh/id_rsa -N ""
    ```
+   
+   If you get the error `cannot execute binary file`, then re-run the command above without `bash`:
+   ```
+    ssh-keygen -t rsa -C "your_email@example.com" -f ~/.ssh/id_rsa -N ""
+   ```
 2. Run the following command and copy the public SSH key (it’ll be used
 
    <ins></ins> the next section):{" "}
