@@ -13,7 +13,6 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager

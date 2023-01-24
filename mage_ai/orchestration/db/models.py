@@ -7,7 +7,6 @@ from mage_ai.data_preparation.models.block.utils import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.constants import IN_PROGRESS_STATUSES
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
@@ -341,7 +340,10 @@ class PipelineRun(BaseModel):
     ):
         return self.query.filter(
             PipelineRun.pipeline_schedule_id.in_(pipeline_schedules),
-            PipelineRun.status.in_(IN_PROGRESS_STATUSES),
+            PipelineRun.status.in_([
+                self.PipelineRunStatus.INITIAL,
+                self.PipelineRunStatus.RUNNING,
+            ]),
             PipelineRun.passed_sla.is_(False),
         ).all()
 
