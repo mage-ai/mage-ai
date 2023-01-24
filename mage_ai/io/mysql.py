@@ -1,6 +1,6 @@
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
-from mage_ai.io.sql.base import BaseSQL
+from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.utils import clean_name
 from mysql.connector import connect
 from pandas import DataFrame, Series
