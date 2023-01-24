@@ -21,7 +21,7 @@ pipelines to transform large datasets.
 Instructions for running PySpark kernel
 
 - Launch editor with docker:
-  `docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai mage start [project_name]`
+  `docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]`
 - Specify PySpark kernel related [metadata](#metadata) in project's
   metadata.yaml file
 - Launch a remote AWS EMR Spark cluster. Install mage_ai library in bootstrap

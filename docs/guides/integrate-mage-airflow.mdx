@@ -56,7 +56,7 @@ If you’re using Docker, run the following command in the `dags/` folder:
 
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  mageai/mageai mage init demo_project
+  /app/run_app.sh mageai/mageai mage init demo_project
 ```
 
 If you used pip to install Mage, run the following command in the `dags/`
@@ -115,7 +115,7 @@ If you’re using Docker, run the following command in the `dags/` folder:
 
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  mageai/mageai mage start demo_project
+  /app/run_app.sh mageai/mageai mage start demo_project
 ```
 
 If you used pip to install Mage, run the following command in the `dags/`
