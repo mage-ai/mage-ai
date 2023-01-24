@@ -46,6 +46,12 @@ class Postgres(BaseSQL):
             password=password,
             host=host,
             port=port,
+            connection_method=connection_method,
+            ssh_host=ssh_host,
+            ssh_port=ssh_port,
+            ssh_username=ssh_username,
+            ssh_password=ssh_password,
+            ssh_pkey=ssh_pkey,
             **kwargs,
         )
 
@@ -74,14 +80,14 @@ class Postgres(BaseSQL):
             user = self.settings['user']
             if self.settings['connection_method'] == 'ssh_tunnel':
                 ssh_setting = dict(ssh_username=self.settings['ssh_username'])
-                if self.ssh_pkey is not None:
+                if self.settings['ssh_pkey'] is not None:
                     ssh_setting['ssh_pkey'] = self.settings['ssh_pkey']
                 else:
                     ssh_setting['ssh_password'] = self.settings['ssh_password']
                 self.ssh_tunnel = SSHTunnelForwarder(
-                    (self.ssh_host, self.ssh_port),
-                    remote_bind_address=(self.host, self.port),
-                    local_bind_address=('', self.port),
+                    (self.settings['ssh_host'], self.settings['ssh_port']),
+                    remote_bind_address=(host, port),
+                    local_bind_address=('', port),
                     **ssh_setting,
                 )
                 self.ssh_tunnel.start()
@@ -89,15 +95,20 @@ class Postgres(BaseSQL):
 
                 host = '127.0.0.1'
                 port = self.ssh_tunnel.local_bind_port
-            self._ctx = connect(
-                database=database,
-                host=host,
-                password=password,
-                port=port,
-                user=user,
-                keepalives=1,
-                keepalives_idle=300,
-            )
+            try:
+                self._ctx = connect(
+                    database=database,
+                    host=host,
+                    password=password,
+                    port=port,
+                    user=user,
+                    keepalives=1,
+                    keepalives_idle=300,
+                )
+            except Exception:
+                if self.ssh_tunnel is not None:
+                    self.ssh_tunnel.stop()
+                    self.ssh_tunnel = None
 
     def close(self) -> None:
         """
