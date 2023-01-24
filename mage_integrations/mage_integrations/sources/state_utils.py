@@ -41,24 +41,3 @@ def incorporate(state, table, key, value, force=False):
         new_state['bookmarks'][table][key] = value
 
     return new_state
-
-
-def save_state(state):
-    if not state:
-        return
-
-    LOGGER.info('Updating state.')
-
-    write_state(state)
-
-
-def load_state(filename):
-    if filename is None:
-        return {}
-
-    try:
-        with open(filename) as handle:
-            return json.load(handle)
-    except:
-        LOGGER.fatal("Failed to decode state file. Is it valid json?")
-        raise RuntimeError

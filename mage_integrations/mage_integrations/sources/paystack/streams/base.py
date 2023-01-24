@@ -1,14 +1,13 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-from mage_integrations.sources.chargebee.streams.util import Util
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.messages import write_schema
+from mage_integrations.sources.paystack.client import PaystackClient
 from mage_integrations.sources.state_utils import (
     get_last_record_value_for_table,
     incorporate
 )
 import inspect
-import json
 import os
 import pytz
 import singer
@@ -36,14 +35,14 @@ def is_selected(stream_catalog):
     return inclusion == 'automatic'
 
 
-class BaseChargebeeStream():
+class BasePaystackStream():
     # GLOBAL PROPERTIES
     TABLE = None
     KEY_PROPERTIES = []
     API_METHOD = 'GET'
     REQUIRES = []
 
-    def __init__(self, config, state, catalog, client):
+    def __init__(self, config, state, catalog, client: PaystackClient):
         self.config = config
         self.state = state
         self.catalog = catalog
@@ -73,36 +72,10 @@ class BaseChargebeeStream():
     def get_abs_path(self, path):
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
-    def append_custom_fields(self, record):
-        list_of_custom_field_obj = ['addon', 'plan', 'subscription', 'customer']
-        custom_fields = {}
-        event_custom_fields = {}
-        if self.ENTITY == 'event':
-            content = record['content']
-            words = record['event_type'].split("_")
-            sl = slice(len(words) - 1)
-            content_obj = "_".join(words[sl])
-
-            if content_obj in list_of_custom_field_obj:
-                for k in record['content'][content_obj].keys():
-                    if "cf_" in k:
-                        event_custom_fields[k] = record['content'][content_obj][k]
-                record['content'][content_obj]['custom_fields'] = json.dumps(event_custom_fields)
-
-
-        for key in record.keys():
-            if "cf_" in key:
-                custom_fields[key] = record[key]
-        if custom_fields:
-            record['custom_fields'] = json.dumps(custom_fields)
-        return record
-
     # This overrides the transform_record method in the Fistown Analytics tap-framework package
     def transform_record(self, record):
         with singer.Transformer(integer_datetime_fmt="unix-seconds-integer-datetime-parsing") as tx:
             metadata = {}
-
-            record = self.append_custom_fields(record)
 
             if self.catalog.metadata is not None:
                 metadata = singer.metadata.to_map(self.catalog.metadata)
@@ -110,11 +83,11 @@ class BaseChargebeeStream():
             return tx.transform(
                 record,
                 self.catalog.schema.to_dict(),
-                metadata)
+                metadata
+            )
 
     def get_stream_data(self, data):
-        entity = self.ENTITY
-        return [self.transform_record(item.get(entity)) for item in data]
+        return [self.transform_record(item) for item in data]
 
     def load_data(self):
         table = self.TABLE
@@ -134,26 +107,13 @@ class BaseChargebeeStream():
             bookmark_date = parse(bookmark_date)
 
         # Convert bookmarked start date to POSIX.
-        bookmark_date_posix = int(bookmark_date.timestamp())
+        bookmark_date_iso = bookmark_date.strftime('%Y-%m-%dT%H:%M:%SZ')
         to_date = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
-        to_date_posix = int(to_date.timestamp())
-        sync_window = str([bookmark_date_posix, to_date_posix])
+        to_date_iso = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+        sync_window = str([bookmark_date_iso, to_date_iso])
         LOGGER.info("Sync Window {} for schema {}".format(sync_window, table))
 
-        # Create params for filtering
-        if self.ENTITY == 'event':
-            params = {"occurred_at[between]": sync_window}
-            bookmark_key = 'occurred_at'
-        elif self.ENTITY in ['promotional_credit','comment']:
-            params = {"created_at[between]": sync_window}
-            bookmark_key = 'created_at'
-        else:
-            params = {"updated_at[between]": sync_window}
-            bookmark_key = 'updated_at'
-
-        # Add sort_by[asc] to prevent data overwrite by oldest deleted records
-        if self.SORT_BY is not None:
-            params['sort_by[asc]'] = self.SORT_BY
+        params = {'from': bookmark_date_iso, 'to': to_date_iso}
 
         LOGGER.info("Querying {} starting at {}".format(table, bookmark_date))
 
@@ -163,46 +123,22 @@ class BaseChargebeeStream():
             response = self.client.make_request(
                 url=self.get_url(),
                 method=api_method,
-                params=params)
+                params=params
+            )
+
+            meta = response.get('meta', dict())
 
             if 'api_error_code' in response.keys():
                 if response['api_error_code'] == 'configuration_incompatible':
                     LOGGER.error('{} is not configured'.format(response['error_code']))
                     break
 
-            records = response.get('list')
-
-            # List of deleted "plans, addons and coupons" from the /events endpoint
-            deleted_records = []
-
-            if self.config.get('include_deleted') not in ['false','False', False]:
-                if self.ENTITY == 'event':
-                    # Parse "event_type" from events records and collect deleted plan/addon/coupon from events
-                    for record in records:
-                        event = record.get(self.ENTITY)
-                        if event["event_type"] == 'plan_deleted':
-                            Util.plans.append(event['content']['plan'])
-                        elif event['event_type'] == 'addon_deleted':
-                            Util.addons.append(event['content']['addon'])
-                        elif event['event_type'] == 'coupon_deleted':
-                            Util.coupons.append(event['content']['coupon'])
-                # We need additional transform for deleted records as "to_write" already contains transformed data
-                if self.ENTITY == 'plan':
-                    for plan in Util.plans:
-                        deleted_records.append(self.transform_record(plan))
-                if self.ENTITY == 'addon':
-                    for addon in Util.addons:
-                        deleted_records.append(self.transform_record(addon))
-                if self.ENTITY == 'coupon':
-                    for coupon in Util.coupons:
-                        deleted_records.append(self.transform_record(coupon))
+            records = response.get('data')
 
             # Get records from API response and transform
             to_write = self.get_stream_data(records)
 
             with singer.metrics.record_counter(endpoint=table) as ctr:
-                # Combine transformed records and deleted data of  "plan, addon and coupon" collected from events endpoint
-                to_write = to_write + deleted_records
                 yield to_write
 
                 ctr.increment(amount=len(to_write))
@@ -214,12 +150,12 @@ class BaseChargebeeStream():
             self.state = incorporate(
                 self.state, table, 'bookmark_date', max_date)
 
-            if not response.get('next_offset'):
-                LOGGER.info("Final offset reached. Ending sync.")
+            if meta.get('page') == meta.get('pageCount'):
+                LOGGER.info("Final page reached. Ending sync.")
                 done = True
             else:
-                LOGGER.info("Advancing by one offset.")
-                params['offset'] = response.get('next_offset')
+                LOGGER.info("Advancing by one page.")
+                params['page'] = meta.get('page') + 1
                 bookmark_date = max_date
 
     def get_class_path(self):

@@ -19,6 +19,7 @@ SOURCES = sorted([
     dict(name='Google Sheets'),
     dict(name='HubSpot'),
     dict(name='Intercom'),
+    dict(name='Paystack'),
     dict(name='Postmark'),
     dict(name='Salesforce'),
     dict(name='Stripe'),

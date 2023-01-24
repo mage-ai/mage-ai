@@ -1,13 +1,10 @@
 from mage_integrations.sources.base import Source, main
-from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.chargebee.client import ChargebeeClient
-from mage_integrations.sources.chargebee.state import save_state
 from mage_integrations.sources.chargebee.streams import (
     STREAMS,
     ITEM_MODEL_AVAILABLE_STREAMS,
     PLAN_MODEL_AVAILABLE_STREAMS,
 )
-from mage_integrations.sources.chargebee.streams.base import is_selected
 from singer.schema import Schema
 from typing import Dict, Generator, List
 import singer
