@@ -106,7 +106,7 @@ class BaseSQL(BaseSQLConnection):
                 for line in display_query.split('\n'):
                     print_message += f'\n{line}'
             else:
-                print_message += f'\n{query_string}'
+                print_message += f'\n\n{query_string}\n\n'
 
         query_string = self._clean_query(query_string)
 
