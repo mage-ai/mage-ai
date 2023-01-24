@@ -665,12 +665,7 @@ def check_sla():
             for s in PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines)
         ])
 
-    pipeline_runs = \
-        PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id.in_(pipeline_schedules),
-            PipelineRun.status.in_(IN_PROGRESS_STATUSES),
-            PipelineRun.passed_sla.is_(False),
-        ).all()
+    pipeline_runs = PipelineRun.in_progress_runs(pipeline_schedules)
 
     if pipeline_runs:
         notification_sender = NotificationSender(
