@@ -250,7 +250,8 @@
         "integrations/airbyte",
         "integrations/dbt-cloud",
         "integrations/hightouch",
-        "integrations/stitch"
+        "integrations/stitch",
+        "integrations/metaplane"
       ]
     },
     {
