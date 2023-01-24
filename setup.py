@@ -61,7 +61,10 @@ setuptools.setup(
         'mysql': [
             'mysql-connector-python==8.0.31',
         ],
-        'postgres': ['psycopg2-binary==2.9.3'],
+        'postgres': [
+            'psycopg2-binary==2.9.3'
+            'sshtunnel==0.4.0',
+        ],
         'redshift': ['boto3==1.24.19', 'redshift-connector==2.0.909'],
         's3': ['botocore==1.27.19', 'boto3==1.24.19'],
         'snowflake': ['snowflake-connector-python==2.7.9'],
@@ -96,6 +99,7 @@ setuptools.setup(
             'redshift-connector==2.0.909',
             'requests_aws4auth',
             'snowflake-connector-python==2.7.9',
+            'sshtunnel==0.4.0',
         ],
     },
 )
