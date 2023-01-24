@@ -162,7 +162,7 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
 1. Create a new project and launch tool (change `demo_project` to any other name if you want):
     ```bash
     docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-      mage start demo_project
+      /app/run_app.sh mage start demo_project
     ```
 
     <sub>Want to use Spark or other integrations? Read more about [integrations](https://docs.mage.ai/data-integrations/overview).</sub>
