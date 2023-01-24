@@ -3,6 +3,7 @@ from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
 from pandas import DataFrame, Series
 from psycopg2 import connect
+from sshtunnel import SSHTunnelForwarder
 import numpy as np
 
 
@@ -17,6 +18,12 @@ class Postgres(BaseSQL):
         password: str,
         host: str,
         port: str = None,
+        connection_method: str = 'direct',
+        ssh_host: str = None,
+        ssh_port: str = None,
+        ssh_username: str = None,
+        ssh_password: str = None,
+        ssh_pkey: str = None,
         verbose=True,
         **kwargs,
     ) -> None:
@@ -31,6 +38,7 @@ class Postgres(BaseSQL):
             port (str): Port on which the database is running.
             **kwargs: Additional settings for creating SQLAlchemy engine and connection
         """
+        self.ssh_tunnel = None
         super().__init__(
             verbose=verbose,
             dbname=dbname,
@@ -38,6 +46,12 @@ class Postgres(BaseSQL):
             password=password,
             host=host,
             port=port,
+            connection_method=connection_method,
+            ssh_host=ssh_host,
+            ssh_port=ssh_port,
+            ssh_username=ssh_username,
+            ssh_password=ssh_password,
+            ssh_pkey=ssh_pkey,
             **kwargs,
         )
 
@@ -49,14 +63,65 @@ class Postgres(BaseSQL):
             password=config[ConfigKey.POSTGRES_PASSWORD],
             host=config[ConfigKey.POSTGRES_HOST],
             port=config[ConfigKey.POSTGRES_PORT],
+            connection_method=config[ConfigKey.POSTGRES_CONNECTION_METHOD],
+            ssh_host=config[ConfigKey.POSTGRES_SSH_HOST],
+            ssh_port=config[ConfigKey.POSTGRES_SSH_PORT],
+            ssh_username=config[ConfigKey.POSTGRES_SSH_USERNAME],
+            ssh_password=config[ConfigKey.POSTGRES_SSH_PASSWORD],
+            ssh_pkey=config[ConfigKey.POSTGRES_SSH_PKEY],
         )
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to PostgreSQL database'):
-            self._ctx = connect(**self.settings,
-                keepalives=1,
-                keepalives_idle=300,
-            )
+            database = self.settings['dbname']
+            host = self.settings['host']
+            password = self.settings['password']
+            port = self.settings['port']
+            user = self.settings['user']
+            if self.settings['connection_method'] == 'ssh_tunnel':
+                ssh_setting = dict(ssh_username=self.settings['ssh_username'])
+                if self.settings['ssh_pkey'] is not None:
+                    ssh_setting['ssh_pkey'] = self.settings['ssh_pkey']
+                else:
+                    ssh_setting['ssh_password'] = self.settings['ssh_password']
+                self.ssh_tunnel = SSHTunnelForwarder(
+                    (self.settings['ssh_host'], self.settings['ssh_port']),
+                    remote_bind_address=(host, port),
+                    local_bind_address=('', port),
+                    **ssh_setting,
+                )
+                self.ssh_tunnel.start()
+                self.ssh_tunnel._check_is_started()
+
+                host = '127.0.0.1'
+                port = self.ssh_tunnel.local_bind_port
+            try:
+                self._ctx = connect(
+                    database=database,
+                    host=host,
+                    password=password,
+                    port=port,
+                    user=user,
+                    keepalives=1,
+                    keepalives_idle=300,
+                )
+            except Exception:
+                if self.ssh_tunnel is not None:
+                    self.ssh_tunnel.stop()
+                    self.ssh_tunnel = None
+
+    def close(self) -> None:
+        """
+        Close the underlying connection to the SQL data source if open. Else will do nothing.
+        """
+        if '_ctx' in self.__dict__:
+            self._ctx.close()
+            del self._ctx
+        if self.ssh_tunnel is not None:
+            self.ssh_tunnel.stop()
+            self.ssh_tunnel = None
+        if self.verbose and self.printer.exists_previous_message:
+            print('')
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
