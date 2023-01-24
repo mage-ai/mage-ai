@@ -5,9 +5,11 @@ from mage_integrations.sources.postgresql import PostgreSQL
 from mage_integrations.sources.stripe import Stripe
 from singer.schema import Schema
 from unittest.mock import patch
+import os
 import unittest
 import json
 import sys
+
 
 def build_sample_streams_catalog_entries():
     return [
@@ -21,74 +23,21 @@ def build_sample_streams_catalog_entries():
         ),
     ]
 
+ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
 def build_sample_streams_list():
+    with open(os.path.join(
+            ABSOLUTE_PATH,
+            'samples/demo_table_stream_metadata.json',
+        ), 'r') as f1, open(os.path.join(
+            ABSOLUTE_PATH,
+            'samples/demo_users_stream_metadata.json',
+        ), 'r') as f2:
+        demo_table_stream_metadata = json.load(f1)
+        demo_users_stream_metadata = json.load(f2)
     stream1 = dict(
         auto_add_new_fields=False,
         key_properties=[],
-        metadata=[
-            {
-                'breadcrumb': (),
-                'metadata': {
-                    'table-key-properties': [],
-                    'forced-replication-method': 'FULL_TABLE',
-                    'valid-replication-keys': [],
-                    'inclusion': 'available',
-                    'schema-name': 'demo_table',
-                },
-            },
-            {
-                'breadcrumb': ('properties', 'confidence'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'actionname'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'type'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'isdeleted'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'actionid'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'createdbyid'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'systemmodstamp'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'lastmodifieddate'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'createddate'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'id'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'name'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'airecordinsightid'),
-                'metadata': {'inclusion': 'available'},
-            },
-            {
-                'breadcrumb': ('properties', 'lastmodifiedbyid'),
-                'metadata': {'inclusion': 'available'},
-            },
-        ],
+        metadata=demo_table_stream_metadata,
         replication_method='FULL_TABLE',
         schema=dict(
             properties=dict(
@@ -144,68 +93,7 @@ def build_sample_streams_list():
         auto_add_new_fields=False,
         bookmark_properties=['id'],
         key_properties=[],
-        metadata=[
-            {
-                'breadcrumb': [],
-                'metadata': {
-                    'table-key-properties': [],
-                    'forced-replication-method': 'FULL_TABLE',
-                    'valid-replication-keys': [],
-                    'inclusion': 'available',
-                    'schema-name': 'demo_users'
-                }
-            },
-            {
-                'breadcrumb': [
-                    'properties',
-                    'age'
-                ],
-                'metadata': {
-                    'inclusion': 'available',
-                    'selected': True,
-                }
-            },
-            {
-                'breadcrumb': [
-                    'properties',
-                    'id'
-                ],
-                'metadata': {
-                    'inclusion': 'available',
-                    'selected': True,
-                }
-            },
-            {
-                'breadcrumb': [
-                    'properties',
-                    'last_name'
-                ],
-                'metadata': {
-                    'inclusion': 'available',
-                    'selected': True,
-                }
-            },
-            {
-                'breadcrumb': [
-                    'properties',
-                    'first_name'
-                ],
-                'metadata': {
-                    'inclusion': 'available',
-                    'selected': True,
-                }
-            },
-            {
-                'breadcrumb': [
-                    'properties',
-                    'color'
-                ],
-                'metadata': {
-                    'inclusion': 'available',
-                    'selected': True,
-                }
-            },
-        ],
+        metadata=demo_users_stream_metadata,
         replication_method='INCREMENTAL',
         schema=dict(
             properties=dict(
