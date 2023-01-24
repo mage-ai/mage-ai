@@ -51,13 +51,16 @@ setuptools.setup(
             'db-dtypes==1.0.2',
         ],
         'dbt': [
+            'dbt-bigquery==1.3.0',
             'dbt-core==1.3.0',
             'dbt-postgres==1.3.0',
-            'dbt-bigquery==1.3.0',
             'dbt-snowflake==1.3.0',
         ],
         'google-cloud-storage': ['google-cloud-storage==2.5.0'],
         'hdf5': ['tables==3.7.0'],
+        'mysql': [
+            'mysql-connector-python==8.0.31',
+        ],
         'postgres': ['psycopg2-binary==2.9.3'],
         'redshift': ['boto3==1.24.19', 'redshift-connector==2.0.909'],
         's3': ['botocore==1.27.19', 'boto3==1.24.19'],

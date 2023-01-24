@@ -1,7 +1,9 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
 from mage_ai.data_preparation.models.block.errors import NoMultipleDynamicUpstreamBlocks
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
     BlockType,
     ExecutorType,
     PipelineType,
@@ -183,7 +185,11 @@ class Pipeline:
         if not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
         async with aiofiles.open(config_path, mode='r') as f:
-            config = yaml.safe_load(await f.read())
+            try:
+                config = yaml.safe_load(await f.read()) or {}
+            except Exception as err:
+                config = {}
+                print(err)
 
         if PipelineType.INTEGRATION == config.get('type'):
             pipeline = IntegrationPipeline(uuid, repo_path=repo_path, config=config)
@@ -502,6 +508,9 @@ class Pipeline:
 
                             block.configuration = configuration
                             should_save = True
+
+                        if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
+                            update_model_settings(block, block.upstream_blocks, [], force_update=True)
 
                         if widget:
                             keys_to_update = []

@@ -17,6 +17,7 @@ COPY requirements.txt requirements.txt
 RUN ${PIP} install --upgrade pip
 COPY mage_integrations mage_integrations
 RUN ${PIP} install mage_integrations/
+RUN ${PIP} install "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
 RUN ${PIP} install -r requirements.txt
 RUN ${PIP} install jupyterlab
