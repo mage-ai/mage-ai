@@ -10,7 +10,7 @@ You can install Mage using Docker, `pip`, or `conda`.
 
    ```bash
    docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-     mage start [project_name]
+     /app/run_app.sh mage start [project_name]
    ```
 
     > Windows
@@ -19,7 +19,7 @@ You can install Mage using Docker, `pip`, or `conda`.
     > command:
     ```bash
     docker run -it -p 6789:6789 -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai \
-      mage start [project_name]
+      /app/run_app.sh mage start [project_name]
     ```
 
 2. Open http://localhost:6789 in your browser and build a pipeline.
@@ -28,7 +28,7 @@ You can install Mage using Docker, `pip`, or `conda`.
 
    ```bash
    docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-     mage run [project_name] [pipeline]
+     /app/run_app.sh mage run [project_name] [pipeline]
    ```
 
 ### Initialize new project
@@ -68,7 +68,7 @@ the database engine, you'll need to run your Docker container slightly different
    docker run --network mage-app -it -p 6789:6789 -v $(pwd):/home/src \
       -e MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://<username>:<password>@postgres_db:5432/<database> \
       mageai/mageai \
-      mage start another_repo
+      /app/run_app.sh mage start another_repo
    ```
 
 <br />
@@ -145,7 +145,7 @@ The command to run Mage using Docker could look like this:
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
     -e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2 \
-    mage start demo_project
+    /app/run_app.sh mage start demo_project
 ```
 
 <br />

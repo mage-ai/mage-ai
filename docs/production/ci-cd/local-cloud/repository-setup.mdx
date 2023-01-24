@@ -9,7 +9,7 @@ description: "Setup your Mage project respository."
 
     ```bash
     docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
-      mage start demo_project
+      /app/run_app.sh mage start demo_project
     ```
 
     For more examples, read the [setup guide](/getting-started/setup).
@@ -69,7 +69,7 @@ description: "Setup your Mage project respository."
 
 6.  To test the new image works, run the following command:
     ```bash
-    docker run -it -p 6789:6789 mageprod:latest mage start demo_project
+    docker run -it -p 6789:6789 mageprod:latest /app/run_app.sh mage start demo_project
     ```
 7.  Open your browser and go to http://localhost:6789/
     1. You should see all your pipelines there.

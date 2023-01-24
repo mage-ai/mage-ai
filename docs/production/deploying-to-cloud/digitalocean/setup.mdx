@@ -99,7 +99,7 @@ SSH into the instance: `ssh -i [path_to_private_key] root@[ip]`
 
 Run command to start Mage app in :
 ```bash
-docker run -d -p 6789:6789 -v $(pwd):/home/src mageai/mageai mage start default_repo
+docker run -d -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start default_repo
 ```
 
 ---
