@@ -4,6 +4,7 @@ from logging import Logger
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
+    mysql,
     postgres,
     snowflake,
 )
@@ -16,7 +17,7 @@ from mage_ai.io.config import ConfigFileLoader
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
-from mage_ai.shared.utils import files_in_path
+from mage_ai.shared.utils import clean_name, files_in_path
 from pandas import DataFrame
 from typing import Callable, Dict, List, Tuple
 import os
@@ -44,7 +45,14 @@ def parse_attributes(block) -> Dict:
     full_path = f'{get_repo_path()}/dbt/{file_path}'
     sources_full_path = re.sub(filename, 'mage_sources.yml', full_path)
 
-    source_name = f'mage_{project_name}'
+    profiles_full_path = f'{project_full_path}/profiles.yml'
+    profile_target = block.configuration.get('dbt_profile_target')
+    profile = load_profile(project_name, profiles_full_path, profile_target)
+
+    if profile and 'mysql' == profile.get('type'):
+        source_name = profile['schema']
+    else:
+        source_name = f'mage_{project_name}'
 
     return dict(
         file_extension=file_extension,
@@ -52,7 +60,7 @@ def parse_attributes(block) -> Dict:
         filename=filename,
         full_path=full_path,
         model_name=model_name,
-        profiles_full_path=f'{project_full_path}/profiles.yml',
+        profiles_full_path=profiles_full_path,
         project_full_path=project_full_path,
         project_name=project_name,
         source_name=source_name,
@@ -118,10 +126,15 @@ def load_sources(block) -> Dict:
 
 
 def source_table_name_for_block(block) -> str:
-    return f'{block.pipeline.uuid}_{block.uuid}'
+    return f'{clean_name(block.pipeline.uuid)}_{clean_name(block.uuid)}'
 
 
-def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
+def update_model_settings(
+    block: 'Block',
+    upstream_blocks: List['Block'],
+    upstream_blocks_previous: List['Block'],
+    force_update: bool = False,
+):
     attributes_dict = parse_attributes(block)
 
     filename = attributes_dict['filename']
@@ -130,7 +143,7 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
     sources_full_path = attributes_dict['sources_full_path']
     source_name = attributes_dict['source_name']
 
-    if len(upstream_blocks_previous) > len(upstream_blocks):
+    if not force_update and len(upstream_blocks_previous) > len(upstream_blocks):
         # TODO (tommy dangerous): should we remove sources?
         # How do we know no other model is using a source?
 
@@ -175,6 +188,8 @@ def update_model_settings(block, upstream_blocks, upstream_blocks_previous):
             )
 
             settings = load_sources(block)
+
+            print('WTFFFFFFFFFFFFFF', new_source)
             if settings:
                 source = find(lambda x: x['name'] == source_name, settings.get('sources', []))
                 if source:
@@ -201,7 +216,9 @@ def get_profile(block, profile_target: str = None) -> Dict:
     attr = parse_attributes(block)
     project_name = attr['project_name']
     profiles_full_path = attr['profiles_full_path']
+    return load_profile(project_name, profiles_full_path, profile_target)
 
+def load_profile(project_name: str, profiles_full_path: str, profile_target: str = None) -> Dict:
     with open(profiles_full_path, 'r') as f:
         try:
             text = Template(f.read()).render(
@@ -259,6 +276,27 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider=profile_type,
             data_provider_database=database,
             data_provider_schema=schema,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
+    elif DataSource.MYSQL == profile_type:
+        host = profile.get('server')
+        password = profile.get('password')
+        port = profile.get('port')
+        schema = profile.get('schema')
+        ssl_disabled = profile.get('ssl_disabled')
+        username = profile.get('username')
+
+        config_file_loader = ConfigFileLoader(config=dict(
+            MYSQL_CONNECTION_METHOD='ssh_tunnel' if not ssl_disabled else None,
+            MYSQL_DATABASE=schema,
+            MYSQL_HOST=host,
+            MYSQL_PASSWORD=password,
+            MYSQL_PORT=port,
+            MYSQL_USER=username,
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
     elif DataSource.SNOWFLAKE == profile_type:
@@ -339,6 +377,18 @@ def create_upstream_tables(
                 cache_upstream_dbt_models=cache_upstream_dbt_models,
                 **kwargs,
             )
+    elif DataSource.MYSQL == data_provider:
+        from mage_ai.io.mysql import MySQL
+
+        with MySQL.with_config(config_file_loader) as loader:
+            mysql.create_upstream_block_tables(
+                loader,
+                block,
+                cascade_on_drop=True,
+                configuration=configuration,
+                cache_upstream_dbt_models=cache_upstream_dbt_models,
+                **kwargs,
+            )
     elif DataSource.BIGQUERY == data_provider:
         from mage_ai.io.bigquery import BigQuery
 
@@ -379,6 +429,9 @@ def interpolate_input(
         if replace_func:
             return replace_func(db, schema, tn)
 
+        if db and not schema:
+            return f'{__quoted(db)}.{__quoted(tn)}'
+
         return f'{__quoted(schema)}.{__quoted(tn)}'
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
@@ -387,8 +440,15 @@ def interpolate_input(
 
         attrs = parse_attributes(upstream_block)
         model_name = attrs['model_name']
-        matcher1 = f'{__quoted(profile_database)}.{__quoted(profile_schema)}.'\
-                   f'{__quoted(model_name)}'
+
+        arr = []
+        if profile_database:
+            arr.append(__quoted(profile_database))
+        if profile_schema:
+            arr.append(__quoted(profile_schema))
+        if model_name:
+            arr.append(__quoted(model_name))
+        matcher1 = '.'.join(arr)
 
         database = configuration.get('data_provider_database')
         schema = configuration.get('data_provider_schema')
@@ -426,6 +486,10 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             database = profile['dbname']
             schema = profile['schema']
             quote_str = '"'
+        elif DataSource.MYSQL == profile_type:
+            database = configuration['data_provider_database']
+            schema = None
+            quote_str = '`'
         elif DataSource.BIGQUERY == profile_type:
             database = profile['project']
             schema = profile['dataset']
@@ -447,6 +511,11 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             from mage_ai.io.postgres import Postgres
 
             with Postgres.with_config(config_file_loader) as loader:
+                return loader.load(query_string)
+        elif DataSource.MYSQL == data_provider:
+            from mage_ai.io.mysql import MySQL
+
+            with MySQL.with_config(config_file_loader) as loader:
                 return loader.load(query_string)
         elif DataSource.BIGQUERY == data_provider:
             from mage_ai.io.bigquery import BigQuery

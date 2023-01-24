@@ -306,7 +306,7 @@ class Block:
 
     @property
     def table_name(self):
-        table_name = f'{self.pipeline.uuid}_{self.uuid}_{self.pipeline.version_name}'
+        table_name = f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_{self.pipeline.version_name}'
 
         env = (self.global_vars or dict()).get('env')
         if env == ENV_DEV:
