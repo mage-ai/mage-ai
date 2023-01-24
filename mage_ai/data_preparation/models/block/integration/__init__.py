@@ -88,7 +88,7 @@ class IntegrationBlock(Block):
             lines_in_file = 0
 
             with open(source_output_file_path, 'w') as f:
-                proc = subprocess.Popen([
+                args = [
                     PYTHON_COMMAND,
                     self.pipeline.source_file_path,
                     '--config_json',
@@ -104,7 +104,15 @@ class IntegrationBlock(Block):
                     source_state_file_path,
                     '--query_json',
                     json.dumps(query_data),
-                ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                ]
+
+                if len(selected_streams) >= 1:
+                    args += [
+                        '--selected_streams_json',
+                        json.dumps(selected_streams),
+                    ]
+
+                proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
                 for line in proc.stdout:
                     f.write(line.decode())

@@ -265,6 +265,13 @@ class Source:
                             if stream.tap_stream_id in updated_streams:
                                 stream.update_schema(updated_streams[stream.tap_stream_id][0])
                     catalog = self.catalog
+
+                if self.selected_streams:
+                    catalog.streams = list(filter(
+                        lambda x: x.tap_stream_id in self.selected_streams,
+                        catalog.streams,
+                    ))
+
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {str(err)}.'

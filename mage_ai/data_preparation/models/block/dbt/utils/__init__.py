@@ -189,7 +189,6 @@ def update_model_settings(
 
             settings = load_sources(block)
 
-            print('WTFFFFFFFFFFFFFF', new_source)
             if settings:
                 source = find(lambda x: x['name'] == source_name, settings.get('sources', []))
                 if source:
