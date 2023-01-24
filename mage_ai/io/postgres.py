@@ -1,6 +1,6 @@
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
-from mage_ai.io.sql.base import BaseSQL
+from mage_ai.io.sql import BaseSQL
 from pandas import DataFrame, Series
 from psycopg2 import connect
 import numpy as np
