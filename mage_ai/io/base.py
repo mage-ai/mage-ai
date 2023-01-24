@@ -16,6 +16,7 @@ class DataSource(str, Enum):
     FILE = 'file'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     KAFKA = 'kafka'
+    MYSQL = 'mysql'
     OPENSEARCH = 'opensearch'
     POSTGRES = 'postgres'
     REDSHIFT = 'redshift'

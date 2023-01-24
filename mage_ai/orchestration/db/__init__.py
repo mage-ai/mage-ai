@@ -11,6 +11,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 import os
 import sqlalchemy
 
+DB_RETRY_COUNT = 2
 TEST_DB = 'test.db'
 
 db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
@@ -72,7 +73,7 @@ def safe_db_query(func):
                 return func(*args, **kwargs)
             except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.PendingRollbackError) as e:
                 db_connection.session.rollback()
-                if retry_count >= 1:
+                if retry_count >= DB_RETRY_COUNT:
                     raise e
                 retry_count += 1
     return func_with_rollback

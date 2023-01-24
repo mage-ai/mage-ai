@@ -208,6 +208,7 @@ class PipelineSchedule(BaseModel):
             cron_itr = croniter(self.schedule_interval, now)
             return cron_itr.get_prev(datetime)
 
+    @safe_db_query
     def should_schedule(self) -> bool:
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
             return False
@@ -331,6 +332,21 @@ class PipelineRun(BaseModel):
 
         return pipeline_run
 
+    @classmethod
+    @safe_db_query
+    def in_progress_runs(
+        self,
+        pipeline_schedules: List[int],
+    ):
+        return self.query.filter(
+            PipelineRun.pipeline_schedule_id.in_(pipeline_schedules),
+            PipelineRun.status.in_([
+                self.PipelineRunStatus.INITIAL,
+                self.PipelineRunStatus.RUNNING,
+            ]),
+            PipelineRun.passed_sla.is_(False),
+        ).all()
+
     def create_block_run(self, block_uuid: str, **kwargs) -> 'BlockRun':
         return BlockRun.create(
             block_uuid=block_uuid,
@@ -392,15 +408,12 @@ class BlockRun(BaseModel):
         ).get_logs_async()
 
     @classmethod
+    @safe_db_query
     def batch_update_status(self, block_run_ids: List[int], status):
         BlockRun.query.filter(BlockRun.id.in_(block_run_ids)).update({
             BlockRun.status: status
         }, synchronize_session=False)
-        try:
-            db_connection.session.commit()
-        except Exception as e:
-            db_connection.rollback()
-            raise e
+        db_connection.session.commit()
 
     @classmethod
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':

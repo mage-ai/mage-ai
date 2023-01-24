@@ -98,4 +98,10 @@ def gen_table_creation_query(
     query = []
     for cname in dtypes:
         query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
-    return f'CREATE TABLE {schema_name}.{table_name} (' + ','.join(query) + ');'
+
+    if schema_name:
+        full_table_name = f'{schema_name}.{table_name}'
+    else:
+        full_table_name = table_name
+
+    return f'CREATE TABLE {full_table_name} (' + ','.join(query) + ');'
