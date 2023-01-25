@@ -1,0 +1,81 @@
+{
+    "auto_add_new_fields": true,
+    "bookmark_properties": ["id"],
+    "key_properties": [],
+    "metadata": [
+        {
+            "breadcrumb": [],
+            "metadata": {
+                "table-key-properties": [],
+                "forced-replication-method": "FULL_TABLE",
+                "valid-replication-keys": [],
+                "inclusion": "available",
+                "schema-name": "demo_users"
+            }
+        },
+        {
+            "breadcrumb": [
+                "properties",
+                "age"
+            ],
+            "metadata": {
+                "inclusion": "available",
+                "selected": true
+            }
+        },
+        {
+            "breadcrumb": [
+                "properties",
+                "id"
+            ],
+            "metadata": {
+                "inclusion": "available",
+                "selected": true
+            }
+        },
+        {
+            "breadcrumb": [
+                "properties",
+                "last_name"
+            ],
+            "metadata": {
+                "inclusion": "available",
+                "selected": true
+            }
+        },
+        {
+            "breadcrumb": [
+                "properties",
+                "first_name"
+            ],
+            "metadata": {
+                "inclusion": "available",
+                "selected": true
+            }
+        },
+        {
+            "breadcrumb": [
+                "properties",
+                "color"
+            ],
+            "metadata": {
+                "inclusion": "available",
+                "selected": true
+            }
+        }
+    ],
+    "replication_method": "INCREMENTAL",
+    "schema": {
+        "properties": {
+            "age": { "type": [null, "integer"] },
+            "id": { "type": [null, "string"] },
+            "last_name": { "type": [null, "string"] },
+            "first_name": { "type": [null, "string"] },
+            "color": { "type": [null, "string"]}
+        },
+        "type": "object"
+    },
+    "stream": "demo_users", 
+    "tap_stream_id": "demo_users",
+    "unique_conflict_method": "UPDATE"
+}

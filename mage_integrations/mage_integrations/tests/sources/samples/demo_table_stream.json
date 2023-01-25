@@ -1,0 +1,118 @@
+{
+    "auto_add_new_fields": true,
+    "key_properties": [],
+    "metadata": [
+        {
+            "breadcrumb": [],
+            "metadata": {
+                "table-key-properties": [],
+                "forced-replication-method": "FULL_TABLE",
+                "valid-replication-keys": [],
+                "inclusion": "available",
+                "schema-name": "demo_table"
+            }
+        },
+        {
+            "breadcrumb": ["properties", "confidence"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "actionname"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "type"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "isdeleted"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "actionid"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "createdbyid"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "systemmodstamp"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "lastmodifieddate"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "createddate"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "id"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "name"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "airecordinsightid"],
+            "metadata": {"inclusion": "available"}
+        },
+        {
+            "breadcrumb": ["properties", "lastmodifiedbyid"],
+            "metadata": {"inclusion": "available"}
+        }
+        ],
+    "replication_method": "FULL_TABLE",
+    "schema": {
+        "properties": {
+            "confidence": {
+                "type": [null, "integer"]
+            },
+            "actionname": {
+                "type": [null, "string"]
+            },
+            "type": {
+                "type": [null, "string"]
+            },
+            "isdeleted": {
+                "type": [null, "boolean"]
+            },
+            "actionid": {
+                "type": [null, "string"]
+            },
+            "createdbyid": {
+                "type": [null, "string"]
+            },
+            "systemmodstamp": {
+                "type": [null, "string"]
+            },
+            "lastmodifieddate": {
+                "type": [null, "string"]
+            },
+            "createddate": {
+                "type": [null, "string"],
+                "format": "date-time"
+            },
+            "id": {
+                "type": [null, "string"]
+            },
+            "name": {
+                "type": [null, "string"]
+            },
+            "airecordinsightid": {
+                "type": [null, "string"]
+            },
+            "lastmodifiedbyid": {
+                "type": [null, "string"]
+            }
+        },
+        "type": "object"
+    },
+    "stream": "demo_table",
+    "tap_stream_id": "demo_table",
+    "unique_conflict_method": "UPDATE",
+    "unique_constraints": []
+}
