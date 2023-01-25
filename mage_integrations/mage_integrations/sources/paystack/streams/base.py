@@ -28,14 +28,14 @@ class BasePaystackStream():
         """
         Return the URL to hit for data from this stream.
         """
-        raise RuntimeError("get_url not implemented!")
+        raise RuntimeError('get_url not implemented!')
 
     def get_abs_path(self, path):
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
     # This overrides the transform_record method in the Fistown Analytics tap-framework package
     def transform_record(self, record):
-        with singer.Transformer(integer_datetime_fmt="unix-seconds-integer-datetime-parsing") as tx:
+        with singer.Transformer(integer_datetime_fmt='unix-seconds-integer-datetime-parsing') as tx:
             metadata = {}
 
             if self.catalog.metadata is not None:
@@ -63,13 +63,17 @@ class BasePaystackStream():
         bookmark_date = None
 
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
-        self.logger.info('Attempting to get the most recent bookmark_date for entity {}.'.format(self.ENTITY))
+        self.logger.info(
+            f'Attempting to get the most recent bookmark_date for entity {self.ENTITY}.')
         if bookmarks and bookmark_properties:
             bookmark_date = bookmarks.get(bookmark_properties[0])
 
         # If there is no bookmark date, fall back to using the start date from the config file.
         if bookmark_date is None:
-            self.logger.info('Could not locate bookmark_date from STATE file. Falling back to start_date from config.json instead.')
+            self.logger.info(
+                'Could not locate bookmark_date from STATE file. '
+                'Falling back to start_date from config.json instead.'
+            )
             if 'start_date' in self.config:
                 bookmark_datetime = parse(self.config.get('start_date'))
             else:
@@ -80,11 +84,11 @@ class BasePaystackStream():
             to_datetime = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
             to_date = to_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
         sync_window = str([bookmark_date, to_date])
-        self.logger.info("Sync Window {} for schema {}".format(sync_window, table))
+        self.logger.info(f'Sync Window {sync_window} for schema {table}')
 
         params = {'from': bookmark_date, 'to': to_date}
 
-        self.logger.info("Querying {} starting at {}".format(table, bookmark_date))
+        self.logger.info(f'Querying {table} starting at {bookmark_date}')
 
         while not done:
             max_date = to_date
@@ -113,9 +117,9 @@ class BasePaystackStream():
                 ctr.increment(amount=len(to_write))
 
             if meta.get('page') >= meta.get('pageCount'):
-                self.logger.info("Final page reached. Ending sync.")
+                self.logger.info('Final page reached. Ending sync.')
                 done = True
             else:
-                self.logger.info("Advancing by one page.")
+                self.logger.info('Advancing by one page.')
                 params['page'] = meta.get('page') + 1
                 bookmark_date = max_date
