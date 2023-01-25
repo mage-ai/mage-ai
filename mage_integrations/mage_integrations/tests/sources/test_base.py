@@ -1,5 +1,5 @@
-from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.base import Source
+from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.intercom import Intercom
 from mage_integrations.sources.postgresql import PostgreSQL
 from mage_integrations.sources.stripe import Stripe
