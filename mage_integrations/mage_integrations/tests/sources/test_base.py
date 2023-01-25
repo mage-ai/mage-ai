@@ -23,8 +23,8 @@ def build_sample_streams_catalog_entries():
         ),
     ]
 
-ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
 def build_sample_streams_list():
+    ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(
             ABSOLUTE_PATH,
             'samples/demo_table_stream_metadata.json',
@@ -140,7 +140,8 @@ class BaseSourceTests(unittest.TestCase):
         )
 
     def test_discover(self):
-        # Testing with Intercom source, since it has a "schemas" folder and no "discover" subclass method.
+        # Testing with Intercom source, since it has a "schemas"
+        # folder and no "discover" subclass method.
         source = Intercom()
         streams = source.discover().streams
         self.assertEqual(len(streams), 11)
@@ -215,7 +216,11 @@ class BaseSourceTests(unittest.TestCase):
             selected_streams=['demo_table', 'demo_users'],
         )
         with patch.object(source, 'count_records') as mock_count_records:
-            with patch.object(catalog, 'get_selected_streams', return_value=build_sample_streams_catalog_entries()):
+            with patch.object(
+                catalog,
+                'get_selected_streams',
+                return_value=build_sample_streams_catalog_entries(),
+            ):
                 with patch.object(json, 'dump'):
                     source.process()
                     self.assertEqual(mock_count_records.call_count, 2)
@@ -313,7 +318,11 @@ class BaseSourceTests(unittest.TestCase):
         source = Source()
         with patch.object(source, 'process_stream') as mock_process_stream:
             with patch.object(source, 'sync_stream') as mock_sync_stream:
-                with patch.object(catalog, 'get_selected_streams', return_value=build_sample_streams_catalog_entries()):
+                with patch.object(
+                    catalog,
+                    'get_selected_streams',
+                    return_value=build_sample_streams_catalog_entries(),
+                ):
                     source.sync(catalog)
                     self.assertEqual(mock_process_stream.call_count, 2)
                     self.assertEqual(mock_sync_stream.call_count, 2)
@@ -389,7 +398,8 @@ class BaseSourceTests(unittest.TestCase):
         )
     
     def test_load_schemas_from_folder(self):
-        # Testing with Stripe source, since not all of the integration sources have "schemas" folders.
+        # Testing with Stripe source, since not all of the
+        # integration sourceshave "schemas" folders.
         source = Stripe()
         schemas = source.load_schemas_from_folder()
         self.assertEqual(
