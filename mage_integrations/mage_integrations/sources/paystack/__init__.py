@@ -23,7 +23,8 @@ class Paystack(Source):
             self.config,
             self.state,
             stream,
-            self.client
+            self.client,
+            self.logger
         )
 
         bookmark_properties = self._get_bookmark_properties_for_stream(stream)
@@ -38,14 +39,6 @@ class Paystack(Source):
 
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].VALID_REPLICATION_KEYS
-
-    def load_schemas_from_folder(self) -> Dict:
-        available_streams = STREAMS.values()
-        return {
-            stream.TABLE: Schema.from_dict(
-                stream(self.config, self.state, None, None).get_schema())
-            for stream in available_streams
-        }
 
 if __name__ == '__main__':
     main(Paystack)

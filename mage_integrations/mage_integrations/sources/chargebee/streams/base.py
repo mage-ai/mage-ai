@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-from mage_integrations.sources.chargebee.streams.util import Util
-from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
-from mage_integrations.sources.messages import write_schema
-from mage_integrations.sources.state_utils import (
+from mage_integrations.sources.chargebee.state import (
     get_last_record_value_for_table,
     incorporate
 )
+from mage_integrations.sources.chargebee.streams.util import Util
+from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
+from mage_integrations.sources.messages import write_schema
 import inspect
 import json
 import os
