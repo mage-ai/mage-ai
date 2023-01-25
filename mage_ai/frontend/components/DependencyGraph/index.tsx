@@ -308,7 +308,7 @@ function DependencyGraph({
       } else if (BlockTypeEnum.DATA_EXPORTER === block.type) {
         displayText = `${block.uuid}: ${contentParsed?.destination}`;
       }
-    } else if (BlockTypeEnum.DBT === block.type) {
+    } else if (BlockTypeEnum.DBT === block.type && BlockLanguageEnum.SQL === block.language) {
       displayText = getModelName(block);
     }
 
