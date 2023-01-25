@@ -11,6 +11,8 @@ import json
 import sys
 
 
+ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
+
 def build_sample_streams_catalog_entries():
     return [
         CatalogEntry(
@@ -24,93 +26,17 @@ def build_sample_streams_catalog_entries():
     ]
 
 def build_sample_streams_list():
-    ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(
             ABSOLUTE_PATH,
-            'samples/demo_table_stream_metadata.json',
+            'samples/demo_table_stream.json',
         ), 'r') as f1, open(os.path.join(
             ABSOLUTE_PATH,
-            'samples/demo_users_stream_metadata.json',
+            'samples/demo_users_stream.json',
         ), 'r') as f2:
-        demo_table_stream_metadata = json.load(f1)
-        demo_users_stream_metadata = json.load(f2)
-    stream1 = dict(
-        auto_add_new_fields=True,
-        key_properties=[],
-        metadata=demo_table_stream_metadata,
-        replication_method='FULL_TABLE',
-        schema=dict(
-            properties=dict(
-                confidence=dict(
-                    type=['null', 'integer'],
-                ),
-                actionname=dict(
-                    type=['null', 'string'],
-                ),
-                type=dict(
-                    type=['null', 'string'],
-                ),
-                isdeleted=dict(
-                    type=['null', 'boolean'],
-                ),
-                actionid=dict(
-                    type=['null', 'string'],
-                ),
-                createdbyid=dict(
-                    type=['null', 'string'],
-                ),
-                systemmodstamp=dict(
-                    type=['null', 'string'],
-                ),
-                lastmodifieddate=dict(
-                    type=['null', 'string'],
-                ),
-                createddate=dict(
-                    type=['null', 'string'],
-                    format='date-time',
-                ),
-                id=dict(
-                    type=['null', 'string'],
-                ),
-                name=dict(
-                    type=['null', 'string'],
-                ),
-                airecordinsightid=dict(
-                    type=['null', 'string'],
-                ),
-                lastmodifiedbyid=dict(
-                    type=['null', 'string'],
-                ),
-            ),
-            type='object',
-        ),
-        stream='demo_table',
-        tap_stream_id='demo_table',
-        unique_conflict_method='UPDATE',
-        unique_constraints=[],
-    )
-    stream2 = dict(
-        auto_add_new_fields=True,
-        bookmark_properties=['id'],
-        key_properties=[],
-        metadata=demo_users_stream_metadata,
-        replication_method='INCREMENTAL',
-        schema=dict(
-            properties=dict(
-                age=dict(type=['null', 'integer']),
-                id=dict(type=['null', 'string']),
-                last_name=dict(type=['null', 'string']),
-                first_name=dict(type=['null', 'string']),
-                color=dict(type=['null', 'string'])
-            ),
-            type='object',
-        ),
-        stream='demo_users',
-        tap_stream_id='demo_users',
-        unique_conflict_method='UPDATE',
-    )
+        demo_table_stream = json.load(f1)
+        demo_users_stream = json.load(f2)
 
-    return [stream1, stream2]
+    return [demo_table_stream, demo_users_stream]
 
 def build_sample_streams_catalog():
     return Catalog.from_dict(
@@ -118,8 +44,6 @@ def build_sample_streams_catalog():
     )
 
 class BaseSourceTests(unittest.TestCase):
-    maxDiff = None
-
     def test_templates(self):
         # Template folders exist in the different integration source folders.
         source = PostgreSQL()
@@ -140,8 +64,10 @@ class BaseSourceTests(unittest.TestCase):
         )
 
     def test_discover(self):
-        # Testing with Intercom source, since it has a "schemas"
-        # folder and no "discover" subclass method.
+        """
+        Testing with Intercom source, since it has a "schemas"
+        folder and no "discover" subclass method.
+        """
         source = Intercom()
         streams = source.discover().streams
         self.assertEqual(len(streams), 11)
@@ -363,7 +289,7 @@ class BaseSourceTests(unittest.TestCase):
     def test_sync(self):
         catalog = build_sample_streams_catalog()
         source = Source()
-        with patch.object(source, 'process_stream') as mock_process_stream:
+        with patch.object(source, 'process_stream', return_value=None) as mock_process_stream:
             with patch.object(source, 'sync_stream') as mock_sync_stream:
                 with patch.object(
                     catalog,
