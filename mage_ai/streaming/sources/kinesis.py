@@ -36,23 +36,38 @@ class KinesisSource(BaseSource):
         else:
             batch_size = DEFAULT_BATCH_SIZE
         try:
-            response = self.kinesis_client.get_shard_iterator(
-                StreamName=self.config.stream_name,
-                ShardId=self.details['Shards'][0]['ShardId'],
-                ShardIteratorType='TRIM_HORIZON',
-
-            )
-            shard_iter = response['ShardIterator']
-            while True:
-                response = self.kinesis_client.get_records(
-                    ShardIterator=shard_iter,
-                    Limit=batch_size,
+            shard_iterators = dict()
+            for shard_id in self.details['Shards']:
+                shard_id = shard_id['ShardId']
+                shard_iterator = self.kinesis_client.get_shard_iterator(
+                    StreamName=self.config.stream_name,
+                    ShardId=shard_id,
+                    ShardIteratorType='TRIM_HORIZON',
                 )
-                shard_iter = response['NextShardIterator']
-                records = response['Records']
-                if records:
-                    self._print(f'Got {len(records)} records. Sample: {records[0]}')
-                    handler([json.loads(r['Data'].decode('utf-8')) for r in records])
+                shard_iterators[shard_id] = shard_iterator['ShardIterator']
+            self._print(f'Consuming messages from shards: {list(shard_iterators.keys())}')
+            closed_streams = set()
+            while True:
+                for shard_id, shard_iter in shard_iterators.items():
+                    if shard_id in closed_streams:
+                        continue
+                    response = self.kinesis_client.get_records(
+                        ShardIterator=shard_iter,
+                        Limit=batch_size,
+                    )
+                    if 'NextShardIterator' not in response:
+                        self._print(f'Shards {shard_id} is closed.')
+                        closed_streams.add(shard_id)
+                        continue
+                    shard_iterators[shard_id] = response['NextShardIterator']
+                    records = response['Records']
+                    if records:
+                        self._print(f'Got {len(records)} records from shard {shard_id}. '
+                                    f'Sample: {records[0]}')
+                        handler([json.loads(r['Data'].decode('utf-8')) for r in records])
+                if len(closed_streams) == len(shard_iterators):
+                    self._print(f'All shards {list(shard_iterators.keys())} are closed.')
+                    break
         except Exception:
             self._print(f'Couldn\'t get records from stream {self.config.stream_name}.')
             raise
