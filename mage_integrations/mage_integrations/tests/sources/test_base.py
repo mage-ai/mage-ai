@@ -35,7 +35,7 @@ def build_sample_streams_list():
         demo_table_stream_metadata = json.load(f1)
         demo_users_stream_metadata = json.load(f2)
     stream1 = dict(
-        auto_add_new_fields=False,
+        auto_add_new_fields=True,
         key_properties=[],
         metadata=demo_table_stream_metadata,
         replication_method='FULL_TABLE',
@@ -90,7 +90,7 @@ def build_sample_streams_list():
         unique_constraints=[],
     )
     stream2 = dict(
-        auto_add_new_fields=False,
+        auto_add_new_fields=True,
         bookmark_properties=['id'],
         key_properties=[],
         metadata=demo_users_stream_metadata,
@@ -175,8 +175,16 @@ class BaseSourceTests(unittest.TestCase):
             test_connection=True,
         )
         with patch.object(source, 'test_connection') as mock_test_connection:
-            source.process()
-            mock_test_connection.assert_called_once()
+            with patch.object(source, 'discover_streams') as mock_discover_streams:
+                with patch.object(source, 'discover') as mock_discover:
+                    with patch.object(source, 'load_data') as mock_load_data:
+                        with patch.object(source, 'sync') as mock_sync:
+                            source.process()
+                            mock_test_connection.assert_called_once()
+                            mock_discover_streams.assert_not_called()
+                            mock_discover.assert_not_called()
+                            mock_load_data.assert_not_called()
+                            mock_sync.assert_not_called()
 
     def test_process_load_sample_data(self):
         catalog = build_sample_streams_catalog()
@@ -186,8 +194,14 @@ class BaseSourceTests(unittest.TestCase):
             selected_streams=['demo_table', 'demo_users'],
         )
         with patch.object(source, 'load_data', return_value=None) as mock_load_data:
-            source.process()
-            self.assertEqual(mock_load_data.call_count, 2)
+            with patch.object(source, 'discover_streams') as mock_discover_streams:
+                with patch.object(source, 'discover') as mock_discover:
+                        with patch.object(source, 'sync') as mock_sync:
+                            source.process()
+                            self.assertEqual(mock_load_data.call_count, 2)
+                            mock_discover_streams.assert_not_called()
+                            mock_discover.assert_not_called()
+                            mock_sync.assert_not_called()
 
     def test_process_discover_streams_mode(self):
         source = Source(
@@ -196,17 +210,29 @@ class BaseSourceTests(unittest.TestCase):
         )
         with patch.object(source, 'discover_streams') as mock_discover_streams:
             with patch.object(json, 'dump') as mock_json_dump:
-                source.process()
-                mock_discover_streams.assert_called_once()
-                mock_json_dump.assert_called_once()
+                with patch.object(source, 'discover') as mock_discover:
+                    with patch.object(source, 'load_data') as mock_load_data:
+                        with patch.object(source, 'sync') as mock_sync:
+                            source.process()
+                            mock_discover_streams.assert_called_once()
+                            mock_json_dump.assert_called_once()
+                            mock_discover.assert_not_called()
+                            mock_load_data.assert_not_called()
+                            mock_sync.assert_not_called()
 
     def test_process_discover_mode(self):
         source = Source(
             discover_mode=True,
         )
         with patch.object(source, 'discover') as mock_discover:
-            source.process()
-            mock_discover.assert_called_once()
+            with patch.object(source, 'discover_streams') as mock_discover_streams:
+                    with patch.object(source, 'load_data') as mock_load_data:
+                        with patch.object(source, 'sync') as mock_sync:
+                            source.process()
+                            mock_discover.assert_called_once()
+                            mock_discover_streams.assert_not_called()
+                            mock_load_data.assert_not_called()
+                            mock_sync.assert_not_called()
 
     def test_process_count_records_mode(self):
         catalog = build_sample_streams_catalog()
@@ -222,22 +248,43 @@ class BaseSourceTests(unittest.TestCase):
                 return_value=build_sample_streams_catalog_entries(),
             ):
                 with patch.object(json, 'dump'):
-                    source.process()
-                    self.assertEqual(mock_count_records.call_count, 2)
+                    with patch.object(source, 'discover_streams') as mock_discover_streams:
+                        with patch.object(source, 'discover') as mock_discover:
+                            with patch.object(source, 'load_data') as mock_load_data:
+                                with patch.object(source, 'sync') as mock_sync:
+                                    source.process()
+                                    self.assertEqual(mock_count_records.call_count, 2)
+                                    mock_discover_streams.assert_not_called()
+                                    mock_discover.assert_not_called()
+                                    mock_load_data.assert_not_called()
+                                    mock_sync.assert_not_called()
 
-    def test_process(self):
-        source1 = Source()
-        with patch.object(source1, 'discover') as mock_discover:
-            source1.process()
-            mock_discover.assert_called_once()
+    def test_process_no_catalog(self):
+        source = Source()
+        with patch.object(source, 'discover') as mock_discover:
+            with patch.object(source, 'sync') as mock_sync:
+                with patch.object(source, 'discover_streams') as mock_discover_streams:
+                    with patch.object(source, 'load_data') as mock_load_data:
+                            source.process()
+                            mock_discover.assert_called_with(streams=None)
+                            mock_sync.assert_called_once()
+                            mock_discover_streams.assert_not_called()
+                            mock_load_data.assert_not_called()
 
+    def test_process_with_catalog(self):
         catalog = build_sample_streams_catalog()
-        source2 = Source(
+        source = Source(
             catalog=catalog,
         )
-        with patch.object(source2, 'sync') as mock_sync:
-            source2.process()
-            mock_sync.assert_called_with(catalog)
+        with patch.object(source, 'sync') as mock_sync:
+            with patch.object(source, 'discover') as mock_discover:
+                with patch.object(source, 'discover_streams') as mock_discover_streams:
+                    with patch.object(source, 'load_data') as mock_load_data:
+                            source.process()
+                            mock_sync.assert_called_with(catalog)
+                            mock_discover.assert_called_with(streams=['demo_table', 'demo_users'])
+                            mock_discover_streams.assert_not_called()
+                            mock_load_data.assert_not_called()
 
     def test_process_stream(self):
         source = Source()
