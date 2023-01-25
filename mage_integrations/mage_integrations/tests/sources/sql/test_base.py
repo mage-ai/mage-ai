@@ -1,6 +1,5 @@
 from mage_integrations.sources.catalog import CatalogEntry
 from mage_integrations.sources.sql.base import Source
-from mage_integrations.sources.postgresql import PostgreSQL
 from unittest.mock import MagicMock, patch
 import unittest
 
@@ -56,6 +55,6 @@ class BaseSQLSourceTests(unittest.TestCase):
     def test_load_data_log_based(self):
         source = Source()
         stream = build_log_based_sample_catalog_entry()
-        with patch.object(source, 'load_data_from_logs') as mock_load_data_from_logs:
-            next(source.load_data(stream))
+        with patch.object(source, 'load_data_from_logs', return_value=[]) as mock_load_data_from_logs:
+            next(source.load_data(stream), None)
             mock_load_data_from_logs.assert_called_once_with(stream, bookmarks=None, query={})
