@@ -65,7 +65,7 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
     if COLUMN_TYPE_BOOLEAN == column_type:
         return 'CHAR(52)'
     elif COLUMN_TYPE_INTEGER == column_type:
-        return 'BIGINT'
+        return 'UNSIGNED'
     elif COLUMN_TYPE_NUMBER == column_type:
         return 'DECIMAL'
     elif COLUMN_TYPE_OBJECT == column_type:
