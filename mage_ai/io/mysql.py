@@ -3,8 +3,10 @@ from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.utils import clean_name
 from mysql.connector import connect
+from mysql.connector.cursor import MySQLCursor
 from pandas import DataFrame, Series
 import numpy as np
+from typing import IO, Mapping, Union
 
 
 class MySQL(BaseSQL):
@@ -38,7 +40,12 @@ class MySQL(BaseSQL):
             user=config[ConfigKey.MYSQL_USER],
         )
 
-    def build_create_table_command(self, dtypes, schema_name: str, table_name: str) -> str:
+    def build_create_table_command(
+        self,
+        dtypes: Mapping[str, str],
+        schema_name: str,
+        table_name: str
+    ) -> str:
         query = []
         for cname in dtypes:
             query.append(f'`{clean_name(cname)}` {dtypes[cname]}')
@@ -59,7 +66,13 @@ class MySQL(BaseSQL):
             ]))
             return len(cur.fetchall()) >= 1
 
-    def upload_dataframe(self, cursor, df: DataFrame, full_table_name: str, buffer = None) -> None:
+    def upload_dataframe(
+        self,
+        cursor: MySQLCursor,
+        df: DataFrame,
+        full_table_name: str,
+        buffer: Union[IO, None] = None
+    ) -> None:
         values_placeholder = ', '.join(["%s" for i in range(len(df.columns))])
         values = []
         for i, row in df.iterrows():
@@ -115,4 +128,3 @@ class MySQL(BaseSQL):
             return 'BIGINT'
         else:
             raise ValueError(f'Invalid datatype provided: {dtype}')
-

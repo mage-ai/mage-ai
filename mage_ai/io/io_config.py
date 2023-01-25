@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Mapping, Union
 import pathlib
 import os
 import yaml
@@ -20,7 +20,10 @@ class IOConfig:
     Wrapper around IO configuration file.
     """
 
-    def __init__(self, filepath: os.PathLike = './default_repo/io_config.yaml') -> None:
+    def __init__(
+        self,
+        filepath: Union[os.PathLike, str] = './default_repo/io_config.yaml'
+    ) -> None:
         """
         Initializes IO Configuration loader
 

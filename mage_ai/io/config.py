@@ -102,7 +102,10 @@ class AWSSecretLoader(BaseConfigLoader):
         self.client = boto3.client('secretsmanager', **kwargs)
 
     def contains(
-        self, secret_id: Union[ConfigKey, str], version_id=None, version_stage_label=None
+        self,
+        secret_id: Union[ConfigKey, str],
+        version_id: Union[str, None] = None,
+        version_stage_label: Union[str, None] = None,
     ) -> bool:
         """
         Check if there is a secret with ID `secret_id` contained. Can also specify the version of the
@@ -121,7 +124,10 @@ class AWSSecretLoader(BaseConfigLoader):
         return self.__get_secret(secret_id, version_id, version_stage_label) is not None
 
     def get(
-        self, secret_id: Union[ConfigKey, str], version_id=None, version_stage_label=None
+        self,
+        secret_id: Union[ConfigKey, str],
+        version_id: Union[str, None] = None,
+        version_stage_label: Union[str, None] = None,
     ) -> Union[bytes, str]:
         """
         Loads the secret stored under `secret_id`. Can also specify the version of the
@@ -147,8 +153,11 @@ class AWSSecretLoader(BaseConfigLoader):
             return response['SecretString']
 
     def __get_secret(
-        self, secret_id: Union[ConfigKey, str], version_id=None, version_stage_label=None
-    ) -> Dict:
+        self,
+        secret_id: Union[ConfigKey, str],
+        version_id: Union[str, None] = None,
+        version_stage_label: Union[str, None] = None,
+    ) -> Union[Dict, None]:
         """
         Get secret with ID `secret_id`. Can also specify the version of the secret to get.
         If
@@ -273,9 +282,9 @@ class ConfigFileLoader(BaseConfigLoader):
 
     def __init__(
         self,
-        filepath: os.PathLike = None,
-        profile='default',
-        config: Dict = None,
+        filepath: Union[os.PathLike, None] = None,
+        profile: str = 'default',
+        config: Union[Dict, None] = None,
     ) -> None:
         """
         Initializes IO Configuration loader. Input configuration file can have two formats:

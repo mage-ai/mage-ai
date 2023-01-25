@@ -5,6 +5,7 @@ from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.shared.hash import extract, merge_dict
 from pandas import DataFrame
+from typing import Union
 
 
 class AzureBlobStorage(BaseFile):
@@ -23,7 +24,7 @@ class AzureBlobStorage(BaseFile):
 
     def __init__(
         self,
-        verbose=False,
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -49,7 +50,7 @@ class AzureBlobStorage(BaseFile):
         self,
         container_name: str,
         blob_path: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
@@ -80,7 +81,7 @@ class AzureBlobStorage(BaseFile):
         df: DataFrame,
         container_name: str,
         blob_path: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         **kwargs,
     ) -> None:
         """

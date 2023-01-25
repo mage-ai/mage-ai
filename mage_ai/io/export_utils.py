@@ -57,7 +57,9 @@ def infer_dtypes(df: DataFrame) -> Dict[str, str]:
 
 
 def clean_df_for_export(
-    df: DataFrame, column_mapper: Callable[[Series, str], str], dtypes: Mapping[str, str]
+    df: DataFrame,
+    column_mapper: Callable[[Series, str], Series],
+    dtypes: Mapping[str, str],
 ) -> DataFrame:
     """
     Cleans data frame with the appropriate steps to prepare loading the data frame

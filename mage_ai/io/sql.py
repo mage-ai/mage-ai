@@ -9,6 +9,7 @@ from mage_ai.io.export_utils import (
     PandasTypes,
 )
 from pandas import DataFrame, read_sql, Series
+from typing import IO, Mapping, Union
 
 
 class BaseSQL(BaseSQLConnection):
@@ -38,7 +39,12 @@ class BaseSQL(BaseSQLConnection):
         """
         raise Exception('Subclasses must override this method.')
 
-    def build_create_table_command(self, dtypes, schema_name: str, table_name: str) -> str:
+    def build_create_table_command(
+        self,
+        dtypes: Mapping[str, str],
+        schema_name: str,
+        table_name: str
+    ) -> str:
         return gen_table_creation_query(dtypes, schema_name, table_name)
 
     def open(self) -> None:
@@ -60,7 +66,13 @@ class BaseSQL(BaseSQLConnection):
         """
         raise Exception('Subclasses must override this method.')
 
-    def upload_dataframe(self, cursor, df: DataFrame, full_table_name: str, buffer = None) -> None:
+    def upload_dataframe(
+        self,
+        cursor,
+        df: DataFrame,
+        full_table_name: str,
+        buffer: Union[IO, None] = None
+    ) -> None:
         raise Exception('Subclasses must override this method.')
 
     def execute(self, query_string: str, **query_vars) -> None:
@@ -80,7 +92,7 @@ class BaseSQL(BaseSQLConnection):
         self,
         query_string: str,
         limit: int = QUERY_ROW_LIMIT,
-        display_query: str = None,
+        display_query: Union[str, None] = None,
         verbose: bool = True,
         **kwargs,
     ) -> DataFrame:
@@ -121,7 +133,7 @@ class BaseSQL(BaseSQLConnection):
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
         verbose: bool = True,
-        query_string: str = None,
+        query_string: Union[str, None] = None,
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
     ) -> None:

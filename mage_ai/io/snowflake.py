@@ -3,6 +3,7 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
+from typing import Union
 
 DEFAULT_LOGIN_TIMEOUT = 20
 # NOTE: if credentials are wrong, it’ll take this many seconds for the user to be shown an error.
@@ -60,7 +61,7 @@ class Snowflake(BaseSQLConnection):
         self,
         query_string: str,
         limit: int = QUERY_ROW_LIMIT,
-        display_query: str = None,
+        display_query: Union[str, None] = None,
         verbose: bool = True,
         *args,
         **kwargs,
@@ -105,7 +106,7 @@ class Snowflake(BaseSQLConnection):
         database: str,
         schema: str,
         if_exists: str = 'append',
-        query_string: str = None,
+        query_string: Union[str, None] = None,
         verbose: bool = True,
         **kwargs,
     ) -> None:

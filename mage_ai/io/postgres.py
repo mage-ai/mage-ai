@@ -2,9 +2,10 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
 from pandas import DataFrame, Series
-from psycopg2 import connect
+from psycopg2 import connect, _psycopg
 from sshtunnel import SSHTunnelForwarder
 import numpy as np
+from typing import Union, IO
 
 
 class Postgres(BaseSQL):
@@ -17,13 +18,13 @@ class Postgres(BaseSQL):
         user: str,
         password: str,
         host: str,
-        port: str = None,
+        port: Union[str, None] = None,
         connection_method: str = 'direct',
-        ssh_host: str = None,
-        ssh_port: str = None,
-        ssh_username: str = None,
-        ssh_password: str = None,
-        ssh_pkey: str = None,
+        ssh_host: Union[str, None] = None,
+        ssh_port: Union[str, None] = None,
+        ssh_username: Union[str, None] = None,
+        ssh_password: Union[str, None] = None,
+        ssh_pkey: Union[str, None] = None,
         verbose=True,
         **kwargs,
     ) -> None:
@@ -178,7 +179,13 @@ class Postgres(BaseSQL):
         else:
             raise ValueError(f'Invalid datatype provided: {dtype}')
 
-    def upload_dataframe(self, cursor, df: DataFrame, full_table_name: str, buffer = None) -> None:
+    def upload_dataframe(
+        self,
+        cursor: _psycopg.cursor,
+        df: DataFrame,
+        full_table_name: str,
+        buffer: Union[IO, None] = None
+    ) -> None:
         df.to_csv(buffer, index=False, header=False)
         buffer.seek(0)
         cursor.copy_expert(
