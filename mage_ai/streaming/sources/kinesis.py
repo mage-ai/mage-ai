@@ -26,7 +26,6 @@ class KinesisSource(BaseSource):
             StreamName=self.config.stream_name,
         )['StreamDescription']
         print(self.details)
-        # self.stream_exists_waiter = self.kinesis_client.get_waiter('stream_exists')
         print('[Kinesis] Finish initializing consumer.')
 
     def read(self, handler: Callable):
