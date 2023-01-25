@@ -6,19 +6,13 @@ import unittest
 
 def build_sample_rows():
     return [
-        ("demo_table", None, None, "actionid", "character varying", "YES"),
-        ("demo_table", None, None, "actionname", "character varying", "YES"),
-        ("demo_table", None, None, "confidence", "integer", "YES"),
-        ("demo_table", None, None, "createddate", "timestamp without time zone", "YES"),
-        ("demo_table", None, None, "id", "character varying", "YES"),
-        ("demo_table", None, None, "isdeleted", "boolean", "YES"),
-        ("demo_table", None, None, "name", "character varying", "YES"),
-        ("demo_table", None, None, "type", "character varying", "YES"),
-        ("demo_users", None, None, "age", "integer", "YES"),
-        ("demo_users", None, None, "color", "character varying", "YES"),
-        ("demo_users", None, None, "first_name", "character varying", "YES"),
-        ("demo_users", None, None, "id", "character varying", "YES"),
-        ("demo_users", None, None, "last_name", "character varying", "YES"),
+        ('demo_actions', None, None, 'actionid', 'character varying', 'YES'),
+        ('demo_actions', None, None, 'actionname', 'character varying', 'YES'),
+        ('demo_actions', None, None, 'createddate', 'timestamp without time zone', 'YES'),
+        ('demo_actions', None, None, 'type', 'character varying', 'YES'),
+        ('demo_users', None, None, 'color', 'character varying', 'YES'),
+        ('demo_users', None, None, 'first_name', 'character varying', 'YES'),
+        ('demo_users', None, None, 'id', 'character varying', 'YES'),
     ]
 
 def build_log_based_sample_catalog_entry():
@@ -42,9 +36,101 @@ class BaseSQLSourceTests(unittest.TestCase):
                     catalog = source.discover()
                     mock_build_query.assert_called_once()
                     mock_build_connection.assert_called_once()
-                    streams = catalog.streams
-                    self.assertEqual(streams[0].tap_stream_id, 'demo_table')
-                    self.assertEqual(streams[1].tap_stream_id, 'demo_users')
+                    self.assertEqual(
+                        catalog.to_dict(),
+                        {
+                            'streams': [
+                                {
+                                    'tap_stream_id': 'demo_actions',
+                                    'replication_method': 'FULL_TABLE',
+                                    'key_properties': [],
+                                    'schema': {
+                                        'properties': {
+                                            'actionid': {'type': ['null', 'string']},
+                                            'actionname': {'type': ['null', 'string']},
+                                            'createddate': {
+                                                'format': 'date-time',
+                                                'type': ['null', 'string'],
+                                            },
+                                            'type': {'type': ['null', 'string']},
+                                        },
+                                        'type': 'object',
+                                    },
+                                    'stream': 'demo_actions',
+                                    'metadata': [
+                                        {
+                                            'breadcrumb': (),
+                                            'metadata': {
+                                                'table-key-properties': [],
+                                                'forced-replication-method': 'FULL_TABLE',
+                                                'valid-replication-keys': [],
+                                                'inclusion': 'available',
+                                                'schema-name': 'demo_actions',
+                                            },
+                                        },
+                                        {
+                                            'breadcrumb': ('properties', 'actionid'),
+                                            'metadata': {'inclusion': 'available'},
+                                        },
+                                        {
+                                            'breadcrumb': ('properties', 'actionname'),
+                                            'metadata': {'inclusion': 'available'},
+                                        },
+                                        {
+                                            'breadcrumb': ('properties', 'createddate'),
+                                            'metadata': {'inclusion': 'available'},
+                                        },
+                                        {
+                                            'breadcrumb': ('properties', 'type'),
+                                            'metadata': {'inclusion': 'available'},
+                                        },
+                                    ],
+                                    'auto_add_new_fields': False,
+                                    'unique_conflict_method': 'UPDATE',
+                                },
+                                {
+                                    'tap_stream_id': 'demo_users',
+                                    'replication_method': 'FULL_TABLE',
+                                    'key_properties': [],
+                                    'schema': {
+                                        'properties': {
+                                            'color': {'type': ['null', 'string']},
+                                            'first_name': {'type': ['null', 'string']},
+                                            'id': {'type': ['null', 'string']},
+                                        },
+                                        'type': 'object',
+                                    },
+                                    'stream': 'demo_users',
+                                    'metadata': [
+                                        {
+                                            'breadcrumb': (),
+                                            'metadata': {
+                                                'table-key-properties': [],
+                                                'forced-replication-method': 'FULL_TABLE',
+                                                'valid-replication-keys': [],
+                                                'inclusion': 'available',
+                                                'schema-name': 'demo_users',
+                                            },
+                                        },
+                                        {
+                                            'breadcrumb': ('properties', 'color'),
+                                            'metadata': {'inclusion': 'available'},
+                                        },
+                                        {
+                                            'breadcrumb': ('properties', 'first_name'),
+                                            'metadata': {'inclusion': 'available'},
+                                        },
+                                        {
+                                            'breadcrumb': ('properties', 'id'),
+                                            'metadata': {'inclusion': 'available'},
+                                        },
+                                    ],
+                                    'auto_add_new_fields': False,
+                                    'unique_conflict_method': 'UPDATE',
+                                },
+                            ]
+                        },
+                    )
 
     def test_count_records_log_based(self):
         source = Source()
