@@ -9,6 +9,9 @@ class SinkFactory:
         if connector_type == SinkType.OPENSEARCH:
             from mage_ai.streaming.sinks.opensearch import OpenSearchSink
             return OpenSearchSink(config)
+        elif connector_type == SinkType.KINESIS:
+            from mage_ai.streaming.sinks.kinesis import KinesisSink
+            return KinesisSink(config)
         raise Exception(
             f'Ingesting data to {connector_type} is not supported in streaming pipelines yet.',
         )
