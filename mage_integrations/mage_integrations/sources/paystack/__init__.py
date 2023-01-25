@@ -26,7 +26,9 @@ class Paystack(Source):
             self.client
         )
 
-        return stream_obj.load_data()
+        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
+        to_date = query.get('_execution_date')
+        return stream_obj.load_data(bookmarks, bookmark_properties, to_date)
 
     def get_forced_replication_method(self, stream_id):
         return STREAMS[stream_id].REPLICATION_METHOD

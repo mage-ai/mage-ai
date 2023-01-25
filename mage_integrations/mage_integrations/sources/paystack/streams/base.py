@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Dict, List
 from dateutil.parser import parse
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.messages import write_schema
@@ -89,31 +90,31 @@ class BasePaystackStream():
     def get_stream_data(self, data):
         return [self.transform_record(item) for item in data]
 
-    def load_data(self):
+    def load_data(self, bookmarks: Dict = None, bookmark_properties: List = None, to_date: str = None):
         table = self.TABLE
         api_method = self.API_METHOD
         done = False
         sync_interval_in_mins = 2
+        bookmark_date = None
 
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
         LOGGER.info('Attempting to get the most recent bookmark_date for entity {}.'.format(self.ENTITY))
-        bookmark_date = get_last_record_value_for_table(self.state, table, 'bookmark_date')
+        if bookmarks and bookmark_properties:
+            bookmark_date = bookmarks.get(bookmark_properties[0])
 
         # If there is no bookmark date, fall back to using the start date from the config file.
         if bookmark_date is None:
             LOGGER.info('Could not locate bookmark_date from STATE file. Falling back to start_date from config.json instead.')
-            bookmark_date = parse(self.config.get('start_date'))
-        else:
-            bookmark_date = parse(bookmark_date)
+            bookmark_datetime = parse(self.config.get('start_date'))
+            bookmark_date = bookmark_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        # Convert bookmarked start date to POSIX.
-        bookmark_date_iso = bookmark_date.strftime('%Y-%m-%dT%H:%M:%SZ')
-        to_date = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
-        to_date_iso = to_date.strftime('%Y-%m-%dT%H:%M:%SZ')
-        sync_window = str([bookmark_date_iso, to_date_iso])
+        if to_date is None:
+            to_datetime = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
+            to_date = to_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
+        sync_window = str([bookmark_date, to_date])
         LOGGER.info("Sync Window {} for schema {}".format(sync_window, table))
 
-        params = {'from': bookmark_date_iso, 'to': to_date_iso}
+        params = {'from': bookmark_date, 'to': to_date}
 
         LOGGER.info("Querying {} starting at {}".format(table, bookmark_date))
 
@@ -143,14 +144,7 @@ class BasePaystackStream():
 
                 ctr.increment(amount=len(to_write))
 
-            # update max_date with minimum of (max_replication_key) or (now - 2 minutes)
-            # this will make sure that bookmark does not go beyond (now - 2 minutes)
-            # so, no data will be missed due to API latency
-            max_date = min(max_date, to_date)
-            self.state = incorporate(
-                self.state, table, 'bookmark_date', max_date)
-
-            if meta.get('page') == meta.get('pageCount'):
+            if meta.get('page') >= meta.get('pageCount'):
                 LOGGER.info("Final page reached. Ending sync.")
                 done = True
             else:
