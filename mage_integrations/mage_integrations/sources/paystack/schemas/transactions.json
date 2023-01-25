@@ -31,10 +31,6 @@
       "type": ["null", "string"],
       "format": "date-time"
     },
-    "updatedAt": {
-      "type": ["null", "string"],
-      "format": "date-time"
-    },
     "channel": {
       "type": ["null", "string"]
     },
@@ -45,10 +41,18 @@
       "type": ["null", "string"]
     },
     "metadata": {
-      "type": ["null", "object"]
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
-    "timeline": {
-      "type": ["null", "string"]
+    "log": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "fees": {
+      "type": ["null", "integer"]
+    },
+    "fees_split": {
+      "type": ["null", "float"]
     },
     "customer": {
       "type": ["null", "object"],
@@ -79,11 +83,88 @@
         }
       }
     },
+    "authorization": {
+      "type": ["null", "object"],
+      "properties": {
+        "authorization_code": {
+          "type": ["null", "string"]
+        },
+        "bin": {
+          "type": ["null", "string"]
+        },
+        "last4": {
+          "type": ["null", "string"]
+        },
+        "exp_month": {
+          "type": ["null", "string"]
+        },
+        "exp_year": {
+          "type": ["null", "string"]
+        },
+        "channel": {
+          "type": ["null", "string"]
+        },
+        "card_type": {
+          "type": ["null", "string"]
+        },
+        "bank": {
+          "type": ["null", "string"]
+        },
+        "country_code": {
+          "type": ["null", "string"]
+        },
+        "brand": {
+          "type": ["null", "string"]
+        },
+        "reusable": {
+          "type": ["null", "boolean"]
+        },
+        "signature": {
+          "type": ["null", "string"]
+        },
+        "account_name": {
+          "type": ["null", "string"]
+        }
+      }
+    },
     "plan": {
-      "type": ["null", "object"]
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "split": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "subaccount": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "order_id": {
+      "type": ["null", "string"]
+    },
+    "source": {
+      "type": ["null", "object"],
+      "properties": {
+        "source": {
+          "type": ["null", "string"]
+        },
+        "type": {
+          "type": ["null", "string"]
+        },
+        "identifier": {
+          "type": ["null", "string"]
+        },
+        "entry_point": {
+          "type": ["null", "string"]
+        }
+      }
     },
     "requested_amount": {
       "type": ["null", "integer"]
+    },
+    "pos_transaction_data": {
+      "type": ["null", "object"],
+      "additionalProperties": true
     }
   }
 }

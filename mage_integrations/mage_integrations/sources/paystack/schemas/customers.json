@@ -18,7 +18,8 @@
       "type": ["null", "string"]
     },
     "metadata": {
-      "type": ["null", "object"]
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "domain": {
       "type": ["null", "string"]
