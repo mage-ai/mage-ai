@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from typing import Callable, Dict, List, Union
+import os
 import yaml
 
 
@@ -89,7 +90,13 @@ class StreamingPipelineExecutor(PipelineExecutor):
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
         source_config = yaml.safe_load(self.source_block.content)
         sink_config = yaml.safe_load(self.sink_block.content)
-        source = SourceFactory.get_source(source_config)
+        source = SourceFactory.get_source(
+            source_config,
+            checkpoint_path=os.path.join(
+                self.pipeline.pipeline_variables_dir,
+                'streaming_checkpoint',
+            ),
+        )
         sink = SinkFactory.get_sink(sink_config)
 
         def handle_batch_events(messages: List[Union[Dict, str]]):
