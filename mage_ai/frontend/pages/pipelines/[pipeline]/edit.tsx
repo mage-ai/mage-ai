@@ -1400,7 +1400,7 @@ function PipelineDetailPage({
       addNewBlockAtIndex={automaticallyNameBlocks
         ? addNewBlockAtIndex
         : (block, idx, onCreateCallback, name) => new Promise((resolve, reject) => {
-            if (BlockTypeEnum.DBT === block?.type) {
+            if (BlockTypeEnum.DBT === block?.type && BlockLanguageEnum.SQL === block?.language) {
               addNewBlockAtIndex(block, idx, onCreateCallback, name);
             } else {
               // @ts-ignore

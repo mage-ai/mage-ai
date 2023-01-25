@@ -1,5 +1,5 @@
 from datetime import datetime
-from mage_ai.services.stitch.config import Config
+from mage_ai.services.metaplane.config import Config
 from mage_ai.shared.http_client import HttpClient
 from typing import Dict, List, Literal, TypedDict, Union
 import dateutil.parser
