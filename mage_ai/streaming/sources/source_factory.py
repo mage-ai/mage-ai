@@ -9,6 +9,9 @@ class SourceFactory:
         if connector_type == SourceType.KAFKA:
             from mage_ai.streaming.sources.kafka import KafkaSource
             return KafkaSource(config)
+        elif connector_type == SourceType.KINESIS:
+            from mage_ai.streaming.sources.kinesis import KinesisSource
+            return KinesisSource(config)
         elif connector_type == SourceType.AZURE_EVENT_HUB:
             from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
             return AzureEventHubSource(config)
