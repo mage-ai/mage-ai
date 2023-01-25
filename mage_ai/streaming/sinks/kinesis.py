@@ -23,7 +23,7 @@ class KinesisSink(BaseSink):
         return True
 
     def write(self, data: Dict):
-        print(f'[Kinesis] Ingest data {data}, time={time.time()}')
+        self._print(f'Ingest data {data}, time={time.time()}')
         self.kinesis_client.put_record(
             StreamName=self.config.stream_name,
             Data=json.dumps(data),
@@ -31,7 +31,9 @@ class KinesisSink(BaseSink):
         )
 
     def batch_write(self, data: List[Dict]):
-        print(f'[Kinesis] Batch ingest data {data}, time={time.time()}')
+        if not data:
+            return
+        self._print(f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}')
         records = [
             {
                 'Data': json.dumps(d).encode('utf-8'),

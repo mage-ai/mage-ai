@@ -25,3 +25,6 @@ class BaseSource(ABC):
 
     def test_connection(self):
         return True
+
+    def _print(self, msg):
+        print(f'[{self.__class__.__name__}] {msg}')

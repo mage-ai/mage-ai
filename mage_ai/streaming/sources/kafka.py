@@ -39,7 +39,7 @@ class KafkaSource(BaseSource):
     config_class = KafkaConfig
 
     def init_client(self):
-        print('[Kafka] Start initializing consumer.')
+        self._print('Start initializing consumer.')
         # Initialize kafka consumer
         consumer_kwargs = dict(
             group_id=self.config.consumer_group,
@@ -58,17 +58,17 @@ class KafkaSource(BaseSource):
             self.config.topic,
             **consumer_kwargs
         )
-        print('[Kafka] Finish initializing consumer.')
+        self._print('Finish initializing consumer.')
 
     def read(self, handler: Callable):
-        print('[Kafka] Start consuming messages.')
+        self._print('Start consuming messages.')
         for message in self.consumer:
             self.__print_message(message)
             data = json.loads(message.value.decode('utf-8'))
             handler(data)
 
     def batch_read(self, handler: Callable):
-        print('[Kafka] Start consuming messages.')
+        self._print('Start consuming messages.')
         if self.config.batch_size > 0:
             batch_size = self.config.batch_size
         else:
@@ -92,5 +92,5 @@ class KafkaSource(BaseSource):
         return True
 
     def __print_message(self, message):
-        print(f'[Kafka] Receive message {message.partition}:{message.offset}: '
-              f'v={message.value}, time={time.time()}')
+        self._print(f'Receive message {message.partition}:{message.offset}: '
+                    f'v={message.value}, time={time.time()}')

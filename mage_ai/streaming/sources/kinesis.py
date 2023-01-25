@@ -18,21 +18,19 @@ class KinesisSource(BaseSource):
     config_class = KinesisConfig
 
     def init_client(self):
-        print('[Kinesis] Start initializing consumer.')
+        self._print('Start initializing consumer.')
         # Initialize kafka consumer
         self.kinesis_client = boto3.client('kinesis')
-        print(self.config)
         self.details = self.kinesis_client.describe_stream(
             StreamName=self.config.stream_name,
         )['StreamDescription']
-        print(self.details)
-        print('[Kinesis] Finish initializing consumer.')
+        self._print('Finish initializing consumer.')
 
     def read(self, handler: Callable):
         pass
 
     def batch_read(self, handler: Callable):
-        print('[Kinesis] Start consuming messages.')
+        self._print('Start consuming messages.')
         if self.config.batch_size > 0:
             batch_size = self.config.batch_size
         else:
@@ -53,10 +51,10 @@ class KinesisSource(BaseSource):
                 shard_iter = response['NextShardIterator']
                 records = response['Records']
                 if records:
-                    print(f'[Kinesis] Got {len(records)} records. Sample: {records[0]}')
+                    self._print(f'Got {len(records)} records. Sample: {records[0]}')
                     handler([json.loads(r['Data'].decode('utf-8')) for r in records])
         except Exception:
-            print(f'[Kinesis] Couldn\'t get records from stream {self.config.stream_name}.')
+            self._print(f'Couldn\'t get records from stream {self.config.stream_name}.')
             raise
 
     def test_connection(self):

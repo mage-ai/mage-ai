@@ -50,7 +50,7 @@ class OpenSearchSink(BaseSink):
         return True
 
     def write(self, data: Dict):
-        print(f'[Opensearch] Ingest data {data}, time={time.time()}')
+        self._print(f'[Opensearch] Ingest data {data}, time={time.time()}')
         self.client.index(
             index=self.config.index_name,
             body=data,
@@ -58,6 +58,6 @@ class OpenSearchSink(BaseSink):
         )
 
     def batch_write(self, data: List[Dict]):
-        print(f'[Opensearch] Batch ingest data {data}, time={time.time()}')
+        self._print(f'[Opensearch] Batch ingest data {data}, time={time.time()}')
         docs = [{'_index': self.config.index_name, '_source': doc} for doc in data]
         bulk(self.client, docs)
