@@ -1,0 +1,5 @@
+steps:
+  - label: ":docker: :ecs: Build Docker images, run migrations, and deploy to ECS"
+    command: "./.buildkite/cd/deploy-ecs.sh"
+    key: "deploy"
+    timeout_in_minutes: 30
