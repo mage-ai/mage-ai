@@ -125,12 +125,12 @@ Here are the steps we’ll take:
 
         1. Sample commands if using previously tagged custom Docker image:
             ```bash
-            docker tag mageai/mageai:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
+            docker tag mageprod:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
             ```
 
             An example command could look like this:
 
-                docker tag mageai/mageai:latest \
+                docker tag mageprod:latest \
                   us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
 
 6.  Push the local Docker image to GCP Artifact Registry:
