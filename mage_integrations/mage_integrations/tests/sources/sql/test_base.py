@@ -1,5 +1,6 @@
 from mage_integrations.sources.catalog import CatalogEntry
 from mage_integrations.sources.sql.base import Source
+from mage_integrations.tests.sources.test_base import build_sample_streams_catalog
 from unittest.mock import MagicMock, patch
 import unittest
 
@@ -25,14 +26,18 @@ def build_log_based_sample_catalog_entry():
 class BaseSQLSourceTests(unittest.TestCase):
     def test_discover(self):
         source = Source()
-        build_connection = MagicMock()
+        build_connection_result = MagicMock()
         with patch.object(source, 'build_discover_query') as mock_build_query:
             with patch.object(
                 source,
                 'build_connection',
-                return_value=build_connection,
+                return_value=build_connection_result,
             ) as mock_build_connection:
-                with patch.object(build_connection, 'load', return_value=build_sample_rows()):
+                with patch.object(
+                    build_connection_result,
+                    'load',
+                    return_value=build_sample_rows(),
+                ):
                     catalog = source.discover()
                     mock_build_query.assert_called_once()
                     mock_build_connection.assert_called_once()
@@ -135,8 +140,25 @@ class BaseSQLSourceTests(unittest.TestCase):
     def test_count_records_log_based(self):
         source = Source()
         stream = build_log_based_sample_catalog_entry()
-        result = source.count_records(stream)
-        self.assertEqual(result, 1)
+        with patch.object(source, 'build_connection') as mock_build_connection:
+            result = source.count_records(stream)
+            mock_build_connection.assert_not_called()
+            self.assertEqual(result, 1)
+
+    def test_count_records_non_log_based(self):
+        source = Source()
+        catalog = build_sample_streams_catalog()
+        stream = catalog.streams[0]
+        build_connection_result = MagicMock()
+        with patch.object(
+            source,
+            'build_connection',
+            return_value=build_connection_result,
+        ) as mock_build_connection:
+            with patch.object(build_connection_result, 'load', return_value=[(1,)]):
+                result = source.count_records(stream)
+                mock_build_connection.assert_called_once()
+                self.assertEqual(result, 1)
 
     def test_load_data_log_based(self):
         source = Source()
@@ -144,3 +166,45 @@ class BaseSQLSourceTests(unittest.TestCase):
         with patch.object(source, 'load_data_from_logs') as mock_load_data_from_logs:
             next(source.load_data(stream), None)
             mock_load_data_from_logs.assert_called_once_with(stream, bookmarks=None, query={})
+
+    def test_load_data_non_log_based(self):
+        source = Source()
+        catalog = build_sample_streams_catalog()
+        stream = catalog.streams[1]
+        build_connection_result = MagicMock()
+        with patch.object(source, 'load_data_from_logs') as mock_load_data_from_logs:
+            with patch.object(
+                source,
+                'build_connection',
+                return_value=build_connection_result,
+            ) as mock_build_connection:
+                with patch.object(
+                    build_connection_result,
+                    'load',
+                    return_value=[
+                        (18, '2', 'scott', 'jason', 'red'),
+                        (17, '3', 'hart', 'kimberly', 'pink'),
+                    ],
+                ):
+                    result = next(source.load_data(stream), None)
+                    mock_build_connection.assert_called_once()
+                    mock_load_data_from_logs.assert_not_called()
+                    self.assertEqual(
+                        result,
+                        [
+                            {
+                                'age': 18,
+                                'id': '2',
+                                'last_name': 'scott',
+                                'first_name': 'jason',
+                                'color': 'red',
+                            },
+                            {
+                                'age': 17,
+                                'id': '3',
+                                'last_name': 'hart',
+                                'first_name': 'kimberly',
+                                'color': 'pink',
+                            },
+                        ],
+                    )
