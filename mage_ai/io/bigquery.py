@@ -8,7 +8,7 @@ from mage_ai.shared.utils import (
     convert_python_type_to_bigquery_type,
 )
 from pandas import DataFrame
-from typing import Mapping
+from typing import Mapping, Union
 
 
 class BigQuery(BaseSQLDatabase):
@@ -59,7 +59,7 @@ class BigQuery(BaseSQLDatabase):
         self,
         df: DataFrame,
         table_id: str,
-        database: str = None,
+        database: Union[str, None] = None,
         verbose: bool = True,
     ):
         def __process(database):
@@ -114,7 +114,7 @@ WHERE TABLE_NAME = '{table_name}'
         self,
         query_string: str,
         limit: int = QUERY_ROW_LIMIT,
-        display_query: str = None,
+        display_query: Union[str, None] = None,
         verbose: bool = True,
         **kwargs,
     ) -> DataFrame:
@@ -156,9 +156,9 @@ WHERE TABLE_NAME = '{table_name}'
         self,
         df: DataFrame,
         table_id: str,
-        database: str = None,
+        database: Union[str, None] = None,
         if_exists: str = 'replace',
-        query_string: str = None,
+        query_string: Union[str, None] = None,
         verbose: bool = True,
         **configuration_params,
     ) -> None:
@@ -181,7 +181,7 @@ WHERE TABLE_NAME = '{table_name}'
             **configuration_params: Configuration parameters for export job
         """
 
-        def __process(database):
+        def __process(database: Union[str, None]):
             if query_string:
                 parts = table_id.split('.')
                 if len(parts) == 2:

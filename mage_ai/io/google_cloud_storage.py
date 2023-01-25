@@ -4,6 +4,7 @@ from google.oauth2 import service_account
 from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
+from typing import Union
 
 
 class GoogleCloudStorage(BaseFile):
@@ -21,7 +22,7 @@ class GoogleCloudStorage(BaseFile):
 
     def __init__(
         self,
-        verbose=False,
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -66,7 +67,7 @@ class GoogleCloudStorage(BaseFile):
         self,
         bucket_name: str,
         object_key: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
@@ -97,7 +98,12 @@ class GoogleCloudStorage(BaseFile):
             return self._read(buffer, format, limit, **kwargs)
 
     def export(
-        self, df: DataFrame, bucket_name: str, object_key: str, format: FileFormat = None, **kwargs
+        self,
+        df: DataFrame,
+        bucket_name: str,
+        object_key: str,
+        format: Union[FileFormat, str, None] = None,
+        **kwargs,
     ) -> None:
         """
         Exports data frame to a Google Cloud Storage bucket.

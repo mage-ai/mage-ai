@@ -11,8 +11,8 @@ class FileIO(BaseFile):
 
     def load(
         self,
-        filepath: str,
-        format: FileFormat = None,
+        filepath: Union[str, os.PathLike],
+        format: Union[FileFormat, str, None] = None,
         **kwargs,
     ) -> DataFrame:
         """
@@ -32,7 +32,11 @@ class FileIO(BaseFile):
             return self._read(filepath, format, **kwargs)
 
     def export(
-        self, df: DataFrame, filepath: str, format: Union[FileFormat, str] = None, **kwargs
+        self,
+        df: DataFrame,
+        filepath: Union[str, os.PathLike],
+        format: Union[FileFormat, str, None] = None,
+        **kwargs,
     ) -> None:
         """
         Exports the input dataframe to the file specified.
@@ -49,6 +53,7 @@ class FileIO(BaseFile):
             self._write(df, format, filepath, **kwargs)
 
     def exists(
-        self, filepath: str
+        self,
+        filepath: Union[os.PathLike, str],
     ) -> bool:
         return os.path.exists(filepath)

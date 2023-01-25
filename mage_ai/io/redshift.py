@@ -7,6 +7,7 @@ from mage_ai.shared.utils import (
 from pandas import DataFrame
 from redshift_connector import connect
 import json
+from typing import Union
 
 
 class Redshift(BaseSQLConnection):
@@ -46,11 +47,11 @@ class Redshift(BaseSQLConnection):
         self,
         query_string: str,
         limit: int = QUERY_ROW_LIMIT,
-        display_query: str = None,
+        display_query: Union[str, None] = None,
         verbose: bool = True,
         *args,
         **kwargs,
-    ) -> DataFrame:
+    ) -> Union[DataFrame, None]:
         """
         Uses query to load data from Redshift cluster into a Pandas data frame.
         This will fail if the query returns no data from the database. When a
@@ -101,8 +102,8 @@ class Redshift(BaseSQLConnection):
         df: DataFrame,
         table_name: str,
         if_exists: str = 'append',
-        query_string: str = None,
-        schema: str = None,
+        query_string: Union[str, None] = None,
+        schema: Union[str, None] = None,
         verbose: bool = True,
     ) -> None:
         """

@@ -97,10 +97,10 @@ class BaseFile(BaseIO):
         """
         pass
 
-    def _get_file_format(self, filepath):
+    def _get_file_format(self, filepath: Union[os.PathLike, str]) -> str:
         return os.path.splitext(os.path.basename(filepath))[-1][1:]
 
-    def __get_reader(self, format: Union[FileFormat, str]) -> Callable:
+    def __get_reader(self, format: Union[FileFormat, str, None]) -> Callable:
         """
         Gets data frame reader based on file format
 
@@ -126,8 +126,8 @@ class BaseFile(BaseIO):
 
     def _read(
         self,
-        input: Union[IO, os.PathLike],
-        format: Union[FileFormat, str],
+        input: Union[IO, os.PathLike, str],
+        format: Union[FileFormat, str, None],
         limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
@@ -162,8 +162,8 @@ class BaseFile(BaseIO):
     def _write(
         self,
         df: DataFrame,
-        format: Union[FileFormat, str],
-        output: Union[IO, os.PathLike],
+        format: Union[FileFormat, str, None],
+        output: Union[IO, os.PathLike, str],
         **kwargs,
     ) -> None:
         """
@@ -192,7 +192,7 @@ class BaseFile(BaseIO):
     def __get_writer(
         self,
         df: DataFrame,
-        format: Union[FileFormat, str],
+        format: Union[FileFormat, str, None],
     ) -> Callable:
         """
         Fetches the appropriate file writer based on format
@@ -277,7 +277,7 @@ class BaseSQLConnection(BaseSQLDatabase):
     manager when connecting to external data sources.
     """
 
-    def __init__(self, verbose=False, **kwargs) -> None:
+    def __init__(self, verbose: bool = False, **kwargs) -> None:
         """
         Initializes the connection with the settings given as keyword arguments.
         Specific data connectors will have access to different settings.

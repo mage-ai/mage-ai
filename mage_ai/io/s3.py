@@ -6,6 +6,7 @@ from pandas import DataFrame
 from pathlib import Path
 import boto3
 import os
+from typing import Union
 
 
 class S3(BaseFile):
@@ -24,7 +25,7 @@ class S3(BaseFile):
 
     def __init__(
         self,
-        verbose=False,
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -42,7 +43,7 @@ class S3(BaseFile):
         self,
         bucket_name: str,
         object_key: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
@@ -78,7 +79,12 @@ class S3(BaseFile):
             return self._read(buffer, format, limit, **kwargs)
 
     def export(
-        self, df: DataFrame, bucket_name: str, object_key: str, format: FileFormat = None, **kwargs
+        self,
+        df: DataFrame,
+        bucket_name: str,
+        object_key: str,
+        format: Union[FileFormat, str, None] = None,
+        **kwargs,
     ) -> None:
         """
         Exports data frame to an S3 bucket.
