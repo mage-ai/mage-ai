@@ -540,7 +540,13 @@ class Source:
 
         self.logger.info('Sync completed.')
 
-    def build_catalog_entry(self, stream_id: str, schema, **kwargs) -> CatalogEntry:
+    def build_catalog_entry(
+        self,
+        stream_id: str,
+        schema,
+        replication_key: str = None,
+        **kwargs,
+    ) -> CatalogEntry:
         """
         Build catalog entry.
 
@@ -569,7 +575,7 @@ class Source:
                 is_view=None,
                 key_properties=[],  # User customizes this after creating catalog from discover.
                 metadata=metadata,
-                replication_key='',     # User customizes this after creating catalog from discover.
+                replication_key=replication_key or '',
                 replication_method=self.get_forced_replication_method(stream_id),
                 row_count=None,
                 schema=schema,

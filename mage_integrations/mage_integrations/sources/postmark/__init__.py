@@ -16,7 +16,11 @@ class Postmark(Source):
             stream_id = stream['tap_stream_id']
             if not streams or stream_id in streams:
                 schema = catalog_singer.Schema.from_dict(stream['schema'])
-                catalog_entries.append(self.build_catalog_entry(stream_id, schema))
+                catalog_entries.append(self.build_catalog_entry(
+                    stream_id,
+                    schema,
+                    replication_key=stream.get('replication_key'),
+                ))
 
         return Catalog(catalog_entries)
 
