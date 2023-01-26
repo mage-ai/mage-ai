@@ -136,7 +136,6 @@ WHERE TABLE_NAME = '{table_name}'
         for col, obj in new_mapping.items():
             new_mapping_column_types[clean_column_name(col)] = obj['type_converted']
 
-
         new_column_types = {}
         for col, col_type in current_mapping.items():
             if col not in new_mapping_column_types:
