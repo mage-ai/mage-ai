@@ -23,6 +23,7 @@ import { onError, onSuccess } from '@api/utils/response';
 export const ACTION_EXECUTE = 'execute';
 export const ANALYSES = 'analyses';
 export const AUTOCOMPLETE_ITEMS = 'autocomplete_items';
+export const BACKFILLS: 'backfills' = 'backfills';
 export const BLOCKS: 'blocks' = 'blocks';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const CLUSTERS: 'clusters' = 'clusters';
@@ -61,6 +62,8 @@ export const WIDGETS: 'widgets' = 'widgets';
 const RESOURCES: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
   [AUTOCOMPLETE_ITEMS],
+  [BACKFILLS],
+  [BACKFILLS, PIPELINES],
   [BLOCK_RUNS],
   [BLOCKS],
   [BLOCKS, PIPELINES],

@@ -6,18 +6,8 @@ from mage_ai.shared.hash import extract
 from sqlalchemy import desc
 
 
-class ApiBackfillsHandler(BaseHandler):
+class ApiPipelineBackfillsHandler(BaseHandler):
     model_class = Backfill
-
-    @safe_db_query
-    def get(self, pipeline_uuid):
-        collection = (Backfill.
-            query.
-            filter(Backfill.pipeline_uuid == pipeline_uuid).
-            order_by(desc(Backfill.created_at)).
-            all())
-
-        self.write(dict(backfills=[b.to_dict() for b in collection]))
 
     @safe_db_query
     def post(self, pipeline_uuid):
@@ -47,3 +37,22 @@ class ApiBackfillHandler(BaseHandler):
             'start_datetime',
         ]))
         self.write(dict(block_run=model.to_dict()))
+
+
+class ApiBackfillsHandler(BaseHandler):
+    model_class = Backfill
+
+    @safe_db_query
+    def get(self):
+        pipeline_uuid = self.get_argument('pipeline_uuid', None)
+
+        results = (Backfill.
+            query.
+            filter(Backfill.pipeline_uuid == pipeline_uuid).
+            order_by(desc(Backfill.created_at))
+        )
+
+        results = self.limit(results)
+        collection = [b.to_dict() for b in results]
+
+        self.write(dict(backfills=collection))
