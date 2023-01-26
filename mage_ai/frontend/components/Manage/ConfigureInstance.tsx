@@ -155,6 +155,7 @@ function ConfigureInstance({
                 onClick={() => createInstance({
                   instance: {
                     name: updateInstanceName(newInstanceName),
+                    container_config: configureContainer && containerConfig,
                   }
                 })}
                 uuid="EnvironmentListPage/new"
