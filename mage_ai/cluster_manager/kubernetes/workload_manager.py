@@ -1,3 +1,4 @@
+import traceback
 from kubernetes import client, config
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
@@ -16,7 +17,7 @@ from mage_ai.orchestration.constants import (
     DB_PASS,
     DB_USER
 )
-from typing import List
+from typing import Dict, List
 
 import os
 
@@ -42,7 +43,9 @@ class WorkloadManager:
 
         try:
             config.load_kube_config()
+            return True
         except:
+            traceback.print_exc()
             pass
 
         return False
@@ -70,9 +73,12 @@ class WorkloadManager:
         return services_list
 
 
-    def create_stateful_set(self, deployment_name, storage_class_name: str = None):
+    def create_stateful_set(self, deployment_name, storage_class_name: str = None, container_config: Dict = None):
         env_vars = self.__populate_env_vars()
         
+        if container_config is None:
+            container_config = dict()
+
         containers = [
             {
                 'name': f'{deployment_name}-container',
@@ -90,7 +96,8 @@ class WorkloadManager:
                         'name': 'mage-data',
                         'mountPath': '/home/src'
                     }
-                ]
+                ],
+                **container_config,
             }
         ]
         

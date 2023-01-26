@@ -17,6 +17,7 @@ from mage_ai.server.kernels import KernelName
 from mage_ai.shared.hash import merge_dict
 
 import os
+import yaml
 
 class ClusterType(str, Enum):
     EMR = 'emr'
@@ -161,11 +162,16 @@ class ApiInstancesHandler(BaseHandler):
                 'storage_class_name',
                 os.getenv(KUBE_STORAGE_CLASS_NAME)
             )
+            container_config_yaml = instance_payload.get('container_config')
+            container_config = None
+            if container_config_yaml:
+                container_config = yaml.full_load(container_config_yaml)
 
             k8s_workload_manager = WorkloadManager(namespace)
             k8s_workload_manager.create_stateful_set(
                 name,
-                storage_class_name=storage_class_name
+                storage_class_name=storage_class_name,
+                container_config=container_config,
             )
 
             self.write(dict(success=True))
