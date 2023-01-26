@@ -85,8 +85,14 @@ def sync_record(stream: CatalogEntry, row: dict, state: dict) -> None:
         state {dict} -- State
     """
     # Retrieve the value of the bookmark
+    bookmark_property = None
+    if stream.bookmark_properties:
+        bookmark_property = stream.bookmark_properties[0]
+    else:
+        bookmark_property = stream.replication_key
+
     bookmark: Optional[str] = tools.retrieve_bookmark_with_path(
-        stream.replication_key,
+        bookmark_property,
         row,
     )
 
