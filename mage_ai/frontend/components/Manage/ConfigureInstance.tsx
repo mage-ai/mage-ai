@@ -37,6 +37,7 @@ function ConfigureInstance({
   instanceType,
 }: ConfigureInstanceProps) {
   const [create, setCreate] = useState<boolean>();
+  const [error, setError] = useState<string>();
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [containerConfig, setContainerConfig] = useState(null);
   const [newInstanceName, setNewInstanceName] = useState<string>();
@@ -46,9 +47,13 @@ function ConfigureInstance({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
-            fetchInstances();
-            setCreate(false);
+          callback: (res) => {
+            if (res['success']) {
+              fetchInstances();
+              setCreate(false);
+            } else {
+              setError(res['error_message']);
+            }
           },
           onErrorCallback: ({
             error: {
