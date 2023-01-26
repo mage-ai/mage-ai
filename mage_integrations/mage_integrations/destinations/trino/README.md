@@ -22,10 +22,7 @@ You must enter the following credentials when configuring this source:
 
 ### Connectors
 
-Currently supported connectors:
-
-- [`postgresql`](https://trino.io/docs/current/connector/postgresql.html)
-- [Coming soon] S3 (Iceberg)
+Currently supported connectors: https://trino.io/docs/current/connector.html
 
 <br />
 
@@ -35,7 +32,7 @@ Currently supported connectors:
 docker run -v $PWD/etc:/etc/trino -p 8080:8080 trinodb/trino
 ```
 
-### `/etc/config.properties`
+### `/etc/trino/config.properties`
 
 ```
 #single node install config
@@ -51,7 +48,22 @@ http-server.authentication.type=PASSWORD
 internal-communication.shared-secret=some_very_long_secret
 ```
 
-### `/etc/catalog/postgresql.properties`
+### `/etc/trino/catalog/iceberg.properties`
+Configuration: https://trino.io/docs/current/connector/iceberg.html#configuration
+
+Example config:
+```
+connector.name=iceberg
+iceberg.catalog.type=glue
+iceberg.file-format=parquet
+hive.metastore.glue.region=us-west-2
+hive.metastore.glue.aws-access-key=aws-access-key
+hive.metastore.glue.aws-secret-key=aws-secret-key
+hive.metastore.glue.default-warehouse-dir=s3://[bucket_name]/
+
+```
+
+### `/etc/trino/catalog/postgresql.properties`
 
 ```
 connector.name=postgresql
