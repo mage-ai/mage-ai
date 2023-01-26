@@ -381,21 +381,38 @@ function IntegrationPipeline({
       return;
     }
 
-    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-      ...dataLoaderBlockContent,
-      catalog: {
-        ...catalog,
-        streams: catalog.streams.map(stream => streamDataTransformer(stream)),
-      },
-    }));
+    const catalogUpdate = {
+      ...catalog,
+      streams: catalog.streams.map(stream => streamDataTransformer(stream)),
+    };
 
-    savePipelineContent().then(() => fetchPipeline());
+    let payload;
+    const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+    if (dataLoaderBlockContentCatalog) {
+      onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+        ...dataLoaderBlockContent,
+        catalog: catalogUpdate,
+      }));
+    } else {
+      payload = {
+        pipeline: {
+          ...pipeline,
+          data_integration: {
+            ...(pipeline?.data_integration || {}),
+            catalog: catalogUpdate,
+          },
+        },
+      };
+    }
+
+    savePipelineContent(payload).then(() => fetchPipeline());
   }, [
     catalog,
     dataLoaderBlock,
     dataLoaderBlockContent,
     fetchPipeline,
     onChangeCodeBlock,
+    pipeline,
     savePipelineContent,
   ]);
 
