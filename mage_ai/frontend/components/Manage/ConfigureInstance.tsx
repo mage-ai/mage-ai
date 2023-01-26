@@ -109,16 +109,18 @@ function ConfigureInstance({
           />
           {true && (
             <>
-              <FlexContainer alignItems="center">
-                <Text monospace>
-                  Configure container
-                </Text>
-                <Spacing ml={1} />
-                <ToggleSwitch
-                  checked={configureContainer}
-                  onCheck={() => setConfigureContainer(prevVal => !prevVal)}
-                />
-              </FlexContainer>
+              <Spacing mt={1}>
+                <FlexContainer alignItems="center">
+                  <Text default monospace>
+                    Configure container
+                  </Text>
+                  <Spacing ml={1} />
+                  <ToggleSwitch
+                    checked={configureContainer}
+                    onCheck={() => setConfigureContainer(prevVal => !prevVal)}
+                  />
+                </FlexContainer>
+              </Spacing>
               {configureContainer && (
                 <Spacing mt={1}>
                   <CodeEditorStyle>
