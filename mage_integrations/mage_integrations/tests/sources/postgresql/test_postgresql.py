@@ -26,8 +26,9 @@ class PostgreSQLSourceTests(unittest.TestCase):
 
         replication_message = MagicMock()
         """"
-        The second mocked return value for replication_cursor results in 23272288 for the
-        end_lsn, so we test with a value greater than 23272288 to avoid an infinite loop.
+        The second mocked return value for replication_cursor's "fetchone"
+        method results in 23272288 for the end_lsn variable, so we test with
+        a value greater than 23272288 to avoid an infinite loop.
         """
         replication_message.data_start = 23272289
         replication_cursor.read_message.return_value = replication_message
