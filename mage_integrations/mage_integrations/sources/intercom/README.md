@@ -12,4 +12,7 @@ You must enter the following credentials when configuring this source:
 
 <br />
 
-How to get access token: https://developers.intercom.com/building-apps/docs/authentication-types#section-how-to-get-your-access-token
+### How to get `access_token`
+
+Follow Intercom’s [instructions](https://developers.intercom.com/building-apps/docs/authentication-types#section-how-to-get-your-access-token)
+to get your `access_token`.
