@@ -42,6 +42,7 @@ def execute_r_code(
         block,
         code,
         execution_partition=execution_partition,
+        global_vars=global_vars,
         input_variable_objects=input_variable_objects,
     )
     file_path = f'/tmp/{str(uuid.uuid4())}.r'
@@ -77,10 +78,26 @@ def __convert_inputs_to_csvs(input_variable_objects):
             v.convert_parquet_to_csv()
 
 
+def __render_global_vars(global_vars: Dict = None):
+    if not global_vars:
+        return ''
+
+    def format_value(val):
+        if type(val) is int or type(val) is float:
+            return val
+        else:
+            return f"'{val}'"
+
+    var_list = [f'{k}={format_value(v)}' for k, v in global_vars.items()]
+    val_list_str = ', '.join(var_list)
+    return f'global_vars = c({val_list_str})'
+
+
 def __render_r_script(
     block,
     code: str,
     execution_partition: str = None,
+    global_vars: Dict = None,
     input_variable_objects: List = [],
 ):
     if block.type not in BLOCK_TYPE_TO_EXECUTION_TEMPLATE:
@@ -93,8 +110,11 @@ def __render_r_script(
     os.makedirs(output_variable_object.variable_path, exist_ok=True)
     output_path = os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE)
 
+    global_vars_str = __render_global_vars(global_vars=global_vars)
+
     return template.render(
         code=code,
+        global_vars=global_vars_str,
         input_paths=[os.path.join(v.variable_path, DATAFRAME_CSV_FILE) for v in input_variable_objects],
         input_vars_str=', '.join([f'df_{i + 1}' for i in range(len(input_variable_objects))]),
         output_path=output_path,
