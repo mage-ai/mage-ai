@@ -8,8 +8,10 @@ RUN ${PIP} install --upgrade pip
 RUN ${PIP} install --no-cache "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 RUN ${PIP} install "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
-COPY ./mage_ai/server/constants.py constants.py
-RUN tag=$(tail -n 1 constants.py) && VERSION=$(echo $tag | tr -d "'") && ${PIP} install --no-cache "mage-ai[all]"==$VERSION
+# COPY ./mage_ai/server/constants.py constants.py
+# RUN tag=$(tail -n 1 constants.py) && VERSION=$(echo $tag | tr -d "'") && ${PIP} install --no-cache "mage-ai[all]"==$VERSION
+RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git@dy--test_k8s_frontend"
+
 
 # Install NFS dependencies
 RUN apt -y update && apt -y install nfs-common
