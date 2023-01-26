@@ -1,6 +1,7 @@
-from mage_ai.cli.utils import parse_runtime_variables
 import argparse
 import os
+
+from mage_ai.cli.utils import parse_runtime_variables
 
 
 def main():
@@ -9,10 +10,11 @@ def main():
     try:
         command = sys.argv[1]
     except IndexError:
-        command = 'help'
+        command = "help"
 
-    if command == 'help':
-        print("""Usage:
+    if command == "help":
+        print(
+            """Usage:
     mage <command> 
 
 Commands:
@@ -44,24 +46,25 @@ Commands:
     create_spark_cluster <project_path>
       args:
         project_path                    path of the Mage project that contains the EMR config.
-        """)
-    elif command == 'init':
+        """
+        )
+    elif command == "init":
         from mage_ai.data_preparation.repo_manager import init_repo
 
         repo_path = os.path.join(os.getcwd(), sys.argv[2])
         init_repo(repo_path)
-    elif command == 'start':
+    elif command == "start":
         parser = argparse.ArgumentParser()
-        parser.add_argument('repo_path', metavar='project_path', type=str)
-        parser.add_argument('--host', nargs='?', type=str)
-        parser.add_argument('--port', nargs='?', type=int)
-        parser.add_argument('--manage-instance', nargs='?', type=str)
-        parser.add_argument('--dbt-docs-instance', nargs='?', type=str)
+        parser.add_argument("repo_path", metavar="project_path", type=str)
+        parser.add_argument("--host", nargs="?", type=str)
+        parser.add_argument("--port", nargs="?", type=int)
+        parser.add_argument("--manage-instance", nargs="?", type=str)
+        parser.add_argument("--dbt-docs-instance", nargs="?", type=str)
 
         args = dict()
         if len(sys.argv) >= 3:
             args = vars(parser.parse_args(sys.argv[2:]))
-            project_path = args['repo_path']
+            project_path = args["repo_path"]
         else:
             project_path = os.getcwd()
         project_path = os.path.abspath(project_path)
@@ -73,36 +76,36 @@ Commands:
         from mage_ai.server.server import start_server
 
         start_server(
-            host=args.get('host'),
-            dbt_docs=args.get('dbt_docs_instance') == '1',
-            manage=args.get('manage_instance') == '1',
-            port=args.get('port'),
+            host=args.get("host"),
+            dbt_docs=args.get("dbt_docs_instance") == "1",
+            manage=args.get("manage_instance") == "1",
+            port=args.get("port"),
             project=project_path,
         )
-    elif command == 'run' or command == 'test':
+    elif command == "run" or command == "test":
         from mage_ai.data_preparation.repo_manager import set_repo_path
         from mage_ai.shared.hash import merge_dict
 
-        parser = argparse.ArgumentParser(description='Run pipeline.')
-        parser.add_argument('repo_path', metavar='project_path', type=str)
-        parser.add_argument('pipeline_uuid', type=str)
-        parser.add_argument('--block_uuid', nargs='?', type=str)
-        parser.add_argument('--execution_partition', nargs='?', type=str)
-        parser.add_argument('--executor_type', nargs='?', type=str)
-        parser.add_argument('--callback_url', nargs='?', type=str)
-        parser.add_argument('--block_run_id', nargs='?', type=int)
-        parser.add_argument('--runtime-vars', nargs="+")
-        parser.add_argument('--skip-sensors', type=bool)
+        parser = argparse.ArgumentParser(description="Run pipeline.")
+        parser.add_argument("repo_path", metavar="project_path", type=str)
+        parser.add_argument("pipeline_uuid", type=str)
+        parser.add_argument("--block_uuid", nargs="?", type=str)
+        parser.add_argument("--execution_partition", nargs="?", type=str)
+        parser.add_argument("--executor_type", nargs="?", type=str)
+        parser.add_argument("--callback_url", nargs="?", type=str)
+        parser.add_argument("--block_run_id", nargs="?", type=int)
+        parser.add_argument("--runtime-vars", nargs="+")
+        parser.add_argument("--skip-sensors", type=bool)
 
         args = vars(parser.parse_args(sys.argv[2:]))
-        project_path = args['repo_path']
-        pipeline_uuid = args['pipeline_uuid']
-        block_uuid = args.get('block_uuid')
-        execution_partition = args.get('execution_partition')
-        executor_type = args.get('executor_type')
-        callback_url = args.get('callback_url')
-        runtime_vars = args.get('runtime_vars')
-        skip_sensors = args.get('skip_sensors', False)
+        project_path = args["repo_path"]
+        pipeline_uuid = args["pipeline_uuid"]
+        block_uuid = args.get("block_uuid")
+        execution_partition = args.get("execution_partition")
+        executor_type = args.get("executor_type")
+        callback_url = args.get("callback_url")
+        runtime_vars = args.get("runtime_vars")
+        skip_sensors = args.get("skip_sensors", False)
 
         runtime_variables = dict()
         if runtime_vars is not None:
@@ -122,6 +125,7 @@ Commands:
         global_vars = merge_dict(default_variables, runtime_variables)
 
         from mage_ai.orchestration.db import db_connection
+
         db_connection.start_session()
 
         if block_uuid is None:
@@ -129,7 +133,7 @@ Commands:
                 analyze_outputs=False,
                 global_vars=global_vars,
                 run_sensors=not skip_sensors,
-                run_tests=command == 'test',
+                run_tests=command == "test",
                 update_status=False,
             )
         else:
@@ -145,13 +149,15 @@ Commands:
                 update_status=False,
             )
 
-    elif command == 'create_spark_cluster':
+    elif command == "create_spark_cluster":
         from mage_ai.services.aws.emr.launcher import create_cluster
 
         project_path = os.path.abspath(sys.argv[2])
         create_cluster(project_path)
     else:
-        print(f'Unknown command "{command}". Type "mage help" to see what commands are available.')
+        print(
+            f'Unknown command "{command}". Type "mage help" to see what commands are available.'
+        )
 
 
 if __name__ == "__main__":
