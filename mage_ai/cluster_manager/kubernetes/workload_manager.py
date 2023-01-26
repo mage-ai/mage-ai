@@ -70,7 +70,13 @@ class WorkloadManager:
         return services_list
 
 
-    def create_stateful_set(self, deployment_name, storage_class_name: str = None, container_config: Dict = None):
+    def create_stateful_set(
+        self,
+        deployment_name,
+        container_config: Dict = None,
+        service_account_name: str = None,
+        storage_class_name: str = None,
+    ):
         if container_config is None:
             container_config = dict()
 
@@ -138,6 +144,10 @@ class WorkloadManager:
                 }
             )
 
+        stateful_set_spec = dict()
+        if service_account_name:
+            stateful_set_spec['serviceAccountName'] = service_account_name
+
         stateful_set = {
             'apiVersion': 'apps/v1',
             'kind': 'StatefulSet',
@@ -184,7 +194,8 @@ class WorkloadManager:
                             }
                         }
                     }
-                ]
+                ],
+                **stateful_set_spec
             }
         }
 

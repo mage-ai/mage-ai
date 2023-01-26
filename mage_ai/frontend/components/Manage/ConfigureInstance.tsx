@@ -17,8 +17,8 @@ import { BLUE_SKY, PURPLE } from '@oracle/styles/colors/main';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { randomNameGenerator, replaceSpaces } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import { randomNameGenerator, replaceSpaces } from '@utils/string';
 
 type ConfigureInstanceProps = {
   fetchInstances: any,
@@ -34,6 +34,7 @@ function ConfigureInstance({
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [containerConfig, setContainerConfig] = useState(null);
   const [newInstanceName, setNewInstanceName] = useState<string>();
+  const [serviceAccountName, setServiceAccountName] = useState<string>();
 
   const [createInstance, { isLoading: isLoadingCreateInstance }] = useMutation(
     api.instances.clusters.useCreate(instanceType),
@@ -76,6 +77,44 @@ function ConfigureInstance({
       return "Spaces will be replaced by hyphens";
     }
   }
+
+  const rows = [
+    [
+      <Text bold color={BLUE_SKY}>
+        Instance name
+      </Text>,
+      <TextInput
+        label={instanceNameLabel()}
+        monospace
+        onChange={(e) => {
+          e.preventDefault();
+          setNewInstanceName(e.target.value);
+        }}
+        placeholder="Name your new instance"
+        value={newInstanceName}
+      />,
+    ]
+  ];
+
+  if (instanceType === 'k8s') {
+    rows.push(
+      [
+        <Text bold color={BLUE_SKY}>
+          Service account name (optional)
+        </Text>,
+        <TextInput
+          label="Name of service account to be attached to stateful set"
+          monospace
+          onChange={(e) => {
+            e.preventDefault();
+            setServiceAccountName(e.target.value);
+          }}
+          placeholder="Service account name"
+          value={serviceAccountName}
+        />,
+      ]
+    )
+  }
   
 
   return (
@@ -87,23 +126,7 @@ function ConfigureInstance({
           </Headline>
           <Table
             columnFlex={[null, 3]}
-            rows={[
-              [
-                <Text bold color={BLUE_SKY}>
-                  Instance name
-                </Text>,
-                <TextInput
-                  label={instanceNameLabel()}
-                  monospace
-                  onChange={(e) => {
-                    e.preventDefault();
-                    setNewInstanceName(e.target.value);
-                  }}
-                  placeholder="Name your new instance"
-                  value={newInstanceName}
-                />,
-              ],
-            ]}
+            rows={rows}
           />
           {instanceType === 'k8s' && (
             <>
@@ -169,6 +192,7 @@ function ConfigureInstance({
                 onClick={() => createInstance({
                   instance: {
                     name: updateInstanceName(newInstanceName),
+                    service_account_name: serviceAccountName,
                     container_config: configureContainer && containerConfig,
                   }
                 })}

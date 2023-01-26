@@ -163,6 +163,7 @@ class ApiInstancesHandler(BaseHandler):
                     'storage_class_name',
                     os.getenv(KUBE_STORAGE_CLASS_NAME)
                 )
+                service_account_name = instance_payload.get('service_account_name')
                 container_config_yaml = instance_payload.get('container_config')
                 container_config = None
                 if container_config_yaml:
@@ -171,8 +172,9 @@ class ApiInstancesHandler(BaseHandler):
                 k8s_workload_manager = WorkloadManager(namespace)
                 k8s_workload_manager.create_stateful_set(
                     name,
-                    storage_class_name=storage_class_name,
                     container_config=container_config,
+                    service_account_name=service_account_name,
+                    storage_class_name=storage_class_name,
                 )
                 self.write(dict(success=True))
         except Exception as e:
