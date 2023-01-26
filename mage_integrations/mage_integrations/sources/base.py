@@ -526,7 +526,7 @@ class Source:
         """
         self.logger.info('Sync started.')
 
-        for stream in catalog.get_selected_streams(self.state):
+        for stream in catalog.get_selected_streams(self.state or {}):
             tap_stream_id = stream.tap_stream_id
             tags = dict(stream=tap_stream_id)
             self.logger.info(f'Sync for stream {tap_stream_id} started.', tags=tags)

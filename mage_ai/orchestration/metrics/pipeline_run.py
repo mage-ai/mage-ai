@@ -120,11 +120,16 @@ def parse_line(l: str) -> Dict:
     try:
         data1 = json.loads(text)
         tags = data1.get('tags', {})
+        message = data1.get('message', '')
         try:
-            data2 = json.loads(data1.get('message', ''))
+            data2 = json.loads(message)
             tags.update(data2.get('tags', {}))
         except json.JSONDecodeError as err:
-            pass
+            tags.update(data1)
+            if 'error_stacktrace' in data1:
+                tags['error'] = data1['error_stacktrace']
+            if 'error' in data1:
+                tags['errors'] = data1['error']
     except json.JSONDecodeError as err:
         pass
 

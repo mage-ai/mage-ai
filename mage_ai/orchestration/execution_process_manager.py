@@ -20,7 +20,7 @@ class ExecutionProcessManager:
             try:
                 self.pipeline_processes[pipeline_run_id].terminate()
             except AttributeError as err:
-                print(err)
+                print(f'ExecutionProcessManager.terminate_pipeline_process: {err}')
 
     def set_pipeline_process(
         self,

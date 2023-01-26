@@ -837,5 +837,6 @@ SQL_RESERVED_WORDS_SUBSET = {
     'ORDER',
     'SELECT',
     'TO',
+    'USER',
     'WHERE',
 }
