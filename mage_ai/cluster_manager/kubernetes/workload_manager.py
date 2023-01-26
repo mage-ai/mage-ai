@@ -144,9 +144,9 @@ class WorkloadManager:
                 }
             )
 
-        stateful_set_spec = dict()
+        stateful_set_template_spec = dict()
         if service_account_name:
-            stateful_set_spec['serviceAccountName'] = service_account_name
+            stateful_set_template_spec['serviceAccountName'] = service_account_name
 
         stateful_set = {
             'apiVersion': 'apps/v1',
@@ -174,7 +174,8 @@ class WorkloadManager:
                     'spec': {
                         'terminationGracePeriodSeconds': 10,
                         'containers': containers,
-                        'volumes': volumes
+                        'volumes': volumes,
+                        **stateful_set_template_spec
                     }
                 },
                 'volumeClaimTemplates': [
@@ -194,8 +195,7 @@ class WorkloadManager:
                             }
                         }
                     }
-                ],
-                **stateful_set_spec
+                ]
             }
         }
 
