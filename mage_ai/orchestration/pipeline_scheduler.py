@@ -376,7 +376,7 @@ class PipelineScheduler:
     def __run_heartbeat(self) -> None:
         load1, load5, load15, cpu_count = get_compute()
         cpu_usage = load15 / cpu_count if cpu_count else None
-        
+
         free_memory, used_memory, total_memory = get_memory()
         memory_usage = used_memory / total_memory if total_memory else None
 

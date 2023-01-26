@@ -1,3 +1,4 @@
+import Ansi from 'ansi-to-react';
 import moment from 'moment';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -743,7 +744,7 @@ function SyncRowDetail({
                   <Spacing key={stream} mt={idx >= 1 ? 1 : 0}>
                     {Object.entries(obj1).map(([conn, obj2]) => {
                       const {
-                        error: errorLine,
+                        error: errorLineOrig,
                         errors: errorStack,
                         message: errorTraceback,
                       }: {
@@ -752,19 +753,29 @@ function SyncRowDetail({
                         message?: string;
                       } = obj2;
 
+                      const errorLine = Array.isArray(errorLineOrig)
+                        ? errorLineOrig.join(' ')
+                        : errorLineOrig;
+
                       return (
                         <div key={`${stream}-${conn}`}>
-                          <Text monospace>
-                            {stream}{!!conn && (
-                              <Text inline monospace muted>&nbsp;({conn})</Text>
-                            )}: <Text
-                              default
-                              inline
-                              monospace
-                            >
-                              {errorLine}
+                          <Spacing mb={errorTraceback || errorStack?.length >= 1 ? 2 : 0}>
+                            <Text monospace preWrap textOverflow>
+                              {stream}{!!conn && (
+                                <Text inline monospace muted>&nbsp;({conn})</Text>
+                              )}: <Text
+                                default
+                                inline
+                                monospace
+                              >
+                                {errorLine && (
+                                  <Ansi>
+                                    {errorLine}
+                                  </Ansi>
+                                )}
+                              </Text>
                             </Text>
-                          </Text>
+                          </Spacing>
 
                           <Text
                             default

@@ -125,7 +125,10 @@ def column_type_mapping(
                 for aoi in any_of_items:
                     aoi_type = aoi.get('type')
                     if aoi_type:
-                        column_types_for_array_type.append(aoi_type)
+                        if type(aoi_type) is list:
+                            column_types_for_array_type += aoi_type
+                        else:
+                            column_types_for_array_type.append(aoi_type)
 
             arr += arr2
 
@@ -143,11 +146,12 @@ def column_type_mapping(
         item_type_converted = None
 
         if COLUMN_TYPE_ARRAY == column_type:
-            item_types = column_types_for_array_type.copy()
+            item_types = [ct for ct in column_types_for_array_type if 'null' != ct]
             items_types = column_settings.get('items', {}).get('type', [])
             if type(items_types) is not list:
                 items_types = [items_types]
             item_types += [t for t in items_types if 'null' != t]
+
             if len(item_types):
                 item_type = item_types[0]
                 item_type_converted = convert_column_type_func(
