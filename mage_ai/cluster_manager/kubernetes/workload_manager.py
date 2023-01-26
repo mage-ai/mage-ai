@@ -1,4 +1,3 @@
-import traceback
 from kubernetes import client, config
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
@@ -43,9 +42,7 @@ class WorkloadManager:
 
         try:
             config.load_kube_config()
-            return True
         except:
-            traceback.print_exc()
             pass
 
         return False

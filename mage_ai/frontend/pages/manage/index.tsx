@@ -3,26 +3,21 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ConfigureInstance from '@components/Manage/ConfigureInstance';
 import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
-import Headline from '@oracle/elements/Headline';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { Add, Ellipsis, Expand } from '@oracle/icons';
-import { BLUE_SKY, PURPLE } from '@oracle/styles/colors/main';
+import { Ellipsis, Expand } from '@oracle/icons';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { capitalizeRemoveUnderscoreLower, randomNameGenerator, replaceSpaces } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import ConfigureInstance from '@components/Manage/ConfigureInstance';
 
 function MoreActions({
   fetchInstances,

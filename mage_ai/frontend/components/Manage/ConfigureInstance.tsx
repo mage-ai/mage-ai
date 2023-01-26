@@ -1,31 +1,24 @@
 import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 
-import Button from '@oracle/elements/Button';
-import ClickOutside from '@oracle/components/ClickOutside';
-import Dashboard from '@components/Dashboard';
+import CodeEditor from '@components/CodeEditor';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import api from '@api';
-import { Add, Ellipsis, Expand } from '@oracle/icons';
-import { BLUE_SKY, PURPLE } from '@oracle/styles/colors/main';
-import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
-import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { capitalizeRemoveUnderscoreLower, randomNameGenerator, replaceSpaces } from '@utils/string';
-import { onSuccess } from '@api/utils/response';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import api from '@api';
+import { Add } from '@oracle/icons';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
-import CodeEditor from '@components/CodeEditor';
+import { BLUE_SKY, PURPLE } from '@oracle/styles/colors/main';
+import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { CodeEditorStyle } from '@components/IntegrationPipeline/index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { randomNameGenerator, replaceSpaces } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
 
 type ConfigureInstanceProps = {
   fetchInstances: any,
@@ -112,7 +105,7 @@ function ConfigureInstance({
               ],
             ]}
           />
-          {true && (
+          {instanceType === 'k8s' && (
             <>
               <Spacing mt={1}>
                 <FlexContainer alignItems="center">
@@ -146,10 +139,24 @@ function ConfigureInstance({
           )}
           {isLoadingCreateInstance && (
             <Spacing mt={1}>
-              <Text warning>
+              <Text small warning>
                 This may take up to a few minutes... Once the service is created, it may take another 5-10 minutes for the service to be accessible.
               </Text>
             </Spacing>
+          )}
+          {!isLoadingCreateInstance && error && (
+            <>
+              <Spacing mt={1}>
+                <Text small danger>
+                  Failed to create instance, see error below.
+                </Text>
+              </Spacing>
+              <Spacing mt={1}>
+                <Text small danger>
+                  {error}
+                </Text>
+              </Spacing>
+            </>
           )}
           <Spacing my={2}>
             <FlexContainer>
