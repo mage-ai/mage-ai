@@ -95,7 +95,7 @@ def build_sample_bigquery_rows():
             },
         ),
         Row(
-            ('active_users', 'NULL', None, 'active', 'BOOL', 'YES'),
+            ('active_users', 'TRUE', None, 'active', 'BOOL', 'YES'),
             {
                 'table_name': 0,
                 'column_default': 1,
