@@ -595,8 +595,6 @@ def make_app():
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)',
             ApiPipelineBlockHandler,
         ),
-        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiBackfillsHandler),
-        (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiPipelineBackfillsHandler),
         (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
         (r'/api/backfills', ApiBackfillsHandler),

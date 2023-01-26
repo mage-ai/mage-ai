@@ -5,6 +5,15 @@ from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.hash import extract
 from sqlalchemy import desc
 
+ALLOWED_PAYLOAD_KEYS = [
+    'block_uuid',
+    'end_datetime',
+    'interval_type',
+    'interval_units',
+    'name',
+    'start_datetime',
+]
+
 
 class ApiPipelineBackfillsHandler(BaseHandler):
     model_class = Backfill
@@ -12,7 +21,7 @@ class ApiPipelineBackfillsHandler(BaseHandler):
     @safe_db_query
     def post(self, pipeline_uuid):
         payload = self.get_payload()
-        model = Backfill.create(**payload)
+        model = Backfill.create(**extract(payload, ALLOWED_PAYLOAD_KEYS))
         self.write(dict(backfill=model.to_dict()))
 
 
@@ -28,14 +37,7 @@ class ApiBackfillHandler(BaseHandler):
     def put(self, id):
         payload = self.get_payload()
         model = Backfill.query.get(int(id))
-        model.update(**extract(payload, [
-            'block_uuid',
-            'end_datetime',
-            'interval_type',
-            'interval_units',
-            'name',
-            'start_datetime',
-        ]))
+        model.update(**extract(payload, ALLOWED_PAYLOAD_KEYS))
         self.write(dict(block_run=model.to_dict()))
 
 

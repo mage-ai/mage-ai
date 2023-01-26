@@ -4,17 +4,24 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import BackfillType from '@interfaces/BackfillType';
 import BackfillsTable from '@components/Backfills/Table';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import RowDetail from '@components/Backfills/RowDetail';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import { Add } from '@oracle/icons';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { goToWithQuery } from '@utils/routing';
+import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { randomNameGenerator } from '@utils/string';
 
 type PipelineBackfillsProp = {
   pipeline: {
@@ -25,6 +32,7 @@ type PipelineBackfillsProp = {
 function PipelineBackfills({
   pipeline,
 }: PipelineBackfillsProp) {
+  const router = useRouter();
   const pipelineUUID = pipeline.uuid;
   const {
     data: dataPipelineRuns,
@@ -34,7 +42,7 @@ function PipelineBackfills({
     _offset: 0,
     pipeline_uuid: pipelineUUID,
   }, {
-    refreshInterval: 5000,
+    refreshInterval: 60000,
   });
   const models = useMemo(() => dataPipelineRuns?.backfills || [], [dataPipelineRuns]);
 
@@ -100,6 +108,34 @@ function PipelineBackfills({
     selectedRow,
   ]);
 
+  const [createBackfill, { isLoading }] = useMutation(
+    api.backfills.pipelines.useCreate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            backfill: {
+              id,
+            },
+          }) => {
+            router.push(
+              '/pipelines/[pipeline]/backfills/[...slug]',
+              `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
+            );
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            alert(message);
+          },
+        },
+      ),
+    },
+  );
+
   return (
     <PipelineDetailPage
       breadcrumbs={breadcrumbs}
@@ -109,8 +145,28 @@ function PipelineBackfills({
       title={({ name }) => `${name} backfills`}
       uuid={`${PageNameEnum.BACKFILLS}_${pipelineUUID}`}
     >
+      <Spacing p={PADDING_UNITS}>
+        <KeyboardShortcutButton
+          beforeElement={<Add size={2.5 * UNIT} />}
+          blackBorder
+          inline
+          loading={isLoading}
+          noHoverUnderline
+          // @ts-ignore
+          onClick={() => createBackfill({
+            backfill: {
+              name: randomNameGenerator(),
+            },
+          })}
+          sameColorAsText
+          uuid="PipelineDetailPage/Backfills/add_new_backfill"
+        >
+          Create new backfill
+        </KeyboardShortcutButton>
+      </Spacing>
+
       {models && models.length === 0 && (
-        <Spacing p={2}>
+        <Spacing p={PADDING_UNITS}>
           <Text bold default monospace muted>
             No backfills
           </Text>
@@ -122,6 +178,7 @@ function PipelineBackfills({
           onClickRow={({ id }: BackfillType) => goToWithQuery({
             backfill_id: id,
           })}
+          pipeline={pipeline}
           selectedRow={selectedRow}
         />
       )}

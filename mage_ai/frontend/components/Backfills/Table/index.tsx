@@ -1,9 +1,15 @@
 import BackfillType from '@interfaces/BackfillType';
+import Button from '@oracle/elements/Button';
 import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import { Edit } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTC } from '@components/Triggers/utils';
 
 type BackfillsTableProps = {
+  pipeline: {
+    uuid: string;
+  };
   models: BackfillType[];
   onClickRow: (backfill: BackfillType) => void;
   selectedRow?: BackfillType;
@@ -12,9 +18,11 @@ type BackfillsTableProps = {
 function BackfillsTable({
   models,
   onClickRow,
+  pipeline,
   selectedRow,
 }: BackfillsTableProps) {
-  const columnFlex = [null, 1, 1, 1];
+  const pipelineUUID = pipeline?.uuid;
+  const columnFlex = [null, 1, 1, 1, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Status',
@@ -28,9 +36,11 @@ function BackfillsTable({
     {
       uuid: 'Completed at',
     },
+    {
+      label: () => '',
+      uuid: 'edit',
+    },
   ];
-
-
 
   return (
     <Table
@@ -40,6 +50,7 @@ function BackfillsTable({
       onClickRow={(rowIndex: number) => onClickRow(models[rowIndex])}
       rows={models.map(({
         completed_at: completedAt,
+        id,
         name,
         started_at: startedAt,
         status,
@@ -53,6 +64,18 @@ function BackfillsTable({
           <Text default key="completed_at" monospace>
             {completedAt ? getTimeInUTC(completedAt).toISOString().split('.')[0] : '-'}
           </Text>,
+          <Button
+            default
+            iconOnly
+            noBackground
+            linkProps={{
+              as: `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
+              href: '/pipelines/[pipeline]/backfills/[...slug]',
+            }}
+            title="Edit"
+          >
+            <Edit default size={2 * UNIT} />
+          </Button>
         ];
 
         return arr;
