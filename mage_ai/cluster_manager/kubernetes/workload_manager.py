@@ -16,7 +16,7 @@ from mage_ai.orchestration.constants import (
     DB_PASS,
     DB_USER
 )
-from typing import List
+from typing import Dict, List
 
 import os
 
@@ -70,15 +70,24 @@ class WorkloadManager:
         return services_list
 
 
-    def create_stateful_set(self, deployment_name, storage_class_name: str = None):
-        env_vars = self.__populate_env_vars()
+    def create_stateful_set(
+        self,
+        deployment_name,
+        container_config: Dict = None,
+        service_account_name: str = None,
+        storage_class_name: str = None,
+    ):
+        if container_config is None:
+            container_config = dict()
+
+        env_vars = self.__populate_env_vars(container_config)
+        container_config['env'] = env_vars
         
         containers = [
             {
                 'name': f'{deployment_name}-container',
                 'image': 'mageai/mageai:latest',
                 'command': ['mage', 'start', deployment_name],
-                'env': env_vars,
                 'ports': [
                     {
                         'containerPort': 6789,
@@ -90,7 +99,8 @@ class WorkloadManager:
                         'name': 'mage-data',
                         'mountPath': '/home/src'
                     }
-                ]
+                ],
+                **container_config,
             }
         ]
         
@@ -133,6 +143,10 @@ class WorkloadManager:
                     }
                 }
             )
+
+        stateful_set_spec = dict()
+        if service_account_name:
+            stateful_set_spec['serviceAccountName'] = service_account_name
 
         stateful_set = {
             'apiVersion': 'apps/v1',
@@ -180,7 +194,8 @@ class WorkloadManager:
                             }
                         }
                     }
-                ]
+                ],
+                **stateful_set_spec
             }
         }
 
@@ -222,7 +237,7 @@ class WorkloadManager:
         self.core_client.create_namespaced_service(self.namespace, service)
 
     
-    def __populate_env_vars(self) -> List:
+    def __populate_env_vars(self, container_config) -> List:
         env_vars = []
 
         connection_url_secrets_name = os.getenv(CONNECTION_URL_SECRETS_NAME)
@@ -271,5 +286,8 @@ class WorkloadManager:
                     }
                 }
             ])
+
+        if container_config and 'env' in container_config:
+            env_vars += container_config['env']
 
         return env_vars
