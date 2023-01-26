@@ -11,6 +11,17 @@ export enum IntervalTypeEnum {
   CUSTOM = 'custom',
 }
 
+export const INTERVAL_TYPES = [
+  IntervalTypeEnum.SECOND,
+  IntervalTypeEnum.MINUTE,
+  IntervalTypeEnum.HOUR,
+  IntervalTypeEnum.DAY,
+  IntervalTypeEnum.WEEK,
+  IntervalTypeEnum.MONTH,
+  IntervalTypeEnum.YEAR,
+  IntervalTypeEnum.CUSTOM,
+];
+
 export default interface BackfillType {
   block_uuid?: string;
   completed_at?: string;
