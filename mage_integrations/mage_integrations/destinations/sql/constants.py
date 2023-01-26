@@ -828,5 +828,14 @@ SQL_RESERVED_WORDS = [
 ]
 
 SQL_RESERVED_WORDS_SUBSET = {
+    'AS',
     'DEFAULT',
+    'FROM',
+    'GROUP',
+    'JOIN',
+    'LIMIT',
+    'ORDER',
+    'SELECT',
+    'TO',
+    'WHERE',
 }
