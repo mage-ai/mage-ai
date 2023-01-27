@@ -19,7 +19,6 @@ from mage_ai.orchestration.pipeline_scheduler import get_variables
 from mage_ai.server.api.errors import UnauthenticatedRequestException
 from mage_ai.shared.hash import merge_dict
 from sqlalchemy.orm import aliased, selectinload
-from typing import List
 import json
 
 
@@ -127,11 +126,9 @@ class ApiBlockRunOutputHandler(BaseHandler):
 
 def process_pipeline_runs(
     handler,
-    backfill_id: int = None,
-    pipeline_schedule_id: int = None,
-    pipeline_uuid: str = None,
-    status: str = None,
-    order_by: List[str] = None,
+    pipeline_schedule_id=None,
+    pipeline_uuid=None,
+    status=None,
 ):
     results = (
         PipelineRun.
@@ -139,26 +136,14 @@ def process_pipeline_runs(
         options(selectinload(PipelineRun.block_runs)).
         options(selectinload(PipelineRun.pipeline_schedule))
     )
-    if backfill_id is not None:
-        results = results.filter(PipelineRun.backfill_id == int(backfill_id))
     if pipeline_schedule_id is not None:
-        results = results.filter(PipelineRun.pipeline_schedule_id == int(pipeline_schedule_id))
+        results = results.filter(PipelineRun.pipeline_schedule_id == pipeline_schedule_id)
     if pipeline_uuid is not None:
         results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
     if status is not None:
         results = results.filter(PipelineRun.status == status)
-
-    if order_by:
-        arr = []
-        for tup in order_by:
-            col, asc_desc = tup
-            asc_desc = asc_desc.lower()
-            pr_col = getattr(PipelineRun, col)
-            arr.append(getattr(pr_col, asc_desc)())
-        initial_results = results.order_by(*arr)
-    else:
-        initial_results = \
-            results.order_by(PipelineRun.execution_date.desc(), PipelineRun.id.desc())
+    initial_results = \
+        results.order_by(PipelineRun.execution_date.desc(), PipelineRun.id.desc())
 
     results = handler.limit(initial_results)
 
@@ -215,27 +200,9 @@ class ApiAllPipelineRunListHandler(BaseHandler):
 
     @safe_db_query
     def get(self):
-        backfill_id = self.get_argument('backfill_id', None)
         pipeline_uuid = self.get_argument('pipeline_uuid', None)
         status = self.get_argument('status', None)
-        order_by = None
-        order_by_arg = self.get_argument('order_by[]', None)
-        if order_by_arg:
-            order_by = []
-            for s in order_by_arg.split(','):
-                parts = s.strip().split(' ')
-                if len(parts) >= 2:
-                    order_by.append((parts[0], parts[1]))
-                else:
-                    order_by.append((parts[0], 'asc'))
-
-        process_pipeline_runs(
-            self,
-            backfill_id=backfill_id,
-            pipeline_uuid=pipeline_uuid,
-            status=status,
-            order_by=order_by,
-        )
+        process_pipeline_runs(self, pipeline_uuid=pipeline_uuid, status=status)
 
 
 class ApiPipelineRunDetailHandler(BaseDetailHandler):

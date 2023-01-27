@@ -146,7 +146,6 @@ class PipelineSchedule(BaseModel):
     sla = Column(Integer, default=None) # in seconds
     token = Column(String(255), index=True, default=None)
 
-    backfills = relationship('Backfill', back_populates='pipeline_schedule')
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
 
     event_matchers = relationship(
@@ -257,11 +256,9 @@ class PipelineRun(BaseModel):
     passed_sla = Column(Boolean, default=False)
     event_variables = Column(JSON)
     metrics = Column(JSON)
-    backfill_id = Column(Integer, ForeignKey('backfill.id'))
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
-    backfill = relationship('Backfill', back_populates='pipeline_runs')
 
     def __repr__(self):
         return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
@@ -537,42 +534,3 @@ class EventMatcher(BaseModel):
                     return False
             return True
         return __match_dict(self.pattern, config)
-
-
-class Backfill(BaseModel):
-    class IntervalType(str, enum.Enum):
-        SECOND = 'second'
-        MINUTE = 'minute'
-        HOUR = 'hour'
-        DAY = 'day'
-        WEEK = 'week'
-        MONTH = 'month'
-        YEAR = 'year'
-        CUSTOM = 'custom'
-
-    class Status(str, enum.Enum):
-        INITIAL = 'initial'
-        RUNNING = 'running'
-        COMPLETED = 'completed'
-        FAILED = 'failed'
-        CANCELLED = 'cancelled'
-
-    block_uuid = Column(String(255), default=None)
-    completed_at = Column(DateTime(timezone=True), default=None)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    end_datetime = Column(DateTime(timezone=True), default=None)
-    failed_at = Column(DateTime(timezone=True), default=None)
-    interval_type = Column(Enum(IntervalType), default=None)
-    interval_units = Column(Integer, default=None)
-    metrics = Column(JSON)
-    name = Column(String(255))
-    pipeline_schedule = relationship(PipelineSchedule, back_populates='backfills')
-    pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
-    pipeline_uuid = Column(String(255))
-    start_datetime = Column(DateTime(timezone=True), default=None)
-    started_at = Column(DateTime(timezone=True), default=None)
-    status = Column(Enum(Status), default=None)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    variables = Column(JSON, default=None)
-
-    pipeline_runs = relationship('PipelineRun', back_populates='backfill')
