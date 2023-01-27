@@ -7,6 +7,7 @@ from singer import metrics, metadata, utils
 from singer import Transformer, should_sync_field, UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING
 from singer.utils import strptime_to_utc, strftime
 from tap_linkedin_ads.transform import transform_json, snake_case_to_camel_case
+from mage_integrations.sources.messages import write_schema as write_schema_orig
 
 LOGGER = singer.get_logger()
 
@@ -88,7 +89,18 @@ def write_schema(catalog, stream_name):
     stream = catalog.get_stream(stream_name)
     schema = stream.schema.to_dict()
     try:
-        singer.write_schema(stream_name, schema, stream.key_properties)
+        write_schema_orig(
+            stream_name=stream_name,
+            schema=schema,
+            key_properties=stream.key_properties,
+            bookmark_properties=stream.bookmark_properties,
+            disable_column_type_check=stream.disable_column_type_check,
+            partition_keys=stream.partition_keys,
+            replication_method=stream.replication_method,
+            stream_alias=stream.stream_alias,
+            unique_conflict_method=stream.unique_conflict_method,
+            unique_constraints=stream.unique_constraints,
+        )
     except OSError as err:
         LOGGER.info('OS Error writing schema for: %s', stream_name)
         raise err

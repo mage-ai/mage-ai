@@ -544,7 +544,10 @@ class Source:
         self,
         stream_id: str,
         schema,
+        bookmark_properties: List[str] = None,
+        key_properties: List[str] = None,
         replication_key: str = None,
+        replication_method: str = None,
         **kwargs,
     ) -> CatalogEntry:
         """
@@ -559,30 +562,39 @@ class Source:
         """
         # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata
         metadata = get_standard_metadata(
-            key_properties=self.get_table_key_properties(stream_id),
-            replication_method=self.get_forced_replication_method(stream_id),
+            key_properties=key_properties or self.get_table_key_properties(stream_id),
+            replication_method=replication_method or self.get_forced_replication_method(stream_id),
             schema=schema.to_dict(),
             stream_id=stream_id,
-            valid_replication_keys=self.get_valid_replication_keys(stream_id),
+            valid_replication_keys=bookmark_properties or self.get_valid_replication_keys(stream_id),
         )
+
         idx = find_index(lambda x: len(x['breadcrumb']) == 0, metadata)
         if idx >= 0:
             metadata[idx]['metadata']['selected'] = False
 
+        if not replication_key and bookmark_properties and len(bookmark_properties) >= 1:
+            replication_key = bookmark_properties[0]
+
         return CatalogEntry(**merge_dict(
             dict(
+                bookmark_properties=bookmark_properties,
                 database=None,
+                disable_column_type_check=None,
                 is_view=None,
-                key_properties=[],  # User customizes this after creating catalog from discover.
+                key_properties=key_properties or [],  # User customizes this after creating catalog from discover.
                 metadata=metadata,
+                partition_keys=None,
                 replication_key=replication_key or '',
-                replication_method=self.get_forced_replication_method(stream_id),
+                replication_method=replication_method or self.get_forced_replication_method(stream_id),
                 row_count=None,
                 schema=schema,
                 stream=stream_id,
                 stream_alias=None,
                 table=None,
                 tap_stream_id=stream_id,
+                unique_conflict_method=None,
+                unique_constraints=None,
             ),
             kwargs,
         ))

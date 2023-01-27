@@ -19,13 +19,18 @@ REQUIRED_CONFIG_KEYS = [
 ]
 
 
-def do_discover(client, config):
+def do_discover(client, config, return_streams: bool = False):
     LOGGER.info('Starting discover')
     client.check_accounts(config)
     catalog = discover()
-    json.dump(catalog.to_dict(), sys.stdout, indent=2)
+    catalog_dict = catalog.to_dict()
+
     LOGGER.info('Finished discover')
 
+    if return_streams:
+        return catalog_dict
+
+    json.dump(catalog_dict, sys.stdout, indent=2)
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():

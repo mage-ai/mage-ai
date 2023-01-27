@@ -1,9 +1,6 @@
 {
-  "client_id": "",
-  "client_secret": "",
-  "user_agent": "",
-  "refresh_token": "",
-  "accounts": "null",
-  "start_date": "",
-  "request_timeout": 300
+  "access_token": "",
+  "request_timeout": 300,
+  "start_date": "2023-01-01T00:00:00Z",
+  "user_agent": ""
 }
