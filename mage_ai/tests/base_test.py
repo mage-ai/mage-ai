@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.repo_manager import set_repo_path
 from mage_ai.orchestration.db import TEST_DB, db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.shared.logger import LoggingLevel
@@ -17,6 +18,7 @@ class DBTestCase(unittest.TestCase):
     def setUpClass(self):
         super().setUpClass()
         self.repo_path = os.getcwd() + '/test'
+        set_repo_path(self.repo_path)
         if not os.path.exists(self.repo_path):
             os.mkdir(self.repo_path)
         database_manager.run_migrations(log_level=LoggingLevel.ERROR)

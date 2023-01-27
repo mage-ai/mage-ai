@@ -136,7 +136,7 @@ class PipelineRunTests(DBTestCase):
             'pipelines/test_pipeline/.logs',
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/pipeline.log',
         )
-        self.assertEquals(pipeline_run.logs.get('path'), expected_file_path)
+        self.assertEqual(pipeline_run.logs.get('path'), expected_file_path)
 
     def test_active_runs(self):
         create_pipeline_with_blocks(
