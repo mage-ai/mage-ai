@@ -10,7 +10,7 @@ When a pipeline runs, each DBT model block will run and then each test
 associated with that DBT model will be ran.
 
 For example, if you add a DBT block to your pipeline for a DBT model named
-`my_third_dbt_model` and a test file named `test_my_second_dbt_model.sql` with
+`my_third_dbt_model` and a test file named `test_my_third_dbt_model.sql` with
 the following folder structure:
 
 ```
@@ -22,10 +22,10 @@ demo_project/
 |   |   |   |   |   my_third_dbt_model.sql
 |   |   |   tests/
 |   |   |   |   example/
-|   |   |   |   |   my_third_dbt_model.sql
+|   |   |   |   |   test_my_third_dbt_model.sql
 ```
 
-Then whenever your pipeline runs, the test in `test_my_second_dbt_model.sql`
+Then whenever your pipeline runs, the test in `test_my_third_dbt_model.sql`
 will also be ran after the DBT run for the model `my_third_dbt_model` is
 complete.
 
