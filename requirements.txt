@@ -19,7 +19,7 @@ requests==2.27.1
 scikit-learn>=1.0
 simplejson
 six>=1.15.0
-sqlalchemy>=1.4.20
+sqlalchemy>=1.4.20, <2.0.0
 tornado==6.1
 aiofiles==22.1.0
 
