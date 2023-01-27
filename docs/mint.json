@@ -344,7 +344,7 @@
       "group": "About",
       "pages": [
         "about/features",
-        "about/changelog",
+        "about/releases",
         "about/roadmap"
       ]
     }
