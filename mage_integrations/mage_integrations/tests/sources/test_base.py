@@ -372,7 +372,7 @@ class BaseSourceTests(unittest.TestCase):
     
     def test_load_schemas_from_folder(self):
         # Testing with Stripe source, since not all of the
-        # integration sourceshave 'schemas' folders.
+        # integration sources have "schemas" folders.
         source = Stripe()
         schemas = source.load_schemas_from_folder()
         self.assertEqual(
