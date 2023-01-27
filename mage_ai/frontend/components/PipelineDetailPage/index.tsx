@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import BackfillGradient from '@oracle/icons/custom/BackfillGradient';
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import ChartGradient from '@oracle/icons/custom/ChartGradient';
@@ -17,6 +18,7 @@ import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
 
 import {
+  Backfill,
   BlocksSeparated,
   BlocksStacked,
   Chart,
@@ -234,6 +236,17 @@ function PipelineDetailPage({
         href: '/pipelines/[pipeline]/runs',
       },
       isSelected: () => PageNameEnum.RUNS === pageName,
+    },
+    {
+      Icon: Backfill,
+      IconSelected: BackfillGradient,
+      id: PageNameEnum.BACKFILLS,
+      label: () => 'Backfills',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/backfills`,
+        href: '/pipelines/[pipeline]/backfills',
+      },
+      isSelected: () => PageNameEnum.BACKFILLS === pageName,
     },
     {
       Icon: TodoList,

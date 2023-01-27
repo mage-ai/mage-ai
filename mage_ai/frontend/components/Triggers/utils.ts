@@ -16,7 +16,7 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
       if (startedAt && completedAt) {
         const completedAtTs = moment(completedAt).valueOf();
         const startedAtTs = moment(startedAt).valueOf();
-        
+
         runtime = completedAtTs - startedAtTs;
       }
 
@@ -47,6 +47,10 @@ export function getTimeInUTC(dateTime: string) {
     date.getSeconds(),
   );
   return new Date(utcTs);
+}
+
+export function getTimeInUTCString(dateTime: string) {
+  return getTimeInUTC(dateTime).toISOString().split('.')[0]
 }
 
 export enum TimeUnitEnum {
