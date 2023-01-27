@@ -557,13 +557,6 @@ class Backfill(BaseModel):
         FAILED = 'failed'
         CANCELLED = 'cancelled'
 
-    class ScheduleInterval(str, enum.Enum):
-        ONCE = '@once'
-        HOURLY = '@hourly'
-        DAILY = '@daily'
-        WEEKLY = '@weekly'
-        MONTHLY = '@monthly'
-
     block_uuid = Column(String(255), default=None)
     completed_at = Column(DateTime(timezone=True), default=None)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

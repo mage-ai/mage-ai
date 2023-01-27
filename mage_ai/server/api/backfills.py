@@ -1,8 +1,9 @@
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.orchestration.backfills.service import start_backfill, cancel_backfill
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import Backfill
 from mage_ai.server.api.base import BaseHandler
-from mage_ai.shared.hash import extract
+from mage_ai.shared.hash import extract, merge_dict
 from sqlalchemy import desc
 
 ALLOWED_PAYLOAD_KEYS = [
@@ -21,7 +22,10 @@ class ApiPipelineBackfillsHandler(BaseHandler):
     @safe_db_query
     def post(self, pipeline_uuid):
         payload = self.get_payload()
-        model = Backfill.create(**extract(payload, ALLOWED_PAYLOAD_KEYS))
+        model = Backfill.create(
+            **extract(payload, ALLOWED_PAYLOAD_KEYS),
+            pipeline_uuid=pipeline_uuid,
+        )
         self.write(dict(backfill=model.to_dict()))
 
 
@@ -38,15 +42,21 @@ class ApiBackfillHandler(BaseHandler):
         model = Backfill.query.get(int(id))
         payload = self.get_payload()
 
+        pipeline_runs = []
+
         if 'status' in payload and payload['status'] != model.status:
             if Backfill.Status.INITIAL == payload['status']:
+                pipeline_runs += start_backfill(model)
                 model.update(status=payload['status'])
             elif Backfill.Status.CANCELLED == payload['status']:
+                cancel_backfill(model)
                 model.update(status=payload['status'])
         else:
             model.update(**extract(payload, ALLOWED_PAYLOAD_KEYS))
 
-        self.write(dict(block_run=model.to_dict()))
+        self.write(dict(block_run=merge_dict(model.to_dict(), dict(
+            pipeline_runs=[pr.to_dict() for pr in pipeline_runs],
+        ))))
 
 
 class ApiBackfillsHandler(BaseHandler):

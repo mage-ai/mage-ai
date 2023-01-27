@@ -168,6 +168,7 @@ function BackfillDetail({
         response, {
           callback: () => {
             fetchBackfill();
+            fetchPipelineRuns();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -178,8 +179,16 @@ function BackfillDetail({
     },
   );
 
-  const isActive = useMemo(() => status ? BackfillStatusEnum.CANCELLED !== status : false, [status]);
+  const isActive = useMemo(() => status
+    ? BackfillStatusEnum.CANCELLED !== status && BackfillStatusEnum.FAILED !== status
+    : false,
+    [
+      status,
+    ],
+  );
   const cannotStartOrCancel = useMemo(() => status
+    && BackfillStatusEnum.CANCELLED !== status
+    && BackfillStatusEnum.FAILED !== status
     && BackfillStatusEnum.INITIAL !== status
     && BackfillStatusEnum.RUNNING !== status, [status]);
 
@@ -318,11 +327,13 @@ function BackfillDetail({
       />
     );
   }, [
+    blockUUID,
     endDatetime,
     intervalType,
     intervalUnits,
     isActive,
     startDatetime,
+    status,
   ]);
 
   const modelVariables = useMemo(() => modelVariablesInit || {}, [modelVariablesInit]);
@@ -451,7 +462,10 @@ function BackfillDetail({
                 <Button
                   beforeIcon={isActive
                     ? <Pause size={2 * UNIT} />
-                    : <PlayButtonFilled inverted size={2 * UNIT} />
+                    : <PlayButtonFilled
+                        inverted={!(BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED === status)}
+                        size={2 * UNIT}
+                      />
                   }
                   danger={isActive}
                   loading={isLoadingUpdate}
@@ -467,11 +481,13 @@ function BackfillDetail({
                     });
                   }}
                   outline
-                  success={!isActive}
+                  success={!isActive && !(BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED === status)}
                 >
                   {isActive
                     ? 'Cancel backfill'
-                    : 'Start backfill'
+                    : BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED === status
+                      ? 'Retry backfill'
+                      : 'Start backfill'
                   }
                 </Button>
                 <Spacing mr={PADDING_UNITS} />
