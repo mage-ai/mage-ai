@@ -120,9 +120,9 @@ class PipelineScheduler:
                 self.logger_manager.output_logs_to_destination()
 
                 pipeline_schedule = PipelineSchedule.query.get(self.pipeline_run.pipeline_schedule_id)
-                backfills = pipeline_schedule.backfills
 
                 if pipeline_schedule:
+                    backfills = pipeline_schedule.backfills
                     # When all pipeline runs that are associated with backfill is done
                     if len(backfills) >= 1:
                         backfill = backfills[0]
