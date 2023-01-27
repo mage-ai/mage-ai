@@ -1,5 +1,4 @@
 export enum PageNameEnum {
-  BACKFILLS = 'backfills',
   BLOCK_RUNS = 'block_runs',
   EDIT = 'edit',
   MONITOR = 'monitor',

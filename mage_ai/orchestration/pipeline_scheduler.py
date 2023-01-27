@@ -13,13 +13,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db.models import (
-    Backfill,
-    BlockRun,
-    EventMatcher,
-    PipelineRun,
-    PipelineSchedule,
-)
+from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
@@ -29,7 +23,7 @@ from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
-from mage_ai.shared.hash import index_by, merge_dict
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
 from typing import Any, Dict, List
 import pytz
@@ -109,6 +103,16 @@ class PipelineScheduler:
                         **merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
                     )
 
+                # If running once, update the schedule to inactive when pipeline run is done
+                pipeline_schedule = PipelineSchedule.query.get(self.pipeline_run.pipeline_schedule_id)
+                if pipeline_schedule is not None and \
+                        pipeline_schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
+                        pipeline_schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
+                        pipeline_schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
+                    pipeline_schedule.update(
+                        status=PipelineSchedule.ScheduleStatus.INACTIVE,
+                    )
+
                 self.pipeline_run.update(
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
@@ -118,25 +122,6 @@ class PipelineScheduler:
                     pipeline_run=self.pipeline_run,
                 )
                 self.logger_manager.output_logs_to_destination()
-
-                pipeline_schedule = PipelineSchedule.query.get(self.pipeline_run.pipeline_schedule_id)
-                backfills = pipeline_schedule.backfills
-
-                if pipeline_schedule:
-                    # When all pipeline runs that are associated with backfill is done
-                    if len(backfills) >= 1:
-                        backfill = backfills[0]
-                        if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status for pr in backfill.pipeline_runs]):
-                            backfill.update(status=Backfill.Status.COMPLETED)
-                            pipeline_schedule.update(
-                                status=PipelineSchedule.ScheduleStatus.INACTIVE,
-                            )
-                    # If running once, update the schedule to inactive when pipeline run is done
-                    elif pipeline_schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
-                        pipeline_schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
-                        pipeline_schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
-
-                        pipeline_schedule.update(status=PipelineSchedule.ScheduleStatus.INACTIVE)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
             else:
@@ -716,18 +701,8 @@ def schedule_all():
     active_pipeline_schedules = \
         list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))
 
-    backfills = Backfill.query.filter(
-        Backfill.pipeline_schedule_id.in_([ps.id for ps in active_pipeline_schedules]),
-    )
-    backfills_by_pipeline_schedule_id = index_by(
-        lambda backfill: backfill.pipeline_schedule_id,
-        backfills,
-    )
-
     for pipeline_schedule in active_pipeline_schedules:
-        if pipeline_schedule.should_schedule() and \
-            pipeline_schedule_id not in backfills_by_pipeline_schedule_id:
-
+        if pipeline_schedule.should_schedule():
             pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
                 execution_date=pipeline_schedule.current_execution_date(),
