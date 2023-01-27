@@ -328,6 +328,8 @@ class Pipeline:
         self.block_configs = config.get('blocks') or []
         self.widget_configs = config.get('widgets') or []
 
+        self.variables = config.get('variables')
+
         def build_shared_args_kwargs(c):
             block_type = c.get('type')
             language = c.get('language')
@@ -415,6 +417,7 @@ class Pipeline:
                 )
                 for b in self.widgets_by_uuid.values()
             ],
+            variables=self.variables,
         ))
 
     async def to_dict_async(
@@ -666,6 +669,19 @@ class Pipeline:
             }
         self.save()
         return block
+
+    def update_global_variable(self, key, value):
+        if self.variables is None:
+            self.variables = {}
+        self.variables = {
+            **self.variables,
+            key: value,
+        }
+        self.save()
+
+    def delete_global_variable(self, key):
+        del self.variables[key]
+        self.save()
 
     def delete(self):
         for block_uuid in list(self.blocks_by_uuid.keys()):

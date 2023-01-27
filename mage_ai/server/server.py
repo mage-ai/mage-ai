@@ -14,6 +14,7 @@ from mage_ai.data_preparation.shared.constants import (
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
     delete_global_variable,
+    get_global_variables,
     set_global_variable,
 )
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -327,6 +328,15 @@ class ApiPipelineVariableListHandler(BaseHandler):
             )
 
         variables_dict = variable_manager.get_variables_by_pipeline(pipeline_uuid)
+        global_variables = get_global_variables(pipeline_uuid)
+        global_variables_arr = [
+            dict(
+                uuid=uuid,
+                type=str(type(value)),
+                value=value
+            )
+            for uuid, value in global_variables.items()
+        ]
         variables = [
             dict(
                 block=dict(uuid=uuid),
@@ -334,8 +344,8 @@ class ApiPipelineVariableListHandler(BaseHandler):
                 variables=[
                             get_variable_value(uuid, var) for var in arr
                             # Not return printed outputs
-                            if var == 'df' or var.startswith('output') or uuid == 'global'
-                          ],
+                            if var == 'df' or var.startswith('output')
+                          ] + global_variables_arr,
             )
             for uuid, arr in variables_dict.items()
         ]
