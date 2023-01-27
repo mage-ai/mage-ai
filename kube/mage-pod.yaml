@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mage-server
+spec:
+  containers:
+  - name: mage-server
+    image: mageai/mageai:latest
+    ports:
+    - containerPort: 6789
+    volumeMounts:
+    - name: mage-fs
+      mountPath: /home/src
+  volumes:
+  - name: mage-fs
+    hostPath:
+      path: /path/to/your/local_mage_repo
