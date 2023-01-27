@@ -35,9 +35,17 @@ class ApiBackfillHandler(BaseHandler):
 
     @safe_db_query
     def put(self, id):
-        payload = self.get_payload()
         model = Backfill.query.get(int(id))
-        model.update(**extract(payload, ALLOWED_PAYLOAD_KEYS))
+        payload = self.get_payload()
+
+        if 'status' in payload and payload['status'] != model.status:
+            if Backfill.Status.INITIAL == payload['status']:
+                model.update(status=payload['status'])
+            elif Backfill.Status.CANCELLED == payload['status']:
+                model.update(status=payload['status'])
+        else:
+            model.update(**extract(payload, ALLOWED_PAYLOAD_KEYS))
+
         self.write(dict(block_run=model.to_dict()))
 
 

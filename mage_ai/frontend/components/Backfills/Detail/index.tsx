@@ -19,8 +19,9 @@ import PipelineRunType, {
   PipelineRunReqQueryParamsType,
   RUN_STATUS_TO_LABEL,
   RunStatus,
- } from '@interfaces/PipelineRunType';
+} from '@interfaces/PipelineRunType';
 import PipelineType from '@interfaces/PipelineType';
+import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -51,6 +52,7 @@ import {
 import { getTimeInUTCString } from '@components/Triggers/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
+import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 
@@ -60,10 +62,12 @@ type BackfillDetailProps = {
   backfill: BackfillType;
   fetchBackfill: () => void;
   pipeline: PipelineType;
+  variables?: PipelineVariableType[];
 };
 
 function BackfillDetail({
   backfill: model = {},
+  fetchBackfill,
   pipeline,
   variables,
 }: BackfillDetailProps) {
@@ -157,7 +161,27 @@ function BackfillDetail({
 
   const [selectedTab, setSelectedTab] = useState(TABS[0]);
 
-  const isActive = useMemo(() => BackfillStatusEnum.ACTIVE === status, [status]);
+  const [updateModel, { isLoading: isLoadingUpdate }] = useMutation(
+    api.backfills.useUpdate(modelID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBackfill();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const isActive = useMemo(() => status ? BackfillStatusEnum.CANCELLED !== status : false, [status]);
+  const cannotStartOrCancel = useMemo(() => status
+    && BackfillStatusEnum.INITIAL !== status
+    && BackfillStatusEnum.RUNNING !== status, [status]);
 
   const detailsMemo = useMemo(() => {
     const iconProps = {
@@ -196,10 +220,12 @@ function BackfillDetail({
           </Text>
         </FlexContainer>,
         <Text
-          danger={!isActive}
+          danger={BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED == status}
+          default={BackfillStatusEnum.INITIAL === status}
           key="backfill_status"
           monospace
-          success={isActive}
+          muted={!status}
+          success={BackfillStatusEnum.RUNNING === status || BackfillStatusEnum.COMPLETED === status}
         >
           {status || 'inactive'}
         </Text>
@@ -420,32 +446,37 @@ function BackfillDetail({
         pipeline={pipeline}
         subheader={(
           <FlexContainer alignItems="center">
-            <Button
-              beforeIcon={isActive
-                ? <Pause size={2 * UNIT} />
-                : <PlayButtonFilled inverted size={2 * UNIT} />
-              }
-              danger={isActive}
-              // loading={isLoadingUpdatePipelineSchedule}
-              onClick={(e) => {
-                pauseEvent(e);
-                // updatePipelineSchedule({
-                //   id: pipelineScheduleID,
-                //   status: isActive
-                //     ? ScheduleStatusEnum.INACTIVE
-                //     : ScheduleStatusEnum.ACTIVE
-                // });
-              }}
-              outline
-              success={!isActive}
-            >
-              {isActive
-                ? 'Cancel backfill'
-                : 'Start backfill'
-              }
-            </Button>
-
-            <Spacing mr={PADDING_UNITS} />
+            {!cannotStartOrCancel && (
+              <>
+                <Button
+                  beforeIcon={isActive
+                    ? <Pause size={2 * UNIT} />
+                    : <PlayButtonFilled inverted size={2 * UNIT} />
+                  }
+                  danger={isActive}
+                  loading={isLoadingUpdate}
+                  onClick={(e) => {
+                    pauseEvent(e);
+                    updateModel({
+                      backfill: {
+                        id: modelID,
+                        status: isActive
+                          ? BackfillStatusEnum.CANCELLED
+                          : BackfillStatusEnum.INITIAL
+                      },
+                    });
+                  }}
+                  outline
+                  success={!isActive}
+                >
+                  {isActive
+                    ? 'Cancel backfill'
+                    : 'Start backfill'
+                  }
+                </Button>
+                <Spacing mr={PADDING_UNITS} />
+              </>
+            )}
 
             <Button
               linkProps={{
