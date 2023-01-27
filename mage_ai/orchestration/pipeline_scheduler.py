@@ -725,6 +725,7 @@ def schedule_all():
             )
             if pipeline_schedule.settings.get('skip_if_previous_running') \
                     and running_pipeline_run is not None:
+                payload['create_block_runs'] = False
                 pipeline_run = PipelineRun.create(**payload)
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
             else:
