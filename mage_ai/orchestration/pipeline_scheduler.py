@@ -716,16 +716,20 @@ def schedule_all():
             if is_integration:
                 payload['create_block_runs'] = False
 
-            pipeline_run = PipelineRun.create(**payload)
-            pipeline_scheduler = PipelineScheduler(pipeline_run)
-
+            running_pipeline_run = find(
+                lambda r: r.status in [
+                    PipelineRun.PipelineRunStatus.INITIAL,
+                    PipelineRun.PipelineRunStatus.RUNNING,
+                ],
+                pipeline_schedule.pipeline_runs
+            )
             if pipeline_schedule.settings.get('skip_if_previous_running') \
-                    and pipeline_schedule.last_pipeline_run_status in [
-                        PipelineRun.PipelineRunStatus.INITIAL,
-                        PipelineRun.PipelineRunStatus.RUNNING,
-                    ]:
+                    and running_pipeline_run is not None:
+                pipeline_run = PipelineRun.create(**payload)
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
             else:
+                pipeline_run = PipelineRun.create(**payload)
+                pipeline_scheduler = PipelineScheduler(pipeline_run)
                 if is_integration:
                     block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id).all()
                     if len(block_runs) == 0:
