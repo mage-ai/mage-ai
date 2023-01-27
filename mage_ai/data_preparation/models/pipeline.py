@@ -386,12 +386,15 @@ class Pipeline:
         return blocks_by_uuid
 
     def to_dict_base(self) -> Dict:
-        return dict(
+        base = dict(
             data_integration=self.data_integration,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             uuid=self.uuid,
         )
+        if self.variables is not None:
+            base['variables'] = self.variables
+        return base
 
     def to_dict(
         self,
@@ -417,7 +420,6 @@ class Pipeline:
                 )
                 for b in self.widgets_by_uuid.values()
             ],
-            variables=self.variables,
         ))
 
     async def to_dict_async(
@@ -673,10 +675,7 @@ class Pipeline:
     def update_global_variable(self, key, value):
         if self.variables is None:
             self.variables = {}
-        self.variables = {
-            **self.variables,
-            key: value,
-        }
+        self.variables[key] = value
         self.save()
 
     def delete_global_variable(self, key):

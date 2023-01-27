@@ -250,7 +250,7 @@ def get_global_variable(
     from mage_ai.data_preparation.models.pipeline import Pipeline
     pipeline = Pipeline.get(pipeline_uuid)
     if pipeline.variables is not None:
-        return pipeline.variables.get('key')
+        return pipeline.variables.get(key)
     else:
         return VariableManager(variables_dir=get_variables_dir()).get_variable(
             pipeline_uuid,
