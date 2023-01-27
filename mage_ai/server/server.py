@@ -25,6 +25,15 @@ from mage_ai.server.active_kernel import (
     switch_active_kernel,
 )
 from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
+from mage_ai.server.api.backfills import (
+    ApiBackfillHandler,
+    ApiBackfillsHandler,
+)
+from mage_ai.server.api.backfills import (
+    ApiBackfillHandler,
+    ApiBackfillsHandler,
+    ApiPipelineBackfillsHandler,
+)
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
     ApiBlockHandler,
@@ -586,6 +595,9 @@ def make_app():
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)',
             ApiPipelineBlockHandler,
         ),
+        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiPipelineBackfillsHandler),
+        (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
+        (r'/api/backfills', ApiBackfillsHandler),
     ]
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
