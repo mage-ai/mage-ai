@@ -719,20 +719,27 @@ def schedule_all():
             pipeline_run = PipelineRun.create(**payload)
             pipeline_scheduler = PipelineScheduler(pipeline_run)
 
-            if is_integration:
-                block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id).all()
-                if len(block_runs) == 0:
-                    clear_source_output_files(
-                        pipeline_run,
-                        pipeline_scheduler.logger,
-                    )
-                    initialize_state_and_runs(
-                        pipeline_run,
-                        pipeline_scheduler.logger,
-                        get_variables(pipeline_run),
-                    )
+            if pipeline_schedule.settings.get('skip_if_previous_running') \
+                    and pipeline_schedule.last_pipeline_run_status in [
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]:
+                pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+            else:
+                if is_integration:
+                    block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id).all()
+                    if len(block_runs) == 0:
+                        clear_source_output_files(
+                            pipeline_run,
+                            pipeline_scheduler.logger,
+                        )
+                        initialize_state_and_runs(
+                            pipeline_run,
+                            pipeline_scheduler.logger,
+                            get_variables(pipeline_run),
+                        )
 
-            pipeline_scheduler.start(should_schedule=False)
+                pipeline_scheduler.start(should_schedule=False)
 
     active_pipeline_runs = PipelineRun.active_runs(
         pipeline_uuids=repo_pipelines,
