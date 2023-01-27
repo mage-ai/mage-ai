@@ -10,7 +10,7 @@ import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Edit } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { getTimeInUTC } from '@components/Triggers/utils';
+import { getTimeInUTCString } from '@components/Triggers/utils';
 
 type BackfillsTableProps = {
   pipeline: {
@@ -92,18 +92,18 @@ function BackfillsTable({
           <Text default key="backfill" monospace>
             {startDatetime && endDatetime && (
               <>
-                {getTimeInUTC(startDatetime).toISOString().split('.')[0]}
+                {getTimeInUTCString(startDatetime)}
                 &nbsp;-&nbsp;
-                {getTimeInUTC(endDatetime).toISOString().split('.')[0]}
+                {getTimeInUTCString(endDatetime)}
               </>
             )}
             {!(startDatetime && endDatetime) && '-'}
           </Text>,
           <Text default key="started_at" monospace>
-            {startedAt ? getTimeInUTC(startedAt).toISOString().split('.')[0] : '-'}
+            {startedAt ? getTimeInUTCString(startedAt) : '-'}
           </Text>,
           <Text default key="completed_at" monospace>
-            {completedAt ? getTimeInUTC(completedAt).toISOString().split('.')[0] : '-'}
+            {completedAt ? getTimeInUTCString(completedAt) : '-'}
           </Text>,
           <Button
             default

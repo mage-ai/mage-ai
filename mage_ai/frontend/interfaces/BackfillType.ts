@@ -3,6 +3,8 @@ import { RunStatus } from './BlockRunType';
 export const BACKFILL_TYPE_DATETIME = 'datetime';
 export const BACKFILL_TYPE_CODE = 'code';
 
+export const BackfillStatusEnum = RunStatus;
+
 export enum IntervalTypeEnum {
   SECOND = 'second',
   MINUTE = 'minute',
@@ -41,7 +43,7 @@ export default interface BackfillType {
   pipeline_uuid: string;
   start_datetime?: string;
   started_at?: string;
-  status?: RunStatus;
+  status?: BackfillStatusEnum;
   updated_at?: string;
   variables?: {
     [key: string]: number | string;

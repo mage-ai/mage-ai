@@ -279,7 +279,7 @@ function BackfillEdit({
             alignItems="center"
             key="interval_units"
           >
-            <Code default size={1.5 * UNIT} />
+            <Schedule default size={1.5 * UNIT} />
             <Spacing mr={1} />
             <Text default>
               Interval units
@@ -464,7 +464,7 @@ function BackfillEdit({
           </FlexContainer>
         )}
         title={() => `Edit ${model?.name}`}
-        uuid="triggers/edit"
+        uuid="backfill/edit"
       >
         <Spacing p={PADDING_UNITS}>
           <Spacing mb={2}>
@@ -536,8 +536,8 @@ function BackfillEdit({
         <Spacing mt={5}>
           {detailsMemo}
         </Spacing>
-
       </PipelineDetailPage>
+
       {errors && (
         <ClickOutside
           disableClickOutside
