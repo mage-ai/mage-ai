@@ -726,7 +726,7 @@ def schedule_all():
 
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule() and \
-            pipeline_schedule_id not in backfills_by_pipeline_schedule_id:
+            pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
 
             pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
