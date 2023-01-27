@@ -1,0 +1,106 @@
+{
+    "type": [
+        "null",
+        "object"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "analytics_date": {
+            "type": [
+                "null",
+                "string"
+            ],
+            "format": "date"
+        },
+        "analytics_range": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "resource_t": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "resource_v": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "resource_id": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "resource_url": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "num_received_p": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "num_received_v": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "num_sent_p": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "num_sent_v": {
+            "type": [
+                "null",
+                "integer"
+            ]
+        },
+        "avg_first_response_p": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "avg_first_response_v": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "avg_response_p": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "avg_response_v": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "avg_resolution_p": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "avg_resolution_v": {
+            "type": [
+                "null",
+                "number"
+            ]
+        }
+    }
+}

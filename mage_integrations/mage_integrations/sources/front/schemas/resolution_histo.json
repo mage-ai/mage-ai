@@ -1,0 +1,40 @@
+{
+    "type": [
+        "null",
+        "object"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "analytics_date": {
+            "type": [
+                "null",
+                "string"
+            ],
+            "format": "date"
+        },
+        "analytics_range": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "time_v": {
+            "type": [
+                "null",
+                "string"
+            ]
+        },
+        "resolutions_p": {
+            "type": [
+                "null",
+                "number"
+            ]
+        },
+        "resolutions_v": {
+            "type": [
+                "null",
+                "number"
+            ]
+        }
+    }
+}

@@ -1,0 +1,98 @@
+{
+    "type": ["null", "object"],
+    "selected": true,
+    "additionalProperties": false,
+    "properties": {
+	"analytics_date": {
+	    "type": ["null", "string"],
+	    "format": "date",
+	    "selected": true
+	},
+	"analytics_range": {
+	    "type": ["null", "string"],
+	    "selected": true
+	},
+      	"teammate_v": {
+            "type": ["null", "string"],
+	    "selected": true
+	},
+      	"teammate_url": {
+            "type": ["null", "string"],
+	    "selected": true
+	},
+      	"teammate_id": {
+            "type": ["null", "integer"],
+	    "selected": true
+	},
+      	"teammate_p": {
+            "type": ["null", "string"],
+	    "selected": true
+	},
+	"num_conversations_v": {
+	    "type": ["null", "integer"],
+	    "selected": true
+	},
+	"num_conversations_p": {
+	    "type": ["null", "integer"],
+	    "selected": true
+	},
+	"avg_message_conversations_v": {
+	    "type": ["null", "number"],
+	    "selected": true
+	},
+	"avg_message_conversations_p": {
+	    "type": ["null", "number"],
+	    "selected": true
+	},
+	"avg_reaction_time_v": {
+	    "type": ["null", "number"],
+	    "selected": true
+	},
+	"avg_reaction_time_p": {
+	    "type": ["null", "number"],
+	    "selected": true
+	},
+	"avg_first_reaction_time_v": {
+	    "type": ["null", "number"],
+	    "selected": true
+	},
+	"avg_first_reaction_time_p": {
+	    "type": ["null", "number"],
+	    "selected": true
+	},
+	"num_messages_v": {
+	    "type": ["null", "integer"],
+	    "selected": true
+	},
+	"num_messages_p": {
+	    "type": ["null", "integer"],
+	    "selected": true
+	},
+	"num_sent_v": {
+	    "type": ["null", "integer"],
+	    "selected": true
+	},
+  	"num_sent_p": {
+	    "type": ["null", "integer"],
+	    "selected": true
+        },
+	"num_replied_v": {
+	    "type": ["null", "integer"],
+	    "selected": true
+	},
+  	"num_replied_p": {
+	    "type": ["null", "integer"],
+	    "selected": true
+        },
+	"num_composed_v": {
+	    "type": ["null", "integer"],
+	    "selected": true
+	},
+  	"num_composed_p": {
+	    "type": ["null", "integer"],
+	    "selected": true
+        }
+    },
+    "key_properties": ["analytics_date","analytics_range","teammate_v"],
+    "bookmark_properties": ["analytics_date","analytics_range"]
+}
