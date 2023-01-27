@@ -1,5 +1,8 @@
-export const BACKFILL_TYPE_DATETIME = 'datetime';
-export const BACKFILL_TYPE_CODE = 'code';
+import {
+  BACKFILL_TYPE_DATETIME,
+  BACKFILL_TYPE_CODE,
+} from '@interfaces/BackfillType';
+
 export const BACKFILL_TYPES = [
   {
     label: () => 'Date and time window',

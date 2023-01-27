@@ -8,7 +8,11 @@ import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import BackfillType, { INTERVAL_TYPES } from '@interfaces/BackfillType';
+import BackfillType, {
+  BACKFILL_TYPE_CODE,
+  BACKFILL_TYPE_DATETIME,
+  INTERVAL_TYPES,
+} from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -35,7 +39,7 @@ import {
   Schedule,
   Trash,
 } from '@oracle/icons';
-import { BACKFILL_TYPE_DATETIME, BACKFILL_TYPE_CODE, BACKFILL_TYPES } from './constants';
+import { BACKFILL_TYPES } from './constants';
 import { CardStyle } from '../../Triggers/Edit/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {

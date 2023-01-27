@@ -1,5 +1,8 @@
 import { RunStatus } from './BlockRunType';
 
+export const BACKFILL_TYPE_DATETIME = 'datetime';
+export const BACKFILL_TYPE_CODE = 'code';
+
 export enum IntervalTypeEnum {
   SECOND = 'second',
   MINUTE = 'minute',
