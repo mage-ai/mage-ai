@@ -181,7 +181,6 @@ class ApiInstancesHandler(BaseHandler):
             self.write(dict(success=False, error_message=str(e)))
 
 
-
 class ApiInstanceDetailHandler(BaseHandler):
     def put(self, cluster_type, instance_name):
         if cluster_type == 'ecs':
@@ -204,7 +203,6 @@ class ApiInstanceDetailHandler(BaseHandler):
                     task_definition,
                     container_name,
                 )
-
 
         self.write(dict(
             instance=instance,

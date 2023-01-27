@@ -1,15 +1,19 @@
 from kubernetes import client, config
 import time
 
-JOB_NAME = 'mage-job'
-
 
 class JobManager():
-    def __init__(self, namespace: str = 'default'):
+    def __init__(self, job_name='mage-job', namespace: str = 'default'):
+        self.job_name = job_name
         self.namespace = namespace
         self.load_config()
         self.api_client = client.BatchV1Api()
         self.api_version = 'batch/v1'
+        self.core_api = client.CoreV1Api()
+        self.pod_config = self.core_api.read_namespaced_pod(
+            name='mage-server',
+            namespace=self.namespace,
+        )
 
     @classmethod
     def load_config(cls) -> bool:
@@ -30,7 +34,7 @@ class JobManager():
         job = self.create_job_object(command)
 
         self.create_job(job)
-        time.sleep(30)
+        # Check the status of the job
         self.delete_job()
 
     def create_job_object(self, command):
@@ -39,13 +43,20 @@ class JobManager():
             name='mage-job-container',
             image='mageai/mageai',
             command=command.split(' '),
+            volume_mounts=[
+                client.V1VolumeMount(
+                    name='mage-fs',
+                    mount_path='/home/src',
+                ),
+            ],
         )
         # Create and configurate a spec section
         template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(labels={'name': JOB_NAME}),
+            metadata=client.V1ObjectMeta(labels={'name': self.job_name}),
             spec=client.V1PodSpec(
                 restart_policy='OnFailure',
                 containers=[container],
+                volumes=self.pod_config.spec.volumes,
             ),
         )
         # Create the specification of deployment
@@ -54,7 +65,7 @@ class JobManager():
         job = client.V1Job(
             api_version=self.api_version,
             kind='Job',
-            metadata=client.V1ObjectMeta(name=JOB_NAME),
+            metadata=client.V1ObjectMeta(name=self.job_name),
             spec=spec)
 
         return job
@@ -68,7 +79,7 @@ class JobManager():
 
     def delete_job(self):
         api_response = self.api_client.delete_namespaced_job(
-            name=JOB_NAME,
+            name=self.job_name,
             namespace='default',
             body=client.V1DeleteOptions(
                 propagation_policy='Foreground',

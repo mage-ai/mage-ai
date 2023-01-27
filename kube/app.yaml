@@ -49,5 +49,5 @@ spec:
   volumes:
   - name: mage-fs
     hostPath:
-      path: /Users/xiaoyou_wang/mage/repos/mage-ai
+      path: /path/to/mage_project
   serviceAccountName: mage-user
