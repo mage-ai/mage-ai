@@ -68,3 +68,15 @@ p_load(dplyr)
 `pacman` is an R package management tool. You can use `p_library()` to view all the available packages.
 
 Here is the documentation for `pacman` where you can find more useful methods: https://www.rdocumentation.org/packages/pacman/versions/0.5.1
+
+## Runtime variables
+Runtime variables can be accessed via `global_vars` vector, like `global_vars['execution_date']`.
+
+Example code:
+```R
+load_data <- function() {
+    df <- read.csv(file='titanic_clean.csv')
+    df['date'] <- global_vars['execution_date']
+    df
+}
+```

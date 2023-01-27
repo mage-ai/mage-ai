@@ -13,7 +13,7 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
 )
 from mage_integrations.destinations.sql.utils import clean_column_name
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 
 class PostgreSQL(Destination):

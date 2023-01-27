@@ -20,7 +20,23 @@ default:
   POSTGRES_PASSWORD: ...
   POSTGRES_PORT: ...
   POSTGRES_USER: ...
+  POSTGRES_CONNECTION_METHOD: direct
+  POSTGRES_SSH_HOST:
+  POSTGRES_SSH_PORT: 22
+  POSTGRES_SSH_USERNAME:
+  POSTGRES_SSH_PASSWORD:
+  POSTGRES_SSH_PKEY:
 ```
+### SSH tunneling
+If you want to connect to Postgres cluster with ssh tunnel, update the value of `POSTGRES_CONNECTION_METHOD` to `ssh_tunnel`, and enter the values for keys with prefix `POSTGRES_SSH`.
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `POSTGRES_SSH_HOST` | The host of the intermediate bastion server. | `123.45.67.89` |
+| `POSTGRES_SSH_PORT` | The port of the intermediate bastion server. Default value: 22 | `22` |
+| `POSTGRES_SSH_USERNAME` | The username used to connect to the bastion server. | `username` |
+| `POSTGRES_SSH_PASSWORD` | (Optional) The password used to connect to the bastion server. It should be set if you authenticate with the bastion server with password. | `password` |
+| `POSTGRES_SSH_PKEY` | (Optional) The path to the private key used to connect to the bastion server. It should be set if you authenticate with the bastion server with private key. | `/path/to/private/key` |
 
 <br />
 

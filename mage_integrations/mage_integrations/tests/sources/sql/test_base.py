@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import unittest
 
 
-def build_sample_rows():
+def build_sample_postgres_rows():
     return [
         ('demo_actions', None, None, 'actionid', 'character varying', 'YES'),
         ('demo_actions', None, None, 'actionname', 'character varying', 'YES'),
@@ -36,7 +36,7 @@ class BaseSQLSourceTests(unittest.TestCase):
                 with patch.object(
                     build_connection_result,
                     'load',
-                    return_value=build_sample_rows(),
+                    return_value=build_sample_postgres_rows(),
                 ):
                     catalog = source.discover()
                     mock_build_query.assert_called_once()

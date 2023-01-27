@@ -38,4 +38,3 @@ class Trino(Connection):
             connect_kwargs['http_scheme'] = 'https'
 
         return ConnectionWrapper(**connect_kwargs)
-

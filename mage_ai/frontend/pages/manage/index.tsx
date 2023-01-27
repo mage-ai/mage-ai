@@ -2,26 +2,22 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import ClickOutside from '@oracle/components/ClickOutside';
+import ConfigureInstance from '@components/Manage/ConfigureInstance';
 import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Headline from '@oracle/elements/Headline';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { Add, Ellipsis, Expand } from '@oracle/icons';
-import { BLUE_SKY, PURPLE } from '@oracle/styles/colors/main';
+import { Ellipsis, Expand } from '@oracle/icons';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
+import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { capitalizeRemoveUnderscoreLower, randomNameGenerator, replaceSpaces } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import ClickOutside from '@oracle/components/ClickOutside';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
-import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
 
 function MoreActions({
   fetchInstances,
@@ -177,7 +173,7 @@ function MoreActions({
                   <Button
                     danger
                     onClick={deleteInstance}
-                  >cd
+                  >
                     Confirm
                   </Button>
                   <Spacing ml={1} />
@@ -208,8 +204,6 @@ function MoreActions({
 }
 
 function InstanceListPage() {
-  const [create, setCreate] = useState<boolean>();
-  const [newInstanceName, setNewInstanceName] = useState<string>();
   const [error, setError] = useState<string>();
 
   const { data: dataStatus } = api.status.list();
@@ -224,48 +218,10 @@ function InstanceListPage() {
     },
   );
 
-  const [createInstance, { isLoading: isLoadingCreateInstance }] = useMutation(
-    api.instances.clusters.useCreate(instanceType),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchInstances();
-            setCreate(false);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        }
-      )
-    }
-  )
-
   const instances = useMemo(
     () => dataInstances?.instances?.filter(({ name }) => name),
     [dataInstances],
   );
-
-  const updateInstanceName = (name) => {
-    if (instanceType === 'ecs') {
-      return replaceSpaces(name, '_');
-    } else {
-      return replaceSpaces(name, '-');
-    }
-  }
-
-  const instanceNameLabel = () => {
-    if (instanceType === 'ecs') {
-      return "Spaces will be replaced by underscores";
-    } else {
-      return "Spaces will be replaced by hyphens";
-    }
-  }
 
   return (
     <Dashboard
@@ -274,93 +230,17 @@ function InstanceListPage() {
       breadcrumbs={[
         {
           bold: true,
-          label: () => 'Manage',
+          label: () => `Manage (${instanceType})`,
         },
       ]}
       navigationItems={[]}
       subheaderChildren={
-        <>
-          {create ? (
-            <>
-              <Headline default level={5} monospace>
-                Configure new instance
-              </Headline>
-              <Table
-                columnFlex={[null, 3]}
-                rows={[
-                  [
-                    <Text bold color={BLUE_SKY}>
-                      Instance name
-                    </Text>,
-                    <TextInput
-                      label={instanceNameLabel()}
-                      monospace
-                      onChange={(e) => {
-                        e.preventDefault();
-                        setNewInstanceName(e.target.value);
-                      }}
-                      placeholder="Name your new instance"
-                      value={newInstanceName}
-                    />,
-                  ],
-                ]}
-              />
-              {isLoadingCreateInstance && (
-                <Spacing mt={1}>
-                  <Text warning>
-                    This may take up to a few minutes... Once the service is created, it may take another 5-10 minutes for the service to be accessible.
-                  </Text>
-                </Spacing>
-              )}
-              <Spacing my={2}>
-                <FlexContainer>
-                  <KeyboardShortcutButton
-                    background={PURPLE}
-                    bold
-                    inline
-                    loading={isLoadingCreateInstance}
-                    // @ts-ignore
-                    onClick={() => createInstance({
-                      instance: {
-                        name: updateInstanceName(newInstanceName),
-                      }
-                    })}
-                    uuid="EnvironmentListPage/new"
-                  >
-                    Create
-                  </KeyboardShortcutButton>
-                  <Spacing ml={1} />
-                  <KeyboardShortcutButton
-                    bold
-                    inline
-                    onClick={() => setCreate(false)}
-                    uuid="EnvironmentListPage/cancel"
-                  >
-                    Cancel
-                  </KeyboardShortcutButton>
-                </FlexContainer>
-              </Spacing>
-            </>
-          ) : (
-            <KeyboardShortcutButton
-              background={BUTTON_GRADIENT}
-              beforeElement={<Add size={2.5 * UNIT} />}
-              bold
-              inline
-              // loading={isLoading}
-              // @ts-ignore
-              onClick={() => {
-                setNewInstanceName(randomNameGenerator())
-                setCreate(true);
-              }}
-              uuid="EnvironmentListPage/new_instance"
-            >
-              Create new instance
-            </KeyboardShortcutButton>
-          )}
-        </>
+        <ConfigureInstance
+          fetchInstances={fetchInstances}
+          instanceType={instanceType}
+        />
       }
-      title="Manage"
+      title={`Manage`}
       uuid="Manage/index"
     >
       <Table
