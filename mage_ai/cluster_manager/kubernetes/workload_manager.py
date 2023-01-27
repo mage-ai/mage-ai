@@ -31,22 +31,20 @@ class WorkloadManager:
         if not self.namespace:
             self.namespace = 'default'
 
-    
     @classmethod
     def load_config(cls) -> bool:
         try:
             config.load_incluster_config()
             return True
-        except:
+        except Exception:
             pass
 
         try:
             config.load_kube_config()
-        except:
+        except Exception:
             pass
 
         return False
-
 
     def list_services(self):
         services = self.core_client.list_namespaced_service(self.namespace).items
@@ -64,11 +62,10 @@ class WorkloadManager:
                     status='RUNNING' if len(conditions) == 0 else conditions[0].status,
                     type='kubernetes',
                 ))
-            except:
+            except Exception:
                 pass
 
         return services_list
-
 
     def create_stateful_set(
         self,
@@ -236,7 +233,6 @@ class WorkloadManager:
 
         self.core_client.create_namespaced_service(self.namespace, service)
 
-    
     def __populate_env_vars(self, container_config) -> List:
         env_vars = []
 
