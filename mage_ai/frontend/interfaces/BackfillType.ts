@@ -33,6 +33,7 @@ export default interface BackfillType {
   created_at: string;
   end_datetime?: string;
   failed_at?: string;
+  id: number;
   interval_type?: IntervalTypeEnum;
   interval_units?: number;
   metrics?: {
@@ -43,7 +44,7 @@ export default interface BackfillType {
   pipeline_uuid: string;
   start_datetime?: string;
   started_at?: string;
-  status?: BackfillStatusEnum;
+  status?: RunStatus;
   updated_at?: string;
   variables?: {
     [key: string]: number | string;

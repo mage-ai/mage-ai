@@ -25,6 +25,7 @@ import Link from '@oracle/elements/Link';
 import List from '@oracle/elements/List';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType from '@interfaces/PipelineType';
+import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -57,15 +58,17 @@ type BackfillEditProps = {
   backfill: BackfillType;
   fetchBackfill: () => void;
   pipeline: PipelineType;
+  variables?: PipelineVariableType[];
 };
 
 function BackfillEdit({
   backfill: modelProp,
   fetchBackfill,
   pipeline,
+  variables,
 }: BackfillEditProps) {
   const router = useRouter();
-  const [model, setModel] = useState<PipelineScheduleType>({});
+  const [model, setModel] = useState<BackfillType>();
   const {
     block_uuid: blockUUID,
     id: modelID,
@@ -74,7 +77,7 @@ function BackfillEdit({
     end_datetime: endDatetime,
     start_datetime: startDatetime,
     name,
-  } = model;
+  } = model || {};
   const {
     uuid: pipelineUUID,
   } = pipeline;

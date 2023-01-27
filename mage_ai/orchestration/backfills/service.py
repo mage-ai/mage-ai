@@ -1,6 +1,7 @@
-from mage_ai.orchestration.db.models import Backfill, PipelineRun, PipelineSchedule
-from typing import Dict, List
 from datetime import datetime, timedelta
+from mage_ai.orchestration.db.models import Backfill, PipelineRun, PipelineSchedule
+from mage_ai.shared.hash import merge_dict
+from typing import Dict, List
 import dateutil.parser
 
 
@@ -11,6 +12,8 @@ def start_backfill(backfill: Backfill) -> List[PipelineRun]:
     if len(variables_list) == 0:
         return []
 
+    backfill_variables = backfill.variables
+
     pipeline_schedule = backfill.pipeline_schedule
     if not pipeline_schedule:
         pipeline_schedule = PipelineSchedule.create(
@@ -18,19 +21,20 @@ def start_backfill(backfill: Backfill) -> List[PipelineRun]:
             pipeline_uuid=backfill.pipeline_uuid,
             schedule_interval=PipelineSchedule.ScheduleInterval.ONCE,
             start_time=datetime.utcnow(),
+            variables=backfill_variables,
         )
 
-    for backfill_variables in variables_list:
+    for backfill_run_variables in variables_list:
         execution_date = None
-        if 'execution_date' in backfill_variables:
-            execution_date = dateutil.parser.parse(backfill_variables['execution_date'])
+        if 'execution_date' in backfill_run_variables:
+            execution_date = dateutil.parser.parse(backfill_run_variables['execution_date'])
         pipeline_run = PipelineRun.create(
             backfill_id=backfill.id,
             execution_date=execution_date,
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=backfill.pipeline_uuid,
             status=PipelineRun.PipelineRunStatus.RUNNING,
-            variables=backfill_variables,
+            variables=merge_dict(backfill_variables or {}, backfill_run_variables),
         )
         pipeline_runs.append(pipeline_run)
 

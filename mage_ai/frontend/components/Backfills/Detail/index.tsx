@@ -66,7 +66,7 @@ type BackfillDetailProps = {
 };
 
 function BackfillDetail({
-  backfill: model = {},
+  backfill: model,
   fetchBackfill,
   pipeline,
   variables,
@@ -82,7 +82,7 @@ function BackfillDetail({
     start_datetime: startDatetime,
     status,
     variables: modelVariablesInit = {},
-  } = model;
+  } = model || {};
   const {
     uuid: pipelineUUID,
   } = pipeline;
@@ -144,7 +144,7 @@ function BackfillDetail({
               };
               router.push(
                 '/pipelines/[pipeline]/triggers/[...slug]',
-                `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}?${queryString(updatedQuery)}`,
+                `/pipelines/${pipelineUUID}/triggers/${modelID}?${queryString(updatedQuery)}`,
               );
             }}
             totalPages={Math.ceil(totalRuns / LIMIT)}
@@ -170,10 +170,7 @@ function BackfillDetail({
             fetchBackfill();
             fetchPipelineRuns();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => console.log(errors, response),
         },
       ),
     },
@@ -471,6 +468,7 @@ function BackfillDetail({
                   loading={isLoadingUpdate}
                   onClick={(e) => {
                     pauseEvent(e);
+                    // @ts-ignore
                     updateModel({
                       backfill: {
                         id: modelID,
