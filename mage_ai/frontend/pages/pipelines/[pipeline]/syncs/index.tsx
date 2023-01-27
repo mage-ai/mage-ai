@@ -15,15 +15,15 @@ import { getStreams } from '@utils/models/pipelineRun';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl } from '@utils/url';
 
-type PipelineSchedulesProp = {
+type PipelineSyncsProp = {
   pipeline: {
     uuid: string;
   };
 };
 
-function PipelineSchedules({
+function PipelineSyncs({
   pipeline,
-}: PipelineSchedulesProp) {
+}: PipelineSyncsProp) {
   const pipelineUUID = pipeline.uuid;
   const {
     data: dataPipelineRuns,
@@ -121,7 +121,7 @@ function PipelineSchedules({
       pageName={PageNameEnum.SYNCS}
       pipeline={pipeline}
       title={({ name }) => `${name} syncs`}
-      uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
+      uuid={`${PageNameEnum.SYNCS}_${pipelineUUID}`}
     >
       {pipelineRuns.map((pipelineRun: PipelineRunType) => {
         const selected = selectedPipelineRun?.id === pipelineRun.id;
@@ -142,7 +142,7 @@ function PipelineSchedules({
   );
 }
 
-PipelineSchedules.getInitialProps = async (ctx: any) => {
+PipelineSyncs.getInitialProps = async (ctx: any) => {
   const { pipeline: pipelineUUID }: { pipeline: string } = ctx.query;
 
   return {
@@ -152,4 +152,4 @@ PipelineSchedules.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineSchedules;
+export default PipelineSyncs;
