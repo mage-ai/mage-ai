@@ -14,6 +14,11 @@ You must enter the following credentials when configuring this source:
 | `end_date` | The end date of google analytics query. | `2022-01-01` |
 <br />
 
-Prerequisites:
-* Google Analytics API needs to be enabled https://console.cloud.google.com/apis/dashboard
-* The service account needs to have access to the Google Analytics data.
+### Prerequisites:
+1. Google Analytics API needs to be enabled https://console.cloud.google.com/apis/dashboard
+1. The service account needs to have access to the Google Analytics data.
+1. Go to the dashboard: https://analytics.google.com/analytics
+1. Click on Admin in the bottom left corner of the screen
+1. Click on the Account Access Management section
+1. Click on Property access management
+1. Add the email address of the service account belonging to the credentials in the file at `path_to_credentials_json_file`
