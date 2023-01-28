@@ -145,7 +145,6 @@ class PipelineSchedule(BaseModel):
     variables = Column(JSON)
     sla = Column(Integer, default=None) # in seconds
     token = Column(String(255), index=True, default=None)
-    settings = Column(JSON)
 
     backfills = relationship('Backfill', back_populates='pipeline_schedule')
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
@@ -170,7 +169,7 @@ class PipelineSchedule(BaseModel):
         return schedule_interval
 
     @property
-    def last_pipeline_run_status(self) -> str:
+    def last_pipeline_run_status(self) -> int:
         if len(self.pipeline_runs) == 0:
             return None
         return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status

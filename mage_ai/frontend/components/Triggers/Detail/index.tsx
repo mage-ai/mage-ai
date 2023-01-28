@@ -24,7 +24,6 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
 
@@ -85,7 +84,6 @@ function TriggerDetail({
     name: pipelineScheduleName,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
-    settings,
     sla,
     start_time: startTime,
     status,
@@ -298,35 +296,6 @@ function TriggerDetail({
       ]);
     }
 
-    if (settings) {
-      const skipIfRunning = settings['skip_if_previous_running'];
-      if (skipIfRunning) {
-        rows.push([
-          <FlexContainer
-            alignItems="center"
-            key="trigger_skip_if_running_label"
-          >
-            <Tooltip
-              default
-              label="Skip current run if any previous runs are still in progress"
-              widthFitContent
-              size={UNIT*1.5}
-            />
-            <Spacing mr={1} />
-            <Text default>
-              Skip if running
-            </Text>
-          </FlexContainer>,
-          <Text
-            key="trigger_skip_if_running"
-            monospace
-          >
-            {skipIfRunning.toString()}
-          </Text>,
-        ]);
-      }
-    }
-
     return (
       <Table
         columnFlex={[null, 1]}
@@ -336,7 +305,6 @@ function TriggerDetail({
   }, [
     isActive,
     scheduleInterval,
-    settings,
     sla,
     startTime,
     scheduleType,
