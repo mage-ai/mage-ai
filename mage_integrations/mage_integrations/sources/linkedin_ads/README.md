@@ -16,6 +16,14 @@ You must enter the following credentials when configuring this source:
 | `start_date` | ... | `2023-01-01T00:00:00Z` | ✅ |
 | `user_agent` | ... | `your_email@your_domain.com` | ✅ |
 
+Instead of providing an `access_token`, you can add the following fields and values:
+
+| Key | Description | Sample value | Required |
+| --- | --- | --- | --- |
+| `client_id` | ... | `abc123...` | ✅ |
+| `client_secret` | ... | `xyz456...` | ✅ |
+| `refresh_token` | ... | `def789...` | ✅ |
+
 ### How to get `access_token`
 
 1. Create a LinkedIn app: https://www.linkedin.com/developers/apps

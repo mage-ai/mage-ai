@@ -3,6 +3,5 @@
   "client_secret": "",
   "redirect_uri": "",
   "refresh_token": "",
-  "start_date": "2023-01-01T00:00:00Z",
-  "user_agent": ""
+  "start_date": "2023-01-01T00:00:00Z"
 }
