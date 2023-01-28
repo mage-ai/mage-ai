@@ -62,7 +62,7 @@ setuptools.setup(
             'mysql-connector-python==8.0.31',
         ],
         'postgres': [
-            'psycopg2-binary==2.9.3'
+            'psycopg2-binary==2.9.3',
             'sshtunnel==0.4.0',
         ],
         'redshift': ['boto3==1.24.19', 'redshift-connector==2.0.909'],
