@@ -835,6 +835,7 @@ SQL_RESERVED_WORDS_SUBSET = {
     'JOIN',
     'LIMIT',
     'ORDER',
+    'REFERENCES',
     'SELECT',
     'TO',
     'USER',

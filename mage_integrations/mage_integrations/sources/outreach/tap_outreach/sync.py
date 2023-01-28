@@ -8,7 +8,7 @@ LOGGER = singer.get_logger()
 STREAM_CONFIGS = {
     'accounts': {
         'url_path': 'accounts',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': [
             'creatorId',
@@ -18,19 +18,19 @@ STREAM_CONFIGS = {
     },
     'call_dispositions': {
         'url_path': 'callDispositions',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['creatorId']
     },
     'call_purposes': {
         'url_path': 'callPurposes',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['creatorId']
     },
     'calls': {
         'url_path': 'calls',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': [
             'callDispositionId',
@@ -46,29 +46,29 @@ STREAM_CONFIGS = {
     },
     'content_categories': {
         'url_path': 'contentCategories',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['creatorId']
     },
     'duties': {
         'url_path': 'duties',
-        'replication': 'full'
+        'replication': 'FULL_TABLE'
     },
     'events': {
         'url_path': 'events',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'eventAt',
         'fks': ['prospectId', 'userId']
     },
     'mailboxes': {
         'url_path': 'mailboxes',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['creatorId', 'updaterId']
     },
     'mailings': {
         'url_path': 'mailings',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': [
             'calendarId',
@@ -84,7 +84,7 @@ STREAM_CONFIGS = {
     },
     'opportunities': {
         'url_path': 'opportunities',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': [
             'accountId',
@@ -95,12 +95,12 @@ STREAM_CONFIGS = {
     },
     'personas': {
         'url_path': 'personas',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt'
     },
     'prospects': {
         'url_path': 'prospects',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': [
             'accountId',
@@ -114,37 +114,37 @@ STREAM_CONFIGS = {
     },
     'stages': {
         'url_path': 'stages',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['creatorId', 'updaterId']
     },
     'sequences': {
         'url_path': 'sequences',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['creatorId', 'ownerid', 'updaterId']
     },
     'sequence_states': {
         'url_path': 'sequenceStates',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['accountid', 'creatorId', 'prospectId', 'sequenceId']
     },
     'sequence_steps': {
         'url_path': 'sequenceSteps',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': ['creatorId', 'sequenceId', 'updaterId']
     },
     'sequence_templates': {
         'url_path': 'sequenceTemplates',
-        'replication': 'full',
+        'replication': 'FULL_TABLE',
         'filter_field': 'updatedAt',
         'fks': ['creatorId', 'updaterId']
     },
     'tasks': {
         'url_path': 'tasks',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': [
             'accountId',
@@ -166,12 +166,12 @@ STREAM_CONFIGS = {
     },
     'teams': {
         'url_path': 'teams',
-        'replication': 'full',
+        'replication': 'FULL_TABLE',
         'fks': ['creatorId', 'updaterId']
     },
     'users': {
         'url_path': 'users',
-        'replication': 'incremental',
+        'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
         'fks': [
             'calendarId',
@@ -189,10 +189,10 @@ def get_bookmark(state, stream_name, default):
     return state.get('bookmarks', {}).get(stream_name, default)
 
 
-def write_bookmark(state, stream_name, value):
+def write_bookmark(state, stream_name, value, bookmark_key: str):
     if 'bookmarks' not in state:
         state['bookmarks'] = {}
-    state['bookmarks'][stream_name] = value
+    state = singer.write_bookmark(state, stream_name, bookmark_key, value)
     singer.write_state(state)
 
 
@@ -288,7 +288,7 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
                 'page[size]': count,
                 'count': 'false'
             }
-            if stream_config.get('replication') == 'incremental':
+            if stream_config.get('replication') == 'INCREMENTAL':
                 query_params['filter[{}]'.format(
                     filter_field)] = '{}..inf'.format(paginate_datetime)
                 query_params['sort'] = filter_field
@@ -330,8 +330,8 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
                                        filter_field,
                                        fks)
 
-        if stream_config.get('replication') == 'incremental':
-            write_bookmark(state, stream_name, max_modified)
+        if stream_config.get('replication') == 'INCREMENTAL':
+            write_bookmark(state, stream_name, max_modified, filter_field)
 
 
 def update_current_stream(state, stream_name=None):
