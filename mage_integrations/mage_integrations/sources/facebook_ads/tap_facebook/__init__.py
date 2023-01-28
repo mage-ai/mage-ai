@@ -21,7 +21,7 @@ from singer import SingerConfigurationError, SingerDiscoveryError, SingerSyncErr
 from singer import (transform,
                     UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING,
                     Transformer, _transform_datetime)
-from singer.catalog import Catalog, CatalogEntry
+from mage_integrations.sources.catalog import Catalog, CatalogEntry
 
 from functools import partial
 
@@ -864,10 +864,19 @@ def discover_schemas():
         if bookmark_key == UPDATED_TIME_KEY or bookmark_key == CREATED_TIME_KEY :
             mdata = metadata.write(mdata, ('properties', bookmark_key), 'inclusion', 'automatic')
 
-        result['streams'].append({'stream': stream.name,
-                                  'tap_stream_id': stream.name,
-                                  'schema': schema,
-                                  'metadata': metadata.to_list(mdata)})
+        bookmark_properties = []
+        if bookmark_key:
+            bookmark_properties.append(bookmark_key)
+
+        result['streams'].append({
+            'bookmark_properties': bookmark_properties,
+            'key_properties': stream.key_properties,
+            'metadata': metadata.to_list(mdata),
+            'replication_method': stream.replication_method,
+            'schema': schema,
+            'stream': stream.name,
+            'tap_stream_id': stream.name,
+        })
     return result
 
 def load_shared_schema_refs():
