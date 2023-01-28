@@ -1,7 +1,7 @@
 """Add settings to pipeline schedule
 
 Revision ID: 1d8e65aeefdd
-Revises: 6aecc9bc451c
+Revises: 26305e46df52
 Create Date: 2023-01-26 14:54:26.688979
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '1d8e65aeefdd'
-down_revision = '6aecc9bc451c'
+down_revision = '26305e46df52'
 branch_labels = None
 depends_on = None
 
