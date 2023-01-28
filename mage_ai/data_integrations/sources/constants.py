@@ -20,6 +20,7 @@ SOURCES = sorted([
     dict(name='HubSpot'),
     dict(name='Intercom'),
     dict(name='LinkedIn Ads'),
+    dict(name='Outreach'),
     dict(name='Paystack'),
     dict(name='Postmark'),
     dict(name='Salesforce'),

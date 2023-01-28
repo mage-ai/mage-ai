@@ -150,7 +150,11 @@ def column_type_mapping(
             items_types = column_settings.get('items', {}).get('type', [])
             if type(items_types) is not list:
                 items_types = [items_types]
-            item_types += [t for t in items_types if 'null' != t]
+            item_types += [t for t in items_types if 'null' != t and 'array' != t]
+
+            items_items = column_settings.get('items', {}).get('items', {}).get('type', [])
+            if len(items_items) >= 1:
+                item_types += items_items
 
             if len(item_types):
                 item_type = item_types[0]
