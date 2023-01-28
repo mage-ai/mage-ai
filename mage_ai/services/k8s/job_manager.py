@@ -34,7 +34,19 @@ class JobManager():
         job = self.create_job_object(command)
 
         self.create_job(job)
-        # Check the status of the job
+
+        job_completed = False
+        while not job_completed:
+            api_response = self.api_client.read_namespaced_job_status(
+                name=self.job_name,
+                namespace=self.namespace
+            )
+            if api_response.status.succeeded is not None or \
+                    api_response.status.failed is not None:
+                job_completed = True
+            time.sleep(1)
+            print(f'Job {self.job_name} status={api_response.status}')
+
         self.delete_job()
 
     def create_job_object(self, command):
@@ -54,7 +66,7 @@ class JobManager():
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={'name': self.job_name}),
             spec=client.V1PodSpec(
-                restart_policy='OnFailure',
+                restart_policy='Never',
                 containers=[container],
                 volumes=self.pod_config.spec.volumes,
             ),

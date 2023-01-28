@@ -14,8 +14,8 @@ rules:
   resources: ["pods"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["batch", "extensions"]
-  resources: ["jobs"]
-  verbs: ["create", "delete"]
+  resources: ["jobs", "jobs/status"]
+  verbs: ["create", "delete", "get"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
