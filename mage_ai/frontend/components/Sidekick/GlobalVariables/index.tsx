@@ -145,7 +145,6 @@ function GlobalVariables({
   ]);
 
   const tableWidth = useMemo(() => width - 4 * UNIT, [width]);
-  console.log('table width:', tableWidth);
   const globalVariables = useMemo(
     () => getFormattedVariables(variables, (block) => block.uuid === 'global'),
     [variables],
