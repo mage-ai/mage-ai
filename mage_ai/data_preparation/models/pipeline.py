@@ -328,6 +328,8 @@ class Pipeline:
         self.block_configs = config.get('blocks') or []
         self.widget_configs = config.get('widgets') or []
 
+        self.variables = config.get('variables')
+
         def build_shared_args_kwargs(c):
             block_type = c.get('type')
             language = c.get('language')
@@ -384,12 +386,15 @@ class Pipeline:
         return blocks_by_uuid
 
     def to_dict_base(self) -> Dict:
-        return dict(
+        base = dict(
             data_integration=self.data_integration,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             uuid=self.uuid,
         )
+        if self.variables is not None:
+            base['variables'] = self.variables
+        return base
 
     def to_dict(
         self,
@@ -666,6 +671,16 @@ class Pipeline:
             }
         self.save()
         return block
+
+    def update_global_variable(self, key, value):
+        if self.variables is None:
+            self.variables = {}
+        self.variables[key] = value
+        self.save()
+
+    def delete_global_variable(self, key):
+        del self.variables[key]
+        self.save()
 
     def delete(self):
         for block_uuid in list(self.blocks_by_uuid.keys()):
