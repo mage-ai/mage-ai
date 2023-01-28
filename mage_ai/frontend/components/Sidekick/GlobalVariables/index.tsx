@@ -226,7 +226,6 @@ function GlobalVariables({
           deleteVariable={() => deleteVariable(variable.uuid)}
           fetchVariables={fetchVariables}
           pipelineUUID={pipelineUUID}
-          setErrorMessages={setErrorMessages}
           variable={variable}
         />
       ))}
@@ -256,6 +255,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
         {blockVariables?.map((variable: VariableType) => (
           <VariableRow
             copyText={copyText(variable.uuid)}
+            pipelineUUID={pipelineUUID}
             variable={variable}
           />
         ))}
@@ -335,6 +335,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
           {addTriggerVariables([], value).map((variable) => (
             <VariableRow
               variable={variable}
+              pipelineUUID={pipelineUUID}
             />
           ))}
         </Spacing>

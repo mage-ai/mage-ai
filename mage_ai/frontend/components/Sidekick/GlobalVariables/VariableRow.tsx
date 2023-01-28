@@ -20,9 +20,8 @@ import api from '@api';
 type VariableRowProps = {
   copyText?: string;
   deleteVariable?: () => void;
-  fetchVariables: () => void;
+  fetchVariables?: () => void;
   pipelineUUID: string;
-  setErrorMessages: (errors: string[]) => void;
   variable: VariableType;
 }
 
