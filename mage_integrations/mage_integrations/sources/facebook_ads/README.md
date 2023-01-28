@@ -8,11 +8,11 @@
 
 You must enter the following credentials when configuring this source:
 
-| Key | Description | Sample value |
+| Key | Description | Sample value | Required |
 | --- | --- | --- |
-| `account_id` | The Facebook Ad account ID use when extracting data. | `abc123...` |
-| `access_token` | OAuth token to access API endpoints. | `abc123...` |
-| `start_date` | Fetch data that is newer than the `start_date`. | `2022-01-01T00:00:00Z` |
+| `account_id` | The Facebook Ad account ID use when extracting data. | `"abc123..."` (double quotes required) | ✅ |
+| `access_token` | OAuth token to access API endpoints. | `abc123...` | ✅ |
+| `start_date` | Fetch data that is newer than the `start_date`. | `2022-01-01T00:00:00Z` | ✅ |
 
 <br />
 
