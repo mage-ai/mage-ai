@@ -3,7 +3,8 @@ import json
 import singer
 from singer import metadata
 from .sync import STREAM_CONFIGS
-from singer.catalog import Catalog, CatalogEntry, Schema
+from singer.catalog import Schema
+from mage_integrations.sources.catalog import Catalog, CatalogEntry
 
 
 def get_abs_path(path):
@@ -56,12 +57,27 @@ def discover():
         schema = Schema.from_dict(schema_dict)
         metadata = field_metadata[stream_name]
 
-        catalog.streams.append(CatalogEntry(
+        settings = STREAM_CONFIGS[stream_name]
+
+        bookmark_properties = None
+        if 'filter_field' in settings:
+            bookmark_properties = settings['filter_field']
+            if type(bookmark_properties) is not list:
+                bookmark_properties = [bookmark_properties]
+
+        replication_method = None
+        if 'replication' in settings:
+            replication_method = settings['replication'].upper()
+
+        catalog_entry = CatalogEntry(
+            bookmark_properties=bookmark_properties,
+            key_properties=['id'],
+            metadata=metadata,
+            replication_method=replication_method,
+            schema=schema,
             stream=stream_name,
             tap_stream_id=stream_name,
-            key_properties=['id'],
-            schema=schema,
-            metadata=metadata
-        ))
+        )
+        catalog.streams.append(catalog_entry)
 
     return catalog

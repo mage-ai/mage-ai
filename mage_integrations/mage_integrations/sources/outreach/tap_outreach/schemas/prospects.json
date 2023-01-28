@@ -94,22 +94,6 @@
         "integer"
       ]
     },
-    "contactHistogram": {
-      "type": [
-        "null",
-        "array"
-      ],
-      "items": {
-        "type": [
-          "array"
-        ],
-        "items": {
-          "type": [
-            "integer"
-          ]
-        }
-      }
-    },
     "createdAt": {
       "type": [
         "null",
@@ -919,4 +903,4 @@
       ]
     }
   }
-} 
+}

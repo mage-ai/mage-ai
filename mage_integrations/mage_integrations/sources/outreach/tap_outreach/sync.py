@@ -1,6 +1,7 @@
 import singer
 from singer import metrics, metadata, Transformer
 from singer.bookmarks import set_currently_syncing
+from mage_integrations.sources.messages import write_schema as write_schema_orig
 
 LOGGER = singer.get_logger()
 
@@ -197,7 +198,18 @@ def write_bookmark(state, stream_name, value):
 
 def write_schema(stream):
     schema = stream.schema.to_dict()
-    singer.write_schema(stream.tap_stream_id, schema, stream.key_properties)
+    write_schema_orig(
+        stream_name=stream.tap_stream_id,
+        schema=schema,
+        key_properties=stream.key_properties,
+        bookmark_properties=stream.bookmark_properties,
+        disable_column_type_check=stream.disable_column_type_check,
+        partition_keys=stream.partition_keys,
+        replication_method=stream.replication_method,
+        stream_alias=stream.stream_alias,
+        unique_conflict_method=stream.unique_conflict_method,
+        unique_constraints=stream.unique_constraints,
+    )
 
 
 def process_records(stream, mdata, max_modified, records, filter_field, fks):
@@ -228,8 +240,9 @@ def process_records(stream, mdata, max_modified, records, filter_field, fks):
                                 'null or `id` field expected for `data` relationship')
 
                         if fk_field_name in record_flat:
-                            raise Exception(
-                                '`{}` exists as both an attribute and generated relationship name'.format(fk_field_name))
+                            print(
+                                '`{}` exists as both an attribute and generated relationship name'.format(fk_field_name),
+                            )
 
                         if data_value == None:
                             record_flat[fk_field_name] = None

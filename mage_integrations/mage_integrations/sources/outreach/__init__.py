@@ -1,50 +1,45 @@
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
-# from mage_integrations.sources.hubspot.tap_hubspot import (
-#     do_discover,
-#     do_sync,
-#     setup,
-# )
+from mage_integrations.sources.outreach.tap_outreach import check_auth
+from mage_integrations.sources.outreach.tap_outreach.client import OutreachClient
+from mage_integrations.sources.outreach.tap_outreach.discover import discover
+from mage_integrations.sources.outreach.tap_outreach.sync import sync
+from mage_integrations.utils.dictionary import ignore_keys
 from singer import catalog as catalog_singer
 from typing import List
 
 
 class Outreach(Source):
-    pass
-    # def discover(self, streams: List[str] = None) -> Catalog:
-    #     setup(self.config, self.state)
-    #     catalog = do_discover(return_streams=True)
+    def discover(self, streams: List[str] = None) -> Catalog:
+        catalog = discover().to_dict()
 
-    #     catalog_entries = []
-    #     for stream in catalog['streams']:
-    #         stream_id = stream['tap_stream_id']
-    #         if not streams or stream_id in streams:
-    #             schema = catalog_singer.Schema.from_dict(stream['schema'])
-    #             catalog_entries.append(self.build_catalog_entry(stream_id, schema))
+        catalog_entries = []
+        for stream in catalog['streams']:
+            stream_id = stream['tap_stream_id']
+            if not streams or stream_id in streams:
+                schema = catalog_singer.Schema.from_dict(stream['schema'])
+                catalog_entries.append(self.build_catalog_entry(
+                    stream_id,
+                    schema,
+                    **ignore_keys(stream, ['schema']),
+                ))
 
-    #     return Catalog(catalog_entries)
+        return Catalog(catalog_entries)
 
-    # def sync(self, catalog: Catalog) -> None:
-    #     _, state = setup(self.config, self.state)
-    #     do_sync(state, catalog.to_dict())
+    def sync(self, catalog: Catalog) -> None:
+        with OutreachClient(self.config) as client:
+            check_auth(client)
+            sync(
+                client,
+                self.config,
+                catalog,
+                self.state or {},
+                self.config['start_date'],
+            )
 
-    # def get_valid_replication_keys(self, stream_id: str) -> List[str]:
-    #     return dict(
-    #         companies=['property_hs_lastmodifieddate'],
-    #         contact_lists=['updatedAt'],
-    #         contacts=['versionTimestamp'],
-    #         deals=['property_hs_lastmodifieddate'],
-    #         email_events=['startTimestamp'],
-    #         engagements=['lastUpdated'],
-    #         entity_chunked=['startTimestamp'],
-    #         forms=['updatedAt'],
-    #         owners=['updatedAt'],
-    #         subscription_changes=['startTimestamp'],
-    #         workflows=['updatedAt'],
-    #     ).get(stream_id, ['N/A'])
-
-    # def test_connection(self):
-    #     pass
+    def test_connection(self) -> None:
+        with OutreachClient(self.config) as client:
+            check_auth(client)
 
 
 if __name__ == '__main__':
