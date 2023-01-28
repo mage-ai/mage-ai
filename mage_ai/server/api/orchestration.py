@@ -185,7 +185,7 @@ def process_pipeline_runs(
         if additional_results[0].id != results[0].id:
             filter_dates.append(collection[0]['execution_date'])
 
-        last_execution_date = results[-1].execution_date
+        last_execution_date = results[results.count() - 1].execution_date
         additional_results = \
             initial_results.filter(PipelineRun.execution_date == last_execution_date)
         addons = [

@@ -10,6 +10,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
+import Checkbox from '@oracle/elements/Checkbox';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@oracle/components/CodeBlock';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
@@ -110,6 +111,7 @@ function Edit({
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [enableSLA, setEnableSLA] = useState<boolean>(false);
+  const [skipIfRunning, setSkipIfRunning] = useState<boolean>();
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
@@ -126,11 +128,16 @@ function Edit({
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
+    settings: settingsInit = {},
     sla,
     start_time: startTime,
     token,
     variables: scheduleVariablesInit = {},
   } = schedule || {};
+
+  useEffect(() => {
+    setSkipIfRunning(settingsInit?.['skip_if_previous_running']);
+  }, [settingsInit]);
 
   const [date, setDate] = useState<Date>(null);
   const [time, setTime] = useState<TimeType>({ hour: '00', minute: '00' });
@@ -288,6 +295,13 @@ function Edit({
       data.sla = 0;
     }
 
+    if (ScheduleTypeEnum.TIME === schedule.schedule_type) {
+      data.settings = {
+        ...settingsInit,
+        'skip_if_previous_running': skipIfRunning,
+      };
+    }
+
     // @ts-ignore
     updateSchedule({
       pipeline_schedule: data,
@@ -300,6 +314,8 @@ function Edit({
     pipelineSchedule,
     runtimeVariables,
     schedule,
+    settingsInit,
+    skipIfRunning,
     time,
     updateSchedule,
   ]);
@@ -930,7 +946,7 @@ function Edit({
               }}
             />
           </Spacing>
-          <Text monospace muted>
+          <Text default monospace>
             Configure trigger SLA
           </Text>
         </FlexContainer>
@@ -994,6 +1010,27 @@ function Edit({
             />
           </Spacing>
         )}
+        {ScheduleTypeEnum.TIME === scheduleType && (
+          <>
+            <Spacing mt={2}>
+              <Headline default level={5} monospace>
+                Additional settings
+              </Headline>
+              <Spacing mt={2}>
+                <FlexContainer alignItems="center">
+                  <Checkbox
+                    checked={skipIfRunning}
+                    onClick={() => setSkipIfRunning(prevVal => !prevVal)}
+                  />
+                  <Spacing ml={2}/>
+                  <Text default monospace small>
+                    Skip run if previous run still in progress
+                  </Text>
+                </FlexContainer>
+              </Spacing>
+            </Spacing>
+          </>
+        )}
       </Spacing>
     </Spacing>
   ), [
@@ -1004,6 +1041,7 @@ function Edit({
     schedule,
     setEnableSLA,
     setOverwriteVariables,
+    skipIfRunning,
   ]);
 
   return (
