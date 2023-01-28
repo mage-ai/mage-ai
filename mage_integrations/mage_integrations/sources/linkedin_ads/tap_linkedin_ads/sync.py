@@ -7,6 +7,7 @@ from singer import metrics, metadata, utils
 from singer import Transformer, should_sync_field, UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING
 from singer.utils import strptime_to_utc, strftime
 from tap_linkedin_ads.transform import transform_json, snake_case_to_camel_case
+from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.schema import STREAMS
 from mage_integrations.sources.messages import write_schema as write_schema_orig
 
 LOGGER = singer.get_logger()
@@ -128,9 +129,16 @@ def get_bookmark(state, stream, default):
 def write_bookmark(state, stream, value):
     if 'bookmarks' not in state:
         state['bookmarks'] = {}
-    state['bookmarks'][stream] = value
-    LOGGER.info('Write state for stream: %s, value: %s', stream, value)
-    singer.write_state(state)
+
+    bookmark_properties = STREAMS.get(stream, {}).get('replication_keys', [])
+    if len(bookmark_properties) >= 1:
+        LOGGER.info('Write state for stream: %s, value: %s', stream, value)
+        bookmark_key = bookmark_properties[0]
+        state = singer.write_bookmark(state, stream, bookmark_key, value)
+        singer.write_state(state)
+    else:
+        LOGGER.info('No bookmark property for stream: %s, value: %s', stream, value)
+
 
 # pylint: disable=too-many-arguments,too-many-locals
 def process_records(catalog,
