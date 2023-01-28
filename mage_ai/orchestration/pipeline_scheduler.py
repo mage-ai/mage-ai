@@ -741,23 +741,35 @@ def schedule_all():
             if is_integration:
                 payload['create_block_runs'] = False
 
-            pipeline_run = PipelineRun.create(**payload)
-            pipeline_scheduler = PipelineScheduler(pipeline_run)
+            running_pipeline_run = find(
+                lambda r: r.status in [
+                    PipelineRun.PipelineRunStatus.INITIAL,
+                    PipelineRun.PipelineRunStatus.RUNNING,
+                ],
+                pipeline_schedule.pipeline_runs
+            )
+            if pipeline_schedule.settings.get('skip_if_previous_running') \
+                    and running_pipeline_run is not None:
+                payload['create_block_runs'] = False
+                pipeline_run = PipelineRun.create(**payload)
+                pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+            else:
+                pipeline_run = PipelineRun.create(**payload)
+                pipeline_scheduler = PipelineScheduler(pipeline_run)
+                if is_integration:
+                    block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id).all()
+                    if len(block_runs) == 0:
+                        clear_source_output_files(
+                            pipeline_run,
+                            pipeline_scheduler.logger,
+                        )
+                        initialize_state_and_runs(
+                            pipeline_run,
+                            pipeline_scheduler.logger,
+                            get_variables(pipeline_run),
+                        )
 
-            if is_integration:
-                block_runs = BlockRun.query.filter(BlockRun.pipeline_run_id == pipeline_run.id).all()
-                if len(block_runs) == 0:
-                    clear_source_output_files(
-                        pipeline_run,
-                        pipeline_scheduler.logger,
-                    )
-                    initialize_state_and_runs(
-                        pipeline_run,
-                        pipeline_scheduler.logger,
-                        get_variables(pipeline_run),
-                    )
-
-            pipeline_scheduler.start(should_schedule=False)
+                pipeline_scheduler.start(should_schedule=False)
 
     active_pipeline_runs = PipelineRun.active_runs(
         pipeline_uuids=repo_pipelines,
