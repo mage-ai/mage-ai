@@ -32,6 +32,24 @@ the
 [Customize the compute resource of the Mage web service](#customize-the-compute-resource-of-the-mage-web-service)
 section.
 
+### Kubernetes executor
+
+If your Mage app is running in a Kubernetes cluster, you can execute the blocks in separate Kubernetes pods with Kubernetes executor.
+
+To configure a pipeline block to use Kubernetes executor, you simply just need to update the `executor_type` of the block to `k8s` in pipeline's metadata.yaml:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: k8s
+  ...
+```
+Customizing compute resource for Kubernetes executor is coming soon.
+
+
 ### AWS ECS executor
 
 You can choose to launch separate AWS ECS tasks to executor blocks by specifying

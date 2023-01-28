@@ -114,6 +114,36 @@ mage init [project_name]
 
 ---
 
+## Using Kubernetes
+
+1. Start a Kubernetes cluster locally
+
+   [Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a kubernetes cluster locally.
+
+   Other options for starting a Kubernetes cluster locally:
+   * [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
+   * [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+
+2. Download and update Kubernetes config file
+
+   * Download Mage Kubernetes config file. https://github.com/mage-ai/mage-ai/blob/master/kube/app.yaml
+   * Replace the `/path/to/mage_project` in the config yaml with the path that you want to use to store your Mage projects.
+
+3. Run Mage app in Kubernetes cluster
+
+   * Install command line tool [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl) if you haven't.
+   * Run command `kubectl create -f kube/app.yaml` to run Mage in a Kubernetes pod.
+   * You can check the pod status with command `kubectl get pods -o wide`.
+   * Set up port forarding with command `kubectl port-forward mage-server 6789:6789`.
+
+3. Open http://localhost:6789 in your browser and build a pipeline.
+
+4. (Optional) Enable blocks to be executed in separate Kubernetes pods.
+
+   If you want the pipeline blocks to be executed in separate containers, you can follow the [guide](https://docs.mage.ai/production/configuring-production-settings/compute-resource#kubernetes-executor) to set `executor_type` of a block to `k8s` in pipeline's `metadata.yaml`.
+
+---
+
 ## Download new version of Mage
 
 ### Using Docker
