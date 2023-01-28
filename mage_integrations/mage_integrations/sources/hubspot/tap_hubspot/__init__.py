@@ -20,8 +20,14 @@ from singer import (transform,
                     Transformer, _transform_datetime)
 from mage_integrations.sources.hubspot.tap_hubspot.constants import BOOKMARK_PROPERTIES_BY_STREAM_NAME
 from mage_integrations.sources.messages import write_schema
+from mage_integrations.utils.logger import Logger
 
-LOGGER = singer.get_logger()
+LOGGER = Logger(
+    caller='tap_hubspot',
+    log_to_stdout=False,
+    logger=singer.get_logger(),
+    verbose=True,
+)
 SESSION = requests.Session()
 
 REQUEST_TIMEOUT = 300
@@ -1253,33 +1259,44 @@ def discover_schemas():
     result = {'streams': []}
     for stream in STREAMS:
         LOGGER.info('Loading schema for %s', stream.tap_stream_id)
-        schema, mdata = load_discovered_schema(stream)
-        result['streams'].append({
-            'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(stream.tap_stream_id),
-            'key_properties': stream.key_properties,
-            'metadata': mdata,
-            'replication_method': stream.replication_method,
-            'schema': schema,
-            'stream': stream.tap_stream_id,
-            'tap_stream_id': stream.tap_stream_id,
-        })
-    # Load the contacts_by_company schema
-    LOGGER.info('Loading schema for contacts_by_company')
-    contacts_by_company = Stream('contacts_by_company', _sync_contacts_by_company, ['company-id', 'contact-id'], None, 'FULL_TABLE')
-    schema, mdata = load_discovered_schema(contacts_by_company)
+        try:
+            schema, mdata = load_discovered_schema(stream)
+            result['streams'].append({
+                'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(stream.tap_stream_id),
+                'key_properties': stream.key_properties,
+                'metadata': mdata,
+                'replication_method': stream.replication_method,
+                'schema': schema,
+                'stream': stream.tap_stream_id,
+                'tap_stream_id': stream.tap_stream_id,
+            })
+        except SourceUnavailableException as err:
+            LOGGER.info(f'{err}', tags=dict(
+                stream=stream.tap_stream_id,
+            ))
 
-    result['streams'].append({
-        'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(CONTACTS_BY_COMPANY),
-        'key_properties': [
-            'company-id',
-            'contact-id',
-        ],
-        'metadata': mdata,
-        'replication_method': 'FULL_TABLE',
-        'schema': schema,
-        'stream': CONTACTS_BY_COMPANY,
-        'tap_stream_id': CONTACTS_BY_COMPANY,
-    })
+    try:
+        # Load the contacts_by_company schema
+        LOGGER.info('Loading schema for contacts_by_company')
+        contacts_by_company = Stream('contacts_by_company', _sync_contacts_by_company, ['company-id', 'contact-id'], None, 'FULL_TABLE')
+        schema, mdata = load_discovered_schema(contacts_by_company)
+
+        result['streams'].append({
+            'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(CONTACTS_BY_COMPANY),
+            'key_properties': [
+                'company-id',
+                'contact-id',
+            ],
+            'metadata': mdata,
+            'replication_method': 'FULL_TABLE',
+            'schema': schema,
+            'stream': CONTACTS_BY_COMPANY,
+            'tap_stream_id': CONTACTS_BY_COMPANY,
+        })
+    except SourceUnavailableException as err:
+        LOGGER.info(f'{err}', tags=dict(
+            stream=stream.tap_stream_id,
+        ))
 
     return result
 
