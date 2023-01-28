@@ -14,8 +14,8 @@ class Trino(Destination):
         connector = config['connector']
 
         klass = TrinoConnector
-        if 'postgresql' == connector:
-            klass = TrinoPostgreSQL
+        # if 'postgresql' == connector:
+        #     klass = TrinoPostgreSQL
 
         return klass(argument_parser=argument_parser, **kwargs)
 

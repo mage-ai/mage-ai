@@ -1,8 +1,4 @@
 from mage_integrations.connections.trino import Trino as TrinoConnection
-from mage_integrations.destinations.constants import (
-    INTERNAL_COLUMN_CREATED_AT,
-    UNIQUE_CONFLICT_METHOD_UPDATE,
-)
 from mage_integrations.destinations.sql.base import Destination
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
