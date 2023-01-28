@@ -145,6 +145,7 @@ function GlobalVariables({
   ]);
 
   const tableWidth = useMemo(() => width - 4 * UNIT, [width]);
+  console.log('table width:', tableWidth);
   const globalVariables = useMemo(
     () => getFormattedVariables(variables, (block) => block.uuid === 'global'),
     [variables],
@@ -183,7 +184,7 @@ function GlobalVariables({
               </KeyboardShortcutButton>
             </CellStyle>
           </Col>
-          <Col md={5}>
+          <Col md={4}>
             <CellStyle>
               <TextInput
                 compact
@@ -201,7 +202,7 @@ function GlobalVariables({
               />
             </CellStyle>
           </Col>
-          <Col md={6}>
+          <Col md={7}>
             <CellStyle>
               <TextInput
                 compact
@@ -219,18 +220,14 @@ function GlobalVariables({
               />
             </CellStyle>
           </Col>
-          {/* <Col md={2}>
-            <CellStyle>
-              <Text monospace>
-                ...
-              </Text>
-            </CellStyle>
-          </Col> */}
         </Row>
       )}
       {globalVariables?.map((variable: VariableType) => (
         <VariableRow
           deleteVariable={() => deleteVariable(variable.uuid)}
+          fetchVariables={fetchVariables}
+          pipelineUUID={pipelineUUID}
+          setErrorMessages={setErrorMessages}
           variable={variable}
         />
       ))}
