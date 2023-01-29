@@ -18,6 +18,5 @@ def convert_json_or_string(value, column_type_dict):
     column_type = column_type_dict['type']
     if COLUMN_TYPE_OBJECT == column_type:
         value = value.replace("'", "''")
-        value = f"JSON '{value}'"
 
     return value
