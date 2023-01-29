@@ -113,7 +113,7 @@ DESCRIBE {schema_name}.{table_name}
             return 'NULL'
         item_type_converted = column_type_dict['item_type_converted']
 
-        if 'JSONB' == item_type_converted.upper():
+        if 'JSON' == item_type_converted.upper():
             return f"JSON '{json.dumps(value)}'"
         else:
             return f"CAST('{json.dumps(value)}' AS {item_type_converted})"
