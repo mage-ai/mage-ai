@@ -17,10 +17,15 @@ description: "You can install Mage using Docker, pip, or conda."
     >
     > If you are running Mage in Docker on Windows OS, `$(pwd)` won’t work. Instead, use the following
     > command:
-    ```bash
-    docker run -it -p 6789:6789 -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai \
-      /app/run_app.sh mage start [project_name]
-    ```
+    <CodeGroup>
+        ```bash Windows Command Line
+        docker run -it -p 6789:6789 -v %cd%:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+        ```
+
+        ```bash PowerShell
+        docker run -it -p 6789:6789 -v ${PWD}:/home/src mageai/mageai /app/run_app.sh mage start [project_name]
+        ```
+    </CodeGroup>
 
 
 2. Open http://localhost:6789 in your browser and build a pipeline.
@@ -78,15 +83,15 @@ the database engine, you'll need to run your Docker container slightly different
 
 1. Install Mage
 
-   ```bash
-   pip install mage-ai
-   ```
+    <CodeGroup>
+       ```bash pip
+       pip install mage-ai
+       ```
 
-   or
-
-   ```bash
-   conda install -c conda-forge mage-ai
-   ```
+       ```bash conda
+       conda install -c conda-forge mage-ai
+       ```
+    </CodeGroup>
 
    <sub>If you run into errors, see the [errors section](#errors) below.</sub>
 

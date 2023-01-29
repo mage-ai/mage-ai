@@ -378,6 +378,22 @@ configurations or through the Google Console UI.
    [Google provided instructions](https://cloud.google.com/run/docs/configuring/secrets#mounting-secrets-service)
    to manually mount the secret to the running Mage Cloud Run service and grant
    the right permissions for that service to access those secrets.
+After you mount the secrets, you can create environment variables in your Cloud Run that reference
+your secrets. Follow the below example to setup the mounted secret and environment variable for that
+secret:
+
+    | <b>Secrets</b> |   |
+    | --- | --- |
+    | Secret name | `bigquery_credentials` |
+    | Reference method | `Mounted as volume` |
+    | Mount path | `/secrets/bigquery` |
+    | Path 1 | `bigquery_credentials` |
+    | Version 1 | `latest` |
+
+    | <b>Environment variables</b> |   |
+    | --- | --- |
+    | Name | `path_to_keyfile` |
+    | Value | `/secrets/bigquery/bigquery_credentials` |
 
 ### More
 
