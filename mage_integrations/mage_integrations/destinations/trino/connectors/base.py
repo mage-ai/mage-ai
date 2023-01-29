@@ -1,8 +1,4 @@
 from mage_integrations.connections.trino import Trino as TrinoConnection
-from mage_integrations.destinations.constants import (
-    INTERNAL_COLUMN_CREATED_AT,
-    UNIQUE_CONFLICT_METHOD_UPDATE,
-)
 from mage_integrations.destinations.sql.base import Destination
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
@@ -115,8 +111,12 @@ DESCRIBE {schema_name}.{table_name}
     def convert_array(self, value: str, column_type_dict: Dict) -> str:
         if len(value) == 0:
             return 'NULL'
+        item_type_converted = column_type_dict['item_type_converted']
 
-        return f"JSON '{json.dumps(value)}'"
+        if 'JSON' == item_type_converted.upper():
+            return f"JSON '{json.dumps(value)}'"
+        else:
+            return f"CAST('{json.dumps(value)}' AS {item_type_converted})"
 
     def calculate_records_inserted_and_updated(
         self,
