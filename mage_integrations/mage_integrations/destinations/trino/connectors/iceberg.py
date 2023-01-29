@@ -25,6 +25,3 @@ class TrinoIceberg(TrinoConnector):
             convert_column_type,
             lambda item_type_converted: 'JSON',
         )
-
-    def string_parse_func(self, value: str, column_type_dict: Dict) -> str:
-        return value
