@@ -1,4 +1,3 @@
-from dateutil.parser import ParserError
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
@@ -17,6 +16,7 @@ def replace_single_quotes_with_double(v: str) -> str:
         v = json.dumps(v)
     return v.replace("'", '"')
 
+
 def convert_array(value: str, column_type_dict: Dict) -> str:
     item_type_converted = column_type_dict['item_type_converted']
 
@@ -31,8 +31,6 @@ def convert_array(value: str, column_type_dict: Dict) -> str:
         arr_string = ', '.join([f'TO_JSON({v})' for v in value_next])
 
         return f'[{arr_string}]'
-
-    column_settings = column_type_dict['column_settings']
 
     if type(value) is list:
         value_next = [f"CAST('{replace_single_quotes_with_double(v)}' AS {item_type_converted})" for v in value]
@@ -52,7 +50,7 @@ def convert_column_type(
     if COLUMN_TYPE_OBJECT == column_type:
         return 'JSON'
     elif COLUMN_TYPE_STRING == column_type \
-        and COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+            and COLUMN_FORMAT_DATETIME == column_settings.get('format'):
 
         return 'DATETIME'
     elif COLUMN_TYPE_BOOLEAN == column_type:
@@ -135,7 +133,7 @@ def convert_json_or_string(value, column_type_dict):
 def remove_duplicate_rows(
     row_data: List[Dict],
     unique_constraints: List[str],
-    logger = None,
+    logger=None,
     tags: Dict = {}
 ) -> List[Dict]:
     if not unique_constraints or len(unique_constraints) == 0:

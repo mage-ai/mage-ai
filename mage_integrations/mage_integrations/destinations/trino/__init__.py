@@ -1,5 +1,6 @@
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.trino.connectors.base import TrinoConnector
+from mage_integrations.destinations.trino.connectors.iceberg import TrinoIceberg
 from mage_integrations.destinations.trino.connectors.postgresql import TrinoPostgreSQL
 import copy
 
@@ -14,8 +15,10 @@ class Trino(Destination):
         connector = config['connector']
 
         klass = TrinoConnector
-        # if 'postgresql' == connector:
-        #     klass = TrinoPostgreSQL
+        if 'postgresql' == connector:
+            klass = TrinoPostgreSQL
+        elif 'iceberg' == connector:
+            klass = TrinoIceberg
 
         return klass(argument_parser=argument_parser, **kwargs)
 
