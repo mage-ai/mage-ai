@@ -128,6 +128,7 @@
     {
       "group": "Development",
       "pages": [
+        "development/troubleshooting",
         "production/configuring-production-settings/runtime-variable",
         "developing-in-the-cloud/setting-up-git",
         {

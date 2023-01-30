@@ -1,0 +1,22 @@
+---
+title: "Troubleshooting"
+description: "Debugging issues in Mage."
+---
+
+## Pipeline edit page freezes browser
+
+The data output of a block contains too much information for the browser to render.
+
+To temporarily fix this, open the `/terminal` page in Mage.
+Then type the following command press enter to run it:
+
+```bash
+rm -rf mage_data/[project_name]/pipelines/[pipeline_name]/.variables
+```
+
+> Note
+>
+> Change `[project_name]` to your Mage project name and change `[pipeline_name]` to the name of
+> the pipeline that is freezing the browser.
+
+The above command will remove the data output files for each block in your pipeline.
