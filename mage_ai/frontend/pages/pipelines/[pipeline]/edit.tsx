@@ -1836,7 +1836,6 @@ function PipelineDetailPage({
                 router.push(`/pipelines/${pipelineUUID}/edit`);
               }}
               fetchPipeline={fetchPipeline}
-              fetchVariables={fetchVariables}
               filePath={filePath}
               openSidekickView={openSidekickView}
               pipeline={pipeline}
