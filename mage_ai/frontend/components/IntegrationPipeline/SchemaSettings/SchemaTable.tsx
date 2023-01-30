@@ -505,7 +505,9 @@ function SchemaTable({
       columnFlex.push(null);
       columns.push({
         tooltipMessage: 'This will apply this individual feature\'s schema \
-          settings to all selected streams that have the same feature.',
+          settings to all selected streams that have the same feature. \
+          Unique features must be valid key properties in other streams. \
+          Bookmark features must be valid replication keys in other streams.',
         uuid: 'All streams',
       });
     }
