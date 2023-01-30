@@ -28,6 +28,7 @@ import {
   InclusionEnum,
   IntegrationDestinationEnum,
   IntegrationSourceEnum,
+  MetadataKeyEnum,
   PropertyMetadataType,
   ReplicationMethodEnum,
   SchemaPropertyType,
@@ -126,10 +127,10 @@ function SchemaTable({
   ]);
   const metadataForStream =
     useMemo(() => find(metadata, ({ breadcrumb }) => breadcrumb.length === 0)?.metadata, [metadata]);
-  const validKeyProperties = useMemo(() => metadataForStream['table-key-properties'] || [], [
+  const validKeyProperties = useMemo(() => metadataForStream[MetadataKeyEnum.KEY_PROPERTIES] || [], [
     metadataForStream,
   ]);
-  const validReplicationKeys = useMemo(() => metadataForStream['valid-replication-keys'] || [], [
+  const validReplicationKeys = useMemo(() => metadataForStream[MetadataKeyEnum.REPLICATION_KEYS] || [], [
     metadataForStream,
   ]);
 
@@ -398,16 +399,32 @@ function SchemaTable({
                     format: columnFormat || null,
                     type: columnTypes,
                   };
+                  const currStreamMetadata = find(
+                    stream?.metadata || [],
+                    ({ breadcrumb }) => breadcrumb.length === 0,
+                  )?.metadata;
+                  const currStreamReplicationKeys = currStreamMetadata[MetadataKeyEnum.REPLICATION_KEYS] || [];
+                  const currStreamKeyProperties = currStreamMetadata[MetadataKeyEnum.KEY_PROPERTIES] || [];
 
-                  if (uniqueConstraints?.includes(columnName) && !stream?.unique_constraints?.includes(columnName)) {
+                  if (uniqueConstraints?.includes(columnName)
+                    && !stream?.unique_constraints?.includes(columnName)
+                    && currStreamKeyProperties.includes(columnName)
+                  ) {
                     stream.unique_constraints = [columnName].concat(stream.unique_constraints || []);
-                  } else if (!uniqueConstraints?.includes(columnName) && stream?.unique_constraints?.includes(columnName)) {
+                  } else if (!uniqueConstraints?.includes(columnName)
+                    && stream?.unique_constraints?.includes(columnName)
+                  ) {
                     stream.unique_constraints = remove(stream.unique_constraints, col => columnName === col);
                   }
 
-                  if (bookmarkProperties?.includes(columnName) && !stream?.bookmark_properties?.includes(columnName)) {
+                  if (bookmarkProperties?.includes(columnName)
+                    && !stream?.bookmark_properties?.includes(columnName)
+                    && currStreamReplicationKeys.includes(columnName)
+                  ) {
                     stream.bookmark_properties = [columnName].concat(stream.bookmark_properties || []);
-                  } else if (!bookmarkProperties?.includes(columnName) && stream?.bookmark_properties?.includes(columnName)) {
+                  } else if (!bookmarkProperties?.includes(columnName)
+                    && stream?.bookmark_properties?.includes(columnName)
+                  ) {
                     stream.bookmark_properties = remove(stream.bookmark_properties, col => columnName === col);
                   }
 
@@ -487,7 +504,10 @@ function SchemaTable({
     if (hasMultipleStreams) {
       columnFlex.push(null);
       columns.push({
-        tooltipMessage: 'This will apply this individual feature\'s schema settings to all selected streams that have the same feature.',
+        tooltipMessage: 'This will apply this individual feature\'s schema \
+          settings to all selected streams that have the same feature. \
+          Unique features must be valid key properties in other streams. \
+          Bookmark features must be valid replication keys in other streams.',
         uuid: 'All streams',
       });
     }
@@ -506,6 +526,8 @@ function SchemaTable({
     );
   }, [
     bookmarkProperties,
+    destination,
+    hasMultipleStreams,
     isApplyingToAllStreamsIdx,
     keyProperties,
     metadataByColumn,
@@ -646,16 +668,20 @@ function SchemaTable({
               <Spacing ml={TOOLTIP_LEFT_SPACING} />
               <Tooltip
                 label={(
-                  <Text>
+                  <Text wordBreak>
                     If a new record has the same value as an existing record in
-                    the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.sort().map((col: string, idx: number) => (
+                    the {pluralize('column', uniqueConstraints?.length)}
+                    {uniqueConstraints?.length > 0 && <>&nbsp;</>}
+                    {uniqueConstraints?.sort().map((col: string, idx: number) => (
                       <Text
                         bold
                         inline
                         key={col}
                         monospace
                       >
-                        {idx >= 1 && <>,&nbsp;</>}
+                        {uniqueConstraints?.length !== 1 && idx === uniqueConstraints?.length - 1
+                          ? <Text inline key={col}> and </Text>
+                          : (idx >= 1 && <>,&nbsp;</>)}
                         {col}
                       </Text>
                     ))}, how do you want to resolve the conflict?
