@@ -6,7 +6,7 @@ ARG PIP=pip3
 
 USER root
 
-RUN apt -y update && apt -y install curl
+RUN apt -y update && apt -y install curl freetds-dev freetds-bin
 
 # Install R
 # RUN apt install -y r-base

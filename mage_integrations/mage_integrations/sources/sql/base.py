@@ -48,6 +48,15 @@ class Source(BaseSource):
             valid_replication_keys = []
 
             for column_data in columns_data:
+                """
+                Each column data has the following values
+                * TABLE_NAME
+                * COLUMN_DEFAULT
+                * COLUMN_KEY
+                * COLUMN_NAME
+                * DATA_TYPE
+                * IS_NULLABLE
+                """
                 column_key = column_data[2]
                 column_name = column_data[3]
                 column_type = column_data[4].lower()
@@ -230,6 +239,9 @@ WHERE table_schema = '{schema}'
     def _after_load_data(self, stream):
         pass
 
+    def _limit_query_string(self, limit, offset):
+        return f'LIMIT {limit} OFFSET {offset}'
+
     def _replication_method(self, stream, bookmarks: Dict = None):
         return stream.replication_method
 
@@ -264,15 +276,17 @@ WHERE table_schema = '{schema}'
                 if col not in order_by_columns:
                     order_by_columns.append(col)
 
+        columns = extract_selected_columns(stream.metadata)
+        clean_columns = self.update_column_names(columns)
+
+        if not order_by_columns:
+            order_by_columns = columns
         order_by_columns = [wrap_column_in_quotes(col) for col in list(order_by_columns)]
 
         if order_by_columns and not count_records:
             order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
         else:
             order_by_statement = ''
-
-        columns = extract_selected_columns(stream.metadata)
-        clean_columns = self.update_column_names(columns)
 
         if count_records:
             columns_statement = 'COUNT(*) AS number_of_records'
@@ -329,8 +343,7 @@ WHERE table_schema = '{schema}'
             ))
         else:
             with_limit_query_string += [
-                f'LIMIT {limit}',
-                f'OFFSET {offset}',
+                self._limit_query_string(limit, offset),
             ]
         with_limit_query_string = '\n'.join(with_limit_query_string)
 
