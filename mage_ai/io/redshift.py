@@ -1,10 +1,10 @@
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.utils import format_value
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_redshift_type,
 )
-from mage_ai.io.utils.sql import format_value
 from pandas import DataFrame
 from redshift_connector import connect
 import json

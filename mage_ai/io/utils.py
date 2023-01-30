@@ -19,6 +19,7 @@ def format_value(value):
 
     return f"'{value}'"
 
+
 def escape_quotes(line: str, single: bool = True, double: bool = True) -> str:
     new_line = str(line)
     if single:
