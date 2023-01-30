@@ -646,16 +646,20 @@ function SchemaTable({
               <Spacing ml={TOOLTIP_LEFT_SPACING} />
               <Tooltip
                 label={(
-                  <Text>
+                  <Text wordBreak>
                     If a new record has the same value as an existing record in
-                    the {pluralize('column', uniqueConstraints?.length)} {uniqueConstraints?.sort().map((col: string, idx: number) => (
+                    the {pluralize('column', uniqueConstraints?.length)}
+                    {uniqueConstraints?.length > 0 && <>&nbsp;</>}
+                    {uniqueConstraints?.sort().map((col: string, idx: number) => (
                       <Text
                         bold
                         inline
                         key={col}
                         monospace
                       >
-                        {idx >= 1 && <>,&nbsp;</>}
+                        {uniqueConstraints?.length !== 1 && idx === uniqueConstraints?.length - 1
+                          ? <Text inline key={col}> and </Text>
+                          : (idx >= 1 && <>,&nbsp;</>)}
                         {col}
                       </Text>
                     ))}, how do you want to resolve the conflict?
