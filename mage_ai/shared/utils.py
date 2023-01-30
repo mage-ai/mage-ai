@@ -68,7 +68,7 @@ def convert_python_type_to_redshift_type(python_type):
     if python_type is int:
         return 'BIGINT'
     elif python_type is float:
-        return 'DOUBLE'
+        return 'FLOAT8'
     elif python_type is bool:
         return 'BOOLEAN'
     return 'VARCHAR'

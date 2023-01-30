@@ -1,36 +1,10 @@
-Faker==4.14.0
-Jinja2==3.1.2
-alembic>=1.7.5
-croniter==1.3.7
-httpx==0.23.1
-ipykernel==6.15.0
-ipython
-itsdangerous~=1.1.0
-joblib>=1.1.0
-jupyter-server-proxy==3.2.1
-jupyter_client==7.3.4
-numpy~=1.21.0
-pandas~=1.3.0
-pyarrow==10.0.1
-python-dateutil==2.8.2
-pytz==2022.1
-pyyaml~=6.0
-requests==2.27.1
-scikit-learn>=1.0
-simplejson
-six>=1.15.0
-sqlalchemy>=1.4.20, <2.0.0
-tornado==6.1
-aiofiles==22.1.0
-
-
 # extras
 aws-secretsmanager-caching==1.1.1.5
-boto3==1.24.19
+boto3
 botocore==1.27.19
 db-dtypes==1.0.5
 google-api-python-client==2.70.0
-google-cloud-bigquery~=2.34.4
+google-cloud-bigquery~=3.0
 google-cloud-iam==2.9.0
 google-cloud-run==0.5.0
 google-cloud-storage==2.5.0
@@ -42,20 +16,9 @@ snowflake-connector-python==2.7.9
 sshtunnel==0.4.0
 tables==3.7.0
 
-# Azure
-azure-eventhub==5.10.1
-azure-identity==1.11.0
-azure-keyvault-secrets==4.6.0
-azure-keyvault-certificates==4.6.0
-azure-storage-blob==12.14.1
-
-# Streaming
-kafka-python==2.0.2
-opensearch-py==2.0.0
-requests_aws4auth==1.1.2
-
 # DBT
-dbt-bigquery==1.3.0
-dbt-core==1.3.0
-dbt-postgres==1.3.0
-dbt-snowflake==1.3.0
+dbt-bigquery==1.4.0
+dbt-core==1.4.0
+dbt-postgres==1.4.0
+dbt-redshift==1.4.0
+dbt-snowflake==1.4.0

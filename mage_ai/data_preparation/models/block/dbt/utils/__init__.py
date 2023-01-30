@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.block.sql import (
     execute_sql_code as execute_sql_code_orig,
     mysql,
     postgres,
+    redshift,
     snowflake,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
@@ -298,6 +299,27 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider_database=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
+    elif DataSource.REDSHIFT == profile_type:
+        database = profile.get('dbname')
+        host = profile.get('host')
+        password = profile.get('password')
+        port = profile.get('port', 5439)
+        schema = profile.get('schema')
+        user = profile.get('user')
+
+        config_file_loader = ConfigFileLoader(config=dict(
+            REDSHIFT_DBNAME=database,
+            REDSHIFT_HOST=host,
+            REDSHIFT_PORT=port,
+            REDSHIFT_TEMP_CRED_PASSWORD=password,
+            REDSHIFT_TEMP_CRED_USER=user,
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=database,
+            data_provider_schema=schema,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
     elif DataSource.SNOWFLAKE == profile_type:
         database = profile.get('database')
         schema = profile.get('schema')
@@ -399,6 +421,16 @@ def create_upstream_tables(
             cache_upstream_dbt_models=cache_upstream_dbt_models,
             **kwargs,
         )
+    elif DataSource.REDSHIFT == data_provider:
+        from mage_ai.io.redshift import Redshift
+
+        with Redshift.with_config(config_file_loader) as loader:
+            redshift.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                **kwargs,
+            )
     elif DataSource.SNOWFLAKE == data_provider:
         from mage_ai.io.snowflake import Snowflake
 
@@ -493,6 +525,10 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             database = profile['project']
             schema = profile['dataset']
             quote_str = '`'
+        elif DataSource.REDSHIFT == profile_type:
+            database = profile['dbname']
+            schema = profile['schema']
+            quote_str = '"'
         elif DataSource.SNOWFLAKE == profile_type:
             database = profile['database']
             schema = profile['schema']
@@ -521,6 +557,11 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
 
             loader = BigQuery.with_config(config_file_loader)
             return loader.load(query_string)
+        elif DataSource.REDSHIFT == data_provider:
+            from mage_ai.io.redshift import Redshift
+
+            with Redshift.with_config(config_file_loader) as loader:
+                return loader.load(query_string)
         elif DataSource.SNOWFLAKE == data_provider:
             from mage_ai.io.snowflake import Snowflake
 
