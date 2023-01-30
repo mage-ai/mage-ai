@@ -1,5 +1,9 @@
 SQL_SOURCES = [
     dict(name='BigQuery'),
+    dict(
+        name='Microsoft SQL Server',
+        uuid='mssql',
+    ),
     dict(name='MongoDB'),
     dict(name='MySQL'),
     dict(name='PostgreSQL'),
