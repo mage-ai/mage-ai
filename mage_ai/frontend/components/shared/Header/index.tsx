@@ -185,7 +185,7 @@ function Header({
                 <Button
                   borderLess
                   linkProps={{
-                    href: 'https://docs.mage.ai/getting-started/setup#download-new-version-of-mage',
+                    href: 'https://docs.mage.ai/about/releases',
                   }}
                   noHoverUnderline
                   primary
