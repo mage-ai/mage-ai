@@ -30,6 +30,7 @@ class ApiPipelineBackfillsHandler(BaseHandler):
 
 
 class ApiBackfillHandler(BaseHandler):
+    datetime_keys = ['start_datetime', 'end_datetime']
     model_class = Backfill
 
     @safe_db_query
@@ -66,7 +67,8 @@ class ApiBackfillsHandler(BaseHandler):
     def get(self):
         pipeline_uuid = self.get_argument('pipeline_uuid', None)
 
-        results = (Backfill.
+        results = (
+            Backfill.
             query.
             filter(Backfill.pipeline_uuid == pipeline_uuid).
             order_by(desc(Backfill.created_at))
