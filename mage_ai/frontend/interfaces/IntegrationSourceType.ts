@@ -71,11 +71,18 @@ interface SchemaType {
   type: ColumnTypeEnum;
 }
 
+export enum MetadataKeyEnum {
+  FORCED_REPLICATION_METHOD = 'forced-replication-method',
+  KEY_PROPERTIES = 'table-key-properties',
+  REPLICATION_KEYS = 'valid-replication-keys',
+  SCHEMA_NAME = 'schema-name',
+}
+
 export interface PropertyMetadataType {
-  'forced-replication-method'?: ReplicationMethodEnum,
-  'schema-name'?: string;
-  'table-key-properties'?: string[];
-  'valid-replication-keys'?: string[];
+  [MetadataKeyEnum.FORCED_REPLICATION_METHOD]?: ReplicationMethodEnum,
+  [MetadataKeyEnum.KEY_PROPERTIES]?: string[];
+  [MetadataKeyEnum.REPLICATION_KEYS]?: string[];
+  [MetadataKeyEnum.SCHEMA_NAME]?: string;
   inclusion?: InclusionEnum;
   selected: boolean;
 }
