@@ -7,6 +7,11 @@ from typing import List
 
 
 class MSSQL(Source):
+    @property
+    def table_prefix(self):
+        schema = self.config['schema']
+        return f'{schema}.'
+
     def build_connection(self) -> MSSQLConnection:
         return MSSQLConnection(
             database=self.config['database'],
