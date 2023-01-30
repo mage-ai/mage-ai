@@ -66,7 +66,7 @@ class Source(BaseSource):
                 column_properties = None
                 column_types = []
 
-                if column_key is not None and 'PRI' in column_key:
+                if column_key is not None and ('PRI' in column_key or 'UNIQUE' == column_key):
                     unique_constraints.append(column_name)
 
                 if 'YES' == is_nullable:
