@@ -399,8 +399,17 @@ function SchemaTable({
                     format: columnFormat || null,
                     type: columnTypes,
                   };
+                  const currStreamMetadata = find(
+                    stream?.metadata || [],
+                    ({ breadcrumb }) => breadcrumb.length === 0,
+                  )?.metadata;
+                  const currStreamReplicationKeys = currStreamMetadata[MetadataKeyEnum.REPLICATION_KEYS] || [];
+                  const currStreamKeyProperties = currStreamMetadata[MetadataKeyEnum.KEY_PROPERTIES] || [];
 
-                  if (uniqueConstraints?.includes(columnName) && !stream?.unique_constraints?.includes(columnName)) {
+                  if (uniqueConstraints?.includes(columnName)
+                    && !stream?.unique_constraints?.includes(columnName)
+                    && currStreamKeyProperties.includes(columnName)
+                  ) {
                     stream.unique_constraints = [columnName].concat(stream.unique_constraints || []);
                   } else if (!uniqueConstraints?.includes(columnName)
                     && stream?.unique_constraints?.includes(columnName)
@@ -408,15 +417,11 @@ function SchemaTable({
                     stream.unique_constraints = remove(stream.unique_constraints, col => columnName === col);
                   }
 
-                  if (bookmarkProperties?.includes(columnName) && !stream?.bookmark_properties?.includes(columnName)) {
-                    const currStreamMetadata = find(
-                      stream?.metadata || [],
-                      ({ breadcrumb }) => breadcrumb.length === 0,
-                    )?.metadata;
-                    const currStreamReplicationKeys = currStreamMetadata[MetadataKeyEnum.REPLICATION_KEYS] || [];
-                    if (currStreamReplicationKeys.includes(columnName)) {
-                      stream.bookmark_properties = [columnName].concat(stream.bookmark_properties || []);
-                    }
+                  if (bookmarkProperties?.includes(columnName)
+                    && !stream?.bookmark_properties?.includes(columnName)
+                    && currStreamReplicationKeys.includes(columnName)
+                  ) {
+                    stream.bookmark_properties = [columnName].concat(stream.bookmark_properties || []);
                   } else if (!bookmarkProperties?.includes(columnName)
                     && stream?.bookmark_properties?.includes(columnName)
                   ) {
