@@ -47,7 +47,6 @@ type FileEditorProps = {
   active: boolean;
   addNewBlock: (b: BlockRequestPayloadType, cb: any) => void;
   fetchPipeline: () => void;
-  fetchVariables: () => void;
   filePath: string;
   openSidekickView: (newView: ViewKeyEnum) => void;
   pipeline: PipelineType;
@@ -63,7 +62,6 @@ function FileEditor({
   active,
   addNewBlock,
   fetchPipeline,
-  fetchVariables,
   filePath,
   openSidekickView,
   pipeline,
@@ -119,11 +117,6 @@ function FileEditor({
         ...f,
         content: value,
       },
-    }).then(() => {
-      const fileName = decodeURIComponent(filePath).split('/').pop()
-      if (fileName === SpecialFileEnum.METADATA_YAML) {
-        fetchVariables();
-      }
     });
     // @ts-ignore
     setFilesTouched((prev: {
