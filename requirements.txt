@@ -26,11 +26,11 @@ aiofiles==22.1.0
 
 # extras
 aws-secretsmanager-caching==1.1.1.5
-boto3==1.24.19
-botocore==1.27.19
+boto3==1.26.60
+botocore==1.29.60
 db-dtypes==1.0.5
 google-api-python-client==2.70.0
-google-cloud-bigquery~=2.34.4
+google-cloud-bigquery~=3.0
 google-cloud-iam==2.9.0
 google-cloud-run==0.5.0
 google-cloud-storage==2.5.0
@@ -55,7 +55,8 @@ opensearch-py==2.0.0
 requests_aws4auth==1.1.2
 
 # DBT
-dbt-bigquery==1.3.0
-dbt-core==1.3.0
-dbt-postgres==1.3.0
-dbt-snowflake==1.3.0
+dbt-bigquery==1.4.0
+dbt-core==1.4.0
+dbt-postgres==1.4.0
+dbt-redshift==1.4.0
+dbt-snowflake==1.4.0

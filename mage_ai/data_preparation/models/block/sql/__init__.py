@@ -51,6 +51,13 @@ def execute_sql_code(
     table_name = block.table_name
     should_query = block.type in PREVIEWABLE_BLOCK_TYPES
 
+    kwargs_shared = dict(
+        drop_table_on_replace=True,
+        if_exists=export_write_policy,
+        index=False,
+        verbose=BlockType.DATA_EXPORTER == block.type,
+    )
+
     if DataSource.BIGQUERY.value == data_provider:
         from mage_ai.io.bigquery import BigQuery
 
@@ -107,11 +114,8 @@ def execute_sql_code(
                 None,
                 None,
                 table_name,
-                drop_table_on_replace=True,
-                if_exists=export_write_policy,
-                index=False,
                 query_string=query_string,
-                verbose=BlockType.DATA_EXPORTER == block.type,
+                **kwargs_shared,
             )
 
             if should_query:
@@ -139,11 +143,8 @@ def execute_sql_code(
                 None,
                 schema,
                 table_name,
-                drop_table_on_replace=True,
-                if_exists=export_write_policy,
-                index=False,
                 query_string=query_string,
-                verbose=BlockType.DATA_EXPORTER == block.type,
+                **kwargs_shared,
             )
 
             if should_query:
@@ -169,10 +170,9 @@ def execute_sql_code(
             loader.export(
                 None,
                 table_name,
-                if_exists=export_write_policy,
-                query_string=query_string,
                 schema=schema,
-                verbose=BlockType.DATA_EXPORTER == block.type,
+                query_string=query_string,
+                **kwargs_shared,
             )
 
             if should_query:
