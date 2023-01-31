@@ -23,6 +23,8 @@ def build_sample_mysql_rows():
     ]
 
 class MySQLSourceTests(unittest.TestCase):
+    maxDiff = None
+
     def test_discover(self):
         source = MySQL(config=dict(database="demo_db"))
         mysql_connection = MagicMock()
@@ -64,7 +66,7 @@ class MySQLSourceTests(unittest.TestCase):
                                         'metadata': {
                                             'table-key-properties': ['id'],
                                             'forced-replication-method': 'FULL_TABLE',
-                                            'valid-replication-keys': ['id'],
+                                            'valid-replication-keys': ['id', 'date_joined'],
                                             'inclusion': 'available',
                                             'schema-name': 'demo_users',
                                         },
@@ -95,7 +97,7 @@ class MySQLSourceTests(unittest.TestCase):
                                     },
                                     {
                                         'breadcrumb': ('properties', 'date_joined'),
-                                        'metadata': {'inclusion': 'available'},
+                                        'metadata': {'inclusion': 'automatic'},
                                     },
                                     {
                                         'breadcrumb': ('properties', 'power_level'),

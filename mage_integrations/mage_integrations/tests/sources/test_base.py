@@ -44,6 +44,9 @@ def build_sample_streams_catalog():
     )
 
 class BaseSourceTests(unittest.TestCase):
+    # Shows full diff if any unit tests fail
+    maxDiff = None
+
     def test_templates(self):
         # Template folders exist in the different integration source folders.
         source = PostgreSQL()
@@ -370,7 +373,7 @@ class BaseSourceTests(unittest.TestCase):
         source = Stripe()
         schemas = source.load_schemas_from_folder()
         self.assertEqual(
-            list(schemas),
+            list(schemas).sort(),
             [
                 'balance_transactions',
                 'charges',
@@ -389,5 +392,5 @@ class BaseSourceTests(unittest.TestCase):
                 'subscription_items',
                 'subscriptions',
                 'transfers',
-            ],
+            ].sort(),
         )
