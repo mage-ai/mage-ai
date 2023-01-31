@@ -24,6 +24,9 @@ jobs:
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
+      - name: Run mage integrations unit tests
+        run: |
+          cd mage_integrations && python3 -m unittest discover mage_integrations.tests
   build_frontend:
     runs-on: ubuntu-latest
     steps:
