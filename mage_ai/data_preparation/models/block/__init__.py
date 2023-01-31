@@ -305,7 +305,10 @@ class Block:
         return File.from_path(self.file_path)
 
     @property
-    def table_name(self):
+    def table_name(self) -> str:
+        if self.configuration and 'data_provider_table' in self.configuration:
+            return self.configuration['data_provider_table']
+
         table_name = f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_{self.pipeline.version_name}'
 
         env = (self.global_vars or dict()).get('env')
@@ -313,6 +316,27 @@ class Block:
             table_name = f'dev_{table_name}'
 
         return table_name
+
+    @property
+    def full_table_name(self) -> str:
+        from mage_ai.data_preparation.models.block.sql.utils.shared import (
+            extract_and_replace_text_between_strings,
+        )
+
+        if not self.content:
+            return None
+
+        create_statement_partial, _ = extract_and_replace_text_between_strings(
+            self.content,
+            'create',
+            '\(',
+        )
+
+        if not create_statement_partial:
+            return None
+
+        parts = create_statement_partial[:len(create_statement_partial) - 1].strip().split(' ')
+        return parts[-1]
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs):
@@ -551,7 +575,7 @@ class Block:
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
             )
-            block_output = output['output']
+            block_output = output['output'] or []
             variable_mapping = dict()
 
             if BlockType.CHART == self.type:
