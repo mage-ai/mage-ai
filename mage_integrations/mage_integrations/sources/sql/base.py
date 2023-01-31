@@ -82,7 +82,7 @@ class Source(BaseSource):
                     column_format = COLUMN_FORMAT_DATETIME
                     column_types.append(COLUMN_TYPE_STRING)
                     # TODO (tommy dang): remove this so we allow any columns to be used as a bookmark
-                    # valid_replication_keys.append(column_name)
+                    valid_replication_keys.append(column_name)
                 elif 'json' in column_type:
                     column_properties = {}
                     column_types.append(COLUMN_TYPE_OBJECT)
