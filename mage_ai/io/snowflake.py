@@ -4,6 +4,8 @@ from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
 from typing import Dict, List, Union
+import pandas as pd
+
 
 DEFAULT_LOGIN_TIMEOUT = 20
 # NOTE: if credentials are wrong, it’ll take this many seconds for the user to be shown an error.
@@ -148,6 +150,11 @@ class Snowflake(BaseSQLConnection):
             Defaults to `'append'`.
             **kwargs: Additional arguments to pass to writer
         """
+
+        if type(df) is dict:
+            df = pd.DataFrame([df])
+        elif type(df) is list:
+            df = pd.DataFrame(df)
 
         def __process():
             with self._ctx.cursor() as cur:

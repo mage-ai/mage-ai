@@ -12,8 +12,9 @@ from mage_ai.shared.utils import (
 )
 from pandas import DataFrame
 from redshift_connector import connect
-import json
 from typing import Union
+import json
+import pandas as pd
 
 
 class Redshift(BaseSQL):
@@ -130,6 +131,11 @@ class Redshift(BaseSQL):
         # CREATE TABLE predictions_dev.test_v01 AS
         # SELECT *
         # FROM experimentation.assignments_dev
+
+        if type(df) is dict:
+            df = pd.DataFrame([df])
+        elif type(df) is list:
+            df = pd.DataFrame(df)
 
         if schema and not schema_name:
             schema_name = schema
