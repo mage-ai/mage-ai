@@ -15,6 +15,14 @@ from typing import Dict, List, Tuple
 import json
 
 
+# https://trino.io/docs/current/develop/supporting-merge.html
+MERGEABLE_CONNECTORS = [
+    'blackhole',
+    'delta-lake',
+    'iceberg',
+]
+
+
 class TrinoConnector(Destination):
     def build_connection(self) -> TrinoConnection:
         return TrinoConnection(
@@ -100,7 +108,7 @@ DESCRIBE {schema_name}.{table_name}
         insert_columns = ', '.join(insert_columns)
         insert_values = ', '.join(insert_values)
 
-        if unique_constraints and unique_conflict_method:
+        if self._support_merge_rows() and unique_constraints and unique_conflict_method:
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             commands = [
                 drop_temp_table_command,
@@ -199,3 +207,6 @@ DESCRIBE {schema_name}.{table_name}
         return [
             commands_string,
         ]
+
+    def _support_merge_rows(self):
+        return self.config['connector'] in MERGEABLE_CONNECTORS
