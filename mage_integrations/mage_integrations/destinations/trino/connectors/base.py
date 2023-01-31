@@ -127,7 +127,7 @@ DESCRIBE {schema_name}.{table_name}
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                 set_command = ', '.join(
-                    [f'a.{col} = b.{col}' for col in columns_cleaned],
+                    [f'{col} = b.{col}' for col in columns_cleaned],
                 )
                 merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
 
