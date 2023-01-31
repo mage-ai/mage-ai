@@ -3,7 +3,7 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
-from typing import Union
+from typing import Dict, List, Union
 
 DEFAULT_LOGIN_TIMEOUT = 20
 # NOTE: if credentials are wrong, it’ll take this many seconds for the user to be shown an error.
@@ -56,6 +56,28 @@ class Snowflake(BaseSQLConnection):
             query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 return cur.execute(query_string, **kwargs).fetchall()
+
+    def execute_queries(
+        self,
+        queries: List[str],
+        query_variables: List[Dict] = None,
+        fetch_query_at_indexes: List[bool] = None,
+        **kwargs,
+    ):
+        results = []
+
+        with self.conn.cursor() as cursor:
+            for idx, query in enumerate(queries):
+                variables = query_variables[idx] if query_variables and idx < len(query_variables) else {}
+                query = self._clean_query(query)
+                result = cursor.execute(query, **variables)
+
+                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and fetch_query_at_indexes[idx]:
+                    result = result.fetch_pandas_all()
+
+                results.append(result)
+
+        return results
 
     def load(
         self,

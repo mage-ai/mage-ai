@@ -23,6 +23,7 @@ import BlockType, {
   SetEditingBlockType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor, {
   CodeEditorSharedProps,
@@ -79,9 +80,11 @@ import {
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
   CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+  CONFIG_KEY_DATA_PROVIDER_TABLE,
   CONFIG_KEY_DBT_PROFILE_TARGET,
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_EXPORT_WRITE_POLICY,
+  CONFIG_KEY_USE_RAW_SQL,
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
@@ -103,6 +106,7 @@ import { indexBy } from '@utils/array';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { selectKeys } from '@utils/hash';
 import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -202,10 +206,12 @@ function CodeBlockProps({
     [CONFIG_KEY_DATA_PROVIDER_DATABASE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_DATABASE],
     [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
     [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
+    [CONFIG_KEY_DATA_PROVIDER_TABLE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_TABLE],
     [CONFIG_KEY_DBT_PROFILE_TARGET]: block?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET],
     [CONFIG_KEY_DBT_PROJECT_NAME]: block?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
     [CONFIG_KEY_EXPORT_WRITE_POLICY]: block?.configuration?.[CONFIG_KEY_EXPORT_WRITE_POLICY]
       || ExportWritePolicyEnum.APPEND,
+    [CONFIG_KEY_USE_RAW_SQL]: !!block?.configuration?.[CONFIG_KEY_USE_RAW_SQL],
   });
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
@@ -1056,7 +1062,7 @@ function CodeBlockProps({
                 <FlexContainer>
                   <Select
                     compact
-                    label="Data provider"
+                    label="Connection"
                     // @ts-ignore
                     onChange={e => updateDataProviderConfig({
                       [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
@@ -1095,118 +1101,213 @@ function CodeBlockProps({
                     ))}
                   </Select>
 
-                  {requiresDatabaseName && (
-                    <>
-                      <Spacing mr={1} />
-
-                      <FlexContainer alignItems="center">
-                        <Text monospace muted small>
-                          Database:
-                        </Text>
-                        <span>&nbsp;</span>
-                        <TextInput
-                          compact
-                          monospace
-                          onBlur={() => setTimeout(() => {
-                            setAnyInputFocused(false);
-                          }, 300)}
-                          onChange={(e) => {
-                            // @ts-ignore
-                            updateDataProviderConfig({
-                              [CONFIG_KEY_DATA_PROVIDER_DATABASE]: e.target.value,
-                            });
-                            e.preventDefault();
-                          }}
-                          onFocus={() => {
-                            setAnyInputFocused(true);
-                          }}
-                          small
-                          value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_DATABASE]}
-                          width={10 * UNIT}
-                        />
-                      </FlexContainer>
-                    </>
-                  )}
-
                   <Spacing mr={1} />
 
                   <FlexContainer alignItems="center">
-                    <Text monospace muted small>
-                      Save to schema:
-                    </Text>
-                    <span>&nbsp;</span>
-                    <TextInput
-                      compact
-                      monospace
-                      onBlur={() => setTimeout(() => {
-                        setAnyInputFocused(false);
-                      }, 300)}
-                      onChange={(e) => {
-                        // @ts-ignore
-                        updateDataProviderConfig({
-                          [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
-                        });
-                        e.preventDefault();
-                      }}
-                      onFocus={() => {
-                        setAnyInputFocused(true);
-                      }}
-                      small
-                      value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
-                      width={10 * UNIT}
-                    />
+                    <Tooltip
+                      block
+                      description={
+                        <Text default inline>
+                          If checked, you’ll have to write your own custom
+                          <br />
+                          CREATE TABLE commands and INSERT commands.
+                          <br />
+                          Separate your commands using a semi-colon: <Text default inline monospace>
+                            ;
+                          </Text>
+                        </Text>
+                      }
+                      size={null}
+                      widthFitContent
+                    >
+                      <FlexContainer alignItems="center">
+                        <Checkbox
+                          checked={dataProviderConfig[CONFIG_KEY_USE_RAW_SQL]}
+                          label={
+                            <Text muted small>
+                              Use raw SQL
+                            </Text>
+                          }
+                          onClick={() => updateDataProviderConfig({
+                            [CONFIG_KEY_USE_RAW_SQL]: !dataProviderConfig[CONFIG_KEY_USE_RAW_SQL],
+                          })}
+                        />
+                        <span>&nbsp;</span>
+                        <Info muted />
+                      </FlexContainer>
+                    </Tooltip>
                   </FlexContainer>
+
+                  {!dataProviderConfig[CONFIG_KEY_USE_RAW_SQL] && (
+                    <>
+                      {requiresDatabaseName && (
+                        <>
+                          <Spacing mr={1} />
+
+                          <FlexContainer alignItems="center">
+                            <TextInput
+                              compact
+                              monospace
+                              onBlur={() => setTimeout(() => {
+                                setAnyInputFocused(false);
+                              }, 300)}
+                              onChange={(e) => {
+                                // @ts-ignore
+                                updateDataProviderConfig({
+                                  [CONFIG_KEY_DATA_PROVIDER_DATABASE]: e.target.value,
+                                });
+                                e.preventDefault();
+                              }}
+                              onFocus={() => {
+                                setAnyInputFocused(true);
+                              }}
+                              label="Database"
+                              small
+                              value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_DATABASE]}
+                              width={10 * UNIT}
+                            />
+                          </FlexContainer>
+                        </>
+                      )}
+
+                      <Spacing mr={1} />
+
+                      <Tooltip
+                        block
+                        description={
+                          <Text default inline>
+                            Schema that is used when creating a table and inserting values.
+                            <br />
+                            This field is required.
+                          </Text>
+                        }
+                        size={null}
+                        widthFitContent
+                      >
+                        <FlexContainer alignItems="center">
+                          <TextInput
+                            compact
+                            monospace
+                            onBlur={() => setTimeout(() => {
+                              setAnyInputFocused(false);
+                            }, 300)}
+                            onChange={(e) => {
+                              // @ts-ignore
+                              updateDataProviderConfig({
+                                [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
+                              });
+                              e.preventDefault();
+                            }}
+                            onFocus={() => {
+                              setAnyInputFocused(true);
+                            }}
+                            label="Schema"
+                            small
+                            value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
+                            width={10 * UNIT}
+                          />
+                        </FlexContainer>
+                      </Tooltip>
+
+                      <Spacing mr={1} />
+
+                      <Tooltip
+                        block
+                        description={
+                          <Text default inline>
+                            This value will be used as the table name.
+                            <br />
+                            If blank, the default table name will be:
+                            <br />
+                            <Text inline monospace>
+                              {pipeline?.uuid}_{block?.uuid}
+                            </Text>
+                            <br />
+                            This field is optional.
+                          </Text>
+                        }
+                        size={null}
+                        widthFitContent
+                      >
+                        <FlexContainer alignItems="center">
+                          <TextInput
+                            compact
+                            monospace
+                            onBlur={() => setTimeout(() => {
+                              setAnyInputFocused(false);
+                            }, 300)}
+                            onChange={(e) => {
+                              // @ts-ignore
+                              updateDataProviderConfig({
+                                [CONFIG_KEY_DATA_PROVIDER_TABLE]: e.target.value,
+                              });
+                              e.preventDefault();
+                            }}
+                            onFocus={() => {
+                              setAnyInputFocused(true);
+                            }}
+                            label="Table (optional)"
+                            small
+                            value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_TABLE]}
+                            width={20 * UNIT}
+                          />
+                        </FlexContainer>
+                      </Tooltip>
+                    </>
+                  )}
                 </FlexContainer>
 
-                <FlexContainer alignItems="center">
-                  <Tooltip
-                    appearBefore
-                    block
-                    description={
-                      <Text default inline>
-                        How do you want to handle existing data with the
-                        same{requiresDatabaseName ? ' database,' : ''} schema, and table name?
-                        <br />
-                        <Text bold inline monospace>Append</Text>: add rows to the existing table.
-                        <br />
-                        <Text bold inline monospace>Replace</Text>: delete the existing data.
-                        <br />
-                        <Text bold inline monospace>Fail</Text>: raise an error during execution.
-                      </Text>
-                    }
-                    size={null}
-                    widthFitContent
-                  >
-                    <FlexContainer alignItems="center">
-                      <Info muted />
-                      <span>&nbsp;</span>
-                      <Text monospace muted small>
-                        Write policy:
-                      </Text>
-                      <span>&nbsp;</span>
-                    </FlexContainer>
-                  </Tooltip>
+                {!dataProviderConfig[CONFIG_KEY_USE_RAW_SQL] && (
+                  <FlexContainer alignItems="center">
+                    <Tooltip
+                      appearBefore
+                      block
+                      description={
+                        <Text default inline>
+                          How do you want to handle existing data with the
+                          same{requiresDatabaseName ? ' database,' : ''} schema, and table name?
+                          <br />
+                          <Text bold inline monospace>Append</Text>: add rows to the existing table.
+                          <br />
+                          <Text bold inline monospace>Replace</Text>: delete the existing data.
+                          <br />
+                          <Text bold inline monospace>Fail</Text>: raise an error during execution.
+                        </Text>
+                      }
+                      size={null}
+                      widthFitContent
+                    >
+                      <FlexContainer alignItems="center">
+                        <Info muted />
+                        <span>&nbsp;</span>
+                        <Text monospace muted small>
+                          Write policy:
+                        </Text>
+                        <span>&nbsp;</span>
+                      </FlexContainer>
+                    </Tooltip>
 
-                  <Select
-                    compact
-                    label="strategy"
-                    // @ts-ignore
-                    onChange={e => updateDataProviderConfig({
-                      [CONFIG_KEY_EXPORT_WRITE_POLICY]: e.target.value,
-                    })}
-                    small
-                    value={dataProviderConfig[CONFIG_KEY_EXPORT_WRITE_POLICY]}
-                  >
-                    <option value="" />
-                    {EXPORT_WRITE_POLICIES?.map(value => (
-                      <option key={value} value={value}>
-                        {capitalize(value)}
-                      </option>
-                    ))}
-                  </Select>
+                    <Select
+                      compact
+                      label="strategy"
+                      // @ts-ignore
+                      onChange={e => updateDataProviderConfig({
+                        [CONFIG_KEY_EXPORT_WRITE_POLICY]: e.target.value,
+                      })}
+                      small
+                      value={dataProviderConfig[CONFIG_KEY_EXPORT_WRITE_POLICY]}
+                    >
+                      <option value="" />
+                      {EXPORT_WRITE_POLICIES?.map(value => (
+                        <option key={value} value={value}>
+                          {capitalize(value)}
+                        </option>
+                      ))}
+                    </Select>
 
-                  <Spacing mr={5} />
-                </FlexContainer>
+                    <Spacing mr={5} />
+                  </FlexContainer>
+                )}
               </FlexContainer>
             </CodeHelperStyle>
           )}
@@ -1370,7 +1471,13 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
 
                   if (BlockLanguageEnum.SQL === block.language) {
                     configuration = {
-                      ...block.configuration,
+                      ...selectKeys(block.configuration, [
+                        CONFIG_KEY_DATA_PROVIDER,
+                        CONFIG_KEY_DATA_PROVIDER_DATABASE,
+                        CONFIG_KEY_DATA_PROVIDER_PROFILE,
+                        CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+                        CONFIG_KEY_EXPORT_WRITE_POLICY,
+                      ]),
                       ...configuration,
                     };
                   }

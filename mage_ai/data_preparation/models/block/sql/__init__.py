@@ -6,7 +6,10 @@ from mage_ai.data_preparation.models.block.sql import (
     redshift,
     snowflake,
 )
-from mage_ai.data_preparation.models.block.sql.utils.shared import interpolate_vars
+from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    extract_and_replace_text_between_strings,
+    interpolate_vars,
+)
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource, ExportWritePolicy
@@ -30,8 +33,9 @@ def execute_sql_code(
     global_vars: Dict = None,
     config_file_loader: Any = None,
     configuration: Dict = None,
-):
+) -> List[Any]:
     configuration = configuration if configuration else block.configuration
+    use_raw_sql = configuration.get('use_raw_sql')
 
     if not config_file_loader:
         config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -61,41 +65,50 @@ def execute_sql_code(
     if DataSource.BIGQUERY.value == data_provider:
         from mage_ai.io.bigquery import BigQuery
 
-        loader = BigQuery.with_config(config_file_loader)
-        bigquery.create_upstream_block_tables(
-            loader,
-            block,
-            configuration=configuration,
-            execution_partition=execution_partition,
-        )
+        with BigQuery.with_config(config_file_loader) as loader:
+            bigquery.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                execution_partition=execution_partition,
+            )
 
-        query_string = bigquery.interpolate_input_data(block, query)
-        query_string = interpolate_vars(query_string, global_vars=global_vars)
-        loader.export(
-            None,
-            f'{schema}.{table_name}',
-            database=database,
-            if_exists=export_write_policy,
-            query_string=query_string,
-            verbose=BlockType.DATA_EXPORTER == block.type,
-        )
+            query_string = bigquery.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
 
-        if should_query:
-            # An error is thrown because the table doesn’t exist until you re-run the query
-            # NotFound: 404 Not found: Table database:schema.table_name was not found in location XX
-            tries = 0
-            while tries < 10:
-                sleep(tries)
-                tries += 1
-                try:
-                    result = loader.load(
-                        f'SELECT * FROM {database}.{schema}.{table_name}',
-                        verbose=False,
-                    )
-                    return [result]
-                except Exception as err:
-                    if '404' not in str(err):
-                        raise err
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    f'{schema}.{table_name}',
+                    database=database,
+                    if_exists=export_write_policy,
+                    query_string=query_string,
+                    verbose=BlockType.DATA_EXPORTER == block.type,
+                )
+
+                if should_query:
+                    # An error is thrown because the table doesn’t exist until you re-run the query
+                    # NotFound: 404 Not found: Table database:schema.table_name was not found in location XX
+                    tries = 0
+                    while tries < 10:
+                        sleep(tries)
+                        tries += 1
+                        try:
+                            result = loader.load(
+                                f'SELECT * FROM {database}.{schema}.{table_name}',
+                                verbose=False,
+                            )
+                            return [result]
+                        except Exception as err:
+                            if '404' not in str(err):
+                                raise err
     elif DataSource.MYSQL.value == data_provider:
         from mage_ai.io.mysql import MySQL
 
@@ -110,21 +123,29 @@ def execute_sql_code(
             query_string = mysql.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
-            loader.export(
-                None,
-                None,
-                table_name,
-                query_string=query_string,
-                **kwargs_shared,
-            )
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    None,
+                    table_name,
+                    query_string=query_string,
+                    **kwargs_shared,
+                )
 
-            if should_query:
-                return [
-                    loader.load(
-                        f'SELECT * FROM {table_name}',
-                        verbose=False,
-                    ),
-                ]
+                if should_query:
+                    return [
+                        loader.load(
+                            f'SELECT * FROM {table_name}',
+                            verbose=False,
+                        ),
+                    ]
     elif DataSource.POSTGRES.value == data_provider:
         from mage_ai.io.postgres import Postgres
 
@@ -139,21 +160,29 @@ def execute_sql_code(
             query_string = postgres.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
-            loader.export(
-                None,
-                schema,
-                table_name,
-                query_string=query_string,
-                **kwargs_shared,
-            )
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    schema,
+                    table_name,
+                    query_string=query_string,
+                    **kwargs_shared,
+                )
 
-            if should_query:
-                return [
-                    loader.load(
-                        f'SELECT * FROM {schema}.{table_name}',
-                        verbose=False,
-                    ),
-                ]
+                if should_query:
+                    return [
+                        loader.load(
+                            f'SELECT * FROM {schema}.{table_name}',
+                            verbose=False,
+                        ),
+                    ]
     elif DataSource.REDSHIFT.value == data_provider:
         from mage_ai.io.redshift import Redshift
 
@@ -167,21 +196,30 @@ def execute_sql_code(
 
             query_string = redshift.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
-            loader.export(
-                None,
-                table_name,
-                schema=schema,
-                query_string=query_string,
-                **kwargs_shared,
-            )
 
-            if should_query:
-                return [
-                        loader.load(
-                            f'SELECT * FROM {schema}.{table_name}',
-                            verbose=False,
-                        ),
-                    ]
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    table_name,
+                    schema=schema,
+                    query_string=query_string,
+                    **kwargs_shared,
+                )
+
+                if should_query:
+                    return [
+                            loader.load(
+                                f'SELECT * FROM {schema}.{table_name}',
+                                verbose=False,
+                            ),
+                        ]
     elif DataSource.SNOWFLAKE.value == data_provider:
         from mage_ai.io.snowflake import Snowflake
 
@@ -199,23 +237,75 @@ def execute_sql_code(
 
             query_string = snowflake.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
-            loader.export(
-                None,
-                table_name,
-                database,
-                schema,
-                if_exists=export_write_policy,
-                query_string=query_string,
-                verbose=BlockType.DATA_EXPORTER == block.type,
-            )
 
-            if should_query:
-                return [
-                    loader.load(
-                        f'SELECT * FROM "{database}"."{schema}"."{table_name}"',
-                        verbose=False,
-                    ),
-                ]
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    table_name,
+                    database,
+                    schema,
+                    if_exists=export_write_policy,
+                    query_string=query_string,
+                    verbose=BlockType.DATA_EXPORTER == block.type,
+                )
+
+                if should_query:
+                    return [
+                        loader.load(
+                            f'SELECT * FROM "{database}"."{schema}"."{table_name}"',
+                            verbose=False,
+                        ),
+                    ]
+
+
+def execute_raw_sql(
+    loader,
+    block: 'Block',
+    query_string: str,
+    should_query: bool = False,
+) -> List[Any]:
+    queries = []
+    fetch_query_at_indexes = []
+
+    # create_statement, query_statement = extract_and_replace_text_between_strings(
+    #     query_string,
+    #     'create',
+    #     ';',
+    #     case_sensitive=True,
+    # )
+
+    # if create_statement:
+    #     queries.append(create_statement)
+    #     fetch_query_at_indexes.append(False)
+
+    # queries.append(query_statement)
+    # fetch_query_at_indexes.append(False)
+
+    for query in query_string.split(';'):
+        query = query.strip()
+        if query and not query.startswith('--'):
+            queries.append(query)
+            fetch_query_at_indexes.append(False)
+
+    if should_query:
+        queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
+        fetch_query_at_indexes.append(True)
+
+    results = loader.execute_queries(
+        queries,
+        commit=True,
+        fetch_query_at_indexes=fetch_query_at_indexes,
+    )
+
+    if should_query:
+        return [results[-1]]
 
     return []
 

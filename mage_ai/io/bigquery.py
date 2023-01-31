@@ -8,7 +8,7 @@ from mage_ai.shared.utils import (
     convert_python_type_to_bigquery_type,
 )
 from pandas import DataFrame
-from typing import Mapping, Union
+from typing import Dict, List, Mapping, Union
 
 
 class BigQuery(BaseSQLDatabase):
@@ -91,7 +91,13 @@ WHERE TABLE_NAME = '{table_name}'
             """)
             current_columns = [r[0].lower() for r in results]
 
-            new_columns = [c for c in df.columns if c.lower() not in current_columns]
+            columns = []
+            if type(df) is DataFrame:
+                columns = df.columns
+            elif type(df) is dict:
+                columns = df.keys()
+
+            new_columns = [c for c in columns if c.lower() not in current_columns]
             if not new_columns:
                 return
             dtypes = infer_dtypes(df)
@@ -259,7 +265,29 @@ WHERE table_id = '{table_name}'
             **kwargs: Additional arguments to pass to query, such as query configurations
         """
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
             self.client.query(query_string, **kwargs)
+
+    def execute_queries(
+        self,
+        queries: List[str],
+        query_variables: List[Dict] = None,
+        fetch_query_at_indexes: List[bool] = None,
+        **kwargs,
+    ) -> List:
+        results = []
+
+        for idx, query in enumerate(queries):
+            variables = query_variables[idx] if query_variables and idx < len(query_variables) else {}
+            query = self._clean_query(query)
+            result = self.client.query(query, **variables)
+
+            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and fetch_query_at_indexes[idx]:
+                result = result.to_dataframe()
+
+            results.append(result)
+
+        return results
 
     @classmethod
     def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'BigQuery':

@@ -281,7 +281,7 @@ def execute_custom_code():
             from_notebook=True,
             update_tests=False,
         )
-    output = block_output['output']
+    output = block_output['output'] or []
 
     if {widget}:
         return output

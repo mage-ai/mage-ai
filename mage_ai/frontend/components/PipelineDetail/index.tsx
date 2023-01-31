@@ -33,6 +33,13 @@ import {
   PipelineContainerStyle,
 } from './index.style';
 import {
+  CONFIG_KEY_DATA_PROVIDER,
+  CONFIG_KEY_DATA_PROVIDER_DATABASE,
+  CONFIG_KEY_DATA_PROVIDER_PROFILE,
+  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+  CONFIG_KEY_EXPORT_WRITE_POLICY,
+} from '@interfaces/ChartBlockType';
+import {
   KEY_CODES_SYSTEM,
   KEY_CODE_A,
   KEY_CODE_ARROW_DOWN,
@@ -53,6 +60,7 @@ import { addScratchpadNote } from '@components/PipelineDetail/AddNewBlocks/utils
 import { addUnderscores, randomNameGenerator } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type PipelineDetailProps = {
@@ -506,7 +514,13 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 
           if (BlockLanguageEnum.SQL === block.language) {
             configuration = {
-              ...block.configuration,
+              ...selectKeys(block.configuration, [
+                CONFIG_KEY_DATA_PROVIDER,
+                CONFIG_KEY_DATA_PROVIDER_DATABASE,
+                CONFIG_KEY_DATA_PROVIDER_PROFILE,
+                CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+                CONFIG_KEY_EXPORT_WRITE_POLICY,
+              ]),
               ...configuration,
             };
           }

@@ -4,7 +4,8 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
 from os import path
-from typing import Dict, List
+from pandas import DataFrame
+from typing import Dict, List, Tuple
 import re
 
 
@@ -104,6 +105,16 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
+            if type(df) is DataFrame:
+                if len(df.index) == 0:
+                    continue
+            elif type(df) is dict and len(df) == 0:
+                continue
+            elif type(df) is list and len(df) == 0:
+                continue
+            elif not df:
+                continue
+
             if no_schema:
                 schema_name = None
             else:
@@ -131,3 +142,30 @@ def create_upstream_block_tables(
                 index=False,
                 verbose=False,
             )
+
+
+def extract_and_replace_text_between_strings(
+    text: str,
+    start_string: str,
+    end_string: str = None,
+    replace_string: str = '',
+    case_sensitive: bool = True,
+) -> Tuple[str, str]:
+    start_match = re.search(start_string, text, re.NOFLAG if not case_sensitive else re.IGNORECASE)
+    if end_string:
+        end_match = re.search(end_string, text, re.NOFLAG if not case_sensitive else re.IGNORECASE)
+    else:
+        end_match = None
+
+    if not start_match or (end_string and not end_match):
+        return None, text
+
+    start_idx = start_match.span()[0]
+    if end_string and end_match:
+        end_idx = end_match.span()[1]
+
+    extracted_text = text[start_idx:end_idx]
+
+    new_text = text[0:max(start_idx - 1, 0)] + replace_string + text[end_idx + 1:]
+
+    return extracted_text, new_text

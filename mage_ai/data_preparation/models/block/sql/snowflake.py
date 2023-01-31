@@ -39,6 +39,16 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
+            if type(df) is DataFrame:
+                if len(df.index) == 0:
+                    continue
+            elif type(df) is dict and len(df) == 0:
+                continue
+            elif type(df) is list and len(df) == 0:
+                continue
+            elif not df:
+                continue
+
             database = configuration.get('data_provider_database').upper()
             schema_name = configuration.get('data_provider_schema').upper()
             table_name = upstream_block.table_name.upper()

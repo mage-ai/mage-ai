@@ -9,12 +9,12 @@ from mage_ai.io.export_utils import (
     PandasTypes,
 )
 from pandas import DataFrame, read_sql, Series
-from typing import IO, Mapping, Union
+from typing import Any, Dict, IO, List, Mapping, Union
 
 
 class BaseSQL(BaseSQLConnection):
     @classmethod
-    def with_config(cls, config: BaseConfigLoader) -> 'Postgres':
+    def with_config(cls, config: BaseConfigLoader):
         """
         Initializes SQL loader from configuration loader
 
@@ -87,6 +87,38 @@ class BaseSQL(BaseSQLConnection):
             query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **query_vars)
+
+    def execute_queries(
+        self,
+        queries: List[str],
+        query_variables: List[Dict] = None,
+        commit: bool = False,
+        fetch_query_at_indexes: List[bool] = None,
+    ):
+        results = []
+
+        with self.conn.cursor() as cursor:
+            for idx, query in enumerate(queries):
+                variables = query_variables[idx] if query_variables and idx < len(query_variables) else {}
+                query = self._clean_query(query)
+
+                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and fetch_query_at_indexes[idx]:
+                    result = self.fetch_query(
+                        cursor,
+                        query,
+                    )
+                else:
+                    result = cursor.execute(query, **variables)
+
+                results.append(result)
+
+        if commit:
+            self.conn.commit()
+
+        return results
+
+    def fetch_query(self, cursor, query: str) -> Any:
+        return read_sql(query, self.conn)
 
     def load(
         self,

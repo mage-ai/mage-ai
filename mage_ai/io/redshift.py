@@ -158,12 +158,18 @@ class Redshift(BaseSQL):
 
             columns_with_type = []
             if not query_string:
+                columns = []
+                if type(df) is DataFrame:
+                    columns = df.columns
+                elif type(df) is dict:
+                    columns = df.keys()
+
                 columns_with_type = [(
                     col,
                     convert_python_type_to_redshift_type(
                         convert_pandas_dtype_to_python_type(df.dtypes[col]),
                     ),
-                ) for col in df.columns]
+                ) for col in columns]
 
             with self.conn.cursor() as cur:
                 if schema_name and create_schema:
