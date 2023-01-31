@@ -386,6 +386,11 @@ def create_upstream_tables(
 
     data_provider = configuration.get('data_provider')
 
+    kwargs_shared = merge_dict(dict(
+        configuration=configuration,
+        cache_upstream_dbt_models=cache_upstream_dbt_models,
+    ), kwargs)
+
     if DataSource.POSTGRES == data_provider:
         from mage_ai.io.postgres import Postgres
 
@@ -394,9 +399,7 @@ def create_upstream_tables(
                 loader,
                 block,
                 cascade_on_drop=True,
-                configuration=configuration,
-                cache_upstream_dbt_models=cache_upstream_dbt_models,
-                **kwargs,
+                **kwargs_shared,
             )
     elif DataSource.MYSQL == data_provider:
         from mage_ai.io.mysql import MySQL
@@ -406,9 +409,7 @@ def create_upstream_tables(
                 loader,
                 block,
                 cascade_on_drop=True,
-                configuration=configuration,
-                cache_upstream_dbt_models=cache_upstream_dbt_models,
-                **kwargs,
+                **kwargs_shared,
             )
     elif DataSource.BIGQUERY == data_provider:
         from mage_ai.io.bigquery import BigQuery
@@ -428,8 +429,8 @@ def create_upstream_tables(
             redshift.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                **kwargs,
+                cascade_on_drop=True,
+                **kwargs_shared,
             )
     elif DataSource.SNOWFLAKE == data_provider:
         from mage_ai.io.snowflake import Snowflake
@@ -438,9 +439,7 @@ def create_upstream_tables(
             snowflake.create_upstream_block_tables(
                 loader,
                 block,
-                configuration=configuration,
-                cache_upstream_dbt_models=cache_upstream_dbt_models,
-                **kwargs,
+                **kwargs_shared,
             )
 
 
