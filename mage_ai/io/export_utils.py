@@ -31,6 +31,7 @@ class PandasTypes(str, Enum):
     DATETIME64 = 'datetime64'
     DECIMAL = 'decimal'
     INTEGER = 'integer'
+    EMPTY = 'empty'
     FLOATING = 'floating'
     MIXED = 'mixed'
     MIXED_INTEGER = 'mixed-integer'

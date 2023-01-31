@@ -326,6 +326,8 @@ class Variable:
                 except Exception:
                     # Fall back to convert to string
                     df_output[c] = series_non_null.astype(str)
+
+        # Use custom serialization
         self.storage.makedirs(self.variable_path, exist_ok=True)
         self.storage.write_parquet(
             df_output,
