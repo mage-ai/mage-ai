@@ -50,10 +50,12 @@ def parse_attributes(block) -> Dict:
     profile_target = block.configuration.get('dbt_profile_target')
     profile = load_profile(project_name, profiles_full_path, profile_target)
 
-    if profile and 'mysql' == profile.get('type'):
-        source_name = profile['schema']
-    else:
-        source_name = f'mage_{project_name}'
+    source_name = f'mage_{project_name}'
+    if profile:
+        if DataSource.MYSQL == profile.get('type'):
+            source_name = profile['schema']
+        elif DataSource.REDSHIFT == profile.get('type'):
+            source_name = profile['schema']
 
     return dict(
         file_extension=file_extension,

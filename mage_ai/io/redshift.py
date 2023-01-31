@@ -4,6 +4,7 @@ from mage_ai.io.export_utils import (
     clean_df_for_export,
     infer_dtypes,
 )
+from mage_ai.io.sql import BaseSQL
 from mage_ai.io.utils import format_value
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
@@ -15,7 +16,7 @@ import json
 from typing import Union
 
 
-class Redshift(BaseSQLConnection):
+class Redshift(BaseSQL):
     """
     Handles data transfer between a Redshift cluster and the Mage app.
     """
@@ -81,7 +82,7 @@ class Redshift(BaseSQLConnection):
                 for line in display_query.split('\n'):
                     print_message += f'\n{line}'
             else:
-                print_message += f'\n{query_string}'
+                print_message += f'\n\n{query_string}\n\n'
 
         query_string = self._clean_query(query_string)
 
@@ -107,6 +108,7 @@ class Redshift(BaseSQLConnection):
         df: DataFrame,
         table_name: str,
         schema: Union[str, None] = None,
+        schema_name: Union[str, None] = None,
         if_exists: ExportWritePolicy = ExportWritePolicy.APPEND,
         index: bool = False,
         verbose: bool = True,
@@ -129,16 +131,19 @@ class Redshift(BaseSQLConnection):
         # SELECT *
         # FROM experimentation.assignments_dev
 
-        if schema:
-            full_table_name = f'{schema}.{table_name}'
+        if schema and not schema_name:
+            schema_name = schema
+
+        if schema_name:
+            full_table_name = f'{schema_name}.{table_name}'
         else:
             parts = table_name.split('.')
             if len(parts) == 2:
-                schema = parts[0]
+                schema_name = parts[0]
                 table_name = parts[1]
-                full_table_name = f'{schema}.{table_name}'
+                full_table_name = f'{schema_name}.{table_name}'
             else:
-                schema = 'public'
+                schema_name = 'public'
                 full_table_name = table_name
 
         if not query_string:
@@ -149,7 +154,7 @@ class Redshift(BaseSQLConnection):
             df = clean_df_for_export(df, self.clean, dtypes)
 
         def __process():
-            table_exists = self.table_exists(schema, table_name)
+            table_exists = self.table_exists(schema_name, table_name)
 
             columns_with_type = []
             if not query_string:
@@ -161,8 +166,8 @@ class Redshift(BaseSQLConnection):
                 ) for col in df.columns]
 
             with self.conn.cursor() as cur:
-                if schema and create_schema:
-                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema};')
+                if schema_name and create_schema:
+                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
 
                 should_create_table = not table_exists
 
