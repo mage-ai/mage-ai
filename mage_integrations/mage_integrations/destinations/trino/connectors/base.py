@@ -24,6 +24,8 @@ MERGEABLE_CONNECTORS = [
 
 
 class TrinoConnector(Destination):
+    BATCH_SIZE = 500
+
     def build_connection(self) -> TrinoConnection:
         return TrinoConnection(
             catalog=self.config['catalog'],
