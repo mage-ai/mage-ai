@@ -318,61 +318,61 @@ class BaseSourceTests(unittest.TestCase):
         self.assertEqual(
             catalog_entry.to_dict(),
             {
-                "auto_add_new_fields": False,
-                "key_properties": [],
-                "metadata": [
+                'auto_add_new_fields': False,
+                'key_properties': [],
+                'metadata': [
                     {
-                        "breadcrumb": (),
-                        "metadata": {
-                            "forced-replication-method": "FULL_TABLE",
-                            "inclusion": "available",
-                            "schema-name": "demo_users",
-                            "selected": False,
-                            "table-key-properties": [],
-                            "valid-replication-keys": [],
+                        'breadcrumb': (),
+                        'metadata': {
+                            'forced-replication-method': 'FULL_TABLE',
+                            'inclusion': 'available',
+                            'schema-name': 'demo_users',
+                            'selected': False,
+                            'table-key-properties': [],
+                            'valid-replication-keys': [],
                         },
                     },
                     {
-                        "breadcrumb": ("properties", "age"),
-                        "metadata": {"inclusion": "available"},
+                        'breadcrumb': ('properties', 'age'),
+                        'metadata': {'inclusion': 'available'},
                     },
                     {
-                        "breadcrumb": ("properties", "id"),
-                        "metadata": {"inclusion": "available"},
+                        'breadcrumb': ('properties', 'id'),
+                        'metadata': {'inclusion': 'available'},
                     },
                     {
-                        "breadcrumb": ("properties", "last_name"),
-                        "metadata": {"inclusion": "available"},
+                        'breadcrumb': ('properties', 'last_name'),
+                        'metadata': {'inclusion': 'available'},
                     },
                     {
-                        "breadcrumb": ("properties", "first_name"),
-                        "metadata": {"inclusion": "available"},
+                        'breadcrumb': ('properties', 'first_name'),
+                        'metadata': {'inclusion': 'available'},
                     },
                     {
-                        "breadcrumb": ("properties", "color"),
-                        "metadata": {"inclusion": "available"},
+                        'breadcrumb': ('properties', 'color'),
+                        'metadata': {'inclusion': 'available'},
                     },
                 ],
-                "replication_key": "",
-                "replication_method": "FULL_TABLE",
-                "schema": {
-                    "properties": {
-                        "age": {"type": ["null", "integer"]},
-                        "color": {"type": ["null", "string"]},
-                        "first_name": {"type": ["null", "string"]},
-                        "id": {"type": ["null", "string"]},
-                        "last_name": {"type": ["null", "string"]},
+                'replication_key': '',
+                'replication_method': 'FULL_TABLE',
+                'schema': {
+                    'properties': {
+                        'age': {'type': ['null', 'integer']},
+                        'color': {'type': ['null', 'string']},
+                        'first_name': {'type': ['null', 'string']},
+                        'id': {'type': ['null', 'string']},
+                        'last_name': {'type': ['null', 'string']},
                     },
-                    "type": "object",
+                    'type': 'object',
                 },
-                "stream": "demo_users",
-                "tap_stream_id": "demo_users",
+                'stream': 'demo_users',
+                'tap_stream_id': 'demo_users',
             },
         )
     
     def test_load_schemas_from_folder(self):
         # Testing with Stripe source, since not all of the
-        # integration sourceshave "schemas" folders.
+        # integration sources have "schemas" folders.
         source = Stripe()
         schemas = source.load_schemas_from_folder()
         self.assertEqual(
