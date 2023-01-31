@@ -66,6 +66,12 @@
   >
     <img alt="Github Stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github">
   </a>
+  <a
+    href="https://hub.docker.com/r/mageai/mageai"
+    target="_blank"
+  >
+    <img alt="Docker pulls" src="https://img.shields.io/docker/pulls/mageai/mageai.svg">
+  </a>
 </div>
 <img
   referrerpolicy="no-referrer-when-downgrade"
