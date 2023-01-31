@@ -128,8 +128,55 @@
     {
       "group": "Development",
       "pages": [
-        "development/troubleshooting",
+        {
+          "group": "Pipelines",
+          "pages": [
+            "guides/batch-pipeline",
+            "guides/data-integration-pipeline",
+            "guides/streaming-pipeline"
+          ]
+        },
+        {
+          "group": "Blocks",
+          "pages": [
+            "guides/blocks/dynamic-blocks",
+            {
+              "group": "Data loader",
+              "pages": [
+                "design/data-loading",
+                "guides/load-data-s3",
+                "guides/io_config"
+              ]
+            },
+            {
+              "group": "Transformer",
+              "pages": [
+                "guides/transformer-blocks"
+              ]
+            },
+            {
+              "group": "Data exporter",
+              "pages": [
+                "guides/export-data-s3"
+              ]
+            },
+            {
+              "group": "Sensors",
+              "pages": [
+                "guides/sensors"
+              ]
+            },
+            "guides/sql-blocks",
+            "guides/r-blocks"
+          ]
+        },
         "production/configuring-production-settings/runtime-variable",
+        {
+          "group": "Testing",
+          "pages": [
+            "guides/data-validation"
+          ]
+        },
         "developing-in-the-cloud/setting-up-git",
         {
           "group": "Team management",
@@ -138,6 +185,28 @@
             "developing-in-the-cloud/cloud-dev-environments/aws-ecs",
             "developing-in-the-cloud/cloud-dev-environments/cloud-run",
             "developing-in-the-cloud/cloud-dev-environments/kubernetes"
+          ]
+        },
+        "development/troubleshooting"
+      ]
+    },
+    {
+      "group": "Orchestration",
+      "pages": [
+        {
+          "group": "Schedules and triggers",
+          "pages": [
+            "guides/triggering-pipelines",
+            "guides/schedule-pipelines",
+            "guides/trigger-pipeline-event",
+            "guides/trigger-pipeline-api"
+          ]
+        },
+        {
+          "group": "Backfills",
+          "pages": [
+            "orchestration/backfills/overview",
+            "orchestration/backfills/guides"
           ]
         }
       ]
@@ -259,63 +328,6 @@
     {
       "group": "Guides",
       "pages": [
-        {
-          "group": "Pipelines",
-          "pages": [
-            "guides/batch-pipeline",
-            "guides/data-integration-pipeline",
-            "guides/streaming-pipeline"
-          ]
-        },
-        {
-          "group": "Blocks",
-          "pages": [
-            "guides/blocks/dynamic-blocks",
-            {
-              "group": "Data loader",
-              "pages": [
-                "design/data-loading",
-                "guides/load-data-s3",
-                "guides/io_config"
-              ]
-            },
-            {
-              "group": "Transformer",
-              "pages": [
-                "guides/transformer-blocks"
-              ]
-            },
-            {
-              "group": "Data exporter",
-              "pages": [
-                "guides/export-data-s3"
-              ]
-            },
-            {
-              "group": "Sensors",
-              "pages": [
-                "guides/sensors"
-              ]
-            },
-            "guides/sql-blocks",
-            "guides/r-blocks"
-          ]
-        },
-        {
-          "group": "Schedules and triggers",
-          "pages": [
-            "guides/triggering-pipelines",
-            "guides/schedule-pipelines",
-            "guides/trigger-pipeline-event",
-            "guides/trigger-pipeline-api"
-          ]
-        },
-        {
-          "group": "Testing",
-          "pages": [
-            "guides/data-validation"
-          ]
-        },
         {
           "group": "Visualizations",
           "pages": [
