@@ -4,6 +4,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
 from os import path
+from pandas import DataFrame
 from typing import Dict, List, Tuple
 import re
 
@@ -103,6 +104,16 @@ def create_upstream_block_tables(
                 'output_0',
                 partition=execution_partition,
             )
+
+            if type(df) is DataFrame:
+                if len(df.index) == 0:
+                    continue
+            elif type(df) is dict and len(df) == 0:
+                continue
+            elif type(df) is list and len(df) == 0:
+                continue
+            elif not df:
+                continue
 
             if no_schema:
                 schema_name = None

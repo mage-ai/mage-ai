@@ -53,7 +53,13 @@ def infer_dtypes(df: DataFrame) -> Dict[str, str]:
     Returns:
         Dict[str, str]: Map of column names to inferred dtypes
     """
-    return {column: infer_dtype(df[column], skipna=True) for column in df.columns}
+    columns = []
+    if type(df) is DataFrame:
+        columns = df.columns
+    elif type(df) is dict:
+        columns = df.keys()
+
+    return {column: infer_dtype(df[column], skipna=True) for column in columns}
 
 
 def clean_df_for_export(
@@ -75,7 +81,14 @@ def clean_df_for_export(
         str: Table creation query for this table.
     """
     copy_df = df.copy()
-    for column in df.columns:
+
+    columns = []
+    if type(df) is DataFrame:
+        columns = df.columns
+    elif type(df) is dict:
+        columns = df.keys()
+
+    for column in columns:
         copy_df[column] = column_mapper(copy_df[column], dtypes[column])
     return copy_df
 

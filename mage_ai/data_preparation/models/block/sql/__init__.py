@@ -290,7 +290,7 @@ def execute_raw_sql(
 
     for query in query_string.split(';'):
         query = query.strip()
-        if query:
+        if query and not query.startswith('--'):
             queries.append(query)
             fetch_query_at_indexes.append(False)
 
@@ -298,11 +298,16 @@ def execute_raw_sql(
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
         fetch_query_at_indexes.append(True)
 
-    return loader.execute_queries(
+    results = loader.execute_queries(
         queries,
         commit=True,
         fetch_query_at_indexes=fetch_query_at_indexes,
     )
+
+    if should_query:
+        return [results[-1]]
+
+    return []
 
 
 class SQLBlock(Block):

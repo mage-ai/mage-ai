@@ -9,7 +9,7 @@ from mage_ai.io.export_utils import (
     PandasTypes,
 )
 from pandas import DataFrame, read_sql, Series
-from typing import Dict, IO, List, Mapping, Union
+from typing import Any, Dict, IO, List, Mapping, Union
 
 
 class BaseSQL(BaseSQLConnection):
@@ -103,7 +103,10 @@ class BaseSQL(BaseSQLConnection):
                 query = self._clean_query(query)
 
                 if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and fetch_query_at_indexes[idx]:
-                    result = read_sql(query, self.conn)
+                    result = self.fetch_query(
+                        cursor,
+                        query,
+                    )
                 else:
                     result = cursor.execute(query, **variables)
 
@@ -113,6 +116,9 @@ class BaseSQL(BaseSQLConnection):
             self.conn.commit()
 
         return results
+
+    def fetch_query(self, cursor, query: str) -> Any:
+        return read_sql(query, self.conn)
 
     def load(
         self,
