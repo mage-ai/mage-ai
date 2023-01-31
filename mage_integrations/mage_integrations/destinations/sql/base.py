@@ -51,6 +51,13 @@ class Destination(BaseDestination):
         for r in record_data:
             r['record'] = update_record_with_internal_columns(r['record'])
 
+        # Create schema if not exists
+        create_schema_commands = self.build_create_schema_commands(
+            database_name=database_name,
+            schema_name=schema_name,
+        )
+        self.build_connection().execute(create_schema_commands, commit=True)
+
         query_strings = self.build_query_strings(record_data, stream)
 
         data = self.process_queries(
@@ -94,10 +101,7 @@ class Destination(BaseDestination):
             table_name=table_name,
         )
 
-        query_strings = self.build_create_schema_commands(
-            database_name=database_name,
-            schema_name=schema_name,
-        )
+        query_strings = []
 
         replication_method = self.replication_methods[stream]
         if replication_method in [
