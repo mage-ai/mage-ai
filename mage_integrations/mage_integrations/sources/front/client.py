@@ -17,7 +17,8 @@ class Client(object):
     BASE_URL = 'https://api2.frontapp.com'
 
     def __init__(self, config, logger):
-        self.token = 'Bearer ' + config.get('token')
+        self.config = config or dict()
+        self.token = f"Bearer {self.config.get('token')}"
         self.logger = logger
         self.session = requests.Session()
 

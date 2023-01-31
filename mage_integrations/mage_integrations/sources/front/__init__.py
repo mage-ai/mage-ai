@@ -3,8 +3,6 @@ from mage_integrations.sources.front.client import Client
 from mage_integrations.sources.front.schemas import STREAMS
 # from mage_integrations.sources.front.streams import fetch_data
 from typing import Dict, Generator, List
-import datetime
-import dateutil
 
 
 class Front(Source):
