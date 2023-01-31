@@ -16,9 +16,11 @@ export const CONFIG_KEY_DATA_PROVIDER = 'data_provider';
 export const CONFIG_KEY_DATA_PROVIDER_DATABASE = 'data_provider_database'
 export const CONFIG_KEY_DATA_PROVIDER_PROFILE = 'data_provider_profile';
 export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
+export const CONFIG_KEY_DATA_PROVIDER_TABLE = 'data_provider_table';
 export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
 export const CONFIG_KEY_DBT_PROFILE_TARGET = 'dbt_profile_target';
 export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
+export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';
 
 export const VARIABLE_NAMES = [
   VARIABLE_NAME_X,
