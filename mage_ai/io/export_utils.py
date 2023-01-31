@@ -56,10 +56,12 @@ def infer_dtypes(df: DataFrame) -> Dict[str, str]:
     columns = []
     if type(df) is DataFrame:
         columns = df.columns
+        return {column: infer_dtype(df[column], skipna=True) for column in columns}
     elif type(df) is dict:
         columns = df.keys()
+        return {column: type(df[column]) for column in columns}
 
-    return {column: infer_dtype(df[column], skipna=True) for column in columns}
+    return {}
 
 
 def clean_df_for_export(

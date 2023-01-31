@@ -9,6 +9,7 @@ from mage_ai.shared.utils import (
 )
 from pandas import DataFrame
 from typing import Dict, List, Mapping, Union
+import pandas as pd
 
 
 class BigQuery(BaseSQLDatabase):
@@ -186,6 +187,11 @@ WHERE TABLE_NAME = '{table_name}'
             is ignored (as both define the same functionality).
             **configuration_params: Configuration parameters for export job
         """
+
+        if type(df) is dict:
+            df = pd.DataFrame([df])
+        elif type(df) is list:
+            df = pd.DataFrame(df)
 
         def __process(database: Union[str, None]):
             if query_string:

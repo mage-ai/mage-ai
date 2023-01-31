@@ -10,6 +10,7 @@ from mage_ai.io.export_utils import (
 )
 from pandas import DataFrame, read_sql, Series
 from typing import Any, Dict, IO, List, Mapping, Union
+import pandas as pd
 
 
 class BaseSQL(BaseSQLConnection):
@@ -184,6 +185,11 @@ class BaseSQL(BaseSQLConnection):
             index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
             **kwargs: Additional query parameters.
         """
+
+        if type(df) is dict:
+            df = pd.DataFrame([df])
+        elif type(df) is list:
+            df = pd.DataFrame(df)
 
         if schema_name:
             full_table_name = f'{schema_name}.{table_name}'
