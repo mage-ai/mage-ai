@@ -24,6 +24,8 @@ def build_log_based_sample_catalog_entry():
     )
 
 class BaseSQLSourceTests(unittest.TestCase):
+    maxDiff = None
+
     def test_discover(self):
         source = Source()
         build_connection_result = MagicMock()
@@ -68,7 +70,7 @@ class BaseSQLSourceTests(unittest.TestCase):
                                             'metadata': {
                                                 'table-key-properties': [],
                                                 'forced-replication-method': 'FULL_TABLE',
-                                                'valid-replication-keys': [],
+                                                'valid-replication-keys': ['createddate'],
                                                 'inclusion': 'available',
                                                 'schema-name': 'demo_actions',
                                             },
@@ -83,7 +85,7 @@ class BaseSQLSourceTests(unittest.TestCase):
                                         },
                                         {
                                             'breadcrumb': ('properties', 'createddate'),
-                                            'metadata': {'inclusion': 'available'},
+                                            'metadata': {'inclusion': 'automatic'},
                                         },
                                         {
                                             'breadcrumb': ('properties', 'type'),

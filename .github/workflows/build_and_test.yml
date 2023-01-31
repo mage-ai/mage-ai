@@ -21,9 +21,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r mage_integrations/requirements.txt
+          pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
+      - name: Run mage integrations unit tests
+        run: |
+          cd mage_integrations && python3 -m unittest discover mage_integrations.tests
   build_frontend:
     runs-on: ubuntu-latest
     steps:

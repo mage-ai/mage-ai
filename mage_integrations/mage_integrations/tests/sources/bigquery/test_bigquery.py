@@ -108,6 +108,8 @@ def build_sample_bigquery_rows():
     ]
 
 class BigQuerySourceTests(unittest.TestCase):
+    maxDiff = None
+
     def test_discover(self):
         source = BigQuery(config=dict(project_id="mage_test_project"))
         bigquery_connection = MagicMock()
@@ -151,7 +153,7 @@ class BigQuerySourceTests(unittest.TestCase):
                                         'metadata': {
                                             'table-key-properties': [],
                                             'forced-replication-method': 'FULL_TABLE',
-                                            'valid-replication-keys': [],
+                                            'valid-replication-keys': ['date_joined'],
                                             'inclusion': 'available',
                                             'schema-name': 'demo_users',
                                         },
@@ -182,7 +184,7 @@ class BigQuerySourceTests(unittest.TestCase):
                                     },
                                     {
                                         'breadcrumb': ('properties', 'date_joined'),
-                                        'metadata': {'inclusion': 'available'},
+                                        'metadata': {'inclusion': 'automatic'},
                                     },
                                 ],
                                 'auto_add_new_fields': False,

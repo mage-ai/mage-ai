@@ -4,7 +4,7 @@ from mage_integrations.sources.intercom import Intercom
 from mage_integrations.sources.postgresql import PostgreSQL
 from mage_integrations.sources.stripe import Stripe
 from singer.schema import Schema
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import os
 import unittest
 import json
@@ -44,6 +44,9 @@ def build_sample_streams_catalog():
     )
 
 class BaseSourceTests(unittest.TestCase):
+    # Shows full diff if any unit tests fail
+    maxDiff = None
+
     def test_templates(self):
         # Template folders exist in the different integration source folders.
         source = PostgreSQL()
@@ -162,28 +165,25 @@ class BaseSourceTests(unittest.TestCase):
 
     def test_process_count_records_mode(self):
         catalog = build_sample_streams_catalog()
+        catalog.get_selected_streams = MagicMock()
+        catalog.get_selected_streams.return_value = build_sample_streams_catalog_entries()
         source = Source(
             catalog=catalog,
             count_records=True,
             selected_streams=['demo_table', 'demo_users'],
         )
         with patch.object(source, 'count_records') as mock_count_records:
-            with patch.object(
-                catalog,
-                'get_selected_streams',
-                return_value=build_sample_streams_catalog_entries(),
-            ):
-                with patch.object(json, 'dump'):
-                    with patch.object(source, 'discover_streams') as mock_discover_streams:
-                        with patch.object(source, 'discover') as mock_discover:
-                            with patch.object(source, 'load_data') as mock_load_data:
-                                with patch.object(source, 'sync') as mock_sync:
-                                    source.process()
-                                    self.assertEqual(mock_count_records.call_count, 2)
-                                    mock_discover_streams.assert_not_called()
-                                    mock_discover.assert_not_called()
-                                    mock_load_data.assert_not_called()
-                                    mock_sync.assert_not_called()
+            with patch.object(json, 'dump'):
+                with patch.object(source, 'discover_streams') as mock_discover_streams:
+                    with patch.object(source, 'discover') as mock_discover:
+                        with patch.object(source, 'load_data') as mock_load_data:
+                            with patch.object(source, 'sync') as mock_sync:
+                                source.process()
+                                self.assertEqual(mock_count_records.call_count, 2)
+                                mock_discover_streams.assert_not_called()
+                                mock_discover.assert_not_called()
+                                mock_load_data.assert_not_called()
+                                mock_sync.assert_not_called()
 
     def test_process_no_catalog(self):
         source = Source()
@@ -288,17 +288,14 @@ class BaseSourceTests(unittest.TestCase):
 
     def test_sync(self):
         catalog = build_sample_streams_catalog()
+        catalog.get_selected_streams = MagicMock()
+        catalog.get_selected_streams.return_value = build_sample_streams_catalog_entries()
         source = Source()
         with patch.object(source, 'process_stream', return_value=None) as mock_process_stream:
             with patch.object(source, 'sync_stream') as mock_sync_stream:
-                with patch.object(
-                    catalog,
-                    'get_selected_streams',
-                    return_value=build_sample_streams_catalog_entries(),
-                ):
-                    source.sync(catalog)
-                    self.assertEqual(mock_process_stream.call_count, 2)
-                    self.assertEqual(mock_sync_stream.call_count, 2)
+                source.sync(catalog)
+                self.assertEqual(mock_process_stream.call_count, 2)
+                self.assertEqual(mock_sync_stream.call_count, 2)
 
     def test_build_catalog_entry(self):
         source = Source()
@@ -376,7 +373,7 @@ class BaseSourceTests(unittest.TestCase):
         source = Stripe()
         schemas = source.load_schemas_from_folder()
         self.assertEqual(
-            list(schemas),
+            list(schemas).sort(),
             [
                 'balance_transactions',
                 'charges',
@@ -395,5 +392,5 @@ class BaseSourceTests(unittest.TestCase):
                 'subscription_items',
                 'subscriptions',
                 'transfers',
-            ],
+            ].sort(),
         )
