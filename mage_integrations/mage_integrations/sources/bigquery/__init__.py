@@ -6,7 +6,7 @@ from typing import List
 
 class BigQuery(Source):
     @property
-    def table_prefix(self):
+    def table_prefix(self) -> str:
         dataset = self.config['dataset']
         return f'{dataset}.'
 
@@ -15,9 +15,8 @@ class BigQuery(Source):
             path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
         )
 
-    def build_discover_query(self, streams: List[str] = None):
+    def build_discover_query(self, streams: List[str] = None) -> str:
         dataset = self.config['dataset']
-
         query = f"""
 SELECT
     table_name
@@ -31,11 +30,11 @@ FROM {dataset}.INFORMATION_SCHEMA.COLUMNS
 
         if streams:
             table_names = ', '.join([f"'{n}'" for n in streams])
-            query = f'{query}\nWHERE TABLE_NAME IN ({table_names})'
+            query += f'\nWHERE TABLE_NAME IN ({table_names})'
         return query
 
     def update_column_names(self, columns: List[str]) -> List[str]:
-        return list(map(lambda column: f'`{column}`', columns))
+        return [f'`{column}`' for column in columns]
 
 
 if __name__ == '__main__':
