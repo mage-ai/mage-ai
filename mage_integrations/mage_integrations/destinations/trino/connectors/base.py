@@ -130,7 +130,7 @@ DESCRIBE {schema_name}.{table_name}
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
                 f'USING (SELECT * FROM {full_table_name_temp}) AS b',
-                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
+                f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
             ]
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
