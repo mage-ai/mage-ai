@@ -1,4 +1,4 @@
-from singer import metrics
+from typing import Dict
 import backoff
 import json
 import requests
@@ -33,7 +33,12 @@ class Client(object):
                           RateLimitException,
                           max_tries=10,
                           factor=2)
-    def request(self, method, path, **kwargs):
+    def request(self, method: str = 'get', path: str = None, url: str = None, **kwargs):
+        if not path and not url:
+            return
+        if not url:
+            url = self.url(path)
+
         if self.calls_remaining is not None and self.calls_remaining == 0:
             wait = self.limit_reset - int(time.monotonic())
             if 0 < wait <= 300:
@@ -45,7 +50,7 @@ class Client(object):
             kwargs['headers']['Authorization'] = self.token
 
         kwargs['headers']['Content-Type'] = 'application/json'
-        response = requests.request(method, self.url(path), **kwargs)
+        response = requests.request(method, url, **kwargs)
 
         self.calls_remaining = int(response.headers['X-Ratelimit-Remaining'])
         self.limit_reset = int(float(response.headers['X-Ratelimit-Reset']))
@@ -60,14 +65,11 @@ class Client(object):
             self.logger.error('{} - {}'.format(response.status_code, response.text))
             raise
 
-        if len(response.json()['metrics']) > 0:
-            return response.json()['metrics'][0]['rows']
-        else:
-            return {}
+        return response.json()
 
-    def get(self, path, **kwargs):
-        return self.request('get', path, **kwargs)
+    def get(self, path: str = None, url: str = None, **kwargs):
+        return self.request(method='get', path=path, url=url, **kwargs)
 
-    def post(self, path, data, **kwargs):
+    def post(self, path: str = None, url: str = None, data: Dict = dict(), **kwargs):
         kwargs['data'] = json.dumps(data)
-        return self.request('post', path, **kwargs)
+        return self.request(method='post', path=path, url=url, **kwargs)
