@@ -21,12 +21,10 @@ redshift-connector==2.0.909
 requests==2.27.1
 requests_mock==1.10.0
 simplejson==3.11.1
-singer-python==5.13.0
 snowflake-connector-python==2.9.0
 sshtunnel==0.4.0
 stripe==4.2.0
 trino==0.321.0
-typing-extensions==4.4.0
 tzlocal==4.2
 xmltodict==0.13.0
 zenpy==2.0.25
