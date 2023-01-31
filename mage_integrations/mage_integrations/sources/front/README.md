@@ -11,9 +11,9 @@ You must enter the following credentials when configuring this source:
 | Key | Description | Sample value
 | --- | --- | --- |
 | `token` | The API token of Front app. | `abc123` |
-| `start_date` | Fetch data that is newer than the `start_date`. | `2023-01-01T00:00:00Z` |
-| `end_date` | Fetch data that is older than the `end_date`. If it's null, use current date as end_date. | `2023-01-05T00:00:00Z` |
-| `incremental_range` | The incremental extract date ranges, `daily` or `hourly`. | `daily`, `hourly` |
+| `start_date` | Used for `analytics` stream. Fetch data that is newer than the `start_date`. | `2023-01-01T00:00:00Z` |
+| `end_date` | Used for `analytics` stream. Fetch data that is older than the `end_date`. If it's null, use current date as end_date. | `2023-01-05T00:00:00Z` |
+| `incremental_range` | Used for `analytics` stream. The incremental extract date ranges, `daily` or `hourly`. | `daily`, `hourly` |
 
 <br />
 
