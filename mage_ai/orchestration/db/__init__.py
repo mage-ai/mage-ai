@@ -16,10 +16,8 @@ TEST_DB = 'test.db'
 
 db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
 db_kwargs = dict(
+    connect_args={},
     pool_pre_ping=True,
-    connect_args=dict(
-        options='-c timezone=utc',
-    ),
 )
 
 if not db_connection_url:
@@ -45,6 +43,9 @@ if not db_connection_url:
 
 if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50
+
+if not is_test():
+    db_kwargs['connect_args']['options'] = '-c timezone=utc'
 
 engine = create_engine(
     db_connection_url,
