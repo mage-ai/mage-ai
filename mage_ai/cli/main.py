@@ -4,6 +4,7 @@ from typing import List, Union
 
 import typer
 from click import Context
+from rich import print
 from typer.core import TyperGroup
 
 from mage_ai.cli.utils import parse_runtime_variables
@@ -31,13 +32,14 @@ def init(
 
     repo_path = os.path.join(os.getcwd(), project_path)
     init_repo(repo_path)
+    print(f"Initialized Mage project at {repo_path}")
 
 
 @app.command()
 def start(
     project_path: str = typer.Argument(os.getcwd(), help="path of the Mage project to be loaded."),
-    host: str = typer.Option("localhost", help="specify the host, defaults to localhost."),
-    port: str = typer.Option("6789", help="specify the port, defaults to 6789."),
+    host: str = typer.Option("localhost", help="specify the host."),
+    port: str = typer.Option("6789", help="specify the port."),
     manage_instance: bool = typer.Option(False, help=""),
     dbt_docs_instance: bool = typer.Option(False, help=""),
 ):
@@ -51,6 +53,7 @@ def start(
     set_repo_path(project_path)
 
     start_server(host, port, project_path, manage_instance, dbt_docs_instance)
+    print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project_path}')
 
 
 @app.command()
@@ -110,6 +113,7 @@ def run(
             global_vars=global_vars,
             update_status=False,
         )
+    print("Pipeline run completed.")
 
 
 @app.command()
@@ -124,3 +128,6 @@ def create_spark_cluster(
     project_path = os.path.abspath(project_path)
     create_cluster(project_path)
 
+
+if __name__ == "__main__":
+    app()

@@ -99,6 +99,7 @@ import socket
 import tornado.ioloop
 import tornado.web
 import urllib.parse
+from typing import Union
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -596,9 +597,8 @@ def make_app():
 
 
 async def main(
-    host: str = None,
-    port: str = None,
-    project: str = None,
+    host: Union[str, None] = None,
+    port: Union[str, None] = None,
 ):
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
@@ -622,9 +622,6 @@ async def main(
         port,
         address=host,
     )
-
-    print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
-
     db_connection.start_session(force=True)
 
     # Check scheduler status periodically
@@ -650,7 +647,6 @@ def start_server(
     manage: bool = False,
     dbt_docs: bool = False,
 ):
-
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
     project = project if project else None
@@ -681,7 +677,6 @@ def start_server(
             main(
                 host=host,
                 port=port,
-                project=project,
             )
         )
 

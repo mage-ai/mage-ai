@@ -99,7 +99,7 @@ def init_repo(repo_path: str) -> None:
     Initialize a repository under the current path.
     """
     if os.path.exists(repo_path):
-        return
+        raise FileExistsError(f'Repository {repo_path} already exists')
 
     os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exist_ok=True)
     copy_template_directory('repo', repo_path)
