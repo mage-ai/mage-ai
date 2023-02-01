@@ -2,7 +2,11 @@ import OSEnum from '@interfaces/OSType';
 
 export function getOS() {
   const userAgent = window?.navigator?.userAgent;
+
+  //@ts-ignore
+  // We fall back to checking the User-Agent string if a browser does not support the properties below.
   const platform = window?.navigator?.userAgentData?.platform || window?.navigator?.platform;
+
   const macosPlatforms = ['macOS', 'Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'];
   const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
   const iosPlatforms = ['iPhone', 'iPad', 'iPod'];
