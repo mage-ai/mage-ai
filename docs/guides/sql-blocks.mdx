@@ -10,10 +10,11 @@ commands.
 
 Follow the steps for the database or data warehouse of your choice:
 
-- [BigQuery](integrations/BigQuery.md#add-credentials)
-- [PostgreSQL](integrations/PostgreSQL.md#add-credentials)
-- [Redshift](integrations/Redshift.md#add-credentials)
-- [Snowflake](integrations/Snowflake.md#add-credentials)
+- [BigQuery](/integrations/databases/BigQuery#add-credentials)
+- [MySQL](/integrations/databases/MySQL#add-credentials)
+- [PostgreSQL](/integrations/databases/PostgreSQL#add-credentials)
+- [Redshift](/integrations/databases/Redshift#add-credentials)
+- [Snowflake](/integrations/databases/Snowflake#add-credentials)
 
 ---
 
@@ -33,8 +34,10 @@ There are 4 - 5 fields that must be configured for each SQL block:
 | -------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Data provider  | Yes                      | The database or data warehouse you want to execute your SQL commands in.                                                                                                                                                                                  |
 | Profile        | Yes                      | When you add your credentials to the `io_config.yaml` file, you added them under a key. That key is called the profile. Choose which set of credentials you want this SQL block to use.                                                                   |
-| Schema to save | Yes                      | Every SQL block will save data to your data provider. The name of the table that is created follows this convention: `[schema].[pipeline UUID]_[block UUID]`.                                                                                             |
+| Use raw SQL    | No                       | You can write raw SQL and it’ll be executed as written in your data provider. |
 | Database       | Depends on data provider | Some data warehouses require that we explicitly state the name of the database we want to write to. If this is present, it’s required. The name of the table that is created follows this convention: `[database].[schema].[pipeline UUID]_[block UUID]`. |
+| Schema to save | Yes                      | Every SQL block will save data to your data provider. The name of the table that is created follows this convention: `[schema].[pipeline UUID]_[block UUID]`.                                                                                             |
+| Table          | No                       | SQL blocks will automatically name your table for you using a naming convention (see the section `Automatic naming of tables` for more information). You can override this automatic naming convention by filling in a value in this field. |
 | Write policy   | Yes                      | How do you want to handle existing data with the same database, schema, and table name? See below for more information.                                                                                                                                   |
 
 #### Write policies
@@ -54,7 +57,40 @@ Each SQL block will create a table in the data provider of your choice.
 When you run a block, it’ll execute your SQL command, then store the results in
 a table created in your database or data warehouse.
 
-The name of this automatically created table follows these conventions:
+### Using raw SQL
+
+If you toggle this setting, you’re responsible for writing the `CREATE TABLE` command and the
+`INSERT` command.
+
+For example:
+
+```sql
+CREATE TABLE mage.users AS (
+    id BIGINT
+    , username VARCHAR(255)
+);
+
+WITH users AS (
+    SELECT
+        1 AS id
+        , 'Urza' AS username
+)
+
+INSERT INTO mage.users
+SELECT
+    *
+FROM users;
+```
+
+This SQL query will create a table named `mage.users` with 2 columns: `id` as a `BIGINT`
+and `username` as a `VARCHAR(255)`.
+
+Then, it’ll insert a single row into that table.
+
+### Automatic naming of tables
+
+If you don’t choose the setting for using raw SQL,
+the name of this automatically created table follows these conventions:
 
 - If `Database` field is configured:
   `[database].[schema].[pipeline UUID]_[block UUID]`
@@ -64,7 +100,7 @@ Where pipeline UUID is the name of the current pipeline you’re editing.
 
 Where block UUID is the name of the SQL block you are running.
 
-#### Upstream blocks
+### Upstream blocks
 
 If your SQL block depends on upstream blocks that aren’t SQL blocks (e.g. Python
 code blocks), then those blocks will also automatically create tables.

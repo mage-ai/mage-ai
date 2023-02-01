@@ -299,6 +299,7 @@
           "group": "Data",
           "pages": [
             "integrations/databases/BigQuery",
+            "integrations/databases/MySQL",
             "integrations/databases/PostgreSQL",
             "integrations/databases/Redshift",
             "integrations/databases/S3",

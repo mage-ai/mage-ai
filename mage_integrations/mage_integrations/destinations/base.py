@@ -332,6 +332,7 @@ class Destination():
         return row_data
 
     def _process(self, input_buffer) -> None:
+        batch_number = 0
         batches_by_stream = {}
         final_record_data = None
         final_state_data = None
@@ -373,7 +374,11 @@ class Destination():
                 if row_value.get('current_stream'):
                     stream = row_value['current_stream']
                 elif row_value.get('bookmarks'):
-                    stream = list(row_value['bookmarks'].keys())[0]
+                    bookmarks = row_value['bookmarks']
+                    if 'currently_syncing' in row:
+                        stream = row['currently_syncing']
+                    else:
+                        stream = list(bookmarks.keys())[0]
                 else:
                     stream = list(row_value.keys())[0]
 
@@ -413,7 +418,13 @@ class Destination():
                 state_data = dict(row=row, tags=tags)
 
                 if self.batch_processing:
-                    batches_by_stream[stream]['state_data'].append(state_data)
+                    if 'value' in row and 'bookmarks' in row['value']:
+                        arr = row['value']['bookmarks'].keys()
+                    else:
+                        arr = [stream]
+
+                    for s in arr:
+                        batches_by_stream[stream]['state_data'].append(state_data)
                 else:
                     self.process_state(**state_data)
                     final_state_data = state_data
@@ -431,18 +442,22 @@ class Destination():
                             batches_by_stream,
                             final_record_data,
                             final_state_data,
-                            tags=dict(batch_byte_size=current_byte_size),
+                            tags=dict(
+                                batch=batch_number,
+                                batch_byte_size=current_byte_size,
+                            ),
                         )
                         batches_by_stream = {}
                         final_record_data = None
                         final_state_data = None
                         current_byte_size = 0
+                        batch_number += 1
 
         self.__process_batch_set(
             batches_by_stream,
             final_record_data,
             final_state_data,
-            tags=tags,
+            tags=merge_dict(tags, dict(batch=batch_number)),
         )
 
     def __process_batch_set(

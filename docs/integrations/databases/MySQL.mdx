@@ -1,33 +1,35 @@
 ---
-title: MySQL
+title: "MySQL"
 ---
 
-```python
-import mysql.connector
+![](https://user-images.githubusercontent.com/78053898/198753513-4a149790-853a-4dcd-8c93-388f84ef6aeb.png)
 
-conn = mysql.connector.connect(
-    host='...',
-    password='...',
-    port=3306,
-    user='root',
-    database='...',
-)
+## Add credentials
 
-sql = """
-SELECT
-  id,
-  , email
-FROM auth_user
-"""
+1. Create a new pipeline or open an existing pipeline.
+2. Expand the left side of your screen to view the file browser.
+3. Scroll down and click on a file named `io_config.yaml`.
+4. Enter the following keys and values under the key named `default` (you can
+   have multiple profiles, add it under whichever is relevant to you)
 
-
-cursor = conn.cursor()
-cursor.execute(sql)
-
-rows = cursor.fetchall()
-
-import pandas as pd
-
-df = pd.DataFrame(rows, columns=['id', 'email'])
-df.to_csv('default_repo/users.csv', index=False)
+```yaml
+version: 0.1.1
+default:
+  MYSQL_DATABASE: ...
+  MYSQL_HOST: ...
+  MYSQL_PASSWORD: ...
+  MYSQL_PORT: 3306
+  MYSQL_USER: root
 ```
+
+---
+
+## Using SQL block
+
+Instructions coming soon...
+
+---
+
+## Using Python block
+
+Instructions coming soon...

@@ -23,7 +23,7 @@ from mage_integrations.destinations.sql.utils import (
     build_insert_command,
     column_type_mapping,
 )
-from mage_integrations.destinations.utils import clean_column_name
+from mage_integrations.destinations.sql.utils import clean_column_name
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Any, Dict, List, Tuple
 import google
