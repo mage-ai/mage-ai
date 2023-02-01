@@ -332,6 +332,7 @@ class Destination():
         return row_data
 
     def _process(self, input_buffer) -> None:
+        batch_number = 0
         batches_by_stream = {}
         final_record_data = None
         final_state_data = None
@@ -441,18 +442,22 @@ class Destination():
                             batches_by_stream,
                             final_record_data,
                             final_state_data,
-                            tags=dict(batch_byte_size=current_byte_size),
+                            tags=dict(
+                                batch=batch_number,
+                                batch_byte_size=current_byte_size,
+                            ),
                         )
                         batches_by_stream = {}
                         final_record_data = None
                         final_state_data = None
                         current_byte_size = 0
+                        batch_number += 1
 
         self.__process_batch_set(
             batches_by_stream,
             final_record_data,
             final_state_data,
-            tags=tags,
+            tags=merge_dict(tags, dict(batch=batch_number)),
         )
 
     def __process_batch_set(
