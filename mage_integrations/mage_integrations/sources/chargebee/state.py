@@ -1,6 +1,4 @@
-from mage_integrations.sources.messages import write_state
 import datetime
-import json
 import singer
 
 LOGGER = singer.get_logger()

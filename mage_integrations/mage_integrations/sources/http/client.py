@@ -9,38 +9,50 @@ LOGGER = singer.get_logger()
 
 REQUEST_TIMEOUT = 300
 
+
 class HttpError(Exception):
     pass
+
 
 class Server4xxError(HttpError):
     pass
 
+
 class Server5xxError(HttpError):
     pass
+
 
 class BadRequestError(Server4xxError):
     pass
 
+
 class AuthenticationError(Server4xxError):
     pass
+
 
 class ForbiddenError(Server4xxError):
     pass
 
+
 class NotFoundError(Server4xxError):
     pass
+
 
 class MethodNotAllowedError(Server4xxError):
     pass
 
+
 class NotProcessedError(Server4xxError):
     pass
+
 
 class RateLimitError(Server4xxError):
     pass
 
+
 class InternalServiceError(Server5xxError):
     pass
+
 
 class ServiceUnavailableError(Server5xxError):
     pass
@@ -85,6 +97,7 @@ STATUS_CODE_EXCEPTION_MAPPING = {
     },
 }
 
+
 def get_exception_for_status_code(status_code):
     """Map the input status_code with the corresponding Exception Class \
         using 'STATUS_CODE_EXCEPTION_MAPPING' dictionary."""
@@ -100,6 +113,7 @@ def get_exception_for_status_code(status_code):
         else:
             exception = HttpError
     return exception
+
 
 def raise_for_error(response):
     """Raises error class with appropriate msg for the response"""
@@ -146,7 +160,8 @@ class Client():
         if config_request_timeout and float(config_request_timeout):
             request_timeout = float(config_request_timeout)
         else:
-            request_timeout = REQUEST_TIMEOUT # If value is 0,"0","" or not passed then set default to 300 seconds.
+            # If value is 0,"0","" or not passed then set default to 300 seconds.
+            request_timeout = REQUEST_TIMEOUT
 
         response = requests.request(
             method,

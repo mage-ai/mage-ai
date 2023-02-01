@@ -16,6 +16,7 @@ import singer
 
 LOGGER = singer.get_logger()
 
+
 def is_selected(stream_catalog):
     metadata = singer.metadata.to_map(stream_catalog.metadata)
     stream_metadata = metadata.get((), {})
@@ -88,7 +89,6 @@ class BaseChargebeeStream():
                     if "cf_" in k:
                         event_custom_fields[k] = record['content'][content_obj][k]
                 record['content'][content_obj]['custom_fields'] = json.dumps(event_custom_fields)
-
 
         for key in record.keys():
             if "cf_" in key:

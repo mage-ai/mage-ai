@@ -1,6 +1,4 @@
-from requests.exceptions import Timeout, ConnectionError
 from singer import utils
-import backoff
 import requests
 import singer
 
@@ -9,38 +7,50 @@ LOGGER = singer.get_logger()
 
 REQUEST_TIMEOUT = 300
 
+
 class ChargebeeError(Exception):
     pass
+
 
 class Server4xxError(ChargebeeError):
     pass
 
+
 class Server5xxError(ChargebeeError):
     pass
+
 
 class ChargebeeBadRequestError(Server4xxError):
     pass
 
+
 class ChargebeeAuthenticationError(Server4xxError):
     pass
+
 
 class ChargebeeForbiddenError(Server4xxError):
     pass
 
+
 class ChargebeeNotFoundError(Server4xxError):
     pass
+
 
 class ChargebeeMethodNotAllowedError(Server4xxError):
     pass
 
+
 class ChargebeeNotProcessedError(Server4xxError):
     pass
+
 
 class ChargebeeRateLimitError(Server4xxError):
     pass
 
+
 class ChargebeeInternalServiceError(Server5xxError):
     pass
+
 
 class ChargebeeServiceUnavailableError(Server5xxError):
     pass
@@ -123,6 +133,7 @@ def raise_for_error(response):
     exc = get_exception_for_status_code(status_code)
     raise exc(message) from None
 
+
 class ChargebeeClient():
     def __init__(self, config, api_result_limit=100, include_deleted=True):
         self.config = config
@@ -165,7 +176,8 @@ class ChargebeeClient():
         if config_request_timeout and float(config_request_timeout):
             request_timeout = float(config_request_timeout)
         else:
-            request_timeout = REQUEST_TIMEOUT # If value is 0,"0","" or not passed then set default to 300 seconds.
+            # If value is 0,"0","" or not passed then set default to 300 seconds.
+            request_timeout = REQUEST_TIMEOUT
 
         response = requests.request(
             method,

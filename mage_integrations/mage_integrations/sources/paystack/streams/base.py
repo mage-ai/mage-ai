@@ -1,10 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict, List
 from dateutil.parser import parse
-from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
-from mage_integrations.sources.messages import write_schema
 from mage_integrations.sources.paystack.client import PaystackClient
-import inspect
 import os
 import pytz
 import singer

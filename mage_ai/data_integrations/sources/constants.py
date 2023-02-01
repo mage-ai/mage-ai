@@ -18,6 +18,7 @@ SOURCES = sorted([
     dict(name='Chargebee'),
     dict(name='Facebook Ads'),
     dict(name='Freshdesk'),
+    dict(name='Front'),
     dict(name='Google Analytics'),
     dict(name='Google Search Console'),
     dict(name='Google Sheets'),

@@ -1,0 +1,27 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "highlight": {
+      "type": ["null", "string"]
+    },
+    "is_private": {
+      "type": ["null", "string"]
+    },
+    "is_visible_in_conversation_lists": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "number"]
+    },
+    "updated_at": {
+      "type": ["null", "number"]
+    }
+  }
+}
