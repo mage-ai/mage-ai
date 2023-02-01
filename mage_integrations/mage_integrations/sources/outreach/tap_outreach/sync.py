@@ -2,6 +2,8 @@ import singer
 from singer import metrics, metadata, Transformer
 from singer.bookmarks import set_currently_syncing
 from mage_integrations.sources.messages import write_schema as write_schema_orig
+from datetime import datetime, timedelta
+import dateutil.parser
 
 LOGGER = singer.get_logger()
 
@@ -264,6 +266,17 @@ def process_records(stream, mdata, max_modified, records, filter_field, fks):
 def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
     stream_name = stream.tap_stream_id
     last_datetime = get_bookmark(state, stream_name, start_date)
+
+    if last_datetime and type(last_datetime) is dict:
+        for ds in last_datetime.values():
+            try:
+                last_ds = dateutil.parser.parse(ds)
+                now = datetime.utcnow().replace(tzinfo=last_ds.tzinfo)
+                if now < last_ds + timedelta(days=1):
+                    LOGGER.info(f'Skipping stream {stream.tap_stream_id} because bookmark {last_datetime} is less than 1 day ago.')
+                    return
+            except dateutil.parser.ParserError:
+                pass
 
     write_schema(stream)
 

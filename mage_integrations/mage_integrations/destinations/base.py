@@ -373,7 +373,11 @@ class Destination():
                 if row_value.get('current_stream'):
                     stream = row_value['current_stream']
                 elif row_value.get('bookmarks'):
-                    stream = list(row_value['bookmarks'].keys())[0]
+                    bookmarks = row_value['bookmarks']
+                    if 'currently_syncing' in row:
+                        stream = row['currently_syncing']
+                    else:
+                        stream = list(bookmarks.keys())[0]
                 else:
                     stream = list(row_value.keys())[0]
 
@@ -413,7 +417,13 @@ class Destination():
                 state_data = dict(row=row, tags=tags)
 
                 if self.batch_processing:
-                    batches_by_stream[stream]['state_data'].append(state_data)
+                    if 'value' in row and 'bookmarks' in row['value']:
+                        arr = row['value']['bookmarks'].keys()
+                    else:
+                        arr = [stream]
+
+                    for s in arr:
+                        batches_by_stream[stream]['state_data'].append(state_data)
                 else:
                     self.process_state(**state_data)
                     final_state_data = state_data
