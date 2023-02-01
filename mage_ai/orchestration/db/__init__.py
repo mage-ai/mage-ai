@@ -15,7 +15,12 @@ DB_RETRY_COUNT = 2
 TEST_DB = 'test.db'
 
 db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
-db_kwargs = dict(pool_pre_ping=True)
+db_kwargs = dict(
+    pool_pre_ping=True,
+    connect_args=dict(
+        options='-c timezone=utc',
+    ),
+)
 
 if not db_connection_url:
     # connect to K8s CloudSQL sidecar
@@ -36,7 +41,7 @@ if not db_connection_url:
         else:
             # For new projects, create mage-ai.db in variables idr
             db_connection_url = f'sqlite:///{get_variables_dir()}/mage-ai.db'
-        db_kwargs['connect_args'] = {'check_same_thread': False}
+        db_kwargs['connect_args']['check_same_thread'] = False
 
 if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50

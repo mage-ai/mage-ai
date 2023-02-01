@@ -121,14 +121,14 @@ pipeline_schedule_event_matcher_association_table = Table(
 
 class User(BaseModel):
     avatar = Column(String(255), default=None)
-    email = Column(String(255), default=None)
+    email = Column(String(255), default=None, index=True, unique=True)
     first_name = Column(String(255), default=None)
     last_name = Column(String(255), default=None)
     owner = Column(Boolean, default=False)
     password_hash = Column(String(255), default=None)
     password_salt = Column(String(255), default=None)
     roles = Column(Integer, default=None)
-    username = Column(String(255), default=None)
+    username = Column(String(255), default=None, index=True, unique=True)
 
     oauth2_applications = relationship('Oauth2Application', back_populates='user')
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='user')
@@ -147,7 +147,7 @@ class Oauth2Application(BaseModel):
         Enum(AuthorizationGrantType),
         default=AuthorizationGrantType.AUTHORIZATION_CODE,
     )
-    client_id = Column(String(255))
+    client_id = Column(String(255), index=True, unique=True)
     client_type = Column(Enum(ClientType), default=ClientType.PRIVATE)
     name = Column(String(255))
     redirect_uris = Column(String(255), default=None)
@@ -161,9 +161,14 @@ class Oauth2AccessToken(BaseModel):
     expires = Column(DateTime(timezone=True))
     oauth2_application = relationship(Oauth2Application, back_populates='oauth2_access_tokens')
     oauth2_application_id = Column(Integer, ForeignKey('oauth2_application.id'))
-    token = Column(String(255))
+    token = Column(String(255), index=True, unique=True)
     user = relationship(User, back_populates='oauth2_access_tokens')
     user_id = Column(Integer, ForeignKey('user.id'))
+
+    def is_valid(self) -> bool:
+        return self.token and \
+            self.expires and \
+            self.expires >= datetime.utcnow().replace(tzinfo=self.expires.tzinfo)
 
 
 class PipelineSchedule(BaseModel):
