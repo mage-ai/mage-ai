@@ -34,7 +34,7 @@ from mage_ai.server.api.backfills import (
     ApiBackfillsHandler,
     ApiPipelineBackfillsHandler,
 )
-from mage_ai.server.api.base import BaseHandler
+from mage_ai.server.api.base import BaseApiHandler, BaseHandler
 from mage_ai.server.api.blocks import (
     ApiBlockHandler,
     ApiPipelineBlockAnalysisHandler,
@@ -236,7 +236,7 @@ class ApiPipelineExecuteHandler(BaseHandler):
         self.finish()
 
 
-class ApiPipelineListHandler(BaseHandler):
+class ApiPipelineListHandler(BaseApiHandler):
     async def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
@@ -639,6 +639,8 @@ async def main(
 
     db_connection.start_session(force=True)
 
+    # Check for default OAuth2Application
+
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
         check_scheduler_status,
@@ -662,7 +664,6 @@ def start_server(
     manage: bool = False,
     dbt_docs: bool = False,
 ):
-
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
     project = project if project else None

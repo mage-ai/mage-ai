@@ -1,7 +1,12 @@
+from json import JSONDecodeError
+from mage_ai.orchestration.db.models import Oauth2AccessToken, Oauth2Application
+from mage_ai.server.api.constants import ENDPOINTS_BYPASS_OAUTH_CHECK, HEADER_OAUTH_TOKEN
+from mage_ai.server.api.errors import ApiError
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import camel_to_snake_case
 import dateutil.parser
 import json
+import os
 import simplejson
 import tornado.web
 import traceback
@@ -91,6 +96,33 @@ class BaseHandler(tornado.web.RequestHandler):
                 if payload.get(key) is not None:
                     payload[key] = dateutil.parser.parse(payload[key])
         return payload
+
+
+class BaseApiHandler(BaseHandler):
+    def prepare(self):
+        self.request.__setattr__('current_user', None)
+        self.request.__setattr__('error', None)
+        self.request.__setattr__('oauth_token', None)
+
+        paths = [path for path in self.request.uri.split('/') if path]
+        if any(p in ENDPOINTS_BYPASS_OAUTH_CHECK for p in paths):
+            return
+
+        token_from_header = self.request.headers.get(HEADER_OAUTH_TOKEN, None)
+        if not token_from_header:
+            return
+
+        oauth_token = Oauth2AccessToken.query.filter(
+            Oauth2AccessToken.token == token_from_header,
+        ).first()
+        if oauth_token:
+            if oauth_token.is_valid():
+                self.request.__setattr__('oauth_token', oauth_token)
+                self.request.__setattr__('current_user', oauth_token.user)
+            else:
+                self.request.__setattr__('error', ApiError.EXPIRED_OAUTH_TOKEN)
+        else:
+            self.request.__setattr__('error', ApiError.INVALID_OAUTH_TOKEN)
 
 
 class BaseDetailHandler(BaseHandler):
