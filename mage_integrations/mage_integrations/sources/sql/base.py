@@ -281,7 +281,7 @@ WHERE table_schema = '{schema}'
 
         if not order_by_columns:
             order_by_columns = columns
-        order_by_columns = [wrap_column_in_quotes(col) for col in list(order_by_columns)]
+        order_by_columns = self.update_column_names(order_by_columns)
 
         if order_by_columns and not count_records:
             order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
