@@ -119,11 +119,22 @@ def write_record(stream_name, record, time_extracted):
 def get_bookmark(state, stream, default):
     if (state is None) or ('bookmarks' not in state):
         return default
-    return (
+
+    data = (
         state
         .get('bookmarks', {})
-        .get(stream, default)
+        .get(stream, {})
     )
+
+    if stream in STREAMS and 'replication_keys' in STREAMS[stream]:
+        replication_keys = STREAMS[stream]['replication_keys']
+        if len(replication_keys) >= 1:
+            replication_key = replication_keys[0]
+            if replication_key in data:
+                return data[replication_key]
+
+    return default
+
 
 
 def write_bookmark(state, stream, value):
