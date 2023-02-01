@@ -2,7 +2,7 @@ import OSEnum from '@interfaces/OSType';
 
 export function getOS() {
   const userAgent = window?.navigator?.userAgent;
-  const platform = window?.navigator?.userAgentData?.platform || window.navigator.platform;
+  const platform = window?.navigator?.userAgentData?.platform || window?.navigator?.platform;
   const macosPlatforms = ['macOS', 'Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'];
   const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'];
   const iosPlatforms = ['iPhone', 'iPad', 'iPod'];
@@ -33,4 +33,8 @@ export function getOS() {
   }
 
   return os;
+}
+
+export function isMac() {
+  return getOS() === OSEnum.MAC;
 }
