@@ -78,6 +78,12 @@ from mage_ai.server.api.orchestration import (
     ApiPipelineScheduleListHandler,
 )
 from mage_ai.server.api.projects import ApiProjectsHandler
+from mage_ai.server.api.v1 import (
+    ApiChildDetailHandler,
+    ApiChildListHandler,
+    ApiResourceDetailHandler,
+    ApiResourceListHandler,
+)
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
@@ -599,6 +605,22 @@ def make_app():
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiPipelineBackfillsHandler),
         (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
         (r'/api/backfills', ApiBackfillsHandler),
+        (
+            r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)/(?P<child_pk>\w+)',
+            ApiChildDetailHandler,
+        ),
+        (
+            r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)',
+            ApiChildListHandler,
+        ),
+        (
+            r'/api/(?P<resource>\w+)/(?P<pk>\w+)',
+            ApiResourceDetailHandler,
+        ),
+        (
+            r'/api/(?P<resource>\w+)',
+            ApiResourceListHandler,
+        ),
     ]
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(

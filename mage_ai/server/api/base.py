@@ -102,6 +102,8 @@ class BaseApiHandler(BaseHandler):
     def prepare(self):
         self.request.__setattr__('current_user', None)
         self.request.__setattr__('error', None)
+        # TODO (tommy dang): support authentication using application client_id
+        self.request.__setattr__('oauth_client', None)
         self.request.__setattr__('oauth_token', None)
 
         paths = [path for path in self.request.uri.split('/') if path]
