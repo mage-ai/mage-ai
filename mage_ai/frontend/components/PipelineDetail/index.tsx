@@ -45,6 +45,7 @@ import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_UP,
   KEY_CODE_B,
+  KEY_CODE_CONTROL,
   KEY_CODE_D,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
@@ -220,7 +221,9 @@ function PipelineDetail({
         if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
           location.reload();
         }
-      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)) {
+      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
+        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
+      ) {
         event.preventDefault();
         savePipelineContent();
       } else if (textareaFocused) {

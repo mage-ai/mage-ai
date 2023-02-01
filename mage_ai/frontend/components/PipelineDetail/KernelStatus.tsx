@@ -25,20 +25,23 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-import { Check, Close, FileFill } from '@oracle/icons';
+
+import { Check } from '@oracle/icons';
 import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
-import { FileTabStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
   KEY_CODE_META,
+  KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_META,
   KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PipelineHeaderStyle } from './index.style';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { dateFormatLongFromUnixTimestamp } from '@utils/date';
-import { find, remove } from '@utils/array';
+import { find } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
+import { isMac } from '@utils/os';
 import { onSuccess } from '@api/utils/response';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -422,7 +425,7 @@ function KernelStatus({
                   <FlexContainer alignItems="center">
                     <Text default inline>Press</Text>&nbsp;<KeyboardText
                       inline
-                      keyText={KEY_SYMBOL_META}
+                      keyText={isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL}
                     />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
                       inline
                       keyText={KEY_SYMBOL_S}

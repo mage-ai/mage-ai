@@ -8,6 +8,7 @@ import Text from '@oracle/elements/Text';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
   KEY_CODE_NUMBER_0,
+  KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_I,
   KEY_SYMBOL_META,
   KEY_SYMBOL_S,
@@ -18,6 +19,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LinkStyle } from './index.style';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { isMac } from '@utils/os';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -74,7 +76,10 @@ function FileHeaderMenu({
     },
     {
       label: () => 'Save pipeline',
-      keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_S]],
+      keyTextGroups: [[
+        isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
+        KEY_SYMBOL_S,
+      ]],
       onClick: () => savePipelineContent(),
       uuid: 'save_pipeline',
     },

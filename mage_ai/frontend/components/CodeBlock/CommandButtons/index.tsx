@@ -27,6 +27,7 @@ import {
   PlayButtonFilled,
 } from '@oracle/icons';
 import {
+  KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_ENTER,
   KEY_SYMBOL_I,
   KEY_SYMBOL_META,
@@ -35,6 +36,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { buildConvertBlockMenuItems, getMoreActionsItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
+import { isMac } from '@utils/os';
 import { indexBy } from '@utils/array';
 
 export type CommandButtonsSharedProps = {
@@ -148,7 +150,10 @@ function CommandButtons({
                 &nbsp;
                 <KeyboardTextGroup
                   inline
-                  keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+                  keyTextGroups={[[
+                    isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
+                    KEY_SYMBOL_ENTER,
+                  ]]}
                   monospace
                   uuidForKey={uuid}
                 />
