@@ -9,7 +9,7 @@
 You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value | Required |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 | `account_id` | The Facebook Ad account ID use when extracting data. | `"abc123..."` (double quotes required) | ✅ |
 | `access_token` | OAuth token to access API endpoints. | `abc123...` | ✅ |
 | `start_date` | Fetch data that is newer than the `start_date`. | `2022-01-01T00:00:00Z` | ✅ |
@@ -37,5 +37,13 @@ It should look something like this: `13261011608127020`.
         - `read_insights`
     1. Click the button labeled <b>Get Token</b>.
 1. Copy the `account_token`.
+
+<br />
+
+## Errors
+
+### API rate limit
+
+Read this [community thread](https://developers.facebook.com/community/threads/158172292247085/) for more information.
 
 <br />
