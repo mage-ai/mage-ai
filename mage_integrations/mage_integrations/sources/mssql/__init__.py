@@ -20,7 +20,7 @@ class MSSQL(Source):
             database=self.config['database'],
             host=self.config['host'],
             password=self.config['password'],
-            port=self.config.get('port', 3306),
+            port=self.config.get('port', 1433),
             username=self.config['username'],
             verbose=0 if self.discover_mode or self.discover_streams_mode else 1,
         )
