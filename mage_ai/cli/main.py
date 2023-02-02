@@ -21,7 +21,7 @@ app = typer.Typer(
 
 @app.command()
 def init(
-    project_path: str = typer.Argument(..., help="path of the Mage project to be created.")
+    project_path: str = typer.Argument(..., help='path of the Mage project to be created.')
 ):
     """
     Initialize Mage project.
@@ -30,16 +30,16 @@ def init(
 
     repo_path = os.path.join(os.getcwd(), project_path)
     init_repo(repo_path)
-    print(f"Initialized Mage project at {repo_path}")
+    print(f'Initialized Mage project at {repo_path}')
 
 
 @app.command()
 def start(
-    project_path: str = typer.Argument(os.getcwd(), help="path of the Mage project to be loaded."),
-    host: str = typer.Option("localhost", help="specify the host."),
-    port: str = typer.Option("6789", help="specify the port."),
-    manage_instance: bool = typer.Option(False, help=""),
-    dbt_docs_instance: bool = typer.Option(False, help=""),
+    project_path: str = typer.Argument(os.getcwd(), help='path of the Mage project to be loaded.'),
+    host: str = typer.Option('localhost', help='specify the host.'),
+    port: str = typer.Option('6789', help='specify the port.'),
+    manage_instance: bool = typer.Option(False, help=''),
+    dbt_docs_instance: bool = typer.Option(False, help=''),
 ):
     """
     Start Mage server and UI.
@@ -59,41 +59,41 @@ def start(
     )
     print(
         f'Mage is running at http://{host or "localhost"}:{port}'
-        f' and serving project {project_path}'''
+        f' and serving project {project_path}'
     )
 
 
 @app.command()
 def run(
     project_path: str = typer.Argument(
-        ..., help="path of the Mage project that contains the pipeline."
+        ..., help='path of the Mage project that contains the pipeline.'
     ),
     pipeline_uuid: str = typer.Argument(
-        ..., help="uuid of the pipeline to be run."
+        ..., help='uuid of the pipeline to be run.'
     ),
     test: bool = typer.Option(
-        False, help="specify if tests should be run."
+        False, help='specify if tests should be run.'
     ),
     block_uuid: Union[str, None] = typer.Option(
-        None, help="uuid of the block to be run."
+        None, help='uuid of the block to be run.'
     ),
     execution_partition: Union[str, None] = typer.Option(
-        None, help=""
+        None, help=''
     ),
     executor_type: Union[str, None] = typer.Option(
-        None, help=""
+        None, help=''
     ),
     callback_url: Union[str, None] = typer.Option(
-        None, help=""
+        None, help=''
     ),
     block_run_id: Union[int, None] = typer.Option(
-        None, help=""
+        None, help=''
     ),
     runtime_vars: Union[List[str], None] = typer.Option(
-        None, help="specify runtime variables. These will overwrite the pipeline global variables."
+        None, help='specify runtime variables. These will overwrite the pipeline global variables.'
     ),
     skip_sensors: bool = typer.Option(
-        False, help="specify if the sensors should be skipped."
+        False, help='specify if the sensors should be skipped.'
     ),
 ):
     """
@@ -140,13 +140,13 @@ def run(
             global_vars=global_vars,
             update_status=False,
         )
-    print("Pipeline run completed.")
+    print('Pipeline run completed.')
 
 
 @app.command()
 def create_spark_cluster(
     project_path: str = typer.Argument(
-        ..., help=" path of the Mage project that contains the EMR config."
+        ..., help='path of the Mage project that contains the EMR config.'
     ),
 ):
     """
@@ -158,5 +158,5 @@ def create_spark_cluster(
     create_cluster(project_path)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app()
