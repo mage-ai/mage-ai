@@ -100,6 +100,7 @@ from sqlalchemy.orm import aliased
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
+from typing import Union
 import argparse
 import asyncio
 import json
@@ -608,9 +609,8 @@ def make_app():
 
 
 async def main(
-    host: str = None,
-    port: str = None,
-    project: str = None,
+    host: Union[str, None] = None,
+    port: Union[str, None] = None,
 ):
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
@@ -634,9 +634,6 @@ async def main(
         port,
         address=host,
     )
-
-    print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
-
     db_connection.start_session(force=True)
 
     # Check for default OAuth2Application
@@ -694,7 +691,6 @@ def start_server(
             main(
                 host=host,
                 port=port,
-                project=project,
             )
         )
 

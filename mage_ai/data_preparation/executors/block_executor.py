@@ -1,10 +1,10 @@
-from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
-from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
+from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
+from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 import json
 import requests
 import traceback
@@ -32,19 +32,19 @@ class BlockExecutor:
     def execute(
         self,
         analyze_outputs: bool = False,
-        callback_url: str = None,
-        global_vars: Dict = None,
+        callback_url: Union[str, None] = None,
+        global_vars: Union[Dict, None] = None,
         update_status: bool = False,
-        on_complete: Callable[[str], None] = None,
-        on_failure: Callable[[str, Dict], None] = None,
-        on_start: Callable[[str], None] = None,
-        input_from_output: Dict = None,
+        on_complete: Union[Callable[[str], None], None] = None,
+        on_failure: Union[Callable[[str, Dict], None], None] = None,
+        on_start: Union[Callable[[str], None], None] = None,
+        input_from_output: Union[Dict, None] = None,
         verify_output: bool = True,
-        runtime_arguments: Dict = None,
-        template_runtime_configuration: Dict = None,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
-        dynamic_upstream_block_uuids: List[str] = None,
+        runtime_arguments: Union[Dict, None] = None,
+        template_runtime_configuration: Union[Dict, None] = None,
+        dynamic_block_index: Union[int, None] = None,
+        dynamic_block_uuid: Union[str, None] = None,
+        dynamic_upstream_block_uuids: Union[List[str], None] = None,
         **kwargs,
     ) -> Dict:
         if template_runtime_configuration:
@@ -102,16 +102,16 @@ class BlockExecutor:
     def _execute(
         self,
         analyze_outputs: bool = False,
-        callback_url: str = None,
-        global_vars: Dict = None,
+        callback_url: Union[str, None] = None,
+        global_vars: Union[Dict, None] = None,
         update_status: bool = False,
-        input_from_output: Dict = None,
+        input_from_output: Union[Dict, None] = None,
         logging_tags: Dict = dict(),
         verify_output: bool = True,
-        runtime_arguments: Dict = None,
-        dynamic_block_index: int = None,
-        dynamic_block_uuid: str = None,
-        dynamic_upstream_block_uuids: List[str] = None,
+        runtime_arguments: Union[Dict, None] = None,
+        dynamic_block_index: Union[int, None] = None,
+        dynamic_block_uuid: Union[str, None] = None,
+        dynamic_upstream_block_uuids: Union[List[str], None] = None,
         **kwargs,
     ) -> Dict:
         result = self.block.execute_sync(
@@ -149,7 +149,7 @@ class BlockExecutor:
 
         return result
 
-    def __update_block_run_status(self, callback_url: str, status: str, tags: dict):
+    def __update_block_run_status(self, callback_url: str, status: str, tags: Dict):
         """Update the status of block run by edither updating the BlockRun db object or making API call
 
         Args:

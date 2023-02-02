@@ -1,158 +1,162 @@
+from click import Context
 from mage_ai.cli.utils import parse_runtime_variables
-import argparse
+from rich import print
+from typer.core import TyperGroup
+from typing import List, Union
 import os
+import sys
+import typer
 
 
-def main():
-    import sys
+class OrderCommands(TyperGroup):
+    def list_commands(self, ctx: Context):
+        """Return list of commands in the order they appear."""
+        return list(self.commands)
 
-    try:
-        command = sys.argv[1]
-    except IndexError:
-        command = 'help'
 
-    if command == 'help':
-        print("""Usage:
-    mage <command> 
+app = typer.Typer(
+    cls=OrderCommands,
+)
 
-Commands:
-    init <project_path>                 Initialize Mage project.
-      args:
-        project_path                    path of the Mage project to be created.
 
-    start <project_path>                Start Mage server and UI.
-      args:
-        project_path                    path of the Mage project to be loaded.
-      options:
-        --host <host>                   specify the host, defaults to localhost
-        --port <port>                   specify the port, defaults to 6789
+@app.command()
+def init(
+    project_path: str = typer.Argument(..., help='path of the Mage project to be created.')
+):
+    """
+    Initialize Mage project.
+    """
+    from mage_ai.data_preparation.repo_manager import init_repo
 
-    run <project_path> <pipeline_uuid>  Run pipeline.
-      args:
-        project_path                    path of the Mage project that contains the pipeline.
-        pipeline_uuid                   uuid of the pipeline to be run.
-      options:
-        --runtime-vars [key value]...   specify runtime variables. These will overwrite the pipeline global variables.   
+    repo_path = os.path.join(os.getcwd(), project_path)
+    init_repo(repo_path)
+    print(f'Initialized Mage project at {repo_path}')
 
-    test <project_path> <pipeline_uuid> Run pipeline and output tests.
-      args:
-        project_path                    path of the Mage project that contains the pipeline.
-        pipeline_uuid                   uuid of the pipeline to be run and tested.
-      options:
-        --runtime-vars [key value]...   specify runtime variables. These will overwrite the pipeline global variables.
 
-    create_spark_cluster <project_path>
-      args:
-        project_path                    path of the Mage project that contains the EMR config.
-        """)
-    elif command == 'init':
-        from mage_ai.data_preparation.repo_manager import init_repo
+@app.command()
+def start(
+    project_path: str = typer.Argument(os.getcwd(), help='path of the Mage project to be loaded.'),
+    host: str = typer.Option('localhost', help='specify the host.'),
+    port: str = typer.Option('6789', help='specify the port.'),
+    manage_instance: str = typer.Option('0', help=''),
+    dbt_docs_instance: str = typer.Option('0', help=''),
+):
+    """
+    Start Mage server and UI.
+    """
+    from mage_ai.data_preparation.repo_manager import set_repo_path
+    from mage_ai.server.server import start_server
 
-        repo_path = os.path.join(os.getcwd(), sys.argv[2])
-        init_repo(repo_path)
-    elif command == 'start':
-        parser = argparse.ArgumentParser()
-        parser.add_argument('repo_path', metavar='project_path', type=str)
-        parser.add_argument('--host', nargs='?', type=str)
-        parser.add_argument('--port', nargs='?', type=int)
-        parser.add_argument('--manage-instance', nargs='?', type=str)
-        parser.add_argument('--dbt-docs-instance', nargs='?', type=str)
+    project_path = os.path.abspath(project_path)
+    set_repo_path(project_path)
 
-        args = dict()
-        if len(sys.argv) >= 3:
-            args = vars(parser.parse_args(sys.argv[2:]))
-            project_path = args['repo_path']
-        else:
-            project_path = os.getcwd()
-        project_path = os.path.abspath(project_path)
+    start_server(
+        host=host,
+        port=port,
+        project=project_path,
+        manage=manage_instance == "1",
+        dbt_docs=dbt_docs_instance == "1",
+    )
+    print(
+        f'Mage is running at http://{host or "localhost"}:{port}'
+        f' and serving project {project_path}'
+    )
 
-        from mage_ai.data_preparation.repo_manager import set_repo_path
 
-        set_repo_path(project_path)
+@app.command()
+def run(
+    project_path: str = typer.Argument(
+        ..., help='path of the Mage project that contains the pipeline.'
+    ),
+    pipeline_uuid: str = typer.Argument(
+        ..., help='uuid of the pipeline to be run.'
+    ),
+    test: bool = typer.Option(
+        False, help='specify if tests should be run.'
+    ),
+    block_uuid: Union[str, None] = typer.Option(
+        None, help='uuid of the block to be run.'
+    ),
+    execution_partition: Union[str, None] = typer.Option(
+        None, help=''
+    ),
+    executor_type: Union[str, None] = typer.Option(
+        None, help=''
+    ),
+    callback_url: Union[str, None] = typer.Option(
+        None, help=''
+    ),
+    block_run_id: Union[int, None] = typer.Option(
+        None, help=''
+    ),
+    runtime_vars: Union[List[str], None] = typer.Option(
+        None, help='specify runtime variables. These will overwrite the pipeline global variables.'
+    ),
+    skip_sensors: bool = typer.Option(
+        False, help='specify if the sensors should be skipped.'
+    ),
+):
+    """
+    Run pipeline.
+    """
+    from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
+    from mage_ai.data_preparation.models.pipeline import Pipeline
+    from mage_ai.data_preparation.repo_manager import set_repo_path
+    from mage_ai.data_preparation.variable_manager import get_global_variables
+    from mage_ai.orchestration.db import db_connection
+    from mage_ai.shared.hash import merge_dict
 
-        from mage_ai.server.server import start_server
+    runtime_variables = dict()
+    if runtime_vars is not None:
+        runtime_variables = parse_runtime_variables(runtime_vars)
 
-        start_server(
-            host=args.get('host'),
-            dbt_docs=args.get('dbt_docs_instance') == '1',
-            manage=args.get('manage_instance') == '1',
-            port=args.get('port'),
-            project=project_path,
+    project_path = os.path.abspath(project_path)
+    set_repo_path(project_path)
+    sys.path.append(os.path.dirname(project_path))
+    pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
+
+    default_variables = get_global_variables(pipeline_uuid)
+    global_vars = merge_dict(default_variables, runtime_variables)
+
+    db_connection.start_session()
+
+    if block_uuid is None:
+        ExecutorFactory.get_pipeline_executor(pipeline).execute(
+            analyze_outputs=False,
+            global_vars=global_vars,
+            run_sensors=not skip_sensors,
+            run_tests=test,
+            update_status=False,
         )
-    elif command == 'run' or command == 'test':
-        from mage_ai.data_preparation.repo_manager import set_repo_path
-        from mage_ai.shared.hash import merge_dict
-
-        parser = argparse.ArgumentParser(description='Run pipeline.')
-        parser.add_argument('repo_path', metavar='project_path', type=str)
-        parser.add_argument('pipeline_uuid', type=str)
-        parser.add_argument('--block_uuid', nargs='?', type=str)
-        parser.add_argument('--execution_partition', nargs='?', type=str)
-        parser.add_argument('--executor_type', nargs='?', type=str)
-        parser.add_argument('--callback_url', nargs='?', type=str)
-        parser.add_argument('--block_run_id', nargs='?', type=int)
-        parser.add_argument('--runtime-vars', nargs="+")
-        parser.add_argument('--skip-sensors', type=bool)
-
-        args = vars(parser.parse_args(sys.argv[2:]))
-        project_path = args['repo_path']
-        pipeline_uuid = args['pipeline_uuid']
-        block_uuid = args.get('block_uuid')
-        execution_partition = args.get('execution_partition')
-        executor_type = args.get('executor_type')
-        callback_url = args.get('callback_url')
-        runtime_vars = args.get('runtime_vars')
-        skip_sensors = args.get('skip_sensors', False)
-
-        runtime_variables = dict()
-        if runtime_vars is not None:
-            runtime_variables = parse_runtime_variables(runtime_vars)
-
-        project_path = os.path.abspath(project_path)
-        set_repo_path(project_path)
-
-        from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
-        from mage_ai.data_preparation.models.pipeline import Pipeline
-        from mage_ai.data_preparation.variable_manager import get_global_variables
-
-        sys.path.append(os.path.dirname(project_path))
-        pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
-
-        default_variables = get_global_variables(pipeline_uuid)
-        global_vars = merge_dict(default_variables, runtime_variables)
-
-        from mage_ai.orchestration.db import db_connection
-        db_connection.start_session()
-
-        if block_uuid is None:
-            ExecutorFactory.get_pipeline_executor(pipeline).execute(
-                analyze_outputs=False,
-                global_vars=global_vars,
-                run_sensors=not skip_sensors,
-                run_tests=command == 'test',
-                update_status=False,
-            )
-        else:
-            ExecutorFactory.get_block_executor(
-                pipeline,
-                block_uuid,
-                execution_partition=execution_partition,
-                executor_type=executor_type,
-            ).execute(
-                analyze_outputs=False,
-                callback_url=callback_url,
-                global_vars=global_vars,
-                update_status=False,
-            )
-
-    elif command == 'create_spark_cluster':
-        from mage_ai.services.aws.emr.launcher import create_cluster
-
-        project_path = os.path.abspath(sys.argv[2])
-        create_cluster(project_path)
     else:
-        print(f'Unknown command "{command}". Type "mage help" to see what commands are available.')
+        ExecutorFactory.get_block_executor(
+            pipeline,
+            block_uuid,
+            execution_partition=execution_partition,
+            executor_type=executor_type,
+        ).execute(
+            analyze_outputs=False,
+            callback_url=callback_url,
+            global_vars=global_vars,
+            update_status=False,
+        )
+    print('Pipeline run completed.')
 
 
-if __name__ == "__main__":
-    main()
+@app.command()
+def create_spark_cluster(
+    project_path: str = typer.Argument(
+        ..., help='path of the Mage project that contains the EMR config.'
+    ),
+):
+    """
+    Create EMR cluster for Mage project.
+    """
+    from mage_ai.services.aws.emr.launcher import create_cluster
+
+    project_path = os.path.abspath(project_path)
+    create_cluster(project_path)
+
+
+if __name__ == '__main__':
+    app()

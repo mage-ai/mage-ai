@@ -1,7 +1,7 @@
+from jinja2 import Template
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.shared.environments import is_test
 from mage_ai.data_preparation.templates.utils import copy_template_directory
-from jinja2 import Template
 from typing import Dict
 import os
 import sys
@@ -99,7 +99,7 @@ def init_repo(repo_path: str) -> None:
     Initialize a repository under the current path.
     """
     if os.path.exists(repo_path):
-        return
+        raise FileExistsError(f'Repository {repo_path} already exists')
 
     os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exist_ok=True)
     copy_template_directory('repo', repo_path)
