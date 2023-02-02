@@ -1,8 +1,8 @@
 from collections.abc import Iterable
+from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.services.tracking.metrics import increment
-from mage_ai.shared import settings
 from mage_ai.shared.hash import extract
 import importlib
 import inflection

@@ -1,9 +1,9 @@
+from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.Resource import Resource
 from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db import db_connection
-from mage_ai.shared import settings
 from mage_ai.shared.hash import merge_dict
 import importlib
 import inflection
@@ -126,11 +126,9 @@ class BaseResource(Resource):
         before_create = self.before_create(payload, user, **kwargs)
 
         try:
-            res = None
-            with db_connection.session.begin():
-                res = self.create(payload, user, **merge_dict(kwargs, {
-                    'before_create': before_create,
-                }))
+            res = self.create(payload, user, **merge_dict(kwargs, {
+                'before_create': before_create,
+            }))
 
             if self.on_create_callback:
                 self.on_create_callback(resource=res)
@@ -179,9 +177,7 @@ class BaseResource(Resource):
         self.on_delete_failure_callback = None
 
         try:
-            res = None
-            with db_connection.session.begin():
-                res = self.delete(**kwargs)
+            res = self.delete(**kwargs)
 
             if self.on_delete_callback:
                 self.on_delete_callback(resource=res)
@@ -198,9 +194,7 @@ class BaseResource(Resource):
         self.on_update_failure_callback = None
 
         try:
-            res = None
-            with db_connection.session.begin():
-                res = self.update(payload, **kwargs)
+            res = self.update(payload, **kwargs)
 
             if self.on_update_callback:
                 self.on_update_callback(resource=res)

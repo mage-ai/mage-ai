@@ -7,6 +7,9 @@ import shutil
 import unittest
 
 
+from mage_ai.shared.environments import is_test
+
+
 class DBTestCase(unittest.TestCase):
     def setUp(self):
         pass
@@ -28,7 +31,10 @@ class DBTestCase(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree(self.repo_path)
         db_connection.close_session()
-        os.remove(TEST_DB)
+
+        if os.path.isfile(TEST_DB):
+            os.remove(TEST_DB)
+
         super().tearDownClass()
 
 

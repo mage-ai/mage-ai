@@ -21,7 +21,9 @@ db_kwargs = dict(
     pool_pre_ping=True,
 )
 
-if not db_connection_url:
+if is_test():
+    db_connection_url = f'sqlite:///{TEST_DB}'
+elif not db_connection_url:
     # connect to K8s CloudSQL sidecar
     if os.getenv(DB_USER):
         db_user = os.getenv(DB_USER)
