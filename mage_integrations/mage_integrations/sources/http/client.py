@@ -152,7 +152,7 @@ class Client():
         return params
 
     @utils.ratelimit(100, 60)
-    def make_request(self, url, method, params=None, body=None) -> Dict:
+    def make_request(self, url, method='get', params=None, body=None) -> Dict:
         if params is None:
             params = {}
         
@@ -169,7 +169,7 @@ class Client():
             headers=self.get_headers(),
             params=self.get_params(params),
             json=body,
-            timeout=request_timeout
+            timeout=request_timeout,
         )
 
         if response.status_code != 200:
