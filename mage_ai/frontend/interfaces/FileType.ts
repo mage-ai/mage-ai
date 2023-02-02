@@ -1,6 +1,7 @@
 import { BlockLanguageEnum } from './BlockType';
 
 export enum FileExtensionEnum {
+  JSON = 'json',
   PY = 'py',
   R = 'r',
   SQL = 'sql',
@@ -21,6 +22,7 @@ export const CODE_BLOCK_FILE_EXTENSIONS = [
 ];
 
 const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
+  FileExtensionEnum.JSON,
   FileExtensionEnum.PY,
   FileExtensionEnum.R,
   FileExtensionEnum.SQL,
@@ -51,6 +53,7 @@ export const FOLDER_NAME_CONFIG = 'config';
 export const FOLDER_NAME_PIPELINES = 'pipelines';
 export const METADATA_FILENAME = 'metadata.yaml';
 export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
+  [FileExtensionEnum.JSON]: FileExtensionEnum.JSON,
   [FileExtensionEnum.PY]: BlockLanguageEnum.PYTHON,
   [FileExtensionEnum.R]: BlockLanguageEnum.R,
   [FileExtensionEnum.SQL]: BlockLanguageEnum.SQL,
