@@ -38,8 +38,8 @@ def start(
     project_path: str = typer.Argument(os.getcwd(), help='path of the Mage project to be loaded.'),
     host: str = typer.Option('localhost', help='specify the host.'),
     port: str = typer.Option('6789', help='specify the port.'),
-    manage_instance: bool = typer.Option(False, help=''),
-    dbt_docs_instance: bool = typer.Option(False, help=''),
+    manage_instance: str = typer.Option('0', help=''),
+    dbt_docs_instance: str = typer.Option('0', help=''),
 ):
     """
     Start Mage server and UI.
@@ -54,8 +54,8 @@ def start(
         host=host,
         port=port,
         project=project_path,
-        manage=manage_instance,
-        dbt_docs=dbt_docs_instance,
+        manage=manage_instance == "1",
+        dbt_docs=dbt_docs_instance == "1",
     )
     print(
         f'Mage is running at http://{host or "localhost"}:{port}'
