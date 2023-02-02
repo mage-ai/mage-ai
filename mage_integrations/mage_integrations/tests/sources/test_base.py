@@ -292,7 +292,7 @@ class BaseSourceTests(unittest.TestCase):
         catalog.get_selected_streams.return_value = build_sample_streams_catalog_entries()
         source = Source()
         with patch.object(source, 'process_stream', return_value=None) as mock_process_stream:
-            with patch.object(source, 'sync_stream') as mock_sync_stream:
+            with patch.object(source, 'sync_stream', return_value=1) as mock_sync_stream:
                 source.sync(catalog)
                 self.assertEqual(mock_process_stream.call_count, 2)
                 self.assertEqual(mock_sync_stream.call_count, 2)
