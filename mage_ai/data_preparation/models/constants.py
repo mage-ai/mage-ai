@@ -2,6 +2,7 @@ from enum import Enum
 
 PIPELINES_FOLDER = 'pipelines'
 PIPELINE_CONFIG_FILE = 'metadata.yaml'
+DATA_INTEGRATION_CATALOG_FILE = 'data_integration_catalog.json'
 
 
 DATAFRAME_ANALYSIS_KEYS = frozenset(

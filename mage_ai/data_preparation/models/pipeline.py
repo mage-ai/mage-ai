@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
+    DATA_INTEGRATION_CATALOG_FILE,
     ExecutorType,
     PipelineType,
     PIPELINE_CONFIG_FILE,
@@ -21,6 +22,7 @@ from mage_ai.shared.utils import clean_name
 from typing import Callable, Dict, List
 import aiofiles
 import asyncio
+import json
 import os
 import shutil
 import yaml
@@ -62,6 +64,15 @@ class Pipeline:
             PIPELINES_FOLDER,
             self.uuid,
             PIPELINE_CONFIG_FILE,
+        )
+
+    @property
+    def catalog_config_path(self):
+        return os.path.join(
+            self.repo_path,
+            PIPELINES_FOLDER,
+            self.uuid,
+            DATA_INTEGRATION_CATALOG_FILE,
         )
 
     @property
@@ -750,6 +761,10 @@ class Pipeline:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict()
         else:
+            if self.data_integration is not None:
+                with open(self.catalog_config_path, 'w') as fp:
+                    json.dump(self.data_integration, fp)
+                self.data_integration = None
             pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
