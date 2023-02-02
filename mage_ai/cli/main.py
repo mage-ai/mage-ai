@@ -51,21 +51,44 @@ def start(
     set_repo_path(project_path)
 
     start_server(host, port, project_path, manage_instance, dbt_docs_instance)
-    print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project_path}')
+    print(
+        f'Mage is running at http://{host or "localhost"}:{port}'
+        f' and serving project {project_path}'''
+    )
 
 
 @app.command()
 def run(
-    project_path: str = typer.Argument(..., help="path of the Mage project that contains the pipeline."),
-    pipeline_uuid: str = typer.Argument(..., help="uuid of the pipeline to be run."),
-    test: bool = typer.Option(False, help="specify if tests should be run."),
-    block_uuid: Union[str, None] = typer.Option(None, help="uuid of the block to be run."),
-    execution_partition: Union[str, None] = typer.Option(None, help=""),
-    executor_type: Union[str, None] = typer.Option(None, help=""),
-    callback_url: Union[str, None] = typer.Option(None, help=""),
-    block_run_id: Union[int, None] = typer.Option(None, help=""),
-    runtime_vars: Union[List[str], None] = typer.Option(None, help="specify runtime variables. These will overwrite the pipeline global variables."),
-    skip_sensors: bool = typer.Option(False, help="specify if the sensors should be skipped."),
+    project_path: str = typer.Argument(
+        ..., help="path of the Mage project that contains the pipeline."
+    ),
+    pipeline_uuid: str = typer.Argument(
+        ..., help="uuid of the pipeline to be run."
+    ),
+    test: bool = typer.Option(
+        False, help="specify if tests should be run."
+    ),
+    block_uuid: Union[str, None] = typer.Option(
+        None, help="uuid of the block to be run."
+    ),
+    execution_partition: Union[str, None] = typer.Option(
+        None, help=""
+    ),
+    executor_type: Union[str, None] = typer.Option(
+        None, help=""
+    ),
+    callback_url: Union[str, None] = typer.Option(
+        None, help=""
+    ),
+    block_run_id: Union[int, None] = typer.Option(
+        None, help=""
+    ),
+    runtime_vars: Union[List[str], None] = typer.Option(
+        None, help="specify runtime variables. These will overwrite the pipeline global variables."
+    ),
+    skip_sensors: bool = typer.Option(
+        False, help="specify if the sensors should be skipped."
+    ),
 ):
     """
     Run pipeline.
@@ -116,7 +139,9 @@ def run(
 
 @app.command()
 def create_spark_cluster(
-    project_path: str = typer.Argument(..., help=" path of the Mage project that contains the EMR config."),
+    project_path: str = typer.Argument(
+        ..., help=" path of the Mage project that contains the EMR config."
+    ),
 ):
     """
     Create EMR cluster for Mage project.
