@@ -21,7 +21,10 @@ from mage_integrations.sources.sql.utils import (
 )
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.utils.dictionary import group_by
-from mage_integrations.utils.schema_helpers import extract_selected_columns
+from mage_integrations.utils.schema_helpers import (
+    extract_selected_columns,
+    filter_columns,
+)
 from singer.schema import Schema
 from time import sleep
 from typing import Any, Dict, Generator, List, Tuple
@@ -280,7 +283,16 @@ WHERE table_schema = '{schema}'
         clean_columns = self.update_column_names(columns)
 
         if not order_by_columns:
-            order_by_columns = columns
+            order_by_columns = filter_columns(
+                columns,
+                stream.schema.to_dict()['properties'],
+                [
+                    COLUMN_TYPE_BOOLEAN,
+                    COLUMN_TYPE_INTEGER,
+                    COLUMN_TYPE_NUMBER,
+                    COLUMN_TYPE_STRING,
+                ],
+            )
         order_by_columns = self.update_column_names(order_by_columns)
 
         if order_by_columns and not count_records:

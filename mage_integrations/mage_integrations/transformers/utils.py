@@ -9,6 +9,7 @@ INVALID_DATA_TYPES = [
     'mixed',
 ]
 
+
 def write_parquet_file(file_path: str, df: pd.DataFrame) -> None:
     df_output = df.copy()
     # Clean up data types since parquet doesn't support mixed data types
