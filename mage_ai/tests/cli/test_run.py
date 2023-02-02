@@ -1,10 +1,7 @@
-
-from unittest import mock
-
-from typer.testing import CliRunner
-
 from mage_ai.cli.main import app
 from mage_ai.tests.base_test import TestCase
+from typer.testing import CliRunner
+from unittest import mock
 
 runner = CliRunner()
 

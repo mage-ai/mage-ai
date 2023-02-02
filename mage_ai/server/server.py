@@ -98,8 +98,8 @@ import os
 import socket
 import tornado.ioloop
 import tornado.web
-import urllib.parse
 from typing import Union
+import urllib.parse
 
 
 class MainPageHandler(tornado.web.RequestHandler):

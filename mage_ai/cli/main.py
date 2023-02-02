@@ -1,13 +1,11 @@
-import os
-import sys
-from typing import List, Union
-
-import typer
 from click import Context
-from rich import print
-from typer.core import TyperGroup
-
 from mage_ai.cli.utils import parse_runtime_variables
+import os
+from rich import print
+import sys
+import typer
+from typer.core import TyperGroup
+from typing import List, Union
 
 
 class OrderCommands(TyperGroup):

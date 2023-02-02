@@ -1,5 +1,3 @@
-from typing import Union
-
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.constants import (
@@ -9,6 +7,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.code import is_pyspark_code
+from typing import Union
 
 
 class ExecutorFactory:
