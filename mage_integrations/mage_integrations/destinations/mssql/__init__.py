@@ -3,10 +3,9 @@ from mage_integrations.connections.mssql import (
 )
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
-    INTERNAL_COLUMN_CREATED_AT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
-from mage_integrations.destinations.sql.utils import (
+from mage_integrations.destinations.mssql.utils import (
     build_create_table_command,
     clean_column_name,
     convert_column_type,
@@ -29,6 +28,20 @@ class MSSQL(Destination):
             username=self.config['username'],
         )
 
+    def build_create_schema_commands(
+        self,
+        database_name: str,
+        schema_name: str,
+    ) -> List[str]:
+        return [
+            f"""
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '{schema_name}' )
+BEGIN
+    EXEC ('CREATE SCHEMA [{schema_name}] AUTHORIZATION [dbo]')
+END
+            """,
+        ]
+
     def build_create_table_commands(
         self,
         schema: Dict,
@@ -43,10 +56,10 @@ class MSSQL(Destination):
                 column_type_mapping=column_type_mapping(
                     schema,
                     convert_column_type,
-                    lambda item_type_converted: 'LONGTEXT',
+                    lambda item_type_converted: 'TEXT',
                 ),
                 columns=schema['properties'].keys(),
-                full_table_name=f'{database_name}.{table_name}',
+                full_table_name=f'{schema_name}.{table_name}',
                 key_properties=self.key_properties.get(stream),
                 schema=schema,
                 unique_constraints=unique_constraints,
@@ -63,12 +76,14 @@ class MSSQL(Destination):
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
+        full_table_name = f'{schema_name}.{table_name}'
+
         columns = list(schema['properties'].keys())
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=column_type_mapping(
                 schema,
                 convert_column_type,
-                lambda item_type_converted: 'LONGTEXT',
+                lambda item_type_converted: 'TEXT',
             ),
             columns=columns,
             records=records,
@@ -78,31 +93,39 @@ class MSSQL(Destination):
         insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
         insert_values = ', '.join(insert_values)
 
-        insert_into = f'INTO {table_name} ({insert_columns})'
-        commands_after = []
-
+        # https://learn.microsoft.com/en-us/sql/t-sql/statements/merge-transact-sql?view=sql-server-ver16
         if unique_constraints and unique_conflict_method:
-            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                columns_cleaned = [clean_column_name(col) for col in columns]
-                update_command = [f'{col} = new.{col}' for col in columns_cleaned
-                                  if col != INTERNAL_COLUMN_CREATED_AT]
-                commands_after += [
-                    'AS new',
-                    f"ON DUPLICATE KEY UPDATE {', '.join(update_command)}",
-                ]
-            else:
-                insert_into = f'IGNORE {insert_into}'
+            columns_cleaned = [clean_column_name(col) for col in columns]
+            unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
 
+            merge_commands = [
+                f'MERGE INTO {full_table_name} AS a',
+                f'USING (VALUES {insert_values}) AS b({insert_columns})',
+                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
+            ]
+
+            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+                set_command = ', '.join(
+                    [f'a.{col} = b.{col}' for col in columns_cleaned],
+                )
+                merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
+
+            merge_values = f"({', '.join([f'b.{col}' for col in columns_cleaned])})"
+            merge_commands.append(
+                f"WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values};",
+            )
+            merge_command = '\n'.join(merge_commands)
+
+            return [
+                merge_command,
+            ]
         commands = [
-            f'INSERT {insert_into}',
+            f'INSERT INTO {full_table_name} ({insert_columns})',
             f'VALUES {insert_values}',
-        ] + commands_after
+        ]
 
         return [
             '\n'.join(commands),
-            # This will combine the count for number of rows inserted and number of rows updated.
-            # For example, if it inserts 2 and updates 2, that will yield 4.
-            'SELECT ROW_COUNT()',
         ]
 
     def does_table_exist(
@@ -114,10 +137,8 @@ class MSSQL(Destination):
         connection = self.build_connection()
         data = connection.load('\n'.join([
             'SELECT * FROM information_schema.tables ',
-            f'WHERE table_schema = \'{database_name}\' AND table_name = \'{table_name}\'',
-            'LIMIT 1',
+            f'WHERE table_schema = \'{schema_name}\' AND table_name = \'{table_name}\'',
         ]))
-
         return len(data) >= 1
 
     def calculate_records_inserted_and_updated(
