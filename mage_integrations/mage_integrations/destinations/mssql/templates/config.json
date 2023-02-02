@@ -1,0 +1,8 @@
+{
+  "database": "msdb",
+  "host": "localhost",
+  "port": "1433",
+  "username": "root",
+  "password": "password",
+  "schema": ""
+}
