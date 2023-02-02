@@ -43,6 +43,7 @@ import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { find, indexBy } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
@@ -159,7 +160,10 @@ function IntegrationPipeline({
   ]);
 
   const catalog: CatalogType =
-    useMemo(() => dataLoaderBlockContent?.catalog || pipeline?.data_integration?.catalog, [
+    useMemo(() => (!isEmptyObject(dataLoaderBlockContent?.catalog)
+      ? dataLoaderBlockContent?.catalog
+      : pipeline?.data_integration?.catalog
+    ), [
       dataLoaderBlockContent,
       pipeline?.data_integration?.catalog,
     ]);
@@ -277,24 +281,22 @@ function IntegrationPipeline({
 
             setIntegrationStreams(streams.map(({ tap_stream_id }) => tap_stream_id));
 
-            let payload;
             const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
-            if (dataLoaderBlockContentCatalog) {
+            if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
               onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
                 ...dataLoaderBlockContent,
-                catalog: catalogData,
+                catalog: {},
               }));
-            } else {
-              payload = {
-                pipeline: {
-                  ...pipeline,
-                  data_integration: {
-                    ...(pipeline?.data_integration || {}),
-                    catalog: catalogData,
-                  },
-                },
-              };
             }
+            const payload = {
+              pipeline: {
+                ...pipeline,
+                data_integration: {
+                  ...(pipeline?.data_integration || {}),
+                  catalog: catalogData,
+                },
+              },
+            };
 
             savePipelineContent(payload).then(() => {
               return fetchPipeline();
@@ -346,24 +348,22 @@ function IntegrationPipeline({
       streams: streams.concat(streamDataTransformer(stream)),
     };
 
-    let payload;
     const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
-    if (dataLoaderBlockContentCatalog) {
+    if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
       onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
         ...dataLoaderBlockContent,
-        catalog: catalogUpdate,
+        catalog: {},
       }));
-    } else {
-      payload = {
-        pipeline: {
-          ...pipeline,
-          data_integration: {
-            ...(pipeline?.data_integration || {}),
-            catalog: catalogUpdate,
-          },
-        },
-      };
     }
+    const payload = {
+      pipeline: {
+        ...pipeline,
+        data_integration: {
+          ...(pipeline?.data_integration || {}),
+          catalog: catalogUpdate,
+        },
+      },
+    };
 
     savePipelineContent(payload).then(() => fetchPipeline());
   }, [
@@ -372,6 +372,7 @@ function IntegrationPipeline({
     dataLoaderBlockContent,
     fetchPipeline,
     onChangeCodeBlock,
+    pipeline,
     savePipelineContent,
   ]);
   const updateAllStreams = useCallback((
@@ -386,24 +387,22 @@ function IntegrationPipeline({
       streams: catalog.streams.map(stream => streamDataTransformer(stream)),
     };
 
-    let payload;
     const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
-    if (dataLoaderBlockContentCatalog) {
+    if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
       onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
         ...dataLoaderBlockContent,
-        catalog: catalogUpdate,
+        catalog: {},
       }));
-    } else {
-      payload = {
-        pipeline: {
-          ...pipeline,
-          data_integration: {
-            ...(pipeline?.data_integration || {}),
-            catalog: catalogUpdate,
-          },
-        },
-      };
     }
+    const payload = {
+      pipeline: {
+        ...pipeline,
+        data_integration: {
+          ...(pipeline?.data_integration || {}),
+          catalog: catalogUpdate,
+        },
+      },
+    };
 
     savePipelineContent(payload).then(() => fetchPipeline());
   }, [
@@ -577,11 +576,22 @@ function IntegrationPipeline({
           });
           hideModal();
         } else {
-          onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-            ...dataLoaderBlockContent,
-            catalog: {},
-          }));
-          savePipelineContent().then(() => fetchPipeline());
+          const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+          if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
+            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+              ...dataLoaderBlockContent,
+              catalog: {},
+            }));
+          }
+          savePipelineContent({
+            pipeline: {
+              ...pipeline,
+              data_integration: {
+                ...(pipeline?.data_integration || {}),
+                catalog: null,
+              },
+            },
+          }).then(() => fetchPipeline());
           hideModal();
         }
       }}
@@ -856,7 +866,6 @@ function IntegrationPipeline({
 
                   return ret;
                 }}
-                // blockIdx={blockIdx}
                 compact
                 hideDataExporter
                 hideDataLoader
