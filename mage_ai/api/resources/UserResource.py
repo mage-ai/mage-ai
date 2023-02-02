@@ -1,14 +1,13 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.api.resources.mixins.TokenEncodable import TokenEncodable
-from mage_ai.authentication.oauth2 import generate_access_token
+from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.orchestration.db.models import User
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from sqlalchemy import or_
 
 
-class UserResource(DatabaseResource, TokenEncodable):
+class UserResource(DatabaseResource):
     model_class = User
 
     def __init__(self, model, current_user, **kwargs):
@@ -66,4 +65,4 @@ class UserResource(DatabaseResource, TokenEncodable):
     def token(self):
         oauth_token = self.model_options.get('oauth_token')
         if oauth_token:
-            return self.encode_token(oauth_token.token, oauth_token.expires)
+            return encode_token(oauth_token.token, oauth_token.expires)

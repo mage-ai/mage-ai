@@ -69,8 +69,8 @@ class DatabaseResource(BaseResource):
                 payload[column_name] = parent_model.id
             except StopIteration:
                 pass
-        model = self.model_class(**payload)
         try:
+            model = self.model_class(**payload)
             model.full_clean()
             model.save()
             self.create_associated_resources(model, payload, user, **kwargs)
@@ -80,7 +80,7 @@ class DatabaseResource(BaseResource):
                 # We need to return 200 so the front end client can process the error response
                 # and show the user helpful errors.
                 'code': 200,
-                'errors':  err.message_dict,
+                'errors':  err.to_dict(),
             }))
 
     @classmethod

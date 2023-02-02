@@ -1,14 +1,13 @@
 from datetime import datetime
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
-from mage_ai.api.resources.mixins.TokenEncodable import TokenEncodable
-from mage_ai.authentication.oauth2 import generate_access_token
+from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models import User
 
 
-class SessionResource(BaseResource, TokenEncodable):
+class SessionResource(BaseResource):
     @classmethod
     def create(self, payload, _, **kwargs):
         email = payload.get('email')
@@ -45,4 +44,4 @@ class SessionResource(BaseResource, TokenEncodable):
         self.model.save()
 
     def token(self):
-        return self.encode_token(self.model.token, self.model.expires)
+        return encode_token(self.model.token, self.model.expires)
