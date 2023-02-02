@@ -1,7 +1,7 @@
 from json import JSONDecodeError
+from mage_ai.api.errors import ApiError
 from mage_ai.orchestration.db.models import Oauth2AccessToken, Oauth2Application
 from mage_ai.server.api.constants import ENDPOINTS_BYPASS_OAUTH_CHECK, HEADER_OAUTH_TOKEN
-from mage_ai.server.api.errors import ApiError
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import camel_to_snake_case
 import dateutil.parser

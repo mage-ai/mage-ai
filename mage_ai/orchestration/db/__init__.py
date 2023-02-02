@@ -8,6 +8,7 @@ from mage_ai.orchestration.constants import (
 from mage_ai.shared.environments import is_test
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+import logging
 import os
 import sqlalchemy
 
@@ -81,3 +82,7 @@ def safe_db_query(func):
                     raise e
                 retry_count += 1
     return func_with_rollback
+
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)

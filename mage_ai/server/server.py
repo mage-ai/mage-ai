@@ -243,7 +243,7 @@ class ApiPipelineExecuteHandler(BaseHandler):
         self.finish()
 
 
-class ApiPipelineListHandler(BaseApiHandler):
+class ApiPipelineListHandler(BaseHandler):
     async def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 

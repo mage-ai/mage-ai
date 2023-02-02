@@ -4,21 +4,21 @@ from mage_ai.server.api.base import BaseApiHandler, BaseHandler
 
 class ApiChildDetailHandler(BaseApiHandler):
     def delete(self, resource, pk, child, child_pk):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
             child=child,
             child_pk=child_pk,
         ))
 
     def get(self, resource, pk, child, child_pk):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
             child=child,
             child_pk=child_pk,
         ))
 
     def put(self, resource, pk, child, child_pk):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
             child=child,
             child_pk=child_pk,
@@ -27,13 +27,13 @@ class ApiChildDetailHandler(BaseApiHandler):
 
 class ApiChildListHandler(BaseApiHandler):
     def get(self, resource, pk, child):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
             child=child,
         ))
 
     def post(self, resource, pk, child):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
             child=child,
         ))
@@ -41,24 +41,24 @@ class ApiChildListHandler(BaseApiHandler):
 
 class ApiResourceDetailHandler(BaseApiHandler):
     def delete(self, resource, pk):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
         ))
 
     def get(self, resource, pk):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
         ))
 
     def put(self, resource, pk):
-        return execute_operation(self, self.request, resource, dict(
+        return execute_operation(self, resource, dict(
             pk=pk,
         ))
 
 
 class ApiResourceListHandler(BaseApiHandler):
     def get(self, resource):
-        return execute_operation(self, self.request, resource)
+        return execute_operation(self, resource)
 
     def post(self, resource):
-        return execute_operation(self, self.request, resource)
+        return execute_operation(self, resource)
