@@ -91,6 +91,7 @@ from sqlalchemy.orm import aliased
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
+from typing import Union
 import argparse
 import asyncio
 import json
@@ -98,7 +99,6 @@ import os
 import socket
 import tornado.ioloop
 import tornado.web
-from typing import Union
 import urllib.parse
 
 

@@ -1,8 +1,8 @@
 from mage_ai.cli.main import app
 from mage_ai.tests.base_test import TestCase
-import os
 from typer.testing import CliRunner
 from unittest import mock
+import os
 
 runner = CliRunner()
 

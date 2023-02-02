@@ -1,11 +1,11 @@
 from click import Context
 from mage_ai.cli.utils import parse_runtime_variables
-import os
 from rich import print
-import sys
-import typer
 from typer.core import TyperGroup
 from typing import List, Union
+import os
+import sys
+import typer
 
 
 class OrderCommands(TyperGroup):

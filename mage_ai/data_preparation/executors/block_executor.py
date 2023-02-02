@@ -1,13 +1,13 @@
-import json
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
+from typing import Callable, Dict, List, Union
+import json
 import requests
 import traceback
-from typing import Callable, Dict, List, Union
 
 
 class BlockExecutor:

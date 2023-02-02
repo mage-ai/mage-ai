@@ -2,10 +2,10 @@ from jinja2 import Template
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.shared.environments import is_test
 from mage_ai.data_preparation.templates.utils import copy_template_directory
+from typing import Dict
 import os
 import sys
 import traceback
-from typing import Dict
 import yaml
 
 MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'

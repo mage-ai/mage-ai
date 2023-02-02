@@ -1,5 +1,5 @@
-import json
 from typing import Any, Dict, List, Union
+import json
 
 
 def parse_runtime_variables(variables: List[str]) -> Dict[str, Any]:
