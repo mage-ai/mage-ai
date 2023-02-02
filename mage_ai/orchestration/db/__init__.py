@@ -43,8 +43,6 @@ if not db_connection_url:
 
 if db_connection_url.startswith('postgresql'):
     db_kwargs['pool_size'] = 50
-
-if not is_test():
     db_kwargs['connect_args']['options'] = '-c timezone=utc'
 
 engine = create_engine(
