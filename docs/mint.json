@@ -177,6 +177,12 @@
             "guides/data-validation"
           ]
         },
+        {
+          "group": "Secrets",
+          "pages": [
+            "development/secrets/GCP"
+          ]
+        },
         "developing-in-the-cloud/setting-up-git",
         {
           "group": "Team management",
