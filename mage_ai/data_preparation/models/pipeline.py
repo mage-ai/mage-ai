@@ -33,7 +33,7 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
-    def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
+    def __init__(self, uuid, repo_path=None, config=None, repo_config=None, catalog=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.data_integration = None
@@ -45,7 +45,7 @@ class Pipeline:
         if config is None:
             self.load_config_from_yaml()
         else:
-            self.load_config(config)
+            self.load_config(config, catalog)
         if repo_config is None:
             self.repo_config = get_repo_config(repo_path=self.repo_path)
         elif type(repo_config) is dict:
@@ -203,7 +203,26 @@ class Pipeline:
                 print(err)
 
         if PipelineType.INTEGRATION == config.get('type'):
-            pipeline = IntegrationPipeline(uuid, repo_path=repo_path, config=config)
+            catalog = None
+            catalog_config_path = os.path.join(
+                repo_path,
+                PIPELINES_FOLDER,
+                uuid,
+                DATA_INTEGRATION_CATALOG_FILE,
+            )
+            if os.path.exists(catalog_config_path):
+                async with aiofiles.open(catalog_config_path, mode='r') as f:
+                    try:
+                        catalog = json.loads(await f.read())
+                    except Exception as err:
+                        catalog = {}
+                        print(err)
+            pipeline = IntegrationPipeline(
+                uuid,
+                catalog=catalog,
+                config=config,
+                repo_path=repo_path,
+            )
         else:
             pipeline = self(uuid, repo_path=repo_path, config=config)
         return pipeline
@@ -331,8 +350,11 @@ class Pipeline:
     def load_config_from_yaml(self):
         self.load_config(self.get_config_from_yaml())
 
-    def load_config(self, config):
-        self.data_integration = config.get('data_integration')
+    def load_config(self, config, catalog=None):
+        if catalog is None:
+            self.data_integration = config.get('data_integration')
+        else:
+            self.data_integration = catalog
         self.name = config.get('name')
         self.type = config.get('type') or self.type
 
