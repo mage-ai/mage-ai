@@ -2,6 +2,9 @@ from mage_integrations.connections.mssql import (
     MSSQL as MSSQLConnection
 )
 from mage_integrations.sources.base import main
+from mage_integrations.sources.constants import (
+    COLUMN_FORMAT_DATETIME,
+)
 from mage_integrations.sources.sql.base import Source
 from typing import List
 
@@ -51,6 +54,11 @@ WHERE  c.table_schema = '{schema}'
 
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
+
+    def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
+        if COLUMN_FORMAT_DATETIME == column_format:
+            return 'DATE'
+        return super().column_type_mapping(column_type, column_format)
 
     def _limit_query_string(self, limit, offset):
         return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
