@@ -662,7 +662,7 @@ async def main(
 
     if REQUIRE_USER_AUTHENTICATION:
         print('User authentication is enabled.')
-        user = User.query.filter(owner=True)
+        user = User.query.filter(User.owner == True).first()
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
             password_salt = generate_salt()

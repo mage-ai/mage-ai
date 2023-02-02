@@ -18,7 +18,7 @@ def generate_access_token(user: User, application: Oauth2Application = None) -> 
     )
 
     if application:
-        attributes_data['application_id'] = application.id
+        attributes_data['oauth2_application_id'] = application.id
 
     return Oauth2AccessToken.create(**attributes_data)
 

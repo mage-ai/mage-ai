@@ -15,7 +15,7 @@ import json
 import simplejson
 
 
-def execute_operation(
+async def execute_operation(
     handler,
     resource: str,
     pk: Union[None, int, str] = None,
@@ -88,7 +88,7 @@ def execute_operation(
     timing('api.time', api_time, tags)
     timing('sql.time', api_time, tags)
 
-    self.write(simplejson.dumps(
+    handler.write(simplejson.dumps(
         response,
         default=datetime.isoformat,
         ignore_nan=True,
@@ -102,7 +102,7 @@ def __determine_action(
      pk: Union[None, int, str] = None,
 ) -> Tuple[str, str]:
     if 'DELETE' == request.method:
-        return (DELETE, json.loads(request.body))
+        return (DELETE, json.loads(request.body) if request.body else {})
 
     if 'GET' == request.method:
         if pk and child and child_pk:
@@ -115,10 +115,10 @@ def __determine_action(
             return (LIST, request.query_arguments)
 
     if 'POST' == request.method:
-        return (CREATE, json.loads(request.body))
+        return (CREATE, json.loads(request.body) if request.body else {})
 
     if 'PUT' == request.method:
-        return (UPDATE, json.loads(request.body))
+        return (UPDATE, json.loads(request.body) if request.body else {})
 
 
 def __meta(request) -> Dict:

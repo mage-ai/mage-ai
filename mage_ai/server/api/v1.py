@@ -3,22 +3,22 @@ from mage_ai.server.api.base import BaseApiHandler, BaseHandler
 
 
 class ApiChildDetailHandler(BaseApiHandler):
-    def delete(self, resource, pk, child, child_pk):
-        return execute_operation(self, resource, dict(
+    async def delete(self, resource, pk, child, child_pk):
+        return await execute_operation(self, resource, dict(
             pk=pk,
             child=child,
             child_pk=child_pk,
         ))
 
-    def get(self, resource, pk, child, child_pk):
-        return execute_operation(self, resource, dict(
+    async def get(self, resource, pk, child, child_pk):
+        return await execute_operation(self, resource, dict(
             pk=pk,
             child=child,
             child_pk=child_pk,
         ))
 
-    def put(self, resource, pk, child, child_pk):
-        return execute_operation(self, resource, dict(
+    async def put(self, resource, pk, child, child_pk):
+        return await execute_operation(self, resource, dict(
             pk=pk,
             child=child,
             child_pk=child_pk,
@@ -26,39 +26,39 @@ class ApiChildDetailHandler(BaseApiHandler):
 
 
 class ApiChildListHandler(BaseApiHandler):
-    def get(self, resource, pk, child):
-        return execute_operation(self, resource, dict(
+    async def get(self, resource, pk, child):
+        return await execute_operation(self, resource, dict(
             pk=pk,
             child=child,
         ))
 
-    def post(self, resource, pk, child):
-        return execute_operation(self, resource, dict(
+    async def post(self, resource, pk, child):
+        return await execute_operation(self, resource, dict(
             pk=pk,
             child=child,
         ))
 
 
 class ApiResourceDetailHandler(BaseApiHandler):
-    def delete(self, resource, pk):
-        return execute_operation(self, resource, dict(
+    async def delete(self, resource, pk):
+        return await execute_operation(self, resource, dict(
             pk=pk,
         ))
 
-    def get(self, resource, pk):
-        return execute_operation(self, resource, dict(
+    async def get(self, resource, pk):
+        return await execute_operation(self, resource, dict(
             pk=pk,
         ))
 
-    def put(self, resource, pk):
-        return execute_operation(self, resource, dict(
+    async def put(self, resource, pk):
+        return await execute_operation(self, resource, dict(
             pk=pk,
         ))
 
 
 class ApiResourceListHandler(BaseApiHandler):
-    def get(self, resource):
-        return execute_operation(self, resource)
+    async def get(self, resource):
+        return await execute_operation(self, resource)
 
-    def post(self, resource):
-        return execute_operation(self, resource)
+    async def post(self, resource):
+        return await execute_operation(self, resource)

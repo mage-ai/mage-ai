@@ -145,11 +145,11 @@ class BaseApiHandler(BaseHandler):
             self.request.__setattr__('oauth_client', oauth_client)
             if not oauth_client:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
-            elif oauth_client.id != OAUTH2_APPLICATION_CLIENT_ID:
+            elif oauth_client.client_id != OAUTH2_APPLICATION_CLIENT_ID:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
-            else:
+            elif token_from_header:
                 oauth_token = Oauth2AccessToken.query.filter(
-                    Oauth2AccessToken.oauth2_application_id == oauth_client.client_id,
+                    Oauth2AccessToken.oauth2_application_id == oauth_client.id,
                     Oauth2AccessToken.token == token_from_header,
                 ).first()
                 if oauth_token:

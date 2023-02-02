@@ -3,7 +3,6 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.Resource import Resource
 from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
-from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.hash import merge_dict
 import importlib
 import inflection
