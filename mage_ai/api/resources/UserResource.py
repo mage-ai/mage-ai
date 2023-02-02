@@ -4,7 +4,6 @@ from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.orchestration.db.models import User
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
-from sqlalchemy import or_
 
 
 class UserResource(DatabaseResource):
@@ -32,10 +31,16 @@ class UserResource(DatabaseResource):
             error.update({ 'message': 'Missing required values: {}.'.format(', '.join(missing_values)) })
             raise ApiError(error)
 
-        user = User.query.filter(or_(User.email == email, User.username == username)).first()
-        if user:
-            error.update({ 'message': 'Account with same email or username is already taken.' })
-            raise ApiError(error)
+        if email:
+            user = User.query.filter(User.email == email).first()
+            if user:
+                error.update({ 'message': 'Account with same email is already taken.' })
+                raise ApiError(error)
+        if username:
+            user = User.query.filter(User.username == username).first()
+            if user:
+                error.update({ 'message': 'Account with same username is already taken.' })
+                raise ApiError(error)
 
         if password != password_confirmation:
             error.update({ 'message': 'Password and password confirmation do not match.' })
