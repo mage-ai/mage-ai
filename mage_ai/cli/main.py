@@ -50,7 +50,13 @@ def start(
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
 
-    start_server(host, port, project_path, manage_instance, dbt_docs_instance)
+    start_server(
+        host=host,
+        port=port,
+        project=project_path,
+        manage=manage_instance,
+        dbt_docs=dbt_docs_instance,
+    )
     print(
         f'Mage is running at http://{host or "localhost"}:{port}'
         f' and serving project {project_path}'''
