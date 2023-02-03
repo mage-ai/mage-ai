@@ -16,7 +16,7 @@ from mage_ai.data_cleaner.transformer_actions.column import (
     shift_up,
 )
 from mage_ai.tests.base_test import TestCase
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 from random import seed
 import numpy as np
 import pandas as pd
