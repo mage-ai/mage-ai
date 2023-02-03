@@ -347,8 +347,18 @@ class Pipeline:
             config = yaml.full_load(fp) or {}
         return config
 
+    def get_catalog_from_json(self):
+        if not os.path.exists(self.catalog_config_path):
+            raise Exception(f'Data integration pipeline {self.uuid} is missing stream data.')
+        with open(self.catalog_config_path) as f:
+            config = json.load(f)
+        return config
+
     def load_config_from_yaml(self):
-        self.load_config(self.get_config_from_yaml())
+        catalog = None
+        if os.path.exists(self.catalog_config_path):
+            catalog = self.get_catalog_from_json()
+        self.load_config(self.get_config_from_yaml(), catalog=catalog)
 
     def load_config(self, config, catalog=None):
         if catalog is None:
