@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "key": {
+      "type": ["null", "string"]
+    },
+    "version": {
+      "type": ["null", "number"]
+    },
+    "createdAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "lastModifiedAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "lastModifiedBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "customer": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "anonymousId": {
+      "type": ["null", "string"]
+    },
+    "interfaceId": {
+      "type": ["null", "string"]
+    },
+    "amountPlanned": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "paymentMethodInfo": {
+      "type": ["null", "object"],
+      "properties": {
+        "paymentInterface": {
+          "type": ["null", "string"]
+        },
+        "method": {
+          "type": ["null", "string"]
+        },
+        "name": {
+          "type": ["null", "object"],
+          "additionalProperties": true
+        }
+      }
+    },
+    "paymentStatus": {
+      "type": ["null", "object"],
+      "properties": {
+        "interfaceCode": {
+          "type": ["null", "string"]
+        },
+        "interfaceText": {
+          "type": ["null", "string"]
+        },
+        "state": {
+          "type": ["null", "object"],
+          "additionalProperties": true
+        }
+      }
+    },
+    "transactions": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "id": {
+            "type": ["null", "string"]
+          },
+          "timestamp": {
+            "type": ["null", "string"]
+          },
+          "type": {
+            "type": ["null", "string"]
+          },
+          "amount": {
+            "type": ["null", "object"],
+            "additionalProperties": true
+          },
+          "interactionId": {
+            "type": ["null", "string"]
+          },
+          "state": {
+            "type": ["null", "string"]
+          }
+        }
+      }
+    },
+    "interfaceInteractions": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "custom": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    }
+  }
+}

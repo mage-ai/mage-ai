@@ -1,10 +1,10 @@
 from mage_integrations.sources.base import Source, main
-from mage_integrations.sources.front.client import Client
-from mage_integrations.sources.front.schemas import STREAMS
+from mage_integrations.sources.commercetools.client import Client
+from mage_integrations.sources.commercetools.schemas import STREAMS
 from typing import Dict, Generator, List
 
 
-class Front(Source):
+class Commercetools(Source):
     """
     Front API doc: https://dev.frontapp.com/reference/introduction
     """
@@ -40,4 +40,4 @@ class Front(Source):
 
 
 if __name__ == '__main__':
-    main(Front)
+    main(Commercetools)

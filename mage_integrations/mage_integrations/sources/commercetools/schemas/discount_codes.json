@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "version": {
+      "type": ["null", "number"]
+    },
+    "createdAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "lastModifiedAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "lastModifiedBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "name": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "description": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "code": {
+      "type": ["null", "string"]
+    },
+    "cartDiscounts": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "groups": {
+      "type": ["null", "array"]
+    },
+    "isActive": {
+      "type": ["null", "boolean"]
+    },
+    "validFrom": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "validUntil": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "references": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "maxApplications": {
+      "type": ["null", "number"]
+    },
+    "maxApplicationsPerCustomer": {
+      "type": ["null", "number"]
+    },
+    "custom": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    }
+  }
+}
