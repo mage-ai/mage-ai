@@ -1,12 +1,10 @@
 from croniter import croniter
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.utils import (
-    get_all_ancestors,
-    is_dynamic_block,
-)
+from mage_ai.data_preparation.models.block.utils import get_all_ancestors, is_dynamic_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
@@ -19,6 +17,8 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+import json
+import re
 import uuid
 
 
@@ -62,6 +62,9 @@ class BaseModel(Base):
         model = self(**kwargs)
         model.save()
         return model
+
+    def full_clean(self, **kwargs) -> None:
+        pass
 
     def save(self, commit=True) -> None:
         self.session.add(self)
@@ -132,6 +135,17 @@ class User(BaseModel):
 
     oauth2_applications = relationship('Oauth2Application', back_populates='user')
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='user')
+
+    @validates('email')
+    def validate_email(self, key, value):
+        if value:
+            regex = re.compile(r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])")
+            if not re.fullmatch(regex, value):
+                raise ValidationError('Email address is invalid.', metadata=dict(
+                    key=key,
+                    value=value,
+                ))
+        return value
 
 
 class Oauth2Application(BaseModel):

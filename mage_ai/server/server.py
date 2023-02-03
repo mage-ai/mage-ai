@@ -1,3 +1,4 @@
+from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -17,7 +18,7 @@ from mage_ai.data_preparation.variable_manager import (
     set_global_variable,
 )
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models import PipelineSchedule
+from mage_ai.orchestration.db.models import Oauth2Application, PipelineSchedule, User
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
     restart_kernel,
@@ -78,6 +79,12 @@ from mage_ai.server.api.orchestration import (
     ApiPipelineScheduleListHandler,
 )
 from mage_ai.server.api.projects import ApiProjectsHandler
+from mage_ai.server.api.v1 import (
+    ApiChildDetailHandler,
+    ApiChildListHandler,
+    ApiResourceDetailHandler,
+    ApiResourceListHandler,
+)
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
@@ -95,6 +102,7 @@ from mage_ai.server.scheduler_manager import (
 )
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket_server import WebSocketServer
+from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.hash import group_by, merge_dict
 from sqlalchemy.orm import aliased
 from tornado import autoreload
@@ -237,7 +245,7 @@ class ApiPipelineExecuteHandler(BaseHandler):
         self.finish()
 
 
-class ApiPipelineListHandler(BaseApiHandler):
+class ApiPipelineListHandler(BaseHandler):
     async def get(self):
         include_schedules = self.get_argument('include_schedules', False)
 
@@ -599,6 +607,22 @@ def make_app():
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiPipelineBackfillsHandler),
         (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
         (r'/api/backfills', ApiBackfillsHandler),
+        (
+            r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)/(?P<child_pk>\w+)',
+            ApiChildDetailHandler,
+        ),
+        (
+            r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)',
+            ApiChildListHandler,
+        ),
+        (
+            r'/api/(?P<resource>\w+)/(?P<pk>\w+)',
+            ApiResourceDetailHandler,
+        ),
+        (
+            r'/api/(?P<resource>\w+)',
+            ApiResourceListHandler,
+        ),
     ]
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
@@ -636,7 +660,30 @@ async def main(
     )
     db_connection.start_session(force=True)
 
-    # Check for default OAuth2Application
+    if REQUIRE_USER_AUTHENTICATION:
+        print('User authentication is enabled.')
+        user = User.query.filter(User.owner == True).first()
+        if not user:
+            print('User with owner permission doesn’t exist, creating owner user.')
+            password_salt = generate_salt()
+            user = User.create(
+                password_hash=create_bcrypt_hash('admin', password_salt),
+                password_salt=password_salt,
+                owner=True,
+                username='admin',
+            )
+
+        oauth_client = Oauth2Application.query.filter(
+            Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,
+        ).first()
+        if not oauth_client:
+            print('OAuth2 application doesn’t exist for frontend, creating OAuth2 application.')
+            oauth_client = Oauth2Application.create(
+                client_id=OAUTH2_APPLICATION_CLIENT_ID,
+                client_type=Oauth2Application.ClientType.PUBLIC,
+                name='frontend',
+                user_id=user.id,
+            )
 
     # Check scheduler status periodically
     periodic_callback = PeriodicCallback(
