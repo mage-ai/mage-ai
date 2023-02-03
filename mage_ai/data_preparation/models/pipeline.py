@@ -45,7 +45,7 @@ class Pipeline:
         if config is None:
             self.load_config_from_yaml()
         else:
-            self.load_config(config, catalog)
+            self.load_config(config, catalog=catalog)
         if repo_config is None:
             self.repo_config = get_repo_config(repo_path=self.repo_path)
         elif type(repo_config) is dict:
@@ -428,9 +428,9 @@ class Pipeline:
 
         return blocks_by_uuid
 
-    def to_dict_base(self) -> Dict:
-        base = dict(
-            data_integration=self.data_integration,
+    def to_dict_base(self,exclude_data_integration=False) -> Dict:
+        return dict(
+            data_integration=self.data_integration if not exclude_data_integration else None,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             uuid=self.uuid,
@@ -444,26 +444,30 @@ class Pipeline:
         include_content=False,
         include_outputs=False,
         sample_count=None,
+        exclude_data_integration=False,
     ) -> Dict:
-        return merge_dict(self.to_dict_base(), dict(
-            blocks=[
-                b.to_dict(
-                    include_content=include_content,
-                    include_outputs=include_outputs,
-                    sample_count=sample_count,
-                    check_if_file_exists=True,
-                )
-                for b in self.blocks_by_uuid.values()
-            ],
-            widgets=[
-                b.to_dict(
-                    include_content=include_content,
-                    include_outputs=include_outputs,
-                    sample_count=sample_count,
-                )
-                for b in self.widgets_by_uuid.values()
-            ],
-        ))
+        return merge_dict(
+            self.to_dict_base(exclude_data_integration=exclude_data_integration),
+            dict(
+                blocks=[
+                    b.to_dict(
+                        include_content=include_content,
+                        include_outputs=include_outputs,
+                        sample_count=sample_count,
+                        check_if_file_exists=True,
+                    )
+                    for b in self.blocks_by_uuid.values()
+                ],
+                widgets=[
+                    b.to_dict(
+                        include_content=include_content,
+                        include_outputs=include_outputs,
+                        sample_count=sample_count,
+                    )
+                    for b in self.widgets_by_uuid.values()
+                ],
+            ),
+        )
 
     async def to_dict_async(
         self,
@@ -796,8 +800,7 @@ class Pipeline:
             if self.data_integration is not None:
                 with open(self.catalog_config_path, 'w') as fp:
                     json.dump(self.data_integration, fp)
-                self.data_integration = None
-            pipeline_dict = self.to_dict()
+            pipeline_dict = self.to_dict(exclude_data_integration=True)
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
 
