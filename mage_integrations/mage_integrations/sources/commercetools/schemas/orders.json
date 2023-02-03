@@ -13,14 +13,16 @@
       "format": "date-time"
     },
     "createdBy": {
-      "$ref": "created_by.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "lastModifiedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
     "lastModifiedBy": {
-      "$ref": "last_modified_by.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "completedAt": {
       "type": ["null", "integer"],
@@ -39,7 +41,8 @@
       "type": ["null", "string"]
     },
     "store": {
-      "$ref": "key_reference.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "lineItems": {
       "type": ["null", "array"],
@@ -53,25 +56,32 @@
             "type": ["null", "string"]
           },
           "name": {
-            "$ref": "localized_string.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "productSlug": {
-            "$ref": "localized_string.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "productType": {
-            "$ref": "reference.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "variant": {
-            "$ref": "product_variant.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "price": {
-            "$ref": "price.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "taxedPrice": {
-            "$ref": "taxed_item_price.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "totalPrice": {
-            "$ref": "money.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "quantity": {
             "type": ["null", "number"]
@@ -83,20 +93,25 @@
           "state": {
             "type": ["null", "array"],
             "items": {
-              "$ref": "state.json"
+              "type": ["null", "object"],
+              "additionalProperties": true
             }
           },
           "taxRate": {
-            "$ref": "taxrate.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "supplyChannel": {
-            "$ref": "reference.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "distributionChannel": {
-            "$ref": "reference.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "discountedPricePerQuantity": {
-            "$ref": "discounted_price_per_quantity.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "priceMode": {
             "type": ["null", "string"]
@@ -105,10 +120,12 @@
             "type": ["null", "string"]
           },
           "custom": {
-            "$ref": "custom.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "shippingDetails": {
-            "$ref": "shipping_details.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "lastModifiedAt": {
             "type": ["null", "string"],
@@ -126,16 +143,20 @@
             "type": ["null", "string"]
           },
           "name": {
-            "$ref": "localized_string.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "money": {
-            "$ref": "money.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "taxedPrice": {
-            "$ref": "taxed_item_price.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "totalPrice": {
-            "$ref": "money.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "slug": {
             "type": ["null", "string"]
@@ -146,41 +167,51 @@
           "state": {
             "type": ["null", "array"],
             "items": {
-              "$ref": "state.json"
+              "type": ["null", "object"],
+              "additionalProperties": true
             }
           },
           "taxCategory": {
-            "$ref": "reference.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "taxRate": {
-            "$ref": "taxrate.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "discountedPricePerQuantity": {
             "type": ["null", "array"],
             "items": {
-              "$ref": "discounted_price_per_quantity.json"
+              "type": ["null", "object"],
+              "additionalProperties": true
             }
           },
           "custom": {
-            "$ref": "custom.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "shippingDetails": {
-            "$ref": "shipping_details.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           }
         }
       }
     },
     "totalPrice": {
-      "$ref": "money.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "taxedPrice": {
-      "$ref": "taxed_price.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "shippingAddress": {
-      "$ref": "address.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "billingAddress": {
-      "$ref": "address.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "taxMode": {
       "type": ["null", "string"]
@@ -195,7 +226,8 @@
       "type": ["null", "string"]
     },
     "customerGroup": {
-      "$ref": "reference.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "country": {
       "type": ["null", "string"]
@@ -204,7 +236,8 @@
       "type": ["null", "string"]
     },
     "state": {
-      "$ref": "reference.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "shipmentState": {
       "type": ["null", "string"]
@@ -219,16 +252,19 @@
           "type": ["null", "string"]
         },
         "price": {
-          "$ref": "money.json"
+          "type": ["null", "object"],
+          "additionalProperties": true
         },
         "shippingRate": {
           "type": ["null", "object"],
           "properties": {
             "price": {
-              "$ref": "money.json"
+              "type": ["null", "object"],
+              "additionalProperties": true
             },
             "freeAbove": {
-              "$ref": "money.json"
+              "type": ["null", "object"],
+              "additionalProperties": true
             },
             "tiers": {
               "type": ["null", "array"]
@@ -239,16 +275,20 @@
           }
         },
         "taxedPrice": {
-          "$ref": "taxed_item_price.json"
+          "type": ["null", "object"],
+          "additionalProperties": true
         },
         "taxRate": {
-          "$ref": "taxrate.json"
+          "type": ["null", "object"],
+          "additionalProperties": true
         },
         "taxCategory": {
-          "$ref": "reference.json"
+          "type": ["null", "object"],
+          "additionalProperties": true
         },
         "shippingMethod": {
-          "$ref": "reference.json"
+          "type": ["null", "object"],
+          "additionalProperties": true
         },
         "deliveries": {
           "type": ["null", "array"],
@@ -329,7 +369,8 @@
                 }
               },
               "address": {
-                "$ref": "address.json"
+                "type": ["null", "object"],
+                "additionalProperties": true
               }
             }
           }
@@ -338,7 +379,8 @@
           "type": ["null", "object"],
           "properties": {
             "value": {
-              "$ref": "money.json"
+              "type": ["null", "object"],
+              "additionalProperties": true
             },
             "includedDiscounts": {
               "type": ["null", "array"],
@@ -346,10 +388,12 @@
                 "type": ["null", "object"],
                 "properties": {
                   "discount": {
-                    "$ref": "reference.json"
+                    "type": ["null", "object"],
+                    "additionalProperties": true
                   },
                   "discountedAmount": {
-                    "$ref": "money.json"
+                    "type": ["null", "object"],
+                    "additionalProperties": true
                   }
                 }
               }
@@ -367,7 +411,8 @@
         "type": ["null", "object"],
         "properties": {
           "channel": {
-            "$ref": "reference.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "externalId": {
             "type": ["null", "string"]
@@ -437,7 +482,8 @@
         "type": ["null", "object"],
         "properties": {
           "discountCode": {
-            "$ref": "reference.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           },
           "state": {
             "type": ["null", "string"]
@@ -448,17 +494,20 @@
     "refusedGifts": {
       "type": ["null", "array"],
       "items": {
-        "$ref": "reference.json"
+        "type": ["null", "object"],
+        "additionalProperties": true
       }
     },
     "lastMessageSequenceNumber": {
       "type": ["null", "number"]
     },
     "cart": {
-      "$ref": "reference.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "custom": {
-      "$ref": "custom.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "paymentInfo": {
       "type": ["null", "object"],
@@ -466,7 +515,8 @@
         "payments": {
           "type": ["null", "array"],
           "items": {
-            "$ref": "reference.json"
+            "type": ["null", "object"],
+            "additionalProperties": true
           }
         }
       }
@@ -478,7 +528,8 @@
       "type": ["null", "string"]
     },
     "shippingRateInput": {
-      "$ref": "localized_string.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "origin": {
       "type": ["null", "string"]
@@ -486,7 +537,8 @@
     "itemShippingAddresses": {
       "type": ["null", "array"],
       "items": {
-        "$ref": "address.json"
+        "type": ["null", "object"],
+        "additionalProperties": true
       }
     }
   }

@@ -16,17 +16,20 @@
       "format": "date-time"
     },
     "createdBy": {
-      "$ref": "created_by.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "lastModifiedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
     "lastModifiedBy": {
-      "$ref": "last_modified_by.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "productType": {
-      "$ref": "reference.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "masterData": {
       "type": ["null", "object"],
@@ -35,10 +38,12 @@
           "type": ["null", "boolean"]
         },
         "current": {
-          "$ref": "product_data.json"
+          "type": ["null", "object"],
+          "additionalProperties": true
         },
         "staged": {
-          "$ref": "product_data.json"
+          "type": ["null", "object"],
+          "additionalProperties": true
         },
         "hasStagedChanges": {
           "type": ["null", "boolean"]
@@ -46,10 +51,12 @@
       }
     },
     "taxCategory": {
-      "$ref": "reference.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "state": {
-      "$ref": "reference.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "reviewRatingStatistics": {
       "type": ["null", "object"],

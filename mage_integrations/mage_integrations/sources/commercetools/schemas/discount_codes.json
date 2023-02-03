@@ -13,20 +13,24 @@
       "format": "date-time"
     },
     "createdBy": {
-      "$ref": "created_by.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "lastModifiedAt": {
       "type": ["null", "string"],
       "format": "date-time"
     },
     "lastModifiedBy": {
-      "$ref": "last_modified_by.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "name": {
-      "$ref": "localized_string.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "description": {
-      "$ref": "localized_string.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     },
     "code": {
       "type": ["null", "string"]
@@ -34,7 +38,8 @@
     "cartDiscounts": {
       "type": ["null", "array"],
       "items": {
-        "$ref": "reference.json"
+        "type": ["null", "object"],
+        "additionalProperties": true
       }
     },
     "groups": {
@@ -54,7 +59,8 @@
     "references": {
       "type": ["null", "array"],
       "items": {
-        "$ref": "reference.json"
+        "type": ["null", "object"],
+        "additionalProperties": true
       }
     },
     "maxApplications": {
@@ -64,7 +70,8 @@
       "type": ["null", "number"]
     },
     "custom": {
-      "$ref": "custom.json"
+      "type": ["null", "object"],
+      "additionalProperties": true
     }
   }
 }
