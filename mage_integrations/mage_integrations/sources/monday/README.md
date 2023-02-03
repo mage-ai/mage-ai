@@ -1,6 +1,6 @@
 # Monday
 
-![Monday](https://commercetools.com/_build/images/logos/commercetools-logo-desktop.svg)
+![Monday](https://user-images.githubusercontent.com/80284865/216693464-961b160f-d987-41a6-85e6-a216f040e897.png)
 
 <br />
 
