@@ -25,7 +25,7 @@ const PanelStyle = styled.div<{
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
   width: 100%;
-  
+
   ${props => `
     background-color: ${(props.theme.background || light.background).panel};
     border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
@@ -34,7 +34,7 @@ const PanelStyle = styled.div<{
   ${props => !props.fullHeight && `
     height: fit-content;
   `}
-  
+
   ${props => props.borderless && `
     border: none;
   `}

@@ -2,7 +2,9 @@ from collections.abc import Iterable
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
+from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
 from mage_ai.services.tracking.metrics import increment
+from mage_ai.shared.environments import is_test
 from mage_ai.shared.hash import extract
 import importlib
 import inflection
@@ -110,7 +112,8 @@ class BasePolicy():
         return inflection.underscore(self.__name__.replace('Policy', '')).lower()
 
     def is_admin(self):
-        return self.current_user and self.current_user.owner
+        return (self.current_user and self.current_user.owner) or \
+            (not REQUIRE_USER_AUTHENTICATION and not is_test())
 
     def authorize_action(self, action):
         if self.is_admin():

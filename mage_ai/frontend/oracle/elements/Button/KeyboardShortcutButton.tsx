@@ -354,6 +354,12 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
 
   ${props => (props.selected || props.useModelTheme) && props.wind && `
     background-color: ${(props.theme.brand || dark.brand).wind400};
+
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: ${(props.theme.brand || dark.brand).wind500};
+    }
   `}
 
   ${props => (props.selected || props.useModelTheme) && props.water && `

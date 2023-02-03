@@ -1,5 +1,5 @@
+from json.decoder import JSONDecodeError
 from mage_ai.api.errors import ApiError
-from mage_ai.authentication.oauth2 import decode_token
 from mage_ai.orchestration.db.models import Oauth2AccessToken, Oauth2Application
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID
 from mage_ai.server.api.constants import (
@@ -9,6 +9,7 @@ from mage_ai.server.api.constants import (
     URL_PARAMETER_API_KEY,
 )
 from tornado.web import RequestHandler
+import json
 
 
 class OAuthMiddleware(RequestHandler):
@@ -56,13 +57,12 @@ class OAuthMiddleware(RequestHandler):
             elif oauth_client.client_id != OAUTH2_APPLICATION_CLIENT_ID:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
             elif token_from_header:
-                decoded_token_data = decode_token(token_from_header)
                 oauth_token = None
 
                 if 'token' in decoded_token_data:
                     oauth_token = Oauth2AccessToken.query.filter(
                         Oauth2AccessToken.oauth2_application_id == oauth_client.id,
-                        Oauth2AccessToken.token == decoded_token_data['token'],
+                        Oauth2AccessToken.token == token_from_header,
                     ).first()
 
                 if oauth_token:
