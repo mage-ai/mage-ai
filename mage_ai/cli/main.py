@@ -57,10 +57,6 @@ def start(
         manage=manage_instance == "1",
         dbt_docs=dbt_docs_instance == "1",
     )
-    print(
-        f'Mage is running at http://{host or "localhost"}:{port}'
-        f' and serving project {project_path}'
-    )
 
 
 @app.command()
