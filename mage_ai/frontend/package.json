@@ -36,6 +36,7 @@
     "axios": "^0.27.2",
     "d3-color": "^3.1.0",
     "js-cookie": "^3.0.1",
+    "jwt-decode": "^3.1.2",
     "local-storage": "^2.0.0",
     "moment": "^2.29.4",
     "monaco-themes": "^0.4.2",

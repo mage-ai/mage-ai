@@ -1,6 +1,10 @@
-// import AuthToken from './AuthToken';
 import axios from 'axios';
+
+import AuthToken from '@api/utils/AuthToken';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { queryFromUrl } from '@utils/url';
+
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || OAUTH2_APPLICATION_CLIENT_ID;
 
 type FetcherOptionsType = {
   body?: any;
@@ -45,7 +49,7 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
       formData.set(
         'json_root_body',
         JSON.stringify({
-          api_key: process.env.NEXT_PUBLIC_API_KEY,
+          api_key: API_KEY,
           [key]: body[key],
         }),
       );
@@ -55,16 +59,16 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
     } else {
       data.body = JSON.stringify({
         ...body,
-        api_key: process.env.NEXT_PUBLIC_API_KEY,
+        api_key: API_KEY,
       });
     }
   }
 
-  // const authToken = ctx && ctx.auth ? ctx.auth : new AuthToken(token);
-  // const oauthToken: string | undefined = authToken.authorizationString;
-  // if (oauthToken) {
-  //   headers['Authorization'] = oauthToken;
-  // }
+  const authToken = ctx && ctx.auth ? ctx.auth : new AuthToken(token);
+  const oauthToken: string | undefined = authToken.authorizationString;
+  if (oauthToken) {
+    headers['Authorization'] = oauthToken;
+  }
 
   data.headers = new Headers(headers);
 
@@ -72,8 +76,8 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
     ...queryFromUrl(url),
     ...query,
   };
-  if (process.env.NEXT_PUBLIC_API_KEY) {
-    queryObj.api_key = process.env.NEXT_PUBLIC_API_KEY;
+  if (API_KEY) {
+    queryObj.api_key = API_KEY;
   }
    const queryString = Object.entries(queryObj)
     .reduce((arr, [k, v]) => arr.concat(`${k}=${v}`), []).join('&');

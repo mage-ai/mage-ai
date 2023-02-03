@@ -307,7 +307,13 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   `}
 
   ${props => props.danger && `
-    border-color: ${(props.theme.interactive || dark.interactive).dangerBorder};
+    border-color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
+
+    &:active,
+    &:focus,
+    &:hover {
+      border-color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
+    }
   `}
 
   ${props => !props.compact && `

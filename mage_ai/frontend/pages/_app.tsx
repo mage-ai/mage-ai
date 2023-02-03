@@ -13,7 +13,6 @@ import '@styles/globals.css';
 import Head from '@oracle/elements/Head';
 import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
-import light from '@oracle/styles/themes/light';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import { ModalProvider } from '@context/Modal';
 import { RED } from '@oracle/styles/colors/main';

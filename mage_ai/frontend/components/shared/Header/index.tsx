@@ -2,14 +2,14 @@ import NextLink from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import AuthToken from '@api/utils/AuthToken';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
-import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
+import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -20,13 +20,16 @@ import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
+import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
 import {
   HeaderStyle,
   LOGO_HEIGHT,
 } from './index.style';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
-import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
+import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { redirectToUrl } from '@utils/url';
 
 export type BreadcrumbType = {
   bold?: boolean;
@@ -45,26 +48,55 @@ export type MenuItemType = {
   uuid: string;
 };
 
-type HeaderProps = {
-  breadcrumbs: BreadcrumbType[];
+export type HeaderProps = {
+  breadcrumbs?: BreadcrumbType[];
   menuItems?: MenuItemType[];
   project?: ProjectType;
   version?: string;
 };
 
 function Header({
-  breadcrumbs,
+  breadcrumbs: breadcrumbsProp,
   menuItems,
-  project,
-  version,
+  project: projectProp,
+  version: versionProp,
 }: HeaderProps) {
   const [userMenuVisible, setUserMenuVisible] = useState<boolean>(false);
   const [highlightedMenuIndex, setHighlightedMenuIndex] = useState(null);
   const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState(false);
   const [confirmationAction, setConfirmationAction] = useState(null);
+
   const menuRef = useRef(null);
   const refUserMenu = useRef(null);
   const router = useRouter();
+
+  const {
+    data: dataProjects,
+  } = api.projects.list({}, { revalidateOnFocus: false }, { pauseFetch: !!projectProp });
+  const project = useMemo(() => projectProp || dataProjects?.projects?.[0], [dataProjects, projectProp]);
+  const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
+
+  const loggedIn = AuthToken.isLoggedIn() || (!project || !project?.require_user_authentication);
+  const logout = () => {
+    AuthToken.logout(() => {
+      api.sessions.updateAsync(null, 1)
+        .then(() => {
+          redirectToUrl('/sign-in');
+        })
+        .catch(() => {
+          redirectToUrl('/');
+        });
+    });
+  };
+
+  const breadcrumbs = useMemo(() => breadcrumbsProp || [{
+    bold: true,
+    label: () => project?.name,
+    linkProps: {
+      href: '/',
+      sameColorText: true,
+    },
+  }], [breadcrumbsProp, project]);
   const { pipeline: pipelineUUID } = router.query;
   const breadcrumbEls = useMemo(() => {
     const count = breadcrumbs.length;
@@ -144,6 +176,41 @@ function Header({
 
   const { latest_version: latesetVersion } = project || {};
 
+  const logoLink = useMemo(() => (
+    <NextLink
+      as="/"
+      href="/"
+      passHref
+    >
+      <Link
+        block
+        height={LOGO_HEIGHT}
+        noHoverUnderline
+        noOutline
+      >
+        <GradientLogoIcon height={LOGO_HEIGHT} />
+      </Link>
+    </NextLink>
+  ), []);
+
+  const userDropdown: FlyoutMenuItemType[] = [
+    {
+      label: () => 'User settings',
+      linkProps: {
+        href: '/users/settings',
+      },
+      uuid: 'user_settings',
+    },
+  ];
+  if (REQUIRE_USER_AUTHENTICATION) {
+    userDropdown.push(
+    {
+      label: () => 'Sign out',
+      onClick: () => logout(),
+      uuid: 'sign_out',
+    });
+  }
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -153,35 +220,26 @@ function Header({
           justifyContent="space-between"
         >
           <Flex alignItems="center">
-            <Tooltip
-              height={LOGO_HEIGHT}
-              label={`Version ${version}`}
-              size={null}
-              visibleDelay={300}
-              widthFitContent
-            >
-              <NextLink
-                as="/"
-                href="/"
-                passHref
+            {version && (
+              <Tooltip
+                height={LOGO_HEIGHT}
+                label={`Version ${version}`}
+                size={null}
+                visibleDelay={300}
+                widthFitContent
               >
-                <Link
-                  block
-                  height={LOGO_HEIGHT}
-                  noHoverUnderline
-                  noOutline
-                >
-                  <GradientLogoIcon height={LOGO_HEIGHT} />
-                </Link>
-              </NextLink>
-            </Tooltip>
+                {logoLink}
+              </Tooltip>
+            )}
+
+            {!version && logoLink}
 
             {breadcrumbEls}
           </Flex>
 
           <Flex alignItems="center">
             {latesetVersion && version && latesetVersion !== version && (
-              <Spacing mr={2}>
+              <Spacing ml={2}>
                 <Button
                   borderLess
                   linkProps={{
@@ -204,7 +262,20 @@ function Header({
               </Spacing>
             )}
 
-            <Spacing mr={2}>
+            {version && typeof(version) !== 'undefined' && (
+              <Spacing ml={2}>
+                <Link
+                  default
+                  href="https://www.mage.ai/changelog"
+                  monospace
+                  openNewWindow
+                >
+                  {`v${version}`}
+                </Link>
+              </Spacing>
+            )}
+
+            <Spacing ml={2}>
               <KeyboardShortcutButton
                 blackBorder
                 block
@@ -224,6 +295,8 @@ function Header({
 
             {menuItems &&
               <>
+                <Spacing ml={2} />
+
                 <ClickOutside
                   onClickOutside={() => setHighlightedMenuIndex(null)}
                   open
@@ -270,64 +343,46 @@ function Header({
                     width={UNIT * 40}
                   />
                 </ClickOutside>
-
-                <Spacing mr={2} />
               </>
             }
 
-            {version && typeof(version) !== 'undefined' && (
-              <Spacing mr={2}>
-                <Link
-                  default
-                  href="https://www.mage.ai/changelog"
-                  monospace
-                  openNewWindow
+            {loggedIn && (
+              <>
+                <Spacing ml={2} />
+
+                <ClickOutside
+                  onClickOutside={() => setUserMenuVisible(false)}
+                  open
+                  style={{
+                    position: 'relative',
+                  }}
                 >
-                  {`v${version}`}
-                </Link>
-              </Spacing>
+                  <FlexContainer>
+                    <LinkStyle
+                      onClick={() => setUserMenuVisible(true)}
+                      ref={refUserMenu}
+                    >
+                      <Circle
+                        color={BLUE_TRANSPARENT}
+                        size={4 * UNIT}
+                      >
+                        <Mage8Bit />
+                      </Circle>
+                    </LinkStyle>
+
+                    <FlyoutMenu
+                      alternateBackground
+                      items={userDropdown}
+                      onClickCallback={() => setUserMenuVisible(false)}
+                      open={userMenuVisible}
+                      parentRef={refUserMenu}
+                      rightOffset={0}
+                      uuid="shared/Header/user_menu"
+                    />
+                  </FlexContainer>
+                </ClickOutside>
+              </>
             )}
-
-            <ClickOutside
-              onClickOutside={() => setUserMenuVisible(false)}
-              open
-              style={{
-                position: 'relative',
-              }}
-            >
-              <FlexContainer>
-                <LinkStyle
-                  onClick={() => setUserMenuVisible(true)}
-                  ref={refUserMenu}
-                >
-                  <Circle
-                    color={BLUE_TRANSPARENT}
-                    size={4 * UNIT}
-                  >
-                    <Mage8Bit />
-                  </Circle>
-                </LinkStyle>
-
-                <FlyoutMenu
-                  alternateBackground
-                  items={[
-                    {
-                      label: () => 'User settings',
-                      linkProps: {
-                        href: '/users/settings',
-                      },
-                      uuid: 'settings',
-                    },
-                  ]}
-                  onClickCallback={() => setUserMenuVisible(false)}
-                  open={userMenuVisible}
-                  parentRef={refUserMenu}
-                  rightOffset={0}
-                  uuid="shared/Header/user_menu"
-                />
-              </FlexContainer>
-            </ClickOutside>
-
           </Flex>
         </FlexContainer>
       </ClientOnly>

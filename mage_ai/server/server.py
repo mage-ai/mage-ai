@@ -671,6 +671,7 @@ async def main(
             print('User with owner permission doesn’t exist, creating owner user.')
             password_salt = generate_salt()
             user = User.create(
+                email='admin@admin.com',
                 password_hash=create_bcrypt_hash('admin', password_salt),
                 password_salt=password_salt,
                 owner=True,
