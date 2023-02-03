@@ -1,7 +1,12 @@
 from datetime import datetime
+from faker import Faker
+from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.orchestration.db.models import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models import PipelineRun, PipelineSchedule, User
+from typing import Dict, Union
+
+faker = Faker()
 
 
 def create_pipeline(name: str, repo_path: str):
@@ -47,3 +52,33 @@ def create_pipeline_run_with_schedule(
         pipeline_schedule_id=pipeline_schedule_id,
     )
     return pipeline_run
+
+
+def create_user(
+    as_dict: bool = False,
+    save: bool = True,
+    password: str = None,
+    **kwargs,
+) -> Union[Dict, User]:
+    password = password or faker.password()
+    password_salt = generate_salt()
+    password_hash = create_bcrypt_hash(password, password_salt)
+    payload = dict(
+        email=faker.email(),
+        username=faker.name(),
+        **kwargs,
+    )
+
+    if as_dict:
+        payload.update(password=password)
+        return payload
+
+    user = User(
+        password_hash=password_hash,
+        password_salt=password_salt,
+        **payload,
+    )
+    if save:
+        user.save()
+
+    return user
