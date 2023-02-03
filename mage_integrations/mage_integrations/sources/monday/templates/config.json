@@ -1,4 +1,5 @@
 {
-  "auth_token": "auth_token",
-  "board_limit": 10
+  "api_token": "auth_token",
+  "board_id": null,
+  "board_limit": 25
 }

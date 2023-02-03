@@ -3,6 +3,10 @@ from typing import Dict
 
 
 class Client(BaseClient):
+    """
+    Authentication: https://developer.monday.com/api-reference/docs/authentication
+    """
+
     def __init__(self, config: Dict, logger):
         super().__init__(config)
         self.logger = logger
@@ -13,7 +17,7 @@ class Client(BaseClient):
 
     def get_headers(self):
         return {
-            'Authorization': self.config['auth_token'],
+            'Authorization': self.config['api_token'],
             'Content-Type': 'application/json'
         }
 

@@ -1,31 +1,39 @@
 from typing import Any, Dict, Generator, Iterable, List, Optional
-import requests
 
 
 class BaseStream:
-    KEY_PROPERTIES = []
-
-    URL_PATH = None
-
     def __init__(self, client, config, stream, logger):
         self.client = client
         self.config = config
         self.stream = stream
         self.logger = logger
 
-    def load_data(self, bookmarks: Dict = None) -> Generator[List[Dict], None, None]:
-        if self.URL_PATH is None:
-            return
-        kwargs = dict(path=self.URL_PATH)
-        while True:
-            data = self.client.get(**kwargs)
-            results = data['_results']
-            yield results
+    def get_next_page_token(
+        self, response: Dict, previous_token: Optional[Any]
+    ) -> Any:
+        return None
 
-            pagination_next_url = data.get('_pagination', dict()).get('next')
-            if not pagination_next_url:
+    def get_url_params(
+        self, context: Optional[dict], next_page_token: Optional[Any]
+    ) -> Dict[str, Any]:
+        return dict()
+
+    def load_data(self, bookmarks: Dict = None) -> Generator[List[Dict], None, None]:
+        page_token = None
+        while True:
+            data = self.client.request(
+                method='post',
+                body=dict(
+                    query=self.query,
+                    variables=self.get_url_params(self.config, page_token),
+                ),
+            )
+            results = list(self.parse_response(data))
+            yield results
+            page_token = self.get_next_page_token(data, page_token)
+
+            if not page_token:
                 break
-            kwargs = dict(url=pagination_next_url)
 
         self.logger.info(f'Finish loading data for stream {self.__class__.__name__}.')
 
@@ -50,10 +58,11 @@ class WorkspacesStream(BaseStream):
             }
         """
 
-    def parse_response(self, response: requests.Response) -> Iterable[dict]:
-        resp_json = response.json()
-        for row in resp_json["data"]["boards"]:
-            yield row["workspace"]
+    def parse_response(self, response: Dict) -> Iterable[dict]:
+        for row in response["data"]["boards"]:
+            workspace = row["workspace"]
+            if workspace is not None:
+                yield workspace
 
 
 class BoardsStream(BaseStream):
@@ -104,9 +113,8 @@ class BoardsStream(BaseStream):
             "board_id": record["id"],
         }
 
-    def parse_response(self, response: requests.Response) -> Iterable[dict]:
-        resp_json = response.json()
-        for row in resp_json["data"]["boards"]:
+    def parse_response(self, response: Dict) -> Iterable[dict]:
+        for row in response["data"]["boards"]:
             yield row
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
@@ -116,10 +124,10 @@ class BoardsStream(BaseStream):
         return row
 
     def get_next_page_token(
-        self, response: requests.Response, previous_token: Optional[Any]
+        self, response: Dict, previous_token: Optional[Any]
     ) -> Any:
         current_page = previous_token if previous_token is not None else 1
-        if len(response.json()["data"][self.name]) == self.config["board_limit"]:
+        if len(response["data"][self.name]) == self.config["board_limit"]:
             next_page_token = current_page + 1
         else:
             next_page_token = None
@@ -156,9 +164,8 @@ class BoardViewsStream(BaseStream):
             }
         """
 
-    def parse_response(self, response: requests.Response) -> Iterable[dict]:
-        resp_json = response.json()
-        for row in resp_json["data"]["boards"][0]["views"]:
+    def parse_response(self, response: Dict) -> Iterable[dict]:
+        for row in response["data"]["boards"][0]["views"]:
             yield row
 
 
@@ -192,9 +199,8 @@ class GroupsStream(BaseStream):
             }
         """
 
-    def parse_response(self, response: requests.Response) -> Iterable[dict]:
-        resp_json = response.json()
-        for row in resp_json["data"]["boards"][0]["groups"]:
+    def parse_response(self, response: Dict) -> Iterable[dict]:
+        for row in response["data"]["boards"][0]["groups"]:
             yield row
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
@@ -235,9 +241,8 @@ class ColumnsStream(BaseStream):
             }
         """
 
-    def parse_response(self, response: requests.Response) -> Iterable[dict]:
-        resp_json = response.json()
-        for row in resp_json["data"]["boards"]:
+    def parse_response(self, response: Dict) -> Iterable[dict]:
+        for row in response["data"]["boards"]:
             for column in row["columns"]:
                 yield column
 

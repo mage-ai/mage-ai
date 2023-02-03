@@ -1,6 +1,6 @@
-# Commercetools
+# Monday
 
-![Commercetools](https://commercetools.com/_build/images/logos/commercetools-logo-desktop.svg)
+![Monday](https://commercetools.com/_build/images/logos/commercetools-logo-desktop.svg)
 
 <br />
 
@@ -10,19 +10,15 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value |
 | --- | --- | --- |
-| `client_id` | `client_id` of the API client. Used to obtain the access token. | `abcdefg` |
-| `client_secret` | `client_secret` of the API client. Used to obtain the access token. | `abcdefghijklmnopqrstuvwxyz` |
-| `host` | The host in your Commercetools url, e.g. `aws`, `gcp`.  | `gcp` |
-| `project_key` | The project key associated with your project. | `projectkey` |
-| `region` | The region in your Commercetools url, e.g. `us-central1`, `us-east-2`. | `us-central1` |
+| `api_token` | The `api_token` used for authentication. | `abcdefghijklmnopqrstuvwxyz` |
+| `board_id` | The `board_id` used to query board related data. | `12345678` |
+| `board_limit` | The number of boards returned per page for `boards` stream. | `25` |
 
 <br />
 
-## How to get your `client_id` and `client_secret`
+## How to get your `api_token`
 
-Follow [Commercetools's documentation](https://docs.commercetools.com/api/authorization)
-* Create an API client.
-* Get `client_id`, `client_secret` and `project_key` from the API client credentials page.
+Follow [Monday's documentation](https://developer.monday.com/api-reference/docs/authentication#accessing-api-tokens) to get your API token.
 
 
 <br />
