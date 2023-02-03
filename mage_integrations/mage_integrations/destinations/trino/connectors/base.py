@@ -26,7 +26,7 @@ MERGEABLE_CONNECTORS = [
 
 class TrinoConnector(Destination):
     BATCH_SIZE = 500
-    DEFAULT_QUERY_MAX_LENGTH = 1_000_0000
+    DEFAULT_QUERY_MAX_LENGTH = 1_000_000
 
     @property
     def query_max_length(self):
