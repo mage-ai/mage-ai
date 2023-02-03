@@ -11,7 +11,8 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
 )
 from mage_integrations.destinations.trino.utils import convert_column_type, convert_json_or_string
-from typing import Dict, List, Tuple
+from mage_integrations.utils.dictionary import merge_dict
+from typing import Dict, Generator, List, Tuple
 import json
 
 
@@ -25,6 +26,11 @@ MERGEABLE_CONNECTORS = [
 
 class TrinoConnector(Destination):
     BATCH_SIZE = 500
+    DEFAULT_QUERY_MAX_LENGTH = 1_000_000
+
+    @property
+    def query_max_length(self):
+        return self.config.get('query_max_length', self.DEFAULT_QUERY_MAX_LENGTH)
 
     def build_connection(self) -> TrinoConnection:
         return TrinoConnection(
@@ -95,7 +101,7 @@ DESCRIBE {schema_name}.{table_name}
         database_name: str = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
-    ) -> List[str]:
+    ) -> Generator[List[str], None, None]:
         full_table_name = f'{schema_name}.{table_name}'
         full_table_name_temp = f'{schema_name}.temp_{table_name}'
 
@@ -108,7 +114,6 @@ DESCRIBE {schema_name}.{table_name}
             string_parse_func=self.string_parse_func,
         )
         insert_columns = ', '.join(insert_columns)
-        insert_values = ', '.join(insert_values)
 
         if self._support_merge_rows() and unique_constraints and unique_conflict_method:
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
@@ -123,7 +128,7 @@ DESCRIBE {schema_name}.{table_name}
                 unique_constraints=unique_constraints,
             ) + self.wrap_insert_commands([
                 f'INSERT INTO {full_table_name_temp} ({insert_columns})',
-                f'VALUES {insert_values}',
+                'VALUES {insert_values}',
             ])
 
             unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
@@ -147,17 +152,29 @@ DESCRIBE {schema_name}.{table_name}
             )
             merge_command = '\n'.join(merge_commands)
 
-            return commands + [
+            commands = commands + [
                 merge_command,
                 drop_temp_table_command,
             ]
+        else:
+            commands = self.wrap_insert_commands([
+                f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
+                'VALUES {insert_values}',
+            ])
 
-        commands = [
-            f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
-            f'VALUES {insert_values}',
-        ]
-
-        return self.wrap_insert_commands(commands)
+        fixed_query_payload_size = sum([len(c) for c in commands])
+        value_payload_size = 0
+        subbatch_insert_values = []
+        for insert_value in insert_values:
+            subbatch_insert_values.append(insert_value)
+            value_payload_size += len(insert_value) + 2
+            if value_payload_size + fixed_query_payload_size >= 0.9 * self.query_max_length:
+                subbatch_insert_value_str = ', '.join(subbatch_insert_values)
+                yield [c.replace('{insert_values}', subbatch_insert_value_str) for c in commands]
+                subbatch_insert_values = []
+                value_payload_size = 0
+        subbatch_insert_value_str = ', '.join(subbatch_insert_values)
+        yield [c.replace('{insert_values}', subbatch_insert_value_str) for c in commands]
 
     def column_type_mapping(self, schema: Dict) -> Dict:
         return column_type_mapping_orig(
@@ -200,6 +217,64 @@ DESCRIBE {schema_name}.{table_name}
             f'SHOW TABLES FROM {schema_name} LIKE \'{table_name}\'',
         )
         return len(tables) > 0
+
+    def process_queries(
+        self,
+        query_strings: List[str],
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = {},
+    ) -> List[List[Tuple]]:
+        results = []
+
+        if self.debug:
+            for qs in query_strings:
+                print(qs, '\n')
+
+        results += self.build_connection().execute(query_strings, commit=True)
+
+        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
+        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
+        table_name = self.config.get('table')
+
+        schema = self.schemas[stream]
+        unique_constraints = self.unique_constraints.get(stream)
+        unique_conflict_method = self.unique_conflict_methods.get(stream)
+
+        records = [d['record'] for d in record_data]
+
+        idx = 0
+        for cmds in self.build_insert_commands(
+            database_name=database_name,
+            records=records,
+            schema=schema,
+            schema_name=schema_name,
+            table_name=table_name,
+            unique_conflict_method=unique_conflict_method,
+            unique_constraints=unique_constraints,
+        ):
+            tags2 = merge_dict(tags, dict(index=idx))
+            self.logger.info(
+                f'Build insert commands for batch {idx} completed.',
+                tags=merge_dict(tags2, dict(insert_commands=len(cmds))),
+            )
+            query_string_size = sum([len(c) for c in cmds])
+            self.logger.info(
+                f'Execute {len(cmds)} commands, length: {query_string_size}',
+                tags=tags,
+            )
+            results += self.build_connection().execute(cmds, commit=True)
+            idx += 1
+
+        return results
+
+    def handle_insert_commands(
+        self,
+        record_data: List[Dict],
+        stream: str,
+        tags: Dict = {},
+    ) -> List[str]:
+        return []
 
     def string_parse_func(self, value: str, column_type_dict: Dict) -> str:
         return convert_json_or_string(value, column_type_dict)

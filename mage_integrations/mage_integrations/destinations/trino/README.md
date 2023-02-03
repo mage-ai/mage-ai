@@ -18,6 +18,7 @@ You must enter the following credentials when configuring this source:
 | `username` | Name of the user that will access the database. | `admin` |
 | `password` | Password for the user to access the database. | `abc123...` (optional) |
 | `port` | Port of the running database (typically 8080). | `8080` (default value) |
+| `query_max_length` | The maximum number of characters allowed for the SQL query text. | `1000000` (default value) |
 | `ssl` | In order to disable SSL verification, set the verify parameter to `false`. | `false` (default value) |
 
 ### Connectors
