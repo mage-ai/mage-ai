@@ -1,4 +1,5 @@
 from mage_integrations.sources.constants import (
+    COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_NULL,
@@ -16,6 +17,7 @@ def build_comparison_statement(
     column_type_mapping: Callable,
     operator: str = '=',
     column_cleaned: str = None,
+    convert_datetime_func: Callable = None,
 ):
     column_properties = properties.get(col)
     if not column_properties:
@@ -24,6 +26,9 @@ def build_comparison_statement(
     column_type = find(lambda x: COLUMN_TYPE_NULL != x, column_properties['type'])
     column_format = column_properties.get('format')
     col_type = column_type_mapping(column_type, column_format)
+
+    if column_format == COLUMN_FORMAT_DATETIME and convert_datetime_func is not None:
+        val = convert_datetime_func(val)
 
     return f"{column_cleaned if column_cleaned else col} {operator} CAST('{val}' AS {col_type})"
 

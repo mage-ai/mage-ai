@@ -7,6 +7,7 @@ from mage_integrations.sources.constants import (
 )
 from mage_integrations.sources.sql.base import Source
 from typing import List
+import dateutil
 
 
 class MSSQL(Source):
@@ -52,13 +53,25 @@ WHERE  c.table_schema = '{schema}'
             query = f'{query}\nAND c.TABLE_NAME IN ({table_names})'
         return query
 
-    def update_column_names(self, columns: List[str]) -> List[str]:
-        return list(map(lambda column: f'"{column}"', columns))
+    def convert_datetime(self, val):
+        parts = val.split('.')
+        arr = parts
+        if len(parts) >= 2:
+            arr = parts[:-1]
+            tz = parts[-1][:3]
+            arr.append(tz)
+            final_value = '.'.join(arr)
+        else:
+            final_value = dateutil.parser.parse(val).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
+        return final_value
 
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         if COLUMN_FORMAT_DATETIME == column_format:
-            return 'DATE'
+            return 'DATETIME'
         return super().column_type_mapping(column_type, column_format)
+
+    def update_column_names(self, columns: List[str]) -> List[str]:
+        return list(map(lambda column: f'"{column}"', columns))
 
     def _limit_query_string(self, limit, offset):
         return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
