@@ -211,7 +211,7 @@ def add_execution_code(
     block_uuid: str,
     code: str,
     global_vars,
-    analyze_outputs: bool = True,
+    analyze_outputs: bool = False,
     block_type: BlockType = None,
     kernel_name: str = None,
     pipeline_config: Dict = None,
