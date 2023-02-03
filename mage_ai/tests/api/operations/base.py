@@ -24,6 +24,12 @@ class BaseApiTestCase(TestCase):
         return inflection.pluralize(self.model_class_name)
 
     def build_operation(self, **kwargs) -> BaseOperation:
+        user = None
+        if 'user' in kwargs:
+            user = kwargs['user']
+        else:
+            user = User(owner=True)
+
         return BaseOperation(
             action=kwargs.get('action'),
             meta=kwargs.get('meta', {}),
@@ -34,7 +40,7 @@ class BaseApiTestCase(TestCase):
             resource=kwargs.get('resource'),
             resource_parent=kwargs.get('resource_parent'),
             resource_parent_id=kwargs.get('resource_parent_id'),
-            user=kwargs.get('user', User(owner=True)),
+            user=user,
         )
 
     def build_create_operation(self, payload: Dict, **kwargs) -> BaseOperation:
