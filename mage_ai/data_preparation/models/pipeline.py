@@ -238,7 +238,7 @@ class Pipeline:
 
     async def execute(
         self,
-        analyze_outputs: bool = True,
+        analyze_outputs: bool = False,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
         parallel: bool = True,
@@ -272,7 +272,7 @@ class Pipeline:
 
     def execute_sync(
         self,
-        analyze_outputs: bool = True,
+        analyze_outputs: bool = False,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
         run_sensors: bool = True,

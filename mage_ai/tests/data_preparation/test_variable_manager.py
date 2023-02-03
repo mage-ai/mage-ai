@@ -8,7 +8,7 @@ from mage_ai.data_preparation.variable_manager import (
     set_global_variable,
 )
 from mage_ai.tests.base_test import DBTestCase
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 import pandas as pd
 
 

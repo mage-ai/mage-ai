@@ -55,7 +55,7 @@ PYTHON_COMMAND = 'python3'
 
 async def run_blocks(
     root_blocks: List['Block'],
-    analyze_outputs: bool = True,
+    analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
     global_vars=None,
     parallel: bool = True,
@@ -138,7 +138,7 @@ async def run_blocks(
 
 def run_blocks_sync(
     root_blocks: List['Block'],
-    analyze_outputs: bool = True,
+    analyze_outputs: bool = False,
     build_block_output_stdout: Callable[..., object] = None,
     global_vars: Dict = None,
     run_sensors: bool = True,
@@ -532,7 +532,7 @@ class Block:
 
     def execute_sync(
         self,
-        analyze_outputs: bool = True,
+        analyze_outputs: bool = False,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
@@ -636,7 +636,7 @@ class Block:
 
     async def execute(
         self,
-        analyze_outputs: bool = True,
+        analyze_outputs: bool = False,
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         global_vars=None,

@@ -300,7 +300,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     global_vars,
-                    analyze_outputs=False if remote_execution else True,
+                    analyze_outputs=False,
                     block_type=block_type,
                     kernel_name=kernel_name,
                     pipeline_config=pipeline.get_config_from_yaml(),

@@ -5,7 +5,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import DBTestCase
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 import os
 import pandas as pd
 
@@ -53,8 +53,8 @@ def remove_duplicate_rows(df):
     df_transformed = df.drop_duplicates()
     return [df_transformed]
             ''')
-        asyncio.run(block1.execute())
-        asyncio.run(block2.execute())
+        asyncio.run(block1.execute(analyze_outputs=True))
+        asyncio.run(block2.execute(analyze_outputs=True))
 
         variable_manager = VariableManager(
             variables_dir=get_repo_config(self.repo_path).variables_dir,
@@ -117,9 +117,9 @@ def union_datasets(df1, df2):
     df_union = pd.concat([df1, df2])
     return [df_union]
             ''')
-        asyncio.run(block1.execute())
-        asyncio.run(block2.execute())
-        asyncio.run(block3.execute())
+        asyncio.run(block1.execute(analyze_outputs=True))
+        asyncio.run(block2.execute(analyze_outputs=True))
+        asyncio.run(block3.execute(analyze_outputs=True))
 
         variable_manager = VariableManager(
             variables_dir=get_repo_config(self.repo_path).variables_dir,
