@@ -4,6 +4,7 @@
   "host": "",
   "password": "",
   "port": 8080,
+  "query_max_length": 1000000,
   "schema": "",
   "ssl": false,
   "table": "",

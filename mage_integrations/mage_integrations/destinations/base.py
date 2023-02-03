@@ -44,7 +44,7 @@ import traceback
 import yaml
 
 LOGGER = singer.get_logger()
-MAXIMUM_BATCH_BYTE_SIZE = 100 * 1024 * 1024 # 100 mb batches
+MAXIMUM_BATCH_BYTE_SIZE = 100 * 1024 * 1024  # 100 mb batches
 
 
 class Destination():
