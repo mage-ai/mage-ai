@@ -11,6 +11,7 @@ ipykernel==6.15.0
 ipython
 itsdangerous~=1.1.0
 joblib>=1.1.0
+jupyter-server~=1.23.5
 jupyter-server-proxy==3.2.1
 jupyter_client==7.3.4
 numpy~=1.21.0
