@@ -49,3 +49,15 @@ export const IconContainerStyle = styled.div<IconContainerProps>`
     width: ${(ICON_SIZE / 2) + (UNIT)}px;
   `}
 `;
+
+export const ButtonWrapper = styled.div<{
+  increasedZIndex?: boolean;
+}>`
+  position: relative;
+  margin-bottom: ${UNIT}px;
+  margin-right: ${UNIT}px;
+
+  ${props => props.increasedZIndex && `
+    z-index: 3;
+  `}
+`;

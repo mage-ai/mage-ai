@@ -5,7 +5,6 @@ import DBTLogo from '@oracle/icons/custom/DBTLogo';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Tooltip from '@oracle/components/Tooltip';
@@ -17,14 +16,15 @@ import {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import {
+  ButtonWrapper,
+  ICON_SIZE,
+  IconContainerStyle,
+} from './index.style';
+import {
   COLUMN_ACTION_GROUPINGS,
   ROW_ACTION_GROUPINGS,
 } from '@interfaces/TransformerActionType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
-import {
-  ICON_SIZE,
-  IconContainerStyle,
-} from './index.style';
 import {
   createActionMenuGroupings,
   getdataSourceMenuItems,
@@ -155,7 +155,7 @@ function AddNewBlocks({
       >
         <FlexContainer flexWrap="wrap">
           {!hideDataExporter && (
-            <Spacing mb={1} mr={1}>
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType)}
@@ -185,11 +185,11 @@ function AddNewBlocks({
                   Data loader
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-            </Spacing>
+            </ButtonWrapper>
           )}
 
           {!hideTransformer && (
-            <Spacing mb={1} mr={1}>
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType
@@ -240,11 +240,11 @@ function AddNewBlocks({
                   Transformer
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-            </Spacing>
+            </ButtonWrapper>
           )}
 
           {!hideDataExporter && (
-            <Spacing mb={1} mr={1}>
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType)}
@@ -277,11 +277,11 @@ function AddNewBlocks({
                   Data exporter
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-            </Spacing>
+            </ButtonWrapper>
           )}
 
           {!hideDbt && (
-            <Spacing mb={1} mr={1}>
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === DBT_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
                 items={[
@@ -331,11 +331,11 @@ function AddNewBlocks({
                   DBT model
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
-            </Spacing>
+            </ButtonWrapper>
           )}
 
           {!hideScratchpad && (
-            <Spacing mb={1} mr={1}>
+            <ButtonWrapper>
               <Tooltip
                 block
                 label="Write experimental code that doesn’t get executed when you run your pipeline."
@@ -360,11 +360,11 @@ function AddNewBlocks({
                   Scratchpad
                 </KeyboardShortcutButton>
               </Tooltip>
-            </Spacing>
+            </ButtonWrapper>
           )}
 
           {!isStreamingPipeline &&
-            <Spacing mb={1} mr={1}>
+            <ButtonWrapper>
               {!hideSensor && (
                 <>
                   <Tooltip
@@ -412,7 +412,7 @@ function AddNewBlocks({
                   Recs
                 </KeyboardShortcutButton>
               )}*/}
-            </Spacing>
+            </ButtonWrapper>
           }
         </FlexContainer>
       </ClickOutside>
