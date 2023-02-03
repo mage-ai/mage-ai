@@ -15,7 +15,7 @@ export type AuthProps = {
 
 type PublicRouteProps = {
   redirectUrl?: string;
-}
+};
 
 export default function PublicRoute(WrappedComponent: any, opts: PublicRouteProps = {}) {
   return class extends Component<AuthProps> {

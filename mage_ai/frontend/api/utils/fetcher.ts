@@ -69,7 +69,6 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
   if (oauthToken) {
     headers['Authorization'] = oauthToken;
   }
-  console.log('WTFFFFFFFFFFFFFFFF', oauthToken)
 
   data.headers = new Headers(headers);
 

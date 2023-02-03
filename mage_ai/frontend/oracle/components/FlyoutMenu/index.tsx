@@ -193,9 +193,9 @@ function FlyoutMenu({
 
           if (isGroupingTitle) {
             return (
-              <TitleContainerStyle>
+              <TitleContainerStyle key={uuid}>
                 {typeof labelToRender === 'string' && (
-                  <Text bold key={uuid} muted noWrapping>
+                  <Text bold muted noWrapping>
                     {labelToRender}
                   </Text>
                 )}
@@ -290,6 +290,7 @@ function FlyoutMenu({
             return (
               <NextLink
                 {...linkProps}
+                key={uuid}
                 passHref
               >
                 {el}

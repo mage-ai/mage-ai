@@ -21,12 +21,13 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
 import {
   HeaderStyle,
   LOGO_HEIGHT,
 } from './index.style';
 import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style';
-import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
+import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { redirectToUrl } from '@utils/url';
 
@@ -75,7 +76,7 @@ function Header({
   const project = useMemo(() => projectProp || dataProjects?.projects?.[0], [dataProjects, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
 
-  const loggedIn = AuthToken.isLoggedIn() || true;
+  const loggedIn = AuthToken.isLoggedIn() || (!project || !project?.require_user_authentication);
   const logout = () => {
     AuthToken.logout(() => {
       api.sessions.updateAsync(null, 1)
@@ -190,7 +191,25 @@ function Header({
         <GradientLogoIcon height={LOGO_HEIGHT} />
       </Link>
     </NextLink>
-  ));
+  ), []);
+
+  const userDropdown = [
+    {
+      label: () => 'User settings',
+      linkProps: {
+        href: '/users/settings',
+      },
+      uuid: 'user_settings',
+    },
+  ];
+  if (REQUIRE_USER_AUTHENTICATION) {
+    userDropdown.push(
+    {
+      label: () => 'Sign out',
+      onClick: logout,
+      uuid: 'sign_out',
+    });
+  }
 
   return (
     <HeaderStyle>
@@ -353,20 +372,7 @@ function Header({
 
                     <FlyoutMenu
                       alternateBackground
-                      items={[
-                        {
-                          label: () => 'User settings',
-                          linkProps: {
-                            href: '/users/settings',
-                          },
-                          uuid: 'settings',
-                        },
-                        {
-                          label: () => 'Sign out',
-                          onClick: logout,
-                          uuid: 'sign_out',
-                        },
-                      ]}
+                      items={userDropdown}
                       onClickCallback={() => setUserMenuVisible(false)}
                       open={userMenuVisible}
                       parentRef={refUserMenu}

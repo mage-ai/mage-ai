@@ -5,7 +5,7 @@ import { NextPageContext } from 'next';
 import AuthToken from '@api/utils/AuthToken';
 import { COOKIE_KEY } from '@api/utils/token';
 import { LOCAL_STORAGE_KEY_THEME } from '@oracle/styles/themes/utils';
-import { getGroup } from '@utils/session';
+import { REQUIRE_USER_AUTHENTICATION, getGroup } from '@utils/session';
 import { queryString, redirectToUrl } from '@utils/url';
 
 export type AuthProps = {
@@ -26,10 +26,10 @@ export default function PrivateRoute(WrappedComponent: any) {
       const theme = cookie[LOCAL_STORAGE_KEY_THEME];
       const auth = new AuthToken(token);
       const initialProps = {
-        ...ctx, auth, currentGroupId, theme
+        ...ctx, auth, currentGroupId, theme,
       };
 
-      if (auth.isExpired) {
+      if (REQUIRE_USER_AUTHENTICATION && auth.isExpired) {
         console.log('OAuth token has expired.');
         const query = {
           ...ctx.query,
@@ -38,15 +38,15 @@ export default function PrivateRoute(WrappedComponent: any) {
         redirectToUrl(`/sign-in?${queryString(query)}`, ctx.res);
       }
 
-      if (!currentGroupId && !ctx.asPath.startsWith('/groups')) {
-        redirectToUrl('/groups', ctx.res);
-      }
+      // if (!currentGroupId && !ctx.asPath.startsWith('/groups')) {
+      //   redirectToUrl('/groups', ctx.res);
+      // }
 
       if (WrappedComponent.getInitialProps) {
         const wrappedProps = await WrappedComponent.getInitialProps(initialProps);
         // make sure our `auth: AuthToken` is always returned
         return {
-          ...wrappedProps, auth, currentGroupId, theme
+          ...wrappedProps, auth, currentGroupId, theme,
         };
       }
       return initialProps;

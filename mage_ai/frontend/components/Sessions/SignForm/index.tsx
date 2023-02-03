@@ -72,25 +72,11 @@ function SignForm({
         {title}
       </Headline>
 
-      <Spacing mt={3}>
-        <TextInput
-          label="Email"
-          large
-          meta={{
-            error: ' ',
-            touched: !!error,
-          }}
-          onChange={e => setPayload(prev => ({
-            ...prev,
-            [KEY_EMAIL]: e.target.value,
-          }))}
-          primary={!error}
-          value={payload[KEY_EMAIL]}
-        />
-
-        <Spacing mt={2}>
+      <form>
+        <Spacing mt={3}>
           <TextInput
-            label="Password"
+            autoComplete="username"
+            label="Email"
             large
             meta={{
               error: ' ',
@@ -98,45 +84,63 @@ function SignForm({
             }}
             onChange={e => setPayload(prev => ({
               ...prev,
-              [KEY_PASSWORD]: e.target.value,
+              [KEY_EMAIL]: e.target.value,
             }))}
             primary={!error}
-            type="password"
-            value={payload[KEY_PASSWORD]}
+            value={payload[KEY_EMAIL]}
           />
-        </Spacing>
-      </Spacing>
 
-      {error && (
-        <Spacing mt={2}>
-          <Text danger>
-            {error.message}
-          </Text>
+          <Spacing mt={2}>
+            <TextInput
+              autoComplete="current-password"
+              label="Password"
+              large
+              meta={{
+                error: ' ',
+                touched: !!error,
+              }}
+              onChange={e => setPayload(prev => ({
+                ...prev,
+                [KEY_PASSWORD]: e.target.value,
+              }))}
+              primary={!error}
+              type="password"
+              value={payload[KEY_PASSWORD]}
+            />
+          </Spacing>
         </Spacing>
-      )}
 
-      <Spacing mt={3}>
-        <KeyboardShortcutButton
-          bold
-          inline
-          keyTextGroups={[[KEY_SYMBOL_ENTER]]}
-          keyboardShortcutValidation={({
-            keyMapping,
-          }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
-          large
-          loading={isLoading}
-          noHoverUnderline
-          // @ts-ignore
-          onClick={() => create({
-            session: payload,
-          })}
-          selected
-          uuid="SignForm/action"
-          wind
-        >
-          Sign into Mage
-        </KeyboardShortcutButton>
-      </Spacing>
+        {error && (
+          <Spacing mt={2}>
+            <Text danger>
+              {error.message}
+            </Text>
+          </Spacing>
+        )}
+
+        <Spacing mt={3}>
+          <KeyboardShortcutButton
+            bold
+            inline
+            keyTextGroups={[[KEY_SYMBOL_ENTER]]}
+            keyboardShortcutValidation={({
+              keyMapping,
+            }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
+            large
+            loading={isLoading}
+            noHoverUnderline
+            // @ts-ignore
+            onClick={() => create({
+              session: payload,
+            })}
+            selected
+            uuid="SignForm/action"
+            wind
+          >
+            Sign into Mage
+          </KeyboardShortcutButton>
+        </Spacing>
+      </form>
     </ContainerStyle>
   );
 }

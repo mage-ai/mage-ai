@@ -8,10 +8,10 @@ import Flex from '@oracle/components/Flex';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-
 import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
@@ -273,4 +273,6 @@ function PipelineListPage() {
   );
 }
 
-export default PipelineListPage;
+PipelineListPage.getInitialProps = async () => ({});
+
+export default PrivateRoute(PipelineListPage);
