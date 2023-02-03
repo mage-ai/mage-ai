@@ -234,6 +234,9 @@ WHERE table_schema = '{schema}'
     def column_type_mapping(self, column_type: str, column_format: str = None) -> str:
         return column_type_mapping(column_type, column_format)
 
+    def convert_datetime(self, val):
+        return val
+
     def build_table_name(self, stream) -> str:
         table_name = stream.tap_stream_id
 
@@ -323,6 +326,7 @@ WHERE table_schema = '{schema}'
                         stream.schema.to_dict()['properties'],
                         self.column_type_mapping,
                         column_cleaned=wrap_column_in_quotes(col),
+                        convert_datetime_func=self.convert_datetime,
                         operator='>=',
                     ),
                 )
@@ -337,6 +341,7 @@ WHERE table_schema = '{schema}'
                             stream.schema.to_dict()['properties'],
                             self.column_type_mapping,
                             column_cleaned=wrap_column_in_quotes(col),
+                            convert_datetime_func=self.convert_datetime,
                         ),
                     )
 
