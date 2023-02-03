@@ -5,7 +5,6 @@ import ProjectContextType from '@interfaces/ProjectType';
 const ProjectContext = React.createContext<ProjectContextType>({
   latest_version: null,
   name: null,
-  require_user_authentication: null,
   version: null,
 });
 

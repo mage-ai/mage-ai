@@ -9,7 +9,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -193,7 +193,7 @@ function Header({
     </NextLink>
   ), []);
 
-  const userDropdown = [
+  const userDropdown: FlyoutMenuItemType[] = [
     {
       label: () => 'User settings',
       linkProps: {

@@ -70,7 +70,7 @@ function SignForm({
   );
 
   return (
-    <Row fullHeight fullWidth>
+    <Row fullHeight>
       <Col
         lg={6}
         md={12}
