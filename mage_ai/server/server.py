@@ -635,6 +635,7 @@ def make_app():
 async def main(
     host: Union[str, None] = None,
     port: Union[str, None] = None,
+    project: Union[str, None] = None,
 ):
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
@@ -656,8 +657,11 @@ async def main(
 
     app.listen(
         port,
-        address=host,
+        address=host if host != 'localhost' else None,
     )
+
+    print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
+
     db_connection.start_session(force=True)
 
     if REQUIRE_USER_AUTHENTICATION:
@@ -738,6 +742,7 @@ def start_server(
             main(
                 host=host,
                 port=port,
+                project=project,
             )
         )
 
