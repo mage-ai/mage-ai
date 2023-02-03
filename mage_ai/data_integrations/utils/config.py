@@ -158,11 +158,7 @@ def interpolate_string(text: str, variables: Dict) -> str:
 def interpolate_variables(
     text: str,
     variables: Dict,
-    load_json: bool = False,
 ) -> Dict:
     settings_string = text if variables is None else interpolate_string(text, variables)
-
-    if (load_json):
-        return json.loads(settings_string)
 
     return yaml.load(settings_string, Loader=NoDatesSafeLoader)
