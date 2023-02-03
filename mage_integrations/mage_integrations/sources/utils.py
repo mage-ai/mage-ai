@@ -278,7 +278,10 @@ def parse_args(required_config_keys):
     config = dict()
     if args.settings:
         with open(args.settings) as f:
-            args.settings = yaml.safe_load(f.read())
+            if args.settings.endswith('.json'):
+                args.settings = json.loads(f.read())
+            else:
+                args.settings = yaml.safe_load(f.read())
             if args.settings.get('config') and not args.config:
                 config.update(args.settings['config'])
 
