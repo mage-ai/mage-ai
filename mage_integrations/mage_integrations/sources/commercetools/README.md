@@ -10,8 +10,8 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value |
 | --- | --- | --- |
-| `client_id` | Used to obtain the access token. | `abcdefg` |
-| `client_secret` | Used to obtain the access token. | `abcdefghijklmnopqrstuvwxyz` |
+| `client_id` | `client_id` of the API client. Used to obtain the access token. | `abcdefg` |
+| `client_secret` | `client_secret` of the API client. Used to obtain the access token. | `abcdefghijklmnopqrstuvwxyz` |
 | `host` | The host in your Commercetools url, e.g. `aws`, `gcp`.  | `gcp` |
 | `project_key` | The project key associated with your project. | `projectkey` |
 | `region` | The region in your Commercetools url, e.g. `us-central1`, `us-east-2`. | `us-central1` |
