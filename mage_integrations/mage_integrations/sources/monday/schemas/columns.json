@@ -1,0 +1,27 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "archived": {
+      "type": ["null", "boolean"]
+    },
+    "settings_str": {
+      "type": ["null", "string"]
+    },
+    "title": {
+      "type": ["null", "string"]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "width": {
+      "type": ["null", "integer"]
+    },
+    "board_id": {
+      "type": ["null", "integer"]
+    }
+  }
+}
