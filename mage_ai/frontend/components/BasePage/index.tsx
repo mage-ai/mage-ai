@@ -2,7 +2,6 @@ import Head from '@oracle/elements/Head';
 import Header, { HeaderProps } from '@components/shared/Header';
 import SingleWidthContainer from '@oracle/components/SingleWidthContainer';
 import { ContainerStyle } from './index.style';
-import FlexContainer from '@oracle/components/FlexContainer';
 
 type BasePageProps = {
   children: any;
@@ -23,13 +22,7 @@ function BasePage({
 
       <SingleWidthContainer>
         <ContainerStyle fullHeight>
-          <FlexContainer
-            flexDirection="column"
-            fullHeight
-            justifyContent="center"
-          >
-            {children}
-          </FlexContainer>
+          {children}
         </ContainerStyle>
       </SingleWidthContainer>
     </>

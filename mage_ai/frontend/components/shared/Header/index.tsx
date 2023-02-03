@@ -206,7 +206,7 @@ function Header({
     userDropdown.push(
     {
       label: () => 'Sign out',
-      onClick: logout,
+      onClick: () => logout(),
       uuid: 'sign_out',
     });
   }
