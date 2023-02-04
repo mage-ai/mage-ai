@@ -41,14 +41,17 @@ class DatabaseResource(BaseResource):
         query = ignore_keys(query_arg, [settings.QUERY_API_KEY])
         parent_model = kwargs.get('parent_model')
         if parent_model and self.parent_resource():
-            column_name, parent_class = next((k, v) for k, v in self.parent_resource().items() if type(parent_model) is v.model_class)
+            column_name, parent_class = next(
+                (k, v) for k, v in self.parent_resource().items() if isinstance(
+                    parent_model, v.model_class))
             where = {}
             where[column_name] = parent_model.id
 
             filters = []
             for col, val in merge_dict(query, where).items():
                 filters.append(self.model_class)
-            return self.model_class.query.filter(**merge_dict(query, where)).all()
+            return self.model_class.query.filter(
+                **merge_dict(query, where)).all()
         else:
             return self.model_class.query.filter(**query).all()
 
@@ -59,13 +62,17 @@ class DatabaseResource(BaseResource):
         parent_class = None
         if parent_model and self.parent_models():
             try:
-                column_name, parent_class = next((k, v) for k, v in self.parent_models().items() if type(parent_model) is v)
+                column_name, parent_class = next(
+                    (k, v) for k, v in self.parent_models().items() if isinstance(
+                        parent_model, v))
                 payload[column_name] = parent_model.id
             except StopIteration:
                 pass
         if parent_model and self.parent_resource():
             try:
-                column_name, parent_class = next((k, v) for k, v in self.parent_resource().items() if type(parent_model) is v.model_class)
+                column_name, parent_class = next(
+                    (k, v) for k, v in self.parent_resource().items() if isinstance(
+                        parent_model, v.model_class))
                 payload[column_name] = parent_model.id
             except StopIteration:
                 pass
@@ -80,7 +87,7 @@ class DatabaseResource(BaseResource):
                 # We need to return 200 so the front end client can process the error response
                 # and show the user helpful errors.
                 'code': 200,
-                'errors':  err.to_dict(),
+                'errors': err.to_dict(),
             }))
 
     @classmethod

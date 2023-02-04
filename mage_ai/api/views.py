@@ -37,7 +37,8 @@ async def execute_operation(
     if request.error:
         return __render_error(handler, request.error, **tags)
 
-    action, options = __determine_action(request, child=child, child_pk=child_pk, pk=pk)
+    action, options = __determine_action(
+        request, child=child, child_pk=child_pk, pk=pk)
     try:
         response = BaseOperation(
             action=action,
@@ -96,10 +97,10 @@ async def execute_operation(
 
 
 def __determine_action(
-     request,
-     child: str = None,
-     child_pk: Union[None, int, str] = None,
-     pk: Union[None, int, str] = None,
+    request,
+    child: str = None,
+    child_pk: Union[None, int, str] = None,
+    pk: Union[None, int, str] = None,
 ) -> Tuple[str, str]:
     if 'DELETE' == request.method:
         return (DELETE, request.body_arguments)
@@ -129,7 +130,10 @@ def __meta(request) -> Dict:
 
 
 def __meta_keys(request) -> List[str]:
-    return list(filter(lambda x: x[0] == '_', [k for k in request.query_arguments.keys()]))
+    return list(
+        filter(
+            lambda x: x[0] == '_', [
+                k for k in request.query_arguments.keys()]))
 
 
 def __payload(request) -> Dict:
@@ -137,7 +141,8 @@ def __payload(request) -> Dict:
        'multipart/form-data' in request.headers.get('Content-Type'):
 
         parts = request.body.decode('utf-8', 'ignore').split('\r\n')
-        idx = parts.index('Content-Disposition: form-data; name="json_root_body"')
+        idx = parts.index(
+            'Content-Disposition: form-data; name="json_root_body"')
         json_root_body = parts[idx + 2]
 
         return json.loads(json_root_body)
@@ -148,9 +153,10 @@ def __payload(request) -> Dict:
 def __query(request) -> Dict:
     meta_keys = __meta_keys(request)
     query_arg = dict(request.query_arguments)
+
     def _build(obj, key):
         value = query_arg.get(key)
-        if obj.get(key) and type(obj[key]) is list:
+        if obj.get(key) and isinstance(obj[key], list):
             obj[key].append(value)
         else:
             obj[key] = value
@@ -196,7 +202,7 @@ def __log_error(
     ))
 
     increment('api.error', tags=dict(
-          endpoint=endpoint,
-          error=err['type'] if type(err) is dict else type(err).__name__,
-          resource=resource,
+        endpoint=endpoint,
+        error=err['type'] if isinstance(err, dict) else type(err).__name__,
+        resource=resource,
     ))

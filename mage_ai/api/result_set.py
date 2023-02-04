@@ -14,7 +14,8 @@ class ResultSet(UserList):
                 if not r.model_options.get('result_sets', None):
                     r.model_options['result_sets'] = {}
 
-                existing_result_set = r.model_options['result_sets'].get(key, None)
+                existing_result_set = r.model_options['result_sets'].get(
+                    key, None)
                 if existing_result_set:
                     for i in self:
                         existing_result_set.append(i)

@@ -3,7 +3,6 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
-from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models import User
 
 
@@ -15,10 +14,11 @@ class SessionResource(BaseResource):
         username = payload.get('username')
 
         error = ApiError.RESOURCE_NOT_FOUND
-        error.update({ 'message': 'Email/username and/or password invalid.' })
+        error.update({'message': 'Email/username and/or password invalid.'})
 
         if not (email or username) or not password:
-            error.update({ 'message': 'Email/username and password are required.' })
+            error.update(
+                {'message': 'Email/username and password are required.'})
             raise ApiError(error)
 
         user = None

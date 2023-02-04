@@ -3,7 +3,7 @@ from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.orchestration.db.models import User
-from mage_ai.shared.hash import extract, ignore_keys, merge_dict
+from mage_ai.shared.hash import extract
 
 
 class UserResource(DatabaseResource):
@@ -28,22 +28,26 @@ class UserResource(DatabaseResource):
                 missing_values.append(key)
 
         if len(missing_values) >= 1:
-            error.update({ 'message': 'Missing required values: {}.'.format(', '.join(missing_values)) })
+            error.update(
+                {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
             raise ApiError(error)
 
         if email:
             user = User.query.filter(User.email == email).first()
             if user:
-                error.update({ 'message': 'Account with same email is already taken.' })
+                error.update(
+                    {'message': 'Account with same email is already taken.'})
                 raise ApiError(error)
         if username:
             user = User.query.filter(User.username == username).first()
             if user:
-                error.update({ 'message': 'Account with same username is already taken.' })
+                error.update(
+                    {'message': 'Account with same username is already taken.'})
                 raise ApiError(error)
 
         if password != password_confirmation:
-            error.update({ 'message': 'Password and password confirmation do not match.' })
+            error.update(
+                {'message': 'Password and password confirmation do not match.'})
             raise ApiError(error)
 
         password_salt = generate_salt()
@@ -62,7 +66,8 @@ class UserResource(DatabaseResource):
         ]), user, **kwargs)
 
         if 'oauth_client' in kwargs:
-            oauth_token = generate_access_token(resource.model, kwargs['oauth_client'])
+            oauth_token = generate_access_token(
+                resource.model, kwargs['oauth_client'])
             resource.model_options['oauth_token'] = oauth_token
 
         return resource
