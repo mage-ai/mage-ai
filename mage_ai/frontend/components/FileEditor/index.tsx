@@ -9,6 +9,7 @@ import { useMutation } from 'react-query';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import CodeEditor from '@components/CodeEditor';
 import FileType, {
   FileExtensionEnum,
@@ -33,7 +34,6 @@ import {
   buildAddBlockRequestPayload,
   buildFileExtensionRegExp,
   getBlockType,
-  getBlockUUID,
 } from './utils';
 import { find } from '@utils/array';
 import { getBlockFromFile } from '../FileBrowser/utils';
@@ -193,41 +193,36 @@ function FileEditor({
     && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD
     && getBlockFromFile(file)
     && (
-    <Spacing p={2}>
-      <Button
-        borderLess
-        compact
-        onClick={() => {
-          const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
+    <Button
+      onClick={() => {
+        const isIntegrationPipeline = pipeline.type === PipelineTypeEnum.INTEGRATION;
 
-          const blockReqPayload = buildAddBlockRequestPayload(
-            file,
-            repoPath,
-            pipeline,
-          );
+        const blockReqPayload = buildAddBlockRequestPayload(
+          file,
+          repoPath,
+          pipeline,
+        );
 
-          addNewBlock(
-            blockReqPayload,
-            block => {
-              if (isIntegrationPipeline && dataExporterBlock) {
-                // @ts-ignore
-                updateDestinationBlock({
-                  block: {
-                    ...dataExporterBlock,
-                    upstream_blocks: [block.uuid],
-                  },
-                });
-              }
-              setSelectedBlock(block);
-            },
-          );
-        }}
-        primary
-        small
-      >
-        Add to current pipeline
-      </Button>
-    </Spacing>
+        addNewBlock(
+          blockReqPayload,
+          block => {
+            if (isIntegrationPipeline && dataExporterBlock) {
+              // @ts-ignore
+              updateDestinationBlock({
+                block: {
+                  ...dataExporterBlock,
+                  upstream_blocks: [block.uuid],
+                },
+              });
+            }
+            setSelectedBlock(block);
+          },
+        );
+      }}
+      primary
+    >
+      Add to current pipeline
+    </Button>
   );
 
   const {
@@ -318,8 +313,25 @@ function FileEditor({
 
   return (
     <div ref={containerRef}>
-      {addToPipelineEl}
+      <Spacing p={2}>
+        <ButtonGroup>
+          {addToPipelineEl}
+
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              saveFile(content, file);
+            }}
+            disabled={!content}
+            title={content ? null : 'No changes have been made to this file.'}
+          >
+            Save file content
+          </Button>
+        </ButtonGroup>
+      </Spacing>
+
       {codeEditorEl}
+
       {filePath === SpecialFileEnum.REQS_TXT && installPackagesButtonEl}
     </div>
   );
