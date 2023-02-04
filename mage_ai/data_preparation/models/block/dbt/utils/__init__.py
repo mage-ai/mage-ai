@@ -44,7 +44,10 @@ def parse_attributes(block) -> Dict:
     project_full_path = f'{get_repo_path()}/dbt/{project_name}'
 
     full_path = f'{get_repo_path()}/dbt/{file_path}'
-    sources_full_path = re.sub(filename, 'mage_sources.yml', full_path)
+
+    models_folder_path = f'{project_full_path}/models'
+    sources_full_path = f'{models_folder_path}/mage_sources.yml'
+    sources_full_path_legacy = re.sub(filename, 'mage_sources.yml', full_path)
 
     profiles_full_path = f'{project_full_path}/profiles.yml'
     profile_target = block.configuration.get('dbt_profile_target')
@@ -68,6 +71,7 @@ def parse_attributes(block) -> Dict:
         project_name=project_name,
         source_name=source_name,
         sources_full_path=sources_full_path,
+        sources_full_path_legacy=sources_full_path_legacy,
     )
 
 
@@ -123,9 +127,33 @@ def get_source(block) -> Dict:
 def load_sources(block) -> Dict:
     attributes_dict = parse_attributes(block)
     sources_full_path = attributes_dict['sources_full_path']
+    sources_full_path_legacy = attributes_dict['sources_full_path_legacy']
+
+    settings = None
     if os.path.exists(sources_full_path):
         with open(sources_full_path, 'r') as f:
-            return yaml.safe_load(f) or dict(sources=[], version=2)
+            settings = yaml.safe_load(f) or dict(sources=[], version=2)
+
+    if os.path.exists(sources_full_path_legacy):
+        print(f'Legacy dbt source file exists at {sources_full_path_legacy}.')
+
+        with open(sources_full_path_legacy, 'r') as f:
+            sources_legacy = yaml.safe_load(f) or dict(sources=[], version=2)
+
+            for source_data in sources_legacy.get('sources', []):
+                source_name = source_data['name']
+                for table_data in source_data['tables']:
+                    table_name = table_data['name']
+                    print(f'Adding source {source_name} and table {table_name} to {sources_full_path}.')
+                    settings = add_table_to_source(block, settings, source_name, table_name)
+
+            with open(sources_full_path_legacy, 'w') as f:
+                print(f'Deleting legacy dbt source file at {sources_full_path_legacy}.')
+                yaml.safe_dump(settings, f)
+
+        os.remove(sources_full_path_legacy)
+
+    return settings
 
 
 def source_table_name_for_block(block) -> str:
@@ -181,37 +209,43 @@ def update_model_settings(
                 continue
 
             table_name = source_table_name_for_block(upstream_block)
-
-            new_table = dict(name=table_name)
-            new_source = dict(
-                name=source_name,
-                tables=[
-                    new_table,
-                ],
-            )
-
-            settings = load_sources(block)
-
-            if settings:
-                source = find(lambda x: x['name'] == source_name, settings.get('sources', []))
-                if source:
-                    if not source.get('tables'):
-                        source['tables'] = []
-                    if table_name not in [x['name'] for x in source['tables']]:
-                        source['tables'].append(new_table)
-                else:
-                    settings['sources'].append(new_source)
-
-            else:
-                settings = dict(
-                    version=2,
-                    sources=[
-                        new_source,
-                    ],
-                )
+            settings = add_table_to_source(block, load_sources(block), source_name, table_name)
 
             with open(sources_full_path, 'w') as f:
                 yaml.safe_dump(settings, f)
+
+
+def add_table_to_source(block: 'Block', settings: Dict, source_name: str, table_name: str) -> None:
+    attributes_dict = parse_attributes(block)
+    sources_full_path = attributes_dict['sources_full_path']
+
+    new_table = dict(name=table_name)
+    new_source = dict(
+        name=source_name,
+        tables=[
+            new_table,
+        ],
+    )
+
+    if settings:
+        source = find(lambda x: x['name'] == source_name, settings.get('sources', []))
+        if source:
+            if not source.get('tables'):
+                source['tables'] = []
+            if table_name not in [x['name'] for x in source['tables']]:
+                source['tables'].append(new_table)
+        else:
+            settings['sources'].append(new_source)
+
+    else:
+        settings = dict(
+            version=2,
+            sources=[
+                new_source,
+            ],
+        )
+
+    return settings
 
 
 def get_profile(block, profile_target: str = None) -> Dict:
@@ -219,6 +253,7 @@ def get_profile(block, profile_target: str = None) -> Dict:
     project_name = attr['project_name']
     profiles_full_path = attr['profiles_full_path']
     return load_profile(project_name, profiles_full_path, profile_target)
+
 
 def load_profile(project_name: str, profiles_full_path: str, profile_target: str = None) -> Dict:
     with open(profiles_full_path, 'r') as f:
@@ -231,8 +266,8 @@ def load_profile(project_name: str, profiles_full_path: str, profile_target: str
             target = profile.get('target')
 
             return outputs.get(profile_target or target)
-        except Exception:
-            print(f'Error loading file {profiles_full_path}, please check file content syntax.')
+        except Exception as err:
+            print(f'Error loading file {profiles_full_path}, please check file content syntax: {err}.')
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
