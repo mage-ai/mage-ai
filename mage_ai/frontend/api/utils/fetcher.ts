@@ -46,12 +46,14 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
       } = file;
       const formData = new FormData();
       const key: string = Object.keys(body).filter(k => k !== 'file')[0];
+      const jsonRootBody = JSON.stringify({
+        api_key: API_KEY,
+        [key]: body[key],
+      });
+      console.log(jsonRootBody);
       formData.set(
         'json_root_body',
-        JSON.stringify({
-          api_key: API_KEY,
-          [key]: body[key],
-        }),
+        jsonRootBody,
       );
       formData.append('file', file);
       data.body = formData;

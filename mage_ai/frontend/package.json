@@ -47,6 +47,7 @@
     "react-calendar": "^3.7.0",
     "react-copy-to-clipboard": "^5.0.2",
     "react-dom": "18.1.0",
+    "react-dropzone": "^14.2.3",
     "react-hooks-global-state": "^2.0.0-rc.0",
     "react-loading": "^2.0.3",
     "react-markdown": "^4.3.1",

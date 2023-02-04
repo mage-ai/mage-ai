@@ -102,7 +102,7 @@ def __determine_action(
      pk: Union[None, int, str] = None,
 ) -> Tuple[str, str]:
     if 'DELETE' == request.method:
-        return (DELETE, json.loads(request.body) if request.body else {})
+        return (DELETE, request.body_arguments)
 
     if 'GET' == request.method:
         if pk and child and child_pk:
@@ -115,10 +115,10 @@ def __determine_action(
             return (LIST, request.query_arguments)
 
     if 'POST' == request.method:
-        return (CREATE, json.loads(request.body) if request.body else {})
+        return (CREATE, request.body_arguments)
 
     if 'PUT' == request.method:
-        return (UPDATE, json.loads(request.body) if request.body else {})
+        return (UPDATE, request.body_arguments)
 
 
 def __meta(request) -> Dict:
@@ -135,12 +135,14 @@ def __meta_keys(request) -> List[str]:
 def __payload(request) -> Dict:
     if 'Content-Type' in request.headers and \
        'multipart/form-data' in request.headers.get('Content-Type'):
+
         parts = request.body.decode('utf-8', 'ignore').split('\r\n')
         idx = parts.index('Content-Disposition: form-data; name="json_root_body"')
         json_root_body = parts[idx + 2]
+
         return json.loads(json_root_body)
-    else:
-        return json.loads(request.body) if request.body else {}
+
+    return request.body_arguments
 
 
 def __query(request) -> Dict:

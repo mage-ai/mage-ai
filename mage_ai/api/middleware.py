@@ -1,7 +1,7 @@
 from json.decoder import JSONDecodeError
 from mage_ai.api.errors import ApiError
 from mage_ai.orchestration.db.models import Oauth2AccessToken, Oauth2Application
-from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID
+from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
 from mage_ai.server.api.constants import (
     ENDPOINTS_BYPASS_OAUTH_CHECK,
     HEADER_API_KEY,
@@ -18,6 +18,9 @@ class OAuthMiddleware(RequestHandler):
         self.request.__setattr__('error', None)
         self.request.__setattr__('oauth_client', None)
         self.request.__setattr__('oauth_token', None)
+
+        if not REQUIRE_USER_AUTHENTICATION:
+            return
 
         paths = [path for path in self.request.uri.split('/') if path]
         if any(p in ENDPOINTS_BYPASS_OAUTH_CHECK for p in paths):
