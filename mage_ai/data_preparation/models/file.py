@@ -48,6 +48,9 @@ class File:
     def get_all_files(self, repo_path):
         return traverse(os.path.basename(repo_path), True, repo_path)
 
+    def exists(self) -> bool:
+        return os.path.isfile(self.file_path)
+
     def content(self):
         try:
             with open(self.file_path) as fp:
