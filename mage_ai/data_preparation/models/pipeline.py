@@ -814,7 +814,7 @@ class Pipeline:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict()
         else:
-            pipeline_dict = self.to_dict()
+            pipeline_dict = self.to_dict(exclude_data_integration=True)
         async with aiofiles.open(self.config_path, mode='w') as fp:
             await fp.write(yaml.dump(pipeline_dict))
 
