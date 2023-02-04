@@ -87,7 +87,7 @@ class DBTBlock(Block):
         outputs = []
         if is_sql and test_execution:
             print(f'Running DBT command {dbt_command} with arguments {args}.')
-            proc = subprocess.run(
+            subprocess.run(
                 cmds,
                 preexec_fn=os.setsid,
                 stdout=stdout,
@@ -103,15 +103,18 @@ class DBTBlock(Block):
             )
             outputs = [df]
         elif not test_execution:
-            with subprocess.Popen(
+            proc = subprocess.Popen(
                 cmds,
                 bufsize=1,
                 preexec_fn=os.setsid,
                 stdout=stdout,
                 universal_newlines=True,
-            ) as p:
-                for line in p.stdout:
-                    print(line, end='')
+            )
+            for line in proc.stdout:
+                print(line, end='')
+            proc.communicate()
+            if proc.returncode != 0 and proc.returncode is not None:
+                raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
         if not test_execution:
             with open(f'{project_full_path}/target/run_results.json', 'r') as f:
