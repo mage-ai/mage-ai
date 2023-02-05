@@ -10,7 +10,14 @@ type FetcherOptionsType = {
   body?: any;
   ctx?: any;
   method?: any;
-  onUploadProgress?: (progress: any) => void;
+  onUploadProgress?: (progress: any, opts?: {
+    body: {
+      [key: string]: number | string;
+    };
+    query: {
+      [key: string]: number | string;
+    };
+  }) => void;
   query?: any;
   token?: string;
 };

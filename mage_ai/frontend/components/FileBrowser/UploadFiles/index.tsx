@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import ApiErrorType from '@interfaces/ApiErrorType';
 import Button from '@oracle/elements/Button';
 import FileType from '@interfaces/FileType';
 import FileUploader from '@components/FileUploader';
@@ -30,7 +31,7 @@ function UploadFiles({
     [key: string]: number;
   }>({});
   const [uploadedFiles, setUploadedFiles] = useState<{
-    [key: string]: FileType;
+    [key: string]: ApiErrorType & FileType;
   }>({});
   const hasFiles: boolean = !isEmptyObject(fileUploadProgress);
 
@@ -40,7 +41,7 @@ function UploadFiles({
       filename,
       progress,
     ]) => {
-      const file = uploadedFiles[filename];
+      const file: ApiErrorType & FileType = uploadedFiles[filename];
       const errorMessage = file?.message;
 
       rows.push([
@@ -60,7 +61,6 @@ function UploadFiles({
           )}
         </div>,
         <ProgressBar
-          animateProgress
           danger={!!errorMessage}
           key={`progress-${filename}`}
           progress={progress * 100}
@@ -122,6 +122,7 @@ function UploadFiles({
           directoryPath={selectedFolder ? getFullPathWithoutRootFolder(selectedFolder) : ''}
           onDragActiveChange={setIsDragActive}
           setFileUploadProgress={setFileUploadProgress}
+          // @ts-ignore
           setUploadedFiles={(uploadedFiles) => {
             setUploadedFiles(uploadedFiles);
             fetchFileTree?.();
