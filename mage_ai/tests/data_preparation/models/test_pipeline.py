@@ -94,7 +94,7 @@ class PipelineTest(DBTestCase):
                     downstream_blocks=[],
                     all_upstream_blocks_executed=False,
                 ),
-            ],
+            ]
         ))
 
     def test_delete_block(self):
