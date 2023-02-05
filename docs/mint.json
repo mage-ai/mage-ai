@@ -204,7 +204,13 @@
           "pages": [
             "guides/triggering-pipelines",
             "guides/schedule-pipelines",
-            "guides/trigger-pipeline-event",
+            {
+              "group": "Event triggers",
+              "pages": [
+                "guides/triggers/events/overview",
+                "guides/triggers/events/aws"
+              ]
+            },
             "guides/trigger-pipeline-api"
           ]
         },
