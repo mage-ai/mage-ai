@@ -10,7 +10,14 @@ type FetcherOptionsType = {
   body?: any;
   ctx?: any;
   method?: any;
-  onUploadProgress?: (progress: any) => void;
+  onUploadProgress?: (progress: any, opts?: {
+    body: {
+      [key: string]: number | string;
+    };
+    query: {
+      [key: string]: number | string;
+    };
+  }) => void;
   query?: any;
   token?: string;
 };
@@ -46,12 +53,13 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
       } = file;
       const formData = new FormData();
       const key: string = Object.keys(body).filter(k => k !== 'file')[0];
+      const jsonRootBody = JSON.stringify({
+        api_key: API_KEY,
+        [key]: body[key],
+      });
       formData.set(
         'json_root_body',
-        JSON.stringify({
-          api_key: API_KEY,
-          [key]: body[key],
-        }),
+        jsonRootBody,
       );
       formData.append('file', file);
       data.body = formData;
@@ -118,7 +126,12 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
     data: data.body,
     headers,
     method,
-    onUploadProgress: opts?.onUploadProgress,
+    onUploadProgress: opts?.onUploadProgress
+      ? e => opts.onUploadProgress(e, {
+        body: opts?.body,
+        query: opts?.query,
+      })
+      : null,
     url: finalUrl,
   });
 }

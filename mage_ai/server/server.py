@@ -134,16 +134,6 @@ class ManagePageHandler(tornado.web.RequestHandler):
         self.render('manage.html')
 
 
-class ApiFileListHandler(BaseHandler):
-    def get(self):
-        self.write(dict(files=[File.get_all_files(get_repo_path())]))
-
-    def post(self):
-        data = json.loads(self.request.body).get('file', {})
-        file = File.create(data.get('name'), data.get('dir_path'), get_repo_path())
-        self.write(dict(file=file.to_dict()))
-
-
 class ApiFileContentHandler(BaseHandler):
     def get(self, file_path_encoded):
         file_path = urllib.parse.unquote(file_path_encoded)
@@ -517,7 +507,6 @@ def make_app():
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
-        (r'/api/files', ApiFileListHandler),
         (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
         (r'/api/monitor_stats/(?P<stats_type>\w+)', ApiMonitorStatsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),

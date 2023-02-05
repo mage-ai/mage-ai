@@ -7,7 +7,6 @@ import React, {
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
-import { useRouter } from 'next/router';
 import { useMutation } from 'react-query';
 
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
@@ -16,6 +15,7 @@ import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
+import UploadFiles from './UploadFiles';
 import api from '@api';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
@@ -25,6 +25,7 @@ import { buildAddBlockRequestPayload } from '../FileEditor/utils';
 import { getBlockFromFile, getFullPathWithoutRootFolder } from './utils';
 import { find } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { useModal } from '@context/Modal';
 
 const MENU_WIDTH: number = UNIT * 20;
 
@@ -33,6 +34,7 @@ type FileBrowserProps = {
   blocks?: BlockType[];
   deleteBlockFile?: (b: BlockType) => void;
   deleteWidget?: (b: BlockType) => void;
+  fetchFileTree?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
@@ -46,13 +48,14 @@ export enum FileContextEnum {
   FILE = 'file',
   FOLDER = 'folder',
   PIPELINE = 'pipeline',
-};
+}
 
 function FileBrowser({
   addNewBlock,
   blocks = [],
   deleteBlockFile,
   deleteWidget,
+  fetchFileTree,
   fetchPipeline,
   files,
   pipeline,
@@ -148,12 +151,16 @@ function FileBrowser({
       document?.removeEventListener('mouseup', handleMouseUp);
     };
   }, [
+    addNewBlock,
+    dataExporterBlock,
     draggingFile,
+    handleClick,
     pipeline,
     ref,
-    dataExporterBlock,
+    repoPath,
     setSelectedBlock,
     timeout,
+    updateDestinationBlock,
   ]);
 
   const pipelineBlockUuids = useMemo(() => blocks.concat(widgets).map(({ uuid }) => uuid), [
@@ -178,6 +185,7 @@ function FileBrowser({
   )), [
     files,
     pipelineBlockUuids,
+    props,
     ref,
     themeContext,
     timeout,
@@ -189,9 +197,27 @@ function FileBrowser({
   const draggingBlock  = useMemo(() => draggingFile && getBlockFromFile(draggingFile), [
     draggingFile,
   ]);
+  const selectedFolder = useMemo(() => selectedFile && typeof selectedFile?.children !== 'undefined' && selectedFile, [
+    selectedFile,
+  ]);
+
+  const [showModal, hideModal] = useModal(() => (
+    <UploadFiles
+      fetchFileTree={fetchFileTree}
+      onCancel={hideModal}
+      selectedFolder={selectedFolder}
+    />
+  ), {
+  }, [
+    fetchFileTree,
+    selectedFolder,
+  ], {
+    background: true,
+    uuid: 'upload_files',
+  });
 
   const menuMemo = useMemo(() => {
-    if (!selectedBlock) {
+    if (!selectedBlock && !selectedFolder) {
       return <div />;
     }
 
@@ -211,6 +237,29 @@ function FileBrowser({
       xFinal = 0;
     }
 
+    const items = [];
+    if (selectedFolder) {
+      items.push({
+        label: () => 'Upload files',
+        onClick: () => {
+          showModal();
+        },
+        uuid: 'upload_files',
+      });
+    } else {
+      items.push({
+        label: () => 'Delete file',
+        onClick: () => {
+          if (selectedBlock.type === BlockTypeEnum.CHART) {
+            deleteWidget(selectedBlock);
+          } else {
+            deleteBlockFile(selectedBlock);
+          }
+        },
+        uuid: 'delete_file',
+      });
+    }
+
     return (
       <div
         style={{
@@ -221,19 +270,7 @@ function FileBrowser({
         }}
       >
         <FlyoutMenu
-          items={[
-            {
-              label: () => 'Delete file',
-              onClick: () => {
-                if (selectedBlock.type === BlockTypeEnum.CHART) {
-                  deleteWidget(selectedBlock);
-                } else {
-                  deleteBlockFile(selectedBlock);
-                }
-              },
-              uuid: 'delete_file',
-            },
-          ]}
+          items={items}
           open
           parentRef={undefined}
           uuid="FileBrowser/ContextMenu"
@@ -243,15 +280,19 @@ function FileBrowser({
     );
   }, [
     coordinates,
+    deleteBlockFile,
+    deleteWidget,
     ref,
+    showModal,
     selectedBlock,
+    selectedFolder,
   ]);
 
   return (
     <ContainerStyle ref={ref}>
       {filesMemo}
 
-      {selectedBlock && menuMemo}
+      {(selectedBlock || selectedFolder) && menuMemo}
 
       {draggingBlock && (
         <div

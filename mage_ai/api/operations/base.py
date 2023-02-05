@@ -7,6 +7,7 @@ from mage_ai.api.operations.constants import (
     CREATE,
     DELETE,
     DETAIL,
+    FILE_KEY_NAME,
     LIST,
     META_KEY_FORMAT,
     READ,
@@ -218,7 +219,9 @@ class BaseOperation():
     def __payload_for_resource(self):
         payload = self.payload.get(self.__resource_name_singular(), {})
         if self.files and self.files.get(FILE_KEY_NAME):
+            payload_prev = ignore_keys(self.payload, [FILE_KEY_NAME])
             payload[FILE_KEY_NAME] = self.files.get(FILE_KEY_NAME)
+            payload.update(payload_prev)
         return payload
 
     def __present_results(self, results):

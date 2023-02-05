@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
@@ -25,7 +25,7 @@ const ProgressBarContainerStyle = styled.div<ProgressBarProps>`
   width: 100%;
 
   ${props => `
-    background-color: ${(props.theme.monotone || light.monotone).grey200};
+    background-color: ${(props.theme.monotone || dark.monotone).grey200};
   `}
 `;
 
@@ -33,8 +33,8 @@ const ProgressBarStyle = styled.div<ProgressBarProps>`
   height: inherit;
   position: absolute;
 
-  ${props => `
-    background-color: ${(props.theme.progress || light.progress).positive};
+  ${props => !props.danger && `
+    background-color: ${(props.theme.progress || dark.progress).positive};
   `}
 
   ${props => props.progress && `
@@ -42,7 +42,7 @@ const ProgressBarStyle = styled.div<ProgressBarProps>`
   `}
 
   ${props => props.danger && `
-    background-color: ${(props.theme.progress || light.progress).negative}
+    background-color: ${(props.theme.progress || dark.progress).negative};
   `}
 
   ${props => props.animateProgress && `

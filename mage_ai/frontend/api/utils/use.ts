@@ -3,7 +3,7 @@ import useSWR from 'swr';
 import { DELETE, GET, POST, PUT, buildFetch, buildFetchV2, fetcher } from './fetcher';
 import { buildUrl } from './url';
 
-export function fetchCreate(resource: string, body: object, opts: any = {},) {
+export function fetchCreate(resource: string, body: object, opts: any = {}) {
   return buildFetchV2(buildUrl(resource), { ...opts, body, method: POST });
 }
 
@@ -30,7 +30,7 @@ export function fetchCreateWithParentAndChild(
   const url: string = buildUrl(parentResource, parentId, resource, id);
 
   return buildFetchV2(url, { ...opts, body, method: POST });
-};
+}
 
 export function fetchUpdateWithParent(
   resource: string,
@@ -43,7 +43,7 @@ export function fetchUpdateWithParent(
   const url: string = buildUrl(parentResource, parentId, resource, id);
 
   return buildFetchV2(url, { ...opts, body, method: PUT });
-};
+}
 
 export function fetchDetailAsync(ctx: any, resource: string, id: string, query: object = {}) {
   return buildFetch(buildUrl(resource, id), { ctx, query, method: GET });

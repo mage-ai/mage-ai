@@ -447,7 +447,7 @@ class Block:
 
         if BlockType.DBT == block.type:
             if block.file_path and not block.file.exists():
-                os.makedirs(os.path.dirname(block.file_path), exist_ok=True)
+                block.file.create_parent_directories(block.file_path)
                 block.file.update_content('')
 
         self.after_create(

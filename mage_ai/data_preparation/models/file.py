@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.models.errors import FileExistsError
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Dict
 import aiofiles
@@ -32,11 +33,42 @@ class File:
         return os.path.join(self.repo_path, self.dir_path, self.filename)
 
     @classmethod
-    def create(self, filename, dir_path, repo_path=None):
+    def file_exists(self, file_path: str) -> bool:
+        return os.path.isfile(file_path)
+
+    @classmethod
+    def create_parent_directories(self, file_path: str) -> bool:
+        will_create = not self.file_exists(file_path)
+        if will_create:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        return will_create
+
+    @classmethod
+    def create(
+        self,
+        filename,
+        dir_path,
+        content: str = None,
+        repo_path: str = None,
+        create_directories_if_not_exist: bool = True,
+        overwrite: bool = True,
+    ):
+
         repo_path = repo_path or get_repo_path()
         file = File(filename, dir_path, repo_path)
-        with open(file.file_path, 'w'):
-            pass
+        file_path = file.file_path
+
+        if self.file_exists(file_path) and not overwrite:
+            raise FileExistsError(f'File at {file_path} already exists.')
+
+        if create_directories_if_not_exist:
+            self.create_parent_directories(file_path)
+
+        write_type = 'wb' if content and type(content) is bytes else 'w'
+        with open(file_path, write_type) as f:
+            if content:
+                f.write(content)
+
         return file
 
     @classmethod
@@ -49,7 +81,7 @@ class File:
         return traverse(os.path.basename(repo_path), True, repo_path)
 
     def exists(self) -> bool:
-        return os.path.isfile(self.file_path)
+        return self.file_exists(self.file_path)
 
     def content(self):
         try:
