@@ -6,9 +6,12 @@ import LineReader from '@utils/LineReader.js';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/radius';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 
-const DropzoneStyle = styled.div`
+const DropzoneStyle = styled.div<{
+  danger?: boolean;
+  inverted?: boolean;
+}>`
   border-radius: ${BORDER_RADIUS}px;
 
   &:hover {

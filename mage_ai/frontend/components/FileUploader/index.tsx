@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 
+import ApiErrorType from '@interfaces/ApiErrorType';
 import FileType from '@interfaces/FileType';
 import MultiFileInput from '@oracle/elements/Inputs/MultiFileInput';
 import UploadFileType from '@interfaces/UploadFileType';
@@ -11,10 +12,10 @@ type FileUploaderProps = {
   directoryPath: string;
   onDragActiveChange?: (isDragActive: boolean) => void;
   setFileUploadProgress?: (opts: {
-    [path: string]: FileType;
+    [path: string]: number;
   }) => void;
   setUploadedFiles: (opts: {
-    [path: string]: number;
+    [path: string]: ApiErrorType | FileType;
   }) => void;
 };
 
@@ -29,6 +30,7 @@ function FileUploader({
     api.files.useCreate({
       onUploadProgress: (event, { body }) => {
         const fileFullPath = `${body?.dir_path}/${body?.file?.name}`;
+        // @ts-ignore
         setFileUploadProgress?.(prev => ({
           ...prev,
           [fileFullPath]: event.loaded / event.total,
@@ -44,6 +46,7 @@ function FileUploader({
       const dirPath = `${directoryPath}/${pathClean}`;
       const fileFullPath = `${dirPath}/${name}`;
 
+      // @ts-ignore
       createFile({
         dir_path: dirPath,
         file: file,
@@ -55,13 +58,19 @@ function FileUploader({
           error,
           file: fileFromServer,
         } = data;
-        setUploadedFiles(prev => ({
+        // @ts-ignore
+        setUploadedFiles((prev: {
+          [path: string]: ApiErrorType | FileType;
+        }) => ({
           ...prev,
           [fileFullPath]: fileFromServer || error,
         }));
       });
 
-      setFileUploadProgress(prev => ({
+      // @ts-ignore
+      setFileUploadProgress((prev: {
+        [path: string]: number;
+      }) => ({
         ...prev,
         [fileFullPath]: 0,
       }));
@@ -76,6 +85,7 @@ function FileUploader({
 
   return (
     <MultiFileInput
+      // @ts-ignore
       onDragActiveChange={onDragActiveChange}
       setFiles={setFiles}
     >

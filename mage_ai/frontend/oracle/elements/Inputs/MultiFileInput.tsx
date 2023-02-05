@@ -13,6 +13,8 @@ type MultiFileInputProps = {
   inputOnChange?: (e: any) => void;
   inputProps?: {
     [key: string]: number | string;
+  } & {
+    onChange?: (event: any) => void;
   };
   onDragActiveChange?: (isDragActive: boolean) => void;
   setFiles: (files: any[]) => void;

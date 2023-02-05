@@ -121,9 +121,11 @@ function UploadFiles({
         <FileUploader
           directoryPath={selectedFolder ? getFullPathWithoutRootFolder(selectedFolder) : ''}
           onDragActiveChange={setIsDragActive}
+          // @ts-ignore
           setFileUploadProgress={setFileUploadProgress}
           // @ts-ignore
           setUploadedFiles={(uploadedFiles) => {
+            // @ts-ignore
             setUploadedFiles(uploadedFiles);
             fetchFileTree?.();
           }}
