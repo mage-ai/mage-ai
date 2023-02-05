@@ -46,6 +46,7 @@ export type ThemeType = {
     table: string;
   };
   borders: {
+    contrast: string;
     danger: string;
     dark: string;
     info: string;

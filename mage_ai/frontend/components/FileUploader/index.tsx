@@ -9,7 +9,8 @@ import api from '@api';
 type FileUploaderProps = {
   children: any;
   directoryPath: string;
-  setFileUploadProgress: (opts: {
+  onDragActiveChange?: (isDragActive: boolean) => void;
+  setFileUploadProgress?: (opts: {
     [path: string]: FileType;
   }) => void;
   setUploadedFiles: (opts: {
@@ -20,6 +21,7 @@ type FileUploaderProps = {
 function FileUploader({
   children,
   directoryPath,
+  onDragActiveChange,
   setFileUploadProgress,
   setUploadedFiles,
 }: FileUploaderProps) {
@@ -27,7 +29,7 @@ function FileUploader({
     api.files.useCreate({
       onUploadProgress: (event, { body }) => {
         const fileFullPath = `${body?.dir_path}/${body?.file?.name}`;
-        setFileUploadProgress(prev => ({
+        setFileUploadProgress?.(prev => ({
           ...prev,
           [fileFullPath]: event.loaded / event.total,
         }));
@@ -74,6 +76,7 @@ function FileUploader({
 
   return (
     <MultiFileInput
+      onDragActiveChange={onDragActiveChange}
       setFiles={setFiles}
     >
       {children}

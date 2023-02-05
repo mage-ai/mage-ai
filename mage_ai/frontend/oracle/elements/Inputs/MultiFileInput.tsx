@@ -3,7 +3,6 @@ import { useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 const DropzoneStyle = styled.div`
-  background-color: red;
   &:hover {
     cursor: pointer;
   }
@@ -16,24 +15,19 @@ type MultiFileInputProps = {
     [key: string]: number | string;
   };
   onDragActiveChange?: (isDragActive: boolean) => void;
-  onDrop?: (acceptedFiles: any[]) => void;
   setFiles: (files: any[]) => void;
 };
-
 
 function MultiFileInput({
   children,
   inputOnChange,
   inputProps,
   onDragActiveChange,
-  onDrop: onDropProps,
   setFiles,
 }: MultiFileInputProps) {
   const onDrop = useCallback((acceptedFiles) => {
-    setFiles([...acceptedFiles]);
-    onDropProps?.(acceptedFiles);
+    setFiles(acceptedFiles);
   }, [
-    onDropProps,
     setFiles,
   ]);
 

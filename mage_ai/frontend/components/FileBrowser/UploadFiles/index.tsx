@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import FileType from '@interfaces/FileType';
 import FileUploader from '@components/FileUploader';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Panel from '@oracle/components/Panel';
+import ProgressBar from '@oracle/components/ProgressBar';
+import Spacing from '@oracle/elements/Spacing';
+import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import { DropZoneStyle, TableStyle } from './index.style';
 import { getFullPathWithoutRootFolder } from '../utils';
+import { isEmptyObject } from '@utils/hash';
+import { sortByKey } from '@utils/array';
 
 type UploadFilesProps = {
   onCancel: () => void;
@@ -19,35 +23,113 @@ function UploadFiles({
   onCancel,
   selectedFolder,
 }: UploadFilesProps) {
-  // setFileUploadProgress
-  // setUploadedFiles
+  const [isDragActive, setIsDragActive] = useState<boolean>(false);
+  const [fileUploadProgress, setFileUploadProgress] = useState<{
+    [key: string]: number;
+  }>({});
+  const [uploadedFiles, setUploadedFiles] = useState<{
+    [key: string]: FileType;
+  }>({});
+  const hasFiles: boolean = !isEmptyObject(fileUploadProgress);
+
+  const tableMemo = useMemo(() => {
+    const rows = [];
+    sortByKey(Object.entries(fileUploadProgress), ([name, _]) => name).forEach(([
+      filename,
+      progress,
+    ]) => {
+      const file = uploadedFiles[filename];
+      const errorMessage = file?.message;
+
+      rows.push([
+        <div key={`name-${filename}`}>
+          <Text
+            overflowWrap
+            preWrap
+          >
+            {filename}
+          </Text>
+          {errorMessage && (
+            <Spacing mt={1}>
+              <Text danger small>
+                {errorMessage}
+              </Text>
+            </Spacing>
+          )}
+        </div>,
+        <ProgressBar
+          animateProgress
+          danger={!!errorMessage}
+          key={`progress-${filename}`}
+          progress={progress * 100}
+        />,
+      ]);
+    });
+
+    return (
+      <Table
+        columnFlex={[1, 4]}
+        columns={[
+          {
+            uuid: 'Filename',
+          },
+          {
+            uuid: 'Upload progress',
+          },
+        ]}
+        rows={rows}
+        uuid="block-runs"
+      />
+    );
+  }, [
+    fileUploadProgress,
+    uploadedFiles,
+  ]);
 
   return (
     <Panel
-      headerTitle="Upload files"
       footer={(
-        <FlexContainer>
-          <Button
-            primary
-          >
-            Upload files
+        <FlexContainer fullWidth>
+          <Button onClick={() => onCancel()}>
+            Close
           </Button>
-
-          <Spacing mr={1} />
-
-          <Button>
-            Cancel
-          </Button>
+          {hasFiles && (
+            <Spacing ml={1}>
+              <Button
+                onClick={() => {
+                  setFileUploadProgress({});
+                  setUploadedFiles({});
+                }}
+              >
+                Clear files and retry
+              </Button>
+            </Spacing>
+          )}
         </FlexContainer>
       )}
+      headerTitle="Upload files"
     >
-      <FileUploader
-        directoryPath={selectedFolder ? getFullPathWithoutRootFolder(selectedFolder) : ''}
-        // setFileUploadProgress
-        // setUploadedFiles
-      >
-      </FileUploader>
+      {hasFiles && (
+        <TableStyle>
+          {tableMemo}
+        </TableStyle>
+      )}
 
+      {!hasFiles && (
+        <FileUploader
+          directoryPath={selectedFolder ? getFullPathWithoutRootFolder(selectedFolder) : ''}
+          onDragActiveChange={setIsDragActive}
+          setFileUploadProgress={setFileUploadProgress}
+          setUploadedFiles={setUploadedFiles}
+        >
+          <DropZoneStyle>
+            <Text center>
+              {isDragActive && 'Drop to upload'}
+              {!isDragActive && 'Click or drop files and folders to upload'}
+            </Text>
+          </DropZoneStyle>
+        </FileUploader>
+      )}
     </Panel>
   );
 }

@@ -159,3 +159,6 @@ docker-compose.override.yml
 
 # vscode
 .vscode/
+
+# front-end
+node_modules

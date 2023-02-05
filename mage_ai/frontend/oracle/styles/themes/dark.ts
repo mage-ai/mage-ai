@@ -94,6 +94,7 @@ export default {
     table: '#292A2F',
   },
   borders: {
+    contrast: WHITE,
     danger: RED,
     dark: '#000000',
     info: YELLOW,
