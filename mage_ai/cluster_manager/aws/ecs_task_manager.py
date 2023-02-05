@@ -10,6 +10,7 @@ import boto3
 import json
 import os
 
+
 class EcsTaskManager:
     def __init__(self, cluster_name):
         self.cluster_name = cluster_name
@@ -59,12 +60,14 @@ class EcsTaskManager:
 
         running_instance_names = set(map(lambda x: x['name'], tasks))
 
-        stopped_instance_names = \
-            [name for name in list(self.instance_metadata.keys()) if name not in running_instance_names]
+        stopped_instance_names = [
+            name for name in list(self.instance_metadata.keys())
+            if name not in running_instance_names
+        ]
         stopped_instances = \
             list(
                 map(
-                    lambda name: { 'name': name, 'status': 'STOPPED' },
+                    lambda name: {'name': name, 'status': 'STOPPED'},
                     stopped_instance_names
                 )
             )

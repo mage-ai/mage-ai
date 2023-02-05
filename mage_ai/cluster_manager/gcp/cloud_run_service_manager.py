@@ -79,7 +79,7 @@ class CloudRunServiceManager:
                 value=service_id
             )
         )
-        existing_service.template.containers[0].env=env_vars
+        existing_service.template.containers[0].env = env_vars
 
         service_request = run_v2.CreateServiceRequest(
             parent=resource_prefix,
@@ -126,7 +126,7 @@ class CloudRunServiceManager:
         backend_body = {
             'name': backend_service_name,
             'loadBalancingScheme': 'EXTERNAL',
-            'backends': [{ 'group': group_url }],
+            'backends': [{'group': group_url}],
             'enableCDN': False,
             # TODO: create a new security policy
             'securityPolicy': f"{os.getenv('GCP_SERVICE_NAME')}-security-policy",
@@ -153,7 +153,7 @@ class CloudRunServiceManager:
         print('Creating external IP address...')
         address_name = f'{service_id}-urlmap-address'
         addresses_service = self.compute_service.globalAddresses()
-        addresses_service.insert(project=self.project_id, body={ 'name': address_name }).execute()
+        addresses_service.insert(project=self.project_id, body={'name': address_name}).execute()
 
         ip_address = addresses_service.get(
             project=self.project_id,
@@ -175,7 +175,7 @@ class CloudRunServiceManager:
             ),
             'Url map'
         )
-        
+
         url_map_link = url_maps_response.get('targetLink')
 
         # Create http proxy

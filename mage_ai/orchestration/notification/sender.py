@@ -48,7 +48,12 @@ class NotificationSender:
                 email_content=email_content,
             )
 
-    def send_pipeline_run_failure_message(self, pipeline, pipeline_run, message: str = None) -> None:
+    def send_pipeline_run_failure_message(
+        self,
+        pipeline,
+        pipeline_run,
+        message: str = None,
+    ) -> None:
         if AlertOn.PIPELINE_RUN_FAILURE in self.config.alert_on:
             message = message or (
                 f'Failed to run Pipeline `{pipeline.uuid}` '

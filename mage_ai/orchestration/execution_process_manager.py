@@ -1,7 +1,5 @@
 from mage_ai.orchestration.db.models import PipelineRun
 import multiprocessing
-import os
-import signal
 
 
 class ExecutionProcessManager:

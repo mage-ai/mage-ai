@@ -157,7 +157,8 @@ class DbtCloudClient(HttpClient):
                 print(f'Polling DBT Cloud run {run_id}. Current status: {job_run_status_msg}.')
 
                 if job_run_status in DbtCloudJobRunStatus.TERMINAL_STATUSES.value:
-                    print(f"Job run status for run {run_id}: {job_run_status_msg}. Polling complete")
+                    print(f"Job run status for run {run_id}: {job_run_status_msg}. "
+                          "Polling complete")
 
                     if job_run_status == DbtCloudJobRunStatus.SUCCESS.value:
                         break

@@ -10,7 +10,8 @@ from typing import Dict, List, Optional, Union
 import requests
 import time
 
-LOG_TEXT_FOR_STREAMS_WITH_EXTRACTED_ROWS = 'com.stitchdata.target-stitch-avro.flush-pipeline - send-stream-record-count-impl'
+LOG_TEXT_FOR_STREAMS_WITH_EXTRACTED_ROWS = \
+    'com.stitchdata.target-stitch-avro.flush-pipeline - send-stream-record-count-impl'
 
 
 class StitchClient(HttpClient):
@@ -73,7 +74,8 @@ class StitchClient(HttpClient):
             extractions = [e for e in extractions if e['job_name'] == job_name]
             if len(extractions) == 0:
                 print(
-                    f'Polling Stitch extraction status for source {source_id}. Current status: running.'
+                    f'Polling Stitch extraction status for source {source_id}. '
+                    'Current status: running.'
                 )
             else:
                 extraction = extractions[0]
@@ -90,7 +92,8 @@ class StitchClient(HttpClient):
                 else:
                     error_message = extraction['discovery_description']
                     raise Exception(
-                        f'Extraction for source {source_id} failed with message: \"{error_message}\".'
+                        f'Extraction for source {source_id} failed with '
+                        f'message: \"{error_message}\".'
                     )
             if (
                 poll_timeout
@@ -98,7 +101,8 @@ class StitchClient(HttpClient):
                 > poll_start + timedelta(seconds=poll_timeout)
             ):
                 raise Exception(
-                    f'Extraction for source {source_id} times out after {datetime.now() - poll_start}.'
+                    f'Extraction for source {source_id} times out after '
+                    f'{datetime.now() - poll_start}.'
                 )
             time.sleep(poll_interval)
 
@@ -121,7 +125,8 @@ class StitchClient(HttpClient):
                          and load['stream_name'] in stream_names]
                 for load in loads:
                     if load['error_state'] is not None:
-                        error_message = load['error_state']['notification_data']['warehouse_message']
+                        error_message = \
+                            load['error_state']['notification_data']['warehouse_message']
                         raise Exception(
                             f"Failed to load data for stream {load['stream_name']} with "
                             f"message: \"{error_message}\"."
@@ -140,8 +145,10 @@ class StitchClient(HttpClient):
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
                 break
             elif autocomplete_after_seconds and \
-                datetime.now().timestamp() - autocomplete_after_seconds >= poll_start.timestamp():
-                print(f'Automatically setting job as complete after {autocomplete_after_seconds} seconds.')
+                    datetime.now().timestamp() - autocomplete_after_seconds >= \
+                    poll_start.timestamp():
+                print(f'Automatically setting job as complete after {autocomplete_after_seconds} '
+                      'seconds.')
                 break
             else:
                 percent_complete = round(
@@ -150,7 +157,8 @@ class StitchClient(HttpClient):
                 ) if total_streams else 0
                 running_streams = [s for s in stream_names if s not in succeeded_streams]
                 print(
-                    f'Polling Stitch load status for source {source_id}: {percent_complete}% ({completed_streams}/{total_streams}). '
+                    f'Polling Stitch load status for source {source_id}: {percent_complete}% '
+                    f'({completed_streams}/{total_streams}). '
                     f'Completed streams: {succeeded_streams}. '
                     f'Running streams: {running_streams}.'
                 )

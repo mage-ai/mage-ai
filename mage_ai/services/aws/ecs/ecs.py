@@ -14,7 +14,7 @@ def run_task(
         ecs_config = EcsConfig.load(config=ecs_config)
     client = boto3.client('ecs')
     response = client.run_task(**ecs_config.get_task_config(command=command))
-    
+
     if wait_for_completion:
         arn = response['tasks'][0]['taskArn']
         waiter = client.get_waiter('tasks_stopped')

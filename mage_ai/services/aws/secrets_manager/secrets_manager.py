@@ -3,7 +3,7 @@ import os
 
 class SecretsManager:
     def __init__(self):
-        from aws_secretsmanager_caching import SecretCache, SecretCacheConfig 
+        from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
         from botocore.config import Config
         import boto3
 
@@ -12,6 +12,7 @@ class SecretsManager:
         client = boto3.client('secretsmanager', config=config)
         cache_config = SecretCacheConfig()
         self.cache = SecretCache(config=cache_config, client=client)
+
 
 secrets_manager = SecretsManager()
 
@@ -34,4 +35,3 @@ def get_secret_force(secret_id: str) -> str:
     return client.get_secret_value(
         SecretId=secret_id,
     ).get('SecretString')
-

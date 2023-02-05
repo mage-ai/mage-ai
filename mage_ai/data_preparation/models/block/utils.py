@@ -390,7 +390,6 @@ def fetch_input_variables(
                 if len(final_value) >= 1 and type(final_value[0]) is pd.DataFrame:
                     final_value = pd.concat(final_value)
 
-
                 if not should_reduce:
                     # Only get the 1st output of a dynamic block;
                     # the 2nd output is the dynamic child block’s metadata
@@ -399,7 +398,7 @@ def fetch_input_variables(
 
                     if type(final_value) is not pd.DataFrame and \
                         type(final_value) is list and \
-                        len(final_value) == 1:
+                            len(final_value) == 1:
                         final_value = final_value[0]
 
                 input_vars[idx] = final_value

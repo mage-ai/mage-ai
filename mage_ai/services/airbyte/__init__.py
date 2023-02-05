@@ -51,7 +51,6 @@ class Airbyte():
                 self.logger.error(msg)
                 raise ConnectionDeprecated(msg)
 
-
     def __run_sync(
         self,
         client: AirbyteClient,
@@ -65,14 +64,11 @@ class Airbyte():
 
         job = client.run_sync(connection_id)
         job_id = job['id']
-        job_created_at = job['createdAt']
 
         status = JOB_STATUS_PENDING
         while status not in [JOB_STATUS_FAILED, JOB_STATUS_SUCCEEDED]:
             job = client.get_job_status(job_id)
-            job_created_at = job['createdAt']
             status = job['status']
-            job_updated_at = job['updatedAt']
 
             if JOB_STATUS_SUCCEEDED == status:
                 self.logger.info(f'Job {job_id} succeeded.')

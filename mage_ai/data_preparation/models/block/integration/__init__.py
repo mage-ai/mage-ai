@@ -4,7 +4,6 @@ from mage_ai.data_integrations.logger.utils import (
     print_log_from_line,
 )
 from mage_ai.data_integrations.utils.config import (
-    build_catalog_json,
     build_config_json,
     get_catalog_by_stream,
 )
@@ -73,7 +72,8 @@ class IntegrationBlock(Block):
             ) or dict()
 
             if stream_catalog.get('replication_method') == 'INCREMENTAL':
-                from mage_integrations.sources.utils import update_source_state_from_destination_state
+                from mage_integrations.sources.utils import \
+                    update_source_state_from_destination_state
                 update_source_state_from_destination_state(
                     source_state_file_path,
                     destination_state_file_path,
@@ -193,7 +193,10 @@ class IntegrationBlock(Block):
                                     stream=stream,
                                 ),
                             )
-                            block_function = self._validate_execution(decorated_functions, input_vars)
+                            block_function = self._validate_execution(
+                                decorated_functions,
+                                input_vars,
+                            )
 
                             if block_function is not None:
                                 df = self.execute_block_function(

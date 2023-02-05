@@ -115,7 +115,7 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
 
 def parse_line(l: str) -> Dict:
     tags = {}
-    text = re.sub('^[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}', '', l).strip()
+    text = re.sub(r'^[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}', '', l).strip()
 
     try:
         data1 = json.loads(text)

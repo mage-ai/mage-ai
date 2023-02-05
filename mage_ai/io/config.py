@@ -121,7 +121,10 @@ class AWSSecretLoader(BaseConfigLoader):
 
         Returns: bool: Returns true if secret exists, otherwise returns false.
         """
-        return self.__get_secret(secret_id, version_id, version_stage_label) is not None
+        return self.__get_secret(
+            secret_id,
+            version_id,
+            version_stage_label) is not None
 
     def get(
         self,
@@ -146,7 +149,8 @@ class AWSSecretLoader(BaseConfigLoader):
             - a binary value, returns a `bytes` object
             - a string value, returns a `string` object
         """
-        response = self.__get_secret(secret_id, version_id, version_stage_label)
+        response = self.__get_secret(
+            secret_id, version_id, version_stage_label)
         if 'SecretBinary' in response:
             return response['SecretBinary']
         else:
@@ -191,7 +195,8 @@ class AWSSecretLoader(BaseConfigLoader):
         except ClientError as error:
             if error.response['Error']['Code'] == 'ResourceNotFoundException':
                 return None
-            raise RuntimeError(f'Error loading config: {error.response["Error"]["Message"]}')
+            raise RuntimeError(
+                f'Error loading config: {error.response["Error"]["Message"]}')
 
 
 class EnvironmentVariableLoader(BaseConfigLoader):
@@ -310,7 +315,8 @@ class ConfigFileLoader(BaseConfigLoader):
                 config_file = Template(fin.read()).render(env_var=os.getenv)
                 self.config = yaml.full_load(config_file)[profile]
 
-        self.use_verbose_format = any(source in self.config.keys() for source in VerboseConfigKey)
+        self.use_verbose_format = any(
+            source in self.config.keys() for source in VerboseConfigKey)
 
     def contains(self, key: Union[ConfigKey, str]) -> Any:
         """

@@ -225,7 +225,8 @@ def submit_spark_job(
         #     )
 
         #     if status != 'COMPLETED':
-        #         raise Exception(f'Cluster ID {cluster_id} did not complete step, status: {status}')
+        #         raise Exception(
+        #             f'Cluster ID {cluster_id} did not complete step, status: {status}')
     else:
         total_steps, active_steps, cluster_id = sorted(valid_cluster_ids, key=lambda t: t[0])[0]
         print(f'Number of steps in cluster ID {cluster_id}: {total_steps}')

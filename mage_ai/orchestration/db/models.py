@@ -17,7 +17,6 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
-import json
 import re
 import uuid
 

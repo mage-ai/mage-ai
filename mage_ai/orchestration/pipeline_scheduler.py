@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from mage_ai.data_integrations.utils.scheduler import clear_source_output_files, initialize_state_and_runs
+from mage_ai.data_integrations.utils.scheduler import (
+    clear_source_output_files,
+    initialize_state_and_runs,
+)
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
@@ -126,15 +129,16 @@ class PipelineScheduler:
                     # When all pipeline runs that are associated with backfill is done
                     if len(backfills) >= 1:
                         backfill = backfills[0]
-                        if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status for pr in backfill.pipeline_runs]):
+                        if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
+                                for pr in backfill.pipeline_runs]):
                             backfill.update(status=Backfill.Status.COMPLETED)
                             pipeline_schedule.update(
                                 status=PipelineSchedule.ScheduleStatus.INACTIVE,
                             )
                     # If running once, update the schedule to inactive when pipeline run is done
                     elif pipeline_schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
-                        pipeline_schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
-                        pipeline_schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
+                            pipeline_schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
+                            pipeline_schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
 
                         pipeline_schedule.update(status=PipelineSchedule.ScheduleStatus.INACTIVE)
             elif PipelineType.INTEGRATION == self.pipeline.type:
@@ -242,8 +246,8 @@ class PipelineScheduler:
             )
 
     def memory_usage_failure(self, tags: Dict = {}) -> None:
-        msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum limit of ' \
-            f'{int(MEMORY_USAGE_MAXIMUM * 100)}%.'
+        msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
+            f'limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%.'
         self.logger.info(msg, tags=tags)
 
         self.stop()
@@ -274,7 +278,8 @@ class PipelineScheduler:
 
     @property
     def completed_block_runs(self) -> List[BlockRun]:
-        return [b for b in self.pipeline_run.block_runs if b.status == BlockRun.BlockRunStatus.COMPLETED]
+        return [b for b in self.pipeline_run.block_runs
+                if b.status == BlockRun.BlockRunStatus.COMPLETED]
 
     @property
     def queued_block_runs(self) -> List[BlockRun]:
@@ -288,7 +293,8 @@ class PipelineScheduler:
             )
 
             if dynamic_upstream_block_uuids:
-                completed = all(uuid in completed_block_uuids for uuid in dynamic_upstream_block_uuids)
+                completed = all(uuid in completed_block_uuids
+                                for uuid in dynamic_upstream_block_uuids)
             else:
                 block = self.pipeline.get_block(block_run.block_uuid)
                 completed = block is not None and \
@@ -619,9 +625,10 @@ def run_block(
     pipeline = pipeline_scheduler.pipeline
 
     block_run = BlockRun.query.get(block_run_id)
-    pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
-                                   f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
-                                   **tags)
+    pipeline_scheduler.logger.info(
+        f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
+        f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
+        **tags)
 
     if schedule_after_complete:
         on_complete = pipeline_scheduler.on_block_complete
@@ -726,7 +733,7 @@ def schedule_all():
 
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule() and \
-            pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
+                pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
 
             pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
@@ -750,7 +757,7 @@ def schedule_all():
             )
             if pipeline_schedule.settings and \
                 pipeline_schedule.settings.get('skip_if_previous_running') and \
-                running_pipeline_run is not None:
+                    running_pipeline_run is not None:
 
                 payload['create_block_runs'] = False
                 pipeline_run = PipelineRun.create(**payload)

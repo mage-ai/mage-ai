@@ -309,7 +309,8 @@ class Block:
         if self.configuration and 'data_provider_table' in self.configuration:
             return self.configuration['data_provider_table']
 
-        table_name = f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_{self.pipeline.version_name}'
+        table_name = f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_'\
+                     f'{self.pipeline.version_name}'
 
         env = (self.global_vars or dict()).get('env')
         if env == ENV_DEV:
@@ -561,11 +562,13 @@ class Block:
                 not_executed_upstream_blocks = list(
                     filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
                 )
-                all_upstream_is_dbt = all([BlockType.DBT == b.type for b in not_executed_upstream_blocks])
+                all_upstream_is_dbt = all([BlockType.DBT == b.type
+                                           for b in not_executed_upstream_blocks])
                 if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
+                    upstream_block_uuids = list(map(lambda b: b.uuid, not_executed_upstream_blocks))
                     raise Exception(
                         f"Block {self.uuid}'s upstream blocks have not been executed yet. "
-                        f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
+                        f'Please run upstream blocks {upstream_block_uuids} '
                         'before running the current block.'
                     )
             output = self.execute_block(
@@ -710,30 +713,33 @@ class Block:
                 if num_upstream < num_args:
                     raise Exception(
                         f'Block {self.uuid} may be missing upstream dependencies. '
-                        f'It expected to have {"at least " if has_var_args else ""}{num_args} arguments, '
-                        f'but only received {num_inputs}. '
-                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                        f'It expected to have {"at least " if has_var_args else ""}{num_args} '
+                        f'arguments, but only received {num_inputs}. '
+                        f'Confirm that the @{self.type} method declaration has the correct number '
+                        'of arguments.'
                     )
                 else:
                     raise Exception(
                         f'Block {self.uuid} is missing input arguments. '
-                        f'It expected to have {"at least " if has_var_args else ""}{num_args} arguments, '
-                        f'but only received {num_inputs}. '
-                        f'Double check the @{self.type} method declaration has the correct number of arguments '
-                        f'and that the upstream blocks have been executed.'
+                        f'It expected to have {"at least " if has_var_args else ""}{num_args} '
+                        f'arguments, but only received {num_inputs}. '
+                        f'Double check the @{self.type} method declaration has the correct number '
+                        'of arguments and that the upstream blocks have been executed.'
                     )
             elif num_args < num_inputs and not has_var_args:
                 if num_upstream > num_args:
                     raise Exception(
                         f'Block {self.uuid} may have too many upstream dependencies. '
                         f'It expected to have {num_args} arguments, but received {num_inputs}. '
-                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                        f'Confirm that the @{self.type} method declaration has the correct number '
+                        'of arguments.'
                     )
                 else:
                     raise Exception(
                         f'Block {self.uuid} has too many input arguments. '
                         f'It expected to have {num_args} arguments, but received {num_inputs}. '
-                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                        f'Confirm that the @{self.type} method declaration has the correct number '
+                        'of arguments.'
                     )
 
             return block_function
@@ -851,7 +857,12 @@ class Block:
         else:
             block_function = self._validate_execution(decorated_functions, input_vars)
             if block_function is not None:
-                outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
+                outputs = self.execute_block_function(
+                    block_function,
+                    input_vars,
+                    global_vars,
+                    test_execution,
+                )
 
             if outputs is None:
                 outputs = []
@@ -1183,8 +1194,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
-                        error=f'No such file or directory',
-                        message='You may have moved it or changed it’s filename. ' \
+                        error='No such file or directory',
+                        message='You may have moved it or changed it’s filename. '
                         'Delete the current block to remove it from the pipeline or write code ' +
                         f'and save the pipeline to create a new file at {file_path}.',
                     )
@@ -1207,8 +1218,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 file_path = self.file.file_path
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
-                        error=f'No such file or directory',
-                        message='You may have moved it or changed it’s filename. ' \
+                        error='No such file or directory',
+                        message='You may have moved it or changed it’s filename. '
                         'Delete the current block to remove it from the pipeline or write code ' +
                         f'and save the pipeline to create a new file at {file_path}.',
                     )

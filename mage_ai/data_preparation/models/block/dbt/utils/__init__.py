@@ -168,9 +168,6 @@ def update_model_settings(
 ):
     attributes_dict = parse_attributes(block)
 
-    filename = attributes_dict['filename']
-    full_path = attributes_dict['full_path']
-    project_name = attributes_dict['project_name']
     sources_full_path = attributes_dict['sources_full_path']
     source_name = attributes_dict['source_name']
 
@@ -216,9 +213,6 @@ def update_model_settings(
 
 
 def add_table_to_source(block: 'Block', settings: Dict, source_name: str, table_name: str) -> None:
-    attributes_dict = parse_attributes(block)
-    sources_full_path = attributes_dict['sources_full_path']
-
     new_table = dict(name=table_name)
     new_source = dict(
         name=source_name,
@@ -267,7 +261,8 @@ def load_profile(project_name: str, profiles_full_path: str, profile_target: str
 
             return outputs.get(profile_target or target)
         except Exception as err:
-            print(f'Error loading file {profiles_full_path}, please check file content syntax: {err}.')
+            print(f'Error loading file {profiles_full_path}, please check file content '
+                  f'syntax: {err}.')
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
