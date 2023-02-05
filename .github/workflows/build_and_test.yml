@@ -17,7 +17,7 @@ jobs:
         uses: py-actions/flake8@v2
         with:
           ignore: "F401"
-          exclude: "mage_ai/data_preparation/templates"
+          exclude: "mage_ai/data_preparation/templates,mage_ai/orchestration/db/migrations/versions/"
           max-line-length: "100"
           path: "mage_ai"
   test_backend:
