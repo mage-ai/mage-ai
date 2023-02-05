@@ -1677,6 +1677,7 @@ function PipelineDetailPage({
       blocks={blocks}
       deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
+      fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       files={files}
       onSelectBlockFile={onSelectBlockFile}
@@ -1694,6 +1695,9 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     blocks,
+    deleteBlock,
+    deleteWidget,
+    fetchFileTree,
     fetchPipeline,
     filePathsFromUrl,
     fileTreeRef,
@@ -1704,6 +1708,7 @@ function PipelineDetailPage({
     pipeline,
     pipelineUUID,
     resetState,
+    router,
     setSelectedBlock,
     widgets,
   ]);

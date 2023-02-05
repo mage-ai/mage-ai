@@ -15,11 +15,13 @@ import { isEmptyObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
 
 type UploadFilesProps = {
+  fetchFileTree?: () => void;
   onCancel: () => void;
   selectedFolder: FileType;
 };
 
 function UploadFiles({
+  fetchFileTree,
   onCancel,
   selectedFolder,
 }: UploadFilesProps) {
@@ -120,7 +122,10 @@ function UploadFiles({
           directoryPath={selectedFolder ? getFullPathWithoutRootFolder(selectedFolder) : ''}
           onDragActiveChange={setIsDragActive}
           setFileUploadProgress={setFileUploadProgress}
-          setUploadedFiles={setUploadedFiles}
+          setUploadedFiles={(uploadedFiles) => {
+            setUploadedFiles(uploadedFiles);
+            fetchFileTree?.();
+          }}
         >
           <DropZoneStyle>
             <Text center>

@@ -34,6 +34,7 @@ type FileBrowserProps = {
   blocks?: BlockType[];
   deleteBlockFile?: (b: BlockType) => void;
   deleteWidget?: (b: BlockType) => void;
+  fetchFileTree?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
@@ -54,6 +55,7 @@ function FileBrowser({
   blocks = [],
   deleteBlockFile,
   deleteWidget,
+  fetchFileTree,
   fetchPipeline,
   files,
   pipeline,
@@ -201,11 +203,13 @@ function FileBrowser({
 
   const [showModal, hideModal] = useModal(() => (
     <UploadFiles
+      fetchFileTree={fetchFileTree}
       onCancel={hideModal}
       selectedFolder={selectedFolder}
     />
   ), {
   }, [
+    fetchFileTree,
     selectedFolder,
   ], {
     background: true,
