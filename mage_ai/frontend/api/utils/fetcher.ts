@@ -50,7 +50,6 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
         api_key: API_KEY,
         [key]: body[key],
       });
-      console.log(jsonRootBody);
       formData.set(
         'json_root_body',
         jsonRootBody,
@@ -120,7 +119,12 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
     data: data.body,
     headers,
     method,
-    onUploadProgress: opts?.onUploadProgress,
+    onUploadProgress: opts?.onUploadProgress
+      ? e => opts.onUploadProgress(e, {
+        body: opts?.body,
+        query: opts?.query,
+      })
+      : null,
     url: finalUrl,
   });
 }

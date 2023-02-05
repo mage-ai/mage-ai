@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.models.errors import FileExistsError
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Dict
 import aiofiles
@@ -50,18 +51,24 @@ class File:
         content: str = None,
         repo_path: str = None,
         create_directories_if_not_exist: bool = True,
+        overwrite: bool = True,
     ):
 
         repo_path = repo_path or get_repo_path()
         file = File(filename, dir_path, repo_path)
         file_path = file.file_path
 
+        if self.file_exists(file_path) and not overwrite:
+            raise FileExistsError(f'File at {file_path} already exists.')
+
         if create_directories_if_not_exist:
             self.create_parent_directories(file_path)
 
-        with open(file_path, 'w') as f:
+        write_type = 'wb' if content and type(content) is bytes else 'w'
+        with open(file_path, write_type) as f:
             if content:
                 f.write(content)
+
         return file
 
     @classmethod

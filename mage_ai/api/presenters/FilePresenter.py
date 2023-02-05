@@ -6,4 +6,5 @@ class FilePresenter(BasePresenter):
         'children',
         'disabled',
         'name',
+        'path',
     ]

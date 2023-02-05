@@ -1,4 +1,4 @@
-import FileUploader from '@components/FileBrowser/FileUploader';
+import FileUploader from '@components/FileUploader';
 
 function Test() {
   return (

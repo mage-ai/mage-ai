@@ -261,7 +261,7 @@ function Folder({
             const block = getBlockFromFile(file);
 
             if (!containerRef?.current?.contains(e.target)
-              || !block
+              || (!block && typeof children === 'undefined')
               || disableContextMenu
             ) {
               return;
@@ -274,7 +274,7 @@ function Folder({
               : {
                 x: e.pageX,
                 y: e.pageY,
-              }
+              },
             );
             setDraggingFile(null);
             setSelectedFile(disabled ? null : file);

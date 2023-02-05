@@ -25,6 +25,7 @@ FilePolicy.allow_read([] + FilePresenter.default_attributes, scopes=[
 FilePolicy.allow_write([
     'dir_path',
     'name',
+    'overwrite',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
