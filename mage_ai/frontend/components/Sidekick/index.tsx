@@ -180,6 +180,7 @@ function Sidekick({
       width={afterWidth}
     />
   ), [
+    afterWidth,
     blockRefs?.current,
     blocks,
     fetchVariables,

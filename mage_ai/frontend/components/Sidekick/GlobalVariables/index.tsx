@@ -136,6 +136,8 @@ function GlobalVariables({
         setNewVariableValue(null);
       });
       setShowNewVariable(false);
+    } else if (e.key === 'Escape') {
+      setShowNewVariable(false);
     }
   }, [
     createVariable,
@@ -183,11 +185,12 @@ function GlobalVariables({
               </KeyboardShortcutButton>
             </CellStyle>
           </Col>
-          <Col md={5}>
+          <Col md={4}>
             <CellStyle>
               <TextInput
                 compact
                 borderless
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setNewVariableName(e.target.value);
@@ -201,11 +204,12 @@ function GlobalVariables({
               />
             </CellStyle>
           </Col>
-          <Col md={6}>
+          <Col md={7}>
             <CellStyle>
               <TextInput
                 compact
                 borderless
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setNewVariableValue(e.target.value);
@@ -219,18 +223,13 @@ function GlobalVariables({
               />
             </CellStyle>
           </Col>
-          {/* <Col md={2}>
-            <CellStyle>
-              <Text monospace>
-                ...
-              </Text>
-            </CellStyle>
-          </Col> */}
         </Row>
       )}
       {globalVariables?.map((variable: VariableType) => (
         <VariableRow
           deleteVariable={() => deleteVariable(variable.uuid)}
+          fetchVariables={fetchVariables}
+          pipelineUUID={pipelineUUID}
           variable={variable}
         />
       ))}
@@ -240,6 +239,7 @@ function GlobalVariables({
     globalVariables,
     newVariableName,
     newVariableValue,
+    pipelineUUID,
     setNewVariableName,
     setNewVariableValue,
     setShowNewVariable,
@@ -260,6 +260,8 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
         {blockVariables?.map((variable: VariableType) => (
           <VariableRow
             copyText={copyText(variable.uuid)}
+            hideEdit
+            pipelineUUID={pipelineUUID}
             variable={variable}
           />
         ))}
@@ -338,7 +340,9 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
           </Spacing>
           {addTriggerVariables([], value).map((variable) => (
             <VariableRow
+              hideEdit
               variable={variable}
+              pipelineUUID={pipelineUUID}
             />
           ))}
         </Spacing>

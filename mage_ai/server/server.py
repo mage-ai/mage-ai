@@ -399,6 +399,39 @@ class ApiPipelineVariableListHandler(BaseHandler):
 
 
 class ApiPipelineVariableDetailHandler(BaseHandler):
+    def put(self, pipeline_uuid, variable_uuid):
+        variable = json.loads(self.request.body).get('variable', {})
+        new_uuid = variable.get('name')
+        if not new_uuid.isidentifier():
+            raise Exception(f'Invalid variable name syntax for variable name {variable_uuid}')
+        new_value = variable.get('value')
+        if new_value is None:
+            raise Exception(f'Value is empty for variable name {variable_uuid}')
+
+        set_global_variable(
+            pipeline_uuid,
+            new_uuid,
+            new_value,
+        )
+
+        if variable_uuid != new_uuid:
+            delete_global_variable(pipeline_uuid, variable_uuid)
+
+        # Get global variables from project's path
+        variables_dict = VariableManager(
+            variables_dir=get_variables_dir(),
+        ).get_variables_by_pipeline(pipeline_uuid)
+        variables = [
+            dict(
+                block=dict(uuid=uuid),
+                pipeline=dict(uuid=pipeline_uuid),
+                variables=arr,
+            )
+            for uuid, arr in variables_dict.items()
+        ]
+        self.write(dict(variables=variables))
+        self.finish()
+
     def delete(self, pipeline_uuid, variable_uuid):
         delete_global_variable(pipeline_uuid, variable_uuid)
 
