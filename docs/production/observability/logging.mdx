@@ -17,8 +17,23 @@ logging_config:
   type: s3
   level: INFO
   destination_config:
-    bucket: <bucket_name>
-    prefix: <prefix_path>
+    bucket: <bucket name>
+    prefix: <prefix path>
 ```
 
-### More destinations TBA
+### Google Cloud Storage
+
+To store logs in GCS, you need to set the `logging` config in your project's `metadata.yaml` file.
+
+Example GCS logging config:
+```
+logging_config:
+  type: gcs
+  level: INFO
+  destination_config:
+    path_to_credentials: <path to gcp credentials json file>
+    bucket: <bucket name>
+    prefix: <prefix path>
+```
+
+### More destinations coming...

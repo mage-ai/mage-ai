@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.logging import LoggerType
-from mage_ai.data_preparation.logging.gcs_logger_manager import GCSLoggerManager
 from mage_ai.data_preparation.logging.logger_manager import LoggerManager
 from mage_ai.data_preparation.repo_manager import RepoConfig
 
