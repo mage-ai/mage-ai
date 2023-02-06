@@ -398,6 +398,7 @@ def fetch_input_variables(
                         final_value = final_value[dynamic_block_index]
 
                     if type(final_value) is not pd.DataFrame and \
+                        type(final_value) is list and \
                         len(final_value) == 1:
                         final_value = final_value[0]
 
