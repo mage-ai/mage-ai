@@ -2,8 +2,12 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import DBTestCase
+from unittest.mock import call, mock_open, patch
+import json
 import os
 
+
+ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
 
 class PipelineTest(DBTestCase):
     def test_create(self):
@@ -412,6 +416,73 @@ class PipelineTest(DBTestCase):
         with self.assertRaises(InvalidPipelineError):
             pipeline.update_block(block4)
 
+    def test_save_data_integration_catalog(self):
+        pipeline = self.__create_pipeline_with_integration('test_pipeline_9')
+        pipeline.repo_path = '/'
+        with patch('builtins.open', new_callable=mock_open) as mock_open_file:
+            with patch('json.dump') as mock_json_dump:
+                with patch('yaml.dump') as mock_yaml_dump:
+                    pipeline.save()
+                    mock_open_file.assert_has_calls([
+                        call('/pipelines/test_pipeline_9/data_integration_catalog.json', 'w'),
+                        call().__enter__(),
+                        call().__exit__(None, None, None),
+                        call('/pipelines/test_pipeline_9/metadata.yaml', 'w'),
+                        call().__enter__(),
+                        call().__exit__(None, None, None),
+                    ])
+                    mock_json_dump.assert_called_once_with(
+                        {
+                            'catalog': {
+                                'streams': [
+                                    {
+                                        'tap_stream_id': 'demo_users',
+                                        'stream': 'demo_users',
+                                    },
+                                ],
+                            },
+                        },
+                        mock_open_file(),
+                    ),
+                    mock_yaml_dump.assert_called_once_with(
+                        {
+                            "data_integration": None,
+                            "name": "test_pipeline_9",
+                            "type": "python",
+                            "uuid": "test_pipeline_9",
+                            "blocks": [
+                                {
+                                    "all_upstream_blocks_executed": True,
+                                    "configuration": {},
+                                    "downstream_blocks": ["destination_block"],
+                                    "executor_config": None,
+                                    "executor_type": "local_python",
+                                    "name": "source_block",
+                                    "language": "python",
+                                    "status": "not_executed",
+                                    "type": "data_loader",
+                                    "upstream_blocks": [],
+                                    "uuid": "source_block",
+                                },
+                                {
+                                    "all_upstream_blocks_executed": False,
+                                    "configuration": {},
+                                    "downstream_blocks": [],
+                                    "executor_config": None,
+                                    "executor_type": "local_python",
+                                    "name": "destination_block",
+                                    "language": "python",
+                                    "status": "not_executed",
+                                    "type": "transformer",
+                                    "upstream_blocks": ["source_block"],
+                                    "uuid": "destination_block",
+                                },
+                            ],
+                            "widgets": [],
+                        },
+                        mock_open_file(),
+                    )
+
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(
             name,
@@ -427,6 +498,27 @@ class PipelineTest(DBTestCase):
         pipeline.add_block(block3, upstream_block_uuids=['block1'])
         pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
         pipeline.add_block(widget1, upstream_block_uuids=['block4'], widget=True)
+        return pipeline
+
+    def __create_pipeline_with_integration(self, name):
+        pipeline = Pipeline.create(
+            name,
+            repo_path=self.repo_path,
+        )
+        source_block = Block.create('source_block', 'data_loader', self.repo_path, language='python')
+        destination_block = Block.create('destination_block', 'transformer', self.repo_path, language='python')
+        pipeline.add_block(source_block)
+        pipeline.add_block(destination_block, upstream_block_uuids=['source_block'])
+        pipeline.data_integration = {
+            'catalog': {
+                'streams': [
+                    {
+                        'tap_stream_id': 'demo_users',
+                        'stream': 'demo_users',
+                    },
+                ],
+            },
+        }
         return pipeline
 
     def __create_dummy_data_loader_block(self, name, pipeline):

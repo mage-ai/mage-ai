@@ -1695,9 +1695,9 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     blocks,
-    fetchFileTree,
     deleteBlockFile,
     deleteWidget,
+    fetchFileTree,
     fetchPipeline,
     filePathsFromUrl?.length,
     files,
