@@ -136,6 +136,8 @@ function GlobalVariables({
         setNewVariableValue(null);
       });
       setShowNewVariable(false);
+    } else if (e.key === 'Escape') {
+      setShowNewVariable(false);
     }
   }, [
     createVariable,
@@ -188,6 +190,7 @@ function GlobalVariables({
               <TextInput
                 compact
                 borderless
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setNewVariableName(e.target.value);
@@ -206,6 +209,7 @@ function GlobalVariables({
               <TextInput
                 compact
                 borderless
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setNewVariableValue(e.target.value);
@@ -235,6 +239,7 @@ function GlobalVariables({
     globalVariables,
     newVariableName,
     newVariableValue,
+    pipelineUUID,
     setNewVariableName,
     setNewVariableValue,
     setShowNewVariable,
@@ -255,6 +260,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
         {blockVariables?.map((variable: VariableType) => (
           <VariableRow
             copyText={copyText(variable.uuid)}
+            hideEdit
             pipelineUUID={pipelineUUID}
             variable={variable}
           />
@@ -334,6 +340,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
           </Spacing>
           {addTriggerVariables([], value).map((variable) => (
             <VariableRow
+              hideEdit
               variable={variable}
               pipelineUUID={pipelineUUID}
             />

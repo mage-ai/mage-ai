@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import Col from '@components/shared/Grid/Col';
@@ -21,6 +21,7 @@ type VariableRowProps = {
   copyText?: string;
   deleteVariable?: () => void;
   fetchVariables?: () => void;
+  hideEdit?: boolean;
   pipelineUUID: string;
   variable: VariableType;
 }
@@ -29,6 +30,7 @@ function VariableRow({
   copyText: copyTextProp,
   deleteVariable,
   fetchVariables,
+  hideEdit,
   pipelineUUID,
   variable,
 }: VariableRowProps) {
@@ -38,7 +40,8 @@ function VariableRow({
     value,
   } = variable;
 
-  const [showDelete, setShowDelete] = useState<boolean>(false);
+  const refTextInput = useRef(null);
+  const [showActions, setShowActions] = useState<boolean>(false);
   const [variableName, setVariableName] = useState<string>(uuid);
   const [variableValue, setVariableValue] = useState<string>(value);
   const [edit, setEdit] = useState<boolean>(false);
@@ -57,12 +60,41 @@ function VariableRow({
     },
   );
 
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      let updatedValue = variableValue
+      try {
+        updatedValue = JSON.parse(variableValue);
+      } catch {
+        // do nothing
+      }
+      // @ts-ignore
+      updateVariable({
+        variable: {
+          name: variableName,
+          value: updatedValue,
+        },
+      });
+    } else if (e.key === 'Escape') {
+      setEdit(false);
+    }
+  }, [
+    variableName,
+    variableValue,
+  ]);
+
+  useEffect(() => {
+    if (edit) {
+      refTextInput?.current?.focus();
+    }
+  }, [edit, refTextInput]);
+
   const copyText = copyTextProp || `kwargs['${uuid}']`;
 
   return (
     <div
-      onMouseEnter={() => setShowDelete(true)}
-      onMouseLeave={() => setShowDelete(false)}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
     >
       <Row>
         <Col md={1} hiddenSmDown>
@@ -96,11 +128,13 @@ function VariableRow({
               <TextInput
                 compact
                 borderless
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setVariableName(e.target.value);
                   e.preventDefault();
                 }}
+                onKeyDown={handleKeyDown}
                 paddingHorizontal={0}
                 placeholder="variable"
                 small
@@ -121,59 +155,19 @@ function VariableRow({
               <TextInput
                 compact
                 borderless
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setVariableValue(e.target.value);
                   e.preventDefault();
                 }}
+                onKeyDown={handleKeyDown}
                 paddingHorizontal={0}
                 placeholder="enter value"
+                ref={refTextInput}
                 small
                 value={variableValue}
               />
-              {showDelete && (
-                <Flex>
-                  <KeyboardShortcutButton
-                    backgroundColor={DARK_CONTENT_BACKGROUND}
-                    borderless
-                    inline
-                    muted
-                    onClick={() => {
-                      let updatedValue = variableValue
-                      try {
-                        updatedValue = JSON.parse(variableValue);
-                      } catch {
-                        // do nothing
-                      }
-                      // @ts-ignore
-                      updateVariable({
-                        variable: {
-                          name: variableName,
-                          value: updatedValue,
-                        },
-                      });
-                    }}
-                    small
-                    uuid={`Sidekick/GlobalVariables/save_${uuid}`}
-                    withIcon
-                  >
-                    <Check size={2.5 * UNIT} />
-                  </KeyboardShortcutButton>
-                  <KeyboardShortcutButton
-                    backgroundColor={DARK_CONTENT_BACKGROUND}
-                    borderless
-                    inline
-                    muted
-                    // @ts-ignore
-                    onClick={() => setEdit(false)}
-                    small
-                    uuid={`Sidekick/GlobalVariables/save_${uuid}`}
-                    withIcon
-                  >
-                    <Close size={1.5 * UNIT} />
-                  </KeyboardShortcutButton>
-                </Flex>
-              )}
             </CellStyle>
           ) : (
             <CellStyle>
@@ -181,14 +175,15 @@ function VariableRow({
                 {value}
               </Text>
               <Flex>
-                {showDelete && (
+                {!hideEdit && showActions && (
                   <KeyboardShortcutButton
                     backgroundColor={DARK_CONTENT_BACKGROUND}
                     borderless
                     inline
                     muted
-                    // @ts-ignore
-                    onClick={() => setEdit(true)}
+                    onClick={() => {
+                      setEdit(true);
+                    }}
                     small
                     uuid={`Sidekick/GlobalVariables/edit_${uuid}`}
                     withIcon
@@ -196,7 +191,7 @@ function VariableRow({
                     <Edit size={2.5 * UNIT} />
                   </KeyboardShortcutButton>
                 )}
-                {deleteVariable && showDelete && (
+                {deleteVariable && showActions && (
                   <KeyboardShortcutButton
                     backgroundColor={DARK_CONTENT_BACKGROUND}
                     borderless
@@ -214,13 +209,6 @@ function VariableRow({
             </CellStyle>
           )}
         </Col>
-        {/* <Col md={2} hiddenSmDown>
-          <CellStyle>
-            <Text color={DARK_CONTENT_MUTED} monospace textOverflow>
-              {type}
-            </Text>
-          </CellStyle>
-        </Col> */}
       </Row>
     </div>
   );
