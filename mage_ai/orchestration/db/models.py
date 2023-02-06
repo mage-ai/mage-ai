@@ -501,6 +501,7 @@ class BlockRun(BaseModel):
         return block.get_outputs(
             execution_partition=self.pipeline_run.execution_partition,
             sample_count=sample_count,
+            block_uuid=self.block_uuid,
         )
 
 

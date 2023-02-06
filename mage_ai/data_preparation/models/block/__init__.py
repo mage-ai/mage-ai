@@ -924,9 +924,13 @@ class Block:
         include_print_outputs: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
+        block_uuid: str = None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
+
+        if not block_uuid:
+            block_uuid = self.uuid
 
         data_products = []
         outputs = []
@@ -934,7 +938,7 @@ class Block:
 
         all_variables = variable_manager.get_variables_by_block(
             self.pipeline.uuid,
-            self.uuid,
+            block_uuid,
             partition=execution_partition,
         )
 
@@ -944,7 +948,7 @@ class Block:
         for v in all_variables:
             variable_object = variable_manager.get_variable_object(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 v,
                 partition=execution_partition,
             )
@@ -960,7 +964,7 @@ class Block:
                 try:
                     analysis = variable_manager.get_variable(
                         self.pipeline.uuid,
-                        self.uuid,
+                        block_uuid,
                         v,
                         dataframe_analysis_keys=['metadata', 'statistics'],
                         partition=execution_partition,
@@ -1023,9 +1027,13 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         include_print_outputs: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
+        block_uuid: str =  None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
+
+        if not block_uuid:
+            block_uuid = self.uuid
 
         data_products = []
         outputs = []
@@ -1033,7 +1041,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
 
         all_variables = variable_manager.get_variables_by_block(
             self.pipeline.uuid,
-            self.uuid,
+            block_uuid,
             partition=execution_partition,
         )
 
@@ -1043,7 +1051,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         for v in all_variables:
             variable_object = variable_manager.get_variable_object(
                 self.pipeline.uuid,
-                self.uuid,
+                block_uuid,
                 v,
                 partition=execution_partition,
             )
@@ -1059,7 +1067,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 try:
                     analysis = variable_manager.get_variable(
                         self.pipeline.uuid,
-                        self.uuid,
+                        block_uuid,
                         v,
                         dataframe_analysis_keys=['metadata', 'statistics'],
                         partition=execution_partition,
@@ -1092,7 +1100,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                     text_data=f''' Use the following code in a scratchpad to get the output of the block:
 
 from mage_ai.data_preparation.variable_manager import get_variable
-df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
+df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 ''',
                     type=DataType.TEXT,
                     variable_uuid=v,
