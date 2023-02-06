@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
 )
 from mage_ai.io.config import ConfigKey
 from typing import Dict
+import pandas as pd
 
 
 def create_upstream_block_tables(
@@ -39,7 +40,7 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
-            if type(df) is DataFrame:
+            if type(df) is pd.DataFrame:
                 if len(df.index) == 0:
                     continue
             elif type(df) is dict and len(df) == 0:

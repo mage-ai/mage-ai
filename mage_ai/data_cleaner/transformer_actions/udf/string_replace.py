@@ -6,5 +6,5 @@ class StringReplace(BaseUDF):
         pattern = self.options.get('pattern')
         replacement = self.options.get('replacement')
         if not pattern and not replacement:
-            raise Exception(f'Require both `pattern` and `replacement` parameters.')
+            raise Exception('Require both `pattern` and `replacement` parameters.')
         return self.df[self.arguments[0]].str.replace(pattern, replacement)

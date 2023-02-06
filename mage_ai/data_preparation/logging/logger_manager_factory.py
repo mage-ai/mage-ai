@@ -19,5 +19,4 @@ class LoggerManagerFactory:
                 from mage_ai.data_preparation.logging.gcs_logger_manager import GCSLoggerManager
                 return GCSLoggerManager(repo_config=repo_config, **kwargs)
 
-        
         return LoggerManager(repo_config=repo_config, **kwargs)

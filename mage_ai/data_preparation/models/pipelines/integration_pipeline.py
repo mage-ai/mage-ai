@@ -1,6 +1,5 @@
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_integrations.utils.config import (
-    build_catalog_json,
     build_config_json,
     get_catalog,
     interpolate_variables,
@@ -60,7 +59,9 @@ class IntegrationPipeline(Pipeline):
     @property
     def destination(self) -> Any:
         if self.destination_uuid:
-            return importlib.import_module(f'mage_integrations.destinations.{self.destination_uuid}')
+            return importlib.import_module(
+                f'mage_integrations.destinations.{self.destination_uuid}',
+            )
 
     @property
     def destination_file_path(self) -> str:

@@ -87,7 +87,7 @@ def __parse_element(element: str) -> Any:
     else:
         try:
             return __resolve_type(eval(element))
-        except:
+        except Exception:
             return None
 
 

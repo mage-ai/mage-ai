@@ -122,25 +122,27 @@ class PipelineScheduler:
                 )
                 self.logger_manager.output_logs_to_destination()
 
-                pipeline_schedule = PipelineSchedule.query.get(self.pipeline_run.pipeline_schedule_id)
+                schedule = PipelineSchedule.query.get(
+                    self.pipeline_run.pipeline_schedule_id,
+                )
 
-                if pipeline_schedule:
-                    backfills = pipeline_schedule.backfills
+                if schedule:
+                    backfills = schedule.backfills
                     # When all pipeline runs that are associated with backfill is done
                     if len(backfills) >= 1:
                         backfill = backfills[0]
                         if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
                                 for pr in backfill.pipeline_runs]):
                             backfill.update(status=Backfill.Status.COMPLETED)
-                            pipeline_schedule.update(
+                            schedule.update(
                                 status=PipelineSchedule.ScheduleStatus.INACTIVE,
                             )
                     # If running once, update the schedule to inactive when pipeline run is done
-                    elif pipeline_schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
-                            pipeline_schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
-                            pipeline_schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
+                    elif schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
+                            schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
+                            schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
 
-                        pipeline_schedule.update(status=PipelineSchedule.ScheduleStatus.INACTIVE)
+                        schedule.update(status=PipelineSchedule.ScheduleStatus.INACTIVE)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
             else:

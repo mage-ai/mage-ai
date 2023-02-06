@@ -23,7 +23,6 @@ from .utils import (
 )
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
-    BlockType,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
 import numpy as np

@@ -54,7 +54,7 @@ class Mage:
                         'remote_id': pipeline_response['id'],
                     },
                 )
-        except:
+        except Exception:
             logger.exception(error_message)
             pass
 
@@ -71,6 +71,6 @@ class Mage:
                 url=f'{self.url_prefix}/data_cleaning_pipelines/{id}',
             ).json()
             return response['data_cleaning_pipeline'].get('pipeline_actions', [])
-        except:
+        except Exception:
             logger.exception('Fetching pipeline actions from database failed')
             return []

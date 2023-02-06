@@ -27,7 +27,7 @@ def get_secret(secret_id: str, cached=True) -> str:
 def get_secret_force(secret_id: str) -> str:
     from botocore.config import Config
     import boto3
-    
+
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     client = boto3.client('secretsmanager', config=config)

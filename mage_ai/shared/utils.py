@@ -18,13 +18,13 @@ def clean_name(name, allow_characters: List[str] = []):
             if char == allowed_char:
                 indexes_of_allowed_characters[allowed_char].append(idx)
 
-    name = re.sub('\W', '_', name)
+    name = re.sub(r'\W', '_', name)
 
     for allowed_char, indexes in indexes_of_allowed_characters.items():
         for idx in indexes:
             name = replacer(name, allowed_char, idx)
 
-    if name and re.match('\d', name[0]):
+    if name and re.match(r'\d', name[0]):
         name = f'letter_{name}'
     return name.lower()
 

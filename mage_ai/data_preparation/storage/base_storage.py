@@ -13,7 +13,7 @@ class BaseStorage(ABC):
     @abstractmethod
     def listdir(self, path: str) -> List[str]:
         """
-        Get a list of files and directories in the specified directory. 
+        Get a list of files and directories in the specified directory.
         """
         pass
 

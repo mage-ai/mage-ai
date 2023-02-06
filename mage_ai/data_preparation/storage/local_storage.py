@@ -2,7 +2,6 @@ from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List
 import aiofiles
-import io
 import json
 import os
 import pandas as pd

@@ -28,7 +28,7 @@ def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline
     if 'catalog' not in settings \
         and pipeline \
         and pipeline.data_integration \
-        and 'catalog' in pipeline.data_integration:
+            and 'catalog' in pipeline.data_integration:
         settings['catalog'] = interpolate_variables(
             json.dumps(pipeline.data_integration['catalog']),
             variables,

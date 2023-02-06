@@ -108,7 +108,8 @@ class Metaplane(HttpClient):
                 start_date = monitors_started[monitor_id]
                 status_date = dateutil.parser.parse(monitor_status['createdAt'])
                 completed = status_date.timestamp() >= start_date.timestamp()
-                print(f'Monitor ID {monitor_id} completed: {completed}; started {start_date}, last created {status_date}).')
+                print(f'Monitor ID {monitor_id} completed: {completed}; started {start_date}, '
+                      f'last created {status_date}).')
                 if completed:
                     passed = monitor_status['passed']
 
@@ -124,7 +125,10 @@ class Metaplane(HttpClient):
         print('Metaplane process completed.')
 
     def connections(self, include_deleted: bool = False) -> List[Connection]:
-        return self.make_request(f'/{self.VERSION}/connections', params=dict(includeDeleted=include_deleted))
+        return self.make_request(
+            f'/{self.VERSION}/connections',
+            params=dict(includeDeleted=include_deleted),
+        )
 
     def monitors(self, connection_id: str, include_deleted: bool = False) -> Monitors:
         return self.make_request(

@@ -143,7 +143,8 @@ class BaseActionTests(TestCase):
             'magic.spell',
         ]
         hydrated_action['action_options'] = dict(
-            condition='omni.delivered_at >= magic.booked_at and magic.booked_at >= omni.delivered_at - 2592000',
+            condition='omni.delivered_at >= magic.booked_at and magic.booked_at '
+                      '>= omni.delivered_at - 2592000',
             default=0,
             timestamp_feature_a='omni.fund',
             timestamp_feature_b='omni.delivered_at',
@@ -169,7 +170,8 @@ class BaseActionTests(TestCase):
             'magic.spell',
         ]
         hydrated_action['action_options'] = dict(
-            condition='omni.delivered_at >= magic.booked_at and magic.booked_at >= omni.delivered_at - 2592000',
+            condition='omni.delivered_at >= magic.booked_at and magic.booked_at >= '
+                      'omni.delivered_at - 2592000',
             default=0,
             timestamp_feature_a='omni.fund',
             timestamp_feature_b='omni.delivered_at',

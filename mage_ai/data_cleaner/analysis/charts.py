@@ -9,7 +9,6 @@ from mage_ai.data_cleaner.analysis.constants import (
 )
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.estimators.encoders import MultipleColumnLabelEncoder
-from mage_ai.data_cleaner.shared.utils import clean_series
 import math
 import numpy as np
 import pandas as pd

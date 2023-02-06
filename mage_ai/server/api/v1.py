@@ -1,5 +1,5 @@
 from mage_ai.api.views import execute_operation
-from mage_ai.server.api.base import BaseApiHandler, BaseHandler
+from mage_ai.server.api.base import BaseApiHandler
 
 
 class ApiChildDetailHandler(BaseApiHandler):

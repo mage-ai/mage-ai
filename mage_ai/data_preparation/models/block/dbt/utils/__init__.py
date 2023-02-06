@@ -77,7 +77,7 @@ def parse_attributes(block) -> Dict:
 
 def extract_refs(block) -> List[str]:
     return re.findall(
-        "{}[ ]*ref\(['\"]+([\w]+)['\"]+\)[ ]*{}".format('\{\{', '\}\}'),
+        r"{}[ ]*ref\(['\"]+([\w]+)['\"]+\)[ ]*{}".format(r'\{\{', r'\}\}'),
         block.content,
     )
 

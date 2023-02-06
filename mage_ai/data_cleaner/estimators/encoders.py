@@ -35,7 +35,6 @@ class CustomLabelEncoder(BaseEstimator):
         def _build(x):
             v = class_mappings.get(str(x))
             if v is None:
-                unknown_found = True
                 return missing_value
             return v
         if unknown_found:

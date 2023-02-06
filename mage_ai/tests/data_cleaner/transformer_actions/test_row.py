@@ -290,7 +290,7 @@ class RowTests(TestCase):
             action_code='email not contains @',
         )
         action4 = dict(
-            action_code='email not contains \'^e+\w\'',
+            action_code=r'email not contains \'^e+\w\'',
         )
         action_invalid = dict(action_code='subscription not contains False')
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)

@@ -56,7 +56,7 @@ def interpolate_input(block, query, replace_func=None):
         schema = configuration.get('data_provider_schema', '')
 
         query = re.sub(
-            '{}[ ]*df_{}[ ]*{}'.format('\{\{', idx + 1, '\}\}'),
+            '{}[ ]*df_{}[ ]*{}'.format(r'\{\{', idx + 1, r'\}\}'),
             __replace_func(database, schema, upstream_block.table_name),
             query,
         )
@@ -130,7 +130,8 @@ def create_upstream_block_tables(
             if schema_name:
                 full_table_name = f'{schema_name}.{full_table_name}'
 
-            print(f'\n\nExporting data from upstream block {upstream_block.uuid} to {full_table_name}.')
+            print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
+                  f'to {full_table_name}.')
 
             loader.export(
                 df,

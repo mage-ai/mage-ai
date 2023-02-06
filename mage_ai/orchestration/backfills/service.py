@@ -86,7 +86,7 @@ def __build_dates(backfill: Backfill) -> List[datetime]:
             unit = f'{interval_type.value}s'
             if Backfill.IntervalType.CUSTOM == interval_type:
                 unit = 'seconds'
-            current_datetime += timedelta(**{ unit: backfill.interval_units })
+            current_datetime += timedelta(**{unit: backfill.interval_units})
         else:
             month = 1 if Backfill.IntervalType.MONTH == interval_type else 0
             year = 1 if Backfill.IntervalType.YEAR == interval_type else 0

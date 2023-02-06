@@ -56,7 +56,7 @@ class AirbyteClient:
             key = 'available' if 'available' in data else 'db'
             status = response.json()[key]
             if not status:
-                raise err.UnhealthyServer(f"Airbyte server health: {status}")
+                raise UnhealthyServer(f"Airbyte server health: {status}")
 
             return True
         except httpx.HTTPStatusError as e:

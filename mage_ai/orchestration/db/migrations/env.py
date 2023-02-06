@@ -1,10 +1,11 @@
+from alembic import context
 from logging.config import fileConfig
-
+from mage_ai.orchestration.db.models import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
-from alembic import context
 import logging
+import os
+import sys
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,8 +19,7 @@ if config.config_file_name is not None:
 logging.getLogger('alembic').setLevel(config.get_section_option('logger_alembic', 'level'))
 
 # add your model's MetaData object here for 'autogenerate' support
-import os
-import sys
+
 
 sys.path.append(os.path.dirname(
     # mage_ai
@@ -31,7 +31,6 @@ sys.path.append(os.path.dirname(
                 # migrations
                 os.path.dirname(os.path.abspath(__file__)))))))
 
-from mage_ai.orchestration.db.models import Base
 
 target_metadata = Base.metadata
 

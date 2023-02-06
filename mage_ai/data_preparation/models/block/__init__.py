@@ -330,7 +330,7 @@ class Block:
         create_statement_partial, _ = extract_and_replace_text_between_strings(
             self.content,
             'create',
-            '\(',
+            r'\(',
         )
 
         if not create_statement_partial:

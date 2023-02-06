@@ -7,7 +7,6 @@ from mage_ai.data_preparation.models.block.sql import (
     snowflake,
 )
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
-    extract_and_replace_text_between_strings,
     interpolate_vars,
 )
 from mage_ai.data_preparation.models.constants import BlockType
@@ -95,7 +94,8 @@ def execute_sql_code(
 
                 if should_query:
                     # An error is thrown because the table doesn’t exist until you re-run the query
-                    # NotFound: 404 Not found: Table database:schema.table_name was not found in location XX
+                    # NotFound: 404 Not found: Table database:schema.table_name was not found in
+                    # location XX
                     tries = 0
                     while tries < 10:
                         sleep(tries)
