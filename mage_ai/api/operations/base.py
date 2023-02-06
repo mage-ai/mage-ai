@@ -16,7 +16,7 @@ from mage_ai.api.operations.constants import (
 )
 from mage_ai.api.result_set import ResultSet
 from mage_ai.shared.array import flatten
-from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.hash import merge_dict, ignore_keys
 import importlib
 import inflection
 
