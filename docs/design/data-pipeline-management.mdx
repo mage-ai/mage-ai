@@ -21,7 +21,7 @@ If you haven’t setup a project before, check out the
 
 This page will show all the pipelines in your project.
 
-> Core abstraction: [Pipeline](/introduction/core-abstractions#pipeline)
+> Core abstraction: [Pipeline](/design/core-abstractions#pipeline)
 >
 > A pipeline contains references to all the blocks of code you want to run,
 > charts for visualizing data, and organizes the dependency between each block
@@ -30,7 +30,7 @@ This page will show all the pipelines in your project.
 ![Pipelines](https://github.com/mage-ai/assets/blob/main/pipelines/pipelines-index.jpg?raw=true)
 
 Learn more about
-[**projects and pipelines here**](/introduction/core-abstractions#project).
+[**projects and pipelines here**](/design/core-abstractions#project).
 
 From this page, you can also create a new pipeline by clicking the
 
@@ -57,7 +57,7 @@ blocks, testing code, and visualizing data with charts.
 
 View all the runs for every pipeline in your current project.
 
-> Core abstraction: [Run](/introduction/core-abstractions#run)
+> Core abstraction: [Run](/design/core-abstractions#run)
 >
 > A run record stores information about when it was started, its status, when it
 > was completed, any runtime variables used in the execution of the pipeline or
@@ -73,9 +73,9 @@ View all the runs for every pipeline in your current project.
 
 This page contains all the information and history for a single pipeline:
 
-1. [Triggers](/introduction/core-abstractions#trigger)
-1. [Runs](/introduction/core-abstractions#run)
-1. [Logs](/introduction/core-abstractions#log)
+1. [Triggers](/design/core-abstractions#trigger)
+1. [Runs](/design/core-abstractions#run)
+1. [Logs](/design/core-abstractions#log)
 
 ---
 
@@ -87,7 +87,7 @@ This page contains all the information and history for a single pipeline:
 
 This page shows all the active and inactive triggers for a single pipeline.
 
-> Core abstraction: [Trigger](/introduction/core-abstractions#trigger)
+> Core abstraction: [Trigger](/design/core-abstractions#trigger)
 >
 > A trigger is a set of instructions that determine when or how a pipeline
 > should run.
@@ -103,20 +103,27 @@ This page shows all the active and inactive triggers for a single pipeline.
 Create a new trigger for this pipeline by clicking the **`[+ Create]`** button
 near the top of the page.
 
-You can configure the trigger to run the pipeline on a schedule or when an event
-occurs.
+You can configure the trigger to run the pipeline on a schedule, when an event
+occurs, or when an API is called.
 
-> Core abstraction: [Schedule](/introduction/core-abstractions#schedule)
+> Core abstraction: [Schedule](/design/core-abstractions#schedule)
 >
 > A schedule type trigger will instruct the pipeline to run after a start date
 > and on a set interval.
 
 ---
 
-> Core abstraction: [Event](/introduction/core-abstractions#event)
+> Core abstraction: [Event](/design/core-abstractions#event)
 >
 > An event type trigger will instruct the pipeline to run whenever a specific
 > event occurs.
+
+---
+
+> Core abstraction: [API](/design/core-abstractions#api)
+>
+> An API trigger will instruct the pipeline to run whenever a specific API
+> is called.
 
 ![Trigger create](https://github.com/mage-ai/assets/blob/main/pipelines/trigger-create.jpg?raw=true)
 
@@ -154,7 +161,7 @@ You can also edit the trigger after creating it by clicking the
 
 View the pipeline runs and block runs for a pipeline.
 
-> Core abstraction: [Run](/introduction/core-abstractions#run)
+> Core abstraction: [Run](/design/core-abstractions#run)
 >
 > A run record stores information about when it was started, its status, when it
 > was completed, any runtime variables used in the execution of the pipeline or
@@ -177,7 +184,7 @@ _WIP_
 Browse all logs for a pipeline. You can search and filter logs by log level,
 block type, block UUID, and more.
 
-> Core abstraction: [**Log**](/introduction/core-abstractions#log)
+> Core abstraction: [**Log**](/design/core-abstractions#log)
 >
 > A log is a file that contains system output information.
 

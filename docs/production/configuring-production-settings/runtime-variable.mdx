@@ -41,13 +41,25 @@ containers:
 Runtime variable names must be a valid Python identifier (i.e., no spaces in
 name, can't start with a number).
 
-## Creating Runtime Variables In-Editor
+## Creating Runtime Variables
+
+### In Mage editor
 
 You can create new global variables from the Mage UI through the "Variables" tab
 in the sidekick. Click the "New" button, and configure your variable's name and
 value, and press Enter to save.
 
-![Create Runtime Variables](/media/configure_runtime_variables.png)
+To edit global variables, hover over the variable and click on the edit button.
+You can edit the variable name and/or value, and press Enter to save.
+
+![Create Global Variables](/media/configure-runtime-variables.png)
+
+### In code
+
+You can also create or edit global variables in code by editing the pipeline
+`metadata.yaml` file.
+
+![Create Global Variables in Code](/media/configure-variables-in-code.png)
 
 ## Default Runtime Variables
 
