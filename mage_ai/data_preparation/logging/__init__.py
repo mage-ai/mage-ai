@@ -8,6 +8,7 @@ from typing import Dict
 class LoggerType(str, Enum):
     DEFAULT = 'file'
     S3 = 's3'
+    GCS = 'gcs'
 
 
 @dataclass
