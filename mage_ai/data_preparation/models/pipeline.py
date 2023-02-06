@@ -428,8 +428,8 @@ class Pipeline:
 
         return blocks_by_uuid
 
-    def to_dict_base(self,exclude_data_integration=False) -> Dict:
-        return dict(
+    def to_dict_base(self, exclude_data_integration=False) -> Dict:
+        base = dict(
             data_integration=self.data_integration if not exclude_data_integration else None,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
