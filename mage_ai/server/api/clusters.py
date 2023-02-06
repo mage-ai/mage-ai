@@ -202,7 +202,7 @@ class ApiInstanceDetailHandler(BaseHandler):
 
             action = instance_payload.get('action')
 
-            ecs_instance_manager = EcsTaskManager(cluster_name)    
+            ecs_instance_manager = EcsTaskManager(cluster_name)
             instance = None
             if action == 'stop':
                 instance = ecs_instance_manager.stop_task(task_arn)

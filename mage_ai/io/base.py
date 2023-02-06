@@ -219,8 +219,8 @@ class BaseFile(BaseIO):
 
 class BaseSQLDatabase(BaseIO):
     """
-    Base data connector for connecting to a SQL database. This adds `query` method which allows a user
-    to send queries to the database server.
+    Base data connector for connecting to a SQL database. This adds `query` method which allows
+    a user to send queries to the database server.
     """
 
     @abstractmethod
@@ -263,7 +263,7 @@ class BaseSQLDatabase(BaseIO):
         return query_string.strip(' \n\t')
 
     def _clean_column_name(self, column_name: str) -> str:
-        return re.sub('\W', '_', column_name.lower())
+        return re.sub(r'\W', '_', column_name.lower())
 
 
 class BaseSQLConnection(BaseSQLDatabase):

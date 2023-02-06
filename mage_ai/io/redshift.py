@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
+from mage_ai.io.base import ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import (
     clean_df_for_export,
@@ -68,7 +68,8 @@ class Redshift(BaseSQL):
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to.
+                                    Defaults to 10,000,000.
             *args, **kwargs: Additional parameters to send to query, including parameters
             for use with format strings. See `redshift-connector` docs for more options.
 

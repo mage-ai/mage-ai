@@ -56,7 +56,11 @@ class StatisticsCalculator:
             self.data_tags,
         )
         with VerboseFunctionExec('Calculating statistics per variable', verbose=self.verbose):
-            return self.__calculate_statistics_overview(df, df_original=df_original, is_clean=is_clean)
+            return self.__calculate_statistics_overview(
+                df,
+                df_original=df_original,
+                is_clean=is_clean,
+            )
 
     def null_seq_gen(self, arr):
         prev = -1
@@ -178,8 +182,10 @@ class StatisticsCalculator:
             df_top_value_counts = df_top_value_counts.head(VALUE_COUNT_LIMIT)
 
         # TODO: remove duplicate data for distinct values
-        # object_key_distinct_values = s3_paths.path_distinct_values_by_column(self.object_key_prefix, col)
-        # s3_data.upload_dataframe(self.s3_client, df_top_value_counts, object_key_distinct_values, columns=[col])
+        # object_key_distinct_values = \
+        #     s3_paths.path_distinct_values_by_column(self.object_key_prefix, col)
+        # s3_data.upload_dataframe(
+        #     self.s3_client, df_top_value_counts, object_key_distinct_values, columns=[col])
         # object_key_statistics = s3_paths.path_statistics_by_column(self.object_key_prefix, col)
         # s3_data.upload_dataframe(self.s3_client, df_top_value_counts, object_key_statistics)
 
@@ -281,7 +287,7 @@ class StatisticsCalculator:
                 data[f'{col}/max_character_count'] = string_length.max()
                 text_series = text_series.str.replace(PUNCTUATION, ' ', regex=True)
                 text_series = text_series.str.lower().str.strip()
-                text_series = text_series.str.split('\s+')
+                text_series = text_series.str.split(r'\s+')
 
                 word_count = text_series.map(len)
                 data[f'{col}/max_word_count'] = word_count.max()

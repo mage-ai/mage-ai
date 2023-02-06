@@ -12,7 +12,7 @@ def reload_all_repo_modules(content: str) -> None:
         if f'import {project_name}' not in line and f'from {project_name}' not in line:
             continue
 
-        regex = re.compile('from ([\w.]+) import|import ([\w.]+)')
+        regex = re.compile(r'from ([\w.]+) import|import ([\w.]+)')
         matches = re.findall(regex, line)
 
         if len(matches) >= 1:

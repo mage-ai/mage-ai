@@ -1,6 +1,7 @@
 from contextlib import redirect_stdout
 from jinja2 import Template
 from logging import Logger
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
@@ -144,7 +145,8 @@ def load_sources(block) -> Dict:
                 source_name = source_data['name']
                 for table_data in source_data['tables']:
                     table_name = table_data['name']
-                    print(f'Adding source {source_name} and table {table_name} to {sources_full_path}.')
+                    print(f'Adding source {source_name} and table {table_name} '
+                          f'to {sources_full_path}.')
                     settings = add_table_to_source(block, settings, source_name, table_name)
 
             with open(sources_full_path_legacy, 'w') as f:

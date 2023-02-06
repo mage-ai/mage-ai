@@ -34,7 +34,8 @@ template:
   REDSHIFT_CLUSTER_ID: "{{ env_var('REDSHIFT_CLUSTER') }}"
 """
         sample_yaml_verbose_format = """default:
-  #  Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
+  #  Default profile created for data IO access. Add credentials for the sources you use and
+  #   remove the rest.
   BigQuery:
     credentials_mapping:
         test: 4
@@ -191,7 +192,7 @@ template:
             self.assertEqual(env_loader[expected_key], expected_value)
 
     @mock.patch('mage_ai.io.config.os')
-    def test_env_map_get(self, mock_os):
+    def test_env_map_get_redshift(self, mock_os):
         test_env_vars = {'REDSHIFT_CLUSTER': 'env_var_cluster'}
         mock_os.getenv = test_env_vars.get
         config = ConfigFileLoader(self.test_config_path, profile='template')

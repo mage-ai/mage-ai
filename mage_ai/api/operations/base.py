@@ -57,8 +57,7 @@ class BaseOperation():
             presented = self.__present_results(result)
             attrb = flatten([d.keys() for d in presented]) if issubclass(
                 type(presented), list) else presented.keys()
-            if (issubclass(type(result), list)
-                    or issubclass(type(result), UserList)):
+            if (issubclass(type(result), list) or issubclass(type(result), UserList)):
                 results = result
             else:
                 results = [result]

@@ -54,7 +54,8 @@ class S3(BaseFile):
         Args:
             import_config (Mapping, optional): Configuration settings for importing file from
             S3. Defaults to None.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to.
+                                    Defaults to 10,000,000.
             read_config (Mapping, optional): Configuration settings for reading file into data
             frame. Defaults to None.
 

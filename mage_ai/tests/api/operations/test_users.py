@@ -1,4 +1,3 @@
-from mage_ai.api.operations import constants
 from mage_ai.orchestration.db.models import User
 from mage_ai.tests.api.operations.base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
@@ -51,10 +50,12 @@ class UserOperationTests(BaseApiTestCase):
 
     def test_execute_list(self):
         owner = create_user(owner=True)
-        response = self.base_test_execute_list([
-            dict(email='mage1@mage.ai', password='mage', password_confirmation='mage'),
-            dict(email='mage2@mage.ai', password='mage', password_confirmation='mage'),
-            ], [
+        self.base_test_execute_list(
+            [
+                dict(email='mage1@mage.ai', password='mage', password_confirmation='mage'),
+                dict(email='mage2@mage.ai', password='mage', password_confirmation='mage'),
+            ],
+            [
                 'id',
             ],
             user=owner,
@@ -69,7 +70,7 @@ class UserOperationTests(BaseApiTestCase):
     def test_execute_update(self):
         user = create_user()
         new_username = self.faker.name()
-        response = self.base_test_execute_update(
+        self.base_test_execute_update(
             user.id,
             dict(username=new_username),
             dict(username=new_username),

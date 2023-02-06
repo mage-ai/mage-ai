@@ -21,7 +21,8 @@ class BigQuery(BaseSQLDatabase):
         """
         Initializes settings for connecting to a BigQuery warehouse.
 
-        To authenticate (and authorize) access to a BigQuery warehouse, credentials must be provided.
+        To authenticate (and authorize) access to a BigQuery warehouse, credentials must be
+        provided.
         Below are the different ways in which the BigQuery data loader can access those
         credentials:
         - Define the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to point to a
@@ -34,8 +35,8 @@ class BigQuery(BaseSQLDatabase):
         - Manually define the service key key-value set to use (such as a dictionary containing
         the same parameters as a service key) with the keyword argument `credentials_mapping`
 
-        All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
-        to the Google BigQuery client, accepting all other configuration settings there.
+        All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be
+        passed to the Google BigQuery client, accepting all other configuration settings there.
         """
         if kwargs.get('verbose') is not None:
             kwargs.pop('verbose')
@@ -102,8 +103,9 @@ WHERE TABLE_NAME = '{table_name}'
             if not new_columns:
                 return
             dtypes = infer_dtypes(df)
-            dtypes = {k: convert_python_type_to_bigquery_type(convert_pandas_dtype_to_python_type(v))
-                      for k, v in dtypes.items()}
+            dtypes = \
+                {k: convert_python_type_to_bigquery_type(convert_pandas_dtype_to_python_type(v))
+                 for k, v in dtypes.items()}
             columns_and_types = [
                 f"ADD COLUMN {self._clean_column_name(col)} {dtypes[col]}" for col
                 in new_columns
@@ -128,14 +130,13 @@ WHERE TABLE_NAME = '{table_name}'
         """
         Loads data from BigQuery into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. When a select query
-        is provided, this function will load at maximum 10,000,000 rows of data. To operate on more data,
-        consider performing data transformations in warehouse.
-
-
+        is provided, this function will load at maximum 10,000,000 rows of data. To operate on more
+        data, consider performing data transformations in warehouse.
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to
+                                    10,000,000.
             **kwargs: Additional arguments to pass to query, such as query configurations
 
         Returns:
@@ -182,9 +183,10 @@ WHERE TABLE_NAME = '{table_name}'
             if_exists (str): Specifies export policy if table exists. Either
                 - `'fail'`: throw an error.
                 - `'replace'`: drops existing table and creates new table of same name.
-                - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
-            Defaults to `'replace'`. If `write_disposition` is specified as a keyword argument, this parameter
-            is ignored (as both define the same functionality).
+                - `'append'`: appends data frame to existing table. In this case the schema must
+                                match the original table.
+            Defaults to `'replace'`. If `write_disposition` is specified as a keyword argument,
+            this parameter is ignored (as both define the same functionality).
             **configuration_params: Configuration parameters for export job
         """
 
@@ -241,7 +243,8 @@ WHERE table_id = '{table_name}'
                         config.write_disposition = WriteDisposition.WRITE_EMPTY
                     else:
                         raise ValueError(
-                            f'Invalid policy specified for handling existence of table: \'{if_exists}\''
+                            f'Invalid policy specified for handling existence of '
+                            f'table: \'{if_exists}\''
                         )
                 parts = table_id.split('.')
                 if len(parts) == 2:
@@ -284,11 +287,14 @@ WHERE table_id = '{table_name}'
         results = []
 
         for idx, query in enumerate(queries):
-            variables = query_variables[idx] if query_variables and idx < len(query_variables) else {}
+            variables = query_variables[idx] \
+                        if query_variables and idx < len(query_variables) \
+                        else {}
             query = self._clean_query(query)
             result = self.client.query(query, **variables)
 
-            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and fetch_query_at_indexes[idx]:
+            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
+                    fetch_query_at_indexes[idx]:
                 result = result.to_dataframe()
 
             results.append(result)
@@ -333,8 +339,9 @@ WHERE table_id = '{table_name}'
         Constructs BigQuery data loader using manually specified authentication credentials object.
 
         Args:
-            credentials (Mapping[str, str]): Credentials object. Must contain all the OAuth information necessary
-            to authenticate and authorize BigQuery access. This should resemble a service account key.
+            credentials (Mapping[str, str]): Credentials object. Must contain all the OAuth
+                information necessary to authenticate and authorize BigQuery access. This should
+                resemble a service account key.
 
         Returns:
             BigQuery: BigQuery data loader

@@ -10,8 +10,8 @@ from typing import Union
 
 class AzureBlobStorage(BaseFile):
     """
-    Handles data transfer between a Azure Blob Storage container and the Mage app. Supports loading files
-    of any of the following types:
+    Handles data transfer between a Azure Blob Storage container and the Mage app. Supports
+    loading files of any of the following types:
     - ".csv"
     - ".json"
     - ".parquet"

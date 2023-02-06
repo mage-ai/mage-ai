@@ -1,4 +1,5 @@
 from jinja2 import Template
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
@@ -75,7 +76,7 @@ def build_catalog_json(
     absolute_file_path: str,
     variables: Dict,
     selected_streams: List[str] = None,
-    pipeline: 'Pipeline' =  None,
+    pipeline: 'Pipeline' = None,
 ) -> str:
     streams = []
 

@@ -9,14 +9,14 @@ from typing import Union
 
 class GoogleCloudStorage(BaseFile):
     """
-    Handles data transfer between a Google Cloud Storage bucket and the Mage app. Supports loading files
-    of any of the following types:
+    Handles data transfer between a Google Cloud Storage bucket and the Mage app. Supports
+    loading files of any of the following types:
     - ".csv"
     - ".json"
     - ".parquet"
 
-    If GOOGLE_APPLICATION_CREDENTIALS environment is set, no further arguments are needed other than those
-    specified below. Otherwise, use the factory method `with_config` to construct
+    If GOOGLE_APPLICATION_CREDENTIALS environment is set, no further arguments are needed
+    other than those specified below. Otherwise, use the factory method `with_config` to construct
     the data loader using manually specified credentials.
     """
 
@@ -28,7 +28,8 @@ class GoogleCloudStorage(BaseFile):
         """
         Initializes data loader from a Google Cloud Storage bucket.
 
-        To authenticate (and authorize) access to Google Cloud Storage, credentials must be provided.
+        To authenticate (and authorize) access to Google Cloud Storage, credentials must be
+        provided.
         Below are the different ways to access those credentials:
         - Define the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to point to a
           service account key. In this case no other no other parameters need to be
@@ -40,8 +41,8 @@ class GoogleCloudStorage(BaseFile):
         - Manually define the service key key-value set to use (such as a dictionary containing
         the same parameters as a service key) with the keyword argument `credentials_mapping`
 
-        All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
-        to the Google Cloud Storage client, accepting all other configuration settings there.
+        All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be
+        passed to the Google Cloud Storage client, accepting all other configuration settings there.
         """
 
         super().__init__(verbose=kwargs.get('verbose', True))
@@ -78,7 +79,8 @@ class GoogleCloudStorage(BaseFile):
         Args:
             import_config (Mapping, optional): Configuration settings for importing file from
             Google Cloud Storage. Defaults to None.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults
+                                    to 10,000,000.
             read_config (Mapping, optional): Configuration settings for reading file into data
             frame. Defaults to None.
 

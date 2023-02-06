@@ -88,7 +88,8 @@ class MySQL(BaseSQL):
             PandasTypes.COMPLEX,
         ):
             raise BadConversionError(
-                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to a MySQL datatype.'
+                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to '
+                'a MySQL datatype.'
             )
         elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
             try:

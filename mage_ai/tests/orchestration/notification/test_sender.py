@@ -64,7 +64,11 @@ class NotificationSenderTests(DBTestCase):
 
     @patch('mage_ai.orchestration.notification.sender.send_teams_message')
     @patch('mage_ai.orchestration.notification.sender.send_email')
-    def test_send_pipeline_run_failure_message_using_teams(self, mock_send_email, mock_send_teams_message):
+    def test_send_pipeline_run_failure_message_using_teams(
+        self,
+        mock_send_email,
+        mock_send_teams_message,
+    ):
         notification_config = NotificationConfig.load(config=TEAMS_NOTIFICATION_CONFIG)
         sender = NotificationSender(config=notification_config)
         pipeline_run = self.__class__.pipeline_run

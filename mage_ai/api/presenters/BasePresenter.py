@@ -57,13 +57,14 @@ class BasePresenter():
 
     @classmethod
     def present_resource(self, resource, user, **kwargs):
-        def present_lambda(r): return r.__class__.presenter_class()(
-            r,
-            user,
-            **kwargs,
-        ).present(
-            **kwargs,
-        )
+        def present_lambda(r):
+            return r.__class__.presenter_class()(
+                r,
+                user,
+                **kwargs,
+            ).present(
+                **kwargs,
+            )
         if isinstance(resource, Iterable):
             return [present_lambda(r) for r in resource]
         else:

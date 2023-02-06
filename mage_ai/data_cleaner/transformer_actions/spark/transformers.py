@@ -38,7 +38,7 @@ def transform_add_distance_between(feature_set, transformer_action, sort_options
         .withColumn(output_col, asin(sqrt(
                                          sin(col('dlat') / 2) ** 2 + cos(radians(col(lat1)))
                                          * cos(radians(col(lat2))) * sin(col('dlng') / 2) ** 2
-                                         )
+                                        )
                                      ) * 2 * 3963 * 5280) \
         .drop('dlng', 'dlat')
 

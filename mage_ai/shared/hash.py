@@ -7,6 +7,7 @@ def dig(obj_arg, arr_or_string):
     if type(arr_or_string) is str:
         arr_or_string = arr_or_string.split('.')
     arr = list(map(str.strip, arr_or_string))
+
     def _build(obj, key):
         tup = re.split(r'\[(\d+)\]$', key)
         if len(tup) >= 2:

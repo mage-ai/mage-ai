@@ -48,7 +48,10 @@ class DataCleaner:
                     df, column_types=column_types
                 )
         with timer('data_cleaner.clean_series'):
-            with VerboseFunctionExec('Converting entries to correct datatype', verbose=self.verbose):
+            with VerboseFunctionExec(
+                'Converting entries to correct datatype',
+                verbose=self.verbose,
+            ):
                 df = clean_dataframe(df, column_types, dropna=False)
         with timer('data_cleaner.calculate_statistics'):
             statistics = StatisticsCalculator(column_types, verbose=self.verbose).process(

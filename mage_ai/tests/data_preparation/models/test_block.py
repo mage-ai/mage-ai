@@ -85,8 +85,18 @@ def remove_duplicate_rows(df):
             'test pipeline 2',
             repo_path=self.repo_path,
         )
-        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
-        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
+        block1 = Block.create(
+            'test_data_loader_1',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        block2 = Block.create(
+            'test_data_loader_2',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
         block3 = Block.create(
             'test_transformer',
             'transformer',
@@ -154,8 +164,18 @@ def union_datasets(df1, df2):
             'test pipeline 3',
             repo_path=self.repo_path,
         )
-        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
-        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
+        block1 = Block.create(
+            'test_data_loader_1',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        block2 = Block.create(
+            'test_data_loader_2',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
         block3 = Block.create(
             'test_transformer',
             'transformer',

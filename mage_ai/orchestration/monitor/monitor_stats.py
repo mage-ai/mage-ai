@@ -91,7 +91,7 @@ class MonitorStats:
             end_time=end_time,
             **kwargs,
         )
-        pipeline_runs = pipeline_runs.filter(PipelineRun.completed_at != None).all()
+        pipeline_runs = pipeline_runs.filter(PipelineRun.completed_at != None).all()  # noqa: E711
         pipeline_run_by_date = group_by(lambda p: p.created_at.strftime('%Y-%m-%d'), pipeline_runs)
 
         def __mean_runtime(pipeline_runs):
@@ -142,7 +142,7 @@ class MonitorStats:
             end_time=end_time,
             **kwargs,
         )
-        block_runs = block_runs.filter(BlockRun.completed_at != None).all()
+        block_runs = block_runs.filter(BlockRun.completed_at != None).all()  # noqa: E711
 
         def __stats_func(block_runs):
             runtime_list = [(b.completed_at - b.created_at).total_seconds()

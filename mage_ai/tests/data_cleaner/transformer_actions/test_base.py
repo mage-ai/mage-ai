@@ -23,7 +23,8 @@ class BaseActionTests(TestCase):
 
     #     base_action = BaseAction(merge_dict(
     #         TEST_ACTION,
-    #         dict(action_code='%{1_1} >= 3 and (%{1_2} == false or %{1_2} != %{1_2}) and %{1_4} >= 5.0'),
+    #         dict(action_code='%{1_1} >= 3 and (%{1_2} == false or %{1_2} != %{1_2}) '
+    #                          'and %{1_4} >= 5.0'),
     #     ))
 
     #     self.assertEqual(base_action.execute(df).sort_values('deposited').to_numpy().tolist(), [

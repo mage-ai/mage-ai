@@ -56,7 +56,7 @@ class PipelineScheduleTests(DBTestCase):
             'test active schedule 2',
             self.repo_path,
         )
-        pipeline_schedule1 = PipelineSchedule.create(
+        PipelineSchedule.create(
             pipeline_uuid='test_active_schedule_1',
             schedule_interval='@daily'
         )
@@ -68,7 +68,7 @@ class PipelineScheduleTests(DBTestCase):
             pipeline_uuid='test_active_schedule_2',
             schedule_interval='@daily'
         )
-        pipeline_schedule4 = PipelineSchedule.create(
+        PipelineSchedule.create(
             pipeline_uuid='test_active_schedule_2',
             schedule_interval='@daily'
         )
@@ -157,7 +157,7 @@ class PipelineRunTests(DBTestCase):
             pipeline_schedule_id=pipeline_schedule.id,
         )
         pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
-        pipeline_run3 = create_pipeline_run_with_schedule(
+        create_pipeline_run_with_schedule(
             pipeline_uuid='test_active_run_1',
             pipeline_schedule_id=pipeline_schedule.id,
         )

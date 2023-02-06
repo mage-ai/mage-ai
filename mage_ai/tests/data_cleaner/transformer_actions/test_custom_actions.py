@@ -38,7 +38,8 @@ class CustomActionTests(TestCase):
         action = dict(
             action_type='custom',
             axis='row',
-            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
+            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector \
+            import infer_column_types
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
@@ -141,7 +142,8 @@ def add_column(df):
         action = dict(
             action_type='custom',
             axis='row',
-            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
+            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector \
+            import infer_column_types
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd

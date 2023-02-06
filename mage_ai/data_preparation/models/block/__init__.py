@@ -1005,7 +1005,7 @@ class Block:
                 continue
             elif is_geo_dataframe(data):
                 data = dict(
-                    text_data=f''' Use the following code in a scratchpad to get the output of the block:
+                    text_data=f'''Use the code in a scratchpad to get the output of the block:
 
 from mage_ai.data_preparation.variable_manager import get_variable
 df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
@@ -1038,7 +1038,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         include_print_outputs: bool = True,
         sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
         variable_type: VariableType = None,
-        block_uuid: str =  None,
+        block_uuid: str = None,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
@@ -1108,7 +1108,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 continue
             elif is_geo_dataframe(data):
                 data = dict(
-                    text_data=f''' Use the following code in a scratchpad to get the output of the block:
+                    text_data=f'''Use the code in a scratchpad to get the output of the block:
 
 from mage_ai.data_preparation.variable_manager import get_variable
 df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
