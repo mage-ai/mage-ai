@@ -12,7 +12,7 @@ By default, logs for each pipeline run will be stored in the
 To store logs in S3, you need to set the `logging` config in your project's `metadata.yaml` file.
 
 Example S3 logging config:
-```
+```yaml
 logging_config:
   type: s3
   level: INFO
@@ -26,7 +26,7 @@ logging_config:
 To store logs in GCS, you need to set the `logging` config in your project's `metadata.yaml` file.
 
 Example GCS logging config:
-```
+```yaml
 logging_config:
   type: gcs
   level: INFO
