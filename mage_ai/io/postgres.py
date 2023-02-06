@@ -177,7 +177,9 @@ class Postgres(BaseSQL):
         elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
             return 'bigint'
         else:
-            raise ValueError(f'Invalid datatype provided: {dtype}')
+            print(f'Invalid datatype provided: {dtype}')
+
+        return 'text'
 
     def upload_dataframe(
         self,
