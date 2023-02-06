@@ -1,6 +1,5 @@
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.udf.base import BaseUDF
-import numpy as np
 import pandas as pd
 
 
@@ -27,7 +26,6 @@ class Difference(BaseUDF):
 
     def __difference_between_columns(self, column1, column2, column_type=None, options={}):
         if column_type == ColumnType.DATETIME:
-            time_unit = options.get('time_unit', 'd')
             return (pd.to_datetime(column1, utc=True) - pd.to_datetime(column2, utc=True)).dt.days
         return column1 - column2
 

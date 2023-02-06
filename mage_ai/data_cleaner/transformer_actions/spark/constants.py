@@ -1,11 +1,8 @@
-from pyspark.sql import types
 from pyspark.sql.types import (
-    BooleanType,
     DoubleType,
     IntegerType,
     StringType,
 )
-import re
 
 COLUMN_TYPE_MAPPING = {
     'category': StringType,

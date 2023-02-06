@@ -70,11 +70,14 @@ class Snowflake(BaseSQLConnection):
 
         with self.conn.cursor() as cursor:
             for idx, query in enumerate(queries):
-                variables = query_variables[idx] if query_variables and idx < len(query_variables) else {}
+                variables = query_variables[idx] \
+                                if query_variables and idx < len(query_variables) \
+                                else {}
                 query = self._clean_query(query)
                 result = cursor.execute(query, **variables)
 
-                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and fetch_query_at_indexes[idx]:
+                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
+                        fetch_query_at_indexes[idx]:
                     result = result.fetch_pandas_all()
 
                 results.append(result)
@@ -98,7 +101,8 @@ class Snowflake(BaseSQLConnection):
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults
+                                    to 10,000,000.
             *args, **kwargs: Additional parameters to provide to the query
 
         Returns:
@@ -135,8 +139,8 @@ class Snowflake(BaseSQLConnection):
         **kwargs,
     ) -> None:
         """
-        Exports a Pandas data frame to a Snowflake warehouse based on the table name. If table doesn't
-        exist, the table is automatically created.
+        Exports a Pandas data frame to a Snowflake warehouse based on the table name.
+        If table doesn't exist, the table is automatically created.
 
         Args:
             df (DataFrame): Data frame to export to a Snowflake warehouse.
@@ -170,7 +174,8 @@ class Snowflake(BaseSQLConnection):
                 elif not table_doesnt_exist:
                     if ExportWritePolicy.FAIL == if_exists:
                         raise RuntimeError(
-                            f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
+                            f'Table {table_name} already exists in the current warehouse, '
+                            'database, schema scenario.'
                         )
                     elif ExportWritePolicy.REPLACE == if_exists:
                         cur.execute(f'USE DATABASE {database}')

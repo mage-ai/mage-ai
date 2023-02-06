@@ -150,7 +150,9 @@ class BlockExecutor:
         return result
 
     def __update_block_run_status(self, callback_url: str, status: str, tags: Dict):
-        """Update the status of block run by edither updating the BlockRun db object or making API call
+        """
+        Update the status of block run by edither updating the BlockRun db object or making
+        API call
 
         Args:
             callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]

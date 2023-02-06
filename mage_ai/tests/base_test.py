@@ -7,9 +7,6 @@ import shutil
 import unittest
 
 
-from mage_ai.shared.environments import is_test
-
-
 class DBTestCase(unittest.TestCase):
     def setUp(self):
         pass

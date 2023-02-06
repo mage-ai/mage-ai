@@ -32,11 +32,11 @@ def convert_to_block(block, content):
         if decorator_index_end is not None:
             break
 
-        if not decorator_function_started and not re.search('^[\w@]+', line):
+        if not decorator_function_started and not re.search(r'^[\w@]+', line):
             decorator_function_started = True
 
         if decorator_function_started:
-            if re.search('^[\w]+', line):
+            if re.search(r'^[\w]+', line):
                 decorator_index_end = i - 1
             elif i == len(block_template_content_parts2) - 1:
                 decorator_index_end = i
@@ -51,7 +51,8 @@ def convert_to_block(block, content):
     content_parts = content.split('\n')
     content_to_display = []
     for i, line in enumerate(content_parts):
-        if len(content_parts) - 1 == i and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+        if len(content_parts) - 1 == i and \
+                block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
             content_to_display.append(f'    return {line}')
         else:
             content_to_display.append(f'    {line}')
@@ -61,7 +62,9 @@ def convert_to_block(block, content):
         part_5 = ''
     else:
         part_3 = '\n'.join(decorator_function_parts[:-2]).strip()
-        part_5 = '\n'.join(block_template_content_parts[decorator_index + decorator_index_end:]).strip()
+        part_5 = '\n'.join(
+            block_template_content_parts[decorator_index + decorator_index_end:]
+        ).strip()
 
     return """{}
 

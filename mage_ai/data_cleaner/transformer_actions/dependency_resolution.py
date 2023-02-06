@@ -16,7 +16,7 @@ def default_resolution(df: DataFrame, action: Dict) -> Tuple[bool, str]:
 
 def resolve_filter_action(df: DataFrame, action: Dict) -> Tuple[bool, str]:
     for name in df.columns:
-        if re.search('\s', name):
+        if re.search(r'\s', name):
             return (
                 False,
                 'Column name contains whitespace or newline '

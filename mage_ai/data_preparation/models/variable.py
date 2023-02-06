@@ -156,7 +156,9 @@ class Variable:
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            return await self.__read_dataframe_analysis_async(dataframe_analysis_keys=dataframe_analysis_keys)
+            return await self.__read_dataframe_analysis_async(
+                dataframe_analysis_keys=dataframe_analysis_keys,
+            )
         return await self.__read_json_async()
 
     def write_data(self, data: Any) -> None:

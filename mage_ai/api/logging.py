@@ -14,6 +14,7 @@ def error(text):
 
     LOGGER.error(f'[{now}][api.views] {text}')
 
+
 def info(text):
     now = datetime.utcnow().isoformat()
     LOGGER.info(f'[{now}][api.views] {text}')

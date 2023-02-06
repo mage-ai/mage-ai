@@ -41,7 +41,7 @@ def get_collection(key: str, available_options: List[Dict]):
                 for line in proc.stdout.decode().split('\n'):
                     try:
                         d['templates'] = json.loads(line)
-                    except:
+                    except Exception:
                         pass
             except Exception as err:
                 print(f"Failed to load source {d['uuid']}: {err}")

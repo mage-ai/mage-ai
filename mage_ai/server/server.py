@@ -30,13 +30,9 @@ from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
 from mage_ai.server.api.backfills import (
     ApiBackfillHandler,
     ApiBackfillsHandler,
-)
-from mage_ai.server.api.backfills import (
-    ApiBackfillHandler,
-    ApiBackfillsHandler,
     ApiPipelineBackfillsHandler,
 )
-from mage_ai.server.api.base import BaseApiHandler, BaseHandler
+from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
     ApiBlockHandler,
     ApiPipelineBlockAnalysisHandler,
@@ -313,7 +309,11 @@ class ApiPipelineVariableListHandler(BaseHandler):
         variable_manager = VariableManager(variables_dir=get_variables_dir())
 
         def get_variable_value(block_uuid, variable_uuid):
-            variable = variable_manager.get_variable_object(pipeline_uuid, block_uuid, variable_uuid)
+            variable = variable_manager.get_variable_object(
+                pipeline_uuid,
+                block_uuid,
+                variable_uuid,
+            )
             if variable.variable_type in [VariableType.DATAFRAME, VariableType.GEO_DATAFRAME]:
                 value = 'DataFrame'
                 variable_type = 'pandas.DataFrame'
@@ -561,7 +561,10 @@ def make_app():
         (r'/api/block_runs/(?P<block_run_id>\w+)/logs', ApiBlockRunLogHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)', ApiClustersHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
-        (r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)', ApiInstanceDetailHandler),
+        (
+            r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)',
+            ApiInstanceDetailHandler,
+        ),
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
@@ -640,7 +643,10 @@ def make_app():
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
         (r'/api/data_providers', ApiDataProvidersHandler),
         (r'/api/integration_destinations', ApiIntegrationDestinationsHandler),
-        (r'/api/integration_source_streams/(?P<pipeline_uuid>\w+)', ApiIntegrationSourceStreamHandler),
+        (
+            r'/api/integration_source_streams/(?P<pipeline_uuid>\w+)',
+            ApiIntegrationSourceStreamHandler,
+        ),
         (r'/api/integration_sources', ApiIntegrationSourcesHandler),
         (r'/api/integration_sources/(?P<pipeline_uuid>\w+)', ApiIntegrationSourceHandler),
         (r'/api/projects', ApiProjectsHandler),
@@ -713,7 +719,7 @@ async def main(
 
     if REQUIRE_USER_AUTHENTICATION:
         print('User authentication is enabled.')
-        user = User.query.filter(User.owner == True).first()
+        user = User.query.filter(User.owner == True).first()  # noqa: E712
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
             password_salt = generate_salt()

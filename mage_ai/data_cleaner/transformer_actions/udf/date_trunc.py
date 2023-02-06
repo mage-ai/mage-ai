@@ -10,7 +10,8 @@ class DateTrunc(BaseUDF):
         df_copy = self.df.copy()
         df_copy[date_column] = pd.to_datetime(df_copy[date_column])
         if date_part == 'week':
-            return (df_copy[date_column] - df_copy[date_column].dt.weekday * np.timedelta64(1, 'D')).\
+            return (df_copy[date_column] -
+                    df_copy[date_column].dt.weekday * np.timedelta64(1, 'D')).\
                     dt.strftime('%Y-%m-%d')
 
         raise Exception(f'Date part {date_part} is not supported.')

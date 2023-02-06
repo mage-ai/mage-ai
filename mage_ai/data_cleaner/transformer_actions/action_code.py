@@ -31,14 +31,14 @@ def __query_mutate_null_type(match, dtype):
             condition.append(f' | {column_name} == \'\'')
         elif dtype == str:
             condition.append(f' | {column_name}.str.len() == 0')
-        condition.append(f')')
+        condition.append(')')
     else:
         condition.append(f'({column_name}.notna()')
         if dtype == bool:
             condition.append(f' & {column_name} != \'\'')
         elif dtype == str:
             condition.append(f' & {column_name}.str.len() >= 1')
-        condition.append(f')')
+        condition.append(')')
     return ''.join(condition)
 
 
@@ -86,7 +86,7 @@ def query_with_action_code(df, action_code, kwargs):
     for match in ACTION_CODE_PATTERN.finditer(action_code):
         column_name, operator, value = match.groups()
         column_name = column_name.strip(QUOTES)
-        reconstructed_code.append(action_code[prev_end : match.start()])
+        reconstructed_code.append(action_code[prev_end: match.start()])
         prev_end = match.end()
         if operator == Operator.CONTAINS or operator == Operator.NOT_CONTAINS:
             transformed_dtype = __get_column_type(df, transformed_types, column_name)
@@ -109,6 +109,6 @@ def query_with_action_code(df, action_code, kwargs):
 
     action_code = ''.join(reconstructed_code)
     queried_df = queried_df.query(action_code, engine='python').rename(
-        lambda x: x[len(TRANSFORMED_COLUMN_PREFIX) :], axis='columns'
+        lambda x: x[len(TRANSFORMED_COLUMN_PREFIX):], axis='columns'
     )
     return queried_df[df.columns]

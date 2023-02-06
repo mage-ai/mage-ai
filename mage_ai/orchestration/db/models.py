@@ -17,7 +17,6 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
-import json
 import re
 import uuid
 
@@ -139,7 +138,7 @@ class User(BaseModel):
     @validates('email')
     def validate_email(self, key, value):
         if value:
-            regex = re.compile(r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])")
+            regex = re.compile(r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])")  # noqa: E501
             if not re.fullmatch(regex, value):
                 raise ValidationError('Email address is invalid.', metadata=dict(
                     key=key,
@@ -209,7 +208,7 @@ class PipelineSchedule(BaseModel):
     schedule_interval = Column(String(50))
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
     variables = Column(JSON)
-    sla = Column(Integer, default=None) # in seconds
+    sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
     settings = Column(JSON)
 

@@ -9,6 +9,7 @@ import os.path
 
 logger = logging.getLogger(__name__)
 
+
 # right now, we are writing the models to local files to reduce dependencies
 class FeatureSet(Model):
     def __init__(self, id=None, df=None, name=None, api_key=None):

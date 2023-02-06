@@ -11,15 +11,19 @@ def build_custom_action_decorator(action_list):
 
 def execute_custom_action(df, action, **kwargs):
     """
-    Handles custom action generation and execution. Custom actions are currently supported in two different ways:
-    - `transformer_action` decorator: any function decorated with `@transformer_action` will be executed afterwards as a custom action.
-    All functions must accept a Pandas dataframe and return a Pandas dataframe. Functions decorated with `@transformer_action` are
+    Handles custom action generation and execution. Custom actions are currently supported in two
+    different ways:
+    - `transformer_action` decorator: any function decorated with `@transformer_action` will be
+    executed afterwards as a custom action. All functions must accept a Pandas dataframe and
+    return a Pandas dataframe. Functions decorated with `@transformer_action` are
     executed in the order of their definition.
 
-    - Script style: entering a script into the action code menu will execute the script. The script will have access to the dataframe through the
-    `df` variable and must mutate it before completion in order to apply the correct action.
+    - Script style: entering a script into the action code menu will execute the script. The script
+     will have access to the dataframe through the `df` variable and must mutate it before
+     completion in order to apply the correct action.
 
-    If both custom actions and scripts are provided, the scripts will be executed before the custom actions.
+    If both custom actions and scripts are provided, the scripts will be executed before the
+    custom actions.
 
     Below is an example of a user defined custom transformer action
     ```python

@@ -36,7 +36,8 @@ def check_status(
         return False
 
     if pipeline_run.execution_date != execution_date and \
-        pipeline_run.pipeline_schedule.schedule_interval != PipelineSchedule.ScheduleInterval.ONCE:
+        pipeline_run.pipeline_schedule.schedule_interval != \
+            PipelineSchedule.ScheduleInterval.ONCE:
         return False
 
     pipeline_run.refresh()

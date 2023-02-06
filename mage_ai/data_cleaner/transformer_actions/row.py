@@ -1,6 +1,5 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
-from mage_ai.data_cleaner.transformer_actions.constants import VariableType
 from mage_ai.data_cleaner.transformer_actions.custom_action import execute_custom_action
 import pandas as pd
 

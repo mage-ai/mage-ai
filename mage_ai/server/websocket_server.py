@@ -101,7 +101,8 @@ def run_pipeline(
         )
     except Exception:
         trace = traceback.format_exc().splitlines()
-        add_pipeline_message(f'Pipeline {pipeline.uuid} execution failed with error:', metadata=metadata)
+        add_pipeline_message(f'Pipeline {pipeline.uuid} execution failed with error:',
+                             metadata=metadata)
         add_pipeline_message(trace, execution_state='idle', metadata=metadata)
 
     if pipeline.type == PipelineType.PYTHON:
@@ -360,7 +361,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             # TODO: save config for other kernel types.
             def save_pipeline_config() -> str:
                 pipeline_copy = f'{pipeline.uuid}_{str(uuid.uuid4())}'
-                new_pipeline_directory = os.path.join(pipeline.repo_path, PIPELINES_FOLDER, pipeline_copy)
+                new_pipeline_directory = os.path.join(
+                    pipeline.repo_path,
+                    PIPELINES_FOLDER,
+                    pipeline_copy,
+                )
                 os.makedirs(new_pipeline_directory, exist_ok=True)
                 copy_file(
                     os.path.join(pipeline.dir_path, 'metadata.yaml'),
@@ -378,7 +383,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 )
 
                 # The pipeline state can potentially break when the execution is cancelled,
-                # so we save the pipeline config before execution if the user cancels the excecution.
+                # so we save the pipeline config before execution if the user cancels the
+                # excecution.
                 config_copy_path = save_pipeline_config()
             else:
                 config_copy_path = None

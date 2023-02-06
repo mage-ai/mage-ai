@@ -75,7 +75,7 @@ def get_content_inside_triple_quotes(parts):
         first_line = parts[start_index]
 
         variable = None
-        if re.search('[\w]+[ ]*=[ ]*[f]*"""', first_line):
+        if re.search(r'[\w]+[ ]*=[ ]*[f]*"""', first_line):
             variable = first_line.split('=')[0].strip()
 
         return '\n'.join(parts[start_index + 1:-1]).replace('\"', '\\"'), variable
@@ -96,7 +96,7 @@ def add_internal_output_info(code: str) -> str:
     else:
         last_line = code_lines[len(code_lines) - 1]
 
-    matches = re.search('^[ ]*([^{^(^\[^=^ ]+)[ ]*=[ ]*', last_line)
+    matches = re.search(r'^[ ]*([^{^(^\[^=^ ]+)[ ]*=[ ]*', last_line)
     if matches:
         # Get the variable name in the last line if the last line is a variable assignment
         last_line = matches.group(1)
@@ -120,7 +120,7 @@ def add_internal_output_info(code: str) -> str:
         elif triple_quotes_content:
             return f'{code}\nprint("""\n{triple_quotes_content}\n""")'
 
-    if not last_line or last_line_in_block or re.match('^from|^import|^\%\%', last_line.strip()):
+    if not last_line or last_line_in_block or re.match(r'^from|^import|^\%\%', last_line.strip()):
         return code
     else:
         if matches:

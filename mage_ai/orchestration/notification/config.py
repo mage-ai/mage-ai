@@ -7,6 +7,7 @@ from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 import traceback
 
+
 class AlertOn(str, Enum):
     PIPELINE_RUN_FAILURE = 'trigger_failure'
     PIPELINE_RUN_SUCCESS = 'trigger_success'

@@ -294,7 +294,8 @@ class StatisticsCalculatorTest(TestCase):
             None,
             'I know that bees make honey, but do they bake cake?',
             'It is not a problem with the quantum flux capacitor, but the light conduits',
-            'Breaking News: scientists finally figure out if water is wet, leading to widespread controversy',
+            'Breaking News: scientists finally figure out if water is wet, leading to widespread '
+            'controversy',
             'The Mage data cleaning tool is overpowered, try it out now!',
             None,
             None,

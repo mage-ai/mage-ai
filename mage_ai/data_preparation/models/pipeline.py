@@ -506,16 +506,22 @@ class Pipeline:
                                     if len(dynamic_blocks) >= 1:
                                         db_uuids = [block.uuid] + [b.uuid for b in dynamic_blocks]
                                         raise NoMultipleDynamicUpstreamBlocks(
-                                            f'Block {downstream_block.uuid} can only have 1 upstream block that is dynamic. '
-                                            'Current request is trying to set the following dynamic blocks as upstream: '
-                                            f"{', '.join(db_uuids)}.",
+                                            f'Block {downstream_block.uuid} can only have 1 '
+                                            'upstream block that is dynamic. Current request is '
+                                            'trying to set the following dynamic blocks as '
+                                            f"upstream: {', '.join(db_uuids)}.",
                                         )
 
                             block.configuration = configuration
                             should_save = True
 
                         if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                            update_model_settings(block, block.upstream_blocks, [], force_update=True)
+                            update_model_settings(
+                                block,
+                                block.upstream_blocks,
+                                [],
+                                force_update=True,
+                            )
 
                         if widget:
                             keys_to_update = []

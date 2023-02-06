@@ -7,6 +7,7 @@ import socketserver
 def get_dbt_target_path():
     return os.path.join(get_repo_path(), 'dbt/target')
 
+
 def run_docs_server():
     target_path = get_dbt_target_path()
     if not os.path.exists(target_path):

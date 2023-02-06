@@ -73,7 +73,7 @@ class VerbosePrintHandler:
     def print_msg(self, msg):
         if self.verbose:
             if self.exists_previous_message:
-                print(f'\r├─ ')
+                print('\r├─ ')
             print(f'└─ {msg}...', end='')
         yield msg
         if self.verbose:

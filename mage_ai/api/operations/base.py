@@ -16,7 +16,7 @@ from mage_ai.api.operations.constants import (
 )
 from mage_ai.api.result_set import ResultSet
 from mage_ai.shared.array import flatten
-from mage_ai.shared.hash import ignore_keys, merge_dict
+from mage_ai.shared.hash import merge_dict, ignore_keys
 import importlib
 import inflection
 
@@ -24,8 +24,10 @@ import inflection
 def classify(name):
     return ''.join([n.capitalize() for n in name.split('_')])
 
+
 def singularize(name):
     return inflection.singularize(name)
+
 
 class BaseOperation():
     def __init__(self, **kwargs):
@@ -53,18 +55,20 @@ class BaseOperation():
         try:
             result = self.__executed_result()
             presented = self.__present_results(result)
-            attrb = flatten([d.keys() for d in presented]) if issubclass(type(presented), list) else presented.keys()
+            attrb = flatten([d.keys() for d in presented]) if issubclass(
+                type(presented), list) else presented.keys()
             if (issubclass(type(result), list) or issubclass(type(result), UserList)):
                 results = result
             else:
                 results = [result]
             for res in results:
                 policy = self.__policy_class()(res, self.user, **self.__updated_options())
-                policy.authorize_attributes(READ, attrb, api_operation_action=self.action)
+                policy.authorize_attributes(
+                    READ, attrb, api_operation_action=self.action)
             response_key = self.resource if LIST == self.action else self.__resource_name_singular()
             response[response_key] = presented
 
-            if type(result) is ResultSet:
+            if isinstance(result, ResultSet):
                 response['metadata'] = result.metadata
 
             if settings.DEBUG:
@@ -132,7 +136,8 @@ class BaseOperation():
             )
 
     def __delete_show_or_update(self):
-        res = self.__resource_class().process_member(self.pk, self.user, **self.__updated_options())
+        res = self.__resource_class().process_member(
+            self.pk, self.user, **self.__updated_options())
         policy = self.__policy_class()(res, self.user, **self.__updated_options())
         policy.authorize_action(self.action)
 
@@ -169,39 +174,45 @@ class BaseOperation():
     def __monitor_class(self):
         try:
             return getattr(
-                importlib.import_module('mage_ai.api.monitors.{}Monitor'.format(self.__classified_class())),
-                '{}Monitor'.format(self.__classified_class()),
-            )
+                importlib.import_module(
+                    'mage_ai.api.monitors.{}Monitor'.format(
+                        self.__classified_class())), '{}Monitor'.format(
+                    self.__classified_class()), )
         except ModuleNotFoundError:
             return BaseMonitor
 
     def __policy_class(self):
         return getattr(
-            importlib.import_module('mage_ai.api.policies.{}Policy'.format(self.__classified_class())),
-            '{}Policy'.format(self.__classified_class()),
-        )
+            importlib.import_module(
+                'mage_ai.api.policies.{}Policy'.format(
+                    self.__classified_class())), '{}Policy'.format(
+                self.__classified_class()), )
 
     def __presenter_class(self):
         return getattr(
-            importlib.import_module('mage_ai.api.presenters.{}Presenter'.format(self.__classified_class())),
-            '{}Presenter'.format(self.__classified_class()),
-        )
+            importlib.import_module(
+                'mage_ai.api.presenters.{}Presenter'.format(
+                    self.__classified_class())), '{}Presenter'.format(
+                self.__classified_class()), )
 
     def __resource_class(self):
         return getattr(
-            importlib.import_module('mage_ai.api.resources.{}Resource'.format(self.__classified_class())),
-            '{}Resource'.format(self.__classified_class()),
-        )
+            importlib.import_module(
+                'mage_ai.api.resources.{}Resource'.format(
+                    self.__classified_class())), '{}Resource'.format(
+                self.__classified_class()), )
 
     def __parent_model(self):
         if self.resource_parent and self.resource_parent_id:
             parent_class = classify(singularize(self.resource_parent))
             parent_resource_class = getattr(
-                importlib.import_module('mage_ai.api.resources.{}Resource'.format(parent_class)),
+                importlib.import_module(
+                    'mage_ai.api.resources.{}Resource'.format(parent_class)),
                 '{}Resource'.format(parent_class),
             )
             try:
-                return parent_resource_class.model_class.objects.get(pk=self.resource_parent_id)
+                return parent_resource_class.model_class.objects.get(
+                    pk=self.resource_parent_id)
             except parent_resource_class.model_class.DoesNotExist:
                 raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
@@ -226,12 +237,13 @@ class BaseOperation():
 
     def __present_results(self, results):
         data = self.__updated_options().copy()
-        data.update({ 'format': self.__presentation_format() })
+        data.update({'format': self.__presentation_format()})
         return self.__presenter_class().present_resource(results, self.user, **data)
 
     def __presentation_format(self):
         if not self.__presentation_format_attr:
-            self.__presentation_format_attr = self.meta.get(META_KEY_FORMAT, self.action)
+            self.__presentation_format_attr = self.meta.get(
+                META_KEY_FORMAT, self.action)
         return self.__presentation_format_attr
 
     def __updated_options(self):

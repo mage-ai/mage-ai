@@ -108,20 +108,26 @@ class AWSSecretLoader(BaseConfigLoader):
         version_stage_label: Union[str, None] = None,
     ) -> bool:
         """
-        Check if there is a secret with ID `secret_id` contained. Can also specify the version of the
-        secret to check. If
-        - both `version_id` and `version_stage_label` are specified, both must agree on the secret version
+        Check if there is a secret with ID `secret_id` contained. Can also specify the version of
+        the secret to check. If
+        - both `version_id` and `version_stage_label` are specified, both must agree on the secret
+            version
         - neither of `version_id` or `version_stage_label` are specified, any version is checked
-        - one of `version_id` and `version_stage_label` are specified, the associated version is checked
+        - one of `version_id` and `version_stage_label` are specified, the associated version is
+            checked
 
         Args:
             secret_id (str): ID of the secret to load
             version_id (str, Optional): ID of the version of the secret to load. Defaults to None.
-            version_stage_label (str, Optional): Staging label of the version of the secret to load. Defaults to None.
+            version_stage_label (str, Optional): Staging label of the version of the secret to load.
+                                                    Defaults to None.
 
         Returns: bool: Returns true if secret exists, otherwise returns false.
         """
-        return self.__get_secret(secret_id, version_id, version_stage_label) is not None
+        return self.__get_secret(
+            secret_id,
+            version_id,
+            version_stage_label) is not None
 
     def get(
         self,
@@ -132,21 +138,27 @@ class AWSSecretLoader(BaseConfigLoader):
         """
         Loads the secret stored under `secret_id`. Can also specify the version of the
         secret to fetch. If
-        - both `version_id` and `version_stage_label` are specified, both must agree on the secret version
-        - neither of `version_id` or `version_stage_label` are specified, the current version is loaded
-        - one of `version_id` and `version_stage_label` are specified, the associated version is loaded
+        - both `version_id` and `version_stage_label` are specified, both must agree on the secret
+            version
+        - neither of `version_id` or `version_stage_label` are specified, the current version is
+            loaded
+        - one of `version_id` and `version_stage_label` are specified, the associated version is
+            loaded
 
         Args:
             secret_id (str): ID of the secret to load
             version_id (str, Optional): ID of the version of the secret to load. Defaults to None.
-            version_stage_label (str, Optional): Staging label of the version of the secret to load. Defaults to None.
+            version_stage_label (str, Optional): Staging label of the version of the secret to load.
+                                                    Defaults to None.
 
         Returns:
-            Union(bytes, str): The secret stored under `secret_id` in AWS secret manager. If secret is:
+            Union(bytes, str): The secret stored under `secret_id` in AWS secret manager. If secret
+            is:
             - a binary value, returns a `bytes` object
             - a string value, returns a `string` object
         """
-        response = self.__get_secret(secret_id, version_id, version_stage_label)
+        response = self.__get_secret(
+            secret_id, version_id, version_stage_label)
         if 'SecretBinary' in response:
             return response['SecretBinary']
         else:
@@ -191,7 +203,8 @@ class AWSSecretLoader(BaseConfigLoader):
         except ClientError as error:
             if error.response['Error']['Code'] == 'ResourceNotFoundException':
                 return None
-            raise RuntimeError(f'Error loading config: {error.response["Error"]["Message"]}')
+            raise RuntimeError(
+                f'Error loading config: {error.response["Error"]["Message"]}')
 
 
 class EnvironmentVariableLoader(BaseConfigLoader):
@@ -290,14 +303,15 @@ class ConfigFileLoader(BaseConfigLoader):
         Initializes IO Configuration loader. Input configuration file can have two formats:
         - Standard: contains a subset of the configuration keys specified in `ConfigKey`. This
           is the default and recommended format
-        - Verbose: Instead of configuration keys, each profile stores an object of settings associated with
-          each data migration client. This format was used in previous versions of this tool, and exists
-          for backwards compatibility.
+        - Verbose: Instead of configuration keys, each profile stores an object of settings
+          associated with each data migration client. This format was used in previous versions
+          of this tool, and exists for backwards compatibility.
 
         Args:
             filepath (os.PathLike, optional): Path to IO configuration file.
             Defaults to '[repo_path]/io_config.yaml'
-            profile (str, optional): Profile to load configuration settings from. Defaults to 'default'.
+            profile (str, optional): Profile to load configuration settings from. Defaults to
+                                        'default'.
         """
         if config:
             self.config = config
@@ -310,7 +324,8 @@ class ConfigFileLoader(BaseConfigLoader):
                 config_file = Template(fin.read()).render(env_var=os.getenv)
                 self.config = yaml.full_load(config_file)[profile]
 
-        self.use_verbose_format = any(source in self.config.keys() for source in VerboseConfigKey)
+        self.use_verbose_format = any(
+            source in self.config.keys() for source in VerboseConfigKey)
 
     def contains(self, key: Union[ConfigKey, str]) -> Any:
         """

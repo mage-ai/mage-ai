@@ -5,7 +5,7 @@ from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict
-from typing import Dict, List, Tuple
+from typing import Dict, List
 import json
 import math
 import os
@@ -31,7 +31,8 @@ def clear_source_output_files(
         source_output_folder = integration_pipeline.source_output_folder(tap_stream_id)
         if os.path.exists(source_output_folder):
             logger.info(
-                f'Removing source output directory for stream {tap_stream_id} at {source_output_folder}.',
+                f'Removing source output directory for stream {tap_stream_id} at '
+                f'{source_output_folder}.',
                 tags=merge_dict(tags, dict(
                     source_output_folder=source_output_folder,
                 )),
@@ -129,7 +130,8 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
         ))
 
         logger.info(
-            f"Number of records for stream {tap_stream_id}: {'N/A' if record_counts is None else record_counts}.",
+            f"Number of records for stream {tap_stream_id}: "
+            f"{'N/A' if record_counts is None else record_counts}.",
             tags=tags2,
         )
         logger.info(
@@ -170,7 +172,8 @@ def update_stream_states(pipeline_run: PipelineRun, logger: DictLogger, variable
         )
 
         logger.info(
-            f'Updating source state from destination state for stream {tap_stream_id} and table {destination_table}.',
+            f'Updating source state from destination state for stream '
+            f'{tap_stream_id} and table {destination_table}.',
             tags=tags,
         )
         source_state_file_path = integration_pipeline.source_state_file_path(

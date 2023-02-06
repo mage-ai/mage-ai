@@ -3,6 +3,23 @@ name: Build and test
 on: [push]
 
 jobs:
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+        with:
+          ignore: "E121,E126,W503,W504"
+          exclude: "mage_ai/data_preparation/templates,mage_ai/orchestration/db/migrations/versions/"
+          max-line-length: "100"
+          path: "mage_ai"
   test_backend:
     runs-on: ubuntu-latest
     strategy:

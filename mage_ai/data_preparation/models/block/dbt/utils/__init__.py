@@ -1,6 +1,7 @@
 from contextlib import redirect_stdout
 from jinja2 import Template
 from logging import Logger
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
@@ -77,7 +78,7 @@ def parse_attributes(block) -> Dict:
 
 def extract_refs(block) -> List[str]:
     return re.findall(
-        "{}[ ]*ref\(['\"]+([\w]+)['\"]+\)[ ]*{}".format('\{\{', '\}\}'),
+        r"{}[ ]*ref\(['\"]+([\w]+)['\"]+\)[ ]*{}".format(r'\{\{', r'\}\}'),
         block.content,
     )
 
@@ -144,7 +145,8 @@ def load_sources(block) -> Dict:
                 source_name = source_data['name']
                 for table_data in source_data['tables']:
                     table_name = table_data['name']
-                    print(f'Adding source {source_name} and table {table_name} to {sources_full_path}.')
+                    print(f'Adding source {source_name} and table {table_name} '
+                          f'to {sources_full_path}.')
                     settings = add_table_to_source(block, settings, source_name, table_name)
 
             with open(sources_full_path_legacy, 'w') as f:
@@ -168,9 +170,6 @@ def update_model_settings(
 ):
     attributes_dict = parse_attributes(block)
 
-    filename = attributes_dict['filename']
-    full_path = attributes_dict['full_path']
-    project_name = attributes_dict['project_name']
     sources_full_path = attributes_dict['sources_full_path']
     source_name = attributes_dict['source_name']
 
@@ -216,9 +215,6 @@ def update_model_settings(
 
 
 def add_table_to_source(block: 'Block', settings: Dict, source_name: str, table_name: str) -> None:
-    attributes_dict = parse_attributes(block)
-    sources_full_path = attributes_dict['sources_full_path']
-
     new_table = dict(name=table_name)
     new_source = dict(
         name=source_name,
@@ -267,7 +263,8 @@ def load_profile(project_name: str, profiles_full_path: str, profile_target: str
 
             return outputs.get(profile_target or target)
         except Exception as err:
-            print(f'Error loading file {profiles_full_path}, please check file content syntax: {err}.')
+            print(f'Error loading file {profiles_full_path}, please check file content '
+                  f'syntax: {err}.')
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:

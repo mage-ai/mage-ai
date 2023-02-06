@@ -9,7 +9,7 @@ def retry(
 ):
     """
     Create the decorator to retry a method
-    
+
     Args:
         retries (int, optional): Number of retry attempts.
         delay (int, optional): Delay between retries. If using exponential backoff retry,

@@ -20,11 +20,11 @@ def dynamic_block_uuid(
 
 
 def create_block_run_from_dynamic_child(
-    block: 'Block',
-    pipeline_run: 'PipelineRun',
+    block,
+    pipeline_run,
     block_metadata: Dict,
     index: int,
-) -> 'BlockRun':
+):
     metadata = block_metadata.copy()
     metadata.update(dict(dynamic_block_index=index))
 
@@ -35,10 +35,10 @@ def create_block_run_from_dynamic_child(
 
 
 def create_block_runs_from_dynamic_block(
-    block: 'Block',
-    pipeline_run: 'PipelineRun',
+    block,
+    pipeline_run,
     block_uuid: str = None,
-) -> List['BlockRun']:
+) -> List:
     block_uuid_original = block.uuid
     block_uuid = block_uuid_original if block_uuid is None else block_uuid
     execution_partition = pipeline_run.execution_partition
@@ -150,7 +150,8 @@ def create_block_runs_from_dynamic_block(
                     skip_creating_downstream = len(down_uuids_as_ancestors) >= 2
 
                 # Only create downstream block runs if it doesn’t have dynamically created upstream
-                # blocks (aka dynamic child) that were created by a 2nd ancestor that is a dynamic block
+                # blocks (aka dynamic child) that were created by a 2nd ancestor that is a dynamic
+                # block
                 if skip_creating_downstream:
                     continue
 
@@ -169,7 +170,7 @@ def create_block_runs_from_dynamic_block(
     return all_block_runs
 
 
-def get_all_ancestors(block: 'Block') -> List['Block']:
+def get_all_ancestors(block) -> List:
     arr = get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
     return list(filter(
         lambda x: x.uuid != block.uuid,
@@ -177,7 +178,7 @@ def get_all_ancestors(block: 'Block') -> List['Block']:
     ))
 
 
-def get_all_descendants(block: 'Block') -> List['Block']:
+def get_all_descendants(block) -> List:
     arr = get_leaf_nodes(block, 'downstream_blocks', include_all_nodes=True)
     return list(filter(
         lambda x: x.uuid != block.uuid,
@@ -186,14 +187,14 @@ def get_all_descendants(block: 'Block') -> List['Block']:
 
 
 def get_leaf_nodes(
-    block: 'Block',
+    block,
     attribute_key: str,
     condition=None,
     include_all_nodes: bool = False,
-) -> List['Block']:
+) -> List:
     leafs = []
 
-    def _get_leaf_nodes(b: 'Block'):
+    def _get_leaf_nodes(b):
         if condition is None or condition(b):
             if b is not None:
                 arr = getattr(b, attribute_key)
@@ -208,16 +209,16 @@ def get_leaf_nodes(
     return leafs
 
 
-def is_dynamic_block(block: 'Block') -> bool:
+def is_dynamic_block(block) -> bool:
     return block.configuration and block.configuration.get('dynamic', False)
 
 
-def should_reduce_output(block: 'Block') -> bool:
+def should_reduce_output(block) -> bool:
     return block.configuration and block.configuration.get('reduce_output', False)
 
 
 def output_variables(
-    pipeline: 'Pipeline',
+    pipeline,
     block_uuid: str,
     execution_partition: str = None,
 ) -> List[str]:
@@ -264,7 +265,7 @@ def is_valid_print_variable(k, v, block_uuid):
 
 
 def input_variables(
-    pipeline: 'Pipeline',
+    pipeline,
     upstream_block_uuids: List[str],
     execution_partition: str = None,
 ) -> Dict[str, List[str]]:
@@ -280,7 +281,7 @@ def input_variables(
 
 
 def fetch_input_variables(
-    pipeline: 'Pipeline',
+    pipeline,
     upstream_block_uuids: List[str],
     input_args: List[Any],
     execution_partition: str = None,
@@ -390,7 +391,6 @@ def fetch_input_variables(
                 if len(final_value) >= 1 and type(final_value[0]) is pd.DataFrame:
                     final_value = pd.concat(final_value)
 
-
                 if not should_reduce:
                     # Only get the 1st output of a dynamic block;
                     # the 2nd output is the dynamic child block’s metadata
@@ -399,7 +399,7 @@ def fetch_input_variables(
 
                     if type(final_value) is not pd.DataFrame and \
                         type(final_value) is list and \
-                        len(final_value) == 1:
+                            len(final_value) == 1:
                         final_value = final_value[0]
 
                 input_vars[idx] = final_value

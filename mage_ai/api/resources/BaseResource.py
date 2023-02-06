@@ -18,7 +18,8 @@ class BaseResource(Resource):
     def policy_class(self):
         model_name = self.__name__.replace('Resource', '')
         return getattr(
-            importlib.import_module('mage_ai.api.policies.{}Policy'.format(model_name)),
+            importlib.import_module(
+                'mage_ai.api.policies.{}Policy'.format(model_name)),
             '{}Policy'.format(model_name),
         )
 
@@ -26,7 +27,8 @@ class BaseResource(Resource):
     def presenter_class(self):
         model_name = self.__name__.replace('Resource', '')
         return getattr(
-            importlib.import_module('mage_ai.api.presenters.{}Presenter'.format(model_name)),
+            importlib.import_module(
+                'mage_ai.api.presenters.{}Presenter'.format(model_name)),
             '{}Presenter'.format(model_name),
         )
 
@@ -54,11 +56,15 @@ class BaseResource(Resource):
 
     @classmethod
     def register_collective_loader_find(self, resource_class, **kwargs):
-        attribute = kwargs.get('attribute', resource_class.resource_name_singular())
+        attribute = kwargs.get('attribute',
+                               resource_class.resource_name_singular())
         self.register_collective_loader(
             attribute,
-            load=collective_loaders.build_load(resource_class, attribute=attribute),
-            select=collective_loaders.build_select_find('{}_id'.format(attribute)),
+            load=collective_loaders.build_load(
+                resource_class,
+                attribute=attribute),
+            select=collective_loaders.build_select_find(
+                '{}_id'.format(attribute)),
         )
 
     @classmethod
@@ -66,8 +72,13 @@ class BaseResource(Resource):
         attribute = kwargs.get('attribute', resource_class.resource_name())
         self.register_collective_loader(
             attribute,
-            load=collective_loaders.build_load_select(self, resource_class, attribute=self.resource_name_singular()),
-            select=collective_loaders.build_select_filter('{}_id'.format(self.resource_name_singular())),
+            load=collective_loaders.build_load_select(
+                self,
+                resource_class,
+                attribute=self.resource_name_singular()),
+            select=collective_loaders.build_select_filter(
+                '{}_id'.format(
+                    self.resource_name_singular())),
         )
 
     @classmethod
@@ -89,9 +100,8 @@ class BaseResource(Resource):
 
     @classmethod
     def build_result_set(self, arr, user, **kwargs):
-        return ResultSet(
-            [mod if issubclass(mod.__class__, BaseResource) else self(mod, user, **kwargs) for mod in arr],
-        )
+        return ResultSet([mod if issubclass(mod.__class__, BaseResource) else self(
+            mod, user, **kwargs) for mod in arr], )
 
     @classmethod
     def collection(self, query, meta, user, **kwargs):
@@ -160,7 +170,9 @@ class BaseResource(Resource):
 
     @classmethod
     def resource_name_singular(self):
-        return inflection.underscore(self.__name__.replace('Resource', '')).lower()
+        return inflection.underscore(
+            self.__name__.replace(
+                'Resource', '')).lower()
 
     def delete(self, **kwargs):
         """
@@ -227,7 +239,11 @@ class BaseResource(Resource):
         loader = self.__class__.collective_loader().get(key, None)
         if not loaded and loader:
             loaded = loader['load'](self)
-            if loaded and type(loaded) is not ResultSet and type(loaded) is not dict:
+            if loaded and not isinstance(
+                    loaded,
+                    ResultSet) and not isinstance(
+                    loaded,
+                    dict):
                 loaded = ResultSet(loaded)
             if not self.result_set().context.data.get(k_name):
                 self.result_set().context.data[k_name] = {}

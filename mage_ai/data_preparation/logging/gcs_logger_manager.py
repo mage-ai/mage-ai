@@ -64,6 +64,3 @@ class GCSLoggerManager(LoggerManager):
         TODO: Implement this method
         """
         return self.get_logs()
-
-    
-

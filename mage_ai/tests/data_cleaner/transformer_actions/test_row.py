@@ -290,7 +290,7 @@ class RowTests(TestCase):
             action_code='email not contains @',
         )
         action4 = dict(
-            action_code='email not contains \'^e+\w\'',
+            action_code='email not contains \'^e+\w\'',  # noqa: W605
         )
         action_invalid = dict(action_code='subscription not contains False')
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
@@ -465,14 +465,16 @@ class RowTests(TestCase):
         action = dict(action_code='("Val ue" < 110 and "Val ue" >= 50) and ("Val ue" != null)')
         action2 = dict(action_code='"bra  23423  nd" contains brand and "invVe nTory" != null')
         action3 = dict(
-            action_code='("bra  23423  nd" != null and "Val ue" > 60) or ("dis>>> ??cou nted" == null)'
+            action_code='("bra  23423  nd" != null and "Val ue" > 60) or ("dis>>> ??cou nted" '
+                        '== null)'
         )
         action4 = dict(
             action_code='("dis>>> ??cou nted" == True and "invVe nTory" > 15)'
             ' or ("dis>>> ??cou nted" == False and "Val ue" != null)'
         )
         action5 = dict(
-            action_code='("bra  23423  nd" not contains company and "Val ue" == 75 and "invVe nTory" <= 80) or ("dis>>> ??cou nted" != null)'
+            action_code='("bra  23423  nd" not contains company and "Val ue" == 75 and "invVe '
+                        'nTory" <= 80) or ("dis>>> ??cou nted" != null)'
         )
         df_expected = pd.DataFrame(
             [
@@ -545,10 +547,12 @@ class RowTests(TestCase):
             columns=['e e e e e  e e e', ' kas22d fe ($)'],
         )
         action = dict(
-            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e e  e e e" > " kas22d fe ($)"'
+            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e '
+                        'e  e e e" > " kas22d fe ($)"'
         )
         action2 = dict(
-            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e e  e e e" <= " kas22d fe ($)"'
+            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e '
+                        'e  e e e" <= " kas22d fe ($)"'
         )
         df_expected = pd.DataFrame(
             [
@@ -596,7 +600,7 @@ class RowTests(TestCase):
             action_code='"e e e e e e email" not contains @',
         )
         action4 = dict(
-            action_code='"e e e e e e email" not contains \'^e+\w\'',
+            action_code='"e e e e e e email" not contains \'^e+\w\'',  # noqa: W605
         )
         action_invalid = dict(action_code='"subs crip tion" not contains False')
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
@@ -635,7 +639,8 @@ class RowTests(TestCase):
             _ = filter_rows(df, action_invalid, original_df=df).reset_index(drop=True)
 
     def test_original_df_column_name_padding(self):
-        # tests edge cases for when columns with the special prefixes "orig_" and "tf_" are given as input
+        # tests edge cases for when columns with the special prefixes "orig_" and "tf_" are given
+        # as input
         df = pd.DataFrame(
             [[0, 1, None], [1, 2, np.NaN], [np.NaN, 3, 4], [3, None, 5]],
             columns=['col', 'orig_col', 'tf_col'],

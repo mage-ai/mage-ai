@@ -12,7 +12,7 @@ class Client():
         self.client = kwargs.get(
             'client',
             boto3.client(
-                's3', 
+                's3',
                 config=botocore.client.Config(max_pool_connections=MAX_POOL_CONNECTIONS),
             ),
         )

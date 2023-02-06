@@ -6,7 +6,7 @@ from mage_ai.data_cleaner.transformer_actions.spark.constants import (
 )
 from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name
 from pyspark.sql import functions as F
-from pyspark.sql.functions import PandasUDFType, expr, pandas_udf
+from pyspark.sql.functions import expr
 from pyspark.sql.types import (
     StringType,
     StructField,
@@ -38,7 +38,7 @@ def transform_add_distance_between(feature_set, transformer_action, sort_options
         .withColumn(output_col, asin(sqrt(
                                          sin(col('dlat') / 2) ** 2 + cos(radians(col(lat1)))
                                          * cos(radians(col(lat2))) * sin(col('dlng') / 2) ** 2
-                                         )
+                                        )
                                      ) * 2 * 3963 * 5280) \
         .drop('dlng', 'dlat')
 

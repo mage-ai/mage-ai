@@ -305,4 +305,6 @@ def delete_global_variable(
     if pipeline.variables is not None:
         pipeline.delete_global_variable(key)
     else:
-        VariableManager(variables_dir=get_variables_dir()).delete_variable(pipeline_uuid, 'global', key)
+        VariableManager(
+            variables_dir=get_variables_dir(),
+        ).delete_variable(pipeline_uuid, 'global', key)

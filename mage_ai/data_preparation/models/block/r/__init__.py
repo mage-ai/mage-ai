@@ -106,7 +106,10 @@ def __render_r_script(
         )
     template = template_env.get_template(BLOCK_TYPE_TO_EXECUTION_TEMPLATE[block.type])
 
-    output_variable_object = block.variable_object('output_0', execution_partition=execution_partition)
+    output_variable_object = block.variable_object(
+        'output_0',
+        execution_partition=execution_partition,
+    )
     os.makedirs(output_variable_object.variable_path, exist_ok=True)
     output_path = os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE)
 
@@ -115,7 +118,8 @@ def __render_r_script(
     return template.render(
         code=code,
         global_vars=global_vars_str,
-        input_paths=[os.path.join(v.variable_path, DATAFRAME_CSV_FILE) for v in input_variable_objects],
+        input_paths=[os.path.join(v.variable_path, DATAFRAME_CSV_FILE)
+                     for v in input_variable_objects],
         input_vars_str=', '.join([f'df_{i + 1}' for i in range(len(input_variable_objects))]),
         output_path=output_path,
     ) + '\n'

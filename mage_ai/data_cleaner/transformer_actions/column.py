@@ -16,7 +16,6 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
 from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
-from keyword import iskeyword
 import logging
 import pandas as pd
 import numpy as np
@@ -166,20 +165,22 @@ def median(df, action, **kwargs):
 def min(df, action, **kwargs):
     return __agg(df, action, 'min')
 
+
 def normalize(df, action, **kwargs):
     columns = action['action_arguments']
     for col in columns:
         data_min = np.nanmin(df[col], axis=0)
         data_max = np.nanmax(df[col], axis=0)
-        data_range = data_max-data_min
+        data_range = data_max - data_min
         df[col] = (df[col] - data_min) / data_range
     return df
+
 
 def reformat(df, action, **kwargs):
     columns = action['action_arguments']
     options = action['action_options']
     reformat_action = options['reformat']
-    df.loc[:, columns] = df[columns].replace('^\s*$', np.nan, regex=True)
+    df.loc[:, columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
 
     if reformat_action == 'caps_standardization':
         capitalization = options['capitalization']
@@ -191,8 +192,8 @@ def reformat(df, action, **kwargs):
     elif reformat_action == 'currency_to_num':
         for column in generate_string_cols(df, columns):
             clean_col = df[column].replace(CURRENCY_SYMBOLS, '', regex=True)
-            clean_col = clean_col.replace('\s', '', regex=True)
-            clean_col = clean_col.replace('^\s*$', np.nan, regex=True)
+            clean_col = clean_col.replace(r'\s', '', regex=True)
+            clean_col = clean_col.replace(r'^\s*$', np.nan, regex=True)
             try:
                 df.loc[:, column] = clean_col.astype(float)
             except ValueError:
@@ -281,13 +282,15 @@ def shift_up(df, action, **kwargs):
     df[output_col] = df[action['action_arguments'][0]].shift(-1)
     return df
 
+
 def standardize(df, action, **kwargs):
     columns = action['action_arguments']
     for col in columns:
         data_mean = np.mean(df[col], axis=0)
         data_std = np.std(df[col], axis=0)
-        df[col] = (df[col]-data_mean)/data_std
+        df[col] = (df[col] - data_mean) / data_std
     return df
+
 
 def sum(df, action, **kwargs):
     return __agg(df, action, 'sum')

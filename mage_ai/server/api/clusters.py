@@ -15,9 +15,9 @@ from mage_ai.server.active_kernel import (
 )
 from mage_ai.server.kernels import KernelName
 from mage_ai.shared.hash import merge_dict
-
 import os
 import yaml
+
 
 class ClusterType(str, Enum):
     EMR = 'emr'
@@ -64,7 +64,6 @@ class ApiClustersHandler(BaseHandler):
             cluster_payload = self.get_payload().get('cluster')
             if cluster_payload is None:
                 raise Exception('Please include cluster info in the request payload')
-            action = cluster_payload.get('action')
 
             cluster_id = cluster_payload.get('id')
             if cluster_id is None:
@@ -119,8 +118,14 @@ class ApiInstancesHandler(BaseHandler):
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 cluster_name = instance_payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
-                task_definition = instance_payload.get('task_definition', os.getenv(ECS_TASK_DEFINITION))
-                container_name = instance_payload.get('container_name', os.getenv(ECS_CONTAINER_NAME))
+                task_definition = instance_payload.get(
+                    'task_definition',
+                    os.getenv(ECS_TASK_DEFINITION),
+                )
+                container_name = instance_payload.get(
+                    'container_name',
+                    os.getenv(ECS_CONTAINER_NAME),
+                )
 
                 ecs_instance_manager = EcsTaskManager(cluster_name)
 
@@ -135,7 +140,8 @@ class ApiInstancesHandler(BaseHandler):
                     success=True,
                 ))
             elif cluster_type == ClusterType.CLOUD_RUN:
-                from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
+                from mage_ai.cluster_manager.gcp.cloud_run_service_manager \
+                    import CloudRunServiceManager
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 project_id = instance_payload.get('project_id', os.getenv(GCP_PROJECT_ID))
@@ -188,12 +194,15 @@ class ApiInstanceDetailHandler(BaseHandler):
             instance_payload = self.get_payload().get('instance')
             task_arn = instance_payload.get('task_arn')
             cluster_name = instance_payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
-            task_definition = instance_payload.get('task_definition', os.getenv(ECS_TASK_DEFINITION))
+            task_definition = instance_payload.get(
+                'task_definition',
+                os.getenv(ECS_TASK_DEFINITION),
+            )
             container_name = instance_payload.get('container_name', os.getenv(ECS_CONTAINER_NAME))
 
             action = instance_payload.get('action')
 
-            ecs_instance_manager = EcsTaskManager(cluster_name)    
+            ecs_instance_manager = EcsTaskManager(cluster_name)
             instance = None
             if action == 'stop':
                 instance = ecs_instance_manager.stop_task(task_arn)

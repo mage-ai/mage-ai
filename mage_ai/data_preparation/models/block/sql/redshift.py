@@ -1,7 +1,6 @@
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     create_upstream_block_tables as create_upstream_block_tables_orig,
     interpolate_input,
-    should_cache_data_from_upstream,
 )
 from mage_ai.io.config import ConfigKey
 from typing import Dict

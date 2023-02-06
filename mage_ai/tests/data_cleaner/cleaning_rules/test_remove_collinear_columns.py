@@ -392,7 +392,8 @@ class RemoveCollinearColumnsTests(TestCase):
     #     expected_results = [
     #         dict(
     #             title='Remove collinear columns',
-    #             message='Delete these columns to remove redundant data and increase data quality.',
+    #             message='Delete these columns to remove redundant data and increase '
+    #                     'data quality.',
     #             status='not_applied',
     #             action_payload=dict(
     #                 action_type='remove',

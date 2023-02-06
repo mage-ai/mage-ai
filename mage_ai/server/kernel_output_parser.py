@@ -10,6 +10,7 @@ class DataType(str, Enum):
     TEXT_HTML = 'text/html'
     TEXT_PLAIN = 'text/plain'
 
+
 COMMS_MESSAGE_TYPES = [
     'comm_open',
     'comm_msg',

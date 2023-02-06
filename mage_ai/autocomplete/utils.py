@@ -37,7 +37,7 @@ def add_file(acc, path):
 
 
 def extract_all_classes(file_content):
-    regex_base = '([A-Za-z_]+)\(*[A-Za-z_, ]*\)*:'
+    regex_base = r'([A-Za-z_]+)\(*[A-Za-z_, ]*\)*:'
     regex = re.compile(f'^class {regex_base}|\nclass {regex_base}')
     return [t[0] or t[1] for t in re.findall(regex, file_content)]
 
@@ -49,17 +49,17 @@ def extract_all_constants(file_content):
 
 
 def extract_all_functions(file_content):
-    regex_base = '([A-Za-z_]+)\('
+    regex_base = r'([A-Za-z_]+)\('
     regex = re.compile(f'^def {regex_base}|\ndef {regex_base}')
     return [t[0] or t[1] for t in re.findall(regex, file_content)]
 
 
 def extract_all_imports(file_content, ignore_nesting=False):
     base_regexes = [
-        'import [\w.]+ as [\w.]+',
-        'import [\w.]+',
-        'from [\w.]+ import [\w.]+ as [\w.]+',
-        'from [\w.]+ import [\w.]+',
+        r'import [\w.]+ as [\w.]+',
+        r'import [\w.]+',
+        r'from [\w.]+ import [\w.]+ as [\w.]+',
+        r'from [\w.]+ import [\w.]+',
     ]
     regexes = []
 

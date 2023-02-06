@@ -29,7 +29,6 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     for br in all_block_runs:
         block_uuid = br.block_uuid
         parts = block_uuid.split(':')
-        uuid = parts[0]
         stream = parts[1]
         if stream not in block_runs_by_stream:
             block_runs_by_stream[stream] = []
@@ -79,8 +78,8 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
 
     pipeline_logs_by_stream = {}
     pipeline_logs = pipeline_run.logs['content'].split('\n')
-    for l in pipeline_logs:
-        tags = parse_line(l)
+    for pipeline_log in pipeline_logs:
+        tags = parse_line(pipeline_log)
         stream = tags.get('stream')
         if not stream:
             continue
@@ -88,7 +87,7 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
         if stream not in pipeline_logs_by_stream:
             pipeline_logs_by_stream[stream] = []
 
-        pipeline_logs_by_stream[stream].append(l)
+        pipeline_logs_by_stream[stream].append(pipeline_log)
 
     pipeline_metrics_by_stream = {}
     for s in pipeline.streams():
@@ -113,9 +112,9 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     return pipeline_run.metrics
 
 
-def parse_line(l: str) -> Dict:
+def parse_line(line: str) -> Dict:
     tags = {}
-    text = re.sub('^[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}', '', l).strip()
+    text = re.sub(r'^[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}', '', line).strip()
 
     try:
         data1 = json.loads(text)
@@ -124,13 +123,13 @@ def parse_line(l: str) -> Dict:
         try:
             data2 = json.loads(message)
             tags.update(data2.get('tags', {}))
-        except json.JSONDecodeError as err:
+        except json.JSONDecodeError:
             tags.update(data1)
             if 'error_stacktrace' in data1:
                 tags['error'] = data1['error_stacktrace']
             if 'error' in data1:
                 tags['errors'] = data1['error']
-    except json.JSONDecodeError as err:
+    except json.JSONDecodeError:
         pass
 
     return tags

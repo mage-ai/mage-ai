@@ -127,7 +127,8 @@ class Postgres(BaseSQL):
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
             cur.execute(
-                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\''
+                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
+                f'tablename = \'{table_name}\''
             )
             return bool(cur.rowcount)
 
@@ -138,7 +139,8 @@ class Postgres(BaseSQL):
             PandasTypes.COMPLEX,
         ):
             raise BadConversionError(
-                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to a PostgreSQL datatype.'
+                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to '
+                'a PostgreSQL datatype.'
             )
         elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
             try:

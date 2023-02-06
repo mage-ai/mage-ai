@@ -79,7 +79,7 @@ class WorkloadManager:
 
         env_vars = self.__populate_env_vars(container_config)
         container_config['env'] = env_vars
-        
+
         containers = [
             {
                 'name': f'{deployment_name}-container',
@@ -100,10 +100,13 @@ class WorkloadManager:
                 **container_config,
             }
         ]
-        
+
         volumes = []
         if os.getenv(SERVICE_ACCOUNT_SECRETS_NAME):
-            credential_file_path = os.getenv(SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH, 'service_account.json')
+            credential_file_path = os.getenv(
+                SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
+                'service_account.json',
+            )
             containers.append(
                 {
                     'name': 'cloud-sql-proxy',

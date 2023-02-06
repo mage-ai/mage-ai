@@ -1,4 +1,3 @@
-from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.backfills.service import start_backfill, cancel_backfill
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import Backfill

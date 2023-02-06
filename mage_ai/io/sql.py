@@ -2,7 +2,6 @@ from io import StringIO
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader
 from mage_ai.io.export_utils import (
-    BadConversionError,
     clean_df_for_export,
     gen_table_creation_query,
     infer_dtypes,
@@ -100,10 +99,13 @@ class BaseSQL(BaseSQLConnection):
 
         with self.conn.cursor() as cursor:
             for idx, query in enumerate(queries):
-                variables = query_variables[idx] if query_variables and idx < len(query_variables) else {}
+                variables = query_variables[idx] \
+                                if query_variables and idx < len(query_variables) \
+                                else {}
                 query = self._clean_query(query)
 
-                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and fetch_query_at_indexes[idx]:
+                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
+                        fetch_query_at_indexes[idx]:
                     result = self.fetch_query(
                         cursor,
                         query,
@@ -137,7 +139,8 @@ class BaseSQL(BaseSQLConnection):
 
         Args:
             query_string (str): Query to execute on the database.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults
+                to 10,000,000.
             **kwargs: Additional query parameters.
 
         Returns:
@@ -172,7 +175,8 @@ class BaseSQL(BaseSQLConnection):
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
-        exist, the table is automatically created. If the schema doesn't exist, the schema is also created.
+        exist, the table is automatically created. If the schema doesn't exist, the schema is
+        also created.
 
         Args:
             schema_name (str): Name of the schema of the table to export data to.
@@ -180,9 +184,11 @@ class BaseSQL(BaseSQLConnection):
             if_exists (ExportWritePolicy): Specifies export policy if table exists. Either
                 - `'fail'`: throw an error.
                 - `'replace'`: drops existing table and creates new table of same name.
-                - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
+                - `'append'`: appends data frame to existing table. In this case the schema must
+                                match the original table.
             Defaults to `'replace'`.
-            index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
+            index (bool): If true, the data frame index is also exported alongside the table.
+                            Defaults to False.
             **kwargs: Additional query parameters.
         """
 

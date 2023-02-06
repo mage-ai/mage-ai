@@ -280,13 +280,17 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
                     BlockRun.BlockRunStatus.INITIAL,
                 )
 
-                from mage_ai.orchestration.execution_process_manager import execution_process_manager
+                from mage_ai.orchestration.execution_process_manager \
+                    import execution_process_manager
                 if PipelineType.STREAMING != pipeline.type:
                     if PipelineType.INTEGRATION == pipeline.type:
                         execution_process_manager.terminate_pipeline_process(pipeline_run.id)
                     else:
                         for br in incomplete_block_runs:
-                            execution_process_manager.terminate_block_process(pipeline_run.id, br.id)
+                            execution_process_manager.terminate_block_process(
+                                pipeline_run.id,
+                                br.id,
+                            )
 
                 pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         elif payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
@@ -457,7 +461,11 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                     order_by(PipelineSchedule.start_time.desc(), PipelineSchedule.id.desc())
                 )
                 results = self.limit(results)
-                collection = [r.to_dict(include_attributes=['event_matchers', 'pipeline_runs_count', 'last_pipeline_run_status'])
+                collection = [r.to_dict(include_attributes=[
+                                'event_matchers',
+                                'pipeline_runs_count',
+                                'last_pipeline_run_status',
+                              ])
                               for r in results]
                 collection.sort(key=lambda d: d['id'], reverse=True)
         except Exception as err:

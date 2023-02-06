@@ -99,8 +99,8 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         Rule:
         1. If column is not a category/string type which may have alphabet, no suggestion
         2. If non-null entries are not string, no suggestion
-        3. If NON_ALPH_UB of entries are not majority alphabetical, no suggestion. Majority alphabetical
-           == ALPH_RATIO_LB of all chars are alphabet
+        3. If NON_ALPH_UB of entries are not majority alphabetical, no suggestion. Majority
+            alphabetical == ALPH_RATIO_LB of all chars are alphabet
         4. If all entries are same case, no suggestion
         5. Suggest the more prevalent occurrence (e.g., if most alphabetical entries are lowercase
         text but some mixedcase and uppercase text, suggest conversion to lowercase)
