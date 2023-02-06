@@ -50,6 +50,15 @@ runtime variables are accessible from within each pipeline block.
 }
 ```
 
+Or
+
+```json
+{
+  "env": "staging",
+  "schema": "public"
+}
+```
+
 When the pipeline is triggered by this API request, each block in the pipeline
 can access all the values defined in the variables object (e.g. `env`, `schema`)
 within the request payload (in addition to the global variables defined within
