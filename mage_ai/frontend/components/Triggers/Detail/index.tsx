@@ -28,7 +28,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
 
-import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import {
   CalendarDate,
   Info,
@@ -356,7 +356,7 @@ function TriggerDetail({
     } else {
       arr = getFormattedVariables(variables, block => block.uuid === 'global');
     }
-    
+
     arr = addTriggerVariables(arr || [], scheduleType);
 
     if (typeof arr === 'undefined' || !arr?.length) {
@@ -492,7 +492,7 @@ function TriggerDetail({
           )}
         </BeforeStyle>
       )}
-      beforeWidth={34 * UNIT}
+      beforeWidth={BEFORE_WIDTH}
       breadcrumbs={[
         {
           label: () => 'Triggers',
