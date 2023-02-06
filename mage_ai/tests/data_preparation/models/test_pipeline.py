@@ -3,11 +3,11 @@ from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipel
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import DBTestCase
 from unittest.mock import call, mock_open, patch
-import json
 import os
-
+import unittest
 
 ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
+
 
 class PipelineTest(DBTestCase):
     def test_create(self):
@@ -585,3 +585,60 @@ def export_data(df, *args):
             '''
             )
         return block
+
+
+class PipelineTestAsync(unittest.IsolatedAsyncioTestCase):
+    async def test_get_integration_pipeline_async(self):
+        with patch('os.path.exists', return_value=True):
+            with patch('builtins.open', new_callable=mock_open) as mock_open_metadata:
+                with patch('aiofiles.open') as mock_aio_open:
+                    with patch(
+                        'yaml.safe_load',
+                        return_value={
+                            'name': 'mysql_to_postgres_integration',
+                            'type': 'integration',
+                            'uuid': 'mysql_to_postgres_integration',
+                        },
+                    ):
+                        with patch(
+                            'json.loads',
+                            return_value={
+                                'catalog': {
+                                    'streams': [
+                                        {
+                                            'tap_stream_id': 'demo_users',
+                                            'stream': 'demo_users',
+                                        },
+                                    ],
+                                },
+                            }
+                        ):
+                            pipeline = await Pipeline.get_async('test_pipeline_10', '/')
+                            mock_open_metadata.assert_called_once_with('/metadata.yaml')
+                            mock_aio_open.assert_has_calls(
+                                [
+                                    call('/pipelines/test_pipeline_10/metadata.yaml', mode='r'),
+                                    call().__aenter__(),
+                                    call().__aenter__().read(),
+                                    call().__aexit__(None, None, None),
+                                    call('/pipelines/test_pipeline_10/data_integration_catalog.json', mode='r'),
+                                    call().__aenter__(),
+                                    call().__aenter__().read(),
+                                    call().__aexit__(None, None, None)
+                                ],
+                            )
+                            self.assertEqual(
+                                pipeline.to_dict(),
+                                {
+                                    'data_integration': {
+                                        'catalog': {
+                                            'streams': [{'tap_stream_id': 'demo_users', 'stream': 'demo_users'}]
+                                        }
+                                    },
+                                    'name': 'mysql_to_postgres_integration',
+                                    'type': 'integration',
+                                    'uuid': 'test_pipeline_10',
+                                    'blocks': [],
+                                    'widgets': [],
+                                }
+                            )
