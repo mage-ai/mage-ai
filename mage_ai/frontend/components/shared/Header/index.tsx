@@ -197,7 +197,7 @@ function Header({
     {
       label: () => 'User settings',
       linkProps: {
-        href: '/users/settings',
+        href: '/settings/workspace/preferences',
       },
       uuid: 'user_settings',
     },

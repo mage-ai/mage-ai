@@ -1,23 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import Checkbox from '@oracle/elements/Checkbox';
-import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
+import PrivateRoute from '@components/shared/PrivateRoute';
+import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import {
+  SECTION_ITEM_UUID_PREFERENCES,
+  SECTION_UUID_WORKSPACE,
+} from '@components/settings/Dashboard/constants';
 import { get, set } from '@storage/localStorage';
 
-function Settings() {
+function Preferences() {
   const [automaticallyNameBlocks, setAutomaticallyNameBlocks] = useState<boolean>(
     !!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS),
   );
 
   return (
-    <Dashboard
-      title="User settings"
-      uuid="user/settings"
+    <SettingsDashboard
+      uuidItemSelected={SECTION_ITEM_UUID_PREFERENCES}
+      uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
       <Spacing p={PADDING_UNITS}>
         <FlexContainer alignItems="center">
@@ -31,8 +35,10 @@ function Settings() {
           />
         </FlexContainer>
       </Spacing>
-    </Dashboard>
+    </SettingsDashboard>
   );
 }
 
-export default Settings;
+Preferences.getInitialProps = async () => ({});
+
+export default PrivateRoute(Preferences);

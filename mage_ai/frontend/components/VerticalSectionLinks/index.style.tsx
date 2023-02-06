@@ -17,7 +17,7 @@ export const ItemStyle = styled.div<{
 
   padding: ${UNIT * 1.5}px ${UNIT * 2.5}px;
 
-  ${props => `
+  ${props => !props.selected && `
     &:hover {
       background-color: ${(props.theme.background || dark.background).codeArea};
     }

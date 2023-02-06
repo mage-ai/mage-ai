@@ -23,7 +23,9 @@ export type SectionLinksType = {
 };
 
 type VerticalSectionLinksProps = {
-  isItemSelected?: (item: SectionItemType) => boolean;
+  isItemSelected?: (item: SectionItemType & {
+    uuidWorkspace: string;
+  }) => boolean;
   sections: SectionLinksType[];
 };
 
@@ -55,7 +57,12 @@ function VerticalSectionLinks({
 
             const linkLabel = label ? label() : uuidItem;
             const el = (
-              <ItemStyle selected={isItemSelected?.(item)}>
+              <ItemStyle
+                selected={isItemSelected?.({
+                ...item,
+                uuidWorkspace: uuid,
+                })}
+              >
                 {linkLabel}
               </ItemStyle>
             );
