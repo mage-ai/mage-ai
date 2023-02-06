@@ -327,14 +327,20 @@ class ApiPipelineVariableListHandler(BaseHandler):
             )
 
         variables_dict = variable_manager.get_variables_by_pipeline(pipeline_uuid)
-        global_variables = get_global_variables(pipeline_uuid)
-        global_variables_arr = [
+        global_variables = [
             dict(
                 uuid=uuid,
                 type=str(type(value)),
                 value=value
             )
-            for uuid, value in global_variables.items()
+            for uuid, value in get_global_variables(pipeline_uuid).items()
+        ]
+        global_variables_arr = [
+            dict(
+                block=dict(uuid='global'),
+                pipeline=dict(uuid=pipeline_uuid),
+                variables=global_variables,
+            )
         ]
         variables = [
             dict(
@@ -344,10 +350,10 @@ class ApiPipelineVariableListHandler(BaseHandler):
                             get_variable_value(uuid, var) for var in arr
                             # Not return printed outputs
                             if var == 'df' or var.startswith('output')
-                          ] + global_variables_arr,
+                          ],
             )
-            for uuid, arr in variables_dict.items()
-        ]
+            for uuid, arr in variables_dict.items() if uuid != 'global'
+        ] + global_variables_arr
 
         self.write(dict(variables=variables))
         self.finish()
@@ -371,14 +377,23 @@ class ApiPipelineVariableListHandler(BaseHandler):
         variables_dict = VariableManager(
             variables_dir=get_variables_dir(),
         ).get_variables_by_pipeline(pipeline_uuid)
+
+        global_variables = get_global_variables(pipeline_uuid)
+        global_variables_arr = [
+            dict(
+                block=dict(uuid='global'),
+                pipeline=dict(uuid=pipeline_uuid),
+                variables=list(global_variables.keys()),
+            )
+        ]
         variables = [
             dict(
                 block=dict(uuid=uuid),
                 pipeline=dict(uuid=pipeline_uuid),
                 variables=arr,
             )
-            for uuid, arr in variables_dict.items()
-        ]
+            for uuid, arr in variables_dict.items() if uuid != 'global'
+        ] + global_variables_arr
         self.write(dict(variables=variables))
         self.finish()
 
