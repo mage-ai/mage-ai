@@ -23,10 +23,8 @@ class S3LoggerManager(LoggerManager):
         self.s3_client = s3.Client(bucket=self.s3_config.bucket)
 
     def output_logs_to_destination(self):
-        s3_client = s3.Client(bucket=self.s3_config.bucket)
-
         key = self.get_log_filepath()
-        s3_client.upload(f'{key}', self.stream.getvalue())
+        self.s3_client.upload(key, self.stream.getvalue())
 
     def create_log_filepath_dir(self, path):
         pass
