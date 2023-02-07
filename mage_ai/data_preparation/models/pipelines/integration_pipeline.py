@@ -112,6 +112,8 @@ class IntegrationPipeline(Pipeline):
     @property
     def settings_file_path(self) -> str:
         if self.data_integration and 'catalog' in self.data_integration:
+            if os.path.exists(self.catalog_config_path):
+                return self.catalog_config_path
             return self.config_path
         return self.data_loader.file_path
 

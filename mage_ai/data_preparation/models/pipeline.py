@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
+    DATA_INTEGRATION_CATALOG_FILE,
     ExecutorType,
     PipelineType,
     PIPELINE_CONFIG_FILE,
@@ -21,6 +22,7 @@ from mage_ai.shared.utils import clean_name
 from typing import Callable, Dict, List
 import aiofiles
 import asyncio
+import json
 import os
 import shutil
 import yaml
@@ -31,7 +33,7 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
-    def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
+    def __init__(self, uuid, repo_path=None, config=None, repo_config=None, catalog=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.data_integration = None
@@ -43,7 +45,7 @@ class Pipeline:
         if config is None:
             self.load_config_from_yaml()
         else:
-            self.load_config(config)
+            self.load_config(config, catalog=catalog)
         if repo_config is None:
             self.repo_config = get_repo_config(repo_path=self.repo_path)
         elif type(repo_config) is dict:
@@ -62,6 +64,15 @@ class Pipeline:
             PIPELINES_FOLDER,
             self.uuid,
             PIPELINE_CONFIG_FILE,
+        )
+
+    @property
+    def catalog_config_path(self):
+        return os.path.join(
+            self.repo_path,
+            PIPELINES_FOLDER,
+            self.uuid,
+            DATA_INTEGRATION_CATALOG_FILE,
         )
 
     @property
@@ -192,7 +203,26 @@ class Pipeline:
                 print(err)
 
         if PipelineType.INTEGRATION == config.get('type'):
-            pipeline = IntegrationPipeline(uuid, repo_path=repo_path, config=config)
+            catalog = None
+            catalog_config_path = os.path.join(
+                repo_path,
+                PIPELINES_FOLDER,
+                uuid,
+                DATA_INTEGRATION_CATALOG_FILE,
+            )
+            if os.path.exists(catalog_config_path):
+                async with aiofiles.open(catalog_config_path, mode='r') as f:
+                    try:
+                        catalog = json.loads(await f.read())
+                    except Exception as err:
+                        catalog = {}
+                        print(err)
+            pipeline = IntegrationPipeline(
+                uuid,
+                catalog=catalog,
+                config=config,
+                repo_path=repo_path,
+            )
         else:
             pipeline = self(uuid, repo_path=repo_path, config=config)
         return pipeline
@@ -317,11 +347,24 @@ class Pipeline:
             config = yaml.full_load(fp) or {}
         return config
 
-    def load_config_from_yaml(self):
-        self.load_config(self.get_config_from_yaml())
+    def get_catalog_from_json(self):
+        if not os.path.exists(self.catalog_config_path):
+            raise Exception(f'Data integration pipeline {self.uuid} is missing stream data.')
+        with open(self.catalog_config_path) as f:
+            config = json.load(f)
+        return config
 
-    def load_config(self, config):
-        self.data_integration = config.get('data_integration')
+    def load_config_from_yaml(self):
+        catalog = None
+        if os.path.exists(self.catalog_config_path):
+            catalog = self.get_catalog_from_json()
+        self.load_config(self.get_config_from_yaml(), catalog=catalog)
+
+    def load_config(self, config, catalog=None):
+        if catalog is None:
+            self.data_integration = config.get('data_integration')
+        else:
+            self.data_integration = catalog
         self.name = config.get('name')
         self.type = config.get('type') or self.type
 
@@ -385,9 +428,9 @@ class Pipeline:
 
         return blocks_by_uuid
 
-    def to_dict_base(self) -> Dict:
+    def to_dict_base(self, exclude_data_integration=False) -> Dict:
         base = dict(
-            data_integration=self.data_integration,
+            data_integration=self.data_integration if not exclude_data_integration else None,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             uuid=self.uuid,
@@ -401,26 +444,30 @@ class Pipeline:
         include_content=False,
         include_outputs=False,
         sample_count=None,
+        exclude_data_integration=False,
     ) -> Dict:
-        return merge_dict(self.to_dict_base(), dict(
-            blocks=[
-                b.to_dict(
-                    include_content=include_content,
-                    include_outputs=include_outputs,
-                    sample_count=sample_count,
-                    check_if_file_exists=True,
-                )
-                for b in self.blocks_by_uuid.values()
-            ],
-            widgets=[
-                b.to_dict(
-                    include_content=include_content,
-                    include_outputs=include_outputs,
-                    sample_count=sample_count,
-                )
-                for b in self.widgets_by_uuid.values()
-            ],
-        ))
+        return merge_dict(
+            self.to_dict_base(exclude_data_integration=exclude_data_integration),
+            dict(
+                blocks=[
+                    b.to_dict(
+                        include_content=include_content,
+                        include_outputs=include_outputs,
+                        sample_count=sample_count,
+                        check_if_file_exists=True,
+                    )
+                    for b in self.blocks_by_uuid.values()
+                ],
+                widgets=[
+                    b.to_dict(
+                        include_content=include_content,
+                        include_outputs=include_outputs,
+                        sample_count=sample_count,
+                    )
+                    for b in self.widgets_by_uuid.values()
+                ],
+            ),
+        )
 
     async def to_dict_async(
         self,
@@ -750,7 +797,10 @@ class Pipeline:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict()
         else:
-            pipeline_dict = self.to_dict()
+            if self.data_integration is not None:
+                with open(self.catalog_config_path, 'w') as fp:
+                    json.dump(self.data_integration, fp)
+            pipeline_dict = self.to_dict(exclude_data_integration=True)
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
 
@@ -764,7 +814,10 @@ class Pipeline:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict()
         else:
-            pipeline_dict = self.to_dict()
+            if self.data_integration is not None:
+                async with aiofiles.open(self.catalog_config_path, mode='w') as fp:
+                    await fp.write(json.dumps(self.data_integration))
+            pipeline_dict = self.to_dict(exclude_data_integration=True)
         async with aiofiles.open(self.config_path, mode='w') as fp:
             await fp.write(yaml.dump(pipeline_dict))
 

@@ -39,6 +39,7 @@ import { find } from '@utils/array';
 import { getBlockFromFile } from '../FileBrowser/utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
 import { getWebSocket } from '@api/utils/url';
+import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -163,7 +164,10 @@ function FileEditor({
           }}
           selected
           textareaFocused
-          value={file?.content}
+          value={isJsonString(file?.content)
+            ? JSON.stringify(JSON.parse(file?.content), null, 2)
+            : file?.content
+          }
           width="100%"
         />
       );

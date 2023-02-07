@@ -467,6 +467,7 @@ function PipelineDetail({
       addNewBlockAtIndex={addNewBlockAtIndex}
       blocks={blocks}
       codeBlocks={codeBlocks}
+      fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
       globalVariables={globalVariables}
