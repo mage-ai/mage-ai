@@ -38,21 +38,32 @@ class RabbitMQSource(BaseSource):
     config_class = RabbitMQConfig
 
     def init_client(self):
+        queue_name = self.config.queue_name
+        username = self.config.username
+        password = self.config.password
+        connection_host = self.config.connection_host
+        connection_port = self.config.connection_port
+        amqp_url_virtual_host = self.config.amqp_url_virtual_host
 
-        self._print(f'Starting to initialize consumer for queue {self.config.queue_name}')
+        self._print(f'Starting to initialize consumer for queue {queue_name}')
 
         try:
-            
-            generated_url = f"amqp://{self.config.username}:{self.config.password}@{self.config.connection_host}:{self.config.connection_port}/{self.config.amqp_url_virtual_host}"
+
+            generated_url = f"""amqp://{username}:{password}@
+            {connection_host}:{connection_port}/{amqp_url_virtual_host}"""
+
             self._print(f'Trying to connect on {generated_url}')
-            self.create_connection = pika.BlockingConnection(pika.URLParameters(f"amqp://guest:guest@{self.config.connection_host}:{self.config.connection_port}/%2f"))
-            
+            self.create_connection = pika.BlockingConnection(
+                pika.URLParameters(
+                    generated_url
+                    ))
+
             self._print('Connected on broker')
-        
+
             self.channel = self.create_connection.channel()
 
         except AMQPConnectionError:
-            self._print('AMQP Connection Error, please check your broker connection or configuration')
+            self._print('Connection Error, please check broker connection')
             raise AMQPConnectionError
         except Exception as e:
             print(e)
@@ -62,26 +73,30 @@ class RabbitMQSource(BaseSource):
         pass
 
     def batch_read(self, handler: Callable):
+        inactivity_timeout = self.config.consume_config.inactivity_timeout
 
         self._print('Start consuming messages.')
-        
+
         # using namedtuple for better usage on transformer blocks
 
         message_tuple = namedtuple('Payload', ['method', 'properties', 'body'])
         if self.config.configure_consume is True:
-            for method, properties, body in self.channel.consume(self.config.queue_name, self.config.consume_config.auto_ack, self.config.consume_config.exclusive, arguments=None, inactivity_timeout=self.config.consume_config.inactivity_timeout):
+            for method, properties, body in self.channel.consume(
+                    self.config.queue_name,
+                    self.config.consume_config.auto_ack,
+                    self.config.consume_config.exclusive,
+                    arguments=None,
+                    inactivity_timeout=inactivity_timeout
+                    ):
+
                 full_message = message_tuple(method, properties, body)
                 self.__print_message(full_message)
                 handler(full_message, **{'channel': self.channel})
         else:
-            for method, properties, body in self.channel.consume(self.config.queue_name):
+            for method, properties, body in self.channel.consume():
                 full_message = message_tuple(method, properties, body)
                 self.__print_message(full_message)
                 handler(full_message, **{'channel': self.channel})
 
     def __print_message(self, method):
         self._print(f'Received message {method}')
-        
-
-
-
