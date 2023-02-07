@@ -19,12 +19,14 @@ import PipelineScheduleType, {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import PopupMenu from '@oracle/components/PopupMenu';
+import RunPipelinePopup from '@components/Triggers/RunPipelinePopup';
 import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+
 import {
   Add,
   Edit,
@@ -42,6 +44,7 @@ import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { randomNameGenerator } from '@utils/string';
+import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineSchedulesProp = {
@@ -102,6 +105,42 @@ function PipelineSchedules({
   const [createOnceSchedule, { isLoading: isLoadingCreateOnceSchedule }] =
     useCreateScheduleMutation(fetchPipelineSchedules);
 
+  const variablesOrig = useMemo(() => (
+    getFormattedVariables(
+      globalVariables,
+      block => block.uuid === 'global',
+    )?.reduce((acc, { uuid, value }) => ({
+      ...acc,
+      [uuid]: value,
+    }), {})
+  ), [globalVariables]);
+
+  const pipelineOnceSchedulePayload = {
+    name: randomNameGenerator(),
+    schedule_interval: ScheduleIntervalEnum.ONCE,
+    schedule_type: ScheduleTypeEnum.TIME,
+    start_time: dateFormatLong(
+      new Date().toISOString(),
+      { dayAgo: true, utcFormat: true },
+    ),
+    status: ScheduleStatusEnum.ACTIVE,
+  };
+  const [showModal, hideModal] = useModal(() => (
+    <RunPipelinePopup
+      initialPipelineSchedulePayload={pipelineOnceSchedulePayload}
+      onCancel={hideModal}
+      onSuccess={createOnceSchedule}
+      variables={variablesOrig}
+    />
+  ), {
+  }, [
+    globalVariables,
+    variablesOrig,
+  ], {
+    background: true,
+    uuid: 'run_pipeline_now_popup',
+  });
+
   const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
       api.pipeline_schedules.useUpdate(pipelineSchedule.id)({
@@ -145,14 +184,6 @@ function PipelineSchedules({
 
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
-    const variablesOrig =
-      getFormattedVariables(
-        globalVariables,
-        block => block.uuid === 'global',
-      )?.reduce((acc, { uuid, value }) => ({
-        ...acc,
-        [uuid]: value,
-      }), {});
     const variablesOverride = selectedSchedule?.variables;
     const hasOverride = !isEmptyObject(variablesOverride);
 
@@ -256,21 +287,12 @@ function PipelineSchedules({
             <Button
               beforeIcon={<PlayButton inverted size={UNIT * 2} />}
               loading={isLoadingCreateOnceSchedule}
-              onClick={() => {
+              onClick={isEmptyObject(variablesOrig)
                 // @ts-ignore
-                createOnceSchedule({
-                  pipeline_schedule: {
-                    name: randomNameGenerator(),
-                    schedule_interval: ScheduleIntervalEnum.ONCE,
-                    schedule_type: ScheduleTypeEnum.TIME,
-                    start_time: dateFormatLong(
-                      new Date().toISOString(),
-                      { dayAgo: true, utcFormat: true },
-                    ),
-                    status: ScheduleStatusEnum.ACTIVE,
-                  },
-                });
-              }}
+                ? () => createOnceSchedule({
+                  pipeline_schedule: pipelineOnceSchedulePayload,
+                })
+                : showModal}
               outline
               success
             >
