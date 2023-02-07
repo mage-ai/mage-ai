@@ -1,10 +1,12 @@
-from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.sources.base import BaseSource
+from collections import namedtuple
 from dataclasses import dataclass
 from typing import Callable, Dict
-from collections import namedtuple
+
 import pika
+from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.sources.base import BaseSource
 from pika.exceptions import AMQPConnectionError
+
 
 @dataclass
 class ConsumeConfig:
@@ -13,11 +15,8 @@ class ConsumeConfig:
     inactivity_timeout: float = None
 
 
-
-
-
 @dataclass
-class PikaConfig(BaseConfig):
+class RabbitMQConfig(BaseConfig):
     connection_host: str
     connection_port: int
     queue_name: str
@@ -25,7 +24,7 @@ class PikaConfig(BaseConfig):
     username: str = 'guest'
     password: str = 'guest'
     amqp_url_virtual_host: str = r'%2f'
-    consume_config = ConsumeConfig = None
+    consume_config: ConsumeConfig = None
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
@@ -34,12 +33,9 @@ class PikaConfig(BaseConfig):
             config['consume_config'] = ConsumeConfig(**consume_config)
         return config
 
-    
 
-
-class PikaSource(BaseSource):
-    config_class = PikaConfig
-
+class RabbitMQSource(BaseSource):
+    config_class = RabbitMQConfig
 
     def init_client(self):
 
@@ -53,42 +49,35 @@ class PikaSource(BaseSource):
             
             self._print('Connected on broker')
         
-
             self.channel = self.create_connection.channel()
 
-
         except AMQPConnectionError:
-            print('AMQP Connection Error, please check your broker connection or configuration')
+            self._print('AMQP Connection Error, please check your broker connection or configuration')
             raise AMQPConnectionError
         except Exception as e:
             print(e)
             raise e
 
-        
-        
-
-
-
-    def read(self, handler:Callable):
+    def read(self, handler: Callable):
         pass
 
-    def batch_read(self,handler:Callable):
+    def batch_read(self, handler: Callable):
 
         self._print('Start consuming messages.')
         
-        #using namedtuple for better usage on transformer blocks
+        # using namedtuple for better usage on transformer blocks
 
-        message_tuple = namedtuple('Payload',['method','properties','body'])
-        if self.config.configure_consume == True:
-            for method , properties, body in self.channel.consume(self.config.queue_name,self.config.consume_config.auto_ack,self.config.consume_config.exclusive,arguments=None,inactivity_timeout=self.config.consume_config.inactivity_timeout):
-                full_message = message_tuple(method,properties,body)
+        message_tuple = namedtuple('Payload', ['method', 'properties', 'body'])
+        if self.config.configure_consume is True:
+            for method, properties, body in self.channel.consume(self.config.queue_name, self.config.consume_config.auto_ack, self.config.consume_config.exclusive, arguments=None, inactivity_timeout=self.config.consume_config.inactivity_timeout):
+                full_message = message_tuple(method, properties, body)
                 self.__print_message(full_message)
-                handler(full_message,**{'channel':self.channel})
+                handler(full_message, **{'channel': self.channel})
         else:
             for method, properties, body in self.channel.consume(self.config.queue_name):
-                full_message = message_tuple(method,properties,body)
+                full_message = message_tuple(method, properties, body)
                 self.__print_message(full_message)
-                handler(full_message,**{'channel':self.channel})
+                handler(full_message, **{'channel': self.channel})
 
     def __print_message(self, method):
         self._print(f'Received message {method}')
