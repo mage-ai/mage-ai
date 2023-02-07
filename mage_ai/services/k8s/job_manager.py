@@ -25,6 +25,7 @@ class JobManager():
 
         try:
             config.load_kube_config()
+            return True
         except Exception:
             pass
 
