@@ -54,6 +54,8 @@ WHERE  c.table_schema = '{schema}'
         return query
 
     def convert_datetime(self, val):
+        if val is None:
+            return val
         parts = val.split('.')
         arr = parts
         if len(parts) >= 2:

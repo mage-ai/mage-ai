@@ -317,7 +317,7 @@ WHERE table_schema = '{schema}'
         where_statements = []
         if bookmarks:
             for col, val in bookmarks.items():
-                if col not in bookmark_properties:
+                if col not in bookmark_properties or val is None:
                     continue
                 where_statements.append(
                     build_comparison_statement(
