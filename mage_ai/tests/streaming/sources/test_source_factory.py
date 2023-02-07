@@ -1,5 +1,6 @@
 from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
 from mage_ai.streaming.sources.kafka import KafkaSource
+from mage_ai.streaming.sources.rabbitmq import PikaSource
 from mage_ai.streaming.sources.source_factory import SourceFactory
 from mage_ai.tests.base_test import TestCase
 from unittest.mock import patch
@@ -23,6 +24,16 @@ class SourceFactoryTests(TestCase):
             source = SourceFactory.get_source(config)
             self.assertIsInstance(source, AzureEventHubSource)
             mock_init.assert_called_once_with(config)
+
+    def test_get_source_rabbitmq(self):
+        with patch.object(PikaSource,'__init__',return_value =None) as mock_init:
+            config = dict(
+                connector_type='rabbitmq'
+            )
+            source =  SourceFactory.get_source(config)
+            self.assertIsInstance(source, PikaSource)
+            mock_init.assert_called_once_with(config)
+    
 
     def test_get_source_other(self):
         with self.assertRaises(Exception) as context:

@@ -25,6 +25,7 @@ const getDataSourceTypes = (
     return {
       [BlockTypeEnum.DATA_LOADER]: [
         DataSourceTypeEnum.KAFKA,
+        DataSourceTypeEnum.RABBITMQ,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.AZURE_EVENT_HUB,
       ],
