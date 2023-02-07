@@ -1,11 +1,6 @@
 from jinja2 import Template
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
-from mage_ai.data_preparation.models.constants import (
-    DATA_INTEGRATION_CATALOG_FILE,
-    PIPELINES_FOLDER,
-)
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
@@ -39,16 +34,6 @@ def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline
             json.dumps(pipeline.data_integration['catalog']),
             variables,
         )
-    elif pipeline and not settings.get('catalog'):
-        catalog_config_path = os.path.join(
-            get_repo_path(),
-            PIPELINES_FOLDER,
-            pipeline.uuid,
-            DATA_INTEGRATION_CATALOG_FILE,
-        )
-        with open(catalog_config_path, 'r') as f:
-            catalog = interpolate_variables(f.read(), variables)
-        settings['catalog'] = catalog['catalog']
 
     if destination_table_pattern:
         for stream in settings['catalog']['streams']:

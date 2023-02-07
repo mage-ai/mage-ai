@@ -8,8 +8,6 @@ import json
 import os
 import yaml
 
-ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
-
 
 class PipelineTest(DBTestCase):
     def test_create(self):
