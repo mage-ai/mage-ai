@@ -1,0 +1,5 @@
+import os
+
+DEFAULT_NAMESPACE = os.getenv('KUBE_NAMESPACE', 'default')
+
+KUBE_POD_NAME_ENV_VAR = 'HOSTNAME'

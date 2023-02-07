@@ -46,6 +46,11 @@ spec:
     volumeMounts:
     - name: mage-fs
       mountPath: /home/src
+    env:
+      - name: KUBE_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
   volumes:
   - name: mage-fs
     hostPath:
