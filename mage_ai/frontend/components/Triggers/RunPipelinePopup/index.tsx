@@ -70,6 +70,7 @@ function RunPipelinePopup({
       return (
         <TextArea
           {...sharedValueElProps}
+          rows={1}
           value={value}
         />
       );
