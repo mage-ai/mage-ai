@@ -56,7 +56,8 @@ class RabbitMQSource(BaseSource):
             self.create_connection = pika.BlockingConnection(
                 pika.URLParameters(
                     generated_url
-                    ))
+                )
+            )
 
             self._print('Connected on broker')
 
@@ -87,7 +88,7 @@ class RabbitMQSource(BaseSource):
                     self.config.consume_config.exclusive,
                     arguments=None,
                     inactivity_timeout=inactivity_timeout
-                    ):
+            ):
 
                 full_message = message_tuple(method, properties, body)
                 self.__print_message(full_message)

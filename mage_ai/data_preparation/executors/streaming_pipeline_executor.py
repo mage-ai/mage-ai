@@ -99,7 +99,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         )
         sink = SinkFactory.get_sink(sink_config)
 
-        def handle_batch_events(messages: List[Union[Dict, str]],**kwargs):
+        def handle_batch_events(messages: List[Union[Dict, str]], **kwargs):
             if self.transformer_block is not None:
                 messages = self.transformer_block.execute_block(
                     input_args=[messages],
