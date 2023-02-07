@@ -3,8 +3,8 @@ from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipel
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import DBTestCase
 from unittest.mock import call, mock_open, patch
+import asynctest
 import os
-import unittest
 
 ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -597,7 +597,7 @@ def export_data(df, *args):
         return block
 
 
-class PipelineTestAsync(unittest.IsolatedAsyncioTestCase):
+class PipelineTestAsync(asynctest.TestCase):
     async def test_get_integration_pipeline_async(self):
         with patch('os.path.exists', return_value=True):
             with patch('builtins.open', new_callable=mock_open) as mock_open_metadata:
