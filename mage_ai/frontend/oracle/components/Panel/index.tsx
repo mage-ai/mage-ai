@@ -21,6 +21,7 @@ const PanelStyle = styled.div<{
   borderless?: boolean;
   fullHeight?: boolean;
   overflowVisible?: boolean;
+  minWidth?: number;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
@@ -33,6 +34,14 @@ const PanelStyle = styled.div<{
 
   ${props => !props.fullHeight && `
     height: fit-content;
+  `}
+
+  ${props => props.minWidth && `
+    min-width: ${props.minWidth}px;
+
+    @media (max-width: ${props.minWidth}px) {
+      min-width: 0;
+    }
   `}
 
   ${props => props.borderless && `
@@ -97,7 +106,8 @@ export type PanelProps = {
   fullHeight?: boolean;
   noPadding?: boolean;
   overflowVisible?: boolean;
-  subtitle?: JSX.Element;
+  subtitle?: string;
+  minWidth?: number;
 };
 
 function Panel({
@@ -114,11 +124,13 @@ function Panel({
   noPadding,
   overflowVisible,
   subtitle,
+  minWidth,
 }: PanelProps) {
   return (
     <PanelStyle
       borderless={borderless}
       fullHeight={fullHeight}
+      minWidth={minWidth}
       overflowVisible={overflowVisible}
       ref={containerRef}
     >
@@ -137,28 +149,27 @@ function Panel({
               </FlexContainer>
             </FlexContainer>
           }
-          { subtitle &&
-          <>
-            <Spacing mb={2}/>
-            <FlexContainer alignItems="right">
-              {subtitle}
-            </FlexContainer>
-          </>
-          }
         </HeaderStyle>
       }
+
       <ContentStyle
         noPadding={noPadding}
         overflowVisible={overflowVisible}
         ref={contentContainerRef}
       >
+        {subtitle &&
+          <Spacing mb={2}>
+            <Text default>
+              {subtitle}
+            </Text>
+          </Spacing>
+        }
         {children}
       </ContentStyle>
+
       {footer &&
         <FooterStyle>
-          <FlexContainer alignItems="center" justifyContent="center">
-            {footer}
-          </FlexContainer>
+          {footer}
         </FooterStyle>
       }
     </PanelStyle>
