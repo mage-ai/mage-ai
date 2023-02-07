@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -35,6 +35,7 @@ function RunPipelinePopup({
   variables,
 }: RunPipelinePopupProps) {
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
+  const [textAreaElementMapping, setTextAreaElementMapping] = useState({});
   const [runtimeVariables, setRuntimeVariables] = useState<{
     [keyof: string]: string,
   }>(variables || {});
@@ -48,7 +49,7 @@ function RunPipelinePopup({
     runtimeVariables,
   ]);
 
-  const buildValueRowEl = useMemo(() => (uuid: string, value: string) => {
+  const buildValueRowEl = (uuid: string, value: string) => {
     const sharedValueElProps = {
       borderless: true,
       key: `variable_uuid_input_${uuid}`,
@@ -65,15 +66,11 @@ function RunPipelinePopup({
       value,
     };
 
-    if (isJsonString(value)
-      && typeof JSON.parse(value) === 'object'
-      && !Array.isArray(JSON.parse(value))
-      && JSON.parse(value) !== null
-    ) {
+    if (textAreaElementMapping[uuid]) {
       return (
         <TextArea
           {...sharedValueElProps}
-          value={JSON.stringify(JSON.parse(value), null, 2)}
+          value={value}
         />
       );
     }
@@ -81,6 +78,24 @@ function RunPipelinePopup({
     return (
       <TextInput {...sharedValueElProps} />
     );
+  };
+
+  useEffect(() => {
+    const textAreaElementMappingInit = Object.entries(runtimeVariables)
+      .reduce((acc, keyValPair) => {
+        const [uuid, val] = keyValPair;
+        const isUsingTextAreaEl = isJsonString(val)
+          && typeof JSON.parse(val) === 'object'
+          && !Array.isArray(JSON.parse(val))
+          && JSON.parse(val) !== null;
+
+        return {
+          ...acc,
+          [uuid]: isUsingTextAreaEl,
+        };
+      }, {});
+
+    setTextAreaElementMapping(textAreaElementMappingInit);
   }, []);
 
   return (
