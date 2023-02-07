@@ -103,7 +103,7 @@ def __determine_action(
     pk: Union[None, int, str] = None,
 ) -> Tuple[str, str]:
     if 'DELETE' == request.method:
-        return (DELETE, request.body_arguments)
+        return (DELETE, __parse_request_body(request))
 
     if 'GET' == request.method:
         if pk and child and child_pk:
@@ -116,10 +116,10 @@ def __determine_action(
             return (LIST, request.query_arguments)
 
     if 'POST' == request.method:
-        return (CREATE, request.body_arguments)
+        return (CREATE, __parse_request_body(request))
 
     if 'PUT' == request.method:
-        return (UPDATE, request.body_arguments)
+        return (UPDATE, __parse_request_body(request))
 
 
 def __meta(request) -> Dict:
@@ -147,7 +147,22 @@ def __payload(request) -> Dict:
 
         return json.loads(json_root_body)
 
-    return request.body_arguments
+    return __parse_request_body(request)
+
+
+def __parse_request_body(request) -> Dict:
+    payload = {}
+
+    if request.body_arguments and len(request.body_arguments) >= 1:
+        payload = request.body_arguments
+
+    if request.body:
+        if type(request.body) is str:
+            payload = json.loads(request.body)
+        else:
+            payload = json.loads(request.body.decode())
+
+    return payload
 
 
 def __query(request) -> Dict:

@@ -2,7 +2,7 @@ from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.BaseResource import BaseResource
-from mage_ai.orchestration.db.errors import ValidationError
+from mage_ai.orchestration.db.errors import DoesNotExistError, ValidationError
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from sqlalchemy.orm.query import Query
 
@@ -99,7 +99,10 @@ class DatabaseResource(BaseResource):
 
     @classmethod
     def member(self, pk, user, **kwargs):
-        return self(self.model_class.query.get(pk), user, **kwargs)
+        model = self.model_class.query.get(pk)
+        if not model:
+            raise DoesNotExistError(f'{self.model_class.__name__} {pk} does not exist.')
+        return self(model, user, **kwargs)
 
     def delete(self, **kwargs):
         return self.model.delete()

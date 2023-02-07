@@ -55,6 +55,7 @@ export const PROJECTS: 'projects' = 'projects';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUS: 'status' = 'status';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
+export const USERS: 'users' = 'users';
 export const VARIABLES: 'variables' = 'variables';
 export const VERSIONS: 'versions' = 'versions';
 export const WIDGETS: 'widgets' = 'widgets';
@@ -98,6 +99,7 @@ const RESOURCES: any[][] = [
   [PROJECTS],
   [SESSIONS],
   [STATUS],
+  [USERS],
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],
   [WIDGETS, PIPELINES],

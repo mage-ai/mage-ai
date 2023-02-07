@@ -3,6 +3,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.Resource import Resource
 from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
+from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.hash import merge_dict
 import importlib
 import inflection
@@ -157,7 +158,7 @@ class BaseResource(Resource):
     def process_member(self, pk, user, **kwargs):
         try:
             return self.member(pk, user, **kwargs)
-        except self.model_class.DoesNotExist as err:
+        except DoesNotExistError as err:
             if settings.DEBUG:
                 raise err
             else:

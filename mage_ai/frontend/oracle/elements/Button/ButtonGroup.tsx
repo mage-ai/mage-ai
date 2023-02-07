@@ -20,7 +20,7 @@ const ButtonGroup = ({
   children,
   divider,
 }: ButtonGroupProps) => {
-  const numberOfButtons: number = children.length;
+  const numberOfButtons = React.Children.toArray(children).length;
 
   return (
     <ButtonGroupStyle>
@@ -30,12 +30,12 @@ const ButtonGroup = ({
             {idx >= 1 && divider && <VerticalDivider />}
 
             {React.cloneElement(child, {
-              borderRadiusLeft: idx === 0,
-              borderRadiusRight: idx === numberOfButtons - 1,
-              halfPaddingLeft: idx !== 0,
-              halfPaddingRight: idx !== numberOfButtons - 1,
-              noBorder: idx > 0 && idx < numberOfButtons - 1,
-              noBorderRight: idx !== numberOfButtons - 1,
+              borderRadiusLeft: numberOfButtons >= 2 && idx === 0,
+              borderRadiusRight: numberOfButtons >= 2 && idx === numberOfButtons - 1,
+              halfPaddingLeft: numberOfButtons >= 2 && idx !== 0,
+              halfPaddingRight: numberOfButtons >= 2 && idx !== numberOfButtons - 1,
+              noBorder: numberOfButtons >= 2 && idx > 0 && idx < numberOfButtons - 1,
+              noBorderRight: numberOfButtons >= 2 && idx !== numberOfButtons - 1,
             })}
           </Flex>
         ))}

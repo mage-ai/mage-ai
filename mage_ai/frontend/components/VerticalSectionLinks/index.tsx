@@ -77,6 +77,7 @@ function VerticalSectionLinks({
                   <Link
                     block
                     noHoverUnderline
+                    noOutline
                     sameColorAsText
                   >
                     {el}
@@ -90,6 +91,7 @@ function VerticalSectionLinks({
                 block
                 key={uuidItem}
                 noHoverUnderline
+                noOutline
                 onClick={onClick}
                 preventDefault
                 sameColorAsText
