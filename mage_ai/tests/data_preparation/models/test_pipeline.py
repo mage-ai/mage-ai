@@ -505,8 +505,18 @@ class PipelineTest(DBTestCase):
             name,
             repo_path=self.repo_path,
         )
-        source_block = Block.create('source_block', 'data_loader', self.repo_path, language='python')
-        destination_block = Block.create('destination_block', 'transformer', self.repo_path, language='python')
+        source_block = Block.create(
+            'source_block',
+            'data_loader',
+            self.repo_path,
+            language='python',
+        )
+        destination_block = Block.create(
+            'destination_block',
+            'transformer',
+            self.repo_path,
+            language='python',
+        )
         pipeline.add_block(source_block)
         pipeline.add_block(destination_block, upstream_block_uuids=['source_block'])
         pipeline.data_integration = {
@@ -621,7 +631,10 @@ class PipelineTestAsync(unittest.IsolatedAsyncioTestCase):
                                     call().__aenter__(),
                                     call().__aenter__().read(),
                                     call().__aexit__(None, None, None),
-                                    call('/pipelines/test_pipeline_10/data_integration_catalog.json', mode='r'),
+                                    call(
+                                        '/pipelines/test_pipeline_10/data_integration_catalog.json',
+                                        mode='r',
+                                    ),
                                     call().__aenter__(),
                                     call().__aenter__().read(),
                                     call().__aexit__(None, None, None)
@@ -632,7 +645,12 @@ class PipelineTestAsync(unittest.IsolatedAsyncioTestCase):
                                 {
                                     'data_integration': {
                                         'catalog': {
-                                            'streams': [{'tap_stream_id': 'demo_users', 'stream': 'demo_users'}]
+                                            'streams': [
+                                                {
+                                                    'tap_stream_id': 'demo_users',
+                                                    'stream': 'demo_users',
+                                                },
+                                            ],
                                         }
                                     },
                                     'name': 'mysql_to_postgres_integration',
