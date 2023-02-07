@@ -2,7 +2,6 @@ blocks:
 - all_upstream_blocks_executed: true
   downstream_blocks:
   - fill_in_missing_values
-  - fill_in_missing_values
   name: load_titanic
   status: not_executed
   type: data_loader
