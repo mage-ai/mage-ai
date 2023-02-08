@@ -25,8 +25,8 @@ function SettingsDashboard({
   return (
     <Dashboard
       after={after}
-      afterHidden={afterHidden}
-      afterWidth={50 * UNIT}
+      afterHidden={!after || afterHidden}
+      afterWidth={after ? 50 * UNIT : 0}
       before={(
         <BeforeStyle>
           <VerticalSectionLinks
