@@ -1,17 +1,33 @@
 from kubernetes import client, config
+from mage_ai.services.k8s.constants import (
+    DEFAULT_NAMESPACE,
+    KUBE_POD_NAME_ENV_VAR,
+)
+from mage_ai.shared.hash import merge_dict
+import os
 import time
 
 
 class JobManager():
-    def __init__(self, job_name='mage-job', namespace: str = 'default'):
+    def __init__(
+        self,
+        job_name: str = 'mage-job',
+        namespace: str = DEFAULT_NAMESPACE,
+        logger=None,
+        logging_tags=dict(),
+    ):
         self.job_name = job_name
         self.namespace = namespace
+        self.logger = logger
+        self.logging_tags = logging_tags or dict()
+
         self.load_config()
-        self.api_client = client.BatchV1Api()
+        self.batch_api_client = client.BatchV1Api()
         self.api_version = 'batch/v1'
-        self.core_api = client.CoreV1Api()
-        self.pod_config = self.core_api.read_namespaced_pod(
-            name='mage-server',
+        self.core_api_client = client.CoreV1Api()
+
+        self.pod_config = self.core_api_client.read_namespaced_pod(
+            name=os.getenv(KUBE_POD_NAME_ENV_VAR),
             namespace=self.namespace,
         )
 
@@ -38,7 +54,7 @@ class JobManager():
 
         job_completed = False
         while not job_completed:
-            api_response = self.api_client.read_namespaced_job_status(
+            api_response = self.batch_api_client.read_namespaced_job_status(
                 name=self.job_name,
                 namespace=self.namespace
             )
@@ -46,7 +62,7 @@ class JobManager():
                     api_response.status.failed is not None:
                 job_completed = True
             time.sleep(1)
-            print(f'Job {self.job_name} status={api_response.status}')
+            self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
 
@@ -56,12 +72,7 @@ class JobManager():
             name='mage-job-container',
             image='mageai/mageai',
             command=command.split(' '),
-            volume_mounts=[
-                client.V1VolumeMount(
-                    name='mage-fs',
-                    mount_path='/home/src',
-                ),
-            ],
+            volume_mounts=self.pod_config.spec.containers[0].volume_mounts,
         )
         # Create and configurate a spec section
         template = client.V1PodTemplateSpec(
@@ -84,17 +95,23 @@ class JobManager():
         return job
 
     def create_job(self, job):
-        api_response = self.api_client.create_namespaced_job(
+        api_response = self.batch_api_client.create_namespaced_job(
             body=job,
             namespace=self.namespace,
         )
-        print("Job created. status='%s'" % str(api_response.status))
+        self._print("Job created. status='%s'" % str(api_response.status))
 
     def delete_job(self):
-        api_response = self.api_client.delete_namespaced_job(
+        api_response = self.batch_api_client.delete_namespaced_job(
             name=self.job_name,
-            namespace='default',
+            namespace=self.namespace,
             body=client.V1DeleteOptions(
                 propagation_policy='Foreground',
                 grace_period_seconds=0))
-        print("Job deleted. status='%s'" % str(api_response.status))
+        self._print("Job deleted. status='%s'" % str(api_response.status))
+
+    def _print(self, message, **kwargs):
+        if self.logger is None:
+            print(message, **kwargs)
+        else:
+            self.logger.info(message, **merge_dict(self.logging_tags, kwargs))

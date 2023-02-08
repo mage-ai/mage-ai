@@ -1,8 +1,10 @@
 from mage_ai.services.k8s.job_manager import JobManager
 from mage_ai.tests.base_test import TestCase
 from unittest.mock import MagicMock, call, patch
+import os
 
 
+@patch.dict(os.environ, {'HOSTNAME': 'mage-server'})
 class JobManagerTests(TestCase):
     @patch('mage_ai.services.k8s.job_manager.config')
     def test_load_config(self, mock_config):
@@ -32,9 +34,9 @@ class JobManagerTests(TestCase):
                         )
                         self.assertEqual(job_manager.job_name, 'test_job_name')
                         self.assertEqual(job_manager.namespace, 'test_namespace')
-                        self.assertEqual(job_manager.api_client, mock_batch_api_client)
+                        self.assertEqual(job_manager.batch_api_client, mock_batch_api_client)
                         self.assertEqual(job_manager.api_version, 'batch/v1')
-                        self.assertEqual(job_manager.core_api, mock_core_v1_api_client)
+                        self.assertEqual(job_manager.core_api_client, mock_core_v1_api_client)
                         self.assertEqual(job_manager.pod_config, mock_pod_config)
 
                         mock_load_config.assert_called_once()
@@ -47,7 +49,6 @@ class JobManagerTests(TestCase):
     @patch('mage_ai.services.k8s.job_manager.config')
     def test_create_job_object(self, mock_config, mock_client):
         mock_v1_container = MagicMock()
-        mock_v1_volume_mount = MagicMock()
         mock_v1_pod_template_spec = MagicMock()
         mock_v1_object_meta = MagicMock()
         mock_v1_pod_spec = MagicMock()
@@ -55,7 +56,6 @@ class JobManagerTests(TestCase):
         mock_v1_job = MagicMock()
 
         mock_client.V1Container = MagicMock(return_value=mock_v1_container)
-        mock_client.V1VolumeMount = MagicMock(return_value=mock_v1_volume_mount)
         mock_client.V1PodTemplateSpec = MagicMock(return_value=mock_v1_pod_template_spec)
         mock_client.V1ObjectMeta = MagicMock(return_value=mock_v1_object_meta)
         mock_client.V1PodSpec = MagicMock(return_value=mock_v1_pod_spec)
@@ -68,15 +68,11 @@ class JobManagerTests(TestCase):
         )
         command = 'mage run test_pipeline'
         job_manager.create_job_object(command)
-        mock_client.V1VolumeMount.assert_called_once_with(
-            name='mage-fs',
-            mount_path='/home/src',
-        )
         mock_client.V1Container.assert_called_once_with(
             name='mage-job-container',
             image='mageai/mageai',
             command=['mage', 'run', 'test_pipeline'],
-            volume_mounts=[mock_v1_volume_mount],
+            volume_mounts=job_manager.pod_config.spec.containers[0].volume_mounts,
         )
         mock_client.V1ObjectMeta.assert_has_calls(
             [
@@ -139,6 +135,6 @@ class JobManagerTests(TestCase):
         )
         mock_api_client.delete_namespaced_job.assert_called_once_with(
             name='test_job_name',
-            namespace='default',
+            namespace='test_namespace',
             body=mock_delete_options
         )
