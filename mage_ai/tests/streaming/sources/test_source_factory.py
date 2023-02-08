@@ -8,32 +8,37 @@ from unittest.mock import patch
 
 class SourceFactoryTests(TestCase):
     def test_get_source_kafka(self):
-        mock_init = patch.object(KafkaSource, '__init__', return_value=None)
-        config = dict(
-            connector_type='kafka',
-        )
-        source = SourceFactory.get_source(config)
-        self.assertIsInstance(source, KafkaSource)
-        mock_init.assert_called_once_with(config)
+        with patch.object(KafkaSource,
+                          '__init__',
+                          return_value=None) as mock_init:
+            config = dict(
+                connector_type='kafka',
+            )
+            source = SourceFactory.get_source(config)
+            self.assertIsInstance(source, KafkaSource)
+            mock_init.assert_called_once_with(config)
 
     def test_get_source_azure_event_hub(self):
-        # changing to mock for linting pourposes
-        mock = patch.object(AzureEventHubSource, '__init__', return_value=None)
-        config = dict(
-            connector_type='azure_event_hub',
-        )
-        source = SourceFactory.get_source(config)
-        self.assertIsInstance(source, AzureEventHubSource)
-        mock.assert_called_once_with(config)
+        with patch.object(AzureEventHubSource,
+                          '__init__',
+                          return_value=None) as mock_init:
+            config = dict(
+                connector_type='azure_event_hub',
+            )
+            source = SourceFactory.get_source(config)
+            self.assertIsInstance(source, AzureEventHubSource)
+            mock_init.assert_called_once_with(config)
 
     def test_get_source_rabbitmq(self):
-        mock_init = patch.object(RabbitMQSource, '__init__', return_value=None)
-        config = dict(
-            connector_type='rabbitmq'
-        )
-        source = SourceFactory.get_source(config)
-        self.assertIsInstance(source, RabbitMQSource)
-        mock_init.assert_called_once_with(config)
+        with patch.object(RabbitMQSource,
+                          '__init__',
+                          return_value=None) as mock_init:
+            config = dict(
+                connector_type='rabbitmq',
+            )
+            source = SourceFactory.get_source(config)
+            self.assertIsInstance(source, RabbitMQSource)
+            mock_init.assert_called_once_with(config)
 
     def test_get_source_other(self):
         with self.assertRaises(Exception) as context:
@@ -41,6 +46,7 @@ class SourceFactoryTests(TestCase):
                 connector_type='random',
             ))
         self.assertTrue(
-            'Consuming data from random is not supported in streaming pipelines yet.'
+            """Consuming data from random is
+            not supported in streaming pipelines yet."""
             in str(context.exception),
         )
