@@ -36,7 +36,8 @@ class Source(BaseSource):
         return ''
 
     def build_connection(self):
-        raise Exception('Subclasses must implement the build_connection method.')
+        # raise Exception('Subclasses must implement the build_connection method.')
+        pass
 
     def discover(self, streams: List[str] = None) -> Catalog:
         query = self.build_discover_query(streams=streams)
@@ -373,6 +374,9 @@ WHERE table_schema = '{schema}'
                 stream=table_name,
             ))
         else:
-            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
+            rows = self._convert_to_rows(columns, rows_temp)
 
         return rows, rows_temp
+
+    def _convert_to_rows(self, columns, rows_temp):
+        return [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]

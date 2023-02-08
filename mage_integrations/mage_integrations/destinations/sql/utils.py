@@ -248,7 +248,7 @@ def build_insert_command(
                     if type(v) is dict or type(v) is list:
                         value_final = json.dumps(v)
                     else:
-                        value_final = str(v).replace("'", "''")
+                        value_final = str(v).replace("'", "''").replace("\\", "\\\\")
 
                     if string_parse_func:
                         value_final = string_parse_func(value_final, column_type_dict)
