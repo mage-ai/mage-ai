@@ -2,6 +2,7 @@ import Dashboard from '@components/Dashboard';
 import VerticalSectionLinks from '@components/VerticalSectionLinks';
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { SECTIONS } from './constants';
+import { getUser } from '@utils/session';
 
 type SettingsDashboardProps = {
   children: any;
@@ -14,6 +15,8 @@ function SettingsDashboard({
   uuidItemSelected,
   uuidWorkspaceSelected,
 }: SettingsDashboardProps) {
+  const { owner } = getUser() || {};
+
   return (
     <Dashboard
       // afterHidden
@@ -24,7 +27,7 @@ function SettingsDashboard({
               uuid,
               uuidWorkspace,
             }) => uuidWorkspaceSelected === uuidWorkspace && uuidItemSelected === uuid}
-            sections={SECTIONS}
+            sections={SECTIONS({ owner })}
           />
         </BeforeStyle>
       )}

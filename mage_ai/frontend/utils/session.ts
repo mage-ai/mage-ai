@@ -48,6 +48,11 @@ export function removeGroup() {
   ls.remove(CURRENT_GROUP_LOCAL_STORAGE_KEY);
 }
 
+export function removeUser() {
+  // @ts-ignore
+  ls.remove(CURRENT_USER_LOCAL_STORAGE_KEY);
+}
+
 export function getUser(): UserType | undefined {
   // @ts-ignore
   return ls.get(CURRENT_USER_LOCAL_STORAGE_KEY);
