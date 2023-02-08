@@ -156,14 +156,14 @@ class Snowflake(BaseSQLConnection):
                 columns = None
                 if (database and schema and table_name) or full_table_name:
                     columns = self.get_columns(
-                        cursor,
+                        cur,
                         database=database,
                         schema=schema,
                         table_name=table_name,
                         full_table_name=full_table_name,
                     )
 
-                results =  cur.execute(
+                results = cur.execute(
                     self._enforce_limit(query_string, limit), *args, **kwargs
                 ).fetchall()
 
@@ -218,7 +218,9 @@ class Snowflake(BaseSQLConnection):
 
                 if table_exists:
                     if cur.rowcount > 1:
-                        raise ValueError(f'Two or more tables with the name {table_name} are found.')
+                        raise ValueError(
+                            f'Two or more tables with the name {table_name} are found.',
+                        )
 
                     if ExportWritePolicy.FAIL == if_exists:
                         raise RuntimeError(

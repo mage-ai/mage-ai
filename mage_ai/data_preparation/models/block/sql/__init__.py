@@ -93,8 +93,11 @@ def execute_sql_code(
             )
 
             if should_query:
-                # An error is thrown because the table doesn’t exist until you re-run the query
-                # NotFound: 404 Not found: Table database:schema.table_name was not found in location XX
+                """
+                An error is thrown because the table doesn’t exist until you re-run the query
+                NotFound: 404 Not found: Table database:schema.table_name
+                    was not found in location XX
+                """
                 tries = 0
                 while tries < 10:
                     sleep(tries)
