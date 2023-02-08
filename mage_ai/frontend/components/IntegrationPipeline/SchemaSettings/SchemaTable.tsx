@@ -354,7 +354,8 @@ function SchemaTable({
       ];
 
       if (showPartitionKey) {
-        const disabled = destination !== IntegrationDestinationEnum.DELTA_LAKE_S3 && (
+        const isNotDeltaLakeDestination = destination !== IntegrationDestinationEnum.DELTA_LAKE_S3;
+        const disabled = isNotDeltaLakeDestination && (
           validKeyProperties.includes(columnName)
             || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)
         );
@@ -369,8 +370,8 @@ function SchemaTable({
                 stream.partition_keys =
                   remove(stream.partition_keys, col => columnName === col);
               } else {
-                // only allow one partition key for now
-                if (stream.partition_keys?.length === 1) {
+                // Only allow one partition key for now (except Delta Lake S3))
+                if (isNotDeltaLakeDestination && stream.partition_keys?.length === 1) {
                   stream.partition_keys = [columnName];
                 } else {
                   stream.partition_keys =
