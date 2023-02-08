@@ -132,8 +132,8 @@ export function getFormattedVariables(variables, filterBlock) {
       return {
         ...variable,
         value: getFormattedVariable(variableValue),
-      }
-    })
+      };
+    });
 }
 
 export function addTriggerVariables(variablesArr, scheduleType) {

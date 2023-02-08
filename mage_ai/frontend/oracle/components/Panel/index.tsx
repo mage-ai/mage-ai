@@ -3,10 +3,11 @@ import styled, { css } from 'styled-components';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { UNIT } from '@oracle/styles/units/spacing';
-
 import light from '@oracle/styles/themes/light';
+
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 const HEADER_PADDING_Y_UNITS = 1.5;
 const PADDING_UNITS = 1.75;
@@ -20,6 +21,8 @@ const HEADER_STYLES = css`
 const PanelStyle = styled.div<{
   borderless?: boolean;
   fullHeight?: boolean;
+  maxHeight?: string;
+  minWidth?: number;
   overflowVisible?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
@@ -33,6 +36,18 @@ const PanelStyle = styled.div<{
 
   ${props => !props.fullHeight && `
     height: fit-content;
+  `}
+
+  ${props => props.maxHeight && `
+    max-height: ${props.maxHeight};
+  `}
+
+  ${props => props.minWidth && `
+    min-width: ${props.minWidth}px;
+
+    @media (max-width: ${props.minWidth}px) {
+      min-width: 0;
+    }
   `}
 
   ${props => props.borderless && `
@@ -64,9 +79,14 @@ const ContentStyle = styled.div<any>`
   overflow-y: auto;
   padding: ${PADDING_UNITS * UNIT}px;
   height: 100%;
+  ${ScrollbarStyledCss}
 
   ${props => props.height && `
     height: ${props.height}px;
+  `}
+
+  ${props => props.maxHeight && `
+    max-height: calc(${props.maxHeight} - ${UNIT * 15}px);
   `}
 
   ${props => props.noPadding && `
@@ -93,11 +113,13 @@ export type PanelProps = {
   headerHeight?: number;
   headerIcon?: JSX.Element;
   headerTitle?: string;
+  maxHeight?: string;
   footer?: JSX.Element;
   fullHeight?: boolean;
   noPadding?: boolean;
   overflowVisible?: boolean;
-  subtitle?: JSX.Element;
+  subtitle?: string;
+  minWidth?: number;
 };
 
 function Panel({
@@ -111,14 +133,18 @@ function Panel({
   headerHeight,
   headerIcon,
   headerTitle,
+  maxHeight,
   noPadding,
   overflowVisible,
   subtitle,
+  minWidth,
 }: PanelProps) {
   return (
     <PanelStyle
       borderless={borderless}
       fullHeight={fullHeight}
+      maxHeight={maxHeight}
+      minWidth={minWidth}
       overflowVisible={overflowVisible}
       ref={containerRef}
     >
@@ -137,28 +163,28 @@ function Panel({
               </FlexContainer>
             </FlexContainer>
           }
-          { subtitle &&
-          <>
-            <Spacing mb={2}/>
-            <FlexContainer alignItems="right">
-              {subtitle}
-            </FlexContainer>
-          </>
-          }
         </HeaderStyle>
       }
+
       <ContentStyle
+        maxHeight={maxHeight}
         noPadding={noPadding}
         overflowVisible={overflowVisible}
         ref={contentContainerRef}
       >
+        {subtitle &&
+          <Spacing mb={2}>
+            <Text default>
+              {subtitle}
+            </Text>
+          </Spacing>
+        }
         {children}
       </ContentStyle>
+
       {footer &&
         <FooterStyle>
-          <FlexContainer alignItems="center" justifyContent="center">
-            {footer}
-          </FlexContainer>
+          {footer}
         </FooterStyle>
       }
     </PanelStyle>

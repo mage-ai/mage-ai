@@ -67,6 +67,7 @@ export type ButtonProps = {
   pill?: boolean;
   pointerEventsEnabled?: boolean;
   primary?: boolean;
+  primaryAlternate?: boolean;
   primaryGradient?: boolean;
   sameColorAsText?: boolean;
   secondary?: boolean;
@@ -111,10 +112,6 @@ const SHARED_STYLES = css<{
 
   ${props => props.default && `
     color: ${(props.theme.content || dark.content).default};
-  `}
-
-  ${props => props.borderColor && `
-    border-color: ${props.borderColor};
   `}
 
   ${props => !props.noBackground && `
@@ -273,6 +270,14 @@ const SHARED_STYLES = css<{
       background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover} !important;
       border-color: ${(props.theme.interactive || dark.interactive).linkPrimary} !important;
     }
+  `}
+
+  ${props => props.primaryAlternate && `
+    background-color: ${(props.theme.brand || dark.brand).wind400};
+  `}
+
+  ${props => props.borderColor && `
+    border-color: ${props.borderColor};
   `}
 
   ${props => props.secondaryGradient && `
