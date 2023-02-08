@@ -1,18 +1,20 @@
-from mage_integrations.connections.couchbase import Couchbase as CouchbaseConnection
+from mage_integrations.connections.couchbase import (
+    Couchbase as CouchbaseConnection
+)
 from mage_integrations.sources.base import main
+from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
-    COLUMN_TYPE_ARRAY,
-    COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_NULL,
-    COLUMN_TYPE_NUMBER,
-    COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING
 )
-from mage_integrations.sources.couchbase.utils import build_comparison_statement, wrap_column_in_quotes
-from mage_integrations.sources.catalog import Catalog
+from mage_integrations.sources.couchbase.utils import (
+    build_comparison_statement,
+    wrap_column_in_quotes,
+)
 from mage_integrations.sources.sql.base import Source
 from singer import catalog
 from typing import Any, Dict, List
+
 
 class Couchbase(Source):
     def build_connection(self) -> CouchbaseConnection:
@@ -44,7 +46,7 @@ WITH {{"sample_size": 1000, "similarity_metric": 0, "dictionary_threshold": 0}}
                 for column, data in props.items():
                     dtype = data.get('type')
                     if type(dtype) is not list:
-                        if self.__get_type(dtype) == COLUMN_TYPE_NULL:
+                        if dtype == COLUMN_TYPE_NULL:
                             dtype = [COLUMN_TYPE_NULL, COLUMN_TYPE_STRING]
                         else:
                             dtype = [COLUMN_TYPE_NULL, dtype]

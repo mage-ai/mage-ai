@@ -36,8 +36,7 @@ class Source(BaseSource):
         return ''
 
     def build_connection(self):
-        # raise Exception('Subclasses must implement the build_connection method.')
-        pass
+        raise Exception('Subclasses must implement the build_connection method.')
 
     def discover(self, streams: List[str] = None) -> Catalog:
         query = self.build_discover_query(streams=streams)
