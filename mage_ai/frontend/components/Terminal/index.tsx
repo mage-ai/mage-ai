@@ -192,11 +192,38 @@ function Terminal({
             setCommand('');
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
             navigator.clipboard.writeText(window.getSelection().toString());
-          } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)) {
-            navigator.clipboard.readText().then(clipText => {
-              setCommand(prev => prev + clipText);
-              setCursorIndex(command.length + clipText.length);
-            });
+          } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)
+            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_V], keyMapping)) {
+            if (navigator?.clipboard?.readText) {
+              navigator.clipboard.readText()
+                .then(clipText => {
+                  setCommand(prev => prev + clipText);
+                  setCursorIndex(command.length + clipText.length);
+                }).catch(err => alert(`${err}
+    For Chrome, users need to allow clipboard permissions for this site under \
+"Privacy and security" -> "Site settings".
+    For Safari, users need to allow the clipboard paste by clicking "Paste" \
+in the context menu that appears.`),
+                );
+            } else {
+              navigator.clipboard.read()
+                .then(clipboardItems => {
+                  for (const clipboardItem of clipboardItems) {
+                    for (const type of clipboardItem.types) {
+                      if (type === 'text/plain') {
+                        return clipboardItem.getType(type);
+                      }
+                    }
+                  }
+                }).then(blob => blob.text(),
+                ).then(clipText => {
+                  setCommand(prev => prev + clipText);
+                  setCursorIndex(command.length + clipText.length);
+                }).catch(err => alert(`${err}
+    For Firefox, users need to allow clipboard paste by setting the "dom.events.asyncClipboard.read" \
+preference in "about:config" to "true" and clicking "Paste" in the context menu that appears.`),
+                );
+            }
           } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
             setCommand(prev => prev.slice(0, cursorIndex) + key + prev.slice(cursorIndex));
             increaseCursorIndex();
