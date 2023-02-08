@@ -40,9 +40,11 @@ export const KEY_CODE_Y = 89;
 export const KEY_CODE_META = 'metaKey';
 export const KEY_CODE_META_LEFT = 91;
 export const KEY_CODE_META_RIGHT = 93;
+export const KEY_CODE_META_FIREFOX = 224;
 export const KEY_CODE_METAS = [
   KEY_CODE_META_LEFT,
   KEY_CODE_META_RIGHT,
+  KEY_CODE_META_FIREFOX,
 ];
 export const KEY_CODE_NUMBER_0 = 48;
 export const KEY_CODE_NUMBER_1 = 49;
