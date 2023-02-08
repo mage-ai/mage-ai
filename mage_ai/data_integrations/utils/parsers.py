@@ -6,8 +6,6 @@ def parse_logs_and_json(input_string: str) -> str:
     logs = []
     lines = []
 
-    print('input string!!!!!!!!:', input_string)
-
     for line in input_string.split('\n'):
         is_log = False
         try:

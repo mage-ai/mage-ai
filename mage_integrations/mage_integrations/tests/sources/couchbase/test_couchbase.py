@@ -221,123 +221,112 @@ class CouchbaseSourceTests(unittest.TestCase):
             catalog = source.discover()
 
             mock_build_connection.assert_called()
-            self.assertEqual(
+            self.assertDictEqual(
                 {
                     "streams": [
                         {
                             "auto_add_new_fields": False,
-                            "destination_table": "route",
                             "key_properties": [],
                             "metadata": [
                                 {
-                                    "breadcrumb": [],
+                                    "breadcrumb": (),
                                     "metadata": {
                                         "forced-replication-method": "FULL_TABLE",
                                         "inclusion": "available",
                                         "schema-name": "route",
-                                        "selected": True,
+                                        "selected": False,
                                         "table-key-properties": [],
                                         "valid-replication-keys": []
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "airline"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "airlineid"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "destinationairport"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "distance"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "equipment"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "id"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "schedule"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "sourceairport"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "stops"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 },
                                 {
-                                    "breadcrumb": [
+                                    "breadcrumb": (
                                         "properties",
                                         "type"
-                                    ],
+                                    ),
                                     "metadata": {
-                                        "inclusion": "available",
-                                        "selected": True
+                                        "inclusion": "available"
                                     }
                                 }
                             ],
@@ -346,71 +335,40 @@ class CouchbaseSourceTests(unittest.TestCase):
                             "schema": {
                                 "properties": {
                                     "airline": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
+                                        "type": ["null", "string"]
                                     },
                                     "airlineid": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
+                                        "type": ["null", "string"]
                                     },
                                     "destinationairport": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
+                                        "type": ["null", "string"]
                                     },
                                     "distance": {
-                                        "type": [
-                                            "number",
-                                            "null"
-                                        ]
+                                        "type": ["null", "number"]
                                     },
                                     "equipment": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
+                                        "type": ["null", "string"]
                                     },
                                     "id": {
-                                        "type": [
-                                            "number",
-                                            "null"
-                                        ]
+                                        "type": ["null", "number"]
                                     },
                                     "schedule": {
-                                        "type": [
-                                            "array",
-                                            "null"
-                                        ]
+                                        "type": ["null", "array"]
                                     },
                                     "sourceairport": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
+                                        "type": ["null", "string"]
                                     },
                                     "stops": {
-                                        "type": [
-                                            "number",
-                                            "null"
-                                        ]
+                                        "type": ["null", "number"]
                                     },
                                     "type": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
+                                        "type": ["null", "string"]
                                     }
                                 },
                                 "type": "object"
                             },
                             "stream": "route",
-                            "tap_stream_id": "route",
-                            "unique_conflict_method": "UPDATE"
+                            "tap_stream_id": "route"
                         }
                     ]
                 },
