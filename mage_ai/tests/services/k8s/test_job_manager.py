@@ -135,6 +135,6 @@ class JobManagerTests(TestCase):
         )
         mock_api_client.delete_namespaced_job.assert_called_once_with(
             name='test_job_name',
-            namespace='default',
+            namespace='test_namespace',
             body=mock_delete_options
         )
