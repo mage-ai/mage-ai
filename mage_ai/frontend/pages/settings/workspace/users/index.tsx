@@ -7,6 +7,7 @@ import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import UserEditForm from '@components/users/edit/Form';
 import UserType from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -26,14 +27,17 @@ function UsersListPage() {
     user_id: number;
   }>(null);
 
-  const { data } = api.users.list({}, {
+  const { data, mutate: fetchUsers } = api.users.list({}, {
     revalidateOnFocus: false,
   });
   const users = useMemo(() => data?.users || [], [data]);
   const { data: dataUser } = api.users.detail(query?.user_id, {}, {
     revalidateOnFocus: false,
   });
-  const user = useMemo(() => dataUser?.user, [dataUser]);
+  const user = useMemo(() => dataUser?.user, [
+    dataUser,
+    query?.user_id,
+  ]);
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -67,6 +71,16 @@ function UsersListPage() {
 
   return (
     <SettingsDashboard
+      after={user && (
+        <Spacing p={PADDING_UNITS}>
+          <UserEditForm
+            onSaveSuccess={() => fetchUsers()}
+            title={`Edit ${user?.username || user?.email}`}
+            user={user}
+          />
+        </Spacing>
+      )}
+      afterHidden={!user}
       uuidItemSelected={SECTION_ITEM_UUID_USERS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
@@ -103,10 +117,13 @@ function UsersListPage() {
           },
         ]}
         isSelectedRow={(rowIndex: number) => users[rowIndex]?.id === user?.id}
-        onClickRow={(rowIndex: number) => goToWithQuery({
-          add_new_user: null,
-          user_id: users[rowIndex]?.id,
-        })}
+        onClickRow={(rowIndex: number) => {
+
+          goToWithQuery({
+            add_new_user: null,
+            user_id: users[rowIndex]?.id,
+          });
+        }}
         rows={users.map(({
           email,
           roles_display,

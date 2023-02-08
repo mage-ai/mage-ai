@@ -9,15 +9,20 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import UserType from '@interfaces/UserType';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { UserFieldType, USER_PROFILE_FIELDS, USER_PASSWORD_FIELDS } from './constants';
-import { isEmptyObject } from '@utils/hash';
+import { isEmptyObject, selectKeys } from '@utils/hash';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 
 type UserEditFormProps = {
+  onSaveSuccess?: () => void;
+  title?: string;
   user: UserType;
 };
 
 function UserEditForm({
+  onSaveSuccess,
+  title,
   user,
 }: UserEditFormProps) {
   const [buttonDisabled, setButtonDisabled] = useState<boolean>(true);
@@ -42,6 +47,7 @@ function UserEditForm({
                 toastId: `user-update-success-${userServer.id}`,
               },
             );
+            onSaveSuccess?.();
           },
           onErrorCallback: ({
             error: {
@@ -62,9 +68,12 @@ function UserEditForm({
     },
   );
 
+  const userPrev = usePrevious(user);
   useEffect(() => {
-    if (user && !profile) {
-      setProfile(user);
+    if (user && (!profile || userPrev?.id !== user?.id)) {
+      setProfile(selectKeys(user, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
+        uuid,
+      }) => uuid)));
     }
 
     if (profile?.password && profile?.password_confirmation) {
@@ -91,12 +100,12 @@ function UserEditForm({
     } else if (!profile?.password_current && !profile?.password && !profile?.password_confirmation) {
       setErrors(null);
     }
-  }, [profile, user]);
+  }, [profile, user, userPrev]);
 
   return (
     <>
       <Headline>
-        Edit profile
+        {title || 'Edit profile'}
       </Headline>
       {USER_PROFILE_FIELDS.map(({
         autoComplete,

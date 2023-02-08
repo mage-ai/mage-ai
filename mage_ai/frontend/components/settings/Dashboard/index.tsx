@@ -2,15 +2,20 @@ import Dashboard from '@components/Dashboard';
 import VerticalSectionLinks from '@components/VerticalSectionLinks';
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { SECTIONS } from './constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { getUser } from '@utils/session';
 
 type SettingsDashboardProps = {
+  after?: any;
+  afterHidden?: boolean;
   children: any;
   uuidItemSelected: string;
   uuidWorkspaceSelected: string;
 };
 
 function SettingsDashboard({
+  after,
+  afterHidden,
   children,
   uuidItemSelected,
   uuidWorkspaceSelected,
@@ -19,7 +24,9 @@ function SettingsDashboard({
 
   return (
     <Dashboard
-      // afterHidden
+      after={after}
+      afterHidden={afterHidden}
+      afterWidth={50 * UNIT}
       before={(
         <BeforeStyle>
           <VerticalSectionLinks
@@ -32,7 +39,6 @@ function SettingsDashboard({
         </BeforeStyle>
       )}
       beforeWidth={BEFORE_WIDTH}
-      // buildSidekick
       title="Settings"
       uuid="settings/index"
     >
