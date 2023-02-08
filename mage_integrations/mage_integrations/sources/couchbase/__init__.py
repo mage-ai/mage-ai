@@ -1,9 +1,11 @@
 from mage_integrations.connections.couchbase import Couchbase as CouchbaseConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.constants import (
+    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_NULL,
     COLUMN_TYPE_NUMBER,
+    COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING
 )
 from mage_integrations.sources.catalog import Catalog
@@ -23,26 +25,19 @@ class Couchbase(Source):
 
     def discover(self, streams: List[str] = None) -> Catalog:
         connection = self.build_connection()
-        collection_manager = connection.get_bucket().collections()
-
-        scopes = collection_manager.get_all_scopes()
-        collection_names = []
-        for scope in scopes:
-            if scope.name == self.config['scope']:
-                collection_names = [c.name for c in scope.collections]
+        collection_names = connection.get_all_collections()
 
         catalog_entries = []
-        scope = connection.get_scope()
         for stream_id in collection_names:
             properties = dict()
             
             infer_query = f"""
-INFER `{stream_id}`
+INFER `route`
 WITH {{"sample_size": 1000, "similarity_metric": 0, "dictionary_threshold": 0}}
             """
 
-            infer_result = scope.query(infer_query)
-            result = next(infer_result.rows())
+            infer_result = connection.load(infer_query)
+            result = next(iter(infer_result))
             try:
                 props = result[0]['properties'] or dict()
                 for column, data in props.items():
@@ -66,16 +61,10 @@ WITH {{"sample_size": 1000, "similarity_metric": 0, "dictionary_threshold": 0}}
 
         return Catalog(catalog_entries)
 
-    def __get_type(self, type) -> str:
-        column_type = COLUMN_TYPE_STRING
-        if type == 'number':
-            column_type = COLUMN_TYPE_NUMBER
-        elif type == 'boolean':
-            column_type = COLUMN_TYPE_BOOLEAN
-        elif type == 'string':
+    def __get_type(self, dtype: str) -> str:
+        column_type = dtype
+        if dtype == 'missing':
             column_type = COLUMN_TYPE_STRING
-        elif type in ['missing', 'null']:
-            column_type = COLUMN_TYPE_NULL
         
         return column_type
 

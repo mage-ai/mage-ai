@@ -28,5 +28,16 @@ class Couchbase(Connection):
     def get_scope(self):
         return self.get_bucket().scope(self.scope)
 
+    def get_all_collections(self):
+        collection_manager = self.get_bucket().collections()
+
+        scopes = collection_manager.get_all_scopes()
+        collection_names = []
+        for scope in scopes:
+            if scope.name == self.scope:
+                collection_names = [c.name for c in scope.collections]
+
+        return collection_names
+
     def load(self, query):
         return list(self.get_scope().query(query).rows())
