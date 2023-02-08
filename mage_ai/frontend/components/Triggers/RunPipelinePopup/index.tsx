@@ -135,6 +135,7 @@ function RunPipelinePopup({
           Run pipeline now
         </Headline>
       }
+      maxHeight="90vh"
       minWidth={UNIT * 85}
       subtitle="Creates a new trigger and immediately runs the current pipeline once."
     >
