@@ -64,51 +64,53 @@ def execute_sql_code(
     if DataSource.BIGQUERY.value == data_provider:
         from mage_ai.io.bigquery import BigQuery
 
-        with BigQuery.with_config(config_file_loader) as loader:
-            bigquery.create_upstream_block_tables(
+        loader = BigQuery.with_config(config_file_loader)
+        bigquery.create_upstream_block_tables(
+            loader,
+            block,
+            configuration=configuration,
+            execution_partition=execution_partition,
+        )
+
+        query_string = bigquery.interpolate_input_data(block, query)
+        query_string = interpolate_vars(query_string, global_vars=global_vars)
+
+        if use_raw_sql:
+            return execute_raw_sql(
                 loader,
                 block,
-                configuration=configuration,
-                execution_partition=execution_partition,
+                query_string,
+                should_query=should_query,
+            )
+        else:
+            loader.export(
+                None,
+                f'{schema}.{table_name}',
+                database=database,
+                if_exists=export_write_policy,
+                query_string=query_string,
+                verbose=BlockType.DATA_EXPORTER == block.type,
             )
 
-            query_string = bigquery.interpolate_input_data(block, query)
-            query_string = interpolate_vars(query_string, global_vars=global_vars)
-
-            if use_raw_sql:
-                return execute_raw_sql(
-                    loader,
-                    block,
-                    query_string,
-                    should_query=should_query,
-                )
-            else:
-                loader.export(
-                    None,
-                    f'{schema}.{table_name}',
-                    database=database,
-                    if_exists=export_write_policy,
-                    query_string=query_string,
-                    verbose=BlockType.DATA_EXPORTER == block.type,
-                )
-
-                if should_query:
-                    # An error is thrown because the table doesn’t exist until you re-run the query
-                    # NotFound: 404 Not found: Table database:schema.table_name was not found in
-                    # location XX
-                    tries = 0
-                    while tries < 10:
-                        sleep(tries)
-                        tries += 1
-                        try:
-                            result = loader.load(
-                                f'SELECT * FROM {database}.{schema}.{table_name}',
-                                verbose=False,
-                            )
-                            return [result]
-                        except Exception as err:
-                            if '404' not in str(err):
-                                raise err
+            if should_query:
+                """
+                An error is thrown because the table doesn’t exist until you re-run the query
+                NotFound: 404 Not found: Table database:schema.table_name
+                    was not found in location XX
+                """
+                tries = 0
+                while tries < 10:
+                    sleep(tries)
+                    tries += 1
+                    try:
+                        result = loader.load(
+                            f'SELECT * FROM {database}.{schema}.{table_name}',
+                            verbose=False,
+                        )
+                        return [result]
+                    except Exception as err:
+                        if '404' not in str(err):
+                            raise err
     elif DataSource.MYSQL.value == data_provider:
         from mage_ai.io.mysql import MySQL
 
@@ -260,6 +262,9 @@ def execute_sql_code(
                     return [
                         loader.load(
                             f'SELECT * FROM "{database}"."{schema}"."{table_name}"',
+                            database=database,
+                            schema=schema,
+                            table_name=table_name,
                             verbose=False,
                         ),
                     ]
@@ -296,7 +301,7 @@ def execute_raw_sql(
 
     if should_query:
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
-        fetch_query_at_indexes.append(True)
+        fetch_query_at_indexes.append(block.full_table_name)
 
     results = loader.execute_queries(
         queries,

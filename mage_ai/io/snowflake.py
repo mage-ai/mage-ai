@@ -74,15 +74,41 @@ class Snowflake(BaseSQLConnection):
                                 if query_variables and idx < len(query_variables) \
                                 else {}
                 query = self._clean_query(query)
-                result = cursor.execute(query, **variables)
 
                 if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
                         fetch_query_at_indexes[idx]:
-                    result = result.fetch_pandas_all()
+
+                    full_table_name = fetch_query_at_indexes[idx]
+                    columns = self.get_columns(
+                        cursor,
+                        full_table_name=full_table_name,
+                    )
+                    rows = cursor.execute(query, **variables).fetchall()
+                    result = pd.DataFrame(rows, columns=columns)
+                else:
+                    result = cursor.execute(query, **variables)
 
                 results.append(result)
 
         return results
+
+    def get_columns(
+        self,
+        cursor,
+        database: str = None,
+        schema: str = None,
+        table_name: str = None,
+        full_table_name: str = None,
+    ) -> List[str]:
+        columns = None
+        if not full_table_name and database and schema and table_name:
+            full_table_name = f'"{database}"."{schema}"."{table_name}"'
+
+        if full_table_name:
+            arr = cursor.execute(f'DESCRIBE TABLE {full_table_name}').fetchall()
+            columns = [t[0] for t in arr]
+
+        return columns
 
     def load(
         self,
@@ -90,6 +116,10 @@ class Snowflake(BaseSQLConnection):
         limit: int = QUERY_ROW_LIMIT,
         display_query: Union[str, None] = None,
         verbose: bool = True,
+        database: str = None,
+        schema: str = None,
+        table_name: str = None,
+        full_table_name: str = None,
         *args,
         **kwargs,
     ) -> DataFrame:
@@ -123,9 +153,24 @@ class Snowflake(BaseSQLConnection):
 
         with self.printer.print_msg(print_message):
             with self.conn.cursor() as cur:
-                return cur.execute(
+                columns = None
+                if (database and schema and table_name) or full_table_name:
+                    columns = self.get_columns(
+                        cur,
+                        database=database,
+                        schema=schema,
+                        table_name=table_name,
+                        full_table_name=full_table_name,
+                    )
+
+                results = cur.execute(
                     self._enforce_limit(query_string, limit), *args, **kwargs
-                ).fetch_pandas_all()
+                ).fetchall()
+
+                if not columns and len(results) >= 1:
+                    columns = [f'col{i}' for i in range(len(results[0]))]
+
+                return pd.DataFrame(results, columns=columns)
 
     def export(
         self,
@@ -168,10 +213,15 @@ class Snowflake(BaseSQLConnection):
                 cur.execute(f'SELECT * FROM information_schema.tables WHERE table_schema = '
                             f'\'{schema}\' AND table_name = \'{table_name}\'')
 
-                table_doesnt_exist = cur.rowcount == 0
-                if cur.rowcount > 1:
-                    raise ValueError(f'Two or more tables with the name {table_name} are found.')
-                elif not table_doesnt_exist:
+                table_exists = cur.rowcount >= 1
+                should_create_table = not table_exists
+
+                if table_exists:
+                    if cur.rowcount > 1:
+                        raise ValueError(
+                            f'Two or more tables with the name {table_name} are found.',
+                        )
+
                     if ExportWritePolicy.FAIL == if_exists:
                         raise RuntimeError(
                             f'Table {table_name} already exists in the current warehouse, '
@@ -180,37 +230,32 @@ class Snowflake(BaseSQLConnection):
                     elif ExportWritePolicy.REPLACE == if_exists:
                         cur.execute(f'USE DATABASE {database}')
                         cur.execute(f'DROP TABLE "{schema}"."{table_name}"')
+                        should_create_table = True
 
                 if query_string:
-                    if table_doesnt_exist:
-                        cur.execute(f'USE DATABASE {database}')
+                    cur.execute(f'USE DATABASE {database}')
+
+                    if should_create_table:
                         cur.execute(f"""
 CREATE TABLE IF NOT EXISTS "{database}"."{schema}"."{table_name}" AS
 {query_string}
 """)
-                    elif not table_doesnt_exist:
-                        cur.execute(f'USE DATABASE {database}')
+                    else:
                         cur.execute(f"""
 INSERT INTO "{database}"."{schema}"."{table_name}"
 {query_string}
 """)
 
-            auto_create_table = True
-            if 'auto_create_table' in kwargs:
-                auto_create_table = kwargs.pop(auto_create_table)
-                if auto_create_table is None:
-                    auto_create_table = True
-
-            if not query_string:
-                write_pandas(
-                    self.conn,
-                    df,
-                    table_name,
-                    database=database,
-                    schema=schema,
-                    auto_create_table=auto_create_table,
-                    **kwargs,
-                )
+                else:
+                    write_pandas(
+                        self.conn,
+                        df,
+                        table_name,
+                        database=database,
+                        schema=schema,
+                        auto_create_table=should_create_table,
+                        **kwargs,
+                    )
 
         if verbose:
             with self.printer.print_msg(
