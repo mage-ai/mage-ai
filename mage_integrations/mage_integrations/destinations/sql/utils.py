@@ -25,6 +25,7 @@ def build_create_table_command(
     column_type_mapping: Dict,
     columns: List[str],
     full_table_name: str,
+    location: str = None,
     unique_constraints: List[str] = None,
     create_temporary_table: bool = False,
     column_identifier: str = '',
@@ -52,7 +53,13 @@ def build_create_table_command(
     if if_not_exists:
         if_not_exists_command = ' IF NOT EXISTS'
 
-    return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE{if_not_exists_command} {full_table_name} ({', '.join(columns_and_types)})"
+    if location is not None:
+        table_properties = f"WITH (location = '{location}')"
+    else:
+        table_properties = ''
+    return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE"\
+           f"{if_not_exists_command} {full_table_name} ({', '.join(columns_and_types)})"\
+           f"{table_properties}"
 
 
 def build_alter_table_command(

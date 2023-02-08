@@ -58,6 +58,7 @@ class TrinoConnector(Destination):
                 columns=schema['properties'].keys(),
                 full_table_name=f'{schema_name}.{table_name}',
                 if_not_exists=True,
+                location=self.config.get('location'),
                 # Unique constraint is not supported
                 # https://trino.io/docs/current/sql/create-table.html
                 unique_constraints=None,
