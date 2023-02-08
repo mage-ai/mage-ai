@@ -41,12 +41,13 @@ class SourceFactoryTests(TestCase):
             mock_init.assert_called_once_with(config)
 
     def test_get_source_other(self):
+        s = "Consuming data from random is not supported " \
+            "in streaming pipelines yet."
         with self.assertRaises(Exception) as context:
             SourceFactory.get_source(dict(
                 connector_type='random',
             ))
         self.assertTrue(
-            """Consuming data from random is
-            not supported in streaming pipelines yet."""
+            s
             in str(context.exception),
         )
