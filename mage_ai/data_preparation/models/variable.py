@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from pandas.api.types import is_object_dtype
 from typing import Any, Dict, List
 import os
 import pandas as pd
@@ -318,7 +319,7 @@ class Variable:
         # Clean up data types since parquet doesn't support mixed data types
         for c in df_output.columns:
             series_non_null = df_output[c].dropna()
-            if len(series_non_null) > 0:
+            if len(series_non_null) > 0 and is_object_dtype(series_non_null.dtype):
                 coltype = type(series_non_null.iloc[0])
                 try:
                     df_output[c] = series_non_null.astype(coltype)
