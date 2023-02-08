@@ -192,7 +192,8 @@ function Terminal({
             setCommand('');
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
             navigator.clipboard.writeText(window.getSelection().toString());
-          } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)) {
+          } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)
+            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_V], keyMapping)) {
             if (navigator?.clipboard?.readText) {
               navigator.clipboard.readText()
                 .then(clipText => {
