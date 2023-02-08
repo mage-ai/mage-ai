@@ -159,7 +159,7 @@ class Postgres(BaseSQL):
         elif dtype == PandasTypes.DATE:
             return 'date'
         elif dtype == PandasTypes.STRING:
-            return 'TEXT'
+            return 'text'
         elif dtype == PandasTypes.CATEGORICAL:
             return 'text'
         elif dtype == PandasTypes.BYTES:
