@@ -23,6 +23,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import List from '@oracle/elements/List';
+import OSEnum, { getOS } from '@utils/os';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, {
   ScheduleIntervalEnum,
@@ -367,6 +368,7 @@ function Edit({
         <Select
           key="frequency_input"
           monospace
+          multiple={getOS() === OSEnum.WINDOWS}
           onChange={(e) => {
             e.preventDefault();
             const interval = e.target.value;
@@ -376,7 +378,10 @@ function Edit({
             }));
           }}
           placeholder="Choose the frequency to run"
-          value={scheduleInterval}
+          value={getOS() === OSEnum.WINDOWS
+            ? [scheduleInterval]
+            : scheduleInterval
+          }
         >
           {!scheduleInterval && <option value="" />}
           {Object.values(ScheduleIntervalEnum).map(value => (
@@ -707,7 +712,7 @@ function Edit({
   ]);
 
   const apiMemo = useMemo(() => {
-    let url = ''
+    let url = '';
     if (typeof window !== 'undefined') {
       url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
 
