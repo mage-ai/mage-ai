@@ -1,4 +1,4 @@
-from mage_integrations.utils.parsers import encode_complex
+from mage_ai.shared.parsers import encode_complex
 from typing import Dict
 import dask.dataframe as dd
 import pandas as pd
