@@ -223,19 +223,22 @@ def add_execution_code(
 ) -> str:
     escaped_code = code.replace("'''", "\"\"\"")
 
-    global_vars_spark = ''
     magic_header = ''
+    spark_session_init = ''
     if kernel_name == KernelName.PYSPARK:
         if block_type == BlockType.CHART or (
             block_type == BlockType.SENSOR and not is_pyspark_code(code)
         ):
-            global_vars_spark = ''
             magic_header = '%%local'
             run_upstream = False
         else:
-            global_vars_spark = 'global_vars[\'spark\'] = spark'
             if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
                 magic_header = '%%spark -o df --maxrows 10000'
+    elif pipeline_config['type'] == 'databricks':
+        spark_session_init = '''
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+'''
 
     return f"""{magic_header}
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -246,6 +249,7 @@ import datetime
 import pandas as pd
 
 db_connection.start_session()
+{spark_session_init}
 
 def execute_custom_code():
     block_uuid=\'{block_uuid}\'
@@ -265,7 +269,11 @@ def execute_custom_code():
         block.run_upstream_blocks()
 
     global_vars = {global_vars} or dict()
-    {global_vars_spark}
+
+    try:
+        global_vars[\'spark\'] = spark
+    except Exception:
+        pass
 
     block_output = block.execute_sync(
         custom_code=code,
@@ -328,13 +336,18 @@ def get_pipeline_execution_code(
     repo_config: Dict = None,
     update_status: bool = True,
 ) -> str:
-    if kernel_name == KernelName.PYSPARK:
-        global_vars_spark = 'global_vars[\'spark\'] = spark'
-    else:
-        global_vars_spark = ''
+    spark_session_init = ''
+    if pipeline_config['type'] == 'databricks':
+        spark_session_init = '''
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+'''
+
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline
 import asyncio
+
+{spark_session_init}
 
 def execute_pipeline():
     pipeline = Pipeline(
@@ -344,7 +357,11 @@ def execute_pipeline():
     )
 
     global_vars = {global_vars} or dict()
-    {global_vars_spark}
+
+    try:
+        global_vars[\'spark\'] = spark
+    except Exception:
+        pass
 
     asyncio.run(pipeline.execute(
         analyze_outputs=False,

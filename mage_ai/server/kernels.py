@@ -12,6 +12,7 @@ class KernelName(str, Enum):
 
 PIPELINE_TO_KERNEL_NAME = {
     PipelineType.INTEGRATION: KernelName.PYTHON3,
+    PipelineType.DATABRICKS: KernelName.PYTHON3,
     PipelineType.PYTHON: KernelName.PYTHON3,
     PipelineType.PYSPARK: KernelName.PYSPARK,
     PipelineType.STREAMING: KernelName.PYTHON3,

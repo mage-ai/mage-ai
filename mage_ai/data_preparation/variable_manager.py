@@ -160,6 +160,7 @@ class VariableManager:
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
             partition=partition,
+            spark=spark,
             storage=self.storage,
             variable_type=variable_type,
         )

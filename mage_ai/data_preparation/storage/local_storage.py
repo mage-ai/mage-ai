@@ -13,8 +13,13 @@ class LocalStorage(BaseStorage):
     def isdir(self, path: str) -> bool:
         return os.listdir(path)
 
-    def listdir(self, path: str) -> List[str]:
-        return os.listdir(path)
+    def listdir(self, path: str, suffix: str = None) -> List[str]:
+        if not os.path.exists(path):
+            return []
+        paths = os.listdir(path)
+        if suffix is not None:
+            paths = [p for p in paths if p.endswith(suffix)]
+        return paths
 
     def makedirs(self, path: str, **kwargs) -> None:
         os.makedirs(path, exist_ok=True)

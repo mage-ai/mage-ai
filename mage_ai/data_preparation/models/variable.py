@@ -44,6 +44,7 @@ class Variable:
         pipeline_path: str,
         block_uuid: str,
         partition: str = None,
+        spark=None,
         storage: BaseStorage = LocalStorage(),
         variable_type: VariableType = None
     ) -> None:
@@ -64,7 +65,7 @@ class Variable:
             self.storage.makedirs(self.variable_dir_path)
 
         self.variable_type = variable_type
-        self.check_variable_type()
+        self.check_variable_type(spark=spark)
 
     @property
     def variable_path(self):
@@ -74,12 +75,12 @@ class Variable:
     def dir_path(self, pipeline_path, block_uuid):
         return os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
 
-    def check_variable_type(self):
+    def check_variable_type(self, spark=None):
         """
         Infer variable type based on data in the storage.
         """
         if self.variable_type is None and self.storage.path_exists(
-            os.path.join(self.variable_dir_path, f'{self.uuid}', DATAFRAME_PARQUET_FILE)
+            os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
@@ -87,6 +88,10 @@ class Variable:
                 and os.path.exists(
                 os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
             self.variable_type = VariableType.GEO_DATAFRAME
+        elif self.variable_type is None and \
+                len(self.storage.listdir(self.variable_path, suffix='.csv')) > 0 and \
+                spark is not None:
+            self.variable_type = VariableType.SPARK_DATAFRAME
 
     def convert_parquet_to_csv(self):
         """
