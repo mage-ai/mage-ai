@@ -39,8 +39,9 @@ function VerticalNavigation({
   const router = useRouter();
   const { pathname } = router;
 
+
   const buttons = useMemo(() => {
-    const items = navigationItems || [
+    const defaultItems = [
       {
         Icon: PipelineV2,
         IconSelected: PipelineV2Gradient,
@@ -69,6 +70,8 @@ function VerticalNavigation({
         },
       },
     ];
+
+    const items = navigationItems || defaultItems;
 
     return items.map(({
       Icon,

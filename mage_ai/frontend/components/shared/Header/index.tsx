@@ -346,7 +346,7 @@ function Header({
               </>
             }
 
-            {loggedIn && (
+            {(loggedIn || !REQUIRE_USER_AUTHENTICATION) && (
               <>
                 <Spacing ml={2} />
 

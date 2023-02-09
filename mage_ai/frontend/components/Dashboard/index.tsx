@@ -59,15 +59,21 @@ function Dashboard({
 
   const mainContainerRef = useRef(null);
 
-  const [afterWidth, setAfterWidth] = useState(Math.max(
-    get(localStorageKeyAfter, afterWidthProp),
-    UNIT * 13,
-  ));
+  const [afterWidth, setAfterWidth] = useState(after && !afterHidden
+    ? Math.max(
+      get(localStorageKeyAfter, afterWidthProp),
+      UNIT * 13,
+    )
+    : null
+  );
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeWidth, setBeforeWidth] = useState(Math.max(
-    get(localStorageKeyBefore, beforeWidthProp),
-    UNIT * 13,
-  ));
+  const [beforeWidth, setBeforeWidth] = useState(before
+    ? Math.max(
+      get(localStorageKeyBefore, beforeWidthProp),
+      UNIT * 13,
+    )
+    : null
+  );
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
 

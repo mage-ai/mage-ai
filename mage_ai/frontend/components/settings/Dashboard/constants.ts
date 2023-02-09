@@ -1,3 +1,5 @@
+import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
+
 export const SECTION_UUID_WORKSPACE = 'Workspace';
 export const SECTION_ITEM_UUID_PREFERENCES = 'Preferences';
 export const SECTION_ITEM_UUID_USERS = 'Users';
@@ -24,11 +26,18 @@ export const SECTIONS = ({ owner }: { owner?: boolean }) => {
     });
   }
 
-  return [
+  const arr = [
     {
       items: workspaceItems,
       uuid: SECTION_UUID_WORKSPACE,
     },
+  ];
+
+  if (!REQUIRE_USER_AUTHENTICATION) {
+    return arr;
+  }
+
+  return arr + [
     {
       items: [
         {
