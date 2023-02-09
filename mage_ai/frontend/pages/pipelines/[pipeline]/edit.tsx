@@ -37,6 +37,7 @@ import PipelineDetail from '@components/PipelineDetail';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
 import RecommendationsWindow from '@components/RecommendationsWindow';
 import Sidekick from '@components/Sidekick';
@@ -1935,4 +1936,4 @@ PipelineDetailPage.getInitialProps = async (ctx: any) => {
   return initialProps;
 };
 
-export default PipelineDetailPage;
+export default PrivateRoute(PipelineDetailPage);

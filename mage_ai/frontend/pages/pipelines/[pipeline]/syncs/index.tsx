@@ -7,6 +7,7 @@ import {
 
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType from '@interfaces/PipelineRunType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import SyncRow from '@components/PipelineDetail/Syncs/SyncRow';
 import SyncRowDetail from '@components/PipelineDetail/Syncs/SyncRowDetail';
 import api from '@api';
@@ -152,4 +153,4 @@ PipelineSyncs.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineSyncs;
+export default PrivateRoute(PipelineSyncs);

@@ -5,6 +5,7 @@ import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Paginate from '@components/shared/Paginate';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -118,4 +119,4 @@ function RunListPage() {
   );
 }
 
-export default RunListPage;
+export default PrivateRoute(RunListPage);

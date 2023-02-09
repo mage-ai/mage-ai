@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
+import PrivateRoute from '@components/shared/PrivateRoute';
+
 function PipelineDetail({
   pipeline,
 }) {
@@ -21,4 +23,4 @@ PipelineDetail.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineDetail;
+export default PrivateRoute(PipelineDetail);

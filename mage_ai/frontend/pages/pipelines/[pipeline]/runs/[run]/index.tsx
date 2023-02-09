@@ -9,6 +9,7 @@ import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import PipelineType from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import buildTableSidekick from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
@@ -192,4 +193,4 @@ PipelineBlockRuns.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineBlockRuns;
+export default PrivateRoute(PipelineBlockRuns);

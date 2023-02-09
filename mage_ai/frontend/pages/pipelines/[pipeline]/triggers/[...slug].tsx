@@ -1,5 +1,6 @@
 import TriggerDetail from '@components/Triggers/Detail';
 import TriggerEdit from '@components/Triggers/Edit';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import api from '@api';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 
@@ -84,4 +85,4 @@ TriggerDetailPage.getInitialProps= async(ctx: any) => {
   };
 };
 
-export default TriggerDetailPage;
+export default PrivateRoute(TriggerDetailPage);
