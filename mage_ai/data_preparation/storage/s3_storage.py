@@ -26,11 +26,11 @@ class S3Storage(BaseStorage):
             path += '/'
         return self.path_exists(path)
 
-    def listdir(self, path: str) -> List[str]:
+    def listdir(self, path: str, suffix: str = None) -> List[str]:
         if not path.endswith('/'):
             path += '/'
         path = s3_url_path(path)
-        keys = self.client.list_folders(path)
+        keys = self.client.listdir(path, suffix=suffix)
         return [k[len(path):].rstrip('/') for k in keys]
 
     def makedirs(self, path: str, **kwargs) -> None:

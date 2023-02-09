@@ -11,7 +11,7 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def listdir(self, path: str) -> List[str]:
+    def listdir(self, path: str, suffix: str = None) -> List[str]:
         """
         Get a list of files and directories in the specified directory.
         """

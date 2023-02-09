@@ -292,7 +292,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
         else:
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-                if kernel_name == KernelName.PYSPARK and not widget:
+                if (kernel_name == KernelName.PYSPARK or
+                        pipeline.type == PipelineType.DATABRICKS) and not widget:
                     remote_execution = True
                 else:
                     remote_execution = False
@@ -342,7 +343,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     ) -> None:
         pipeline_uuid = pipeline.uuid
 
-        if kernel_name == KernelName.PYSPARK:
+        if kernel_name == KernelName.PYSPARK or pipeline.type == PipelineType.DATABRICKS:
             code = get_pipeline_execution_code(
                 pipeline_uuid,
                 global_vars=global_vars,

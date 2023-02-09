@@ -308,6 +308,7 @@
       "group": "Integrations",
       "pages": [
         "integrations/spark-pyspark",
+        "integrations/databricks",
         {
           "group": "Data",
           "pages": [
