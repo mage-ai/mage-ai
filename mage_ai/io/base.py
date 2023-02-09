@@ -22,6 +22,7 @@ class DataSource(str, Enum):
     REDSHIFT = 'redshift'
     S3 = 's3'
     SNOWFLAKE = 'snowflake'
+    TRINO = 'trino'
 
 
 class FileFormat(str, Enum):
