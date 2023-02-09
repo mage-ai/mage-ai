@@ -85,7 +85,12 @@ def remove_duplicate_rows(df):
             'test_pipeline_execute_dicts_and_lists',
             repo_path=self.repo_path,
         )
-        block1 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
+        block1 = Block.create(
+            'test_data_loader_2',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
         block2 = Block.create(
             'test_transformer_2',
             'transformer',
@@ -97,7 +102,12 @@ def remove_duplicate_rows(df):
             file.write('''import pandas as pd
 @data_loader
 def load_data():
-    data = {'col1': [1, 1, 3], 'col2': [2, 2, 4], 'col3': [{ "mage": 1 }, { "power": 3 }, { "spell": 5 }], 'col4': [[{ "mage": 1 }], [{ "power": 3 }], [{ "spell": 5 }]]}
+    data = {
+        'col1': [1, 1, 3],
+        'col2': [2, 2, 4],
+        'col3': [dict(mage=1), dict(mage=2), dict(mage=3)],
+        'col4': [[dict(mage=1)], [dict(mage=2)], [dict(mage=3)]],
+    }
     df = pd.DataFrame(data)
     return [df]
             ''')
@@ -123,8 +133,8 @@ def remove_duplicate_rows(df):
         df_final = pd.DataFrame({
             'col1': [1, 1, 3],
             'col2': [2, 2, 4],
-            'col3': [{ "mage": 1 }, { "power": 3 }, { "spell": 5 }],
-            'col4': [[{ "mage": 1 }], [{ "power": 3 }], [{ "spell": 5 }]],
+            'col3': [dict(mage=1), dict(mage=2), dict(mage=3)],
+            'col4': [[dict(mage=1)], [dict(mage=2)], [dict(mage=3)]],
         })
         assert_frame_equal(data, df_final)
 
