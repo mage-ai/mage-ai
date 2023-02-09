@@ -49,8 +49,14 @@ class OAuthMiddleware(RequestHandler):
 
         token_from_header = self.request.headers.get(HEADER_OAUTH_TOKEN, None)
         if not token_from_header:
-            token_from_header = self.request.query_arguments.get(
-                'HTTP_AUTHORIZATION', None)
+            token_from_header = self.request.headers.get(
+                'Authorization',
+                self.request.query_arguments.get(
+                    'HTTP_AUTHORIZATION',
+                    None,
+                ),
+            )
+
             if token_from_header:
                 token_from_header = token_from_header.replace(
                     'Bearer ', '').replace('bearer ', '')

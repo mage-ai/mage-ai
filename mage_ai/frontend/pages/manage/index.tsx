@@ -7,6 +7,7 @@ import ConfigureInstance from '@components/Manage/ConfigureInstance';
 import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -274,7 +275,7 @@ function InstanceListPage() {
             status,
             type,
           } = instance
-          
+
           let link = `http://${ip}`;
           if (instanceType === 'ecs') {
             link = `http://${ip}:6789`;
@@ -319,4 +320,4 @@ function InstanceListPage() {
   );
 }
 
-export default InstanceListPage;
+export default PrivateRoute(InstanceListPage);

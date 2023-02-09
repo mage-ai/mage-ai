@@ -6,10 +6,11 @@ import ClientOnly from '@hocs/ClientOnly';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineV2Gradient from '@oracle/icons/custom/PipelineV2Gradient';
+import SettingsGradient from '@oracle/icons/custom/SettingsGradient';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
-import { BlocksStacked, PipelineV2 } from '@oracle/icons';
+import { BlocksStacked, PipelineV2, Settings } from '@oracle/icons';
 import { NavigationItemStyle } from './index.style';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -38,8 +39,9 @@ function VerticalNavigation({
   const router = useRouter();
   const { pathname } = router;
 
+
   const buttons = useMemo(() => {
-    const items = navigationItems || [
+    const defaultItems = [
       {
         Icon: PipelineV2,
         IconSelected: PipelineV2Gradient,
@@ -58,7 +60,18 @@ function VerticalNavigation({
           href: '/pipeline-runs',
         },
       },
+      {
+        Icon: Settings,
+        IconSelected: SettingsGradient,
+        id: 'settings',
+        label: () => 'Settings',
+        linkProps: {
+          href: '/settings',
+        },
+      },
     ];
+
+    const items = navigationItems || defaultItems;
 
     return items.map(({
       Icon,

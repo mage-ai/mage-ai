@@ -14,6 +14,7 @@ import PipelineRunType, {
   RUN_STATUS_TO_LABEL,
 } from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
@@ -293,4 +294,4 @@ PipelineRuns.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineRuns;
+export default PrivateRoute(PipelineRuns);

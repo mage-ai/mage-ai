@@ -22,6 +22,12 @@ UserPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.is_current_user())
 
+UserPolicy.allow_actions([
+    constants.LIST,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.is_owner())
+
 UserPolicy.allow_read(UserPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.is_current_user())
@@ -39,6 +45,9 @@ UserPolicy.allow_write([
     'email',
     'first_name',
     'last_name',
+    'password',
+    'password_confirmation',
+    'password_current',
     'username',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

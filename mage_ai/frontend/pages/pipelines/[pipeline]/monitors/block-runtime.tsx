@@ -7,6 +7,7 @@ import Headline from '@oracle/elements/Headline';
 import LineSeries from '@components/charts/LineSeries';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Select from '@oracle/elements/Inputs/Select';
 import Text from '@oracle/elements/Text';
@@ -249,4 +250,4 @@ BlockRuntimeMonitor.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default BlockRuntimeMonitor;
+export default PrivateRoute(BlockRuntimeMonitor);

@@ -9,6 +9,9 @@ class UserPresenter(BasePresenter):
         'first_name',
         'id',
         'last_name',
+        'owner',
+        'roles',
+        'roles_display',
         'username',
     ]
 

@@ -8,6 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import api, { MONITOR_STATS } from '@api';
@@ -215,4 +216,4 @@ BlockRunsMonitor.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default BlockRunsMonitor;
+export default PrivateRoute(BlockRunsMonitor);

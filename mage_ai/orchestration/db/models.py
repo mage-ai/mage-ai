@@ -146,6 +146,13 @@ class User(BaseModel):
                 ))
         return value
 
+    @property
+    def roles_display(self) -> str:
+        if self.owner:
+            return 'Owner'
+
+        return 'Editor'
+
 
 class Oauth2Application(BaseModel):
     class AuthorizationGrantType(str, enum.Enum):

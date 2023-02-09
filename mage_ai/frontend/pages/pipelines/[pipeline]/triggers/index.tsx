@@ -19,6 +19,7 @@ import PipelineScheduleType, {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import PopupMenu from '@oracle/components/PopupMenu';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import RunPipelinePopup from '@components/Triggers/RunPipelinePopup';
 import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
@@ -485,4 +486,4 @@ PipelineSchedules.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineSchedules;
+export default PrivateRoute(PipelineSchedules);

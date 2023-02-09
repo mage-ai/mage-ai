@@ -2,6 +2,10 @@ from mage_ai.errors.base import MageBaseException
 from typing import Dict
 
 
+class DoesNotExistError(MageBaseException):
+    pass
+
+
 class ValidationError(MageBaseException):
     def __init__(self, error: str, metadata: Dict):
         self.error = error

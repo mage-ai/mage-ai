@@ -329,11 +329,11 @@ function FileEditor({
           {addToPipelineEl}
 
           <Button
+            disabled={!content}
             onClick={(e) => {
               e.preventDefault();
               saveFile(content, file);
             }}
-            disabled={!content}
             title={content ? null : 'No changes have been made to this file.'}
           >
             Save file content

@@ -2,7 +2,7 @@ import jwtDecode from 'jwt-decode';
 import ls from 'local-storage';
 
 import { getToken, removeToken, setToken } from './token';
-import { removeGroup } from '@utils/session';
+import { removeUser } from '@utils/session';
 import { redirectToUrl } from '@utils/url';
 
 export type DecodedToken = {
@@ -70,7 +70,7 @@ export default class AuthToken {
     }
     // @ts-ignore
     ls.clear();
-    removeGroup();
+    removeUser();
     removeToken();
   }
 
