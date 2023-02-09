@@ -171,6 +171,12 @@
             "guides/r-blocks"
           ]
         },
+        {
+          "group": "Streaming pipelines",
+          "pages": [
+            "guides/streaming/streaming-pipeline-rabbitmq"
+          ]
+        },
         "production/configuring-production-settings/runtime-variable",
         {
           "group": "Testing",
