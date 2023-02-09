@@ -23,21 +23,6 @@ from typing import List
 import json
 
 
-class ApiBlockRunDetailHandler(BaseHandler):
-    model_class = BlockRun
-
-    @safe_db_query
-    def put(self, block_run_id):
-        payload = self.get_payload()
-        # Only allow update block run status
-        status = payload.get('status')
-        if status is not None:
-            block_run = BlockRun.query.get(int(block_run_id))
-            if status != block_run.status:
-                block_run.update(status=status)
-        self.write(dict(block_run=block_run.to_dict()))
-
-
 class ApiAllBlockRunListHandler(BaseHandler):
     model_class = BlockRun
 
@@ -104,25 +89,6 @@ class ApiBlockRunListHandler(BaseHandler):
 
         self.write(dict(block_runs=collection))
         self.finish()
-
-
-class ApiBlockRunLogHandler(BaseHandler):
-    @safe_db_query
-    def get(self, block_run_id):
-        block_run = BlockRun.query.get(int(block_run_id))
-        self.write(
-            dict(
-                log=block_run.logs,
-            ),
-        )
-
-
-class ApiBlockRunOutputHandler(BaseHandler):
-    @safe_db_query
-    def get(self, block_run_id):
-        block_run = BlockRun.query.get(int(block_run_id))
-        outputs = block_run.get_outputs()
-        self.write(dict(outputs=outputs))
 
 
 def process_pipeline_runs(

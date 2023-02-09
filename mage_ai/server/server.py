@@ -34,7 +34,6 @@ from mage_ai.server.api.backfills import (
 )
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
-    ApiBlockHandler,
     ApiPipelineBlockAnalysisHandler,
     ApiPipelineBlockExecuteHandler,
     ApiPipelineBlockHandler,
@@ -42,7 +41,6 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockOutputHandler,
 )
 from mage_ai.server.api.clusters import (
-    ApiClustersHandler,
     ApiInstanceDetailHandler,
     ApiInstancesHandler,
     ClusterType,
@@ -65,10 +63,7 @@ from mage_ai.server.api.orchestration import (
     ApiAllBlockRunListHandler,
     ApiPipelineRunDetailHandler,
     ApiAllPipelineRunListHandler,
-    ApiBlockRunDetailHandler,
     ApiBlockRunListHandler,
-    ApiBlockRunLogHandler,
-    ApiBlockRunOutputHandler,
     ApiPipelineRunListHandler,
     ApiPipelineRunLogHandler,
     ApiPipelineScheduleDetailHandler,
@@ -559,11 +554,6 @@ def make_app():
         (r'/websocket/', WebSocketServer),
 
         # API v1 routes
-        (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
-        (r'/api/block_runs/(?P<block_run_id>\w+)', ApiBlockRunDetailHandler),
-        (r'/api/block_runs/(?P<block_run_id>\w+)/outputs', ApiBlockRunOutputHandler),
-        (r'/api/block_runs/(?P<block_run_id>\w+)/logs', ApiBlockRunLogHandler),
-        (r'/api/clusters/(?P<cluster_type>\w+)', ApiClustersHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
         (
             r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)',
@@ -678,10 +668,9 @@ def make_app():
             r'/api/(?P<resource>\w+)/(?P<pk>\w+)',
             ApiResourceDetailHandler,
         ),
-        (
-            r'/api/(?P<resource>\w+)',
-            ApiResourceListHandler,
-        ),
+        (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
+        (r'/api/(?P<resource>\w+)', ApiResourceListHandler),
+        (r'/api/(?P<resource>\w+)/(?P<pk>.+)', ApiResourceDetailHandler),
     ]
     autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(

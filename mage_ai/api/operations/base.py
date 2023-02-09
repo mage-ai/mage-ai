@@ -15,6 +15,7 @@ from mage_ai.api.operations.constants import (
     WRITE,
 )
 from mage_ai.api.result_set import ResultSet
+from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import merge_dict, ignore_keys
 import importlib
@@ -211,9 +212,10 @@ class BaseOperation():
                 '{}Resource'.format(parent_class),
             )
             try:
-                return parent_resource_class.model_class.objects.get(
-                    pk=self.resource_parent_id)
-            except parent_resource_class.model_class.DoesNotExist:
+                return parent_resource_class.model_class.query.get(
+                    self.resource_parent_id,
+                )
+            except DoesNotExistError:
                 raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
     def __combined_options(self):

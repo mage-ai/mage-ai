@@ -2,6 +2,7 @@ from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.BaseResource import BaseResource
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.errors import DoesNotExistError, ValidationError
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from sqlalchemy.orm.query import Query
@@ -37,6 +38,7 @@ class DatabaseResource(BaseResource):
         return result_set
 
     @classmethod
+    @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
         query = ignore_keys(query_arg, [settings.QUERY_API_KEY])
         parent_model = kwargs.get('parent_model')
@@ -98,6 +100,7 @@ class DatabaseResource(BaseResource):
         pass
 
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         model = self.model_class.query.get(pk)
         if not model:
