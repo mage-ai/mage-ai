@@ -24,9 +24,10 @@ const getDataSourceTypes = (
   if (pipelineType === PipelineTypeEnum.STREAMING) {
     return {
       [BlockTypeEnum.DATA_LOADER]: [
+        DataSourceTypeEnum.AZURE_EVENT_HUB,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
-        DataSourceTypeEnum.AZURE_EVENT_HUB,
+        DataSourceTypeEnum.RABBITMQ,
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
         DataSourceTypeEnum.KINESIS,
