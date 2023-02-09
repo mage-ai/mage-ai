@@ -5,6 +5,7 @@ import json
 import sys
 import csv
 
+
 def translate_breakdown(breakdown):
     if breakdown is None:
         return ''
@@ -16,9 +17,11 @@ def translate_breakdown(breakdown):
         return 'pd'
     return 'other'
 
+
 def load_records():
     for line in sys.stdin:
         yield json.loads(line)
+
 
 def translate_raw_record(raw):
     breakdowns = translate_breakdown(raw['table']['breakdowns'])
@@ -32,43 +35,56 @@ def translate_raw_record(raw):
         'duration': round(raw['duration'] / 60.0, 1),
     }
 
+
 def success(rec):
     return rec['success']
+
 
 def proportion(pred, recs):
     return float(len(list(filter(pred, recs)))) / float(len(recs))
 
+
 def p_success(recs):
     return proportion(success, recs)
+
 
 def p_breakdown(breakdown, recs):
     return proportion(lambda r: r['bd'] == breakdown, recs)
 
+
 def p_nabd(nabd, recs):
     return proportion(lambda r: r['nabd'] == nabd, recs)
+
 
 def p_naaw(naaw, recs):
     return proportion(lambda r: r['naaw'] == naaw, recs)
 
+
 def p_success_and_breakdown(breakdown, recs):
     return proportion(lambda r: success(r) and r['bd'] == breakdown, recs)
+
 
 def p_success_given_breakdown(breakdown, recs):
     return p_success_and_breakdown(breakdown, recs) / p_breakdown(breakdown, recs)
 
+
 def p_success_and_nabd(nabd, recs):
     return proportion(lambda r: success(r) and r['nabd'] == nabd, recs)
+
 
 def p_success_given_nabd(nabd, recs):
     return p_success_and_nabd(nabd, recs) / p_nabd(nabd, recs)
 
+
 def p_success_and_naaw(naaw, recs):
     return proportion(lambda r: success(r) and r['naaw'] == naaw, recs)
+
 
 def p_success_given_naaw(naaw, recs):
     denom = p_naaw(naaw, recs)
     if denom > 0:
         return p_success_and_naaw(naaw, recs) / denom
+
 
 def main():
     writer = csv.DictWriter(

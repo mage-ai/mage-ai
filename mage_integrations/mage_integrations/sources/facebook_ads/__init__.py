@@ -30,7 +30,7 @@ class FacebookAds(Source):
 
     def sync(self, catalog: Catalog) -> None:
         account = setup_account(self.config)
-        do_sync_with_except(account, catalog, self.state)
+        do_sync_with_except(account, catalog, self.state, logger=self.logger)
 
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
         if stream_id in BOOKMARK_KEYS:
