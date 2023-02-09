@@ -58,14 +58,7 @@ function Dashboard({
   const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
-
-  const [afterWidth, setAfterWidth] = useState(after && !afterHidden
-    ? Math.max(
-      get(localStorageKeyAfter, afterWidthProp),
-      UNIT * 13,
-    )
-    : null
-  );
+  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, afterWidthProp));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(before
     ? Math.max(
