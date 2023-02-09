@@ -18,8 +18,8 @@ from mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.utils import 
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import index_by
 from pymongo_schema.extract import extract_pymongo_client_schema
-from typing import Dict, Generator, List
 from singer import catalog
+from typing import Dict, Generator, List
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 

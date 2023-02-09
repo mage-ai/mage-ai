@@ -27,7 +27,7 @@ from mage_integrations.utils.schema_helpers import (
 )
 from singer.schema import Schema
 from time import sleep
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List, Tuple
 
 
 class Source(BaseSource):
@@ -320,29 +320,23 @@ WHERE table_schema = '{schema}'
                 if col not in bookmark_properties or val is None:
                     continue
                 where_statements.append(
-                    build_comparison_statement(
+                    self._build_comparison_statement(
                         col,
                         val,
                         stream.schema.to_dict()['properties'],
-                        self.column_type_mapping,
-                        column_cleaned=wrap_column_in_quotes(col),
-                        convert_datetime_func=self.convert_datetime,
-                        operator='>=',
-                    ),
+                        operator='>='
+                    )
                 )
 
         if query:
             for col, val in query.items():
                 if col in columns:
                     where_statements.append(
-                        build_comparison_statement(
+                        self._build_comparison_statement(
                             col,
                             val,
-                            stream.schema.to_dict()['properties'],
-                            self.column_type_mapping,
-                            column_cleaned=wrap_column_in_quotes(col),
-                            convert_datetime_func=self.convert_datetime,
-                        ),
+                            stream.schema.to_dict()['properties']
+                        )
                     )
 
         if where_statements:
@@ -373,6 +367,26 @@ WHERE table_schema = '{schema}'
                 stream=table_name,
             ))
         else:
-            rows = [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
+            rows = self._convert_to_rows(columns, rows_temp)
 
         return rows, rows_temp
+
+    def _build_comparison_statement(
+        self,
+        col: str,
+        val: Any,
+        properties: Dict,
+        operator: str = '=',
+    ) -> str:
+        return build_comparison_statement(
+            col,
+            val,
+            properties,
+            self.column_type_mapping,
+            operator=operator,
+            column_cleaned=wrap_column_in_quotes(col),
+            convert_datetime_func=self.convert_datetime,
+        )
+
+    def _convert_to_rows(self, columns, rows_temp):
+        return [{col: row[idx] for idx, col in enumerate(columns)} for row in rows_temp]
