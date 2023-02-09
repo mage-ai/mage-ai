@@ -9,8 +9,8 @@ class UserOperationTests(BaseApiTestCase):
     def test_execute_create(self):
         response = self.base_test_execute_create(dict(
             email='fire@mage.ai',
-            password='water',
-            password_confirmation='water',
+            password='water_lightning',
+            password_confirmation='water_lightning',
         ))
         self.assertEqual(User.query.get(response['user']['id']).email, 'fire@mage.ai')
 
@@ -19,8 +19,8 @@ class UserOperationTests(BaseApiTestCase):
             Exception,
             lambda: self.base_test_execute_create(dict(
                 email='fire@mage.ai',
-                password='water',
-                password_confirmation='water',
+                password='water_lightning',
+                password_confirmation='water_lightning',
             ), user=create_user(), after_create_count=1, before_create_count=1)
         )
 
@@ -52,8 +52,16 @@ class UserOperationTests(BaseApiTestCase):
         owner = create_user(owner=True)
         self.base_test_execute_list(
             [
-                dict(email='mage1@mage.ai', password='mage', password_confirmation='mage'),
-                dict(email='mage2@mage.ai', password='mage', password_confirmation='mage'),
+                dict(
+                    email='mage1@mage.ai',
+                    password='water_lightning',
+                    password_confirmation='water_lightning',
+                ),
+                dict(
+                    email='mage2@mage.ai',
+                    password='water_lightning',
+                    password_confirmation='water_lightning',
+                ),
             ],
             [
                 'id',
