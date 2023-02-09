@@ -1,7 +1,6 @@
 from mage_ai.services.aws.s3.s3 import Client
 from mage_ai.tests.base_test import TestCase
-from unittest.mock import MagicMock, call, patch
-import os
+from unittest.mock import MagicMock, patch
 
 
 class ClientTests(TestCase):
