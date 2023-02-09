@@ -243,7 +243,8 @@ def process_records(stream, mdata, max_modified, records, filter_field, fks):
 
                         if fk_field_name in record_flat:
                             print(
-                                '`{}` exists as both an attribute and generated relationship name'.format(fk_field_name),
+                                f'`{fk_field_name}` exists as both an attribute and generated '
+                                'relationship name',
                             )
 
                         if data_value == None:
@@ -273,10 +274,12 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
                 last_ds = dateutil.parser.parse(ds)
                 now = datetime.utcnow().replace(tzinfo=last_ds.tzinfo)
                 if now < last_ds + timedelta(days=1):
-                    LOGGER.info(f'Skipping stream {stream.tap_stream_id} because bookmark {last_datetime} is less than 1 day ago.')
+                    LOGGER.info(f'Skipping stream {stream.tap_stream_id} because bookmark '
+                                f'{last_datetime} is less than 1 day ago.')
                     return
             except dateutil.parser.ParserError:
                 pass
+        last_datetime = max(last_datetime.values())
 
     write_schema(stream)
 
@@ -302,8 +305,7 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
                 'count': 'false'
             }
             if stream_config.get('replication') == 'INCREMENTAL':
-                query_params['filter[{}]'.format(
-                    filter_field)] = '{}..inf'.format(paginate_datetime)
+                query_params[f'filter[{filter_field}]'] = f'{paginate_datetime}..inf'
                 query_params['sort'] = filter_field
 
         LOGGER.info('{} - Syncing data since {} - page: {}, limit: {}, offset: {}'.format(

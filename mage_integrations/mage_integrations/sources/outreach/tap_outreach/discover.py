@@ -39,7 +39,11 @@ def get_schemas():
 
         if replication == 'incremental':
             meta = metadata.write(
-                meta, ('properties', STREAM_CONFIGS[stream_name]['filter_field']), 'inclusion', 'automatic')
+                meta,
+                ('properties', STREAM_CONFIGS[stream_name]['filter_field']),
+                'inclusion',
+                'automatic',
+            )
 
         meta = metadata.to_list(meta)
 
