@@ -1,5 +1,5 @@
 export interface UserFieldType {
-  autoComplete?: boolean;
+  autoComplete?: boolean | string;
   disabled?: boolean;
   label: string;
   type?: string;
@@ -8,13 +8,13 @@ export interface UserFieldType {
 
 export const USER_PROFILE_FIELDS = [
   {
-    autoComplete: false,
+    autoComplete: 'username',
     label: 'Username',
     required: true,
     uuid: 'username',
   },
   {
-    autoComplete: false,
+    autoComplete: 'email',
     disabled: true,
     label: 'Email',
     required: true,
@@ -23,21 +23,23 @@ export const USER_PROFILE_FIELDS = [
   },
 ];
 
+export const USER_PASSWORD_CURRENT_FIELD_UUID = 'password_current';
+
 export const USER_PASSWORD_FIELDS = [
   {
-    autoComplete: true,
+    autoComplete: 'current-password',
     label: 'Current password',
     type: 'password',
-    uuid: 'password_current',
+    uuid: USER_PASSWORD_CURRENT_FIELD_UUID,
   },
   {
-    autoComplete: false,
+    autoComplete: 'new-password',
     label: 'New password',
     type: 'password',
     uuid: 'password',
   },
   {
-    autoComplete: false,
+    autoComplete: 'new-password',
     label: 'Confirm new password',
     type: 'password',
     uuid: 'password_confirmation',

@@ -5,22 +5,30 @@ import { useMutation } from 'react-query';
 import Button from '@oracle/elements/Button';
 import Headline from '@oracle/elements/Headline';
 import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import UserType from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { UserFieldType, USER_PROFILE_FIELDS, USER_PASSWORD_FIELDS } from './constants';
+import {
+  USER_PASSWORD_CURRENT_FIELD_UUID,
+  USER_PASSWORD_FIELDS,
+  USER_PROFILE_FIELDS,
+  UserFieldType,
+} from './constants';
 import { isEmptyObject, selectKeys } from '@utils/hash';
-import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
+import { onSuccess } from '@api/utils/response';
 
 type UserEditFormProps = {
-  onSaveSuccess?: () => void;
+  hideFields?: string[];
+  newUser?: boolean;
+  onSaveSuccess?: (user: UserType) => void;
   title?: string;
   user: UserType;
 };
 
 function UserEditForm({
+  hideFields: hideFieldsProp,
+  newUser,
   onSaveSuccess,
   title,
   user,
@@ -32,22 +40,26 @@ function UserEditForm({
   const [profile, setProfile] = useState<UserType>(null);
 
   const [updateUser, { isLoading }] = useMutation(
-    api.users.useUpdate(user?.id),
+    newUser ? api.users.useCreate() : api.users.useUpdate(user?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: ({
             user: userServer,
           }) => {
-            setProfile(userServer);
+            const newProfile = selectKeys(userServer, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
+              uuid,
+            }) => uuid));
+            setProfile(newProfile);
+
             toast.success(
-              'User profile successfully updated.',
+              newUser ? 'New user created successfully.' : 'User profile successfully updated.',
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
                 toastId: `user-update-success-${userServer.id}`,
               },
             );
-            onSaveSuccess?.();
+            onSaveSuccess?.(newProfile);
           },
           onErrorCallback: ({
             error: {
@@ -68,7 +80,14 @@ function UserEditForm({
     },
   );
 
-  const userPrev = usePrevious(user);
+  const hideFields = hideFieldsProp ? [...hideFieldsProp] : [];
+  if (newUser) {
+    hideFields.push(USER_PASSWORD_CURRENT_FIELD_UUID);
+  }
+  const requirePasswordCurrent = !hideFields
+    || !hideFields.includes(USER_PASSWORD_CURRENT_FIELD_UUID);
+
+ const userPrev = usePrevious(user);
   useEffect(() => {
     if (user && (!profile || userPrev?.id !== user?.id)) {
       setProfile(selectKeys(user, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
@@ -76,19 +95,19 @@ function UserEditForm({
       }) => uuid)));
     }
 
-    if (profile?.password && profile?.password_confirmation) {
-      if (profile.password !== profile.password_confirmation) {
+    if (profile?.password || profile?.password_confirmation) {
+      if (profile?.password !== profile?.password_confirmation) {
         setErrors({
           password_confirmation: 'Password confirmation does not match.',
         });
-      } else if (!profile?.password_current) {
+      } else if (requirePasswordCurrent && !profile?.password_current) {
         setErrors({
           password_current: 'This field is required.',
         });
       } else {
         setErrors(null);
       }
-    } else if (profile?.password_current) {
+    } else if (profile?.password_current && requirePasswordCurrent) {
       if (profile?.password && profile?.password_confirmation) {
         setErrors(null);
       } else {
@@ -100,48 +119,23 @@ function UserEditForm({
     } else if (!profile?.password_current && !profile?.password && !profile?.password_confirmation) {
       setErrors(null);
     }
-  }, [profile, user, userPrev]);
+  }, [
+    profile,
+    requirePasswordCurrent,
+    user,
+    userPrev,
+  ]);
 
   return (
     <>
       <Headline>
         {title || 'Edit profile'}
       </Headline>
-      {USER_PROFILE_FIELDS.map(({
-        autoComplete,
-        disabled,
-        label,
-        required,
-        type,
-        uuid,
-      }: UserFieldType) => (
-        <Spacing key={uuid} mt={2}>
-          <TextInput
-            autoComplete={!!autoComplete}
-            disabled={disabled}
-            label={label}
-            // @ts-ignore
-            onChange={e => {
-              setButtonDisabled(false);
-              setProfile(prev => ({
-                ...prev,
-                [uuid]: e.target.value,
-              }));
-            }}
-            primary
-            required={required}
-            type={type}
-            value={profile?.[uuid] || ''}
-          />
-        </Spacing>
-      ))}
 
-      <Spacing mt={5}>
-        <Headline>
-          Change password
-        </Headline>
-
-        {USER_PASSWORD_FIELDS.map(({
+      <form>
+        {USER_PROFILE_FIELDS.filter(({
+          uuid,
+        }) => !hideFields || !hideFields.includes(uuid)).map(({
           autoComplete,
           disabled,
           label,
@@ -151,13 +145,9 @@ function UserEditForm({
         }: UserFieldType) => (
           <Spacing key={uuid} mt={2}>
             <TextInput
-              autoComplete={!!autoComplete}
-              disabled={disabled}
+              autoComplete={autoComplete}
+              disabled={disabled && !newUser}
               label={label}
-              meta={{
-                error: errors?.[uuid],
-                touched: !!errors?.[uuid],
-              }}
               // @ts-ignore
               onChange={e => {
                 setButtonDisabled(false);
@@ -168,23 +158,66 @@ function UserEditForm({
               }}
               primary
               required={required}
+              setContentOnMount
               type={type}
               value={profile?.[uuid] || ''}
             />
           </Spacing>
         ))}
-      </Spacing>
 
-      <Spacing mt={5}>
-        <Button
-          disabled={buttonDisabled || (errors && !isEmptyObject(errors))}
-          loading={isLoading}
-          onClick={() => updateUser({ user: profile })}
-          primary
-        >
-          Update user profile
-        </Button>
-      </Spacing>
+        <Spacing mt={5}>
+          <Headline>
+            {newUser ? 'Password' : 'Change password'}
+          </Headline>
+
+          {USER_PASSWORD_FIELDS.filter(({
+            uuid,
+          }) => !hideFields || !hideFields.includes(uuid)).map(({
+            autoComplete,
+            disabled,
+            label,
+            required,
+            type,
+            uuid,
+          }: UserFieldType) => (
+            <Spacing key={uuid} mt={2}>
+              <TextInput
+                autoComplete={autoComplete}
+                disabled={disabled}
+                label={label}
+                meta={{
+                  error: errors?.[uuid],
+                  touched: !!errors?.[uuid],
+                }}
+                // @ts-ignore
+                onChange={e => {
+                  setButtonDisabled(false);
+                  setProfile(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+              setContentOnMount
+                type={type}
+                value={profile?.[uuid] || ''}
+              />
+            </Spacing>
+          ))}
+        </Spacing>
+
+        <Spacing mt={5}>
+          <Button
+            disabled={buttonDisabled || (errors && !isEmptyObject(errors))}
+            loading={isLoading}
+            onClick={() => updateUser({ user: profile })}
+            primary
+          >
+            {newUser ? 'Create new user' : 'Update user profile'}
+          </Button>
+        </Spacing>
+      </form>
     </>
   );
 }

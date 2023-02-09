@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Headline from '@oracle/elements/Headline';
@@ -17,11 +18,15 @@ import {
   SECTION_ITEM_UUID_USERS,
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
+import { USER_PASSWORD_CURRENT_FIELD_UUID } from '@components/users/edit/Form/constants';
+import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
 
 function UsersListPage() {
+  const router = useRouter();
+  const { id: currentUserID } = getUser() || {};
   const [query, setQuery] = useState<{
     add_new_user: boolean;
     user_id: number;
@@ -31,13 +36,10 @@ function UsersListPage() {
     revalidateOnFocus: false,
   });
   const users = useMemo(() => data?.users || [], [data]);
-  const { data: dataUser } = api.users.detail(query?.user_id, {}, {
+  const { data: dataUser, mutate: fetchUser } = api.users.detail(query?.user_id, {}, {
     revalidateOnFocus: false,
   });
-  const user = useMemo(() => dataUser?.user, [
-    dataUser,
-    query?.user_id,
-  ]);
+  const user = dataUser?.user;
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -69,18 +71,52 @@ function UsersListPage() {
     qPrev,
   ]);
 
-  return (
-    <SettingsDashboard
-      after={user && (
+  const showAddNewUser = query?.add_new_user;
+  const formMemo = useMemo(() => {
+    if (showAddNewUser) {
+      return (
         <Spacing p={PADDING_UNITS}>
           <UserEditForm
-            onSaveSuccess={() => fetchUsers()}
-            title={`Edit ${user?.username || user?.email}`}
+            newUser
+            onSaveSuccess={() => {
+              goToWithQuery({
+                add_new_user: null,
+                user_id: null,
+              });
+            }}
+            title="Add new user"
+            user={{}}
+          />
+        </Spacing>
+      );
+    } else if (user) {
+      return (
+        <Spacing p={PADDING_UNITS}>
+          <UserEditForm
+            hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
+            onSaveSuccess={() => {
+              fetchUser();
+              fetchUsers();
+            }}
+            title="Edit user"
             user={user}
           />
         </Spacing>
-      )}
-      afterHidden={!user}
+      );
+    }
+
+    return null;
+  }, [
+    fetchUser,
+    fetchUsers,
+    showAddNewUser,
+    user,
+  ]);
+
+  return (
+    <SettingsDashboard
+      after={formMemo}
+      afterHidden={!user && !showAddNewUser}
       uuidItemSelected={SECTION_ITEM_UUID_USERS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
@@ -118,11 +154,16 @@ function UsersListPage() {
         ]}
         isSelectedRow={(rowIndex: number) => users[rowIndex]?.id === user?.id}
         onClickRow={(rowIndex: number) => {
+          const rowUserID = users[rowIndex]?.id;
 
-          goToWithQuery({
-            add_new_user: null,
-            user_id: users[rowIndex]?.id,
-          });
+          if (rowUserID === currentUserID) {
+            router.push('/settings/account/profile');
+          } else {
+            goToWithQuery({
+              add_new_user: null,
+              user_id: rowUserID,
+            });
+          }
         }}
         rows={users.map(({
           email,

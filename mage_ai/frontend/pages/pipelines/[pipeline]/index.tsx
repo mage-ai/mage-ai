@@ -8,7 +8,7 @@ function PipelineDetail({
 
   useEffect(() => {
     router.replace('/pipelines/[pipeline]/triggers', `/pipelines/${pipeline.uuid}/triggers`);
-  }, []);
+  }, [pipeline]);
 }
 
 PipelineDetail.getInitialProps = async (ctx: any) => {

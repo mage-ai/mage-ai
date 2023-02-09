@@ -636,12 +636,12 @@ const InputWrapper = ({
   const [isFocused, setIsFocused] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   const showLabel = showLabelRequirement ? showLabelRequirement({
-    isFocused,
     content,
+    isFocused,
   }) : (isFocused || !!content);
 
   useEffect(() => {
-    if (setContentOnMount && !content) {
+    if (setContentOnMount && !content && value) {
       setContent(value);
     }
   }, [content, setContent, setContentOnMount, value]);

@@ -13,6 +13,7 @@ import {
   VerticalNavigationStyle,
 } from './index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   get,
   set,
@@ -58,9 +59,15 @@ function Dashboard({
 
   const mainContainerRef = useRef(null);
 
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, afterWidthProp));
+  const [afterWidth, setAfterWidth] = useState(Math.max(
+    get(localStorageKeyAfter, afterWidthProp),
+    UNIT * 13,
+  ));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeWidth, setBeforeWidth] = useState(get(localStorageKeyBefore, beforeWidthProp));
+  const [beforeWidth, setBeforeWidth] = useState(Math.max(
+    get(localStorageKeyBefore, beforeWidthProp),
+    UNIT * 13,
+  ));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
 
@@ -95,7 +102,7 @@ function Dashboard({
     afterWidth,
     beforeMousedownActive,
     beforeWidth,
-    mainContainerRef?.current,
+    mainContainerRef,
     setMainContainerWidth,
     widthWindow,
   ]);
@@ -108,6 +115,7 @@ function Dashboard({
     afterHidden,
     afterMousedownActive,
     afterWidth,
+    localStorageKeyAfter,
   ]);
 
   useEffect(() => {
@@ -117,6 +125,7 @@ function Dashboard({
   }, [
     beforeMousedownActive,
     beforeWidth,
+    localStorageKeyBefore,
   ]);
 
   return (

@@ -76,7 +76,7 @@ function Header({
   const project = useMemo(() => projectProp || dataProjects?.projects?.[0], [dataProjects, projectProp]);
   const version = useMemo(() => versionProp || project?.version, [project, versionProp]);
 
-  const loggedIn = AuthToken.isLoggedIn() || (!project || !project?.require_user_authentication);
+  const loggedIn = AuthToken.isLoggedIn();
   const logout = () => {
     AuthToken.logout(() => {
       api.sessions.updateAsync(null, 1)

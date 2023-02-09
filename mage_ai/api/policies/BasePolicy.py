@@ -203,6 +203,9 @@ class BasePolicy():
                         message=error_message,
                     )
 
+    def is_owner(self):
+        return self.current_user and self.current_user.owner
+
     def parent_model(self):
         if not self.parent_model_attr:
             self.parent_model_attr = self.options.get('parent_model', None)
