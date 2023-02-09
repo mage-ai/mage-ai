@@ -4,17 +4,6 @@ from mage_ai.orchestration.triggers.event_trigger import EventTrigger
 import json
 
 
-class ApiAwsEventRuleListHandler(BaseHandler):
-    def get(self, provider):
-        event_rules = []
-
-        if 'aws' == provider:
-            from mage_ai.services.aws.events.events import get_all_event_rules
-            event_rules = get_all_event_rules()
-
-        self.write(dict(event_rules=event_rules))
-
-
 class ApiEventHandler(BaseHandler):
     def post(self):
         payload = self.get_payload()

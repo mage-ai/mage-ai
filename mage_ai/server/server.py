@@ -49,7 +49,6 @@ from mage_ai.server.api.clusters import (
 )
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.events import (
-    ApiAwsEventRuleListHandler,
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
     ApiEventMatcherListHandler,
@@ -558,7 +557,8 @@ def make_app():
             {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
         ),
         (r'/websocket/', WebSocketServer),
-        (r'/api/event_rules/(?P<provider>\w+)', ApiAwsEventRuleListHandler),
+
+        # API v1 routes
         (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)', ApiBlockRunDetailHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)/outputs', ApiBlockRunOutputHandler),
