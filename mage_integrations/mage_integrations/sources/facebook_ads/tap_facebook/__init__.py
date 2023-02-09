@@ -304,6 +304,7 @@ class Ads(IncrementalStream):
         This is necessary because the functions that call this endpoint return
         a generator, whose calls need decorated with a backoff.
         """
+        self.logger.info(f'Call get ads with params: {params}')
         return self.account.get_ads(fields=self.automatic_fields(), params=params)  # pylint: disable=no-member
 
     def __iter__(self):
