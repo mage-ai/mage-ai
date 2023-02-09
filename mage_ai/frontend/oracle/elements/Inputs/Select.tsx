@@ -12,6 +12,7 @@ export type SelectProps = {
   cyan?: boolean;
   children?: any;
   hasContent?: boolean;
+  multiple?: boolean;
   showPlaceholder?: boolean;
 } & InputWrapperProps;
 
@@ -58,6 +59,7 @@ const Select = ({
   beforeIcon,
   children,
   label,
+  multiple,
   placeholder,
   ...props
 }: SelectProps, ref) => (
@@ -65,7 +67,7 @@ const Select = ({
     {...props}
     beforeIcon={beforeIcon}
     input={
-      <SelectStyle {...props}>
+      <SelectStyle multiple={multiple} {...props}>
         {(label || placeholder) && (
         <option
           disabled
