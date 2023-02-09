@@ -21,12 +21,22 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
 
 export enum BlockTypeEnum {
   CHART = 'chart',
+  CUSTOM = 'custom',
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
   DBT = 'dbt',
   SCRATCHPAD = 'scratchpad',
   SENSOR = 'sensor',
   TRANSFORMER = 'transformer',
+}
+
+export enum BlockColorEnum {
+  BLUE = 'blue',
+  GREY = 'grey',
+  PINK = 'pink',
+  PURPLE = 'purple',
+  TEAL = 'teal',
+  YELLOW = 'yellow',
 }
 
 export const BLOCK_TYPES = [
@@ -127,6 +137,7 @@ export interface BlockRequestPayloadType {
 
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
+  color?: BlockColorEnum;
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;

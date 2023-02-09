@@ -126,6 +126,7 @@ function BlockRunsTable({
             >
               <Circle
                 color={getColorsForBlockType(block?.type, {
+                  blockColor: block?.color,
                   theme: themeContext,
                 }).accent}
                 size={UNIT * 1.5}

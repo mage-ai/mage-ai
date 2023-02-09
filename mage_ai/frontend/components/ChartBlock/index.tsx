@@ -180,7 +180,6 @@ function ChartBlock({
   ]);
   const hasError = !!messagesWithType.find(({ error }) => error);
   const hasOutput = messagesWithType.length >= 1;
-  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
   const borderColorShareProps = useMemo(() => ({
     blockType: block.type,
     hasError,
@@ -386,7 +385,10 @@ function ChartBlock({
     upstreamBlocks.forEach((blockUUID: string, idx: number) => {
       const b = blocksMapping[blockUUID];
       const blockColor =
-        getColorsForBlockType(b?.type, { theme: themeContext }).accent;
+        getColorsForBlockType(
+          b?.type,
+          { blockColor: b?.color, theme: themeContext },
+        ).accent;
 
       arr.push(
         <Spacing key={blockUUID} ml={2}>

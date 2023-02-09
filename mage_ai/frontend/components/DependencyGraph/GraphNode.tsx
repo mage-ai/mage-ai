@@ -45,6 +45,7 @@ function GraphNode({
 }: GraphNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
+    color,
     type,
     uuid,
   } = block;
@@ -67,7 +68,10 @@ function GraphNode({
 
   return (
     <NodeStyle
-      backgroundColor={getColorsForBlockType(type, { theme: themeContext }).accent}
+      backgroundColor={getColorsForBlockType(
+        type,
+        { blockColor: color, theme: themeContext },
+      ).accent}
       disabled={disabled}
       isCancelled={isCancelled}
       key={uuid}
@@ -76,7 +80,10 @@ function GraphNode({
       <FlexContainer alignItems="center">
         {runtime && (
           <RuntimeStyle
-            backgroundColor={getColorsForBlockType(type, { theme: themeContext }).accent}
+            backgroundColor={getColorsForBlockType(
+              type,
+              { blockColor: color, theme: themeContext },
+            ).accent}
           >
             <FlexContainer justifyContent="center">
               <Text

@@ -420,7 +420,10 @@ function PipelineLogsPage({
             }
 
             if (block) {
-              const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+              const color = getColorsForBlockType(
+                block.type,
+                { blockColor: block.color, theme: themeContext },
+              ).accent;
 
               idEl = (
                 <FlexContainer alignItems="center">

@@ -162,41 +162,44 @@ function BlockRunsMonitor({
       }
     >
       <Spacing mx={2}>
-        {blockRunData && Object.entries(blockRunData).map(([blockUuid, blockData]) => {
-          return (
-            <Spacing mt={3}>
-              <FlexContainer alignItems="center">
-                <Spacing mx={1}>
-                  <Circle
-                    color={getColorsForBlockType(blocksByUUID[blockUuid]?.type, { theme }).accent}
-                    size={ICON_SIZE}
-                    square
-                  />
-                </Spacing>
-                <Headline level={4}>
-                  {blockUuid}
-                </Headline>
-              </FlexContainer>
-              <Spacing mt={1}>
-                <BarStackChart
-                  colors={BAR_STACK_COLORS}
-                  // @ts-ignore
-                  data={blockData}
-                  getXValue={(data) => data['date']}
-                  height={200}
-                  keys={BAR_STACK_STATUSES}
-                  margin={{
-                    top: 10,
-                    bottom: 30,
-                    left: 35,
-                    right: 0
-                  }}
-                  xLabelFormat={label => moment(label).format('MMM DD')}
+        {blockRunData && Object.entries(blockRunData).map(([blockUuid, blockData]) => (
+          <Spacing key={blockUuid} mt={3}>
+            <FlexContainer alignItems="center">
+              <Spacing mx={1}>
+                <Circle
+                  color={getColorsForBlockType(
+                    blocksByUUID[blockUuid]?.type, {
+                      blockColor: blocksByUUID[blockUuid]?.color,
+                      theme,
+                    },
+                  ).accent}
+                  size={ICON_SIZE}
+                  square
                 />
               </Spacing>
+              <Headline level={4}>
+                {blockUuid}
+              </Headline>
+            </FlexContainer>
+            <Spacing mt={1}>
+              <BarStackChart
+                colors={BAR_STACK_COLORS}
+                // @ts-ignore
+                data={blockData}
+                getXValue={(data) => data['date']}
+                height={200}
+                keys={BAR_STACK_STATUSES}
+                margin={{
+                  bottom: 30,
+                  left: 35,
+                  right: 0,
+                  top: 10,
+                }}
+                xLabelFormat={label => moment(label).format('MMM DD')}
+              />
             </Spacing>
-          );
-        })}
+          </Spacing>
+        ))}
       </Spacing>
     </Monitor>
   );
