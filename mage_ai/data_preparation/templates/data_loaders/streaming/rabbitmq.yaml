@@ -8,7 +8,7 @@ amqp_url_virtual_host: '%2f'
 
 
 
-#
+##Uncomment this to set consume configuration 
 #configure_consume: True
 
 #auto_ack: False

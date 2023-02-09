@@ -43,14 +43,14 @@ class RabbitMQSource(BaseSource):
         password = self.config.password
         connection_host = self.config.connection_host
         connection_port = self.config.connection_port
-        amqp_url_virtual_host = self.config.amqp_url_virtual_host
+        vt_host = self.config.amqp_url_virtual_host
 
         self._print(f'Starting to initialize consumer for queue {queue_name}')
 
         try:
 
-            generated_url = f"""amqp://{username}:{password}@
-            {connection_host}:{connection_port}/{amqp_url_virtual_host}"""
+            generated_url = f"amqp://{username}:{password}@" \
+                            f"{connection_host}:{connection_port}/{vt_host}"
 
             self._print(f'Trying to connect on {generated_url}')
             self.create_connection = pika.BlockingConnection(
@@ -74,7 +74,6 @@ class RabbitMQSource(BaseSource):
         pass
 
     def batch_read(self, handler: Callable):
-        inactivity_timeout = self.config.consume_config.inactivity_timeout
 
         self._print('Start consuming messages.')
 
@@ -82,6 +81,9 @@ class RabbitMQSource(BaseSource):
 
         message_tuple = namedtuple('Payload', ['method', 'properties', 'body'])
         if self.config.configure_consume is True:
+
+            inactivity_timeout = self.config.consume_config.inactivity_timeout
+
             for method, properties, body in self.channel.consume(
                     self.config.queue_name,
                     self.config.consume_config.auto_ack,
@@ -94,7 +96,9 @@ class RabbitMQSource(BaseSource):
                 self.__print_message(full_message)
                 handler(full_message, **{'channel': self.channel})
         else:
-            for method, properties, body in self.channel.consume():
+            for method, properties, body in self.channel.consume(
+                self.config.queue_name
+            ):
                 full_message = message_tuple(method, properties, body)
                 self.__print_message(full_message)
                 handler(full_message, **{'channel': self.channel})
