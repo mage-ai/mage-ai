@@ -87,8 +87,10 @@ class UserResource(DatabaseResource):
             error = ApiError.RESOURCE_INVALID.copy()
 
             if self.current_user.id == self.id or not self.current_user.owner:
-                if not password_current or \
-                    not verify_password(password_current, self.password_hash):
+                if not password_current or not verify_password(
+                    password_current,
+                    self.password_hash,
+                ):
                     error.update(
                         {'message': 'Current password is incorrect.'})
                     raise ApiError(error)

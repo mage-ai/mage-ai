@@ -9,6 +9,7 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -267,4 +268,4 @@ PipelineRunsMonitor.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineRunsMonitor;
+export default PrivateRoute(PipelineRunsMonitor);

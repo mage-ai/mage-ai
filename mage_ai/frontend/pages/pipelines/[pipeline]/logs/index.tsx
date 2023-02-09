@@ -23,6 +23,7 @@ import LogDetail from '@components/Logs/Detail';
 import LogType, { LogRangeEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
@@ -53,15 +54,15 @@ const LOG_UUID_PARAM = 'log_uuid';
 const PIPELINE_RUN_ID_PARAM = 'pipeline_run_id[]';
 const BLOCK_RUN_ID_PARAM = 'block_run_id[]';
 
-type BlockRunsProp = {
+type PipelineLogsPageProp = {
   pipeline: {
     uuid: string;
   };
 };
 
-function BlockRuns({
+function PipelineLogsPage({
   pipeline: pipelineProp,
-}: BlockRunsProp) {
+}: PipelineLogsPageProp) {
   const themeContext = useContext(ThemeContext);
   const bottomOfPageButtonRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
@@ -525,7 +526,7 @@ function BlockRuns({
   );
 }
 
-BlockRuns.getInitialProps = async (ctx: any) => {
+PipelineLogsPage.getInitialProps = async (ctx: any) => {
   const {
     pipeline: pipelineUUID,
   }: {
@@ -539,4 +540,4 @@ BlockRuns.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default BlockRuns;
+export default PrivateRoute(PipelineLogsPage);

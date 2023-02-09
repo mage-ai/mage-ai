@@ -11,6 +11,7 @@ import BackfillType from '@interfaces/BackfillType';
 import BackfillsTable from '@components/Backfills/Table';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetailPage from '@components/PipelineDetailPage';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import RowDetail from '@components/Backfills/RowDetail';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -196,4 +197,4 @@ PipelineBackfills.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineBackfills;
+export default PrivateRoute(PipelineBackfills);

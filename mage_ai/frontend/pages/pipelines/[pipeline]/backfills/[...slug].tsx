@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import BackfillDetail from '@components/Backfills/Detail';
 import BackfillEdit from '@components/Backfills/Edit';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import api from '@api';
 
 type BackfillDetailPageProps = {
@@ -79,5 +80,5 @@ BackfillDetailPage.getInitialProps= async(ctx: any) => {
   };
 };
 
-export default BackfillDetailPage;
+export default PrivateRoute(BackfillDetailPage);
 
