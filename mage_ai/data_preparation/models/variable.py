@@ -343,7 +343,7 @@ class Variable:
                 if is_object_dtype(series_non_null.dtype):
                     try:
                         df_output[c] = series_non_null.astype(coltype)
-                    except Exception as err:
+                    except Exception:
                         # Fall back to convert to string
                         # df_output[c] = series_non_null.astype(str)
                         pass
@@ -356,7 +356,10 @@ class Variable:
         self.storage.makedirs(self.variable_path, exist_ok=True)
 
         ddf = dask_from_pandas(df_output)
-        df_output_serialized = apply_transform(ddf, lambda row: serialize_columns(row, column_types))
+        df_output_serialized = apply_transform(
+            ddf,
+            lambda row: serialize_columns(row, column_types),
+        )
 
         self.storage.write_parquet(
             df_output_serialized,
