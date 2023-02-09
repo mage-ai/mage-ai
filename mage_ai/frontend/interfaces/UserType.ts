@@ -5,7 +5,10 @@ export default interface UserType {
   id?: string;
   last_name?: string;
   owner?: boolean;
-  roles?: integer;
+  password?: string;
+  password_confirmation?: string;
+  password_current?: string;
+  roles?: number;
   roles_display?: string;
   username?: string;
 }

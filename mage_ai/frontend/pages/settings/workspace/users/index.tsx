@@ -123,7 +123,6 @@ function UsersListPage() {
       <Spacing p={PADDING_UNITS}>
         <Button
           beforeIcon={<Add />}
-          bold
           onClick={() => goToWithQuery({
             add_new_user: 1,
             user_id: null,

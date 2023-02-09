@@ -47,6 +47,7 @@ function UserEditForm({
           callback: ({
             user: userServer,
           }) => {
+            // @ts-ignore
             const newProfile = selectKeys(userServer, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
               uuid,
             }) => uuid));
@@ -90,6 +91,7 @@ function UserEditForm({
  const userPrev = usePrevious(user);
   useEffect(() => {
     if (user && (!profile || userPrev?.id !== user?.id)) {
+      // @ts-ignore
       setProfile(selectKeys(user, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
         uuid,
       }) => uuid)));
@@ -211,6 +213,7 @@ function UserEditForm({
           <Button
             disabled={buttonDisabled || (errors && !isEmptyObject(errors))}
             loading={isLoading}
+            // @ts-ignore
             onClick={() => updateUser({ user: profile })}
             primary
           >

@@ -1,7 +1,8 @@
 export interface UserFieldType {
-  autoComplete?: boolean | string;
+  autoComplete?: string;
   disabled?: boolean;
   label: string;
+  required?: boolean;
   type?: string;
   uuid: string;
 }

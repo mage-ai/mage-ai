@@ -37,7 +37,7 @@ export const SECTIONS = ({ owner }: { owner?: boolean }) => {
     return arr;
   }
 
-  return arr + [
+  return arr.concat([
     {
       items: [
         {
@@ -49,5 +49,5 @@ export const SECTIONS = ({ owner }: { owner?: boolean }) => {
       ],
       uuid: SECTION_UUID_ACCOUNT,
     },
-  ];
-}
+  ]);
+};
