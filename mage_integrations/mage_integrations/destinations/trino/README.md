@@ -20,6 +20,7 @@ You must enter the following credentials when configuring this source:
 | `port` | Port of the running database (typically 8080). | `8080` (default value) |
 | `query_max_length` | The maximum number of characters allowed for the SQL query text. | `1000000` (default value) |
 | `ssl` | In order to disable SSL verification, set the verify parameter to `false`. | `false` (default value) |
+| `location` | Used by deltalake connector to specify the location of the data. | `s3://[bucket]/` |
 
 ### Connectors
 

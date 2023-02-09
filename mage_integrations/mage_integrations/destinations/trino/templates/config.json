@@ -8,5 +8,6 @@
   "schema": "",
   "ssl": false,
   "table": "",
-  "username": ""
+  "username": "",
+  "location": ""
 }

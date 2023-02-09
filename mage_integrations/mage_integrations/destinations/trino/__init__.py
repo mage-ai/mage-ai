@@ -1,5 +1,6 @@
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.trino.connectors.base import TrinoConnector
+from mage_integrations.destinations.trino.connectors.deltalake import TrinoDeltalake
 from mage_integrations.destinations.trino.connectors.iceberg import TrinoIceberg
 import copy
 
@@ -16,6 +17,8 @@ class Trino(Destination):
         klass = TrinoConnector
         if 'iceberg' == connector:
             klass = TrinoIceberg
+        elif 'delta-lake' == connector:
+            klass = TrinoDeltalake
 
         return klass(argument_parser=argument_parser, **kwargs)
 

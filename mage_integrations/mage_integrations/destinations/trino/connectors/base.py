@@ -58,6 +58,7 @@ class TrinoConnector(Destination):
                 columns=schema['properties'].keys(),
                 full_table_name=f'{schema_name}.{table_name}',
                 if_not_exists=True,
+                location=self.table_location(table_name),
                 # Unique constraint is not supported
                 # https://trino.io/docs/current/sql/create-table.html
                 unique_constraints=None,
@@ -278,6 +279,14 @@ DESCRIBE {schema_name}.{table_name}
 
     def string_parse_func(self, value: str, column_type_dict: Dict) -> str:
         return convert_json_or_string(value, column_type_dict)
+
+    def table_location(self, table_name):
+        if not self.config.get('location'):
+            return None
+        location = self.config.get('location')
+        if not location.endswith('/'):
+            location += '/'
+        return location + table_name
 
     def wrap_insert_commands(self, commands: List[str]) -> List[str]:
         commands_string = '\n'.join(commands)
