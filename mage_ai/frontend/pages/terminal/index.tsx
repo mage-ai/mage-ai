@@ -1,9 +1,10 @@
 import { useMutation } from 'react-query';
 
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Terminal from '@components/Terminal';
 import api from '@api';
 import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
-import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
+import { onSuccess } from '@api/utils/response';
 
 function TerminalPage() {
   const [interruptKernel] = useMutation(
@@ -27,4 +28,6 @@ function TerminalPage() {
   );
 }
 
-export default TerminalPage;
+TerminalPage.getInitialProps = async () => ({});
+
+export default PrivateRoute(TerminalPage);
