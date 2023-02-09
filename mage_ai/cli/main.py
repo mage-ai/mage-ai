@@ -45,10 +45,12 @@ def start(
     Start Mage server and UI.
     """
     from mage_ai.data_preparation.repo_manager import set_repo_path
-    from mage_ai.server.server import start_server
 
+    # Set repo_path before intializing the DB so that we can get correct db_connection_url
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
+
+    from mage_ai.server.server import start_server
 
     start_server(
         host=host,
