@@ -38,12 +38,22 @@ class BlockStatus(str, Enum):
 
 class BlockType(str, Enum):
     CHART = 'chart'
+    CUSTOM = 'custom'
     DATA_EXPORTER = 'data_exporter'
     DATA_LOADER = 'data_loader'
     DBT = 'dbt'
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'
     TRANSFORMER = 'transformer'
+
+
+class BlockColor(str, Enum):
+    BLUE = 'blue'
+    GREY = 'grey'
+    PINK = 'pink'
+    PURPLE = 'purple'
+    TEAL = 'teal'
+    YELLOW = 'yellow'
 
 
 class ExecutorType(str, Enum):

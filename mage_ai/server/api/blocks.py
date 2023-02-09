@@ -114,6 +114,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
             payload.get('name') or payload.get('uuid'),
             payload.get('type'),
             get_repo_path(),
+            color=payload.get('color'),
             config=payload.get('config'),
             configuration=payload.get('configuration'),
             language=payload.get('language'),

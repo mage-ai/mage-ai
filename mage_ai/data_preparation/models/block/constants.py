@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.constants import BlockType
 
 
 BLOCK_TYPE_TO_CLASS = {
+    BlockType.CUSTOM: Block,
     BlockType.DATA_EXPORTER: Block,
     BlockType.DATA_LOADER: Block,
     BlockType.DBT: DBTBlock,

@@ -14,6 +14,7 @@ from mage_ai.data_preparation.models.block.utils import (
     output_variables,
 )
 from mage_ai.data_preparation.models.constants import (
+    BlockColor,
     BlockLanguage,
     BlockStatus,
     BlockType,
@@ -210,6 +211,7 @@ class Block:
         name: str,
         uuid: str,
         block_type: BlockType,
+        block_color: BlockColor = None,
         content: str = None,
         executor_config: Dict = None,
         executor_type: ExecutorType = ExecutorType.LOCAL_PYTHON,
@@ -227,6 +229,7 @@ class Block:
         self.status = status
         self.pipeline = pipeline
         self.language = language or BlockLanguage.PYTHON
+        self.color = block_color
         self.configuration = configuration
 
         self._outputs = None
@@ -396,6 +399,7 @@ class Block:
         name,
         block_type,
         repo_path,
+        color=None,
         configuration=None,
         language=None,
         pipeline=None,
@@ -441,6 +445,7 @@ class Block:
             name,
             uuid,
             block_type,
+            block_color=color,
             configuration=configuration,
             language=language,
             pipeline=pipeline,
@@ -1165,6 +1170,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
+            color=self.color,
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
             executor_config=self.executor_config,
