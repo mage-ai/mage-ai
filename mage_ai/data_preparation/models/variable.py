@@ -9,13 +9,22 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_MAX_COLUMNS,
     VARIABLE_DIR,
 )
+from mage_ai.data_preparation.models.utils import (
+    apply_transform,
+    dask_from_pandas,
+    deserialize_columns,
+    serialize_columns,
+)
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from pandas.api.types import is_object_dtype
 from typing import Any, Dict, List
+import json
+import numpy as np
 import os
 import pandas as pd
 
+DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
 DATAFRAME_PARQUET_FILE = 'data.parquet'
 DATAFRAME_PARQUET_SAMPLE_FILE = 'sample_data.parquet'
 DATAFRAME_CSV_FILE = 'data.csv'
@@ -294,6 +303,14 @@ class Variable:
             sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
             if df.shape[0] > sample_count:
                 df = df.iloc[:sample_count]
+
+        column_types_filename = os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE)
+        if os.path.exists(column_types_filename):
+            with open(column_types_filename, 'r') as f:
+                column_types = json.load(f)
+                ddf = dask_from_pandas(df)
+                df = apply_transform(ddf, lambda row: deserialize_columns(row, column_types))
+
         return df
 
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
@@ -315,33 +332,55 @@ class Variable:
         df_sample_output.to_file(os.path.join(self.variable_path, 'sample_data.sh'))
 
     def __write_parquet(self, data: pd.DataFrame) -> None:
+        column_types = {}
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types
         for c in df_output.columns:
             series_non_null = df_output[c].dropna()
-            if len(series_non_null) > 0 and is_object_dtype(series_non_null.dtype):
+            if len(series_non_null) > 0:
                 coltype = type(series_non_null.iloc[0])
-                try:
-                    df_output[c] = series_non_null.astype(coltype)
-                except Exception:
-                    # Fall back to convert to string
-                    df_output[c] = series_non_null.astype(str)
+
+                if is_object_dtype(series_non_null.dtype):
+                    try:
+                        df_output[c] = series_non_null.astype(coltype)
+                    except Exception:
+                        # Fall back to convert to string
+                        # df_output[c] = series_non_null.astype(str)
+                        pass
+
+                if coltype.__module__ == np.__name__:
+                    column_types[c] = type(series_non_null.iloc[0].item()).__name__
+                else:
+                    column_types[c] = coltype.__name__
+
         self.storage.makedirs(self.variable_path, exist_ok=True)
+
+        ddf = dask_from_pandas(df_output)
+        df_output_serialized = apply_transform(
+            ddf,
+            lambda row: serialize_columns(row, column_types),
+        )
+
         self.storage.write_parquet(
-            df_output,
+            df_output_serialized,
             os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE),
         )
+
+        with open(os.path.join(self.variable_path, DATAFRAME_COLUMN_TYPES_FILE), 'w') as f:
+            f.write(json.dumps(column_types))
+
         try:
-            df_sample_output = df_output.iloc[
+            df_sample_output = df_output_serialized.iloc[
                 :DATAFRAME_SAMPLE_COUNT,
                 :DATAFRAME_SAMPLE_MAX_COLUMNS
             ]
+
             self.storage.write_parquet(
                 df_sample_output,
                 os.path.join(self.variable_path, DATAFRAME_PARQUET_SAMPLE_FILE),
             )
-        except Exception:
-            pass
+        except Exception as err:
+            print(f'Sample output error: {err}.')
 
     def __write_spark_parquet(self, data) -> None:
         (

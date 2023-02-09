@@ -178,6 +178,8 @@ class Postgres(BaseSQL):
             return 'boolean'
         elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
             return 'bigint'
+        elif dtype == PandasTypes.EMPTY:
+            return 'text'
         else:
             print(f'Invalid datatype provided: {dtype}')
 

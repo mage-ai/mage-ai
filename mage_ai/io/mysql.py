@@ -127,6 +127,8 @@ class MySQL(BaseSQL):
             return 'CHAR(52)'
         elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
             return 'BIGINT'
+        elif dtype == PandasTypes.EMPTY:
+            return 'CHAR(255)'
         else:
             print(f'Invalid datatype provided: {dtype}')
 

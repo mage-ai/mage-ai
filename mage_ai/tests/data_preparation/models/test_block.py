@@ -80,6 +80,64 @@ def remove_duplicate_rows(df):
         self.assertTrue(len(analysis['statistics']) > 0)
         self.assertTrue(len(analysis['insights']) > 0)
 
+    def test_execute_dicts_and_lists(self):
+        pipeline = Pipeline.create(
+            'test_pipeline_execute_dicts_and_lists',
+            repo_path=self.repo_path,
+        )
+        block1 = Block.create(
+            'test_data_loader_2',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        block2 = Block.create(
+            'test_transformer_2',
+            'transformer',
+            self.repo_path,
+            pipeline=pipeline,
+            upstream_block_uuids=['test_data_loader_2'],
+        )
+        with open(block1.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    data = {
+        'col1': [1, 1, 3],
+        'col2': [2, 2, 4],
+        'col3': [dict(mage=1), dict(mage=2), dict(mage=3)],
+        'col4': [[dict(mage=1)], [dict(mage=2)], [dict(mage=3)]],
+    }
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        with open(block2.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@transformer
+def remove_duplicate_rows(df):
+    df_transformed = df
+    return [df_transformed]
+            ''')
+        asyncio.run(block1.execute())
+        asyncio.run(block2.execute())
+
+        variable_manager = VariableManager(
+            variables_dir=get_repo_config(self.repo_path).variables_dir,
+        )
+        data = variable_manager.get_variable(
+            pipeline.uuid,
+            block2.uuid,
+            'output_0',
+            variable_type='dataframe'
+        )
+        df_final = pd.DataFrame({
+            'col1': [1, 1, 3],
+            'col2': [2, 2, 4],
+            'col3': [dict(mage=1), dict(mage=2), dict(mage=3)],
+            'col4': [[dict(mage=1)], [dict(mage=2)], [dict(mage=3)]],
+        })
+        assert_frame_equal(data, df_final)
+
     def test_execute_multiple_upstream_blocks(self):
         pipeline = Pipeline.create(
             'test pipeline 2',
@@ -124,7 +182,7 @@ def load_data():
             file.write('''import pandas as pd
 @transformer
 def union_datasets(df1, df2):
-    df_union = pd.concat([df1, df2])
+    df_union = pd.concat([df1, df2]).reset_index(drop=True)
     return [df_union]
             ''')
         asyncio.run(block1.execute(analyze_outputs=True))
@@ -149,7 +207,8 @@ def union_datasets(df1, df2):
         df_final = pd.concat([
             pd.DataFrame({'col1': [1, 3], 'col2': [2, 4]}),
             pd.DataFrame({'col1': [5], 'col2': [6]}),
-        ])
+        ]).reset_index(drop=True)
+
         assert_frame_equal(data, df_final)
         self.assertEqual(
             analysis['metadata']['column_types'],
