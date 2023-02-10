@@ -224,7 +224,6 @@ function CommandButtons({
       {isInProgress && (
         <Spacing ml={PADDING_UNITS}>
           <Tooltip
-            appearAbove
             appearBefore
             default
             label={(
