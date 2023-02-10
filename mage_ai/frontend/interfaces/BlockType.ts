@@ -41,6 +41,7 @@ export enum BlockColorEnum {
 
 export const BLOCK_TYPES = [
   BlockTypeEnum.CHART,
+  BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.SCRATCHPAD,
