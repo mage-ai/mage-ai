@@ -506,8 +506,6 @@ def create_upstream_tables(
             trino.create_upstream_block_tables(
                 loader,
                 block,
-                cache_upstream_dbt_models=cache_upstream_dbt_models,
-                configuration=configuration,
                 **kwargs_shared,
             )
 
@@ -575,7 +573,9 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
 
     profile = get_profile(block, profile_target)
 
-    with open(f'{project_full_path}/target/compiled/{file_path}', 'r') as f:
+    file = f'{project_full_path}/target/compiled/{file_path}'
+
+    with open(file, 'r') as f:
         query_string = f.read()
 
         profile_type = profile.get('type')

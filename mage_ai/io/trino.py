@@ -1,14 +1,23 @@
+from io import StringIO
+from mage_ai.io.base import ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.export_utils import (
+    clean_df_for_export,
+    infer_dtypes,
+)
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.utils import (
     clean_name,
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_trino_type,
 )
-from trino.dbapi import Connection, Cursor as CursorParent
+from sqlalchemy import create_engine
+from trino.auth import BasicAuthentication
+from trino.dbapi import connect, Connection, Cursor as CursorParent
 from trino.transaction import IsolationLevel
 from typing import IO, Mapping, Union
 from pandas import DataFrame, Series
+import pandas as pd
 
 
 class Cursor(CursorParent):
@@ -40,6 +49,8 @@ class ConnectionWrapper(Connection):
         )
 
 class Trino(BaseSQL):
+    QUERY_MAX_LENGTH = 100_000
+
     def __init__(
         self,
         catalog: str,
@@ -79,13 +90,28 @@ class Trino(BaseSQL):
     ):
         query = []
         for cname in dtypes:
-            query.append(f'`{clean_name(cname)}` {dtypes[cname]}')
+            query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
 
-        return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
+        return f'CREATE TABLE {table_name} (' + ','.join(query) + ')'
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to Trino database'):
-            self._ctx = ConnectionWrapper(**self.settings)
+            connect_kwargs = dict(
+                catalog=self.settings['catalog'],
+                host=self.settings['host'],
+                port=self.settings['port'],
+                schema=self.settings['schema'],
+                user=self.settings['user'],
+            )
+
+            if self.settings.get('password'):
+                connect_kwargs['auth'] = \
+                    BasicAuthentication(
+                        self.settings['user'],
+                        self.settings['password'],
+                    )
+                connect_kwargs['http_scheme'] = 'https'
+            self._ctx = ConnectionWrapper(**connect_kwargs)
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
@@ -102,15 +128,139 @@ class Trino(BaseSQL):
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:
-        values_placeholder = ', '.join(["%s" for _ in range(len(df.columns))])
         values = []
         for _, row in df.iterrows():
-            values.append(tuple(row))
+            t = tuple(row)
+            if len(t) == 1:
+                values.append(f'({str(t[0])})')
+            else:
+                values.append(str(t))
 
-        sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
-        cursor.executemany(sql, values)
+        value_payload_size = 0
+        subbatch_query = []
+        for value in values:
+            subbatch_query.append(value)
+            value_payload_size += len(value) + 2
+            if value_payload_size >= self.QUERY_MAX_LENGTH:
+                values_string = ', '.join(subbatch_query)
+                sql = f'INSERT INTO {full_table_name} VALUES {values_string}'
+                cursor.execute(sql)
+                subbatch_query = []
+                value_payload_size = 0
+
+        values_string = ', '.join(subbatch_query)
+        sql = f'INSERT INTO {full_table_name} VALUES {values_string}'
+        cursor.execute(sql)
 
     def get_type(self, column: Series, dtype: str) -> str:
         return convert_python_type_to_trino_type(
             convert_pandas_dtype_to_python_type(dtype)
         )
+
+    def export(
+        self,
+        df: DataFrame,
+        schema_name: str,
+        table_name: str,
+        if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
+        index: bool = False,
+        verbose: bool = True,
+        query_string: Union[str, None] = None,
+        drop_table_on_replace: bool = False,
+        cascade_on_drop: bool = False,
+    ) -> None:
+        """
+        Exports dataframe to the connected database from a Pandas data frame. If table doesn't
+        exist, the table is automatically created. If the schema doesn't exist, the schema is
+        also created.
+
+        Args:
+            schema_name (str): Name of the schema of the table to export data to.
+            table_name (str): Name of the table to insert rows from this data frame into.
+            if_exists (ExportWritePolicy): Specifies export policy if table exists. Either
+                - `'fail'`: throw an error.
+                - `'replace'`: drops existing table and creates new table of same name.
+                - `'append'`: appends data frame to existing table. In this case the schema must
+                                match the original table.
+            Defaults to `'replace'`.
+            index (bool): If true, the data frame index is also exported alongside the table.
+                            Defaults to False.
+            **kwargs: Additional query parameters.
+        """
+
+        if type(df) is dict:
+            df = pd.DataFrame([df])
+        elif type(df) is list:
+            df = pd.DataFrame(df)
+
+        catalog = self.settings['catalog']
+        schema = self.settings['schema']
+        full_table_name = f'{catalog}.{schema}.{table_name}'
+
+        if not query_string:
+            if index:
+                df = df.reset_index()
+
+            dtypes = infer_dtypes(df)
+            df = clean_df_for_export(df, self.clean, dtypes)
+
+        def __process():
+            buffer = StringIO()
+            table_exists = self.table_exists(schema, table_name)
+
+            with self.conn.cursor() as cur:
+                if schema:
+                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}')
+
+                should_create_table = not table_exists
+
+                if table_exists:
+                    if ExportWritePolicy.FAIL == if_exists:
+                        raise ValueError(
+                            f'Table \'{full_table_name}\' already exists in database.'
+                        )
+                    elif ExportWritePolicy.REPLACE == if_exists:
+                        if drop_table_on_replace:
+                            cmd = f'DROP TABLE {full_table_name}'
+                            if cascade_on_drop:
+                                cmd = f'{cmd} CASCADE'
+                            cur.execute(cmd)
+                            should_create_table = True
+                        else:
+                            cur.execute(f'DELETE FROM {full_table_name}')
+
+                if query_string:
+                    query = 'CREATE TABLE {} AS\n{}'.format(
+                        full_table_name,
+                        query_string,
+                    )
+
+                    if ExportWritePolicy.APPEND == if_exists and table_exists:
+                        query = 'INSERT INTO {}\n{}'.format(
+                            full_table_name,
+                            query_string,
+                        )
+                    cur.execute(query)
+                else:
+                    if should_create_table:
+                        db_dtypes = {
+                            col: self.get_type(df[col], dtypes[col])
+                            for col in dtypes
+                        }
+                        query = self.build_create_table_command(
+                            db_dtypes,
+                            schema_name,
+                            table_name,
+                        )
+                        cur.execute(query)
+
+                    self.upload_dataframe(cur, df, full_table_name, buffer)
+            self.conn.commit()
+
+        if verbose:
+            with self.printer.print_msg(
+                f'Exporting data to \'{full_table_name}\''
+            ):
+                __process()
+        else:
+            __process()

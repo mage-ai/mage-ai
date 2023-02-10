@@ -95,4 +95,4 @@ def convert_python_type_to_trino_type(python_type):
         return 'BOOLEAN'
     elif python_type is datetime:
         return 'TIMESTAMP'
-    return 'STRING'
+    return 'VARCHAR'
