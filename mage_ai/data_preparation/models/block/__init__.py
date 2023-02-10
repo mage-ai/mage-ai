@@ -297,10 +297,11 @@ class Block:
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
 
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
+        block_directory = f'{self.type}s' if self.type != BlockType.CUSTOM else self.type
 
         return os.path.join(
             repo_path or os.getcwd(),
-            f'{self.type}s/{self.uuid}.{file_extension}',
+            f'{block_directory}/{self.uuid}.{file_extension}',
         )
 
     @property
@@ -421,7 +422,8 @@ class Block:
         language = language or BlockLanguage.PYTHON
 
         if BlockType.DBT != block_type or BlockLanguage.YAML == language:
-            block_dir_path = os.path.join(repo_path, f'{block_type}s')
+            block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
+            block_dir_path = os.path.join(repo_path, block_directory)
             if not os.path.exists(block_dir_path):
                 os.mkdir(block_dir_path)
                 with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
@@ -1201,7 +1203,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
                         error='No such file or directory',
-                        message='You may have moved it or changed it’s filename. '
+                        message='You may have moved it or changed its filename. '
                         'Delete the current block to remove it from the pipeline or write code ' +
                         f'and save the pipeline to create a new file at {file_path}.',
                     )
@@ -1225,7 +1227,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 if not os.path.isfile(file_path):
                     data['error'] = dict(
                         error='No such file or directory',
-                        message='You may have moved it or changed it’s filename. '
+                        message='You may have moved it or changed its filename. '
                         'Delete the current block to remove it from the pipeline or write code ' +
                         f'and save the pipeline to create a new file at {file_path}.',
                     )
