@@ -12,6 +12,7 @@ You must enter the following credentials when configuring this source:
 | --- | --- | --- |
 | `account` | Your Snowflake [account ID](https://docs.snowflake.com/en/user-guide/admin-account-identifier.html). | `abc1234.us-east-1` |
 | `database` | The name of the database you want to export data to. | `DEMO_DB` |
+| `disable_double_quotes` | If `true`, table names and columns won’t automatically have double quotes around them. | `false` (default value) |
 | `password` | Password for the user to access the database. | `abc123...` |
 | `schema` | Schema of the data you want to export to. | `PUBLIC` |
 | `table` | Name of the table that will be created to store data from your source. | `dim_users_v1` |

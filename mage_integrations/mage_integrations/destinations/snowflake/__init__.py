@@ -59,6 +59,16 @@ def convert_column_if_json(value, column_type):
 
 
 class Snowflake(Destination):
+    @property
+    def column_identifier(self) -> str:
+        if self.disable_double_quotes:
+            return ''
+        return '"'
+
+    @property
+    def disable_double_quotes(self) -> bool:
+        return self.config.get('disable_double_quotes', False)
+
     def build_connection(self) -> SnowflakeConnection:
         return SnowflakeConnection(
             account=self.config['account'],
@@ -78,18 +88,24 @@ class Snowflake(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        return [
-            build_create_table_command(
-                column_type_mapping=column_type_mapping(
-                    schema,
-                    convert_column_type,
-                    lambda item_type_converted: 'ARRAY',
-                ),
-                columns=schema['properties'].keys(),
-                full_table_name=f'"{database_name}"."{schema_name}"."{table_name}"',
-                unique_constraints=unique_constraints,
-                column_identifier='"',
+        cmd = build_create_table_command(
+            column_type_mapping=column_type_mapping(
+                schema,
+                convert_column_type,
+                lambda item_type_converted: 'ARRAY',
             ),
+            columns=schema['properties'].keys(),
+            full_table_name=self.full_table_name(
+                database_name,
+                schema_name,
+                table_name,
+            ),
+            unique_constraints=unique_constraints,
+            column_identifier=self.column_identifier,
+        )
+
+        return [
+            cmd,
         ]
 
     def build_alter_table_commands(
@@ -101,13 +117,14 @@ class Snowflake(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        results = self.build_connection().load(f"""
+        query = f"""
 SELECT
     column_name
     , data_type
 FROM {database_name}.INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
-        """)
+WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
+        """
+        results = self.build_connection().load(query)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
@@ -124,8 +141,12 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                     lambda item_type_converted: 'ARRAY',
                 ),
                 columns=new_columns,
-                full_table_name=f'"{database_name}"."{schema_name}"."{table_name}"',
-                column_identifier='"',
+                full_table_name=self.full_table_name(
+                    database_name,
+                    schema_name,
+                    table_name,
+                ),
+                column_identifier=self.column_identifier,
             ),
         ]
 
@@ -139,8 +160,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        full_table_name = f'"{database_name}"."{schema_name}"."{table_name}"'
-        full_table_name_temp = f'"{database_name}"."{schema_name}"."temp_{table_name}"'
+        full_table_name = self.full_table_name(database_name, schema_name, table_name)
+        full_table_name_temp = self.full_table_name_temp(database_name, schema_name, table_name)
 
         columns = list(schema['properties'].keys())
         mapping = column_type_mapping(
@@ -154,7 +175,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             convert_array_func=convert_array,
             convert_column_to_type_func=convert_column_if_json,
             records=records,
-            column_identifier='"'
+            column_identifier=self.column_identifier,
         )
 
         insert_columns = ', '.join(insert_columns)
@@ -190,8 +211,14 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 f'FROM VALUES {insert_values}',
             ])]
 
-            unique_constraints_clean = [f'"{clean_column_name(col)}"' for col in unique_constraints]
-            columns_cleaned = [f'"{clean_column_name(col)}"' for col in columns]
+            unique_constraints_clean = [
+                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                for col in unique_constraints
+            ]
+            columns_cleaned = [
+                f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
+                for col in columns
+            ]
 
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
@@ -232,6 +259,18 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         return [
             f'USE DATABASE {database_name}',
         ] + super().build_create_schema_commands(database_name, schema_name)
+
+    def full_table_name(self, database_name: str, schema_name: str, table_name: str) -> str:
+        if self.disable_double_quotes:
+            return f'{database_name}.{schema_name}.{table_name}'
+
+        return f'"{database_name}"."{schema_name}"."{table_name}"'
+
+    def full_table_name_temp(self, database_name: str, schema_name: str, table_name: str) -> str:
+        if self.disable_double_quotes:
+            return f'{database_name}.{schema_name}.temp_{table_name}'
+
+        return f'"{database_name}"."{schema_name}"."temp_{table_name}"'
 
     def does_table_exist(
         self,
