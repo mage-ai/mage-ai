@@ -3,6 +3,7 @@ from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import DBTestCase
+from unittest.mock import patch
 import asyncio
 import json
 import os
@@ -504,6 +505,13 @@ class PipelineTest(DBTestCase):
             pipeline_load.to_dict(),
             pipeline.to_dict(),
         )
+
+    def test_save_with_empty_content(self):
+        pipeline = self.__create_pipeline_with_blocks('test pipeline 11')
+        with patch.object(pipeline, 'to_dict', return_value=dict()):
+            with self.assertRaises(Exception) as err:
+                pipeline.save()
+            self.assertTrue('Writing empty pipeline metadata is prevented.' in str(err.exception))
 
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(
