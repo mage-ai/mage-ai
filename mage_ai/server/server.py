@@ -58,7 +58,6 @@ from mage_ai.server.api.integration_sources import (
     ApiIntegrationSourcesHandler,
 )
 from mage_ai.server.api.logs import ApiPipelineLogListHandler
-from mage_ai.server.api.monitor import ApiMonitorStatsHandler
 from mage_ai.server.api.orchestration import (
     ApiAllBlockRunListHandler,
     ApiPipelineRunDetailHandler,
@@ -546,7 +545,6 @@ def make_app():
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
 
         # API v1 routes
-        (r'/api/monitor_stats/(?P<stats_type>\w+)', ApiMonitorStatsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
         (r'/api/pipelines', ApiPipelineListHandler),

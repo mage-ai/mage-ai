@@ -83,7 +83,7 @@ function PipelineRunsMonitor({
 
   const {
     stats: monitorStats,
-  } = dataMonitor?.monitor_stats || {};
+  } = dataMonitor?.monitor_stat || {};
 
   const dateRange = useMemo(() => {
     let date = new Date()

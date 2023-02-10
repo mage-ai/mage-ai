@@ -20,6 +20,7 @@ from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import merge_dict, ignore_keys
 import importlib
 import inflection
+from typing import Dict
 
 
 def classify(name):
@@ -41,7 +42,7 @@ class BaseOperation():
         self.oauth_token = kwargs.get('oauth_token')
         self.options = kwargs.get('options', {})
         self.payload = kwargs.get('payload', {})
-        self.query = kwargs.get('query', {}) or {}
+        self._query = kwargs.get('query', {}) or {}
         self.resource = kwargs.get('resource')
         self.resource_parent = kwargs.get('resource_parent')
         self.resource_parent_id = kwargs.get('resource_parent_id')
@@ -101,6 +102,26 @@ class BaseOperation():
             else:
                 response['error'] = self.__present_error(err)
         return response
+
+    @property
+    def query(self) -> Dict:
+        if not self._query:
+            return {}
+
+        query = {}
+        for key, values in self._query.items():
+            query[key] = values
+            if type(values) is list:
+                arr = []
+                for v in values:
+                    try:
+                        v = v.decode()
+                    except (UnicodeDecodeError, AttributeError):
+                        pass
+                    arr.append(v)
+                query[key] = arr
+
+        return query
 
     def __executed_result(self):
         if self.action in [CREATE, LIST]:
