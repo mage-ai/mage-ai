@@ -139,7 +139,7 @@ function PipelineDetailPage({
     data,
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
-    include_outputs: isEmptyObject(messages),
+    includes_outputs: isEmptyObject(messages),
   });
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);

@@ -128,67 +128,6 @@ class ManagePageHandler(tornado.web.RequestHandler):
         self.render('manage.html')
 
 
-class ApiPipelineHandler(BaseHandler):
-    def delete(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
-        response = dict(pipeline=pipeline.to_dict())
-        pipeline.delete()
-        self.write(response)
-
-    async def get(self, pipeline_uuid):
-        pipeline = await Pipeline.get_async(pipeline_uuid)
-        include_content = self.get_bool_argument('include_content', True)
-        include_outputs = self.get_bool_argument('include_outputs', True)
-        switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
-        self.write(
-            dict(
-                pipeline=await pipeline.to_dict_async(
-                    include_content=include_content,
-                    include_outputs=include_outputs,
-                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                )
-            )
-        )
-        self.finish()
-
-    async def put(self, pipeline_uuid):
-        """
-        Allow updating pipeline name, uuid, status
-        """
-        pipeline = await Pipeline.get_async(pipeline_uuid)
-        update_content = self.get_bool_argument('update_content', False)
-        data = json.loads(self.request.body).get('pipeline', {})
-        await pipeline.update(data, update_content=update_content)
-        switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
-
-        status = data.get('status')
-
-        @safe_db_query
-        def update_schedule_status(status):
-            schedules = (
-                PipelineSchedule.
-                query.
-                filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
-            ).all()
-            for schedule in schedules:
-                schedule.update(status=status)
-
-        if status and status in [
-            PipelineSchedule.ScheduleStatus.ACTIVE.value,
-            PipelineSchedule.ScheduleStatus.INACTIVE.value,
-        ]:
-            update_schedule_status(status)
-
-        resp = dict(
-            pipeline=await pipeline.to_dict_async(
-                include_content=update_content,
-                include_outputs=update_content,
-                sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-            )
-        )
-        self.write(resp)
-
-
 class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
         pipeline = Pipeline.get(pipeline_uuid)
@@ -544,10 +483,12 @@ def make_app():
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
 
-        # API v1 routes
+        # Where is this used?
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
-        (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
+
+        # API v1 routes
         (r'/api/pipelines', ApiPipelineListHandler),
+
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)/execute',
             ApiPipelineBlockExecuteHandler,

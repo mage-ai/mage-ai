@@ -40,7 +40,7 @@ async def execute_operation(
     action, options = __determine_action(
         request, child=child, child_pk=child_pk, pk=pk)
     try:
-        response = BaseOperation(
+        response = await BaseOperation(
             action=action,
             files=request.files,
             headers=request.headers,

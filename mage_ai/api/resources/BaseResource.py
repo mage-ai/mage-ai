@@ -201,12 +201,12 @@ class BaseResource(Resource):
 
             raise err
 
-    def process_update(self, payload, **kwargs):
+    async def process_update(self, payload, **kwargs):
         self.on_update_callback = None
         self.on_update_failure_callback = None
 
         try:
-            res = self.update(payload, **kwargs)
+            res = await self.update(payload, **kwargs)
 
             if self.on_update_callback:
                 self.on_update_callback(resource=res)

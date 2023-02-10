@@ -18,9 +18,10 @@ from mage_ai.api.result_set import ResultSet
 from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import merge_dict, ignore_keys
+from typing import Dict
 import importlib
 import inflection
-from typing import Dict
+import inspect
 
 
 def classify(name):
@@ -52,11 +53,11 @@ class BaseOperation():
         self.__presentation_format_attr = None
         self.__updated_options_attr = None
 
-    def execute(self):
+    async def execute(self):
         response = {}
         try:
-            result = self.__executed_result()
-            presented = self.__present_results(result)
+            result = await self.__executed_result()
+            presented = await self.__present_results(result)
             attrb = flatten([d.keys() for d in presented]) if issubclass(
                 type(presented), list) else presented.keys()
             if (issubclass(type(result), list) or issubclass(type(result), UserList)):
@@ -118,16 +119,22 @@ class BaseOperation():
                         v = v.decode()
                     except (UnicodeDecodeError, AttributeError):
                         pass
+
+                    if 'true' == v:
+                        v = True
+                    elif 'false' == v:
+                        v = False
+
                     arr.append(v)
                 query[key] = arr
 
         return query
 
-    def __executed_result(self):
+    async def __executed_result(self):
         if self.action in [CREATE, LIST]:
             return self.__create_or_index()
         elif self.action in [DELETE, DETAIL, UPDATE]:
-            return self.__delete_show_or_update()
+            return await self.__delete_show_or_update()
 
     def __create_or_index(self):
         policy = self.__policy_class()(None, self.user, **self.__updated_options())
@@ -157,9 +164,13 @@ class BaseOperation():
                 **options,
             )
 
-    def __delete_show_or_update(self):
+    async def __delete_show_or_update(self):
         res = self.__resource_class().process_member(
             self.pk, self.user, **self.__updated_options())
+
+        if inspect.isawaitable(res):
+            res = await res
+
         policy = self.__policy_class()(res, self.user, **self.__updated_options())
         policy.authorize_action(self.action)
 
@@ -175,7 +186,7 @@ class BaseOperation():
             )
             options = self.__updated_options().copy()
             options.pop('payload', None)
-            res.process_update(self.__payload_for_resource(), **options)
+            await res.process_update(self.__payload_for_resource(), **options)
 
         return res
 
@@ -258,10 +269,10 @@ class BaseOperation():
             payload.update(payload_prev)
         return payload
 
-    def __present_results(self, results):
+    async def __present_results(self, results):
         data = self.__updated_options().copy()
         data.update({'format': self.__presentation_format()})
-        return self.__presenter_class().present_resource(results, self.user, **data)
+        return await self.__presenter_class().present_resource(results, self.user, **data)
 
     def __presentation_format(self):
         if not self.__presentation_format_attr:
