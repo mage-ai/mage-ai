@@ -53,7 +53,11 @@ export function getBlockFromFile(
   // This happens when you open a file from the file browser and edit it on the notebook UI
   if (parts.length === 1) {
     parts = file.path.split('/');
-    blockType = singularize(parts[0] || '');
+    if (parts[0] === BlockTypeEnum.CUSTOM) {
+      blockType = parts[0];
+    } else {
+      blockType = singularize(parts[0] || '');
+    }
   } else {
     // This assumes path default_repo/[block_type]s/..
     if (parts[1] === BlockTypeEnum.CUSTOM) {

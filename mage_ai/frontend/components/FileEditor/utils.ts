@@ -1,4 +1,5 @@
 import BlockType, {
+  BlockColorEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
 } from '@interfaces/BlockType';
@@ -13,7 +14,8 @@ export const getBlockFilename = (path: string[]) => path.at(-1);
 export const getBlockType = (path: string[]): BlockTypeEnum => {
   const blockTypeFolder = path[0];
 
-  if (blockTypeFolder === BlockTypeEnum.DBT) {
+  if (blockTypeFolder === BlockTypeEnum.DBT
+    || blockTypeFolder === BlockTypeEnum.CUSTOM) {
     return blockTypeFolder;
   }
 
@@ -59,6 +61,7 @@ export function buildAddBlockRequestPayload(
     blockUUID = `${nestedFolders}/${blockUUID}`;
   }
 
+  const blockType = getBlockType(file.path.split('/'));
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: {
       file_path: file.path.split('/')[0] === BlockTypeEnum.DBT
@@ -67,8 +70,12 @@ export function buildAddBlockRequestPayload(
     },
     language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
     name: blockUUID,
-    type: getBlockType(file.path.split('/')),
+    type: blockType,
   };
+
+  if (blockType === BlockTypeEnum.CUSTOM) {
+    blockReqPayload.color = BlockColorEnum.TEAL;
+  }
 
   if (isIntegrationPipeline) {
     const dataLoaderBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
