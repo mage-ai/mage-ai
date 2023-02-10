@@ -61,6 +61,7 @@ import { addScratchpadNote } from '@components/PipelineDetail/AddNewBlocks/utils
 import { addUnderscores, randomNameGenerator } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pauseEvent } from '@utils/events';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -204,6 +205,7 @@ function PipelineDetail({
 
   const uuidKeyboard = 'PipelineDetail/index';
   const {
+    disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
     unregisterOnKeyDown,
   } = useKeyboardContext();
@@ -215,6 +217,11 @@ function PipelineDetail({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
+      if (disableGlobalKeyboardShortcuts) {
+        pauseEvent(event);
+        return;
+      }
+
       if (pipelineContentTouched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
         event.preventDefault();
         const warning = 'You have changes that are unsaved. Click cancel and save your changes before reloading page.';
