@@ -305,7 +305,7 @@ class Ads(IncrementalStream):
         a generator, whose calls need decorated with a backoff.
         """
         self.logger.info(f'Call get ads with params: {params}')
-        return self.account.get_ads(fields=self.automatic_fields(), params=params)  # pylint: disable=no-member
+        return self.account.get_ads(fields=self.fields(), params=params)  # pylint: disable=no-member
 
     def __iter__(self):
         def do_request():
@@ -340,7 +340,7 @@ class Ads(IncrementalStream):
         # Added retry_pattern to handle AttributeError raised from ad.api_get() below
         @retry_pattern(backoff.expo, (FacebookRequestError, AttributeError), max_tries=5, factor=5)
         def prepare_record(ad):
-            return ad.api_get(fields=self.fields()).export_all_data()
+            return ad.export_all_data()
 
         if CONFIG.get('include_deleted', 'false').lower() == 'true':
             ads = do_request_multiple()
@@ -365,7 +365,7 @@ class AdSets(IncrementalStream):
         This is necessary because the functions that call this endpoint return
         a generator, whose calls need decorated with a backoff.
         """
-        return self.account.get_ad_sets(fields=self.automatic_fields(), params=params)  # pylint: disable=no-member
+        return self.account.get_ad_sets(fields=self.fields(), params=params)  # pylint: disable=no-member
 
     def __iter__(self):
         def do_request():
@@ -411,7 +411,7 @@ class Campaigns(IncrementalStream):
         This is necessary because the functions that call this endpoint return
         a generator, whose calls need decorated with a backoff.
         """
-        return self.account.get_campaigns(fields=self.automatic_fields(), params=params) # pylint: disable=no-member
+        return self.account.get_campaigns(fields=self.fields(), params=params) # pylint: disable=no-member
 
     def __iter__(self):
         # ads is not a field under campaigns in the SDK. To add ads to this stream, we have to make a separate request
@@ -440,7 +440,7 @@ class Campaigns(IncrementalStream):
         @retry_pattern(backoff.expo, (FacebookRequestError, AttributeError), max_tries=5, factor=5)
         def prepare_record(campaign):
             """If campaign.ads is selected, make the request and insert the data here"""
-            campaign_out = campaign.api_get(fields=fields).export_all_data()
+            campaign_out = campaign.export_all_data()
             if pull_ads:
                 campaign_out['ads'] = {'data': []}
                 ids = [ad['id'] for ad in campaign.get_ads()]
