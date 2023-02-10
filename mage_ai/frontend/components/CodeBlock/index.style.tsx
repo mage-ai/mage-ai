@@ -19,45 +19,45 @@ export function getColorsForBlockType(
   props: {
     blockColor?: BlockColorEnum,
     isSelected?: boolean,
-    theme: ThemeType,
+    theme?: ThemeType,
   },
 ): {
   accent?: string;
   accentLight?: string;
 } {
-  let accent = (props.theme.borders || dark.borders).light;
-  let accentLight = (props.theme.monotone || dark.monotone).grey500;
+  let accent = (props?.theme?.borders || dark.borders).light;
+  let accentLight = (props?.theme?.monotone || dark.monotone).grey500;
   const { blockColor, isSelected, theme } = props || {};
 
   if (isSelected) {
-    accent = (theme.content || dark.content).active;
+    accent = (theme?.content || dark.content).active;
   } else if (BlockTypeEnum.TRANSFORMER === blockType
     || blockColor === BlockColorEnum.PURPLE) {
-    accent = (theme.accent || dark.accent).purple;
-    accentLight = (theme.accent || dark.accent).purpleLight;
+    accent = (theme?.accent || dark.accent).purple;
+    accentLight = (theme?.accent || dark.accent).purpleLight;
   } else if (BlockTypeEnum.DATA_EXPORTER === blockType
     || blockColor === BlockColorEnum.YELLOW) {
-    accent = (theme.accent || dark.accent).yellow;
-    accentLight = (theme.accent || dark.accent).yellowLight;
+    accent = (theme?.accent || dark.accent).yellow;
+    accentLight = (theme?.accent || dark.accent).yellowLight;
   } else if (BlockTypeEnum.DATA_LOADER === blockType
     || blockColor === BlockColorEnum.BLUE) {
-    accent = (theme.accent || dark.accent).blue;
-    accentLight = (theme.accent || dark.accent).blueLight;
+    accent = (theme?.accent || dark.accent).blue;
+    accentLight = (theme?.accent || dark.accent).blueLight;
   } else if (BlockTypeEnum.SENSOR === blockType
     || blockColor === BlockColorEnum.PINK) {
-    accent = (theme.accent || dark.accent).pink;
-    accentLight = (theme.accent || dark.accent).pinkLight;
+    accent = (theme?.accent || dark.accent).pink;
+    accentLight = (theme?.accent || dark.accent).pinkLight;
   } else if (BlockTypeEnum.DBT === blockType) {
-    accent = (theme.accent || dark.accent).dbt;
-    accentLight = (theme.accent || dark.accent).dbtLight;
+    accent = (theme?.accent || dark.accent).dbt;
+    accentLight = (theme?.accent || dark.accent).dbtLight;
   } else if (blockColor === BlockColorEnum.TEAL) {
-    accent = (theme.accent || dark.accent).teal;
-    accentLight = (theme.accent || dark.accent).tealLight;
+    accent = (theme?.accent || dark.accent).teal;
+    accentLight = (theme?.accent || dark.accent).tealLight;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType
     || blockColor === BlockColorEnum.GREY
     || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {
-    accent = (theme.content || dark.content).default;
-    accentLight = (theme.accent || dark.accent).contentDefaultTransparent;
+    accent = (theme?.content || dark.content).default;
+    accentLight = (theme?.accent || dark.accent).contentDefaultTransparent;
   }
 
   return {
