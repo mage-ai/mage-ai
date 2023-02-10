@@ -18,7 +18,7 @@ def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
             continue
 
         val = row[column]
-        if val:
+        if val is not None:
             row[column] = simplejson.dumps(
                 val,
                 default=encode_complex,
@@ -35,7 +35,7 @@ def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
             continue
 
         val = row[column]
-        if val:
+        if val is not None:
             row[column] = simplejson.loads(val)
 
     return row
