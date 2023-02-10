@@ -421,12 +421,15 @@ class Campaigns(IncrementalStream):
     @retry_pattern(backoff.expo, (Timeout, ConnectionError), max_tries=5, factor=2)
     # Added retry_pattern to handle AttributeError raised from account.get_campaigns() below
     @retry_pattern(backoff.expo, (FacebookRequestError, AttributeError), max_tries=5, factor=5)
-    def _call_get_campaigns(self, params):
+    def _call_get_campaigns(self, params, fields=None):
         """
         This is necessary because the functions that call this endpoint return
         a generator, whose calls need decorated with a backoff.
         """
-        return self.account.get_campaigns(fields=self.fields(), params=params) # pylint: disable=no-member
+        if not fields:
+            fields = self.fields()
+        self.logger.info(f'Call get campaigns, fields = {fields}, params={params}.')
+        return self.account.get_campaigns(fields=fields, params=params)  # pylint: disable=no-member
 
     def __iter__(self):
         # ads is not a field under campaigns in the SDK. To add ads to this stream, we have to make a separate request
@@ -446,7 +449,7 @@ class Campaigns(IncrementalStream):
                         },
                     ],
                 })
-            yield self._call_get_campaigns(params)
+            yield self._call_get_campaigns(params, fields=fields)
 
         def do_request_multiple():
             params = {'limit': RESULT_RETURN_LIMIT}
