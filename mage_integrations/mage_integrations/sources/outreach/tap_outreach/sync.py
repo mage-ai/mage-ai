@@ -264,7 +264,7 @@ def process_records(stream, mdata, max_modified, records, filter_field, fks):
         return max_modified
 
 
-def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
+def sync_endpoint(client, config, catalog, state, start_date, stream, mdata, logger=LOGGER):
     stream_name = stream.tap_stream_id
     last_datetime = get_bookmark(state, stream_name, start_date)
 
@@ -274,7 +274,7 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
                 last_ds = dateutil.parser.parse(ds)
                 now = datetime.utcnow().replace(tzinfo=last_ds.tzinfo)
                 if now < last_ds + timedelta(days=1):
-                    LOGGER.info(f'Skipping stream {stream.tap_stream_id} because bookmark '
+                    logger.info(f'Skipping stream {stream.tap_stream_id} because bookmark '
                                 f'{last_datetime} is less than 1 day ago.')
                     return
             except dateutil.parser.ParserError:
@@ -308,7 +308,7 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata):
                 query_params[f'filter[{filter_field}]'] = f'{paginate_datetime}..inf'
                 query_params['sort'] = filter_field
 
-        LOGGER.info('{} - Syncing data since {} - page: {}, limit: {}, offset: {}'.format(
+        logger.info('{} - Syncing data since {} - page: {}, limit: {}, offset: {}'.format(
             stream.tap_stream_id,
             last_datetime,
             page,
@@ -354,14 +354,22 @@ def update_current_stream(state, stream_name=None):
     singer.write_state(state)
 
 
-def sync(client, config, catalog, state, start_date):
+def sync(client, config, catalog, state, start_date, logger=LOGGER):
     selected_streams = catalog.get_selected_streams(state)
     selected_streams = sorted(selected_streams, key=lambda x: x.tap_stream_id)
 
     for stream in selected_streams:
         mdata = metadata.to_map(stream.metadata)
         update_current_stream(state, stream.tap_stream_id)
-        sync_endpoint(client, config, catalog, state,
-                      start_date, stream, mdata)
+        sync_endpoint(
+            client,
+            config,
+            catalog,
+            state,
+            start_date,
+            stream,
+            mdata,
+            logger=logger,
+        )
 
     update_current_stream(state)
