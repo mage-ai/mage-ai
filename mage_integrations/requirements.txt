@@ -1,9 +1,9 @@
 attrs==17.4.0
 azure-storage-blob==12.14.1
-backoff==1.8.0
+backoff==1.10.0
 couchbase==4.1.1
 deltalake==0.7.0
-facebook_business==15.0.2
+facebook_business==16.0.0
 google-analytics-data==0.14.2
 google-api-python-client==2.70.0
 google-cloud-bigquery-storage==2.16.2
