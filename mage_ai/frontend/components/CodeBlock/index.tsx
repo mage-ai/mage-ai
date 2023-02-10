@@ -410,7 +410,10 @@ function CodeBlockProps({
   ]);
   const hasError = !!messagesWithType.find(({ error }) => error);
 
-  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+  const color = getColorsForBlockType(
+    block.type,
+    { blockColor: block.color, theme: themeContext },
+  ).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
   const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
 
@@ -451,6 +454,7 @@ function CodeBlockProps({
 
     return {
       borderColorShareProps: {
+        blockColor: block?.color,
         blockType: block?.type,
         dynamicBlock: dynamic,
         dynamicChildBlock,
@@ -1366,8 +1370,10 @@ function CodeBlockProps({
 
                 {block.upstream_blocks.map((blockUUID, i) => {
                   const b = blocksMapping[blockUUID];
-                  const blockColor =
-                    getColorsForBlockType(b?.type, { theme: themeContext }).accent;
+                  const blockColor = getColorsForBlockType(
+                      b?.type,
+                      { blockColor: b?.color, theme: themeContext },
+                    ).accent;
 
                   return (
                     <div key={blockUUID}>

@@ -1,12 +1,12 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import {
   BORDER_RADIUS,
   BORDER_STYLE,
   BORDER_WIDTH_THICK,
 } from '@oracle/styles/units/borders';
-import { BlockTypeEnum } from '@interfaces/BlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { transition } from '@oracle/styles/mixins';
@@ -16,35 +16,48 @@ export const LEFT_PADDING = 68;
 
 export function getColorsForBlockType(
   blockType: BlockTypeEnum,
-  props: { isSelected?: boolean, theme: ThemeType },
+  props: {
+    blockColor?: BlockColorEnum,
+    isSelected?: boolean,
+    theme?: ThemeType,
+  },
 ): {
   accent?: string;
   accentLight?: string;
 } {
-  let accent = (props.theme.borders || dark.borders).light;
-  let accentLight = (props.theme.monotone || dark.monotone).grey500;
-  const { isSelected, theme } = props || {};
+  let accent = (props?.theme?.borders || dark.borders).light;
+  let accentLight = (props?.theme?.monotone || dark.monotone).grey500;
+  const { blockColor, isSelected, theme } = props || {};
 
   if (isSelected) {
-    accent = (theme.content || dark.content).active;
-  } else if (BlockTypeEnum.TRANSFORMER === blockType) {
-    accent = (theme.accent || dark.accent).purple;
-    accentLight = (theme.accent || dark.accent).purpleLight;
-  } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
-    accent = (theme.accent || dark.accent).yellow;
-    accentLight = (theme.accent || dark.accent).yellowLight;
-  } else if (BlockTypeEnum.DATA_LOADER === blockType) {
-    accent = (theme.accent || dark.accent).blue;
-    accentLight = (theme.accent || dark.accent).blueLight;
-  } else if (BlockTypeEnum.SCRATCHPAD === blockType) {
-    accent = (theme.content || dark.content).default;
-    accentLight = (theme.accent || dark.accent).contentDefaultTransparent;
-  } else if (BlockTypeEnum.SENSOR === blockType) {
-    accent = (theme.accent || dark.accent).pink;
-    accentLight = (theme.accent || dark.accent).pinkLight;
+    accent = (theme?.content || dark.content).active;
+  } else if (BlockTypeEnum.TRANSFORMER === blockType
+    || blockColor === BlockColorEnum.PURPLE) {
+    accent = (theme?.accent || dark.accent).purple;
+    accentLight = (theme?.accent || dark.accent).purpleLight;
+  } else if (BlockTypeEnum.DATA_EXPORTER === blockType
+    || blockColor === BlockColorEnum.YELLOW) {
+    accent = (theme?.accent || dark.accent).yellow;
+    accentLight = (theme?.accent || dark.accent).yellowLight;
+  } else if (BlockTypeEnum.DATA_LOADER === blockType
+    || blockColor === BlockColorEnum.BLUE) {
+    accent = (theme?.accent || dark.accent).blue;
+    accentLight = (theme?.accent || dark.accent).blueLight;
+  } else if (BlockTypeEnum.SENSOR === blockType
+    || blockColor === BlockColorEnum.PINK) {
+    accent = (theme?.accent || dark.accent).pink;
+    accentLight = (theme?.accent || dark.accent).pinkLight;
   } else if (BlockTypeEnum.DBT === blockType) {
-    accent = (theme.accent || dark.accent).dbt;
-    accentLight = (theme.accent || dark.accent).dbtLight;
+    accent = (theme?.accent || dark.accent).dbt;
+    accentLight = (theme?.accent || dark.accent).dbtLight;
+  } else if (blockColor === BlockColorEnum.TEAL) {
+    accent = (theme?.accent || dark.accent).teal;
+    accentLight = (theme?.accent || dark.accent).tealLight;
+  } else if (BlockTypeEnum.SCRATCHPAD === blockType
+    || blockColor === BlockColorEnum.GREY
+    || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {
+    accent = (theme?.content || dark.content).default;
+    accentLight = (theme?.accent || dark.accent).contentDefaultTransparent;
   }
 
   return {

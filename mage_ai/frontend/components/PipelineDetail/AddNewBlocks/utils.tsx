@@ -1,10 +1,14 @@
+import FlexContainer from '@oracle/components/FlexContainer';
+import Text from '@oracle/elements/Text';
 import {
   ACTION_GROUPING_MAPPING,
   ACTION_TYPE_HUMAN_READABLE_MAPPING,
   ActionGroupingEnum,
 } from '@interfaces/TransformerActionType';
 import { ActionTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
+import { Add } from '@oracle/icons';
 import BlockType, {
+  BlockColorEnum,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -16,7 +20,8 @@ import DataSourceTypeEnum, {
 } from '@interfaces/DataSourceType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { addUnderscores } from '@utils/string';
+import { addUnderscores, capitalize } from '@utils/string';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 const getDataSourceTypes = (
   pipelineType?: PipelineTypeEnum,
@@ -172,6 +177,37 @@ export function createActionMenuGroupings(
 
   return menuItems;
 }
+
+export const createColorMenuItems = (
+  addNewBlock: (block: BlockRequestPayloadType) => void,
+  blockType: BlockTypeEnum,
+  language: BlockLanguageEnum,
+) => Object.values(BlockColorEnum)
+  .map(color => ({
+    label: () => (
+      <FlexContainer alignItems="center">
+        <Add
+          fill={getColorsForBlockType(
+            BlockTypeEnum.CUSTOM,
+            { blockColor: color },
+          ).accent}
+          size={16}
+        />
+        &nbsp;
+        <Text>
+          {capitalize(color)}
+        </Text>
+      </FlexContainer>
+    ),
+    onClick: () => {
+      addNewBlock({
+        color,
+        language,
+        type: blockType,
+      });
+    },
+    uuid: `${language}_${color}`,
+  }));
 
 export function addScratchpadNote(
   block: BlockType,

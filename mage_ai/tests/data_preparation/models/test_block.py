@@ -295,6 +295,7 @@ def incorrect_function(df1, df2, df3):
         block1.downstream_blocks = [block2]
         self.assertEqual(block1.to_dict(), dict(
             all_upstream_blocks_executed=True,
+            color=None,
             configuration={},
             downstream_blocks=['test_data_exporter'],
             executor_config=None,
@@ -308,6 +309,7 @@ def incorrect_function(df1, df2, df3):
         ))
         self.assertEqual(block2.to_dict(), dict(
             all_upstream_blocks_executed=False,
+            color=None,
             configuration={},
             downstream_blocks=[],
             executor_config=None,

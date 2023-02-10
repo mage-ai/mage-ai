@@ -546,6 +546,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         }, numberOfBlocks, setSelectedBlock);
         setTextareaFocused(true);
       }}
+      hideCustom={isIntegration}
       hideDataExporter={isIntegration}
       hideDataLoader={isIntegration}
       hideDbt={isIntegration || PipelineTypeEnum.STREAMING === pipeline?.type}

@@ -176,7 +176,10 @@ function BlockRuntimeMonitor({
               <FlexContainer alignItems="center">
                 <Spacing mx={1}>
                   <Circle
-                    color={getColorsForBlockType(blocksByUUID[blockUuid]?.type, { theme }).accent}
+                    color={getColorsForBlockType(
+                      blocksByUUID[blockUuid]?.type,
+                      { blockColor: blocksByUUID[blockUuid]?.color, theme },
+                    ).accent}
                     size={ICON_SIZE}
                     square
                   />

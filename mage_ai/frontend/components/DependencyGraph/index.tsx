@@ -455,6 +455,7 @@ function DependencyGraph({
                 color={getColorsForBlockType(
                   blockEditing.type,
                   {
+                    blockColor: blockEditing.color,
                     theme: themeContext,
                   },
                 ).accent}
@@ -471,6 +472,7 @@ function DependencyGraph({
                   color={getColorsForBlockType(
                     blockUUIDMapping[uuid]?.type,
                     {
+                      blockColor: blockUUIDMapping[uuid]?.type,
                       theme: themeContext,
                     },
                   ).accent}
@@ -555,7 +557,10 @@ function DependencyGraph({
                 }}
                 removable={enablePorts && !editingBlock?.upstreamBlocks}
                 style={{
-                  stroke: getColorsForBlockType(block?.type, { theme: themeContext })?.accent,
+                  stroke: getColorsForBlockType(
+                    block?.type,
+                    { blockColor: block?.color, theme: themeContext },
+                  )?.accent,
                 }}
               />
             );
@@ -605,7 +610,13 @@ function DependencyGraph({
                       rx={10}
                       ry={10}
                       style={{
-                        fill: getColorsForBlockType(node?.properties?.data?.block?.type, { theme: themeContext }).accent,
+                        fill: getColorsForBlockType(
+                          node?.properties?.data?.block?.type,
+                          {
+                            blockColor: node?.properties?.data?.block?.color,
+                            theme: themeContext,
+                          },
+                        ).accent,
                         stroke: 'white',
                         strokeWidth: '1px',
                       }}

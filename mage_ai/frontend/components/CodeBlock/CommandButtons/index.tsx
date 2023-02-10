@@ -85,6 +85,7 @@ function CommandButtons({
 }: CommandButtonsProps) {
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
+    color: blockColor,
     type,
     uuid,
   } = block;
@@ -100,7 +101,10 @@ function CommandButtons({
 
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
-  const color = getColorsForBlockType(type, { theme: themeContext }).accent;
+  const color = getColorsForBlockType(
+    type,
+    { blockColor: blockColor, theme: themeContext },
+  ).accent;
   const isStreamingPipeline = pipelineType === PipelineTypeEnum.STREAMING;
 
   const convertBlockMenuItems =
@@ -220,7 +224,6 @@ function CommandButtons({
       {isInProgress && (
         <Spacing ml={PADDING_UNITS}>
           <Tooltip
-            appearAbove
             appearBefore
             default
             label={(

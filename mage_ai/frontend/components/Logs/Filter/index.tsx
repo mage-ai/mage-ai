@@ -193,7 +193,10 @@ function Filter({
                   />
                   <Spacing mr={1} />
                   <Circle
-                    color={getColorsForBlockType(block.type, { theme: themeContext }).accent}
+                    color={getColorsForBlockType(
+                      block.type,
+                      { blockColor: block.color, theme: themeContext },
+                    ).accent}
                     size={UNIT * 1.5}
                     square
                   />

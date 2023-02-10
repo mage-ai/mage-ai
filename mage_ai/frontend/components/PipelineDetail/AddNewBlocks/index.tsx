@@ -6,9 +6,8 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import Spacing from '@oracle/elements/Spacing';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Sensor as SensorIcon } from '@oracle/icons';
+import { Add, Edit, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   BlockLanguageEnum,
@@ -25,8 +24,10 @@ import {
   ROW_ACTION_GROUPINGS,
 } from '@interfaces/TransformerActionType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   createActionMenuGroupings,
+  createColorMenuItems,
   getdataSourceMenuItems,
   getNonPythonMenuItems,
 } from './utils';
@@ -38,6 +39,7 @@ type AddNewBlocksProps = {
   hideDataExporter?: boolean;
   hideDataLoader?: boolean;
   hideDbt?: boolean;
+  hideCustom?: boolean;
   hideRecommendations?: boolean;
   hideScratchpad?: boolean;
   hideSensor?: boolean;
@@ -54,11 +56,13 @@ const DATA_LOADER_BUTTON_INDEX = 0;
 const TRANSFORMER_BUTTON_INDEX = 1;
 const DATA_EXPORTER_BUTTON_INDEX = 2;
 const DBT_BUTTON_INDEX = 3;
+const CUSTOM_BUTTON_INDEX = 4;
 
 function AddNewBlocks({
   addNewBlock,
   blockIdx,
   compact,
+  hideCustom,
   hideDataExporter,
   hideDataLoader,
   hideDbt,
@@ -78,6 +82,7 @@ function AddNewBlocks({
   const transformerButtonRef = useRef(null);
   const dataExporterButtonRef = useRef(null);
   const dbtButtonRef = useRef(null);
+  const customBlockButtonRef = useRef(null);
   const sharedProps = {
     compact,
     inline: true,
@@ -85,6 +90,7 @@ function AddNewBlocks({
   const pipelineType = pipeline?.type;
   const isStreamingPipeline = pipelineType === PipelineTypeEnum.STREAMING;
   const iconSize = compact ? ICON_SIZE / 2 : ICON_SIZE;
+  const MAX_TOOLTIP_WIDTH = UNIT * 25;
 
   const columnActionMenuItems = createActionMenuGroupings(
     COLUMN_ACTION_GROUPINGS,
@@ -334,13 +340,82 @@ function AddNewBlocks({
             </ButtonWrapper>
           )}
 
+          {!hideCustom && (
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === CUSTOM_BUTTON_INDEX}>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={[
+                  {
+                    items: createColorMenuItems(
+                      addNewBlock,
+                      BlockTypeEnum.CUSTOM,
+                      BlockLanguageEnum.PYTHON,
+                    ),
+                    label: () => 'Python',
+                    uuid: 'custom_block_python',
+                  },
+                  {
+                    items: createColorMenuItems(
+                      addNewBlock,
+                      BlockTypeEnum.CUSTOM,
+                      BlockLanguageEnum.SQL,
+                    ),
+                    label: () => 'SQL',
+                    uuid: 'custom_block_sql',
+                  },
+                  {
+                    items: createColorMenuItems(
+                      addNewBlock,
+                      BlockTypeEnum.CUSTOM,
+                      BlockLanguageEnum.R,
+                    ),
+                    label: () => 'R',
+                    uuid: 'custom_block_r',
+                  },
+                ]}
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex ===CUSTOM_BUTTON_INDEX}
+                parentRef={customBlockButtonRef}
+                uuid="custom_block_button"
+              >
+                <Tooltip
+                  block
+                  label="Add a custom code block with a designated color."
+                  maxWidth={MAX_TOOLTIP_WIDTH}
+                  size={null}
+                >
+                  <KeyboardShortcutButton
+                    {...sharedProps}
+                    beforeElement={
+                      <IconContainerStyle compact={compact}>
+                        <Edit size={iconSize} />
+                      </IconContainerStyle>
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setButtonMenuOpenIndex(val =>
+                        val === CUSTOM_BUTTON_INDEX
+                          ? null
+                          : CUSTOM_BUTTON_INDEX,
+                      );
+                      handleBlockZIndex(CUSTOM_BUTTON_INDEX);
+                    }}
+                    uuid="AddNewBlocks/Scratchpad"
+                  >
+                    Custom
+                  </KeyboardShortcutButton>
+                </Tooltip>
+              </FlyoutMenuWrapper>
+            </ButtonWrapper>
+          )}
+
           {!hideScratchpad && (
             <ButtonWrapper>
               <Tooltip
                 block
                 label="Write experimental code that doesn’t get executed when you run your pipeline."
+                maxWidth={MAX_TOOLTIP_WIDTH}
                 size={null}
-                widthFitContent
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
@@ -370,8 +445,8 @@ function AddNewBlocks({
                   <Tooltip
                     block
                     label="Add a sensor so that other blocks only run when sensor is complete."
+                    maxWidth={MAX_TOOLTIP_WIDTH}
                     size={null}
-                    widthFitContent
                   >
                     <KeyboardShortcutButton
                       {...sharedProps}
@@ -394,26 +469,26 @@ function AddNewBlocks({
                   </Tooltip>
                 </>
               )}
-
-              {/*{!hideRecommendations && (
-                <KeyboardShortcutButton
-                  {...sharedProps}
-                  beforeElement={
-                    <IconContainerStyle compact={compact}>
-                      <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-                    </IconContainerStyle>
-                  }
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setRecsWindowOpenBlockIdx(blockIdx);
-                  }}
-                  uuid="AddNewBlocks/Recommendations"
-                >
-                  Recs
-                </KeyboardShortcutButton>
-              )}*/}
             </ButtonWrapper>
           }
+
+          {/*{!hideRecommendations && (
+            <KeyboardShortcutButton
+              {...sharedProps}
+              beforeElement={
+                <IconContainerStyle compact={compact}>
+                  <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                </IconContainerStyle>
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                setRecsWindowOpenBlockIdx(blockIdx);
+              }}
+              uuid="AddNewBlocks/Recommendations"
+            >
+              Recs
+            </KeyboardShortcutButton>
+          )}*/}
         </FlexContainer>
       </ClickOutside>
     </FlexContainer>

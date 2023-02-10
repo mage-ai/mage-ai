@@ -870,6 +870,7 @@ function IntegrationPipeline({
                   return ret;
                 }}
                 compact
+                hideCustom
                 hideDataExporter
                 hideDataLoader
                 hideDbt

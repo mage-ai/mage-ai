@@ -34,6 +34,7 @@ class PipelineTest(DBTestCase):
             blocks=[
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -47,6 +48,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -60,6 +62,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -73,6 +76,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -88,6 +92,7 @@ class PipelineTest(DBTestCase):
             widgets=[
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -117,6 +122,7 @@ class PipelineTest(DBTestCase):
             blocks=[
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -130,6 +136,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -143,6 +150,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -180,6 +188,7 @@ class PipelineTest(DBTestCase):
             blocks=[
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -193,6 +202,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -206,6 +216,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -219,6 +230,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -262,6 +274,7 @@ class PipelineTest(DBTestCase):
             blocks=[
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -275,6 +288,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -288,6 +302,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -301,6 +316,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -314,6 +330,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -327,6 +344,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -340,6 +358,7 @@ class PipelineTest(DBTestCase):
                 ),
                 dict(
                     language='python',
+                    color=None,
                     configuration={},
                     executor_config=None,
                     executor_type='local_python',
@@ -452,6 +471,7 @@ class PipelineTest(DBTestCase):
                     "blocks": [
                         {
                             "all_upstream_blocks_executed": True,
+                            "color": None,
                             "configuration": {},
                             "downstream_blocks": ["destination_block"],
                             "executor_config": None,
@@ -465,6 +485,7 @@ class PipelineTest(DBTestCase):
                         },
                         {
                             "all_upstream_blocks_executed": False,
+                            "color": None,
                             "configuration": {},
                             "downstream_blocks": [],
                             "executor_config": None,

@@ -21,6 +21,7 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
 
 export enum BlockTypeEnum {
   CHART = 'chart',
+  CUSTOM = 'custom',
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
   DBT = 'dbt',
@@ -29,8 +30,18 @@ export enum BlockTypeEnum {
   TRANSFORMER = 'transformer',
 }
 
+export enum BlockColorEnum {
+  BLUE = 'blue',
+  GREY = 'grey',
+  PINK = 'pink',
+  PURPLE = 'purple',
+  TEAL = 'teal',
+  YELLOW = 'yellow',
+}
+
 export const BLOCK_TYPES = [
   BlockTypeEnum.CHART,
+  BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.SCRATCHPAD,
@@ -109,6 +120,7 @@ export interface AnalysisType {
 }
 
 export interface BlockRequestPayloadType {
+  color?: BlockColorEnum;
   config?: {
     data_source?: DataSourceTypeEnum;
     action_type?: ActionTypeEnum;
@@ -127,6 +139,7 @@ export interface BlockRequestPayloadType {
 
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
+  color?: BlockColorEnum;
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
@@ -152,6 +165,7 @@ export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
 ];
 
 export const BLOCK_TYPE_NAME_MAPPING = {
+  [BlockTypeEnum.CUSTOM]: 'Custom',
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',

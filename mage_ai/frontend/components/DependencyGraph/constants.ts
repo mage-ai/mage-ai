@@ -1,4 +1,7 @@
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, {
+  BlockColorEnum,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const MIN_NODE_WIDTH = UNIT * 20;
@@ -11,6 +14,13 @@ export const SHARED_PORT_PROPS = {
 export const INVERTED_TEXT_COLOR_BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.SENSOR,
+];
+
+export const INVERTED_TEXT_COLOR_BLOCK_COLORS = [
+  BlockColorEnum.GREY,
+  BlockColorEnum.PINK,
+  BlockColorEnum.TEAL,
+  BlockColorEnum.YELLOW,
 ];
 
 export enum SideEnum {
