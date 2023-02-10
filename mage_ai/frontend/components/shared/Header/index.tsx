@@ -322,6 +322,7 @@ function Header({
                       onClickCallback={() => setHighlightedMenuIndex(null)}
                       open={highlightedMenuIndex === 0}
                       parentRef={menuRef}
+                      rightOffset={0}
                       setConfirmationAction={setConfirmationAction}
                       setConfirmationDialogueOpen={setConfirmationDialogueOpen}
                       uuid="PipelineDetail/Header/menu"
