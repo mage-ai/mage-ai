@@ -129,26 +129,6 @@ class ManagePageHandler(tornado.web.RequestHandler):
         self.render('manage.html')
 
 
-class ApiFileContentHandler(BaseHandler):
-    def get(self, file_path_encoded):
-        file_path = urllib.parse.unquote(file_path_encoded)
-        file = File.from_path(file_path, get_repo_path())
-
-        self.write(dict(file_content=file.to_dict(include_content=True)))
-
-    def put(self, file_path_encoded):
-        file_path = urllib.parse.unquote(file_path_encoded)
-        file = File.from_path(file_path, get_repo_path())
-
-        data = json.loads(self.request.body).get('file_content', {})
-        content = data.get('content')
-        if content is None:
-            raise Exception('Please provide a \'content\' param in the request payload.')
-        file.update_content(content)
-
-        self.write(dict(file_content=file.to_dict(include_content=True)))
-
-
 class ApiPipelineHandler(BaseHandler):
     def delete(self, pipeline_uuid):
         pipeline = Pipeline.get(pipeline_uuid)
@@ -553,16 +533,19 @@ def make_app():
         ),
         (r'/websocket/', WebSocketServer),
 
-        # API v1 routes
+        # These are hard to test until we do a full Docker build and deploy to cloud
         (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
         (
             r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)',
             ApiInstanceDetailHandler,
         ),
+
+        # Not sure what is using this, perhaps the event triggering via Lambda?
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
-        (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
+
+        # API v1 routes
         (r'/api/monitor_stats/(?P<stats_type>\w+)', ApiMonitorStatsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
