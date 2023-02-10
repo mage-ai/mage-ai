@@ -3,7 +3,7 @@ from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import DBTestCase
-from unittest.mock import mock_open, patch, MagicMock
+from unittest.mock import patch
 import asyncio
 import json
 import os
