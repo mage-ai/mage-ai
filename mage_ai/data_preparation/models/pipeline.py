@@ -381,6 +381,7 @@ class Pipeline:
                 c.get('name'),
                 c.get('uuid'),
                 block_type,
+                block_color=c.get('color'),
                 configuration=c.get('configuration'),
                 content=c.get('content'),
                 executor_config=c.get('executor_config'),
@@ -638,7 +639,7 @@ class Pipeline:
         self.save()
         return block
 
-    def get_block(self, block_uuid, check_template: bool = False, widget: bool = False) -> 'Block':
+    def get_block(self, block_uuid, check_template: bool = False, widget: bool = False) -> Block:
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
         block = mapping.get(block_uuid)
 

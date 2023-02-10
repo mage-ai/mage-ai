@@ -1240,6 +1240,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             and data['type'] != BlockType.SCRATCHPAD
         ):
             self.__update_type(data['type'])
+        if 'color' in data and data['color'] != self.color:
+            self.color = data['color']
+            self.__update_pipeline_block()
         if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
             self.upstream_block_uuids
         ):
