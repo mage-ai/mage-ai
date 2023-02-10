@@ -88,6 +88,7 @@ FILE_EXTENSION_TO_BLOCK_LANGUAGE = {
 
 CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.CHART,
+    BlockType.CUSTOM,
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
     BlockType.DBT,
