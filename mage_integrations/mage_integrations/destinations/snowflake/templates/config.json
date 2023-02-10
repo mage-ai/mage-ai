@@ -1,6 +1,7 @@
 {
   "account": "",
   "database": "",
+  "disable_double_quotes": false,
   "password": "",
   "schema": "",
   "table": "",
