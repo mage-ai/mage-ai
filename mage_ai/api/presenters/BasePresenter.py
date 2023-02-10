@@ -59,16 +59,22 @@ class BasePresenter():
     @classmethod
     async def present_resource(self, resource, user, **kwargs):
         async def present_lambda(r):
-            if inspect.isawaitable(r):
+            if r and inspect.isawaitable(r):
                 r = await r
 
-            return await r.__class__.presenter_class()(
+            results = r.__class__.presenter_class()(
                 r,
                 user,
                 **kwargs,
             ).present(
                 **kwargs,
             )
+
+            if results and inspect.isawaitable(results):
+                results = await results
+
+            return results
+
         if isinstance(resource, Iterable):
             return [await present_lambda(r) for r in resource]
         else:

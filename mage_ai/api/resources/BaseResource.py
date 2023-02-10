@@ -7,6 +7,7 @@ from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.hash import merge_dict
 import importlib
 import inflection
+import inspect
 
 
 class BaseResource(Resource):
@@ -130,7 +131,7 @@ class BaseResource(Resource):
         pass
 
     @classmethod
-    def process_create(self, payload, user, **kwargs):
+    async def process_create(self, payload, user, **kwargs):
         self.on_create_callback = None
         self.on_create_failure_callback = None
         before_create = self.before_create(payload, user, **kwargs)
@@ -139,6 +140,8 @@ class BaseResource(Resource):
             res = self.create(payload, user, **merge_dict(kwargs, {
                 'before_create': before_create,
             }))
+            if res and inspect.isawaitable(res):
+                res = await res
 
             if self.on_create_callback:
                 self.on_create_callback(resource=res)
@@ -151,13 +154,20 @@ class BaseResource(Resource):
             raise err
 
     @classmethod
-    def process_collection(self, query, meta, user, **kwargs):
-        return self.collection(query, meta, user, **kwargs)
+    async def process_collection(self, query, meta, user, **kwargs):
+        res = self.collection(query, meta, user, **kwargs)
+        if res and inspect.isawaitable(res):
+            res = await res
+        return res
 
     @classmethod
-    def process_member(self, pk, user, **kwargs):
+    async def process_member(self, pk, user, **kwargs):
         try:
-            return self.member(pk, user, **kwargs)
+            res = self.member(pk, user, **kwargs)
+            if res and inspect.isawaitable(res):
+                res = await res
+
+            return res
         except DoesNotExistError as err:
             if settings.DEBUG:
                 raise err
@@ -184,12 +194,14 @@ class BaseResource(Resource):
     def parent_model(self):
         return self.model_options.get('parent_model')
 
-    def process_delete(self, **kwargs):
+    async def process_delete(self, **kwargs):
         self.on_delete_callback = None
         self.on_delete_failure_callback = None
 
         try:
             res = self.delete(**kwargs)
+            if res and inspect.isawaitable(res):
+                res = await res
 
             if self.on_delete_callback:
                 self.on_delete_callback(resource=res)
@@ -206,7 +218,9 @@ class BaseResource(Resource):
         self.on_update_failure_callback = None
 
         try:
-            res = await self.update(payload, **kwargs)
+            res = self.update(payload, **kwargs)
+            if res and inspect.isawaitable(res):
+                res = await res
 
             if self.on_update_callback:
                 self.on_update_callback(resource=res)

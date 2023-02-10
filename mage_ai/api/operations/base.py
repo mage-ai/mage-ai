@@ -132,11 +132,11 @@ class BaseOperation():
 
     async def __executed_result(self):
         if self.action in [CREATE, LIST]:
-            return self.__create_or_index()
+            return await self.__create_or_index()
         elif self.action in [DELETE, DETAIL, UPDATE]:
             return await self.__delete_show_or_update()
 
-    def __create_or_index(self):
+    async def __create_or_index(self):
         policy = self.__policy_class()(None, self.user, **self.__updated_options())
         policy.authorize_action(self.action)
         if CREATE == self.action:
@@ -147,7 +147,7 @@ class BaseOperation():
             )
             options = self.__updated_options().copy()
             options.pop('payload', None)
-            return self.__resource_class().process_create(
+            return await self.__resource_class().process_create(
                 self.__payload_for_resource(),
                 self.user,
                 **options,
@@ -157,7 +157,7 @@ class BaseOperation():
             options = self.__updated_options().copy()
             options.pop('meta', None)
             options.pop('query', None)
-            return self.__resource_class().process_collection(
+            return await self.__resource_class().process_collection(
                 self.query,
                 self.meta,
                 self.user,
@@ -165,17 +165,14 @@ class BaseOperation():
             )
 
     async def __delete_show_or_update(self):
-        res = self.__resource_class().process_member(
+        res = await self.__resource_class().process_member(
             self.pk, self.user, **self.__updated_options())
-
-        if inspect.isawaitable(res):
-            res = await res
 
         policy = self.__policy_class()(res, self.user, **self.__updated_options())
         policy.authorize_action(self.action)
 
         if DELETE == self.action:
-            res.process_delete(**self.__updated_options())
+            await res.process_delete(**self.__updated_options())
         elif DETAIL == self.action:
             policy.authorize_query(self.query)
         elif UPDATE == self.action:
