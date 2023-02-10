@@ -35,6 +35,7 @@ class Outreach(Source):
                 catalog,
                 self.state or {},
                 self.config['start_date'],
+                logger=self.logger,
             )
 
     def test_connection(self) -> None:
