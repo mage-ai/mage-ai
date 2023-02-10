@@ -1,21 +1,24 @@
+from typing import Callable
 import aiofiles
 import os
 import shutil
 
 
-def safe_write(filepath: str, content: str):
+def safe_write(filepath: str, content: str, write_func: Callable = None):
     temp_file_path = filepath + '.temp'
     if os.path.isfile(filepath):
-        print(f'Path {filepath} exists')
         shutil.copy2(filepath, temp_file_path)
         prev_existed = True
     else:
         prev_existed = False
 
-    success = False    
+    success = False
     try:
         with open(filepath, 'w') as fp:
-            fp.write(content)
+            if write_func is not None:
+                write_func(fp, content)
+            else:
+                fp.write(content)
         success = True
     except Exception as e:
         raise e
@@ -26,7 +29,7 @@ def safe_write(filepath: str, content: str):
             os.remove(temp_file_path)
 
 
-async def safe_write_async(filepath: str, content: str):
+async def safe_write_async(filepath: str, content: str, write_func: Callable = None):
     temp_file_path = filepath + '.temp'
     if os.path.isfile(filepath):
         shutil.copy2(filepath, temp_file_path)
@@ -34,10 +37,13 @@ async def safe_write_async(filepath: str, content: str):
     else:
         prev_existed = False
 
-    success = False    
+    success = False
     try:
         async with aiofiles.open(filepath, mode='w') as fp:
-            await fp.write(content)
+            if write_func is not None:
+                await write_func(fp, content)
+            else:
+                await fp.write(content)
 
         success = True
     except Exception as e:
