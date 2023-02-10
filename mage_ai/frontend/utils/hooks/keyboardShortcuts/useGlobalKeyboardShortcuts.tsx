@@ -3,6 +3,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 
 import { KEY_CODE_METAS } from './constants';
@@ -10,6 +11,7 @@ import { isEmptyObject } from '@utils/hash';
 import { logRender } from '@utils/environment';
 
 export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
+  const [disableGlobalKeyboardShortcuts, setDisableGlobalKeyboardShortcuts] = useState<boolean>(false);
   const timeout = useRef(null);
 
   const onKeyDownDependencies = useMemo(() => ({}), []);
@@ -172,8 +174,10 @@ export default function useGlobalKeyboardShortcuts(keyMapping, keyHistory) {
   ]);
 
   return {
+    disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
     registerOnKeyUp,
+    setDisableGlobalKeyboardShortcuts,
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   };

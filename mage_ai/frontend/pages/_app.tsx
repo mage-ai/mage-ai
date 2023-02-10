@@ -84,19 +84,25 @@ function MyApp(props: MyAppProps & AppProps) {
   ]);
 
   const {
+    disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
     registerOnKeyUp,
+    setDisableGlobalKeyboardShortcuts,
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   } = useGlobalKeyboardShortcuts(keyMapping, keyHistory);
   const keyboardContextValue = useMemo(() => ({
+    disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
     registerOnKeyUp,
+    setDisableGlobalKeyboardShortcuts,
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   }), [
+    disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
     registerOnKeyUp,
+    setDisableGlobalKeyboardShortcuts,
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   ]);
