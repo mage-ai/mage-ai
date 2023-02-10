@@ -403,7 +403,7 @@ class AdSets(IncrementalStream):
         # Added retry_pattern to handle AttributeError raised from ad_set.api_get() below
         @retry_pattern(backoff.expo, (FacebookRequestError, AttributeError), max_tries=5, factor=5)
         def prepare_record(ad_set):
-            return ad_set.api_get(fields=self.fields()).export_all_data()
+            return ad_set.export_all_data()
 
         if CONFIG.get('include_deleted', 'false').lower() == 'true':
             ad_sets = do_request_multiple()
