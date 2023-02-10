@@ -163,6 +163,21 @@ docker pull mageai/mageai:latest
 pip install -U mage-ai
 ```
 
+### In cloud provider
+
+#### Using the cloud provider’s UI
+
+Use your cloud provider’s UI to deploy a new container (e.g. revision, task definition, etc).
+
+#### Using Mage terminal
+
+1. In Mage, go to `/terminal`.
+1. Type the following command in your terminal: `ps aux|grep mage`
+1. In the first row, under the 2nd column, note the process ID (e.g. `3`).
+1. Kill the Mage process by running this command in your terminal: `kill -9 [process_id]`.
+
+    An example command killing process ID `3` could look like this: `kill -9 3`.
+
 ---
 
 ## Environment variables
