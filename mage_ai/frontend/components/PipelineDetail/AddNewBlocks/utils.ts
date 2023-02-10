@@ -5,6 +5,7 @@ import {
 } from '@interfaces/TransformerActionType';
 import { ActionTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
 import BlockType, {
+  BlockColorEnum,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -16,7 +17,7 @@ import DataSourceTypeEnum, {
 } from '@interfaces/DataSourceType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
-import { addUnderscores } from '@utils/string';
+import { addUnderscores, capitalize } from '@utils/string';
 
 const getDataSourceTypes = (
   pipelineType?: PipelineTypeEnum,
@@ -172,6 +173,23 @@ export function createActionMenuGroupings(
 
   return menuItems;
 }
+
+export const createColorMenuItems = (
+  addNewBlock: (block: BlockRequestPayloadType) => void,
+  blockType: BlockTypeEnum,
+  language: BlockLanguageEnum,
+) => Object.values(BlockColorEnum)
+  .map(color => ({
+    label: () => capitalize(color),
+    onClick: () => {
+      addNewBlock({
+        color,
+        language,
+        type: blockType,
+      });
+    },
+    uuid: `${language}_${color}`,
+  }));
 
 export function addScratchpadNote(
   block: BlockType,
