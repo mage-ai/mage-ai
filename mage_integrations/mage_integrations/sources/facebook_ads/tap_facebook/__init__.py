@@ -602,11 +602,15 @@ def get_start(stream, bookmark_key, default_value=None, logger=LOGGER):
     state = stream.state or {}
     current_bookmark = singer.get_bookmark(state, tap_stream_id, bookmark_key)
     if current_bookmark is None:
+        start_date = CONFIG.get('start_date')
         logger.info(
-            f"No bookmark found for {tap_stream_id}, using start_date "
-            f"instead...{CONFIG['start_date']}"
+            f'No bookmark found for {tap_stream_id}, using start_date '
+            f'instead...{start_date}'
         )
-        return pendulum.parse(CONFIG['start_date'])
+        if start_date:
+            return pendulum.parse(start_date)
+        else:
+            return None
     logger.info(f"Found current bookmark for {tap_stream_id}: {current_bookmark}")
     return pendulum.parse(current_bookmark)
 
