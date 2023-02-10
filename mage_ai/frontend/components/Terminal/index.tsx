@@ -113,6 +113,7 @@ function Terminal({
 
   const {
     registerOnKeyDown,
+    setDisableGlobalKeyboardShortcuts,
     unregisterOnKeyDown,
   } = useKeyboardContext();
 
@@ -257,9 +258,11 @@ preference in "about:config" to "true" and clicking "Paste" in the context menu 
         onClick={() => {
           onFocus?.();
           setFocus(true);
+          setDisableGlobalKeyboardShortcuts(true);
         }}
         onClickOutside={() => {
           setFocus(false);
+          setDisableGlobalKeyboardShortcuts(false);
         }}
         style={{
           minHeight: '100%',
