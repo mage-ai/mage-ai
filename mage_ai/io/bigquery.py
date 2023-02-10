@@ -57,6 +57,21 @@ class BigQuery(BaseSQLDatabase):
         with self.printer.print_msg('Connecting to BigQuery warehouse'):
             self.client = Client(credentials=credentials, **kwargs)
 
+    def get_column_types(self, schema: str, table_name: str) -> Dict:
+        results = self.client.query(f"""
+SELECT
+    column_name
+    , data_type
+FROM {schema}.INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '{table_name}'
+""")
+
+        column_types = {}
+        for col, col_type in results:
+            column_types[col.lower()] = col_type
+
+        return column_types
+
     def alter_table(
         self,
         df: DataFrame,
@@ -84,14 +99,7 @@ class BigQuery(BaseSQLDatabase):
             if table_doesnt_exist:
                 raise ValueError(f'Table \'{table_id}\' doesn\'t exist.')
 
-            results = self.client.query(f"""
-SELECT
-    column_name
-    , data_type
-FROM {schema}.INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = '{table_name}'
-            """)
-            current_columns = [r[0].lower() for r in results]
+            current_columns = list(self.get_column_types(schema, table_name).keys())
 
             columns = []
             if type(df) is DataFrame:
@@ -249,9 +257,21 @@ WHERE table_id = '{table_name}'
                 parts = table_id.split('.')
                 if len(parts) == 2:
                     schema = parts[0]
+                    table_name = parts[1]
                 elif len(parts) == 3:
                     schema = parts[1]
+                    table_name = parts[2]
+
                 self.client.create_dataset(dataset=schema, exists_ok=True)
+
+                column_types = self.get_column_types(schema, table_name)
+
+                for col in df.columns:
+                    col_type = column_types.get(col)
+                    if not col_type:
+                        continue
+                    if col_type.startswith('ARRAY'):
+                        df[col] = df[col].fillna('')
 
                 # Clean column names
                 if type(df) is DataFrame:
