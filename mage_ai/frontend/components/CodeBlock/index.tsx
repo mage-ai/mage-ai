@@ -454,6 +454,7 @@ function CodeBlockProps({
 
     return {
       borderColorShareProps: {
+        blockColor: block?.color,
         blockType: block?.type,
         dynamicBlock: dynamic,
         dynamicChildBlock,

@@ -9,7 +9,10 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { Check, Close } from '@oracle/icons';
-import { INVERTED_TEXT_COLOR_BLOCK_TYPES } from './constants';
+import {
+  INVERTED_TEXT_COLOR_BLOCK_COLORS,
+  INVERTED_TEXT_COLOR_BLOCK_TYPES,
+} from './constants';
 import { NodeStyle, RuntimeStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -87,7 +90,8 @@ function GraphNode({
           >
             <FlexContainer justifyContent="center">
               <Text
-                inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
+                inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)
+                  || INVERTED_TEXT_COLOR_BLOCK_COLORS.includes(color)}
                 xsmall
               >
                 {getRuntimeText(runtime)}
@@ -135,7 +139,8 @@ function GraphNode({
           }}
         >
           <Text
-            inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
+            inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)
+              || INVERTED_TEXT_COLOR_BLOCK_COLORS.includes(color)}
             monospace
             small
           >
