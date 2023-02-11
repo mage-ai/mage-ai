@@ -10,7 +10,8 @@ class PipelinePolicy(BasePolicy):
 
 PipelinePolicy.allow_actions([
     constants.DELETE,
-    constants.READ,
+    constants.DETAIL,
+    constants.LIST,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -19,8 +20,8 @@ PipelinePolicy.allow_actions([
 PipelinePolicy.allow_read([] + PipelinePresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
+    constants.DETAIL,
     constants.DELETE,
-    constants.READ,
     constants.UPDATE,
 ])
 

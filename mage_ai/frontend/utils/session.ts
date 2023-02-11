@@ -9,7 +9,7 @@ import UserType from '@interfaces/UserType';
 import { COOKIE_KEY, SHARED_OPTS } from '@api/utils/token';
 import { resetObjectCounts } from '@storage/localStorage';
 
-export const REQUIRE_USER_AUTHENTICATION = false;
+export const REQUIRE_USER_AUTHENTICATION = true;
 
 export const CURRENT_GROUP_ID_COOKIE_KEY: string = 'current_group_id';
 export const CURRENT_GROUP_LOCAL_STORAGE_KEY: string = 'current_group';

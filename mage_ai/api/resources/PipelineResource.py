@@ -85,6 +85,10 @@ class PipelineResource(GenericResource):
         return self(pipeline, user, **kwargs)
 
     @classmethod
+    async def get_model(self, pk):
+        return await Pipeline.get_async(pk)
+
+    @classmethod
     async def member(self, pk, user, **kwargs):
         pipeline = await Pipeline.get_async(pk)
 

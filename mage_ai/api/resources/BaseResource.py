@@ -185,6 +185,11 @@ class BaseResource(Resource):
             self.__name__.replace(
                 'Resource', '')).lower()
 
+    @classmethod
+    async def get_model(self, pk):
+        if self.model_class:
+            return self.model_class.query.get(pk)
+
     def delete(self, **kwargs):
         """
         Subclasses override this method

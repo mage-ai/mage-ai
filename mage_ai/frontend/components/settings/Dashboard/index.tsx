@@ -27,6 +27,7 @@ function SettingsDashboard({
       after={after}
       afterHidden={!after || afterHidden}
       afterWidth={after ? 50 * UNIT : 0}
+      afterWidthOverride
       before={(
         <BeforeStyle>
           <VerticalSectionLinks

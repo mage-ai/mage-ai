@@ -24,6 +24,7 @@ export type DashboardSharedProps = {
   after?: any;
   afterHidden?: boolean;
   afterWidth?: number;
+  afterWidthOverride?: boolean;
   before?: any;
   beforeWidth?: number;
   uuid: string;
@@ -41,6 +42,7 @@ function Dashboard({
   after,
   afterHidden,
   afterWidth: afterWidthProp,
+  afterWidthOverride,
   before,
   beforeWidth: beforeWidthProp,
   breadcrumbs: breadcrumbsProp,
@@ -58,7 +60,10 @@ function Dashboard({
   const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
-  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, afterWidthProp));
+  const [afterWidth, setAfterWidth] = useState(afterWidthOverride
+    ? afterWidthProp
+    : get(localStorageKeyAfter, afterWidthProp)
+  );
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(before
     ? Math.max(

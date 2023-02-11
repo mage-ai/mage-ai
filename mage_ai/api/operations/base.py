@@ -21,6 +21,7 @@ from mage_ai.shared.hash import merge_dict, ignore_keys
 from typing import Dict
 import importlib
 import inflection
+import inspect
 
 
 def classify(name):
@@ -59,12 +60,14 @@ class BaseOperation():
             presented = await self.__present_results(result)
             attrb = flatten([d.keys() for d in presented]) if issubclass(
                 type(presented), list) else presented.keys()
+            attrb = list(set(attrb))
             if (issubclass(type(result), list) or issubclass(type(result), UserList)):
                 results = result
             else:
                 results = [result]
             for res in results:
-                policy = self.__policy_class()(res, self.user, **self.__updated_options())
+                updated_options = await self.__updated_options()
+                policy = self.__policy_class()(res, self.user, **updated_options)
                 policy.authorize_attributes(
                     READ, attrb, api_operation_action=self.action)
             response_key = self.resource if LIST == self.action else self.__resource_name_singular()
@@ -136,7 +139,8 @@ class BaseOperation():
             return await self.__delete_show_or_update()
 
     async def __create_or_index(self):
-        policy = self.__policy_class()(None, self.user, **self.__updated_options())
+        updated_options = await self.__updated_options()
+        policy = self.__policy_class()(None, self.user, **updated_options)
         policy.authorize_action(self.action)
         if CREATE == self.action:
             policy.authorize_attributes(
@@ -144,7 +148,7 @@ class BaseOperation():
                 self.__payload_for_resource().keys(),
                 **self.__payload_for_resource(),
             )
-            options = self.__updated_options().copy()
+            options = updated_options.copy()
             options.pop('payload', None)
             return await self.__resource_class().process_create(
                 self.__payload_for_resource(),
@@ -153,7 +157,7 @@ class BaseOperation():
             )
         elif LIST == self.action:
             policy.authorize_query(self.query)
-            options = self.__updated_options().copy()
+            options = updated_options.copy()
             options.pop('meta', None)
             options.pop('query', None)
             return await self.__resource_class().process_collection(
@@ -164,14 +168,15 @@ class BaseOperation():
             )
 
     async def __delete_show_or_update(self):
+        updated_options = await self.__updated_options()
         res = await self.__resource_class().process_member(
-            self.pk, self.user, **self.__updated_options())
+            self.pk, self.user, **updated_options)
 
-        policy = self.__policy_class()(res, self.user, **self.__updated_options())
+        policy = self.__policy_class()(res, self.user, **updated_options)
         policy.authorize_action(self.action)
 
         if DELETE == self.action:
-            await res.process_delete(**self.__updated_options())
+            await res.process_delete(**updated_options)
         elif DETAIL == self.action:
             policy.authorize_query(self.query)
         elif UPDATE == self.action:
@@ -180,7 +185,7 @@ class BaseOperation():
                 self.__payload_for_resource().keys(),
                 **self.__payload_for_resource(),
             )
-            options = self.__updated_options().copy()
+            options = updated_options.copy()
             options.pop('payload', None)
             await res.process_update(self.__payload_for_resource(), **options)
 
@@ -231,7 +236,7 @@ class BaseOperation():
                     self.__classified_class())), '{}Resource'.format(
                 self.__classified_class()), )
 
-    def __parent_model(self):
+    async def __parent_model(self):
         if self.resource_parent and self.resource_parent_id:
             parent_class = classify(singularize(self.resource_parent))
             parent_resource_class = getattr(
@@ -240,9 +245,10 @@ class BaseOperation():
                 '{}Resource'.format(parent_class),
             )
             try:
-                return parent_resource_class.model_class.query.get(
-                    self.resource_parent_id,
-                )
+                model = parent_resource_class.get_model(self.resource_parent_id)
+                if inspect.isawaitable(model):
+                    model = await model
+                return model
             except DoesNotExistError:
                 raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
@@ -266,7 +272,8 @@ class BaseOperation():
         return payload
 
     async def __present_results(self, results):
-        data = self.__updated_options().copy()
+        updated_options = await self.__updated_options()
+        data = updated_options.copy()
         data.update({'format': self.__presentation_format()})
         return await self.__presenter_class().present_resource(results, self.user, **data)
 
@@ -276,14 +283,14 @@ class BaseOperation():
                 META_KEY_FORMAT, self.action)
         return self.__presentation_format_attr
 
-    def __updated_options(self):
+    async def __updated_options(self):
         if not self.__updated_options_attr:
             self.__updated_options_attr = self.__combined_options().copy()
             self.__updated_options_attr.update({
                 'api_operation_action': self.action,
                 'oauth_client': self.oauth_client,
                 'oauth_token': self.oauth_token,
-                'parent_model': self.__parent_model(),
+                'parent_model': await self.__parent_model(),
             })
             self.__updated_options_attr.update(self.headers)
         return self.__updated_options_attr
