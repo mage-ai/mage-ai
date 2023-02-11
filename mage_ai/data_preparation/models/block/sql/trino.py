@@ -1,10 +1,8 @@
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
-    create_upstream_block_tables as create_upstream_block_tables_orig,
     interpolate_input,
     should_cache_data_from_upstream,
 )
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigKey
 from pandas import DataFrame

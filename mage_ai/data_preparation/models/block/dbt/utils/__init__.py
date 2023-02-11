@@ -509,6 +509,7 @@ def create_upstream_tables(
                 **kwargs_shared,
             )
 
+
 def interpolate_input(
     block,
     query: str,

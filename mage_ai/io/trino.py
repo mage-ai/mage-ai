@@ -11,9 +11,8 @@ from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_trino_type,
 )
-from sqlalchemy import create_engine
 from trino.auth import BasicAuthentication
-from trino.dbapi import connect, Connection, Cursor as CursorParent
+from trino.dbapi import Connection, Cursor as CursorParent
 from trino.transaction import IsolationLevel
 from typing import IO, Mapping, Union
 from pandas import DataFrame, Series
@@ -48,6 +47,7 @@ class ConnectionWrapper(Connection):
             else self.legacy_primitive_types
         )
 
+
 class Trino(BaseSQL):
     QUERY_MAX_LENGTH = 100_000
 
@@ -70,7 +70,7 @@ class Trino(BaseSQL):
             schema=schema,
             **kwargs
         )
-    
+
     @classmethod
     def with_config(cls, config: BaseConfigLoader) -> 'Trino':
         return cls(
@@ -107,9 +107,7 @@ class Trino(BaseSQL):
             if self.settings.get('password'):
                 connect_kwargs['auth'] = \
                     BasicAuthentication(
-                        self.settings['user'],
-                        self.settings['password'],
-                    )
+                        self.settings['user'], self.settings['password'])
                 connect_kwargs['http_scheme'] = 'https'
             self._ctx = ConnectionWrapper(**connect_kwargs)
 

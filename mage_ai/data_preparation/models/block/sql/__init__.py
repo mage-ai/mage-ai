@@ -313,7 +313,6 @@ def execute_sql_code(
                     ]
 
 
-
 def execute_raw_sql(
     loader,
     block: 'Block',
