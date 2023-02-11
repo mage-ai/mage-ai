@@ -10,14 +10,11 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import (
     BlockRun,
-    EventMatcher,
     PipelineRun,
     PipelineSchedule,
-    pipeline_schedule_event_matcher_association_table,
 )
 from mage_ai.orchestration.pipeline_scheduler import get_variables
 from mage_ai.server.api.errors import UnauthenticatedRequestException
-from mage_ai.shared.hash import merge_dict
 from sqlalchemy.orm import aliased, selectinload
 from typing import List
 import json
@@ -334,73 +331,3 @@ class ApiPipelineRunLogHandler(BaseHandler):
                 log=pipeline_run.logs,
             ),
         )
-
-
-class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
-    datetime_keys = ['start_time']
-    model_class = PipelineSchedule
-
-    @safe_db_query
-    def get(self, pipeline_schedule_id):
-        include_attributes = []
-        if self.get_bool_argument('include_event_matchers', False):
-            include_attributes.append('event_matchers')
-        super().get(pipeline_schedule_id, include_attributes=include_attributes)
-
-    @safe_db_query
-    def put(self, pipeline_schedule_id):
-        pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
-        payload = self.get_payload()
-
-        arr = payload.pop('event_matchers', None)
-        event_matchers = []
-        if arr is not None:
-            if len(arr) >= 1:
-                event_matchers = EventMatcher.upsert_batch(
-                    [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id]))
-                     for p in arr],
-                )
-
-            ems = (
-                EventMatcher.
-                query.
-                join(
-                    pipeline_schedule_event_matcher_association_table,
-                    EventMatcher.id ==
-                    pipeline_schedule_event_matcher_association_table.c.event_matcher_id
-                ).
-                join(
-                    PipelineSchedule,
-                    PipelineSchedule.id ==
-                    pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id
-                ).
-                filter(
-                    PipelineSchedule.id == int(pipeline_schedule_id),
-                    EventMatcher.id.not_in([em.id for em in event_matchers]),
-                )
-            )
-            for em in ems:
-                new_ids = [schedule for schedule in em.pipeline_schedules
-                           if schedule.id != int(pipeline_schedule_id)]
-                ps = [p for p in PipelineSchedule.query.filter(PipelineSchedule.id.in_(new_ids))]
-                em.update(pipeline_schedules=ps)
-
-        pipeline_schedule.update(**payload)
-
-        extra_data = {}
-        include_attributes = []
-
-        if len(event_matchers) >= 1:
-            extra_data['event_matchers'] = [em.to_dict() for em in event_matchers]
-        else:
-            include_attributes.append('event_matchers')
-
-        pipeline_schedule_data = merge_dict(
-            pipeline_schedule.to_dict(include_attributes=include_attributes),
-            extra_data,
-        )
-
-        self.write(dict(pipeline_schedule=pipeline_schedule_data))
-
-    def delete(self, pipeline_schedule_id):
-        super().delete(pipeline_schedule_id)

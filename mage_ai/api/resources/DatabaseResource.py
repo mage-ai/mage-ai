@@ -115,6 +115,7 @@ class DatabaseResource(BaseResource):
     def delete(self, **kwargs):
         return self.model.delete()
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         for k, v in payload.items():
             setattr(self.model, k, v)

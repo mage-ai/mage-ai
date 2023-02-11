@@ -19,6 +19,7 @@ from mage_ai.orchestration.db.errors import DoesNotExistError
 from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import merge_dict, ignore_keys
 from typing import Dict
+import dateutil.parser
 import importlib
 import inflection
 import inspect
@@ -265,10 +266,16 @@ class BaseOperation():
 
     def __payload_for_resource(self):
         payload = self.payload.get(self.__resource_name_singular(), {})
+
         if self.files and self.files.get(FILE_KEY_NAME):
             payload_prev = ignore_keys(self.payload, [FILE_KEY_NAME])
             payload[FILE_KEY_NAME] = self.files.get(FILE_KEY_NAME)
             payload.update(payload_prev)
+
+        for key in self.__resource_class().datetime_keys:
+            if payload.get(key) is not None:
+                payload[key] = dateutil.parser.parse(payload[key])
+
         return payload
 
     async def __present_results(self, results):

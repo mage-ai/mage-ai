@@ -64,7 +64,6 @@ from mage_ai.server.api.orchestration import (
     ApiBlockRunListHandler,
     ApiPipelineRunListHandler,
     ApiPipelineRunLogHandler,
-    ApiPipelineScheduleDetailHandler,
 )
 from mage_ai.server.api.projects import ApiProjectsHandler
 from mage_ai.server.api.secrets import (
@@ -448,10 +447,6 @@ def make_app():
             ApiAllBlockRunListHandler,
         ),
         (r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/logs', ApiPipelineRunLogHandler),
-        (
-            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)',
-            ApiPipelineScheduleDetailHandler,
-        ),
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs',
             ApiPipelineRunListHandler,

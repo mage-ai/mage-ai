@@ -9,6 +9,7 @@ class PipelineSchedulePolicy(BasePolicy):
 
 
 PipelineSchedulePolicy.allow_actions([
+    constants.DETAIL,
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -16,6 +17,8 @@ PipelineSchedulePolicy.allow_actions([
 
 PipelineSchedulePolicy.allow_actions([
     constants.CREATE,
+    constants.DELETE,
+    constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
@@ -24,7 +27,24 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+    constants.DELETE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
+
+PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
+    'event_matchers',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
+PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
+    'event_matchers',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
@@ -46,4 +66,18 @@ PipelineSchedulePolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
+
+PipelineSchedulePolicy.allow_write([
+    'event_matchers',
+    'name',
+    'schedule_interval',
+    'schedule_type',
+    'start_time',
+    'variables',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())

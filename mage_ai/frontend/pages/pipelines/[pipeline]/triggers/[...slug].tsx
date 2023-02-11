@@ -23,9 +23,7 @@ function TriggerDetailPage({
   const {
     data: pipelineScheduleData,
     mutate: fetchPipelineSchedule,
-  } = api.pipeline_schedules.detail(pipelineScheduleId, {
-    include_event_matchers: true,
-  });
+  } = api.pipeline_schedules.detail(pipelineScheduleId);
   const pipelineSchedule = pipelineScheduleData?.pipeline_schedule;
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
