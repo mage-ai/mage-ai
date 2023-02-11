@@ -32,6 +32,7 @@ import CodeEditor, {
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import DataProviderType, {
+  DataProviderEnum,
   EXPORT_WRITE_POLICIES,
   ExportWritePolicyEnum,
 } from '@interfaces/DataProviderType';
@@ -96,7 +97,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addScratchpadNote } from '@components/PipelineDetail/AddNewBlocks/utils';
+import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
@@ -1176,44 +1177,48 @@ function CodeBlockProps({
 
                       <Spacing mr={1} />
 
-                      <Tooltip
-                        block
-                        description={
-                          <Text default inline>
-                            Schema that is used when creating a table and inserting values.
-                            <br />
-                            This field is required.
-                          </Text>
-                        }
-                        size={null}
-                        widthFitContent
-                      >
-                        <FlexContainer alignItems="center">
-                          <TextInput
-                            compact
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              // @ts-ignore
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            label="Schema"
-                            small
-                            value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
-                            width={10 * UNIT}
-                          />
-                        </FlexContainer>
-                      </Tooltip>
+                      {dataProviderConfig[CONFIG_KEY_DATA_PROVIDER] !== DataProviderEnum.MYSQL &&
+                        <>
+                          <Tooltip
+                            block
+                            description={
+                              <Text default inline>
+                                Schema that is used when creating a table and inserting values.
+                                <br />
+                                This field is required.
+                              </Text>
+                            }
+                            size={null}
+                            widthFitContent
+                          >
+                            <FlexContainer alignItems="center">
+                              <TextInput
+                                compact
+                                monospace
+                                onBlur={() => setTimeout(() => {
+                                  setAnyInputFocused(false);
+                                }, 300)}
+                                onChange={(e) => {
+                                  // @ts-ignore
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
+                                  });
+                                  e.preventDefault();
+                                }}
+                                onFocus={() => {
+                                  setAnyInputFocused(true);
+                                }}
+                                label="Schema"
+                                small
+                                value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
+                                width={10 * UNIT}
+                              />
+                            </FlexContainer>
+                          </Tooltip>
 
-                      <Spacing mr={1} />
+                          <Spacing mr={1} />
+                        </>
+                      }
 
                       <Tooltip
                         block
@@ -1476,6 +1481,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
                   content = addScratchpadNote(newBlock, content);
 
                   if (BlockLanguageEnum.SQL === block.language) {
+                    content = addSqlBlockNote(content);
                     configuration = {
                       ...selectKeys(block.configuration, [
                         CONFIG_KEY_DATA_PROVIDER,

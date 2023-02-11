@@ -7,6 +7,7 @@ import yaml
 
 DATA_PROVIDERS = [
     DataSource.BIGQUERY,
+    DataSource.MYSQL,
     DataSource.POSTGRES,
     DataSource.REDSHIFT,
     DataSource.SNOWFLAKE,
