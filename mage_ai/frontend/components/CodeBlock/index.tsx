@@ -32,6 +32,7 @@ import CodeEditor, {
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import DataProviderType, {
+  DataProviderEnum,
   EXPORT_WRITE_POLICIES,
   ExportWritePolicyEnum,
 } from '@interfaces/DataProviderType';
@@ -1176,44 +1177,48 @@ function CodeBlockProps({
 
                       <Spacing mr={1} />
 
-                      <Tooltip
-                        block
-                        description={
-                          <Text default inline>
-                            Schema that is used when creating a table and inserting values.
-                            <br />
-                            This field is required.
-                          </Text>
-                        }
-                        size={null}
-                        widthFitContent
-                      >
-                        <FlexContainer alignItems="center">
-                          <TextInput
-                            compact
-                            monospace
-                            onBlur={() => setTimeout(() => {
-                              setAnyInputFocused(false);
-                            }, 300)}
-                            onChange={(e) => {
-                              // @ts-ignore
-                              updateDataProviderConfig({
-                                [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
-                              });
-                              e.preventDefault();
-                            }}
-                            onFocus={() => {
-                              setAnyInputFocused(true);
-                            }}
-                            label="Schema"
-                            small
-                            value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
-                            width={10 * UNIT}
-                          />
-                        </FlexContainer>
-                      </Tooltip>
+                      {dataProviderConfig[CONFIG_KEY_DATA_PROVIDER] !== DataProviderEnum.MYSQL &&
+                        <>
+                          <Tooltip
+                            block
+                            description={
+                              <Text default inline>
+                                Schema that is used when creating a table and inserting values.
+                                <br />
+                                This field is required.
+                              </Text>
+                            }
+                            size={null}
+                            widthFitContent
+                          >
+                            <FlexContainer alignItems="center">
+                              <TextInput
+                                compact
+                                monospace
+                                onBlur={() => setTimeout(() => {
+                                  setAnyInputFocused(false);
+                                }, 300)}
+                                onChange={(e) => {
+                                  // @ts-ignore
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
+                                  });
+                                  e.preventDefault();
+                                }}
+                                onFocus={() => {
+                                  setAnyInputFocused(true);
+                                }}
+                                label="Schema"
+                                small
+                                value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
+                                width={10 * UNIT}
+                              />
+                            </FlexContainer>
+                          </Tooltip>
 
-                      <Spacing mr={1} />
+                          <Spacing mr={1} />
+                        </>
+                      }
 
                       <Tooltip
                         block
