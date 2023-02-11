@@ -7,6 +7,7 @@ class OutputResource(GenericResource):
     def collection(self, query, meta, user, **kwargs):
         parent_model = kwargs['parent_model']
 
+        outputs = []
         if type(parent_model) is BlockRun:
             outputs = parent_model.get_outputs()
 

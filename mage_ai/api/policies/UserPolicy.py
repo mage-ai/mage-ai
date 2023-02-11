@@ -14,14 +14,14 @@ UserPolicy.allow_actions([
     constants.DELETE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.current_user.owner)
+], condition=lambda policy: policy.is_owner())
 
 UserPolicy.allow_actions([
     constants.DETAIL,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.is_current_user())
+], condition=lambda policy: policy.is_current_user() or policy.is_owner())
 
 UserPolicy.allow_actions([
     constants.LIST,
@@ -31,7 +31,7 @@ UserPolicy.allow_actions([
 
 UserPolicy.allow_read(UserPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.is_current_user())
+], condition=lambda policy: policy.is_current_user() or policy.is_owner())
 
 UserPolicy.allow_read(UserPresenter.default_attributes + [
     'token',
@@ -40,7 +40,7 @@ UserPolicy.allow_read(UserPresenter.default_attributes + [
 ], on_action=[
     constants.CREATE,
     constants.DELETE,
-])
+], condition=lambda policy: policy.is_current_user() or policy.is_owner())
 
 UserPolicy.allow_write([
     'avatar',
@@ -55,7 +55,7 @@ UserPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.is_current_user())
+], condition=lambda policy: policy.is_current_user() or policy.is_owner())
 
 UserPolicy.allow_write([
     'avatar',
@@ -69,4 +69,4 @@ UserPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-])
+], condition=lambda policy: policy.is_owner())

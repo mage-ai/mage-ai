@@ -117,7 +117,7 @@ class BasePolicy():
             self.__name__.replace(
                 'Policy', '')).lower()
 
-    def is_admin(self):
+    def is_owner(self) -> bool:
         return (self.current_user and self.current_user.owner) or \
             (not REQUIRE_USER_AUTHENTICATION and not is_test())
 
@@ -137,7 +137,7 @@ class BasePolicy():
             (self.current_user.roles and self.current_user.roles & 3 != 0)
 
     def authorize_action(self, action):
-        if self.is_admin():
+        if self.is_owner():
             return True
 
         config = self.__class__.action_rule(action)
@@ -153,7 +153,7 @@ class BasePolicy():
             raise ApiError(error)
 
     def authorize_attribute(self, read_or_write, attrb, **kwargs):
-        if self.is_admin():
+        if self.is_owner():
             return True
 
         api_operation_action = self.options.get(
@@ -190,8 +190,9 @@ class BasePolicy():
             self.__validate_condition(attrb, cond, **kwargs)
 
     def authorize_attributes(self, read_or_write, attrbs, **kwargs):
-        if self.is_admin():
+        if self.is_owner():
             return True
+
         for attrb in attrbs:
             self.authorize_attribute(read_or_write, attrb, **kwargs)
 
@@ -217,9 +218,6 @@ class BasePolicy():
                         config[self.__current_scope()]['condition'],
                         message=error_message,
                     )
-
-    def is_owner(self):
-        return self.current_user and self.current_user.owner
 
     def parent_model(self):
         if not self.parent_model_attr:

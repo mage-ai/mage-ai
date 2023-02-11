@@ -9,21 +9,31 @@ class PipelinePolicy(BasePolicy):
 
 
 PipelinePolicy.allow_actions([
-    constants.DELETE,
     constants.DETAIL,
     constants.LIST,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelinePolicy.allow_actions([
+    constants.DELETE,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
 
-PipelinePolicy.allow_read([] + PipelinePresenter.default_attributes, scopes=[
+PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
     constants.DELETE,
     constants.UPDATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'schedules',
@@ -31,7 +41,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.LIST,
-])
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_write([
     'clone_pipeline_uuid',
@@ -41,7 +51,7 @@ PipelinePolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelinePolicy.allow_write([
     'status',
@@ -49,7 +59,7 @@ PipelinePolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelinePolicy.allow_query([
     'includes_content',
@@ -57,8 +67,8 @@ PipelinePolicy.allow_query([
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.READ,
-])
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_query([
     'include_schedules',
@@ -66,7 +76,7 @@ PipelinePolicy.allow_query([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.LIST,
-])
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_query([
     'update_content',
@@ -74,4 +84,4 @@ PipelinePolicy.allow_query([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
