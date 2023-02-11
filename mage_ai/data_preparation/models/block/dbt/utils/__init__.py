@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.block.sql import (
     postgres,
     redshift,
     snowflake,
+    trino,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -59,6 +60,8 @@ def parse_attributes(block) -> Dict:
         if DataSource.MYSQL == profile.get('type'):
             source_name = profile['schema']
         elif DataSource.REDSHIFT == profile.get('type'):
+            source_name = profile['schema']
+        elif DataSource.TRINO == profile.get('type'):
             source_name = profile['schema']
 
     return dict(
@@ -251,7 +254,11 @@ def get_profile(block, profile_target: str = None) -> Dict:
     return load_profile(project_name, profiles_full_path, profile_target)
 
 
-def load_profile(project_name: str, profiles_full_path: str, profile_target: str = None) -> Dict:
+def load_profile(
+    project_name: str,
+    profiles_full_path: str,
+    profile_target: str = None,
+) -> Dict:
     with open(profiles_full_path, 'r') as f:
         try:
             text = Template(f.read()).render(
@@ -371,6 +378,23 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider_schema=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
+    elif DataSource.TRINO == profile_type:
+        catalog = profile.get('catalog')
+        schema = profile.get('schema')
+        config_file_loader = ConfigFileLoader(config=dict(
+            TRINO_CATALOG=profile.get('catalog'),
+            TRINO_HOST=profile.get('host'),
+            TRINO_USER=profile.get('user'),
+            TRINO_PASSWORD=profile.get('password'),
+            TRINO_PORT=profile.get('port'),
+            TRINO_SCHEMA=profile.get('schema'),
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=catalog,
+            data_provider_schema=schema,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
 
     if not config_file_loader or not configuration:
         attr = parse_attributes(block)
@@ -475,6 +499,15 @@ def create_upstream_tables(
                 block,
                 **kwargs_shared,
             )
+    elif DataSource.TRINO == data_provider:
+        from mage_ai.io.trino import Trino
+
+        with Trino.with_config(config_file_loader) as loader:
+            trino.create_upstream_block_tables(
+                loader,
+                block,
+                **kwargs_shared,
+            )
 
 
 def interpolate_input(
@@ -541,7 +574,9 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
 
     profile = get_profile(block, profile_target)
 
-    with open(f'{project_full_path}/target/compiled/{file_path}', 'r') as f:
+    file = f'{project_full_path}/target/compiled/{file_path}'
+
+    with open(file, 'r') as f:
         query_string = f.read()
 
         profile_type = profile.get('type')
@@ -564,6 +599,9 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             quote_str = '"'
         elif DataSource.SNOWFLAKE == profile_type:
             database = profile['database']
+            schema = profile['schema']
+        elif DataSource.TRINO == profile_type:
+            database = profile['catalog']
             schema = profile['schema']
 
         query_string = interpolate_input(
@@ -599,6 +637,11 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             from mage_ai.io.snowflake import Snowflake
 
             with Snowflake.with_config(config_file_loader) as loader:
+                return loader.load(query_string)
+        elif DataSource.TRINO == data_provider:
+            from mage_ai.io.trino import Trino
+
+            with Trino.with_config(config_file_loader) as loader:
                 return loader.load(query_string)
 
 

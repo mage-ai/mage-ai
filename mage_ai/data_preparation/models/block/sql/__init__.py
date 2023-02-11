@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block.sql import (
     postgres,
     redshift,
     snowflake,
+    trino,
 )
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     interpolate_vars,
@@ -238,6 +239,48 @@ def execute_sql_code(
             )
 
             query_string = snowflake.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
+
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    table_name,
+                    database,
+                    schema,
+                    if_exists=export_write_policy,
+                    query_string=query_string,
+                    verbose=BlockType.DATA_EXPORTER == block.type,
+                )
+
+                if should_query:
+                    return [
+                        loader.load(
+                            f'SELECT * FROM "{database}"."{schema}"."{table_name}"',
+                            database=database,
+                            schema=schema,
+                            table_name=table_name,
+                            verbose=False,
+                        ),
+                    ]
+    elif DataSource.TRINO.value == data_provider:
+        from mage_ai.io.trino import Trino
+
+        with Trino.with_config(config_file_loader) as loader:
+            trino.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                execution_partition=execution_partition,
+            )
+
+            query_string = trino.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:

@@ -5,8 +5,8 @@ from mage_ai.shared.utils import clean_name
 from mysql.connector import connect
 from mysql.connector.cursor import MySQLCursor
 from pandas import DataFrame, Series
-import numpy as np
 from typing import IO, Mapping, Union
+import numpy as np
 
 
 class MySQL(BaseSQL):

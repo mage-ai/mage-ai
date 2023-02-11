@@ -159,7 +159,8 @@ class BaseSQL(BaseSQLConnection):
         query_string = self._clean_query(query_string)
 
         with self.printer.print_msg(print_message):
-            return read_sql(self._enforce_limit(query_string, limit), self.conn, **kwargs)
+            return read_sql(
+                self._enforce_limit(query_string, limit), self.conn, **kwargs)
 
     def export(
         self,
