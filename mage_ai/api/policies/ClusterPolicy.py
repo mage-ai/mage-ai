@@ -9,18 +9,23 @@ class ClusterPolicy(BasePolicy):
 
 
 ClusterPolicy.allow_actions([
-    constants.READ,
+    constants.DETAIL,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+ClusterPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 ClusterPolicy.allow_read(ClusterPresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.READ,
+    constants.DETAIL,
     constants.UPDATE,
-])
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 ClusterPolicy.allow_write([
     'id',
@@ -28,4 +33,4 @@ ClusterPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())

@@ -121,6 +121,21 @@ class BasePolicy():
         return (self.current_user and self.current_user.owner) or \
             (not REQUIRE_USER_AUTHENTICATION and not is_test())
 
+    def has_at_least_admin_role(self) -> bool:
+        return not self.current_user or \
+            (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+            (self.current_user.roles and self.current_user.roles & 1 != 0)
+
+    def has_at_least_editor_role(self) -> bool:
+        return not self.current_user or \
+            (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+            (self.current_user.roles and self.current_user.roles & 2 != 0)
+
+    def has_at_least_viewer_role(self) -> bool:
+        return not self.current_user or \
+            (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+            (self.current_user.roles and self.current_user.roles & 3 != 0)
+
     def authorize_action(self, action):
         if self.is_admin():
             return True

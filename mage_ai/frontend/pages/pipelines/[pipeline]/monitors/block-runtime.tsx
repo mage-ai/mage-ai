@@ -57,34 +57,25 @@ function BlockRuntimeMonitor({
 
   const blocksByUUID = useMemo(() => indexBy(pipeline?.blocks, ({ uuid }) => uuid) || {}, [pipeline]);
 
-  const [dataMonitor, setDataMonitor] = useState<any>(null);
-  const [fetchStats] = useMutation(
-    async (id: number) => {
-      let url = `${buildUrl(MONITOR_STATS)}/block_run_time?pipeline_uuid=${pipelineUUID}`;
-      if (id || id === 0) {
-        url += `&pipeline_schedule_id=${id}`;
-      }
-      return fetch(url, { method: 'GET' });
-    },
-    {
-      onSuccess: (response: any) => onSuccess(
-        response,
-        {
-          callback: (res) => {
-            setDataMonitor(res);
-          },
-        },
-      ),
-    }
-  );
+  const monitorStatQuery: {
+    pipeline_uuid: string;
+    pipeline_schedule_id?: number;
+  } = {
+    pipeline_uuid: pipelineUUID,
+  };
+  if (pipelineSchedule || pipelineSchedule === 0) {
+    monitorStatQuery.pipeline_schedule_id = Number(pipelineSchedule);
+  }
+  const { data: dataMonitor, mutate: fetchStats } =
+    api.monitor_stats.detail('block_run_time', monitorStatQuery);
 
   useEffect(() => {
     fetchStats(pipelineSchedule);
-  }, [fetchStats]);
+  }, [fetchStats, pipelineSchedule]);
 
   const {
     stats: monitorStats,
-  } = dataMonitor?.monitor_stats || {};
+  } = dataMonitor?.monitor_stat || {};
 
   const dateRange = useMemo(() => {
     const date = new Date();
@@ -142,8 +133,8 @@ function BlockRuntimeMonitor({
             onChange={e => {
               const val = e.target.value;
               if (val !== 'initial') {
-                fetchStats(val);
                 setPipelineSchedule(val);
+                fetchStats(val);
               } else {
                 fetchStats();
                 setPipelineSchedule(null);

@@ -9,16 +9,16 @@ class MonitorStatPolicy(BasePolicy):
 
 
 MonitorStatPolicy.allow_actions([
-    constants.READ,
+    constants.DETAIL,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-])
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 MonitorStatPolicy.allow_read([] + MonitorStatPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.READ,
-])
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 MonitorStatPolicy.allow_query([
     'end_time',
@@ -27,4 +27,4 @@ MonitorStatPolicy.allow_query([
     'start_time',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-])
+], condition=lambda policy: policy.has_at_least_viewer_role())

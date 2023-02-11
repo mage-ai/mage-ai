@@ -9,23 +9,30 @@ class FileContentPolicy(BasePolicy):
 
 
 FileContentPolicy.allow_actions([
-    constants.READ,
+    constants.DETAIL,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+FileContentPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
 
-FileContentPolicy.allow_read([] + FileContentPresenter.default_attributes, scopes=[
+FileContentPolicy.allow_read(FileContentPresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.READ,
+    constants.DETAIL,
     constants.UPDATE,
 ])
 
 FileContentPolicy.allow_write([
     'content',
+    'name',
+    'path',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())
