@@ -1,11 +1,8 @@
-from enum import Enum
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.orchestration.db.models import BlockRun
 from mage_ai.server.active_kernel import get_active_kernel_name
 from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.kernels import KernelName
-from mage_ai.shared.hash import merge_dict
 
 
 class ClusterResource(GenericResource):

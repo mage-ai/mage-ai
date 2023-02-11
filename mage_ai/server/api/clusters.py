@@ -10,11 +10,6 @@ from mage_ai.cluster_manager.constants import (
     KUBE_NAMESPACE,
     KUBE_STORAGE_CLASS_NAME
 )
-from mage_ai.server.active_kernel import (
-    get_active_kernel_name,
-)
-from mage_ai.server.kernels import KernelName
-from mage_ai.shared.hash import merge_dict
 import os
 import yaml
 

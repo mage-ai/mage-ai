@@ -1,6 +1,5 @@
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
-from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import (
@@ -87,7 +86,6 @@ from mage_ai.server.kernels import (
     DEFAULT_KERNEL_NAME,
     kernel_managers,
     KernelName,
-    PIPELINE_TO_KERNEL_NAME,
 )
 from mage_ai.server.scheduler_manager import (
     SCHEDULER_AUTO_RESTART_INTERVAL,
@@ -110,7 +108,6 @@ import os
 import socket
 import tornado.ioloop
 import tornado.web
-import urllib.parse
 
 
 class MainPageHandler(tornado.web.RequestHandler):

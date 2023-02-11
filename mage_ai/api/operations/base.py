@@ -21,7 +21,6 @@ from mage_ai.shared.hash import merge_dict, ignore_keys
 from typing import Dict
 import importlib
 import inflection
-import inspect
 
 
 def classify(name):

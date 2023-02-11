@@ -31,7 +31,6 @@ class MonitorStatResource(GenericResource):
         else:
             pipeline_schedule_id = None
 
-
         stats = MonitorStats().get_stats(
             pk,
             pipeline_uuid=pipeline_uuid,

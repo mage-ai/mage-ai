@@ -202,4 +202,3 @@ class BaseApiTestCase(TestCase):
                 raise err
 
         self.assertTrue(error_raised)
-
