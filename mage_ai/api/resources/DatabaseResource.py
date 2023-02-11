@@ -6,18 +6,23 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.errors import DoesNotExistError, ValidationError
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from sqlalchemy.orm.query import Query
+import inspect
 
 
 class DatabaseResource(BaseResource):
     DEFAULT_LIMIT = 10
 
     @classmethod
-    def process_collection(self, query, meta, user, **kwargs):
+    async def process_collection(self, query, meta, user, **kwargs):
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
         offset = int(meta.get(META_KEY_OFFSET, 0))
         start_idx = offset
         end_idx = start_idx + limit
+
         total_results = self.collection(query, meta, user, **kwargs)
+        if total_results and inspect.isawaitable(total_results):
+            total_results = await total_results
+
         if issubclass(total_results.__class__, Query):
             total_count = total_results.count()
         else:

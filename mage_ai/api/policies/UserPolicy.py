@@ -11,9 +11,10 @@ class UserPolicy(BasePolicy):
 
 UserPolicy.allow_actions([
     constants.CREATE,
+    constants.DELETE,
 ], scopes=[
-    OauthScope.CLIENT_PUBLIC,
-])
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.current_user.owner)
 
 UserPolicy.allow_actions([
     constants.DETAIL,
@@ -35,9 +36,10 @@ UserPolicy.allow_read(UserPresenter.default_attributes, scopes=[
 UserPolicy.allow_read(UserPresenter.default_attributes + [
     'token',
 ], scopes=[
-    OauthScope.CLIENT_PUBLIC,
+    OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+    constants.DELETE,
 ])
 
 UserPolicy.allow_write([
@@ -64,7 +66,7 @@ UserPolicy.allow_write([
     'password_confirmation',
     'username',
 ], scopes=[
-    OauthScope.CLIENT_PUBLIC,
+    OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
 ])
