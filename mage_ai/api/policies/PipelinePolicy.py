@@ -24,6 +24,24 @@ PipelinePolicy.allow_read([] + PipelinePresenter.default_attributes, scopes=[
     constants.UPDATE,
 ])
 
+PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
+    'schedules',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
+])
+
+PipelinePolicy.allow_write([
+    'clone_pipeline_uuid',
+    'name',
+    'type',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+])
+
 PipelinePolicy.allow_write([
     'status',
 ] + PipelinePresenter.default_attributes, scopes=[
@@ -39,6 +57,14 @@ PipelinePolicy.allow_query([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.READ,
+])
+
+PipelinePolicy.allow_query([
+    'include_schedules',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.LIST,
 ])
 
 PipelinePolicy.allow_query([

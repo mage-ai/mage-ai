@@ -17,8 +17,8 @@ from mage_ai.data_preparation.variable_manager import (
     get_global_variables,
     set_global_variable,
 )
-from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models import Oauth2Application, PipelineSchedule, User
+from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db.models import Oauth2Application, User
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
     restart_kernel,
@@ -95,8 +95,6 @@ from mage_ai.server.scheduler_manager import (
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
-from mage_ai.shared.hash import group_by, merge_dict
-from sqlalchemy.orm import aliased
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -143,77 +141,6 @@ class ApiPipelineExecuteHandler(BaseHandler):
             )
         )
         self.finish()
-
-
-class ApiPipelineListHandler(BaseHandler):
-    async def get(self):
-        include_schedules = self.get_argument('include_schedules', False)
-
-        pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
-
-        async def get_pipeline(uuid):
-            try:
-                return await Pipeline.get_async(uuid)
-            except Exception:
-                return None
-
-        pipelines = await asyncio.gather(
-            *[get_pipeline(uuid) for uuid in pipeline_uuids]
-        )
-        pipelines = [p for p in pipelines if p is not None]
-
-        @safe_db_query
-        def query_pipeline_schedules(pipeline_uuids):
-            a = aliased(PipelineSchedule, name='a')
-            result = (
-                PipelineSchedule.
-                select(*[
-                    a.created_at,
-                    a.id,
-                    a.name,
-                    a.pipeline_uuid,
-                    a.schedule_interval,
-                    a.schedule_type,
-                    a.start_time,
-                    a.status,
-                    a.updated_at,
-                ]).
-                filter(a.pipeline_uuid.in_(pipeline_uuids))
-            ).all()
-            return group_by(lambda x: x.pipeline_uuid, result)
-
-        mapping = {}
-        if include_schedules:
-            mapping = query_pipeline_schedules(pipeline_uuids)
-
-        collection = []
-        for pipeline in pipelines:
-            schedules = []
-            if mapping.get(pipeline.uuid):
-                schedules = mapping[pipeline.uuid]
-            collection.append(merge_dict(
-                pipeline.to_dict(),
-                dict(schedules=schedules),
-            ))
-
-        self.write(dict(pipelines=collection))
-        self.finish()
-
-    def post(self):
-        pipeline = json.loads(self.request.body).get('pipeline', {})
-        clone_pipeline_uuid = pipeline.get('clone_pipeline_uuid')
-        name = pipeline.get('name')
-        pipeline_type = pipeline.get('type')
-        if clone_pipeline_uuid is None:
-            pipeline = Pipeline.create(
-                name,
-                pipeline_type=pipeline_type,
-                repo_path=get_repo_path(),
-            )
-        else:
-            source = Pipeline.get(clone_pipeline_uuid)
-            pipeline = Pipeline.duplicate(source, name)
-        self.write(dict(pipeline=pipeline.to_dict()))
 
 
 class ApiPipelineVariableListHandler(BaseHandler):
@@ -484,8 +411,6 @@ def make_app():
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
 
         # API v1 routes
-        (r'/api/pipelines', ApiPipelineListHandler),
-
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)/execute',
             ApiPipelineBlockExecuteHandler,
