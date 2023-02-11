@@ -1,5 +1,5 @@
 from io import StringIO
-from mage_ai.io.base import ExportWritePolicy
+from mage_ai.io.base import ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import (
     clean_df_for_export,
@@ -11,11 +11,11 @@ from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_trino_type,
 )
+from pandas import DataFrame, Series
 from trino.auth import BasicAuthentication
 from trino.dbapi import Connection, Cursor as CursorParent
 from trino.transaction import IsolationLevel
 from typing import IO, Mapping, Union
-from pandas import DataFrame, Series
 import pandas as pd
 
 
@@ -59,9 +59,11 @@ class Trino(BaseSQL):
         password: str = None,
         port: int = 8080,
         schema: str = None,
+        verbose: bool = True,
         **kwargs,
     ):
         super().__init__(
+            verbose=verbose,
             catalog=catalog,
             host=host,
             user=user,
@@ -262,3 +264,6 @@ class Trino(BaseSQL):
                 __process()
         else:
             __process()
+
+    def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
+        return f'SELECT * FROM ({query.strip(";")}) AS subquery LIMIT {limit}'
