@@ -209,6 +209,11 @@ export const createColorMenuItems = (
     uuid: `${language}_${color}`,
   }));
 
+export const addSqlBlockNote = (content: string) => (
+  `-- Docs: https://docs.mage.ai/guides/sql-blocks
+` + (content || '')
+);
+
 export function addScratchpadNote(
   block: BlockType,
   content?: string,

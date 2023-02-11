@@ -97,7 +97,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { addScratchpadNote } from '@components/PipelineDetail/AddNewBlocks/utils';
+import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
@@ -1481,6 +1481,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
                   content = addScratchpadNote(newBlock, content);
 
                   if (BlockLanguageEnum.SQL === block.language) {
+                    content = addSqlBlockNote(content);
                     configuration = {
                       ...selectKeys(block.configuration, [
                         CONFIG_KEY_DATA_PROVIDER,
