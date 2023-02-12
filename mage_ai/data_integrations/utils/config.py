@@ -26,7 +26,7 @@ def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline
     patterns = config.get(KEY_PATTERNS, {})
     destination_table_pattern = patterns.get(PATTERN_KEY_DESTINATION_TABLE)
 
-    if 'catalog' not in settings \
+    if not settings.get('catalog') \
         and pipeline \
         and pipeline.data_integration \
             and 'catalog' in pipeline.data_integration:
