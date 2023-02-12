@@ -285,7 +285,7 @@ function PipelineDetailPage({
     };
   }, [
     setPipelineContentTouched,
-    widgetTempData.current,
+    widgetTempData,
   ]);
 
   const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
@@ -573,14 +573,50 @@ function PipelineDetailPage({
             contentToSave = block.content;
           }
 
+          let outputs;
+          const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
+          const hasError = messagesForBlock?.find(({ error }) => error);
+
+          if (messagesForBlock) {
+            const arr2 = [];
+
+            messagesForBlock.forEach((d: KernelOutputType) => {
+              const {
+                data,
+                type,
+              } = d;
+
+              if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
+                if (Array.isArray(data)) {
+                  d.data = data.reduce((acc, text: string) => {
+                    if (text.match(INTERNAL_OUTPUT_REGEX)) {
+                      return acc;
+                    }
+
+                    return acc.concat(text);
+                  }, []);
+                }
+
+                arr2.push(d);
+              }
+            });
+
+            // @ts-ignore
+            outputs = arr2.map((d: KernelOutputType, idx: number) => ({
+              text_data: JSON.stringify(d),
+              variable_uuid: `${block.uuid}_${idx}`,
+            }));
+          }
+
           return {
             ...block,
             ...tempData,
-            content: contentToSave,
             configuration: {
               ...block.configuration,
               ...tempData.configuration,
             },
+            content: contentToSave,
+            outputs,
           };
         }),
       },

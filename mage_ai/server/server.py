@@ -68,7 +68,6 @@ from mage_ai.server.api.v1 import (
     ApiResourceDetailHandler,
     ApiResourceListHandler,
 )
-from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
 from mage_ai.server.kernel_output_parser import parse_output_message
@@ -277,14 +276,6 @@ def make_app():
         ),
 
         # API v1 routes
-        (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets/(?P<block_uuid>[\w\%2f]+)',
-            ApiPipelineWidgetDetailHandler,
-        ),
-        (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets',
-            ApiPipelineWidgetListHandler,
-        ),
         (
             r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)',
             ApiPipelineRunDetailHandler,
