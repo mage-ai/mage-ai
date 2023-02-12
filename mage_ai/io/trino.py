@@ -40,11 +40,9 @@ class ConnectionWrapper(Connection):
         return Cursor(
             self,
             request,
-            # if legacy_primitive_types is not explicitly set in Cursor,
-            # take from Connection
             legacy_primitive_types
             if legacy_primitive_types is not None
-            else self.legacy_primitive_types
+            else False
         )
 
 
