@@ -14,7 +14,7 @@ from typing import List
 class Hubspot(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
         setup(self.config, self.state)
-        catalog = do_discover(return_streams=True)
+        catalog = do_discover(return_streams=True, logger=self.logger)
 
         catalog_entries = []
         for stream in catalog['streams']:
@@ -31,7 +31,7 @@ class Hubspot(Source):
 
     def sync(self, catalog: Catalog) -> None:
         _, state = setup(self.config, self.state)
-        do_sync(state, catalog.to_dict())
+        do_sync(state, catalog.to_dict(), logger=self.logger)
 
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
         return BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(stream_id, ['N/A'])
