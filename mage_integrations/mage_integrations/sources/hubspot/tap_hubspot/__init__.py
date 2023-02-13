@@ -349,7 +349,7 @@ def get_params_and_headers(params):
                       interval=10)
 def request(url, params=None, logger=LOGGER):
 
-    params, headers = get_params_and_headers(params, logger=logger)
+    params, headers = get_params_and_headers(params)
 
     req = requests.Request('GET', url, params=params, headers=headers).prepare()
     logger.info(f'GET {req.url}')
