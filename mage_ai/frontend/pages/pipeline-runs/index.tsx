@@ -119,4 +119,6 @@ function RunListPage() {
   );
 }
 
+RunListPage.getInitialProps = async () => ({});
+
 export default PrivateRoute(RunListPage);

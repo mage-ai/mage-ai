@@ -1,6 +1,5 @@
 from mage_ai.shared.hash import merge_dict
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.api.resources.shared.collections import limit_collection
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import (
     EventMatcher,
@@ -20,20 +19,16 @@ class PipelineScheduleResource(DatabaseResource):
         pipeline = kwargs.get('parent_model')
 
         if pipeline:
-            results = (
+            return (
                 PipelineSchedule.
                 query.
                 options(selectinload(PipelineSchedule.event_matchers)).
                 options(selectinload(PipelineSchedule.pipeline_runs)).
                 filter(PipelineSchedule.pipeline_uuid == pipeline.uuid).
-                order_by(PipelineSchedule.start_time.desc(), PipelineSchedule.id.desc())
+                order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
             )
-            results = limit_collection(results, query_arg).all()
-            results.sort(key=lambda x: x.id, reverse=True)
-        else:
-            results = PipelineSchedule.query.all()
 
-        return self.build_result_set(results, user, **kwargs)
+        return PipelineSchedule.query.all()
 
     @classmethod
     def create(self, payload, user, **kwargs):

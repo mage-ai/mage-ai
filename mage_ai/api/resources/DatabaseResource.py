@@ -10,14 +10,12 @@ import inspect
 
 
 class DatabaseResource(BaseResource):
-    DEFAULT_LIMIT = 10
+    DEFAULT_LIMIT = 100
 
     @classmethod
     async def process_collection(self, query, meta, user, **kwargs):
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
         offset = int(meta.get(META_KEY_OFFSET, 0))
-        start_idx = offset
-        end_idx = start_idx + limit
 
         total_results = self.collection(query, meta, user, **kwargs)
         if total_results and inspect.isawaitable(total_results):
@@ -25,12 +23,20 @@ class DatabaseResource(BaseResource):
 
         if issubclass(total_results.__class__, Query):
             total_count = total_results.count()
+
+            results = total_results.limit(limit + 1).offset(offset).all()
         else:
             total_count = len(total_results)
-        results = total_results[start_idx:(end_idx + 1)]
+
+            start_idx = offset
+            end_idx = start_idx + limit
+
+            results = total_results[start_idx:(end_idx + 1)]
+
         results_size = len(results)
         has_next = results_size > limit
         final_end_idx = results_size - 1 if has_next else results_size
+
         result_set = self.build_result_set(
             results[0:final_end_idx],
             user,

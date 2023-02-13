@@ -320,4 +320,6 @@ function InstanceListPage() {
   );
 }
 
+InstanceListPage.getInitialProps = async () => ({});
+
 export default PrivateRoute(InstanceListPage);
