@@ -461,6 +461,7 @@ def gen_request(
     offset_keys,
     offset_targets,
     v3_fields=None,
+    logger=LOGGER,
 ):
     if len(offset_keys) != len(offset_targets):
         raise ValueError("Number of offset_keys must match number of offset_targets")
@@ -470,7 +471,7 @@ def gen_request(
 
     with metrics.record_counter(tap_stream_id) as counter:
         while True:
-            data = request(url, params).json()
+            data = request(url, params, logger=logger).json()
 
             if data.get(path) is None:
                 raise RuntimeError("Unexpected API response: {} not in {}".format(path, data.keys()))
@@ -502,11 +503,23 @@ def gen_request(
     singer.write_state(STATE)
 
 
-def _sync_contact_vids(catalog, vids, schema, bumble_bee, bookmark_values, bookmark_key):
+def _sync_contact_vids(
+    catalog,
+    vids,
+    schema,
+    bumble_bee,
+    bookmark_values,
+    bookmark_key,
+    logger=LOGGER,
+):
     if len(vids) == 0:
         return
 
-    data = request(get_url("contacts_detail"), params={'vid': vids, 'showListMemberships' : True, "formSubmissionMode" : "all"}).json()
+    data = request(
+        get_url('contacts_detail'),
+        params={'vid': vids, 'showListMemberships': True, "formSubmissionMode": "all"},
+        logger=logger,
+    ).json()
     time_extracted = utils.now()
     mdata = metadata.to_map(catalog.get('metadata'))
 
@@ -553,7 +566,17 @@ def sync_contacts(STATE, ctx, logger=LOGGER):
     # Dict to store replication key value for each contact record
     bookmark_values = {}
     with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
-        for row in gen_request(STATE, 'contacts', url, default_contact_params, 'contacts', 'has-more', ['vid-offset'], ['vidOffset']):
+        for row in gen_request(
+            STATE,
+            'contacts',
+            url,
+            default_contact_params,
+            'contacts',
+            'has-more',
+            ['vid-offset'],
+            ['vidOffset'],
+            logger=logger,
+        ):
             modified_time = None
             if bookmark_key in row:
                 modified_time = utils.strptime_with_tz(
@@ -571,10 +594,26 @@ def sync_contacts(STATE, ctx, logger=LOGGER):
                 max_bk_value = modified_time
 
             if len(vids) == 100:
-                _sync_contact_vids(catalog, vids, schema, bumble_bee, bookmark_values, bookmark_key)
+                _sync_contact_vids(
+                    catalog,
+                    vids,
+                    schema,
+                    bumble_bee,
+                    bookmark_values,
+                    bookmark_key,
+                    logger=logger,
+                )
                 vids = []
 
-        _sync_contact_vids(catalog, vids, schema, bumble_bee, bookmark_values, bookmark_key)
+        _sync_contact_vids(
+            catalog,
+            vids,
+            schema,
+            bumble_bee,
+            bookmark_values,
+            bookmark_key,
+            logger=logger,
+        )
 
     STATE = singer.write_bookmark(STATE, 'contacts', bookmark_key, utils.strftime(max_bk_value))
     singer.write_state(STATE)
@@ -669,7 +708,17 @@ def sync_companies(STATE, ctx, logger=LOGGER):
         )
 
     with bumble_bee:
-        for row in gen_request(STATE, 'companies', url, default_company_params, 'companies', 'has-more', ['offset'], ['offset']):
+        for row in gen_request(
+            STATE,
+            'companies',
+            url,
+            default_company_params,
+            'companies',
+            'has-more',
+            ['offset'],
+            ['offset'],
+            logger=logger,
+        ):
             row_properties = row['properties']
             modified_time = None
             if bookmark_field_in_record in row_properties:
@@ -779,7 +828,18 @@ def sync_deals(STATE, ctx, logger=LOGGER):
 
     url = get_url('deals_all')
     with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
-        for row in gen_request(STATE, 'deals', url, params, 'deals', "hasMore", ["offset"], ["offset"], v3_fields=v3_fields):
+        for row in gen_request(
+            STATE,
+            'deals',
+            url,
+            params,
+            'deals',
+            'hasMore',
+            ['offset'],
+            ['offset'],
+            v3_fields=v3_fields,
+            logger=logger,
+        ):
             row_properties = row['properties']
             modified_time = None
             if last_modified_date in row_properties:
@@ -826,7 +886,17 @@ def sync_campaigns(STATE, ctx, logger=LOGGER):
     params = {'limit': 500}
 
     with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
-        for row in gen_request(STATE, 'campaigns', url, params, "campaigns", "hasMore", ["offset"], ["offset"]):
+        for row in gen_request(
+            STATE,
+            'campaigns',
+            url,
+            params,
+            'campaigns',
+            'hasMore',
+            ['offset'],
+            ['offset'],
+            logger=logger,
+        ):
             record = request(get_url("campaigns_detail", campaign_id=row['id'])).json()
             record = bumble_bee.transform(lift_properties_and_versions(record), schema, mdata)
             singer.write_record("campaigns", record, catalog.get('stream_alias'), time_extracted=utils.now())
@@ -969,7 +1039,17 @@ def sync_contact_lists(STATE, ctx, logger=LOGGER):
     url = get_url("contact_lists")
     params = {'count': 250}
     with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
-        for row in gen_request(STATE, 'contact_lists', url, params, "lists", "has-more", ["offset"], ["offset"]):
+        for row in gen_request(
+            STATE,
+            'contact_lists',
+            url,
+            params,
+            'lists',
+            'has-more',
+            ['offset'],
+            ['offset'],
+            logger=logger,
+        ):
             record = bumble_bee.transform(lift_properties_and_versions(row), schema, mdata)
 
             if record[bookmark_key] >= start:
@@ -1157,7 +1237,17 @@ def sync_engagements(STATE, ctx, logger=LOGGER):
     url = get_url("engagements_all")
     params = {'limit': 250}
     top_level_key = "results"
-    engagements = gen_request(STATE, 'engagements', url, params, top_level_key, "hasMore", ["offset"], ["offset"])
+    engagements = gen_request(
+        STATE,
+        'engagements',
+        url,
+        params,
+        top_level_key,
+        'hasMore',
+        ['offset'],
+        ['offset'],
+        logger=logger,
+    )
 
     time_extracted = utils.now()
 
