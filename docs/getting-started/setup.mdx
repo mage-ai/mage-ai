@@ -214,7 +214,7 @@ then run the following Docker command to start Mage and add files in the `secret
 ```bash
 docker run -it -p 6789:6789
     -v /Users/dragon/secrets:/home/secrets \
-    -v $(pwd):/home/src mageai/mageai mageai/mageai \
+    -v $(pwd):/home/src mageai/mageai \
     /app/run_app.sh mage start demo_project
 ```
 
