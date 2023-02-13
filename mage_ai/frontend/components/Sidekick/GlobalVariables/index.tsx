@@ -25,6 +25,7 @@ import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineSc
 import { addTriggerVariables, getFormattedVariables } from '../utils';
 import { onSuccess } from '@api/utils/response';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import SecretType from '@interfaces/SecretType';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
@@ -53,8 +54,10 @@ ${variableName} = get_variable('${pipelineUUID}', '${blockUUID}', '${variableNam
 
 type GlobalVariablesProps = {
   blocks: BlockType[];
+  fetchSecrets: () => void;
   fetchVariables: () => void;
   pipeline: PipelineType;
+  secrets: SecretType[];
   selectedBlock: BlockType;
   setErrorMessages: (errors: string[]) => void;
   variables: PipelineVariableType[];
@@ -63,8 +66,10 @@ type GlobalVariablesProps = {
 
 function GlobalVariables({
   blocks,
+  fetchSecrets,
   fetchVariables,
   pipeline,
+  secrets,
   selectedBlock,
   setErrorMessages,
   variables,
@@ -77,6 +82,24 @@ function GlobalVariables({
   const pipelineUUID = pipeline?.uuid;
   const [createVariable] = useMutation(
     api.variables.pipelines.useCreate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          onErrorCallback: ({
+            error: {
+              exception,
+            },
+          }) => {
+            // @ts-ignore
+            setErrorMessages((errorMessages) => errorMessages.concat(exception));
+          },
+        },
+      ),
+    },
+  );
+
+  const [createSecret] = useMutation(
+    api.secrets.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -320,6 +343,14 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
           source={SAMPLE_KWARGS_SOURCE}
         />
       </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Headline level={4} monospace>
+          Secrets
+        </Headline>
+      </Spacing>
+
+
 
       <Spacing mb={PADDING_UNITS}>
         <Headline level={4} monospace>

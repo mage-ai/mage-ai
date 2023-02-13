@@ -254,6 +254,13 @@ function PipelineDetailPage({
   } = api.variables.pipelines.list(pipelineUUID);
   const globalVariables = dataGlobalVariables?.variables;
 
+  // Secrets
+  const {
+    data: dataSecrets,
+    mutate: fetchSecrets,
+  } = api.secrets.list();
+  const secrets = dataSecrets?.secrets
+
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [widgets, setWidgets] = useState<BlockType[]>([]);
@@ -1335,6 +1342,7 @@ function PipelineDetailPage({
       executePipeline={executePipeline}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
+      fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
       globalVariables={globalVariables}
       insights={insights}
@@ -1349,6 +1357,7 @@ function PipelineDetailPage({
       runningBlocks={runningBlocks}
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
+      secrets={secrets}
       selectedBlock={selectedBlock}
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
@@ -1370,6 +1379,7 @@ function PipelineDetailPage({
     editingBlock,
     fetchFileTree,
     fetchPipeline,
+    fetchSecrets,
     fetchVariables,
     globalVariables,
     insights,
@@ -1383,6 +1393,7 @@ function PipelineDetailPage({
     runningBlocks,
     sampleData,
     savePipelineContent,
+    secrets,
     selectedBlock,
     sendMessage,
     setAnyInputFocused,

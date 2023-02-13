@@ -20,6 +20,7 @@ import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
+import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
@@ -64,6 +65,7 @@ export type SidekickProps = {
   executePipeline: () => void;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  fetchSecrets: () => void;
   fetchVariables: () => void;
   insights: InsightType[][];
   interruptKernel: () => void;
@@ -74,6 +76,7 @@ export type SidekickProps = {
   pipelineMessages: KernelOutputType[];
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
+  secrets: SecretType[];
   selectedBlock: BlockType;
   setErrors: (opts: {
     errors: any;
@@ -95,6 +98,7 @@ function Sidekick({
   executePipeline,
   fetchFileTree,
   fetchPipeline,
+  fetchSecrets,
   fetchVariables,
   globalVariables,
   insights,
@@ -109,6 +113,7 @@ function Sidekick({
   runningBlocks,
   sampleData,
   savePipelineContent,
+  secrets,
   selectedBlock,
   setAnyInputFocused,
   setEditingBlock,
@@ -172,8 +177,10 @@ function Sidekick({
   const globalVariablesMemo = useMemo(() => (
     <GlobalVariables
       blocks={blocks}
+      fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
       pipeline={pipeline}
+      secrets={secrets}
       selectedBlock={selectedBlock}
       setErrorMessages={setErrorMessages}
       variables={globalVariables}
@@ -183,9 +190,11 @@ function Sidekick({
     afterWidth,
     blockRefs?.current,
     blocks,
+    fetchSecrets,
     fetchVariables,
     globalVariables,
     pipeline,
+    secrets,
     selectedBlock,
     setSelectedBlock,
   ]);

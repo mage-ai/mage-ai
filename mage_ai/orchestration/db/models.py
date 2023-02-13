@@ -1,8 +1,10 @@
 from croniter import croniter
+from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import get_all_ancestors, is_dynamic_block
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.shared.array import find
@@ -10,13 +12,25 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
 from mage_ai.shared.utils import clean_name
-from sqlalchemy import Column, Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
+from sqlalchemy import (
+    Column,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Table,
+    Text,
+)
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+import os
 import re
 import uuid
 
@@ -650,3 +664,49 @@ class Backfill(BaseModel):
     variables = Column(JSON, default=None)
 
     pipeline_runs = relationship('PipelineRun', back_populates='backfill')
+
+
+class Secret(BaseModel):
+    name = Column(String(255))
+    value = Column(Text)
+    repo_name = Column(String(255))
+
+    @classmethod
+    def create(self, **kwargs):
+        repo_config = get_repo_config()
+        key_file = os.path.join(repo_config.secrets_dir, 'key')
+
+        if os.path.exists(key_file):
+            with open(key_file, 'r') as f:
+                key = f.read()
+        else:
+            key = Fernet.generate_key().decode('utf-8')
+            if not os.path.exists(repo_config.secrets_dir):
+                os.makedirs(repo_config.secrets_dir)
+            with open(key_file, 'w') as f:
+                f.write(key)
+        
+        fernet = Fernet(key)
+        encrypted_value = fernet.encrypt(kwargs.get('value').encode('utf-8'))
+        kwargs['value'] = encrypted_value.decode('utf-8')
+        kwargs['repo_name'] = repo_config.repo_name
+
+        model = self(**kwargs)
+        model.save()
+        return model
+
+    @classmethod
+    def get_secrets(self, repo_name) -> Dict[str, str]:
+        repo_config = get_repo_config()
+        key_file = os.path.join(repo_config.secrets_dir, 'key')
+        with open(key_file, 'r') as f:
+            key = f.read()
+        fernet = Fernet(key)
+
+        secrets = self.query.filter(self.repo_name == repo_name)
+        secret_obj = {}
+        if len(secrets) > 0:
+            for secret in secrets:
+                secret_obj[secret.name] = fernet.decrypt(secret.value).decode('utf-8')
+                
+

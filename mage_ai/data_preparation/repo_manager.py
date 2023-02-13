@@ -14,6 +14,8 @@ if is_test():
 else:
     DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
 
+DEFAULT_MAGE_SECRETS_DIR = '.secrets'
+
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
@@ -62,6 +64,11 @@ class RepoConfig:
             self.emr_config = repo_config.get('emr_config')
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.notification_config = repo_config.get('notification_config', dict())
+
+            self.secrets_dir = repo_config.get(
+                'secrets_dir',
+                os.path.join(self.repo_path, DEFAULT_MAGE_SECRETS_DIR)
+            )
 
             self.s3_bucket = None
             self.s3_path_prefix = None

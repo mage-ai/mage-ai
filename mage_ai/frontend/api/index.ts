@@ -52,6 +52,7 @@ export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
 export const PROJECTS: 'projects' = 'projects';
+export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUS: 'status' = 'status';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
@@ -97,6 +98,7 @@ const RESOURCES: any[][] = [
   [PIPELINE_SCHEDULES],
   [PIPELINE_SCHEDULES, PIPELINES],
   [PROJECTS],
+  [SECRETS],
   [SESSIONS],
   [STATUS],
   [USERS],
