@@ -629,8 +629,11 @@ class Block:
             if update_status:
                 self.status = BlockStatus.EXECUTED
 
-            if analyze_outputs and BlockType.CHART != self.type:
-                self.analyze_outputs(variable_mapping)
+            if BlockType.CHART != self.type:
+                if analyze_outputs:
+                    self.analyze_outputs(variable_mapping)
+                else:
+                    self.analyze_outputs(variable_mapping, shape_only=True)
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
@@ -1418,14 +1421,14 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if tests_passed != len(test_functions):
             raise Exception(f'Failed to pass tests for block {self.uuid}')
 
-    def analyze_outputs(self, variable_mapping):
+    def analyze_outputs(self, variable_mapping, shape_only: bool = False):
         from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
             if type(data) is pd.DataFrame:
-                if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS:
+                if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS or shape_only:
                     self.pipeline.variable_manager.add_variable(
                         self.pipeline.uuid,
                         self.uuid,
