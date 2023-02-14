@@ -10,12 +10,10 @@ class K8sBlockExecutor(BlockExecutor):
         global_vars: Dict = None,
         **kwargs,
     ) -> None:
-
         job_manager = K8sJobManager(
             job_name=f'mage-data-prep-block-{block_run_id}',
             logger=self.logger,
             logging_tags=kwargs.get('tags', dict()),
         )
-        cmd = self._run_command(block_run_id, global_vars, **kwargs)
-        self.logger.info(cmd)
+        cmd = self._run_commands(block_run_id, global_vars, **kwargs)
         job_manager.run_job(cmd)

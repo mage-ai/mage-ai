@@ -53,7 +53,7 @@ class BlockExecutor:
         try:
             result = dict()
 
-            tags = self._build_tags(**kwargs.get('tags', {}))
+            tags = self._build_tags(**kwargs)
 
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
@@ -159,28 +159,37 @@ class BlockExecutor:
 
         return result
 
-    def _run_command(
+    def _run_commands(
         self,
         block_run_id: int = None,
         global_vars: Dict = None,
         **kwargs,
-    ):
-        cmd = f'/app/run_app.sh '\
-              f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
+    ) -> List[str]:
+        cmd = f'scripts/run_app.sh '\
+              f'python mage_ai/cli/main.py run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
         options = [
-            f'--block-uuid {self.block_uuid}',
-            '--executor-type local_python',
+            '--block-uuid',
+            self.block_uuid,
+            '--executor-type',
+            'local_python',
         ]
         if self.execution_partition is not None:
-            options.append(f'--execution-partition {self.execution_partition}')
+            options += ['--execution-partition', self.execution_partition]
         if block_run_id is not None:
-            options.append(f'--block-run-id {block_run_id}')
+            options += ['--block-run-id', f'{block_run_id}']
+        if kwargs.get('pipeline_run_id'):
+            pipeline_run_id = kwargs.get('pipeline_run_id')
+            options += [
+                '--pipeline-run-id',
+                f'{pipeline_run_id}',
+            ]
         if kwargs.get('template_runtime_configuration'):
             template_run_configuration = kwargs.get('template_runtime_configuration')
-            options.append(
-                f"--template-runtime-configuration '{json.dumps(template_run_configuration)}'")
-        options_str = ' '.join(options)
-        return f'{cmd} {options_str}'
+            options += [
+                '--template-runtime-configuration',
+                json.dumps(template_run_configuration),
+            ]
+        return cmd.split(' ') + options
 
     def __update_block_run_status(
         self,
@@ -199,10 +208,10 @@ class BlockExecutor:
             callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]
             tags (dict): tags used in logging
         """
-        if block_run_id is None and callback_url is None:
+        if not block_run_id and not callback_url:
             return
         try:
-            if block_run_id is None:
+            if not block_run_id:
                 block_run_id = int(callback_url.split('/')[-1])
 
             from mage_ai.orchestration.db.models import BlockRun
@@ -231,8 +240,13 @@ class BlockExecutor:
         )
 
     def _build_tags(self, **kwargs):
-        return merge_dict(kwargs, dict(
+        default_tags = dict(
             block_type=self.block.type,
             block_uuid=self.block_uuid,
             pipeline_uuid=self.pipeline.uuid,
-        ))
+        )
+        if kwargs.get('block_run_id'):
+            default_tags['block_run_id'] = kwargs.get('block_run_id')
+        if kwargs.get('pipeline_run_id'):
+            default_tags['pipeline_run_id'] = kwargs.get('pipeline_run_id')
+        return merge_dict(kwargs.get('tags', {}), default_tags)

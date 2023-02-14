@@ -88,6 +88,9 @@ def run(
     block_run_id: Union[int, None] = typer.Option(
         None, help=''
     ),
+    pipeline_run_id: Union[int, None] = typer.Option(
+        None, help=''
+    ),
     runtime_vars: Union[List[str], None] = typer.Option(
         None, help='specify runtime variables. These will overwrite the pipeline global variables.'
     ),
@@ -141,8 +144,10 @@ def run(
             executor_type=executor_type,
         ).execute(
             analyze_outputs=False,
+            block_run_id=block_run_id,
             callback_url=callback_url,
             global_vars=global_vars,
+            pipeline_run_id=pipeline_run_id,
             template_runtime_configuration=template_runtime_configuration,
             update_status=False,
         )

@@ -62,7 +62,7 @@ class JobManager():
                     api_response.status.failed is not None:
                 job_completed = True
             time.sleep(5)
-            self._print(f'Job {self.job_name} status={api_response.status}')
+            # self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
 
@@ -71,7 +71,7 @@ class JobManager():
         container = client.V1Container(
             name='mage-job-container',
             image='mageai/mageai',
-            command=command.split(' '),
+            command=command.split(' ') if isinstance(command, str) else command,
             volume_mounts=self.pod_config.spec.containers[0].volume_mounts,
         )
         # Create and configurate a spec section
@@ -84,7 +84,7 @@ class JobManager():
             ),
         )
         # Create the specification of deployment
-        spec = client.V1JobSpec(template=template)
+        spec = client.V1JobSpec(template=template, backoff_limit=0)
         # Instantiate the job object
         job = client.V1Job(
             api_version=self.api_version,
