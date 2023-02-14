@@ -22,7 +22,7 @@ class ApiSecretsListHandler(BaseHandler):
         secrets = (
             Secret.query.filter(Secret.repo_name == repo_path)
         )
-        
+
         results = self.limit(secrets)
         collection = [s.to_dict() for s in results]
 

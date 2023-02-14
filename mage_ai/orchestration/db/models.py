@@ -1,5 +1,4 @@
 from croniter import croniter
-from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import get_all_ancestors, is_dynamic_block
@@ -29,7 +28,6 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
-import os
 import re
 import uuid
 

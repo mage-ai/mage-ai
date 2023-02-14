@@ -147,7 +147,7 @@ def create_secret(name: str, value: str):
             os.makedirs(secrets_dir)
         with open(key_file, 'w') as f:
             f.write(key)
-    
+
     fernet = Fernet(key)
     encrypted_value = fernet.encrypt(value.encode('utf-8'))
     kwargs = {
@@ -176,5 +176,5 @@ def get_secrets() -> Dict[str, str]:
         for secret in secrets:
             secret_obj[secret.name] = \
                 fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
-    
+
     return secret_obj
