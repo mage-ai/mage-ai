@@ -61,7 +61,7 @@ class JobManager():
             if api_response.status.succeeded is not None or \
                     api_response.status.failed is not None:
                 job_completed = True
-            time.sleep(1)
+            time.sleep(5)
             self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()

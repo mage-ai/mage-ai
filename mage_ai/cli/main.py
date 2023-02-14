@@ -3,6 +3,7 @@ from mage_ai.cli.utils import parse_runtime_variables
 from rich import print
 from typer.core import TyperGroup
 from typing import List, Union
+import json
 import os
 import sys
 import typer
@@ -93,6 +94,9 @@ def run(
     skip_sensors: bool = typer.Option(
         False, help='specify if the sensors should be skipped.'
     ),
+    template_runtime_configuration: Union[str, None] = typer.Option(
+        None, help='runtime configuration of data integration block runs.'
+    ),
 ):
     """
     Run pipeline.
@@ -111,12 +115,15 @@ def run(
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
     sys.path.append(os.path.dirname(project_path))
-    pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
+    pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
     default_variables = get_global_variables(pipeline_uuid)
     global_vars = merge_dict(default_variables, runtime_variables)
 
     db_connection.start_session()
+
+    if template_runtime_configuration is not None:
+        template_runtime_configuration = json.loads(template_runtime_configuration)
 
     if block_uuid is None:
         ExecutorFactory.get_pipeline_executor(pipeline).execute(
@@ -136,6 +143,7 @@ def run(
             analyze_outputs=False,
             callback_url=callback_url,
             global_vars=global_vars,
+            template_runtime_configuration=template_runtime_configuration,
             update_status=False,
         )
     print('Pipeline run completed.')

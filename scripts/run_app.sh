@@ -21,7 +21,7 @@ fi
 
 if [ "$#" -gt 0 ]; then
     echo "Execute command: ${@}"
-    $@
+    "$@"
 else
     echo "Starting project at ${PROJECT_PATH}"
     if [[ ! -z "${DBT_DOCS_INSTANCE}" ]]; then

@@ -86,14 +86,24 @@ class BlockExecutor:
                             message=traceback.format_exc(),
                         ),
                     )
-                elif callback_url is not None:
-                    self.__update_block_run_status(callback_url, 'failed', tags)
+                else:
+                    self.__update_block_run_status(
+                        'failed',
+                        block_run_id=kwargs.get('block_run_id'),
+                        callback_url=callback_url,
+                        tags=tags,
+                    )
                 raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
                 on_complete(self.block_uuid)
-            elif callback_url is not None:
-                self.__update_block_run_status(callback_url, 'completed', tags)
+            else:
+                self.__update_block_run_status(
+                    'completed',
+                    block_run_id=kwargs.get('block_run_id'),
+                    callback_url=callback_url,
+                    tags=tags
+                )
 
             return result
         finally:
@@ -149,18 +159,52 @@ class BlockExecutor:
 
         return result
 
-    def __update_block_run_status(self, callback_url: str, status: str, tags: Dict):
+    def _run_command(
+        self,
+        block_run_id: int = None,
+        global_vars: Dict = None,
+        **kwargs,
+    ):
+        cmd = f'/app/run_app.sh '\
+              f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
+        options = [
+            f'--block-uuid {self.block_uuid}',
+            '--executor-type local_python',
+        ]
+        if self.execution_partition is not None:
+            options.append(f'--execution-partition {self.execution_partition}')
+        if block_run_id is not None:
+            options.append(f'--block-run-id {block_run_id}')
+        if kwargs.get('template_runtime_configuration'):
+            template_run_configuration = kwargs.get('template_runtime_configuration')
+            options.append(
+                f"--template-runtime-configuration '{json.dumps(template_run_configuration)}'")
+        options_str = ' '.join(options)
+        return f'{cmd} {options_str}'
+
+    def __update_block_run_status(
+        self,
+        status: str,
+        block_run_id: int = None,
+        callback_url: str = None,
+        tags: Dict = dict(),
+    ):
         """
         Update the status of block run by edither updating the BlockRun db object or making
         API call
 
         Args:
-            callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]
             status (str): 'completed' or 'failed'
+            block_run_id (int): the id of the block run
+            callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]
             tags (dict): tags used in logging
         """
+        if block_run_id is None and callback_url is None:
+            return
         try:
-            block_run_id = int(callback_url.split('/')[-1])
+            if block_run_id is None:
+                block_run_id = int(callback_url.split('/')[-1])
+
             from mage_ai.orchestration.db.models import BlockRun
 
             block_run = BlockRun.query.get(block_run_id)
