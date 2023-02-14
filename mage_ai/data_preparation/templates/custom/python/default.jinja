@@ -1,0 +1,17 @@
+{% extends "testable.jinja" %}
+{% block imports %}
+if 'custom' not in globals():
+    from mage_ai.data_preparation.decorators import custom
+{% endblock %}
+
+{% block content %}
+@custom
+def transform_custom(*args, **kwargs):
+    """
+    Returns:
+        Anything
+    """
+    # Specify your custom logic here
+{{ code }}
+    return {}
+{% endblock %}

@@ -5,6 +5,10 @@ execute_block method of mage_ai/data_preparation/models/block.py file.
 """
 
 
+def custom(function):
+    return function
+
+
 def data_exporter(function):
     return function
 
