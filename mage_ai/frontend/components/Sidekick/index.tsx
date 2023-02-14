@@ -20,6 +20,7 @@ import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
+import Secrets from './GlobalVariables/Secrets';
 import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
@@ -45,7 +46,6 @@ import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
-import Secrets from './GlobalVariables/Secrets';
 
 const MAX_COLUMNS = 100;
 
@@ -178,10 +178,8 @@ function Sidekick({
   const globalVariablesMemo = useMemo(() => (
     <GlobalVariables
       blocks={blocks}
-      fetchSecrets={fetchSecrets}
       fetchVariables={fetchVariables}
       pipeline={pipeline}
-      secrets={secrets}
       selectedBlock={selectedBlock}
       setErrorMessages={setErrorMessages}
       variables={globalVariables}
@@ -191,11 +189,9 @@ function Sidekick({
     afterWidth,
     blockRefs?.current,
     blocks,
-    fetchSecrets,
     fetchVariables,
     globalVariables,
     pipeline,
-    secrets,
     selectedBlock,
     setSelectedBlock,
   ]);

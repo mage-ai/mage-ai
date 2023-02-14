@@ -25,8 +25,6 @@ import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineSc
 import { addTriggerVariables, getFormattedVariables } from '../utils';
 import { onSuccess } from '@api/utils/response';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
-import SecretType from '@interfaces/SecretType';
-import Secrets from './Secrets';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
@@ -55,10 +53,8 @@ ${variableName} = get_variable('${pipelineUUID}', '${blockUUID}', '${variableNam
 
 type GlobalVariablesProps = {
   blocks: BlockType[];
-  fetchSecrets: () => void;
   fetchVariables: () => void;
   pipeline: PipelineType;
-  secrets: SecretType[];
   selectedBlock: BlockType;
   setErrorMessages: (errors: string[]) => void;
   variables: PipelineVariableType[];
@@ -67,10 +63,8 @@ type GlobalVariablesProps = {
 
 function GlobalVariables({
   blocks,
-  fetchSecrets,
   fetchVariables,
   pipeline,
-  secrets,
   selectedBlock,
   setErrorMessages,
   variables,
@@ -324,16 +318,6 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
           language="python"
           small
           source={SAMPLE_KWARGS_SOURCE}
-        />
-      </Spacing>
-
-      <Spacing mb={PADDING_UNITS}>
-        <Secrets
-          fetchSecrets={fetchSecrets}
-          pipelineUUID={pipelineUUID}
-          secrets={secrets}
-          setErrorMessages={setErrorMessages}
-          width={tableWidth}
         />
       </Spacing>
 

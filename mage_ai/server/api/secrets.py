@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.repo_manager import (
     create_secret,
-    get_repo_config,
+    get_repo_path,
 )
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import Secret
@@ -18,9 +18,9 @@ class ApiSecretsListHandler(BaseHandler):
 
     @safe_db_query
     def get(self):
-        repo_name = get_repo_config().repo_name
+        repo_path = get_repo_path()
         secrets = (
-            Secret.query.filter(Secret.repo_name == repo_name)
+            Secret.query.filter(Secret.repo_name == repo_path)
         )
         
         results = self.limit(secrets)
@@ -43,14 +43,14 @@ class ApiSecretsDetailHandler(BaseHandler):
 
     @safe_db_query
     def delete(self, name):
-        repo_name = get_repo_config().repo_name
+        repo_path = get_repo_path()
         secrets = Secret.query.filter(
-            Secret.repo_name == repo_name and Secret.name == name)
+            Secret.repo_name == repo_path, Secret.name == name)
 
         if secrets.count() > 0:
             secret = secrets[0]
             secret.delete()
 
             self.write_model(secret)
-
-        self.write(dict(secret=None))
+        else:
+            self.write(dict(secret={}))

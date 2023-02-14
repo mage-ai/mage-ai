@@ -12,8 +12,9 @@ from mage_ai.data_preparation.models.block.sql import (
     trino,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-from mage_ai.data_preparation.repo_manager import get_repo_path, get_secrets
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
@@ -262,8 +263,7 @@ def load_profile(
     with open(profiles_full_path, 'r') as f:
         try:
             text = Template(f.read()).render(
-                env_var=os.getenv,
-                mage_secret_var=lambda x: get_secrets().get(x),
+                **get_template_vars(),
             )
             profile = yaml.safe_load(text)[project_name]
             outputs = profile['outputs']
@@ -691,9 +691,8 @@ def build_command_line_arguments(
         ]
     else:
         project_name = Template(block.configuration['dbt_project_name']).render(
-            env_var=os.getenv,
-            mage_secret_var=lambda x: get_secrets().get(x),
             variables=variables,
+            **get_template_vars(),
         )
         project_full_path = f'{get_repo_path()}/dbt/{project_name}'
         args += block.content.split(' ')
@@ -710,9 +709,8 @@ def build_command_line_arguments(
 
     if dbt_profile_target:
         dbt_profile_target = Template(dbt_profile_target).render(
-            env_var=os.getenv,
-            mage_secret_var=lambda x: get_secrets().get(x),
             variables=lambda x: variables.get(x),
+            **get_template_vars(),
         )
         args += [
             '--target',

@@ -20,6 +20,7 @@ DEFAULT_MAGE_SECRETS_DIR = '.secrets'
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
+        from mage_ai.data_preparation.shared.utils import get_template_vars
         self.repo_path = repo_path or get_repo_path()
         self.repo_name = os.path.basename(self.repo_path)
         try:
@@ -28,8 +29,7 @@ class RepoConfig:
                 if os.path.exists(metadata_path):
                     with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
                         config_file = Template(f.read()).render(
-                            env_var=os.getenv,
-                            mage_secret_var=lambda x: get_secrets().get(x),
+                            **get_template_vars()
                         )
                         repo_config = yaml.full_load(config_file) or {}
                 else:
@@ -153,7 +153,7 @@ def create_secret(name: str, value: str):
     kwargs = {
         'name': name,
         'value': encrypted_value.decode('utf-8'),
-        'repo_name': get_repo_name(),
+        'repo_name': get_repo_path(),
     }
 
     secret = Secret(**kwargs)
@@ -170,7 +170,7 @@ def get_secrets() -> Dict[str, str]:
         key = f.read()
     fernet = Fernet(key)
 
-    secrets = Secret.query.filter(Secret.repo_name == get_repo_name())
+    secrets = Secret.query.filter(Secret.repo_name == get_repo_path())
     secret_obj = {}
     if secrets.count() > 0:
         for secret in secrets:

@@ -1,25 +1,25 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-
-import Col from '@components/shared/Grid/Col';
-import Row from '@components/shared/Grid/Row';
-import { CellStyle, TableStyle } from './index.style';
 import { useMutation } from 'react-query';
-import api from '@api';
-import SecretType from '@interfaces/SecretType';
-import { onSuccess } from '@api/utils/response';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
-import { Add, Copy } from '@oracle/icons';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import TextInput from '@oracle/elements/Inputs/TextInput';
-import VariableRow from './VariableRow';
-import { VariableType } from '@interfaces/PipelineVariableType';
-import Spacing from '@oracle/elements/Spacing';
+
+import CodeBlock from '@oracle/components/CodeBlock';
+import Col from '@components/shared/Grid/Col';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Row from '@components/shared/Grid/Row';
+import SecretType from '@interfaces/SecretType';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import CodeBlock from '@oracle/components/CodeBlock';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import VariableRow from './VariableRow';
+import api from '@api';
+import { Add, Copy } from '@oracle/icons';
+import { CellStyle, TableStyle } from './index.style';
+import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { VariableType } from '@interfaces/PipelineVariableType';
+import { onSuccess } from '@api/utils/response';
 
 
 type SecretsProps = {
