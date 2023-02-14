@@ -76,7 +76,10 @@ from mage_ai.server.api.orchestration import (
     ApiPipelineScheduleListHandler,
 )
 from mage_ai.server.api.projects import ApiProjectsHandler
-from mage_ai.server.api.secrets import ApiSecretsListHandler
+from mage_ai.server.api.secrets import (
+    ApiSecretsListHandler,
+    ApiSecretsDetailHandler,
+)
 from mage_ai.server.api.v1 import (
     ApiChildDetailHandler,
     ApiChildListHandler,
@@ -662,6 +665,7 @@ def make_app():
         (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
         (r'/api/backfills', ApiBackfillsHandler),
         (r'/api/secrets', ApiSecretsListHandler),
+        (r'/api/secrets/(?P<name>\w+)', ApiSecretsDetailHandler),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)/(?P<child_pk>\w+)',
             ApiChildDetailHandler,

@@ -1,7 +1,8 @@
+from cryptography.fernet import Fernet
 from jinja2 import Template
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
-from mage_ai.shared.environments import is_test
 from mage_ai.data_preparation.templates.utils import copy_template_directory
+from mage_ai.shared.environments import is_test
 from typing import Dict
 import os
 import sys
@@ -26,7 +27,10 @@ class RepoConfig:
                 metadata_path = os.path.join(self.repo_path, 'metadata.yaml')
                 if os.path.exists(metadata_path):
                     with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
-                        config_file = Template(f.read()).render(env_var=os.getenv)
+                        config_file = Template(f.read()).render(
+                            env_var=os.getenv,
+                            mage_secret_var=lambda x: get_secrets().get(x),
+                        )
                         repo_config = yaml.full_load(config_file) or {}
                 else:
                     repo_config = dict()
@@ -64,11 +68,6 @@ class RepoConfig:
             self.emr_config = repo_config.get('emr_config')
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.notification_config = repo_config.get('notification_config', dict())
-
-            self.secrets_dir = repo_config.get(
-                'secrets_dir',
-                os.path.join(self.repo_path, DEFAULT_MAGE_SECRETS_DIR)
-            )
 
             self.s3_bucket = None
             self.s3_path_prefix = None
@@ -112,6 +111,10 @@ def init_repo(repo_path: str) -> None:
     copy_template_directory('repo', repo_path)
 
 
+def get_repo_name() -> str:
+    return os.path.basename(get_repo_path())
+
+
 def get_repo_path() -> str:
     return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
 
@@ -127,3 +130,51 @@ def set_repo_path(repo_path: str) -> None:
 
 def get_variables_dir(repo_path: str = None) -> str:
     return get_repo_config(repo_path=repo_path).variables_dir
+
+
+def create_secret(name: str, value: str):
+    from mage_ai.orchestration.db.models import Secret
+    secrets_dir = os.path.join(
+        get_repo_path(), DEFAULT_MAGE_SECRETS_DIR)
+    key_file = os.path.join(secrets_dir, 'key')
+
+    if os.path.exists(key_file):
+        with open(key_file, 'r') as f:
+            key = f.read()
+    else:
+        key = Fernet.generate_key().decode('utf-8')
+        if not os.path.exists(secrets_dir):
+            os.makedirs(secrets_dir)
+        with open(key_file, 'w') as f:
+            f.write(key)
+    
+    fernet = Fernet(key)
+    encrypted_value = fernet.encrypt(value.encode('utf-8'))
+    kwargs = {
+        'name': name,
+        'value': encrypted_value.decode('utf-8'),
+        'repo_name': get_repo_name(),
+    }
+
+    secret = Secret(**kwargs)
+    secret.save()
+    return secret
+
+
+def get_secrets() -> Dict[str, str]:
+    from mage_ai.orchestration.db.models import Secret
+    secrets_dir = os.path.join(
+        get_repo_path(), DEFAULT_MAGE_SECRETS_DIR)
+    key_file = os.path.join(secrets_dir, 'key')
+    with open(key_file, 'r') as f:
+        key = f.read()
+    fernet = Fernet(key)
+
+    secrets = Secret.query.filter(Secret.repo_name == get_repo_name())
+    secret_obj = {}
+    if secrets.count() > 0:
+        for secret in secrets:
+            secret_obj[secret.name] = \
+                fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
+    
+    return secret_obj

@@ -45,6 +45,7 @@ import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
+import Secrets from './GlobalVariables/Secrets';
 
 const MAX_COLUMNS = 100;
 
@@ -199,6 +200,21 @@ function Sidekick({
     setSelectedBlock,
   ]);
 
+  const secretsMemo = useMemo(() => (
+    <Secrets
+      fetchSecrets={fetchSecrets}
+      pipelineUUID={pipeline?.uuid}
+      secrets={secrets}
+      setErrorMessages={setErrorMessages}
+      width={afterWidth}
+    />
+  ), [
+    afterWidth,
+    fetchSecrets,
+    pipeline,
+    secrets,
+  ]);
+
   const dataTableMemo = useMemo(() => (
     <DataTable
       columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
@@ -324,7 +340,8 @@ function Sidekick({
             />
           </PaddingContainerStyle>
         }
-        {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
+        {ViewKeyEnum.SECRETS === activeView && secretsMemo}
+        {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
 
         {(isIntegration
           || (selectedBlock && hasData)

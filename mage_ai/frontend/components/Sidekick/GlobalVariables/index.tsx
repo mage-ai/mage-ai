@@ -26,6 +26,7 @@ import { addTriggerVariables, getFormattedVariables } from '../utils';
 import { onSuccess } from '@api/utils/response';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import SecretType from '@interfaces/SecretType';
+import Secrets from './Secrets';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
@@ -82,24 +83,6 @@ function GlobalVariables({
   const pipelineUUID = pipeline?.uuid;
   const [createVariable] = useMutation(
     api.variables.pipelines.useCreate(pipelineUUID),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          onErrorCallback: ({
-            error: {
-              exception,
-            },
-          }) => {
-            // @ts-ignore
-            setErrorMessages((errorMessages) => errorMessages.concat(exception));
-          },
-        },
-      ),
-    },
-  );
-
-  const [createSecret] = useMutation(
-    api.secrets.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -345,12 +328,14 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
       </Spacing>
 
       <Spacing mb={PADDING_UNITS}>
-        <Headline level={4} monospace>
-          Secrets
-        </Headline>
+        <Secrets
+          fetchSecrets={fetchSecrets}
+          pipelineUUID={pipelineUUID}
+          secrets={secrets}
+          setErrorMessages={setErrorMessages}
+          width={tableWidth}
+        />
       </Spacing>
-
-
 
       <Spacing mb={PADDING_UNITS}>
         <Headline level={4} monospace>

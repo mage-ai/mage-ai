@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from jinja2 import Template
+from mage_ai.data_preparation.repo_manager import get_secrets
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from pathlib import Path
 from typing import Any, Dict, Union
@@ -327,7 +328,10 @@ class ConfigFileLoader(BaseConfigLoader):
             self.filepath = Path(filepath)
             self.profile = profile
             with self.filepath.open('r') as fin:
-                config_file = Template(fin.read()).render(env_var=os.getenv)
+                config_file = Template(fin.read()).render(
+                    env_var=os.getenv,
+                    mage_secret_var=lambda x: get_secrets().get(x),
+                )
                 self.config = yaml.full_load(config_file)[profile]
 
         self.use_verbose_format = any(

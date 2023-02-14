@@ -1,5 +1,6 @@
 from jinja2 import Template
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_secrets
 from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
@@ -125,8 +126,11 @@ def interpolate_variables_for_block_settings(
 
 
 def interpolate_string(text: str, variables: Dict) -> str:
+    from mage_ai.orchestration.db.models import Secret
+    variables = dict() if variables is None else variables
     kwargs = dict(
         env_var=os.getenv,
+        mage_secret_var=lambda x: get_secrets().get(x),
         variables=lambda x: variables.get(x),
         n_days_ago=n_days_ago,
     )
@@ -144,6 +148,6 @@ def interpolate_variables(
     text: str,
     variables: Dict,
 ) -> Dict:
-    settings_string = text if variables is None else interpolate_string(text, variables)
+    settings_string = interpolate_string(text, variables)
 
     return yaml.load(settings_string, Loader=NoDatesSafeLoader)

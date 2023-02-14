@@ -1,96 +1,234 @@
-import React, { useState } from 'react';
-import { TableStyle } from './index.style';
+import React, { useCallback, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
+
+import Col from '@components/shared/Grid/Col';
+import Row from '@components/shared/Grid/Row';
+import { CellStyle, TableStyle } from './index.style';
+import { useMutation } from 'react-query';
+import api from '@api';
+import SecretType from '@interfaces/SecretType';
+import { onSuccess } from '@api/utils/response';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
+import { Add, Copy } from '@oracle/icons';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import VariableRow from './VariableRow';
+import { VariableType } from '@interfaces/PipelineVariableType';
+import Spacing from '@oracle/elements/Spacing';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
+import Text from '@oracle/elements/Text';
+import CodeBlock from '@oracle/components/CodeBlock';
 
 
 type SecretsProps = {
+  fetchSecrets: () => void;
+  pipelineUUID: string;
+  secrets: SecretType[];
+  setErrorMessages: (errors: string[]) => void;
   width: number;
-
 };
 
 function Secrets({
-
+  fetchSecrets,
+  pipelineUUID,
+  secrets,
+  setErrorMessages,
+  width,
 }: SecretsProps) {
-  const [newSecretName, setNewSecretName] = useState();
-  const [newSecretValue, setNewSecretValue] = useState();
+  const [showNewSecret, setShowNewSecret] = useState<boolean>(false);
+  const [newSecretName, setNewSecretName] = useState<string>();
+  const [newSecretValue, setNewSecretValue] = useState<string>();
 
-  
+  const tableWidth = useMemo(() => width - 4 * UNIT, [width]);
+
+  const [createSecret] = useMutation(
+    api.secrets.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          onErrorCallback: ({
+            error: {
+              exception,
+            },
+          }) => {
+            // @ts-ignore
+            setErrorMessages((errorMessages) => errorMessages.concat(exception));
+          },
+        },
+      ),
+    },
+  );
+
+  const [deleteSecret] = useMutation(
+    (name: string) => api.secrets.useDelete(name)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchSecrets();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            // @ts-ignore
+            setErrorMessages((errorMessages) => errorMessages.concat(message));
+          },
+        },
+      ),
+    },
+  );
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      // @ts-ignore
+      createSecret({
+        secret: {
+          name: newSecretName,
+          value: newSecretValue,
+        }
+      }).then(() => {
+        fetchSecrets();
+        setNewSecretName(null);
+        setNewSecretValue(null);
+      });
+      setShowNewSecret(false);
+    } else if (e.key === 'Escape') {
+      setShowNewSecret(false);
+    }
+  }, [
+    createSecret,
+    fetchSecrets,
+    newSecretName,
+    newSecretValue,
+  ]);
+
+  const SAMPLE_SECRET_VALUE = `
+    {{ mage_secret('name') }}
+  `;
 
   return (
-    <TableStyle width={tableWidth}>
-      {showNewVariable && (
-        <Row>
-          <Col md={1}>
-            <CellStyle noPadding>
-              <KeyboardShortcutButton
-                backgroundColor={DARK_CONTENT_BACKGROUND}
-                borderless
-                centerText
-                muted
-                onClick={() => {
-                  navigator.clipboard.writeText(newVariableName);
-                  toast.success(
-                    'Successfully copied to clipboard.',
-                    {
-                      position: toast.POSITION.BOTTOM_RIGHT,
-                      toastId: newVariableName,
-                    },
-                  );
-                }}
-                uuid={`Sidekick/Secrets/${newVariableName}`}
-                withIcon
-              >
-                <Copy size={2.5 * UNIT} />
-              </KeyboardShortcutButton>
-            </CellStyle>
-          </Col>
-          <Col md={4}>
-            <CellStyle>
-              <TextInput
-                compact
-                borderless
-                fullWidth
-                monospace
-                onChange={(e) => {
-                  setNewVariableName(e.target.value);
-                  e.preventDefault();
-                }}
-                onKeyDown={handleKeyDown}
-                paddingHorizontal={0}
-                placeholder="variable"
-                small
-                value={newVariableName}
-              />
-            </CellStyle>
-          </Col>
-          <Col md={7}>
-            <CellStyle>
-              <TextInput
-                compact
-                borderless
-                fullWidth
-                monospace
-                onChange={(e) => {
-                  setNewVariableValue(e.target.value);
-                  e.preventDefault();
-                }}
-                onKeyDown={handleKeyDown}
-                paddingHorizontal={0}
-                placeholder="enter value"
-                small
-                value={newVariableValue}
-              />
-            </CellStyle>
-          </Col>
-        </Row>
-      )}
-      {globalVariables?.map((variable: VariableType) => (
-        <VariableRow
-          deleteVariable={() => deleteVariable(variable.uuid)}
-          fetchVariables={fetchVariables}
-          pipelineUUID={pipelineUUID}
-          variable={variable}
+    <Spacing p={PADDING_UNITS}>
+      <Spacing mb={PADDING_UNITS}>
+        <FlexContainer alignItems="center">
+          <Headline level={4} monospace>
+            Secrets
+          </Headline>
+          <Spacing ml={2} />
+          <KeyboardShortcutButton
+            Icon={Add}
+            blackBorder
+            inline
+            onClick={() => setShowNewSecret(value => !value)}
+            uuid="Sidekick/Secrets/addNewSecret"
+          >
+            New
+          </KeyboardShortcutButton>
+        </FlexContainer>
+      </Spacing>
+      <Spacing mb={PADDING_UNITS}>
+        <TableStyle width={tableWidth}>
+          {showNewSecret && (
+            <Row>
+              <Col md={1}>
+                <CellStyle noPadding>
+                  <KeyboardShortcutButton
+                    backgroundColor={DARK_CONTENT_BACKGROUND}
+                    borderless
+                    centerText
+                    muted
+                    onClick={() => {
+                      navigator.clipboard.writeText(`{{ mage_secret(${newSecretName}) }}`);
+                      toast.success(
+                        'Successfully copied to clipboard.',
+                        {
+                          position: toast.POSITION.BOTTOM_RIGHT,
+                          toastId: newSecretName,
+                        },
+                      );
+                    }}
+                    uuid={`Sidekick/Secrets/${newSecretName}`}
+                    withIcon
+                  >
+                    <Copy size={2.5 * UNIT} />
+                  </KeyboardShortcutButton>
+                </CellStyle>
+              </Col>
+              <Col md={4}>
+                <CellStyle>
+                  <TextInput
+                    compact
+                    borderless
+                    fullWidth
+                    monospace
+                    onChange={(e) => {
+                      setNewSecretName(e.target.value);
+                      e.preventDefault();
+                    }}
+                    onKeyDown={handleKeyDown}
+                    paddingHorizontal={0}
+                    placeholder="secret name"
+                    small
+                    value={newSecretName}
+                  />
+                </CellStyle>
+              </Col>
+              <Col md={7}>
+                <CellStyle>
+                  <TextInput
+                    compact
+                    borderless
+                    fullWidth
+                    monospace
+                    onChange={(e) => {
+                      setNewSecretValue(e.target.value);
+                      e.preventDefault();
+                    }}
+                    onKeyDown={handleKeyDown}
+                    paddingHorizontal={0}
+                    placeholder="secret value"
+                    small
+                    value={newSecretValue}
+                  />
+                </CellStyle>
+              </Col>
+            </Row>
+          )}
+          {secrets?.map((secret: SecretType) => (
+            <VariableRow
+              deleteVariable={() => deleteSecret(secret.name)}
+              fetchVariables={fetchSecrets}
+              hideEdit
+              obfuscate
+              pipelineUUID={pipelineUUID}
+              variable={{
+                uuid: secret.name,
+                value: secret.value
+              } as VariableType}
+            />
+          ))}
+        </TableStyle>
+      </Spacing>
+      <Spacing mb={PADDING_UNITS}>
+        <Text>
+          Secrets are shared across the project. Secrets are not editable, you can
+          only create and delete secrets. To reference a secret, use the following templating
+          syntax:
+        </Text>
+      </Spacing>
+      <Spacing mb={PADDING_UNITS}>
+        <CodeBlock
+          language="yaml"
+          small
+          source={SAMPLE_SECRET_VALUE}
         />
-      ))}
-    </TableStyle>
-  )
+      </Spacing>
+    </Spacing>
+  );
 }
+
+export default Secrets;

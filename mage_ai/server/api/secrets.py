@@ -1,4 +1,7 @@
-from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.data_preparation.repo_manager import (
+    create_secret,
+    get_repo_config,
+)
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import Secret
 from mage_ai.server.api.base import BaseHandler
@@ -21,7 +24,7 @@ class ApiSecretsListHandler(BaseHandler):
         )
         
         results = self.limit(secrets)
-        collection = [secrets.to_dict() for s in results]
+        collection = [s.to_dict() for s in results]
 
         self.write(dict(secrets=collection))
 
@@ -29,7 +32,25 @@ class ApiSecretsListHandler(BaseHandler):
     def post(self):
         payload = self.get_payload()
 
-        model = Secret.create(
+        model = create_secret(
             **extract(payload, ALLOWED_PAYLOAD_KEYS),
         )
         self.write(dict(backfill=model.to_dict()))
+
+
+class ApiSecretsDetailHandler(BaseHandler):
+    model_class = Secret
+
+    @safe_db_query
+    def delete(self, name):
+        repo_name = get_repo_config().repo_name
+        secrets = Secret.query.filter(
+            Secret.repo_name == repo_name and Secret.name == name)
+
+        if secrets.count() > 0:
+            secret = secrets[0]
+            secret.delete()
+
+            self.write_model(secret)
+
+        self.write(dict(secret=None))

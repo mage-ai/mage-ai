@@ -1,5 +1,6 @@
 import {
   Alphabet,
+  Code,
   NavData,
   NavGraph,
   NavReport,
@@ -14,6 +15,7 @@ export enum ViewKeyEnum {
   DATA = 'data',
   GRAPHS = 'graphs',
   REPORTS = 'reports',
+  SECRETS = 'secrets',
   TERMINAL = 'terminal',
   TREE = 'tree',
   VARIABLES = 'variables',
@@ -36,6 +38,7 @@ export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.TREE, label: 'Tree' },
   { key: ViewKeyEnum.CHARTS, label: 'Charts' },
   { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
+  { key: ViewKeyEnum.SECRETS, label: 'Secrets' },
   { key: ViewKeyEnum.DATA, label: 'Data' },
   { key: ViewKeyEnum.TERMINAL, label: 'Terminal' },
   // { key: ViewKeyEnum.REPORTS, label: 'Reports' },
@@ -47,6 +50,7 @@ export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.DATA]: NavData,
   [ViewKeyEnum.GRAPHS]: NavGraph,
   [ViewKeyEnum.REPORTS]: NavReport,
+  [ViewKeyEnum.SECRETS]: Code,
   [ViewKeyEnum.TREE]: NavTree,
   [ViewKeyEnum.VARIABLES]: Alphabet,
 };
