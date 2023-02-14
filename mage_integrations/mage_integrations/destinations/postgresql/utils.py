@@ -1,6 +1,6 @@
 from mage_integrations.destinations.constants import COLUMN_TYPE_OBJECT
 from mage_integrations.destinations.sql.utils import convert_column_type as convert_column_type_orig
-from typing import Dict
+from typing import Dict, List
 import json
 
 
@@ -13,7 +13,7 @@ def escape_quotes(line: str, single: bool = True, double: bool = True) -> str:
     return new_line
 
 
-def convert_array(v: str, column_type_dict: Dict):
+def convert_array(v: List, column_type_dict: Dict):
     item_type_converted = column_type_dict['item_type_converted']
 
     if 'JSONB' == item_type_converted.upper():

@@ -8,6 +8,7 @@ DESTINATIONS = [
     ),
     dict(name='MySQL'),
     dict(name='PostgreSQL'),
+    dict(name='Redshift'),
     dict(name='Snowflake'),
     dict(name='Trino'),
 ]
