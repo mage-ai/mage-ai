@@ -588,11 +588,6 @@ def run_integration_pipeline(
                         output['output'][0],
                     )
 
-                pipeline_scheduler.logger.info(
-                    f'Finish setting process for BlockRun {block_run.id}',
-                    **tags_updated,
-                )
-
                 if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
                    f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
 

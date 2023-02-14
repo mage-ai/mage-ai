@@ -165,8 +165,8 @@ class BlockExecutor:
         global_vars: Dict = None,
         **kwargs,
     ) -> List[str]:
-        cmd = f'scripts/run_app.sh '\
-              f'python mage_ai/cli/main.py run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
+        cmd = f'/app/run_app.sh '\
+              f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
         options = [
             '--block-uuid',
             self.block_uuid,
