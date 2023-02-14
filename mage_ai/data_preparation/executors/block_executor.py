@@ -53,7 +53,7 @@ class BlockExecutor:
         try:
             result = dict()
 
-            tags = self._build_tags(**kwargs.get('tags', {}))
+            tags = self._build_tags(**kwargs)
 
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
@@ -86,14 +86,24 @@ class BlockExecutor:
                             message=traceback.format_exc(),
                         ),
                     )
-                elif callback_url is not None:
-                    self.__update_block_run_status(callback_url, 'failed', tags)
+                else:
+                    self.__update_block_run_status(
+                        'failed',
+                        block_run_id=kwargs.get('block_run_id'),
+                        callback_url=callback_url,
+                        tags=tags,
+                    )
                 raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
                 on_complete(self.block_uuid)
-            elif callback_url is not None:
-                self.__update_block_run_status(callback_url, 'completed', tags)
+            else:
+                self.__update_block_run_status(
+                    'completed',
+                    block_run_id=kwargs.get('block_run_id'),
+                    callback_url=callback_url,
+                    tags=tags
+                )
 
             return result
         finally:
@@ -149,18 +159,61 @@ class BlockExecutor:
 
         return result
 
-    def __update_block_run_status(self, callback_url: str, status: str, tags: Dict):
+    def _run_commands(
+        self,
+        block_run_id: int = None,
+        global_vars: Dict = None,
+        **kwargs,
+    ) -> List[str]:
+        cmd = f'/app/run_app.sh '\
+              f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
+        options = [
+            '--block-uuid',
+            self.block_uuid,
+            '--executor-type',
+            'local_python',
+        ]
+        if self.execution_partition is not None:
+            options += ['--execution-partition', self.execution_partition]
+        if block_run_id is not None:
+            options += ['--block-run-id', f'{block_run_id}']
+        if kwargs.get('pipeline_run_id'):
+            pipeline_run_id = kwargs.get('pipeline_run_id')
+            options += [
+                '--pipeline-run-id',
+                f'{pipeline_run_id}',
+            ]
+        if kwargs.get('template_runtime_configuration'):
+            template_run_configuration = kwargs.get('template_runtime_configuration')
+            options += [
+                '--template-runtime-configuration',
+                json.dumps(template_run_configuration),
+            ]
+        return cmd.split(' ') + options
+
+    def __update_block_run_status(
+        self,
+        status: str,
+        block_run_id: int = None,
+        callback_url: str = None,
+        tags: Dict = dict(),
+    ):
         """
         Update the status of block run by edither updating the BlockRun db object or making
         API call
 
         Args:
-            callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]
             status (str): 'completed' or 'failed'
+            block_run_id (int): the id of the block run
+            callback_url (str): with format http(s)://[host]:[port]/api/block_runs/[block_run_id]
             tags (dict): tags used in logging
         """
+        if not block_run_id and not callback_url:
+            return
         try:
-            block_run_id = int(callback_url.split('/')[-1])
+            if not block_run_id:
+                block_run_id = int(callback_url.split('/')[-1])
+
             from mage_ai.orchestration.db.models import BlockRun
 
             block_run = BlockRun.query.get(block_run_id)
@@ -187,8 +240,13 @@ class BlockExecutor:
         )
 
     def _build_tags(self, **kwargs):
-        return merge_dict(kwargs, dict(
+        default_tags = dict(
             block_type=self.block.type,
             block_uuid=self.block_uuid,
             pipeline_uuid=self.pipeline.uuid,
-        ))
+        )
+        if kwargs.get('block_run_id'):
+            default_tags['block_run_id'] = kwargs.get('block_run_id')
+        if kwargs.get('pipeline_run_id'):
+            default_tags['pipeline_run_id'] = kwargs.get('pipeline_run_id')
+        return merge_dict(kwargs.get('tags', {}), default_tags)

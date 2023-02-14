@@ -581,7 +581,7 @@ def run_integration_pipeline(
                     schedule_after_complete=False,
                     template_runtime_configuration=template_runtime_configuration,
                 )
-                if 'output' in output and len(output['output']) >= 1:
+                if isinstance(output, dict) and output.get('output') and len(output['output']) >= 1:
                     execution_process_manager.set_block_process(
                         pipeline_run_id,
                         block_run.id,
@@ -655,6 +655,7 @@ def run_block(
         tags=tags,
         input_from_output=input_from_output,
         verify_output=verify_output,
+        pipeline_run_id=pipeline_run_id,
         runtime_arguments=runtime_arguments,
         template_runtime_configuration=template_runtime_configuration,
         dynamic_block_index=dynamic_block_index,

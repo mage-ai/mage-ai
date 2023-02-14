@@ -85,7 +85,10 @@ class JobManagerTests(TestCase):
             containers=[mock_v1_container],
             volumes=job_manager.pod_config.spec.volumes,
         )
-        mock_client.V1JobSpec.assert_called_once_with(template=mock_v1_pod_template_spec)
+        mock_client.V1JobSpec.assert_called_once_with(
+            template=mock_v1_pod_template_spec,
+            backoff_limit=0,
+        )
         mock_client.V1Job.assert_called_once_with(
             api_version='batch/v1',
             kind='Job',

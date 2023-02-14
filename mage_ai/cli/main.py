@@ -3,6 +3,7 @@ from mage_ai.cli.utils import parse_runtime_variables
 from rich import print
 from typer.core import TyperGroup
 from typing import List, Union
+import json
 import os
 import sys
 import typer
@@ -87,11 +88,17 @@ def run(
     block_run_id: Union[int, None] = typer.Option(
         None, help=''
     ),
+    pipeline_run_id: Union[int, None] = typer.Option(
+        None, help=''
+    ),
     runtime_vars: Union[List[str], None] = typer.Option(
         None, help='specify runtime variables. These will overwrite the pipeline global variables.'
     ),
     skip_sensors: bool = typer.Option(
         False, help='specify if the sensors should be skipped.'
+    ),
+    template_runtime_configuration: Union[str, None] = typer.Option(
+        None, help='runtime configuration of data integration block runs.'
     ),
 ):
     """
@@ -111,12 +118,15 @@ def run(
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
     sys.path.append(os.path.dirname(project_path))
-    pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
+    pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
     default_variables = get_global_variables(pipeline_uuid)
     global_vars = merge_dict(default_variables, runtime_variables)
 
     db_connection.start_session()
+
+    if template_runtime_configuration is not None:
+        template_runtime_configuration = json.loads(template_runtime_configuration)
 
     if block_uuid is None:
         ExecutorFactory.get_pipeline_executor(pipeline).execute(
@@ -134,8 +144,11 @@ def run(
             executor_type=executor_type,
         ).execute(
             analyze_outputs=False,
+            block_run_id=block_run_id,
             callback_url=callback_url,
             global_vars=global_vars,
+            pipeline_run_id=pipeline_run_id,
+            template_runtime_configuration=template_runtime_configuration,
             update_status=False,
         )
     print('Pipeline run completed.')
