@@ -77,6 +77,11 @@ def fetch_template_source(
             )
         elif block_type == BlockType.SENSOR:
             template_source = __fetch_sensor_templates(config)
+        elif block_type == BlockType.CUSTOM:
+            template_source = __fetch_custom_templates(
+                config,
+                language=language,
+            )
     return template_source
 
 
@@ -241,6 +246,21 @@ def __fetch_sensor_templates(config: Mapping[str, str]) -> str:
     except ValueError:
         template_path = 'sensors/default.py'
 
+    return (
+        template_env.get_template(template_path).render(
+            code=config.get('existing_code', ''),
+        )
+        + '\n'
+    )
+
+
+def __fetch_custom_templates(
+    config: Mapping[str, str],
+    language: BlockLanguage = BlockLanguage.PYTHON,
+) -> str:
+    if language != BlockLanguage.PYTHON:
+        return ''
+    template_path = 'custom/python/default.jinja'
     return (
         template_env.get_template(template_path).render(
             code=config.get('existing_code', ''),
