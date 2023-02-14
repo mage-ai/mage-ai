@@ -270,8 +270,14 @@ WHERE table_id = '{table_name}'
                     col_type = column_types.get(col)
                     if not col_type:
                         continue
-                    if col_type.startswith('ARRAY'):
-                        df[col] = df[col].fillna('')
+
+                    null_rows = df[col].isnull()
+                    if col_type.startswith('ARRAY<STRUCT'):
+                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [{}])
+                    elif col_type.startswith('ARRAY'):
+                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [])
+                    elif col_type.startswith('STRUCT'):
+                        df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: {})
 
                 # Clean column names
                 if type(df) is DataFrame:
