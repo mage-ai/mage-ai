@@ -272,8 +272,6 @@ WHERE table_id = '{table_name}'
                         continue
 
                     null_rows = df[col].isnull()
-                    null_length = len(df[null_rows].index)
-
                     if col_type.startswith('ARRAY<STRUCT'):
                         df.loc[null_rows, col] = df.loc[null_rows, col].apply(lambda x: [{}])
                     elif col_type.startswith('ARRAY'):
