@@ -41,7 +41,7 @@ Type this command in your terminal to start Mage using docker (Note:
 want):
 
 ```bash
-docker run -it -n mage_databricks -p 6789:6789 -v $(pwd):/home/src mageai_databricks \
+docker run -it --name mage_databricks -p 6789:6789 -v $(pwd):/home/src mageai_databricks \
   /app/run_app.sh mage start demo_project
 ```
 
@@ -55,7 +55,7 @@ directory: `demo_project/metadata.yaml` (presuming your project is named
 `demo_project`).
 
 
-Change the value for key `remote_variables_dir` to be a remote S3 bucket that
+Change the value for key `variables_dir` to be a S3 bucket that
 you want to use to store intermediate block output.
 
 For example, if your S3 bucket is named `my-awesome-bucket`, then the value for
