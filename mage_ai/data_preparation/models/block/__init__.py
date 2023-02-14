@@ -867,7 +867,7 @@ class Block:
                 outputs = self.execute_block_function(
                     block_function,
                     input_vars,
-                    global_vars,
+                    self.__enrich_global_vars(global_vars),
                     test_execution,
                 )
 
@@ -1535,6 +1535,14 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         variable_mapping = merge_dict(output_variables, consolidated_print_variables)
         return variable_mapping
+
+    def __enrich_global_vars(self, global_vars: Dict = None):
+        if self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS:
+            global_vars = global_vars or dict()
+            if not global_vars.get('spark'):
+                from pyspark.sql import SparkSession
+                global_vars['spark'] = SparkSession.builder.getOrCreate()
+        return global_vars
 
     def __store_variables_prepare(
         self,

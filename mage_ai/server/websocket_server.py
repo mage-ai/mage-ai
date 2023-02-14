@@ -343,7 +343,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     ) -> None:
         pipeline_uuid = pipeline.uuid
 
-        if kernel_name == KernelName.PYSPARK or pipeline.type == PipelineType.DATABRICKS:
+        if kernel_name == KernelName.PYSPARK:
             code = get_pipeline_execution_code(
                 pipeline_uuid,
                 global_vars=global_vars,
