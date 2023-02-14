@@ -108,7 +108,7 @@ function Secrets({
   ]);
 
   const SAMPLE_SECRET_VALUE = `
-    {{ mage_secret('name') }}
+    {{ mage_secret_var('<secret_name>') }}
   `;
 
   return (
@@ -131,6 +131,24 @@ function Secrets({
         </FlexContainer>
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
+        <Text>
+          <Text inline warning>WARNING:</Text> the encryption key is stored in a file
+          in your current project. If you need more secure encryption, we recommend
+          using a secrets manager.
+        </Text>
+      </Spacing>
+      {showNewSecret && (
+        <Spacing mb={PADDING_UNITS}>
+          <Text muted>
+            Press <Text bold default inline monospace>
+              Enter
+            </Text> or <Text bold default inline monospace>
+              Return
+            </Text> to save changes.
+          </Text>
+        </Spacing>
+      )}
+      <Spacing mb={PADDING_UNITS}>
         <TableStyle width={tableWidth}>
           {showNewSecret && (
             <Row>
@@ -142,7 +160,7 @@ function Secrets({
                     centerText
                     muted
                     onClick={() => {
-                      navigator.clipboard.writeText(`{{ mage_secret(${newSecretName}) }}`);
+                      navigator.clipboard.writeText(`{{ mage_secret_var(${newSecretName}) }}`);
                       toast.success(
                         'Successfully copied to clipboard.',
                         {
@@ -215,9 +233,9 @@ function Secrets({
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
         <Text>
-          Secrets are shared across the project. Secrets are not editable, you can
-          only create and delete secrets. To reference a secret, use the following templating
-          syntax:
+          Secrets are not editable, they can only be created and deleted.
+          Secrets are shared across the project, and can be used in configuration fields.
+          To reference a secret, use the following templating syntax:
         </Text>
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
