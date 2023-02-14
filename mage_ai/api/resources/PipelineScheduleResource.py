@@ -7,6 +7,7 @@ from mage_ai.orchestration.db.models import (
     pipeline_schedule_event_matcher_association_table,
 )
 from sqlalchemy.orm import selectinload
+import uuid
 
 
 class PipelineScheduleResource(DatabaseResource):
@@ -34,6 +35,10 @@ class PipelineScheduleResource(DatabaseResource):
     def create(self, payload, user, **kwargs):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid
+
+        if 'token' not in payload:
+            payload['token'] = uuid.uuid4().hex
+
         return super().create(payload, user, **kwargs)
 
     @safe_db_query

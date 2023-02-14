@@ -140,7 +140,7 @@ function PipelineRuns({
     mutate: fetchPipelineRuns,
   } = api.pipeline_runs.list(pipelineRunsRequestQuery, { refreshInterval: 5000 });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
-  const totalRuns = useMemo(() => dataPipelineRuns?.total_count || [], [dataPipelineRuns]);
+  const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
   const selectedTabPrev = usePrevious(selectedTab);
   useEffect(() => {

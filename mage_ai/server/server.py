@@ -52,9 +52,7 @@ from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.orchestration import (
     ApiAllBlockRunListHandler,
     ApiPipelineRunDetailHandler,
-    ApiAllPipelineRunListHandler,
     ApiBlockRunListHandler,
-    ApiPipelineRunListHandler,
     ApiPipelineRunLogHandler,
 )
 from mage_ai.server.api.projects import ApiProjectsHandler
@@ -62,6 +60,7 @@ from mage_ai.server.api.secrets import (
     ApiSecretsListHandler,
     ApiSecretsDetailHandler,
 )
+from mage_ai.server.api.triggers import ApiTriggerPipelineHandler
 from mage_ai.server.api.v1 import (
     ApiChildDetailHandler,
     ApiChildListHandler,
@@ -275,7 +274,14 @@ def make_app():
             ApiPipelineBlockOutputHandler,
         ),
 
+        # Trigger pipeline via API
+        (
+            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
+            ApiTriggerPipelineHandler,
+        ),
+
         # API v1 routes
+
         (
             r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)',
             ApiPipelineRunDetailHandler,
@@ -289,18 +295,6 @@ def make_app():
             ApiAllBlockRunListHandler,
         ),
         (r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/logs', ApiPipelineRunLogHandler),
-        (
-            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs',
-            ApiPipelineRunListHandler,
-        ),
-        (
-            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
-            ApiPipelineRunListHandler,
-        ),
-        (
-            r'/api/pipeline_runs',
-            ApiAllPipelineRunListHandler,
-        ),
         (
             r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler,
         ),

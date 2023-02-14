@@ -49,7 +49,7 @@ function RunListPage() {
   const pipelines = useMemo(() => data?.pipelines || [], [data]);
   const pipelinesByUUID = useMemo(() => indexBy(pipelines, ({ uuid }) => uuid), [pipelines]);
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
-  const totalRuns = useMemo(() => dataPipelineRuns?.total_count || [], [dataPipelineRuns]);
+  const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
   return (
     <Dashboard

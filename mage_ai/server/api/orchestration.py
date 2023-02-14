@@ -3,8 +3,6 @@ from .base import (
     BaseDetailHandler,
     BaseHandler,
 )
-from datetime import datetime
-from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
@@ -13,11 +11,8 @@ from mage_ai.orchestration.db.models import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.pipeline_scheduler import get_variables
-from mage_ai.server.api.errors import UnauthenticatedRequestException
 from sqlalchemy.orm import aliased, selectinload
 from typing import List
-import json
 
 
 class ApiAllBlockRunListHandler(BaseHandler):
@@ -172,35 +167,6 @@ def process_pipeline_runs(
     handler.finish()
 
 
-class ApiAllPipelineRunListHandler(BaseHandler):
-    datetime_keys = ['execution_date']
-    model_class = PipelineRun
-
-    @safe_db_query
-    def get(self):
-        backfill_id = self.get_argument('backfill_id', None)
-        pipeline_uuid = self.get_argument('pipeline_uuid', None)
-        status = self.get_argument('status', None)
-        order_by = None
-        order_by_arg = self.get_argument('order_by[]', None)
-        if order_by_arg:
-            order_by = []
-            for s in order_by_arg.split(','):
-                parts = s.strip().split(' ')
-                if len(parts) >= 2:
-                    order_by.append((parts[0], parts[1]))
-                else:
-                    order_by.append((parts[0], 'asc'))
-
-        process_pipeline_runs(
-            self,
-            backfill_id=backfill_id,
-            pipeline_uuid=pipeline_uuid,
-            status=status,
-            order_by=order_by,
-        )
-
-
 class ApiPipelineRunDetailHandler(BaseDetailHandler):
     model_class = PipelineRun
 
@@ -259,66 +225,6 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
         elif payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
             from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
             PipelineScheduler(pipeline_run).stop()
-        self.write(dict(pipeline_run=pipeline_run.to_dict()))
-
-
-class ApiPipelineRunListHandler(BaseHandler):
-    datetime_keys = ['execution_date']
-    model_class = PipelineRun
-
-    @safe_db_query
-    def get(self, pipeline_schedule_id):
-        status = self.get_argument('status', None)
-        process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id), status=status)
-
-    @safe_db_query
-    def post(self, pipeline_schedule_id, token: str = None):
-        pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
-
-        if PipelineSchedule.ScheduleType.API == pipeline_schedule.schedule_type and \
-            pipeline_schedule.token and \
-                pipeline_schedule.token != token:
-            raise UnauthenticatedRequestException(
-                f'Invalid token for pipeline schedule ID {pipeline_schedule_id}.',
-            )
-
-        pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
-
-        payload = self.get_payload()
-        if 'variables' not in payload:
-            payload['variables'] = {}
-
-        payload['pipeline_schedule_id'] = pipeline_schedule.id
-        payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
-        if payload.get('execution_date') is None:
-            payload['execution_date'] = datetime.now()
-
-        is_integration = PipelineType.INTEGRATION == pipeline.type
-        if is_integration:
-            payload['create_block_runs'] = False
-
-        body = self.request.body
-        if body:
-            payload['event_variables'] = {}
-
-            for k, v in json.loads(body).items():
-                if k == 'pipeline_run':
-                    continue
-                payload['event_variables'][k] = v
-
-        pipeline_run = PipelineRun.create(**payload)
-
-        from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-        pipeline_scheduler = PipelineScheduler(pipeline_run)
-
-        if is_integration:
-            initialize_state_and_runs(
-                pipeline_run,
-                pipeline_scheduler.logger,
-                get_variables(pipeline_run),
-            )
-        pipeline_scheduler.start(should_schedule=False)
-
         self.write(dict(pipeline_run=pipeline_run.to_dict()))
 
 

@@ -111,7 +111,7 @@ function TriggerDetail({
     revalidateOnFocus: true,
   });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
-  const totalRuns = useMemo(() => dataPipelineRuns?.total_count || [], [dataPipelineRuns]);
+  const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const tablePipelineRuns = useMemo(() => {

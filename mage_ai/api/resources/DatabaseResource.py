@@ -10,7 +10,7 @@ import inspect
 
 
 class DatabaseResource(BaseResource):
-    DEFAULT_LIMIT = 100
+    DEFAULT_LIMIT = 40
 
     @classmethod
     async def process_collection(self, query, meta, user, **kwargs):

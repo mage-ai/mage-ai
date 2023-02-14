@@ -274,7 +274,8 @@ class BaseOperation():
 
         for key in self.__resource_class().datetime_keys:
             if payload.get(key) is not None:
-                payload[key] = dateutil.parser.parse(payload[key])
+                if type(payload[key]) is str:
+                    payload[key] = dateutil.parser.parse(payload[key])
 
         return payload
 

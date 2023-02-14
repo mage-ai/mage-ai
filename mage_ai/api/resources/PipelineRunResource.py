@@ -1,12 +1,7 @@
-from mage_ai.api.operations.constants import META_KEY_LIMIT
+from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import (
-    EventMatcher,
-    PipelineRun,
-    pipeline_schedule_event_matcher_association_table,
-)
-from mage_ai.shared.hash import merge_dict
+from mage_ai.orchestration.db.models import PipelineRun
 from sqlalchemy.orm import selectinload
 
 
@@ -25,13 +20,16 @@ class PipelineRunResource(DatabaseResource):
         backfill_id = query_arg.get('backfill_id', [None])
         if backfill_id:
             backfill_id = backfill_id[0]
+
         pipeline_uuid = query_arg.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
-        status = query.get('status', [None])
+
+        status = query_arg.get('status', [None])
         if status:
             status = status[0]
-        order_by_arg = self.get_argument('order_by[]', [None])
+
+        order_by_arg = query_arg.get('order_by[]', [None])
         if order_by_arg:
             order_by_arg = order_by_arg[0]
 
@@ -73,59 +71,67 @@ class PipelineRunResource(DatabaseResource):
             initial_results = \
                 results.order_by(PipelineRun.execution_date.desc(), PipelineRun.id.desc())
 
-        # collection = [r.to_dict(include_attributes=[
-        #     'block_runs',
-        #     'block_runs_count',
-        #     'pipeline_schedule_name',
-        #     'pipeline_schedule_token',
-        #     'pipeline_schedule_type',
-        # ]) for r in results]
+        return initial_results
 
-        # If runs from a certain execution date are included in the results, then
-        # we want to include all of the attempts for that execution date. We need
-        # to do this because the frontend groups retries.
+    @classmethod
+    async def process_collection(self, query_arg, meta, user, **kwargs):
+        total_results = self.collection(query_arg, meta, user, **kwargs)
+        total_count = total_results.count()
 
-        return results
+        limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
+        offset = int(meta.get(META_KEY_OFFSET, 0))
 
-    # @classmethod
-    # def create(self, payload, user, **kwargs):
-    #     pipeline = kwargs['parent_model']
-    #     payload['pipeline_uuid'] = pipeline.uuid
-    #     return super().create(payload, user, **kwargs)
+        results = total_results.limit(limit + 1).offset(offset).all()
 
-    # @safe_db_query
-    # def update(self, payload, **kwargs):
-    #     arr = payload.pop('event_matchers', None)
-    #     event_matchers = []
-    #     if arr is not None:
-    #         if len(arr) >= 1:
-    #             event_matchers = EventMatcher.upsert_batch(
-    #                 [merge_dict(p, dict(pipeline_schedule_ids=[self.id])) for p in arr],
-    #             )
+        pipeline_schedule_id = None
+        parent_model = kwargs.get('parent_model')
+        if parent_model:
+            pipeline_schedule_id = parent_model.id
 
-    #         ems = (
-    #             EventMatcher.
-    #             query.
-    #             join(
-    #                 pipeline_schedule_event_matcher_association_table,
-    #                 EventMatcher.id ==
-    #                 pipeline_schedule_event_matcher_association_table.c.event_matcher_id
-    #             ).
-    #             join(
-    #                 PipelineRun,
-    #                 PipelineRun.id ==
-    #                 pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id
-    #             ).
-    #             filter(
-    #                 PipelineRun.id == int(self.id),
-    #                 EventMatcher.id.not_in([em.id for em in event_matchers]),
-    #             )
-    #         )
-    #         for em in ems:
-    #             new_ids = [schedule for schedule in em.pipeline_schedules if schedule.id != self.id]
-    #             ps = [p for p in PipelineRun.query.filter(PipelineRun.id.in_(new_ids))]
-    #             em.update(pipeline_schedules=ps)
+        pipeline_uuid = query_arg.get('pipeline_uuid', [None])
+        if pipeline_uuid:
+            pipeline_uuid = pipeline_uuid[0]
 
-    #     super().update(payload)
+        if meta.get(META_KEY_LIMIT, None) is not None and \
+            total_results.count() >= 1 and \
+                (pipeline_uuid is not None or pipeline_schedule_id is not None):
 
-    #     return self
+            first_result = results[0]
+            first_execution_date = first_result.execution_date
+            additional_results = total_results.filter(
+                PipelineRun.execution_date == first_execution_date,
+            )
+            first_additional_results = additional_results.first()
+            filter_dates = []
+            if first_additional_results.id != first_result.id:
+                filter_dates.append(first_execution_date)
+
+            last_result = results[-1]
+            last_execution_date = last_result.execution_date
+            additional_results = total_results.filter(
+                PipelineRun.execution_date == last_execution_date,
+            )
+            filter_dates.append(last_result.execution_date)
+            results = list(
+                filter(
+                    lambda x: x.execution_date not in filter_dates,
+                    results,
+                ),
+            ) + additional_results.all()
+
+        results_size = len(results)
+        has_next = results_size > limit
+        final_end_idx = results_size - 1 if has_next else results_size
+
+        result_set = self.build_result_set(
+            results[0:final_end_idx],
+            user,
+            **kwargs,
+        )
+
+        result_set.metadata = {
+            'count': total_count,
+            'next': has_next,
+        }
+
+        return result_set
