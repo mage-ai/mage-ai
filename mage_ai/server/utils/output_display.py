@@ -135,12 +135,15 @@ def add_internal_output_info(code: str) -> str:
 def __custom_output():
     from datetime import datetime
     from mage_ai.shared.parsers import encode_complex
-    from pandas.core.common import SettingWithCopyWarning
     import json
     import pandas as pd
     import simplejson
     import warnings
 
+    if pd.__version__ < '1.5.0':
+        from pandas.core.common import SettingWithCopyWarning
+    else:
+        from pandas.errors import SettingWithCopyWarning
 
     warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
