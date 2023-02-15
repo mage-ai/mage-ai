@@ -10,7 +10,7 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value |
 | --- | --- | --- |
-| `host` | Host name of your Couchbase database. | `--your-instance--.cloud.couchbase.com` |
+| `connection_string` | Connection string for your Couchbase database. For more information see [here](https://docs.couchbase.com/kotlin-sdk/current/howtos/connecting.html#connection-string-scheme). | `couchbase://my_instance.cloud.couchbase.com` |
 | `username` | Name of the user that will access the database (must have permissions to read from specified bucket and scope) | `username` |
 | `password` | Password for the user to access the database.  | `password` |
 | `bucket` | Name of Couchbase bucket that contains your data | `my_bucket` |

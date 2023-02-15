@@ -9,20 +9,20 @@ class Couchbase(Connection):
         self,
         bucket: str,
         scope: str,
-        host: str,
+        connection_string: str,
         password: str,
         username: str,
     ):
         super().__init__()
         self.bucket = bucket
         self.scope = scope
-        self.host = host
+        self.connection_string = connection_string
         self.password = password
         self.username = username
 
     def get_bucket(self):
         auth = PasswordAuthenticator(self.username, self.password)
-        cluster = Cluster(f'couchbases://{self.host}', ClusterOptions(auth))
+        cluster = Cluster(self.connection_string, ClusterOptions(auth))
         return cluster.bucket(self.bucket)
 
     def get_scope(self):
