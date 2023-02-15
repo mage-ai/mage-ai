@@ -20,6 +20,8 @@ import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
+import Secrets from './GlobalVariables/Secrets';
+import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
@@ -64,6 +66,7 @@ export type SidekickProps = {
   executePipeline: () => void;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  fetchSecrets: () => void;
   fetchVariables: () => void;
   insights: InsightType[][];
   interruptKernel: () => void;
@@ -74,6 +77,7 @@ export type SidekickProps = {
   pipelineMessages: KernelOutputType[];
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
+  secrets: SecretType[];
   selectedBlock: BlockType;
   setErrors: (opts: {
     errors: any;
@@ -95,6 +99,7 @@ function Sidekick({
   executePipeline,
   fetchFileTree,
   fetchPipeline,
+  fetchSecrets,
   fetchVariables,
   globalVariables,
   insights,
@@ -109,6 +114,7 @@ function Sidekick({
   runningBlocks,
   sampleData,
   savePipelineContent,
+  secrets,
   selectedBlock,
   setAnyInputFocused,
   setEditingBlock,
@@ -188,6 +194,21 @@ function Sidekick({
     pipeline,
     selectedBlock,
     setSelectedBlock,
+  ]);
+
+  const secretsMemo = useMemo(() => (
+    <Secrets
+      fetchSecrets={fetchSecrets}
+      pipelineUUID={pipeline?.uuid}
+      secrets={secrets}
+      setErrorMessages={setErrorMessages}
+      width={afterWidth}
+    />
+  ), [
+    afterWidth,
+    fetchSecrets,
+    pipeline,
+    secrets,
   ]);
 
   const dataTableMemo = useMemo(() => (
@@ -315,7 +336,8 @@ function Sidekick({
             />
           </PaddingContainerStyle>
         }
-        {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
+        {ViewKeyEnum.SECRETS === activeView && secretsMemo}
+        {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
 
         {(isIntegration
           || (selectedBlock && hasData)

@@ -1,7 +1,7 @@
 from jinja2 import Template
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
-from mage_ai.shared.environments import is_test
 from mage_ai.data_preparation.templates.utils import copy_template_directory
+from mage_ai.shared.environments import is_test
 from typing import Dict
 import os
 import sys
@@ -17,6 +17,7 @@ else:
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
+        from mage_ai.data_preparation.shared.utils import get_template_vars
         self.repo_path = repo_path or get_repo_path()
         self.repo_name = os.path.basename(self.repo_path)
         try:
@@ -24,7 +25,9 @@ class RepoConfig:
                 metadata_path = os.path.join(self.repo_path, 'metadata.yaml')
                 if os.path.exists(metadata_path):
                     with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
-                        config_file = Template(f.read()).render(env_var=os.getenv)
+                        config_file = Template(f.read()).render(
+                            **get_template_vars()
+                        )
                         repo_config = yaml.full_load(config_file) or {}
                 else:
                     repo_config = dict()
@@ -103,6 +106,14 @@ def init_repo(repo_path: str) -> None:
 
     os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exist_ok=True)
     copy_template_directory('repo', repo_path)
+
+
+def get_data_dir() -> str:
+    return os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR)
+
+
+def get_repo_name() -> str:
+    return os.path.basename(get_repo_path())
 
 
 def get_repo_path() -> str:

@@ -10,7 +10,18 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
 from mage_ai.shared.utils import clean_name
-from sqlalchemy import Column, Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
+from sqlalchemy import (
+    Column,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Table,
+    Text,
+)
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.orm.collections import InstrumentedList
@@ -650,3 +661,9 @@ class Backfill(BaseModel):
     variables = Column(JSON, default=None)
 
     pipeline_runs = relationship('PipelineRun', back_populates='backfill')
+
+
+class Secret(BaseModel):
+    name = Column(String(255), unique=True)
+    value = Column(Text)
+    repo_name = Column(String(255))

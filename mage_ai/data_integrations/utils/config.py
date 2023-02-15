@@ -1,12 +1,12 @@
 from jinja2 import Template
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_integrations.utils.parsers import NoDatesSafeLoader
 from mage_ai.shared.dates import n_days_ago
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List
 import json
-import os
 import simplejson
 import yaml
 
@@ -125,17 +125,12 @@ def interpolate_variables_for_block_settings(
 
 
 def interpolate_string(text: str, variables: Dict) -> str:
+    variables = dict() if variables is None else variables
     kwargs = dict(
-        env_var=os.getenv,
         variables=lambda x: variables.get(x),
         n_days_ago=n_days_ago,
+        **get_template_vars(),
     )
-
-    try:
-        from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
-        kwargs['aws_secret_var'] = get_secret
-    except ModuleNotFoundError:
-        pass
 
     return Template(text).render(**kwargs)
 
@@ -144,6 +139,6 @@ def interpolate_variables(
     text: str,
     variables: Dict,
 ) -> Dict:
-    settings_string = text if variables is None else interpolate_string(text, variables)
+    settings_string = interpolate_string(text, variables)
 
     return yaml.load(settings_string, Loader=NoDatesSafeLoader)

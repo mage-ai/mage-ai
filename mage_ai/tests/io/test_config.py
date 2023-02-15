@@ -191,7 +191,7 @@ template:
         for expected_key, expected_value in zip(expected_keys, expected_values):
             self.assertEqual(env_loader[expected_key], expected_value)
 
-    @mock.patch('mage_ai.io.config.os')
+    @mock.patch('mage_ai.data_preparation.shared.utils.os')
     def test_env_map_get_redshift(self, mock_os):
         test_env_vars = {'REDSHIFT_CLUSTER': 'env_var_cluster'}
         mock_os.getenv = test_env_vars.get

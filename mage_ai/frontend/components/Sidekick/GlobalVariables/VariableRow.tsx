@@ -22,6 +22,7 @@ type VariableRowProps = {
   deleteVariable?: () => void;
   fetchVariables?: () => void;
   hideEdit?: boolean;
+  obfuscate?: boolean;
   pipelineUUID: string;
   variable: VariableType;
 }
@@ -31,6 +32,7 @@ function VariableRow({
   deleteVariable,
   fetchVariables,
   hideEdit,
+  obfuscate,
   pipelineUUID,
   variable,
 }: VariableRowProps) {
@@ -171,9 +173,15 @@ function VariableRow({
             </CellStyle>
           ) : (
             <CellStyle>
-              <Text monospace small>
-                {value}
-              </Text>
+              {obfuscate ? (
+                <Text monospace small>
+                  ********
+                </Text>
+              ) : (
+                <Text monospace small>
+                  {value}
+                </Text>
+              )}
               <Flex>
                 {!hideEdit && showActions && (
                   <KeyboardShortcutButton

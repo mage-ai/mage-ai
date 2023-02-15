@@ -1,6 +1,5 @@
 from alembic import context
 from logging.config import fileConfig
-from mage_ai.orchestration.db.models import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 import logging
@@ -30,6 +29,8 @@ sys.path.append(os.path.dirname(
             os.path.dirname(
                 # migrations
                 os.path.dirname(os.path.abspath(__file__)))))))
+
+from mage_ai.orchestration.db.models import Base  # noqa: E402
 
 
 target_metadata = Base.metadata
