@@ -68,6 +68,7 @@ class BlockExecutor:
                     logging_tags=tags,
                     verify_output=verify_output,
                     runtime_arguments=runtime_arguments,
+                    template_runtime_configuration=template_runtime_configuration,
                     dynamic_block_index=dynamic_block_index,
                     dynamic_block_uuid=dynamic_block_uuid,
                     dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,

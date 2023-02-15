@@ -4,7 +4,7 @@ from typing import Dict
 
 
 class K8sBlockExecutor(BlockExecutor):
-    def execute(
+    def _execute(
         self,
         block_run_id: int = None,
         global_vars: Dict = None,
