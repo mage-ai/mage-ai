@@ -36,9 +36,9 @@ class AnalyticsStream(BaseStream):
             end_date = dateutil.parser.parse(self.config.get('end_date')).replace(tzinfo=pytz.utc)
         else:
             if incremental_range == 'daily':
-                end_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = now.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=pytz.utc)
             elif incremental_range == 'hourly':
-                end_date = now.replace(minute=0, second=0, microsecond=0)
+                end_date = now.replace(minute=0, second=0, microsecond=0).replace(tzinfo=pytz.utc)
         self.logger.info('end_date: {} '.format(end_date))
 
         # if the state file has a date_to_resume, we use it as it is.
