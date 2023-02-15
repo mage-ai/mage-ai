@@ -44,7 +44,7 @@ def get_encryption_key() -> str:
     key_file = os.path.join(secrets_dir, 'key')
     with open(key_file, 'r') as f:
         key = f.read()
-        
+
     return key
 
 

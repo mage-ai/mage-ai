@@ -1,4 +1,3 @@
-from cryptography.fernet import Fernet
 from jinja2 import Template
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.data_preparation.templates.utils import copy_template_directory
