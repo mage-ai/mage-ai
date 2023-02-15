@@ -32,6 +32,3 @@ else
         mage start $PROJECT_PATH
     fi
 fi
-
-# Exit immediately when one of the background processes terminate.
-wait -n
