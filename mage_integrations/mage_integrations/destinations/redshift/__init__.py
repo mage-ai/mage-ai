@@ -29,7 +29,7 @@ class Redshift(Destination):
             region=self.config.get('region'),
             secret_access_key=self.config.get('secret_access_key'),
             user=self.config.get('user'),
-            verbose=0 if self.discover_mode or self.discover_streams_mode else 1,
+            verbose=1,
         )
 
     def build_create_table_commands(
@@ -168,8 +168,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 f'tablename = \'{table_name}\'',
             )
             count = cursor.rowcount
-
-            return bool(count)
+            return count > 0
 
     def calculate_records_inserted_and_updated(
         self,
