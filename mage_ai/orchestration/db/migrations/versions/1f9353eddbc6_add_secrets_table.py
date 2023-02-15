@@ -1,8 +1,8 @@
-"""Add secret table
+"""Add secrets table
 
-Revision ID: b32dccaf0b61
+Revision ID: 1f9353eddbc6
 Revises: 643b6e65e814
-Create Date: 2023-02-13 12:30:03.669476
+Create Date: 2023-02-15 09:25:39.658782
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b32dccaf0b61'
+revision = '1f9353eddbc6'
 down_revision = '643b6e65e814'
 branch_labels = None
 depends_on = None
@@ -25,7 +25,8 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('value', sa.Text(), nullable=True),
     sa.Column('repo_name', sa.String(length=255), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
     )
     # ### end Alembic commands ###
 
