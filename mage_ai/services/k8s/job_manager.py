@@ -76,6 +76,7 @@ class JobManager():
             name='mage-job-container',
             image='mageai/mageai',
             command=command.split(' ') if isinstance(command, str) else command,
+            env=self.pod_config.spec.containers[0].env,
             volume_mounts=self.pod_config.spec.containers[0].volume_mounts,
         )
         # Create and configurate a spec section

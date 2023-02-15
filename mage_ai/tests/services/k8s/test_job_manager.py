@@ -72,6 +72,7 @@ class JobManagerTests(TestCase):
             name='mage-job-container',
             image='mageai/mageai',
             command=['mage', 'run', 'test_pipeline'],
+            env=job_manager.pod_config.spec.containers[0].env,
             volume_mounts=job_manager.pod_config.spec.containers[0].volume_mounts,
         )
         mock_client.V1ObjectMeta.assert_has_calls(
