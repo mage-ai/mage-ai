@@ -348,6 +348,7 @@ class IntegrationPipeline(Pipeline):
 
                 proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.check_returncode()
+                
 
                 return json.loads(parse_logs_and_json(proc.stdout.decode()))
             except subprocess.CalledProcessError as e:

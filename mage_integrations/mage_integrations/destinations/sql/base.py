@@ -104,6 +104,14 @@ class Destination(BaseDestination):
         query_strings = []
 
         replication_method = self.replication_methods[stream]
+
+
+        self.logger.info('-----------------------------------------------------------------------------------------------------------')
+
+
+        self.logger.info(self.replication_methods)
+
+
         if replication_method in [
             REPLICATION_METHOD_FULL_TABLE,
             REPLICATION_METHOD_INCREMENTAL,

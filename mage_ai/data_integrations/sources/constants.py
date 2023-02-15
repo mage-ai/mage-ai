@@ -29,6 +29,7 @@ SOURCES = sorted([
     dict(name='Monday'),
     dict(name='Outreach'),
     dict(name='Paystack'),
+    dict(name='Pipedrive'),
     dict(name='Postmark'),
     dict(name='Salesforce'),
     dict(name='Stripe'),

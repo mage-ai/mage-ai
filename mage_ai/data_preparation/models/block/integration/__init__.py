@@ -11,7 +11,6 @@ from mage_ai.data_preparation.models.block import PYTHON_COMMAND, Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.shared.hash import merge_dict
 from typing import Dict, List
-
 import json
 import os
 import pandas as pd
@@ -82,6 +81,8 @@ class IntegrationBlock(Block):
                 query_data['_offset'] = BATCH_FETCH_LIMIT * index
             if not is_last_block_run:
                 query_data['_limit'] = BATCH_FETCH_LIMIT
+        else:
+            print(self.template_runtime_configuration)
 
         outputs = []
         if BlockType.DATA_LOADER == self.type:

@@ -127,6 +127,7 @@ export enum IntegrationSourceEnum {
   INTERCOM = 'intercom',
   MYSQL = 'mysql',
   POSTGRESQL = 'postgresql',
+  PIPEDRIVE = 'pipedrive',
   REDSHIFT = 'redshift',
   SALESFORCE = 'salesforce',
   STRIPE = 'stripe',

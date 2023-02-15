@@ -263,6 +263,11 @@ class Destination():
 
         self.key_properties[stream] = row.get(KEY_KEY_PROPERTIES)
         self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS, [])
+
+        self.logger.info('000000000000000000000000000000000000000000000000000000000000000000000000000')
+
+        self.logger.info(row)
+        
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
         self.schemas[stream] = schema
         # Add internal columns to schema

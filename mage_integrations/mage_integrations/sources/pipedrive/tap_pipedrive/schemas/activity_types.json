@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "order_nr": {
+      "type": ["null", "integer"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "key_string": {
+      "type": ["null", "string"]
+    },
+    "icon_key": {
+      "type": ["null", "string"]
+    },
+    "active_flag": {
+      "type": ["null", "boolean"]
+    },
+    "color": {
+      "type": ["null", "string"]
+    },
+    "is_custom_flag": {
+      "type": ["null", "boolean"]
+    },
+    "add_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "update_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    }
+  }
+}
