@@ -21,7 +21,7 @@ class Couchbase(Source):
         return CouchbaseConnection(
             bucket=self.config['bucket'],
             scope=self.config['scope'],
-            host=self.config['host'],
+            connection_string=self.config['connection_string'],
             password=self.config['password'],
             username=self.config['username']
         )
@@ -94,6 +94,7 @@ WITH {{"sample_size": 1000, "similarity_metric": 0, "dictionary_threshold": 0}}
 
     def test_connection(self):
         self.build_connection().get_bucket()
+
 
 if __name__ == '__main__':
     main(Couchbase)
