@@ -29,3 +29,11 @@ Alternatively, instead of using `password` and `user`, you can use the following
 | `secret_access_key` | The secret access key for the IAM role or IAM user configured for IAM database authentication. | `xyz123` |
 
 <br />
+
+## Grant permissions
+
+Use `GRANT` command to [grant](https://docs.aws.amazon.com/redshift/latest/dg/r_GRANT.html) the user permissions to create schema and insert data into tables:
+```sql
+GRANT CREATE ON DATABASE "database" TO user;
+GRANT CREATE ON ALL TABLES IN SCHEMA "schema" TO user;
+```

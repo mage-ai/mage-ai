@@ -1,8 +1,6 @@
 from mage_integrations.connections.redshift import Redshift as RedshiftConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
-    INTERNAL_COLUMN_CREATED_AT,
-    UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.redshift.utils import convert_column_type, convert_array
 from mage_integrations.destinations.sql.base import Destination, main
@@ -114,29 +112,25 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             f'VALUES {insert_values}',
         ]
 
-        if unique_constraints and unique_conflict_method:
-            unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns
-                               if col != INTERNAL_COLUMN_CREATED_AT]
+        # TODO: handle conflicts
+        # MERGE command is in preview: https://docs.amazonaws.cn/en_us/redshift/latest/dg/r_MERGE.html
 
-            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
-            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
-                commands.append(
-                    f"DO UPDATE SET {', '.join(update_command)}",
-                )
-            else:
-                commands.append('DO NOTHING')
+        return self.wrap_insert_commands(commands, table_name)
 
-        return self.wrap_insert_commands(commands)
-
-    def wrap_insert_commands(self, commands: List[str]) -> List[str]:
+    def wrap_insert_commands(self, commands: List[str], table_name: str) -> List[str]:
         commands_string = '\n'.join(commands)
         return [
+            commands_string,
             '\n'.join([
-                f"WITH insert_rows_and_count AS ({commands_string} RETURNING 1)",
-                'SELECT COUNT(*) FROM insert_rows_and_count',
+                'WITH last_queryid_for_table AS (',
+                '    SELECT query, MAX(si.starttime) OVER () as last_q_stime, si.starttime as stime',
+                '    FROM stl_insert si, SVV_TABLE_INFO sti',
+                f'    WHERE sti.table_id=si.tbl AND sti."table"=\'{table_name}\'',
+                ')',
+                'SELECT SUM(rows) FROM stl_insert si, last_queryid_for_table lqt ',
+                'WHERE si.query=lqt.query AND lqt.last_q_stime=stime',
             ]),
+
         ]
 
     def column_type_mapping(self, schema: Dict) -> Dict:
