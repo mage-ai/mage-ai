@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import Dict, List
 from dateutil.parser import parse
 from mage_integrations.sources.paystack.client import PaystackClient
+from typing import Dict, List
 import os
 import pytz
 import singer
