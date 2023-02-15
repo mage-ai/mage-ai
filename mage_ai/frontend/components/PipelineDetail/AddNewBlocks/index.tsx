@@ -363,15 +363,15 @@ function AddNewBlocks({
                     label: () => 'SQL',
                     uuid: 'custom_block_sql',
                   },
-                  {
-                    items: createColorMenuItems(
-                      addNewBlock,
-                      BlockTypeEnum.CUSTOM,
-                      BlockLanguageEnum.R,
-                    ),
-                    label: () => 'R',
-                    uuid: 'custom_block_r',
-                  },
+                  // {
+                  //   items: createColorMenuItems(
+                  //     addNewBlock,
+                  //     BlockTypeEnum.CUSTOM,
+                  //     BlockLanguageEnum.R,
+                  //   ),
+                  //   label: () => 'R',
+                  //   uuid: 'custom_block_r',
+                  // },
                 ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex ===CUSTOM_BUTTON_INDEX}

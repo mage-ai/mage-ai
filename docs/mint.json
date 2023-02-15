@@ -168,7 +168,8 @@
               ]
             },
             "guides/sql-blocks",
-            "guides/r-blocks"
+            "guides/r-blocks",
+            "guides/blocks/custom-blocks"
           ]
         },
         {
