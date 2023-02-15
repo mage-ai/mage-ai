@@ -664,6 +664,6 @@ class Backfill(BaseModel):
 
 
 class Secret(BaseModel):
-    name = Column(String(255))
+    name = Column(String(255), unique=True)
     value = Column(Text)
     repo_name = Column(String(255))

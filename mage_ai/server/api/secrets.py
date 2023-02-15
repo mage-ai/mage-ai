@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.repo_manager import (
+from mage_ai.data_preparation.shared.secrets import (
     create_secret,
     get_repo_path,
 )

@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.repo_manager import get_secrets
+from mage_ai.data_preparation.shared.secrets import get_secret_value
 from typing import Callable, Dict
 import os
 
@@ -6,7 +6,7 @@ import os
 def get_template_vars() -> Dict[str, Callable]:
     kwargs = dict(
         env_var=os.getenv,
-        mage_secret_var=lambda x: get_secrets().get(x),
+        mage_secret_var=get_secret_value,
     )
 
     try:

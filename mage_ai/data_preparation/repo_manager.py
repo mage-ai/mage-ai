@@ -15,8 +15,6 @@ if is_test():
 else:
     DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
 
-DEFAULT_MAGE_SECRETS_DIR = '.secrets'
-
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
@@ -111,6 +109,10 @@ def init_repo(repo_path: str) -> None:
     copy_template_directory('repo', repo_path)
 
 
+def get_data_dir() -> str:
+    return os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR)
+
+
 def get_repo_name() -> str:
     return os.path.basename(get_repo_path())
 
@@ -130,51 +132,3 @@ def set_repo_path(repo_path: str) -> None:
 
 def get_variables_dir(repo_path: str = None) -> str:
     return get_repo_config(repo_path=repo_path).variables_dir
-
-
-def create_secret(name: str, value: str):
-    from mage_ai.orchestration.db.models import Secret
-    secrets_dir = os.path.join(
-        get_repo_path(), DEFAULT_MAGE_SECRETS_DIR)
-    key_file = os.path.join(secrets_dir, 'key')
-
-    if os.path.exists(key_file):
-        with open(key_file, 'r') as f:
-            key = f.read()
-    else:
-        key = Fernet.generate_key().decode('utf-8')
-        if not os.path.exists(secrets_dir):
-            os.makedirs(secrets_dir)
-        with open(key_file, 'w') as f:
-            f.write(key)
-
-    fernet = Fernet(key)
-    encrypted_value = fernet.encrypt(value.encode('utf-8'))
-    kwargs = {
-        'name': name,
-        'value': encrypted_value.decode('utf-8'),
-        'repo_name': get_repo_path(),
-    }
-
-    secret = Secret(**kwargs)
-    secret.save()
-    return secret
-
-
-def get_secrets() -> Dict[str, str]:
-    from mage_ai.orchestration.db.models import Secret
-    secrets_dir = os.path.join(
-        get_repo_path(), DEFAULT_MAGE_SECRETS_DIR)
-    key_file = os.path.join(secrets_dir, 'key')
-    with open(key_file, 'r') as f:
-        key = f.read()
-    fernet = Fernet(key)
-
-    secrets = Secret.query.filter(Secret.repo_name == get_repo_path())
-    secret_obj = {}
-    if secrets.count() > 0:
-        for secret in secrets:
-            secret_obj[secret.name] = \
-                fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
-
-    return secret_obj
