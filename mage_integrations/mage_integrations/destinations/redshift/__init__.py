@@ -137,7 +137,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         return column_type_mapping_orig(
             schema,
             convert_column_type,
-            lambda item_type_converted: f'{item_type_converted}[]',
+            lambda item_type_converted: 'VARCHAR(65535)',
         )
 
     def convert_array(self, value: str, column_type_dict: Dict) -> str:
