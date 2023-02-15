@@ -52,6 +52,7 @@ class JobManager():
 
         self.create_job(job)
 
+        api_response = None
         job_completed = False
         while not job_completed:
             api_response = self.batch_api_client.read_namespaced_job_status(
@@ -65,6 +66,9 @@ class JobManager():
             # self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
+        self._print(f'Job {self.job_name} status={api_response.status}')
+        if api_response.status.succeeded is None:
+            raise Exception(f'Failed to execute k8s job {self.job_name}')
 
     def create_job_object(self, command):
         # Configureate Pod template container
