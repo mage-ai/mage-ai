@@ -6,7 +6,6 @@ import simplejson
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
 JSON_SERIALIZABLE_COLUMN_TYPES = [
-    'Timestamp',
     dict.__name__,
     list.__name__,
 ]
