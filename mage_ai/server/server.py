@@ -30,7 +30,6 @@ from mage_ai.server.api.clusters import (
     ApiInstancesHandler,
     ClusterType,
 )
-from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
@@ -209,7 +208,6 @@ def make_app():
         ),
 
         # API v1 routes
-        (r'/api/data_providers', ApiDataProvidersHandler),
         (r'/api/integration_destinations', ApiIntegrationDestinationsHandler),
         (
             r'/api/integration_source_streams/(?P<pipeline_uuid>\w+)',
