@@ -14,5 +14,5 @@ class DatadogClient(Client):
             "Accept": "application/json",
             "Content-Type": "application/json",
             "DD-API-KEY": self.config.get('api_key'),
-            "DD-APPLICATION-KEY": self.config('application_key')
+            "DD-APPLICATION-KEY": self.config.get('application_key')
         }
