@@ -811,8 +811,8 @@ function PipelineDetailPage({
     },
   );
 
-  const [restartKernel] = useMutation(
-    api.restart.kernels.useCreate(kernel?.id),
+  const [updateKernel] = useMutation(
+    api.kernels.useUpdate(kernel?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -825,19 +825,16 @@ function PipelineDetailPage({
       ),
     },
   );
-  const [interruptKernel] = useMutation(
-    api.interrupt.kernels.useCreate(kernel?.id),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
+  const restartKernel = useCallback(() => updateKernel({
+    kernel: {
+      action_type: 'restart',
     },
-  );
+  }), [updateKernel]);
+  const interruptKernel = useCallback(() => updateKernel({
+    kernel: {
+      action_type: 'interrupt',
+    },
+  }), [updateKernel]);
 
   const restartKernelWithConfirm = useCallback(() => {
     const warning = 'Do you want to restart the kernel? All variables will be cleared.';

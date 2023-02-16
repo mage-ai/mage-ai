@@ -43,8 +43,6 @@ export const INTEGRATION_SAMPLES = 'integration_samples';
 export const INTEGRATION_SOURCES = 'integration_sources';
 export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
 export const KERNELS: 'kernels' = 'kernels';
-export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
-export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
 export const LOGS = 'logs';
 export const MONITOR_STATS = 'monitor_stats';
 export const OUTPUTS = 'outputs';
@@ -87,8 +85,6 @@ const RESOURCES: any[][] = [
   [INTEGRATION_SOURCES],
   [INTEGRATION_SOURCE_STREAMS],
   [KERNELS],
-  [KERNEL_ACTION_INTERRUPT, KERNELS],
-  [KERNEL_ACTION_RESTART, KERNELS],
   [LOGS, PIPELINES],
   [MONITOR_STATS],
   [OUTPUTS, BLOCK_RUNS],

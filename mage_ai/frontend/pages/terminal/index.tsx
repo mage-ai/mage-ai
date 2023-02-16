@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 
 import PrivateRoute from '@components/shared/PrivateRoute';
@@ -7,12 +8,12 @@ import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/Pipe
 import { onSuccess } from '@api/utils/response';
 
 function TerminalPage() {
-  const [interruptKernel] = useMutation(
-    api.interrupt.kernels.useCreate(PIPELINE_TYPE_TO_KERNEL_NAME[PipelineTypeEnum.PYTHON]),
+  const [updateKernel] = useMutation(
+    api.kernels.useUpdate(PIPELINE_TYPE_TO_KERNEL_NAME[PipelineTypeEnum.PYTHON]),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          onErrorCallback: (response, errors) => console.log({
+          onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
           }),
@@ -20,6 +21,11 @@ function TerminalPage() {
       ),
     },
   );
+  const interruptKernel = useCallback(() => updateKernel({
+    kernel: {
+      action_type: 'interrupt',
+    },
+  }), [updateKernel]);
 
   return (
     <Terminal

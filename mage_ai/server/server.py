@@ -11,12 +11,7 @@ from mage_ai.data_preparation.shared.constants import (
 )
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import Oauth2Application, User
-from mage_ai.server.active_kernel import (
-    interrupt_kernel,
-    restart_kernel,
-    start_kernel,
-    switch_active_kernel,
-)
+from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
 from mage_ai.server.api.backfills import (
     ApiBackfillHandler,
@@ -49,9 +44,6 @@ from mage_ai.server.api.integration_sources import (
     ApiIntegrationSourcesHandler,
 )
 from mage_ai.server.api.logs import ApiPipelineLogListHandler
-from mage_ai.server.api.orchestration import (
-    ApiPipelineRunLogHandler,
-)
 from mage_ai.server.api.projects import ApiProjectsHandler
 from mage_ai.server.api.secrets import (
     ApiSecretsListHandler,
@@ -67,11 +59,7 @@ from mage_ai.server.api.v1 import (
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.docs_server import run_docs_server
 from mage_ai.server.kernel_output_parser import parse_output_message
-from mage_ai.server.kernels import (
-    DEFAULT_KERNEL_NAME,
-    kernel_managers,
-    KernelName,
-)
+from mage_ai.server.kernels import DEFAULT_KERNEL_NAME
 from mage_ai.server.scheduler_manager import (
     SCHEDULER_AUTO_RESTART_INTERVAL,
     check_scheduler_status,
@@ -125,62 +113,6 @@ class ApiPipelineExecuteHandler(BaseHandler):
                 )
             )
         )
-        self.finish()
-
-
-class ApiSchedulerHandler(BaseHandler):
-    def get(self, action_type=None):
-        self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
-
-    def post(self, action_type):
-        if action_type == 'start':
-            scheduler_manager.start_scheduler()
-        elif action_type == 'stop':
-            scheduler_manager.stop_scheduler()
-        self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
-
-
-class KernelsHandler(BaseHandler):
-    def get(self, kernel_id=None):
-        kernels = []
-
-        for kernel_name in KernelName:
-            kernel = kernel_managers[kernel_name]
-            if kernel.has_kernel:
-                kernels.append(
-                    dict(
-                        alive=kernel.is_alive(),
-                        id=kernel.kernel_id,
-                        name=kernel.kernel_name,
-                    )
-                )
-
-        r = json.dumps(dict(kernels=kernels))
-        self.write(r)
-
-    def post(self, kernel_id, action_type):
-        kernel_name = self.get_argument('kernel_name', DEFAULT_KERNEL_NAME)
-        if kernel_name not in kernel_managers:
-            kernel_name = DEFAULT_KERNEL_NAME
-        switch_active_kernel(kernel_name)
-        if 'interrupt' == action_type:
-            interrupt_kernel()
-        elif 'restart' == action_type:
-            try:
-                restart_kernel()
-            except RuntimeError as e:
-                # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
-                if 'start_kernel' in str(e):
-                    start_kernel()
-
-        r = json.dumps(
-            dict(
-                kernel=dict(
-                    id=kernel_id,
-                ),
-            )
-        )
-        self.write(r)
         self.finish()
 
 
@@ -278,12 +210,6 @@ def make_app():
         ),
 
         # API v1 routes
-        (r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/logs', ApiPipelineRunLogHandler),
-        (
-            r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler,
-        ),
-        (r'/api/kernels', KernelsHandler),
-        (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
         (r'/api/data_providers', ApiDataProvidersHandler),
         (r'/api/integration_destinations', ApiIntegrationDestinationsHandler),
@@ -306,6 +232,7 @@ def make_app():
         (r'/api/backfills', ApiBackfillsHandler),
         (r'/api/secrets', ApiSecretsListHandler),
         (r'/api/secrets/(?P<name>\w+)', ApiSecretsDetailHandler),
+
         (
             r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)/(?P<child_pk>\w+)',
             ApiChildDetailHandler,
