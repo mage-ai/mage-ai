@@ -11,3 +11,10 @@ consumer_group: unique_consumer_group
 #   keyfile: "key.pem"
 #   password: password
 #   check_hostname: true
+
+# Uncomment the config below to use SASL_SSL config
+# security_protocol: "SASL_SSL"
+# sasl_config:
+#   mechanism: "PLAIN"
+#   username: username
+#   password: password
