@@ -2,6 +2,8 @@
   "api_key": "",
   "application_key": "",
   "start_date": "",
-  "end_date": "",
-  "query": ""
+  "query": {
+    "audit_logs": "",
+    "logs": ""
+  }
 }

@@ -8,6 +8,7 @@ import pytz
 import requests
 import singer
 
+DEFAULT_MAX_RECORDS = 100
 
 class DatadogStream:
     """
@@ -24,7 +25,7 @@ class DatadogStream:
         self.client = client
         self.logger = logger
 
-        self.max_records_per_request = config.get('max_records_per_request')
+        self.max_records_per_request = DEFAULT_MAX_RECORDS
 
     def get_url(self) -> str:
         """
@@ -40,7 +41,6 @@ class DatadogStream:
     ):
         table = self.TABLE
         done = False
-        sync_interval_in_mins = 2
         bookmark_date = None
 
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
@@ -62,7 +62,7 @@ class DatadogStream:
             bookmark_date = bookmark_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         if to_date is None:
-            to_datetime = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
+            to_datetime = datetime.now(pytz.utc)
             to_date = to_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
         sync_window = str([bookmark_date, to_date])
         self.logger.info(f'Sync Window {sync_window} for schema {table}')
@@ -86,7 +86,6 @@ class DatadogStream:
             bookmark_date = max_date
 
     def make_request(self, params):
-        self.logger.info(f'DATADOG URL: {self.get_url()}')
         return self.client.make_request(
             url=self.get_url(),
             method=self.API_METHOD,
@@ -148,7 +147,6 @@ class SyntheticTests(DatadogStream):
 
 
 class IncrementalSearchableStream(DatadogStream):
-    BOOKMARK_PROPERTIES = ['sync_date']
     API_METHOD = 'POST'
     KEY_PROPERTIES = ['id']
 
@@ -159,7 +157,7 @@ class IncrementalSearchableStream(DatadogStream):
         self._cursor_value = ""
 
     def next_page_token(self, response: Dict) -> Optional[Mapping[str, Any]]:
-        cursor = response.get("meta", {}).get("page", {}).get("after", {}).get("page", {}).get("cursor", {})
+        cursor = response.get("meta", {}).get("page", {}).get("after")
         if not cursor:
             return {}
         else:
@@ -175,8 +173,11 @@ class IncrementalSearchableStream(DatadogStream):
         )
 
     def get_payload(self, cursor=None, **kwargs) -> Mapping[str, Any]:
+        query = self.config.get('query', {}).get(self.TABLE)
+        if query:
+            kwargs['query'] = query
         payload = {
-            "filter": {"query": self.query, **kwargs},
+            "filter": kwargs,
             "page": {"limit": self.max_records_per_request},
         }
         if cursor:

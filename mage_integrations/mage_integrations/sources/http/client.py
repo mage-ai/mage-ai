@@ -163,9 +163,7 @@ class Client():
         else:
             # If value is 0,"0","" or not passed then set default to 300 seconds.
             request_timeout = REQUEST_TIMEOUT
-
-        self.logger.info('datadog url:', url)
-
+        
         response = requests.request(
             method,
             url,
