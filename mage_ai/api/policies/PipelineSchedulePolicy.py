@@ -68,13 +68,13 @@ PipelineSchedulePolicy.allow_write([
     constants.CREATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
-
 PipelineSchedulePolicy.allow_write([
     'event_matchers',
     'name',
     'schedule_interval',
     'schedule_type',
     'start_time',
+    'status',
     'variables',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

@@ -33,7 +33,7 @@ class ApiTriggerPipelineHandler(BaseHandler):
         payload['pipeline_schedule_id'] = pipeline_schedule.id
         payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
         if payload.get('execution_date') is None:
-            payload['execution_date'] = datetime.now()
+            payload['execution_date'] = datetime.utcnow()
 
         is_integration = PipelineType.INTEGRATION == pipeline.type
         if is_integration:

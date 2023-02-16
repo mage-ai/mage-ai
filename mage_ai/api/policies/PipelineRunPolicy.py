@@ -16,6 +16,7 @@ PipelineRunPolicy.allow_actions([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelineRunPolicy.allow_actions([
+    constants.CREATE,
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -44,8 +45,20 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
 PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
+    constants.CREATE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelineRunPolicy.allow_write([
+    'execution_date',
+    'pipeline_schedule_id',
+    'pipeline_uuid',
+    'variables',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.CREATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineRunPolicy.allow_write([
     'pipeline_run_action',

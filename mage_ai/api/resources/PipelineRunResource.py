@@ -1,9 +1,12 @@
+from datetime import datetime
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+from mage_ai.orchestration.pipeline_scheduler import get_variables
 from sqlalchemy.orm import selectinload
 
 
@@ -137,6 +140,44 @@ class PipelineRunResource(DatabaseResource):
         }
 
         return result_set
+
+    @classmethod
+    @safe_db_query
+    def create(self, payload, user, **kwargs):
+        pipeline_schedule = kwargs.get('parent_model')
+
+        pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
+
+        if 'variables' not in payload:
+            payload['variables'] = {}
+
+        payload['pipeline_schedule_id'] = pipeline_schedule.id
+        payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
+        if payload.get('execution_date') is None:
+            payload['execution_date'] = datetime.utcnow()
+
+        is_integration = PipelineType.INTEGRATION == pipeline.type
+        if is_integration:
+            payload['create_block_runs'] = False
+
+        def _create_callback(resource):
+            from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+
+            pipeline_run = resource.model
+            pipeline_scheduler = PipelineScheduler(pipeline_run)
+
+            if is_integration:
+                initialize_state_and_runs(
+                    pipeline_run,
+                    pipeline_scheduler.logger,
+                    get_variables(pipeline_run),
+                )
+
+            pipeline_scheduler.start(should_schedule=False)
+
+        self.on_create_callback = _create_callback
+
+        return super().create(payload, user, **kwargs)
 
     def update(self, payload, **kwargs):
         if 'retry_blocks' == payload.get('pipeline_run_action') and \
