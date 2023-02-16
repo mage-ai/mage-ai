@@ -1,10 +1,7 @@
 from .base import (
     META_KEY_LIMIT,
-    BaseDetailHandler,
     BaseHandler,
 )
-from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import (
     BlockRun,
@@ -165,67 +162,6 @@ def process_pipeline_runs(
         total_count=initial_results.count(),
     ))
     handler.finish()
-
-
-class ApiPipelineRunDetailHandler(BaseDetailHandler):
-    model_class = PipelineRun
-
-    @safe_db_query
-    def get(self, pipeline_run_id):
-        pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
-        block_runs = pipeline_run.block_runs
-
-        pipeline_run_dict = pipeline_run.to_dict()
-        block_runs_json = []
-        for r in block_runs:
-            block_run = r.to_dict()
-            block_run['pipeline_schedule_id'] = pipeline_run.pipeline_schedule_id
-            block_run['pipeline_schedule_name'] = pipeline_run.pipeline_schedule.name
-            block_runs_json.append(block_run)
-        block_runs_json.sort(key=lambda b: b.get('created_at'))
-        pipeline_run_dict['block_runs'] = block_runs_json
-
-        self.write(dict(pipeline_run=pipeline_run_dict))
-
-    @safe_db_query
-    def put(self, pipeline_run_id):
-        payload = self.get_payload()
-        pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
-
-        if payload.get('action') == 'retry_blocks':
-            if pipeline_run.status != PipelineRun.PipelineRunStatus.COMPLETED:
-                pipeline_run.refresh()
-                pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
-                incomplete_block_runs = \
-                    list(
-                        filter(
-                            lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
-                            pipeline_run.block_runs
-                        )
-                    )
-                # Update block run status to INITIAL
-                BlockRun.batch_update_status(
-                    [b.id for b in incomplete_block_runs],
-                    BlockRun.BlockRunStatus.INITIAL,
-                )
-
-                from mage_ai.orchestration.execution_process_manager \
-                    import execution_process_manager
-                if PipelineType.STREAMING != pipeline.type:
-                    if PipelineType.INTEGRATION == pipeline.type:
-                        execution_process_manager.terminate_pipeline_process(pipeline_run.id)
-                    else:
-                        for br in incomplete_block_runs:
-                            execution_process_manager.terminate_block_process(
-                                pipeline_run.id,
-                                br.id,
-                            )
-
-                pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
-        elif payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
-            from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-            PipelineScheduler(pipeline_run).stop()
-        self.write(dict(pipeline_run=pipeline_run.to_dict()))
 
 
 class ApiPipelineRunLogHandler(BaseHandler):

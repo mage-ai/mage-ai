@@ -7,6 +7,7 @@ import Subheader from './Subheader';
 import TripleLayout from '@components/TripleLayout';
 import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import {
   ContainerStyle,
   VERTICAL_NAVIGATION_WIDTH,
@@ -62,7 +63,7 @@ function Dashboard({
   const mainContainerRef = useRef(null);
   const [afterWidth, setAfterWidth] = useState(afterWidthOverride
     ? afterWidthProp
-    : get(localStorageKeyAfter, afterWidthProp)
+    : get(localStorageKeyAfter, afterWidthProp),
   );
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(before
@@ -70,10 +71,10 @@ function Dashboard({
       get(localStorageKeyBefore, beforeWidthProp),
       UNIT * 13,
     )
-    : null
+    : null,
   );
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
+  const [, setMainContainerWidth] = useState<number>(null);
 
   const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
   const projects = dataProjects?.projects;
@@ -130,6 +131,17 @@ function Dashboard({
     beforeMousedownActive,
     beforeWidth,
     localStorageKeyBefore,
+  ]);
+
+  const afterWidthPropPrev = usePrevious(afterWidthProp);
+  useEffect(() => {
+    if (afterWidthOverride && afterWidthPropPrev !== afterWidthProp) {
+      setAfterWidth(afterWidthProp);
+    }
+  }, [
+    afterWidthOverride,
+    afterWidthProp,
+    afterWidthPropPrev,
   ]);
 
   return (

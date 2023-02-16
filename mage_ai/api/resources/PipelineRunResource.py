@@ -1,7 +1,9 @@
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import PipelineRun
+from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from sqlalchemy.orm import selectinload
 
 
@@ -135,3 +137,45 @@ class PipelineRunResource(DatabaseResource):
         }
 
         return result_set
+
+    def update(self, payload, **kwargs):
+        if 'retry_blocks' == payload.get('pipeline_run_action') and \
+                PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:
+            self.model.refresh()
+
+            pipeline = Pipeline.get(self.model.pipeline_uuid)
+
+            incomplete_block_runs = \
+                list(
+                    filter(
+                        lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
+                        self.model.block_runs
+                    )
+                )
+
+            # Update block run status to INITIAL
+            BlockRun.batch_update_status(
+                [b.id for b in incomplete_block_runs],
+                BlockRun.BlockRunStatus.INITIAL,
+            )
+
+            from mage_ai.orchestration.execution_process_manager \
+                import execution_process_manager
+
+            if PipelineType.STREAMING != pipeline.type:
+                if PipelineType.INTEGRATION == pipeline.type:
+                    execution_process_manager.terminate_pipeline_process(self.model.id)
+                else:
+                    for br in incomplete_block_runs:
+                        execution_process_manager.terminate_block_process(
+                            self.model.id,
+                            br.id,
+                        )
+
+            return super().update(dict(status=PipelineRun.PipelineRunStatus.RUNNING))
+        elif PipelineRun.PipelineRunStatus.CANCELLED == payload.get('status'):
+            from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+
+            PipelineScheduler(self.model).stop()
+
+        return self

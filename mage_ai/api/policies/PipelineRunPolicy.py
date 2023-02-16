@@ -9,9 +9,24 @@ class PipelineRunPolicy(BasePolicy):
 
 
 PipelineRunPolicy.allow_actions([
+    constants.DETAIL,
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelineRunPolicy.allow_actions([
+    constants.UPDATE,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
+PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
+    'block_runs',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
@@ -25,6 +40,21 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
 ], on_action=[
     constants.LIST,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+PipelineRunPolicy.allow_write([
+    'pipeline_run_action',
+    'status',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineRunPolicy.allow_query([
     'backfill_id',

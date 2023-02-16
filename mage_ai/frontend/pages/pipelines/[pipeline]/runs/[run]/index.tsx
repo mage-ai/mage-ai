@@ -81,14 +81,13 @@ function PipelineBlockRuns({
   // @ts-ignore
   const retryBlocks = () => updatePipelineRun({
     pipeline_run: {
-      'action': 'retry_blocks',
+      'pipeline_run_action': 'retry_blocks',
     },
   });
 
   const {
     data: dataOutput,
     loading: loadingOutput,
-    mutate: fetchOutput,
   } = api.outputs.block_runs.list(selectedRun?.id);
 
   const {

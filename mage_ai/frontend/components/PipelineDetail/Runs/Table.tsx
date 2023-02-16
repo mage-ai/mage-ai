@@ -78,15 +78,18 @@ function RetryButton({
         variables: pipelineRun?.variables,
       },
     });
-  }, [pipelineRun]);
+  }, [createPipelineRun, pipelineRun]);
 
   const cancelPipelineRun = useCallback(() => {
     setShowConfirmation(false);
     onCancel({
-      ...pipelineRun,
+      id: pipelineRun?.id,
       status: RunStatus.CANCELLED,
     });
-  }, [pipelineRun]);
+  }, [
+    onCancel,
+    pipelineRun,
+  ]);
 
   return (
     <div
@@ -196,9 +199,14 @@ function PipelineRunsTable({
   selectedRun,
 }: PipelineRunsTableProps) {
   const [updatePipelineRun, { isLoading: isLoadingCancelPipeline }] = useMutation(
-    (pipelineRun: PipelineRunType) =>
-      api.pipeline_runs.useUpdate(pipelineRun.id)({
-        pipeline_run: pipelineRun,
+    ({
+      id,
+      status,
+    }: PipelineRunType) =>
+      api.pipeline_runs.useUpdate(id)({
+        pipeline_run: {
+          status,
+        },
       }),
     {
       onSuccess: (response: any) => onSuccess(
@@ -339,8 +347,8 @@ function PipelineRunsTable({
               } else {
                 arr = [
                   <RetryButton
-                    key="row_retry_button"
                     isLoadingCancelPipeline={isLoadingCancelPipeline}
+                    key="row_retry_button"
                     onCancel={updatePipelineRun}
                     onSuccess={fetchPipelineRuns}
                     pipelineRun={pipelineRun}
