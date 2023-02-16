@@ -193,9 +193,12 @@ function IntegrationPipeline({
       onSuccess: (response: any) => onSuccess(
         response,
         {
-          callback: (res) => {
-            if (res['success']) {
-              const streams = res?.['streams'] || []
+          callback: ({
+            integration_source: integrationSource,
+          }) => {
+            if (integrationSource['success']) {
+              const streams = integrationSource?.['streams'] || [];
+
               setOutputBlocks(() => {
                 setSelectedOutputBlock(dataLoaderBlock);
                 return [dataLoaderBlock];
@@ -211,7 +214,7 @@ function IntegrationPipeline({
               openSidekickView(ViewKeyEnum.DATA);
               fetchSampleData();
             } else {
-              setSourceSampleDataError(res['error']);
+              setSourceSampleDataError(integrationSource?.['error_message']);
             }
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -774,9 +777,11 @@ function IntegrationPipeline({
                 isLoadingLoadSampleData={isLoadingLoadSampleData}
                 // @ts-ignore
                 loadSampleData={stream => loadSampleData({
-                  action: 'sample_data',
-                  pipeline_uuid: pipeline?.uuid,
-                  streams: [stream],
+                  integration_source: {
+                    action_type: 'sample_data',
+                    pipeline_uuid: pipeline?.uuid,
+                    streams: [stream],
+                  },
                 })}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
