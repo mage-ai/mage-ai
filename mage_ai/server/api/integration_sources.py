@@ -81,19 +81,6 @@ class ApiIntegrationSourcesHandler(BaseHandler):
         self.finish()
 
 
-class ApiIntegrationSourceStreamHandler(BaseHandler):
-    def put(self, pipeline_uuid):
-        pipeline = IntegrationPipeline.get(pipeline_uuid)
-        streams = pipeline.discover_streams() or {}
-
-        self.write(dict(
-            integration_source_stream=dict(
-                streams=sorted(streams, key=lambda x: x['tap_stream_id']),
-                uuid=pipeline.source_uuid,
-            ),
-        ))
-
-
 class ApiIntegrationSourceHandler(BaseHandler):
     def put(self, pipeline_uuid):
         payload = self.get_payload()

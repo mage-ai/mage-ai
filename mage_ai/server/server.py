@@ -36,7 +36,6 @@ from mage_ai.server.api.events import (
     ApiEventMatcherListHandler,
 )
 from mage_ai.server.api.integration_sources import (
-    ApiIntegrationSourceStreamHandler,
     ApiIntegrationSourceHandler,
     ApiIntegrationSourcesHandler,
 )
@@ -207,23 +206,26 @@ def make_app():
         ),
 
         # API v1 routes
-        (
-            r'/api/integration_source_streams/(?P<pipeline_uuid>\w+)',
-            ApiIntegrationSourceStreamHandler,
-        ),
+
         (r'/api/integration_sources', ApiIntegrationSourcesHandler),
         (r'/api/integration_sources/(?P<pipeline_uuid>\w+)', ApiIntegrationSourceHandler),
+
         (r'/api/projects', ApiProjectsHandler),
+
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
+
         (r'/api/status', ApiStatusHandler),
+
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)',
             ApiPipelineBlockHandler,
         ),
+
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiPipelineBackfillsHandler),
         (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
         (r'/api/backfills', ApiBackfillsHandler),
+
         (r'/api/secrets', ApiSecretsListHandler),
         (r'/api/secrets/(?P<name>\w+)', ApiSecretsDetailHandler),
 
