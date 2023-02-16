@@ -17,6 +17,7 @@ from mage_ai.data_preparation.models.utils import (
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.shared.parsers import sample_output
 from pandas.api.types import is_object_dtype
 from typing import Any, Dict, List
 import json
@@ -147,7 +148,7 @@ class Variable:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
-        return self.__read_json()
+        return self.__read_json(sample=sample)
 
     async def read_data_async(
         self,
@@ -174,7 +175,7 @@ class Variable:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
             )
-        return await self.__read_json_async()
+        return await self.__read_json_async(sample=sample)
 
     def write_data(self, data: Any) -> None:
         """
@@ -244,13 +245,19 @@ class Variable:
             self.storage.remove(file_path)
             self.storage.remove_dir(self.variable_path)
 
-    def __read_json(self, default_value={}) -> Dict:
+    def __read_json(self, default_value={}, sample: bool = False) -> Dict:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
-        return self.storage.read_json_file(file_path, default_value)
+        data = self.storage.read_json_file(file_path, default_value)
+        if sample:
+            data = sample_output(data)
+        return data
 
-    async def __read_json_async(self, default_value={}) -> Dict:
+    async def __read_json_async(self, default_value={}, sample: bool = False) -> Dict:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
-        return await self.storage.read_json_file_async(file_path, default_value)
+        data = await self.storage.read_json_file_async(file_path, default_value)
+        if sample:
+            data = sample_output(data)
+        return data
 
     def __write_json(self, data) -> None:
         if not self.storage.isdir(self.variable_dir_path):

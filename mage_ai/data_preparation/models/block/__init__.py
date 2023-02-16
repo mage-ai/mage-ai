@@ -36,7 +36,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
-from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.parsers import encode_complex, sample_output
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name as clean_name_orig
 from queue import Queue
