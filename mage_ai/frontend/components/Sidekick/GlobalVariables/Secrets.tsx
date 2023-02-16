@@ -133,7 +133,7 @@ function Secrets({
       <Spacing mb={PADDING_UNITS}>
         <Text>
           <Text inline warning>WARNING:</Text> the encryption key is stored in a file
-          in your current project. If you need more secure encryption, we recommend
+          on your machine. If you need more secure encryption, we recommend
           using a secrets manager.
         </Text>
       </Spacing>
