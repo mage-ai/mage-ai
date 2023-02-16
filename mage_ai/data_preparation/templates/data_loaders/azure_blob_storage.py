@@ -15,7 +15,7 @@ def load_from_azure_blob_storage(*args, **kwargs):
     Template for loading data from a Azure Blob Storage.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading
+    Docs: https://docs.mage.ai/design/data-loading#azureblobstorage
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'

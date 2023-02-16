@@ -1,8 +1,8 @@
 {% extends "data_loaders/default.jinja" %}
 {% block imports %}
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.mysql import MySQL
 from os import path
 {{ super() -}}
 {% endblock %}
@@ -10,16 +10,17 @@ from os import path
 
 {% block content %}
 @data_loader
-def load_data_from_big_query(*args, **kwargs):
+def load_data_from_mysql(*args, **kwargs):
     """
-    Template for loading data from a BigQuery warehouse.
+    Template for loading data from a MySQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#bigquery
+    Docs: https://docs.mage.ai/design/data-loading#mysql
     """
-    query = 'your_gbq_query'
+    query = 'Your MySQL query'  # Specify your SQL query here
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    return BigQuery.with_config(ConfigFileLoader(config_path, config_profile)).load(query)
+    with MySQL.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        return loader.load(query)
 {% endblock %}
