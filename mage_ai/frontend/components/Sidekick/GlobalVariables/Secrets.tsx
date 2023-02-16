@@ -111,6 +111,12 @@ function Secrets({
     {{ mage_secret_var('<secret_name>') }}
   `;
 
+  const SECRET_IN_CODE = `
+    from mage_ai.data_preparation.shared.secrets import get_secret_value
+
+    get_secret_value('<secret_name>')
+  `
+
   return (
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={PADDING_UNITS}>
@@ -243,6 +249,18 @@ function Secrets({
           language="yaml"
           small
           source={SAMPLE_SECRET_VALUE}
+        />
+      </Spacing>
+      <Spacing mb={PADDING_UNITS}>
+        <Text>
+          To reference a secret in code, you can import the `get_secret_value` helper method:
+        </Text>
+      </Spacing>
+      <Spacing mb={PADDING_UNITS}>
+        <CodeBlock
+          language="python"
+          small
+          source={SECRET_IN_CODE}
         />
       </Spacing>
     </Spacing>
