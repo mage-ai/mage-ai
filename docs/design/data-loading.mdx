@@ -5,14 +5,15 @@ sidebarTitle: "Utilities"
 
 Mage provides data loading clients that simplify loading and exporting data in your pipelines, allowing you to spend more time analyzing and transforming your data for ML tasks. Currently, Mage includes clients for the following data sources:
 
--   AWS Redshift
--   AWS S3
--   Azure Blob Storage
--   Filesystem
--   Google BigQuery
--   Google Cloud Storage
--   PostgreSQL Database
--   Snowflake
+-   [AWS Redshift](#redshift)
+-   [AWS S3](#s3)
+-   [Azure Blob Storage](#azureblobstorage)
+-   [Filesystem](#fileio)
+-   [Google BigQuery](#bigquery)
+-   [Google Cloud Storage](#googlecloudstorage)
+-   [MySQL](#mysql)
+-   [PostgreSQL](#postgresql)
+-   [Snowflake](#snowflake)
 
 Mage's data loading clients fall into two categories:
 
@@ -707,6 +708,113 @@ Sample data from a table in the PostgreSQL database. Sample is not guaranteed to
     -   `schema (str)`: The schema to select the table from.
     -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
     -   `table (str)`: The table to sample from in the connected database.
+
+-   **Returns**: (`DataFrame`) Sampled data from the table.
+
+## MySQL
+
+`mage_ai.io.mysql.MySQL`
+
+Handles data transfer between a MySQL database and the Mage app. The `MySQL` client utilizes the following keys to connect the MySQL database.
+
+```yaml
+MYSQL_DATABASE: MySQL database name
+MYSQL_HOST: MySQL database hostname
+MYSQL_PASSWORD: MySQL database login password
+MYSQL_PORT: MySQL database port
+MYSQL_USER: MySQL database login username
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the MySQL data loading client.
+
+-   **Args**:
+    -   `database (str)`: The name of the database to connect to.
+    -   `user (str)`: The user for connecting to the database with.
+    -   `password (str)`: The login password for the user.
+    -   `host (str)`: Host address for database.
+    -   `port (int)`: Port on which the database is running Defaults to 3306.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating psycopg2 connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Postgres`
+
+Creates MySQL data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`MySQL`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to MySQL database.
+
+**_commit_** - `commit()`
+
+Saves all changes made to the database since the previous transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected MySQL database. Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the MySQL database.
+    -   `**kwargs`: Additional parameters to pass to the query. See [`psycopg2` docs](https://www.psycopg.org/docs/usage.html#query-parameters) for configuring query parameters.
+
+**_export_** - `export(df: DataFrame, schema_name: str, table_name: str, if_exists: str, index: bool, **kwargs) -> None`
+
+Exports data frame to the MySQL database from a Pandas data frame. If table doesn't exist, the table is automatically created. The `schema_name` can be set as `None` since it is not required for MySQL loaders.
+
+Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+
+    -   `df (DataFrame)`: Data frame to export to the MySQL database.
+    -   `schema_name (str)`: Not required for MySQL loaders. Set to `None`.
+    -   `table_name (str)`: Name of the table to export data to (excluding database).
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+
+        Defaults to `'replace'`.
+
+    -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
+    -   `**kwargs`: Additional arguments to pass to writer.
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to MySQL database.
+
+**_sample_** - `sample(database: str, table: str, size: int, **kwargs) -> DataFrame`
+
+Sample data from a table in the MySQL database. Sample is not guaranteed to be random.
+
+-   **Args**:
+
+    -   `database (str)`: The database to select the table from.
+    -   `table (str)`: The table to sample from in the connected database.
+    -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
 
