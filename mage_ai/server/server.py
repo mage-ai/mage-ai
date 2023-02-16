@@ -36,7 +36,6 @@ from mage_ai.server.api.events import (
     ApiEventMatcherListHandler,
 )
 from mage_ai.server.api.integration_sources import (
-    ApiIntegrationDestinationsHandler,
     ApiIntegrationSourceStreamHandler,
     ApiIntegrationSourceHandler,
     ApiIntegrationSourcesHandler,
@@ -208,7 +207,6 @@ def make_app():
         ),
 
         # API v1 routes
-        (r'/api/integration_destinations', ApiIntegrationDestinationsHandler),
         (
             r'/api/integration_source_streams/(?P<pipeline_uuid>\w+)',
             ApiIntegrationSourceStreamHandler,

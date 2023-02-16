@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { parse, stringify } from 'yaml';
 import { useMutation } from 'react-query';
 
@@ -13,6 +13,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import { CodeEditorStyle } from './index.style';
 import { onSuccess } from '@api/utils/response';
+import { singularize } from '@utils/string';
 
 
 type SourceConfigProps = {
@@ -37,10 +38,10 @@ function SourceConfig({
     if (blockContent && !blockConfig) {
       setBlockConfig(stringify(blockContent?.config));
     }
-  }, [blockContent])
+  }, [blockConfig, blockContent]);
 
 
-  const [connected, setConnected] = useState<boolean>(null)
+  const [connected, setConnected] = useState<boolean>(null);
   const [error, setError] = useState<string>();
   const [testConnection, { isLoading }] = useMutation(
     api[apiName].useCreate(),
@@ -49,8 +50,9 @@ function SourceConfig({
         response,
         {
           callback: (res) => {
-            setConnected(res['success']);
-            setError(res['error_message']);
+            const key = singularize(apiName)
+            setConnected(res?.[key]?.['success']);
+            setError(res?.[key]?.['error_message']);
           },
           onErrorCallback: ({
             error: {
@@ -93,9 +95,11 @@ function SourceConfig({
             onClick={() => {
               // @ts-ignore
               testConnection({
-                action: 'test_connection',
-                pipeline_uuid: pipeline.uuid,
-                config: blockConfig,
+                [singularize(apiName)]: {
+                  action_type: 'test_connection',
+                  config: blockConfig,
+                  pipeline_uuid: pipeline.uuid,
+                },
               });
               setError(null);
             }}

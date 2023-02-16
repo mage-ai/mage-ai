@@ -1,4 +1,3 @@
-from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_integrations.sources.constants import SOURCES
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND
 from mage_ai.data_preparation.models.constants import BlockType
@@ -51,28 +50,6 @@ def get_collection(key: str, available_options: List[Dict]):
         collection.append(d)
 
     return collection
-
-
-class ApiIntegrationDestinationsHandler(BaseHandler):
-    def get(self):
-        self.write(dict(integration_destinations=get_collection('destinations', DESTINATIONS)))
-
-    def post(self):
-        payload = self.get_payload()
-
-        action = payload['action']
-        if action == 'test_connection':
-            pipeline_uuid = payload['pipeline_uuid']
-            pipeline = IntegrationPipeline.get(pipeline_uuid)
-            config = payload['config']
-
-            try:
-                pipeline.test_connection(BlockType.DATA_EXPORTER, config=config)
-                self.write(dict(success=True))
-            except Exception as e:
-                self.write(dict(success=False, error_message=str(e)))
-
-        self.finish()
 
 
 class ApiIntegrationSourcesHandler(BaseHandler):
