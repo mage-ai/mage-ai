@@ -5,7 +5,6 @@ from singer import utils, metadata
 from singer import SingerConfigurationError, SingerDiscoveryError, SingerSyncError
 from singer import Transformer
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
-from functools import partial
 from facebook_business import FacebookAdsApi
 from facebook_business.exceptions import FacebookError, FacebookRequestError, FacebookBadObjectError
 from requests.exceptions import ConnectionError, Timeout
@@ -234,7 +233,10 @@ class IncrementalStream(Stream):
 def batch_record_success(response, stream=None, transformer=None, schema=None):
     '''A success callback for the FB Batch endpoint used when syncing AdCreatives. Needs the stream
     to resolve schema refs and transform the successful response object.'''
-    rec = response.json()
+    if isinstance(response, dict):
+        rec = response
+    else:
+        rec = response.json()
     record = transformer.transform(rec, schema)
     singer.write_record(stream.name, record, stream.stream_alias, utils.now())
 
@@ -251,33 +253,19 @@ class AdCreative(Stream):
     doc: https://developers.facebook.com/docs/marketing-api/reference/adgroup/adcreatives/
     '''
 
-    # Added retry_pattern to handle AttributeError raised from api_batch.execute() below
-    @retry_pattern(backoff.expo, (FacebookRequestError, AttributeError), max_tries=5, factor=5)
     def sync_batches(self, stream_objects):
         refs = load_shared_schema_refs()
         schema = singer.resolve_schema_references(self.catalog_entry.schema.to_dict(), refs)
         transformer = Transformer(pre_hook=transform_date_hook)
 
-        # Create the initial batch
-        api_batch = API.new_batch()
-        batch_count = 0
-
         # This loop syncs minimal fb objects
         for obj in stream_objects:
-            # Execute and create a new batch for every 50 added
-            if batch_count % 50 == 0:
-                api_batch.execute()
-                api_batch = API.new_batch()
-
-            # Add a call to the batch with the full object
-            obj.api_get(fields=self.fields(),
-                        batch=api_batch,
-                        success=partial(batch_record_success, stream=self, transformer=transformer, schema=schema),
-                        failure=batch_record_failure)
-            batch_count += 1
-
-        # Ensure the final batch is executed
-        api_batch.execute()
+            batch_record_success(
+                obj.export_all_data(),
+                stream=self,
+                transformer=transformer,
+                schema=schema,
+            )
 
     key_properties = ['id']
 
@@ -285,7 +273,10 @@ class AdCreative(Stream):
     # Added retry_pattern to handle AttributeError raised from account.get_ad_creatives() below
     @retry_pattern(backoff.expo, (FacebookRequestError, TypeError, AttributeError), max_tries=5, factor=5)
     def get_adcreatives(self):
-        return self.account.get_ad_creatives(params={'limit': RESULT_RETURN_LIMIT})
+        return self.account.get_ad_creatives(
+            fields=self.fields(),
+            params={'limit': RESULT_RETURN_LIMIT},
+        )
 
     def sync(self):
         adcreatives = self.get_adcreatives()
@@ -512,37 +503,21 @@ class Leads(Stream):
         schema = singer.resolve_schema_references(self.catalog_entry.schema.to_dict(), refs)
         transformer = Transformer(pre_hook=transform_date_hook)
 
-        # Create the initial batch
-        api_batch = API.new_batch()
-        batch_count = 0
-
         # Keep track of most recent, lead for bookmarking
         latest_lead = None
 
         # This loop syncs minimal fb objects
         for obj in stream_objects:
+            obj_dict = obj.export_all_data()
+            latest_lead = self.compare_lead_created_times(latest_lead, obj_dict)
 
-            latest_lead = self.compare_lead_created_times(latest_lead, obj)
+            batch_record_success(
+                obj_dict,
+                stream=self,
+                transformer=transformer,
+                schema=schema,
+            )
 
-            # Execute and create a new batch for every 50 added
-            if batch_count % 50 == 0:
-                api_batch.execute()
-                api_batch = API.new_batch()
-
-            # Add a call to the batch with the full object
-            obj.api_get(fields=self.fields(),
-                        batch=api_batch,
-                        success=partial(
-                            batch_record_success,
-                            stream=self,
-                            transformer=transformer,
-                            schema=schema,
-                        ),
-                        failure=batch_record_failure)
-            batch_count += 1
-
-        # Ensure the final batch is executed
-        api_batch.execute()
         return str(pendulum.parse(latest_lead[self.replication_key]))
 
     @retry_pattern(backoff.expo, (Timeout, ConnectionError), max_tries=5, factor=2)
@@ -565,7 +540,10 @@ class Leads(Stream):
                                  'operator': 'LESS_THAN',
                                  'value': start_time}]}
         for ad in ads:
-            yield from ad.get_leads(params=params)
+            yield from ad.get_leads(
+                fields=self.fields(),
+                params=params,
+            )
 
     def sync(self):
         start_time = pendulum.utcnow()
