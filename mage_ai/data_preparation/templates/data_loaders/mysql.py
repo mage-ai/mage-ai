@@ -15,7 +15,7 @@ def load_data_from_mysql(*args, **kwargs):
     Template for loading data from a MySQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading
+    Docs: https://docs.mage.ai/design/data-loading#mysql
     """
     query = 'Your MySQL query'  # Specify your SQL query here
     config_path = path.join(get_repo_path(), 'io_config.yaml')

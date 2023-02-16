@@ -14,7 +14,7 @@ def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading
+    Docs: https://docs.mage.ai/design/data-loading#bigquery
     """
     table_id = 'your-project.your_dataset.your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')

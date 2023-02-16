@@ -26,7 +26,17 @@ default:
 
 ## Using SQL block
 
-Instructions coming soon...
+1. Create a new pipeline or open an existing pipeline.
+2. Add a data loader, transformer, or data exporter block.
+3. Select `SQL`.
+4. Under the `Data provider`/`Connection` dropdown, select `Mysql`.
+5. Under the `Profile` dropdown, select `default` (or the profile you added
+   credentials underneath).
+6. Enter the optional table name of the table to write to.
+7. Under the `Write policy` dropdown, select `Replace` or `Append` (please see
+   [SQL blocks guide](/guides/sql-blocks) for more information on write policies).
+8. Enter in this test query: `SELECT 1`.
+9. Run the block.
 
 ---
 

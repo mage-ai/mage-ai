@@ -14,7 +14,7 @@ def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Google Cloud Storage bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading
+    Docs: https://docs.mage.ai/design/data-loading#googlecloudstorage
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
