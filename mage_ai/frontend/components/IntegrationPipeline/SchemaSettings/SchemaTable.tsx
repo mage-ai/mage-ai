@@ -183,9 +183,7 @@ function SchemaTable({
         },
       } = metadataByColumn[`properties/${columnName}`] || {};
       selectedArr.push(selected);
-      // if (InclusionEnum.AUTOMATIC !== inclusion) {
       selectableColumns.push(columnName);
-      // }
 
       const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
         if (columnTypes.indexOf(colType) >= 0
