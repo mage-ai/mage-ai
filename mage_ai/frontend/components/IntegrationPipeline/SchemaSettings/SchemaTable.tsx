@@ -207,16 +207,13 @@ function SchemaTable({
       const row = [
         <Checkbox
           checked={selected}
-          disabled={InclusionEnum.AUTOMATIC === inclusion}
+          // disabled={InclusionEnum.AUTOMATIC === inclusion}
           key={`${streamUUID}/${columnName}/selected`}
-          onClick={InclusionEnum.AUTOMATIC === inclusion
-            ? null
-            : () => {
-              updateMetadataForColumns(streamUUID, [columnName], {
-                selected: !selected,
-              });
-            }
-          }
+          onClick={() => {
+            updateMetadataForColumns(streamUUID, [columnName], {
+              selected: !selected,
+            });
+          }}
         />,
         <Text
           key={`${streamUUID}/${columnName}/name`}
