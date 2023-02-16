@@ -134,7 +134,7 @@ def add_internal_output_info(code: str) -> str:
 
 def __custom_output():
     from datetime import datetime
-    from mage_ai.shared.parsers import encode_complex
+    from mage_ai.shared.parsers import encode_complex, sample_output
     import json
     import pandas as pd
     import simplejson
@@ -195,7 +195,10 @@ def __custom_output():
         )
         return print(f'[__internal_output__]{{_json_string}}')
     elif not {is_print_statement}:
-        return encode_complex(_internal_output_return)
+        output, sampled = sample_output(encode_complex(_internal_output_return))
+        if sampled:
+            print('Sampled output is provided here for preview.')
+        return output
 
     return
 

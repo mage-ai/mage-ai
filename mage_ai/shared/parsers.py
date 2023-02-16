@@ -16,6 +16,8 @@ INTS = (
     np.uint8,
 )
 
+MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
+
 
 def encode_complex(obj):
     if hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
@@ -62,3 +64,19 @@ def extract_json_objects(text, decoder=JSONDecoder()):
             pos = match + index
         except ValueError:
             pos = match + 1
+
+
+def sample_output(obj):
+    if isinstance(obj, list):
+        sampled = len(obj) > MAX_ITEMS_IN_SAMPLE_OUTPUT
+        return obj[:MAX_ITEMS_IN_SAMPLE_OUTPUT], sampled
+    elif isinstance(obj, dict):
+        sampled = False
+        output = dict()
+        for k, v in obj.items():
+            v, v_sampled = sample_output(v)
+            if v_sampled:
+                sampled = True
+            output[k] = v
+        return output, sampled
+    return obj, False
