@@ -449,13 +449,8 @@ function IntegrationPipeline({
 
         if (index >= 0) {
           const metadataForColumn = streamMetadata[index].metadata;
-          let inclusion = metadataForColumn?.inclusion;
-          if (inclusion === InclusionEnum.AUTOMATIC) {
-            inclusion = InclusionEnum.AVAILABLE;
-          }
           stream.metadata[index].metadata = {
             ...metadataForColumn,
-            inclusion,
             ...data,
           };
         }
