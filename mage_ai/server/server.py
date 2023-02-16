@@ -50,8 +50,6 @@ from mage_ai.server.api.integration_sources import (
 )
 from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.orchestration import (
-    ApiAllBlockRunListHandler,
-    ApiBlockRunListHandler,
     ApiPipelineRunLogHandler,
 )
 from mage_ai.server.api.projects import ApiProjectsHandler
@@ -280,14 +278,6 @@ def make_app():
         ),
 
         # API v1 routes
-        (
-            r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/block_runs',
-            ApiBlockRunListHandler,
-        ),
-        (
-            r'/api/block_runs',
-            ApiAllBlockRunListHandler,
-        ),
         (r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/logs', ApiPipelineRunLogHandler),
         (
             r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler,

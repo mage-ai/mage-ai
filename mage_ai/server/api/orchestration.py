@@ -3,81 +3,9 @@ from .base import (
     BaseHandler,
 )
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import (
-    BlockRun,
-    PipelineRun,
-    PipelineSchedule,
-)
-from sqlalchemy.orm import aliased, selectinload
+from mage_ai.orchestration.db.models import PipelineRun
+from sqlalchemy.orm import selectinload
 from typing import List
-
-
-class ApiAllBlockRunListHandler(BaseHandler):
-    model_class = BlockRun
-
-    @safe_db_query
-    def get(self):
-        query = BlockRun.query
-
-        a = aliased(BlockRun, name='a')
-        b = aliased(PipelineRun, name='b')
-        c = aliased(PipelineSchedule, name='c')
-
-        columns = [
-            a.block_uuid,
-            a.completed_at,
-            a.created_at,
-            a.id,
-            a.pipeline_run_id,
-            a.status,
-            a.updated_at,
-            c.id.label('pipeline_schedule_id'),
-            c.name.label('pipeline_schedule_name'),
-        ]
-
-        query = (
-            BlockRun.
-            select(*columns).
-            join(b, a.pipeline_run_id == b.id).
-            join(c, b.pipeline_schedule_id == c.id)
-        )
-
-        pipeline_run_id = self.get_argument('pipeline_run_id', None)
-        if pipeline_run_id:
-            query = (
-                query.
-                filter(a.pipeline_run_id == int(pipeline_run_id))
-            )
-
-        pipeline_uuid = self.get_argument('pipeline_uuid', None)
-        if pipeline_uuid:
-            query = (
-                query.
-                filter(c.pipeline_uuid == pipeline_uuid)
-            )
-
-        query = (
-            query.
-            order_by(a.created_at.desc(), a.completed_at.desc())
-        ).all()
-        collection = [r for r in query]
-
-        self.write(dict(block_runs=collection))
-        self.finish()
-
-
-class ApiBlockRunListHandler(BaseHandler):
-    model_class = BlockRun
-
-    @safe_db_query
-    def get(self, pipeline_run_id):
-        block_runs = BlockRun.query.filter(
-            BlockRun.pipeline_run_id == int(pipeline_run_id),
-        ).all()
-        collection = [r.to_dict() for r in block_runs]
-
-        self.write(dict(block_runs=collection))
-        self.finish()
 
 
 def process_pipeline_runs(

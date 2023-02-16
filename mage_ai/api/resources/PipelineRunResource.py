@@ -172,6 +172,8 @@ class PipelineRunResource(DatabaseResource):
                     pipeline_scheduler.logger,
                     get_variables(pipeline_run),
                 )
+            else:
+                pipeline_run.create_block_runs()
 
             pipeline_scheduler.start(should_schedule=False)
 
