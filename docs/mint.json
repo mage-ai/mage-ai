@@ -188,6 +188,7 @@
         {
           "group": "Secrets",
           "pages": [
+            "development/secrets/secrets",
             "development/secrets/GCP"
           ]
         },
