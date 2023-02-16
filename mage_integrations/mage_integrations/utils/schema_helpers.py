@@ -19,9 +19,6 @@ def extract_selected_columns(metadata_array: List[dict]) -> List[str]:
            breadcrumb[0] == 'properties':
             column = breadcrumb[1]
             selected = metadata.get(METADATA_KEY_SELECTED, False)
-            inclusion = metadata.get(METADATA_KEY_INCLUSION, INCLUSION_UNSUPPORTED)
-            if INCLUSION_AUTOMATIC == inclusion:
-                selected = True
 
             if selected:
                 columns.append(column)
