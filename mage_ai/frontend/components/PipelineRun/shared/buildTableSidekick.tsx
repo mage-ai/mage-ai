@@ -1,7 +1,6 @@
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CodeBlock from '@oracle/components/CodeBlock';
 import DependencyGraph from '@components/DependencyGraph';
-import Headline from '@oracle/elements/Headline';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineRunType from '@interfaces/PipelineRunType';
 import Spacing from '@oracle/elements/Spacing';
@@ -9,7 +8,6 @@ import Text from '@oracle/elements/Text';
 import Table from '@components/shared/Table';
 import {
   PADDING_UNITS,
-  UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { createBlockStatus } from '@components/Triggers/utils';
 
