@@ -16,6 +16,7 @@ PipelinePolicy.allow_actions([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_actions([
+    constants.CREATE,
     constants.DELETE,
     constants.UPDATE,
 ], scopes=[
