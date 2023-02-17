@@ -62,6 +62,7 @@ PipelineSchedulePolicy.allow_write([
     'schedule_type',
     'start_time',
     'status',
+    'variables',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
