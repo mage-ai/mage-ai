@@ -48,7 +48,7 @@ export function queryString(query: object = {}) {
 }
 
 export const redirectToUrl = (url: string, server?: ServerResponse) => {
-  if (server) {
+  if (server && typeof server === 'function') {
     server.writeHead(302, {
       Location: url,
     });
