@@ -70,7 +70,8 @@ class JobManagerTests(TestCase):
         job_manager.create_job_object(command)
         mock_client.V1Container.assert_called_once_with(
             name='mage-job-container',
-            image='mageai/mageai',
+            image=job_manager.pod_config.spec.containers[0].image,
+            image_pull_policy='IfNotPresent',
             command=['mage', 'run', 'test_pipeline'],
             env=job_manager.pod_config.spec.containers[0].env,
             volume_mounts=job_manager.pod_config.spec.containers[0].volume_mounts,

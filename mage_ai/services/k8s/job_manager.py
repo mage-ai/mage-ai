@@ -76,6 +76,7 @@ class JobManager():
         container = client.V1Container(
             name='mage-job-container',
             image=mage_server_container_spec.image,
+            image_pull_policy='IfNotPresent',
             command=command.split(' ') if isinstance(command, str) else command,
             env=mage_server_container_spec.env,
             volume_mounts=mage_server_container_spec.volume_mounts,
