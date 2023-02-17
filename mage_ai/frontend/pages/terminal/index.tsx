@@ -1,5 +1,6 @@
 import { useMutation } from 'react-query';
 
+import Dashboard from '@components/Dashboard';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Terminal from '@components/Terminal';
 import api from '@api';
@@ -22,9 +23,14 @@ function TerminalPage() {
   );
 
   return (
-    <Terminal
-      interruptKernel={interruptKernel}
-    />
+    <Dashboard
+      title="Terminal"
+      uuid="terminal/index"
+    >
+      <Terminal
+        interruptKernel={interruptKernel}
+      />
+    </Dashboard>
   );
 }
 
