@@ -155,8 +155,7 @@ def __parse_request_body(request) -> Dict:
 
     if request.body_arguments and len(request.body_arguments) >= 1:
         payload = request.body_arguments
-
-    if request.body:
+    elif request.body:
         if type(request.body) is str:
             payload = json.loads(request.body)
         else:
