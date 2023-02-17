@@ -74,6 +74,7 @@ import {
   Stack,
   Sun,
   Switch,
+  Terminal,
   TodoList,
   Trash,
 } from '@oracle/icons';
@@ -155,6 +156,7 @@ const ICONS = [
   Stack,
   Sun,
   Switch,
+  Terminal,
   TodoList,
   Trash,
 ];

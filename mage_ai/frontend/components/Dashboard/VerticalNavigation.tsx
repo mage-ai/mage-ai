@@ -7,10 +7,11 @@ import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineV2Gradient from '@oracle/icons/custom/PipelineV2Gradient';
 import SettingsGradient from '@oracle/icons/custom/SettingsGradient';
+import TerminalGradient from '@oracle/icons/custom/TerminalGradient';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
-import { BlocksStacked, PipelineV2, Settings } from '@oracle/icons';
+import { BlocksStacked, PipelineV2, Settings, Terminal } from '@oracle/icons';
 import { NavigationItemStyle } from './index.style';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -58,6 +59,15 @@ function VerticalNavigation({
         label: () => 'Pipelines runs',
         linkProps: {
           href: '/pipeline-runs',
+        },
+      },
+      {
+        Icon: Terminal,
+        IconSelected: TerminalGradient,
+        id: 'terminal',
+        label: () => 'Terminal',
+        linkProps: {
+          href: '/terminal',
         },
       },
       {
