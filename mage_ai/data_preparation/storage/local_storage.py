@@ -11,7 +11,7 @@ import simplejson
 
 class LocalStorage(BaseStorage):
     def isdir(self, path: str) -> bool:
-        return os.listdir(path)
+        return os.path.isdir(path)
 
     def listdir(self, path: str, suffix: str = None) -> List[str]:
         if not os.path.exists(path):
@@ -40,7 +40,7 @@ class LocalStorage(BaseStorage):
             try:
                 return json.load(file)
             except Exception:
-                return dict()
+                return default_value
 
     async def read_json_file_async(self, file_path: str, default_value={}) -> Dict:
         if not self.path_exists(file_path):
@@ -49,7 +49,7 @@ class LocalStorage(BaseStorage):
             try:
                 return json.loads(await file.read())
             except Exception:
-                return dict()
+                return default_value
 
     def write_json_file(self, file_path: str, data) -> None:
         with open(file_path, 'w') as file:

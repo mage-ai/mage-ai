@@ -322,7 +322,7 @@ class ApiPipelineVariableListHandler(BaseHandler):
                 value = 'DataFrame'
                 variable_type = 'pandas.DataFrame'
             else:
-                value = variable.read_data()
+                value = variable.read_data(sample=True)
                 variable_type = str(type(value))
             return dict(
                 uuid=variable_uuid,
