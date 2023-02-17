@@ -67,6 +67,7 @@ class UserResource(DatabaseResource):
             'last_name',
             'password_hash',
             'password_salt',
+            'roles',
             'username',
         ]), user, **kwargs)
 

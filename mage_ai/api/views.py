@@ -10,6 +10,7 @@ from mage_ai.api.operations.constants import (
 )
 from mage_ai.api.logging import debug, error, info
 from mage_ai.services.tracking.metrics import increment, timing
+from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List, Tuple, Union
 import json
 import simplejson
@@ -91,7 +92,7 @@ async def execute_operation(
 
     handler.write(simplejson.dumps(
         response,
-        default=datetime.isoformat,
+        default=encode_complex,
         ignore_nan=True,
     ))
 
