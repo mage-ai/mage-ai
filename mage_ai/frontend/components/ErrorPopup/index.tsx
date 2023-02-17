@@ -30,7 +30,7 @@ type ErrorPopupProps = {
 };
 
 function ErrorPopup({
-  displayMessage,
+  displayMessage: displayMessageProp,
   errors: errorsProp,
   links,
   onClose,
@@ -38,12 +38,21 @@ function ErrorPopup({
 }: ErrorPopupProps) {
   const [stackTraceVisible, setStackTraceVisible] = useState(false);
   const [tracebackVisible, setTracebackVisible] = useState(false);
-  const { messages } = errorsProp || {};
+  const {
+    messages: messagesProp,
+  } = errorsProp || {};
 
   const {
     errors,
     exception,
   } = response?.error || {};
+
+  let displayMessage = displayMessageProp;
+  let messages = messagesProp;
+  if (!displayMessage && messages?.[0]) {
+    displayMessage = messages[0];
+    messages = null;
+  }
 
   return (
     <ErrorPopupStyle>

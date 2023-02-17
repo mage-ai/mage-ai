@@ -1,5 +1,7 @@
 from datetime import datetime
 from distutils.file_util import copy_file
+from mage_ai.api.errors import ApiError
+from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
@@ -9,6 +11,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
+from mage_ai.orchestration.db.models import Oauth2Application
 from mage_ai.server.active_kernel import (
     get_active_kernel_client,
     get_active_kernel_name,
@@ -31,6 +34,7 @@ from mage_ai.server.utils.output_display import (
     get_block_output_process_code,
     get_pipeline_execution_code,
 )
+from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.hash import merge_dict
 from mage_ai.utils.code import reload_all_repo_modules
 from jupyter_client import KernelClient
@@ -153,6 +157,37 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     def on_message(self, raw_message):
         message = json.loads(raw_message)
+
+        api_key = message.get('api_key')
+        token = message.get('token')
+
+        if REQUIRE_USER_AUTHENTICATION:
+            valid = False
+
+            if api_key and token:
+                oauth_client = Oauth2Application.query.filter(
+                    Oauth2Application.client_id == api_key,
+                ).first()
+                if oauth_client:
+                    oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
+                    valid = valid and \
+                        oauth_token and \
+                        oauth_token.user and \
+                        has_at_least_editor_role(oauth_token.user)
+
+                    print('WTFFFFFFFFFFFFFFFFFFFFFF', has_at_least_editor_role(oauth_token.user))
+
+            if not valid:
+                return self.send_message(
+                    dict(
+                        data=ApiError.UNAUTHORIZED_ACCESS['message'],
+                        execution_metadata=dict(block_uuid=message.get('uuid')),
+                        execution_state='idle',
+                        msg_id=str(uuid.uuid4()),
+                        type=DataType.TEXT_PLAIN,
+                    ),
+                )
+
         output = message.get('output')
         if output:
             self.send_message(output)
@@ -187,8 +222,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             client = self.init_kernel_client(DEFAULT_KERNEL_NAME)
             msg_id = client.execute(code)
-            uuid = message.get('uuid')
-            value = dict(block_uuid=uuid)
+            value = dict(block_uuid=message.get('uuid'))
             WebSocketServer.running_executions_mapping[msg_id] = value
         elif execute_pipeline:
             self.__execute_pipeline(

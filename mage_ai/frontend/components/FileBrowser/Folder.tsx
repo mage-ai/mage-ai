@@ -306,7 +306,7 @@ function Folder({
             }
           }}
           onMouseDown={(e) => {
-            const block = getBlockFromFile(file);
+            const block = file ? getBlockFromFile(file) : null;
 
             if (!containerRef?.current?.contains(e.target)
               || !block

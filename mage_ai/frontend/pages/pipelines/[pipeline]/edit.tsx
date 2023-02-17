@@ -10,6 +10,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
+import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BlockLanguageEnum,
   BlockRequestPayloadType,
@@ -45,7 +46,6 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
 import { Add, Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
@@ -63,6 +63,7 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
@@ -1184,6 +1185,15 @@ function PipelineDetailPage({
     selectedBlock,
   ]);
 
+  const token = new AuthToken();
+  const sharedWebsocketData = useMemo(() => ({
+    api_key: OAUTH2_APPLICATION_CLIENT_ID,
+    token: token.decodedToken.token,
+  }), [
+    OAUTH2_APPLICATION_CLIENT_ID,
+    token,
+  ]);
+
   // WebSocket
   const {
     lastMessage,
@@ -1262,22 +1272,26 @@ function PipelineDetailPage({
       setPipelineMessages([]);
 
       sendMessage(JSON.stringify({
+        ...sharedWebsocketData,
         execute_pipeline: true,
         pipeline_uuid: pipelineUUID,
       }));
     });
   }, [
     pipelineUUID,
+    sharedWebsocketData,
   ]);
 
   const cancelPipeline = useCallback(() => {
     sendMessage(JSON.stringify({
+      ...sharedWebsocketData,
       cancel_pipeline: true,
       pipeline_uuid: pipelineUUID,
     }));
   }, [
     pipelineUUID,
     sendMessage,
+    sharedWebsocketData,
   ]);
 
   const runBlockOrig = useCallback((payload: {
@@ -1302,13 +1316,14 @@ function PipelineDetailPage({
 
     if (!isAlreadyRunning || ignoreAlreadyRunning) {
       sendMessage(JSON.stringify({
+        ...sharedWebsocketData,
         code,
         pipeline_uuid: pipeline?.uuid,
+        run_downstream: runDownstream,
+        run_tests: runTests,
+        run_upstream: runUpstream,
         type: block.type,
         uuid,
-        run_downstream: runDownstream,
-        run_upstream: runUpstream,
-        run_tests: runTests,
       }));
 
       // @ts-ignore
@@ -1340,6 +1355,7 @@ function PipelineDetailPage({
     setMessages,
     setRunningBlocks,
     setTextareaFocused,
+    sharedWebsocketData,
   ]);
 
   const runBlock = useCallback((payload) => {

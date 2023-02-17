@@ -2,6 +2,7 @@ import Ansi from 'ansi-to-react';
 import useWebSocket from 'react-use-websocket';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
@@ -12,7 +13,6 @@ import KernelOutputType, {
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
-
 import {
   CharacterStyle,
   ContainerStyle,
@@ -32,6 +32,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_V,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { getWebSocket } from '@api/utils/url';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -177,7 +178,9 @@ function Terminal({
             if (command?.length >= 1) {
               setBusy(true);
               sendMessage(JSON.stringify({
+                api_key: OAUTH2_APPLICATION_CLIENT_ID,
                 code: `!${command}`,
+                token: (new AuthToken()).decodedToken.token,
                 uuid: terminalUUID,
               }));
               setCommandIndex(commandHistory.length + 1);

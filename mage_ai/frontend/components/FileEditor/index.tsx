@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
+import AuthToken from '@api/utils/AuthToken';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
@@ -22,7 +23,6 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
-
 import { DEFAULT_TERMINAL_UUID } from '@components/Terminal';
 import {
   KEY_CODE_CONTROL,
@@ -30,6 +30,7 @@ import {
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   buildAddBlockRequestPayload,
@@ -277,7 +278,9 @@ function FileEditor({
         onClick={() => {
           openSidekickView(ViewKeyEnum.TERMINAL);
           sendMessage(JSON.stringify({
+            api_key: OAUTH2_APPLICATION_CLIENT_ID,
             code: `!pip install -r ${repoPath}/requirements.txt`,
+            token: (new AuthToken()).decodedToken.token,
             uuid: DEFAULT_TERMINAL_UUID,
           }));
         }}

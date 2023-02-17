@@ -6,9 +6,7 @@ from mage_ai.data_preparation.repo_manager import (
     init_repo,
     set_repo_path,
 )
-from mage_ai.data_preparation.shared.constants import (
-    MANAGE_ENV_VAR,
-)
+from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import Oauth2Application, User
 from mage_ai.server.active_kernel import switch_active_kernel

@@ -2,9 +2,13 @@ from collections.abc import Iterable
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
-from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
+from mage_ai.api.utils import (
+    has_at_least_admin_role,
+    has_at_least_editor_role,
+    has_at_least_viewer_role,
+    is_owner,
+)
 from mage_ai.services.tracking.metrics import increment
-from mage_ai.shared.environments import is_test
 from mage_ai.shared.hash import extract
 import importlib
 import inflection
@@ -118,29 +122,16 @@ class BasePolicy():
                 'Policy', '')).lower()
 
     def is_owner(self) -> bool:
-        return (self.current_user and self.current_user.owner) or \
-            (not REQUIRE_USER_AUTHENTICATION and not is_test())
+        return is_owner(self.current_user)
 
     def has_at_least_admin_role(self) -> bool:
-        return not self.current_user or \
-            (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-            self.is_owner() or \
-            (self.current_user.roles and self.current_user.roles & 1 != 0)
+        return has_at_least_admin_role(self.current_user)
 
     def has_at_least_editor_role(self) -> bool:
-        return not self.current_user or \
-            (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-            self.is_owner() or \
-            self.has_at_least_admin_role() or \
-            (self.current_user.roles and self.current_user.roles & 2 != 0)
+        return has_at_least_editor_role(self.current_user)
 
     def has_at_least_viewer_role(self) -> bool:
-        return not self.current_user or \
-            (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
-            self.is_owner() or \
-            self.has_at_least_admin_role() or \
-            self.has_at_least_editor_role() or \
-            (self.current_user.roles and self.current_user.roles & 4 != 0)
+        return has_at_least_viewer_role(self.current_user)
 
     def authorize_action(self, action):
         if self.is_owner():

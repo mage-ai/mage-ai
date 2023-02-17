@@ -118,7 +118,7 @@ function MyApp(props: MyAppProps & AppProps) {
     REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
     REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
   );
-  const noValue = typeof val === 'undefined' || val === null;
+  const noValue = typeof val === 'undefined' || val === null || !REQUIRE_USER_AUTHENTICATION();
   const { data } = api.project_settings.list({}, {}, { pauseFetch: !noValue });
   const requireUserAuthentication =
     useMemo(() => data?.project_settings?.[0]?.require_user_authentication, [data]);

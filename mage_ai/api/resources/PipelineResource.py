@@ -1,4 +1,4 @@
-from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 import asyncio
 
 
-class PipelineResource(GenericResource):
+class PipelineResource(BaseResource):
     @classmethod
     async def collection(self, query, meta, user, **kwargs):
         include_schedules = query.get('include_schedules', [False])

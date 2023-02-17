@@ -4,6 +4,7 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 class WidgetPresenter(BasePresenter):
     default_attributes = [
         'all_upstream_blocks_executed',
+        'color',
         'configuration',
         'content',
         'downstream_blocks',
