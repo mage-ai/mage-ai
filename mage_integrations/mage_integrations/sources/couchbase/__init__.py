@@ -1,3 +1,4 @@
+from enum import Enum
 from mage_integrations.connections.couchbase import (
     Couchbase as CouchbaseConnection
 )
@@ -5,7 +6,8 @@ from mage_integrations.sources.base import main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
     COLUMN_TYPE_NULL,
-    COLUMN_TYPE_STRING
+    COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_STRING,
 )
 from mage_integrations.sources.couchbase.utils import (
     build_comparison_statement,
@@ -14,6 +16,13 @@ from mage_integrations.sources.couchbase.utils import (
 from mage_integrations.sources.sql.base import Source
 from singer import catalog
 from typing import Any, Dict, List
+
+DEFAULT_COLUMN_NAME = '_document'
+
+
+class SchemaStrategy(str, Enum):
+    INFER = 'infer'
+    COMBINE = 'combine'
 
 
 class Couchbase(Source):
@@ -36,24 +45,41 @@ class Couchbase(Source):
             
             infer_query = f"""
 INFER `{stream_id}`
-WITH {{"sample_size": 1000, "similarity_metric": 0, "dictionary_threshold": 0}}
+WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}}
             """
 
-            infer_result = connection.load(infer_query)
-            result = next(iter(infer_result))
-            try:
-                props = result['properties'] or dict()
-                for column, data in props.items():
-                    dtype = data.get('type')
-                    if type(dtype) is not list:
-                        if dtype == COLUMN_TYPE_NULL:
-                            dtype = [COLUMN_TYPE_NULL, COLUMN_TYPE_STRING]
-                        else:
-                            dtype = [COLUMN_TYPE_NULL, dtype]
-                    prop = dict(type=[self.__get_type(t) for t in dtype])
-                    properties[column] = prop
-            except Exception:
-                pass
+            infer_result = connection.load(infer_query)[0]
+            
+            def get_infer_result_doc_count(result):
+                props = result.get('properties', {})
+                doc_count = props.get('#docs', 0)
+                if type(doc_count) is list:
+                    doc_count = sum(doc_count)
+                return doc_count
+            
+            strategy = self.config.get('strategy')
+            if strategy == SchemaStrategy.INFER or \
+                    (strategy is None and len(infer_result) == 1):
+                result = max(infer_result, key=get_infer_result_doc_count)
+                try:
+                    props = result.get('properties', {})
+                    for column, data in props.items():
+                        dtype = data.get('type')
+                        if type(dtype) is not list:
+                            if dtype == COLUMN_TYPE_NULL:
+                                dtype = [COLUMN_TYPE_NULL, COLUMN_TYPE_STRING]
+                            else:
+                                dtype = [COLUMN_TYPE_NULL, dtype]
+                        prop = dict(type=[self.__get_type(t) for t in dtype])
+                        properties[column] = prop
+                except Exception:
+                    pass
+            else:
+                properties[DEFAULT_COLUMN_NAME] = \
+                    dict(
+                        type=[COLUMN_TYPE_NULL, COLUMN_TYPE_OBJECT],
+                        additionalProperties=True
+                    )
 
             schema = catalog.Schema.from_dict(dict(
                 properties=properties,
@@ -89,8 +115,22 @@ WITH {{"sample_size": 1000, "similarity_metric": 0, "dictionary_threshold": 0}}
             convert_datetime_func=self.convert_datetime,
         )
 
+    def update_column_names(self, columns):
+        if len(columns) == 1 and columns[0] == DEFAULT_COLUMN_NAME:
+            return ['*']
+        return columns
+
     def _convert_to_rows(self, columns, rows_temp):
-        return rows_temp
+        rows = []
+        if len(columns) == 1 and columns[0] == DEFAULT_COLUMN_NAME:
+            for row in rows_temp:
+                # When using the * syntax, Couchbase returns the records
+                # in the form {"stream_id": { fields }}
+                values = list(row.values())[0]
+                rows.append({DEFAULT_COLUMN_NAME: values})
+        else:
+            rows = rows_temp
+        return rows
 
     def test_connection(self):
         self.build_connection().get_bucket()
