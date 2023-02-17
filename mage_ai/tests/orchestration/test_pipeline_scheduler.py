@@ -1,5 +1,6 @@
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+from mage_ai.orchestration.job_manager import JobType
 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
@@ -46,18 +47,17 @@ class PipelineSchedulerTests(DBTestCase):
             self.assertEqual(b.status, BlockRun.BlockRunStatus.CANCELLED)
 
     @patch('mage_ai.orchestration.pipeline_scheduler.run_block')
-    @patch('mage_ai.orchestration.pipeline_scheduler.create_process')
-    def test_schedule(self, mock_create_process, mock_run_pipeline):
+    @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')
+    def test_schedule(self, mock_job_manager, mock_run_pipeline):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        mock_proc = MagicMock()
-        mock_create_process.return_value = mock_proc
+        mock_job_manager.add_job = MagicMock()
         scheduler.schedule()
         # TODO (tommy dang): change to 2 when we resume running heartbeat in pipeline scheduler
-        self.assertEqual(mock_create_process.call_count, 1)
+        self.assertEqual(mock_job_manager.add_job.call_count, 1)
         for b in pipeline_run.block_runs:
             if b.block_uuid == 'block1':
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.RUNNING)
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
             else:
                 self.assertEqual(b.status, BlockRun.BlockRunStatus.INITIAL)
 
@@ -76,8 +76,8 @@ class PipelineSchedulerTests(DBTestCase):
             self.assertEqual(mock_send_message.call_count, 1)
 
     @patch('mage_ai.orchestration.pipeline_scheduler.run_pipeline')
-    @patch('mage_ai.orchestration.pipeline_scheduler.create_process')
-    def test_schedule_streaming(self, mock_create_process, mock_run_pipeline):
+    @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')
+    def test_schedule_streaming(self, mock_job_manager, mock_run_pipeline):
         pipeline = create_pipeline_with_blocks(
             'test pipeline 2',
             self.repo_path,
@@ -87,29 +87,28 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline_2')
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        mock_proc = MagicMock()
-        mock_proc_start = MagicMock()
-        mock_proc.start = mock_proc_start
-        mock_create_process.return_value = mock_proc
+        mock_has_pipelien_run_job = MagicMock()
+        mock_job_manager.has_pipeline_run_job = mock_has_pipelien_run_job
+        mock_has_pipelien_run_job.return_value = False
+        mock_job_manager.add_job = MagicMock()
         scheduler.schedule()
-        mock_create_process.assert_called_once_with(
+        mock_job_manager.add_job.assert_called_once_with(
+            JobType.PIPELINE_RUN,
+            pipeline_run.id,
             mock_run_pipeline,
-            (
-                pipeline_run.id,
-                dict(
-                    env='prod',
-                    execution_date=None,
-                    execution_partition=f'{pipeline_run.pipeline_schedule_id}',
-                    event={},
-                ),
-                dict(
-                    pipeline_run_id=pipeline_run.id,
-                    pipeline_schedule_id=pipeline_run.pipeline_schedule_id,
-                    pipeline_uuid='test_pipeline_2',
-                ),
+            pipeline_run.id,
+            dict(
+                env='prod',
+                execution_date=None,
+                execution_partition=f'{pipeline_run.pipeline_schedule_id}',
+                event={},
+            ),
+            dict(
+                pipeline_run_id=pipeline_run.id,
+                pipeline_schedule_id=pipeline_run.pipeline_schedule_id,
+                pipeline_uuid='test_pipeline_2',
             ),
         )
-        mock_proc_start.assert_called_once()
 
     def test_on_block_complete(self):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
