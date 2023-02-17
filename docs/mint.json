@@ -236,6 +236,12 @@
       "group": "Production",
       "pages": [
         {
+          "group": "Authentication",
+          "pages": [
+            "production/authentication/overview"
+          ]
+        },
+        {
           "group": "CI/CD",
           "pages": [
             "production/ci-cd/overview",
