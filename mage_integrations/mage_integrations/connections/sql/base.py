@@ -39,7 +39,7 @@ class Connection(BaseConnection):
             if re.match('^CREATE[ ]+TABLE', qs):
                 message = 'Execute create table command'
             elif re.match('^CREATE[ ]+SCHEMA', qs):
-                message = 'Execute create schema command'
+                message = f'Execute create schema command: {qs}'
             elif re.match('^INSERT', qs):
                 message = 'Execute insert command'
             elif re.match('^ALTER[ ]+TABLE', qs):
