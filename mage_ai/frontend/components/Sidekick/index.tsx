@@ -45,6 +45,7 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
+import { isEmptyObject } from '@utils/hash';
 import { useWindowSize } from '@utils/sizes';
 
 const MAX_COLUMNS = 100;
@@ -286,7 +287,13 @@ function Sidekick({
         }
         {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
           <DataTable
-            columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
+            columnHeaderHeight={
+              (isEmptyObject(columnTypes)
+                && isEmptyObject(insightsByFeatureUUID)
+                && isEmptyObject(insightsOverview))
+              ? 0
+              : TABLE_COLUMN_HEADER_HEIGHT
+            }
             columns={columns}
             height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
             noBorderBottom
