@@ -55,8 +55,8 @@ function UserEditForm({
           callback: ({
             user: userServer,
           }) => {
-            // @ts-ignore
             const newProfile =
+              // @ts-ignore
               selectKeys(userServer, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
                 uuid,
               }) => uuid));

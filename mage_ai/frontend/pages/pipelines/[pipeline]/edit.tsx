@@ -801,9 +801,9 @@ function PipelineDetailPage({
             fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
-            errors,
             displayMessage: 'Error deleting block file. ' +
               'Check that there are no downstream blocks, then try again.',
+            errors,
             response,
           }),
         },
@@ -825,11 +825,13 @@ function PipelineDetailPage({
       ),
     },
   );
+  // @ts-ignore
   const restartKernel = useCallback(() => updateKernel({
     kernel: {
       action_type: 'restart',
     },
   }), [updateKernel]);
+  // @ts-ignore
   const interruptKernel = useCallback(() => updateKernel({
     kernel: {
       action_type: 'interrupt',

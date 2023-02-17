@@ -13,14 +13,15 @@ function TerminalPage() {
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            console.log(response);
+            alert(errors);
+          },
         },
       ),
     },
   );
+  // @ts-ignore
   const interruptKernel = useCallback(() => updateKernel({
     kernel: {
       action_type: 'interrupt',

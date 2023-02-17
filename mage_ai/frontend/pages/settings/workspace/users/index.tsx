@@ -85,7 +85,6 @@ function UsersListPage() {
               });
               fetchUsers();
             }}
-            showRoles
             title="Add new user"
             user={{}}
           />
