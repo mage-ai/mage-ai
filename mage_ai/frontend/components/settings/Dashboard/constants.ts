@@ -33,7 +33,7 @@ export const SECTIONS = ({ owner }: { owner?: boolean }) => {
     },
   ];
 
-  if (!REQUIRE_USER_AUTHENTICATION) {
+  if (!REQUIRE_USER_AUTHENTICATION()) {
     return arr;
   }
 

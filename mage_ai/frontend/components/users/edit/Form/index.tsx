@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import UserType from '@interfaces/UserType';
+import UserType, { ROLES, ROLE_DISPLAY_MAPPING } from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -19,17 +21,23 @@ import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
 type UserEditFormProps = {
+  disabledFields?: string[];
   hideFields?: string[];
   newUser?: boolean;
+  onDeleteSuccess?: () => void;
   onSaveSuccess?: (user: UserType) => void;
+  showDelete?: boolean;
   title?: string;
   user: UserType;
 };
 
 function UserEditForm({
+  disabledFields,
   hideFields: hideFieldsProp,
   newUser,
+  onDeleteSuccess,
   onSaveSuccess,
+  showDelete,
   title,
   user,
 }: UserEditFormProps) {
@@ -47,10 +55,11 @@ function UserEditForm({
           callback: ({
             user: userServer,
           }) => {
-            // @ts-ignore
-            const newProfile = selectKeys(userServer, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
-              uuid,
-            }) => uuid));
+            const newProfile =
+              // @ts-ignore
+              selectKeys(userServer, USER_PROFILE_FIELDS.concat(USER_PASSWORD_FIELDS).map(({
+                uuid,
+              }) => uuid));
             setProfile(newProfile);
 
             toast.success(
@@ -75,6 +84,28 @@ function UserEditForm({
                 toastId: type,
               },
             );
+          },
+        },
+      ),
+    },
+  );
+
+  const [deleteUser, { isLoading: isLoadingDelete }] = useMutation(
+    api.users.useDelete(user?.id),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            onDeleteSuccess?.();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            alert(message);
+            console.log(errors);
           },
         },
       ),
@@ -167,6 +198,33 @@ function UserEditForm({
           </Spacing>
         ))}
 
+        {!user?.owner && (
+          <Spacing mt={2}>
+            <Select
+              disabled={disabledFields?.includes('roles')}
+              label="Roles"
+              // @ts-ignore
+              onChange={e => {
+                setButtonDisabled(false);
+                setProfile(prev => ({
+                  ...prev,
+                  roles: e.target.value,
+                }));
+              }}
+              primary
+              setContentOnMount
+              value={profile?.roles || user?.roles || ''}
+            >
+              <option value="" />
+              {ROLES.map((value) => (
+                <option key={value} value={value}>
+                  {ROLE_DISPLAY_MAPPING[value]}
+                </option>
+              ))}
+            </Select>
+          </Spacing>
+        )}
+
         <Spacing mt={5}>
           <Headline>
             {newUser ? 'Password' : 'Change password'}
@@ -201,7 +259,7 @@ function UserEditForm({
                 }}
                 primary
                 required={required}
-              setContentOnMount
+                setContentOnMount
                 type={type}
                 value={profile?.[uuid] || ''}
               />
@@ -210,15 +268,38 @@ function UserEditForm({
         </Spacing>
 
         <Spacing mt={5}>
-          <Button
-            disabled={buttonDisabled || (errors && !isEmptyObject(errors))}
-            loading={isLoading}
-            // @ts-ignore
-            onClick={() => updateUser({ user: profile })}
-            primary
-          >
-            {newUser ? 'Create new user' : 'Update user profile'}
-          </Button>
+          <FlexContainer>
+            <Button
+              disabled={buttonDisabled || (errors && !isEmptyObject(errors))}
+              loading={isLoading}
+              // @ts-ignore
+              onClick={() => updateUser({ user: profile })}
+              primary
+            >
+              {newUser ? 'Create new user' : 'Update user profile'}
+            </Button>
+
+            {showDelete && (
+              <Spacing ml={1}>
+                <Button
+                  danger
+                  loading={isLoadingDelete}
+                  // @ts-ignore
+                  onClick={() => {
+                    if (typeof window !== 'undefined'
+                      && window.confirm(
+                        `Are you sure you want to delete ${profile.username || profile.email}?`,
+                      )) {
+
+                      deleteUser();
+                    }
+                  }}
+                >
+                  Delete user
+                </Button>
+              </Spacing>
+            )}
+          </FlexContainer>
         </Spacing>
       </form>
     </>

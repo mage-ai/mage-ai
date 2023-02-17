@@ -40,6 +40,7 @@ class Pipeline:
         self.data_integration = None
         self.name = None
         self.repo_path = repo_path or get_repo_path()
+        self.schedules = []
         self.uuid = uuid
         self.type = PipelineType.PYTHON
         self.widget_configs = []

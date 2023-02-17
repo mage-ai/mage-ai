@@ -161,8 +161,13 @@ class User(BaseModel):
     def roles_display(self) -> str:
         if self.owner:
             return 'Owner'
-
-        return 'Editor'
+        elif self.roles:
+            if self.roles & 1 != 0:
+                return 'Admin'
+            elif self.roles & 2 != 0:
+                return 'Editor'
+            elif self.roles & 4 != 0:
+                return 'Viewer'
 
 
 class Oauth2Application(BaseModel):

@@ -10,6 +10,7 @@ from mage_ai.api.operations.constants import (
 )
 from mage_ai.api.logging import debug, error, info
 from mage_ai.services.tracking.metrics import increment, timing
+from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List, Tuple, Union
 import json
 import simplejson
@@ -40,7 +41,7 @@ async def execute_operation(
     action, options = __determine_action(
         request, child=child, child_pk=child_pk, pk=pk)
     try:
-        response = BaseOperation(
+        response = await BaseOperation(
             action=action,
             files=request.files,
             headers=request.headers,
@@ -91,7 +92,7 @@ async def execute_operation(
 
     handler.write(simplejson.dumps(
         response,
-        default=datetime.isoformat,
+        default=encode_complex,
         ignore_nan=True,
     ))
 
@@ -126,7 +127,24 @@ def __meta(request) -> Dict:
     def _build(obj: Dict, key: str):
         obj[key] = request.query_arguments.get(key)
         return obj
-    return reduce(_build, __meta_keys(request), {})
+
+    meta_init = reduce(_build, __meta_keys(request), {})
+    meta = {}
+    for k, v in meta_init.items():
+        if type(v) is not list:
+            v = [v]
+
+        arr = []
+        for val in v:
+            try:
+                val = val.decode()
+            except (UnicodeDecodeError, AttributeError):
+                pass
+            arr.append(val)
+
+        meta[k] = arr[0]
+
+    return meta
 
 
 def __meta_keys(request) -> List[str]:

@@ -27,7 +27,6 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
-
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import {
   CalendarDate,
@@ -55,7 +54,7 @@ import {
 } from '@components/Sidekick/utils';
 import { convertSeconds } from '../utils';
 import { goToWithQuery } from '@utils/routing';
-import { isEmptyObject } from '@utils/hash';
+import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
@@ -111,7 +110,7 @@ function TriggerDetail({
     revalidateOnFocus: true,
   });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
-  const totalRuns = useMemo(() => dataPipelineRuns?.total_count || [], [dataPipelineRuns]);
+  const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const tablePipelineRuns = useMemo(() => {
@@ -161,7 +160,7 @@ function TriggerDetail({
   const [updatePipelineSchedule, { isLoading: isLoadingUpdatePipelineSchedule }] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
       api.pipeline_schedules.useUpdate(pipelineSchedule.id)({
-        pipeline_schedule: pipelineSchedule,
+        pipeline_schedule: ignoreKeys(pipelineSchedule, ['id']),
       }),
     {
       onSuccess: (response: any) => onSuccess(

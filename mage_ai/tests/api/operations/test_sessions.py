@@ -9,7 +9,7 @@ from mage_ai.tests.factory import create_user
 
 class SessionOperationTests(BaseApiTestCase):
     @freeze_time(datetime(3333, 12, 12))
-    def test_execute_create(self):
+    async def test_execute_create(self):
         password = 'password'
         user = create_user(password=password)
 
@@ -21,7 +21,7 @@ class SessionOperationTests(BaseApiTestCase):
             )),
             resource='sessions',
         )
-        response = operation.execute()
+        response = await operation.execute()
 
         access_token = Oauth2AccessToken.query.filter(Oauth2AccessToken.user_id == user.id).first()
 
@@ -30,7 +30,7 @@ class SessionOperationTests(BaseApiTestCase):
             encode_token(access_token.token, access_token.expires),
         )
 
-    def test_execute_create_failed(self):
+    async def test_execute_create_failed(self):
         password = 'password'
         user = create_user(password=password)
 
@@ -42,6 +42,6 @@ class SessionOperationTests(BaseApiTestCase):
             )),
             resource='sessions',
         )
-        response = operation.execute()
+        response = await operation.execute()
 
         self.assertIsNotNone(response['error'])

@@ -1,48 +1,85 @@
-from .base import META_KEY_LIMIT
 from datetime import datetime
+from mage_ai.api.errors import ApiError
+from mage_ai.api.operations.constants import META_KEY_LIMIT
+from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
-from mage_ai.server.api.base import BaseHandler
 from sqlalchemy.orm import aliased
+from typing import Dict, List
 
 MAX_LOG_FILES = 20
 
 
-class ApiPipelineLogListHandler(BaseHandler):
-    async def get(self, pipeline_uuid):
-        start_timestamp = self.get_argument('start_timestamp', None)
-        end_timestamp = self.get_argument('end_timestamp', None)
+class LogResource(GenericResource):
+    @classmethod
+    async def collection(self, query, meta, user, **kwargs):
+        parent_model = kwargs['parent_model']
 
+        arr = []
+        if type(parent_model) is BlockRun:
+            arr = parent_model.logs
+        elif issubclass(parent_model.__class__, Pipeline):
+            arr = await self.__pipeline_logs(parent_model, query, meta)
+
+        return self.build_result_set(
+            arr,
+            user,
+            **kwargs,
+        )
+
+    @classmethod
+    async def __pipeline_logs(self, pipeline: Pipeline, query_arg, meta) -> List[Dict]:
+        pipeline_uuid = pipeline.uuid
+
+        start_timestamp = query_arg.get('start_timestamp', [None])
+        if start_timestamp:
+            start_timestamp = start_timestamp[0]
+        end_timestamp = query_arg.get('end_timestamp', [None])
+        if end_timestamp:
+            end_timestamp = end_timestamp[0]
+
+        error = ApiError.RESOURCE_INVALID.copy()
         if start_timestamp:
             try:
                 start_timestamp = datetime.fromtimestamp(int(start_timestamp))
             except (ValueError, OverflowError):
-                raise Exception('Value is invalid for start_timestamp')
+                error.update(message='Value is invalid for start_timestamp.')
+                raise ApiError(error)
         if end_timestamp:
             try:
                 end_timestamp = datetime.fromtimestamp(int(end_timestamp))
             except (ValueError, OverflowError):
-                raise Exception('Value is invalid for end_timestamp')
+                error.update(message='Value is invalid for end_timestamp.')
+                raise ApiError(error)
 
-        pipeline_schedule_ids = self.get_argument('pipeline_schedule_id[]', None)
+        pipeline_schedule_ids = query_arg.get('pipeline_schedule_id[]', [None])
+        if pipeline_schedule_ids:
+            pipeline_schedule_ids = pipeline_schedule_ids[0]
         if pipeline_schedule_ids:
             pipeline_schedule_ids = pipeline_schedule_ids.split(',')
         else:
             pipeline_schedule_ids = []
 
-        block_uuids = self.get_argument('block_uuid[]', None)
+        block_uuids = query_arg.get('block_uuid[]', [None])
+        if block_uuids:
+            block_uuids = block_uuids[0]
         if block_uuids:
             block_uuids = block_uuids.split(',')
         else:
             block_uuids = []
 
-        pipeline_run_ids = self.get_argument('pipeline_run_id[]', None)
+        pipeline_run_ids = query_arg.get('pipeline_run_id[]', [None])
+        if pipeline_run_ids:
+            pipeline_run_ids = pipeline_run_ids[0]
         if pipeline_run_ids:
             pipeline_run_ids = pipeline_run_ids.split(',')
         else:
             pipeline_run_ids = []
 
-        block_run_ids = self.get_argument('block_run_id[]', None)
+        block_run_ids = query_arg.get('block_run_id[]', [None])
+        if block_run_ids:
+            block_run_ids = block_run_ids[0]
         if block_run_ids:
             block_run_ids = block_run_ids.split(',')
         else:
@@ -96,8 +133,8 @@ class ApiPipelineLogListHandler(BaseHandler):
                     filter(a.execution_date <= end_timestamp)
                 )
             total_pipeline_run_log_count = query.count()
-            if self.get_argument(META_KEY_LIMIT, None) is not None:
-                rows = self.limit(query)
+            if meta.get(META_KEY_LIMIT, None) is not None:
+                rows = query.limit(meta[META_KEY_LIMIT])
             else:
                 rows = query.all()
             return dict(
@@ -173,8 +210,8 @@ class ApiPipelineLogListHandler(BaseHandler):
                     filter(a.execution_date <= end_timestamp)
                 )
 
-            if self.get_argument(META_KEY_LIMIT, None) is not None:
-                rows = self.limit(query)
+            if meta.get(META_KEY_LIMIT, None) is not None:
+                rows = query.limit(meta[META_KEY_LIMIT])
             else:
                 rows = query.all()
 
@@ -210,11 +247,11 @@ class ApiPipelineLogListHandler(BaseHandler):
             if len(block_run_logs) >= MAX_LOG_FILES:
                 break
 
-        self.write(dict(logs=[
+        return [
             dict(
                 block_run_logs=block_run_logs,
                 pipeline_run_logs=pipeline_run_logs,
                 total_block_run_log_count=total_block_run_log_count,
                 total_pipeline_run_log_count=total_pipeline_run_log_count,
             ),
-        ]))
+        ]

@@ -1,5 +1,5 @@
-export const COOKIE_DOMAIN: string = process.env.NEXT_PUBLIC_COOKIE_DOMAIN;
-export const COOKIE_PATH: string = process.env.NEXT_PUBLIC_COOKIE_PATH;
+export const COOKIE_DOMAIN: string = 'localhost';
+export const COOKIE_PATH: string = '/';
 
 export const SHARED_COOKIE_PROPERTIES: any = {
   domain: COOKIE_DOMAIN,

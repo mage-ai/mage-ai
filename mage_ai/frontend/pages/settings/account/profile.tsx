@@ -24,6 +24,7 @@ function ProfilePage() {
       <Spacing p={PADDING_UNITS}>
         <Panel>
           <UserEditForm
+            disabledFields={['roles']}
             user={user}
           />
         </Panel>

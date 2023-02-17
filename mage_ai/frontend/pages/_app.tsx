@@ -4,6 +4,7 @@ import React, {
   useRef,
 } from 'react';
 import App, { AppProps } from 'next/app';
+import Cookies from 'js-cookie';
 import LoadingBar from 'react-top-loading-bar';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeProvider } from 'styled-components';
@@ -13,9 +14,15 @@ import '@styles/globals.css';
 import Head from '@oracle/elements/Head';
 import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
+import api from '@api';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import { ModalProvider } from '@context/Modal';
 import { RED } from '@oracle/styles/colors/main';
+import {
+  REQUIRE_USER_AUTHENTICATION,
+  REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
+  REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+} from '@utils/session';
 import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
@@ -106,6 +113,27 @@ function MyApp(props: MyAppProps & AppProps) {
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   ]);
+
+  const val = Cookies.get(
+    REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
+    REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+  );
+  const noValue = typeof val === 'undefined' || val === null || !REQUIRE_USER_AUTHENTICATION();
+  const { data } = api.project_settings.list({}, {}, { pauseFetch: !noValue });
+  const requireUserAuthentication =
+    useMemo(() => data?.project_settings?.[0]?.require_user_authentication, [data]);
+  useEffect(() => {
+    if (noValue &&
+      typeof requireUserAuthentication !== 'undefined' &&
+      requireUserAuthentication !== null
+    ) {
+      Cookies.set(
+        REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
+        requireUserAuthentication,
+        REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+      );
+    }
+  }, [noValue, requireUserAuthentication]);
 
   return (
     <KeyboardContext.Provider value={keyboardContextValue}>

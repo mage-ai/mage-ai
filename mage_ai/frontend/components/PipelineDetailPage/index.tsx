@@ -86,7 +86,6 @@ function PipelineDetailPage({
 
   const pipelineUUID = pipelineProp.uuid;
   const { data } = api.pipelines.detail(pipelineUUID, {
-    includes_content: false,
     includes_outputs: false,
   }, {
     revalidateOnFocus: false,

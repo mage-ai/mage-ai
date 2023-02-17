@@ -7,9 +7,35 @@ import GroupType from '@interfaces/GroupType';
 import GroupMembershipType from '@interfaces/GroupMembershipType';
 import UserType from '@interfaces/UserType';
 import { COOKIE_KEY, SHARED_OPTS } from '@api/utils/token';
+import { SHARED_COOKIE_PROPERTIES } from '@utils/cookies/constants';
 import { resetObjectCounts } from '@storage/localStorage';
 
-export const REQUIRE_USER_AUTHENTICATION = false;
+export const REQUIRE_USER_AUTHENTICATION_COOKIE_KEY = 'REQUIRE_USER_AUTHENTICATION';
+export const REQUIRE_USER_AUTHENTICATION_LOCAL_STORAGE_KEY = 'REQUIRE_USER_AUTHENTICATION';
+export const REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES = {
+  ...SHARED_COOKIE_PROPERTIES,
+  expires: 1,
+};
+
+export const REQUIRE_USER_AUTHENTICATION = (ctx: any = null) => {
+  let val;
+
+  if (ctx) {
+    const cookie = ServerCookie(ctx);
+    val = cookie[REQUIRE_USER_AUTHENTICATION_COOKIE_KEY];
+  } else {
+    val = Cookies.get(
+      REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
+      REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
+    );
+  }
+
+  if (!!val) {
+    return String(val) !== '0' && String(val).toLowerCase() !== 'false';
+  }
+
+  return false;
+};
 
 export const CURRENT_GROUP_ID_COOKIE_KEY: string = 'current_group_id';
 export const CURRENT_GROUP_LOCAL_STORAGE_KEY: string = 'current_group';
@@ -83,3 +109,41 @@ export const isLoggedIn = (ctx: NextPageContext) => {
   const token: string | undefined = cookie[COOKIE_KEY];
   return !!token;
 };
+
+export function setWithExpiry(key, value, ttl) {
+  const now = new Date();
+
+  // `item` is an object which contains the original value
+  // as well as the time when it's supposed to expire
+  const item = {
+    expiry: now.getTime() + ttl,
+    value: value,
+  };
+
+  // @ts-ignore
+  ls.set(key, JSON.stringify(item));
+}
+
+export function getWithExpiry(key) {
+  // @ts-ignore
+  const itemStr = ls.get(key);
+
+  // if the item doesn't exist, return null
+  if (!itemStr) {
+    return null;
+  }
+
+  const item = JSON.parse(itemStr);
+  const now = new Date();
+
+  // compare the expiry time of the item with the current time
+  if (now.getTime() > item.expiry) {
+    // If the item is expired, delete the item from storage
+    // and return null
+    // @ts-ignore
+    ls.remove(key);
+
+    return null;
+  }
+  return item.value;
+}

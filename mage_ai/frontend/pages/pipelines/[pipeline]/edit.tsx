@@ -10,6 +10,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
+import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BlockLanguageEnum,
   BlockRequestPayloadType,
@@ -45,7 +46,6 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
 import { Add, Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
@@ -63,6 +63,7 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
@@ -139,7 +140,7 @@ function PipelineDetailPage({
     data,
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
-    include_outputs: isEmptyObject(messages),
+    includes_outputs: isEmptyObject(messages),
   });
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
@@ -285,7 +286,7 @@ function PipelineDetailPage({
     };
   }, [
     setPipelineContentTouched,
-    widgetTempData.current,
+    widgetTempData,
   ]);
 
   const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
@@ -573,14 +574,50 @@ function PipelineDetailPage({
             contentToSave = block.content;
           }
 
+          let outputs;
+          const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
+          const hasError = messagesForBlock?.find(({ error }) => error);
+
+          if (messagesForBlock) {
+            const arr2 = [];
+
+            messagesForBlock.forEach((d: KernelOutputType) => {
+              const {
+                data,
+                type,
+              } = d;
+
+              if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
+                if (Array.isArray(data)) {
+                  d.data = data.reduce((acc, text: string) => {
+                    if (text.match(INTERNAL_OUTPUT_REGEX)) {
+                      return acc;
+                    }
+
+                    return acc.concat(text);
+                  }, []);
+                }
+
+                arr2.push(d);
+              }
+            });
+
+            // @ts-ignore
+            outputs = arr2.map((d: KernelOutputType, idx: number) => ({
+              text_data: JSON.stringify(d),
+              variable_uuid: `${block.uuid}_${idx}`,
+            }));
+          }
+
           return {
             ...block,
             ...tempData,
-            content: contentToSave,
             configuration: {
               ...block.configuration,
               ...tempData.configuration,
             },
+            content: contentToSave,
+            outputs,
           };
         }),
       },
@@ -765,9 +802,9 @@ function PipelineDetailPage({
             fetchFileTree();
           },
           onErrorCallback: (response, errors) => setErrors({
-            errors,
             displayMessage: 'Error deleting block file. ' +
               'Check that there are no downstream blocks, then try again.',
+            errors,
             response,
           }),
         },
@@ -775,8 +812,8 @@ function PipelineDetailPage({
     },
   );
 
-  const [restartKernel] = useMutation(
-    api.restart.kernels.useCreate(kernel?.id),
+  const [updateKernel] = useMutation(
+    api.kernels.useUpdate(kernel?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -789,19 +826,18 @@ function PipelineDetailPage({
       ),
     },
   );
-  const [interruptKernel] = useMutation(
-    api.interrupt.kernels.useCreate(kernel?.id),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
+  // @ts-ignore
+  const restartKernel = useCallback(() => updateKernel({
+    kernel: {
+      action_type: 'restart',
     },
-  );
+  }), [updateKernel]);
+  // @ts-ignore
+  const interruptKernel = useCallback(() => updateKernel({
+    kernel: {
+      action_type: 'interrupt',
+    },
+  }), [updateKernel]);
 
   const restartKernelWithConfirm = useCallback(() => {
     const warning = 'Do you want to restart the kernel? All variables will be cleared.';
@@ -1149,6 +1185,15 @@ function PipelineDetailPage({
     selectedBlock,
   ]);
 
+  const token = new AuthToken();
+  const sharedWebsocketData = useMemo(() => ({
+    api_key: OAUTH2_APPLICATION_CLIENT_ID,
+    token: token.decodedToken.token,
+  }), [
+    OAUTH2_APPLICATION_CLIENT_ID,
+    token,
+  ]);
+
   // WebSocket
   const {
     lastMessage,
@@ -1227,22 +1272,26 @@ function PipelineDetailPage({
       setPipelineMessages([]);
 
       sendMessage(JSON.stringify({
+        ...sharedWebsocketData,
         execute_pipeline: true,
         pipeline_uuid: pipelineUUID,
       }));
     });
   }, [
     pipelineUUID,
+    sharedWebsocketData,
   ]);
 
   const cancelPipeline = useCallback(() => {
     sendMessage(JSON.stringify({
+      ...sharedWebsocketData,
       cancel_pipeline: true,
       pipeline_uuid: pipelineUUID,
     }));
   }, [
     pipelineUUID,
     sendMessage,
+    sharedWebsocketData,
   ]);
 
   const runBlockOrig = useCallback((payload: {
@@ -1267,13 +1316,14 @@ function PipelineDetailPage({
 
     if (!isAlreadyRunning || ignoreAlreadyRunning) {
       sendMessage(JSON.stringify({
+        ...sharedWebsocketData,
         code,
         pipeline_uuid: pipeline?.uuid,
+        run_downstream: runDownstream,
+        run_tests: runTests,
+        run_upstream: runUpstream,
         type: block.type,
         uuid,
-        run_downstream: runDownstream,
-        run_upstream: runUpstream,
-        run_tests: runTests,
       }));
 
       // @ts-ignore
@@ -1305,6 +1355,7 @@ function PipelineDetailPage({
     setMessages,
     setRunningBlocks,
     setTextareaFocused,
+    sharedWebsocketData,
   ]);
 
   const runBlock = useCallback((payload) => {

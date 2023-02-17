@@ -36,13 +36,13 @@ class UserResource(DatabaseResource):
             user = User.query.filter(User.email == email).first()
             if user:
                 error.update(
-                    {'message': 'Account with same email is already taken.'})
+                    {'message': f'Account with same email is already taken: {email}.'})
                 raise ApiError(error)
         if username:
             user = User.query.filter(User.username == username).first()
             if user:
                 error.update(
-                    {'message': 'Account with same username is already taken.'})
+                    {'message': f'Account with same username is already taken: {username}.'})
                 raise ApiError(error)
 
         if len(password) < 8:
@@ -67,6 +67,7 @@ class UserResource(DatabaseResource):
             'last_name',
             'password_hash',
             'password_salt',
+            'roles',
             'username',
         ]), user, **kwargs)
 

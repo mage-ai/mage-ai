@@ -2,9 +2,13 @@ from collections.abc import Iterable
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.oauth_scope import OauthScope
-from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
+from mage_ai.api.utils import (
+    has_at_least_admin_role,
+    has_at_least_editor_role,
+    has_at_least_viewer_role,
+    is_owner,
+)
 from mage_ai.services.tracking.metrics import increment
-from mage_ai.shared.environments import is_test
 from mage_ai.shared.hash import extract
 import importlib
 import inflection
@@ -117,12 +121,20 @@ class BasePolicy():
             self.__name__.replace(
                 'Policy', '')).lower()
 
-    def is_admin(self):
-        return (self.current_user and self.current_user.owner) or \
-            (not REQUIRE_USER_AUTHENTICATION and not is_test())
+    def is_owner(self) -> bool:
+        return is_owner(self.current_user)
+
+    def has_at_least_admin_role(self) -> bool:
+        return has_at_least_admin_role(self.current_user)
+
+    def has_at_least_editor_role(self) -> bool:
+        return has_at_least_editor_role(self.current_user)
+
+    def has_at_least_viewer_role(self) -> bool:
+        return has_at_least_viewer_role(self.current_user)
 
     def authorize_action(self, action):
-        if self.is_admin():
+        if self.is_owner():
             return True
 
         config = self.__class__.action_rule(action)
@@ -138,7 +150,7 @@ class BasePolicy():
             raise ApiError(error)
 
     def authorize_attribute(self, read_or_write, attrb, **kwargs):
-        if self.is_admin():
+        if self.is_owner():
             return True
 
         api_operation_action = self.options.get(
@@ -175,8 +187,9 @@ class BasePolicy():
             self.__validate_condition(attrb, cond, **kwargs)
 
     def authorize_attributes(self, read_or_write, attrbs, **kwargs):
-        if self.is_admin():
+        if self.is_owner():
             return True
+
         for attrb in attrbs:
             self.authorize_attribute(read_or_write, attrb, **kwargs)
 
@@ -202,9 +215,6 @@ class BasePolicy():
                         config[self.__current_scope()]['condition'],
                         message=error_message,
                     )
-
-    def is_owner(self):
-        return self.current_user and self.current_user.owner
 
     def parent_model(self):
         if not self.parent_model_attr:

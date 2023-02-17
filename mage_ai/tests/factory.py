@@ -4,6 +4,7 @@ from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import PipelineRun, PipelineSchedule, User
+from mage_ai.shared.hash import merge_dict
 from typing import Dict, Union
 
 faker = Faker()
@@ -63,11 +64,10 @@ def create_user(
     password = password or faker.password()
     password_salt = generate_salt()
     password_hash = create_bcrypt_hash(password, password_salt)
-    payload = dict(
+    payload = merge_dict(dict(
         email=faker.email(),
         username=faker.name(),
-        **kwargs,
-    )
+    ), kwargs)
 
     if as_dict:
         payload.update(password=password)

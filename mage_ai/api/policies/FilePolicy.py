@@ -9,13 +9,18 @@ class FilePolicy(BasePolicy):
 
 
 FilePolicy.allow_actions([
-    constants.CREATE,
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-])
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
-FilePolicy.allow_read([] + FilePresenter.default_attributes, scopes=[
+FilePolicy.allow_actions([
+    constants.CREATE,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
+FilePolicy.allow_read(FilePresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
@@ -23,11 +28,13 @@ FilePolicy.allow_read([] + FilePresenter.default_attributes, scopes=[
 ])
 
 FilePolicy.allow_write([
+    'api_key',
     'dir_path',
+    'file',
     'name',
     'overwrite',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-])
+], condition=lambda policy: policy.has_at_least_editor_role())

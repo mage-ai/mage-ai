@@ -85,7 +85,7 @@ function MoreActions({
         }
       )
     }
-  )
+  );
 
   const actions = useMemo(() => {
     const {
@@ -319,5 +319,7 @@ function InstanceListPage() {
     </Dashboard>
   );
 }
+
+InstanceListPage.getInitialProps = async () => ({});
 
 export default PrivateRoute(InstanceListPage);

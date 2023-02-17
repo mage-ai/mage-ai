@@ -7,6 +7,7 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.orchestration.db.models import BaseModel
 from mage_ai.shared.hash import merge_dict
 import importlib
+import inspect
 
 
 class BasePresenter():
@@ -56,19 +57,28 @@ class BasePresenter():
             self.register_format(format_arg, keys)
 
     @classmethod
-    def present_resource(self, resource, user, **kwargs):
-        def present_lambda(r):
-            return r.__class__.presenter_class()(
+    async def present_resource(self, resource, user, **kwargs):
+        async def present_lambda(r):
+            if r and inspect.isawaitable(r):
+                r = await r
+
+            results = r.__class__.presenter_class()(
                 r,
                 user,
                 **kwargs,
             ).present(
                 **kwargs,
             )
+
+            if results and inspect.isawaitable(results):
+                results = await results
+
+            return results
+
         if isinstance(resource, Iterable):
-            return [present_lambda(r) for r in resource]
+            return [await present_lambda(r) for r in resource]
         else:
-            return present_lambda(resource)
+            return await present_lambda(resource)
 
     @classmethod
     def present_model(self, model, resource_class, user, **kwargs):
@@ -87,7 +97,7 @@ class BasePresenter():
             **kwargs,
         )
 
-    def present(self, **kwargs):
+    async def present(self, **kwargs):
         def _build(obj, key):
             value = getattr(self, key)
             if callable(value):

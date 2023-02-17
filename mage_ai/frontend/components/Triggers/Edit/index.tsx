@@ -143,7 +143,7 @@ function Edit({
   const [time, setTime] = useState<TimeType>({ hour: '00', minute: '00' });
 
   const { data: dataEventRules } = api.event_rules.detail('aws');
-  const eventRules: EventRuleType[] = useMemo(() => dataEventRules?.event_rules || [], [dataEventRules]);
+  const eventRules: EventRuleType[] = useMemo(() => dataEventRules?.event_rule?.rules || [], [dataEventRules]);
   const eventRulesByName = useMemo(() => indexBy(eventRules, ({ name }) => name), [eventRules]);
 
   const [updateSchedule, { isLoading: isLoadingUpdate }] = useMutation(

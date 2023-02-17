@@ -1,4 +1,4 @@
-from .base import BaseHandler
+from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.autocomplete.utils import (
     build_file_content_mapping,
     PATHS_TO_TRAVERSE,
@@ -8,11 +8,12 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.hash import merge_dict
 
 
-class ApiAutocompleteItemsHandler(BaseHandler):
-    async def get(self):
+class AutocompleteItemResource(GenericResource):
+    @classmethod
+    async def collection(self, query, meta, user, **kwargs):
         repo_path = get_repo_path()
-        collection = []
 
+        collection = []
         for file_group, mapping in [
             (
                 'data_loaders',
@@ -44,4 +45,8 @@ class ApiAutocompleteItemsHandler(BaseHandler):
                     id=filename,
                 )))
 
-        self.write(dict(autocomplete_items=collection))
+        return self.build_result_set(
+            collection,
+            user,
+            **kwargs,
+        )

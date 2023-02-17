@@ -43,8 +43,6 @@ export const INTEGRATION_SAMPLES = 'integration_samples';
 export const INTEGRATION_SOURCES = 'integration_sources';
 export const INTEGRATION_SOURCE_STREAMS = 'integration_source_streams';
 export const KERNELS: 'kernels' = 'kernels';
-export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
-export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
 export const LOGS = 'logs';
 export const MONITOR_STATS = 'monitor_stats';
 export const OUTPUTS = 'outputs';
@@ -52,6 +50,7 @@ export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
 export const PROJECTS: 'projects' = 'projects';
+export const PROJECT_SETTINGS: 'project_settings' = 'project_settings';
 export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUS: 'status' = 'status';
@@ -87,8 +86,6 @@ const RESOURCES: any[][] = [
   [INTEGRATION_SOURCES],
   [INTEGRATION_SOURCE_STREAMS],
   [KERNELS],
-  [KERNEL_ACTION_INTERRUPT, KERNELS],
-  [KERNEL_ACTION_RESTART, KERNELS],
   [LOGS, PIPELINES],
   [MONITOR_STATS],
   [OUTPUTS, BLOCK_RUNS],
@@ -98,6 +95,7 @@ const RESOURCES: any[][] = [
   [PIPELINE_SCHEDULES],
   [PIPELINE_SCHEDULES, PIPELINES],
   [PROJECTS],
+  [PROJECT_SETTINGS],
   [SECRETS],
   [SESSIONS],
   [STATUS],

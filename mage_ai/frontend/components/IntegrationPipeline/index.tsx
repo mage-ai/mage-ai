@@ -193,9 +193,12 @@ function IntegrationPipeline({
       onSuccess: (response: any) => onSuccess(
         response,
         {
-          callback: (res) => {
-            if (res['success']) {
-              const streams = res?.['streams'] || []
+          callback: ({
+            integration_source: integrationSource,
+          }) => {
+            if (integrationSource['success']) {
+              const streams = integrationSource?.['streams'] || [];
+
               setOutputBlocks(() => {
                 setSelectedOutputBlock(dataLoaderBlock);
                 return [dataLoaderBlock];
@@ -211,7 +214,7 @@ function IntegrationPipeline({
               openSidekickView(ViewKeyEnum.DATA);
               fetchSampleData();
             } else {
-              setSourceSampleDataError(res['error']);
+              setSourceSampleDataError(integrationSource?.['error_message']);
             }
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -774,9 +777,11 @@ function IntegrationPipeline({
                 isLoadingLoadSampleData={isLoadingLoadSampleData}
                 // @ts-ignore
                 loadSampleData={stream => loadSampleData({
-                  action: 'sample_data',
-                  pipeline_uuid: pipeline?.uuid,
-                  streams: [stream],
+                  integration_source: {
+                    action_type: 'sample_data',
+                    pipeline_uuid: pipeline?.uuid,
+                    streams: [stream],
+                  },
                 })}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
@@ -840,11 +845,9 @@ function IntegrationPipeline({
                   const content = newBlock.content;
                   const configuration = newBlock.configuration;
 
-                  const currentBlock = blocks[blocks.length - 2];
-
-                  let upstreamBlocks = [dataLoaderBlock.uuid];
-                  if (currentBlock) {
-                    upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
+                  const upstreamBlocks = [];
+                  if (dataLoaderBlock) {
+                    upstreamBlocks.push(dataLoaderBlock.uuid);
                   }
 
                   const ret = addNewBlockAtIndex({
@@ -949,16 +952,24 @@ function IntegrationPipeline({
                     });
                   }
 
+                  const upstreamBlocks = [];
+                  if (blocks?.length >= 2) {
+                    const b = blocks.find(({ uuid }) => dataLoaderBlock?.uuid !== uuid);
+                    if (b) {
+                      upstreamBlocks.push(b.uuid);
+                    }
+                  } else if (dataLoaderBlock) {
+                    upstreamBlocks.push(dataLoaderBlock.uuid);
+                  }
+
                   addNewBlockAtIndex({
                     content: stringify({
-                      destination: destinationUUID,
                       config,
+                      destination: destinationUUID,
                     }),
                     language: BlockLanguageEnum.YAML,
                     type: BlockTypeEnum.DATA_EXPORTER,
-                    upstream_blocks: [
-                      blocks[blocks.length - 1].uuid,
-                    ],
+                    upstream_blocks: upstreamBlocks,
                   }, 1, setSelectedBlock);
                 }
 

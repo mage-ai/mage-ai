@@ -202,7 +202,7 @@ function Header({
       uuid: 'user_settings',
     },
   ];
-  if (REQUIRE_USER_AUTHENTICATION) {
+  if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
     {
       label: () => 'Sign out',
@@ -347,7 +347,7 @@ function Header({
               </>
             }
 
-            {(loggedIn || !REQUIRE_USER_AUTHENTICATION) && (
+            {(loggedIn || !REQUIRE_USER_AUTHENTICATION()) && (
               <>
                 <Spacing ml={2} />
 

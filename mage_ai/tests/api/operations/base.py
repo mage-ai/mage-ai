@@ -3,7 +3,7 @@ from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.orchestration.db.models import User
 from mage_ai.shared.array import find
-from mage_ai.tests.base_test import DBTestCase as TestCase
+from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
 from typing import Dict, List, Union
 import inflection
 
@@ -85,7 +85,7 @@ class BaseApiTestCase(TestCase):
             **kwargs,
         )
 
-    def base_test_execute_create(
+    async def base_test_execute_create(
         self,
         payload: Dict,
         after_create_count: int = 1,
@@ -95,7 +95,7 @@ class BaseApiTestCase(TestCase):
         self.assertEqual(self.model_class.query.count(), before_create_count)
 
         operation = self.build_create_operation(payload, **kwargs)
-        response = operation.execute()
+        response = await operation.execute()
 
         if 'error' in response:
             raise Exception(response['error'])
@@ -104,13 +104,13 @@ class BaseApiTestCase(TestCase):
 
         return response
 
-    def base_test_execute_delete(
+    async def base_test_execute_delete(
         self,
         pk,
         **kwargs,
     ) -> Dict:
         operation = self.build_delete_operation(pk, **kwargs)
-        response = operation.execute()
+        response = await operation.execute()
 
         if 'error' in response:
             raise Exception(response['error'])
@@ -119,14 +119,14 @@ class BaseApiTestCase(TestCase):
 
         return response
 
-    def base_test_execute_detail(
+    async def base_test_execute_detail(
         self,
         pk,
         model_dict: Dict,
         **kwargs,
     ) -> Dict:
         operation = self.build_detail_operation(pk, **kwargs)
-        response = operation.execute()
+        response = await operation.execute()
 
         if 'error' in response:
             raise Exception(response['error'])
@@ -136,7 +136,7 @@ class BaseApiTestCase(TestCase):
 
         return response
 
-    def base_test_execute_list(
+    async def base_test_execute_list(
         self,
         create_payloads: List[Dict] = [{}],
         model_fields_to_check: List[str] = [],
@@ -144,13 +144,13 @@ class BaseApiTestCase(TestCase):
     ) -> Dict:
         models = []
         for payload in create_payloads:
-            response = self.build_create_operation(payload, **kwargs).execute()
+            response = await self.build_create_operation(payload, **kwargs).execute()
             if 'error' in response:
                 raise Exception(response['error'])
             models.append(response[self.model_class_name])
 
         operation = self.build_list_operation(**kwargs)
-        response = operation.execute()
+        response = await operation.execute()
 
         if 'error' in response:
             raise Exception(response['error'])
@@ -165,7 +165,7 @@ class BaseApiTestCase(TestCase):
 
         return response
 
-    def base_test_execute_update(
+    async def base_test_execute_update(
         self,
         pk,
         payload: Dict,
@@ -179,7 +179,7 @@ class BaseApiTestCase(TestCase):
             },
             **kwargs,
         )
-        response = operation.execute()
+        response = await operation.execute()
 
         if 'error' in response:
             raise Exception(response['error'])
@@ -189,3 +189,16 @@ class BaseApiTestCase(TestCase):
             self.assertEqual(model[key], value)
 
         return response
+
+    async def assertRaisesAsync(self, error_class, func):
+        error_raised = False
+
+        try:
+            await func()
+        except Exception as err:
+            if err.__class__.__name__ == error_class.__name__:
+                error_raised = True
+            else:
+                raise err
+
+        self.assertTrue(error_raised)
