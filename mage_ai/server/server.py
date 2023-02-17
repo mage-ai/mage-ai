@@ -35,7 +35,6 @@ from mage_ai.server.api.events import (
     ApiEventMatcherDetailHandler,
     ApiEventMatcherListHandler,
 )
-from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.secrets import (
     ApiSecretsListHandler,
     ApiSecretsDetailHandler,
@@ -201,8 +200,6 @@ def make_app():
         ),
 
         # API v1 routes
-        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
-
         (r'/api/status', ApiStatusHandler),
 
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
