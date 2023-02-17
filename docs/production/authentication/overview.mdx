@@ -30,9 +30,10 @@ Set the environment variable using `-e REQUIRE_USER_AUTHENTICATION=1`.
 For example:
 
 ```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+docker run -it -p 6789:6789 \
+  -v $(pwd):/home/src \
   -e REQUIRE_USER_AUTHENTICATION=1 \
-  /app/run_app.sh mage start demo_project
+  mageai/mageai /app/run_app.sh mage start demo_project
 ```
 
 ### Running Mage without Docker
