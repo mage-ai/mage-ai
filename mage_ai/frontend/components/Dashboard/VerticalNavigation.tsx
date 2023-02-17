@@ -62,21 +62,21 @@ function VerticalNavigation({
         },
       },
       {
-        Icon: Settings,
-        IconSelected: SettingsGradient,
-        id: 'settings',
-        label: () => 'Settings',
-        linkProps: {
-          href: '/settings',
-        },
-      },
-      {
         Icon: Terminal,
         IconSelected: TerminalGradient,
         id: 'terminal',
         label: () => 'Terminal',
         linkProps: {
           href: '/terminal',
+        },
+      },
+      {
+        Icon: Settings,
+        IconSelected: SettingsGradient,
+        id: 'settings',
+        label: () => 'Settings',
+        linkProps: {
+          href: '/settings',
         },
       },
     ];
