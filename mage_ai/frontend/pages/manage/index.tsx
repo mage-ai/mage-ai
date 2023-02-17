@@ -85,7 +85,7 @@ function MoreActions({
         }
       )
     }
-  )
+  );
 
   const actions = useMemo(() => {
     const {

@@ -83,7 +83,9 @@ function UsersListPage() {
                 add_new_user: null,
                 user_id: null,
               });
+              fetchUsers();
             }}
+            showRoles
             title="Add new user"
             user={{}}
           />
@@ -94,10 +96,18 @@ function UsersListPage() {
         <Spacing p={PADDING_UNITS}>
           <UserEditForm
             hideFields={[USER_PASSWORD_CURRENT_FIELD_UUID]}
+            onDeleteSuccess={() => {
+              goToWithQuery({
+                add_new_user: null,
+                user_id: null,
+              });
+              fetchUsers();
+            }}
             onSaveSuccess={() => {
               fetchUser();
               fetchUsers();
             }}
+            showDelete
             title="Edit user"
             user={user}
           />

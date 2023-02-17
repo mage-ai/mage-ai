@@ -1,3 +1,21 @@
+export enum RoleValueEnum {
+  ADMIN = 1,
+  EDITOR = 2,
+  VIEWER = 4,
+}
+
+export const ROLE_DISPLAY_MAPPING = {
+  [RoleValueEnum.ADMIN]: 'Admin',
+  [RoleValueEnum.EDITOR]: 'Editor',
+  [RoleValueEnum.VIEWER]: 'Viewer',
+};
+
+export const ROLES = [
+  RoleValueEnum.VIEWER,
+  RoleValueEnum.EDITOR,
+  RoleValueEnum.ADMIN,
+];
+
 export default interface UserType {
   avatar?: string;
   email?: string;

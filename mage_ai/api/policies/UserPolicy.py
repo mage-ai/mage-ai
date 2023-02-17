@@ -64,6 +64,7 @@ UserPolicy.allow_write([
     'last_name',
     'password',
     'password_confirmation',
+    'roles',
     'username',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
