@@ -71,6 +71,7 @@ PipelineSchedulePolicy.allow_write([
 
 PipelineSchedulePolicy.allow_write([
     'event_matchers',
+    'id',
     'name',
     'schedule_interval',
     'schedule_type',
