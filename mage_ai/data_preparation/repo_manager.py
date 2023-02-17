@@ -65,6 +65,7 @@ class RepoConfig:
             self.emr_config = repo_config.get('emr_config')
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
             self.notification_config = repo_config.get('notification_config', dict())
+            self.queue_config = repo_config.get('queue_config', dict())
 
             self.s3_bucket = None
             self.s3_path_prefix = None
@@ -91,6 +92,7 @@ class RepoConfig:
             emr_config=self.emr_config,
             gcp_cloud_run_config=self.gcp_cloud_run_config,
             notification_config=self.notification_config,
+            queue_config=self.queue_config,
             repo_path=self.repo_path,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
             remote_variables_dir=self.remote_variables_dir,
