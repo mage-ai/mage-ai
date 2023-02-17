@@ -137,6 +137,12 @@ class ApiStatusHandler(BaseHandler):
         self.write(dict(status=status))
 
 
+class ApiProjectSettingsHandler(BaseHandler):
+    def get(self):
+        self.write(dict(project_settings=[
+            dict(require_user_authentication=REQUIRE_USER_AUTHENTICATION),
+        ]))
+
 def make_app():
     routes = [
         (r'/', MainPageHandler),
@@ -205,6 +211,8 @@ def make_app():
 
         # This is used to check scheduler status and manually fix it
         (r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler),
+
+        (r'/api/project_settings', ApiProjectSettingsHandler),
 
         # API v1 routes
         (

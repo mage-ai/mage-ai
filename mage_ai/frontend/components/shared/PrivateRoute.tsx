@@ -29,7 +29,7 @@ export default function PrivateRoute(WrappedComponent: any) {
         ...ctx, auth, currentGroupId, theme,
       };
 
-      if (REQUIRE_USER_AUTHENTICATION && auth.isExpired) {
+      if (REQUIRE_USER_AUTHENTICATION(ctx) && auth.isExpired) {
         console.log('OAuth token has expired.');
         const query = {
           ...ctx.query,

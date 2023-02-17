@@ -19,7 +19,6 @@ export function getToken(): string | undefined {
 }
 
 export function removeToken() {
-  console.log(process.env)
   Cookies.remove(COOKIE_KEY, SHARED_OPTS);
 }
 
