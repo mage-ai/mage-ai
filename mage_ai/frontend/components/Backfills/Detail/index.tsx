@@ -471,10 +471,9 @@ function BackfillDetail({
                     // @ts-ignore
                     updateModel({
                       backfill: {
-                        id: modelID,
                         status: isActive
                           ? BackfillStatusEnum.CANCELLED
-                          : BackfillStatusEnum.INITIAL
+                          : BackfillStatusEnum.INITIAL,
                       },
                     });
                   }}

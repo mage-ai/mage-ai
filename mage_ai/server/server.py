@@ -12,11 +12,6 @@ from mage_ai.data_preparation.shared.constants import (
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import Oauth2Application, User
 from mage_ai.server.active_kernel import switch_active_kernel
-from mage_ai.server.api.backfills import (
-    ApiBackfillHandler,
-    ApiBackfillsHandler,
-    ApiPipelineBackfillsHandler,
-)
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
     ApiPipelineBlockAnalysisHandler,
@@ -216,10 +211,6 @@ def make_app():
         (r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler),
 
         # API v1 routes
-        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiPipelineBackfillsHandler),
-        (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
-        (r'/api/backfills', ApiBackfillsHandler),
-
         (r'/api/secrets', ApiSecretsListHandler),
         (r'/api/secrets/(?P<name>\w+)', ApiSecretsDetailHandler),
 
