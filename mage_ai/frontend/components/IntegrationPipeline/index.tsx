@@ -845,11 +845,9 @@ function IntegrationPipeline({
                   const content = newBlock.content;
                   const configuration = newBlock.configuration;
 
-                  const currentBlock = blocks[blocks.length - 2];
-
-                  let upstreamBlocks = [dataLoaderBlock.uuid];
-                  if (currentBlock) {
-                    upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
+                  const upstreamBlocks = [];
+                  if (dataLoaderBlock) {
+                    upstreamBlocks.push(dataLoaderBlock.uuid);
                   }
 
                   const ret = addNewBlockAtIndex({
@@ -954,16 +952,24 @@ function IntegrationPipeline({
                     });
                   }
 
+                  const upstreamBlocks = [];
+                  if (blocks?.length >= 2) {
+                    const b = blocks.find(({ uuid }) => dataLoaderBlock?.uuid !== uuid);
+                    if (b) {
+                      upstreamBlocks.push(b.uuid);
+                    }
+                  } else if (dataLoaderBlock) {
+                    upstreamBlocks.push(dataLoaderBlock.uuid);
+                  }
+
                   addNewBlockAtIndex({
                     content: stringify({
-                      destination: destinationUUID,
                       config,
+                      destination: destinationUUID,
                     }),
                     language: BlockLanguageEnum.YAML,
                     type: BlockTypeEnum.DATA_EXPORTER,
-                    upstream_blocks: [
-                      blocks[blocks.length - 1].uuid,
-                    ],
+                    upstream_blocks: upstreamBlocks,
                   }, 1, setSelectedBlock);
                 }
 

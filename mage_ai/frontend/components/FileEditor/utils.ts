@@ -79,9 +79,16 @@ export function buildAddBlockRequestPayload(
 
   if (isIntegrationPipeline) {
     const dataLoaderBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type);
-    const upstreamBlocks = dataExporterBlock?.upstream_blocks
-      ? dataExporterBlock.upstream_blocks
-      : (dataLoaderBlock ? [dataLoaderBlock.uuid] : []);
+    const transformerBlock: BlockType = find(pipeline.blocks, ({ type }) => BlockTypeEnum.TRANSFORMER === type);
+    const upstreamBlocks = [];
+    if (transformerBlock) {
+      upstreamBlocks.push(transformerBlock.uuid);
+    } else if (dataExporterBlock?.upstream_blocks) {
+      upstreamBlocks.push(...dataExporterBlock.upstream_blocks);
+    } else if (dataLoaderBlock) {
+      upstreamBlocks.push(dataLoaderBlock.uuid);
+    }
+
     blockReqPayload.upstream_blocks = upstreamBlocks;
   }
 

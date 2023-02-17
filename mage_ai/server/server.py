@@ -21,8 +21,6 @@ from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
     ApiPipelineBlockAnalysisHandler,
     ApiPipelineBlockExecuteHandler,
-    ApiPipelineBlockHandler,
-    ApiPipelineBlockListHandler,
     ApiPipelineBlockOutputHandler,
 )
 from mage_ai.server.api.clusters import (
@@ -104,6 +102,18 @@ class ApiPipelineExecuteHandler(BaseHandler):
             )
         )
         self.finish()
+
+
+class ApiSchedulerHandler(BaseHandler):
+    def get(self, action_type=None):
+        self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
+
+    def post(self, action_type):
+        if action_type == 'start':
+            scheduler_manager.start_scheduler()
+        elif action_type == 'stop':
+            scheduler_manager.stop_scheduler()
+        self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
 
 
 class ApiStatusHandler(BaseHandler):
@@ -199,15 +209,13 @@ def make_app():
             ApiTriggerPipelineHandler,
         ),
 
-        # API v1 routes
+        # Status
         (r'/api/status', ApiStatusHandler),
 
-        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
-        (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f]+)',
-            ApiPipelineBlockHandler,
-        ),
+        # This is used to check scheduler status and manually fix it
+        (r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler),
 
+        # API v1 routes
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/backfills', ApiPipelineBackfillsHandler),
         (r'/api/backfills/(?P<id>\w+)', ApiBackfillHandler),
         (r'/api/backfills', ApiBackfillsHandler),

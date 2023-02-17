@@ -1,5 +1,6 @@
 import useWebSocket from 'react-use-websocket';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -113,7 +114,7 @@ function FileEditor({
       ),
     },
   );
-  const saveFile = (value: string, f: FileType) => {
+  const saveFile = useCallback((value: string, f: FileType) => {
     // @ts-ignore
     updateFile({
       file_content: {
@@ -121,7 +122,7 @@ function FileEditor({
         content: value,
       },
     }).then(() => {
-      const fileName = decodeURIComponent(filePath).split('/').pop()
+      const fileName = decodeURIComponent(filePath).split('/').pop();
       if (fileName === SpecialFileEnum.METADATA_YAML) {
         fetchVariables();
       }
@@ -134,7 +135,11 @@ function FileEditor({
       [f?.path]: false,
     }));
     setTouched(false);
-  };
+  }, [
+    fetchVariables,
+    filePath,
+    updateFile,
+  ]);
 
   const regex = useMemo(() => buildFileExtensionRegExp(), []);
 
