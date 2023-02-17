@@ -72,12 +72,14 @@ class JobManager():
 
     def create_job_object(self, command):
         # Configureate Pod template container
+        mage_server_container_spec = self.pod_config.spec.containers[0]
         container = client.V1Container(
             name='mage-job-container',
-            image='mageai/mageai',
+            image=mage_server_container_spec.image,
+            image_pull_policy='IfNotPresent',
             command=command.split(' ') if isinstance(command, str) else command,
-            env=self.pod_config.spec.containers[0].env,
-            volume_mounts=self.pod_config.spec.containers[0].volume_mounts,
+            env=mage_server_container_spec.env,
+            volume_mounts=mage_server_container_spec.volume_mounts,
         )
         # Create and configurate a spec section
         template = client.V1PodTemplateSpec(
