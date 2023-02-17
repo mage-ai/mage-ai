@@ -19,7 +19,7 @@ class LogResource(GenericResource):
         arr = []
         if type(parent_model) is BlockRun:
             arr = parent_model.logs
-        elif issubclass(parent_model, Pipeline):
+        elif issubclass(parent_model.__class__, Pipeline):
             arr = await self.__pipeline_logs(parent_model, query, meta)
 
         return self.build_result_set(
