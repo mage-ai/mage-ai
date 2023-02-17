@@ -143,6 +143,7 @@ class ApiProjectSettingsHandler(BaseHandler):
             dict(require_user_authentication=REQUIRE_USER_AUTHENTICATION),
         ]))
 
+
 def make_app():
     routes = [
         (r'/', MainPageHandler),
