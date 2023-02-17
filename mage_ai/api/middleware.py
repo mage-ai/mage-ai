@@ -1,7 +1,7 @@
 from json.decoder import JSONDecodeError
 from mage_ai.api.errors import ApiError
 from mage_ai.api.utils import authenticate_client_and_token
-from mage_ai.orchestration.db.models import Oauth2AccessToken, Oauth2Application
+from mage_ai.orchestration.db.models import Oauth2Application
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
 from mage_ai.server.api.constants import (
     ENDPOINTS_BYPASS_OAUTH_CHECK,
@@ -72,7 +72,10 @@ class OAuthMiddleware(RequestHandler):
             elif oauth_client.client_id != OAUTH2_APPLICATION_CLIENT_ID:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
             elif token_from_header:
-                oauth_token, valid = authenticate_client_and_token(oauth_client.id, token_from_header)
+                oauth_token, valid = authenticate_client_and_token(
+                    oauth_client.id,
+                    token_from_header,
+                )
 
                 if oauth_token:
                     if valid:
