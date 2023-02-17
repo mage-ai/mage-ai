@@ -30,6 +30,9 @@ DATAFRAME_PARQUET_FILE = 'data.parquet'
 DATAFRAME_PARQUET_SAMPLE_FILE = 'sample_data.parquet'
 DATAFRAME_CSV_FILE = 'data.csv'
 
+JSON_FILE = 'data.json'
+JSON_SAMPLE_FILE = 'sample_data.json'
+
 
 class VariableType(str, Enum):
     DATAFRAME = 'dataframe'
@@ -246,34 +249,64 @@ class Variable:
             self.storage.remove_dir(self.variable_path)
 
     def __read_json(self, default_value={}, sample: bool = False) -> Dict:
-        file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
-        data = self.storage.read_json_file(file_path, default_value)
+        # For backward compatibility
+        old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
+        file_path = os.path.join(self.variable_path, JSON_FILE)
+        sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
+
+        read_sample_success = False
+        if sample and os.path.exists(sample_file_path):
+            try:
+                data = self.storage.read_json_file(sample_file_path, default_value)
+                read_sample_success = True
+            except Exception:
+                pass
+        if not read_sample_success:
+            if os.path.exists(file_path):
+                data = self.storage.read_json_file(file_path, default_value)
+            else:
+                data = self.storage.read_json_file(old_file_path, default_value)
         if sample:
-            data = sample_output(data)
+            data = sample_output(data)[0]
         return data
 
     async def __read_json_async(self, default_value={}, sample: bool = False) -> Dict:
-        file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
-        data = await self.storage.read_json_file_async(file_path, default_value)
+        # For backward compatibility
+        old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
+        file_path = os.path.join(self.variable_path, JSON_FILE)
+        sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
+
+        read_sample_success = False
+        if sample and os.path.exists(sample_file_path):
+            try:
+                data = await self.storage.read_json_file_async(sample_file_path, default_value)
+                read_sample_success = True
+            except Exception:
+                pass
+        if not read_sample_success:
+            if os.path.exists(file_path):
+                data = await self.storage.read_json_file_async(file_path, default_value)
+            else:
+                data = await self.storage.read_json_file_async(old_file_path, default_value)
         if sample:
-            data = sample_output(data)
+            data = sample_output(data)[0]
         return data
 
     def __write_json(self, data) -> None:
-        if not self.storage.isdir(self.variable_dir_path):
-            self.storage.makedirs(self.variable_dir_path)
-        self.storage.write_json_file(
-            os.path.join(self.variable_dir_path, f'{self.uuid}.json'),
-            data,
-        )
+        if not self.storage.isdir(self.variable_path):
+            self.storage.makedirs(self.variable_path, exist_ok=True)
+        file_path = os.path.join(self.variable_path, JSON_FILE)
+        sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
+        self.storage.write_json_file(file_path, data)
+        self.storage.write_json_file(sample_file_path, sample_output(data)[0])
 
     async def __write_json_async(self, data) -> None:
-        if not self.storage.isdir(self.variable_dir_path):
-            self.storage.makedirs(self.variable_dir_path)
-        await self.storage.write_json_file_async(
-            os.path.join(self.variable_dir_path, f'{self.uuid}.json'),
-            data,
-        )
+        if not self.storage.isdir(self.variable_path):
+            self.storage.makedirs(self.variable_path, exist_ok=True)
+        file_path = os.path.join(self.variable_path, JSON_FILE)
+        sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
+        await self.storage.write_json_file_async(file_path, data)
+        await self.storage.write_json_file_async(sample_file_path, sample_output(data)[0])
 
     def __read_geo_dataframe(self, sample: bool = False, sample_count: int = None):
         import geopandas as gpd

@@ -105,7 +105,6 @@ from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
 from mage_ai.shared.hash import group_by, merge_dict
-from mage_ai.shared.parsers import sample_output
 from sqlalchemy.orm import aliased
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
