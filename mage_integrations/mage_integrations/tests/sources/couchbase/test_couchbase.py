@@ -5,7 +5,7 @@ from mage_integrations.sources.couchbase import Couchbase
 
 
 def sample_discover_results():
-    return [
+    return [[
         {
             "#docs": 1000,
             "$schema": "http://json-schema.org/draft-06/schema",
@@ -205,7 +205,7 @@ def sample_discover_results():
             },
             "type": "object",
         }
-    ]
+    ]]
 
 class CouchbaseSourceTests(unittest.TestCase):
     def test_discover(self):
