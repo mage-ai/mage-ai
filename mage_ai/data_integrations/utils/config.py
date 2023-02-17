@@ -20,7 +20,7 @@ def get_settings(block, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Di
 
 def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline' = None) -> Dict:
     settings = interpolate_variables_for_block_settings(absolute_file_path, variables)
-    settings_raw = interpolate_variables_for_block_settings(absolute_file_path, None)
+    settings_raw = load_yaml_file(absolute_file_path)
 
     config = settings_raw['config']
     patterns = config.get(KEY_PATTERNS, {})
@@ -116,6 +116,15 @@ def build_config_json(
     )
 
 
+def load_yaml(text: str):
+    return yaml.load(text, Loader=NoDatesSafeLoader)
+
+
+def load_yaml_file(absolute_file_path: str) -> Dict:
+    with open(absolute_file_path, 'r') as f:
+        return load_yaml(f.read())
+
+
 def interpolate_variables_for_block_settings(
     absolute_file_path: str,
     variables: Dict,
@@ -141,4 +150,4 @@ def interpolate_variables(
 ) -> Dict:
     settings_string = interpolate_string(text, variables)
 
-    return yaml.load(settings_string, Loader=NoDatesSafeLoader)
+    return load_yaml(settings_string)
