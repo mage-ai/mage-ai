@@ -6,6 +6,10 @@ def is_debug():
     return int(os.getenv('DEBUG', 0)) == 1
 
 
+def is_dev():
+    return os.getenv('ENV', None) == 'dev'
+
+
 def is_test():
     return os.getenv('ENV', None) == 'test' or any('unittest' in v for v in sys.argv)
 

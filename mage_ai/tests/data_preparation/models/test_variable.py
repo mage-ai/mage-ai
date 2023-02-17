@@ -95,6 +95,30 @@ class VariableTest(DBTestCase):
         variable.write_data(data)
         self.assertEqual(variable.read_data(), data)
 
+    def test_write_and_read_json(self):
+        pipeline = self.__create_pipeline('test pipeline 4')
+        variable = Variable(
+            'var1',
+            pipeline.dir_path,
+            'block1',
+        )
+        data = dict(
+            results=[100] * 100,
+        )
+        variable.write_data(data)
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path,
+            'pipelines/test_pipeline_4/.variables/block1/var1/data.json'
+        )))
+        self.assertTrue(os.path.exists(os.path.join(
+            self.repo_path,
+            'pipelines/test_pipeline_4/.variables/block1/var1/sample_data.json'
+        )))
+        self.assertEqual(variable.read_data(), data)
+        self.assertEqual(variable.read_data(sample=True), dict(
+            results=[100] * 20,
+        ))
+
     def __create_pipeline(self, name):
         pipeline = Pipeline.create(
             name,

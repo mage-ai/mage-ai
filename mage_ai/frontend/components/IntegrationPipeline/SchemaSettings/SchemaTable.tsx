@@ -183,9 +183,7 @@ function SchemaTable({
         },
       } = metadataByColumn[`properties/${columnName}`] || {};
       selectedArr.push(selected);
-      if (InclusionEnum.AUTOMATIC !== inclusion) {
-        selectableColumns.push(columnName);
-      }
+      selectableColumns.push(columnName);
 
       const columnTypeOptions = COLUMN_TYPES.reduce((acc, colType: ColumnTypeEnum) => {
         if (columnTypes.indexOf(colType) >= 0
@@ -207,16 +205,12 @@ function SchemaTable({
       const row = [
         <Checkbox
           checked={selected}
-          disabled={InclusionEnum.AUTOMATIC === inclusion}
           key={`${streamUUID}/${columnName}/selected`}
-          onClick={InclusionEnum.AUTOMATIC === inclusion
-            ? null
-            : () => {
-              updateMetadataForColumns(streamUUID, [columnName], {
-                selected: !selected,
-              });
-            }
-          }
+          onClick={() => {
+            updateMetadataForColumns(streamUUID, [columnName], {
+              selected: !selected,
+            });
+          }}
         />,
         <Text
           key={`${streamUUID}/${columnName}/name`}

@@ -5,7 +5,7 @@ from mage_ai.orchestration.constants import (
     DB_PASS,
     DB_USER
 )
-from mage_ai.shared.environments import is_test
+from mage_ai.shared.environments import is_dev, is_test
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import logging
@@ -87,4 +87,6 @@ def safe_db_query(func):
 
 
 logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
+if is_dev():
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
