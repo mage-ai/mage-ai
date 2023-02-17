@@ -32,6 +32,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [], scopes=[
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
+    constants.CREATE,
     constants.DELETE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
