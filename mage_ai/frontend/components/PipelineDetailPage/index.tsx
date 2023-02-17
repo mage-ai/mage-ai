@@ -10,7 +10,6 @@ import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import Spacing from '@oracle/elements/Spacing';
@@ -22,7 +21,6 @@ import {
   BlocksSeparated,
   BlocksStacked,
   Chart,
-  Edit,
   Schedule,
   TodoList,
 } from '@oracle/icons';
@@ -30,7 +28,6 @@ import { BannerStyle } from './index.style';
 import { BreadcrumbType, MenuItemType } from '@components/shared/Header';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PageNameEnum } from './constants';
-import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import {
   PADDING_UNITS,
   UNIT,
