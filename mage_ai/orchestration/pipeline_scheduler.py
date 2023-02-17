@@ -23,7 +23,6 @@ from mage_ai.orchestration.db.models import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.job_manager import JobType, job_manager
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
@@ -74,6 +73,7 @@ class PipelineScheduler:
 
         # Cancel all the block runs
         block_runs_to_cancel = []
+        running_blocks = []
         for b in self.pipeline_run.block_runs:
             if b.status in [
                 BlockRun.BlockRunStatus.INITIAL,
@@ -81,14 +81,18 @@ class PipelineScheduler:
                 BlockRun.BlockRunStatus.RUNNING,
             ]:
                 block_runs_to_cancel.append(b)
+            if b.status == BlockRun.BlockRunStatus.RUNNING:
+                running_blocks.append(b)
         BlockRun.batch_update_status(
             [b.id for b in block_runs_to_cancel],
             BlockRun.BlockRunStatus.CANCELLED,
         )
 
-        if PipelineType.INTEGRATION == self.pipeline.type:
+        if self.pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
             job_manager.kill_pipeline_run_job(self.pipeline_run.id)
-            execution_process_manager.clean_up_processes()
+        else:
+            for b in running_blocks:
+                job_manager.kill_block_run_job(b.id)
 
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
         self.__run_heartbeat()
@@ -235,7 +239,6 @@ class PipelineScheduler:
         if PipelineType.INTEGRATION == self.pipeline.type:
             # If a block/stream fails, stop all other streams
             job_manager.kill_pipeline_run_job(self.pipeline_run.id)
-            execution_process_manager.clean_up_processes()
 
             self.logger.info(
                 f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
@@ -800,7 +803,7 @@ def schedule_all():
             print(f'Failed to schedule {r}')
             traceback.print_exc()
             continue
-    execution_process_manager.clean_up_processes()
+    job_manager.clean_up_jobs()
 
 
 def schedule_with_event(event: Dict = dict()):

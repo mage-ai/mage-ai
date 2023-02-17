@@ -4,6 +4,10 @@ from typing import Callable
 
 class Queue(ABC):
     @abstractmethod
+    def clean_up_jobs(self):
+        pass
+
+    @abstractmethod
     def enqueue(self, job_id: str, target: Callable, *args, **kwargs):
         pass
 

@@ -16,6 +16,9 @@ class CeleryQueue(Queue):
         # )
         pass
 
+    def clean_up_jobs(self):
+        pass
+
     def enqueue(self, job_id: str, target: Callable, *args, **kwargs):
         pass
 

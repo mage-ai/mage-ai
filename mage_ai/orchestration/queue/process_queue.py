@@ -3,7 +3,7 @@ from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
 from multiprocessing import Manager
-from typing import Callable
+from typing import Callable, List
 import multiprocessing as mp
 import os
 import signal
@@ -12,7 +12,7 @@ import time
 
 class JobStatus(str, Enum):
     QUEUED = 'queued'
-    RUNNING = 'running'
+    RUNNING = 'running'  # Not used. The value for RUNNING job is process id.
     COMPLETED = 'completed'
     CANCELLED = 'cancelled'
 
@@ -27,6 +27,12 @@ class ProcessQueue(Queue):
 
         self.worker_pool_proc = None
 
+    def clean_up_jobs(self):
+        job_ids = self.job_dict.keys()
+        for job_id in job_ids:
+            if job_id in self.job_dict and not self.has_job(job_id):
+                del self.job_dict[job_id]
+
     def enqueue(self, job_id: str, target: Callable, *args, **kwargs):
         self._print(f'Enqueue job {job_id}')
         self.queue.put([job_id, target, args, kwargs])
@@ -36,9 +42,10 @@ class ProcessQueue(Queue):
 
     def has_job(self, job_id: str):
         job = self.job_dict.get(job_id)
-        return job == JobStatus.QUEUED or isinstance(job, mp.Process)
+        return job is not None and (job == JobStatus.QUEUED or isinstance(job, int))
 
     def kill_job(self, job_id: str):
+        print(f'Kill job {job_id}, job_dict {self.job_dict}')
         job = self.job_dict.get(job_id)
         if not job:
             return

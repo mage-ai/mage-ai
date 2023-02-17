@@ -1,5 +1,5 @@
 from mage_ai.orchestration.queue.queue_factory import QueueFactory
-from typing import Callable, List, Union
+from typing import Callable, Union
 from enum import Enum
 
 
@@ -24,8 +24,8 @@ class JobManager:
 
         self.queue.enqueue(job_id, target, *args, **kwargs)
 
-    def delete_jobs(self, job_uuids: List[str]):
-        pass
+    def clean_up_jobs(self):
+        self.queue.clean_up_jobs()
 
     def has_block_run_job(self, block_run_id):
         job_id = self.__job_id(JobType.BLOCK_RUN, block_run_id)
@@ -35,7 +35,13 @@ class JobManager:
         job_id = self.__job_id(JobType.PIPELINE_RUN, pipeline_run_id)
         return self.queue.has_job(job_id)
 
+    def kill_block_run_job(self, block_run_id):
+        print(f'Kill block run id: {block_run_id}')
+        job_id = self.__job_id(JobType.BLOCK_RUN, block_run_id)
+        return self.queue.kill_job(job_id)
+
     def kill_pipeline_run_job(self, pipeline_run_id):
+        print(f'Kill pipeline run id: {pipeline_run_id}')
         job_id = self.__job_id(JobType.PIPELINE_RUN, pipeline_run_id)
         return self.queue.kill_job(job_id)
 
