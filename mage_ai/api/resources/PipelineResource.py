@@ -120,12 +120,14 @@ class PipelineResource(GenericResource):
 
         status = payload.get('status')
 
+        pipeline_uuid = self.model.uuid
+
         def _update_callback(resource):
             if status and status in [
                 PipelineSchedule.ScheduleStatus.ACTIVE.value,
                 PipelineSchedule.ScheduleStatus.INACTIVE.value,
             ]:
-                update_schedule_status(status, resource.uuid)
+                update_schedule_status(status, pipeline_uuid)
 
         self.on_update_callback = _update_callback
 
