@@ -48,11 +48,13 @@ export function queryString(query: object = {}) {
 }
 
 export const redirectToUrl = (url: string, server?: ServerResponse) => {
-  if (server && typeof server?.writeHead === 'function') {
-    server.writeHead(302, {
-      Location: url,
-    });
-    server.end();
+  if (server) {
+    if (typeof server?.writeHead === 'function') {
+      server.writeHead(302, {
+        Location: url,
+      });
+      server.end();
+    }
   } else {
     Router.push(url);
   }
