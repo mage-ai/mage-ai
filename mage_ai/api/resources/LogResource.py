@@ -16,6 +16,7 @@ class LogResource(GenericResource):
     async def collection(self, query, meta, user, **kwargs):
         parent_model = kwargs['parent_model']
 
+        arr = []
         if type(parent_model) is BlockRun:
             arr = parent_model.logs
         elif type(parent_model) is Pipeline:
