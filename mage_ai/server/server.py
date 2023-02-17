@@ -28,10 +28,6 @@ from mage_ai.server.api.events import (
     ApiEventMatcherDetailHandler,
     ApiEventMatcherListHandler,
 )
-from mage_ai.server.api.secrets import (
-    ApiSecretsListHandler,
-    ApiSecretsDetailHandler,
-)
 from mage_ai.server.api.triggers import ApiTriggerPipelineHandler
 from mage_ai.server.api.v1 import (
     ApiChildDetailHandler,
@@ -211,9 +207,6 @@ def make_app():
         (r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler),
 
         # API v1 routes
-        (r'/api/secrets', ApiSecretsListHandler),
-        (r'/api/secrets/(?P<name>\w+)', ApiSecretsDetailHandler),
-
         (
             r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)/(?P<child_pk>\w+)',
             ApiChildDetailHandler,
