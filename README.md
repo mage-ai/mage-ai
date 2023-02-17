@@ -72,6 +72,12 @@
   >
     <img alt="Docker pulls" src="https://img.shields.io/docker/pulls/mageai/mageai.svg">
   </a>
+  <a
+    href="https://pepy.tech/project/mage-ai"
+    target="_blank"
+  >
+    <img alt="pip installs" src="https://static.pepy.tech/personalized-badge/mage-ai?period=total&units=international_system&left_color=grey&right_color=purple&left_text=pip%20installs">
+  </a>
 </div>
 <img
   referrerpolicy="no-referrer-when-downgrade"
