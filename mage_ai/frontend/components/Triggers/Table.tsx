@@ -161,10 +161,7 @@ function TriggersTable({
             columnFlex={columnFlex}
             columns={columns}
             isSelectedRow={(rowIndex: number) => pipelineSchedules[rowIndex].id === selectedSchedule?.id}
-            onClickRow={setSelectedSchedule
-              ? (rowIndex: number) => setSelectedSchedule?.(pipelineSchedules[rowIndex])
-              : null
-            }
+            onClickRow={(rowIndex: number) => setSelectedSchedule?.(pipelineSchedules[rowIndex])}
             rows={pipelineSchedules.map((
               pipelineSchedule: PipelineScheduleType,
               idx: number,
