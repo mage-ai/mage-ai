@@ -2,19 +2,14 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import Dashboard from '@components/Dashboard';
-import FlexContainer from '@oracle/components/FlexContainer';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
 import {
   PipelineScheduleReqQueryParamsType,
 } from '@interfaces/PipelineScheduleType';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl, queryString } from '@utils/url';
 
 function TriggerListPage() {
@@ -26,7 +21,6 @@ function TriggerListPage() {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
   };
-  const pipelineUUIDFromQuery = q?.pipeline_uuid;
 
   const {
     data: dataPipelineSchedules,
@@ -34,42 +28,18 @@ function TriggerListPage() {
   } = api.pipeline_schedules.list(
     pipelineSchedulesRequestQuery,
     {
-      refreshInterval: pipelineUUIDFromQuery ? 0 : 7500,
+      refreshInterval: 7500,
       revalidateOnFocus: true,
     },
   );
-  const {
-    data: dataPipelineSchedulesByPipeline,
-    mutate: fetchPipelineSchedulesByPipeline,
-  } = api.pipeline_schedules.pipelines.list(
-    pipelineUUIDFromQuery,
-    pipelineSchedulesRequestQuery,
-    { refreshInterval: pipelineUUIDFromQuery ? 7500 : 0 },
-  );
-  console.log('dataPipelineSchedulesByPipeline:', dataPipelineSchedulesByPipeline);
 
-  const allPipelineSchedules = useMemo(
+  const pipelineSchedules = useMemo(
     () => dataPipelineSchedules?.pipeline_schedules || [],
     [dataPipelineSchedules],
   );
-  const pipelineSchedules = useMemo(
-    () => (pipelineUUIDFromQuery
-      ? dataPipelineSchedulesByPipeline?.pipeline_schedules || []
-      : allPipelineSchedules
-    ),
-    [allPipelineSchedules, dataPipelineSchedulesByPipeline, pipelineUUIDFromQuery],
-  );
   const totalSchedules = useMemo(
-    () => (pipelineUUIDFromQuery
-      ? dataPipelineSchedulesByPipeline?.total_count || []
-      : dataPipelineSchedules?.total_count || []
-    ),
-    [dataPipelineSchedules, dataPipelineSchedulesByPipeline, pipelineUUIDFromQuery],
-  );
-  console.log('allPipelineSchedules:', allPipelineSchedules);
-  const pipelineUUIDsSet: Set<string> = useMemo(() =>
-    new Set(allPipelineSchedules.map(({ pipeline_uuid }) => pipeline_uuid)),
-    [allPipelineSchedules, dataPipelineSchedules],
+    () => dataPipelineSchedules?.total_count || [],
+    [dataPipelineSchedules],
   );
 
   return (
@@ -77,50 +47,9 @@ function TriggerListPage() {
       title="Triggers"
       uuid="triggers/index"
     >
-      <Spacing mx={2} my={1}>
-        <FlexContainer alignItems="center">
-          <Text bold default large>Filter runs by pipeline:</Text>
-          <Spacing mr={1} />
-          <Select
-            compact
-            defaultColor
-            fitContent
-            onChange={e => {
-              e.preventDefault();
-              const updatedPipeline = e.target.value;
-              if (updatedPipeline === '_all_') {
-                router.push('/triggers');
-              } else {
-                goToWithQuery(
-                  {
-                    page: 0,
-                    pipeline_uuid: e.target.value,
-                  },
-                );
-              }
-            }}
-            paddingRight={UNIT * 4}
-            placeholder="Select pipeline"
-            value={pipelineUUIDFromQuery || '_all_'}
-          >
-            <option key="all_pipelines" value="_all_">
-              All pipelines
-            </option>
-            {Array.from(pipelineUUIDsSet).map(pipelineUUID => (
-              <option key={pipelineUUID} value={pipelineUUID}>
-                {pipelineUUID}
-              </option>
-            ))}
-          </Select>
-        </FlexContainer>
-      </Spacing>
-
       <TriggersTable
         confirmDialogueTopOffset={50}
-        fetchPipelineSchedules={pipelineUUIDFromQuery
-          ? fetchPipelineSchedulesByPipeline
-          : fetchPipelineSchedules
-        }
+        fetchPipelineSchedules={fetchPipelineSchedules}
         includeCreatedAtColumn
         includePipelineColumn
         pipelineSchedules={pipelineSchedules}
