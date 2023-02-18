@@ -31,6 +31,11 @@ export interface SelectedScheduleType {
   scheduleName?: string;
 }
 
+export interface PipelineScheduleReqQueryParamsType {
+  _limit?: number;
+  _offset?: number;
+}
+
 export default interface PipelineScheduleType {
   created_at?: string;
   event_matchers?: EventMatcherType[];

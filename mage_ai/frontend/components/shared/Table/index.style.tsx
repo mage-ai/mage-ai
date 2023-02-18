@@ -1,7 +1,25 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
+
+export const TableContainerStyle = styled.div<{
+  minHeight?: number;
+  overflowVisible?: boolean;
+}>`
+  position: relative;
+  overflow: auto;
+  ${ScrollbarStyledCss}
+
+  ${props => props.minHeight && `
+    min-height: ${props.minHeight}px;
+  `}
+
+  ${props => props.overflowVisible && `
+    overflow: visible;
+  `}
+`;
 
 export const TableStyle = styled.table<{
   borderCollapseSeparate?: boolean;
@@ -82,7 +100,7 @@ export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
   ${props => props.sticky && `
     background-color: ${(props.theme || dark).background.panel};
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
-    z-index: 1;
+    z-index: 2;
     position: sticky;
     top: 0;
 
