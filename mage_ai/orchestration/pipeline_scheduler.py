@@ -23,8 +23,7 @@ from mage_ai.orchestration.db.models import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.db.process import create_process
-from mage_ai.orchestration.execution_process_manager import execution_process_manager
+from mage_ai.orchestration.job_manager import JobType, job_manager
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -74,6 +73,7 @@ class PipelineScheduler:
 
         # Cancel all the block runs
         block_runs_to_cancel = []
+        running_blocks = []
         for b in self.pipeline_run.block_runs:
             if b.status in [
                 BlockRun.BlockRunStatus.INITIAL,
@@ -81,14 +81,18 @@ class PipelineScheduler:
                 BlockRun.BlockRunStatus.RUNNING,
             ]:
                 block_runs_to_cancel.append(b)
+            if b.status == BlockRun.BlockRunStatus.RUNNING:
+                running_blocks.append(b)
         BlockRun.batch_update_status(
             [b.id for b in block_runs_to_cancel],
             BlockRun.BlockRunStatus.CANCELLED,
         )
 
-        if PipelineType.INTEGRATION == self.pipeline.type:
-            execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
-            execution_process_manager.clean_up_processes()
+        if self.pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
+            job_manager.kill_pipeline_run_job(self.pipeline_run.id)
+        else:
+            for b in running_blocks:
+                job_manager.kill_block_run_job(b.id)
 
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
         self.__run_heartbeat()
@@ -234,8 +238,7 @@ class PipelineScheduler:
 
         if PipelineType.INTEGRATION == self.pipeline.type:
             # If a block/stream fails, stop all other streams
-            execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
-            execution_process_manager.clean_up_processes()
+            job_manager.kill_pipeline_run_job(self.pipeline_run.id)
 
             self.logger.info(
                 f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
@@ -309,7 +312,6 @@ class PipelineScheduler:
         return queued_block_runs
 
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
-        # TODO: implement queueing logic
         block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
         block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
@@ -321,24 +323,22 @@ class PipelineScheduler:
 
             b.update(
                 started_at=datetime.now(),
-                status=BlockRun.BlockRunStatus.RUNNING,
+                status=BlockRun.BlockRunStatus.QUEUED,
             )
 
-            self.logger.info(
-                f'Start a process for BlockRun {b.id}',
-                **self.__build_tags(**tags),
-            )
-            proc = create_process(run_block, (
+            job_manager.add_job(
+                JobType.BLOCK_RUN,
+                b.id,
+                run_block,
+                # args
                 self.pipeline_run.id,
                 b.id,
                 get_variables(self.pipeline_run),
                 self.__build_tags(**tags),
-            ))
-            execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
-            proc.start()
+            )
 
     def __schedule_integration_pipeline(self, block_runs: List[BlockRun] = None) -> None:
-        if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
+        if job_manager.has_pipeline_run_job(self.pipeline_run.id):
             return
 
         block_runs_to_schedule = self.executable_block_runs if block_runs is None else block_runs
@@ -350,31 +350,35 @@ class PipelineScheduler:
                 **self.__build_tags(),
             )
 
-            proc = create_process(target=run_integration_pipeline, args=(
+            job_manager.add_job(
+                JobType.PIPELINE_RUN,
+                self.pipeline_run.id,
+                run_integration_pipeline,
+                # args
                 self.pipeline_run.id,
                 [b.id for b in block_runs_to_schedule],
                 get_variables(self.pipeline_run, dict(
                     pipeline_uuid=self.pipeline.uuid,
                 )),
                 self.__build_tags(),
-            ))
-            execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
-            proc.start()
+            )
 
     def __schedule_pipeline(self) -> None:
-        if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
+        if job_manager.has_pipeline_run_job(self.pipeline_run.id):
             return
         self.logger.info(
             f'Start a process for PipelineRun {self.pipeline_run.id}',
             **self.__build_tags(),
         )
-        proc = create_process(run_pipeline, (
+        job_manager.add_job(
+            JobType.PIPELINE_RUN,
+            self.pipeline_run.id,
+            run_pipeline,
+            # args
             self.pipeline_run.id,
             get_variables(self.pipeline_run),
             self.__build_tags(),
-        ))
-        execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
-        proc.start()
+        )
 
     def __fetch_crashed_block_runs(self) -> None:
         running_block_runs = [b for b in self.pipeline_run.block_runs if b.status in [
@@ -383,7 +387,7 @@ class PipelineScheduler:
 
         crashed_runs = []
         for br in running_block_runs:
-            if not execution_process_manager.has_block_process(self.pipeline_run.id, br.id):
+            if not job_manager.has_block_run_job(br.id):
                 br.update(status=BlockRun.BlockRunStatus.INITIAL)
                 crashed_runs.append(br)
 
@@ -570,7 +574,7 @@ def run_integration_pipeline(
                     **tags_updated,
                 )
 
-                output = run_block(
+                run_block(
                     pipeline_run_id,
                     block_run.id,
                     variables,
@@ -581,12 +585,6 @@ def run_integration_pipeline(
                     schedule_after_complete=False,
                     template_runtime_configuration=template_runtime_configuration,
                 )
-                if isinstance(output, dict) and output.get('output') and len(output['output']) >= 1:
-                    execution_process_manager.set_block_process(
-                        pipeline_run_id,
-                        block_run.id,
-                        output['output'][0],
-                    )
 
                 if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
                    f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
@@ -622,11 +620,19 @@ def run_block(
     template_runtime_configuration: Dict = None,
 ) -> Any:
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
+    if pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
+        return {}
+
     pipeline_scheduler = PipelineScheduler(pipeline_run)
 
     pipeline = pipeline_scheduler.pipeline
 
     block_run = BlockRun.query.get(block_run_id)
+    block_run.update(
+        started_at=datetime.now(),
+        status=BlockRun.BlockRunStatus.RUNNING,
+    )
+
     pipeline_scheduler.logger.info(
         f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
         f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
@@ -797,7 +803,7 @@ def schedule_all():
             print(f'Failed to schedule {r}')
             traceback.print_exc()
             continue
-    execution_process_manager.clean_up_processes()
+    job_manager.clean_up_jobs()
 
 
 def schedule_with_event(event: Dict = dict()):
