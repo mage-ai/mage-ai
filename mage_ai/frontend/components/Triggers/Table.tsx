@@ -34,6 +34,8 @@ import { useWindowSize } from '@utils/sizes';
 type TriggersTableProps = {
   confirmDialogueTopOffset?: number;
   fetchPipelineSchedules: () => void;
+  includeCreatedAtColumn?: boolean;
+  includePipelineColumn?: boolean;
   pipeline?: PipelineType;
   pipelineSchedules: PipelineScheduleType[];
   selectedSchedule?: PipelineScheduleType;
@@ -44,6 +46,8 @@ type TriggersTableProps = {
 function TriggersTable({
   confirmDialogueTopOffset = 0,
   fetchPipelineSchedules,
+  includeCreatedAtColumn,
+  includePipelineColumn,
   pipeline,
   pipelineSchedules,
   selectedSchedule,
@@ -100,6 +104,49 @@ function TriggersTable({
     },
   );
 
+  const columns = [
+    {
+      label: () => '',
+      uuid: 'action',
+    },
+    {
+      uuid: 'Status',
+    },
+    {
+      uuid: 'Type',
+    },
+    {
+      uuid: 'Name',
+    },
+    {
+      uuid: 'Frequency',
+    },
+    {
+      uuid: 'Runs',
+    },
+    {
+      uuid: 'Latest run status',
+    },
+    {
+      uuid: 'Logs',
+    },
+    {
+      label: () => '',
+      uuid: 'edit/delete',
+    },
+  ];
+
+  const columnFlex = [null, 1, 1, 3, 1, null, null, null, null];
+
+  if (includePipelineColumn) {
+    columns.splice(2, 0, { uuid: 'Pipeline' });
+    columnFlex.splice(2, 0, 2);
+  }
+  if (includeCreatedAtColumn) {
+    columns.splice(3, 0, { uuid: 'Created at' });
+    columnFlex.splice(3, 0, null);
+  }
+
   return (
     <TableContainerStyle overflowVisible>
       {pipelineSchedules.length === 0
@@ -111,38 +158,8 @@ function TriggersTable({
           </Spacing>
         :
           <Table
-            columnFlex={[null, 1, 1, 3, 1, null, null, null]}
-            columns={[
-              {
-                label: () => '',
-                uuid: 'action',
-              },
-              {
-                uuid: 'Status',
-              },
-              {
-                uuid: 'Type',
-              },
-              {
-                uuid: 'Name',
-              },
-              {
-                uuid: 'Frequency',
-              },
-              {
-                uuid: 'Runs',
-              },
-              {
-                uuid: 'Latest run status',
-              },
-              {
-                uuid: 'Logs',
-              },
-              {
-                label: () => '',
-                uuid: 'edit/delete',
-              },
-            ]}
+            columnFlex={columnFlex}
+            columns={columns}
             isSelectedRow={(rowIndex: number) => pipelineSchedules[rowIndex].id === selectedSchedule?.id}
             onClickRow={setSelectedSchedule
               ? (rowIndex: number) => setSelectedSchedule?.(pipelineSchedules[rowIndex])
@@ -154,6 +171,7 @@ function TriggersTable({
             ) => {
               const {
                 id,
+                created_at: createdAt,
                 pipeline_runs_count: pipelineRunsCount,
                 pipeline_uuid: triggerPipelineUUID,
                 last_pipeline_run_status: lastPipelineRunStatus,
@@ -163,7 +181,7 @@ function TriggersTable({
               } = pipelineSchedule;
               const finalPipelineUUID = pipelineUUID || triggerPipelineUUID;
 
-              return [
+              const rows = [
                 <Button
                   iconOnly
                   key={`toggle_trigger_${idx}`}
@@ -279,6 +297,35 @@ function TriggersTable({
                   </ClickOutside>
                 </FlexContainer>,
               ];
+
+              if (includePipelineColumn) {
+                rows.splice(
+                  2,
+                  0,
+                  <Text
+                    default
+                    key={`pipeline_name_${idx}`}
+                    monospace
+                  >
+                    {finalPipelineUUID}
+                  </Text>,
+                );
+              }
+              if (includeCreatedAtColumn) {
+                rows.splice(
+                  3,
+                  0,
+                  <Text
+                    default
+                    key={`created_at_${idx}`}
+                    monospace
+                  >
+                    {createdAt}
+                  </Text>,
+                );
+              }
+
+              return rows;
             })}
             stickyHeader={stickyHeader}
             uuid="pipeline-triggers"

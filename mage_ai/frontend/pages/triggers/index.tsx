@@ -66,9 +66,10 @@ function TriggerListPage() {
     ),
     [dataPipelineSchedules, dataPipelineSchedulesByPipeline, pipelineUUIDFromQuery],
   );
+  console.log('allPipelineSchedules:', allPipelineSchedules);
   const pipelineUUIDsSet: Set<string> = useMemo(() =>
     new Set(allPipelineSchedules.map(({ pipeline_uuid }) => pipeline_uuid)),
-    [allPipelineSchedules],
+    [allPipelineSchedules, dataPipelineSchedules],
   );
 
   return (
@@ -113,15 +114,19 @@ function TriggerListPage() {
           </Select>
         </FlexContainer>
       </Spacing>
+
       <TriggersTable
         confirmDialogueTopOffset={50}
         fetchPipelineSchedules={pipelineUUIDFromQuery
           ? fetchPipelineSchedulesByPipeline
           : fetchPipelineSchedules
         }
+        includeCreatedAtColumn
+        includePipelineColumn
         pipelineSchedules={pipelineSchedules}
         stickyHeader
       />
+
       <Spacing p={2}>
         <Paginate
           maxPages={9}
