@@ -3,7 +3,7 @@ from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
 from multiprocessing import Manager
-from typing import Callable, List
+from typing import Callable
 import multiprocessing as mp
 import os
 import signal
