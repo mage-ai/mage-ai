@@ -237,9 +237,11 @@ class Variable:
                 self.storage.remove(file_path)
 
     def __delete_json(self) -> None:
-        file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
-        if self.storage.path_exists(file_path):
-            self.storage.remove(file_path)
+        old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
+        if self.storage.path_exists(old_file_path):
+            self.storage.remove(old_file_path)
+        if self.storage.isdir(self.variable_path):
+            self.storage.remove_dir(self.variable_path)
 
     def __delete_parquet(self) -> None:
         file_path = os.path.join(self.variable_path, DATAFRAME_PARQUET_FILE)
