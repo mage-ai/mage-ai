@@ -120,7 +120,7 @@ def convert_converted_type_to_parameter_type(converted_type):
 
 
 def convert_json_or_string(value, column_type_dict):
-    value = value.replace('\n', '\\n')
+    value = value.replace('\n', '\\n').encode('utf-16', 'surrogatepass').decode('utf-16')
 
     column_type = column_type_dict['type']
     if COLUMN_TYPE_OBJECT == column_type:
