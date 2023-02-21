@@ -1,5 +1,6 @@
 Faker==4.14.0
 Jinja2==3.1.2
+PyJWT==2.6.0
 aiofiles==22.1.0
 alembic>=1.7.5
 bcrypt==4.0.1
