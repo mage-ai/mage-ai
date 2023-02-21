@@ -58,6 +58,7 @@ function TriggersTable({
   const deleteButtonRefs = useRef({});
   const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<string>(null);
   const [confirmDialogueTopOffset, setConfirmDialogueTopOffset] = useState<number>(0);
+  const [confirmDialogueLeftOffset, setConfirmDialogueLeftOffset] = useState<number>(0);
 
   const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -279,6 +280,7 @@ function TriggersTable({
                     onClick={() => {
                       setDeleteConfirmationOpenIdx(id);
                       setConfirmDialogueTopOffset(deleteButtonRefs.current[id]?.current?.offsetTop || 0);
+                      setConfirmDialogueLeftOffset(deleteButtonRefs.current[id]?.current?.offsetLeft || 0);
                     }}
                     ref={deleteButtonRefs.current[id]}
                     title="Delete"
@@ -291,12 +293,12 @@ function TriggersTable({
                   >
                     <PopupMenu
                       danger
+                      left={(confirmDialogueLeftOffset || 0) - 286}
                       onCancel={() => setDeleteConfirmationOpenIdx(null)}
                       onClick={() => {
                         setDeleteConfirmationOpenIdx(null);
                         deletePipelineTrigger(id);
                       }}
-                      right={UNIT * 2}
                       title={`Are you sure you want to delete the trigger ${name}?`}
                       top={(confirmDialogueTopOffset || 0) - (idx <= 1 ? 40 : 96)}
                       width={UNIT * 40}
