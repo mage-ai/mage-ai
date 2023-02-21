@@ -96,3 +96,8 @@ def convert_python_type_to_trino_type(python_type):
     elif python_type is datetime:
         return 'TIMESTAMP'
     return 'VARCHAR'
+
+
+def is_spark_env():
+    import importlib
+    return importlib.util.find_spec('pyspark') is not None
