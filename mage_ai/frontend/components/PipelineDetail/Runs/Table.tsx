@@ -276,6 +276,7 @@ function PipelineRunsTable({
             columns={columns}
             isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
             onClickRow={onClickRow}
+            rowVerticalPadding={6}
             rows={pipelineRuns.map((pipelineRun, index) => {
               const {
                 block_runs_count: blockRunsCount,

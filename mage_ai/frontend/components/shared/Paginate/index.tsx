@@ -14,7 +14,7 @@ type PaginateProps = {
   totalPages: number;
 };
 
-export const ROW_LIMIT = 20;
+export const ROW_LIMIT = 22;
 
 function Paginate({
   page,
