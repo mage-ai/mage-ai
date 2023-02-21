@@ -16,7 +16,7 @@ def replace_single_quotes_with_double(v: str) -> str:
     if type(v) is dict:
         v = json.dumps(v)
     # Remove emoji code
-    v = re.sub(r'(\\ud83d\\ude[0-4][0-f])|(\\ud83c\\udf[0-f][0-f])|(\\ud83d\\u[0-d][-d][0-f][0-f]])|(\\ud83d\\ude[8-f][0-f])|(\\ud83c\\udd[e-f][0-f])', '', v)
+    v = re.sub(r'(\\ud83d\\ude[0-4][0-f])|(\\ud83c\\udf[0-f][0-f])|(\\ud83d\\u[0-d][-d][0-f][0-f]])|(\\ud83d\\ude[8-f][0-f])|(\\ud83c\\udd[e-f][0-f])|(\\ud83e\\udd[1-f][0-f])', '', v)
     return v.replace("'", '"')
 
 
