@@ -38,7 +38,7 @@ function TriggerListPage() {
     [dataPipelineSchedules],
   );
   const totalSchedules = useMemo(
-    () => dataPipelineSchedules?.total_count || [],
+    () => dataPipelineSchedules?.metadata?.count || [],
     [dataPipelineSchedules],
   );
 
