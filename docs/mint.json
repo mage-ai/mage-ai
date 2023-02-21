@@ -202,6 +202,7 @@
             "developing-in-the-cloud/cloud-dev-environments/kubernetes"
           ]
         },
+        "development/text-editor",
         "development/troubleshooting"
       ]
     },
