@@ -29,7 +29,12 @@ class PipelineScheduleResource(DatabaseResource):
                 order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
             )
 
-        return PipelineSchedule.query.all()
+        query = PipelineSchedule.query
+        order_by = query_arg.get('order_by', [None])
+        if order_by[0] == 'created_at':
+            query = query.order_by(PipelineSchedule.created_at.desc())
+
+        return query.all()
 
     @classmethod
     def create(self, payload, user, **kwargs):

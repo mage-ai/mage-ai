@@ -9,6 +9,7 @@ import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
 import {
   PipelineScheduleReqQueryParamsType,
+  SortQueryParamEnum,
 } from '@interfaces/PipelineScheduleType';
 import { queryFromUrl, queryString } from '@utils/url';
 
@@ -20,6 +21,7 @@ function TriggerListPage() {
   const pipelineSchedulesRequestQuery: PipelineScheduleReqQueryParamsType = {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
+    order_by: SortQueryParamEnum.CREATED_AT,
   };
 
   const {

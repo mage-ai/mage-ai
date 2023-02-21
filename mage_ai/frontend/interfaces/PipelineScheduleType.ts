@@ -31,9 +31,14 @@ export interface SelectedScheduleType {
   scheduleName?: string;
 }
 
+export enum SortQueryParamEnum {
+  CREATED_AT = 'created_at',
+}
+
 export interface PipelineScheduleReqQueryParamsType {
   _limit?: number;
   _offset?: number;
+  order_by?: SortQueryParamEnum;
 }
 
 export default interface PipelineScheduleType {
