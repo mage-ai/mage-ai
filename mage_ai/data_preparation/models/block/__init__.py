@@ -38,7 +38,10 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
-from mage_ai.shared.utils import clean_name as clean_name_orig
+from mage_ai.shared.utils import (
+    clean_name as clean_name_orig,
+    is_spark_env,
+)
 from queue import Queue
 from typing import Any, Callable, Dict, List, Set
 import asyncio
@@ -578,6 +581,8 @@ class Block:
                         f'Please run upstream blocks {upstream_block_uuids} '
                         'before running the current block.'
                     )
+            global_vars = self.__enrich_global_vars(global_vars)
+
             output = self.execute_block(
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
@@ -870,7 +875,7 @@ class Block:
                 outputs = self.execute_block_function(
                     block_function,
                     input_vars,
-                    self.__enrich_global_vars(global_vars),
+                    global_vars,
                     test_execution,
                 )
 
@@ -1540,11 +1545,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return variable_mapping
 
     def __enrich_global_vars(self, global_vars: Dict = None):
-        if self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS:
+        if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
+                is_spark_env()):
             global_vars = global_vars or dict()
             if not global_vars.get('spark'):
-                from pyspark.sql import SparkSession
-                global_vars['spark'] = SparkSession.builder.getOrCreate()
+                try:
+                    from pyspark.sql import SparkSession
+                    global_vars['spark'] = SparkSession.builder.getOrCreate()
+                except Exception:
+                    pass
         return global_vars
 
     def __store_variables_prepare(

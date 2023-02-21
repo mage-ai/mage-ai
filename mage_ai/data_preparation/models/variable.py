@@ -257,14 +257,14 @@ class Variable:
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
 
         read_sample_success = False
-        if sample and os.path.exists(sample_file_path):
+        if sample and self.storage.path_exists(sample_file_path):
             try:
                 data = self.storage.read_json_file(sample_file_path, default_value)
                 read_sample_success = True
             except Exception:
                 pass
         if not read_sample_success:
-            if os.path.exists(file_path):
+            if self.storage.path_exists(file_path):
                 data = self.storage.read_json_file(file_path, default_value)
             else:
                 data = self.storage.read_json_file(old_file_path, default_value)
@@ -279,14 +279,14 @@ class Variable:
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
 
         read_sample_success = False
-        if sample and os.path.exists(sample_file_path):
+        if sample and self.storage.path_exists(sample_file_path):
             try:
                 data = await self.storage.read_json_file_async(sample_file_path, default_value)
                 read_sample_success = True
             except Exception:
                 pass
         if not read_sample_success:
-            if os.path.exists(file_path):
+            if self.storage.path_exists(file_path):
                 data = await self.storage.read_json_file_async(file_path, default_value)
             else:
                 data = await self.storage.read_json_file_async(old_file_path, default_value)
