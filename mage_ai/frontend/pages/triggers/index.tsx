@@ -48,7 +48,6 @@ function TriggerListPage() {
       uuid="triggers/index"
     >
       <TriggersTable
-        confirmDialogueTopOffset={50}
         fetchPipelineSchedules={fetchPipelineSchedules}
         highlightRowOnHover
         includeCreatedAtColumn

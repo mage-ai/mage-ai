@@ -1,5 +1,5 @@
 import NextLink from 'next/link';
-import { useState } from 'react';
+import { createRef, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -29,10 +29,8 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
-import { useWindowSize } from '@utils/sizes';
 
 type TriggersTableProps = {
-  confirmDialogueTopOffset?: number;
   fetchPipelineSchedules: () => void;
   highlightRowOnHover?: boolean;
   includeCreatedAtColumn?: boolean;
@@ -45,7 +43,6 @@ type TriggersTableProps = {
 };
 
 function TriggersTable({
-  confirmDialogueTopOffset = 0,
   fetchPipelineSchedules,
   highlightRowOnHover,
   includeCreatedAtColumn,
@@ -58,8 +55,9 @@ function TriggersTable({
 }: TriggersTableProps) {
   const pipelineUUID = pipeline?.uuid;
   const router = useRouter();
-  const { height: windowHeight } = useWindowSize();
+  const deleteButtonRefs = useRef({});
   const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<string>(null);
+  const [confirmDialogueTopOffset, setConfirmDialogueTopOffset] = useState<number>(0);
 
   const [updatePipelineSchedule] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -184,6 +182,7 @@ function TriggersTable({
                 status,
               } = pipelineSchedule;
               const finalPipelineUUID = pipelineUUID || triggerPipelineUUID;
+              deleteButtonRefs.current[id] = createRef();
 
               const rows = [
                 <Button
@@ -277,7 +276,11 @@ function TriggersTable({
                     default
                     iconOnly
                     noBackground
-                    onClick={() => setDeleteConfirmationOpenIdx(id)}
+                    onClick={() => {
+                      setDeleteConfirmationOpenIdx(id);
+                      setConfirmDialogueTopOffset(deleteButtonRefs.current[id]?.current?.offsetTop || 0);
+                    }}
+                    ref={deleteButtonRefs.current[id]}
                     title="Delete"
                   >
                     <Trash default size={2 * UNIT} />
@@ -295,7 +298,7 @@ function TriggersTable({
                       }}
                       right={UNIT * 2}
                       title={`Are you sure you want to delete the trigger ${name}?`}
-                      top={(windowHeight / 2) - (UNIT * 16) - confirmDialogueTopOffset}
+                      top={(confirmDialogueTopOffset || 0) - (idx <= 1 ? 40 : 96)}
                       width={UNIT * 40}
                     />
                   </ClickOutside>

@@ -253,7 +253,6 @@ function PipelineSchedules({
       <Divider light mt={PADDING_UNITS} short />
 
       <TriggersTable
-        confirmDialogueTopOffset={186}
         fetchPipelineSchedules={fetchPipelineSchedules}
         pipeline={pipeline}
         pipelineSchedules={pipelineSchedules}
