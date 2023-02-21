@@ -82,6 +82,8 @@ def fetch_template_source(
                 config,
                 language=language,
             )
+        elif block_type == BlockType.CALLBACK:
+            template_source = __fetch_callback_templates()
     return template_source
 
 
@@ -265,5 +267,13 @@ def __fetch_custom_templates(
         template_env.get_template(template_path).render(
             code=config.get('existing_code', ''),
         )
+        + '\n'
+    )
+
+
+def __fetch_callback_templates() -> str:
+    template_path = 'callbacks/default.py'
+    return (
+        template_env.get_template(template_path).render()
         + '\n'
     )

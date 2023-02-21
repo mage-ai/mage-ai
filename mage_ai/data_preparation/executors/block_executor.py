@@ -2,6 +2,7 @@ from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.orchestration.db.models import PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from typing import Callable, Dict, List, Union
@@ -49,7 +50,6 @@ class BlockExecutor:
     ) -> Dict:
         if template_runtime_configuration:
             self.block.template_runtime_configuration = template_runtime_configuration
-
         try:
             result = dict()
 
@@ -58,6 +58,11 @@ class BlockExecutor:
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
+
+            if self.block.has_callback:
+                callback_block = self.block.callback_block
+            
+            pipeline_run = PipelineRun.query.get(kwargs.get('pipeline_run_id'))
             try:
                 result = self._execute(
                     analyze_outputs=analyze_outputs,
@@ -94,7 +99,16 @@ class BlockExecutor:
                         callback_url=callback_url,
                         tags=tags,
                     )
-                raise e
+                if self.block.has_callback:
+                    callback_block.execute_callback(
+                        'on_failure',
+                        global_vars=global_vars,
+                        logger=self.logger,
+                        logging_tags=tags,
+                        pipeline_run=pipeline_run,
+                    )
+                return {}
+                # raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
                 on_complete(self.block_uuid)
@@ -104,6 +118,14 @@ class BlockExecutor:
                     block_run_id=kwargs.get('block_run_id'),
                     callback_url=callback_url,
                     tags=tags
+                )
+            if self.block.has_callback:
+                callback_block.execute_callback(
+                    'on_success',
+                    global_vars=global_vars,
+                    logger=self.logger,
+                    logging_tags=tags,
+                    pipeline_run=pipeline_run,
                 )
 
             return result
