@@ -168,6 +168,7 @@ function TriggersTable({
               ? (rowIndex: number) => setSelectedSchedule?.(pipelineSchedules[rowIndex])
               : null
             }
+            rowVerticalPadding={6}
             rows={pipelineSchedules.map((
               pipelineSchedule: PipelineScheduleType,
               idx: number,

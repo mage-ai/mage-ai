@@ -37,6 +37,7 @@ type TableProps = {
   noHeader?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
+  rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
   uuid?: string;
@@ -58,6 +59,7 @@ function Table({
   noHeader,
   onClickRow,
   rows,
+  rowVerticalPadding,
   stickyFirstColumn,
   stickyHeader,
   uuid,
@@ -84,6 +86,7 @@ function Table({
         last={colIndex === cells.length - 1}
         maxWidth={columnMaxWidth?.(colIndex)}
         noBorder={noBorder}
+        rowVerticalPadding={rowVerticalPadding}
         selected={isSelectedRow?.(rowIndex)}
         stickyFirstColumn={stickyFirstColumn && colIndex === 0}
         width={calculateCellWidth(colIndex)}

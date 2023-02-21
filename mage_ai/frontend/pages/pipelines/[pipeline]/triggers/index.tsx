@@ -4,7 +4,6 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
-import ClickOutside from '@oracle/components/ClickOutside';
 import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -13,17 +12,14 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import Link from '@oracle/elements/Link';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, {
-  SCHEDULE_TYPE_TO_LABEL,
   ScheduleIntervalEnum,
   ScheduleStatusEnum,
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
-import PopupMenu from '@oracle/components/PopupMenu';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import RunPipelinePopup from '@components/Triggers/RunPipelinePopup';
 import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import TriggersTable from '@components/Triggers/Table';
@@ -31,12 +27,7 @@ import api from '@api';
 
 import {
   Add,
-  Edit,
-  Pause,
   PlayButton,
-  PlayButtonFilled,
-  TodoList,
-  Trash,
 } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
@@ -44,10 +35,8 @@ import { dateFormatLong } from '@utils/date';
 import { getFormattedVariables } from '@components/Sidekick/utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { pauseEvent } from '@utils/events';
 import { randomNameGenerator } from '@utils/string';
 import { useModal } from '@context/Modal';
-import { useWindowSize } from '@utils/sizes';
 
 type PipelineSchedulesProp = {
   pipeline: {
@@ -60,8 +49,6 @@ function PipelineSchedules({
 }: PipelineSchedulesProp) {
   const router = useRouter();
   const pipelineUUID = pipeline.uuid;
-  const [deleteConfirmationOpenIdx, setDeleteConfirmationOpenIdx] = useState<string>(null);
-  const { height: windowHeight } = useWindowSize();
 
   const {
     data: dataGlobalVariables,
@@ -142,47 +129,6 @@ function PipelineSchedules({
     background: true,
     uuid: 'run_pipeline_now_popup',
   });
-
-  const [updatePipelineSchedule] = useMutation(
-    (pipelineSchedule: PipelineScheduleType) =>
-      api.pipeline_schedules.useUpdate(pipelineSchedule.id)({
-        pipeline_schedule: pipelineSchedule,
-      }),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchPipelineSchedules();
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
-
-  const [deletePipelineTrigger] = useMutation(
-    (id: string) => api.pipeline_schedules.useDelete(id)(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchPipelineSchedules();
-            router.push(
-              '/pipelines/[pipeline]/triggers',
-              `/pipelines/${pipelineUUID}/triggers`,
-            );
-          },
-        },
-      ),
-    },
-  );
 
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {

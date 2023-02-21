@@ -119,11 +119,17 @@ export const TableHeadStyle = styled.th<SHARED_TABLE_PROPS & {
 `;
 
 export const TableDataStyle = styled.td<SHARED_TABLE_PROPS & {
+  rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
   last?: boolean;
   wrapColumns?: boolean;
 }>`
   ${SHARED_STYLES}
+
+  ${props => props.rowVerticalPadding && `
+    padding-top: ${props.rowVerticalPadding}px;
+    padding-bottom: ${props.rowVerticalPadding}px;
+  `}
 
   ${props => props.columnBorders && `
     border-left: 1px solid ${(props.theme.borders || dark.borders).light};
