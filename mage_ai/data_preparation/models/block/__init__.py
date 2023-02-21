@@ -1546,7 +1546,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     def __enrich_global_vars(self, global_vars: Dict = None):
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
-            is_spark_env()):
+                is_spark_env()):
             global_vars = global_vars or dict()
             if not global_vars.get('spark'):
                 try:
