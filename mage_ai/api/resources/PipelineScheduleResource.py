@@ -31,8 +31,18 @@ class PipelineScheduleResource(DatabaseResource):
 
         query = PipelineSchedule.query
         order_by = query_arg.get('order_by', [None])
-        if order_by[0] == 'created_at':
-            query = query.order_by(PipelineSchedule.created_at.desc())
+        if order_by[0]:
+            order_by = order_by[0]
+            if order_by == 'created_at':
+                query = query.order_by(PipelineSchedule.created_at.desc())
+            elif order_by == 'name':
+                query = query.order_by(PipelineSchedule.name.asc())
+            elif order_by == 'pipeline_uuid':
+                query = query.order_by(PipelineSchedule.pipeline_uuid.asc())
+            elif order_by == 'status':
+                query = query.order_by(PipelineSchedule.status.asc())
+            elif order_by == 'schedule_type':
+                query = query.order_by(PipelineSchedule.schedule_type.asc())
 
         return query.all()
 

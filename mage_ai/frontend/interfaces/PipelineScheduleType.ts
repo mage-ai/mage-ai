@@ -33,7 +33,19 @@ export interface SelectedScheduleType {
 
 export enum SortQueryParamEnum {
   CREATED_AT = 'created_at',
+  NAME = 'name',
+  PIPELINE = 'pipeline_uuid',
+  STATUS = 'status',
+  TYPE = 'schedule_type',
 }
+
+export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
+  [SortQueryParamEnum.CREATED_AT]: 'Created at',
+  [SortQueryParamEnum.NAME]: 'Name',
+  [SortQueryParamEnum.PIPELINE]: 'Pipeline',
+  [SortQueryParamEnum.STATUS]: 'Status',
+  [SortQueryParamEnum.TYPE]: 'Type',
+};
 
 export interface PipelineScheduleReqQueryParamsType {
   _limit?: number;
