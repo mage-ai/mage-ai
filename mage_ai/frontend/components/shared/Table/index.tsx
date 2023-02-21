@@ -31,6 +31,7 @@ type TableProps = {
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
+  highlightRowOnHover?: boolean;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
   noHeader?: boolean;
@@ -51,6 +52,7 @@ function Table({
   columnMaxWidth,
   columns = [],
   compact,
+  highlightRowOnHover,
   isSelectedRow,
   noBorder,
   noHeader,
@@ -92,6 +94,7 @@ function Table({
     ));
     const rowEl = (
       <TableRowStyle
+        highlightOnHover={highlightRowOnHover}
         key={`${uuid}-row-${rowIndex}`}
         noHover={!(linkProps || onClickRow)}
         // @ts-ignore

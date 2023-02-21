@@ -50,6 +50,7 @@ function TriggerListPage() {
       <TriggersTable
         confirmDialogueTopOffset={50}
         fetchPipelineSchedules={fetchPipelineSchedules}
+        highlightRowOnHover
         includeCreatedAtColumn
         includePipelineColumn
         pipelineSchedules={pipelineSchedules}

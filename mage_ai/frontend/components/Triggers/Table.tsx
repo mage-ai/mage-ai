@@ -34,6 +34,7 @@ import { useWindowSize } from '@utils/sizes';
 type TriggersTableProps = {
   confirmDialogueTopOffset?: number;
   fetchPipelineSchedules: () => void;
+  highlightRowOnHover?: boolean;
   includeCreatedAtColumn?: boolean;
   includePipelineColumn?: boolean;
   pipeline?: PipelineType;
@@ -46,6 +47,7 @@ type TriggersTableProps = {
 function TriggersTable({
   confirmDialogueTopOffset = 0,
   fetchPipelineSchedules,
+  highlightRowOnHover,
   includeCreatedAtColumn,
   includePipelineColumn,
   pipeline,
@@ -160,8 +162,12 @@ function TriggersTable({
           <Table
             columnFlex={columnFlex}
             columns={columns}
+            highlightRowOnHover={highlightRowOnHover}
             isSelectedRow={(rowIndex: number) => pipelineSchedules[rowIndex].id === selectedSchedule?.id}
-            onClickRow={(rowIndex: number) => setSelectedSchedule?.(pipelineSchedules[rowIndex])}
+            onClickRow={setSelectedSchedule
+              ? (rowIndex: number) => setSelectedSchedule?.(pipelineSchedules[rowIndex])
+              : null
+            }
             rows={pipelineSchedules.map((
               pipelineSchedule: PipelineScheduleType,
               idx: number,

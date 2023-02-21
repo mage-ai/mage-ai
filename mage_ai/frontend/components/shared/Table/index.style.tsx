@@ -34,8 +34,15 @@ export const TableStyle = styled.table<{
 `;
 
 export const TableRowStyle = styled.tr<{
+  highlightOnHover?: boolean;
   noHover?: boolean;
 }>`
+  ${props => props.highlightOnHover && `
+    &:hover {
+      background: ${(props.theme.interactive || dark.interactive).rowHoverBackground};
+    }
+  `}
+
   ${props => !props.noHover && `
     &:hover {
       background: ${(props.theme.interactive || dark.interactive).rowHoverBackground};
