@@ -14,7 +14,7 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import dark from '@oracle/styles/themes/dark';
 import { ToggleStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { isJsonString } from '@utils/string';
+import { isJsonString, randomNameGenerator } from '@utils/string';
 import { parseVariables } from '@components/Sidekick/utils';
 
 type RunPipelinePopupProps = {
@@ -42,6 +42,7 @@ function RunPipelinePopup({
 
   const finalPipelineSchedulePayload = useMemo(() => ({
     ...initialPipelineSchedulePayload,
+    name: randomNameGenerator(),
     variables: overwriteVariables ? parseVariables(runtimeVariables) : null,
   }), [
     initialPipelineSchedulePayload,
