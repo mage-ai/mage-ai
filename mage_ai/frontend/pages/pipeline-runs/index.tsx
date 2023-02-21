@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Paginate from '@components/shared/Paginate';
+import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
@@ -17,20 +17,16 @@ import {
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
-import { indexBy } from '@utils/array';
 import { queryFromUrl, queryString } from '@utils/url';
-
-const LIMIT = 25;
 
 function RunListPage() {
   const router = useRouter();
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
 
-  const { data } = api.pipelines.list();
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
-    _limit: LIMIT,
-    _offset: page * LIMIT,
+    _limit: ROW_LIMIT,
+    _offset: page * ROW_LIMIT,
   };
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
@@ -46,8 +42,6 @@ function RunListPage() {
     },
   );
 
-  const pipelines = useMemo(() => data?.pipelines || [], [data]);
-  const pipelinesByUUID = useMemo(() => indexBy(pipelines, ({ uuid }) => uuid), [pipelines]);
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
   const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
@@ -112,7 +106,7 @@ function RunListPage() {
             );
           }}
           page={Number(page)}
-          totalPages={Math.ceil(totalRuns / LIMIT)}
+          totalPages={Math.ceil(totalRuns / ROW_LIMIT)}
         />
       </Spacing>
     </Dashboard>

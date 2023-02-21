@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAbsoluteLayout, useTable } from 'react-table';
-import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';

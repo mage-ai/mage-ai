@@ -17,8 +17,9 @@ import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { Check, ChevronRight, PlayButtonFilled, Subitem, TodoList } from '@oracle/icons';
-import { PopupContainerStyle, TableContainerStyle } from './Table.style';
+import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
+import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTC } from '@components/Triggers/utils';
 import { onSuccess } from '@api/utils/response';
@@ -275,6 +276,7 @@ function PipelineRunsTable({
             columns={columns}
             isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
             onClickRow={onClickRow}
+            rowVerticalPadding={6}
             rows={pipelineRuns.map((pipelineRun, index) => {
               const {
                 block_runs_count: blockRunsCount,

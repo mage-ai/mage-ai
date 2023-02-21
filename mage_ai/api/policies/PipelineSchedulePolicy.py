@@ -84,3 +84,9 @@ PipelineSchedulePolicy.allow_write([
 ], on_action=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
+
+PipelineSchedulePolicy.allow_query([
+    'order_by',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())

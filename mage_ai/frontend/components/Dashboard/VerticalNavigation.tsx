@@ -6,12 +6,19 @@ import ClientOnly from '@hocs/ClientOnly';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineV2Gradient from '@oracle/icons/custom/PipelineV2Gradient';
+import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import SettingsGradient from '@oracle/icons/custom/SettingsGradient';
 import TerminalGradient from '@oracle/icons/custom/TerminalGradient';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
-import { BlocksStacked, PipelineV2, Settings, Terminal } from '@oracle/icons';
+import {
+  BlocksStacked,
+  PipelineV2,
+  Schedule,
+  Settings,
+  Terminal,
+} from '@oracle/icons';
 import { NavigationItemStyle } from './index.style';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -50,6 +57,15 @@ function VerticalNavigation({
         label: () => 'Pipelines',
         linkProps: {
           href: '/pipelines',
+        },
+      },
+      {
+        Icon: Schedule,
+        IconSelected: ScheduleGradient,
+        id: 'triggers',
+        label: () => 'Triggers',
+        linkProps: {
+          href: '/triggers',
         },
       },
       {

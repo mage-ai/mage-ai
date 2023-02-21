@@ -31,11 +31,13 @@ type TableProps = {
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
+  highlightRowOnHover?: boolean;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
   noHeader?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
+  rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
   stickyHeader?: boolean;
   uuid?: string;
@@ -51,11 +53,13 @@ function Table({
   columnMaxWidth,
   columns = [],
   compact,
+  highlightRowOnHover,
   isSelectedRow,
   noBorder,
   noHeader,
   onClickRow,
   rows,
+  rowVerticalPadding,
   stickyFirstColumn,
   stickyHeader,
   uuid,
@@ -82,6 +86,7 @@ function Table({
         last={colIndex === cells.length - 1}
         maxWidth={columnMaxWidth?.(colIndex)}
         noBorder={noBorder}
+        rowVerticalPadding={rowVerticalPadding}
         selected={isSelectedRow?.(rowIndex)}
         stickyFirstColumn={stickyFirstColumn && colIndex === 0}
         width={calculateCellWidth(colIndex)}
@@ -92,6 +97,7 @@ function Table({
     ));
     const rowEl = (
       <TableRowStyle
+        highlightOnHover={highlightRowOnHover}
         key={`${uuid}-row-${rowIndex}`}
         noHover={!(linkProps || onClickRow)}
         // @ts-ignore
