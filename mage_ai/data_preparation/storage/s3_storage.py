@@ -44,10 +44,7 @@ class S3Storage(BaseStorage):
         self.client.delete_objects(s3_url_path(path))
 
     def remove_dir(self, path: str) -> None:
-        """
-        TODO: Impelment this method.
-        """
-        pass
+        self.client.delete_objects(s3_url_path(path))
 
     def read_json_file(self, file_path: str, default_value={}) -> Dict:
         try:
