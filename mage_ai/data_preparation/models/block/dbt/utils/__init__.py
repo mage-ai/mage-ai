@@ -105,6 +105,10 @@ def add_blocks_upstream_from_refs(block) -> None:
 
     added_blocks = []
     for idx, ref in enumerate(extract_refs(block)):
+        if ref not in files_by_name:
+            print(f'WARNING: dbt model {ref} cannot be found.')
+            continue
+
         uuid = re.sub(f'{get_repo_path()}/dbt/', '', files_by_name[ref])
 
         new_block = block.__class__.create(

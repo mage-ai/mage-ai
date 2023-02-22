@@ -309,7 +309,7 @@ function DependencyGraph({
         displayText = `${block.uuid}: ${contentParsed?.destination}`;
       }
     } else if (BlockTypeEnum.DBT === block.type && BlockLanguageEnum.SQL === block.language) {
-      displayText = getModelName(block);
+      displayText = getModelName(block, { fullPath: true });
     }
 
     const {

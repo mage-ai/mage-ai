@@ -45,11 +45,14 @@ function ErrorPopup({
   const {
     errors,
     exception,
+    message: messageFromResponse,
   } = response?.error || {};
 
   let displayMessage = displayMessageProp;
   let messages = messagesProp;
-  if (!displayMessage && messages?.[0]) {
+  if (messageFromResponse) {
+    messages = messageFromResponse.split('\n');
+  } else if (!displayMessage && messages?.[0]) {
     displayMessage = messages[0];
     messages = null;
   }

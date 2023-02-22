@@ -69,7 +69,12 @@ export function getBlockFromFile(
     if (parts[1] === BlockTypeEnum.CUSTOM) {
       blockType = parts[1];
     } else {
-      blockType = singularize(parts[1] || '');
+      const v = parts[1];
+      if (BlockTypeEnum.DBT === v) {
+        blockType = v;
+      } else {
+        blockType = singularize(v || '');
+      }
     }
   }
 
@@ -94,7 +99,7 @@ export function getBlockFromFile(
     `\.${FileExtensionEnum.YML}`,
   ].join('|');
   const extensionRegex = new RegExp(`${extensions}$`);
-  if (BLOCK_TYPES.includes(blockType) && fileName.match(extensionRegex)) {
+  if (BLOCK_TYPES.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {
     const parts = fileName.split('.');
     const extension = parts[1];
 

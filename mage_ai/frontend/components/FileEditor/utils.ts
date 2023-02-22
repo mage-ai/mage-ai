@@ -54,9 +54,10 @@ export function buildAddBlockRequestPayload(
   // data_loaders/team/foo.py
   // data_loaders/team/growth/foo.py
   const parts = file.path.replace(repoPath, '').split('/');
-  let blockUUID = getBlockUUID(parts);
+  const isDBT = file.path.split('/')[0] === BlockTypeEnum.DBT;
 
-  if (parts.length >= 3) {
+  let blockUUID = getBlockUUID(parts);
+  if (parts.length >= 3 && !isDBT) {
     const nestedFolders = parts.slice(1, parts.length - 1).join('/');
     blockUUID = `${nestedFolders}/${blockUUID}`;
   }
@@ -64,9 +65,7 @@ export function buildAddBlockRequestPayload(
   const blockType = getBlockType(file.path.split('/'));
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: {
-      file_path: file.path.split('/')[0] === BlockTypeEnum.DBT
-        ? blockUUID
-        : null,
+      file_path: isDBT ? blockUUID : null,
     },
     language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
     name: blockUUID,
