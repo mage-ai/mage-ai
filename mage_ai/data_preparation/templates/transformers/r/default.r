@@ -1,5 +1,5 @@
-transform <- function(df_1, ...) {
+transform <- function(arg, ...) {
     # Specify your transformation logic here
-    # Return value: transformed dataframe.
-    df_1
+    # Return value: Anything (e.g. transformed dataframe)
+    arg
 }
