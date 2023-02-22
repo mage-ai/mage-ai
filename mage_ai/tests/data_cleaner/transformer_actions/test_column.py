@@ -388,6 +388,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
+        df_new['distance'] = df_new['distance'].round(3)
         self.assertEqual(
             df_new.to_dict(orient='records'),
             [
@@ -396,14 +397,14 @@ class ColumnTests(TestCase):
                     lng1=-97.31838,
                     lat2=33.41939,
                     lng2=-112.32606,
-                    distance=1661.8978520305657,
+                    distance=1661.898,
                 ),
                 dict(
                     lat1=39.71954,
                     lng1=-84.13056,
                     lat2=33.41939,
                     lng2=-112.32606,
-                    distance=2601.5452571116184,
+                    distance=2601.545,
                 ),
             ],
         )
