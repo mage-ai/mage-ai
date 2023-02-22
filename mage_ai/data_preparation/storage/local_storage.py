@@ -31,7 +31,7 @@ class LocalStorage(BaseStorage):
         os.remove(path)
 
     def remove_dir(self, path: str) -> None:
-        shutil.rmtree(path)
+        shutil.rmtree(path, ignore_errors=True)
 
     def read_json_file(self, file_path: str, default_value={}) -> Dict:
         if not self.path_exists(file_path):
