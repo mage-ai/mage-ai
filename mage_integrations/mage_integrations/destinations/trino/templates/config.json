@@ -7,6 +7,7 @@
   "query_max_length": 1000000,
   "schema": "",
   "ssl": false,
+  "table": "",
   "username": "",
   "location": ""
 }

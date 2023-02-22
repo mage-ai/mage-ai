@@ -4,5 +4,6 @@
   "aws_secret_access_key": null,
   "bucket": null,
   "mode": "append",
-  "object_key_path": null
+  "object_key_path": null,
+  "table": null
 }
