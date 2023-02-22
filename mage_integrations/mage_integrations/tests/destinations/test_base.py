@@ -74,7 +74,6 @@ class BaseDestinationTests(unittest.TestCase):
                     'password': '',
                     'port': 5432,
                     'schema': '',
-                    'table': '',
                     'username': '',
                 }
             },
