@@ -150,9 +150,9 @@ class ColumnTypeDetectorTests(TestCase):
         )
 
     def test_integer_recognition(self):
-        max_int = np.iinfo(np.int).max
+        max_int = np.iinfo(np.int32).max
         max_int_unsigned = np.iinfo(np.uint).max
-        min_int = np.iinfo(np.int).min
+        min_int = np.iinfo(np.int32).min
         df = pd.DataFrame(
             dict(
                 integers=[1, 2, 3, 4, 5],
