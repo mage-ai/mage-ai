@@ -17,7 +17,7 @@ type NewFileProps = {
   fetchFileTree?: () => void;
   onCancel: () => void;
   selectedFolder: FileType;
-  setErrors: (opts: {
+  setErrors?: (opts: {
     errors: any;
     response: any;
   }) => void;
@@ -58,6 +58,7 @@ function NewFile({
               keyMapping,
             }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
             onClick={() => {
+              // @ts-ignore
               createFile({
                 file: {
                   dir_path: directory,
@@ -73,7 +74,7 @@ function NewFile({
                 } = data;
 
                 if (error) {
-                  setErrors({
+                  setErrors?.({
                     errors: {
                       messages: [error.message],
                     },

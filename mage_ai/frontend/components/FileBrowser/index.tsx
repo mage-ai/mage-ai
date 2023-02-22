@@ -39,7 +39,7 @@ type FileBrowserProps = {
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
-  setErrors: (opts: {
+  setErrors?: (opts: {
     errors: any;
     response: any;
   }) => void;
