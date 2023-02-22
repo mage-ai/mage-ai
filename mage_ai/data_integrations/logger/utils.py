@@ -52,15 +52,15 @@ def print_log_from_line(
                 updated_tags = tags1
                 try:
                     updated_tags.update(data2)
+                    logger.info(
+                        message,
+                        **merge_dict(
+                            logging_tags,
+                            dict(tags=merge_dict(tags, updated_tags)),
+                        )
+                    )
                 except Exception:
                     pass
-                logger.info(
-                    message,
-                    **merge_dict(
-                        logging_tags,
-                        dict(tags=merge_dict(tags, updated_tags)),
-                    )
-                )
             else:
                 print(json.dumps(data))
         if data.get('level') in [LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION]:

@@ -138,9 +138,10 @@ def raise_for_error(response):
 
 
 class Client():
-    def __init__(self, config, api_result_limit=100):
+    def __init__(self, config, logger=None, api_result_limit=100):
         self.config = config
-
+        self.logger = logger if logger is not None else LOGGER
+        
         self.api_result_limit = api_result_limit
 
     def get_headers(self):
