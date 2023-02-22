@@ -78,11 +78,11 @@ def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFram
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
         new_string = build_template_from_suggestion(suggestion)
         self.assertEqual(expected_string, new_string)
@@ -108,11 +108,11 @@ def load_data(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': 'default'}
@@ -151,11 +151,11 @@ def load_data_from_redshift(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
         s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
@@ -188,11 +188,11 @@ def load_from_s3_bucket(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': DataSource.REDSHIFT}
@@ -224,11 +224,11 @@ def load_data_from_api(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
         config = {'data_source': DataSource.API}
         api_template = fetch_template_source(BlockType.DATA_LOADER, config)
@@ -292,11 +292,11 @@ def transform(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'action_type': 'custom'}
@@ -339,11 +339,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.CLEAN_COLUMN_NAME, 'axis': Axis.COLUMN}
@@ -380,11 +380,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.FILTER, 'axis': Axis.ROW}
@@ -422,11 +422,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.REFORMAT, 'axis': Axis.COLUMN}
@@ -469,11 +469,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.FIRST, 'axis': Axis.COLUMN}
@@ -638,11 +638,11 @@ def transform_in_postgres(*args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -680,11 +680,11 @@ def transform_in_bigquery(*args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': DataSource.POSTGRES}
