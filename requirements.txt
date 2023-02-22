@@ -17,7 +17,7 @@ joblib>=1.1.0
 jupyter-server-proxy==3.2.1
 jupyter-server==1.23.5
 jupyter_client==7.3.4
-numpy~=1.21.0
+numpy>=1.21.0
 pandas>=1.3.0
 pyarrow==10.0.1
 python-dateutil==2.8.2
