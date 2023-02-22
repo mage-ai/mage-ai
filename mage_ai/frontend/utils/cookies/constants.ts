@@ -1,4 +1,4 @@
-export const COOKIE_DOMAIN: string = 'localhost';
+export const COOKIE_DOMAIN: string = typeof window === 'undefined' ? null : window.location.hostname;
 export const COOKIE_PATH: string = '/';
 
 export const SHARED_COOKIE_PROPERTIES: any = {
