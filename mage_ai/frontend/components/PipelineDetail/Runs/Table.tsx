@@ -31,6 +31,8 @@ function RetryButton({
   onSuccess: onSuccessProp,
   pipelineRun,
   setCancelingRunId,
+  setShowConfirmationId,
+  showConfirmationId,
 }: {
   cancelingRunId: number;
   isLoadingCancelPipeline: boolean;
@@ -38,6 +40,8 @@ function RetryButton({
   onSuccess: () => void;
   pipelineRun: PipelineRunType,
   setCancelingRunId: (id: number) => void;
+  setShowConfirmationId: (showConfirmationId: number) => void;
+  showConfirmationId: number;
 }) {
   const {
     id: pipelineRunId,
@@ -73,10 +77,9 @@ function RetryButton({
       ),
     },
   );
-  const [showConfirmation, setShowConfirmation] = useState<boolean>();
 
   const retryPipelineRun = useCallback(() => {
-    setShowConfirmation(false);
+    setShowConfirmationId(null);
     // @ts-ignore
     createPipelineRun({
       pipeline_run: {
@@ -86,10 +89,14 @@ function RetryButton({
         variables: pipelineRun?.variables,
       },
     });
-  }, [createPipelineRun, pipelineRun]);
+  }, [
+    createPipelineRun,
+    pipelineRun,
+    setShowConfirmationId,
+  ]);
 
   const cancelPipelineRun = useCallback(() => {
-    setShowConfirmation(false);
+    setShowConfirmationId(null);
     setCancelingRunId(pipelineRunId);
     onCancel({
       id: pipelineRunId,
@@ -97,7 +104,9 @@ function RetryButton({
     });
   }, [
     onCancel,
-    pipelineRun,
+    pipelineRunId,
+    setCancelingRunId,
+    setShowConfirmationId,
   ]);
 
   return (
@@ -125,7 +134,7 @@ function RetryButton({
         danger={RunStatus.FAILED === status}
         default={RunStatus.INITIAL === status}
         loading={!pipelineRun}
-        onClick={() => setShowConfirmation(true)}
+        onClick={() => setShowConfirmationId(pipelineRunId)}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isCancelingPipeline}
         warning={RunStatus.CANCELLED === status}
@@ -135,8 +144,8 @@ function RetryButton({
           : RUN_STATUS_TO_LABEL[status]}
       </Button>
       <ClickOutside
-        onClickOutside={() => setShowConfirmation(false)}
-        open={showConfirmation}
+        onClickOutside={() => setShowConfirmationId(null)}
+        open={showConfirmationId === pipelineRunId}
       >
         <PopupContainerStyle>
           {[RunStatus.RUNNING, RunStatus.INITIAL].includes(status) && (
@@ -208,6 +217,7 @@ function PipelineRunsTable({
   selectedRun,
 }: PipelineRunsTableProps) {
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
+  const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
   const [updatePipelineRun, { isLoading: isLoadingCancelPipeline }] = useMutation(
     ({
       id,
@@ -273,7 +283,10 @@ function PipelineRunsTable({
   }
 
   return (
-    <TableContainerStyle minHeight={UNIT * 30}>
+    <TableContainerStyle
+      minHeight={UNIT * 30}
+      overflowVisible={!!showConfirmationId}
+    >
       {pipelineRuns.length === 0
         ?
           <Spacing px ={3} py={1}>
@@ -367,6 +380,8 @@ function PipelineRunsTable({
                     onSuccess={fetchPipelineRuns}
                     pipelineRun={pipelineRun}
                     setCancelingRunId={setCancelingRunId}
+                    setShowConfirmationId={setShowConfirmationId}
+                    showConfirmationId={showConfirmationId}
                   />,
                   <Text default key="row_pipeline_uuid" monospace>
                     {pipelineUUID}
