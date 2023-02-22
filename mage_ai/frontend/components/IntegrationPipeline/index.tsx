@@ -950,6 +950,10 @@ function IntegrationPipeline({
                     Object.keys(config).forEach((key: string) => {
                       config[key] = config[key] || null;
                     });
+
+                    if (config.hasOwnProperty('table')) {
+                      delete config.table;
+                    }
                   }
 
                   const upstreamBlocks = [];
