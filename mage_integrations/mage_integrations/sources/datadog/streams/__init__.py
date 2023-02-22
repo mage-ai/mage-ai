@@ -18,6 +18,9 @@ class DatadogStream:
     primary_key: Optional[str] = None
     parse_response_root: Optional[str] = None
 
+    BASE_PATH = 'https://api.datadoghq.com/api/'
+    URL_PATH = ''
+
     def __init__(self, config, state, catalog, client: DatadogClient, logger):
         self.config = config
         self.state = state
@@ -31,7 +34,7 @@ class DatadogStream:
         """
         Return the URL to hit for data from this stream.
         """
-        raise RuntimeError('get_url not implemented!')
+        return f'{self.BASE_PATH}{self.URL_PATH}'
     
     def load_data(
         self,
@@ -111,11 +114,9 @@ class Dashboards(DatadogStream):
     ENTITY = 'dashboard'
     API_METHOD = 'GET'
     SCHEMA = 'dashboards'
+    URL_PATH = 'v1/dashboard'
 
     parse_response_root: Optional[str] = "dashboards"
-
-    def get_url(self) -> str:
-        return 'https://api.datadoghq.com/api/v1/dashboard'
 
 
 class Downtimes(DatadogStream):
@@ -126,24 +127,20 @@ class Downtimes(DatadogStream):
     ENTITY = 'downtime'
     API_METHOD = 'GET'
     SCHEMA = 'downtimes'
-
-    def get_url(self) -> str:
-        return 'https://api.datadoghq.com/api/v1/downtime'
+    URL_PATH = 'v1/downtime'
 
 
 class SyntheticTests(DatadogStream):
+    """
+    https://docs.datadoghq.com/api/latest/synthetics/#get-the-list-of-all-tests
+    """
     TABLE = 'synthetic_tests'
     ENTITY = 'synthetic_test'
     API_METHOD = 'GET'
     SCHEMA = 'synthetics'
-    """
-    https://docs.datadoghq.com/api/latest/synthetics/#get-the-list-of-all-tests
-    """
+    URL_PATH = 'v1/synthetics/tests'
 
-    parse_response_root: Optional[str] = "tests"
-
-    def get_url(self) -> str:
-        return 'https://api.datadoghq.com/api/v1/synthetics/tests'
+    parse_response_root: Optional[str] = 'tests'
 
 
 class IncrementalSearchableStream(DatadogStream):
@@ -194,9 +191,7 @@ class AuditLogs(IncrementalSearchableStream):
     ENTITY = 'audit_log'
     API_METHOD = 'POST'
     SCHEMA = 'audit_logs'
-
-    def get_url(self):
-        return 'https://api.datadoghq.com/api/v2/audit/events/search'
+    URL_PATH = 'v2/audit/events/search'
 
 
 class Logs(IncrementalSearchableStream):
@@ -207,9 +202,7 @@ class Logs(IncrementalSearchableStream):
     ENTITY = 'log'
     API_METHOD = 'POST'
     SCHEMA = 'logs'
-
-    def get_url(self):
-        return 'https://api.datadoghq.com/api/v2/logs/events/search'
+    URL_PATH = 'v2/logs/events/search'
 
 
 class BasedListStream(DatadogStream):
@@ -225,9 +218,7 @@ class Metrics(BasedListStream):
     ENTITY = 'metric'
     API_METHOD = 'GET'
     SCHEMA = 'metrics'
-
-    def get_url(self):
-        return 'https://api.datadoghq.com/api/v2/metrics'  # max value allowed (2 weeks)
+    URL_PATH = 'v2/metrics?window[seconds]=1209600'  # max value allowed (2 weeks)
 
 
 class PaginatedBasedListStream(BasedListStream):
@@ -250,9 +241,7 @@ class Incidents(PaginatedBasedListStream):
     ENTITY = 'incident'
     API_METHOD = 'GET'
     SCHEMA = 'incidents'
-
-    def get_url(self):
-        return 'https://api.datadoghq.com/api/v2/incidents'
+    URL_PATH = 'v2/incidents'
 
 
 class IncidentTeams(PaginatedBasedListStream):
@@ -263,9 +252,7 @@ class IncidentTeams(PaginatedBasedListStream):
     ENTITY = 'incident_team'
     API_METHOD = 'GET'
     SCHEMA = 'incident_teams'
-
-    def get_url(self):
-        return 'https://api.datadoghq.com/api/v2/teams'
+    URL_PATH = 'v2/teams'
 
 
 class Users(PaginatedBasedListStream):
@@ -276,11 +263,9 @@ class Users(PaginatedBasedListStream):
     ENTITY = 'user'
     API_METHOD = 'GET'
     SCHEMA = 'users'
+    URL_PATH = 'v2/users'
 
     current_page = 0
-
-    def get_url(self):
-        return 'https://api.datadoghq.com/api/v2/users'
 
     def next_page_token(self, response: Dict) -> Optional[Mapping[str, Any]]:
         next_page_token = {}
