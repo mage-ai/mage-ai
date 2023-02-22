@@ -801,8 +801,10 @@ function CodeBlockProps({
 
             <FlexContainer alignItems="center">
               {isDBT && (
-                <Text muted monospace>
-                  {getModelName(block)}
+                <Text monospace muted>
+                  {getModelName(block, {
+                    fullPath: true,
+                  })}
                 </Text>
               )}
 

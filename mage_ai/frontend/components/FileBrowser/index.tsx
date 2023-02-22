@@ -13,6 +13,7 @@ import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/B
 import FileType from '@interfaces/FileType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
+import NewFile from './NewFile';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import UploadFiles from './UploadFiles';
@@ -38,6 +39,10 @@ type FileBrowserProps = {
   fetchPipeline?: () => void;
   files?: FileType[];
   pipeline?: PipelineType;
+  setErrors?: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   setSelectedBlock?: (block: BlockType) => void;
   widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
@@ -59,6 +64,7 @@ function FileBrowser({
   fetchPipeline,
   files,
   pipeline,
+  setErrors,
   setSelectedBlock,
   widgets = [],
   ...props
@@ -216,6 +222,24 @@ function FileBrowser({
     uuid: 'upload_files',
   });
 
+  const [showModalNewFile, hideModalNewFile] = useModal(() => (
+    <NewFile
+      fetchFileTree={fetchFileTree}
+      onCancel={hideModalNewFile}
+      selectedFolder={selectedFolder}
+      setErrors={setErrors}
+    />
+  ), {
+  }, [
+    fetchFileTree,
+    selectedFolder,
+    setErrors,
+  ], {
+    background: true,
+    disableClickOutside: true,
+    uuid: 'new_file',
+  });
+
   const menuMemo = useMemo(() => {
     if (!selectedBlock && !selectedFolder) {
       return <div />;
@@ -239,13 +263,22 @@ function FileBrowser({
 
     const items = [];
     if (selectedFolder) {
-      items.push({
-        label: () => 'Upload files',
-        onClick: () => {
-          showModal();
+      items.push(...[
+        {
+          label: () => 'Upload files',
+          onClick: () => {
+            showModal();
+          },
+          uuid: 'upload_files',
         },
-        uuid: 'upload_files',
-      });
+        {
+          label: () => 'New file',
+          onClick: () => {
+            showModalNewFile();
+          },
+          uuid: 'new_file',
+        },
+      ]);
     } else {
       items.push({
         label: () => 'Delete file',
@@ -284,6 +317,7 @@ function FileBrowser({
     deleteWidget,
     ref,
     showModal,
+    showModalNewFile,
     selectedBlock,
     selectedFolder,
   ]);

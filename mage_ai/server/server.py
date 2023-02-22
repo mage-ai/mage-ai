@@ -216,15 +216,15 @@ def make_app():
 
         # API v1 routes
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)/(?P<child_pk>\w+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f]+)',
             ApiChildDetailHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>\w+)/(?P<child>\w+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f]+)/(?P<child>\w+)',
             ApiChildListHandler,
         ),
         (
-            r'/api/(?P<resource>\w+)/(?P<pk>\w+)',
+            r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f]+)',
             ApiResourceDetailHandler,
         ),
         (r'/api/(?P<resource>\w+)', ApiResourceListHandler),

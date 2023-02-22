@@ -14,7 +14,7 @@ export const ErrorPopupStyle = styled.div`
   overflow: auto;
   padding: ${UNIT * PADDING_UNITS}px;
   position: fixed;
-  z-index: 100;
+  z-index: 9999;
   border-radius: ${BORDER_RADIUS}px;
 
   ${props => `

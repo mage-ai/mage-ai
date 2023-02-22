@@ -44,8 +44,8 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
   };
 
   if (body) {
-    const { file } = body;
-    if (file) {
+    const { file, file_json_only: fileJsonOnly } = body;
+    if (file && !fileJsonOnly) {
       const {
         name,
         size,
