@@ -18,5 +18,6 @@ def load_data_from_file(*args, **kwargs):
     Docs: https://docs.mage.ai/design/data-loading#fileio
     """
     filepath = 'path/to/your/file.csv'
+
     return FileIO().load(filepath)
 {% endblock %}
