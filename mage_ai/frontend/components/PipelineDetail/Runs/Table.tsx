@@ -25,23 +25,30 @@ import { getTimeInUTC } from '@components/Triggers/utils';
 import { onSuccess } from '@api/utils/response';
 
 function RetryButton({
+  cancelingRunId,
   isLoadingCancelPipeline,
   onCancel,
   onSuccess: onSuccessProp,
   pipelineRun,
+  setCancelingRunId,
 }: {
+  cancelingRunId: number;
   isLoadingCancelPipeline: boolean;
   onCancel: (run: PipelineRunType) => void;
   onSuccess: () => void;
   pipelineRun: PipelineRunType,
+  setCancelingRunId: (id: number) => void;
 }) {
   const {
+    id: pipelineRunId,
     pipeline_schedule_id: pipelineScheduleId,
     pipeline_schedule_token: pipelineScheduleToken,
     pipeline_schedule_type: pipelineScheduleType,
     status,
-  } = pipelineRun;
-  const isCancelingPipeline = RunStatus.RUNNING === status && isLoadingCancelPipeline;
+  } = pipelineRun || {};
+  const isCancelingPipeline = isLoadingCancelPipeline
+    && pipelineRunId === cancelingRunId
+    && RunStatus.RUNNING === status;
 
   const [createPipelineRun] = useMutation(
     ScheduleTypeEnum.API === pipelineScheduleType
@@ -83,8 +90,9 @@ function RetryButton({
 
   const cancelPipelineRun = useCallback(() => {
     setShowConfirmation(false);
+    setCancelingRunId(pipelineRunId);
     onCancel({
-      id: pipelineRun?.id,
+      id: pipelineRunId,
       status: RunStatus.CANCELLED,
     });
   }, [
@@ -108,7 +116,7 @@ function RetryButton({
                 <PlayButtonFilled inverted={RunStatus.CANCELLED === status} size={2 * UNIT} />
               )}
               {[RunStatus.RUNNING].includes(status) && (
-                <Spinner color={isLoadingCancelPipeline ? dark.status.negative : dark.monotone.white} small />
+                <Spinner color={isCancelingPipeline ? dark.status.negative : dark.monotone.white} small />
               )}
             </>
           )
@@ -119,7 +127,7 @@ function RetryButton({
         loading={!pipelineRun}
         onClick={() => setShowConfirmation(true)}
         padding="6px"
-        primary={RunStatus.RUNNING === status && !isLoadingCancelPipeline}
+        primary={RunStatus.RUNNING === status && !isCancelingPipeline}
         warning={RunStatus.CANCELLED === status}
       >
         {isCancelingPipeline
@@ -199,6 +207,7 @@ function PipelineRunsTable({
   pipelineRuns,
   selectedRun,
 }: PipelineRunsTableProps) {
+  const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [updatePipelineRun, { isLoading: isLoadingCancelPipeline }] = useMutation(
     ({
       id,
@@ -213,6 +222,7 @@ function PipelineRunsTable({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
+            setCancelingRunId(null);
             fetchPipelineRuns();
           },
           onErrorCallback: ({
@@ -221,6 +231,7 @@ function PipelineRunsTable({
               message,
             },
           }) => {
+            setCancelingRunId(null);
             console.log(errors, message);
           },
         },
@@ -349,11 +360,13 @@ function PipelineRunsTable({
               } else {
                 arr = [
                   <RetryButton
+                    cancelingRunId={cancelingRunId}
                     isLoadingCancelPipeline={isLoadingCancelPipeline}
                     key="row_retry_button"
                     onCancel={updatePipelineRun}
                     onSuccess={fetchPipelineRuns}
                     pipelineRun={pipelineRun}
+                    setCancelingRunId={setCancelingRunId}
                   />,
                   <Text default key="row_pipeline_uuid" monospace>
                     {pipelineUUID}
