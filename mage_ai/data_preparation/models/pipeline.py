@@ -198,11 +198,7 @@ class Pipeline:
         if not os.path.exists(config_path):
             raise Exception(f'Pipeline {uuid} does not exist.')
         async with aiofiles.open(config_path, mode='r') as f:
-            try:
-                config = yaml.safe_load(await f.read()) or {}
-            except Exception as err:
-                config = {}
-                print(err)
+            config = yaml.safe_load(await f.read()) or {}
 
         if PipelineType.INTEGRATION == config.get('type'):
             catalog = None
