@@ -58,6 +58,9 @@ type CommandButtonsProps = {
     code?: string;
     disableReset?: boolean;
     runDownstream?: boolean;
+    runSettings?: {
+      run_model?: boolean;
+    };
     runUpstream?: boolean;
     runTests?: boolean;
   }) => void;

@@ -208,6 +208,7 @@ function PipelineDetailPage({
   }, [
     breadcrumbsProp,
     pipeline,
+    pipelineUUID,
   ]);
 
   const navigationItems = [
@@ -215,56 +216,56 @@ function PipelineDetailPage({
       Icon: Schedule,
       IconSelected: ScheduleGradient,
       id: PageNameEnum.TRIGGERS,
+      isSelected: () => PageNameEnum.TRIGGERS === pageName,
       label: () => 'Triggers',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/triggers`,
         href: '/pipelines/[pipeline]/triggers',
       },
-      isSelected: () => PageNameEnum.TRIGGERS === pageName,
     },
     {
       Icon: BlocksStacked,
       IconSelected: BlocksStackedGradient,
       id: PageNameEnum.RUNS,
+      isSelected: () => PageNameEnum.RUNS === pageName,
       label: () => 'Runs',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/runs`,
         href: '/pipelines/[pipeline]/runs',
       },
-      isSelected: () => PageNameEnum.RUNS === pageName,
     },
     {
       Icon: Backfill,
       IconSelected: BackfillGradient,
       id: PageNameEnum.BACKFILLS,
+      isSelected: () => PageNameEnum.BACKFILLS === pageName,
       label: () => 'Backfills',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/backfills`,
         href: '/pipelines/[pipeline]/backfills',
       },
-      isSelected: () => PageNameEnum.BACKFILLS === pageName,
     },
     {
       Icon: TodoList,
       IconSelected: TodoListGradient,
       id: PageNameEnum.PIPELINE_LOGS,
+      isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
       label: () => 'Logs',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/logs`,
         href: '/pipelines/[pipeline]/logs',
       },
-      isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
     },
     {
       Icon: Chart,
       IconSelected: ChartGradient,
       id: PageNameEnum.MONITOR,
+      isSelected: () => PageNameEnum.MONITOR === pageName,
       label: () => 'Monitor',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/monitors`,
         href: '/pipelines/[pipeline]/monitors',
       },
-      isSelected: () => PageNameEnum.MONITOR === pageName,
     },
   ];
 
@@ -273,12 +274,12 @@ function PipelineDetailPage({
       Icon: BlocksSeparated,
       IconSelected: BlocksSeparatedGradient,
       id: PageNameEnum.SYNCS,
+      isSelected: () => PageNameEnum.SYNCS === pageName,
       label: () => 'Syncs',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/syncs`,
         href: '/pipelines/[pipeline]/syncs',
       },
-      isSelected: () => PageNameEnum.SYNCS === pageName,
     });
   }
 

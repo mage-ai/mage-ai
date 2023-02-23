@@ -137,6 +137,9 @@ type CodeBlockProps = {
     block: BlockType;
     code: string;
     runDownstream?: boolean;
+    runSettings?: {
+      run_model?: boolean;
+    };
     runUpstream?: boolean;
     runTests?: boolean;
   }) => void;
@@ -280,7 +283,10 @@ function CodeBlockProps({
   useEffect(() => {
     setCodeCollapsed(get(codeCollapsedUUID, false));
     setOutputCollapsed(get(outputCollapsedUUID, false));
-  }, [codeCollapsedUUID]);
+  }, [
+    codeCollapsedUUID,
+    outputCollapsedUUID,
+  ]);
 
   const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
@@ -298,6 +304,9 @@ function CodeBlockProps({
       code?: string;
       disableReset?: boolean;
       runDownstream?: boolean;
+      runSettings?: {
+        run_model?: boolean;
+      };
       runUpstream?: boolean;
       runTests?: boolean;
     }) => {
@@ -306,6 +315,7 @@ function CodeBlockProps({
         code,
         disableReset,
         runDownstream,
+        runSettings,
         runUpstream,
         runTests: runTestsInit,
       } = payload || {};
@@ -326,6 +336,7 @@ function CodeBlockProps({
         block: blockPayload,
         code: code || content,
         runDownstream: runDownstream || hasDownstreamWidgets,
+        runSettings,
         runTests: runTests || false,
         runUpstream: runUpstream || false,
       });

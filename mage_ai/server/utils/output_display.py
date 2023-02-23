@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.server.kernels import KernelName
 from mage_ai.shared.code import is_pyspark_code
 from typing import Dict, List
+import json
 import re
 
 
@@ -226,8 +227,11 @@ def add_execution_code(
     run_upstream: bool = False,
     update_status: bool = True,
     widget: bool = False,
+    run_settings: Dict = None,
 ) -> str:
     escaped_code = code.replace("'''", "\"\"\"")
+
+    run_settings_json = json.dumps(run_settings or {})
 
     magic_header = ''
     spark_session_init = ''
@@ -252,7 +256,9 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
 import datetime
+import json
 import pandas as pd
+
 
 db_connection.start_session()
 {spark_session_init}
@@ -285,6 +291,7 @@ def execute_custom_code():
         custom_code=code,
         global_vars=global_vars,
         analyze_outputs={analyze_outputs},
+        run_settings=json.loads('{run_settings_json}'),
         update_status={update_status},
         test_execution=True,
     )

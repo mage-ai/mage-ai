@@ -939,6 +939,8 @@ function PipelineDetailPage({
   }, [
     contentByBlockUUID.current,
     createBlock,
+    fetchFileTree,
+    fetchPipeline,
     isIntegration,
     setBlocks,
     setErrors,
@@ -1030,6 +1032,8 @@ function PipelineDetailPage({
     },
   )), [
     activeSidekickView,
+    fetchFileTree,
+    fetchPipeline,
     chartRefs.current,
     createWidget,
     setActiveSidekickView,
@@ -1045,6 +1049,7 @@ function PipelineDetailPage({
     }
   }, [
     chartRefs.current[recentlyAddedChart?.uuid],
+    recentlyAddedChart,
     setRecentlyAddedChart,
   ]);
 
@@ -1082,8 +1087,8 @@ function PipelineDetailPage({
       setSelectedOutputBlock(outputBlocksInit[0]);
     }
   }, [
-    outputBlocks?.length,
-    outputBlocksInit?.length,
+    outputBlocks,
+    outputBlocksInit,
   ]);
 
   const blocksPrevious = usePrevious(blocks);
@@ -1166,6 +1171,8 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
+    openFile,
+    widgets,
   ]);
 
   useEffect(() => {
@@ -1190,7 +1197,6 @@ function PipelineDetailPage({
     api_key: OAUTH2_APPLICATION_CLIENT_ID,
     token: token.decodedToken.token,
   }), [
-    OAUTH2_APPLICATION_CLIENT_ID,
     token,
   ]);
 
@@ -1263,6 +1269,8 @@ function PipelineDetailPage({
       setPipelineContentTouched(true);
     }
   }, [
+    blocks,
+    fetchPipeline,
     lastMessage,
   ]);
 
@@ -1279,6 +1287,8 @@ function PipelineDetailPage({
     });
   }, [
     pipelineUUID,
+    savePipelineContent,
+    sendMessage,
     sharedWebsocketData,
   ]);
 
@@ -1299,6 +1309,9 @@ function PipelineDetailPage({
     code: string;
     ignoreAlreadyRunning?: boolean;
     runDownstream?: boolean;
+    runSettings?: {
+      run_model?: boolean;
+    };
     runUpstream?: boolean;
     runTests?: boolean;
   }) => {
@@ -1307,6 +1320,7 @@ function PipelineDetailPage({
       code,
       ignoreAlreadyRunning,
       runDownstream = false,
+      runSettings = {},
       runUpstream = false,
       runTests = false,
     } = payload;
@@ -1320,6 +1334,7 @@ function PipelineDetailPage({
         code,
         pipeline_uuid: pipeline?.uuid,
         run_downstream: runDownstream,
+        run_settings: runSettings,
         run_tests: runTests,
         run_upstream: runUpstream,
         type: block.type,

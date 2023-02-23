@@ -100,9 +100,13 @@ class DBTBlock(Block):
         global_vars: Dict = None,
         test_execution: bool = False,
         runtime_arguments: Dict = None,
+        run_settings: Dict = None,
         **kwargs,
     ) -> List:
         variables = merge_dict(global_vars, runtime_arguments or {})
+
+        if run_settings and run_settings.get('run_model', False):
+            test_execution = False
 
         dbt_command, args, command_line_dict = build_command_line_arguments(
             self,

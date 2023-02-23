@@ -620,6 +620,49 @@ def interpolate_input(
     return query
 
 
+def interpolate_refs_with_table_names(
+    query_string: str,
+    block: Block,
+    profile_target: str,
+    configuration: Dict,
+):
+    profile = get_profile(block, profile_target)
+
+    profile_type = profile.get('type')
+    quote_str = ''
+    if DataSource.POSTGRES == profile_type:
+        database = profile['dbname']
+        schema = profile['schema']
+        quote_str = '"'
+    elif DataSource.MYSQL == profile_type:
+        database = configuration['data_provider_database']
+        schema = None
+        quote_str = '`'
+    elif DataSource.BIGQUERY == profile_type:
+        database = profile['project']
+        schema = profile['dataset']
+        quote_str = '`'
+    elif DataSource.REDSHIFT == profile_type:
+        database = profile['dbname']
+        schema = profile['schema']
+        quote_str = '"'
+    elif DataSource.SNOWFLAKE == profile_type:
+        database = profile['database']
+        schema = profile['schema']
+    elif DataSource.TRINO == profile_type:
+        database = profile['catalog']
+        schema = profile['schema']
+
+    return interpolate_input(
+        block,
+        query_string,
+        configuration=configuration,
+        profile_database=database,
+        profile_schema=schema,
+        quote_str=quote_str,
+    )
+
+
 def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
     attr = parse_attributes(block)
 
@@ -632,46 +675,20 @@ def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> Da
     project_full_path = attr['project_full_path']
     file_path = attr['file_path']
 
-    profile = get_profile(block, profile_target)
-
     file = f'{project_full_path}/target/compiled/{file_path}'
 
     with open(file, 'r') as f:
         query_string = f.read()
 
-        profile_type = profile.get('type')
-        quote_str = ''
-        if DataSource.POSTGRES == profile_type:
-            database = profile['dbname']
-            schema = profile['schema']
-            quote_str = '"'
-        elif DataSource.MYSQL == profile_type:
-            database = configuration['data_provider_database']
-            schema = None
-            quote_str = '`'
-        elif DataSource.BIGQUERY == profile_type:
-            database = profile['project']
-            schema = profile['dataset']
-            quote_str = '`'
-        elif DataSource.REDSHIFT == profile_type:
-            database = profile['dbname']
-            schema = profile['schema']
-            quote_str = '"'
-        elif DataSource.SNOWFLAKE == profile_type:
-            database = profile['database']
-            schema = profile['schema']
-        elif DataSource.TRINO == profile_type:
-            database = profile['catalog']
-            schema = profile['schema']
-
-        query_string = interpolate_input(
-            block,
-            query_string,
-            configuration=configuration,
-            profile_database=database,
-            profile_schema=schema,
-            quote_str=quote_str,
-        )
+        # TODO (tommy dang): this was needed because we didn’t want to create model tables and
+        # so we’d create a table to store the model results without creating the model.
+        # However, we’re requiring people to run the model and create the model table to use ref.
+        # query_string = interpolate_refs_with_table_names(
+        #     query_string,
+        #     block,
+        #     profile_target=profile_target,
+        #     configuration=configuration,
+        # )
 
         shared_kwargs = {}
         if limit is not None:
@@ -716,7 +733,7 @@ def build_command_line_arguments(
     test_execution: bool = False,
 ) -> Tuple[str, List[str], Dict]:
     variables = merge_dict(
-        variables,
+        variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
     )
     dbt_command = 'test' if run_tests else 'run'
