@@ -192,9 +192,14 @@ class Postgres(BaseSQL):
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:
-        df.to_csv(buffer, index=False, header=False)
+        columns_names = ', '.join(df.columns)
+        df.to_csv(buffer, index=False, header=False, na_rep='')
         buffer.seek(0)
-        cursor.copy_expert(
-            f'COPY {full_table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
-            buffer,
-        )
+        cursor.copy_expert(f"""
+COPY {full_table_name} FROM STDIN (
+    FORMAT csv
+    , DELIMITER \',\'
+    , NULL \'\'
+    , FORCE_NULL({columns_names})
+);
+""", buffer)

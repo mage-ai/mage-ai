@@ -45,7 +45,8 @@ def create_block_runs_from_dynamic_block(
 
     values = []
     block_metadata = []
-    for idx, output_name in enumerate(block.output_variables()):
+    output_vars = block.output_variables(execution_partition=execution_partition)
+    for idx, output_name in enumerate(output_vars):
         if idx == 0:
             values = block.pipeline.variable_manager.get_variable(
                 block.pipeline.uuid,
