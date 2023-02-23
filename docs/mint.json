@@ -308,7 +308,13 @@
       "group": "Observability",
       "pages": [
         "production/observability/logging",
-        "production/observability/monitoring",
+        {
+          "group": "Monitoring",
+          "pages": [
+            "production/observability/monitoring",
+            "production/observability/datadog"
+          ]
+        },
         {
           "group": "Alerting",
           "pages": [
