@@ -202,6 +202,4 @@ COPY {full_table_name} FROM STDIN (
     , NULL \'\'
     , FORCE_NULL({columns_names})
 );
-""",
-            buffer,
-        )
+""", buffer)

@@ -62,7 +62,6 @@ def create_block_runs_from_dynamic_block(
                 partition=execution_partition,
             )
 
-
     all_block_runs = []
     # Dynamic child blocks (aka created from a dynamic block)
     for downstream_block in block.downstream_blocks:
