@@ -275,6 +275,7 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     &:focus {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
       border-color: ${(props.theme.interactive || dark.interactive).focusBorder};
+      color: ${(props.theme.content || dark.content).active};
     }
 
     &:active {
