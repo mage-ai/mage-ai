@@ -376,6 +376,7 @@ function Edit({
             }));
           }}
           placeholder="Choose the frequency to run"
+          value={scheduleInterval}
         >
           {!scheduleInterval && <option value="" />}
           {Object.values(ScheduleIntervalEnum).map(value => (
