@@ -150,6 +150,17 @@ export default interface BlockType {
   };
   file?: string;
   language?: BlockLanguageEnum;
+  metadata?: {
+    dbt?: {
+      project: string;
+      projects: {
+        [name: string]: {
+          target: string;
+          targets: string[];
+        };
+      };
+    };
+  };
   name?: string;
   outputs?: OutputType[];
   priority?: number;

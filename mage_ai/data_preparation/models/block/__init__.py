@@ -267,6 +267,9 @@ class Block:
             self._content = await self.file.content_async()
         return self._content
 
+    async def metadata_async(self):
+        return {}
+
     @property
     def executable(self):
         return (
@@ -1219,15 +1222,17 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
     async def to_dict_async(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
+        include_block_metadata: bool = False,
+        include_content: bool = False,
+        include_outputs: bool = False,
+        sample_count: int = None,
         check_if_file_exists: bool = False,
     ):
         data = self.to_dict_base()
 
         if include_content:
             data['content'] = await self.content_async()
+
         if include_outputs:
             data['outputs'] = await self.outputs_async()
             if check_if_file_exists:
@@ -1239,6 +1244,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                         'Delete the current block to remove it from the pipeline or write code ' +
                         f'and save the pipeline to create a new file at {file_path}.',
                     )
+
+        if include_block_metadata:
+            data['metadata'] = await self.metadata_async()
+
         return data
 
     def update(self, data):

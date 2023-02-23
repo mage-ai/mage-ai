@@ -470,12 +470,14 @@ class Pipeline:
 
     async def to_dict_async(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
+        include_block_metadata: bool = False,
+        include_content: bool = False,
+        include_outputs: bool = False,
+        sample_count: int = None,
     ):
         blocks_data = await asyncio.gather(
             *[b.to_dict_async(
+                include_block_metadata=include_block_metadata,
                 include_content=include_content,
                 include_outputs=include_outputs,
                 sample_count=sample_count,

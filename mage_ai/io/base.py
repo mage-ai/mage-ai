@@ -60,7 +60,17 @@ class BaseIO(ABC):
         Returns:
             str: Modified query with limit on row count returned.
         """
-        return f'SELECT * FROM ({query.strip(";")}) AS subquery LIMIT {limit};'
+        query = query.strip(';')
+
+        return f"""
+WITH subquery AS (
+    {query}
+)
+
+SELECT *
+FROM subquery
+LIMIT {limit}
+"""
 
     @abstractmethod
     def load(self, *args, **kwargs) -> DataFrame:

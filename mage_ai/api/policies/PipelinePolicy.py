@@ -65,6 +65,7 @@ PipelinePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelinePolicy.allow_query([
+    'includes_block_metadata',
     'includes_content',
     'includes_outputs',
 ], scopes=[
