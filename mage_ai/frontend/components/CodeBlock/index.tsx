@@ -36,6 +36,7 @@ import DataProviderType, {
   EXPORT_WRITE_POLICIES,
   ExportWritePolicyEnum,
 } from '@interfaces/DataProviderType';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -111,7 +112,6 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { selectKeys } from '@utils/hash';
 import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
-import Divider from '@oracle/elements/Divider';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;

@@ -563,6 +563,43 @@ class Block:
             p.delete_block(p.get_block(self.uuid, widget=widget), widget=widget, commit=commit)
         os.remove(self.file_path)
 
+    def execute_with_callback(
+        self,
+        global_vars: Dict = None,
+        logger: Logger = None,
+        logging_tags: Dict = dict(),
+        pipeline_run=None,
+        **kwargs
+    ):
+        try:
+            output = self.execute_sync(
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                **kwargs
+            )
+        except Exception as e:
+            if self.callback_block:
+                self.callback_block.execute_callback(
+                    'on_failure',
+                    global_vars=global_vars,
+                    logger=logger,
+                    logging_tags=logging_tags,
+                    pipeline_run=pipeline_run,
+                )
+            raise e
+        
+        if self.callback_block:
+            self.callback_block.execute_callback(
+                'on_success',
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                pipeline_run=pipeline_run,
+            )
+        
+        return output
+
     def execute_sync(
         self,
         analyze_outputs: bool = False,
@@ -1225,7 +1262,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         data = self.to_dict_base()
         if include_content:
             data['content'] = self.content
-            data['callback_content'] = self.callback_block.content
+            if self.callback_block is not None:
+                data['callback_content'] = self.callback_block.content
         if include_outputs:
             data['outputs'] = self.outputs
             if check_if_file_exists:

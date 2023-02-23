@@ -1093,7 +1093,6 @@ function PipelineDetailPage({
 
   useEffect(() => {
     if (typeof pipeline?.blocks !== 'undefined') {
-      console.log('update blocks');
       setBlocks(pipeline.blocks);
     }
   }, [

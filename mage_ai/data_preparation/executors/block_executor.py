@@ -58,9 +58,6 @@ class BlockExecutor:
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
-
-            if self.block.has_callback:
-                callback_block = self.block.callback_block
             
             pipeline_run = PipelineRun.query.get(kwargs.get('pipeline_run_id'))
             try:
@@ -99,8 +96,8 @@ class BlockExecutor:
                         callback_url=callback_url,
                         tags=tags,
                     )
-                if self.block.has_callback:
-                    callback_block.execute_callback(
+                if self.block.callback_block:
+                    self.block.callback_block.execute_callback(
                         'on_failure',
                         global_vars=global_vars,
                         logger=self.logger,
@@ -119,8 +116,8 @@ class BlockExecutor:
                     callback_url=callback_url,
                     tags=tags
                 )
-            if self.block.has_callback:
-                callback_block.execute_callback(
+            if self.block.callback_block:
+                self.block.callback_block.execute_callback(
                     'on_success',
                     global_vars=global_vars,
                     logger=self.logger,
