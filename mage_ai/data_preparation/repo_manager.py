@@ -37,7 +37,7 @@ class RepoConfig:
             # Priority:
             # 1. 'variables_dir' from config_dict
             # 1. os.getenv(MAGE_DATA_DIR_ENV_VAR)
-            # 2. 'variables_dir' from repo_config file
+            # 2. 'variables_dir' from project's metadata.yaml file
             # 3. DEFAULT_MAGE_DATA_DIR
             if config_dict is not None and config_dict.get('variables_dir'):
                 self.variables_dir = config_dict.get('variables_dir')
