@@ -603,14 +603,16 @@ function CodeBlockProps({
     savePipelineContent,
   ]);
 
-  const dbtMetadata = useMemo(() => block?.metadata?.dbt || {}, [block]);
+  const dbtMetadata = useMemo(() => block?.metadata?.dbt || { project: null, projects: {} }, [block]);
   const dbtProjects = useMemo(() => dbtMetadata.projects || {}, [dbtMetadata]);
   const dbtProjectName =
     useMemo(() => dbtMetadata.project || dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME], [
       dataProviderConfig,
       dbtMetadata,
     ]);
-  const dbtProfileData = useMemo(() => dbtProjects[dbtProjectName] || {}, [
+  const dbtProfileData = useMemo(() => dbtProjects[dbtProjectName] || {
+    targets: [],
+  }, [
     dbtProjectName,
     dbtProjects,
   ]);
@@ -828,7 +830,7 @@ function CodeBlockProps({
             <Spacing mr={1} />
 
             <FlexContainer alignItems="center">
-              {isDBT && (
+              {isDBT && BlockLanguageEnum.YAML !== block.language && (
                 <Text monospace muted>
                   {getModelName(block, {
                     fullPath: true,
@@ -836,7 +838,7 @@ function CodeBlockProps({
                 </Text>
               )}
 
-              {!isDBT && (
+              {(!isDBT || BlockLanguageEnum.YAML === block.language) && (
                 <LabelWithValueClicker
                   bold={false}
                   inputValue={newBlockUuid}
@@ -1039,6 +1041,7 @@ function CodeBlockProps({
                   <span>&nbsp;</span>
                   <Select
                     compact
+                    disabled={!dbtProjectName}
                     monospace
                     onBlur={() => setTimeout(() => {
                       setAnyInputFocused(false);
@@ -1053,6 +1056,7 @@ function CodeBlockProps({
                     onFocus={() => {
                       setAnyInputFocused(true);
                     }}
+                    placeholder={dbtProjectName ? null : 'Select project first'}
                     small
                     value={dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET] || ''}
                   >

@@ -54,7 +54,9 @@ class DBTBlock(Block):
             )
         else:
             dbt_dir = f'{get_repo_path()}/dbt'
-            project_names = [name for name in os.listdir(dbt_dir) if os.path.isdir(f'{dbt_dir}/{name}')]
+            project_names = [
+                name for name in os.listdir(dbt_dir) if os.path.isdir(f'{dbt_dir}/{name}')
+            ]
             for project_name in project_names:
                 profiles_full_path = f'{dbt_dir}/{project_name}/profiles.yml'
                 targets = []

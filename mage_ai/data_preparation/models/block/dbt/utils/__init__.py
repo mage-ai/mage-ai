@@ -303,6 +303,7 @@ def load_profiles(project_name: str, profiles_full_path: str) -> Dict:
 
     return profiles[project_name]
 
+
 async def load_profiles_async(project_name: str, profiles_full_path: str) -> Dict:
     profiles = await load_profiles_file_async(profiles_full_path)
 
