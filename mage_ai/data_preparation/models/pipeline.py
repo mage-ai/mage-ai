@@ -537,8 +537,8 @@ class Pipeline:
                             continue
                         if 'content' in block_data:
                             await block.update_content_async(block_data['content'], widget=widget)
-                        if 'callback_content' in block_data:
-                            print('what:', block_data['callback_content'])
+                        if 'callback_content' in block_data \
+                                and block.callback_block:
                             await block.callback_block.update_content_async(
                                 block_data['callback_content'],
                                 widget=widget,

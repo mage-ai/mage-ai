@@ -262,7 +262,7 @@ class Block:
         if self._content is None:
             self._content = self.file.content()
         return self._content
-    
+
     @property
     def callback_block(self):
         if self.has_callback:
@@ -588,7 +588,7 @@ class Block:
                     pipeline_run=pipeline_run,
                 )
             raise e
-        
+
         if self.callback_block:
             self.callback_block.execute_callback(
                 'on_success',
@@ -597,7 +597,7 @@ class Block:
                 logging_tags=logging_tags,
                 pipeline_run=pipeline_run,
             )
-        
+
         return output
 
     def execute_sync(
@@ -621,14 +621,6 @@ class Block:
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
     ) -> Dict:
-        # Add pipeline uuid and block uuid to global_vars
-        global_vars = merge_dict(
-            global_vars or dict(),
-            dict(
-                pipeline_uuid=self.pipeline.uuid,
-                block_uuid=self.uuid,
-            ),
-        )
         try:
             if not run_all_blocks:
                 not_executed_upstream_blocks = list(
@@ -705,15 +697,15 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
-            # if logger is not None:
-            #     logger.exception(
-            #         f'Failed to execute block {self.uuid}',
-            #         **merge_dict(logging_tags, dict(
-            #             block_type=self.type,
-            #             block_uuid=self.uuid,
-            #             error=err,
-            #         ))
-            #     )
+            if logger is not None:
+                logger.exception(
+                    f'Failed to execute block {self.uuid}',
+                    **merge_dict(logging_tags, dict(
+                        block_type=self.type,
+                        block_uuid=self.uuid,
+                        error=err,
+                    ))
+                )
             raise err
         finally:
             if update_status:
@@ -838,6 +830,14 @@ class Block:
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
     ) -> Dict:
+        # Add pipeline uuid and block uuid to global_vars
+        global_vars = merge_dict(
+            global_vars or dict(),
+            dict(
+                pipeline_uuid=self.pipeline.uuid,
+                block_uuid=self.uuid,
+            ),
+        )
         # Set up logger
         if logger is not None:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
@@ -1331,13 +1331,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if 'has_callback' in data and data['has_callback'] != self.has_callback:
             self.has_callback = data['has_callback']
             if self.has_callback:
-                print('CREATE BLOCK')
-                self.create(
-                    f'{clean_name_orig(self.uuid)}_callback',
-                    BlockType.CALLBACK,
-                    get_repo_path(),
-                    language=BlockLanguage.PYTHON,
-                )
+                CallbackBlock.create(self.uuid)
             self.__update_pipeline_block()
         return self
 
@@ -1927,6 +1921,15 @@ class SensorBlock(Block):
 
 
 class CallbackBlock(Block):
+    @classmethod
+    def create(cls, orig_block_name):
+        return Block.create(
+            f'{clean_name_orig(orig_block_name)}_callback',
+            BlockType.CALLBACK,
+            get_repo_path(),
+            language=BlockLanguage.PYTHON,
+        )
+
     def execute_callback(
         self,
         callback: str,
@@ -1968,4 +1971,3 @@ class CallbackBlock(Block):
             self._content = content
             await self.file.update_content_async(content)
         return self
-        

@@ -58,8 +58,8 @@ class BlockExecutor:
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
-            
-            pipeline_run = PipelineRun.query.get(kwargs.get('pipeline_run_id'))
+            pipeline_run = PipelineRun.query.get(kwargs['pipeline_run_id']) \
+                if 'pipeline_run_id' in kwargs else None
             try:
                 result = self._execute(
                     analyze_outputs=analyze_outputs,
@@ -104,8 +104,7 @@ class BlockExecutor:
                         logging_tags=tags,
                         pipeline_run=pipeline_run,
                     )
-                return {}
-                # raise e
+                raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
                 on_complete(self.block_uuid)
