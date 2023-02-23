@@ -34,6 +34,7 @@ export const OverlayStyle = styled.div`
 `;
 
 export const PipelineHeaderStyle = styled.div<{
+  relativePosition?: boolean;
   secondary?: boolean;
 }>`
   height: ${ASIDE_HEADER_HEIGHT}px;
@@ -47,9 +48,13 @@ export const PipelineHeaderStyle = styled.div<{
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 
+  ${props => props.relativePosition && `
+    position: relative;
+  `}
+
   ${props => props.secondary && `
     height: ${TABS_HEADER_HEIGHT}px;
-    top: ${ASIDE_HEADER_HEIGHT * 2}px;
+    top: ${ASIDE_HEADER_HEIGHT}px;
     overflow-x: auto;
     z-index: 3;
   `}
