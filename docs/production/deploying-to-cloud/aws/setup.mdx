@@ -23,7 +23,14 @@ need the following
 
 ---
 
-## Terraform plan
+## Deploy to ECS cluster
+
+Use Terraform scripts in [aws](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/aws)
+folder to provision resources for AWS ECS cluster.
+
+---
+
+### Terraform plan
 
 You can run the following command to see all the resources that will be created
 by Terraform:
@@ -38,7 +45,7 @@ created.
 
 ---
 
-## 1. Environment variables
+### 1. Environment variables
 
 If you don’t have the AWS CLI installed, you’ll need to create this file:
 `~/.aws/credentials`.
@@ -56,7 +63,7 @@ Alternatively, you can install the AWS CLI by following
 
 ---
 
-## 2. Customize Terraform settings
+### 2. Customize Terraform settings
 
 **Application name (optional)**
 
@@ -136,7 +143,7 @@ can also be customized to your needs.
 
 ---
 
-## 3. Configurable environment variables
+### 3. Configurable environment variables
 
 In the
 [`./aws/env_vars.json`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/env_vars.json)
@@ -164,7 +171,7 @@ the running container.
 
 ---
 
-## 4. Deploy
+### 4. Deploy
 
 **Using CLI**
 
@@ -254,7 +261,7 @@ try re-building your image with the platform flag `--platform linux/amd64`.
 
 ---
 
-## Updating Mage versions
+### Updating Mage versions
 
 After Mage is running in your cloud, you can update the Mage Docker image
 version by running the following command in your CLI tool:
@@ -276,16 +283,16 @@ aws ecs update-service --cluster [cluster_name] --service [service_name] --force
 
 ---
 
-## Misc
+### Misc
 
-### Security
+#### Security
 
 To enable other IP addresses access to Mage, open the security group named
 `mage-data-prep-sg` to whitelist IPs.
 
 Add a new inbound rule for HTTP port 80 and use your IP address.
 
-### HTTPS enabling
+#### HTTPS enabling
 
 Terraform creates a load balancer with a HTTP listener by default.
 
@@ -318,7 +325,7 @@ After you get a certificate, add a HTTPS listener in your load balancer group.
 The detailed instructions can be found in:
 https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
 
-### Terminate all resources
+#### Terminate all resources
 
 If you want to delete all resources created from deploying, run the following
 command:
@@ -332,3 +339,30 @@ A sample output could look like this:
 ```
 Destroy complete! Resources: 10 destroyed.
 ```
+---
+
+## Deploy to EKS cluster
+
+Use Terraform scripts in [aws-eks](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/aws-eks)
+folder to provision resources for AWS EKS cluster.
+
+
+You can run the following command to see all the resources that will be created
+by Terraform:
+
+```bash
+cd aws-eks
+terraform plan
+```
+
+Similar with deploying to ECS cluster, you need to set up the [environment variables](https://docs.mage.ai/production/deploying-to-cloud/aws/setup#1-environment-variables) first, and you can customize the Terraform settings in [./aws-eks/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/variables.tf) file.
+
+
+Then, follow the steps below to set up EKS cluster and deploy Mage.
+1. Run `terraform apply` to provision the EKS cluster
+2. Configure `kubectl` with command `aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)`
+3. Update the `EFS_VOLUME_ID` in [kube/efs-pvc.yaml](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/kube/efs-pvc.yaml) to the efs id in terraform output
+4. Run command `kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"` to install efs csi driver
+5. Run `kubectl apply -f kube/` to deploy app
+6. Whitelist IP in EKS node's security group
+7. Get the node IP via command `kubectl get nodes -o wide` and access Mage with `http://[ip]:31479`
