@@ -198,7 +198,15 @@ function Terminal({
             navigator.clipboard.writeText(window.getSelection().toString());
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)
             || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_V], keyMapping)) {
-            if (navigator?.clipboard?.readText) {
+            if (typeof navigator?.clipboard === 'undefined') {
+              alert('Clipboard pasting is not allowed in insecure contexts. If your Mage '
+                + 'deployment is not secure but you still want to use clipboard paste, you '
+                + 'can override this setting (which should only be done temporarily) '
+                + 'on Chrome browsers by going to '
+                + '"chrome://flags/#unsafely-treat-insecure-origin-as-secure", '
+                + 'adding your origin to "Insecure origins treated as secure", '
+                + 'and enabling that setting.');
+            } else if (navigator?.clipboard?.readText) {
               navigator.clipboard.readText()
                 .then(clipText => {
                   setCommand(prev => prev + clipText);
