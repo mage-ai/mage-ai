@@ -36,8 +36,6 @@ class TemplateTest(TestCase):
         expected_string = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from pandas import DataFrame
-
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
 if 'test' not in globals():
@@ -80,11 +78,11 @@ def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFram
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
         new_string = build_template_from_suggestion(suggestion)
         self.assertEqual(expected_string, new_string)
@@ -102,7 +100,7 @@ def load_data(*args, **kwargs):
     Template code for loading data from any source.
 
     Returns:
-        Anything
+        Anything (e.g. data frame, dictionary, array, int, str, etc.)
     \"\"\"
     # Specify your data loading logic here
 
@@ -110,11 +108,11 @@ def load_data(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': 'default'}
@@ -153,11 +151,11 @@ def load_data_from_redshift(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
         s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
@@ -190,11 +188,11 @@ def load_from_s3_bucket(*args, **kwargs):
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': DataSource.REDSHIFT}
@@ -220,17 +218,17 @@ def load_data_from_api(*args, **kwargs):
     Template for loading data from API
     \"\"\"
     url = ''
-
     response = requests.get(url)
+
     return pd.read_csv(io.StringIO(response.text), sep=',')
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
         config = {'data_source': DataSource.API}
         api_template = fetch_template_source(BlockType.DATA_LOADER, config)
@@ -268,16 +266,14 @@ consumer_group: unique_consumer_group
         self.assertEqual(kafka_template, new_kafka_template)
 
     def test_template_generation_transformer_default(self):
-        expected_template = """from pandas import DataFrame
-
-if 'transformer' not in globals():
+        expected_template = """if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
 if 'test' not in globals():
     from mage_ai.data_preparation.decorators import test
 
 
 @transformer
-def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
+def transform(*args, **kwargs):
     \"\"\"
     Template code for a transformer block.
 
@@ -285,68 +281,22 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     There should be one parameter for each output variable from each parent block.
 
     Args:
-        df (DataFrame): Data frame from parent block.
+        args: The input variables from upstream blocks
 
     Returns:
-        DataFrame: Transformed data frame
+        Anything (e.g. data frame, dictionary, array, int, str, etc.)
     \"\"\"
     # Specify your transformation logic here
 
-    return df
+    return {}
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
-"""
-
-        config1 = {'action_type': 'custom'}
-        config2 = {'axis': 'row'}
-        config3 = {}
-        new_template1 = fetch_template_source(BlockType.TRANSFORMER, config1)
-        new_template2 = fetch_template_source(BlockType.TRANSFORMER, config2)
-        new_template3 = fetch_template_source(BlockType.TRANSFORMER, config3)
-        self.assertEqual(expected_template, new_template1)
-        self.assertEqual(expected_template, new_template2)
-        self.assertEqual(expected_template, new_template3)
-
-    def test_template_generation_transformer_action_default(self):
-        expected_template = """from pandas import DataFrame
-
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
-if 'test' not in globals():
-    from mage_ai.data_preparation.decorators import test
-
-
-@transformer
-def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
-    \"\"\"
-    Template code for a transformer block.
-
-    Add more parameters to this function if this block has multiple parent blocks.
-    There should be one parameter for each output variable from each parent block.
-
-    Args:
-        df (DataFrame): Data frame from parent block.
-
-    Returns:
-        DataFrame: Transformed data frame
-    \"\"\"
-    # Specify your transformation logic here
-
-    return df
-
-
-@test
-def test_output(df, *args) -> None:
-    \"\"\"
-    Template code for testing the output of the block.
-    \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'action_type': 'custom'}
@@ -389,11 +339,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.CLEAN_COLUMN_NAME, 'axis': Axis.COLUMN}
@@ -430,11 +380,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.FILTER, 'axis': Axis.ROW}
@@ -472,11 +422,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.REFORMAT, 'axis': Axis.COLUMN}
@@ -519,11 +469,11 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.FIRST, 'axis': Axis.COLUMN}
@@ -531,19 +481,17 @@ def test_output(df, *args) -> None:
         self.assertEqual(expected_template, new_template)
 
     def test_template_generation_data_exporter_default(self):
-        expected_template = """from pandas import DataFrame
-
-if 'data_exporter' not in globals():
+        expected_template = """if 'data_exporter' not in globals():
     from mage_ai.data_preparation.decorators import data_exporter
 
 
 @data_exporter
-def export_data(df: DataFrame, **kwargs):
+def export_data(*args, **kwargs):
     \"\"\"
     Exports data to some source
 
     Args:
-        df (DataFrame): Data frame to export to
+        args: The input variables from upstream blocks
 
     Output (optional):
         Optionally return any object and it'll be logged and
@@ -690,11 +638,11 @@ def transform_in_postgres(*args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -732,11 +680,11 @@ def transform_in_bigquery(*args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df, *args) -> None:
+def test_output(output, *args) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
-    assert df is not None, 'The output is undefined'
+    assert output is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': DataSource.POSTGRES}
