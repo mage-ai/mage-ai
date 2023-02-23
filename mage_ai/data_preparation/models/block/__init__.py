@@ -568,9 +568,14 @@ class Block:
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = dict(),
-        pipeline_run=None,
         **kwargs
     ):
+        """
+        This method will execute the block and run the callback functions if they exist
+        for this block. This function should only be used when running a block from the
+        websocket as a way to test the code in the callback. To run a block in a pipeline
+        run, use a BlockExecutor.
+        """
         try:
             output = self.execute_sync(
                 global_vars=global_vars,
@@ -585,7 +590,6 @@ class Block:
                     global_vars=global_vars,
                     logger=logger,
                     logging_tags=logging_tags,
-                    pipeline_run=pipeline_run,
                 )
             raise e
 
@@ -595,7 +599,6 @@ class Block:
                 global_vars=global_vars,
                 logger=logger,
                 logging_tags=logging_tags,
-                pipeline_run=pipeline_run,
             )
 
         return output

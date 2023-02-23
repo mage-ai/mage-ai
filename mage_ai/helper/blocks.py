@@ -20,7 +20,7 @@ def run_block(_block_uuid, pipeline_run, **kwargs):
         )
         if block_run is None:
             return
-        
+
         pipeline = Pipeline.get(pipeline_run.pipeline_uuid, get_repo_path())
         block_run.refresh()
         block_run.update(status=BlockRun.BlockRunStatus.INITIAL)
