@@ -85,6 +85,7 @@ import {
   CONFIG_KEY_DBT_PROFILE_TARGET,
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_EXPORT_WRITE_POLICY,
+  CONFIG_KEY_LIMIT,
   CONFIG_KEY_USE_RAW_SQL,
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
@@ -202,17 +203,20 @@ function CodeBlockProps({
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
+
+  const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
   const [dataProviderConfig, setDataProviderConfig] = useState({
-    [CONFIG_KEY_DATA_PROVIDER]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER],
-    [CONFIG_KEY_DATA_PROVIDER_DATABASE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_DATABASE],
-    [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
-    [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
-    [CONFIG_KEY_DATA_PROVIDER_TABLE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_TABLE],
-    [CONFIG_KEY_DBT_PROFILE_TARGET]: block?.configuration?.[CONFIG_KEY_DBT_PROFILE_TARGET],
-    [CONFIG_KEY_DBT_PROJECT_NAME]: block?.configuration?.[CONFIG_KEY_DBT_PROJECT_NAME],
-    [CONFIG_KEY_EXPORT_WRITE_POLICY]: block?.configuration?.[CONFIG_KEY_EXPORT_WRITE_POLICY]
+    [CONFIG_KEY_DATA_PROVIDER]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER],
+    [CONFIG_KEY_DATA_PROVIDER_DATABASE]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER_DATABASE],
+    [CONFIG_KEY_DATA_PROVIDER_PROFILE]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER_PROFILE],
+    [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
+    [CONFIG_KEY_DATA_PROVIDER_TABLE]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER_TABLE],
+    [CONFIG_KEY_DBT_PROFILE_TARGET]: blockConfiguration[CONFIG_KEY_DBT_PROFILE_TARGET],
+    [CONFIG_KEY_DBT_PROJECT_NAME]: blockConfiguration[CONFIG_KEY_DBT_PROJECT_NAME],
+    [CONFIG_KEY_EXPORT_WRITE_POLICY]: blockConfiguration[CONFIG_KEY_EXPORT_WRITE_POLICY]
       || ExportWritePolicyEnum.APPEND,
-    [CONFIG_KEY_USE_RAW_SQL]: !!block?.configuration?.[CONFIG_KEY_USE_RAW_SQL],
+    [CONFIG_KEY_LIMIT]: blockConfiguration[CONFIG_KEY_LIMIT],
+    [CONFIG_KEY_USE_RAW_SQL]: !!blockConfiguration[CONFIG_KEY_USE_RAW_SQL],
   });
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
@@ -276,7 +280,7 @@ function CodeBlockProps({
   useEffect(() => {
     setCodeCollapsed(get(codeCollapsedUUID, false));
     setOutputCollapsed(get(outputCollapsedUUID, false));
-  }, []);
+  }, [codeCollapsedUUID]);
 
   const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
@@ -322,8 +326,8 @@ function CodeBlockProps({
         block: blockPayload,
         code: code || content,
         runDownstream: runDownstream || hasDownstreamWidgets,
-        runUpstream: runUpstream || false,
         runTests: runTests || false,
+        runUpstream: runUpstream || false,
       });
 
       if (!disableReset) {
@@ -416,7 +420,6 @@ function CodeBlockProps({
     { blockColor: block.color, theme: themeContext },
   ).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
-  const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
 
   const {
     dynamic,
@@ -465,6 +468,8 @@ function CodeBlockProps({
       tags: arr,
     };
   }, [
+    block?.color,
+    block?.type,
     dynamic,
     dynamicUpstreamBlock,
     hasError,
@@ -480,6 +485,7 @@ function CodeBlockProps({
       setSelected(true);
     }
   }, [
+    selected,
     setAnyInputFocused,
     setSelected,
   ]);
@@ -594,8 +600,21 @@ function CodeBlockProps({
   }, [
     addNewBlock,
     blocks,
-    buildConvertBlockMenuItems,
     savePipelineContent,
+  ]);
+
+  const dbtMetadata = useMemo(() => block?.metadata?.dbt || { project: null, projects: {} }, [block]);
+  const dbtProjects = useMemo(() => dbtMetadata.projects || {}, [dbtMetadata]);
+  const dbtProjectName =
+    useMemo(() => dbtMetadata.project || dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME], [
+      dataProviderConfig,
+      dbtMetadata,
+    ]);
+  const dbtProfileData = useMemo(() => dbtProjects[dbtProjectName] || {
+    targets: [],
+  }, [
+    dbtProjectName,
+    dbtProjects,
   ]);
 
   const codeEditorEl = useMemo(() => (
@@ -610,7 +629,7 @@ function CodeBlockProps({
       }}
       onDidChangeCursorPosition={onDidChangeCursorPosition}
       placeholder={BlockTypeEnum.DBT === block.type && BlockLanguageEnum.YAML === block.language
-        ? 'e.g. --select path/to/my_model1.sql --exclude path/to/my_model2.sql'
+        ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
         : 'Start typing here...'
       }
       selected={selected}
@@ -631,11 +650,16 @@ function CodeBlockProps({
   ), [
     autocompleteProviders,
     block,
-    blocks,
     content,
+    dbtProjectName,
     height,
-    pipeline,
+    onChange,
+    onDidChangeCursorPosition,
+    runBlockAndTrack,
     selected,
+    setContent,
+    setSelected,
+    setTextareaFocused,
     textareaFocused,
   ]);
 
@@ -684,11 +708,17 @@ function CodeBlockProps({
     isInProgress,
     mainContainerWidth,
     messagesWithType,
+    openSidekickView,
     outputCollapsed,
+    outputCollapsedUUID,
+    pipeline,
     runCount,
     runEndTime,
     runStartTime,
     selected,
+    setOutputBlocks,
+    setOutputCollapsed,
+    setSelectedOutputBlock,
   ]);
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
@@ -800,7 +830,7 @@ function CodeBlockProps({
             <Spacing mr={1} />
 
             <FlexContainer alignItems="center">
-              {isDBT && (
+              {isDBT && BlockLanguageEnum.YAML !== block.language && (
                 <Text monospace muted>
                   {getModelName(block, {
                     fullPath: true,
@@ -808,7 +838,7 @@ function CodeBlockProps({
                 </Text>
               )}
 
-              {!isDBT && (
+              {(!isDBT || BlockLanguageEnum.YAML === block.language) && (
                 <LabelWithValueClicker
                   bold={false}
                   inputValue={newBlockUuid}
@@ -961,14 +991,57 @@ function CodeBlockProps({
             && !codeCollapsed
             && (
             <CodeHelperStyle>
-              <FlexContainer alignItems="center">
-                <Text monospace muted small>
-                  DBT project name:
-                </Text>
-                <span>&nbsp;</span>
-                {BlockLanguageEnum.YAML === block.language && (
-                  <TextInput
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Flex alignItems="center">
+                  {BlockLanguageEnum.YAML === block.language && (
+                    <Select
+                      compact
+                      monospace
+                      onBlur={() => setTimeout(() => {
+                        setAnyInputFocused(false);
+                      }, 300)}
+                      onChange={(e) => {
+                        // @ts-ignore
+                        updateDataProviderConfig({
+                          [CONFIG_KEY_DBT_PROFILE_TARGET]: '',
+                          [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
+                        });
+                        e.preventDefault();
+                      }}
+                      onFocus={() => {
+                        setAnyInputFocused(true);
+                      }}
+                      placeholder="Project"
+                      small
+                      value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME] || ''}
+                    >
+                      <option value="" />
+                      {Object.keys(dbtProjects || {}).map((projectName: string) => (
+                        <option key={projectName} value={projectName}>
+                          {projectName}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+
+                  {BlockLanguageEnum.YAML !== block.language && (
+                    <Text monospace small>
+                      {dbtProjectName}
+                    </Text>
+                  )}
+
+                  <Spacing mr={2} />
+
+                  <Text monospace muted small>
+                    Target
+                  </Text>
+                  <span>&nbsp;</span>
+                  <Select
                     compact
+                    disabled={!dbtProjectName}
                     monospace
                     onBlur={() => setTimeout(() => {
                       setAnyInputFocused(false);
@@ -976,86 +1049,116 @@ function CodeBlockProps({
                     onChange={(e) => {
                       // @ts-ignore
                       updateDataProviderConfig({
-                        [CONFIG_KEY_DBT_PROJECT_NAME]: e.target.value,
+                        [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
                       });
                       e.preventDefault();
                     }}
                     onFocus={() => {
                       setAnyInputFocused(true);
                     }}
-                    placeholder="e.g. my_project"
+                    placeholder={dbtProjectName ? null : 'Select project first'}
                     small
-                    value={dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME]}
-                  />
-                )}
+                    value={dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET] || ''}
+                  >
+                    <option value="" />
+                    {dbtProfileData.targets?.map((target: string) => (
+                      <option key={target} value={target}>
+                        {target}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
+
                 {BlockLanguageEnum.YAML !== block.language && (
-                  <Text monospace small>
-                    {block?.configuration?.file_path?.split('/')?.[0]}
-                  </Text>
+                  <FlexContainer alignItems="center">
+                    <Tooltip
+                      appearBefore
+                      block
+                      description={
+                        <Text default inline>
+                          Limit the number of results that are returned when running this block in
+                          the notebook.
+                          <br />
+                          This limit won’t affect the number of results returned when running the
+                          pipeline end-to-end.
+                        </Text>
+                      }
+                      size={null}
+                      widthFitContent
+                    >
+                      <FlexContainer alignItems="center">
+                        <Info muted />
+                        <span>&nbsp;</span>
+                        <Text monospace muted small>
+                          Sample limit
+                        </Text>
+                        <span>&nbsp;</span>
+                      </FlexContainer>
+                    </Tooltip>
+
+                    <TextInput
+                      compact
+                      monospace
+                      onBlur={() => setTimeout(() => {
+                        setAnyInputFocused(false);
+                      }, 300)}
+                      onChange={(e) => {
+                        // @ts-ignore
+                        updateDataProviderConfig({
+                          [CONFIG_KEY_LIMIT]: e.target.value,
+                        });
+                        e.preventDefault();
+                      }}
+                      onFocus={() => {
+                        setAnyInputFocused(true);
+                      }}
+                      small
+                      type="number"
+                      value={dataProviderConfig[CONFIG_KEY_LIMIT] || ''}
+                      width={UNIT * 10}
+                    />
+
+                    <Spacing mr={5} />
+                  </FlexContainer>
                 )}
-
-                <Spacing mr={2} />
-
-                <Text monospace muted small>
-                  DBT profile target:
-                </Text>
-                <span>&nbsp;</span>
-                <TextInput
-                  compact
-                  monospace
-                  onBlur={() => setTimeout(() => {
-                    setAnyInputFocused(false);
-                  }, 300)}
-                  onChange={(e) => {
-                    // @ts-ignore
-                    updateDataProviderConfig({
-                      [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
-                    });
-                    e.preventDefault();
-                  }}
-                  onFocus={() => {
-                    setAnyInputFocused(true);
-                  }}
-                  placeholder="e.g. prod"
-                  small
-                  value={dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET]}
-                />
               </FlexContainer>
 
               {BlockLanguageEnum.YAML === block.language && (
-                <FlexContainer alignItems="center">
-                  <Flex flex={1}>
-                    <Text monospace default small>
-                      dbt run <Text
-                        inline
-                        monospace
-                        small
-                      >
-                        [type your --select and --exclude syntax below]
+                <Spacing mt={1}>
+                  <FlexContainer alignItems="center">
+                    <Flex flex={1}>
+                      <Text monospace default small>
+                        dbt run <Text
+                          inline
+                          monospace
+                          small
+                        >
+                          [type your --select and --exclude syntax below]
+                        </Text>
                       </Text>
-                    </Text>
+
+                      <Spacing mr={1} />
+
+                      <Text monospace muted small>
+                        (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                      </Text>
+                    </Flex>
 
                     <Spacing mr={1} />
 
-                    <Text monospace muted small>
-                      (paths start from {dataProviderConfig?.[CONFIG_KEY_DBT_PROJECT_NAME] || 'project'} folder)
+                    <Text muted small>
+                      <Link
+                        href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
+                        openNewWindow
+                        small
+                      >
+                        Examples
+                      </Link>
                     </Text>
-                  </Flex>
 
-                  <Spacing mr={1} />
-
-                  <Text muted small>
-                    <Link
-                      href="https://docs.getdbt.com/reference/node-selection/syntax#examples"
-                      openNewWindow
-                      small
-                    >
-                      Examples
-                    </Link>
-                  </Text>
-
-                  <Spacing mr={5} />
-                </FlexContainer>
+                    <Spacing mr={5} />
+                  </FlexContainer>
+                </Spacing>
               )}
             </CodeHelperStyle>
           )}

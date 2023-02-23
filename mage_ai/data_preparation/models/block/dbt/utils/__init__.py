@@ -24,6 +24,7 @@ from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import clean_name, files_in_path
 from pandas import DataFrame
 from typing import Callable, Dict, List, Tuple
+import aiofiles
 import os
 import re
 import simplejson
@@ -252,11 +253,65 @@ def add_table_to_source(block: 'Block', settings: Dict, source_name: str, table_
     return settings
 
 
-def get_profile(block, profile_target: str = None) -> Dict:
-    attr = parse_attributes(block)
-    project_name = attr['project_name']
-    profiles_full_path = attr['profiles_full_path']
-    return load_profile(project_name, profiles_full_path, profile_target)
+def load_profiles_file(profiles_full_path: str) -> Dict:
+    try:
+        with open(profiles_full_path, 'r') as f:
+            try:
+                text = Template(f.read()).render(
+                    **get_template_vars(),
+                )
+                return yaml.safe_load(text)
+            except Exception as err:
+                print(
+                    f'Error loading file {profiles_full_path}, check file content syntax: {err}.',
+                )
+                return {}
+    except OSError as err:
+        print(
+            f'Error loading file {profiles_full_path}, check file content syntax: {err}.',
+        )
+        return {}
+
+
+async def load_profiles_file_async(profiles_full_path: str) -> Dict:
+    try:
+        async with aiofiles.open(profiles_full_path, mode='r') as fp:
+            try:
+                file_content = await fp.read()
+                text = Template(file_content).render(
+                    **get_template_vars(),
+                )
+                return yaml.safe_load(text)
+            except Exception as err:
+                print(
+                    f'Error loading file {profiles_full_path}, check file content syntax: {err}.',
+                )
+                return {}
+    except OSError as err:
+        print(
+            f'Error loading file {profiles_full_path}, check file content syntax: {err}.',
+        )
+        return {}
+
+
+def load_profiles(project_name: str, profiles_full_path: str) -> Dict:
+    profiles = load_profiles_file(profiles_full_path)
+
+    if not profiles or project_name not in profiles:
+        print(f'Project name {project_name} does not exist in profile file {profiles_full_path}.')
+        return {}
+
+    return profiles[project_name]
+
+
+async def load_profiles_async(project_name: str, profiles_full_path: str) -> Dict:
+    profiles = await load_profiles_file_async(profiles_full_path)
+
+    if not profiles or project_name not in profiles:
+        print(f'Project name {project_name} does not exist in profile file {profiles_full_path}.')
+        return {}
+
+    return profiles[project_name]
 
 
 def load_profile(
@@ -264,19 +319,19 @@ def load_profile(
     profiles_full_path: str,
     profile_target: str = None,
 ) -> Dict:
-    with open(profiles_full_path, 'r') as f:
-        try:
-            text = Template(f.read()).render(
-                **get_template_vars(),
-            )
-            profile = yaml.safe_load(text)[project_name]
-            outputs = profile['outputs']
-            target = profile.get('target')
 
-            return outputs.get(profile_target or target)
-        except Exception as err:
-            print(f'Error loading file {profiles_full_path}, please check file content '
-                  f'syntax: {err}.')
+    profile = load_profiles(project_name, profiles_full_path)
+    outputs = profile.get('outputs', {})
+    target = profile.get('target', None)
+
+    return outputs.get(profile_target or target)
+
+
+def get_profile(block, profile_target: str = None) -> Dict:
+    attr = parse_attributes(block)
+    project_name = attr['project_name']
+    profiles_full_path = attr['profiles_full_path']
+    return load_profile(project_name, profiles_full_path, profile_target)
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
@@ -565,7 +620,7 @@ def interpolate_input(
     return query
 
 
-def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
+def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
     attr = parse_attributes(block)
 
     config_file_loader, configuration = config_file_loader_and_configuration(
@@ -618,36 +673,40 @@ def query_from_compiled_sql(block, profile_target: str) -> DataFrame:
             quote_str=quote_str,
         )
 
+        shared_kwargs = {}
+        if limit is not None:
+            shared_kwargs['limit'] = limit
+
         if DataSource.POSTGRES == data_provider:
             from mage_ai.io.postgres import Postgres
 
             with Postgres.with_config(config_file_loader) as loader:
-                return loader.load(query_string)
+                return loader.load(query_string, **shared_kwargs)
         elif DataSource.MYSQL == data_provider:
             from mage_ai.io.mysql import MySQL
 
             with MySQL.with_config(config_file_loader) as loader:
-                return loader.load(query_string)
+                return loader.load(query_string, **shared_kwargs)
         elif DataSource.BIGQUERY == data_provider:
             from mage_ai.io.bigquery import BigQuery
 
             loader = BigQuery.with_config(config_file_loader)
-            return loader.load(query_string)
+            return loader.load(query_string, **shared_kwargs)
         elif DataSource.REDSHIFT == data_provider:
             from mage_ai.io.redshift import Redshift
 
             with Redshift.with_config(config_file_loader) as loader:
-                return loader.load(query_string)
+                return loader.load(query_string, **shared_kwargs)
         elif DataSource.SNOWFLAKE == data_provider:
             from mage_ai.io.snowflake import Snowflake
 
             with Snowflake.with_config(config_file_loader) as loader:
-                return loader.load(query_string)
+                return loader.load(query_string, **shared_kwargs)
         elif DataSource.TRINO == data_provider:
             from mage_ai.io.trino import Trino
 
             with Trino.with_config(config_file_loader) as loader:
-                return loader.load(query_string)
+                return loader.load(query_string, **shared_kwargs)
 
 
 def build_command_line_arguments(

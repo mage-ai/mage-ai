@@ -21,13 +21,18 @@ class PipelinePresenter(BasePresenter):
             include_content = query.get('includes_content', [True])
             if include_content:
                 include_content = include_content[0]
+
             include_outputs = query.get('includes_outputs', [True])
             if include_outputs:
                 include_outputs = include_outputs[0]
 
+            include_block_metadata = query.get('includes_block_metadata', [True])
+            if include_block_metadata:
+                include_block_metadata = include_block_metadata[0]
+
             return await self.model.to_dict_async(
+                include_block_metadata=include_block_metadata,
                 include_content=include_content,
-                include_outputs=include_outputs,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
 

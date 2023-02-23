@@ -11,6 +11,7 @@ class BlockPresenter(BasePresenter):
         'executor_config',
         'executor_type',
         'language',
+        'metadata',
         'name',
         'status',
         'type',

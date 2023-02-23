@@ -2,6 +2,8 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.utils import (
     build_command_line_arguments,
     create_upstream_tables,
+    load_profiles_async,
+    parse_attributes,
     query_from_compiled_sql,
     run_dbt_tests,
     update_model_settings,
@@ -10,7 +12,6 @@ from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.hash import merge_dict
 from typing import Any, Dict, List
-
 import json
 import os
 import subprocess
@@ -30,6 +31,49 @@ class DBTBlock(Block):
             )
 
         return super().file_path
+
+    async def metadata_async(self) -> Dict:
+        project = None
+        projects = {}
+
+        if self.configuration.get('file_path'):
+            attributes_dict = parse_attributes(self)
+            profiles_full_path = attributes_dict['profiles_full_path']
+            project_name = attributes_dict['project_name']
+            project = project_name
+
+            targets = []
+            profiles = await load_profiles_async(project_name, profiles_full_path)
+            outputs = profiles.get('outputs')
+            if outputs:
+                targets += sorted(list(outputs.keys()))
+
+            projects[project_name] = dict(
+                target=profiles.get('target'),
+                targets=targets,
+            )
+        else:
+            dbt_dir = f'{get_repo_path()}/dbt'
+            project_names = [
+                name for name in os.listdir(dbt_dir) if os.path.isdir(f'{dbt_dir}/{name}')
+            ]
+            for project_name in project_names:
+                profiles_full_path = f'{dbt_dir}/{project_name}/profiles.yml'
+                targets = []
+                profiles = await load_profiles_async(project_name, profiles_full_path)
+                outputs = profiles.get('outputs')
+                if outputs:
+                    targets += sorted(list(outputs.keys()))
+
+                projects[project_name] = dict(
+                    target=profiles.get('target'),
+                    targets=targets,
+                )
+
+        return dict(dbt=dict(
+            project=project,
+            projects=projects,
+        ))
 
     def run_tests(
         self,
@@ -95,6 +139,7 @@ class DBTBlock(Block):
             df = query_from_compiled_sql(
                 self,
                 dbt_profile_target,
+                limit=self.configuration.get('limit'),
             )
             self.store_variables(
                 dict(df=df),
