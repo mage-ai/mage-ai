@@ -175,8 +175,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         oauth_token.user and \
                         has_at_least_editor_role(oauth_token.user)
 
-                    print('WTFFFFFFFFFFFFFFFFFFFFFF', has_at_least_editor_role(oauth_token.user))
-
             if not valid:
                 return self.send_message(
                     dict(
@@ -299,6 +297,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         run_downstream = message.get('run_downstream')
         run_tests = message.get('run_tests')
         run_upstream = message.get('run_upstream')
+        run_settings = message.get('run_settings')
 
         pipeline_uuid = pipeline.uuid
 
@@ -344,6 +343,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     run_upstream=run_upstream,
                     update_status=False if remote_execution else True,
                     widget=widget,
+                    run_settings=run_settings,
                 )
 
             msg_id = client.execute(add_internal_output_info(code))

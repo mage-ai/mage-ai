@@ -69,6 +69,9 @@ export const getMoreActionsItems = (
   block: BlockType,
   runBlock: (payload: {
     block: BlockType;
+    runSettings?: {
+      run_model?: boolean;
+    };
     runTests?: boolean;
     runUpstream?: boolean;
   }) => void,
@@ -85,19 +88,6 @@ export const getMoreActionsItems = (
     }) => Promise<any>;
   },
 ): FlyoutMenuItemType[] => {
-  const items: FlyoutMenuItemType[] = [
-    {
-      label: () => 'Execute with upstream blocks',
-      onClick: () => runBlock({ block, runUpstream: true }),
-      uuid: 'execute_upstream',
-    },
-    {
-      label: () => 'Execute block and run tests',
-      onClick: () => runBlock({ block, runTests: true }),
-      uuid: 'run_tests',
-    },
-  ];
-
   const {
     configuration,
     downstream_blocks: downstreamBlocks,
@@ -107,6 +97,25 @@ export const getMoreActionsItems = (
     dynamic,
     reduce_output: reduceOutput,
   } = configuration || {};
+  const isDBT = BlockTypeEnum.DBT === block?.type;
+
+  const items: FlyoutMenuItemType[] = [
+    {
+      label: () => isDBT
+        ? 'Execute and run upstream blocks'
+        : 'Execute with upstream blocks',
+      onClick: () => runBlock({ block, runUpstream: true }),
+      uuid: 'execute_upstream',
+    },
+  ];
+
+  if (!isDBT) {
+    items.push({
+      label: () => 'Execute block and run tests',
+      onClick: () => runBlock({ block, runTests: true }),
+      uuid: 'run_tests',
+    });
+  }
 
   const {
     blocksMapping,
@@ -127,7 +136,20 @@ export const getMoreActionsItems = (
     }
   });
 
-  if (savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
+  if (isDBT) {
+    items.unshift({
+      label: () => 'Run model (create table)',
+      onClick: () => runBlock({
+        block,
+        runSettings: {
+          run_model: true,
+        },
+      }),
+      uuid: 'run_model',
+    });
+  }
+
+  if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
     items.push({
       label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
       onClick: () => savePipelineContent({

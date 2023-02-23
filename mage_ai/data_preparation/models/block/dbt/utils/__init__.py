@@ -664,14 +664,18 @@ def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> Da
             database = profile['catalog']
             schema = profile['schema']
 
-        query_string = interpolate_input(
-            block,
-            query_string,
-            configuration=configuration,
-            profile_database=database,
-            profile_schema=schema,
-            quote_str=quote_str,
-        )
+        # TODO (tommy dang): this was needed because we didn’t want to create model tables and
+        # so we’d create a table to store the model results without creating the model.
+        # However, we’re requiring people to run the model and create the model table to use ref.
+
+        # query_string = interpolate_input(
+        #     block,
+        #     query_string,
+        #     configuration=configuration,
+        #     profile_database=database,
+        #     profile_schema=schema,
+        #     quote_str=quote_str,
+        # )
 
         shared_kwargs = {}
         if limit is not None:
@@ -716,7 +720,7 @@ def build_command_line_arguments(
     test_execution: bool = False,
 ) -> Tuple[str, List[str], Dict]:
     variables = merge_dict(
-        variables,
+        variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
     )
     dbt_command = 'test' if run_tests else 'run'
