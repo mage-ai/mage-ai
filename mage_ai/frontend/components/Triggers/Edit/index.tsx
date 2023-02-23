@@ -707,7 +707,7 @@ function Edit({
   ]);
 
   const apiMemo = useMemo(() => {
-    let url = ''
+    let url = '';
     if (typeof window !== 'undefined') {
       url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
 

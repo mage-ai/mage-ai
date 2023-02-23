@@ -91,7 +91,7 @@ export type InputWrapperProps = {
   spellCheck?: boolean;
   topPosition?: boolean;
   type?: string;
-  value?: string | number;
+  value?: string | number | string[];
   borderTheme?: boolean;
   visible?: boolean;
   warning?: boolean;
@@ -273,7 +273,9 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     }
 
     &:focus {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
       border-color: ${(props.theme.interactive || dark.interactive).focusBorder};
+      color: ${(props.theme.content || dark.content).active};
     }
 
     &:active {
