@@ -35,7 +35,7 @@ function FileTabs({
   useMemo(() => filePaths.map(path => decodeURIComponent(path)), [filePaths]);
 
   return (
-    <PipelineHeaderStyle secondary>
+    <PipelineHeaderStyle relativePosition secondary>
       <FlexContainer
         alignItems="center"
         justifyContent="flex-start"

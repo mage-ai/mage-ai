@@ -363,7 +363,7 @@ function KernelStatus({
   ]);
 
   return (
-    <PipelineHeaderStyle>
+    <PipelineHeaderStyle relativePosition>
       <FlexContainer
         alignItems="center"
         fullHeight
