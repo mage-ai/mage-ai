@@ -1965,6 +1965,15 @@ class CallbackBlock(Block):
         except Exception:
             pass
 
+    def update_content(self, content, widget=False):
+        if not self.file.exists():
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
+
+        if content != self.content:
+            self._content = content
+            self.file.update_content(content)
+        return self
+
     async def update_content_async(self, content, widget=False):
         block_content = await self.content_async()
         if content != block_content:
