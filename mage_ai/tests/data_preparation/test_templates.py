@@ -100,7 +100,7 @@ def load_data(*args, **kwargs):
     Template code for loading data from any source.
 
     Returns:
-        Anything
+        Anything (e.g. data frame, dictionary, array, int, str, etc.)
     \"\"\"
     # Specify your data loading logic here
 
@@ -281,10 +281,10 @@ def transform(*args, **kwargs):
     There should be one parameter for each output variable from each parent block.
 
     Args:
-        df (optional): Data frame from parent block.
+        args: The input variables from upstream blocks
 
     Returns:
-        Anything (e.g. df)
+        Anything (e.g. data frame, dictionary, array, int, str, etc.)
     \"\"\"
     # Specify your transformation logic here
 
@@ -491,7 +491,7 @@ def export_data(*args, **kwargs):
     Exports data to some source
 
     Args:
-        df (optional): Data frame to export to
+        args: The input variables from upstream blocks
 
     Output (optional):
         Optionally return any object and it'll be logged and
