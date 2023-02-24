@@ -6,6 +6,9 @@ from typing import Dict, List, Tuple
 import json
 import re
 
+KEY_DESTINATION = 'destinations'
+KEY_SOURCE = 'sources'
+
 
 def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     pipeline = IntegrationPipeline.get(pipeline_run.pipeline_uuid)
@@ -62,11 +65,11 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     ]
 
     block_metrics_by_stream = get_metrics(block_runs_by_stream, [
-        ('sources', shared_metric_keys + [
+        (KEY_SOURCE, shared_metric_keys + [
             'record',
             'records',
         ]),
-        ('destinations', shared_metric_keys + [
+        (KEY_DESTINATION, shared_metric_keys + [
             'record',
             'records',
             'records_affected',
@@ -153,15 +156,19 @@ def get_metrics(logs_by_uuid: Dict, key_and_key_metrics: List[Tuple[str, List[st
 
                     for key_metric in key_metrics:
                         if key_metric in tags:
-                            temp_metrics[key_metric] = tags[key_metric]
+                            if key_metric not in temp_metrics or key != KEY_DESTINATION:
+                                temp_metrics[key_metric] = [tags[key_metric]]
+                            else:
+                                temp_metrics[key_metric].append(tags[key_metric])
 
-                for key_metric, value in temp_metrics.items():
+                for key_metric, value_list in temp_metrics.items():
                     if key_metric not in metrics[uuid][key]:
                         metrics[uuid][key][key_metric] = 0
 
-                    if type(value) is int:
-                        metrics[uuid][key][key_metric] += value
-                    else:
-                        metrics[uuid][key][key_metric] = value
+                    for value in value_list:
+                        if type(value) is int:
+                            metrics[uuid][key][key_metric] += value
+                        else:
+                            metrics[uuid][key][key_metric] = value
 
     return metrics
