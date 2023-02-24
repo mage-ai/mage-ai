@@ -27,6 +27,12 @@ export const INTERVAL_TYPES = [
   IntervalTypeEnum.CUSTOM,
 ];
 
+type PipelineRunDateType = {
+  ds: string;
+  execution_date: string;
+  hr: string;
+};
+
 export default interface BackfillType {
   block_uuid?: string;
   completed_at?: string;
@@ -40,11 +46,13 @@ export default interface BackfillType {
     [key: string]: number | string;
   };
   name: string;
+  pipeline_run_dates?: PipelineRunDateType[];
   pipeline_schedule_id?: number;
   pipeline_uuid: string;
   start_datetime?: string;
   started_at?: string;
   status?: RunStatus;
+  total_run_count?: number;
   updated_at?: string;
   variables?: {
     [key: string]: number | string;

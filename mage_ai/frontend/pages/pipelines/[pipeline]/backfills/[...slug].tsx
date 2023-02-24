@@ -32,7 +32,7 @@ function BackfillDetailPage({
     uuid: pipelineUUID,
   }), [dataPipeline, pipelineUUID]);
 
-  const { data, mutate } = api.backfills.detail(modelID);
+  const { data, mutate } = api.backfills.detail(modelID, { include_preview_runs: true });
   const model = useMemo(() => data?.backfill, [data]);
 
   if ('edit' === subpath) {

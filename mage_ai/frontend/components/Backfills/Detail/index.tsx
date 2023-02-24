@@ -31,6 +31,7 @@ import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTa
 import {
   Backfill,
   CalendarDate,
+  NumberHash,
   MultiShare,
   Pause,
   PlayButtonFilled,
@@ -49,7 +50,6 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { getTimeInUTCString } from '@components/Triggers/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -79,8 +79,10 @@ function BackfillDetail({
     interval_type: intervalType,
     interval_units: intervalUnits,
     name: modelName,
+    pipeline_run_dates: pipelineRunDates,
     start_datetime: startDatetime,
     status,
+    total_run_count: totalRunCount,
     variables: modelVariablesInit = {},
   } = model || {};
   const {
@@ -312,6 +314,24 @@ function BackfillDetail({
             monospace
           >
             {intervalUnits}
+          </Text>,
+        ],
+        [
+          <FlexContainer
+            alignItems="center"
+            key="total_runs_label"
+          >
+            <NumberHash {...iconProps} />
+            <Spacing mr={1} />
+            <Text default>
+              Total runs
+            </Text>
+          </FlexContainer>,
+          <Text
+            key="total_runs"
+            monospace
+          >
+            {totalRunCount}
           </Text>,
         ],
       ]);

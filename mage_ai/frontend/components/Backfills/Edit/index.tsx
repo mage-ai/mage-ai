@@ -490,7 +490,7 @@ function BackfillEdit({
                   noBorder
                   noPadding
                   onClick={() => {
-                    setSetupType(uuid)
+                    setSetupType(uuid);
                   }}
                 >
                   <CardStyle selected={selected}>
