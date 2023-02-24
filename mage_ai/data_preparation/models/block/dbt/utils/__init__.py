@@ -729,6 +729,7 @@ def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> Da
 def build_command_line_arguments(
     block,
     variables: Dict,
+    run_settings: Dict = None,
     run_tests: bool = False,
     test_execution: bool = False,
 ) -> Tuple[str, List[str], Dict]:
@@ -736,7 +737,16 @@ def build_command_line_arguments(
         variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
     )
-    dbt_command = 'test' if run_tests else 'run'
+    dbt_command = 'run'
+
+    if run_tests:
+        dbt_command = 'test'
+
+    if run_settings:
+        if run_settings.get('build_model'):
+            dbt_command = 'build'
+        elif run_settings.get('test_model'):
+            dbt_command = 'test'
 
     args = [
         '--vars',

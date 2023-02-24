@@ -151,6 +151,10 @@ type CodeBlockProps = {
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
+  setErrors: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -190,6 +194,7 @@ function CodeBlockProps({
   setAnyInputFocused,
   setCreatingNewDBTModel,
   setEditingBlock,
+  setErrors,
   setOutputBlocks,
   setRecsWindowOpenBlockIdx,
   setSelected,
@@ -955,10 +960,12 @@ function CodeBlockProps({
             blocks={blocks}
             deleteBlock={deleteBlock}
             executionState={executionState}
+            fetchPipeline={fetchPipeline}
             interruptKernel={interruptKernel}
-            pipelineType={pipeline?.type}
+            pipeline={pipeline}
             runBlock={runBlockAndTrack}
             savePipelineContent={savePipelineContent}
+            setErrors={setErrors}
             setOutputCollapsed={setOutputCollapsed}
             visible={selected || isInProgress}
           />

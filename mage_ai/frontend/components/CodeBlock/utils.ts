@@ -86,6 +86,7 @@ export const getMoreActionsItems = (
       block?: BlockType;
       pipeline?: PipelineType;
     }) => Promise<any>;
+    updatePipeline: (pipeline: PipelineType) => Promise<any>;
   },
 ): FlyoutMenuItemType[] => {
   const {
@@ -120,6 +121,7 @@ export const getMoreActionsItems = (
   const {
     blocksMapping,
     savePipelineContent,
+    updatePipeline,
   } = opts || {};
 
   // If current block’s downstream has other dynamic blocks,
@@ -137,16 +139,53 @@ export const getMoreActionsItems = (
   });
 
   if (isDBT) {
-    items.unshift({
-      label: () => 'Run model (create table)',
-      onClick: () => runBlock({
-        block,
-        runSettings: {
-          run_model: true,
+    items.unshift(...[
+      {
+        label: () => 'Run model',
+        onClick: () => runBlock({
+          block,
+          runSettings: {
+            run_model: true,
+          },
+        }),
+        tooltip: () => 'Execute command dbt run.',
+        uuid: 'run_model',
+      },
+      {
+        label: () => 'Test model',
+        onClick: () => runBlock({
+          block,
+          runSettings: {
+            test_model: true,
+          },
+        }),
+        tooltip: () => 'Execute command dbt test.',
+        uuid: 'test_model',
+      },
+      {
+        label: () => 'Build model',
+        onClick: () => runBlock({
+          block,
+          runSettings: {
+            build_model: true,
+          },
+        }),
+        tooltip: () => 'Execute command dbt build.',
+        uuid: 'build_model',
+      },
+      {
+        label: () => 'Add upstream models',
+        onClick: () => {
+          updatePipeline({
+            pipeline: {
+              add_upstream_for_block_uuid: block?.uuid,
+            },
+          });
         },
-      }),
-      uuid: 'run_model',
-    });
+        tooltip: () => 'Add upstream models for this model to the pipeline.',
+        uuid: 'add_upstream_models',
+      },
+    ]);
   }
 
   if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {

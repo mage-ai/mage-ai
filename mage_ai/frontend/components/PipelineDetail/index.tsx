@@ -421,6 +421,7 @@ function PipelineDetail({
           setAnyInputFocused={setAnyInputFocused}
           setCreatingNewDBTModel={setCreatingNewDBTModel}
           setEditingBlock={setEditingBlock}
+          setErrors={setErrors}
           setOutputBlocks={setOutputBlocks}
           setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
           setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
@@ -460,6 +461,7 @@ function PipelineDetail({
     setAddNewBlockMenuOpenIdx,
     setAnyInputFocused,
     setEditingBlock,
+    setErrors,
     setOutputBlocks,
     setRecsWindowOpenBlockIdx,
     setSelectedBlock,
