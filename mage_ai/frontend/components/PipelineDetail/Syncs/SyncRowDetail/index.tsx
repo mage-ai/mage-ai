@@ -1,10 +1,8 @@
 import Ansi from 'ansi-to-react';
-import moment from 'moment';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -119,8 +117,8 @@ function SyncRowDetail({
     <FlexContainer>
       {range(101).map((i, idx) => (
         <BarStyle
-          fill={progress > 0 && Math.round(progress * 100) >= idx}
           even={idx % 2 === 0}
+          fill={progress > 0 && Math.round(progress * 100) >= idx}
           key={idx}
         />
       ))}
@@ -144,7 +142,7 @@ function SyncRowDetail({
       } else if ([RunStatusBlockRun.CANCELLED, RunStatusBlockRun.FAILED].includes(brStatus)) {
         return RUN_STATUS_TO_LABEL[brStatus];
       } else if (runtime && total >= 1) {
-        const v = Math.ceil(runtime * (total - completed) / 60)
+        const v = Math.ceil(runtime * (total - completed) / 60);
         return `${pluralize('minute', v, true)} to completion`;
       } else {
         return 'Estimating time remaining for stream...';
@@ -161,7 +159,7 @@ function SyncRowDetail({
       } else if (eta === null) {
         return 'Estimating time remaining...';
       } else {
-        const v = Math.ceil(eta / 60)
+        const v = Math.ceil(eta / 60);
         return `${pluralize('minute', v, true)} to completion`;
       }
     }
@@ -211,7 +209,7 @@ function SyncRowDetail({
     let interval;
 
     if (pipelineRun && selectedStream && timesForStream) {
-      const seconds = timesForStream?.runtime;
+      const seconds = timesForStream?.runtime || 0;
       setRuntimeStream(seconds);
       interval = setInterval(() => setRuntimeStream(prev => prev + 1), 1000);
     }
@@ -346,13 +344,6 @@ function SyncRowDetail({
     if (!pipelineRun) {
       return <div />;
     }
-
-    const metrics = pipelineRun?.metrics || {
-      blocks: null,
-      pipeline: null,
-    };
-    const metricsBlocks = metrics.blocks || {};
-    const metricsPipeline = metrics.pipeline || {};
     const streams = getStreams(pipelineRun);
 
     return (
@@ -443,7 +434,7 @@ function SyncRowDetail({
             </Button>,
           ];
         })}
-        uuid={`{pipelineRun?.id}-streams-table`}
+        uuid={`${pipelineRun?.id}-streams-table`}
       />
     );
   }, [
@@ -520,7 +511,7 @@ function SyncRowDetail({
       // @ts-ignore
       columnData.push({
         uuid: `${key} (${type})`,
-      })
+      });
     });
 
     return (
@@ -587,7 +578,7 @@ function SyncRowDetail({
               </pre>
             )}
             {!isJSONObject && v}
-          </Text>
+          </Text>,
         );
       });
 
@@ -689,7 +680,7 @@ function SyncRowDetail({
           alignItems="center"
           justifyContent="space-between"
         >
-          <Spacing my={1} mr={2}>
+          <Spacing mr={2} my={1}>
             <Headline
               level={5}
               muted={!pipelineRun}
@@ -700,10 +691,10 @@ function SyncRowDetail({
 
           {pipelineRun && (
             <Button
-              small
               onClick={() => router.push(
                 `/pipelines/${pipelineRun.pipeline_uuid}/logs?pipeline_run_id[]=${pipelineRun.id}`,
               )}
+              small
             >
               Logs
             </Button>
