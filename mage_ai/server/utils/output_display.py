@@ -287,7 +287,7 @@ def execute_custom_code():
     except Exception:
         pass
 
-    block_output = block.execute_sync(
+    block_output = block.execute_with_callback(
         custom_code=code,
         global_vars=global_vars,
         analyze_outputs={analyze_outputs},

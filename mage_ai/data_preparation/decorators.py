@@ -27,3 +27,11 @@ def transformer(function):
 
 def test(function):
     return function
+
+
+def on_success(function):
+    return function
+
+
+def on_failure(function):
+    return function

@@ -82,6 +82,7 @@ export const getMoreActionsItems = (
     blocksMapping: {
       [uuid: string]: BlockType;
     };
+    fetchPipeline: () => void;
     savePipelineContent: (payload?: {
       block?: BlockType;
       pipeline?: PipelineType;
@@ -91,6 +92,7 @@ export const getMoreActionsItems = (
   const {
     configuration,
     downstream_blocks: downstreamBlocks,
+    has_callback,
     upstream_blocks: upstreamBlocks,
   } = block || {};
   const {
@@ -119,6 +121,7 @@ export const getMoreActionsItems = (
 
   const {
     blocksMapping,
+    fetchPipeline,
     savePipelineContent,
   } = opts || {};
 
@@ -186,6 +189,17 @@ export const getMoreActionsItems = (
       });
     }
   }
+
+  items.push({
+    label: () => has_callback ? 'Remove callback' : 'Add callback',
+    onClick: () => savePipelineContent({
+      block: {
+        ...block,
+        has_callback: !has_callback,
+      },
+    }).then(() => fetchPipeline()),
+    uuid: 'has_callback',
+  })
 
   items.push({
     label: () => 'Delete block',

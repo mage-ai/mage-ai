@@ -37,6 +37,7 @@ class BlockStatus(str, Enum):
 
 
 class BlockType(str, Enum):
+    CALLBACK = 'callback'
     CHART = 'chart'
     CUSTOM = 'custom'
     DATA_EXPORTER = 'data_exporter'

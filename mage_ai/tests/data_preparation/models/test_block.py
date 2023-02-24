@@ -6,6 +6,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import DBTestCase
 from pandas.testing import assert_frame_equal
+from unittest.mock import patch
 import os
 import pandas as pd
 
@@ -278,6 +279,66 @@ def incorrect_function(df1, df2, df3):
         with self.assertRaises(Exception):
             asyncio.run(block3.execute())
 
+    @patch('builtins.print')
+    def test_execute_with_callback_success(self, mock_print):
+        pipeline = Pipeline.create(
+            'test pipeline 4',
+            repo_path=self.repo_path,
+        )
+        block1 = Block.create(
+            'test_data_loader_1',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        with open(block1.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        block1.update(dict(has_callback=True))
+        with open(block1.callback_block.file_path, 'w') as file:
+            file.write('''
+@on_success
+def on_success_callback(**kwargs):
+    print('SUCCESS')
+            ''')
+        block1.execute_with_callback()
+        mock_print.assert_called_with('SUCCESS')
+
+    @patch('builtins.print')
+    def test_execute_with_callback_failure(self, mock_print):
+        pipeline = Pipeline.create(
+            'test pipeline 5',
+            repo_path=self.repo_path,
+        )
+        block1 = Block.create(
+            'test_data_loader_1',
+            'data_loader',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        with open(block1.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    raise Exception('failed')
+            ''')
+        block1.update(dict(has_callback=True))
+        with open(block1.callback_block.file_path, 'w') as file:
+            file.write('''
+@on_failure
+def on_failure_callback(**kwargs):
+    print('FAILED')
+            ''')
+
+        with self.assertRaises(Exception):
+            block1.execute_with_callback()
+            mock_print.assert_called_with('FAILED')
+
     def test_to_dict(self):
         block1 = Block.create(
             'test_transformer_2',
@@ -300,6 +361,7 @@ def incorrect_function(df1, df2, df3):
             downstream_blocks=['test_data_exporter'],
             executor_config=None,
             executor_type='local_python',
+            has_callback=False,
             language='sql',
             name='test_transformer_2',
             status='not_executed',
@@ -314,6 +376,7 @@ def incorrect_function(df1, df2, df3):
             downstream_blocks=[],
             executor_config=None,
             executor_type='local_python',
+            has_callback=False,
             language='python',
             name='test_data_exporter',
             status='not_executed',

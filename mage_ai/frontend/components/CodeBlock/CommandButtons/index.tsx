@@ -52,6 +52,7 @@ export type CommandButtonsSharedProps = {
 type CommandButtonsProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
+  fetchPipeline: () => void;
   pipelineType?: PipelineTypeEnum;
   runBlock: (payload: {
     block: BlockType;
@@ -79,6 +80,7 @@ function CommandButtons({
   blocks,
   deleteBlock,
   executionState,
+  fetchPipeline,
   interruptKernel,
   pipelineType,
   runBlock,
@@ -388,6 +390,7 @@ function CommandButtons({
             isStreamingPipeline,
             {
               blocksMapping,
+              fetchPipeline,
               savePipelineContent,
             },
           )}

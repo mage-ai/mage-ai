@@ -133,7 +133,6 @@ async def run_blocks(
             if downstream_block.uuid not in tasks and (
                 selected_blocks is None or upstream_block.uuid in selected_blocks
             ):
-
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
     remaining_tasks = filter(lambda task: task is not None, tasks.values())
@@ -222,6 +221,7 @@ class Block:
         pipeline=None,
         language: BlockLanguage = BlockLanguage.PYTHON,
         configuration: Dict = dict(),
+        has_callback: bool = False,
     ):
         self.name = name or uuid
         self._uuid = uuid
@@ -234,6 +234,7 @@ class Block:
         self.language = language or BlockLanguage.PYTHON
         self.color = block_color
         self.configuration = configuration
+        self.has_callback = has_callback
 
         self._outputs = None
         self._outputs_loaded = False
@@ -261,6 +262,18 @@ class Block:
         if self._content is None:
             self._content = self.file.content()
         return self._content
+
+    @property
+    def callback_block(self):
+        if self.has_callback:
+            callback_block_uuid = f'{clean_name_orig(self.uuid)}_callback'
+            return CallbackBlock(
+                callback_block_uuid,
+                callback_block_uuid,
+                BlockType.CALLBACK,
+                pipeline=self.pipeline,
+            )
+        return None
 
     async def content_async(self):
         if self._content is None:
@@ -550,6 +563,46 @@ class Block:
             p.delete_block(p.get_block(self.uuid, widget=widget), widget=widget, commit=commit)
         os.remove(self.file_path)
 
+    def execute_with_callback(
+        self,
+        global_vars: Dict = None,
+        logger: Logger = None,
+        logging_tags: Dict = dict(),
+        **kwargs
+    ):
+        """
+        This method will execute the block and run the callback functions if they exist
+        for this block. This function should only be used when running a block from the
+        websocket as a way to test the code in the callback. To run a block in a pipeline
+        run, use a BlockExecutor.
+        """
+        try:
+            output = self.execute_sync(
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+                **kwargs
+            )
+        except Exception as e:
+            if self.callback_block:
+                self.callback_block.execute_callback(
+                    'on_failure',
+                    global_vars=global_vars,
+                    logger=logger,
+                    logging_tags=logging_tags,
+                )
+            raise e
+
+        if self.callback_block:
+            self.callback_block.execute_callback(
+                'on_success',
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+            )
+
+        return output
+
     def execute_sync(
         self,
         analyze_outputs: bool = False,
@@ -788,7 +841,6 @@ class Block:
                 block_uuid=self.uuid,
             ),
         )
-
         # Set up logger
         if logger is not None:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
@@ -1193,6 +1245,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             downstream_blocks=self.downstream_block_uuids,
             executor_config=self.executor_config,
             executor_type=format_enum(self.executor_type) if self.executor_type else None,
+            has_callback=self.has_callback,
             name=self.name,
             language=language,
             status=format_enum(self.status) if self.status else None,
@@ -1212,6 +1265,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         data = self.to_dict_base()
         if include_content:
             data['content'] = self.content
+            if self.callback_block is not None:
+                data['callback_content'] = self.callback_block.content
         if include_outputs:
             data['outputs'] = self.outputs
             if check_if_file_exists:
@@ -1237,6 +1292,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_content:
             data['content'] = await self.content_async()
+            if self.callback_block is not None:
+                data['callback_content'] = await self.callback_block.content_async()
 
         if include_outputs:
             data['outputs'] = await self.outputs_async()
@@ -1273,6 +1330,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_upstream_blocks(data['upstream_blocks'])
         if 'executor_type' in data and data['executor_type'] != self.executor_type:
             self.executor_type = data['executor_type']
+            self.__update_pipeline_block()
+        if 'has_callback' in data and data['has_callback'] != self.has_callback:
+            self.has_callback = data['has_callback']
+            if self.has_callback:
+                CallbackBlock.create(self.uuid)
             self.__update_pipeline_block()
         return self
 
@@ -1859,3 +1921,67 @@ class SensorBlock(Block):
                 print('Sensor sleeping for 1 minute...')
                 time.sleep(60)
             return []
+
+
+class CallbackBlock(Block):
+    @classmethod
+    def create(cls, orig_block_name):
+        return Block.create(
+            f'{clean_name_orig(orig_block_name)}_callback',
+            BlockType.CALLBACK,
+            get_repo_path(),
+            language=BlockLanguage.PYTHON,
+        )
+
+    def execute_callback(
+        self,
+        callback: str,
+        global_vars: Dict = None,
+        logger: Logger = None,
+        logging_tags: Dict = None,
+        **kwargs
+    ):
+        pipeline_run = kwargs.get('pipeline_run')
+        try:
+            if logger is not None:
+                stdout = StreamToLogger(logger, logging_tags=logging_tags)
+            else:
+                stdout = sys.stdout
+            with redirect_stdout(stdout):
+                global_vars = merge_dict(
+                    global_vars or dict(),
+                    dict(
+                        pipeline_uuid=self.pipeline.uuid,
+                        block_uuid=self.uuid,
+                        pipeline_run=pipeline_run,
+                    ),
+                )
+                fs = dict(on_success=[], on_failure=[])
+                globals = {
+                    k: self._block_decorator(v) for k, v in fs.items()
+                }
+                exec(self.content, globals)
+
+                callback_functions = fs[callback]
+
+                if callback_functions:
+                    callback = callback_functions[0]
+                    callback(**global_vars)
+        except Exception:
+            pass
+
+    def update_content(self, content, widget=False):
+        if not self.file.exists():
+            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
+
+        if content != self.content:
+            self._content = content
+            self.file.update_content(content)
+        return self
+
+    async def update_content_async(self, content, widget=False):
+        block_content = await self.content_async()
+        if content != block_content:
+            self._content = content
+            await self.file.update_content_async(content)
+        return self

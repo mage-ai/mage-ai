@@ -202,9 +202,18 @@ function PipelineDetailPage({
   const refAddChart = useRef(null);
   const blockRefs = useRef({});
   const chartRefs = useRef({});
+  const callbackByBlockUUID = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
 
+  const setCallbackByBlockUUID = useCallback((data: {
+    [uuid: string]: string;
+  }) => {
+    callbackByBlockUUID.current = {
+      ...callbackByBlockUUID.current,
+      ...data,
+    };
+  }, [callbackByBlockUUID]);
   const setContentByBlockUUID = useCallback((data: {
     [uuid: string]: string;
   }) => {
@@ -213,6 +222,15 @@ function PipelineDetailPage({
       ...data,
     };
   }, [contentByBlockUUID]);
+  const onChangeCallbackBlock = useCallback((uuid: string, value: string) => {
+    setCallbackByBlockUUID({ [uuid]: value });
+    setPipelineContentTouched(true);
+  },
+    [
+      setCallbackByBlockUUID,
+      setPipelineContentTouched,
+    ],
+  );
   const onChangeCodeBlock = useCallback((uuid: string, value: string) => {
     setContentByBlockUUID({ [uuid]: value });
     setPipelineContentTouched(true);
@@ -325,6 +343,7 @@ function PipelineDetailPage({
   }, []);
   useEffect(() => {
     if (pipelineUUID !== pipelineUUIDPrev) {
+      callbackByBlockUUID.current = {};
       contentByBlockUUID.current = {};
     }
   }, [pipelineUUID, pipelineUUIDPrev]);
@@ -500,6 +519,11 @@ function PipelineDetailPage({
             contentToSave = block.content;
           }
 
+          let callbackToSave = callbackByBlockUUID.current[block.uuid];
+          if (typeof callbackToSave === 'undefined') {
+            callbackToSave = block.callback_content;
+          }
+
           let outputs;
           const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
           const hasError = messagesForBlock?.find(({ error }) => error);
@@ -537,6 +561,7 @@ function PipelineDetailPage({
 
           const blockPayload: BlockType = {
             ...block,
+            callback_content: callbackToSave,
             content: contentToSave,
             outputs,
           };
@@ -558,6 +583,7 @@ function PipelineDetailPage({
 
           if (contentOnly) {
             return {
+              callback_content: blockPayload.callback_content,
               content: blockPayload.content,
               outputs: blockPayload.outputs,
               uuid: blockPayload.uuid,
@@ -1511,6 +1537,7 @@ function PipelineDetailPage({
       mainContainerRef={mainContainerRef}
       mainContainerWidth={mainContainerWidth}
       messages={messages}
+      onChangeCallbackBlock={onChangeCallbackBlock}
       onChangeCodeBlock={onChangeCodeBlock}
       openSidekickView={openSidekickView}
       pipeline={pipeline}
@@ -1557,6 +1584,7 @@ function PipelineDetailPage({
     mainContainerRef,
     mainContainerWidth,
     messages,
+    onChangeCallbackBlock,
     onChangeCodeBlock,
     pipeline,
     pipelineContentTouched,
