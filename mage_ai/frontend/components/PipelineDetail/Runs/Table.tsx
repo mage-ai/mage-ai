@@ -204,6 +204,7 @@ function RetryButton({
 }
 
 type PipelineRunsTableProps = {
+  emptyMessage?: string;
   fetchPipelineRuns: () => void;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
@@ -211,6 +212,7 @@ type PipelineRunsTableProps = {
 };
 
 function PipelineRunsTable({
+  emptyMessage = 'No runs available',
   fetchPipelineRuns,
   onClickRow,
   pipelineRuns,
@@ -291,7 +293,7 @@ function PipelineRunsTable({
         ?
           <Spacing px ={3} py={1}>
             <Text bold default monospace muted>
-              No runs available
+              {emptyMessage}
             </Text>
           </Spacing>
         :

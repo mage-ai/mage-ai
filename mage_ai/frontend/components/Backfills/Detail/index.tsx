@@ -125,6 +125,7 @@ function BackfillDetail({
     return (
       <>
         <PipelineRunsTable
+          emptyMessage='No runs available. Please complete backfill configuration by clicking "Edit backfill" above.'
           fetchPipelineRuns={fetchPipelineRuns}
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
