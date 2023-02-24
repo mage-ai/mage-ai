@@ -79,8 +79,8 @@ class RepoConfig:
 
             self.logging_config = repo_config.get('logging_config', dict())
 
-            self.variable_retentiton_period = repo_config.get(
-                'variable_retentiton_period',
+            self.variables_retention_period = repo_config.get(
+                'variables_retention_period',
                 DEFAULT_VARIABLE_RETENTION_PERIOD,
             )
         except Exception:
@@ -102,7 +102,7 @@ class RepoConfig:
             queue_config=self.queue_config,
             repo_path=self.repo_path,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
-            variable_retentiton_period=self.variable_retentiton_period,
+            variables_retention_period=self.variables_retention_period,
             remote_variables_dir=self.remote_variables_dir,
         )
 

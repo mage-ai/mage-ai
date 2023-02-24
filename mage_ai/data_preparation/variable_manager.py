@@ -15,6 +15,7 @@ from mage_ai.data_preparation.repo_manager import (
     get_variables_dir,
 )
 from mage_ai.shared.constants import S3_PREFIX
+from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.utils import clean_name
 from typing import Any, Dict, List
 import os
@@ -109,9 +110,10 @@ class VariableManager:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         repo_config = get_repo_config()
-        retention_days = int(repo_config.variable_retentiton_period)
-        min_partition = (datetime.utcnow() - timedelta(days=retention_days)).strftime(
-            format='%Y%m%dT%H%M%S')
+        min_partition = (datetime.utcnow() -
+                         str_to_timedelta(repo_config.variables_retention_period)).strftime(
+                            format='%Y%m%dT%H%M%S')
+        print(f'Clean variables before partition {min_partition}')
         if pipeline_uuid is None:
             pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
         else:
