@@ -140,11 +140,11 @@ class DeltaLake(BaseDestination):
 
         self.logger.info('Export data started.', tags=tags)
 
-        self.logger.info(f'Checking if delta logs exist...', tags=tags)
+        self.logger.info('Checking if delta logs exist...', tags=tags)
         if self.check_and_create_delta_log(stream):
-            self.logger.info(f'Existing delta logs exist.', tags=tags)
+            self.logger.info('Existing delta logs exist.', tags=tags)
         else:
-            self.logger.info(f'No delta logs exist.', tags=tags)
+            self.logger.info('No delta logs exist.', tags=tags)
 
         self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
         table = self.get_table_for_stream(stream)
