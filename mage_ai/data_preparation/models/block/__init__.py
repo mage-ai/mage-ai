@@ -1956,11 +1956,13 @@ class CallbackBlock(Block):
                         pipeline_run=pipeline_run,
                     ),
                 )
-                callback_functions = []
+                fs = dict(on_success=[], on_failure=[])
                 globals = {
-                    callback: self._block_decorator(callback_functions),
+                    k: self._block_decorator(v) for k, v in fs.items()
                 }
                 exec(self.content, globals)
+
+                callback_functions = fs[callback]
 
                 if callback_functions:
                     callback = callback_functions[0]
