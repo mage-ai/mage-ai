@@ -44,6 +44,12 @@ def start_backfill(backfill: Backfill) -> List[PipelineRun]:
     return pipeline_runs
 
 
+def preview_run_dates(backfill: Backfill) -> List[Dict]:
+    variables_list = __build_variables_list(backfill)
+
+    return variables_list
+
+
 def cancel_backfill(backfill: Backfill) -> None:
     for pipeline_run in PipelineRun.query.filter(
         PipelineRun.backfill_id == backfill.id,
