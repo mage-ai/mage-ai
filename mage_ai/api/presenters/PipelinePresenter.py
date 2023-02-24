@@ -33,6 +33,7 @@ class PipelinePresenter(BasePresenter):
             return await self.model.to_dict_async(
                 include_block_metadata=include_block_metadata,
                 include_content=include_content,
+                include_outputs=include_outputs,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
 
