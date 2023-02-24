@@ -14,6 +14,8 @@ if is_test():
 else:
     DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
 
+DEFAULT_VARIABLE_RETENTION_PERIOD = '30d'
+
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
@@ -76,6 +78,11 @@ class RepoConfig:
                 self.s3_path_prefix = '/'.join(path_parts)
 
             self.logging_config = repo_config.get('logging_config', dict())
+
+            self.variable_retentiton_period = repo_config.get(
+                'variable_retentiton_period',
+                DEFAULT_VARIABLE_RETENTION_PERIOD,
+            )
         except Exception:
             traceback.print_exc()
             pass
@@ -95,6 +102,7 @@ class RepoConfig:
             queue_config=self.queue_config,
             repo_path=self.repo_path,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
+            variable_retentiton_period=self.variable_retentiton_period,
             remote_variables_dir=self.remote_variables_dir,
         )
 
