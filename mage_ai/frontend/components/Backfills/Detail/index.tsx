@@ -31,6 +31,7 @@ import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTa
 import {
   Backfill,
   CalendarDate,
+  NumberHash,
   MultiShare,
   Pause,
   PlayButtonFilled,
@@ -49,7 +50,6 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { getTimeInUTCString } from '@components/Triggers/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
@@ -79,8 +79,10 @@ function BackfillDetail({
     interval_type: intervalType,
     interval_units: intervalUnits,
     name: modelName,
+    pipeline_run_dates: pipelineRunDates,
     start_datetime: startDatetime,
     status,
+    total_run_count: totalRunCount,
     variables: modelVariablesInit = {},
   } = model || {};
   const {
@@ -111,9 +113,22 @@ function BackfillDetail({
     },
     {
       pauseFetch: !modelID,
-    }
+    },
   );
-  const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
+
+  const isNotConfigured = !(startDatetime && endDatetime && intervalType && intervalUnits);
+  const showPreviewRuns = !status;
+  const pipelineRuns = useMemo(() => ((
+    showPreviewRuns
+      ? pipelineRunDates
+      : dataPipelineRuns?.pipeline_runs)
+    || []
+    ), [
+      dataPipelineRuns,
+      pipelineRunDates,
+      showPreviewRuns,
+    ],
+  );
   const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
@@ -123,6 +138,11 @@ function BackfillDetail({
     return (
       <>
         <PipelineRunsTable
+          disableRowSelect={showPreviewRuns}
+          emptyMessage={!q?.status
+            ? 'No runs available. Please complete backfill configuration by clicking "Edit backfill" above.'
+            : 'No runs available'
+          }
           fetchPipelineRuns={fetchPipelineRuns}
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
@@ -212,7 +232,7 @@ function BackfillDetail({
           monospace
         >
           {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
-        </Text>
+        </Text>,
       ],
       [
         <FlexContainer
@@ -312,6 +332,24 @@ function BackfillDetail({
             monospace
           >
             {intervalUnits}
+          </Text>,
+        ],
+        [
+          <FlexContainer
+            alignItems="center"
+            key="total_runs_label"
+          >
+            <NumberHash {...iconProps} />
+            <Spacing mr={1} />
+            <Text default>
+              Total runs
+            </Text>
+          </FlexContainer>,
+          <Text
+            key="total_runs"
+            monospace
+          >
+            {totalRunCount}
           </Text>,
         ],
       ]);
@@ -465,6 +503,7 @@ function BackfillDetail({
                       />
                   }
                   danger={isActive}
+                  disabled={isNotConfigured}
                   loading={isLoadingUpdate}
                   onClick={(e) => {
                     pauseEvent(e);
@@ -478,7 +517,10 @@ function BackfillDetail({
                     });
                   }}
                   outline
-                  success={!isActive && !(BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED === status)}
+                  success={!isActive
+                    && !(BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED === status)
+                    && !isNotConfigured
+                  }
                 >
                   {isActive
                     ? 'Cancel backfill'
@@ -491,53 +533,62 @@ function BackfillDetail({
               </>
             )}
 
-            <Button
-              linkProps={{
-                as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
-                href: '/pipelines/[pipeline]/backfills/[...slug]',
-              }}
-              noHoverUnderline
-              outline
-              sameColorAsText
-            >
-              Edit backfill
-            </Button>
+            {status === RunStatus.COMPLETED
+              ?
+                <Text bold default large>
+                  Filter runs by status:
+                </Text>
+              :
+                <Button
+                  linkProps={{
+                    as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
+                    href: '/pipelines/[pipeline]/backfills/[...slug]',
+                  }}
+                  noHoverUnderline
+                  outline
+                  sameColorAsText
+                >
+                  Edit backfill
+                </Button>
+            }
 
             <Spacing mr={PADDING_UNITS} />
 
-            <Select
-              compact
-              defaultColor
-              onChange={e => {
-                e.preventDefault();
-                const updatedStatus = e.target.value;
-                if (updatedStatus === 'all') {
-                  router.push(
-                    '/pipelines/[pipeline]/backfills/[...slug]',
-                    `/pipelines/${pipelineUUID}/backfills/${modelID}`,
-                  );
-                } else {
-                  goToWithQuery(
-                    {
-                      page: 0,
-                      status: e.target.value,
-                    },
-                  );
-                }
-              }}
-              paddingRight={UNIT * 4}
-              placeholder="Select run status"
-              value={q?.status || 'all'}
-            >
-              <option key="all_statuses" value="all">
-                All statuses
-              </option>
-              {Object.values(RunStatus).map(status => (
-                <option key={status} value={status}>
-                  {RUN_STATUS_TO_LABEL[status]}
+            {!showPreviewRuns &&
+              <Select
+                compact
+                defaultColor
+                onChange={e => {
+                  e.preventDefault();
+                  const updatedStatus = e.target.value;
+                  if (updatedStatus === 'all') {
+                    router.push(
+                      '/pipelines/[pipeline]/backfills/[...slug]',
+                      `/pipelines/${pipelineUUID}/backfills/${modelID}`,
+                    );
+                  } else {
+                    goToWithQuery(
+                      {
+                        page: 0,
+                        status: e.target.value,
+                      },
+                    );
+                  }
+                }}
+                paddingRight={UNIT * 4}
+                placeholder="Select run status"
+                value={q?.status || 'all'}
+              >
+                <option key="all_statuses" value="all">
+                  All statuses
                 </option>
-              ))}
-            </Select>
+                {Object.values(RunStatus).map(status => (
+                  <option key={status} value={status}>
+                    {RUN_STATUS_TO_LABEL[status]}
+                  </option>
+                ))}
+              </Select>
+            }
           </FlexContainer>
         )}
         title={() => modelName}

@@ -137,7 +137,10 @@ class PipelineScheduler:
                         backfill = backfills[0]
                         if all([PipelineRun.PipelineRunStatus.COMPLETED == pr.status
                                 for pr in backfill.pipeline_runs]):
-                            backfill.update(status=Backfill.Status.COMPLETED)
+                            backfill.update(
+                                completed_at=datetime.now(),
+                                status=Backfill.Status.COMPLETED,
+                            )
                             schedule.update(
                                 status=PipelineSchedule.ScheduleStatus.INACTIVE,
                             )

@@ -26,6 +26,7 @@ import { onSuccess } from '@api/utils/response';
 
 function RetryButton({
   cancelingRunId,
+  disabled,
   isLoadingCancelPipeline,
   onCancel,
   onSuccess: onSuccessProp,
@@ -35,6 +36,7 @@ function RetryButton({
   showConfirmationId,
 }: {
   cancelingRunId: number;
+  disabled?: boolean;
   isLoadingCancelPipeline: boolean;
   onCancel: (run: PipelineRunType) => void;
   onSuccess: () => void;
@@ -133,15 +135,19 @@ function RetryButton({
         borderRadius={BORDER_RADIUS_XXXLARGE}
         danger={RunStatus.FAILED === status}
         default={RunStatus.INITIAL === status}
+        disabled={disabled}
         loading={!pipelineRun}
         onClick={() => setShowConfirmationId(pipelineRunId)}
         padding="6px"
         primary={RunStatus.RUNNING === status && !isCancelingPipeline}
         warning={RunStatus.CANCELLED === status}
       >
-        {isCancelingPipeline
+        {disabled
+        ? 'Ready'
+        : (isCancelingPipeline
           ? 'Canceling'
-          : RUN_STATUS_TO_LABEL[status]}
+          : RUN_STATUS_TO_LABEL[status])
+        }
       </Button>
       <ClickOutside
         onClickOutside={() => setShowConfirmationId(null)}
@@ -204,6 +210,8 @@ function RetryButton({
 }
 
 type PipelineRunsTableProps = {
+  disableRowSelect?: boolean;
+  emptyMessage?: string;
   fetchPipelineRuns: () => void;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
@@ -211,6 +219,8 @@ type PipelineRunsTableProps = {
 };
 
 function PipelineRunsTable({
+  disableRowSelect,
+  emptyMessage = 'No runs available',
   fetchPipelineRuns,
   onClickRow,
   pipelineRuns,
@@ -274,7 +284,7 @@ function PipelineRunsTable({
     },
   ];
 
-  if (onClickRow) {
+  if (!disableRowSelect && onClickRow) {
     columnFlex.push(null);
     columns.push({
       label: () => '',
@@ -287,21 +297,24 @@ function PipelineRunsTable({
       minHeight={UNIT * 30}
       overflowVisible={!!showConfirmationId}
     >
-      {pipelineRuns.length === 0
+      {pipelineRuns?.length === 0
         ?
           <Spacing px ={3} py={1}>
             <Text bold default monospace muted>
-              No runs available
+              {emptyMessage}
             </Text>
           </Spacing>
         :
           <Table
             columnFlex={columnFlex}
             columns={columns}
-            isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
-            onClickRow={onClickRow}
+            isSelectedRow={(rowIndex: number) => disableRowSelect
+              ? false
+              : pipelineRuns[rowIndex].id === selectedRun?.id
+            }
+            onClickRow={disableRowSelect ? null : onClickRow}
             rowVerticalPadding={6}
-            rows={pipelineRuns.map((pipelineRun, index) => {
+            rows={pipelineRuns?.map((pipelineRun, index) => {
               const {
                 block_runs_count: blockRunsCount,
                 completed_at: completedAt,
@@ -312,6 +325,7 @@ function PipelineRunsTable({
                 pipeline_uuid: pipelineUUID,
                 status,
               } = pipelineRun;
+              const disabled = !id && !status;
 
               const isRetry =
                 index > 0
@@ -374,6 +388,7 @@ function PipelineRunsTable({
                 arr = [
                   <RetryButton
                     cancelingRunId={cancelingRunId}
+                    disabled={disabled}
                     isLoadingCancelPipeline={isLoadingCancelPipeline}
                     key="row_retry_button"
                     onCancel={updatePipelineRun}
@@ -405,8 +420,12 @@ function PipelineRunsTable({
                     key="row_block_runs"
                     passHref
                   >
-                    <Link bold sameColorAsText>
-                      {`See block runs (${blockRunsCount})`}
+                    <Link
+                      bold
+                      disabled={disabled}
+                      sameColorAsText
+                    >
+                      {disabled ? '' : `See block runs (${blockRunsCount})`}
                     </Link>
                   </NextLink>,
                   <Text default key="row_completed" monospace>
@@ -414,6 +433,7 @@ function PipelineRunsTable({
                   </Text>,
                   <Button
                     default
+                    disabled={disabled}
                     iconOnly
                     key="row_item_13"
                     noBackground
@@ -426,7 +446,7 @@ function PipelineRunsTable({
                 ];
               }
 
-              if (onClickRow) {
+              if (!disableRowSelect && onClickRow) {
                 arr.push(
                   <Flex flex={1} justifyContent="flex-end">
                     <ChevronRight default size={2 * UNIT} />
