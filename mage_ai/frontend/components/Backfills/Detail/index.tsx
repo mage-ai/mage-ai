@@ -554,39 +554,41 @@ function BackfillDetail({
 
             <Spacing mr={PADDING_UNITS} />
 
-            <Select
-              compact
-              defaultColor
-              onChange={e => {
-                e.preventDefault();
-                const updatedStatus = e.target.value;
-                if (updatedStatus === 'all') {
-                  router.push(
-                    '/pipelines/[pipeline]/backfills/[...slug]',
-                    `/pipelines/${pipelineUUID}/backfills/${modelID}`,
-                  );
-                } else {
-                  goToWithQuery(
-                    {
-                      page: 0,
-                      status: e.target.value,
-                    },
-                  );
-                }
-              }}
-              paddingRight={UNIT * 4}
-              placeholder="Select run status"
-              value={q?.status || 'all'}
-            >
-              <option key="all_statuses" value="all">
-                All statuses
-              </option>
-              {Object.values(RunStatus).map(status => (
-                <option key={status} value={status}>
-                  {RUN_STATUS_TO_LABEL[status]}
+            {!showPreviewRuns &&
+              <Select
+                compact
+                defaultColor
+                onChange={e => {
+                  e.preventDefault();
+                  const updatedStatus = e.target.value;
+                  if (updatedStatus === 'all') {
+                    router.push(
+                      '/pipelines/[pipeline]/backfills/[...slug]',
+                      `/pipelines/${pipelineUUID}/backfills/${modelID}`,
+                    );
+                  } else {
+                    goToWithQuery(
+                      {
+                        page: 0,
+                        status: e.target.value,
+                      },
+                    );
+                  }
+                }}
+                paddingRight={UNIT * 4}
+                placeholder="Select run status"
+                value={q?.status || 'all'}
+              >
+                <option key="all_statuses" value="all">
+                  All statuses
                 </option>
-              ))}
-            </Select>
+                {Object.values(RunStatus).map(status => (
+                  <option key={status} value={status}>
+                    {RUN_STATUS_TO_LABEL[status]}
+                  </option>
+                ))}
+              </Select>
+            }
           </FlexContainer>
         )}
         title={() => modelName}
