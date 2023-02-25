@@ -116,6 +116,7 @@ function BackfillDetail({
     },
   );
 
+  const isNotConfigured = !(startDatetime && endDatetime && intervalType && intervalUnits);
   const showPreviewRuns = !status;
   const pipelineRuns = useMemo(() => ((
     showPreviewRuns
@@ -499,6 +500,7 @@ function BackfillDetail({
                       />
                   }
                   danger={isActive}
+                  disabled={isNotConfigured}
                   loading={isLoadingUpdate}
                   onClick={(e) => {
                     pauseEvent(e);
@@ -512,7 +514,10 @@ function BackfillDetail({
                     });
                   }}
                   outline
-                  success={!isActive && !(BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED === status)}
+                  success={!isActive
+                    && !(BackfillStatusEnum.CANCELLED === status || BackfillStatusEnum.FAILED === status)
+                    && !isNotConfigured
+                  }
                 >
                   {isActive
                     ? 'Cancel backfill'
