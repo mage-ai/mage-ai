@@ -424,7 +424,10 @@ function CodeOutput({
           el = (
             <Spacing px={2} py={1}>
               <Text muted>
-                No preview to display yet, try running the block.
+                {hasError
+                  ? 'Error, check logs.'
+                  : 'No preview to display yet, try running the block.'
+                }
               </Text>
             </Spacing>
           );
@@ -436,7 +439,10 @@ function CodeOutput({
           el = (
             <Spacing px={2} py={1}>
               <Text muted>
-                No logs to display yet, try running the block.
+                {hasError
+                  ? 'Error, check logs.'
+                  : 'No logs to display yet, try running the block.'
+                }
               </Text>
             </Spacing>
           );
@@ -474,6 +480,7 @@ function CodeOutput({
     blockMetadata,
     buttonTabs,
     content,
+    hasError,
     isDBT,
     isInProgress,
     selectedTab,
