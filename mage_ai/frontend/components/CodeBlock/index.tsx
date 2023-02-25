@@ -97,7 +97,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
-import { TABS_DBT } from './constants';
+import { TAB_DBT_SQL_UUID, TABS_DBT } from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
@@ -509,6 +509,21 @@ function CodeBlockProps({
     setSelected,
   ]);
 
+  const {
+    data: dataBlock,
+    mutate: fetchBlock,
+  } = api.blocks.pipelines.detail(
+    pipeline?.uuid,
+    TAB_DBT_SQL_UUID.uuid === selectedTab?.uuid ? encodeURIComponent(block?.uuid) : null,
+    {
+      _format: 'dbt',
+    },
+    {
+      revalidateOnFocus: true,
+    },
+  );
+  const blockMetadata = useMemo(() => dataBlock?.block?.metadata || {}, [dataBlock]);
+
   const [updateBlock] = useMutation(
     api.blocks.pipelines.useUpdate(pipeline?.uuid, block.uuid),
     {
@@ -702,7 +717,13 @@ function CodeBlockProps({
     ? (
       <Spacing py={1}>
         <ButtonTabs
-          onClickTab={setSelectedTab}
+          onClickTab={(tab: TabType) => {
+            setSelectedTab(tab);
+
+            if (TAB_DBT_SQL_UUID.uuid === tab.uuid) {
+              fetchBlock();
+            }
+          }}
           selectedTabUUID={selectedTab?.uuid}
           small
           tabs={TABS_DBT}
@@ -711,6 +732,7 @@ function CodeBlockProps({
     )
     : null
   , [
+    fetchBlock,
     isDBT,
     selectedTab,
   ]);
@@ -719,6 +741,7 @@ function CodeBlockProps({
     <CodeOutput
       {...borderColorShareProps}
       block={block}
+      blockMetadata={blockMetadata}
       buttonTabs={buttonTabs}
       collapsed={outputCollapsed}
       hasOutput={hasOutput}
@@ -744,6 +767,7 @@ function CodeBlockProps({
     />
   ), [
     block,
+    blockMetadata,
     borderColorShareProps,
     buttonTabs,
     hasOutput,

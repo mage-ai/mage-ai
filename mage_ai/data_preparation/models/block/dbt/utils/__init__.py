@@ -663,14 +663,8 @@ def interpolate_refs_with_table_names(
     )
 
 
-def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
+def compiled_query_string(block: Block) -> str:
     attr = parse_attributes(block)
-
-    config_file_loader, configuration = config_file_loader_and_configuration(
-        block,
-        profile_target,
-    )
-    data_provider = configuration['data_provider']
 
     project_full_path = attr['project_full_path']
     file_path = attr['file_path']
@@ -690,40 +684,53 @@ def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> Da
         #     configuration=configuration,
         # )
 
-        shared_kwargs = {}
-        if limit is not None:
-            shared_kwargs['limit'] = limit
+    return query_string
 
-        if DataSource.POSTGRES == data_provider:
-            from mage_ai.io.postgres import Postgres
 
-            with Postgres.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.MYSQL == data_provider:
-            from mage_ai.io.mysql import MySQL
+def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
+    config_file_loader, configuration = config_file_loader_and_configuration(
+        block,
+        profile_target,
+    )
 
-            with MySQL.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.BIGQUERY == data_provider:
-            from mage_ai.io.bigquery import BigQuery
+    data_provider = configuration['data_provider']
 
-            loader = BigQuery.with_config(config_file_loader)
+    query_string = compiled_query_string(block)
+
+    shared_kwargs = {}
+    if limit is not None:
+        shared_kwargs['limit'] = limit
+
+    if DataSource.POSTGRES == data_provider:
+        from mage_ai.io.postgres import Postgres
+
+        with Postgres.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
-        elif DataSource.REDSHIFT == data_provider:
-            from mage_ai.io.redshift import Redshift
+    elif DataSource.MYSQL == data_provider:
+        from mage_ai.io.mysql import MySQL
 
-            with Redshift.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.SNOWFLAKE == data_provider:
-            from mage_ai.io.snowflake import Snowflake
+        with MySQL.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
+    elif DataSource.BIGQUERY == data_provider:
+        from mage_ai.io.bigquery import BigQuery
 
-            with Snowflake.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.TRINO == data_provider:
-            from mage_ai.io.trino import Trino
+        loader = BigQuery.with_config(config_file_loader)
+        return loader.load(query_string, **shared_kwargs)
+    elif DataSource.REDSHIFT == data_provider:
+        from mage_ai.io.redshift import Redshift
 
-            with Trino.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
+        with Redshift.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
+    elif DataSource.SNOWFLAKE == data_provider:
+        from mage_ai.io.snowflake import Snowflake
+
+        with Snowflake.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
+    elif DataSource.TRINO == data_provider:
+        from mage_ai.io.trino import Trino
+
+        with Trino.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
 
 
 def build_command_line_arguments(

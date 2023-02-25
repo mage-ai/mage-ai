@@ -8,6 +8,7 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
+import CodeEditor from '@components/CodeEditor';
 import DataTable from '@components/DataTable';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
@@ -32,6 +33,7 @@ import {
   HTMLOutputStyle,
   OutputRowStyle,
 } from './index.style';
+import { FileExtensionEnum } from '@interfaces/FileType';
 import {
   INTERNAL_OUTPUT_REGEX,
   INTERNAL_OUTPUT_STRING,
@@ -62,6 +64,11 @@ const TABS_DBT = [
 
 type CodeOutputProps = {
   block: BlockType;
+  blockMetadata?: {
+    dbt: {
+      sql: string;
+    };
+  };
   buttonTabs?: any;
   collapsed?: boolean;
   contained?: boolean;
@@ -84,6 +91,7 @@ type CodeOutputProps = {
 
 function CodeOutput({
   block,
+  blockMetadata,
   buttonTabs,
   collapsed,
   contained = true,
@@ -170,6 +178,7 @@ function CodeOutput({
     hasError,
     hasErrorPrev,
     isDBT,
+    setSelectedTab,
   ]);
 
   const {
@@ -433,7 +442,21 @@ function CodeOutput({
           );
         }
       } else if ('SQL' === tabUUID) {
-        el = null;
+        const sql = blockMetadata?.dbt?.sql;
+        if (sql) {
+          el = (
+            <CodeEditor
+              autoHeight
+              language={FileExtensionEnum.SQL}
+              padding
+              readOnly
+              value={sql}
+              width="100%"
+            />
+          );
+        } else {
+          el = null;
+        }
       } else if ('Lineage' === tabUUID) {
         el = null;
       }
@@ -448,6 +471,7 @@ function CodeOutput({
       </>
     );
   }, [
+    blockMetadata,
     buttonTabs,
     content,
     isDBT,

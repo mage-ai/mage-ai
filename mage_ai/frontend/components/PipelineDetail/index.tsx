@@ -431,7 +431,7 @@ function PipelineDetail({
           widgets={widgets}
         />
       );
-    }
+    },
   ),
   [
     addNewBlockAtIndex,
@@ -440,6 +440,7 @@ function PipelineDetail({
     autocompleteItems,
     blockRefs,
     blocks,
+    dataProviders,
     deleteBlock,
     fetchFileTree,
     fetchPipeline,
