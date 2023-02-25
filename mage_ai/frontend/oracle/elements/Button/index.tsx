@@ -318,12 +318,16 @@ const SHARED_STYLES = css<{
 `;
 
 const ButtonStyle = styled.button`
-  ${SHARED_STYLES};
+  ${SHARED_STYLES}
 `;
 
 const AnchorStyle = styled.a`
-  ${SHARED_STYLES};
+  ${SHARED_STYLES}
   ${SHARED_LINK_STYLES}
+
+  ${props => props.disabled && `
+    pointer-events: none;
+  `}
 `;
 
 const Button = ({

@@ -9,6 +9,7 @@ import Link from '@oracle/elements/Link';
 import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { Edit } from '@oracle/icons';
+import { RunStatus } from '@interfaces/PipelineRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTCString } from '@components/Triggers/utils';
 
@@ -108,6 +109,7 @@ function BackfillsTable({
           </Text>,
           <Button
             default
+            disabled={status === RunStatus.COMPLETED}
             iconOnly
             key={`${idx}_edit_button`}
             linkProps={{

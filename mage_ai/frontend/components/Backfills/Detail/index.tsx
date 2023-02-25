@@ -531,6 +531,7 @@ function BackfillDetail({
             )}
 
             <Button
+              disabled={status === RunStatus.COMPLETED}
               linkProps={{
                 as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
                 href: '/pipelines/[pipeline]/backfills/[...slug]',
@@ -539,7 +540,7 @@ function BackfillDetail({
               outline
               sameColorAsText
             >
-              Edit backfill
+              {status === RunStatus.COMPLETED ? 'Backfill completed' : 'Edit backfill'}
             </Button>
 
             <Spacing mr={PADDING_UNITS} />
