@@ -139,7 +139,10 @@ function BackfillDetail({
       <>
         <PipelineRunsTable
           disableRowSelect={showPreviewRuns}
-          emptyMessage='No runs available. Please complete backfill configuration by clicking "Edit backfill" above.'
+          emptyMessage={!q?.status
+            ? 'No runs available. Please complete backfill configuration by clicking "Edit backfill" above.'
+            : 'No runs available'
+          }
           fetchPipelineRuns={fetchPipelineRuns}
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
@@ -530,18 +533,24 @@ function BackfillDetail({
               </>
             )}
 
-            <Button
-              disabled={status === RunStatus.COMPLETED}
-              linkProps={{
-                as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
-                href: '/pipelines/[pipeline]/backfills/[...slug]',
-              }}
-              noHoverUnderline
-              outline
-              sameColorAsText
-            >
-              {status === RunStatus.COMPLETED ? 'Backfill completed' : 'Edit backfill'}
-            </Button>
+            {status === RunStatus.COMPLETED
+              ?
+                <Text bold default large>
+                  Filter runs by status:
+                </Text>
+              :
+                <Button
+                  linkProps={{
+                    as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
+                    href: '/pipelines/[pipeline]/backfills/[...slug]',
+                  }}
+                  noHoverUnderline
+                  outline
+                  sameColorAsText
+                >
+                  Edit backfill
+                </Button>
+            }
 
             <Spacing mr={PADDING_UNITS} />
 
