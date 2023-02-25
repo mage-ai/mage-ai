@@ -117,9 +117,11 @@ function BackfillDetail({
   );
 
   const showPreviewRuns = !status;
-  const pipelineRuns = useMemo(() => (showPreviewRuns
-    ? pipelineRunDates
-    : (dataPipelineRuns?.pipeline_runs || [])
+  const pipelineRuns = useMemo(() => ((
+    showPreviewRuns
+      ? pipelineRunDates
+      : dataPipelineRuns?.pipeline_runs)
+    || []
     ), [
       dataPipelineRuns,
       pipelineRunDates,
