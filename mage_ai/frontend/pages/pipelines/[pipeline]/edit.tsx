@@ -718,15 +718,22 @@ function PipelineDetailPage({
               fetchFileTree();
             }
           },
-          onErrorCallback: ({
-            url_parameters: urlParameters,
-          }: {
+          onErrorCallback: (response: {
             url_parameters: {
               block_uuid: string;
             };
-          }, {
-            messages,
-          }) => {
+          }, errors) => {
+            const {
+              url_parameters: urlParameters,
+            } = response;
+            const {
+              messages,
+            } = errors;
+
+            setErrors({
+              errors,
+              response,
+            });
             setMessages(messagesPrev => ({
               ...messagesPrev,
               [urlParameters.block_uuid]: messages.map(msg => ({
@@ -757,15 +764,23 @@ function PipelineDetailPage({
             fetchPipeline();
             fetchFileTree();
           },
-          onErrorCallback: ({
-            url_parameters: urlParameters,
-          }: {
+          onErrorCallback: (response: {
             url_parameters: {
               block_uuid: string;
             };
-          }, {
-            messages,
-          }) => {
+          }, errors) => {
+            const {
+              url_parameters: urlParameters,
+            } = response;
+            const {
+              messages,
+            } = errors;
+
+            setErrors({
+              errors,
+              response,
+            });
+
             setMessages(messagesPrev => ({
               ...messagesPrev,
               [urlParameters.block_uuid]: messages.map(msg => ({

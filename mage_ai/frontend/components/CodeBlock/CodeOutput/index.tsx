@@ -3,6 +3,7 @@ import Ansi from 'ansi-to-react';
 
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
+  BlockTypeEnum,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -20,6 +21,7 @@ import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import usePrevious from '@utils/usePrevious';
 import { BorderColorShareProps } from '../index.style';
 import { Check, ChevronDown, ChevronUp, Expand } from '@oracle/icons';
 import {
@@ -38,14 +40,32 @@ import {
 } from '@utils/models/output';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
 
+const TABS_DBT = [
+  {
+    uuid: 'Preview',
+  },
+  {
+    uuid: 'Logs',
+  },
+  {
+    uuid: 'SQL',
+  },
+  {
+    uuid: 'Lineage',
+  },
+];
+
 type CodeOutputProps = {
   block: BlockType;
+  buttonTabs?: any;
   collapsed?: boolean;
   contained?: boolean;
+  hasOutput?: boolean;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
   mainContainerWidth?: number;
@@ -55,18 +75,22 @@ type CodeOutputProps = {
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
+  selectedTab?: TabType;
   setCollapsed?: (boolean) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
+  setSelectedTab?: (tab: TabType) => void;
 } & BorderColorShareProps;
 
 function CodeOutput({
   block,
+  buttonTabs,
   collapsed,
   contained = true,
   dynamicBlock,
   dynamicChildBlock,
   hasError,
+  hasOutput,
   hideExtraInfo,
   isInProgress,
   mainContainerWidth,
@@ -77,9 +101,11 @@ function CodeOutput({
   runEndTime,
   runStartTime,
   selected,
+  selectedTab,
   setCollapsed,
   setOutputBlocks,
   setSelectedOutputBlock,
+  setSelectedTab,
 }: CodeOutputProps) {
   const {
     status,
@@ -125,18 +151,30 @@ function CodeOutput({
     messages,
   ]);
 
-  const progressBar = useMemo(() => {
-    return (
-      <ProgressBar
-        progress={progress}
-      />
-    )
-  }, [
+  const progressBar = useMemo(() => (
+    <ProgressBar
+      progress={progress}
+    />
+  ), [
     progress,
+  ]);
+
+  const isDBT = BlockTypeEnum.DBT === block?.type;
+
+  const hasErrorPrev = usePrevious(hasError);
+  useEffect(() => {
+    if (isDBT && !hasErrorPrev && hasError) {
+      setSelectedTab(TABS_DBT[1]);
+    }
+  }, [
+    hasError,
+    hasErrorPrev,
+    isDBT,
   ]);
 
   const {
     content,
+    tableContent,
     testContent,
   } = useMemo(() => {
     const createDataTableElement = ({
@@ -171,6 +209,7 @@ function CodeOutput({
     let isTable = false;
 
     const arrContent = [];
+    const tableContent = [];
     const testMessages = [];
 
     combinedMessages?.forEach(({
@@ -246,22 +285,33 @@ function CodeOutput({
             } = JSON.parse(rawString);
 
             if (DataTypeEnum.TABLE === typeDisplay) {
-              displayElement = createDataTableElement(dataDisplay, {
+              isTable = true;
+
+              const tableEl = createDataTableElement(dataDisplay, {
                 borderTop,
                 selected,
               });
-              isTable = true;
+              tableContent.push(tableEl);
+
+              if (!isDBT) {
+                displayElement = tableEl;
+              }
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
-          displayElement = createDataTableElement(
+          isTable = true;
+          const tableEl = createDataTableElement(
             isJsonString(data) ? JSON.parse(data) : data,
             {
               borderTop,
               selected,
             },
           );
-          isTable = true;
+          tableContent.push(tableEl);
+
+          if (!isDBT) {
+            displayElement = tableEl;
+          }
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           const textArr = data?.split('\\n');
 
@@ -308,7 +358,7 @@ function CodeOutput({
           arr.push(
             <div key={`code-output-${idx}-${idxInner}`}>
               {displayElement}
-            </div>
+            </div>,
           );
         }
       });
@@ -333,13 +383,16 @@ function CodeOutput({
 
     return {
       content: arrContent,
+      tableContent,
       testContent: testMessages,
     };
   }, [
     combinedMessages,
     contained,
+    isDBT,
+    isInProgress,
     mainContainerWidth,
-    progress,
+    pipeline,
     progressBar,
     selected,
   ]);
@@ -348,6 +401,64 @@ function CodeOutput({
   const columnsPreviewMessage = columnCount > 30
     ? ` (30 out of ${columnCount} columns displayed)`
     : '';
+
+  const currentContentToDisplay = useMemo(() => {
+    let el;
+
+    if (isDBT && selectedTab) {
+      const tabUUID = selectedTab.uuid;
+
+      if ('Preview' === tabUUID) {
+        if (tableContent?.length >= 1) {
+          el = tableContent;
+        } else if (!isInProgress) {
+          el = (
+            <Spacing px={2} py={1}>
+              <Text muted>
+                No preview to display yet, try running the block.
+              </Text>
+            </Spacing>
+          );
+        }
+      } else if ('Logs' === tabUUID) {
+        if (content?.length >= 1) {
+          el = content;
+        } else if (!isInProgress) {
+          el = (
+            <Spacing px={2} py={1}>
+              <Text muted>
+                No logs to display yet, try running the block.
+              </Text>
+            </Spacing>
+          );
+        }
+      } else if ('SQL' === tabUUID) {
+        el = null;
+      } else if ('Lineage' === tabUUID) {
+        el = null;
+      }
+    } else {
+      el = content;
+    }
+
+    return (
+      <>
+        {buttonTabs}
+        {el}
+      </>
+    );
+  }, [
+    buttonTabs,
+    content,
+    isDBT,
+    isInProgress,
+    selectedTab,
+    tableContent,
+  ]);
+
+  if (!buttonTabs && !hasOutput) {
+    return null;
+  }
 
   return (
     <>
@@ -394,11 +505,11 @@ function CodeOutput({
               </Spacing>
             </>
           )}
-          {!collapsed && content}
+          {!collapsed && currentContentToDisplay}
         </ContainerStyle>
       )}
 
-      {!contained && content}
+      {!contained && currentContentToDisplay}
 
       {executedAndIdle && !hideExtraInfo && (
         <ExtraInfoStyle

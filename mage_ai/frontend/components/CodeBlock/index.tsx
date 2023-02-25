@@ -23,6 +23,7 @@ import BlockType, {
   SetEditingBlockType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Checkbox from '@oracle/elements/Checkbox';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor, {
@@ -54,7 +55,6 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
-
 import {
   ArrowDown,
   ChevronDown,
@@ -97,6 +97,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
+import { TABS_DBT } from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
 import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
@@ -108,6 +109,7 @@ import { indexBy } from '@utils/array';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pauseEvent } from '@utils/events';
 import { selectKeys } from '@utils/hash';
 import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -234,6 +236,7 @@ function CodeBlockProps({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
+  const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT[0]);
 
   const isDBT = BlockTypeEnum.DBT === block?.type;
 
@@ -695,11 +698,30 @@ function CodeBlockProps({
     pipeline,
   ]);
 
+  const buttonTabs = useMemo(() => isDBT
+    ? (
+      <Spacing py={1}>
+        <ButtonTabs
+          onClickTab={setSelectedTab}
+          selectedTabUUID={selectedTab?.uuid}
+          small
+          tabs={TABS_DBT}
+        />
+      </Spacing>
+    )
+    : null
+  , [
+    isDBT,
+    selectedTab,
+  ]);
+
   const codeOutputEl = useMemo(() => (
     <CodeOutput
       {...borderColorShareProps}
       block={block}
+      buttonTabs={buttonTabs}
       collapsed={outputCollapsed}
+      hasOutput={hasOutput}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -709,6 +731,7 @@ function CodeBlockProps({
       runEndTime={runEndTime}
       runStartTime={runStartTime}
       selected={selected}
+      selectedTab={selectedTab}
       setCollapsed={(val: boolean) => {
         setOutputCollapsed(() => {
           set(outputCollapsedUUID, val);
@@ -717,10 +740,13 @@ function CodeBlockProps({
       }}
       setOutputBlocks={setOutputBlocks}
       setSelectedOutputBlock={setSelectedOutputBlock}
+      setSelectedTab={setSelectedTab}
     />
   ), [
     block,
     borderColorShareProps,
+    buttonTabs,
+    hasOutput,
     isInProgress,
     mainContainerWidth,
     messagesWithType,
@@ -732,6 +758,7 @@ function CodeBlockProps({
     runEndTime,
     runStartTime,
     selected,
+    selectedTab,
     setOutputBlocks,
     setOutputCollapsed,
     setSelectedOutputBlock,
@@ -1003,7 +1030,7 @@ function CodeBlockProps({
         <CodeContainerStyle
           {...borderColorShareProps}
           className={selected && textareaFocused ? 'selected' : null}
-          hasOutput={hasOutput}
+          hasOutput={!!buttonTabs || hasOutput}
         >
           {BlockTypeEnum.DBT === block.type
             && !codeCollapsed
@@ -1029,6 +1056,7 @@ function CodeBlockProps({
                         });
                         e.preventDefault();
                       }}
+                      onClick={pauseEvent}
                       onFocus={() => {
                         setAnyInputFocused(true);
                       }}
@@ -1071,6 +1099,7 @@ function CodeBlockProps({
                       });
                       e.preventDefault();
                     }}
+                    onClick={pauseEvent}
                     onFocus={() => {
                       setAnyInputFocused(true);
                     }}
@@ -1127,6 +1156,7 @@ function CodeBlockProps({
                         });
                         e.preventDefault();
                       }}
+                      onClick={pauseEvent}
                       onFocus={() => {
                         setAnyInputFocused(true);
                       }}
@@ -1195,6 +1225,7 @@ function CodeBlockProps({
                     onChange={e => updateDataProviderConfig({
                       [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
                     })}
+                    onClick={pauseEvent}
                     small
                     value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
                   >
@@ -1218,6 +1249,7 @@ function CodeBlockProps({
                     onChange={e => updateDataProviderConfig({
                       [CONFIG_KEY_DATA_PROVIDER_PROFILE]: e.target.value,
                     })}
+                    onClick={pauseEvent}
                     small
                     value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
                   >
@@ -1256,9 +1288,12 @@ function CodeBlockProps({
                               Use raw SQL
                             </Text>
                           }
-                          onClick={() => updateDataProviderConfig({
-                            [CONFIG_KEY_USE_RAW_SQL]: !dataProviderConfig[CONFIG_KEY_USE_RAW_SQL],
-                          })}
+                          onClick={(e) => {
+                            pauseEvent(e);
+                            updateDataProviderConfig({
+                              [CONFIG_KEY_USE_RAW_SQL]: !dataProviderConfig[CONFIG_KEY_USE_RAW_SQL],
+                            });
+                          }}
                         />
                         <span>&nbsp;</span>
                         <Info muted />
@@ -1275,6 +1310,7 @@ function CodeBlockProps({
                           <FlexContainer alignItems="center">
                             <TextInput
                               compact
+                              label="Database"
                               monospace
                               onBlur={() => setTimeout(() => {
                                 setAnyInputFocused(false);
@@ -1286,10 +1322,10 @@ function CodeBlockProps({
                                 });
                                 e.preventDefault();
                               }}
+                              onClick={pauseEvent}
                               onFocus={() => {
                                 setAnyInputFocused(true);
                               }}
-                              label="Database"
                               small
                               value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_DATABASE]}
                               width={10 * UNIT}
@@ -1317,6 +1353,7 @@ function CodeBlockProps({
                             <FlexContainer alignItems="center">
                               <TextInput
                                 compact
+                                label="Schema"
                                 monospace
                                 onBlur={() => setTimeout(() => {
                                   setAnyInputFocused(false);
@@ -1328,10 +1365,10 @@ function CodeBlockProps({
                                   });
                                   e.preventDefault();
                                 }}
+                                onClick={pauseEvent}
                                 onFocus={() => {
                                   setAnyInputFocused(true);
                                 }}
-                                label="Schema"
                                 small
                                 value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
                                 width={10 * UNIT}
@@ -1364,6 +1401,7 @@ function CodeBlockProps({
                         <FlexContainer alignItems="center">
                           <TextInput
                             compact
+                            label="Table (optional)"
                             monospace
                             onBlur={() => setTimeout(() => {
                               setAnyInputFocused(false);
@@ -1375,10 +1413,10 @@ function CodeBlockProps({
                               });
                               e.preventDefault();
                             }}
+                            onClick={pauseEvent}
                             onFocus={() => {
                               setAnyInputFocused(true);
                             }}
-                            label="Table (optional)"
                             small
                             value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_TABLE]}
                             width={20 * UNIT}
@@ -1426,6 +1464,7 @@ function CodeBlockProps({
                       onChange={e => updateDataProviderConfig({
                         [CONFIG_KEY_EXPORT_WRITE_POLICY]: e.target.value,
                       })}
+                      onClick={pauseEvent}
                       small
                       value={dataProviderConfig[CONFIG_KEY_EXPORT_WRITE_POLICY]}
                     >
@@ -1573,7 +1612,7 @@ function CodeBlockProps({
           )}
         </CodeContainerStyle>
 
-        {hasOutput && codeOutputEl}
+        {codeOutputEl}
       </ContainerStyle>
 
       {!noDivider && (

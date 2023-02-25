@@ -7,6 +7,7 @@ import Spacing from '@oracle/elements/Spacing';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { TabsContainerStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { pauseEvent } from '@utils/events';
 
 export type TabType = {
   Icon?: any;
@@ -21,6 +22,7 @@ type ButtonTabsProps = {
   noPadding?: boolean;
   onClickTab: (tab: TabType) => void;
   selectedTabUUID?: string;
+  small?: boolean;
   tabs: TabType[];
 };
 
@@ -30,6 +32,7 @@ function ButtonTabs({
   noPadding,
   onClickTab,
   selectedTabUUID,
+  small,
   tabs,
 }: ButtonTabsProps) {
   const tabEls = useMemo(() => {
@@ -78,10 +81,15 @@ function ButtonTabs({
             backgroundPanel
             borderLess
             borderWidth={2}
+            compact={small}
             key={uuid}
-            onClick={() => onClickTab(tab)}
+            onClick={(e) => {
+              pauseEvent(e);
+              onClickTab(tab);
+            }}
             paddingUnitsHorizontal={2}
             paddingUnitsVertical={1.25}
+            small={small}
           >
             {el}
           </GradientButton>,
@@ -91,10 +99,15 @@ function ButtonTabs({
           <div style={{ padding: 4 }}>
             <Button
               borderLess
+              compact={small}
               default
               key={`button-tab-${uuid}`}
-              onClick={() => onClickTab(tab)}
+              onClick={(e) => {
+                pauseEvent(e);
+                onClickTab(tab);
+              }}
               outline
+              small={small}
             >
               {el}
             </Button>
