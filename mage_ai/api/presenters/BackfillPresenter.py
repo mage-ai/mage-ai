@@ -29,10 +29,13 @@ class BackfillPresenter(BasePresenter):
         data = self.model.to_dict()
 
         include_preview_runs = query.get('include_preview_runs', [False])
+        include_run_count = query.get('include_run_count', [False])
         if include_preview_runs:
             include_preview_runs = include_preview_runs[0]
+        if include_run_count:
+            include_run_count = include_run_count[0]
         if (
-            include_preview_runs and
+            (include_preview_runs or include_run_count) and
             self.model.start_datetime is not None and
             self.model.end_datetime is not None and
             self.model.interval_type is not None and
@@ -40,6 +43,7 @@ class BackfillPresenter(BasePresenter):
         ):
             pipeline_run_dates = preview_run_dates(self.model)
             data['total_run_count'] = len(pipeline_run_dates)
-            data['pipeline_run_dates'] = pipeline_run_dates
+            if include_preview_runs:
+                data['pipeline_run_dates'] = pipeline_run_dates
 
         return data

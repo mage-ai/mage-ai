@@ -61,6 +61,7 @@ BackfillPolicy.allow_write([
 
 BackfillPolicy.allow_query([
     'include_preview_runs',
+    'include_run_count',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

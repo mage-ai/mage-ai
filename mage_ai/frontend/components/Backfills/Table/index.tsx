@@ -72,7 +72,8 @@ function BackfillsTable({
         start_datetime: startDatetime,
         started_at: startedAt,
         status,
-      }) => {
+        total_run_count: totalRunCount,
+      }, idx) => {
         const arr = [
           <Text default key="status" monospace>{status || 'inactive'}</Text>,
           <NextLink
@@ -88,7 +89,7 @@ function BackfillsTable({
           <Text default key="type" monospace>
             {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
           </Text>,
-          <Text default key="runs" monospace>{0}</Text>,
+          <Text default key="runs" monospace>{totalRunCount || 0}</Text>,
           <Text default key="backfill" monospace>
             {startDatetime && endDatetime && (
               <>
@@ -108,11 +109,12 @@ function BackfillsTable({
           <Button
             default
             iconOnly
-            noBackground
+            key={`${idx}_edit_button`}
             linkProps={{
               as: `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
               href: '/pipelines/[pipeline]/backfills/[...slug]',
             }}
+            noBackground
             title="Edit"
           >
             <Edit default size={2 * UNIT} />
