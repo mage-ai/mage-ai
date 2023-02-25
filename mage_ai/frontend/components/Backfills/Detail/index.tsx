@@ -113,9 +113,19 @@ function BackfillDetail({
     },
     {
       pauseFetch: !modelID,
-    }
+    },
   );
-  const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
+
+  const showPreviewRuns = !status;
+  const pipelineRuns = useMemo(() => (showPreviewRuns
+    ? pipelineRunDates
+    : (dataPipelineRuns?.pipeline_runs || [])
+    ), [
+      dataPipelineRuns,
+      pipelineRunDates,
+      showPreviewRuns,
+    ],
+  );
   const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
@@ -125,6 +135,7 @@ function BackfillDetail({
     return (
       <>
         <PipelineRunsTable
+          disableRowSelect={showPreviewRuns}
           emptyMessage='No runs available. Please complete backfill configuration by clicking "Edit backfill" above.'
           fetchPipelineRuns={fetchPipelineRuns}
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
@@ -215,7 +226,7 @@ function BackfillDetail({
           monospace
         >
           {blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME}
-        </Text>
+        </Text>,
       ],
       [
         <FlexContainer
