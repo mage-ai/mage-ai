@@ -13,6 +13,7 @@ class DatabaseResource(BaseResource):
     DEFAULT_LIMIT = 40
 
     @classmethod
+    @safe_db_query
     async def process_collection(self, query, meta, user, **kwargs):
         limit = int(meta.get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
         offset = int(meta.get(META_KEY_OFFSET, 0))
@@ -69,6 +70,7 @@ class DatabaseResource(BaseResource):
             return self.model_class.query.filter(**query).all()
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         parent_model = kwargs.get('parent_model')
         column_name = None
@@ -104,6 +106,7 @@ class DatabaseResource(BaseResource):
             }))
 
     @classmethod
+    @safe_db_query
     def create_associated_resources(self, model, payload, user, **kwargs):
         """
         Subclasses override this method
@@ -118,6 +121,7 @@ class DatabaseResource(BaseResource):
             raise DoesNotExistError(f'{self.model_class.__name__} {pk} does not exist.')
         return self(model, user, **kwargs)
 
+    @safe_db_query
     def delete(self, **kwargs):
         return self.model.delete()
 
@@ -129,6 +133,7 @@ class DatabaseResource(BaseResource):
         self.model.save()
         return self
 
+    @safe_db_query
     def update_associated_resources(self, payload, **kwargs):
         """
         Subclasses override this method

@@ -1,5 +1,6 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_variables_dir
 from mage_ai.data_preparation.variable_manager import (
@@ -37,6 +38,7 @@ def get_variable_value(
 
 class VariableResource(GenericResource):
     @classmethod
+    @safe_db_query
     def collection(self, query, meta, user, **kwargs):
         pipeline_uuid = kwargs['parent_model'].uuid
 
@@ -78,6 +80,7 @@ class VariableResource(GenericResource):
         )
 
     @classmethod
+    @safe_db_query
     def create(self, payload: Dict, user, **kwargs) -> 'VariableResource':
         pipeline_uuid = kwargs['parent_model'].uuid
 
@@ -110,9 +113,11 @@ class VariableResource(GenericResource):
         ), user, **kwargs)
 
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         return self(dict(name=pk), user, **kwargs)
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         pipeline_uuid = kwargs['parent_model'].uuid
 
@@ -146,6 +151,7 @@ class VariableResource(GenericResource):
 
         return self
 
+    @safe_db_query
     def delete(self, **kwargs):
         pipeline_uuid = kwargs['parent_model'].uuid
         delete_global_variable(pipeline_uuid, self.name)

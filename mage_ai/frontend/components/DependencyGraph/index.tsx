@@ -117,6 +117,7 @@ export type DependencyGraphProps = {
   height: number;
   heightOffset?: number;
   noStatus?: boolean;
+  pannable?: boolean;
   pipeline: PipelineType;
   runningBlocks?: BlockType[];
   selectedBlock?: BlockType;
@@ -126,6 +127,7 @@ export type DependencyGraphProps = {
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
   showDynamicBlocks?: boolean;
+  zoomable?: boolean;
 } & SetEditingBlockType;
 
 function DependencyGraph({
@@ -138,6 +140,7 @@ function DependencyGraph({
   height,
   heightOffset = UNIT * 10,
   noStatus,
+  pannable = true,
   pipeline,
   runningBlocks = [],
   selectedBlock,
@@ -145,6 +148,7 @@ function DependencyGraph({
   setErrors,
   setSelectedBlock,
   showDynamicBlocks = false,
+  zoomable = true,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
@@ -402,7 +406,7 @@ function DependencyGraph({
         id: uuid,
         ports,
         width: (displayText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
-          + (UNIT * 5)
+          + (disabledProp ? 0 : UNIT * 5)
           + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
           + (blockStatus?.[block.uuid]?.runtime ? 50 : 0),
       });
@@ -417,6 +421,7 @@ function DependencyGraph({
     blockEditing?.uuid,
     blockStatus,
     blocks,
+    disabledProp,
     displayTextForBlock,
     downstreamBlocksMapping,
   ]);
@@ -446,7 +451,12 @@ function DependencyGraph({
         isSuccessful: StatusTypeEnum.EXECUTED === block.status,
       };
     }
-  }, [runningBlocksMapping, blockStatus]);
+  }, [
+    blockStatus,
+    noStatus,
+    runningBlocks,
+    runningBlocksMapping,
+  ]);
 
   return (
     <>
@@ -657,6 +667,7 @@ function DependencyGraph({
                     <GraphNode
                       block={block}
                       disabled={blockEditing?.uuid === block.uuid}
+                      hideStatus={disabledProp}
                       key={block.uuid}
                       selected={blockEditing
                         ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
@@ -694,8 +705,9 @@ function DependencyGraph({
             updateBlockByDragAndDrop({ fromBlock, toBlock });
           }}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
+          pannable={pannable}
           selections={edgeSelections}
-          zoomable
+          zoomable={zoomable}
         />
       </GraphContainerStyle>
     </>

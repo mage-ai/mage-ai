@@ -464,10 +464,12 @@ function CodeOutput({
               disabled
               enablePorts={false}
               height={UNIT * 55}
+              pannable={selected}
               pipeline={{
                 ...pipeline,
                 blocks: lineage,
               }}
+              zoomable={selected}
             />
           );
         } else {
@@ -491,6 +493,8 @@ function CodeOutput({
     hasError,
     isDBT,
     isInProgress,
+    pipeline,
+    selected,
     selectedTab,
     tableContent,
   ]);

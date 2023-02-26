@@ -13,6 +13,7 @@ import asyncio
 
 class PipelineResource(BaseResource):
     @classmethod
+    @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:
@@ -68,6 +69,7 @@ class PipelineResource(BaseResource):
         )
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         clone_pipeline_uuid = payload.get('clone_pipeline_uuid')
         name = payload.get('name')
@@ -86,10 +88,12 @@ class PipelineResource(BaseResource):
         return self(pipeline, user, **kwargs)
 
     @classmethod
+    @safe_db_query
     async def get_model(self, pk):
         return await Pipeline.get_async(pk)
 
     @classmethod
+    @safe_db_query
     async def member(self, pk, user, **kwargs):
         pipeline = await Pipeline.get_async(pk)
 
@@ -97,9 +101,11 @@ class PipelineResource(BaseResource):
 
         return self(pipeline, user, **kwargs)
 
+    @safe_db_query
     def delete(self, **kwargs):
         return self.model.delete()
 
+    @safe_db_query
     async def update(self, payload, **kwargs):
         if 'add_upstream_for_block_uuid' in payload:
             block_uuid = payload['add_upstream_for_block_uuid']

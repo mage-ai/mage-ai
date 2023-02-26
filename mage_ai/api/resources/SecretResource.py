@@ -21,10 +21,12 @@ class SecretResource(DatabaseResource):
         return Secret.query.filter(Secret.repo_name == repo_path)
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         return self(create_secret(**extract(payload, ALLOWED_PAYLOAD_KEYS)), user, **kwargs)
 
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         repo_path = get_repo_path()
         model = Secret.query.filter(Secret.repo_name == repo_path, Secret.name == pk).first()

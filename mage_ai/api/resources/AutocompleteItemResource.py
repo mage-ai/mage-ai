@@ -5,11 +5,13 @@ from mage_ai.autocomplete.utils import (
     FILES_TO_READ,
 )
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.shared.hash import merge_dict
 
 
 class AutocompleteItemResource(GenericResource):
     @classmethod
+    @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         repo_path = get_repo_path()
 

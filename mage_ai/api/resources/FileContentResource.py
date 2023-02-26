@@ -2,11 +2,13 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.orchestration.db import safe_db_query
 import urllib.parse
 
 
 class FileContentResource(GenericResource):
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         file_path = urllib.parse.unquote(pk)
         file = File.from_path(file_path, get_repo_path())

@@ -3,11 +3,13 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import User
 
 
 class SessionResource(BaseResource):
     @classmethod
+    @safe_db_query
     def create(self, payload, _, **kwargs):
         email = payload.get('email')
         password = payload.get('password')
@@ -36,12 +38,15 @@ class SessionResource(BaseResource):
             raise ApiError(error)
 
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         return self(kwargs['oauth_token'], user, **kwargs)
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         self.model.expires = datetime.utcnow()
         self.model.save()
 
+    @safe_db_query
     def token(self):
         return encode_token(self.model.token, self.model.expires)

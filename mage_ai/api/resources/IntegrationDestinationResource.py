@@ -2,11 +2,13 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_integrations.destinations.constants import DESTINATIONS
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.api.integration_sources import get_collection
 
 
 class IntegrationDestinationResource(GenericResource):
     @classmethod
+    @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         collection = get_collection('destinations', DESTINATIONS)
 
@@ -17,6 +19,7 @@ class IntegrationDestinationResource(GenericResource):
         )
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         error_message = None
         success = False
