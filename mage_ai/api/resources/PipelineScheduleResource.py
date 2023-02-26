@@ -47,6 +47,7 @@ class PipelineScheduleResource(DatabaseResource):
         return query.all()
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid

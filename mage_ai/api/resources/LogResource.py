@@ -13,6 +13,7 @@ MAX_LOG_FILES = 20
 
 class LogResource(GenericResource):
     @classmethod
+    @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         parent_model = kwargs['parent_model']
 
@@ -29,6 +30,7 @@ class LogResource(GenericResource):
         )
 
     @classmethod
+    @safe_db_query
     async def __pipeline_logs(self, pipeline: Pipeline, query_arg, meta) -> List[Dict]:
         pipeline_uuid = pipeline.uuid
 

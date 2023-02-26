@@ -1,6 +1,7 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource
+from mage_ai.orchestration.db import safe_db_query
 import aiofiles
 import yaml
 
@@ -16,6 +17,7 @@ DATA_PROVIDERS = [
 
 class DataProviderResource(GenericResource):
     @classmethod
+    @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         async with aiofiles.open(f'{get_repo_path()}/io_config.yaml', mode='r') as file:
             try:

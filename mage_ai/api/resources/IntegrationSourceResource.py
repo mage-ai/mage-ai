@@ -2,11 +2,13 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_integrations.sources.constants import SOURCES
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.api.integration_sources import get_collection
 
 
 class IntegrationSourceResource(GenericResource):
     @classmethod
+    @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         collection = get_collection('sources', SOURCES)
 
@@ -17,6 +19,7 @@ class IntegrationSourceResource(GenericResource):
         )
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         error_message = None
         success = False
@@ -51,5 +54,6 @@ class IntegrationSourceResource(GenericResource):
         ), user, **kwargs)
 
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         return self(IntegrationPipeline.get(pk), user, **kwargs)

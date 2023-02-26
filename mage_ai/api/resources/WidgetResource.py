@@ -1,5 +1,6 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Dict
@@ -8,6 +9,7 @@ import asyncio
 
 class WidgetResource(GenericResource):
     @classmethod
+    @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
         pipeline = kwargs['parent_model']
 
@@ -29,6 +31,7 @@ class WidgetResource(GenericResource):
         )
 
     @classmethod
+    @safe_db_query
     def create(self, payload: Dict, user, **kwargs) -> 'WidgetResource':
         pipeline = kwargs['parent_model']
 
@@ -53,6 +56,7 @@ class WidgetResource(GenericResource):
         return self(resource, user, **kwargs)
 
     @classmethod
+    @safe_db_query
     async def member(self, pk, user, **kwargs):
         pipeline = kwargs['parent_model']
         widget = pipeline.get_block(pk, widget=True)
@@ -64,10 +68,12 @@ class WidgetResource(GenericResource):
 
         return self(widget, user, **kwargs)
 
+    @safe_db_query
     def delete(self, **kwargs):
         self.model.delete()
         return self
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         self.model.update(payload)
         if payload.get('configuration'):

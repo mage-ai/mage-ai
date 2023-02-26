@@ -79,6 +79,7 @@ class PipelineRunResource(DatabaseResource):
         return initial_results
 
     @classmethod
+    @safe_db_query
     async def process_collection(self, query_arg, meta, user, **kwargs):
         total_results = self.collection(query_arg, meta, user, **kwargs)
         total_count = total_results.count()
@@ -181,6 +182,7 @@ class PipelineRunResource(DatabaseResource):
 
         return super().create(payload, user, **kwargs)
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         if 'retry_blocks' == payload.get('pipeline_run_action') and \
                 PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:

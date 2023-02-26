@@ -1,4 +1,5 @@
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
     restart_kernel,
@@ -10,6 +11,7 @@ from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_manag
 
 class KernelResource(GenericResource):
     @classmethod
+    @safe_db_query
     def collection(self, query, meta, user, **kwargs):
         kernels = []
 
@@ -25,6 +27,7 @@ class KernelResource(GenericResource):
         )
 
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         kernels_by_id = {}
 
@@ -37,6 +40,7 @@ class KernelResource(GenericResource):
 
         return self(kernel, user, **kwargs)
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         action_type = payload.get('action_type')
 

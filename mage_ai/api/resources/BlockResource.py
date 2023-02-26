@@ -4,11 +4,13 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import FILE_EXTENSION_TO_BLOCK_LANGUAGE
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
+from mage_ai.orchestration.db import safe_db_query
 import urllib.parse
 
 
 class BlockResource(GenericResource):
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
@@ -35,6 +37,7 @@ class BlockResource(GenericResource):
         return self(block, user, **kwargs)
 
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
 
@@ -69,8 +72,10 @@ class BlockResource(GenericResource):
 
         return self(block, user, **kwargs)
 
+    @safe_db_query
     def delete(self, **kwargs):
         return self.model.delete()
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         self.model.update(payload)

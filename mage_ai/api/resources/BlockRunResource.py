@@ -8,6 +8,7 @@ class BlockRunResource(DatabaseResource):
     model_class = BlockRun
 
     @classmethod
+    @safe_db_query
     def build_result_set(self, arr, user, **kwargs):
         block_runs = []
         for tup in arr:

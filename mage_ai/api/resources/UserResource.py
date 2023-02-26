@@ -2,6 +2,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt, verify_password
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import User
 from mage_ai.shared.hash import extract, ignore_keys
 
@@ -14,6 +15,7 @@ class UserResource(DatabaseResource):
         self.group = None
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         email = payload.get('email')
         password = payload.get('password')
@@ -78,6 +80,7 @@ class UserResource(DatabaseResource):
 
         return resource
 
+    @safe_db_query
     def update(self, payload, **kwargs):
         password = payload.get('password')
 
@@ -116,6 +119,7 @@ class UserResource(DatabaseResource):
             'password_current',
         ]), **kwargs)
 
+    @safe_db_query
     def token(self):
         oauth_token = self.model_options.get('oauth_token')
         if oauth_token:

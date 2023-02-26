@@ -1,9 +1,11 @@
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.monitor.monitor_stats import MonitorStats
 
 
 class MonitorStatResource(GenericResource):
     @classmethod
+    @safe_db_query
     def member(self, pk, user, **kwargs):
         query = kwargs.get('query', {})
 

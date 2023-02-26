@@ -34,6 +34,7 @@ class BackfillResource(DatabaseResource):
         return results.order_by(desc(Backfill.created_at))
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         pipeline_uuid = kwargs['parent_model'].uuid
 
