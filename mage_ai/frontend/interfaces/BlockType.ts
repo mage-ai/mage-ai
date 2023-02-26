@@ -152,6 +152,7 @@ export default interface BlockType {
   language?: BlockLanguageEnum;
   metadata?: {
     dbt?: {
+      lineage?: BlockType[];
       project: string;
       projects: {
         [name: string]: {
@@ -159,6 +160,7 @@ export default interface BlockType {
           targets: string[];
         };
       };
+      sql?: string;
     };
   };
   name?: string;

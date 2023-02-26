@@ -34,7 +34,9 @@ import yaml
 
 
 def parse_attributes(block) -> Dict:
-    file_path = block.configuration['file_path']
+    configuration = block.configuration
+
+    file_path = configuration['file_path']
     project_name = file_path.split('/')[0]
     filename = file_path.split('/')[-1]
     model_name = None
@@ -54,7 +56,7 @@ def parse_attributes(block) -> Dict:
     sources_full_path_legacy = re.sub(filename, 'mage_sources.yml', full_path)
 
     profiles_full_path = f'{project_full_path}/profiles.yml'
-    profile_target = block.configuration.get('dbt_profile_target')
+    profile_target = configuration.get('dbt_profile_target')
     profile = load_profile(project_name, profiles_full_path, profile_target)
 
     source_name = f'mage_{project_name}'
@@ -88,7 +90,12 @@ def extract_refs(block) -> List[str]:
     )
 
 
-def add_blocks_upstream_from_refs(block) -> None:
+def add_blocks_upstream_from_refs(
+    block: 'Block',
+    add_current_block: bool = False,
+    downstream_blocks: List['Block'] = [],
+    read_only: bool = False,
+) -> None:
     attributes_dict = parse_attributes(block)
     project_name = attributes_dict['project_name']
     models_folder_path = f'{get_repo_path()}/dbt/{project_name}/models'
@@ -104,6 +111,7 @@ def add_blocks_upstream_from_refs(block) -> None:
             if 'sql' == file_extension:
                 files_by_name[fn] = file_path_orig
 
+    current_upstream_blocks = []
     added_blocks = []
     for idx, ref in enumerate(extract_refs(block)):
         if ref not in files_by_name:
@@ -111,18 +119,49 @@ def add_blocks_upstream_from_refs(block) -> None:
             continue
 
         uuid = re.sub(f'{get_repo_path()}/dbt/', '', files_by_name[ref])
+        configuration = dict(file_path=uuid)
 
-        new_block = block.__class__.create(
-            uuid,
-            block.type,
-            get_repo_path(),
-            configuration=dict(
-                file_path=uuid,
-            ),
-            language=block.language,
-            pipeline=block.pipeline,
-        )
+        if read_only:
+            uuid_clean = clean_name(uuid, allow_characters=['/'])
+            new_block = block.__class__(uuid_clean, uuid_clean, block.type)
+            new_block.configuration = configuration
+            new_block.language = block.language
+            new_block.pipeline = block.pipeline
+            new_block.downstream_blocks = [block]
+            new_block.upstream_blocks = add_blocks_upstream_from_refs(
+                new_block,
+                read_only=read_only,
+            )
+            added_blocks += new_block.upstream_blocks
+        else:
+            new_block = block.__class__.create(
+                uuid,
+                block.type,
+                get_repo_path(),
+                configuration=configuration,
+                language=block.language,
+                pipeline=block.pipeline,
+            )
+
         added_blocks.append(new_block)
+        current_upstream_blocks.append(new_block)
+
+    if add_current_block:
+        arr = []
+        for b in current_upstream_blocks:
+            if not find(
+                lambda x: clean_name(
+                    x.uuid,
+                    allow_characters=['/'],
+                ) == clean_name(
+                    b.uuid,
+                    allow_characters=['/'],
+                ),
+                block.upstream_blocks,
+            ):
+                arr.append(b)
+        block.upstream_blocks = arr
+        added_blocks.append(block)
 
     return added_blocks
 
@@ -670,6 +709,9 @@ def compiled_query_string(block: Block) -> str:
     file_path = attr['file_path']
 
     file = f'{project_full_path}/target/compiled/{file_path}'
+
+    if not os.path.exists(file):
+        return None
 
     with open(file, 'r') as f:
         query_string = f.read()

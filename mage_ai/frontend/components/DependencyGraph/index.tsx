@@ -105,6 +105,7 @@ export type DependencyGraphProps = {
       runtime?: number,
     };
   };
+  disabled?: boolean;
   editingBlock?: {
     upstreamBlocks: {
       block: BlockType;
@@ -130,6 +131,7 @@ export type DependencyGraphProps = {
 function DependencyGraph({
   blockRefs,
   blockStatus,
+  disabled: disabledProp,
   editingBlock,
   enablePorts = false,
   fetchPipeline,
@@ -175,9 +177,10 @@ function DependencyGraph({
     return arr;
   }, [
     blocksInit,
-    dynamicUpstreamBlocksData,
+    // dynamicUpstreamBlocksData,
     showDynamicBlocks,
   ]);
+
   const blockUUIDMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
@@ -533,7 +536,7 @@ function DependencyGraph({
       <GraphContainerStyle height={height - (heightOffset)}>
         <Canvas
           arrow={null}
-          disabled={false}
+          disabled={disabledProp}
           edge={(edge) => {
             const block = blockUUIDMapping[edge.source];
 

@@ -10,6 +10,7 @@ import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor from '@components/CodeEditor';
 import DataTable from '@components/DataTable';
+import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -42,25 +43,16 @@ import {
 } from '@utils/models/output';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import {
+  TAB_DBT_LINEAGE_UUID,
+  TAB_DBT_LOGS_UUID,
+  TAB_DBT_PREVIEW_UUID,
+  TAB_DBT_SQL_UUID,
+} from '../constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
-
-const TABS_DBT = [
-  {
-    uuid: 'Preview',
-  },
-  {
-    uuid: 'Logs',
-  },
-  {
-    uuid: 'SQL',
-  },
-  {
-    uuid: 'Lineage',
-  },
-];
 
 type CodeOutputProps = {
   block: BlockType;
@@ -172,7 +164,7 @@ function CodeOutput({
   const hasErrorPrev = usePrevious(hasError);
   useEffect(() => {
     if (isDBT && !hasErrorPrev && hasError) {
-      setSelectedTab(TABS_DBT[1]);
+      setSelectedTab(TAB_DBT_LOGS_UUID);
     }
   }, [
     hasError,
@@ -417,7 +409,7 @@ function CodeOutput({
     if (isDBT && selectedTab) {
       const tabUUID = selectedTab.uuid;
 
-      if ('Preview' === tabUUID) {
+      if (TAB_DBT_PREVIEW_UUID.uuid === tabUUID) {
         if (tableContent?.length >= 1) {
           el = tableContent;
         } else if (!isInProgress) {
@@ -432,7 +424,7 @@ function CodeOutput({
             </Spacing>
           );
         }
-      } else if ('Logs' === tabUUID) {
+      } else if (TAB_DBT_LOGS_UUID.uuid === tabUUID) {
         if (content?.length >= 1) {
           el = content;
         } else if (!isInProgress) {
@@ -447,7 +439,7 @@ function CodeOutput({
             </Spacing>
           );
         }
-      } else if ('SQL' === tabUUID) {
+      } else if (TAB_DBT_SQL_UUID.uuid === tabUUID) {
         const sql = blockMetadata?.dbt?.sql;
         if (sql) {
           el = (
@@ -463,8 +455,23 @@ function CodeOutput({
         } else {
           el = null;
         }
-      } else if ('Lineage' === tabUUID) {
-        el = null;
+      } else if (TAB_DBT_LINEAGE_UUID.uuid === tabUUID) {
+        const lineage = blockMetadata?.dbt?.lineage;
+        if (lineage) {
+          el = (
+            <DependencyGraph
+              disabled
+              enablePorts={false}
+              height={300}
+              pipeline={{
+                ...pipeline,
+                blocks: lineage,
+              }}
+            />
+          );
+        } else {
+          el = null;
+        }
       }
     } else {
       el = content;
