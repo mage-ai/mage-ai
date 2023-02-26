@@ -56,6 +56,7 @@ PipelinePolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelinePolicy.allow_write([
+    'add_upstream_for_block_uuid',
     'schedules',
     'status',
 ] + PipelinePresenter.default_attributes, scopes=[

@@ -265,6 +265,7 @@ WHERE table_id = '{table_name}'
                 self.client.create_dataset(dataset=schema, exists_ok=True)
 
                 column_types = self.get_column_types(schema, table_name)
+                print(column_types)
 
                 for col in df.columns:
                     col_type = column_types.get(col)

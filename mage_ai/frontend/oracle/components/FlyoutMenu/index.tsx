@@ -6,6 +6,7 @@ import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import { ArrowRight } from '@oracle/icons';
 import {
   FlyoutMenuContainerStyle,
@@ -36,6 +37,7 @@ export type FlyoutMenuItemType = {
   openConfirmationDialogue?: boolean;
   isGroupingTitle?: boolean;
   onClick?: () => void;
+  tooltip?: () => string;
   uuid: string;
 };
 
@@ -183,6 +185,7 @@ function FlyoutMenu({
           linkProps,
           onClick,
           openConfirmationDialogue,
+          tooltip,
           uuid,
         }: FlyoutMenuItemType, idx0: number) => {
           refArg.current[uuid] = createRef();
@@ -204,7 +207,7 @@ function FlyoutMenu({
             );
           }
 
-          const el = (
+          let el = (
             // @ts-ignore
             <ElToUse
               alternateBackground={alternateBackground || roundedStyle}
@@ -285,6 +288,21 @@ function FlyoutMenu({
               )}
             </ElToUse>
           );
+
+          if (tooltip) {
+            el = (
+              <Tooltip
+                appearBefore
+                block
+                center
+                description={tooltip()}
+                size={null}
+                widthFitContent
+              >
+                {el}
+              </Tooltip>
+            );
+          }
 
           if (linkProps) {
             return (

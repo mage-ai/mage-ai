@@ -1,5 +1,6 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { ThemeContext } from 'styled-components';
+import { useMutation } from 'react-query';
 
 import AddChartMenu from './AddChartMenu';
 import BlockType, {
@@ -18,6 +19,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
@@ -38,6 +40,7 @@ import { buildConvertBlockMenuItems, getMoreActionsItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
 import { isMac } from '@utils/os';
 import { indexBy } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
 
 export type CommandButtonsSharedProps = {
   addWidget: (widget: BlockType, opts?: {
@@ -53,7 +56,7 @@ type CommandButtonsProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
   fetchPipeline: () => void;
-  pipelineType?: PipelineTypeEnum;
+  pipeline?: PipelineType;
   runBlock: (payload: {
     block: BlockType;
     code?: string;
@@ -70,6 +73,10 @@ type CommandButtonsProps = {
     pipeline?: PipelineType;
   }) => Promise<any>;
   setOutputCollapsed: (outputCollapsed: boolean) => void;
+  setErrors: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   visible: boolean;
 } & CommandButtonsSharedProps;
 
@@ -82,9 +89,10 @@ function CommandButtons({
   executionState,
   fetchPipeline,
   interruptKernel,
-  pipelineType,
+  pipeline,
   runBlock,
   savePipelineContent,
+  setErrors,
   setOutputCollapsed,
   visible,
 }: CommandButtonsProps) {
@@ -98,6 +106,8 @@ function CommandButtons({
   const refConvertBlock = useRef(null);
   const refExecuteActions = useRef(null);
   const refMoreActions = useRef(null);
+
+  const pipelineType = pipeline?.type;
 
   const [showAddCharts, setShowAddCharts] = useState<boolean>(false);
   const [showConvertMenu, setShowConvertMenu] = useState<boolean>(false);
@@ -130,6 +140,24 @@ function CommandButtons({
     ]);
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
+  const isDBT = useMemo(() => BlockTypeEnum.DBT === block?.type, [block]);
+
+  const [updatePipeline, { isLoading: isLoadingUpdatePipeline }] = useMutation(
+    api.pipelines.useUpdate(pipeline?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   return (
     <FlexContainer
@@ -154,7 +182,7 @@ function CommandButtons({
             default
             label={(
               <Text>
-                Run block
+                {isDBT ? 'Compile and preview data' : 'Run block'}
                 &nbsp;
                 &nbsp;
                 <KeyboardTextGroup
@@ -392,6 +420,7 @@ function CommandButtons({
               blocksMapping,
               fetchPipeline,
               savePipelineContent,
+              updatePipeline,
             },
           )}
           onClickCallback={() => setShowMoreActions(false)}

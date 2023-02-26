@@ -54,7 +54,9 @@ type CodeEditorProps = {
   language?: string;
   onChange?: (value: string) => void;
   onSave?: (value: string) => void;
+  padding?: boolean;
   placeholder?: string;
+  readOnly?: boolean;
   shortcuts?: ((monaco: any, editor: any) => void)[];
   showLineNumbers?: boolean;
   tabSize?: number;
@@ -73,7 +75,9 @@ function CodeEditor({
   onChange,
   onDidChangeCursorPosition,
   onSave,
+  padding,
   placeholder,
+  readOnly,
   selected,
   setSelected,
   setTextareaFocused,
@@ -177,9 +181,7 @@ function CodeEditor({
     height,
     onDidChangeCursorPosition,
     onSave,
-    refBottomOfEditor.current,
     selected,
-    setCompletionDisposable,
     setMounted,
     setSelected,
     setTextareaFocused,
@@ -264,6 +266,7 @@ function CodeEditor({
 
   return (
     <ContainerStyle
+      padding={padding}
       style={{
         display: mounted ? null : 'none',
       }}
@@ -285,6 +288,7 @@ function CodeEditor({
         onMount={handleEditorDidMount}
         // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
         options={{
+          domReadOnly: readOnly,
           fontFamily: MONO_FONT_FAMILY_REGULAR,
           fontLigatures: true,
           fontSize,
@@ -294,6 +298,7 @@ function CodeEditor({
             enabled: false,
           },
           overviewRulerBorder: false,
+          readOnly,
           renderLineHighlightOnlyWhenFocus: true,
           scrollBeyondLastLine: false,
           // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorScrollbarOptions.html

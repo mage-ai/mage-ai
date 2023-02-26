@@ -37,6 +37,7 @@ function GradientButton({
   backgroundPanel,
   borderWidth = 1,
   children,
+  compact,
   paddingUnits,
   paddingUnitsHorizontal: paddingUnitsHorizontalProp = 1.5,
   paddingUnitsVertical: paddingUnitsVerticalProp = 1.25,
@@ -47,6 +48,11 @@ function GradientButton({
   if (paddingUnits) {
     paddingUnitsHorizontal = paddingUnits;
     paddingUnitsVertical = paddingUnits;
+  }
+
+  if (compact) {
+    paddingUnitsHorizontal *= 0.75;
+    paddingUnitsVertical *= 0.75;
   }
 
   return (

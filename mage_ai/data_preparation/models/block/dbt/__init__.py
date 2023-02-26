@@ -105,12 +105,17 @@ class DBTBlock(Block):
     ) -> List:
         variables = merge_dict(global_vars, runtime_arguments or {})
 
-        if run_settings and run_settings.get('run_model', False):
-            test_execution = False
+        if run_settings:
+            test_execution = not (
+                run_settings.get('build_model', False) or
+                run_settings.get('run_model', False) or
+                run_settings.get('test_model', False)
+            )
 
         dbt_command, args, command_line_dict = build_command_line_arguments(
             self,
             variables,
+            run_settings=run_settings,
             test_execution=test_execution,
         )
         project_full_path = command_line_dict['project_full_path']
@@ -133,8 +138,23 @@ class DBTBlock(Block):
         ] + args
 
         outputs = []
+
+        args_pairs = []
+        args_pair = []
+        for a in args:
+            args_pair.append(f"'{a}'" if '"' in a else a)
+            if len(args_pair) == 2:
+                args_pairs.append(args_pair)
+                args_pair = []
+        if len(args_pair) >= 1:
+            args_pairs.append(args_pair)
+
+        args_pairs = [f"  {' '.join(p)}" for p in args_pairs]
+        args_string = ' \\\n'.join(args_pairs)
+
+        print(f'dbt {dbt_command} \\\n{args_string}\n')
+
         if is_sql and test_execution:
-            print(f'Running DBT command {dbt_command} with arguments {args}.')
             subprocess.run(
                 cmds,
                 preexec_fn=os.setsid,
@@ -169,8 +189,7 @@ class DBTBlock(Block):
             with open(f'{project_full_path}/target/run_results.json', 'r') as f:
                 run_results = json.load(f)
 
-                print('DBT run results:')
-                print(json.dumps(run_results))
+                print(f'\n{json.dumps(run_results, indent=2)}\n')
 
                 for result in run_results['results']:
                     if 'error' == result['status']:

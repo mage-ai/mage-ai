@@ -34,7 +34,9 @@ import yaml
 
 
 def parse_attributes(block) -> Dict:
-    file_path = block.configuration['file_path']
+    configuration = block.configuration
+
+    file_path = configuration['file_path']
     project_name = file_path.split('/')[0]
     filename = file_path.split('/')[-1]
     model_name = None
@@ -54,7 +56,7 @@ def parse_attributes(block) -> Dict:
     sources_full_path_legacy = re.sub(filename, 'mage_sources.yml', full_path)
 
     profiles_full_path = f'{project_full_path}/profiles.yml'
-    profile_target = block.configuration.get('dbt_profile_target')
+    profile_target = configuration.get('dbt_profile_target')
     profile = load_profile(project_name, profiles_full_path, profile_target)
 
     source_name = f'mage_{project_name}'
@@ -88,7 +90,12 @@ def extract_refs(block) -> List[str]:
     )
 
 
-def add_blocks_upstream_from_refs(block) -> None:
+def add_blocks_upstream_from_refs(
+    block: 'Block',
+    add_current_block: bool = False,
+    downstream_blocks: List['Block'] = [],
+    read_only: bool = False,
+) -> None:
     attributes_dict = parse_attributes(block)
     project_name = attributes_dict['project_name']
     models_folder_path = f'{get_repo_path()}/dbt/{project_name}/models'
@@ -104,6 +111,7 @@ def add_blocks_upstream_from_refs(block) -> None:
             if 'sql' == file_extension:
                 files_by_name[fn] = file_path_orig
 
+    current_upstream_blocks = []
     added_blocks = []
     for idx, ref in enumerate(extract_refs(block)):
         if ref not in files_by_name:
@@ -111,18 +119,39 @@ def add_blocks_upstream_from_refs(block) -> None:
             continue
 
         uuid = re.sub(f'{get_repo_path()}/dbt/', '', files_by_name[ref])
+        configuration = dict(file_path=uuid)
 
-        new_block = block.__class__.create(
-            uuid,
-            block.type,
-            get_repo_path(),
-            configuration=dict(
-                file_path=uuid,
-            ),
-            language=block.language,
-            pipeline=block.pipeline,
-        )
+        if read_only:
+            uuid_clean = clean_name(uuid, allow_characters=['/'])
+            new_block = block.__class__(uuid_clean, uuid_clean, block.type)
+            new_block.configuration = configuration
+            new_block.language = block.language
+            new_block.pipeline = block.pipeline
+            new_block.downstream_blocks = [block]
+            new_block.upstream_blocks = add_blocks_upstream_from_refs(
+                new_block,
+                read_only=read_only,
+            )
+            added_blocks += new_block.upstream_blocks
+        else:
+            new_block = block.__class__.create(
+                uuid,
+                block.type,
+                get_repo_path(),
+                configuration=configuration,
+                language=block.language,
+                pipeline=block.pipeline,
+            )
+
         added_blocks.append(new_block)
+        current_upstream_blocks.append(new_block)
+
+    if add_current_block:
+        arr = []
+        for b in current_upstream_blocks:
+            arr.append(b)
+        block.upstream_blocks = arr
+        added_blocks.append(block)
 
     return added_blocks
 
@@ -663,19 +692,16 @@ def interpolate_refs_with_table_names(
     )
 
 
-def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
+def compiled_query_string(block: Block) -> str:
     attr = parse_attributes(block)
-
-    config_file_loader, configuration = config_file_loader_and_configuration(
-        block,
-        profile_target,
-    )
-    data_provider = configuration['data_provider']
 
     project_full_path = attr['project_full_path']
     file_path = attr['file_path']
 
     file = f'{project_full_path}/target/compiled/{file_path}'
+
+    if not os.path.exists(file):
+        return None
 
     with open(file, 'r') as f:
         query_string = f.read()
@@ -690,45 +716,59 @@ def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> Da
         #     configuration=configuration,
         # )
 
-        shared_kwargs = {}
-        if limit is not None:
-            shared_kwargs['limit'] = limit
+    return query_string
 
-        if DataSource.POSTGRES == data_provider:
-            from mage_ai.io.postgres import Postgres
 
-            with Postgres.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.MYSQL == data_provider:
-            from mage_ai.io.mysql import MySQL
+def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
+    config_file_loader, configuration = config_file_loader_and_configuration(
+        block,
+        profile_target,
+    )
 
-            with MySQL.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.BIGQUERY == data_provider:
-            from mage_ai.io.bigquery import BigQuery
+    data_provider = configuration['data_provider']
 
-            loader = BigQuery.with_config(config_file_loader)
+    query_string = compiled_query_string(block)
+
+    shared_kwargs = {}
+    if limit is not None:
+        shared_kwargs['limit'] = limit
+
+    if DataSource.POSTGRES == data_provider:
+        from mage_ai.io.postgres import Postgres
+
+        with Postgres.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
-        elif DataSource.REDSHIFT == data_provider:
-            from mage_ai.io.redshift import Redshift
+    elif DataSource.MYSQL == data_provider:
+        from mage_ai.io.mysql import MySQL
 
-            with Redshift.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.SNOWFLAKE == data_provider:
-            from mage_ai.io.snowflake import Snowflake
+        with MySQL.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
+    elif DataSource.BIGQUERY == data_provider:
+        from mage_ai.io.bigquery import BigQuery
 
-            with Snowflake.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
-        elif DataSource.TRINO == data_provider:
-            from mage_ai.io.trino import Trino
+        loader = BigQuery.with_config(config_file_loader)
+        return loader.load(query_string, **shared_kwargs)
+    elif DataSource.REDSHIFT == data_provider:
+        from mage_ai.io.redshift import Redshift
 
-            with Trino.with_config(config_file_loader) as loader:
-                return loader.load(query_string, **shared_kwargs)
+        with Redshift.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
+    elif DataSource.SNOWFLAKE == data_provider:
+        from mage_ai.io.snowflake import Snowflake
+
+        with Snowflake.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
+    elif DataSource.TRINO == data_provider:
+        from mage_ai.io.trino import Trino
+
+        with Trino.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
 
 
 def build_command_line_arguments(
     block,
     variables: Dict,
+    run_settings: Dict = None,
     run_tests: bool = False,
     test_execution: bool = False,
 ) -> Tuple[str, List[str], Dict]:
@@ -736,7 +776,16 @@ def build_command_line_arguments(
         variables or {},
         get_global_variables(block.pipeline.uuid) if block.pipeline else {},
     )
-    dbt_command = 'test' if run_tests else 'run'
+    dbt_command = 'run'
+
+    if run_tests:
+        dbt_command = 'test'
+
+    if run_settings:
+        if run_settings.get('build_model'):
+            dbt_command = 'build'
+        elif run_settings.get('test_model'):
+            dbt_command = 'test'
 
     args = [
         '--vars',

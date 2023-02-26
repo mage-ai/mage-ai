@@ -3,11 +3,14 @@ import Ansi from 'ansi-to-react';
 
 import BlockType, {
   BLOCK_TYPES_NO_DATA_TABLE,
+  BlockTypeEnum,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
+import CodeEditor from '@components/CodeEditor';
 import DataTable from '@components/DataTable';
+import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -20,6 +23,7 @@ import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import usePrevious from '@utils/usePrevious';
 import { BorderColorShareProps } from '../index.style';
 import { Check, ChevronDown, ChevronUp, Expand } from '@oracle/icons';
 import {
@@ -30,6 +34,7 @@ import {
   HTMLOutputStyle,
   OutputRowStyle,
 } from './index.style';
+import { FileExtensionEnum } from '@interfaces/FileType';
 import {
   INTERNAL_OUTPUT_REGEX,
   INTERNAL_OUTPUT_STRING,
@@ -38,14 +43,29 @@ import {
 } from '@utils/models/output';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import {
+  TAB_DBT_LINEAGE_UUID,
+  TAB_DBT_LOGS_UUID,
+  TAB_DBT_PREVIEW_UUID,
+  TAB_DBT_SQL_UUID,
+} from '../constants';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
 
 type CodeOutputProps = {
   block: BlockType;
+  blockMetadata?: {
+    dbt: {
+      lineage: BlockType[];
+      sql: string;
+    };
+  };
+  buttonTabs?: any;
   collapsed?: boolean;
   contained?: boolean;
+  hasOutput?: boolean;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
   mainContainerWidth?: number;
@@ -55,18 +75,23 @@ type CodeOutputProps = {
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
+  selectedTab?: TabType;
   setCollapsed?: (boolean) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
+  setSelectedTab?: (tab: TabType) => void;
 } & BorderColorShareProps;
 
 function CodeOutput({
   block,
+  blockMetadata,
+  buttonTabs,
   collapsed,
   contained = true,
   dynamicBlock,
   dynamicChildBlock,
   hasError,
+  hasOutput,
   hideExtraInfo,
   isInProgress,
   mainContainerWidth,
@@ -77,9 +102,11 @@ function CodeOutput({
   runEndTime,
   runStartTime,
   selected,
+  selectedTab,
   setCollapsed,
   setOutputBlocks,
   setSelectedOutputBlock,
+  setSelectedTab,
 }: CodeOutputProps) {
   const {
     status,
@@ -125,18 +152,31 @@ function CodeOutput({
     messages,
   ]);
 
-  const progressBar = useMemo(() => {
-    return (
-      <ProgressBar
-        progress={progress}
-      />
-    )
-  }, [
+  const progressBar = useMemo(() => (
+    <ProgressBar
+      progress={progress}
+    />
+  ), [
     progress,
+  ]);
+
+  const isDBT = BlockTypeEnum.DBT === block?.type;
+
+  const hasErrorPrev = usePrevious(hasError);
+  useEffect(() => {
+    if (isDBT && !hasErrorPrev && hasError) {
+      setSelectedTab(TAB_DBT_LOGS_UUID);
+    }
+  }, [
+    hasError,
+    hasErrorPrev,
+    isDBT,
+    setSelectedTab,
   ]);
 
   const {
     content,
+    tableContent,
     testContent,
   } = useMemo(() => {
     const createDataTableElement = ({
@@ -171,6 +211,7 @@ function CodeOutput({
     let isTable = false;
 
     const arrContent = [];
+    const tableContent = [];
     const testMessages = [];
 
     combinedMessages?.forEach(({
@@ -246,22 +287,33 @@ function CodeOutput({
             } = JSON.parse(rawString);
 
             if (DataTypeEnum.TABLE === typeDisplay) {
-              displayElement = createDataTableElement(dataDisplay, {
+              isTable = true;
+
+              const tableEl = createDataTableElement(dataDisplay, {
                 borderTop,
                 selected,
               });
-              isTable = true;
+              tableContent.push(tableEl);
+
+              if (!isDBT) {
+                displayElement = tableEl;
+              }
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
-          displayElement = createDataTableElement(
+          isTable = true;
+          const tableEl = createDataTableElement(
             isJsonString(data) ? JSON.parse(data) : data,
             {
               borderTop,
               selected,
             },
           );
-          isTable = true;
+          tableContent.push(tableEl);
+
+          if (!isDBT) {
+            displayElement = tableEl;
+          }
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           const textArr = data?.split('\\n');
 
@@ -308,7 +360,7 @@ function CodeOutput({
           arr.push(
             <div key={`code-output-${idx}-${idxInner}`}>
               {displayElement}
-            </div>
+            </div>,
           );
         }
       });
@@ -333,13 +385,16 @@ function CodeOutput({
 
     return {
       content: arrContent,
+      tableContent,
       testContent: testMessages,
     };
   }, [
     combinedMessages,
     contained,
+    isDBT,
+    isInProgress,
     mainContainerWidth,
-    progress,
+    pipeline,
     progressBar,
     selected,
   ]);
@@ -348,6 +403,101 @@ function CodeOutput({
   const columnsPreviewMessage = columnCount > 30
     ? ` (30 out of ${columnCount} columns displayed)`
     : '';
+
+  const currentContentToDisplay = useMemo(() => {
+    let el;
+
+    if (isDBT && selectedTab) {
+      const tabUUID = selectedTab.uuid;
+
+      if (TAB_DBT_PREVIEW_UUID.uuid === tabUUID) {
+        if (tableContent?.length >= 1) {
+          el = tableContent;
+        } else if (!isInProgress) {
+          el = (
+            <Spacing px={2} py={1}>
+              <Text muted>
+                {hasError
+                  ? 'Error, check logs.'
+                  : 'No preview to display yet, try running the block.'
+                }
+              </Text>
+            </Spacing>
+          );
+        }
+      } else if (TAB_DBT_LOGS_UUID.uuid === tabUUID) {
+        if (content?.length >= 1) {
+          el = content;
+        } else if (!isInProgress) {
+          el = (
+            <Spacing px={2} py={1}>
+              <Text muted>
+                {hasError
+                  ? 'Error, check logs.'
+                  : 'No logs to display yet, try running the block.'
+                }
+              </Text>
+            </Spacing>
+          );
+        }
+      } else if (TAB_DBT_SQL_UUID.uuid === tabUUID) {
+        const sql = blockMetadata?.dbt?.sql;
+        if (sql) {
+          el = (
+            <CodeEditor
+              autoHeight
+              language={FileExtensionEnum.SQL}
+              padding
+              readOnly
+              value={sql}
+              width="100%"
+            />
+          );
+        } else {
+          el = null;
+        }
+      } else if (TAB_DBT_LINEAGE_UUID.uuid === tabUUID) {
+        const lineage = blockMetadata?.dbt?.lineage;
+        if (lineage) {
+          el = (
+            <DependencyGraph
+              disabled
+              enablePorts={false}
+              height={UNIT * 55}
+              pipeline={{
+                ...pipeline,
+                blocks: lineage,
+              }}
+            />
+          );
+        } else {
+          el = null;
+        }
+      }
+    } else {
+      el = content;
+    }
+
+    return (
+      <>
+        {buttonTabs}
+        {el}
+      </>
+    );
+  }, [
+    blockMetadata,
+    buttonTabs,
+    content,
+    hasError,
+    isDBT,
+    isInProgress,
+    selectedTab,
+    tableContent,
+  ]);
+
+  if (!buttonTabs && !hasOutput) {
+    return null;
+  }
 
   return (
     <>
@@ -394,11 +544,11 @@ function CodeOutput({
               </Spacing>
             </>
           )}
-          {!collapsed && content}
+          {!collapsed && currentContentToDisplay}
         </ContainerStyle>
       )}
 
-      {!contained && content}
+      {!contained && currentContentToDisplay}
 
       {executedAndIdle && !hideExtraInfo && (
         <ExtraInfoStyle
