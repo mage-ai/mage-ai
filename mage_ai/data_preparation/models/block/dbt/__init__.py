@@ -107,9 +107,9 @@ class DBTBlock(Block):
 
         if run_settings:
             test_execution = not (
-                run_settings.get('build_model', False) or \
-                    run_settings.get('run_model', False) or \
-                    run_settings.get('test_model', False)
+                run_settings.get('build_model', False) or
+                run_settings.get('run_model', False) or
+                run_settings.get('test_model', False)
             )
 
         dbt_command, args, command_line_dict = build_command_line_arguments(

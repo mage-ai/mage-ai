@@ -653,6 +653,7 @@ function CodeBlockProps({
       dbtMetadata,
     ]);
   const dbtProfileData = useMemo(() => dbtProjects[dbtProjectName] || {
+    target: null,
     targets: [],
   }, [
     dbtProjectName,

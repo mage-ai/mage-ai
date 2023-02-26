@@ -58,6 +58,7 @@ type CodeOutputProps = {
   block: BlockType;
   blockMetadata?: {
     dbt: {
+      lineage: BlockType[];
       sql: string;
     };
   };

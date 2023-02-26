@@ -70,7 +70,9 @@ export const getMoreActionsItems = (
   runBlock: (payload: {
     block: BlockType;
     runSettings?: {
+      build_model?: boolean;
       run_model?: boolean;
+      test_model?: boolean;
     };
     runTests?: boolean;
     runUpstream?: boolean;
@@ -86,7 +88,11 @@ export const getMoreActionsItems = (
       block?: BlockType;
       pipeline?: PipelineType;
     }) => Promise<any>;
-    updatePipeline: (pipeline: PipelineType) => Promise<any>;
+    updatePipeline: (payload: {
+      pipeline: {
+        add_upstream_for_block_uuid: string;
+      };
+    }) => Promise<any>;
   },
 ): FlyoutMenuItemType[] => {
   const {
