@@ -2,6 +2,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.utils import (
     build_command_line_arguments,
     create_upstream_tables,
+    fetch_model_data,
     load_profiles_async,
     parse_attributes,
     query_from_compiled_sql,
@@ -194,5 +195,18 @@ class DBTBlock(Block):
                 for result in run_results['results']:
                     if 'error' == result['status']:
                         raise Exception(result['message'])
+
+            if is_sql and dbt_command in ['build', 'run']:
+                df = fetch_model_data(
+                    self,
+                    dbt_profile_target,
+                    limit=1000,
+                )
+                self.store_variables(
+                    dict(df=df),
+                    execution_partition=execution_partition,
+                    override_outputs=True,
+                )
+                outputs = [df]
 
         return outputs

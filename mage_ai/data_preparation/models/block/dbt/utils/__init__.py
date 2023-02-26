@@ -719,15 +719,18 @@ def compiled_query_string(block: Block) -> str:
     return query_string
 
 
-def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
+def execute_query(
+    block,
+    profile_target: str,
+    query_string: str,
+    limit: int = None,
+) -> DataFrame:
     config_file_loader, configuration = config_file_loader_and_configuration(
         block,
         profile_target,
     )
 
     data_provider = configuration['data_provider']
-
-    query_string = compiled_query_string(block)
 
     shared_kwargs = {}
     if limit is not None:
@@ -763,6 +766,12 @@ def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> Da
 
         with Trino.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
+
+
+def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
+    query_string = compiled_query_string(block)
+
+    return execute_query(block, profile_target, query_string, limit)
 
 
 def build_command_line_arguments(
@@ -886,3 +895,32 @@ def run_dbt_tests(
 
     if number_of_errors >= 1:
         raise Exception('DBT test failed.')
+
+
+def fetch_model_data(
+    block: 'Block',
+    profile_target: str,
+    limit: int = None,
+) -> DataFrame:
+    attributes_dict = parse_attributes(block)
+    model_name = attributes_dict['model_name']
+
+    # bigquery: dataset, schema
+    # postgres: schema
+    # redshift: schema
+    # snowflake: schema
+    # trino: schema
+    profile = get_profile(block, profile_target)
+    schema = profile.get('schema')
+    if not schema and 'dataset' in profile:
+        schema = profile['dataset']
+
+    if not schema:
+        raise print(
+            f'WARNING: Cannot fetch data from model {model_name}, ' +
+            f'no schema found in profile target {profile_target}.',
+        )
+
+    query_string = f'SELECT * FROM {schema}.{model_name}'
+
+    return execute_query(block, profile_target, query_string, limit)
