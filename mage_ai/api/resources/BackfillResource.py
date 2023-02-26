@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.orchestration.backfills.service import start_backfill, cancel_backfill
 from mage_ai.orchestration.db import safe_db_query
@@ -48,7 +49,10 @@ class BackfillResource(DatabaseResource):
         if 'status' in payload and payload['status'] != self.status:
             if Backfill.Status.INITIAL == payload['status']:
                 pipeline_runs += start_backfill(self.model)
-                return super().update(dict(status=payload['status']))
+                return super().update(dict(
+                    started_at=datetime.now(),
+                    status=payload['status'],
+                ))
             elif Backfill.Status.CANCELLED == payload['status']:
                 cancel_backfill(self.model)
                 return super().update(dict(status=payload['status']))

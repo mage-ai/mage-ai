@@ -9,9 +9,9 @@ export const BACKFILL_TYPES = [
     description: () => 'Backfill between a date and time range.',
     uuid: BACKFILL_TYPE_DATETIME,
   },
-  {
-    label: () => 'Custom code',
-    description: () => 'Use the output of a block to generate backfills.',
-    uuid: BACKFILL_TYPE_CODE,
-  },
+  // {
+  //   label: () => 'Custom code',
+  //   description: () => 'Use the output of a block to generate backfills.',
+  //   uuid: BACKFILL_TYPE_CODE,
+  // },
 ];

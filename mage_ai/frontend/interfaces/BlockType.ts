@@ -139,6 +139,7 @@ export interface BlockRequestPayloadType {
 
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
+  callback_content?: string;
   color?: BlockColorEnum;
   configuration?: ConfigurationType;
   content?: string;
@@ -149,6 +150,7 @@ export default interface BlockType {
     message: string;
   };
   file?: string;
+  has_callback?: boolean;
   language?: BlockLanguageEnum;
   metadata?: {
     dbt?: {

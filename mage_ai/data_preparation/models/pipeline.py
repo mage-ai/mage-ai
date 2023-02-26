@@ -383,6 +383,7 @@ class Pipeline:
                 content=c.get('content'),
                 executor_config=c.get('executor_config'),
                 executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
+                has_callback=c.get('has_callback'),
                 language=c.get('language'),
                 pipeline=self,
                 status=c.get('status'),
@@ -536,11 +537,20 @@ class Pipeline:
                             continue
                         if 'content' in block_data:
                             await block.update_content_async(block_data['content'], widget=widget)
+                        if 'callback_content' in block_data \
+                                and block.callback_block:
+                            await block.callback_block.update_content_async(
+                                block_data['callback_content'],
+                                widget=widget,
+                            )
                         if 'outputs' in block_data:
                             await block.save_outputs_async(block_data['outputs'], override=True)
 
                         should_save = False
                         name = block_data.get('name')
+
+                        if block_data.get('has_callback') is not None:
+                            block.update(extract(block_data, ['has_callback']))
 
                         configuration = block_data.get('configuration')
                         if configuration:

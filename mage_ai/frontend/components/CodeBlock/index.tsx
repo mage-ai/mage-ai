@@ -37,6 +37,7 @@ import DataProviderType, {
   EXPORT_WRITE_POLICIES,
   ExportWritePolicyEnum,
 } from '@interfaces/DataProviderType';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -135,6 +136,7 @@ type CodeBlockProps = {
   mainContainerWidth: number;
   messages: KernelOutputType[];
   noDivider?: boolean;
+  onCallbackChange?: (value: string) => void;
   onChange?: (value: string) => void;
   onClickAddSingleDBTModel: (blockIdx: number) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
@@ -188,6 +190,7 @@ function CodeBlockProps({
   mainContainerWidth,
   messages: blockMessages = [],
   noDivider,
+  onCallbackChange,
   onChange,
   onClickAddSingleDBTModel,
   openSidekickView,
@@ -211,11 +214,17 @@ function CodeBlockProps({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
 
+  const {
+    callback_content: callbackContentOrig,
+    has_callback: hasCallback,
+  } = block;
+
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
+  const [callbackContent, setCallbackContent] = useState(callbackContentOrig);
   const [currentTime, setCurrentTime] = useState<number>(null);
 
   const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
@@ -661,40 +670,77 @@ function CodeBlockProps({
   ]);
 
   const codeEditorEl = useMemo(() => (
-    <CodeEditor
-      autoHeight
-      autocompleteProviders={autocompleteProviders}
-      height={height}
-      language={block.language}
-      onChange={(val: string) => {
-        setContent(val);
-        onChange?.(val);
-      }}
-      onDidChangeCursorPosition={onDidChangeCursorPosition}
-      placeholder={BlockTypeEnum.DBT === block.type && BlockLanguageEnum.YAML === block.language
-        ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
-        : 'Start typing here...'
-      }
-      selected={selected}
-      setSelected={setSelected}
-      setTextareaFocused={setTextareaFocused}
-      shortcuts={[
-        (monaco, editor) => executeCode(monaco, () => {
-          runBlockAndTrack({
-            block,
-            code: editor.getValue(),
-          });
-        }),
-      ]}
-      textareaFocused={textareaFocused}
-      value={content}
-      width="100%"
-    />
+    <>
+      <CodeEditor
+        autoHeight
+        autocompleteProviders={autocompleteProviders}
+        height={height}
+        language={block.language}
+        onChange={(val: string) => {
+          setContent(val);
+          onChange?.(val);
+        }}
+        onDidChangeCursorPosition={onDidChangeCursorPosition}
+        placeholder={BlockTypeEnum.DBT === block.type && BlockLanguageEnum.YAML === block.language
+          ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
+          : 'Start typing here...'
+        }
+        selected={selected}
+        setSelected={setSelected}
+        setTextareaFocused={setTextareaFocused}
+        shortcuts={[
+          (monaco, editor) => executeCode(monaco, () => {
+            runBlockAndTrack({
+              block,
+              code: editor.getValue(),
+            });
+          }),
+        ]}
+        textareaFocused={textareaFocused}
+        value={content}
+        width="100%"
+      />
+      {hasCallback && (
+        <>
+          <Divider />
+          <Spacing mt={1}>
+            <CodeHelperStyle>
+              <Text small>
+                Callback block: define @on_success or @on_failure callbacks for this block.
+              </Text>
+              <Text monospace muted small>
+                kwargs<Text inline monospace muted small> → </Text>
+                global variables
+              </Text>
+            </CodeHelperStyle>
+            <CodeEditor
+              autoHeight
+              autocompleteProviders={autocompleteProviders}
+              language="python"
+              onChange={(val: string) => {
+                setCallbackContent(val);
+                onCallbackChange?.(val);
+              }}
+              onDidChangeCursorPosition={onDidChangeCursorPosition}
+              placeholder="Start typing here..."
+              selected={selected}
+              setSelected={setSelected}
+              setTextareaFocused={setTextareaFocused}
+              textareaFocused={textareaFocused}
+              value={callbackContent}
+              width="100%"
+            />
+          </Spacing>
+        </>
+      )}
+    </>
   ), [
     autocompleteProviders,
     block,
+    callbackContent,
     content,
     dbtProjectName,
+    hasCallback,
     height,
     onChange,
     onDidChangeCursorPosition,

@@ -418,6 +418,7 @@ function CommandButtons({
             isStreamingPipeline,
             {
               blocksMapping,
+              fetchPipeline,
               savePipelineContent,
               updatePipeline,
             },

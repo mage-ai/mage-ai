@@ -155,6 +155,25 @@ def run(
 
 
 @app.command()
+def clean_cached_variables(
+    project_path: str = typer.Argument(
+        ..., help='path of the Mage project to clean variables.'
+    ),
+    pipeline_uuid: str = typer.Option(
+        None, help='uuid of the pipeline to clean.'
+    ),
+):
+    from mage_ai.data_preparation.repo_manager import set_repo_path
+
+    project_path = os.path.abspath(project_path)
+    set_repo_path(project_path)
+
+    from mage_ai.data_preparation.variable_manager import clean_variables
+
+    clean_variables(pipeline_uuid=pipeline_uuid)
+
+
+@app.command()
 def create_spark_cluster(
     project_path: str = typer.Argument(
         ..., help='path of the Mage project that contains the EMR config.'

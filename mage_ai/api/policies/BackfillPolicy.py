@@ -60,6 +60,15 @@ BackfillPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 BackfillPolicy.allow_query([
+    'include_preview_runs',
+    'include_run_count',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+BackfillPolicy.allow_query([
     'pipeline_uuid',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

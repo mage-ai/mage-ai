@@ -41,6 +41,7 @@ function PipelineBackfills({
   } = api.backfills.list({
     _limit: 20,
     _offset: 0,
+    include_run_count: true,
     pipeline_uuid: pipelineUUID,
   }, {
     refreshInterval: 60000,

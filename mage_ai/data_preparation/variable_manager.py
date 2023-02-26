@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
     is_spark_dataframe,
@@ -9,10 +10,12 @@ from mage_ai.data_preparation.models.variable import (
 )
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.data_preparation.repo_manager import (
+    get_repo_config,
     get_repo_path,
     get_variables_dir,
 )
 from mage_ai.shared.constants import S3_PREFIX
+from mage_ai.shared.dates import str_to_timedelta
 from mage_ai.shared.utils import clean_name
 from typing import Any, Dict, List
 import os
@@ -99,6 +102,43 @@ class VariableManager:
         variable.delete()
         variable.variable_type = variable_type
         await variable.write_data_async(data)
+
+    def clean_variables(
+        self,
+        pipeline_uuid: str = None
+    ):
+        from mage_ai.data_preparation.models.pipeline import Pipeline
+
+        repo_config = get_repo_config()
+        min_partition = (datetime.utcnow() -
+                         str_to_timedelta(repo_config.variables_retention_period)).strftime(
+                            format='%Y%m%dT%H%M%S')
+        print(f'Clean variables before partition {min_partition}')
+        if pipeline_uuid is None:
+            pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
+        else:
+            pipeline_uuids = [pipeline_uuid]
+        for pipeline_uuid in pipeline_uuids:
+            print(f'Removing cached variables from pipeline {pipeline_uuid}')
+            pipeline_variable_path = os.path.join(
+                self.__pipeline_path(pipeline_uuid),
+                VARIABLE_DIR,
+            )
+            dirs = self.storage.listdir(pipeline_variable_path)
+            for dirname in dirs:
+                if dirname.isdigit():
+                    pipeline_schedule_vpath = os.path.join(pipeline_variable_path, dirname)
+                    execution_partitions = self.storage.listdir(
+                        pipeline_schedule_vpath,
+                    )
+                    for partition in execution_partitions:
+                        if partition <= min_partition:
+                            pipeline_partition_vpath = os.path.join(
+                                pipeline_schedule_vpath,
+                                partition,
+                            )
+                            print(f'Removing folder {pipeline_partition_vpath}')
+                            self.storage.remove_dir(pipeline_partition_vpath)
 
     def delete_variable(
         self,
@@ -216,6 +256,13 @@ class S3VariableManager(VariableManager):
         from mage_ai.data_preparation.storage.s3_storage import S3Storage
 
         self.storage = S3Storage(dirpath=variables_dir)
+
+
+def clean_variables(
+    pipeline_uuid: str = None
+):
+    variables_dir = get_variables_dir()
+    VariableManager(variables_dir=variables_dir).clean_variables(pipeline_uuid=pipeline_uuid)
 
 
 def get_global_variables(

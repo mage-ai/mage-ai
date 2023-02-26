@@ -4,13 +4,13 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BackfillType, {
   BACKFILL_TYPE_CODE,
   BACKFILL_TYPE_DATETIME,
+  IntervalTypeEnum,
   INTERVAL_TYPES,
 } from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
@@ -21,8 +21,6 @@ import ErrorPopup from '@components/ErrorPopup';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import Link from '@oracle/elements/Link';
-import List from '@oracle/elements/List';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
@@ -33,12 +31,9 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import {
-  Add,
   Alphabet,
   CalendarDate,
-  Code,
   Schedule,
-  Trash,
 } from '@oracle/icons';
 import { BACKFILL_TYPES } from './constants';
 import { CardStyle } from '../../Triggers/Edit/index.style';
@@ -46,12 +41,11 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {
   PADDING_UNITS,
   UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
-import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { getTimeInUTC } from '../../Triggers/utils';
 import { onSuccess } from '@api/utils/response';
+import { parseVariables } from '@components/Sidekick/utils';
 import { selectKeys } from '@utils/hash';
 
 type BackfillEditProps = {
@@ -300,7 +294,7 @@ function BackfillEdit({
               }));
             }}
             placeholder={intervalType
-              ? `Number of ${intervalType} between each backfill`
+              ? `Number of ${intervalType}${intervalType !== IntervalTypeEnum.CUSTOM ? 's' : ''} between each backfill`
               : 'Interval type is required'
             }
             type="number"
@@ -496,7 +490,7 @@ function BackfillEdit({
                   noBorder
                   noPadding
                   onClick={() => {
-                    setSetupType(uuid)
+                    setSetupType(uuid);
                   }}
                 >
                   <CardStyle selected={selected}>
