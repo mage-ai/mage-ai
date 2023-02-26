@@ -195,7 +195,7 @@ function Header({
 
   const userDropdown: FlyoutMenuItemType[] = [
     {
-      label: () => 'User settings',
+      label: () => 'Settings',
       linkProps: {
         href: '/settings/workspace/preferences',
       },

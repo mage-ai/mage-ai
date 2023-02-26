@@ -54,6 +54,7 @@ export const PROJECT_SETTINGS: 'project_settings' = 'project_settings';
 export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUS: 'status' = 'status';
+export const SYNCS: 'syncs' = 'syncs'
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const USERS: 'users' = 'users';
 export const VARIABLES: 'variables' = 'variables';
@@ -99,6 +100,7 @@ const RESOURCES: any[][] = [
   [SECRETS],
   [SESSIONS],
   [STATUS],
+  [SYNCS],
   [USERS],
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],
