@@ -860,10 +860,12 @@ class Block:
 
         outputs_from_input_vars = {}
         if input_args is None:
+            upstream_block_uuids_length = len(upstream_block_uuids)
             for idx, input_var in enumerate(input_vars):
-                upstream_block_uuid = upstream_block_uuids[idx]
-                outputs_from_input_vars[upstream_block_uuid] = input_var
-                outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+                if idx < upstream_block_uuids_length:
+                    upstream_block_uuid = upstream_block_uuids[idx]
+                    outputs_from_input_vars[upstream_block_uuid] = input_var
+                    outputs_from_input_vars[f'df_{idx + 1}'] = input_var
         else:
             outputs_from_input_vars = dict()
 
