@@ -24,6 +24,7 @@ type GraphNodeProps = {
   children: any;
   disabled?: boolean;
   hasFailed?: boolean;
+  hideStatus?: boolean;
   isCancelled?: boolean;
   isInProgress?: boolean;
   isQueued?: boolean;
@@ -38,6 +39,7 @@ function GraphNode({
   children,
   disabled,
   hasFailed,
+  hideStatus,
   isCancelled,
   isInProgress,
   isQueued,
@@ -103,32 +105,36 @@ function GraphNode({
           <Spacing ml={2} />
         )}
 
-        <FlexContainer
-          alignItems="center"
-          justifyContent="center"
-          style={{
-            height: UNIT * 2,
-            width: UNIT * 2,
-          }}
-          title={tooltipText}
-        >
-          {isInProgress && (
-            <Spinner
-              color={(themeContext || dark).content.active}
-              small
-            />
-          )}
-          {success && <Check size={UNIT * 2} success />}
-          {failed && <Close danger size={UNIT * 1.5} />}
-          {noStatus && (
-            <Circle
-              borderSize={1}
-              size={UNIT * 1}
-            />
-          )}
-        </FlexContainer>
+        {!hideStatus && (
+          <>
+            <FlexContainer
+              alignItems="center"
+              justifyContent="center"
+              style={{
+                height: UNIT * 2,
+                width: UNIT * 2,
+              }}
+              title={tooltipText}
+            >
+              {isInProgress && (
+                <Spinner
+                  color={(themeContext || dark).content.active}
+                  small
+                />
+              )}
+              {success && <Check size={UNIT * 2} success />}
+              {failed && <Close danger size={UNIT * 1.5} />}
+              {noStatus && (
+                <Circle
+                  borderSize={1}
+                  size={UNIT * 1}
+                />
+              )}
+            </FlexContainer>
 
-        <Spacing ml={1} />
+            <Spacing ml={1} />
+          </>
+        )}
 
         <FlexContainer
           alignItems="center"

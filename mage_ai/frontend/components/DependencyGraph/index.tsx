@@ -402,7 +402,7 @@ function DependencyGraph({
         id: uuid,
         ports,
         width: (displayText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
-          + (UNIT * 5)
+          + (disabledProp ? 0 : UNIT * 5)
           + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
           + (blockStatus?.[block.uuid]?.runtime ? 50 : 0),
       });
@@ -417,6 +417,7 @@ function DependencyGraph({
     blockEditing?.uuid,
     blockStatus,
     blocks,
+    disabledProp,
     displayTextForBlock,
     downstreamBlocksMapping,
   ]);
@@ -657,6 +658,7 @@ function DependencyGraph({
                     <GraphNode
                       block={block}
                       disabled={blockEditing?.uuid === block.uuid}
+                      hideStatus={disabledProp}
                       key={block.uuid}
                       selected={blockEditing
                         ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
