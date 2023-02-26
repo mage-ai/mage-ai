@@ -462,7 +462,7 @@ function CodeOutput({
             <DependencyGraph
               disabled
               enablePorts={false}
-              height={300}
+              height={UNIT * 55}
               pipeline={{
                 ...pipeline,
                 blocks: lineage,

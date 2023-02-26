@@ -1135,7 +1135,12 @@ function CodeBlockProps({
                     onFocus={() => {
                       setAnyInputFocused(true);
                     }}
-                    placeholder={dbtProjectName ? null : 'Select project first'}
+                    placeholder={dbtProjectName
+                      ? BlockLanguageEnum.SQL === block?.language
+                        ? dbtProfileData?.target
+                        : null
+                      : 'Select project first'
+                    }
                     small
                     value={dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET] || ''}
                   >

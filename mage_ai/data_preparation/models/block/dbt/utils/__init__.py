@@ -149,17 +149,7 @@ def add_blocks_upstream_from_refs(
     if add_current_block:
         arr = []
         for b in current_upstream_blocks:
-            if not find(
-                lambda x: clean_name(
-                    x.uuid,
-                    allow_characters=['/'],
-                ) == clean_name(
-                    b.uuid,
-                    allow_characters=['/'],
-                ),
-                block.upstream_blocks,
-            ):
-                arr.append(b)
+            arr.append(b)
         block.upstream_blocks = arr
         added_blocks.append(block)
 
