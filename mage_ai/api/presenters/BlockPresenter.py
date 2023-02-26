@@ -14,6 +14,7 @@ class BlockPresenter(BasePresenter):
         'downstream_blocks',
         'executor_config',
         'executor_type',
+        'has_callback',
         'language',
         'metadata',
         'name',
