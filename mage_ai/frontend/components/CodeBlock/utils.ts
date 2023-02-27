@@ -84,6 +84,7 @@ export const getMoreActionsItems = (
     blocksMapping: {
       [uuid: string]: BlockType;
     };
+    fetchFileTree: () => void;
     fetchPipeline: () => void;
     savePipelineContent: (payload?: {
       block?: BlockType;
@@ -128,6 +129,7 @@ export const getMoreActionsItems = (
 
   const {
     blocksMapping,
+    fetchFileTree,
     fetchPipeline,
     savePipelineContent,
     updatePipeline,
@@ -242,7 +244,10 @@ export const getMoreActionsItems = (
         ...block,
         has_callback: !has_callback,
       },
-    }).then(() => fetchPipeline()),
+    }).then(() => {
+      fetchFileTree();
+      fetchPipeline();
+    }),
     uuid: 'has_callback',
   })
 
