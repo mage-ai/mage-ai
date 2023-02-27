@@ -18,11 +18,16 @@ import { singularize } from '@utils/string';
 export function getFullPath(
   file: FileType,
   currentPathInit: string = null,
+  removeFilename: boolean = false,
 ): string {
-  const currentPath = currentPathInit || file?.name;
+  const currentPath = currentPathInit || (removeFilename ? null : file?.name);
 
   if (file?.parent) {
-    return getFullPath(file.parent, `${file.parent.name}/${currentPath}`);
+    const parts = [file.parent.name];
+    if (currentPath?.length >= 1) {
+      parts.push(currentPath);
+    }
+    return getFullPath(file.parent, parts.join('/'));
   }
 
   return currentPath;
@@ -35,8 +40,9 @@ export function removeRootFromFilePath(filePath: string): string {
 export function getFullPathWithoutRootFolder(
   file: FileType,
   currentPathInit: string = null,
+  removeFilename: boolean = false,
 ): string {
-  const fullPath = getFullPath(file, currentPathInit);
+  const fullPath = getFullPath(file, currentPathInit, removeFilename);
 
   return removeRootFromFilePath(fullPath);
 }

@@ -68,3 +68,8 @@ class FileResource(GenericResource):
     @safe_db_query
     def delete(self, **kwargs):
         return self.model.delete()
+
+    @safe_db_query
+    def update(self, payload, **kwargs):
+        self.model.rename(payload['dir_path'], payload['name'])
+        return self

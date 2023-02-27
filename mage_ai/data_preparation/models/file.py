@@ -112,6 +112,11 @@ class File:
     def delete(self):
         os.remove(self.file_path)
 
+    def rename(self, dir_path: str, filename):
+        full_path = os.path.join(self.repo_path, dir_path, filename)
+        self.create_parent_directories(full_path)
+        os.rename(self.file_path, full_path)
+
     def to_dict(self, include_content=False):
         data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
         if include_content:

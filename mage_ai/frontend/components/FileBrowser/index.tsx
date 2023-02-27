@@ -243,9 +243,10 @@ function FileBrowser({
     uuid: 'upload_files',
   });
 
-  const [showModalNewFile, hideModalNewFile] = useModal(() => (
+  const [showModalNewFile, hideModalNewFile] = useModal((file: FileType = null) => (
     <NewFile
       fetchFileTree={fetchFileTree}
+      file={file}
       onCancel={hideModalNewFile}
       selectedFolder={selectedFolder}
       setErrors={setErrors}
@@ -313,13 +314,22 @@ function FileBrowser({
         uuid: 'delete_block_file',
       });
     } else if (selectedFile) {
-      items.push({
-        label: () => 'Delete file',
-        onClick: () => {
-          deleteFile(encodeURIComponent(getFullPathWithoutRootFolder(selectedFile)));
+      items.push(...[
+        {
+          label: () => 'Rename file',
+          onClick: () => {
+            showModalNewFile(selectedFile);
+          },
+          uuid: 'rename_file',
         },
-        uuid: 'delete_file',
-      });
+        {
+          label: () => 'Delete file',
+          onClick: () => {
+            deleteFile(encodeURIComponent(getFullPathWithoutRootFolder(selectedFile)));
+          },
+          uuid: 'delete_file',
+        },
+      ]);
     }
 
     return (
