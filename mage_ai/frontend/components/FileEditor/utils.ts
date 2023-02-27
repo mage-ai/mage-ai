@@ -8,6 +8,7 @@ import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
 } from '@interfaces/FileType';
 import { find } from '@utils/array';
+import { removeExtensionFromFilename } from '@utils/string';
 
 export const getBlockFilename = (path: string[]) => path.at(-1);
 
@@ -68,7 +69,7 @@ export function buildAddBlockRequestPayload(
       file_path: isDBT ? blockUUID : null,
     },
     language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
-    name: blockUUID,
+    name: removeExtensionFromFilename(blockUUID),
     type: blockType,
   };
 

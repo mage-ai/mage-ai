@@ -113,6 +113,9 @@ class PipelineResource(BaseResource):
             arr = add_blocks_upstream_from_refs(block)
             upstream_block_uuids = [b.uuid for b in arr]
 
+            for b in block.upstream_blocks:
+                upstream_block_uuids.append(b.uuid)
+
             self.model.add_block(
                 block,
                 upstream_block_uuids,
