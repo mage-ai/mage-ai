@@ -65,7 +65,7 @@ If you toggle this setting, you’re responsible for writing the `CREATE TABLE` 
 For example:
 
 ```sql
-CREATE TABLE mage.users AS (
+CREATE TABLE IF NOT EXISTS mage.users AS (
     id BIGINT
     , username VARCHAR(255)
 );
