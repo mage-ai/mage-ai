@@ -91,12 +91,13 @@ export function getBlockFromFile(
     fileName = parts[parts.length - 1];
   }
 
+
   const extensions = [
-    `\.${FileExtensionEnum.PY}`,
-    `\.${FileExtensionEnum.R}`,
-    `\.${FileExtensionEnum.SQL}`,
-    `\.${FileExtensionEnum.YAML}`,
-    `\.${FileExtensionEnum.YML}`,
+    `\\.${FileExtensionEnum.PY}`,
+    `\\.${FileExtensionEnum.R}`,
+    `\\.${FileExtensionEnum.SQL}`,
+    `\\.${FileExtensionEnum.YAML}`,
+    `\\.${FileExtensionEnum.YML}`,
   ].join('|');
   const extensionRegex = new RegExp(`${extensions}$`);
   if (BLOCK_TYPES.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {

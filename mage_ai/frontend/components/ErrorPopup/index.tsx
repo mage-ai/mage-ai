@@ -54,12 +54,10 @@ function ErrorPopup({
     messages = messageFromResponse.split('\n');
   }
 
-  if (!displayMessage && messages?.[0]) {
+  if (!exception && !displayMessage && messages?.[0]) {
     displayMessage = messages[0];
     messages = null;
   }
-
-  console.log(messageFromResponse)
 
   return (
     <ErrorPopupStyle>

@@ -81,6 +81,23 @@ function FileBrowser({
   const { data: serverStatus } = api.status.list();
   const repoPath = useMemo(() => serverStatus?.status?.repo_path, [serverStatus]);
 
+  const [deleteFile] = useMutation(
+    (fullPath: string) => api.files.useDelete(fullPath)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchFileTree?.();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const dataExporterBlock: BlockType = find(pipeline?.blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type);
   const [updateDestinationBlock] = useMutation(
     api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
@@ -90,6 +107,10 @@ function FileBrowser({
           callback: () => {
             fetchPipeline?.();
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -241,7 +262,7 @@ function FileBrowser({
   });
 
   const menuMemo = useMemo(() => {
-    if (!selectedBlock && !selectedFolder) {
+    if (!selectedBlock && !selectedFile && !selectedFolder) {
       return <div />;
     }
 
@@ -279,15 +300,23 @@ function FileBrowser({
           uuid: 'new_file',
         },
       ]);
-    } else {
+    } else if (selectedBlock) {
       items.push({
-        label: () => 'Delete file',
+        label: () => 'Delete block file',
         onClick: () => {
           if (selectedBlock.type === BlockTypeEnum.CHART) {
             deleteWidget(selectedBlock);
           } else {
             deleteBlockFile(selectedBlock);
           }
+        },
+        uuid: 'delete_block_file',
+      });
+    } else if (selectedFile) {
+      items.push({
+        label: () => 'Delete file',
+        onClick: () => {
+          deleteFile(encodeURIComponent(getFullPathWithoutRootFolder(selectedFile)));
         },
         uuid: 'delete_file',
       });
@@ -314,11 +343,13 @@ function FileBrowser({
   }, [
     coordinates,
     deleteBlockFile,
+    deleteFile,
     deleteWidget,
     ref,
     showModal,
     showModalNewFile,
     selectedBlock,
+    selectedFile,
     selectedFolder,
   ]);
 
@@ -326,7 +357,7 @@ function FileBrowser({
     <ContainerStyle ref={ref}>
       {filesMemo}
 
-      {(selectedBlock || selectedFolder) && menuMemo}
+      {(selectedBlock || selectedFile || selectedFolder) && menuMemo}
 
       {draggingBlock && (
         <div

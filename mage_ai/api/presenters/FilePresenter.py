@@ -8,3 +8,9 @@ class FilePresenter(BasePresenter):
         'name',
         'path',
     ]
+
+    def present(self, **kwargs):
+        if type(self.model) is dict:
+            return self.model
+
+        return self.model.to_dict()

@@ -52,7 +52,7 @@ function NewFile({
         <FlexContainer>
           <KeyboardShortcutButton
             bold
-            disabled={!(filename && directory)}
+            disabled={!filename}
             inline
             keyboardShortcutValidation={({
               keyMapping,
@@ -109,7 +109,6 @@ function NewFile({
         label="Directory"
         monospace
         onChange={e => setDirectory(e.target.value)}
-        required
         setContentOnMount
         value={directory}
       />

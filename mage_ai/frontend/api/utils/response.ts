@@ -35,6 +35,8 @@ export function handle(response) {
   } else if (response.json) {
     return response.json();
   }
+
+  return Promise.resolve(response);
 }
 
 type OptsProps = {
@@ -57,7 +59,7 @@ export function parseErrorFromResponse(res, opts: OptsProps = {}) {
     messages,
   } = parseError(res);
 
-  let msgs = [];
+  const msgs = [];
 
   if (message) {
     msgs.push(...message.split('\n'));
@@ -77,7 +79,7 @@ export function parseErrorFromResponse(res, opts: OptsProps = {}) {
   return {
     code,
     messages: msgs,
-  }
+  };
 }
 
 export function errorOrSuccess(response, opts: OptsProps = {}) {
