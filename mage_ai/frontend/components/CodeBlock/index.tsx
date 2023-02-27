@@ -214,17 +214,11 @@ function CodeBlockProps({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
 
-  const {
-    callback_content: callbackContentOrig,
-    has_callback: hasCallback,
-  } = block;
-
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
-  const [callbackContent, setCallbackContent] = useState(callbackContentOrig);
   const [currentTime, setCurrentTime] = useState<number>(null);
 
   const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
@@ -252,6 +246,17 @@ function CodeBlockProps({
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT[0]);
 
   const isDBT = BlockTypeEnum.DBT === block?.type;
+
+  const {
+    callback_content: callbackContentOrig,
+    has_callback: hasCallback,
+  } = block;
+  const [callbackContent, setCallbackContent] = useState(callbackContentOrig);
+  useEffect(() => {
+    if (callbackContentOrig !== callbackContent) {
+      setCallbackContent(callbackContentOrig);
+    }
+  }, [callbackContentOrig]);
 
   const blockPrevious = usePrevious(block);
   useEffect(() => {
@@ -1066,6 +1071,7 @@ function CodeBlockProps({
             blocks={blocks}
             deleteBlock={deleteBlock}
             executionState={executionState}
+            fetchFileTree={fetchFileTree}
             fetchPipeline={fetchPipeline}
             interruptKernel={interruptKernel}
             pipeline={pipeline}
