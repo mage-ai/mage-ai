@@ -59,6 +59,7 @@ function Terminal({
   const [busy, setBusy] = useState<boolean>(false);
   const [command, setCommand] = useState<string>('');
   const [commandIndex, setCommandIndex] = useState<number>(0);
+  const [finalCommand, setFinalCommand] = useState<string>('');
   const [cursorIndex, setCursorIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [focus, setFocus] = useState<boolean>(false);
@@ -129,6 +130,30 @@ function Terminal({
     setCursorIndex(currIdx => (currIdx <= command.length) ? currIdx + 1 : currIdx);
   }, [command]);
 
+  const handleCopiedText = useCallback((clipText) => {
+    const lines = clipText?.split(/\n/) || [];
+    if (lines.length > 1) {
+      const enteredLines = lines.slice(0, -1);
+      enteredLines[0] = command + enteredLines[0];
+      const lineCommands = enteredLines.map((line, idx) => ({
+        command: idx === 0,
+        data: line,
+        type: DataTypeEnum.TEXT,
+      }));
+      setCommandIndex(commandHistory.length + enteredLines.length);
+      setCommandHistory(prev => prev.concat(enteredLines));
+      // @ts-ignore
+      setKernelOutputs(prev => prev.concat(lineCommands));
+      setFinalCommand(prev => prev + enteredLines.join('\n'));
+      const currentCommand = (lines.slice(-1)[0] || '').trim();
+      setCommand(currentCommand);
+      setCursorIndex(currentCommand.length);
+    } else {
+      setCommand(prev => prev + clipText);
+      setCursorIndex(command.length + clipText.length);
+    }
+  }, [command, commandHistory]);
+
   registerOnKeyDown(
     terminalUUID,
     (event, keyMapping, keyHistory) => {
@@ -164,7 +189,7 @@ function Terminal({
               const idx = Math.max(0, commandIndex - 1);
               setCommand(commandHistory[idx]);
               setCommandIndex(idx);
-              setCursorIndex(commandHistory[idx].length);
+              setCursorIndex(commandHistory[idx]?.length || 0);
             }
           } else if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
             if (commandHistory.length >= 1) {
@@ -175,11 +200,12 @@ function Terminal({
               setCursorIndex(nextCommand.length);
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
-            if (command?.length >= 1) {
+            const finalEnteredCommand = finalCommand + command;
+            if (finalEnteredCommand?.length >= 1) {
               setBusy(true);
               sendMessage(JSON.stringify({
                 api_key: OAUTH2_APPLICATION_CLIENT_ID,
-                code: `!${command}`,
+                code: `!${finalEnteredCommand}`,
                 token: (new AuthToken()).decodedToken.token,
                 uuid: terminalUUID,
               }));
@@ -193,6 +219,7 @@ function Terminal({
               data: command?.trim()?.length >= 1 ? command : '\n',
               type: DataTypeEnum.TEXT,
             }));
+            setFinalCommand('');
             setCommand('');
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
             navigator.clipboard.writeText(window.getSelection().toString());
@@ -208,10 +235,8 @@ function Terminal({
                 + 'and enabling that setting.');
             } else if (navigator?.clipboard?.readText) {
               navigator.clipboard.readText()
-                .then(clipText => {
-                  setCommand(prev => prev + clipText);
-                  setCursorIndex(command.length + clipText.length);
-                }).catch(err => alert(`${err}
+                .then(handleCopiedText)
+                .catch(err => alert(`${err}
     For Chrome, users need to allow clipboard permissions for this site under \
 "Privacy and security" -> "Site settings".
     For Safari, users need to allow the clipboard paste by clicking "Paste" \
@@ -227,11 +252,9 @@ in the context menu that appears.`),
                       }
                     }
                   }
-                }).then(blob => blob.text(),
-                ).then(clipText => {
-                  setCommand(prev => prev + clipText);
-                  setCursorIndex(command.length + clipText.length);
-                }).catch(err => alert(`${err}
+                }).then(blob => blob.text())
+                .then(handleCopiedText)
+                .catch(err => alert(`${err}
     For Firefox, users need to allow clipboard paste by setting the "dom.events.asyncClipboard.read" \
 preference in "about:config" to "true" and clicking "Paste" in the context menu that appears.`),
                 );
