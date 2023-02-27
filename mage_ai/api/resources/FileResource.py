@@ -40,8 +40,34 @@ class FileResource(GenericResource):
                 overwrite=payload.get('overwrite', False),
             )
 
-            return self(file.to_dict(), user, **kwargs)
+            return self(file, user, **kwargs)
         except FileExistsError as err:
             error = ApiError.RESOURCE_INVALID.copy()
             error.update(dict(message=str(err)))
             raise ApiError(error)
+
+    @classmethod
+    @safe_db_query
+    def member(self, pk, user, **kwargs):
+        parts = pk.split('/')
+        file = File(
+            filename=parts[-1],
+            dir_path='/'.join(parts[:-1]),
+            repo_path=get_repo_path(),
+        )
+
+        if not file.exists():
+            error = ApiError.RESOURCE_NOT_FOUND.copy()
+            error.update(message=f'File at {pk} cannot be found.')
+            raise ApiError(error)
+
+        return self(file, user, **kwargs)
+
+    @safe_db_query
+    def delete(self, **kwargs):
+        return self.model.delete()
+
+    @safe_db_query
+    def update(self, payload, **kwargs):
+        self.model.rename(payload['dir_path'], payload['name'])
+        return self

@@ -11,10 +11,13 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { getFullPathWithoutRootFolder } from '../utils';
+import { isEmptyObject } from '@utils/hash';
+import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 type NewFileProps = {
   fetchFileTree?: () => void;
+  file?: FileType;
   onCancel: () => void;
   selectedFolder: FileType;
   setErrors?: (opts: {
@@ -25,13 +28,22 @@ type NewFileProps = {
 
 function NewFile({
   fetchFileTree,
+  file: fileProp,
   onCancel,
   selectedFolder,
   setErrors,
 }: NewFileProps) {
   const refTextInput = useRef(null);
-  const [directory, setDirectory] = useState<string>('');
-  const [filename, setFilename] = useState<string>('');
+  const file = isEmptyObject(fileProp) ? null : fileProp;
+
+  const [directory, setDirectory] = useState<string>(file
+    ? getFullPathWithoutRootFolder(file, null, true)
+    : '',
+  );
+  const [filename, setFilename] = useState<string>(file
+    ? file?.name
+    : '',
+  );
 
   useEffect(() => {
     refTextInput?.current?.focus();
@@ -43,7 +55,40 @@ function NewFile({
     }
   }, [selectedFolder]);
 
-  const [createFile] = useMutation(api.files.useCreate());
+  const [createFile] = useMutation(
+    api.files.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchFileTree?.();
+            onCancel();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const [updateFile] = useMutation(
+    api.files.useUpdate(file && encodeURIComponent(getFullPathWithoutRootFolder(file))),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchFileTree?.();
+            onCancel();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   return (
 
@@ -52,45 +97,38 @@ function NewFile({
         <FlexContainer>
           <KeyboardShortcutButton
             bold
-            disabled={!(filename && directory)}
+            disabled={!filename}
             inline
             keyboardShortcutValidation={({
               keyMapping,
             }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
             onClick={() => {
-              // @ts-ignore
-              createFile({
-                file: {
-                  dir_path: directory,
-                  name: filename,
-                  overwrite: false,
-                },
-                file_json_only: true,
-              }).then(({
-                data,
-              }) => {
-                const {
-                  error,
-                } = data;
-
-                if (error) {
-                  setErrors?.({
-                    errors: {
-                      messages: [error.message],
-                    },
-                    response: data,
-                  });
-                } else {
-                  onCancel();
-                  fetchFileTree?.();
-                }
-              });
+              if (file) {
+                // @ts-ignore
+                return updateFile({
+                  file: {
+                    dir_path: directory,
+                    name: filename,
+                  },
+                  file_json_only: true,
+                });
+              } else {
+                // @ts-ignore
+                return createFile({
+                  file: {
+                    dir_path: directory,
+                    name: filename,
+                    overwrite: false,
+                  },
+                  file_json_only: true,
+                });
+              }
             }}
             primary
             tabIndex={0}
             uuid="NewFile/create_file"
           >
-            Create file
+            {file ? 'Rename' : 'Create'} file
           </KeyboardShortcutButton>
 
           <Spacing ml={1}>
@@ -103,13 +141,13 @@ function NewFile({
           </Spacing>
         </FlexContainer>
       )}
-      headerTitle="New file"
+      headerTitle={file ? 'Rename file' : 'New file'}
     >
       <TextInput
+        disabled={!!file}
         label="Directory"
         monospace
         onChange={e => setDirectory(e.target.value)}
-        required
         setContentOnMount
         value={directory}
       />

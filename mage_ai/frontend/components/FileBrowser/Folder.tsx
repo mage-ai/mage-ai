@@ -258,52 +258,19 @@ function Folder({
           }}
           onContextMenu={(e) => {
             clearTimeout(timeout.current);
-            const block = getBlockFromFile(file);
 
-            if (!containerRef?.current?.contains(e.target)
-              || (!block && typeof children === 'undefined')
-              || disableContextMenu
-            ) {
+            if (!containerRef?.current?.contains(e.target) || disableContextMenu) {
               return;
             }
 
             e.preventDefault();
 
-            setCoordinates(disabled
-              ? null
-              : {
-                x: e.pageX,
-                y: e.pageY,
-              },
-            );
+            setCoordinates({
+              x: e.pageX,
+              y: e.pageY,
+            });
             setDraggingFile(null);
-            setSelectedFile(disabled ? null : file);
-
-            if (disabled) {
-              // setContextItem({ type: FileContextEnum.DISABLED });
-            } else if (isPipelineFolder) {
-              // setContextItem({
-              //   data: {
-              //     name,
-              //   },
-              //   type: FileContextEnum.PIPELINE,
-              // });
-            } else if (children) {
-              // setContextItem({ type: FileContextEnum.FOLDER });
-            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
-              // setContextItem({ type: FileContextEnum.FILE });
-            } else {
-              // if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {
-              //   setContextItem({ type: FileContextEnum.FILE });
-              // } else {
-              //   setContextItem({
-              //     data: {
-              //       block: getBlockFromFile(file),
-              //     },
-              //     type: FileContextEnum.BLOCK_FILE,
-              //   });
-              // }
-            }
+            setSelectedFile(file);
           }}
           onMouseDown={(e) => {
             const block = file ? getBlockFromFile(file) : null;

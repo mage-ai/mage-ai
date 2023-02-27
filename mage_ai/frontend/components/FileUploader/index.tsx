@@ -29,7 +29,11 @@ function FileUploader({
   const [createFile] = useMutation(
     api.files.useCreate({
       onUploadProgress: (event, { body }) => {
-        const fileFullPath = `${body?.dir_path}/${body?.file?.name}`;
+        const parts = [
+          body?.dir_path,
+          body?.file?.name,
+        ];
+        const fileFullPath = parts.filter(s => s?.length >= 1).join('/');
         // @ts-ignore
         setFileUploadProgress?.(prev => ({
           ...prev,
@@ -42,9 +46,19 @@ function FileUploader({
   const setFiles = useCallback((files: UploadFileType[]) => {
     files.forEach((file: UploadFileType) => {
       const { name, path } = file;
+      const parts = [directoryPath];
       const pathClean = path.split('/').filter(p => p && p !== name).join('/');
-      const dirPath = `${directoryPath}/${pathClean}`;
-      const fileFullPath = `${dirPath}/${name}`;
+      if (pathClean) {
+        parts.push(pathClean);
+      }
+
+      const parts2 = [];
+      const dirPath = parts.join('/');
+      if (dirPath?.length >= 1) {
+        parts.push(dirPath);
+      }
+      parts2.push(name);
+      const fileFullPath = parts2.join('/');
 
       // @ts-ignore
       createFile({
