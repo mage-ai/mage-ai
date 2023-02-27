@@ -3,11 +3,12 @@ from google.api.launch_stage_pb2 import LaunchStage
 from google.cloud import run_v2
 from google.oauth2 import service_account
 from mage_ai.services.gcp.cloud_run.config import CloudRunConfig
+from typing import List, Union
 import json
 import os
 
 
-def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None:
+def run_job(command: Union[str, List[str]], job_id: str, cloud_run_config: CloudRunConfig) -> None:
     if type(cloud_run_config) is dict:
         cloud_run_config = CloudRunConfig.load(config=cloud_run_config)
 
@@ -36,7 +37,7 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
 
     containers_with_cmd = service_template.containers
     for c in containers_with_cmd:
-        c.command = command.split(' ')
+        c.command = command.split(' ') if isinstance(command, str) else command
     execution_template = run_v2.ExecutionTemplate(
         task_count=1,
         template=run_v2.TaskTemplate(
