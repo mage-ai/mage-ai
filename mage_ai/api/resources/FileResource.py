@@ -5,7 +5,6 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from typing import Dict
-import os
 
 
 class FileResource(GenericResource):
@@ -61,7 +60,6 @@ class FileResource(GenericResource):
             error = ApiError.RESOURCE_NOT_FOUND.copy()
             error.update(message=f'File at {pk} cannot be found.')
             raise ApiError(error)
-
 
         return self(file, user, **kwargs)
 

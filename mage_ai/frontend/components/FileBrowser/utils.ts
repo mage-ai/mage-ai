@@ -34,7 +34,7 @@ export function getFullPath(
 }
 
 export function removeRootFromFilePath(filePath: string): string {
-  return filePath.split('/').slice(1).join('/');
+  return filePath?.split('/').slice(1).join('/');
 }
 
 export function getFullPathWithoutRootFolder(

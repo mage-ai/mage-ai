@@ -11,6 +11,7 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { getFullPathWithoutRootFolder } from '../utils';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
@@ -27,12 +28,14 @@ type NewFileProps = {
 
 function NewFile({
   fetchFileTree,
-  file,
+  file: fileProp,
   onCancel,
   selectedFolder,
   setErrors,
 }: NewFileProps) {
   const refTextInput = useRef(null);
+  const file = isEmptyObject(fileProp) ? null : fileProp;
+
   const [directory, setDirectory] = useState<string>(file
     ? getFullPathWithoutRootFolder(file, null, true)
     : '',

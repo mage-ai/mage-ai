@@ -296,7 +296,7 @@ function FileBrowser({
         {
           label: () => 'New file',
           onClick: () => {
-            showModalNewFile();
+            showModalNewFile({});
           },
           uuid: 'new_file',
         },
@@ -306,9 +306,17 @@ function FileBrowser({
         label: () => 'Delete block file',
         onClick: () => {
           if (selectedBlock.type === BlockTypeEnum.CHART) {
-            deleteWidget(selectedBlock);
+            if (typeof window !== 'undefined'
+              && window.confirm(`Are you sure you want to delete widget ${selectedBlock.uuid}?`)
+            ) {
+              deleteWidget(selectedBlock);
+            }
           } else {
-            deleteBlockFile(selectedBlock);
+            if (typeof window !== 'undefined'
+              && window.confirm(`Are you sure you want to delete block ${selectedBlock.uuid}?`)
+            ) {
+              deleteBlockFile(selectedBlock);
+            }
           }
         },
         uuid: 'delete_block_file',
@@ -325,7 +333,12 @@ function FileBrowser({
         {
           label: () => 'Delete file',
           onClick: () => {
-            deleteFile(encodeURIComponent(getFullPathWithoutRootFolder(selectedFile)));
+            const fp = getFullPathWithoutRootFolder(selectedFile);
+            if (typeof window !== 'undefined'
+              && window.confirm(`Are you sure you want to delete file ${fp}?`)
+            ) {
+              deleteFile(encodeURIComponent(fp));
+            }
           },
           uuid: 'delete_file',
         },
