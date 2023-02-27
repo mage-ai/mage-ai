@@ -289,3 +289,9 @@ export function randomSimpleHashGenerator() {
 export function cleanName(name: string): string {
   return name.toLowerCase().replace(/\W+/g, '_');
 }
+
+export function removeExtensionFromFilename(filename: string): string {
+  const parts = filename.split('/');
+  const fn = parts[parts.length - 1].split('.')[0];
+  return parts.slice(0, parts.length - 1).concat(fn).join('/');
+}

@@ -58,7 +58,7 @@ import {
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
-import { addUnderscores, randomNameGenerator } from '@utils/string';
+import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -619,12 +619,13 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
                 const finalFilePath = creatingNewDBTModel
                   ? `${filePath}/${addUnderscores(dbtModelName || randomNameGenerator())}.${FileExtensionEnum.SQL}`
                   : filePath;
+
                 const newBlock: BlockRequestPayloadType = {
                   configuration: {
                     file_path: finalFilePath,
                   },
                   language: BlockLanguageEnum.SQL,
-                  name: finalFilePath,
+                  name: removeExtensionFromFilename(finalFilePath),
                   type: BlockTypeEnum.DBT,
                 };
                 if (creatingNewDBTModel) {

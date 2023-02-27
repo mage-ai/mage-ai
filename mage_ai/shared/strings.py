@@ -25,3 +25,9 @@ def replacer(s, newstring, index, nofail=False):
 
     # insert the new string between 'slices' of the original
     return s[:index] + newstring + s[index + 1:]
+
+
+def remove_extension_from_filename(filename: str) -> str:
+    parts = filename.split('/')
+    fn = parts[-1].split('.')[0]
+    return '/'.join(parts[:-1] + [fn])

@@ -860,6 +860,7 @@ function CodeBlockProps({
       if ((data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE])
         || data[CONFIG_KEY_DBT_PROFILE_TARGET]
         || data[CONFIG_KEY_DBT_PROJECT_NAME]
+        || data[CONFIG_KEY_LIMIT]
       ) {
         savePipelineContent({
           block: {

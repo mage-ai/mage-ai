@@ -128,7 +128,8 @@ class DBTBlock(Block):
                 self,
                 execution_partition=execution_partition,
                 profile_target=dbt_profile_target,
-                cache_upstream_dbt_models=test_execution,
+                # TODO (tommy dang): this is creating unnecessary tables in notebook
+                # cache_upstream_dbt_models=test_execution,
             )
 
         stdout = None if test_execution else subprocess.PIPE

@@ -21,6 +21,7 @@ from mage_ai.io.config import ConfigFileLoader
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.strings import remove_extension_from_filename
 from mage_ai.shared.utils import clean_name, files_in_path
 from pandas import DataFrame
 from typing import Callable, Dict, List, Tuple
@@ -83,10 +84,20 @@ def parse_attributes(block) -> Dict:
     )
 
 
-def extract_refs(block) -> List[str]:
+def extract_refs(block_content) -> List[str]:
     return re.findall(
         r"{}[ ]*ref\(['\"]+([\w]+)['\"]+\)[ ]*{}".format(r'\{\{', r'\}\}'),
-        block.content,
+        block_content,
+    )
+
+
+def extract_sources(block_content) -> List[Tuple[str, str]]:
+    return re.findall(
+        r"{}[ ]*source\(['\"]+([\w]+)['\"]+[,]+[ ]*['\"]+([\w]+)['\"]+\)[ ]*{}".format(
+            r'\{\{',
+            r'\}\}',
+        ),
+        block_content,
     )
 
 
@@ -113,13 +124,14 @@ def add_blocks_upstream_from_refs(
 
     current_upstream_blocks = []
     added_blocks = []
-    for idx, ref in enumerate(extract_refs(block)):
+    for idx, ref in enumerate(extract_refs(block.content)):
         if ref not in files_by_name:
             print(f'WARNING: dbt model {ref} cannot be found.')
             continue
 
-        uuid = re.sub(f'{get_repo_path()}/dbt/', '', files_by_name[ref])
-        configuration = dict(file_path=uuid)
+        fp = re.sub(f'{get_repo_path()}/dbt/', '', files_by_name[ref])
+        configuration = dict(file_path=fp)
+        uuid = remove_extension_from_filename(fp)
 
         if read_only:
             uuid_clean = clean_name(uuid, allow_characters=['/'])
@@ -538,6 +550,10 @@ def create_upstream_tables(
         cache_upstream_dbt_models=cache_upstream_dbt_models,
     ), kwargs)
 
+    upstream_blocks_init = block.upstream_blocks
+    upstream_blocks = upstream_blocks_from_sources(block)
+    block.upstream_blocks = upstream_blocks
+
     if DataSource.POSTGRES == data_provider:
         from mage_ai.io.postgres import Postgres
 
@@ -597,6 +613,8 @@ def create_upstream_tables(
                 block,
                 **kwargs_shared,
             )
+
+    block.upstream_blocks = upstream_blocks_init
 
 
 def interpolate_input(
@@ -924,3 +942,26 @@ def fetch_model_data(
     query_string = f'SELECT * FROM {schema}.{model_name}'
 
     return execute_query(block, profile_target, query_string, limit)
+
+
+def upstream_blocks_from_sources(block: Block) -> List[Block]:
+    mapping = {}
+    sources = extract_sources(block.content)
+    for tup in sources:
+        source_name, table_name = tup
+        if source_name not in mapping:
+            mapping[source_name] = {}
+        mapping[source_name][table_name] = True
+
+    print(mapping)
+
+    attributes_dict = parse_attributes(block)
+    source_name = attributes_dict['source_name']
+
+    arr = []
+    for b in block.upstream_blocks:
+        table_name = source_table_name_for_block(b)
+        if mapping.get(source_name, {}).get(table_name):
+            arr.append(b)
+
+    return arr
