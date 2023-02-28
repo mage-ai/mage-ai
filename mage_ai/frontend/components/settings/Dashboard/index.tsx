@@ -20,7 +20,7 @@ function SettingsDashboard({
   uuidItemSelected,
   uuidWorkspaceSelected,
 }: SettingsDashboardProps) {
-  const { owner } = getUser() || {};
+  const user = getUser() || {};
 
   return (
     <Dashboard
@@ -35,7 +35,7 @@ function SettingsDashboard({
               uuid,
               uuidWorkspace,
             }) => uuidWorkspaceSelected === uuidWorkspace && uuidItemSelected === uuid}
-            sections={SECTIONS({ owner })}
+            sections={SECTIONS(user)}
           />
         </BeforeStyle>
       )}

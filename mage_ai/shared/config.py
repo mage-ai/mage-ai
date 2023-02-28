@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.strings import camel_to_snake_case
 from typing import Dict
@@ -39,3 +39,6 @@ class BaseConfig:
     @classmethod
     def load_extra_config(self) -> Dict:
         return dict()
+
+    def to_dict(self) -> Dict:
+        return asdict(self)
