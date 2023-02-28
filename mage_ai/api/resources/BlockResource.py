@@ -53,12 +53,12 @@ class BlockResource(GenericResource):
         block_type_and_uuid = urllib.parse.unquote(pk)
         parts = block_type_and_uuid.split('/')
 
-        if len(parts) != 2:
+        if len(parts) < 2:
             error.update(message='The url path should be in block_type/block_uuid format.')
             raise ApiError(error)
 
         block_type = parts[0]
-        block_uuid = parts[1]
+        block_uuid = '/'.join(parts[1:])
         parts2 = block_uuid.split('.')
         language = None
         if len(parts2) >= 2:
