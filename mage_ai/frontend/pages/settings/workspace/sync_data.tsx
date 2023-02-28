@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -20,10 +21,8 @@ import {
   SECTION_ITEM_UUID_SYNC_DATA,
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
-import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { useMutation } from 'react-query';
-import Checkbox from '@oracle/elements/Checkbox';
 
 export interface SyncFieldType {
   autoComplete?: string;

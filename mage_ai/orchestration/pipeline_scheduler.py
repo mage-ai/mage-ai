@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
+from mage_ai.data_preparation.sync import SyncConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import (
@@ -746,8 +747,8 @@ def schedule_all():
         if pipeline_schedule.should_schedule() and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
 
-            sync_config = get_preferences().sync_config
-            if sync_config.get('sync_on_pipeline_run'):
+            sync_config = SyncConfig.load(config=get_preferences().sync_config)
+            if sync_config.sync_on_pipeline_run:
                 sync = GitSync(sync_config)
                 sync.sync_data()
 
