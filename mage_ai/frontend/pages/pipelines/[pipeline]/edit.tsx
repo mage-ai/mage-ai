@@ -189,7 +189,7 @@ function PipelineDetailPage({
     if (!activeSidekickView) {
       setActiveSidekickView(ViewKeyEnum.TREE, false);
     }
-  }, [activeSidekickView]);
+  }, [activeSidekickView, setActiveSidekickView]);
 
   const openSidekickView = useCallback((
     newView: ViewKeyEnum,
@@ -278,7 +278,7 @@ function PipelineDetailPage({
     data: dataSecrets,
     mutate: fetchSecrets,
   } = api.secrets.list();
-  const secrets = dataSecrets?.secrets
+  const secrets = dataSecrets?.secrets;
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
@@ -425,7 +425,7 @@ function PipelineDetailPage({
       setAfterHidden(false);
       setActiveSidekickView(ViewKeyEnum.TREE);
     }
-  }, [editingBlock.upstreamBlocks]);
+  }, [editingBlock.upstreamBlocks, setActiveSidekickView]);
 
   // Autocomplete items
   const {
@@ -448,6 +448,7 @@ function PipelineDetailPage({
     }
   }, [
     filePathsFromUrl,
+    selectedFilePaths,
   ]);
 
   const [createPipeline] = useMutation(
@@ -650,13 +651,10 @@ function PipelineDetailPage({
     });
   }, [
     blocks,
-    contentByBlockUUID.current,
-    contentByWidgetUUID.current,
     messages,
     pipeline,
     setPipelineLastSaved,
     updatePipeline,
-    widgetTempData.current,
     widgets,
   ]);
 
@@ -713,9 +711,11 @@ function PipelineDetailPage({
     }), [
     blocks,
     fetchFileTree,
+    fetchPipeline,
+    openFile,
+    pipeline?.type,
     pipelineUUID,
     savePipelineContent,
-    updateCollapsedBlockStates,
   ]);
 
   const [deleteBlock] = useMutation(
@@ -968,7 +968,24 @@ function PipelineDetailPage({
             onCreateCallback?.(block);
             setRecsWindowOpenBlockIdx(null);
             fetchFileTree();
-            fetchPipeline().then(({ pipeline: { blocks: arr } }) => setBlocks(arr));
+            fetchPipeline().then(({
+              pipeline: {
+                blocks: blocksNew,
+              },
+            }) => setBlocks((blocksPrev) => {
+              const blocksPrevMapping = indexBy(blocksPrev, ({ uuid }) => uuid);
+              const blocksFinal = [];
+              blocksNew.forEach((blockNew: BlockType) => {
+                const blockPrev = blocksPrevMapping[blockNew.uuid];
+                if (blockPrev) {
+                  blocksFinal.push(blockPrev);
+                } else {
+                  blocksFinal.push(blockNew);
+                }
+              });
+
+              return blocksFinal;
+            }));
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -978,7 +995,6 @@ function PipelineDetailPage({
       );
     });
   }, [
-    contentByBlockUUID.current,
     createBlock,
     fetchFileTree,
     fetchPipeline,
@@ -1075,7 +1091,6 @@ function PipelineDetailPage({
     activeSidekickView,
     fetchFileTree,
     fetchPipeline,
-    chartRefs.current,
     createWidget,
     setActiveSidekickView,
   ]);
@@ -1089,7 +1104,6 @@ function PipelineDetailPage({
       }
     }
   }, [
-    chartRefs.current[recentlyAddedChart?.uuid],
     recentlyAddedChart,
     setRecentlyAddedChart,
   ]);
@@ -1482,8 +1496,10 @@ function PipelineDetailPage({
     autocompleteItems,
     blockRefs,
     blocks,
+    cancelPipeline,
     deleteWidget,
     editingBlock,
+    executePipeline,
     fetchFileTree,
     fetchPipeline,
     fetchSecrets,
@@ -1491,6 +1507,7 @@ function PipelineDetailPage({
     globalVariables,
     insights,
     interruptKernel,
+    isPipelineExecuting,
     messages,
     metadata,
     onChangeChartBlock,
@@ -1502,11 +1519,9 @@ function PipelineDetailPage({
     savePipelineContent,
     secrets,
     selectedBlock,
-    sendMessage,
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
-    setPipelineMessages,
     setTextareaFocused,
     statistics,
     textareaFocused,
@@ -1582,15 +1597,16 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     addWidgetAtIndex,
-    automaticallyNameBlocks,
     anyInputFocused,
     autocompleteItems,
+    automaticallyNameBlocks,
     blockRefs,
     blocks,
     dataProviders,
     deleteBlock,
     fetchFileTree,
     fetchPipeline,
+    fetchSampleData,
     files,
     globalVariables,
     interruptKernel,
@@ -1601,6 +1617,7 @@ function PipelineDetailPage({
     messages,
     onChangeCallbackBlock,
     onChangeCodeBlock,
+    openSidekickView,
     pipeline,
     pipelineContentTouched,
     pipelineLastSaved,
@@ -1745,11 +1762,13 @@ function PipelineDetailPage({
       </FlexContainer>
     );
   }, [
+    activeSidekickView,
     addWidgetAtIndex,
     blocks,
     finalSidekickViews,
     refAddChart,
     runBlock,
+    setActiveSidekickView,
     setShowAddCharts,
     showAddCharts,
     widgets,
