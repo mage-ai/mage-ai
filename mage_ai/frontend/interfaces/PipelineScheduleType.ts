@@ -39,6 +39,11 @@ export enum SortQueryParamEnum {
   TYPE = 'schedule_type',
 }
 
+export interface PipelineScheduleSettingsType {
+  skip_if_previous_running?: boolean;
+  allow_blocks_to_fail?: boolean;
+}
+
 export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
   [SortQueryParamEnum.CREATED_AT]: 'Created at',
   [SortQueryParamEnum.NAME]: 'Name',
@@ -63,7 +68,7 @@ export default interface PipelineScheduleType {
   pipeline_uuid?: string;
   schedule_interval?: string;
   schedule_type?: ScheduleTypeEnum;
-  settings?: object;
+  settings?: PipelineScheduleSettingsType;
   sla?: number;
   start_time?: string;
   status?: ScheduleStatusEnum;
