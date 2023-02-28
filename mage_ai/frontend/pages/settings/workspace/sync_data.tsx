@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import Button from '@oracle/elements/Button';
@@ -15,7 +15,6 @@ import SyncType, {
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { LOCAL_STORAGE_KEY_SYNC_CONFIG } from '@storage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SECTION_ITEM_UUID_SYNC_DATA,
@@ -24,6 +23,7 @@ import {
 import { get, set } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
 import { useMutation } from 'react-query';
+import Checkbox from '@oracle/elements/Checkbox';
 
 export interface SyncFieldType {
   autoComplete?: string;
@@ -35,18 +35,65 @@ export interface SyncFieldType {
 }
 
 function SyncData() {
-  const [syncFields, setSyncFields] = useState<SyncType>(
-    get(LOCAL_STORAGE_KEY_SYNC_CONFIG)
-  );
+  const { data: dataSyncs } = api.syncs.list();
+  const [sync, setSync] = useState<SyncType>(null);
 
-  const [runSync, { isLoading: isLoadingRunSync }] = useMutation(
+  useEffect(() => {
+    if (dataSyncs) {
+      setSync(dataSyncs?.syncs?.[0])
+    }
+  }, [dataSyncs]);
+
+  const [createSync, { isLoading: isLoadingCreateSync }] = useMutation(
     api.syncs.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: (res) => {
-            if (res['success']) {
-              console.log('Data synced!')
+          callback: ({ sync }) => {
+            if (sync) {
+              setSync(sync);
+              toast.success(
+                'Sync saved',
+                {
+                  position: toast.POSITION.BOTTOM_RIGHT,
+                  toastId: 'data_sync_success',
+                },
+              );
+            }
+          },
+          onErrorCallback: ({
+            error: {
+              message,
+              type,
+            },
+          }) => {
+            toast.error(
+              message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
+          },
+        }
+      )
+    }
+  );
+
+  const [runSync, { isLoading: isLoadingRunSync }] = useMutation(
+    api.syncs.useUpdate('git'),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({ sync }) => {
+            if (sync) {
+              toast.success(
+                'Data synced!',
+                {
+                  position: toast.POSITION.BOTTOM_RIGHT,
+                  toastId: 'data_sync_success',
+                },
+              );
             }
           },
           onErrorCallback: ({
@@ -78,13 +125,12 @@ function SyncData() {
           Sync data with Git
         </Headline>
         <Text>
-          You can sync your project with a remote Git repository. Running the sync from this page will
-          run a one time sync with the remote repository. This will overwrite your
-          existing data, so make sure you've committed or backed up your current changes.
-          <Text inline> You will also need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git">
+          You can sync your project with a remote Git repository.
+          <Text inline> You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git">
             set up your SSH key
           </Link> if you have not done that already. </Text>
         </Text>
+        
         <FlexContainer alignItems="center">
           <form>
             {SYNC_FIELDS[SyncTypeEnum.GIT].map(({
@@ -102,7 +148,7 @@ function SyncData() {
                   label={label}
                   // @ts-ignore
                   onChange={e => {
-                    setSyncFields(prev => ({
+                    setSync(prev => ({
                       ...prev,
                       [uuid]: e.target.value,
                     }));
@@ -111,25 +157,53 @@ function SyncData() {
                   required={required}
                   setContentOnMount
                   type={type}
-                  value={syncFields?.[uuid] || ''}
+                  value={sync?.[uuid] || ''}
                 />
               </Spacing>
             ))}
           </form>
         </FlexContainer>
+        <FlexContainer alignItems="center">
+          <Spacing mt={2}>
+            <Checkbox
+              checked={sync?.sync_on_pipeline_run}
+              label="Sync before each pipeline run"
+              onClick={() => {
+                setSync(prev => ({
+                  ...prev,
+                  sync_on_pipeline_run: !sync?.sync_on_pipeline_run
+                }))
+              }}
+            />
+          </Spacing>
+        </FlexContainer>
+        <Spacing mt={2}>
+          <Button
+            loading={isLoadingCreateSync}
+            // @ts-ignore
+            onClick={() => createSync({ sync })}
+            primary
+          >
+            Save
+          </Button>
+        </Spacing>
+        <Spacing mt={2}>
+          <Text>
+            Running the sync from this page will
+            run a one time sync with the remote repository. This will overwrite your
+            existing data, so make sure you've committed or backed up your current changes.
+          </Text>
+        </Spacing>
         <Spacing mt={2}>
           <Button
             loading={isLoadingRunSync}
-            onClick={() => {
-              const sync = {
-                ...syncFields,
-                type: 'git',
-              };
-              // @ts-ignore
-              runSync({ sync });
-              set(LOCAL_STORAGE_KEY_SYNC_CONFIG, sync);
-            }}
-            primary
+            // @ts-ignore
+            onClick={() => runSync({
+              sync: {
+                action_type: 'sync_data',
+              },
+            })}
+            success
           >
             Run Sync
           </Button>

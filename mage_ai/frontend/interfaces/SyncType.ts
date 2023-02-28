@@ -3,6 +3,7 @@ export default interface SyncType {
   remote_repo_link?: string;
   repo_path?: string;
   branch?: string;
+  sync_on_pipeline_run?: boolean;
 };
 
 export enum SyncTypeEnum {
