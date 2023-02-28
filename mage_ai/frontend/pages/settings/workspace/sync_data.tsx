@@ -125,7 +125,7 @@ function SyncData() {
         </Headline>
         <Text>
           You can sync your project with a remote Git repository.
-          <Text inline> You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git">
+          <Text inline> You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git" openNewWindow>
             set up your SSH key
           </Link> if you have not done that already. </Text>
         </Text>
@@ -166,7 +166,7 @@ function SyncData() {
           <Spacing mt={2}>
             <Checkbox
               checked={sync?.sync_on_pipeline_run}
-              label="Sync before each pipeline run"
+              label="Sync before each trigger run"
               onClick={() => {
                 setSync(prev => ({
                   ...prev,
