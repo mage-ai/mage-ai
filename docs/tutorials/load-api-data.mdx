@@ -123,73 +123,55 @@ Your chart should look like:
 
 ## 4. Transform data
 
-Let’s transform the data to add a column that counts the number of meals for
-each user.
+Let’s transform the data in 2 ways: 
+- Add a column that counts the number of meals for each user.
+- Clean the column names to properly store in a PostgreSQL database.
 
-1. Click the `+ Transformer` button, select `Python`, select `Aggregate`, then
-   click `Aggregate by distinct count`.
-2. Rename the block to `transform data`.
-3. Change the argument named `arguments` to `arguments=['meal transaction ID']`.
-4. In the dictionary with the `'groupby_columns'` key, change the value to
-   `{'groupby_columns': ['user ID']}`.
-5. Change the argument named `outputs` to:
+<br />
 
-```python
-outputs=[
-    {'uuid': 'number of meals', 'column_type': 'number'},
-],
-```
+1. Click the `+ Transformer` button, select `Python`, select `Generic`.
+1. Rename the block to `transform data`.
+1. Paste the following code into the block:
+    
+    ```python
+    from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+    from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+    from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+    from os import path
+    from pandas import DataFrame
 
-6. Run the block by clicking the play icon button or using the keyboard
+
+    @transformer
+    def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
+        aggregate_action = build_transformer_action(
+            df,
+            action_type=ActionType.COUNT_DISTINCT,
+            action_code='',  # Enter filtering condition on rows before aggregation
+            arguments=['meal transaction ID'],  # Enter the columns to compute aggregate over
+            axis=Axis.COLUMN,
+            options={'groupby_columns': ['user ID']},  # Enter columns to group by
+            outputs=[
+                # The number of outputs below must match the number of arguments
+                {'uuid': 'number of meals', 'column_type': 'number'},
+            ],
+        )
+
+        df = BaseAction(aggregate_action).execute(df)
+
+        clean_action = build_transformer_action(
+            df,
+            action_type=ActionType.CLEAN_COLUMN_NAME,
+            arguments=df.columns,
+            axis=Axis.COLUMN,
+        )
+
+        return BaseAction(clean_action).execute(df)
+    ```
+
+1. Run the block by clicking the play icon button or using the keyboard
    shortcuts `⌘ + Enter`, `Control + Enter`, or `Shift + Enter`.
 
 ![transform](/media/transform.gif)
-
-Here is what the code should look like:
-
-```python
-from mage_ai.data_cleaner.transformer_actions.base import BaseAction
-from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from os import path
-from pandas import DataFrame
-
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
-if 'test' not in globals():
-    from mage_ai.data_preparation.decorators import test
-
-
-@transformer
-def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
-    """
-    Execute Transformer Action: ActionType.COUNT_DISTINCT
-
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#aggregation-actions
-    """
-    action = build_transformer_action(
-        df,
-        action_type=ActionType.COUNT_DISTINCT,
-        action_code='',  # Enter filtering condition on rows before aggregation
-        arguments=['meal transaction ID'],  # Enter the columns to compute aggregate over
-        axis=Axis.COLUMN,
-        options={'groupby_columns': ['user ID']},  # Enter columns to group by
-        outputs=[
-            # The number of outputs below must match the number of arguments
-            {'uuid': 'number of meals', 'column_type': 'number'},
-        ],
-    )
-
-    return BaseAction(action).execute(df)
-
-
-@test
-def test_output(df) -> None:
-    """
-    Template code for testing the output of the block.
-    """
-    assert df is not None, 'The output is undefined'
-```
 
 ---
 
@@ -204,11 +186,11 @@ def test_output(df) -> None:
 ```yaml
 version: 0.1.1
 default:
-  POSTGRES_DBNAME: mage/demo
-  POSTGRES_HOST: db.bit.io
-  POSTGRES_PASSWORD: v2_3t7Cc_BKPZndtNeYxqSVTatNphR4f
-  POSTGRES_PORT: 5432
+  POSTGRES_DBNAME: mage/demo2
   POSTGRES_USER: mage
+  POSTGRES_PASSWORD: v2_3upzD_eMSdiu5AMjgzSbi3K7KTAuE
+  POSTGRES_HOST: db.bit.io
+  POSTGRES_PORT: 5432
 ```
 
 3. Save the file by pressing `⌘ + Enter` or `Control + Enter`.
