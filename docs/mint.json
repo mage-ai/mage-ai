@@ -166,7 +166,7 @@
                 "guides/sensors"
               ]
             },
-            "guides/callbacks",
+            "guides/blocks/callbacks",
             "guides/sql-blocks",
             "guides/r-blocks",
             "guides/blocks/dynamic-blocks",
