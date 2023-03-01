@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -17,6 +18,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Tooltip from '@oracle/components/Tooltip';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -25,7 +27,6 @@ import {
   ColumnFormatEnum,
   ColumnFormatMapping,
   ColumnTypeEnum,
-  InclusionEnum,
   IntegrationDestinationEnum,
   IntegrationSourceEnum,
   MetadataKeyEnum,
@@ -38,18 +39,21 @@ import {
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array';
+import { isEmptyObject } from '@utils/hash';
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;
 const TOOLTIP_LEFT_SPACING = '4px';
 
 export type SchemaTableProps = {
+  bookmarkValues?: { [key: string]: any };
   destination: IntegrationDestinationEnum;
   isLoadingLoadSampleData: boolean;
   loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
   streams?: StreamType[];
   updateAllStreams: (streamDataTransformer: (stream: StreamType) => StreamType) => void;
+  updateDestinationBlockState?: (payload: any) => void;
   updateMetadataForColumns: (
     streamUUID: string,
     columnNames: string[],
@@ -76,6 +80,7 @@ const PARTITION_KEY_DESTINATIONS = [
 ];
 
 function SchemaTable({
+  bookmarkValues: bookmarkValuesInit,
   destination,
   isLoadingLoadSampleData,
   loadSampleData,
@@ -83,6 +88,7 @@ function SchemaTable({
   stream,
   streams,
   updateAllStreams,
+  updateDestinationBlockState,
   updateMetadataForColumns,
   updateSchemaProperty,
   updateStream,
@@ -107,6 +113,8 @@ function SchemaTable({
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
   const [isApplyingToAllStreams, setIsApplyingToAllStreams] = useState<boolean>(false);
   const [isApplyingToAllStreamsIdx, setIsApplyingToAllStreamsIdx] = useState<number>(null);
+  const [showBookmarkValuesTable, setShowBookmarkPropertyTable] = useState<boolean>(false);
+  const [bookmarkValues, setBookmarkValues] = useState({ [streamUUID]: bookmarkValuesInit || {} });
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
@@ -121,6 +129,30 @@ function SchemaTable({
     streamUUIDPrev,
     uniqueConflictMethod,
   ]);
+
+  useEffect(() => {
+    if (isEmptyObject(bookmarkValues?.[streamUUID]) && bookmarkProperties?.length > 0) {
+      setBookmarkValues(prev => ({
+        ...prev,
+        [streamUUID]: bookmarkValuesInit,
+      }));
+    }
+  }, [bookmarkProperties?.length, bookmarkValuesInit]);
+
+  // Debounce PUT request to update bookmark values for 2s whenever user changes value
+  useEffect(() => {
+    const debounceUpdateDestinationBlockState = setTimeout(() => {
+      updateDestinationBlockState({
+        block: {
+          bookmark_values: bookmarkValues?.[streamUUID],
+          destination_table: destinationTable,
+          tap_stream_id: streamUUID,
+        },
+      });
+    }, 2000);
+
+    return () => clearTimeout(debounceUpdateDestinationBlockState);
+  }, [bookmarkValues]);
 
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
     metadata,
@@ -834,6 +866,75 @@ function SchemaTable({
                 </Spacing>
               ))}
             </FlexContainer>
+
+            {bookmarkProperties?.length > 0 &&
+              <>
+                <Spacing my={2}>
+                  <FlexContainer alignItems="center" justifyContent="space-between">
+                    <Spacing mr={2}>
+                      <Text bold large>
+                        Manually edit bookmark property values
+                      </Text>
+                      <Text default>
+                        In order to override the bookmark values for the next sync, click the toggle
+                        to edit the values for the bookmark properties in the table below.
+                      </Text>
+                    </Spacing>
+
+                    <ToggleSwitch
+                      checked={showBookmarkValuesTable}
+                      onCheck={() => setShowBookmarkPropertyTable(prevState => !prevState)}
+                    />
+                  </FlexContainer>
+                </Spacing>
+                {showBookmarkValuesTable &&
+                  <Panel
+                    headerTitle="Bookmark property values"
+                    overflowVisible
+                  >
+                    <Table
+                      columnBorders
+                      columnFlex={[null, 1]}
+                      columns={[
+                        {
+                          uuid: 'Bookmark property',
+                        },
+                        {
+                          uuid: 'Value',
+                        },
+                      ]}
+                      rows={bookmarkProperties.map(bookmarkProperty => [
+                        <Text
+                          default
+                          key={bookmarkProperty}
+                          monospace
+                        >
+                          {bookmarkProperty}
+                        </Text>,
+                        <TextInput
+                          borderless
+                          key={`${bookmarkProperty}_value`}
+                          monospace
+                          onChange={(e) => {
+                            e.preventDefault();
+                            setBookmarkValues(prev => ({
+                              ...prev,
+                              [streamUUID]: {
+                                ...prev[streamUUID],
+                                [bookmarkProperty]: e.target.value,
+                              },
+                            }));
+                          }}
+                          paddingHorizontal={0}
+                          placeholder="Enter value"
+                          value={bookmarkValues?.[streamUUID]?.[bookmarkProperty]}
+                        />,
+                      ])}
+                    />
+                  </Panel>
+                }
+              </>
+            }
           </Spacing>
         )}
 

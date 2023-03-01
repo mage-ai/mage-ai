@@ -1,23 +1,35 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Headline from '@oracle/elements/Headline';
+import PipelineType from '@interfaces/PipelineType';
 import SchemaTable, { SchemaTableProps } from './SchemaTable';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import api from '@api';
 import { CatalogType } from '@interfaces/IntegrationSourceType';
 import { SectionStyle } from '../index.style';
 import { TableContainerStyle } from '../index.style';
 import { find, indexBy, sortByKey } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
 
 type SchemaSettingsProps = {
   catalog: CatalogType;
+  pipeline: PipelineType;
+  setErrors?: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   setSelectedStream: (stream: string) => void;
 } & SchemaTableProps;
 
 function SchemaSettings({
   catalog,
+  pipeline,
+  setErrors,
   setSelectedStream,
   ...props
 }: SchemaSettingsProps) {
@@ -32,6 +44,48 @@ function SchemaSettings({
     selectedTab,
     streamsByStream,
   ]);
+  const dataExporterBlock: BlockType = useMemo(() => find(
+    (pipeline?.blocks || []),
+    ({ type }) => BlockTypeEnum.DATA_EXPORTER === type,
+  ), [pipeline?.blocks]);
+
+  const {
+    destination_table: destinationTable,
+    tap_stream_id: tapStreamId,
+  } = selectedStream || {};
+  const {
+    data: dataBlock,
+    mutate: fetchBlockState,
+  } = api.blocks.pipelines.detail(
+    pipeline?.uuid,
+    dataExporterBlock?.uuid,
+    {
+      destination_table: destinationTable,
+      state_stream: tapStreamId,
+    },
+  );
+  const bookmarkValues = dataBlock?.block?.bookmarks;
+
+  const [updateDestinationBlockState] = useMutation(
+    api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      dataExporterBlock?.uuid,
+      { query: { update_state: true } },
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchBlockState?.();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   useEffect(() => {
     if (tabs.length > 0) {
@@ -151,8 +205,10 @@ function SchemaSettings({
           <SectionStyle>
             <SchemaTable
               {...props}
+              bookmarkValues={bookmarkValues}
               stream={selectedStream}
               streams={streams}
+              updateDestinationBlockState={updateDestinationBlockState}
             />
           </SectionStyle>
         </Spacing>
