@@ -139,12 +139,26 @@ function SchemaTable({
     }
   }, [bookmarkProperties?.length, bookmarkValuesInit]);
 
+  const bookmarkPropertiesLengthPrev = usePrevious(bookmarkProperties?.length || 0);
   // Debounce PUT request to update bookmark values for 2s whenever user changes value
   useEffect(() => {
+    const updatedBookmarkValues = { ...bookmarkValues?.[streamUUID] };
+    if (bookmarkPropertiesLengthPrev !== bookmarkProperties?.length) {
+      Object.keys(bookmarkValues?.[streamUUID] || {})
+        .forEach(bookmarkProp => {
+          if (!bookmarkProperties.includes(bookmarkProp)) {
+            delete updatedBookmarkValues[bookmarkProp];
+          }
+        });
+      setBookmarkValues(prev => ({
+        ...prev,
+        [streamUUID]: updatedBookmarkValues,
+      }));
+    }
     const debounceUpdateDestinationBlockState = setTimeout(() => {
       updateDestinationBlockState({
         block: {
-          bookmark_values: bookmarkValues?.[streamUUID],
+          bookmark_values: updatedBookmarkValues,
           destination_table: destinationTable,
           tap_stream_id: streamUUID,
         },
@@ -152,7 +166,7 @@ function SchemaTable({
     }, 2000);
 
     return () => clearTimeout(debounceUpdateDestinationBlockState);
-  }, [bookmarkValues]);
+  }, [bookmarkValues, bookmarkProperties]);
 
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
     metadata,
