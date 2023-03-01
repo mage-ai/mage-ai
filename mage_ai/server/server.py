@@ -149,6 +149,7 @@ def make_app():
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
         (r'/settings', MainPageHandler),
+        (r'/settings/(.*)', MainPageHandler),
         (r'/sign-in', MainPageHandler),
         (r'/terminal', MainPageHandler),
         (r'/manage', ManagePageHandler),
