@@ -497,7 +497,7 @@ class Pipeline:
             widgets=widgets_data,
         ))
 
-    async def update(self, data, update_content=False):
+    async def update(self, data, update_content=False, update_state=False):
         if 'name' in data and data['name'] != self.name:
             """
             Rename pipeline folder
@@ -604,6 +604,27 @@ class Pipeline:
                             should_save = True
                         if should_save:
                             await self.save_async(widget=widget)
+
+        if data.get('type') == PipelineType.INTEGRATION and update_state:
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
+                import IntegrationPipeline
+            from mage_integrations.destinations.utils \
+                import update_destination_state_bookmarks
+
+            integration_pipeline = IntegrationPipeline.get(self.uuid)
+            tap_stream_id = data.get('tap_stream_id')
+            destination_table = data.get('destination_table')
+            bookmark_values = data.get('bookmark_values')
+            if tap_stream_id and destination_table and bookmark_values:
+                destination_state_file_path = integration_pipeline.destination_state_file_path(
+                    destination_table=destination_table,
+                    stream=tap_stream_id,
+                )
+                update_destination_state_bookmarks(
+                    destination_state_file_path,
+                    tap_stream_id,
+                    bookmark_values=bookmark_values
+                )
 
     def __add_block_to_mapping(
         self,
