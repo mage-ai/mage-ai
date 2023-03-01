@@ -53,12 +53,13 @@ function SchemaSettings({
     destination_table: destinationTable,
     tap_stream_id: tapStreamId,
   } = selectedStream || {};
+  const queryParamsAreValid = !!(tapStreamId && destinationTable);
   const {
     data: dataBlock,
     mutate: fetchBlockState,
   } = api.blocks.pipelines.detail(
-    pipeline?.uuid,
-    dataExporterBlock?.uuid,
+    queryParamsAreValid ? pipeline?.uuid : null,
+    queryParamsAreValid ? dataExporterBlock?.uuid : null,
     {
       destination_table: destinationTable,
       state_stream: tapStreamId,
