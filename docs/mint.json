@@ -140,7 +140,6 @@
         {
           "group": "Blocks",
           "pages": [
-            "guides/blocks/dynamic-blocks",
             {
               "group": "Data loader",
               "pages": [
@@ -167,8 +166,10 @@
                 "guides/sensors"
               ]
             },
+            "guides/callbacks",
             "guides/sql-blocks",
             "guides/r-blocks",
+            "guides/blocks/dynamic-blocks",
             "guides/blocks/custom-blocks"
           ]
         },
@@ -300,6 +301,12 @@
             "production/configuring-production-settings/secrets",
             "production/configuring-production-settings/compute-resource",
             "production/databases/default"
+          ]
+        },
+        {
+          "group": "Syncing data",
+          "pages": [
+            "production/data-sync/github"
           ]
         }
       ]
