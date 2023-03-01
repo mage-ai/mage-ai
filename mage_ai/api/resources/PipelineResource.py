@@ -129,14 +129,10 @@ class PipelineResource(BaseResource):
         update_content = query.get('update_content', [False])
         if update_content:
             update_content = update_content[0]
-        update_state = query.get('update_state', [False])
-        if update_state:
-            update_state = update_state[0]
 
         await self.model.update(
             ignore_keys(payload, ['add_upstream_for_block_uuid']),
             update_content=update_content,
-            update_state=update_state,
         )
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[self.model.type])
 

@@ -78,4 +78,11 @@ class BlockResource(GenericResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
-        self.model.update(payload)
+        query = kwargs.get('query', {})
+        update_state = query.get('update_state', [False])
+        if update_state:
+            update_state = update_state[0]
+        self.model.update(
+            payload,
+            update_state=update_state,
+        )
