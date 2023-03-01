@@ -61,6 +61,12 @@ class PipelineScheduler:
         )
 
     def start(self, should_schedule: bool = True) -> None:
+        if get_preferences().sync_config:
+            sync_config = SyncConfig.load(config=get_preferences().sync_config)
+            if sync_config.sync_on_pipeline_run:
+                sync = GitSync(sync_config)
+                sync.sync_data()
+
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
             return
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
@@ -749,11 +755,6 @@ def schedule_all():
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule() and \
                 pipeline_schedule.id not in backfills_by_pipeline_schedule_id:
-
-            sync_config = SyncConfig.load(config=get_preferences().sync_config)
-            if sync_config.sync_on_pipeline_run:
-                sync = GitSync(sync_config)
-                sync.sync_data()
 
             pipeline_uuid = pipeline_schedule.pipeline_uuid
             payload = dict(
