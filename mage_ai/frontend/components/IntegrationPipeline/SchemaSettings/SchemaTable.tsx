@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -39,7 +38,7 @@ import {
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array';
-import { isEmptyObject } from '@utils/hash';
+import { isEmptyObject, isEqual } from '@utils/hash';
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;
@@ -49,6 +48,7 @@ export type SchemaTableProps = {
   bookmarkValues?: { [key: string]: any };
   destination: IntegrationDestinationEnum;
   isLoadingLoadSampleData: boolean;
+  isLoadingUpdateDestinationBlockState?: boolean;
   loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
   streams?: StreamType[];
@@ -83,6 +83,7 @@ function SchemaTable({
   bookmarkValues: bookmarkValuesInit,
   destination,
   isLoadingLoadSampleData,
+  isLoadingUpdateDestinationBlockState,
   loadSampleData,
   source,
   stream,
@@ -131,42 +132,19 @@ function SchemaTable({
   ]);
 
   useEffect(() => {
-    if (isEmptyObject(bookmarkValues?.[streamUUID]) && bookmarkProperties?.length > 0) {
+    const bookmmarkValuesFromState = bookmarkValues?.[streamUUID];
+    if (bookmarkProperties?.length > 0
+      && (
+        isEmptyObject(bookmmarkValuesFromState)
+        || !isEqual(bookmarkValuesInit, bookmmarkValuesFromState)
+      )
+    ) {
       setBookmarkValues(prev => ({
         ...prev,
         [streamUUID]: bookmarkValuesInit,
       }));
     }
-  }, [bookmarkProperties?.length, bookmarkValuesInit]);
-
-  const bookmarkPropertiesLengthPrev = usePrevious(bookmarkProperties?.length || 0);
-  // Debounce PUT request to update bookmark values for 2s whenever user changes value
-  useEffect(() => {
-    const updatedBookmarkValues = { ...bookmarkValues?.[streamUUID] };
-    if (bookmarkPropertiesLengthPrev !== bookmarkProperties?.length) {
-      Object.keys(bookmarkValues?.[streamUUID] || {})
-        .forEach(bookmarkProp => {
-          if (!bookmarkProperties.includes(bookmarkProp)) {
-            delete updatedBookmarkValues[bookmarkProp];
-          }
-        });
-      setBookmarkValues(prev => ({
-        ...prev,
-        [streamUUID]: updatedBookmarkValues,
-      }));
-    }
-    const debounceUpdateDestinationBlockState = setTimeout(() => {
-      updateDestinationBlockState({
-        block: {
-          bookmark_values: updatedBookmarkValues,
-          destination_table: destinationTable,
-          tap_stream_id: streamUUID,
-        },
-      });
-    }, 2000);
-
-    return () => clearTimeout(debounceUpdateDestinationBlockState);
-  }, [bookmarkValues, bookmarkProperties]);
+  }, [bookmarkProperties?.length, bookmarkValuesInit, streamUUID]);
 
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
     metadata,
@@ -891,7 +869,8 @@ function SchemaTable({
                       </Text>
                       <Text default>
                         In order to override the bookmark values for the next sync, click the toggle
-                        to edit the values for the bookmark properties in the table below.
+                        to edit the values for the bookmark properties in the table below. Click the &#34;Save&#34;
+                        button to save your changes.
                       </Text>
                     </Spacing>
 
@@ -903,7 +882,32 @@ function SchemaTable({
                 </Spacing>
                 {showBookmarkValuesTable &&
                   <Panel
-                    headerTitle="Bookmark property values"
+                    header={
+                      <FlexContainer alignItems="center" justifyContent="space-between">
+                        <Text bold default>
+                          Bookmark property values
+                        </Text>
+                        <Button
+                          compact
+                          loading={isLoadingUpdateDestinationBlockState}
+                          onClick={() => {
+                            updateDestinationBlockState({
+                              block: {
+                                bookmark_values: bookmarkValues?.[streamUUID] || {},
+                                destination_table: destinationTable,
+                                tap_stream_id: streamUUID,
+                              },
+                            });
+                          }}
+                          pill
+                          secondary
+                        >
+                          Save
+                        </Button>
+                      </FlexContainer>
+                    }
+                    headerPaddingVertical={UNIT}
+                    noPadding
                     overflowVisible
                   >
                     <Table

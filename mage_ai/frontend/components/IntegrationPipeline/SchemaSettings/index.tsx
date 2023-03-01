@@ -66,7 +66,10 @@ function SchemaSettings({
   );
   const bookmarkValues = dataBlock?.block?.bookmarks;
 
-  const [updateDestinationBlockState] = useMutation(
+  const [
+    updateDestinationBlockState,
+    { isLoading: isLoadingUpdateDestinationBlockState },
+  ] = useMutation(
     api.blocks.pipelines.useUpdate(
       pipeline?.uuid,
       dataExporterBlock?.uuid,
@@ -206,6 +209,7 @@ function SchemaSettings({
             <SchemaTable
               {...props}
               bookmarkValues={bookmarkValues}
+              isLoadingUpdateDestinationBlockState={isLoadingUpdateDestinationBlockState}
               stream={selectedStream}
               streams={streams}
               updateDestinationBlockState={updateDestinationBlockState}

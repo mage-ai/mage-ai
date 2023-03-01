@@ -334,12 +334,14 @@ const Button = ({
   afterIcon,
   beforeIcon,
   children,
+  compact,
   disabled,
   iconOnly,
   id,
   linkProps,
   loading,
   onClick,
+  secondary,
   ...props
 }: ButtonProps, ref) => {
   const iconProps = {
@@ -356,6 +358,7 @@ const Button = ({
   const el = (
     <ElToUse
       {...props}
+      compact={compact}
       disabled={disabled}
       hasOnClick={!!onClick || asHref || linkHref}
       iconOnly={iconOnly}
@@ -368,6 +371,7 @@ const Button = ({
         : null
       }
       ref={ref}
+      secondary={secondary}
     >
       <FlexContainer
         alignItems="center"
@@ -383,7 +387,7 @@ const Button = ({
             </Flex>
           </Spacing>
         )}
-        {loading && <Spinner />}
+        {loading && <Spinner inverted={secondary} size={compact ? 20 : null} />}
         {!loading && (
           <Flex>
             {!iconOnly && children}

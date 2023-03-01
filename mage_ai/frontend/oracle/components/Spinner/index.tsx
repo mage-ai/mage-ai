@@ -14,6 +14,7 @@ export type SpinnerProps = {
   left?: number;
   relative?: boolean;
   right?: number;
+  size?: number;
   small?: boolean;
   top?: number;
   type?: 'blank' | 'balls' | 'bars' | 'bubbles' | 'cubes' | 'cylon' | 'spin' | 'spinningBubbles' | 'spokes'
@@ -27,6 +28,7 @@ const Spinner = ({
   left = 0,
   relative,
   right = 0,
+  size = 24,
   small,
   top = 0,
   type = 'spin',
@@ -35,11 +37,11 @@ const Spinner = ({
   const [bodyWidth, setBodyWidth] = useState(undefined);
   const themeContext: ThemeType = useContext(ThemeContext);
 
-  let size: number = UNIT * 3;
+  let finalSize = size;
   if (large) {
-    size = UNIT * 5;
+    finalSize = UNIT * 5;
   } else if (small) {
-    size = UNIT * 2;
+    finalSize = UNIT * 2;
   }
 
   useEffect(() => {
@@ -58,9 +60,9 @@ const Spinner = ({
           ? (themeContext.loader || dark.loader).colorInverted
           : (themeContext.loader || dark.loader).color
       }
-      height={size}
+      height={finalSize}
       type={type}
-      width={size}
+      width={finalSize}
     />
   );
 
@@ -74,9 +76,9 @@ const Spinner = ({
     return (
       <div
         style={{
-          left: !relative ? (left + ((bodyWidth - size) / 2)) - right : null,
+          left: !relative ? (left + ((bodyWidth - finalSize) / 2)) - right : null,
           position: 'fixed',
-          top: top + (bodyHeightAdjusted / 2) - (size / 2),
+          top: top + (bodyHeightAdjusted / 2) - (finalSize / 2),
           zIndex: 50,
         }}
       >
