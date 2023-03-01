@@ -297,57 +297,55 @@ function TriggerDetail({
       ]);
     }
 
-    if (settings) {
-      if (settings.skip_if_previous_running) {
-        rows.push([
-          <FlexContainer
-            alignItems="center"
-            key="trigger_skip_if_running"
-          >
-            <Tooltip
-              default
-              label="Skip current run if any previous runs are still in progress"
-              size={UNIT*1.5}
-              widthFitContent
-            />
-            <Spacing mr={1} />
-            <Text default>
-              Skip if running
-            </Text>
-          </FlexContainer>,
-          <Text
-            key="trigger_skip_if_running_label"
-            monospace
-          >
-            {settings.skip_if_previous_running.toString()}
-          </Text>,
-        ]);
-      }
-      if (settings.allow_blocks_to_fail) {
-        rows.push([
-          <FlexContainer
-            alignItems="center"
-            key="trigger_allow_blocks_to_fail"
-          >
-            <Tooltip
-              default
-              label="Trigger runs will continue running blocks if other unrelated blocks fail"
-              size={UNIT*1.5}
-              widthFitContent
-            />
-            <Spacing mr={1} />
-            <Text default>
-              Allow blocks to fail
-            </Text>
-          </FlexContainer>,
-          <Text
-            key="trigger_allow_blocks_to_fail_label"
-            monospace
-          >
-            {settings.allow_blocks_to_fail.toString()}
-          </Text>,
-        ]);
-      }
+    if (settings?.skip_if_previous_running) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_skip_if_running"
+        >
+          <Tooltip
+            default
+            label="Skip current run if any previous runs are still in progress"
+            size={UNIT*1.5}
+            widthFitContent
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Skip if running
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_skip_if_running_label"
+          monospace
+        >
+          {settings.skip_if_previous_running?.toString()}
+        </Text>,
+      ]);
+    }
+    if (settings?.allow_blocks_to_fail) {
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_allow_blocks_to_fail"
+        >
+          <Tooltip
+            default
+            label="Trigger runs will continue running blocks if other unrelated blocks fail"
+            size={UNIT*1.5}
+            widthFitContent
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Allow blocks to fail
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_allow_blocks_to_fail_label"
+          monospace
+        >
+          {settings.allow_blocks_to_fail.toString()}
+        </Text>,
+      ]);
     }
 
     return (

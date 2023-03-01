@@ -112,7 +112,6 @@ function Edit({
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [enableSLA, setEnableSLA] = useState<boolean>(false);
 
-  // const [skipIfRunning, setSkipIfRunning] = useState<boolean>();
   const [settings, setSettings] = useState<PipelineScheduleSettingsType>();
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);

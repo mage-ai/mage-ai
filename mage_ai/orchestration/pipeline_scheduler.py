@@ -61,8 +61,10 @@ class PipelineScheduler:
             NotificationConfig.load(config=self.pipeline.repo_config.notification_config),
         )
 
-        self.allow_blocks_to_fail = \
+        self.allow_blocks_to_fail = (
             self.pipeline_schedule.get_settings().allow_blocks_to_fail
+            if self.pipeline_schedule else False
+        )
 
     def start(self, should_schedule: bool = True) -> None:
         if get_preferences().sync_config:
@@ -249,24 +251,25 @@ class PipelineScheduler:
             **tags,
         )
 
-        self.notification_sender.send_pipeline_run_failure_message(
-            pipeline=self.pipeline,
-            pipeline_run=self.pipeline_run,
-        )
-
-        if PipelineType.INTEGRATION == self.pipeline.type:
-            # If a block/stream fails, stop all other streams
-            job_manager.kill_pipeline_run_job(self.pipeline_run.id)
-
-            self.logger.info(
-                f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
-                tags=tags,
+        if not self.allow_blocks_to_fail:
+            self.notification_sender.send_pipeline_run_failure_message(
+                pipeline=self.pipeline,
+                pipeline_run=self.pipeline_run,
             )
-            calculate_metrics(self.pipeline_run)
-            self.logger.info(
-                f'Calculate metrics for pipeline run {self.pipeline_run.id} error completed.',
-                tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
-            )
+
+            if PipelineType.INTEGRATION == self.pipeline.type:
+                # If a block/stream fails, stop all other streams
+                job_manager.kill_pipeline_run_job(self.pipeline_run.id)
+
+                self.logger.info(
+                    f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
+                    tags=tags,
+                )
+                calculate_metrics(self.pipeline_run)
+                self.logger.info(
+                    f'Calculate metrics for pipeline run {self.pipeline_run.id} error completed.',
+                    tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
+                )
 
     def memory_usage_failure(self, tags: Dict = {}) -> None:
         msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
@@ -533,6 +536,7 @@ def run_integration_pipeline(
             if len(parts) >= 3:
                 all_indexes.append(int(parts[2]))
         max_index_for_stream = max(all_indexes)
+        
 
         for idx in range(max_index + 1):
             block_runs_in_order = []
@@ -585,6 +589,7 @@ def run_integration_pipeline(
                 (data_exporter_block_run, shared_dict),
             ]
 
+            block_failed = False
             for idx2, tup in enumerate(block_runs_and_configs):
                 block_run, template_runtime_configuration = tup
 
@@ -592,6 +597,13 @@ def run_integration_pipeline(
                     block_run_id=block_run.id,
                     block_uuid=block_run.block_uuid,
                 ))
+
+                if block_failed:
+                    block_run.update(
+                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                    )
+                    continue
+
                 block_run.update(
                     started_at=datetime.now(),
                     status=BlockRun.BlockRunStatus.RUNNING,
@@ -613,9 +625,11 @@ def run_integration_pipeline(
                         schedule_after_complete=False,
                         template_runtime_configuration=template_runtime_configuration,
                     )
-                except Exception:
+                except Exception as e:
                     if pipeline_scheduler.allow_blocks_to_fail:
-                        pass
+                        block_failed = True
+                    else:
+                        raise e
                 else:
                     if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
                             f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
