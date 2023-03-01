@@ -126,7 +126,7 @@ class PipelineScheduler:
                 )
                 self.logger_manager.output_logs_to_destination()
 
-                schedule = PipelineSchedule.query.get(
+                schedule = PipelineSchedule.get(
                     self.pipeline_run.pipeline_schedule_id,
                 )
 
@@ -735,9 +735,8 @@ def schedule_all():
     active_pipeline_schedules = \
         list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))
 
-    backfills = Backfill.query.filter(
-        Backfill.pipeline_schedule_id.in_([ps.id for ps in active_pipeline_schedules]),
-    )
+    backfills = Backfill.filter(pipeline_schedule_ids=[ps.id for ps in active_pipeline_schedules])
+
     backfills_by_pipeline_schedule_id = index_by(
         lambda backfill: backfill.pipeline_schedule_id,
         backfills,

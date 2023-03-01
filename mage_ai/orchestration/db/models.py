@@ -76,6 +76,11 @@ class BaseModel(Base):
     def full_clean(self, **kwargs) -> None:
         pass
 
+    @classmethod
+    @safe_db_query
+    def get(self, uuid):
+        return self.query.get(uuid)
+
     def save(self, commit=True) -> None:
         self.session.add(self)
         if commit:
@@ -666,6 +671,15 @@ class Backfill(BaseModel):
     variables = Column(JSON, default=None)
 
     pipeline_runs = relationship('PipelineRun', back_populates='backfill')
+
+    @classmethod
+    @safe_db_query
+    def filter(self, pipeline_schedule_ids: List = None):
+        if pipeline_schedule_ids is not None:
+            return Backfill.query.filter(
+                Backfill.pipeline_schedule_id.in_(pipeline_schedule_ids),
+            )
+        return []
 
 
 class Secret(BaseModel):
