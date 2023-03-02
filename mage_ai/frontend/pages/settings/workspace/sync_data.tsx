@@ -180,7 +180,12 @@ function SyncData() {
           <Button
             loading={isLoadingCreateSync}
             // @ts-ignore
-            onClick={() => createSync({ sync })}
+            onClick={() => createSync({
+              sync: {
+                ...sync,
+                type: SyncTypeEnum.GIT,
+              }
+            })}
             primary
           >
             Save

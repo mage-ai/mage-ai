@@ -22,8 +22,9 @@ class SyncResource(GenericResource):
             dict(sync_config=sync_config.to_dict())
         )
 
-        # set up Git repo
-        GitSync(sync_config)
+        if sync_config.type == SyncType.GIT:
+            # set up Git repo
+            GitSync(sync_config)
 
         return self(get_preferences().sync_config, user, **kwargs)
 
