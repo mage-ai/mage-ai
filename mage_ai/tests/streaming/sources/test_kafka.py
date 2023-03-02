@@ -48,3 +48,20 @@ class KafkaTests(TestCase):
             self.assertEqual(source.config.sasl_config.username, 'test_username')
             self.assertEqual(source.config.sasl_config.password, 'test_password')
             self.assertIsNone(source.config.ssl_config)
+
+    def test_init_with_serde_config(self):
+        with patch.object(KafkaSource, 'init_client') as mock_init_client:
+            source = KafkaSource(dict(
+                connector_type='kafka',
+                bootstrap_server='test_server',
+                consumer_group='test_group',
+                topic='test_topic',
+                serde_config=dict(
+                    serialization_method='PROTOBUF',
+                    schema_classpath='mage_ai.tests.base_test.TestCase',
+                )
+            ))
+            mock_init_client.assert_called_once()
+            self.assertEqual(source.config.serde_config.serialization_method, 'PROTOBUF')
+            self.assertEqual(
+                source.config.serde_config.schema_classpath, 'mage_ai.tests.base_test.TestCase')

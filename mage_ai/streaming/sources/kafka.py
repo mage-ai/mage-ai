@@ -4,6 +4,7 @@ from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sources.base import BaseSource
 from enum import Enum
 from typing import Callable, Dict
+import importlib
 import json
 import time
 
@@ -13,6 +14,11 @@ DEFAULT_BATCH_SIZE = 100
 class SecurityProtocol(str, Enum):
     SASL_SSL = 'SASL_SSL'
     SSL = 'SSL'
+
+
+class SerializationMethod(str, Enum):
+    JSON = 'JSON'
+    PROTOBUF = 'PROTOBUF'
 
 
 @dataclass
@@ -32,6 +38,12 @@ class SSLConfig:
 
 
 @dataclass
+class SerDeConfig:
+    serialization_method: SerializationMethod
+    schema_classpath: str = None
+
+
+@dataclass
 class KafkaConfig(BaseConfig):
     bootstrap_server: str
     consumer_group: str
@@ -40,15 +52,19 @@ class KafkaConfig(BaseConfig):
     security_protocol: SecurityProtocol = None
     ssl_config: SSLConfig = None
     sasl_config: SASLConfig = None
+    serde_config: SerDeConfig = None
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
         ssl_config = config.get('ssl_config')
         sasl_config = config.get('sasl_config')
+        serde_config = config.get('serde_config')
         if ssl_config and type(ssl_config) is dict:
             config['ssl_config'] = SSLConfig(**ssl_config)
         if sasl_config and type(sasl_config) is dict:
             config['sasl_config'] = SASLConfig(**sasl_config)
+        if serde_config and type(serde_config) is dict:
+            config['serde_config'] = SerDeConfig(**serde_config)
         return config
 
 
@@ -82,11 +98,27 @@ class KafkaSource(BaseSource):
         )
         self._print('Finish initializing consumer.')
 
+        self.schema_class = None
+        if self.config.serde_config is not None and \
+                self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF:
+            schema_classpath = self.config.serde_config.schema_classpath
+            if schema_classpath is None:
+                return
+            self._print(f'Loading message schema from {schema_classpath}')
+            parts = schema_classpath.split('.')
+            if len(parts) >= 2:
+                class_name = parts[-1]
+                libpath = '.'.join(parts[:-1])
+                self.schema_class = getattr(
+                    importlib.import_module(libpath),
+                    class_name,
+                )
+
     def read(self, handler: Callable):
         self._print('Start consuming messages.')
         for message in self.consumer:
             self.__print_message(message)
-            data = json.loads(message.value.decode('utf-8'))
+            data = self.__deserialize_message(message.value)
             handler(data)
 
     def batch_read(self, handler: Callable):
@@ -106,12 +138,23 @@ class KafkaSource(BaseSource):
             for tp, messages in msg_pack.items():
                 for message in messages:
                     self.__print_message(message)
-                    message_values.append(json.loads(message.value.decode('utf-8')))
+                    message_values.append(self.__deserialize_message(message.value))
             if len(message_values) > 0:
                 handler(message_values)
 
     def test_connection(self):
         return True
+
+    def __deserialize_message(self, message):
+        if self.config.serde_config is not None and \
+                self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF and \
+                self.schema_class is not None:
+            from google.protobuf.json_format import MessageToDict
+            obj = self.schema_class()
+            obj.ParseFromString(message)
+            return MessageToDict(obj)
+        else:
+            return json.loads(message.decode('utf-8'))
 
     def __print_message(self, message):
         self._print(f'Receive message {message.partition}:{message.offset}: '

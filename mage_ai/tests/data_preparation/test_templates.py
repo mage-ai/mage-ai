@@ -255,6 +255,11 @@ consumer_group: unique_consumer_group
 #   mechanism: "PLAIN"
 #   username: username
 #   password: password
+
+# Uncomment the config below to use protobuf schema to deserialize message
+# serde_config:
+#   serialization_method: PROTOBUF
+#   schema_classpath: "path.to.schema.SchemaClass"
 """
         config = {'data_source': DataSource.KAFKA}
         new_kafka_template = fetch_template_source(
