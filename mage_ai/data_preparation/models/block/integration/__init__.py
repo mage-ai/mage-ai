@@ -314,6 +314,41 @@ class SourceBlock(IntegrationBlock):
 
 
 class DestinationBlock(IntegrationBlock):
+    def to_dict(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+        check_if_file_exists: bool = False,
+        destination_table: str = None,
+        state_stream: str = None,
+    ):
+        data = {}
+        if state_stream and destination_table:
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
+                import IntegrationPipeline
+            integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
+            destination_state_file_path = integration_pipeline.destination_state_file_path(
+                destination_table=destination_table,
+                stream=state_stream,
+            )
+            if os.path.isfile(destination_state_file_path):
+                with open(destination_state_file_path, 'r') as f:
+                    text = f.read()
+                    d = json.loads(text) if text else {}
+                    bookmark_values = d.get('bookmarks', {}).get(state_stream)
+                    data['bookmarks'] = bookmark_values
+
+        return merge_dict(
+            super().to_dict(
+                include_content,
+                include_outputs,
+                sample_count,
+                check_if_file_exists,
+            ),
+            data,
+        )
+
     def update(self, data, update_state=False):
         if update_state:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline \

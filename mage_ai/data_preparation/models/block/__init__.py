@@ -1263,8 +1263,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_outputs=False,
         sample_count=None,
         check_if_file_exists: bool = False,
-        destination_table: str = None,
-        state_stream: str = None,
+        **kwargs,
     ):
         data = self.to_dict_base()
         if include_content:
@@ -1282,20 +1281,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                         'Delete the current block to remove it from the pipeline or write code ' +
                         f'and save the pipeline to create a new file at {file_path}.',
                     )
-        if state_stream and destination_table:
-            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-                import IntegrationPipeline
-            integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
-            destination_state_file_path = integration_pipeline.destination_state_file_path(
-                destination_table=destination_table,
-                stream=state_stream,
-            )
-            if os.path.isfile(destination_state_file_path):
-                with open(destination_state_file_path, 'r') as f:
-                    text = f.read()
-                    d = json.loads(text) if text else {}
-                    bookmark_values = d.get('bookmarks', {}).get(state_stream)
-                    data['bookmarks'] = bookmark_values
 
         return data
 
