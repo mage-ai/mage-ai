@@ -98,11 +98,13 @@ class KafkaSource(BaseSource):
         )
         self._print('Finish initializing consumer.')
 
+        self.schema_class = None
         if self.config.serde_config is not None and \
                 self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF:
             schema_classpath = self.config.serde_config.schema_classpath
             if schema_classpath is None:
                 return
+            self._print(f'Loading message schema from {schema_classpath}')
             parts = schema_classpath.split('.')
             if len(parts) >= 2:
                 class_name = parts[-1]
@@ -111,8 +113,6 @@ class KafkaSource(BaseSource):
                     importlib.import_module(libpath),
                     class_name,
                 )
-            else:
-                self.schema_class = None
 
     def read(self, handler: Callable):
         self._print('Start consuming messages.')
