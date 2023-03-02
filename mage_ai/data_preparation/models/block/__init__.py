@@ -1331,7 +1331,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         return data
 
-    def update(self, data, update_state=False):
+    def update(self, data, **kwargs):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
         if (
@@ -1355,30 +1355,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if self.has_callback:
                 CallbackBlock.create(self.uuid)
             self.__update_pipeline_block()
-        if (
-            update_state and
-            self.pipeline.type == PipelineType.INTEGRATION and
-            self.type == BlockType.DATA_EXPORTER
-        ):
-            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-                import IntegrationPipeline
-            from mage_integrations.destinations.utils \
-                import update_destination_state_bookmarks
-
-            integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
-            tap_stream_id = data.get('tap_stream_id')
-            destination_table = data.get('destination_table')
-            bookmark_values = data.get('bookmark_values', {})
-            if tap_stream_id and destination_table:
-                destination_state_file_path = integration_pipeline.destination_state_file_path(
-                    destination_table=destination_table,
-                    stream=tap_stream_id,
-                )
-                update_destination_state_bookmarks(
-                    destination_state_file_path,
-                    tap_stream_id,
-                    bookmark_values=bookmark_values
-                )
 
         return self
 
