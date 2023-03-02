@@ -80,6 +80,7 @@ export type SidekickProps = {
   sampleData: SampleDataType;
   secrets: SecretType[];
   selectedBlock: BlockType;
+  setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (opts: {
     errors: any;
     response: any;
@@ -118,6 +119,7 @@ function Sidekick({
   secrets,
   selectedBlock,
   setAnyInputFocused,
+  setDisableShortcuts,
   setEditingBlock,
   setErrors,
   setSelectedBlock,
@@ -212,21 +214,6 @@ function Sidekick({
     secrets,
   ]);
 
-  const dataTableMemo = useMemo(() => (
-    <DataTable
-      columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
-      columns={columns}
-      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
-      noBorderBottom
-      noBorderLeft
-      noBorderRight
-      noBorderTop
-      renderColumnHeader={renderColumnHeader}
-      rows={rows}
-      width={afterWidth}
-    />
-  ), [columns, rows]);
-
   return (
     <>
       {errorMessages?.length >= 1 &&
@@ -257,6 +244,8 @@ function Sidekick({
       <SidekickContainerStyle
         fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
         heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
+        onBlur={() => setDisableShortcuts(false)}
+        onFocus={() => setDisableShortcuts(true)}
       >
         {activeView === ViewKeyEnum.TREE &&
           <>

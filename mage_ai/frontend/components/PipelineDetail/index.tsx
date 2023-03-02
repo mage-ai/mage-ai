@@ -81,6 +81,7 @@ type PipelineDetailProps = {
   blocks: BlockType[];
   dataProviders: DataProviderType[];
   deleteBlock: (block: BlockType) => Promise<any>;
+  disableShortcuts: boolean;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   fetchSampleData: () => void;
@@ -140,6 +141,7 @@ function PipelineDetail({
   blocks = [],
   dataProviders,
   deleteBlock,
+  disableShortcuts,
   fetchFileTree,
   fetchPipeline,
   fetchSampleData,
@@ -219,8 +221,7 @@ function PipelineDetail({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (disableGlobalKeyboardShortcuts) {
-        pauseEvent(event);
+      if (disableShortcuts || disableGlobalKeyboardShortcuts) {
         return;
       }
 
