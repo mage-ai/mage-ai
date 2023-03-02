@@ -104,6 +104,7 @@ setuptools.setup(
             'dbt-postgres==1.4.0',
             'dbt-redshift==1.4.0',
             'dbt-snowflake==1.4.0',
+            'dbt-sqlserver==1.3.1',
             'dbt-trino==1.4.0',
             'google-api-python-client==2.70.0',
             'google-cloud-bigquery~=3.0',
