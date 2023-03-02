@@ -306,7 +306,7 @@ class PipelineScheduler:
     def completed_block_runs(self) -> List[BlockRun]:
         return [b for b in self.pipeline_run.block_runs
                 if b.status == BlockRun.BlockRunStatus.COMPLETED]
-    
+
     @property
     def failed_block_runs(self) -> List[BlockRun]:
         return [b for b in self.pipeline_run.block_runs
@@ -536,7 +536,6 @@ def run_integration_pipeline(
             if len(parts) >= 3:
                 all_indexes.append(int(parts[2]))
         max_index_for_stream = max(all_indexes)
-        
 
         for idx in range(max_index + 1):
             block_runs_in_order = []

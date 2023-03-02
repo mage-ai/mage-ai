@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from mage_ai.orchestration.job_manager import JobType
 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
 from mage_ai.tests.base_test import DBTestCase
