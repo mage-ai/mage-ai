@@ -220,7 +220,6 @@ function PipelineDetail({
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
       if (disableGlobalKeyboardShortcuts) {
-        pauseEvent(event);
         return;
       }
 

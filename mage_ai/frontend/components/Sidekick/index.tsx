@@ -46,6 +46,7 @@ import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
+import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
 
 const MAX_COLUMNS = 100;
@@ -127,6 +128,9 @@ function Sidekick({
   updateWidget,
   widgets,
 }: SidekickProps) {
+  const {
+    setDisableGlobalKeyboardShortcuts,
+  } = useKeyboardContext();
   const {
     height: heightWindow,
   } = useWindowSize();
@@ -257,6 +261,8 @@ function Sidekick({
       <SidekickContainerStyle
         fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
         heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
+        onBlur={() => setDisableGlobalKeyboardShortcuts(false)}
+        onFocus={() => setDisableGlobalKeyboardShortcuts(true)}
       >
         {activeView === ViewKeyEnum.TREE &&
           <>

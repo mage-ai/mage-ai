@@ -115,7 +115,7 @@ function Secrets({
     from mage_ai.data_preparation.shared.secrets import get_secret_value
 
     get_secret_value('<secret_name>')
-  `
+  `;
 
   return (
     <Spacing p={PADDING_UNITS}>
@@ -185,8 +185,8 @@ function Secrets({
               <Col md={4}>
                 <CellStyle>
                   <TextInput
-                    compact
                     borderless
+                    compact
                     fullWidth
                     monospace
                     onChange={(e) => {
@@ -204,8 +204,8 @@ function Secrets({
               <Col md={7}>
                 <CellStyle>
                   <TextInput
-                    compact
                     borderless
+                    compact
                     fullWidth
                     monospace
                     onChange={(e) => {
@@ -227,11 +227,12 @@ function Secrets({
               deleteVariable={() => deleteSecret(secret.name)}
               fetchVariables={fetchSecrets}
               hideEdit
+              key={secret.name}
               obfuscate
               pipelineUUID={pipelineUUID}
               variable={{
                 uuid: secret.name,
-                value: secret.value
+                value: secret.value,
               } as VariableType}
             />
           ))}
