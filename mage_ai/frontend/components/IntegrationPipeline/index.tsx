@@ -655,57 +655,68 @@ function IntegrationPipeline({
                 Select source
               </Headline>
 
-              <Select
-                onChange={(e) => {
-                  const sourceUUID = e.target.value;
-                  if (!sourceUUID) {
-                    return;
-                  }
+              {integrationSources?.length > 0
+                ?
+                  <Select
+                    onChange={(e) => {
+                      const sourceUUID = e.target.value;
+                      if (!sourceUUID) {
+                        return;
+                      }
 
-                  const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
-                  if (config) {
-                    Object.keys(config).forEach((key: string) => {
-                      config[key] = config[key] || null;
-                    });
-                  }
+                      const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
+                      if (config) {
+                        Object.keys(config).forEach((key: string) => {
+                          config[key] = config[key] || null;
+                        });
+                      }
 
-                  if (dataLoaderBlock) {
-                    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-                      ...dataLoaderBlockContent,
-                      catalog: {},
-                      config,
-                      source: sourceUUID,
-                    }));
-                  } else {
-                    addNewBlockAtIndex({
-                      content: stringify({
-                        source: sourceUUID,
-                        config,
-                      }),
-                      language: BlockLanguageEnum.YAML,
-                      type: BlockTypeEnum.DATA_LOADER,
-                    }, 0, setSelectedBlock);
-                  }
+                      if (dataLoaderBlock) {
+                        onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                          ...dataLoaderBlockContent,
+                          catalog: {},
+                          config,
+                          source: sourceUUID,
+                        }));
+                      } else {
+                        addNewBlockAtIndex({
+                          content: stringify({
+                            source: sourceUUID,
+                            config,
+                          }),
+                          language: BlockLanguageEnum.YAML,
+                          type: BlockTypeEnum.DATA_LOADER,
+                        }, 0, setSelectedBlock);
+                      }
 
-                  setIntegrationSourceStream(null);
+                      setIntegrationSourceStream(null);
 
-                  savePipelineContent().then(() => {
-                    fetchPipeline();
-                  });
-                }}
-                primary
-                value={dataLoaderBlockContent?.source}
-              >
-                <option value="" />
-                {integrationSources.map(({ name, uuid }) => (
-                  <option
-                    key={uuid}
-                    value={uuid}
+                      savePipelineContent().then(() => {
+                        fetchPipeline();
+                      });
+                    }}
+                    primary
+                    value={dataLoaderBlockContent?.source}
                   >
-                    {name}
-                  </option>
-                ))}
-              </Select>
+                    <option value="" />
+                    {integrationSources.map(({ name, uuid }) => (
+                      <option
+                        key={uuid}
+                        value={uuid}
+                      >
+                        {name}
+                      </option>
+                    ))}
+                  </Select>
+                :
+                  <FlexContainer alignItems="center">
+                    <Spinner inverted />
+                    <Spacing ml={1} />
+                    <Headline level={5} primary>
+                      Loading sources...
+                    </Headline>
+                  </FlexContainer>
+              }
             </Spacing>
 
             {dataLoaderBlock && (
@@ -932,68 +943,79 @@ function IntegrationPipeline({
               Select destination
             </Headline>
 
-            <Select
-              onChange={(e) => {
-                const destinationUUID = e.target.value;
-                if (!destinationUUID) {
-                  return;
-                }
+            {integrationDestinations?.length > 0
+              ?
+                <Select
+                  onChange={(e) => {
+                    const destinationUUID = e.target.value;
+                    if (!destinationUUID) {
+                      return;
+                    }
 
-                if (dataExporterBlock) {
-                  onChangeCodeBlock(dataExporterBlock.uuid, stringify({
-                    ...dataExporterBlockContent,
-                    destination: destinationUUID,
-                  }));
-                } else {
-                  const config = integrationDestinationsByUUID[destinationUUID]?.templates?.config;
-                  if (config) {
-                    Object.keys(config).forEach((key: string) => {
-                      config[key] = config[key] || null;
+                    if (dataExporterBlock) {
+                      onChangeCodeBlock(dataExporterBlock.uuid, stringify({
+                        ...dataExporterBlockContent,
+                        destination: destinationUUID,
+                      }));
+                    } else {
+                      const config = integrationDestinationsByUUID[destinationUUID]?.templates?.config;
+                      if (config) {
+                        Object.keys(config).forEach((key: string) => {
+                          config[key] = config[key] || null;
+                        });
+
+                        if (config.hasOwnProperty('table')) {
+                          delete config.table;
+                        }
+                      }
+
+                      const upstreamBlocks = [];
+                      if (blocks?.length >= 2) {
+                        const b = blocks.find(({ uuid }) => dataLoaderBlock?.uuid !== uuid);
+                        if (b) {
+                          upstreamBlocks.push(b.uuid);
+                        }
+                      } else if (dataLoaderBlock) {
+                        upstreamBlocks.push(dataLoaderBlock.uuid);
+                      }
+
+                      addNewBlockAtIndex({
+                        content: stringify({
+                          config,
+                          destination: destinationUUID,
+                        }),
+                        language: BlockLanguageEnum.YAML,
+                        type: BlockTypeEnum.DATA_EXPORTER,
+                        upstream_blocks: upstreamBlocks,
+                      }, 1, setSelectedBlock);
+                    }
+
+                    savePipelineContent().then(() => {
+                      fetchPipeline();
                     });
-
-                    if (config.hasOwnProperty('table')) {
-                      delete config.table;
-                    }
-                  }
-
-                  const upstreamBlocks = [];
-                  if (blocks?.length >= 2) {
-                    const b = blocks.find(({ uuid }) => dataLoaderBlock?.uuid !== uuid);
-                    if (b) {
-                      upstreamBlocks.push(b.uuid);
-                    }
-                  } else if (dataLoaderBlock) {
-                    upstreamBlocks.push(dataLoaderBlock.uuid);
-                  }
-
-                  addNewBlockAtIndex({
-                    content: stringify({
-                      config,
-                      destination: destinationUUID,
-                    }),
-                    language: BlockLanguageEnum.YAML,
-                    type: BlockTypeEnum.DATA_EXPORTER,
-                    upstream_blocks: upstreamBlocks,
-                  }, 1, setSelectedBlock);
-                }
-
-                savePipelineContent().then(() => {
-                  fetchPipeline();
-                });
-              }}
-              primary
-              value={dataExporterBlockContent?.destination}
-            >
-              <option value="" />
-              {integrationDestinations.map(({ name, uuid }) => (
-                <option
-                  key={uuid}
-                  value={uuid}
+                  }}
+                  primary
+                  value={dataExporterBlockContent?.destination}
                 >
-                  {name}
-                </option>
-              ))}
-            </Select>
+                  <option value="" />
+                  {integrationDestinations.map(({ name, uuid }) => (
+                    <option
+                      key={uuid}
+                      value={uuid}
+                    >
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              :
+                <FlexContainer alignItems="center">
+                  <Spinner inverted />
+                  <Spacing ml={1} />
+                  <Headline level={5} primary>
+                    Loading destinations...
+                  </Headline>
+                </FlexContainer>
+            }
           </Spacing>
 
           {dataExporterBlock && (
