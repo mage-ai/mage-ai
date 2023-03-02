@@ -1505,8 +1505,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             raise Exception(f'Failed to pass tests for block {self.uuid}')
 
     def analyze_outputs(self, variable_mapping, shape_only: bool = False):
-        from mage_ai.data_cleaner.data_cleaner import clean as clean_data
-
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
@@ -1532,6 +1530,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 else:
                     data_for_analysis = data.reset_index(drop=True)
                 try:
+                    from mage_ai.data_cleaner.data_cleaner import clean as clean_data
                     analysis = clean_data(
                         data_for_analysis,
                         df_original=data,
