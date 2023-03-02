@@ -81,6 +81,7 @@ export type SidekickProps = {
   sampleData: SampleDataType;
   secrets: SecretType[];
   selectedBlock: BlockType;
+  setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (opts: {
     errors: any;
     response: any;
@@ -119,6 +120,7 @@ function Sidekick({
   secrets,
   selectedBlock,
   setAnyInputFocused,
+  setDisableShortcuts,
   setEditingBlock,
   setErrors,
   setSelectedBlock,
@@ -261,8 +263,8 @@ function Sidekick({
       <SidekickContainerStyle
         fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
         heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
-        onBlur={() => setDisableGlobalKeyboardShortcuts(false)}
-        onFocus={() => setDisableGlobalKeyboardShortcuts(true)}
+        onBlur={() => setDisableShortcuts(false)}
+        onFocus={() => setDisableShortcuts(true)}
       >
         {activeView === ViewKeyEnum.TREE &&
           <>

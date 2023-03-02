@@ -111,6 +111,7 @@ function PipelineDetailPage({
   }>({});
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
+  const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
 
   const mainContainerRef = useRef(null);
 
@@ -1481,6 +1482,7 @@ function PipelineDetailPage({
       secrets={secrets}
       selectedBlock={selectedBlock}
       setAnyInputFocused={setAnyInputFocused}
+      setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
       setSelectedBlock={setSelectedBlock}
@@ -1556,6 +1558,7 @@ function PipelineDetailPage({
       blocks={blocks}
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
+      disableShortcuts={disableShortcuts}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       fetchSampleData={fetchSampleData}
