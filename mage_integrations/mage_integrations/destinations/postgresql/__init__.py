@@ -133,6 +133,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             schema,
             convert_column_type,
             lambda item_type_converted: f'{item_type_converted}[]',
+            string_type='TEXT',
         )
 
     def convert_array(self, value: str, column_type_dict: Dict) -> str:
