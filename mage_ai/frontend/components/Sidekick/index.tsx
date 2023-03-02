@@ -46,7 +46,6 @@ import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
-import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
 
 const MAX_COLUMNS = 100;
@@ -131,9 +130,6 @@ function Sidekick({
   widgets,
 }: SidekickProps) {
   const {
-    setDisableGlobalKeyboardShortcuts,
-  } = useKeyboardContext();
-  const {
     height: heightWindow,
   } = useWindowSize();
   const heightOffset = ALL_HEADERS_HEIGHT;
@@ -217,21 +213,6 @@ function Sidekick({
     pipeline,
     secrets,
   ]);
-
-  const dataTableMemo = useMemo(() => (
-    <DataTable
-      columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
-      columns={columns}
-      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
-      noBorderBottom
-      noBorderLeft
-      noBorderRight
-      noBorderTop
-      renderColumnHeader={renderColumnHeader}
-      rows={rows}
-      width={afterWidth}
-    />
-  ), [columns, rows]);
 
   return (
     <>
