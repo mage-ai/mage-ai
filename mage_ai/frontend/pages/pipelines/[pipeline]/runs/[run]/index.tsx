@@ -5,6 +5,7 @@ import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
 import BlockRunType from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
@@ -31,6 +32,7 @@ function PipelineBlockRuns({
   pipelineRun: pipelineRunProp,
 }: PipelineBlockRunsProps) {
   const [selectedRun, setSelectedRun] = useState<BlockRunType>();
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -65,14 +67,10 @@ function PipelineBlockRuns({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -143,8 +141,10 @@ function PipelineBlockRuns({
         showDynamicBlocks: true,
         textData,
       })}
+      errors={errors}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
+      setErrors={setErrors}
       subheader={pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED && (
         <Button
           danger
