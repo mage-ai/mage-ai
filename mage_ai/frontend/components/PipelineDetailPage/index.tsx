@@ -33,6 +33,7 @@ import {
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
@@ -283,17 +284,19 @@ function PipelineDetailPage({
     });
   }
 
-  // @ts-ignore
-  navigationItems.unshift({
-    Icon: null,
-    IconSelected: null,
-    id: PageNameEnum.EDIT,
-    label: () => 'Edit pipeline',
-    linkProps: {
-      as: `/pipelines/${pipelineUUID}/edit`,
-      href: '/pipelines/[pipeline]/edit',
-    },
-  });
+  if (!isViewer()) {
+    // @ts-ignore
+    navigationItems.unshift({
+      Icon: null,
+      IconSelected: null,
+      id: PageNameEnum.EDIT,
+      label: () => 'Edit pipeline',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/edit`,
+        href: '/pipelines/[pipeline]/edit',
+      },
+    });
+  }
 
   return (
     <Dashboard
