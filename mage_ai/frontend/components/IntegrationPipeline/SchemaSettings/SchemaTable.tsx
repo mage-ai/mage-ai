@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -160,6 +161,26 @@ function SchemaTable({
 
   const showPartitionKey = PARTITION_KEY_DESTINATIONS.includes(destination);
   const hasMultipleStreams = streams.length > 1;
+
+  const removeBookmarkPropertyFromState = useCallback((column) => {
+    const updatedBookmarkValues = { ...bookmarkValues?.[streamUUID] };
+    if (updatedBookmarkValues.hasOwnProperty(column)) {
+      delete updatedBookmarkValues[column];
+    }
+    setBookmarkValues(prev => ({
+      ...prev,
+      [streamUUID]: {
+        ...updatedBookmarkValues,
+      },
+    }));
+    updateDestinationBlockState({
+      block: {
+        bookmark_values: updatedBookmarkValues,
+        destination_table: destinationTable,
+        tap_stream_id: streamUUID,
+      },
+    });
+  }, [bookmarkValues, destinationTable, streamUUID, updateDestinationBlockState]);
 
   const tableMemo = useMemo(() => {
     const selectedArr = [];
@@ -344,6 +365,7 @@ function SchemaTable({
             ? null
             : () => updateStream(streamUUID, (stream: StreamType) => {
             if (stream.bookmark_properties?.includes(columnName)) {
+              removeBookmarkPropertyFromState(columnName);
               stream.bookmark_properties =
                 remove(stream.bookmark_properties, col => columnName === col);
             } else {
@@ -845,6 +867,7 @@ function SchemaTable({
                   <Chip
                     label={columnName}
                     onClick={() => {
+                      removeBookmarkPropertyFromState(columnName);
                       updateStream(streamUUID, (stream: StreamType) => ({
                         ...stream,
                         bookmark_properties: remove(
