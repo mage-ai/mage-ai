@@ -2,7 +2,7 @@
 title: "Opensearch"
 ---
 
-## Config
+## Basic config
 
 ```yaml
 connector_type: opensearch
@@ -12,15 +12,13 @@ index_name: test_index
 
 ## Authentication
 
-Whether to verify SSL certificates to authenticate.
 ```yaml
 verify_certs: true
-```
-
-Authentication setting
-1. "@awsauth": Authenticate with AWS Signature Version 4. Need to provide 
-   AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in environment variables.
-2. "username:password": Authenticate with username and password.
-```yaml
 http_auth: "@awsauth"
 ```
+
+- **verify_certs**: Whether to verify SSL certificates to authenticate.
+- **http_auth**: Authentication setting
+   1. "@awsauth": Authenticate with AWS Signature Version 4. Need to provide
+      AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in environment variables.
+   2. "username:password": Authenticate with username and password.

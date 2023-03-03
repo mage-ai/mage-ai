@@ -181,6 +181,7 @@
             {
               "group": "Sources",
               "pages": [
+                "guides/streaming/sources/azure-event-hub",
                 "guides/streaming/sources/kafka",
                 "guides/streaming/sources/kinesis"
               ]
@@ -189,7 +190,7 @@
               "group": "Destinations",
               "pages": [
                 "guides/streaming/destinations/kinesis",
-                "guides/streaming/destinations/opensearch"
+                "guides/streaming/destinations/opensearch",
                 "guides/streaming/destinations/redshift"
               ]
             }

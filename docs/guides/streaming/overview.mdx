@@ -5,13 +5,13 @@ title: "Overview"
 ## Introduction
 
 Each streaming pipeline has three components:
-- Source: The 
-- Transformer: Write python code to transformt the message before writing to destination
-- Sink (destination): 
+- Source: The data stream source to consume message from.
+- Transformer: Write python code to transformt the message before writing to destination.
+- Sink (destination): The data stream destination to write message to.
 
 
 ## Supported sources
-- [Azure Event Hub](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/data_preparation/templates/data_loaders/streaming/azure_event_hub.yaml)
+- [Azure Event Hub](sources/azure-event-hub)
 - [Kafka](sources/kafka)
 - [Kinesis](sources/kinesis)
 - [RabbitMQ](streaming-pipeline-rabbitmq)
