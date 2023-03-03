@@ -209,3 +209,15 @@ be able to monitor aggregate metrics across all pipelines and blocks.
 />
 
 Read more [here](/production/observability/monitoring).
+
+
+## Concurrency
+
+You can limit the concurrency of the block execution to reduce resource consumption.
+
+You can configure the maximum number of concurrent block runs in project’s metadata.yaml via queue_config.
+
+```yaml
+queue_config:
+  concurrency: 100
+```
