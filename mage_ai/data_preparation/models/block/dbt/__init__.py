@@ -188,14 +188,18 @@ class DBTBlock(Block):
                 raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
         if not test_execution:
-            with open(f'{project_full_path}/target/run_results.json', 'r') as f:
-                run_results = json.load(f)
+            run_results_file_path = f'{project_full_path}/target/run_results.json'
+            with open(run_results_file_path, 'r') as f:
+                try:
+                    run_results = json.load(f)
 
-                print(f'\n{json.dumps(run_results, indent=2)}\n')
+                    print(f'\n{json.dumps(run_results, indent=2)}\n')
 
-                for result in run_results['results']:
-                    if 'error' == result['status']:
-                        raise Exception(result['message'])
+                    for result in run_results['results']:
+                        if 'error' == result['status']:
+                            raise Exception(result['message'])
+                except json.decoder.JSONDecodeError:
+                    print(f'WARNING: no run results found at {run_results_file_path}.')
 
             if is_sql and dbt_command in ['build', 'run']:
                 df = fetch_model_data(
