@@ -1,0 +1,13 @@
+---
+title: "Kinesis"
+---
+
+## Config
+
+```yaml
+connector_type: kinesis
+stream_name: stream_name
+partition_key: key
+```
+
+- **partition_key**: A partition key is used to group data by shard within a stream. Kinesis Data Streams segregates the data records belonging to a stream into multiple shards. It uses the partition key that is associated with each data record to determine which shard a given data record belongs to.

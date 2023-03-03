@@ -1,0 +1,52 @@
+---
+title: "Kafka"
+---
+
+## Basic config
+
+```yaml
+connector_type: kafka
+bootstrap_server: "localhost:9092"
+topic: topic_name
+consumer_group: unique_consumer_group
+batch_size: 100
+```
+
+
+## SSL authentication
+
+```yaml
+security_protocol: "SSL"
+ssl_config:
+  cafile: "CARoot.pem"
+  certfile: "certificate.pem"
+  keyfile: "key.pem"
+  password: password
+  check_hostname: true
+```
+
+## SASL authentication
+
+```yaml
+security_protocol: "SASL_SSL"
+sasl_config:
+  mechanism: "PLAIN"
+  username: username
+  password: password
+```
+
+
+## Deserialize message with protobuf schema
+
+```yaml
+serde_config:
+  serialization_method: PROTOBUF
+  schema_classpath: "path.to.schema.SchemaClass"
+```
+
+* Specify the `serialization_method` to `PROTOBUF`.
+* Set the `schema_classpath` to the path to the schema class. Test whether you have access the the schema with the code
+  in a scratchpad.
+  ```python
+  from path.to.schema import SchemaClass
+  ```

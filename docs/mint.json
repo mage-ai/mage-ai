@@ -176,7 +176,24 @@
         {
           "group": "Streaming pipelines",
           "pages": [
-            "guides/streaming/streaming-pipeline-rabbitmq"
+            "guides/streaming/overview",
+            "guides/streaming/streaming-pipeline-rabbitmq",
+            {
+              "group": "Sources",
+              "pages": [
+                "guides/streaming/sources/azure-event-hub",
+                "guides/streaming/sources/kafka",
+                "guides/streaming/sources/kinesis"
+              ]
+            },
+            {
+              "group": "Destinations",
+              "pages": [
+                "guides/streaming/destinations/kinesis",
+                "guides/streaming/destinations/opensearch",
+                "guides/streaming/destinations/redshift"
+              ]
+            }
           ]
         },
         "production/configuring-production-settings/runtime-variable",

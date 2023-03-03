@@ -1,0 +1,27 @@
+---
+title: "Overview"
+---
+
+## Introduction
+
+Each streaming pipeline has three components:
+- Source: The data stream source to consume message from.
+- Transformer: Write python code to transformt the message before writing to destination.
+- Sink (destination): The data stream destination to write message to.
+
+
+## Supported sources
+- [Azure Event Hub](sources/azure-event-hub)
+- [Kafka](sources/kafka)
+- [Kinesis](sources/kinesis)
+- [RabbitMQ](streaming-pipeline-rabbitmq)
+
+## Support sinks (destinations)
+
+- [Kinesis](destinations/kinesis)
+- [Opensearch](destinations/opensearch)
+- [Redshift (via Kinesis)](destinations/redshift)
+
+
+## Test pipeline execution
+After finishing configuring the streaming pipeline, you can click the button `Execution pipeline` to test streaming pipeline execution.
