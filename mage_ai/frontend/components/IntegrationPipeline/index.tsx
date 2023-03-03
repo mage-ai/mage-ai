@@ -10,6 +10,7 @@ import BlockType, {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import IntegrationSourceType, {
@@ -66,10 +67,7 @@ type IntegrationPipelineProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
-  setErrors: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setErrors: (errors: ErrorsType) => void;
   setIntegrationStreams: (streams: string[]) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;

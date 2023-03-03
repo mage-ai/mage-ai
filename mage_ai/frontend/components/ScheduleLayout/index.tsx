@@ -1,5 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 
+import ErrorsType from '@interfaces/ErrorsType';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
@@ -12,7 +13,7 @@ type ScheduleLayoutProps = {
   pipeline: PipelineType;
   pipelineSchedule: PipelineScheduleType;
   projectName: string;
-  setErrors: any;
+  setErrors: (errors: ErrorsType) => void;
 };
 
 function ScheduleLayout({

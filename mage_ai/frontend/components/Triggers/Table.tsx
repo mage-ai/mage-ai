@@ -39,7 +39,7 @@ type TriggersTableProps = {
   pipeline?: PipelineType;
   pipelineSchedules: PipelineScheduleType[];
   selectedSchedule?: PipelineScheduleType;
-  setErrors: (errors: any) => void;
+  setErrors?: (errors: any) => void;
   setSelectedSchedule?: (schedule: PipelineScheduleType) => void;
   stickyHeader?: boolean;
 };

@@ -38,6 +38,7 @@ import DataProviderType, {
   ExportWritePolicyEnum,
 } from '@interfaces/DataProviderType';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -159,10 +160,7 @@ type CodeBlockProps = {
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
-  setErrors: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setErrors: (errors: ErrorsType) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
