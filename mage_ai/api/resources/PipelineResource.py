@@ -2,7 +2,7 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models import PipelineSchedule, PipelineRun
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
@@ -157,8 +157,10 @@ class PipelineResource(BaseResource):
                     PipelineRun.PipelineRunStatus.RUNNING,
                 ]))
             )
-            for pipeline_run in pipeline_runs:
-                pipeline_run.update(status=status)
+            pipeline_runs.update({
+                PipelineRun.status: status
+            }, synchronize_session=False)
+            db_connection.session.commit()
 
         status = payload.get('status')
 
