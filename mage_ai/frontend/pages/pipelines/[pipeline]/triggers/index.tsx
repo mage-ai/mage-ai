@@ -49,6 +49,7 @@ function PipelineSchedules({
 }: PipelineSchedulesProp) {
   const router = useRouter();
   const pipelineUUID = pipeline.uuid;
+  const [errors, setErrors] = useState(null);
 
   const {
     data: dataGlobalVariables,
@@ -73,14 +74,10 @@ function PipelineSchedules({
           }) => {
             onSuccessCallback?.(id);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -194,8 +191,10 @@ function PipelineSchedules({
         },
       ]}
       buildSidekick={buildSidekick}
+      errors={errors}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
+      setErrors={setErrors}
       subheaderBackgroundImage="/images/banner-shape-purple-peach.jpg"
       subheaderButton={
         <KeyboardShortcutButton
@@ -257,6 +256,7 @@ function PipelineSchedules({
         pipeline={pipeline}
         pipelineSchedules={pipelineSchedules}
         selectedSchedule={selectedSchedule}
+        setErrors={setErrors}
         setSelectedSchedule={setSelectedSchedule}
       />
 
