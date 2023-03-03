@@ -36,6 +36,7 @@ class PandasTypes(str, Enum):
     MIXED = 'mixed'
     MIXED_INTEGER = 'mixed-integer'
     MIXED_INTEGER_FLOAT = 'mixed-integer-float'
+    OBJECT = 'object'
     PERIOD = 'period'
     STRING = 'string'
     TIME = 'time'

@@ -77,9 +77,9 @@ import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
+import { isJsonString, randomNameGenerator } from '@utils/string';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
-import { randomNameGenerator } from '@utils/string';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
 
@@ -131,7 +131,7 @@ function PipelineDetailPage({
   const kernels = dataKernels?.kernels;
   const kernel =
     kernels?.find(({ name }) =>
-      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]
+      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type],
     ) || kernels?.[0];
 
   // Pipeline
@@ -757,14 +757,17 @@ function PipelineDetailPage({
               errors,
               response,
             });
-            setMessages(messagesPrev => ({
-              ...messagesPrev,
-              [urlParameters?.block_uuid]: messages.map(msg => ({
-                data: `${msg}\n`,
-                error: `${msg}\n`,
-                type: DataTypeEnum.TEXT_PLAIN,
-              })),
-            }));
+
+            if (urlParameters?.block_uuid) {
+              setMessages(messagesPrev => ({
+                ...messagesPrev,
+                [urlParameters.block_uuid]: messages.map(msg => ({
+                  data: `${msg}\n`,
+                  error: `${msg}\n`,
+                  type: DataTypeEnum.TEXT_PLAIN,
+                })),
+              }));
+            }
           },
         },
       ),
@@ -804,14 +807,16 @@ function PipelineDetailPage({
               response,
             });
 
-            setMessages(messagesPrev => ({
-              ...messagesPrev,
-              [urlParameters.block_uuid]: messages.map(msg => ({
-                data: `${msg}\n`,
-                error: `${msg}\n`,
-                type: DataTypeEnum.TEXT_PLAIN,
-              })),
-            }));
+            if (urlParameters?.block_uuid) {
+              setMessages(messagesPrev => ({
+                ...messagesPrev,
+                [urlParameters.block_uuid]: messages.map(msg => ({
+                  data: `${msg}\n`,
+                  error: `${msg}\n`,
+                  type: DataTypeEnum.TEXT_PLAIN,
+                })),
+              }));
+            }
           },
         },
       ),
@@ -1147,10 +1152,13 @@ function PipelineDetailPage({
   useEffect(() => {
     if (
       typeof pipeline?.blocks !== 'undefined'
-        && (!blocks.length
-            || blocksPrevious?.map(
-              ({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
-           )
+        && (
+          !blocks.length
+            || !equals(
+              blocksPrevious?.map(({ uuid }) => uuid).sort(),
+              blocks?.map(({ uuid }) => uuid).sort(),
+            )
+          )
     ) {
       const {
         content: contentByBlockUUIDResults,
@@ -1170,6 +1178,7 @@ function PipelineDetailPage({
     setBlocks,
     setMessages,
   ]);
+
   useEffect(() => {
     if (!widgets.length && typeof pipeline?.widgets !== 'undefined') {
       const {
@@ -1178,10 +1187,12 @@ function PipelineDetailPage({
       } = initializeContentAndMessages(pipeline.widgets);
       contentByWidgetUUID.current = contentByBlockUUIDResults;
 
-      setMessages((messagesPrev) => ({
-        ...messagesInit,
-        ...messagesPrev,
-      }));
+      setMessages((messagesPrev) => {
+        return {
+          ...messagesInit,
+          ...messagesPrev,
+        };
+      });
     }
   }, [
     pipeline?.widgets,
@@ -1244,7 +1255,7 @@ function PipelineDetailPage({
     selectedBlock,
   ]);
 
-  const token = new AuthToken();
+  const token = useMemo(() => new AuthToken(), []);
   const sharedWebsocketData = useMemo(() => ({
     api_key: OAUTH2_APPLICATION_CLIENT_ID,
     token: token.decodedToken.token,
@@ -1254,10 +1265,63 @@ function PipelineDetailPage({
 
   // WebSocket
   const {
-    lastMessage,
-    readyState,
+    // lastMessage,
+    // readyState,
     sendMessage,
   } = useWebSocket(getWebSocket(), {
+    onMessage: (lastMessage) => {
+      if (lastMessage) {
+        const message: KernelOutputType = JSON.parse(lastMessage.data);
+        const {
+          execution_state: executionState,
+          msg_type: msgType,
+          uuid,
+        } = message;
+
+        const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2);
+
+        if (msgType !== 'stream_pipeline') {
+          // @ts-ignore
+          setMessages((messagesPrevious) => {
+            const messagesFromUUID = messagesPrevious[uuid] || [];
+            return {
+              ...messagesPrevious,
+              [uuid]: messagesFromUUID.concat(message),
+            };
+          });
+        } else {
+          setPipelineMessages((pipelineMessagesPrevious) => [
+            ...pipelineMessagesPrevious,
+            message,
+          ]);
+          if (ExecutionStateEnum.IDLE === executionState) {
+            setRunningBlocks([]);
+            fetchPipeline();
+
+            if (!uuid) {
+              setIsPipelineExecuting(false);
+            }
+          }
+        }
+
+        if (ExecutionStateEnum.BUSY === executionState) {
+          setRunningBlocks((runningBlocksPrevious) => {
+            if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2) || !block) {
+              return runningBlocksPrevious;
+            }
+
+            return runningBlocksPrevious.concat(block);
+          });
+        } else if (ExecutionStateEnum.IDLE === executionState) {
+          // @ts-ignore
+          setRunningBlocks((runningBlocksPrevious) =>
+            runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
+          );
+        }
+
+        setPipelineContentTouched(true);
+      }
+    },
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
       // Will attempt to reconnect on all close events, such as server shutting down
@@ -1266,65 +1330,6 @@ function PipelineDetailPage({
       return true;
     },
   });
-
-  useEffect(() => {
-    if (lastMessage) {
-      const message: KernelOutputType = JSON.parse(lastMessage.data);
-      const {
-        execution_state: executionState,
-        msg_type: msgType,
-        uuid,
-      } = message;
-
-      const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2);
-
-      if (msgType !== 'stream_pipeline') {
-        // @ts-ignore
-        setMessages((messagesPrevious) => {
-          const messagesFromUUID = messagesPrevious[uuid] || [];
-
-          return {
-            ...messagesPrevious,
-            [uuid]: messagesFromUUID.concat(message),
-          };
-        });
-      } else {
-        setPipelineMessages((pipelineMessagesPrevious) => [
-          ...pipelineMessagesPrevious,
-          message,
-        ]);
-        if (ExecutionStateEnum.IDLE === executionState) {
-          setRunningBlocks([]);
-          fetchPipeline();
-
-          if (!uuid) {
-            setIsPipelineExecuting(false);
-          }
-        }
-      }
-
-      if (ExecutionStateEnum.BUSY === executionState) {
-        setRunningBlocks((runningBlocksPrevious) => {
-          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2) || !block) {
-            return runningBlocksPrevious;
-          }
-
-          return runningBlocksPrevious.concat(block);
-        });
-      } else if (ExecutionStateEnum.IDLE === executionState) {
-        // @ts-ignore
-        setRunningBlocks((runningBlocksPrevious) =>
-          runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
-        );
-      }
-
-      setPipelineContentTouched(true);
-    }
-  }, [
-    blocks,
-    fetchPipeline,
-    lastMessage,
-  ]);
 
   const executePipeline = useCallback(() => {
     savePipelineContent().then(() => {

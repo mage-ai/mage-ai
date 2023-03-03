@@ -4,8 +4,10 @@ from mage_ai.io.sql import BaseSQL
 from pandas import DataFrame, Series
 from psycopg2 import connect, _psycopg
 from sshtunnel import SSHTunnelForwarder
-import numpy as np
 from typing import Union, IO
+import json
+import numpy as np
+import pandas as pd
 
 
 class Postgres(BaseSQL):
@@ -138,6 +140,29 @@ class Postgres(BaseSQL):
             PandasTypes.UNKNOWN_ARRAY,
             PandasTypes.COMPLEX,
         ):
+            series = column[column.notnull()]
+            values = series.values
+
+            column_type = None
+
+            if len(values) >= 1:
+                value = values[0]
+                column_type = 'JSONB'
+
+                if type(value) is list:
+                    if len(value) >= 1:
+                        item = value[0]
+                        item_series = pd.Series(data=item)
+                        item_dtype = item_series.dtype
+                        if PandasTypes.OBJECT != item_dtype:
+                            item_type = self.get_type(item_series, item_dtype)
+                            column_type = f'{item_type}[]'
+                    else:
+                        column_type = 'text[]'
+
+            if column_type:
+                return column_type
+
             raise BadConversionError(
                 f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to '
                 'a PostgreSQL datatype.'
@@ -180,6 +205,8 @@ class Postgres(BaseSQL):
             return 'bigint'
         elif dtype == PandasTypes.EMPTY:
             return 'text'
+        elif PandasTypes.OBJECT == dtype:
+            return 'JSONB'
         else:
             print(f'Invalid datatype provided: {dtype}')
 
@@ -192,9 +219,24 @@ class Postgres(BaseSQL):
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:
-        columns_names = ', '.join(df.columns)
-        df.to_csv(buffer, index=False, header=False, na_rep='')
+        df_ = df.copy()
+        columns = df_.columns
+
+        for col in columns:
+            print(col, df_[col].dtype)
+            if PandasTypes.OBJECT == df_[col].dtype:
+                df_[col] = df_[col].apply(lambda x: json.dumps(x))
+
+        df_.to_csv(
+            buffer,
+            header=False,
+            index=False,
+            na_rep='',
+        )
+
         buffer.seek(0)
+
+        columns_names = ', '.join(columns)
         cursor.copy_expert(f"""
 COPY {full_table_name} FROM STDIN (
     FORMAT csv
@@ -202,4 +244,4 @@ COPY {full_table_name} FROM STDIN (
     , NULL \'\'
     , FORCE_NULL({columns_names})
 );
-""", buffer)
+    """, buffer)

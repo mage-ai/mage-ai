@@ -134,11 +134,16 @@ function CodeOutput({
     if (DATA_TYPE_TEXTLIKE.includes(last?.type)
       && last?.type === curr.type
       && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
-      ) {
-      last.data += combineTextData(curr.data);
+    ) {
+      if (Array.isArray(last.data)) {
+        last.data.concat(curr.data);
+      } else if (typeof last.data === 'string') {
+        const currentText = combineTextData(curr.data) || '';
+        last.data = [last.data, currentText].join('\n');
+      }
     } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
       && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)
-      ) {
+    ) {
       arr.push({
         ...curr,
         data: combineTextData(curr.data),
@@ -222,13 +227,22 @@ function CodeOutput({
         return;
       }
 
-      let dataArray: string[] = [];
+      let dataArray1: string[] = [];
       if (Array.isArray(dataInit)) {
-        dataArray = dataInit;
+        dataArray1 = dataInit;
       } else {
-        dataArray = [dataInit];
+        dataArray1 = [dataInit];
       }
-      dataArray = dataArray.filter(d => d);
+      dataArray1 = dataArray1.filter(d => d);
+
+      const dataArray = [];
+      dataArray1.forEach((data: string) => {
+        if (data && typeof data === 'string') {
+          const lines = data.split('\n');
+          dataArray.push(...lines);
+        }
+      });
+
       const dataArrayLength = dataArray.length;
 
       const arr = [];
