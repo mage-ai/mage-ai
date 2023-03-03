@@ -135,9 +135,12 @@ class KafkaSource(BaseSource):
             )
 
             message_values = []
+            msg_printed = False
             for tp, messages in msg_pack.items():
                 for message in messages:
-                    self.__print_message(message)
+                    if not msg_printed:
+                        self.__print_message(message)
+                        msg_printed = True
                     message_values.append(self.__deserialize_message(message.value))
             if len(message_values) > 0:
                 handler(message_values)
