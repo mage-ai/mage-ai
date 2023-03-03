@@ -278,7 +278,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         print(
             f'[{block_uuid}] Sending message for {msg_id} to '
-            f'{len(self.clients)} client(s): {message_final}'
+            f'{len(self.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
         )
 
         for client in self.clients:

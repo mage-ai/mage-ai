@@ -6,6 +6,10 @@ import numbers from './samples/numbers';
 import { randomSample } from './array';
 
 export function isJsonString(str) {
+  if (!str) {
+    return false;
+  }
+
   try {
     JSON.parse(str);
   } catch (e) {
