@@ -14,7 +14,6 @@ import Checkbox from '@oracle/elements/Checkbox';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@oracle/components/CodeBlock';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
-import ErrorPopup from '@components/ErrorPopup';
 import EventMatcherType, { PROVIDER_EVENTS } from '@interfaces/EventMatcherType';
 import EventRuleType from '@interfaces/EventRuleType';
 import Divider from '@oracle/elements/Divider';
@@ -1064,8 +1063,10 @@ function Edit({
             },
           },
         ]}
+        errors={errors}
         pageName={PageNameEnum.TRIGGERS}
         pipeline={pipeline}
+        setErrors={setErrors}
         subheader={(
           <FlexContainer alignItems="center">
             <Button
@@ -1178,18 +1179,6 @@ function Edit({
         </Spacing>
 
       </PipelineDetailPage>
-      {errors && (
-        <ClickOutside
-          disableClickOutside
-          isOpen
-          onClickOutside={() => setErrors(null)}
-        >
-          <ErrorPopup
-            {...errors}
-            onClose={() => setErrors(null)}
-          />
-        </ClickOutside>
-      )}
     </>
   );
 }

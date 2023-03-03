@@ -34,6 +34,7 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { dateFormatLong } from '@utils/date';
 import { getFormattedVariables } from '@components/Sidekick/utils';
 import { isEmptyObject } from '@utils/hash';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { useModal } from '@context/Modal';
@@ -48,6 +49,7 @@ function PipelineSchedules({
   pipeline,
 }: PipelineSchedulesProp) {
   const router = useRouter();
+  const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
   const [errors, setErrors] = useState(null);
 
@@ -200,6 +202,7 @@ function PipelineSchedules({
         <KeyboardShortcutButton
           beforeElement={<Add size={2.5 * UNIT} />}
           blackBorder
+          disabled={isViewerRole}
           inline
           loading={isLoadingCreateNewSchedule}
           noHoverUnderline
@@ -233,6 +236,7 @@ function PipelineSchedules({
           >
             <Button
               beforeIcon={<PlayButton inverted size={UNIT * 2} />}
+              disabled={isViewerRole}
               loading={isLoadingCreateOnceSchedule}
               onClick={isEmptyObject(variablesOrig)
                 // @ts-ignore
@@ -241,7 +245,7 @@ function PipelineSchedules({
                 })
                 : showModal}
               outline
-              success
+              success={!isViewerRole}
             >
               Run pipeline now
             </Button>
