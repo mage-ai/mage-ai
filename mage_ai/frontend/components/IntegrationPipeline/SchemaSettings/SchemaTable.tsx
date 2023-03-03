@@ -891,19 +891,20 @@ function SchemaTable({
                         Manually edit bookmark property values
                       </Text>
                       <Text default>
-                        In order to override the bookmark values for the next sync, click the toggle
-                        to edit the values for the bookmark properties in the table below. Click the &#34;Save&#34;
-                        button to save your changes.
+                        In order to override the bookmark values for the next sync, you must first select a destination.
+                        Then click the toggle to edit the values for the bookmark properties in the table below.
+                        Click the &#34;Save&#34; button to save your changes.
                       </Text>
                     </Spacing>
 
                     <ToggleSwitch
                       checked={showBookmarkValuesTable}
+                      disabled={!destination}
                       onCheck={() => setShowBookmarkPropertyTable(prevState => !prevState)}
                     />
                   </FlexContainer>
                 </Spacing>
-                {showBookmarkValuesTable &&
+                {(showBookmarkValuesTable && !!destination) &&
                   <Panel
                     header={
                       <FlexContainer alignItems="center" justifyContent="space-between">
