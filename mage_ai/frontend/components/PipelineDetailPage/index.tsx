@@ -6,8 +6,11 @@ import BackfillGradient from '@oracle/icons/custom/BackfillGradient';
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import ChartGradient from '@oracle/icons/custom/ChartGradient';
+import ClickOutside from '@oracle/components/ClickOutside';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
+import ErrorPopup from '@components/ErrorPopup';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -33,6 +36,7 @@ import {
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
@@ -45,11 +49,13 @@ type PipelineDetailPageProps = {
     pipeline: PipelineType;
   }) => any;
   children: any;
+  errors?: ErrorsType;
   headline?: string;
   pageName: PageNameEnum,
   pipeline: {
     uuid: string;
   };
+  setErrors?: (errors: ErrorsType) => void;
   subheader?: any;
   subheaderBackground?: string;
   subheaderBackgroundImage?: string;
@@ -67,9 +73,11 @@ function PipelineDetailPage({
   breadcrumbs: breadcrumbsProp,
   buildSidekick,
   children,
+  errors,
   headline,
   pageName,
   pipeline: pipelineProp,
+  setErrors,
   subheader,
   subheaderBackground,
   subheaderBackgroundImage,
@@ -101,6 +109,10 @@ function PipelineDetailPage({
           }) => {
             router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -113,6 +125,10 @@ function PipelineDetailPage({
           callback: () => {
             router.push('/pipelines');
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -283,61 +299,78 @@ function PipelineDetailPage({
     });
   }
 
-  // @ts-ignore
-  navigationItems.unshift({
-    Icon: null,
-    IconSelected: null,
-    id: PageNameEnum.EDIT,
-    label: () => 'Edit pipeline',
-    linkProps: {
-      as: `/pipelines/${pipelineUUID}/edit`,
-      href: '/pipelines/[pipeline]/edit',
-    },
-  });
+  if (!isViewer()) {
+    // @ts-ignore
+    navigationItems.unshift({
+      Icon: null,
+      IconSelected: null,
+      id: PageNameEnum.EDIT,
+      label: () => 'Edit pipeline',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/edit`,
+        href: '/pipelines/[pipeline]/edit',
+      },
+    });
+  }
 
   return (
-    <Dashboard
-      after={after}
-      afterHidden={afterHidden}
-      afterWidth={afterWidth}
-      before={before}
-      beforeWidth={beforeWidth}
-      breadcrumbs={breadcrumbs}
-      headerMenuItems={headerMenuItems}
-      navigationItems={navigationItems}
-      subheaderChildren={typeof subheader !== 'undefined' && subheader}
-      title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
-      uuid={uuid}
-    >
-      {(subheaderButton || subheaderText) && (
-        <Spacing
-          mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
-          mt={PADDING_UNITS}
-          mx={PADDING_UNITS}
-        >
-          <BannerStyle background={subheaderBackground} backgroundImage={subheaderBackgroundImage}>
-            <FlexContainer alignItems="center">
-              {subheaderButton}
-              {subheaderText && <Spacing ml={3} />}
-              {subheaderText}
-            </FlexContainer>
-          </BannerStyle>
-        </Spacing>
-      )}
-
-      {headline && (
-        <Spacing p={PADDING_UNITS}>
-          <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-            <Headline level={5}>
-              {headline}
-            </Headline>
-            <Divider light mt={PADDING_UNITS} short />
+    <>
+      <Dashboard
+        after={after}
+        afterHidden={afterHidden}
+        afterWidth={afterWidth}
+        before={before}
+        beforeWidth={beforeWidth}
+        breadcrumbs={breadcrumbs}
+        headerMenuItems={headerMenuItems}
+        navigationItems={navigationItems}
+        subheaderChildren={typeof subheader !== 'undefined' && subheader}
+        title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
+        uuid={uuid}
+      >
+        {(subheaderButton || subheaderText) && (
+          <Spacing
+            mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
+            mt={PADDING_UNITS}
+            mx={PADDING_UNITS}
+          >
+            <BannerStyle background={subheaderBackground} backgroundImage={subheaderBackgroundImage}>
+              <FlexContainer alignItems="center">
+                {subheaderButton}
+                {subheaderText && <Spacing ml={3} />}
+                {subheaderText}
+              </FlexContainer>
+            </BannerStyle>
           </Spacing>
-        </Spacing>
-      )}
+        )}
 
-      {children}
-    </Dashboard>
+        {headline && (
+          <Spacing p={PADDING_UNITS}>
+            <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+              <Headline level={5}>
+                {headline}
+              </Headline>
+              <Divider light mt={PADDING_UNITS} short />
+            </Spacing>
+          </Spacing>
+        )}
+
+        {children}
+      </Dashboard>
+
+      {errors && (
+        <ClickOutside
+          disableClickOutside
+          isOpen
+          onClickOutside={() => setErrors?.(null)}
+        >
+          <ErrorPopup
+            {...errors}
+            onClose={() => setErrors?.(null)}
+          />
+        </ClickOutside>
+      )}
+    </>
   );
 }
 

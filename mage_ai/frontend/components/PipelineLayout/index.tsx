@@ -44,7 +44,7 @@ type PipelineLayoutProps = {
   projectName: string;
   setAfterHidden?: (value: boolean) => void;
   setAfterWidthForChildren?: (width: number) => void;
-  setErrors: (errors: any) => void;
+  setErrors?: (errors: any) => void;
   setMainContainerWidth?: (width: number) => void;
 };
 

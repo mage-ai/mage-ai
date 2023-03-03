@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useMemo,
   useEffect,
   useState,
@@ -9,10 +8,10 @@ import { useRouter } from 'next/router';
 
 import BackfillType from '@interfaces/BackfillType';
 import BackfillsTable from '@components/Backfills/Table';
+import ErrorsType from '@interfaces/ErrorsType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import RowDetail from '@components/Backfills/RowDetail';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -51,6 +50,7 @@ function PipelineBackfills({
   const q = queryFromUrl();
 
   const [selectedRow, setSelectedRow] = useState<BackfillType>(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   useEffect(() => {
     if (q?.backfill_id) {
@@ -125,14 +125,10 @@ function PipelineBackfills({
               `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
             );
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            alert(message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -141,9 +137,10 @@ function PipelineBackfills({
   return (
     <PipelineDetailPage
       breadcrumbs={breadcrumbs}
-      // buildSidekick={buildSidekick}
+      errors={errors}
       pageName={PageNameEnum.BACKFILLS}
       pipeline={pipeline}
+      setErrors={setErrors}
       title={({ name }) => `${name} backfills`}
       uuid={`${PageNameEnum.BACKFILLS}_${pipelineUUID}`}
     >
@@ -170,7 +167,7 @@ function PipelineBackfills({
       {models && models.length === 0 && (
         <Spacing p={PADDING_UNITS}>
           <Text bold default monospace muted>
-            No backfills
+            No backfills available
           </Text>
         </Spacing>
       )}

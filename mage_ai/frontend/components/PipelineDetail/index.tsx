@@ -18,6 +18,7 @@ import BlockType, {
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
 import DataProviderType from '@interfaces/DataProviderType';
+import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
 import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import IntegrationPipeline from '@components/IntegrationPipeline';
@@ -115,10 +116,7 @@ type PipelineDetailProps = {
   }) => Promise<any>;
   selectedBlock: BlockType;
   setAnyInputFocused: (value: boolean) => void;
-  setErrors: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setErrors: (errors: ErrorsType) => void;
   setIntegrationStreams: (streams: string[]) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;

@@ -10,6 +10,7 @@ import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Convert from '@oracle/icons/custom/Convert';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -74,10 +75,7 @@ type CommandButtonsProps = {
     pipeline?: PipelineType;
   }) => Promise<any>;
   setOutputCollapsed: (outputCollapsed: boolean) => void;
-  setErrors: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setErrors: (errors: ErrorsType) => void;
   visible: boolean;
 } & CommandButtonsSharedProps;
 

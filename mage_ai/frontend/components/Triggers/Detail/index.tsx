@@ -55,6 +55,7 @@ import {
 import { convertSeconds } from '../utils';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
@@ -75,6 +76,9 @@ function TriggerDetail({
   variables,
 }: TriggerDetailProps) {
   const router = useRouter();
+  const isViewerRole = isViewer();
+  const [errors, setErrors] = useState(null);
+
   const {
     uuid: pipelineUUID,
   } = pipeline || {};
@@ -168,14 +172,10 @@ function TriggerDetail({
           callback: () => {
             fetchPipelineSchedule();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -514,16 +514,23 @@ function TriggerDetail({
         selectedTab,
         setSelectedTab,
       })}
+      errors={errors}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
+      setErrors={setErrors}
       subheader={(
         <FlexContainer alignItems="center">
           <Button
             beforeIcon={isActive
-              ? <Pause size={2 * UNIT} />
-              : <PlayButtonFilled inverted size={2 * UNIT} />
+              ?
+                <Pause size={2 * UNIT} />
+              :
+                <PlayButtonFilled
+                  inverted={!isViewerRole}
+                  size={2 * UNIT}
+                />
             }
-            danger={isActive}
+            danger={isActive && !isViewerRole}
             loading={isLoadingUpdatePipelineSchedule}
             onClick={(e) => {
               pauseEvent(e);
@@ -531,11 +538,11 @@ function TriggerDetail({
                 id: pipelineScheduleID,
                 status: isActive
                   ? ScheduleStatusEnum.INACTIVE
-                  : ScheduleStatusEnum.ACTIVE
+                  : ScheduleStatusEnum.ACTIVE,
               });
             }}
             outline
-            success={!isActive}
+            success={!isActive && !isViewerRole}
           >
             {isActive
               ? 'Pause trigger'
@@ -545,19 +552,23 @@ function TriggerDetail({
 
           <Spacing mr={PADDING_UNITS} />
 
-          <Button
-            linkProps={{
-              as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}/edit`,
-              href: '/pipelines/[pipeline]/triggers/[...slug]',
-            }}
-            noHoverUnderline
-            outline
-            sameColorAsText
-          >
-            Edit trigger
-          </Button>
+          {!isViewerRole &&
+            <>
+              <Button
+                linkProps={{
+                  as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}/edit`,
+                  href: '/pipelines/[pipeline]/triggers/[...slug]',
+                }}
+                noHoverUnderline
+                outline
+                sameColorAsText
+              >
+                Edit trigger
+              </Button>
 
-          <Spacing mr={PADDING_UNITS} />
+              <Spacing mr={PADDING_UNITS} />
+            </>
+          }
 
           <Select
             compact

@@ -5,6 +5,7 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -22,6 +23,7 @@ import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTC } from '@components/Triggers/utils';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 
 function RetryButton({
@@ -32,6 +34,7 @@ function RetryButton({
   onSuccess: onSuccessProp,
   pipelineRun,
   setCancelingRunId,
+  setErrors,
   setShowConfirmationId,
   showConfirmationId,
 }: {
@@ -42,9 +45,11 @@ function RetryButton({
   onSuccess: () => void;
   pipelineRun: PipelineRunType,
   setCancelingRunId: (id: number) => void;
+  setErrors?: (errors: ErrorsType) => void;
   setShowConfirmationId: (showConfirmationId: number) => void;
   showConfirmationId: number;
 }) {
+  const isViewerRole = isViewer();
   const {
     id: pipelineRunId,
     pipeline_schedule_id: pipelineScheduleId,
@@ -67,14 +72,10 @@ function RetryButton({
           callback: () => {
             onSuccessProp();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -124,7 +125,10 @@ function RetryButton({
             <>
               {RunStatus.COMPLETED === status && <Check size={2 * UNIT} />}
               {[RunStatus.FAILED, RunStatus.CANCELLED].includes(status) && (
-                <PlayButtonFilled inverted={RunStatus.CANCELLED === status} size={2 * UNIT} />
+                <PlayButtonFilled
+                  inverted={RunStatus.CANCELLED === status && !isViewerRole}
+                  size={2 * UNIT}
+                />
               )}
               {[RunStatus.RUNNING].includes(status) && (
                 <Spinner color={isCancelingPipeline ? dark.status.negative : dark.monotone.white} small />
@@ -133,14 +137,14 @@ function RetryButton({
           )
         }
         borderRadius={BORDER_RADIUS_XXXLARGE}
-        danger={RunStatus.FAILED === status}
+        danger={RunStatus.FAILED === status && !isViewerRole}
         default={RunStatus.INITIAL === status}
-        disabled={disabled}
+        disabled={disabled || isViewerRole}
         loading={!pipelineRun}
         onClick={() => setShowConfirmationId(pipelineRunId)}
         padding="6px"
-        primary={RunStatus.RUNNING === status && !isCancelingPipeline}
-        warning={RunStatus.CANCELLED === status}
+        primary={RunStatus.RUNNING === status && !isCancelingPipeline && !isViewerRole}
+        warning={RunStatus.CANCELLED === status && !isViewerRole}
       >
         {disabled
         ? 'Ready'
@@ -216,6 +220,7 @@ type PipelineRunsTableProps = {
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
+  setErrors?: (errors: ErrorsType) => void;
 };
 
 function PipelineRunsTable({
@@ -225,6 +230,7 @@ function PipelineRunsTable({
   onClickRow,
   pipelineRuns,
   selectedRun,
+  setErrors,
 }: PipelineRunsTableProps) {
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
@@ -245,14 +251,12 @@ function PipelineRunsTable({
             setCancelingRunId(null);
             fetchPipelineRuns();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
+          onErrorCallback: (response, errors) => {
             setCancelingRunId(null);
-            console.log(errors, message);
+            setErrors({
+              errors,
+              response,
+            });
           },
         },
       ),
@@ -395,6 +399,7 @@ function PipelineRunsTable({
                     onSuccess={fetchPipelineRuns}
                     pipelineRun={pipelineRun}
                     setCancelingRunId={setCancelingRunId}
+                    setErrors={setErrors}
                     setShowConfirmationId={setShowConfirmationId}
                     showConfirmationId={showConfirmationId}
                   />,

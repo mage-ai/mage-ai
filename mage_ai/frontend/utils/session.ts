@@ -5,7 +5,7 @@ import ls from 'local-storage';
 
 import GroupType from '@interfaces/GroupType';
 import GroupMembershipType from '@interfaces/GroupMembershipType';
-import UserType from '@interfaces/UserType';
+import UserType, { RoleValueEnum } from '@interfaces/UserType';
 import { COOKIE_KEY, SHARED_OPTS } from '@api/utils/token';
 import { SHARED_COOKIE_PROPERTIES } from '@utils/cookies/constants';
 import { resetObjectCounts } from '@storage/localStorage';
@@ -109,6 +109,11 @@ export const isLoggedIn = (ctx: NextPageContext) => {
   const token: string | undefined = cookie[COOKIE_KEY];
   return !!token;
 };
+
+export function isViewer(): boolean {
+  const user = getUser() || {};
+  return user.roles === RoleValueEnum.VIEWER;
+}
 
 export function setWithExpiry(key, value, ttl) {
   const now = new Date();

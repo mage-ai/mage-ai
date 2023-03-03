@@ -34,6 +34,7 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { dateFormatLong } from '@utils/date';
 import { getFormattedVariables } from '@components/Sidekick/utils';
 import { isEmptyObject } from '@utils/hash';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { useModal } from '@context/Modal';
@@ -48,7 +49,9 @@ function PipelineSchedules({
   pipeline,
 }: PipelineSchedulesProp) {
   const router = useRouter();
+  const isViewerRole = isViewer();
   const pipelineUUID = pipeline.uuid;
+  const [errors, setErrors] = useState(null);
 
   const {
     data: dataGlobalVariables,
@@ -73,14 +76,10 @@ function PipelineSchedules({
           }) => {
             onSuccessCallback?.(id);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -158,19 +157,21 @@ function PipelineSchedules({
                 This pipeline has no runtime variables.
               </Text>
 
-              <Spacing mt={1}>
-                <NextLink
-                  as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
-                  href={'/pipelines/[pipeline]/edit'}
-                  passHref
-                >
-                  <Link>
-                    Click here
-                  </Link>
-                </NextLink> <Text inline>
-                  to add variables to this pipeline.
-                </Text>
-              </Spacing>
+              {!isViewerRole &&
+                <Spacing mt={1}>
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
+                    href={'/pipelines/[pipeline]/edit'}
+                    passHref
+                  >
+                    <Link>
+                      Click here
+                    </Link>
+                  </NextLink> <Text inline>
+                    to add variables to this pipeline.
+                  </Text>
+                </Spacing>
+              }
             </Spacing>
           )}
           <DependencyGraph
@@ -194,8 +195,10 @@ function PipelineSchedules({
         },
       ]}
       buildSidekick={buildSidekick}
+      errors={errors}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
+      setErrors={setErrors}
       subheaderBackgroundImage="/images/banner-shape-purple-peach.jpg"
       subheaderButton={
         <KeyboardShortcutButton
@@ -234,6 +237,7 @@ function PipelineSchedules({
           >
             <Button
               beforeIcon={<PlayButton inverted size={UNIT * 2} />}
+              disabled={isViewerRole}
               loading={isLoadingCreateOnceSchedule}
               onClick={isEmptyObject(variablesOrig)
                 // @ts-ignore
@@ -242,7 +246,7 @@ function PipelineSchedules({
                 })
                 : showModal}
               outline
-              success
+              success={!isViewerRole}
             >
               Run pipeline now
             </Button>
@@ -257,6 +261,7 @@ function PipelineSchedules({
         pipeline={pipeline}
         pipelineSchedules={pipelineSchedules}
         selectedSchedule={selectedSchedule}
+        setErrors={setErrors}
         setSelectedSchedule={setSelectedSchedule}
       />
 

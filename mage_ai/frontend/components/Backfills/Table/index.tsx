@@ -12,6 +12,7 @@ import { Edit } from '@oracle/icons';
 import { RunStatus } from '@interfaces/PipelineRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTCString } from '@components/Triggers/utils';
+import { isViewer } from '@utils/session';
 
 type BackfillsTableProps = {
   pipeline: {
@@ -28,6 +29,7 @@ function BackfillsTable({
   pipeline,
   selectedRow,
 }: BackfillsTableProps) {
+  const isViewerRole = isViewer();
   const pipelineUUID = pipeline?.uuid;
   const columnFlex = [null, 1, null, null, null, 1, 1, null];
   const columns: ColumnType[] = [
@@ -52,11 +54,13 @@ function BackfillsTable({
     {
       uuid: 'Completed at',
     },
-    {
+  ];
+  if (!isViewerRole) {
+    columns.push({
       label: () => '',
       uuid: 'edit',
-    },
-  ];
+    });
+  }
 
   return (
     <Table
@@ -107,21 +111,25 @@ function BackfillsTable({
           <Text default key="completed_at" monospace>
             {completedAt ? getTimeInUTCString(completedAt) : '-'}
           </Text>,
-          <Button
-            default
-            disabled={status === RunStatus.COMPLETED}
-            iconOnly
-            key={`${idx}_edit_button`}
-            linkProps={{
-              as: `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
-              href: '/pipelines/[pipeline]/backfills/[...slug]',
-            }}
-            noBackground
-            title="Edit"
-          >
-            <Edit default size={2 * UNIT} />
-          </Button>
         ];
+        if (!isViewerRole) {
+          arr.push(
+            <Button
+              default
+              disabled={status === RunStatus.COMPLETED}
+              iconOnly
+              key={`${idx}_edit_button`}
+              linkProps={{
+                as: `/pipelines/${pipelineUUID}/backfills/${id}/edit`,
+                href: '/pipelines/[pipeline]/backfills/[...slug]',
+              }}
+              noBackground
+              title="Edit"
+            >
+              <Edit default size={2 * UNIT} />
+            </Button>,
+          );
+        }
 
         return arr;
       })}

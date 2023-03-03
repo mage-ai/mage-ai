@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
+import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorPopup from '@components/ErrorPopup';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import Head from '@oracle/elements/Head';
 import Header, { BreadcrumbType, MenuItemType } from '@components/shared/Header';
@@ -34,7 +37,9 @@ export type DashboardSharedProps = {
 type DashboardProps = {
   breadcrumbs?: BreadcrumbType[];
   children?: any;
+  errors?: ErrorsType;
   headerMenuItems?: MenuItemType[];
+  setErrors?: (errors: ErrorsType) => void;
   subheaderChildren?: any;
   title: string;
 } & DashboardSharedProps;
@@ -48,8 +53,10 @@ function Dashboard({
   beforeWidth: beforeWidthProp,
   breadcrumbs: breadcrumbsProp,
   children,
+  errors,
   headerMenuItems,
   navigationItems,
+  setErrors,
   subheaderChildren,
   title,
   uuid,
@@ -195,6 +202,19 @@ function Dashboard({
           </TripleLayout>
         </Flex>
       </ContainerStyle>
+
+      {errors && (
+        <ClickOutside
+          disableClickOutside
+          isOpen
+          onClickOutside={() => setErrors?.(null)}
+        >
+          <ErrorPopup
+            {...errors}
+            onClose={() => setErrors?.(null)}
+          />
+        </ClickOutside>
+      )}
     </>
   );
 }

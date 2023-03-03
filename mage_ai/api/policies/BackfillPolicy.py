@@ -22,7 +22,10 @@ BackfillPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
-BackfillPolicy.allow_read([] + BackfillPresenter.default_attributes, scopes=[
+BackfillPolicy.allow_read([
+    'pipeline_run_dates',
+    'total_run_count',
+] + BackfillPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DETAIL,

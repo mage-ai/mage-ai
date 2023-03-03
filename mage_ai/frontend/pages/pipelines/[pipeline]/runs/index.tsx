@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import Paginate from '@components/shared/Paginate';
@@ -65,6 +66,7 @@ function PipelineRuns({
   pipeline: pipelineProp,
 }: PipelineRunsProp) {
   const router = useRouter();
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [query, setQuery] = useState<{
@@ -168,6 +170,7 @@ function PipelineRuns({
           })}
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
+          setErrors={setErrors}
         />
         <Spacing p={2}>
           <Paginate
@@ -225,8 +228,10 @@ function PipelineRuns({
         })
         : props => buildTableSidekick(props)
       }
+      errors={errors}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
+      setErrors={setErrors}
       title={({ name }) => `${name} runs`}
       uuid={`${PageNameEnum.RUNS}_${pipelineUUID}`}
     >

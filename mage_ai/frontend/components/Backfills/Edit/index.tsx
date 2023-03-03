@@ -17,7 +17,7 @@ import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Divider from '@oracle/elements/Divider';
-import ErrorPopup from '@components/ErrorPopup';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -76,7 +76,7 @@ function BackfillEdit({
     uuid: pipelineUUID,
   } = pipeline;
 
-  const [errors, setErrors] = useState(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [setupType, setSetupType] = useState<string>(
     blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME,
@@ -412,142 +412,129 @@ function BackfillEdit({
   ]);
 
   return (
-    <>
-      <PipelineDetailPage
-        // after={afterMemo}
-        breadcrumbs={[
-          {
-            label: () => 'Backfills',
-            linkProps: {
-              as: `/pipelines/${pipelineUUID}/backfills`,
-              href: '/pipelines/[pipeline]/backfills',
-            },
+    <PipelineDetailPage
+      // after={afterMemo}
+      breadcrumbs={[
+        {
+          label: () => 'Backfills',
+          linkProps: {
+            as: `/pipelines/${pipelineUUID}/backfills`,
+            href: '/pipelines/[pipeline]/backfills',
           },
-          {
-            label: () => model?.name,
-            linkProps: {
-              as: `/pipelines/${pipelineUUID}/backfills/${modelID}`,
+        },
+        {
+          label: () => model?.name,
+          linkProps: {
+            as: `/pipelines/${pipelineUUID}/backfills/${modelID}`,
+            href: '/pipelines/[pipeline]/backfills/[...slug]',
+          },
+        },
+      ]}
+      errors={errors}
+      pageName={PageNameEnum.BACKFILLS}
+      pipeline={pipeline}
+      setErrors={setErrors}
+      subheader={(
+        <FlexContainer alignItems="center">
+          <Button
+            disabled={saveButtonDisabled}
+            loading={isLoadingUpdate}
+            onClick={onSave}
+            outline
+            primary
+          >
+            Save changes
+          </Button>
+
+          <Spacing mr={1} />
+
+          <Button
+            linkProps={{
               href: '/pipelines/[pipeline]/backfills/[...slug]',
-            },
-          },
-        ]}
-        pageName={PageNameEnum.BACKFILLS}
-        pipeline={pipeline}
-        subheader={(
-          <FlexContainer alignItems="center">
-            <Button
-              disabled={saveButtonDisabled}
-              loading={isLoadingUpdate}
-              onClick={onSave}
-              outline
-              primary
-            >
-              Save changes
-            </Button>
-
-            <Spacing mr={1} />
-
-            <Button
-              linkProps={{
-                href: '/pipelines/[pipeline]/backfills/[...slug]',
-                as: `/pipelines/${pipelineUUID}/backfills/${modelID}`,
-              }}
-              noHoverUnderline
-              outline
-              sameColorAsText
-            >
-              Cancel
-            </Button>
-          </FlexContainer>
-        )}
-        title={() => `Edit ${model?.name}`}
-        uuid="backfill/edit"
-      >
-        <Spacing p={PADDING_UNITS}>
-          <Spacing mb={2}>
-            <Headline>
-              Backfill type
-            </Headline>
-
-            <Text muted>
-              How would you like this pipeline to be backfilled?
-            </Text>
-          </Spacing>
-
-          <FlexContainer>
-            {BACKFILL_TYPES.map(({
-              label,
-              description,
-              uuid,
-            }) => {
-              const selected = setupType === uuid;
-              const othersSelected = setupType && !selected;
-
-              return (
-                <Button
-                  key={uuid}
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => {
-                    setSetupType(uuid);
-                  }}
-                >
-                  <CardStyle selected={selected}>
-                    <FlexContainer alignItems="center">
-                      <Flex>
-                        <input checked={selected} type="radio" />
-                      </Flex>
-
-                      <Spacing mr={PADDING_UNITS} />
-
-                      <Flex
-                        alignItems="flex-start"
-                        flexDirection="column"
-                      >
-                        <Headline
-                          bold
-                          default={!selected && !othersSelected}
-                          level={5}
-                          muted={!selected && othersSelected}
-                        >
-                          {label()}
-                        </Headline>
-
-                        <Text
-                          default={!selected && !othersSelected}
-                          leftAligned
-                          muted={othersSelected}
-                        >
-                          {description()}
-                        </Text>
-                      </Flex>
-                    </FlexContainer>
-                  </CardStyle>
-                </Button>
-              );
-            })}
-          </FlexContainer>
-        </Spacing>
-
-        <Spacing mt={5}>
-          {detailsMemo}
-        </Spacing>
-      </PipelineDetailPage>
-
-      {errors && (
-        <ClickOutside
-          disableClickOutside
-          isOpen
-          onClickOutside={() => setErrors(null)}
-        >
-          <ErrorPopup
-            {...errors}
-            onClose={() => setErrors(null)}
-          />
-        </ClickOutside>
+              as: `/pipelines/${pipelineUUID}/backfills/${modelID}`,
+            }}
+            noHoverUnderline
+            outline
+            sameColorAsText
+          >
+            Cancel
+          </Button>
+        </FlexContainer>
       )}
-    </>
+      title={() => `Edit ${model?.name}`}
+      uuid="backfill/edit"
+    >
+      <Spacing p={PADDING_UNITS}>
+        <Spacing mb={2}>
+          <Headline>
+            Backfill type
+          </Headline>
+
+          <Text muted>
+            How would you like this pipeline to be backfilled?
+          </Text>
+        </Spacing>
+
+        <FlexContainer>
+          {BACKFILL_TYPES.map(({
+            label,
+            description,
+            uuid,
+          }) => {
+            const selected = setupType === uuid;
+            const othersSelected = setupType && !selected;
+
+            return (
+              <Button
+                key={uuid}
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => {
+                  setSetupType(uuid);
+                }}
+              >
+                <CardStyle selected={selected}>
+                  <FlexContainer alignItems="center">
+                    <Flex>
+                      <input checked={selected} type="radio" />
+                    </Flex>
+
+                    <Spacing mr={PADDING_UNITS} />
+
+                    <Flex
+                      alignItems="flex-start"
+                      flexDirection="column"
+                    >
+                      <Headline
+                        bold
+                        default={!selected && !othersSelected}
+                        level={5}
+                        muted={!selected && othersSelected}
+                      >
+                        {label()}
+                      </Headline>
+
+                      <Text
+                        default={!selected && !othersSelected}
+                        leftAligned
+                        muted={othersSelected}
+                      >
+                        {description()}
+                      </Text>
+                    </Flex>
+                  </FlexContainer>
+                </CardStyle>
+              </Button>
+            );
+          })}
+        </FlexContainer>
+      </Spacing>
+
+      <Spacing mt={5}>
+        {detailsMemo}
+      </Spacing>
+    </PipelineDetailPage>
   );
 }
 

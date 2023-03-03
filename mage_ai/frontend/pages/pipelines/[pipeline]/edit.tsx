@@ -465,14 +465,10 @@ function PipelineDetailPage({
             router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
             fetchFileTree();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -763,7 +759,7 @@ function PipelineDetailPage({
             });
             setMessages(messagesPrev => ({
               ...messagesPrev,
-              [urlParameters.block_uuid]: messages.map(msg => ({
+              [urlParameters?.block_uuid]: messages.map(msg => ({
                 data: `${msg}\n`,
                 error: `${msg}\n`,
                 type: DataTypeEnum.TEXT_PLAIN,

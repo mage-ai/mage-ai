@@ -11,6 +11,7 @@ import { useMutation } from 'react-query';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
@@ -59,10 +60,7 @@ type KernelStatusProps = {
   restartKernel: () => void;
   savePipelineContent: () => void;
   selectedFilePath?: string;
-  setErrors: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setErrors: (errors: ErrorsType) => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 

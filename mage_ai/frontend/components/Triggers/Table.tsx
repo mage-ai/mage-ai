@@ -27,6 +27,7 @@ import {
 } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
@@ -38,6 +39,7 @@ type TriggersTableProps = {
   pipeline?: PipelineType;
   pipelineSchedules: PipelineScheduleType[];
   selectedSchedule?: PipelineScheduleType;
+  setErrors?: (errors: any) => void;
   setSelectedSchedule?: (schedule: PipelineScheduleType) => void;
   stickyHeader?: boolean;
 };
@@ -50,6 +52,7 @@ function TriggersTable({
   pipeline,
   pipelineSchedules,
   selectedSchedule,
+  setErrors,
   setSelectedSchedule,
   stickyHeader,
 }: TriggersTableProps) {
@@ -71,14 +74,10 @@ function TriggersTable({
           callback: () => {
             fetchPipelineSchedules();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -100,6 +99,10 @@ function TriggersTable({
               fetchPipelineSchedules();
             }
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -131,11 +134,14 @@ function TriggersTable({
     {
       uuid: 'Logs',
     },
-    {
+  ];
+
+  if (!isViewer()) {
+    columns.push({
       label: () => '',
       uuid: 'edit/delete',
-    },
-  ];
+    });
+  }
 
   const columnFlex = [null, 1, 1, 3, 1, null, null, null, null];
 
@@ -262,50 +268,55 @@ function TriggersTable({
                 >
                   <TodoList default size={2 * UNIT} />
                 </Button>,
-                <FlexContainer key={`edit_delete_buttons_${idx}`}>
-                  <Button
-                    default
-                    iconOnly
-                    noBackground
-                    onClick={() => router.push(`/pipelines/${finalPipelineUUID}/triggers/${id}/edit`)}
-                    title="Edit"
-                  >
-                    <Edit default size={2 * UNIT} />
-                  </Button>
-                  <Spacing mr={1} />
-                  <Button
-                    default
-                    iconOnly
-                    noBackground
-                    onClick={() => {
-                      setDeleteConfirmationOpenIdx(id);
-                      setConfirmDialogueTopOffset(deleteButtonRefs.current[id]?.current?.offsetTop || 0);
-                      setConfirmDialogueLeftOffset(deleteButtonRefs.current[id]?.current?.offsetLeft || 0);
-                    }}
-                    ref={deleteButtonRefs.current[id]}
-                    title="Delete"
-                  >
-                    <Trash default size={2 * UNIT} />
-                  </Button>
-                  <ClickOutside
-                    onClickOutside={() => setDeleteConfirmationOpenIdx(null)}
-                    open={deleteConfirmationOpenIdx === id}
-                  >
-                    <PopupMenu
-                      danger
-                      left={(confirmDialogueLeftOffset || 0) - 286}
-                      onCancel={() => setDeleteConfirmationOpenIdx(null)}
-                      onClick={() => {
-                        setDeleteConfirmationOpenIdx(null);
-                        deletePipelineTrigger(id);
-                      }}
-                      title={`Are you sure you want to delete the trigger ${name}?`}
-                      top={(confirmDialogueTopOffset || 0) - (idx <= 1 ? 40 : 96)}
-                      width={UNIT * 40}
-                    />
-                  </ClickOutside>
-                </FlexContainer>,
               ];
+
+              if (!isViewer()) {
+                rows.push(
+                  <FlexContainer key={`edit_delete_buttons_${idx}`}>
+                    <Button
+                      default
+                      iconOnly
+                      noBackground
+                      onClick={() => router.push(`/pipelines/${finalPipelineUUID}/triggers/${id}/edit`)}
+                      title="Edit"
+                    >
+                      <Edit default size={2 * UNIT} />
+                    </Button>
+                    <Spacing mr={1} />
+                    <Button
+                      default
+                      iconOnly
+                      noBackground
+                      onClick={() => {
+                        setDeleteConfirmationOpenIdx(id);
+                        setConfirmDialogueTopOffset(deleteButtonRefs.current[id]?.current?.offsetTop || 0);
+                        setConfirmDialogueLeftOffset(deleteButtonRefs.current[id]?.current?.offsetLeft || 0);
+                      }}
+                      ref={deleteButtonRefs.current[id]}
+                      title="Delete"
+                    >
+                      <Trash default size={2 * UNIT} />
+                    </Button>
+                    <ClickOutside
+                      onClickOutside={() => setDeleteConfirmationOpenIdx(null)}
+                      open={deleteConfirmationOpenIdx === id}
+                    >
+                      <PopupMenu
+                        danger
+                        left={(confirmDialogueLeftOffset || 0) - 286}
+                        onCancel={() => setDeleteConfirmationOpenIdx(null)}
+                        onClick={() => {
+                          setDeleteConfirmationOpenIdx(null);
+                          deletePipelineTrigger(id);
+                        }}
+                        title={`Are you sure you want to delete the trigger ${name}?`}
+                        top={(confirmDialogueTopOffset || 0) - (idx <= 1 ? 40 : 96)}
+                        width={UNIT * 40}
+                      />
+                    </ClickOutside>
+                  </FlexContainer>,
+                );
+              }
 
               if (includePipelineColumn) {
                 rows.splice(

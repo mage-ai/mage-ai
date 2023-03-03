@@ -12,6 +12,7 @@ import Button from '@oracle/elements/Button';
 import Charts, { ChartsPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -81,10 +82,7 @@ export type SidekickProps = {
   secrets: SecretType[];
   selectedBlock: BlockType;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
-  setErrors: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
 } & SetEditingBlockType & ChartsPropsShared;
 
