@@ -175,6 +175,7 @@ export default interface BlockType {
 }
 
 export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
+  BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.TRANSFORMER,
 ];

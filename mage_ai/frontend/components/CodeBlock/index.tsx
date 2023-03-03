@@ -1614,6 +1614,7 @@ function CodeBlockProps({
                       {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
                       {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
                       {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
+                      {BlockTypeEnum.CUSTOM === block.type && '@custom'}
                     </Text>
                     <Text monospace muted small>
                       def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
