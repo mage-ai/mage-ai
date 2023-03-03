@@ -9,24 +9,17 @@ import {
   CloseButtonContainerStyle,
   ErrorPopupStyle,
 } from './index.style';
+import { ErrorType, ErrorResponseType } from '@interfaces/ErrorsType';
 
 type ErrorPopupProps = {
   displayMessage?: string;
-  errors?: {
-    messages: string[];
-  };
+  errors?: ErrorType;
   links?: {
     label: string;
     onClick: () => void;
   }[];
   onClose?: () => void;
-  response?: {
-    error: {
-      errors: string[];
-      exception: string;
-      message: string;
-    };
-  };
+  response?: ErrorResponseType;
 };
 
 function ErrorPopup({

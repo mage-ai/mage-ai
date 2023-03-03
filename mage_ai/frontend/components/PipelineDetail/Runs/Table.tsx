@@ -49,6 +49,7 @@ function RetryButton({
   setShowConfirmationId: (showConfirmationId: number) => void;
   showConfirmationId: number;
 }) {
+  const isViewerRole = isViewer();
   const {
     id: pipelineRunId,
     pipeline_schedule_id: pipelineScheduleId,
@@ -124,7 +125,10 @@ function RetryButton({
             <>
               {RunStatus.COMPLETED === status && <Check size={2 * UNIT} />}
               {[RunStatus.FAILED, RunStatus.CANCELLED].includes(status) && (
-                <PlayButtonFilled inverted={RunStatus.CANCELLED === status} size={2 * UNIT} />
+                <PlayButtonFilled
+                  inverted={RunStatus.CANCELLED === status && !isViewerRole}
+                  size={2 * UNIT}
+                />
               )}
               {[RunStatus.RUNNING].includes(status) && (
                 <Spinner color={isCancelingPipeline ? dark.status.negative : dark.monotone.white} small />
@@ -133,14 +137,14 @@ function RetryButton({
           )
         }
         borderRadius={BORDER_RADIUS_XXXLARGE}
-        danger={RunStatus.FAILED === status}
+        danger={RunStatus.FAILED === status && !isViewerRole}
         default={RunStatus.INITIAL === status}
-        disabled={disabled || isViewer()}
+        disabled={disabled || isViewerRole}
         loading={!pipelineRun}
         onClick={() => setShowConfirmationId(pipelineRunId)}
         padding="6px"
-        primary={RunStatus.RUNNING === status && !isCancelingPipeline}
-        warning={RunStatus.CANCELLED === status}
+        primary={RunStatus.RUNNING === status && !isCancelingPipeline && !isViewerRole}
+        warning={RunStatus.CANCELLED === status && !isViewerRole}
       >
         {disabled
         ? 'Ready'

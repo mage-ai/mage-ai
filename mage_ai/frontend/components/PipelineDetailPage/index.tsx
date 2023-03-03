@@ -354,11 +354,11 @@ function PipelineDetailPage({
         <ClickOutside
           disableClickOutside
           isOpen
-          onClickOutside={() => setErrors(null)}
+          onClickOutside={() => setErrors?.(null)}
         >
           <ErrorPopup
             {...errors}
-            onClose={() => setErrors(null)}
+            onClose={() => setErrors?.(null)}
           />
         </ClickOutside>
       )}

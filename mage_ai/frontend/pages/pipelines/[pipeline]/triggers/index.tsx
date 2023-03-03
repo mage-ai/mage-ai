@@ -157,19 +157,21 @@ function PipelineSchedules({
                 This pipeline has no runtime variables.
               </Text>
 
-              <Spacing mt={1}>
-                <NextLink
-                  as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
-                  href={'/pipelines/[pipeline]/edit'}
-                  passHref
-                >
-                  <Link>
-                    Click here
-                  </Link>
-                </NextLink> <Text inline>
-                  to add variables to this pipeline.
-                </Text>
-              </Spacing>
+              {!isViewerRole &&
+                <Spacing mt={1}>
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
+                    href={'/pipelines/[pipeline]/edit'}
+                    passHref
+                  >
+                    <Link>
+                      Click here
+                    </Link>
+                  </NextLink> <Text inline>
+                    to add variables to this pipeline.
+                  </Text>
+                </Spacing>
+              }
             </Spacing>
           )}
           <DependencyGraph
