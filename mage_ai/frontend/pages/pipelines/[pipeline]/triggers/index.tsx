@@ -204,7 +204,6 @@ function PipelineSchedules({
         <KeyboardShortcutButton
           beforeElement={<Add size={2.5 * UNIT} />}
           blackBorder
-          disabled={isViewerRole}
           inline
           loading={isLoadingCreateNewSchedule}
           noHoverUnderline

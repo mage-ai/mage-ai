@@ -522,11 +522,15 @@ function TriggerDetail({
         <FlexContainer alignItems="center">
           <Button
             beforeIcon={isActive
-              ? <Pause size={2 * UNIT} />
-              : <PlayButtonFilled inverted size={2 * UNIT} />
+              ?
+                <Pause size={2 * UNIT} />
+              :
+                <PlayButtonFilled
+                  inverted={!isViewerRole}
+                  size={2 * UNIT}
+                />
             }
             danger={isActive && !isViewerRole}
-            disabled={isViewerRole}
             loading={isLoadingUpdatePipelineSchedule}
             onClick={(e) => {
               pauseEvent(e);
@@ -534,7 +538,7 @@ function TriggerDetail({
                 id: pipelineScheduleID,
                 status: isActive
                   ? ScheduleStatusEnum.INACTIVE
-                  : ScheduleStatusEnum.ACTIVE
+                  : ScheduleStatusEnum.ACTIVE,
               });
             }}
             outline
