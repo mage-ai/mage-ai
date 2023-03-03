@@ -9,6 +9,7 @@ const WIDTH = 46;
 
 type ToggleSwitchProps = {
   checked: boolean;
+  disabled?: boolean;
   onCheck: Dispatch<SetStateAction<boolean>>;
 } & InputWrapperProps;
 
@@ -68,31 +69,35 @@ const ToggleSwitchStyle = styled.label<InputWrapperProps>`
 
 const ToggleSwitch = ({
   checked,
+  disabled,
   onCheck,
   ...props
-}: ToggleSwitchProps, ref) => {
-  return (
-    <InputWrapper
-      {...props}
-      input={
-        <ToggleSwitchStyle
-          {...props}
-          noBackground
-          noBorder
-        >
-          <input
-            checked={checked}
-            type="checkbox"
-          />
-          <span
-            onClick={() => onCheck(value => !value)}
-          />
-        </ToggleSwitchStyle>
-      }
-      noBackground
-      ref={ref}
-    />
-  );
-};
+}: ToggleSwitchProps, ref) => (
+  <InputWrapper
+    {...props}
+    disabled={disabled}
+    input={
+      <ToggleSwitchStyle
+        {...props}
+        disabled={disabled}
+        noBackground
+        noBorder
+      >
+        <input
+          checked={checked}
+          type="checkbox"
+        />
+        <span
+          onClick={disabled
+            ? null
+            : () => onCheck?.(value => !value)
+          }
+        />
+      </ToggleSwitchStyle>
+    }
+    noBackground
+    ref={ref}
+  />
+);
 
 export default React.forwardRef(ToggleSwitch);
