@@ -6,10 +6,10 @@ import BackfillType, {
   BACKFILL_TYPE_CODE,
   BACKFILL_TYPE_DATETIME,
   BackfillStatusEnum,
-  INTERVAL_TYPES,
 } from '@interfaces/BackfillType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Paginate from '@components/shared/Paginate';
@@ -52,6 +52,7 @@ import {
 } from '@components/Sidekick/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
@@ -71,6 +72,7 @@ function BackfillDetail({
   pipeline,
   variables,
 }: BackfillDetailProps) {
+  const isViewerRole = isViewer();
   const router = useRouter();
   const {
     block_uuid: blockUUID,
@@ -90,6 +92,7 @@ function BackfillDetail({
   } = pipeline;
 
   const q = queryFromUrl();
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     _limit: LIMIT,
@@ -190,7 +193,10 @@ function BackfillDetail({
             fetchBackfill();
             fetchPipelineRuns();
           },
-          onErrorCallback: (response, errors) => console.log(errors, response),
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -488,8 +494,10 @@ function BackfillDetail({
           selectedTab,
           setSelectedTab,
         })}
+        errors={errors}
         pageName={PageNameEnum.BACKFILLS}
         pipeline={pipeline}
+        setErrors={setErrors}
         subheader={(
           <FlexContainer alignItems="center">
             {!cannotStartOrCancel && (
@@ -533,26 +541,30 @@ function BackfillDetail({
               </>
             )}
 
-            {status === RunStatus.COMPLETED
-              ?
-                <Text bold default large>
-                  Filter runs by status:
-                </Text>
-              :
-                <Button
-                  linkProps={{
-                    as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
-                    href: '/pipelines/[pipeline]/backfills/[...slug]',
-                  }}
-                  noHoverUnderline
-                  outline
-                  sameColorAsText
-                >
-                  Edit backfill
-                </Button>
-            }
+            {!isViewerRole &&
+              <>
+                {status === RunStatus.COMPLETED
+                  ?
+                    <Text bold default large>
+                      Filter runs by status:
+                    </Text>
+                  :
+                    <Button
+                      linkProps={{
+                        as: `/pipelines/${pipelineUUID}/backfills/${modelID}/edit`,
+                        href: '/pipelines/[pipeline]/backfills/[...slug]',
+                      }}
+                      noHoverUnderline
+                      outline
+                      sameColorAsText
+                    >
+                      Edit backfill
+                    </Button>
+                }
 
-            <Spacing mr={PADDING_UNITS} />
+                <Spacing mr={PADDING_UNITS} />
+              </>
+            }
 
             {!showPreviewRuns &&
               <Select
