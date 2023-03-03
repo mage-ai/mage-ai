@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -27,6 +28,7 @@ function PipelineListPage() {
     [uuid: string]: boolean;
   }>({});
   const [newPipelineMenuOpen, setNewPipelineMenuOpen] = useState(false);
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const newPipelineMenuRef = useRef(null);
 
   const { data, mutate: fetchPipelines } = api.pipelines.list({ include_schedules: 1 });
@@ -46,14 +48,10 @@ function PipelineListPage() {
           }) => {
             router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -76,14 +74,10 @@ function PipelineListPage() {
             }));
             fetchPipelines();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -91,6 +85,8 @@ function PipelineListPage() {
 
   return (
     <Dashboard
+      errors={errors}
+      setErrors={setErrors}
       subheaderChildren={
         <FlyoutMenuWrapper
           disableKeyboardShortcuts
