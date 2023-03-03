@@ -30,13 +30,24 @@ class BlockPresenter(BasePresenter):
         if display_format in [constants.CREATE, constants.UPDATE]:
             return self.model.to_dict(include_content=True)
         elif display_format in [constants.DETAIL, 'dbt']:
-            include_outputs = kwargs.get('query', {}).get('include_outputs', [True])
+            query = kwargs.get('query', {})
+
+            include_outputs = query.get('include_outputs', [True])
             if include_outputs:
                 include_outputs = include_outputs[0]
 
+            state_stream = query.get('state_stream', [None])
+            if state_stream:
+                state_stream = state_stream[0]
+            destination_table = query.get('destination_table', [None])
+            if destination_table:
+                destination_table = destination_table[0]
+
             data = self.model.to_dict(
+                destination_table=destination_table,
                 include_content=True,
                 include_outputs=include_outputs,
+                state_stream=state_stream,
             )
 
             if 'dbt' == display_format:

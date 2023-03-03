@@ -38,6 +38,7 @@ BlockPolicy.allow_read(BlockPresenter.default_attributes + [], scopes=[
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 BlockPolicy.allow_read([
+    'bookmarks',
     'content',
     'outputs',
 ] + BlockPresenter.default_attributes, scopes=[
@@ -68,9 +69,11 @@ BlockPolicy.allow_write([
 
 BlockPolicy.allow_write([
     'all_upstream_blocks_executed',
+    'bookmark_values',
     'color',
     'configuration',
     'content',
+    'destination_table',
     'downstream_blocks',
     'executor_config',
     'executor_type',
@@ -80,6 +83,7 @@ BlockPolicy.allow_write([
     'name',
     'outputs',
     'status',
+    'tap_stream_id',
     'type',
     'upstream_blocks',
     'uuid',
@@ -88,3 +92,12 @@ BlockPolicy.allow_write([
 ], on_action=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
+
+BlockPolicy.allow_query([
+    'destination_table',
+    'state_stream',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())

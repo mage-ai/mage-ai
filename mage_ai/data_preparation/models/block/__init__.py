@@ -1263,6 +1263,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         include_outputs=False,
         sample_count=None,
         check_if_file_exists: bool = False,
+        **kwargs,
     ):
         data = self.to_dict_base()
         if include_content:
@@ -1280,6 +1281,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                         'Delete the current block to remove it from the pipeline or write code ' +
                         f'and save the pipeline to create a new file at {file_path}.',
                     )
+
         return data
 
     async def to_dict_async(
@@ -1314,7 +1316,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         return data
 
-    def update(self, data):
+    def update(self, data, **kwargs):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
         if (
@@ -1338,6 +1340,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if self.has_callback:
                 CallbackBlock.create(self.uuid)
             self.__update_pipeline_block()
+
         return self
 
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:

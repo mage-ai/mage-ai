@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -17,6 +18,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Tooltip from '@oracle/components/Tooltip';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -25,7 +27,6 @@ import {
   ColumnFormatEnum,
   ColumnFormatMapping,
   ColumnTypeEnum,
-  InclusionEnum,
   IntegrationDestinationEnum,
   IntegrationSourceEnum,
   MetadataKeyEnum,
@@ -38,18 +39,22 @@ import {
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove, sortTuplesArrayByFirstItem } from '@utils/array';
+import { isEmptyObject, isEqual } from '@utils/hash';
 import { pluralize } from '@utils/string';
 
 const SPACING_BOTTOM_UNITS = 5;
 const TOOLTIP_LEFT_SPACING = '4px';
 
 export type SchemaTableProps = {
+  bookmarkValues?: { [key: string]: any };
   destination: IntegrationDestinationEnum;
   isLoadingLoadSampleData: boolean;
+  isLoadingUpdateDestinationBlockState?: boolean;
   loadSampleData: (stream: string) => void;
   source: IntegrationSourceEnum;
   streams?: StreamType[];
   updateAllStreams: (streamDataTransformer: (stream: StreamType) => StreamType) => void;
+  updateDestinationBlockState?: (payload: any) => void;
   updateMetadataForColumns: (
     streamUUID: string,
     columnNames: string[],
@@ -76,13 +81,16 @@ const PARTITION_KEY_DESTINATIONS = [
 ];
 
 function SchemaTable({
+  bookmarkValues: bookmarkValuesInit,
   destination,
   isLoadingLoadSampleData,
+  isLoadingUpdateDestinationBlockState,
   loadSampleData,
   source,
   stream,
   streams,
   updateAllStreams,
+  updateDestinationBlockState,
   updateMetadataForColumns,
   updateSchemaProperty,
   updateStream,
@@ -107,6 +115,8 @@ function SchemaTable({
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
   const [isApplyingToAllStreams, setIsApplyingToAllStreams] = useState<boolean>(false);
   const [isApplyingToAllStreamsIdx, setIsApplyingToAllStreamsIdx] = useState<number>(null);
+  const [showBookmarkValuesTable, setShowBookmarkPropertyTable] = useState<boolean>(false);
+  const [bookmarkValues, setBookmarkValues] = useState({ [streamUUID]: bookmarkValuesInit || {} });
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
@@ -122,6 +132,21 @@ function SchemaTable({
     uniqueConflictMethod,
   ]);
 
+  useEffect(() => {
+    const bookmmarkValuesFromState = bookmarkValues?.[streamUUID];
+    if (bookmarkProperties?.length > 0
+      && (
+        isEmptyObject(bookmmarkValuesFromState)
+        || !isEqual(bookmarkValuesInit, bookmmarkValuesFromState)
+      )
+    ) {
+      setBookmarkValues(prev => ({
+        ...prev,
+        [streamUUID]: bookmarkValuesInit,
+      }));
+    }
+  }, [bookmarkProperties?.length, bookmarkValuesInit, streamUUID]);
+
   const metadataByColumn = useMemo(() => indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/')), [
     metadata,
   ]);
@@ -136,6 +161,26 @@ function SchemaTable({
 
   const showPartitionKey = PARTITION_KEY_DESTINATIONS.includes(destination);
   const hasMultipleStreams = streams.length > 1;
+
+  const removeBookmarkPropertyFromState = useCallback((column) => {
+    const updatedBookmarkValues = { ...bookmarkValues?.[streamUUID] };
+    if (updatedBookmarkValues.hasOwnProperty(column)) {
+      delete updatedBookmarkValues[column];
+    }
+    setBookmarkValues(prev => ({
+      ...prev,
+      [streamUUID]: {
+        ...updatedBookmarkValues,
+      },
+    }));
+    updateDestinationBlockState({
+      block: {
+        bookmark_values: updatedBookmarkValues,
+        destination_table: destinationTable,
+        tap_stream_id: streamUUID,
+      },
+    });
+  }, [bookmarkValues, destinationTable, streamUUID, updateDestinationBlockState]);
 
   const tableMemo = useMemo(() => {
     const selectedArr = [];
@@ -320,6 +365,7 @@ function SchemaTable({
             ? null
             : () => updateStream(streamUUID, (stream: StreamType) => {
             if (stream.bookmark_properties?.includes(columnName)) {
+              removeBookmarkPropertyFromState(columnName);
               stream.bookmark_properties =
                 remove(stream.bookmark_properties, col => columnName === col);
             } else {
@@ -821,6 +867,7 @@ function SchemaTable({
                   <Chip
                     label={columnName}
                     onClick={() => {
+                      removeBookmarkPropertyFromState(columnName);
                       updateStream(streamUUID, (stream: StreamType) => ({
                         ...stream,
                         bookmark_properties: remove(
@@ -834,6 +881,101 @@ function SchemaTable({
                 </Spacing>
               ))}
             </FlexContainer>
+
+            {bookmarkProperties?.length > 0 &&
+              <>
+                <Spacing my={2}>
+                  <FlexContainer alignItems="center" justifyContent="space-between">
+                    <Spacing mr={2}>
+                      <Text bold large>
+                        Manually edit bookmark property values
+                      </Text>
+                      <Text default>
+                        In order to override the bookmark values for the next sync, click the toggle
+                        to edit the values for the bookmark properties in the table below. Click the &#34;Save&#34;
+                        button to save your changes.
+                      </Text>
+                    </Spacing>
+
+                    <ToggleSwitch
+                      checked={showBookmarkValuesTable}
+                      onCheck={() => setShowBookmarkPropertyTable(prevState => !prevState)}
+                    />
+                  </FlexContainer>
+                </Spacing>
+                {showBookmarkValuesTable &&
+                  <Panel
+                    header={
+                      <FlexContainer alignItems="center" justifyContent="space-between">
+                        <Text bold default>
+                          Bookmark property values
+                        </Text>
+                        <Button
+                          compact
+                          loading={isLoadingUpdateDestinationBlockState}
+                          onClick={() => {
+                            updateDestinationBlockState({
+                              block: {
+                                bookmark_values: bookmarkValues?.[streamUUID] || {},
+                                destination_table: destinationTable,
+                                tap_stream_id: streamUUID,
+                              },
+                            });
+                          }}
+                          pill
+                          secondary
+                        >
+                          Save
+                        </Button>
+                      </FlexContainer>
+                    }
+                    headerPaddingVertical={UNIT}
+                    noPadding
+                    overflowVisible
+                  >
+                    <Table
+                      columnBorders
+                      columnFlex={[null, 1]}
+                      columns={[
+                        {
+                          uuid: 'Bookmark property',
+                        },
+                        {
+                          uuid: 'Value',
+                        },
+                      ]}
+                      rows={bookmarkProperties.map(bookmarkProperty => [
+                        <Text
+                          default
+                          key={bookmarkProperty}
+                          monospace
+                        >
+                          {bookmarkProperty}
+                        </Text>,
+                        <TextInput
+                          borderless
+                          key={`${bookmarkProperty}_value`}
+                          monospace
+                          onChange={(e) => {
+                            e.preventDefault();
+                            setBookmarkValues(prev => ({
+                              ...prev,
+                              [streamUUID]: {
+                                ...prev[streamUUID],
+                                [bookmarkProperty]: e.target.value,
+                              },
+                            }));
+                          }}
+                          paddingHorizontal={0}
+                          placeholder="Enter value"
+                          value={bookmarkValues?.[streamUUID]?.[bookmarkProperty]}
+                        />,
+                      ])}
+                    />
+                  </Panel>
+                }
+              </>
+            }
           </Spacing>
         )}
 

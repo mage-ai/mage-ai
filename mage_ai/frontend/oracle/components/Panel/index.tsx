@@ -13,7 +13,7 @@ const HEADER_PADDING_Y_UNITS = 1.5;
 const PADDING_UNITS = 1.75;
 
 const HEADER_STYLES = css`
-  padding: ${PADDING_UNITS * UNIT}px;
+  padding: ${2 * UNIT}px;
   padding-bottom: ${HEADER_PADDING_Y_UNITS * UNIT}px;
   padding-top: ${HEADER_PADDING_Y_UNITS * UNIT}px;
 `;
@@ -59,7 +59,10 @@ const PanelStyle = styled.div<{
   `}
 `;
 
-const HeaderStyle = styled.div<any>`
+const HeaderStyle = styled.div<{
+  height?: number;
+  headerPaddingVertical?: number;
+}>`
   border-top-left-radius: ${BORDER_RADIUS}px;
   border-top-right-radius: ${BORDER_RADIUS}px;
 
@@ -73,6 +76,11 @@ const HeaderStyle = styled.div<any>`
   `}
 
   ${HEADER_STYLES}
+
+  ${props => props.headerPaddingVertical && `
+    padding-bottom: ${props.headerPaddingVertical}px;
+    padding-top: ${props.headerPaddingVertical}px;
+  `}
 `;
 
 const ContentStyle = styled.div<any>`
@@ -112,6 +120,7 @@ export type PanelProps = {
   header?: JSX.Element;
   headerHeight?: number;
   headerIcon?: JSX.Element;
+  headerPaddingVertical?: number;
   headerTitle?: string;
   maxHeight?: string;
   footer?: JSX.Element;
@@ -132,6 +141,7 @@ function Panel({
   header,
   headerHeight,
   headerIcon,
+  headerPaddingVertical,
   headerTitle,
   maxHeight,
   noPadding,
@@ -149,7 +159,10 @@ function Panel({
       ref={containerRef}
     >
       {(header || headerTitle) &&
-        <HeaderStyle height={headerHeight}>
+        <HeaderStyle
+          headerPaddingVertical={headerPaddingVertical}
+          height={headerHeight}
+        >
           {header && header}
           {headerTitle &&
             <FlexContainer alignItems="center" justifyContent="space-between">

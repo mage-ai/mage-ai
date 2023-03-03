@@ -42,7 +42,6 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { find, indexBy } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
-import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
@@ -473,14 +472,10 @@ function IntegrationPipeline({
           callback: () => {
             fetchPipeline?.();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -794,6 +789,8 @@ function IntegrationPipeline({
                     streams: [stream],
                   },
                 })}
+                pipeline={pipeline}
+                setErrors={setErrors}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
                 updateAllStreams={updateAllStreams}

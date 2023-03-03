@@ -119,7 +119,7 @@ def update_source_state_from_destination_state(
     """
         absolute_path_to_source_state:
             must be path to JSON file
-        absolute_path_to_source_state:
+        absolute_path_to_destination_state:
             must be path to text-like file
     """
     destination_state = None
