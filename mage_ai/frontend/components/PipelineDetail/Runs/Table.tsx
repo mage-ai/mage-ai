@@ -5,6 +5,7 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -22,6 +23,7 @@ import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTC } from '@components/Triggers/utils';
+import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 
 function RetryButton({
@@ -32,6 +34,7 @@ function RetryButton({
   onSuccess: onSuccessProp,
   pipelineRun,
   setCancelingRunId,
+  setErrors,
   setShowConfirmationId,
   showConfirmationId,
 }: {
@@ -42,6 +45,7 @@ function RetryButton({
   onSuccess: () => void;
   pipelineRun: PipelineRunType,
   setCancelingRunId: (id: number) => void;
+  setErrors?: (errors: ErrorsType) => void;
   setShowConfirmationId: (showConfirmationId: number) => void;
   showConfirmationId: number;
 }) {
@@ -67,14 +71,10 @@ function RetryButton({
           callback: () => {
             onSuccessProp();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -135,7 +135,7 @@ function RetryButton({
         borderRadius={BORDER_RADIUS_XXXLARGE}
         danger={RunStatus.FAILED === status}
         default={RunStatus.INITIAL === status}
-        disabled={disabled}
+        disabled={disabled || isViewer()}
         loading={!pipelineRun}
         onClick={() => setShowConfirmationId(pipelineRunId)}
         padding="6px"
@@ -216,6 +216,7 @@ type PipelineRunsTableProps = {
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
+  setErrors?: (errors: ErrorsType) => void;
 };
 
 function PipelineRunsTable({
@@ -225,6 +226,7 @@ function PipelineRunsTable({
   onClickRow,
   pipelineRuns,
   selectedRun,
+  setErrors,
 }: PipelineRunsTableProps) {
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
   const [showConfirmationId, setShowConfirmationId] = useState<number>(null);
@@ -245,14 +247,12 @@ function PipelineRunsTable({
             setCancelingRunId(null);
             fetchPipelineRuns();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
+          onErrorCallback: (response, errors) => {
             setCancelingRunId(null);
-            console.log(errors, message);
+            setErrors({
+              errors,
+              response,
+            });
           },
         },
       ),
@@ -395,6 +395,7 @@ function PipelineRunsTable({
                     onSuccess={fetchPipelineRuns}
                     pipelineRun={pipelineRun}
                     setCancelingRunId={setCancelingRunId}
+                    setErrors={setErrors}
                     setShowConfirmationId={setShowConfirmationId}
                     showConfirmationId={showConfirmationId}
                   />,

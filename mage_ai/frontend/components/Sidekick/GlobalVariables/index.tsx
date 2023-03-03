@@ -82,11 +82,21 @@ function GlobalVariables({
         response, {
           onErrorCallback: ({
             error: {
+              message,
               exception,
             },
           }) => {
             // @ts-ignore
-            setErrorMessages((errorMessages) => errorMessages.concat(exception));
+            setErrorMessages((errorMessages) => {
+              let messagesToDisplay = errorMessages || [];
+              if (exception) {
+                messagesToDisplay = messagesToDisplay.concat(exception);
+              }
+              if (message) {
+                messagesToDisplay = messagesToDisplay.concat(message);
+              }
+              return messagesToDisplay;
+            });
           },
         },
       ),

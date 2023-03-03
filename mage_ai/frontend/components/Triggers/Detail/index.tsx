@@ -538,7 +538,7 @@ function TriggerDetail({
               });
             }}
             outline
-            success={!isActive}
+            success={!isActive && !isViewerRole}
           >
             {isActive
               ? 'Pause trigger'
