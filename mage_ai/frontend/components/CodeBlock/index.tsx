@@ -1614,12 +1614,14 @@ function CodeBlockProps({
                       {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
                       {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
                       {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
+                      {BlockTypeEnum.CUSTOM === block.type && '@custom'}
                     </Text>
                     <Text monospace muted small>
                       def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
                         || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
-                        || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
-                      ({block.upstream_blocks.map((_,i) => i >= 1 ? `df_${i + 1}` : 'df').join(', ')}):
+                        || (BlockTypeEnum.TRANSFORMER === block.type && 'transform')
+                        || (BlockTypeEnum.CUSTOM === block.type && 'transform_custom')}
+                      ({block.upstream_blocks.map((_,i) => i >= 1 ? `data_${i + 1}` : 'data').join(', ')}):
                     </Text>
                   </>
                 )}
@@ -1635,7 +1637,7 @@ function CodeBlockProps({
                     <div key={blockUUID}>
                       {BlockLanguageEnum.SQL !== block.language && (
                         <Text inline monospace muted small>
-                          &nbsp;&nbsp;&nbsp;&nbsp;df{i >= 1 ? `_${i + 1}` : null}
+                          &nbsp;&nbsp;&nbsp;&nbsp;data{i >= 1 ? `_${i + 1}` : null}
                         </Text>
                       )}{BlockLanguageEnum.SQL === block.language && (
                         <Text inline monospace muted small>
