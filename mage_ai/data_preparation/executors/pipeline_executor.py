@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.shared.hash import merge_dict
 from typing import Dict
 import asyncio
 
@@ -33,3 +34,11 @@ class PipelineExecutor:
             update_status=update_status,
         ))
         self.logger_manager.output_logs_to_destination()
+
+    def _build_tags(self, **kwargs):
+        default_tags = dict(
+            pipeline_uuid=self.pipeline.uuid,
+        )
+        if kwargs.get('pipeline_run_id'):
+            default_tags['pipeline_run_id'] = kwargs.get('pipeline_run_id')
+        return merge_dict(kwargs.get('tags', {}), default_tags)

@@ -69,10 +69,12 @@ class StreamingPipelineExecutor(PipelineExecutor):
         # TODOs:
         # 1. Support multiple sources and sinks
         # 2. Support flink pipeline
+
+        tags = self._build_tags(**kwargs)
         if build_block_output_stdout:
             stdout = build_block_output_stdout(self.pipeline.uuid)
         else:
-            stdout = StreamToLogger(self.logger)
+            stdout = StreamToLogger(self.logger, logging_tags=tags)
         try:
             with redirect_stdout(stdout):
                 with redirect_stderr(stdout):
