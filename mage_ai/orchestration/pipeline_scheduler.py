@@ -131,14 +131,25 @@ class PipelineScheduler:
                         **merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
                     )
 
-                self.pipeline_run.update(
-                    status=PipelineRun.PipelineRunStatus.COMPLETED,
-                    completed_at=datetime.now(),
-                )
-                self.notification_sender.send_pipeline_run_success_message(
-                    pipeline=self.pipeline,
-                    pipeline_run=self.pipeline_run,
-                )
+                if self.pipeline_run.any_blocks_failed():
+                    self.pipeline_run.update(
+                        status=PipelineRun.PipelineRunStatus.FAILED,
+                        completed_at=datetime.now(),
+                    )
+                    self.notification_sender.send_pipeline_run_failure_message(
+                        pipeline=self.pipeline,
+                        pipeline_run=self.pipeline_run,
+                    )
+                else:
+                    self.pipeline_run.update(
+                        status=PipelineRun.PipelineRunStatus.COMPLETED,
+                        completed_at=datetime.now(),
+                    )
+                    self.notification_sender.send_pipeline_run_success_message(
+                        pipeline=self.pipeline,
+                        pipeline_run=self.pipeline_run,
+                    )
+
                 self.logger_manager.output_logs_to_destination()
 
                 schedule = PipelineSchedule.get(
@@ -296,11 +307,9 @@ class PipelineScheduler:
             )
 
     @property
-    def executable_block_runs(self) -> List[BlockRun]:
-        return [b for b in self.pipeline_run.block_runs if b.status in [
-            BlockRun.BlockRunStatus.INITIAL,
-            BlockRun.BlockRunStatus.QUEUED,
-        ]]
+    def initial_block_runs(self) -> List[BlockRun]:
+        return [b for b in self.pipeline_run.block_runs
+                if b.status == BlockRun.BlockRunStatus.INITIAL]
 
     @property
     def completed_block_runs(self) -> List[BlockRun]:
@@ -313,9 +322,9 @@ class PipelineScheduler:
                 if b.status == BlockRun.BlockRunStatus.FAILED]
 
     @property
-    def queued_block_runs(self) -> List[BlockRun]:
-        queued_block_runs = []
-        for block_run in self.executable_block_runs:
+    def executable_block_runs(self) -> List[BlockRun]:
+        executable_block_runs = list()
+        for block_run in self.initial_block_runs:
             completed = False
             completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
 
@@ -331,19 +340,25 @@ class PipelineScheduler:
                 completed = block is not None and \
                     block.all_upstream_blocks_completed(completed_block_uuids)
 
-            failed_block_uuids = set(b.block_uuid for b in self.failed_block_runs)
             if completed:
-                block_run.update(status=BlockRun.BlockRunStatus.QUEUED)
-                queued_block_runs.append(block_run)
-            elif any(b in failed_block_uuids for b in block.upstream_block_uuids):
+                executable_block_runs.append(block_run)
+
+        return executable_block_runs
+
+    def __update_block_run_statuses(self) -> None:
+        failed_block_uuids = set(b.block_uuid for b in self.failed_block_runs)
+        for block_run in self.initial_block_runs:
+            block = self.pipeline.get_block(block_run.block_uuid)
+            if any(b in failed_block_uuids for b in block.upstream_block_uuids):
                 block_run.update(
                     status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
 
-        return queued_block_runs
-
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
-        block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
-        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
+        self.__update_block_run_statuses()
+        block_runs_to_schedule = \
+            self.executable_block_runs if block_runs is None else block_runs
+        block_runs_to_schedule = \
+            self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
         for b in block_runs_to_schedule:
             tags = dict(

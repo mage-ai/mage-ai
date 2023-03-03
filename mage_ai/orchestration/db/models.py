@@ -473,6 +473,12 @@ class PipelineRun(BaseModel):
 
         return [self.create_block_run(b.uuid) for b in arr]
 
+    def any_blocks_failed(self) -> bool:
+        return any(
+            b.status == BlockRun.BlockRunStatus.FAILED
+            for b in self.block_runs
+        )
+
     def all_blocks_completed(self, include_failed_blocks: bool = False) -> bool:
         statuses = [BlockRun.BlockRunStatus.COMPLETED]
         if include_failed_blocks:

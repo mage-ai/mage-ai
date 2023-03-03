@@ -90,10 +90,10 @@ class PipelineSchedulerTests(DBTestCase):
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(
             scheduler.notification_sender,
-            'send_pipeline_run_success_message'
+            'send_pipeline_run_failure_message'
         ) as mock_send_message:
             scheduler.schedule()
-            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
             self.assertEqual(mock_send_message.call_count, 1)
 
     @patch('mage_ai.orchestration.pipeline_scheduler.run_pipeline')
