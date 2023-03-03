@@ -465,14 +465,10 @@ function PipelineDetailPage({
             router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
             fetchFileTree();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },

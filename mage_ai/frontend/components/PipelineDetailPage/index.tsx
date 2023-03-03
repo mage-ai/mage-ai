@@ -109,6 +109,10 @@ function PipelineDetailPage({
           }) => {
             router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -121,6 +125,10 @@ function PipelineDetailPage({
           callback: () => {
             router.push('/pipelines');
           },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
