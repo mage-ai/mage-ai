@@ -7,7 +7,6 @@ from mage_ai.orchestration.db.models import PipelineSchedule, PipelineRun
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
 from mage_ai.shared.hash import group_by, ignore_keys
-from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 import asyncio
 
@@ -148,15 +147,15 @@ class PipelineResource(BaseResource):
                 schedule.update(status=status)
 
         @safe_db_query
-        def update_pipeline_run_status(status, pipeline_uuid):
+        def cancel_pipeline_runs(status, pipeline_uuid):
             pipeline_runs = (
                 PipelineRun.
                 query.
                 filter(PipelineRun.pipeline_uuid == pipeline_uuid).
-                filter(or_(
-                    PipelineRun.status == PipelineRun.PipelineRunStatus.INITIAL,
-                    PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
-                ))
+                filter(PipelineRun.status.in_([
+                    PipelineRun.PipelineRunStatus.INITIAL,
+                    PipelineRun.PipelineRunStatus.RUNNING,
+                ]))
             )
             for pipeline_run in pipeline_runs:
                 pipeline_run.update(status=status)
@@ -173,7 +172,7 @@ class PipelineResource(BaseResource):
                 ]:
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:
-                    update_pipeline_run_status(status, pipeline_uuid)
+                    cancel_pipeline_runs(status, pipeline_uuid)
 
         self.on_update_callback = _update_callback
 
