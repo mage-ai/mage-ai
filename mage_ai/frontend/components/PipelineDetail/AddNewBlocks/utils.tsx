@@ -35,6 +35,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.RABBITMQ,
       ],
       [BlockTypeEnum.DATA_EXPORTER]: [
+        DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.OPENSEARCH,
       ],

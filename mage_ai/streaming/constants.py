@@ -9,5 +9,6 @@ class SourceType(str, Enum):
 
 
 class SinkType(str, Enum):
-    OPENSEARCH = 'opensearch'
+    KAFKA = 'kafka'
     KINESIS = 'kinesis'
+    OPENSEARCH = 'opensearch'

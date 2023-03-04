@@ -189,6 +189,7 @@
             {
               "group": "Destinations",
               "pages": [
+                "guides/streaming/destinations/kafka",
                 "guides/streaming/destinations/kinesis",
                 "guides/streaming/destinations/opensearch",
                 "guides/streaming/destinations/redshift"
