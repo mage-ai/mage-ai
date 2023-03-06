@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
+import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -33,6 +35,7 @@ import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
+import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
 
 const TAB_URL_PARAM = 'tab';
@@ -141,8 +144,28 @@ function PipelineRuns({
     data: dataPipelineRuns,
     mutate: fetchPipelineRuns,
   } = api.pipeline_runs.list(pipelineRunsRequestQuery, { refreshInterval: 5000 });
-  const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
-  const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
+  const pipelineRuns: PipelineRunType[] = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
+  const totalRuns: number = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
+  const hasRunningPipeline = pipelineRuns.some(({ status }) => (
+    status === RunStatusEnum.INITIAL || status === RunStatusEnum.RUNNING
+  ));
+
+  const [updatePipeline, { isLoading: isLoadingUpdatePipeline }]: any = useMutation(
+    api.pipelines.useUpdate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineRuns();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   const selectedTabPrev = usePrevious(selectedTab);
   useEffect(() => {
@@ -238,6 +261,24 @@ function PipelineRuns({
       <PageSectionHeader>
         <Spacing py={1}>
           <FlexContainer alignItems="center">
+            {(hasRunningPipeline && TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid) &&
+              <Spacing pl={2}>
+                <Button
+                  danger
+                  loading={isLoadingUpdatePipeline}
+                  onClick={() => {
+                    updatePipeline({
+                      pipeline: {
+                        status: RunStatusEnum.CANCELLED,
+                      },
+                    });
+                  }}
+                  outline
+                >
+                  Cancel running pipeline runs
+                </Button>
+              </Spacing>
+            }
             <ButtonTabs
               onClickTab={({ uuid }) => {
                 setQuery(null);
