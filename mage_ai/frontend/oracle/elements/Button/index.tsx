@@ -387,7 +387,7 @@ const Button = ({
             </Flex>
           </Spacing>
         )}
-        {loading && <Spinner inverted={secondary} size={compact ? 20 : null} />}
+        {loading && <Spinner inverted={secondary} size={compact ? 20 : 24} />}
         {!loading && (
           <Flex>
             {!iconOnly && children}
