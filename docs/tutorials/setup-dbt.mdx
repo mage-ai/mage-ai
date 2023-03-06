@@ -95,21 +95,22 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 3. Change the name to `load data`.
 4. Paste the following code in that block:
 
-   ```python
-   import io
-   import pandas as pd
-   import requests
-   from pandas import DataFrame
+    ```python
+    import io
+    import pandas as pd
+    import requests
+    from pandas import DataFrame
 
 
-   @data_loader
-   def load_data_from_api(**kwargs) -> DataFrame:
-       url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
+    @data_loader
+    def load_data_from_api(**kwargs) -> DataFrame:
+        url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
 
-       response = requests.get(url)
-       return pd.read_csv(io.StringIO(response.text), sep=',')
-   ```
-
+        response = requests.get(url)
+        df = pd.read_csv(io.StringIO(response.text), sep=',')
+        df.columns = ['_'.join(col.split(' ')) for col in df.columns]
+        return df
+    ```
 ---
 
 ## 6. Add DBT model block to pipeline
@@ -147,6 +148,11 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 4. You should see a preview of the query results.
 
 ![](https://github.com/mage-ai/assets/blob/main/dbt/dbt-preview.gif?raw=true)
+
+5. After previewing the results, in the top right corner of the block, click on the triple dots to reveal a dropdown menu.
+6. Under the dropdown menu, click the option <b>Run model</b>. This command will execute the `dbt run` command and create the table in your data source.
+
+![](https://github.com/mage-ai/assets/blob/main/dbt/run-model.png?raw=true)
 
 ### 6b. Edit DBT model `my_second_dbt_model`
 
