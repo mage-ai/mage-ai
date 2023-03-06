@@ -81,7 +81,7 @@ def build_alter_table_command(
     elif columns_with_type_change:
         columns_and_types = [
             f"ALTER COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
-            f" {column_type_mapping[col]['type_converted']}" for col
+            f" TYPE {column_type_mapping[col]['type_converted']}" for col
             in columns_with_type_change
         ]
 
