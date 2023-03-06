@@ -329,7 +329,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     remote_execution = True
                 else:
                     remote_execution = False
-
                 code = add_execution_code(
                     pipeline_uuid,
                     block_uuid,

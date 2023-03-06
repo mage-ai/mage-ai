@@ -104,7 +104,6 @@ class DBTBlock(Block):
         run_settings: Dict = None,
         **kwargs,
     ) -> List:
-
         variables = merge_dict(global_vars, runtime_arguments or {})
 
         if run_settings:

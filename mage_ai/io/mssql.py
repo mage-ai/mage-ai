@@ -1,11 +1,9 @@
-
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.base import QUERY_ROW_LIMIT
 from mage_ai.io.sql import BaseSQL
 from pandas import DataFrame, Series
-from typing import Any, IO, Mapping, Union
-import pymssql
+from typing import Any, IO, Union
 import pyodbc
 import numpy as np
 
@@ -51,12 +49,13 @@ class MSSQL(BaseSQL):
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to MySQL database'):
+            driver = self.settings['driver']
             server = self.settings['server']
             database = self.settings['database']
             username = self.settings['user']
             password = self.settings['password']
             connection_string = (
-                'DRIVER={ODBC Driver 18 for SQL Server};'
+                f'DRIVER={{{driver}}};'
                 f'SERVER={server};'
                 f'DATABASE={database};'
                 f'UID={username};'
@@ -81,13 +80,12 @@ class MSSQL(BaseSQL):
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:
-        values_placeholder = ', '.join(["%s" for i in range(len(df.columns))])
+        values_placeholder = ', '.join(["?" for i in range(len(df.columns))])
         values = []
         for i, row in df.iterrows():
             values.append(tuple(row))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
-        print('insert sql:', sql)
         cursor.executemany(sql, values)
 
     def get_type(self, column: Series, dtype: str) -> str:
