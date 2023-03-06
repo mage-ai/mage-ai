@@ -654,7 +654,7 @@ class Block:
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
             )
-            block_output = output['output'] or []
+            block_output = self.post_process_output(output)
             variable_mapping = dict()
 
             if BlockType.CHART == self.type:
@@ -715,6 +715,9 @@ class Block:
                 self.__update_pipeline_block(widget=BlockType.CHART == self.type)
 
         return output
+
+    def post_process_output(self, output: Dict) -> List:
+        return output['output'] or []
 
     async def execute(
         self,
