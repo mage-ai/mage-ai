@@ -611,12 +611,20 @@ def run_integration_pipeline(
                         **tags_updated,
                         tags=tags2,
                     )
-                    calculate_metrics(pipeline_run)
-                    pipeline_scheduler.logger.info(
-                        f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
-                        **tags_updated,
-                        tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
-                    )
+                    try:
+                        calculate_metrics(pipeline_run)
+                        pipeline_scheduler.logger.info(
+                            f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
+                            **tags_updated,
+                            tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
+                        )
+                    except Exception:
+                        pipeline_scheduler.logger.error(
+                            f'Failed to calculate metrics for pipeline run {pipeline_run.id}. '
+                            f'{traceback.format_exc()}',
+                            **tags_updated,
+                            tags=tags2,
+                        )
 
 
 def run_block(
