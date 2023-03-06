@@ -426,7 +426,8 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
     elif DataSource.MSSQL == profile_type:
         config_file_loader = ConfigFileLoader(config=dict(
             MSSQL_DATABASE=profile.get('database'),
-            MSSQL_HOST=profile.get('host'),
+            MSSQL_DRIVER=profile.get('driver'),
+            MSSQL_HOST=profile.get('server'),
             MSSQL_PASSWORD=profile.get('password'),
             MSSQL_PORT=profile.get('port'),
             MSSQL_USER=profile.get('user'),
@@ -566,9 +567,9 @@ def create_upstream_tables(
         cache_upstream_dbt_models=cache_upstream_dbt_models,
     ), kwargs)
 
-    upstream_blocks_init = block.upstream_blocks
-    upstream_blocks = upstream_blocks_from_sources(block)
-    block.upstream_blocks = upstream_blocks
+    # upstream_blocks_init = block.upstream_blocks
+    # upstream_blocks = upstream_blocks_from_sources(block)
+    # block.upstream_blocks = upstream_blocks
 
     if DataSource.POSTGRES == data_provider:
         from mage_ai.io.postgres import Postgres
@@ -587,7 +588,7 @@ def create_upstream_tables(
             mssql.create_upstream_block_tables(
                 loader,
                 block,
-                cascade_on_drop=True,
+                cascade_on_drop=False,
                 **kwargs_shared,
             )
     elif DataSource.MYSQL == data_provider:
@@ -640,7 +641,7 @@ def create_upstream_tables(
                 **kwargs_shared,
             )
 
-    block.upstream_blocks = upstream_blocks_init
+    # block.upstream_blocks = upstream_blocks_init
 
 
 def interpolate_input(
@@ -823,6 +824,8 @@ def execute_query(
 
 def query_from_compiled_sql(block, profile_target: str, limit: int = None) -> DataFrame:
     query_string = compiled_query_string(block)
+
+    print('query string:', query_string)
 
     return execute_query(block, profile_target, query_string, limit)
 

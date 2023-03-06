@@ -140,6 +140,7 @@ def execute_sql_code(
                     None,
                     table_name,
                     query_string=query_string,
+                    drop_table_on_replace=True,
                     **kwargs_shared,
                 )
 

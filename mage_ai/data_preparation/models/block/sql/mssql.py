@@ -23,6 +23,7 @@ def create_upstream_block_tables(
         cache_upstream_dbt_models,
         cache_keys=[
             ConfigKey.MSSQL_DATABASE,
+            ConfigKey.MSSQL_SCHEMA,
             ConfigKey.MSSQL_HOST,
             ConfigKey.MSSQL_PORT,
         ],
