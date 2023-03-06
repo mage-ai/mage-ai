@@ -67,15 +67,24 @@ def build_alter_table_command(
     columns: List[str],
     full_table_name: str,
     column_identifier: str = '',
+    columns_with_type_change: List[str] = [],
 ) -> str:
-    if not columns:
+    if not columns and not columns_with_type_change:
         return None
 
-    columns_and_types = [
-        f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
-        f" {column_type_mapping[col]['type_converted']}" for col
-        in columns
-    ]
+    if columns:
+        columns_and_types = [
+            f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
+            f" {column_type_mapping[col]['type_converted']}" for col
+            in columns
+        ]
+    elif columns_with_type_change:
+        columns_and_types = [
+            f"ALTER COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
+            f" {column_type_mapping[col]['type_converted']}" for col
+            in columns_with_type_change
+        ]
+
     # TODO: support add new unique constraints
     return f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
 

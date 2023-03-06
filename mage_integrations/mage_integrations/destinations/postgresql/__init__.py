@@ -65,15 +65,18 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
 
-        if not new_columns:
+        column_types = self.column_type_mapping(schema)
+        columns_with_type_change = [c for c in column_types.keys() if column_types[c]['type_converted'] == 'TEXT']
+        if not new_columns and not columns_with_type_change:
             return []
 
         # TODO: Support alter column types
         return [
             build_alter_table_command(
-                column_type_mapping=self.column_type_mapping(schema),
+                column_type_mapping=column_types,
                 columns=new_columns,
                 full_table_name=f'{schema_name}.{table_name}',
+                columns_with_type_change=columns_with_type_change,
             ),
         ]
 
