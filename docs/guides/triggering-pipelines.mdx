@@ -54,3 +54,13 @@ is made.
 You can make a POST request to an endpoint provided in the UI when creating or
 editing a trigger. You can optionally include runtime variables in your request
 payload.
+
+#### Additional trigger settings
+
+* (Schedule triggers only) Skip run if previous run still in progress
+  * Enabling this setting will tell the scheduler to not initialize the current run if any
+    previous run for this trigger is still in progress.
+* Allow blocks to fail
+  * Enabling this setting will tell the scheduler to continue running the trigger even if 
+    a block in the pipeline fails during the execution. The pipeline will continue to run 
+    blocks that are not dependent on the failed blocks until the pipeline is complete.
