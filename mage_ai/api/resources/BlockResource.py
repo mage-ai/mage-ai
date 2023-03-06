@@ -1,7 +1,8 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import FILE_EXTENSION_TO_BLOCK_LANGUAGE
+from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.constants import BlockType, FILE_EXTENSION_TO_BLOCK_LANGUAGE
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
@@ -58,14 +59,26 @@ class BlockResource(GenericResource):
             raise ApiError(error)
 
         block_type = parts[0]
-        block_uuid = '/'.join(parts[1:])
-        parts2 = block_uuid.split('.')
+        block_uuid_with_extension = '/'.join(parts[1:])
+        parts2 = block_uuid_with_extension.split('.')
         language = None
         if len(parts2) >= 2:
             block_uuid = parts2[0]
             language = FILE_EXTENSION_TO_BLOCK_LANGUAGE[parts2[1]]
+        else:
+            block_uuid = block_uuid_with_extension
 
-        block = Block(block_uuid, block_uuid, block_type, language=language)
+        if BlockType.DBT == block_type:
+            block = DBTBlock(
+                block_uuid,
+                block_uuid,
+                block_type,
+                configuration=dict(file_path=block_uuid_with_extension),
+                language=language,
+            )
+        else:
+            block = Block(block_uuid, block_uuid, block_type, language=language)
+
         if not block.exists():
             error.update(ApiError.RESOURCE_NOT_FOUND)
             raise ApiError(error)
