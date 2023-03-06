@@ -13,16 +13,5 @@ You can schedule your pipeline to run on these intervals:
   [CRON Expression](https://en.wikipedia.org/wiki/Cron#CRON_expression)
 - Every minute using CRON expression: `* * * * *`
 - _Streaming pipeline_: coming soon
-
----
-
-Additional trigger settings:
-
-* Skip run if previous run still in progress
-  * Enabling this setting will tell the scheduler to not initialize the current run if any
-    previous run for this trigger is still in progress.
-
----
-
 Learn more about how to
 [schedule pipelines](/design/data-pipeline-management#create-trigger).
