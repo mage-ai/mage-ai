@@ -35,6 +35,10 @@ import {
   VH_PERCENTAGE,
   ViewKeyEnum,
 } from './constants';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
+  get,
+} from '@storage/localStorage';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
@@ -132,6 +136,8 @@ function Sidekick({
   } = useWindowSize();
   const heightOffset = ALL_HEADERS_HEIGHT;
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [pipelineExecutionHidden, setPipelineExecutionHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
   const {
     block: blockEditing,
@@ -160,6 +166,9 @@ function Sidekick({
   });
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+  const finalOutputHeight = isIntegration
+    ? -78   // Hide entire output area
+    : (pipelineExecutionHidden ? -22 : OUTPUT_HEIGHT);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -252,7 +261,7 @@ function Sidekick({
               editingBlock={editingBlock}
               enablePorts={!isIntegration}
               fetchPipeline={fetchPipeline}
-              height={heightWindow - heightOffset - OUTPUT_HEIGHT}
+              height={heightWindow - heightOffset - finalOutputHeight}
               pipeline={pipeline}
               runningBlocks={runningBlocks}
               selectedBlock={selectedBlock}
@@ -261,12 +270,14 @@ function Sidekick({
               setSelectedBlock={setSelectedBlock}
             />
             {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
-              <Spacing p={2}>
+              <Spacing p={1}>
                 <PipelineExecution
                   cancelPipeline={cancelPipeline}
                   executePipeline={executePipeline}
                   isPipelineExecuting={isPipelineExecuting}
+                  pipelineExecutionHidden={pipelineExecutionHidden}
                   pipelineMessages={pipelineMessages}
+                  setPipelineExecutionHidden={setPipelineExecutionHidden}
                 />
               </Spacing>
             )}

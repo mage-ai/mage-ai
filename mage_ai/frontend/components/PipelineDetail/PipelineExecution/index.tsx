@@ -1,59 +1,64 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
 import Button from '@oracle/elements/Button';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import KernelOutputType, {
+  DataTypeEnum,
+  DATA_TYPE_TEXTLIKE,
+} from '@interfaces/KernelOutputType';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
+import { Close, PlayButton } from '@oracle/icons';
 import {
   ContainerStyle as CodeBlockStyle,
   OutputRowStyle,
 } from '@components/CodeBlock/CodeOutput/index.style';
-import KernelOutputType, {
-    DataTypeEnum,
-    DATA_TYPE_TEXTLIKE,
-} from '@interfaces/KernelOutputType';
-import Text from '@oracle/elements/Text';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
+  set,
+} from '@storage/localStorage';
 import { OutputContainerStyle } from './index.style';
-import { Close, PlayButton } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Spacing from '@oracle/elements/Spacing';
 
 export type PipelineExecutionProps = {
   cancelPipeline: () => void;
   executePipeline: () => void;
   isPipelineExecuting: boolean;
+  pipelineExecutionHidden: boolean;
   pipelineMessages: KernelOutputType[];
+  setPipelineExecutionHidden: (pipelineExecutionHidden: boolean) => void;
 };
 
 function PipelineExecution({
   cancelPipeline,
   executePipeline,
   isPipelineExecuting,
+  pipelineExecutionHidden,
   pipelineMessages,
+  setPipelineExecutionHidden,
 }: PipelineExecutionProps) {
   const numberOfMessages = useMemo(() => pipelineMessages?.length || 0, [pipelineMessages]);
 
+  const togglePipelineExecution = useCallback(() => {
+    const val = !pipelineExecutionHidden;
+    setPipelineExecutionHidden(val);
+    set(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, val);
+  }, [
+    pipelineExecutionHidden,
+    setPipelineExecutionHidden,
+  ]);
+
   return (
     <>
-      <FlexContainer>
-        <Button
-          beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-          loading={isPipelineExecuting}
-          onClick={executePipeline}
-          success
-        >
-          <Text
-            bold
-            inverted
-            primary={false}
-          >
-            Execute pipeline
-          </Text>
-        </Button>
-        <Spacing ml={1} />
-        {isPipelineExecuting && (
+      <FlexContainer alignItems="center" justifyContent="space-between">
+        <Flex>
           <Button
-            beforeIcon={<Close inverted size={UNIT * 2}/>}
-            onClick={cancelPipeline}
+            beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+            loading={isPipelineExecuting}
+            onClick={executePipeline}
             success
           >
             <Text
@@ -61,69 +66,102 @@ function PipelineExecution({
               inverted
               primary={false}
             >
-              Cancel Pipeline
+              Execute pipeline
             </Text>
           </Button>
-        )}
+          <Spacing ml={1} />
+          {isPipelineExecuting && (
+            <Button
+              beforeIcon={<Close inverted size={UNIT * 2}/>}
+              onClick={cancelPipeline}
+              success
+            >
+              <Text
+                bold
+                inverted
+                primary={false}
+              >
+                Cancel Pipeline
+              </Text>
+            </Button>
+          )}
+        </Flex>
+        <Flex alignItems="center">
+          <Text>
+            Hide
+          </Text>
+          <Spacing pr={1} />
+          <ToggleSwitch
+            checked={pipelineExecutionHidden}
+            onCheck={togglePipelineExecution}
+          />
+        </Flex>
       </FlexContainer>
-      <OutputContainerStyle noScrollbarTrackBackground>
-        <CodeBlockStyle
-          executedAndIdle
-          hasError={false}
-          selected
-        >
-          {pipelineMessages.map(({
-            data: dataInit,
-            type: dataType,
-          }: KernelOutputType, idx: number) => {
-            let dataArray: string[] = [];
-            if (Array.isArray(dataInit)) {
-              dataArray = dataInit;
-            } else {
-              dataArray = [dataInit];
-            }
 
 
-            dataArray = dataArray.filter(d => d);
-            const dataArrayLength = dataArray.length;
+      {!pipelineExecutionHidden &&
+        <>
+          <Spacing mb={1} />
+          <OutputContainerStyle noScrollbarTrackBackground>
+            <CodeBlockStyle
+              executedAndIdle
+              hasError={false}
+              selected
+            >
+              {pipelineMessages.map(({
+                data: dataInit,
+                type: dataType,
+              }: KernelOutputType, idx: number) => {
+                let dataArray: string[] = [];
+                if (Array.isArray(dataInit)) {
+                  dataArray = dataInit;
+                } else {
+                  dataArray = [dataInit];
+                }
 
-            return dataArray.map((data: string, idxInner: number) => {
-              let displayElement;
-              const outputRowSharedProps = {
-                first: idx === 0 && idxInner === 0,
-                last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
-              };
 
-              if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
-                displayElement = (
-                  <OutputRowStyle {...outputRowSharedProps}>
-                    <Text monospace preWrap>
-                      <Ansi>
-                        {data}
-                      </Ansi>
-                    </Text>
-                  </OutputRowStyle>
-                );
-              } else if (dataType === DataTypeEnum.IMAGE_PNG) {
-                displayElement = (
-                  <div style={{ backgroundColor: 'white' }}>
-                    <img
-                      alt={`Image ${idx} from code output`}
-                      src={`data:image/png;base64, ${data}`}
-                    />
-                  </div>
-                );
-              }
+                dataArray = dataArray.filter(d => d);
+                const dataArrayLength = dataArray.length;
 
-              return (
-                <div key={`code-output-${idx}-${idxInner}`}>
-                  {displayElement}
-                </div>
-              );
-            });
-          })}
-        </CodeBlockStyle>
-      </OutputContainerStyle>
+                return dataArray.map((data: string, idxInner: number) => {
+                  let displayElement;
+                  const outputRowSharedProps = {
+                    first: idx === 0 && idxInner === 0,
+                    last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
+                  };
+
+                  if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+                    displayElement = (
+                      <OutputRowStyle {...outputRowSharedProps}>
+                        <Text monospace preWrap>
+                          <Ansi>
+                            {data}
+                          </Ansi>
+                        </Text>
+                      </OutputRowStyle>
+                    );
+                  } else if (dataType === DataTypeEnum.IMAGE_PNG) {
+                    displayElement = (
+                      <div style={{ backgroundColor: 'white' }}>
+                        <img
+                          alt={`Image ${idx} from code output`}
+                          src={`data:image/png;base64, ${data}`}
+                        />
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={`code-output-${idx}-${idxInner}`}>
+                      {displayElement}
+                    </div>
+                  );
+                });
+              })}
+            </CodeBlockStyle>
+          </OutputContainerStyle>
+        </>
+      }
     </>
   );
 }
