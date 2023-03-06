@@ -6,6 +6,14 @@ ARG PIP=pip3
 
 USER root
 
+# Download ODBC headers for pyodbc
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
+RUN apt-get update
+RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
+RUN apt install unixodbc-dev
+
+# Install NFS dependencies, and pymssql dependencies
 RUN apt -y update && apt -y install curl freetds-dev freetds-bin
 
 # Install R
