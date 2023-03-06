@@ -75,6 +75,27 @@ class PipelineSchedulerTests(DBTestCase):
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
             self.assertEqual(mock_send_message.call_count, 1)
 
+    def test_schedule_all_blocks_completed_with_failures(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        ct = 0
+        for b in pipeline_run.block_runs:
+            if ct == 0:
+                b.update(status=BlockRun.BlockRunStatus.FAILED)
+            else:
+                b.update(status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message'
+        ) as mock_send_message:
+            scheduler.schedule()
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+            self.assertEqual(mock_send_message.call_count, 1)
+
     @patch('mage_ai.orchestration.pipeline_scheduler.run_pipeline')
     @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')
     def test_schedule_streaming(self, mock_job_manager, mock_run_pipeline):
@@ -132,3 +153,20 @@ class PipelineSchedulerTests(DBTestCase):
             block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+
+    def test_on_block_failure_allow_blocks_to_fail(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message'
+        ) as mock_send_message:
+            scheduler.on_block_failure('block1')
+            mock_send_message.assert_not_called()
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.RUNNING)

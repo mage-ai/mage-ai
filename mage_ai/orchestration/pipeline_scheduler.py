@@ -49,6 +49,7 @@ class PipelineScheduler:
         pipeline_run: PipelineRun,
     ) -> None:
         self.pipeline_run = pipeline_run
+        self.pipeline_schedule = pipeline_run.pipeline_schedule
         self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
         self.logger_manager = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline.uuid,
@@ -58,6 +59,11 @@ class PipelineScheduler:
         self.logger = DictLogger(self.logger_manager.logger)
         self.notification_sender = NotificationSender(
             NotificationConfig.load(config=self.pipeline.repo_config.notification_config),
+        )
+
+        self.allow_blocks_to_fail = (
+            self.pipeline_schedule.get_settings().allow_blocks_to_fail
+            if self.pipeline_schedule else False
         )
 
     def start(self, should_schedule: bool = True) -> None:
@@ -109,7 +115,7 @@ class PipelineScheduler:
         if PipelineType.STREAMING == self.pipeline.type:
             self.__schedule_pipeline()
         else:
-            if self.pipeline_run.all_blocks_completed():
+            if self.pipeline_run.all_blocks_completed(self.allow_blocks_to_fail):
                 if PipelineType.INTEGRATION == self.pipeline.type:
                     tags = dict(
                         pipeline_run_id=self.pipeline_run.id,
@@ -125,14 +131,25 @@ class PipelineScheduler:
                         **merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
                     )
 
-                self.pipeline_run.update(
-                    status=PipelineRun.PipelineRunStatus.COMPLETED,
-                    completed_at=datetime.now(),
-                )
-                self.notification_sender.send_pipeline_run_success_message(
-                    pipeline=self.pipeline,
-                    pipeline_run=self.pipeline_run,
-                )
+                if self.pipeline_run.any_blocks_failed():
+                    self.pipeline_run.update(
+                        status=PipelineRun.PipelineRunStatus.FAILED,
+                        completed_at=datetime.now(),
+                    )
+                    self.notification_sender.send_pipeline_run_failure_message(
+                        pipeline=self.pipeline,
+                        pipeline_run=self.pipeline_run,
+                    )
+                else:
+                    self.pipeline_run.update(
+                        status=PipelineRun.PipelineRunStatus.COMPLETED,
+                        completed_at=datetime.now(),
+                    )
+                    self.notification_sender.send_pipeline_run_success_message(
+                        pipeline=self.pipeline,
+                        pipeline_run=self.pipeline_run,
+                    )
+
                 self.logger_manager.output_logs_to_destination()
 
                 schedule = PipelineSchedule.get(
@@ -226,7 +243,9 @@ class PipelineScheduler:
                 metrics=metrics,
                 status=BlockRun.BlockRunStatus.FAILED,
             )
-            self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+            if not self.allow_blocks_to_fail:
+                self.pipeline_run.update(
+                    status=PipelineRun.PipelineRunStatus.FAILED)
 
         update_status()
 
@@ -243,24 +262,25 @@ class PipelineScheduler:
             **tags,
         )
 
-        self.notification_sender.send_pipeline_run_failure_message(
-            pipeline=self.pipeline,
-            pipeline_run=self.pipeline_run,
-        )
-
-        if PipelineType.INTEGRATION == self.pipeline.type:
-            # If a block/stream fails, stop all other streams
-            job_manager.kill_pipeline_run_job(self.pipeline_run.id)
-
-            self.logger.info(
-                f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
-                tags=tags,
+        if not self.allow_blocks_to_fail:
+            self.notification_sender.send_pipeline_run_failure_message(
+                pipeline=self.pipeline,
+                pipeline_run=self.pipeline_run,
             )
-            calculate_metrics(self.pipeline_run)
-            self.logger.info(
-                f'Calculate metrics for pipeline run {self.pipeline_run.id} error completed.',
-                tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
-            )
+
+            if PipelineType.INTEGRATION == self.pipeline.type:
+                # If a block/stream fails, stop all other streams
+                job_manager.kill_pipeline_run_job(self.pipeline_run.id)
+
+                self.logger.info(
+                    f'Calculate metrics for pipeline run {self.pipeline_run.id} error started.',
+                    tags=tags,
+                )
+                calculate_metrics(self.pipeline_run)
+                self.logger.info(
+                    f'Calculate metrics for pipeline run {self.pipeline_run.id} error completed.',
+                    tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
+                )
 
     def memory_usage_failure(self, tags: Dict = {}) -> None:
         msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
@@ -287,11 +307,9 @@ class PipelineScheduler:
             )
 
     @property
-    def executable_block_runs(self) -> List[BlockRun]:
-        return [b for b in self.pipeline_run.block_runs if b.status in [
-            BlockRun.BlockRunStatus.INITIAL,
-            BlockRun.BlockRunStatus.QUEUED,
-        ]]
+    def initial_block_runs(self) -> List[BlockRun]:
+        return [b for b in self.pipeline_run.block_runs
+                if b.status == BlockRun.BlockRunStatus.INITIAL]
 
     @property
     def completed_block_runs(self) -> List[BlockRun]:
@@ -299,9 +317,14 @@ class PipelineScheduler:
                 if b.status == BlockRun.BlockRunStatus.COMPLETED]
 
     @property
-    def queued_block_runs(self) -> List[BlockRun]:
-        queued_block_runs = []
-        for block_run in self.executable_block_runs:
+    def failed_block_runs(self) -> List[BlockRun]:
+        return [b for b in self.pipeline_run.block_runs
+                if b.status == BlockRun.BlockRunStatus.FAILED]
+
+    @property
+    def executable_block_runs(self) -> List[BlockRun]:
+        executable_block_runs = list()
+        for block_run in self.initial_block_runs:
             completed = False
             completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
 
@@ -318,14 +341,24 @@ class PipelineScheduler:
                     block.all_upstream_blocks_completed(completed_block_uuids)
 
             if completed:
-                block_run.update(status=BlockRun.BlockRunStatus.QUEUED)
-                queued_block_runs.append(block_run)
+                executable_block_runs.append(block_run)
 
-        return queued_block_runs
+        return executable_block_runs
+
+    def __update_block_run_statuses(self) -> None:
+        failed_block_uuids = set(b.block_uuid for b in self.failed_block_runs)
+        for block_run in self.initial_block_runs:
+            block = self.pipeline.get_block(block_run.block_uuid)
+            if any(b in failed_block_uuids for b in block.upstream_block_uuids):
+                block_run.update(
+                    status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
 
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
-        block_runs_to_schedule = self.queued_block_runs if block_runs is None else block_runs
-        block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
+        self.__update_block_run_statuses()
+        block_runs_to_schedule = \
+            self.executable_block_runs if block_runs is None else block_runs
+        block_runs_to_schedule = \
+            self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
         for b in block_runs_to_schedule:
             tags = dict(
@@ -570,6 +603,7 @@ def run_integration_pipeline(
                 (data_exporter_block_run, shared_dict),
             ]
 
+            block_failed = False
             for idx2, tup in enumerate(block_runs_and_configs):
                 block_run, template_runtime_configuration = tup
 
@@ -577,6 +611,13 @@ def run_integration_pipeline(
                     block_run_id=block_run.id,
                     block_uuid=block_run.block_uuid,
                 ))
+
+                if block_failed:
+                    block_run.update(
+                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                    )
+                    continue
+
                 block_run.update(
                     started_at=datetime.now(),
                     status=BlockRun.BlockRunStatus.RUNNING,
@@ -586,45 +627,51 @@ def run_integration_pipeline(
                     **tags_updated,
                 )
 
-                run_block(
-                    pipeline_run_id,
-                    block_run.id,
-                    variables,
-                    tags_updated,
-                    pipeline_type=PipelineType.INTEGRATION,
-                    verify_output=False,
-                    runtime_arguments=runtime_arguments,
-                    schedule_after_complete=False,
-                    template_runtime_configuration=template_runtime_configuration,
-                )
-
-                if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
-                   f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
-
-                    tags2 = merge_dict(tags_updated.get('tags', {}), dict(
-                        destination_table=destination_table,
-                        index=index,
-                        stream=tap_stream_id,
-                    ))
-                    pipeline_scheduler.logger.info(
-                        f'Calculate metrics for pipeline run {pipeline_run.id} started.',
-                        **tags_updated,
-                        tags=tags2,
+                try:
+                    run_block(
+                        pipeline_run_id,
+                        block_run.id,
+                        variables,
+                        tags_updated,
+                        pipeline_type=PipelineType.INTEGRATION,
+                        verify_output=False,
+                        runtime_arguments=runtime_arguments,
+                        schedule_after_complete=False,
+                        template_runtime_configuration=template_runtime_configuration,
                     )
-                    try:
-                        calculate_metrics(pipeline_run)
+                except Exception as e:
+                    if pipeline_scheduler.allow_blocks_to_fail:
+                        block_failed = True
+                    else:
+                        raise e
+                else:
+                    if f'{data_loader_block.uuid}:{tap_stream_id}' in block_run.block_uuid or \
+                            f'{data_exporter_block.uuid}:{tap_stream_id}' in block_run.block_uuid:
+
+                        tags2 = merge_dict(tags_updated.get('tags', {}), dict(
+                            destination_table=destination_table,
+                            index=index,
+                            stream=tap_stream_id,
+                        ))
                         pipeline_scheduler.logger.info(
-                            f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
-                            **tags_updated,
-                            tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
-                        )
-                    except Exception:
-                        pipeline_scheduler.logger.error(
-                            f'Failed to calculate metrics for pipeline run {pipeline_run.id}. '
-                            f'{traceback.format_exc()}',
+                            f'Calculate metrics for pipeline run {pipeline_run.id} started.',
                             **tags_updated,
                             tags=tags2,
                         )
+                        try:
+                            calculate_metrics(pipeline_run)
+                            pipeline_scheduler.logger.info(
+                                f'Calculate metrics for pipeline run {pipeline_run.id} completed.',
+                                **tags_updated,
+                                tags=merge_dict(tags2, dict(metrics=pipeline_run.metrics)),
+                            )
+                        except Exception:
+                            pipeline_scheduler.logger.error(
+                                f'Failed to calculate metrics for pipeline run {pipeline_run.id}. '
+                                f'{traceback.format_exc()}',
+                                **tags_updated,
+                                tags=tags2,
+                            )
 
 
 def run_block(
@@ -783,8 +830,7 @@ def schedule_all():
                 ],
                 pipeline_schedule.pipeline_runs
             )
-            if pipeline_schedule.settings and \
-                pipeline_schedule.settings.get('skip_if_previous_running') and \
+            if pipeline_schedule.get_settings().skip_if_previous_running and \
                     running_pipeline_run is not None:
 
                 payload['create_block_runs'] = False

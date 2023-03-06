@@ -43,9 +43,13 @@ def create_pipeline_run_with_schedule(
     pipeline_uuid: str,
     execution_date: datetime = None,
     pipeline_schedule_id: int = None,
+    pipeline_schedule_settings: Dict = dict(),
 ):
     if pipeline_schedule_id is None:
-        pipeline_schedule = PipelineSchedule.create(pipeline_uuid=pipeline_uuid)
+        pipeline_schedule = PipelineSchedule.create(
+            pipeline_uuid=pipeline_uuid,
+            settings=pipeline_schedule_settings,
+        )
         pipeline_schedule_id = pipeline_schedule.id
     pipeline_run = PipelineRun.create(
         execution_date=execution_date,

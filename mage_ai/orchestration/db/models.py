@@ -1,4 +1,5 @@
 from croniter import croniter
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import get_all_ancestors, is_dynamic_block
@@ -6,6 +7,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.shared.array import find
+from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
@@ -229,6 +231,11 @@ class PipelineSchedule(BaseModel):
         WEEKLY = '@weekly'
         MONTHLY = '@monthly'
 
+    @dataclass
+    class SettingsConfig(BaseConfig):
+        skip_if_previous_running: bool = False
+        allow_blocks_to_fail: bool = False
+
     name = Column(String(255))
     pipeline_uuid = Column(String(255))
     schedule_type = Column(Enum(ScheduleType))
@@ -248,6 +255,10 @@ class PipelineSchedule(BaseModel):
         secondary=pipeline_schedule_event_matcher_association_table,
         back_populates='pipeline_schedules'
     )
+
+    def get_settings(self) -> 'SettingsConfig':
+        settings = self.settings if self.settings else dict()
+        return self.__class__.SettingsConfig.load(config=settings)
 
     @property
     def pipeline_runs_count(self) -> int:
@@ -462,9 +473,20 @@ class PipelineRun(BaseModel):
 
         return [self.create_block_run(b.uuid) for b in arr]
 
-    def all_blocks_completed(self) -> bool:
-        return all(b.status == BlockRun.BlockRunStatus.COMPLETED
-                   for b in self.block_runs)
+    def any_blocks_failed(self) -> bool:
+        return any(
+            b.status == BlockRun.BlockRunStatus.FAILED
+            for b in self.block_runs
+        )
+
+    def all_blocks_completed(self, include_failed_blocks: bool = False) -> bool:
+        statuses = [BlockRun.BlockRunStatus.COMPLETED]
+        if include_failed_blocks:
+            statuses.extend([
+                BlockRun.BlockRunStatus.FAILED,
+                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+            ])
+        return all(b.status in statuses for b in self.block_runs)
 
 
 class BlockRun(BaseModel):
@@ -475,6 +497,7 @@ class BlockRun(BaseModel):
         COMPLETED = 'completed'
         FAILED = 'failed'
         CANCELLED = 'cancelled'
+        UPSTREAM_FAILED = 'upstream_failed'
 
     pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'))
     block_uuid = Column(String(255))

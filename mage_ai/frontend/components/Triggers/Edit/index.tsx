@@ -24,6 +24,7 @@ import Link from '@oracle/elements/Link';
 import List from '@oracle/elements/List';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, {
+  PipelineScheduleSettingsType,
   ScheduleIntervalEnum,
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
@@ -110,7 +111,8 @@ function Edit({
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [enableSLA, setEnableSLA] = useState<boolean>(false);
-  const [skipIfRunning, setSkipIfRunning] = useState<boolean>();
+
+  const [settings, setSettings] = useState<PipelineScheduleSettingsType>();
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
@@ -135,7 +137,9 @@ function Edit({
   } = schedule || {};
 
   useEffect(() => {
-    setSkipIfRunning(settingsInit?.['skip_if_previous_running']);
+    if (settingsInit) {
+      setSettings(settingsInit);
+    }
   }, [settingsInit]);
 
   const [date, setDate] = useState<Date>(null);
@@ -294,12 +298,7 @@ function Edit({
       data.sla = 0;
     }
 
-    if (ScheduleTypeEnum.TIME === schedule.schedule_type) {
-      data.settings = {
-        ...settingsInit,
-        'skip_if_previous_running': skipIfRunning,
-      };
-    }
+    data.settings = settings;
 
     // @ts-ignore
     updateSchedule({
@@ -313,8 +312,7 @@ function Edit({
     pipelineSchedule,
     runtimeVariables,
     schedule,
-    settingsInit,
-    skipIfRunning,
+    settings,
     time,
     updateSchedule,
   ]);
@@ -1009,27 +1007,44 @@ function Edit({
             />
           </Spacing>
         )}
-        {ScheduleTypeEnum.TIME === scheduleType && (
-          <>
+        <Spacing mt={2}>
+          <Headline level={5} monospace>
+            Additional settings
+          </Headline>
+          {ScheduleTypeEnum.TIME === scheduleType && (
             <Spacing mt={2}>
-              <Headline default level={5} monospace>
-                Additional settings
-              </Headline>
-              <Spacing mt={2}>
-                <FlexContainer alignItems="center">
-                  <Checkbox
-                    checked={skipIfRunning}
-                    onClick={() => setSkipIfRunning(prevVal => !prevVal)}
-                  />
-                  <Spacing ml={2}/>
-                  <Text default monospace small>
-                    Skip run if previous run still in progress
-                  </Text>
-                </FlexContainer>
-              </Spacing>
+              <FlexContainer alignItems="center">
+                <Checkbox
+                  checked={settings?.skip_if_previous_running}
+                  onClick={() => setSettings(prev => ({
+                    ...prev,
+                    skip_if_previous_running: !settings?.skip_if_previous_running,
+                  }))}
+                />
+                <Spacing ml={2}/>
+                <Text default monospace small>
+                  Skip run if previous run still in progress
+                </Text>
+              </FlexContainer>
             </Spacing>
-          </>
-        )}
+          )}
+
+          <Spacing mt={2}>
+            <FlexContainer alignItems="center">
+              <Checkbox
+                checked={settings?.allow_blocks_to_fail}
+                onClick={() => setSettings(prev => ({
+                  ...prev,
+                  allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
+                }))}
+              />
+              <Spacing ml={2}/>
+              <Text default monospace small>
+                Keep running pipeline even if blocks fail
+              </Text>
+            </FlexContainer>
+          </Spacing>
+        </Spacing>
       </Spacing>
     </Spacing>
   ), [
@@ -1040,7 +1055,7 @@ function Edit({
     schedule,
     setEnableSLA,
     setOverwriteVariables,
-    skipIfRunning,
+    settings,
   ]);
 
   return (
