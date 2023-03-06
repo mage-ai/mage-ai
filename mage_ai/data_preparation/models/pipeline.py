@@ -406,6 +406,19 @@ class Pipeline:
             all_blocks,
         )
 
+        self.extensions = {}
+        for uuid, config in config.get('extensions', {}).items():
+            extension_configs = config.get('blocks') or []
+            extension_blocks = [build_shared_args_kwargs(c) for c in self.extension_configs]
+
+            self.extensions[uuid] = merge_dict(config, dict(
+                blocks_by_uuid=self.__initialize_blocks_by_uuid(
+                    extension_configs,
+                    extension_blocks,
+                    all_blocks,
+                ),
+            ))
+
         self.validate('A cycle was detected in the loaded pipeline')
 
     def __initialize_blocks_by_uuid(
