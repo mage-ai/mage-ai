@@ -166,6 +166,9 @@ function Sidekick({
   });
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+  const finalOutputHeight = isIntegration
+    ? -78   // Hide entire output area
+    : (pipelineExecutionHidden ? -22 : OUTPUT_HEIGHT);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -258,7 +261,7 @@ function Sidekick({
               editingBlock={editingBlock}
               enablePorts={!isIntegration}
               fetchPipeline={fetchPipeline}
-              height={heightWindow - heightOffset - (pipelineExecutionHidden ? -22 : OUTPUT_HEIGHT)}
+              height={heightWindow - heightOffset - finalOutputHeight}
               pipeline={pipeline}
               runningBlocks={runningBlocks}
               selectedBlock={selectedBlock}
