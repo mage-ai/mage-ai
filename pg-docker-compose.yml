@@ -1,5 +1,16 @@
 version: '3'
 services:
+  mssql-server:
+    image: mcr.microsoft.com/azure-sql-edge
+    restart: always
+    hostname: mssql
+    ports:
+      - 1433:1433
+    environment:
+      - ACCEPT_EULA=1
+      - MSSQL_SA_PASSWORD=Magepassw0rd
+      - MSSQL_PID=Developer
+      - MSSQL_SA_USERNAME=SA
   postgres-db:
     image: postgres:13-alpine3.17
     restart: always
