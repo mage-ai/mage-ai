@@ -386,7 +386,7 @@ class PipelineScheduler:
         if job_manager.has_pipeline_run_job(self.pipeline_run.id):
             return
 
-        block_runs_to_schedule = self.executable_block_runs if block_runs is None else block_runs
+        block_runs_to_schedule = self.initial_block_runs if block_runs is None else block_runs
         block_runs_to_schedule = self.__fetch_crashed_block_runs() + block_runs_to_schedule
 
         if len(block_runs_to_schedule) > 0:
