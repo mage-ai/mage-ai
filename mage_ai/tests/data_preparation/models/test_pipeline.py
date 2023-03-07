@@ -3,6 +3,7 @@ from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import DBTestCase
+from mage_ai.tests.factory import create_pipeline_run_with_schedule
 from unittest.mock import patch
 import asyncio
 import json
@@ -111,6 +112,37 @@ class PipelineTest(DBTestCase):
                 ),
             ],
         ))
+
+    def test_update_name_existing_pipeline(self):
+        pipeline1 = Pipeline.create(
+            'test_pipeline_a',
+            repo_path=self.repo_path,
+        )
+        pipeline2 = Pipeline.create(
+            'test_pipeline_b',
+            repo_path=self.repo_path,
+        )
+        with self.assertRaises(Exception):
+            asyncio.run(pipeline2.update(dict(name='test_pipeline_a', uuid='test_pipeline_b')))
+        self.assertEqual(pipeline1.name, 'test_pipeline_a')
+        self.assertEqual(pipeline2.name, 'test_pipeline_b')
+
+    def test_update_name(self):
+        pipeline = Pipeline.create(
+            'test_pipeline_c',
+            repo_path=self.repo_path,
+        )
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline_c')
+        pipeline_schedule = pipeline_run.pipeline_schedule
+        self.assertEqual(pipeline.name, 'test_pipeline_c')
+        self.assertEqual(pipeline.uuid, 'test_pipeline_c')
+        self.assertEqual(pipeline_run.pipeline_uuid, 'test_pipeline_c')
+        self.assertEqual(pipeline_schedule.pipeline_uuid, 'test_pipeline_c')
+        asyncio.run(pipeline.update(dict(name='test_pipeline_c2', uuid='test_pipeline_c')))
+        self.assertEqual(pipeline.name, 'test_pipeline_c2')
+        self.assertEqual(pipeline.uuid, 'test_pipeline_c2')
+        self.assertEqual(pipeline_run.pipeline_uuid, 'test_pipeline_c2')
+        self.assertEqual(pipeline_schedule.pipeline_uuid, 'test_pipeline_c2')
 
     def test_delete_block(self):
         pipeline = self.__create_pipeline_with_blocks('test pipeline 3')
