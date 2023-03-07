@@ -61,6 +61,14 @@ You can also create or edit global variables in code by editing the pipeline
 
 ![Create Global Variables in Code](/media/configure-variables-in-code.png)
 
+### In Python code
+You can also save the variable in Python code. One example usage is to save checkpoint data. 
+
+```python
+from mage_ai.data_preparation.variable_manager import set_global_variable
+set_global_variable(pipeline_uuid, key, value)
+```
+
 ## Default Runtime Variables
 
 Mage provides some default variables to give context on the pipeline execution.
