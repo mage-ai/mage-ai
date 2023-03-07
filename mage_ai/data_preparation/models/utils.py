@@ -9,21 +9,26 @@ JSON_SERIALIZABLE_COLUMN_TYPES = [
     dict.__name__,
     list.__name__,
 ]
+STRING_SERIALIZABLE_COLUMN_TYPES = [
+    'ObjectId',
+]
 
 
 def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
     for column, column_type in column_types.items():
-        if column_type not in JSON_SERIALIZABLE_COLUMN_TYPES:
-            continue
-
-        val = row[column]
-        if val is not None:
-            row[column] = simplejson.dumps(
-                val,
-                default=encode_complex,
-                ignore_nan=True,
-                use_decimal=True,
-            )
+        if column_type in JSON_SERIALIZABLE_COLUMN_TYPES:
+            val = row[column]
+            if val is not None:
+                row[column] = simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                    use_decimal=True,
+                )
+        elif column_type in STRING_SERIALIZABLE_COLUMN_TYPES:
+            val = row[column]
+            if val is not None:
+                row[column] = str(val)
 
     return row
 
