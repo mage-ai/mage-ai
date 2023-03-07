@@ -1,14 +1,17 @@
 from json.decoder import JSONDecodeError
 from mage_ai.api.errors import ApiError
 from mage_ai.api.utils import authenticate_client_and_token
+from mage_ai.authentication.oauth2 import decode_token
 from mage_ai.orchestration.db.models import Oauth2Application
 from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
 from mage_ai.server.api.constants import (
+    COOKIE_OAUTH_TOKEN,
     ENDPOINTS_BYPASS_OAUTH_CHECK,
     HEADER_API_KEY,
     HEADER_OAUTH_TOKEN,
     URL_PARAMETER_API_KEY,
 )
+from mage_ai.shared.array import find
 from tornado.web import RequestHandler
 import json
 
@@ -50,17 +53,28 @@ class OAuthMiddleware(RequestHandler):
 
         token_from_header = self.request.headers.get(HEADER_OAUTH_TOKEN, None)
         if not token_from_header:
-            token_from_header = self.request.headers.get(
-                'Authorization',
-                self.request.query_arguments.get(
-                    'HTTP_AUTHORIZATION',
-                    None,
-                ),
-            )
-
+            token_from_header = self.request.headers.get('Authorization')
             if token_from_header:
-                token_from_header = token_from_header.replace(
-                    'Bearer ', '').replace('bearer ', '')
+                tokens = token_from_header.split(',')
+                token_from_header = find(lambda x: 'bearer' in x.lower(), tokens)
+                if token_from_header:
+                    token_from_header = (
+                        token_from_header.
+                        replace('Bearer ', '').
+                        replace('bearer ', '')
+                    )
+                else:
+                    token_from_header = None
+            else:
+                token_from_header = self.request.query_arguments.get('HTTP_AUTHORIZATION', None)
+
+        cookies_raw = self.request.headers.get('Cookie', '')
+        cookies = {}
+        if cookies_raw:
+            for cookie_string in cookies_raw.split(';'):
+                cookie_string = cookie_string.strip()
+                cookie_name, cookie_value = cookie_string.split('=', 1)
+                cookies[cookie_name] = cookie_value
 
         if api_key:
             oauth_client = Oauth2Application.query.filter(
@@ -71,11 +85,20 @@ class OAuthMiddleware(RequestHandler):
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
             elif oauth_client.client_id != OAUTH2_APPLICATION_CLIENT_ID:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
-            elif token_from_header:
-                oauth_token, valid = authenticate_client_and_token(
-                    oauth_client.id,
-                    token_from_header,
-                )
+            else:
+                oauth_token = None
+                if token_from_header:
+                    oauth_token, valid = authenticate_client_and_token(
+                        oauth_client.id,
+                        token_from_header,
+                    )
+                elif COOKIE_OAUTH_TOKEN in cookies:
+                    token_data = decode_token(cookies[COOKIE_OAUTH_TOKEN])
+                    if 'token' in token_data:
+                        oauth_token, valid = authenticate_client_and_token(
+                            oauth_client.id,
+                            decode_token(cookies[COOKIE_OAUTH_TOKEN])['token'],
+                        )
 
                 if oauth_token:
                     if valid:
