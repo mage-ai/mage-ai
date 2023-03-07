@@ -20,7 +20,7 @@ FilePolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 FilePolicy.allow_read(FilePresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -46,7 +46,7 @@ FilePolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 FilePolicy.allow_write([
     'dir_path',
@@ -55,4 +55,4 @@ FilePolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())

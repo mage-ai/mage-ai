@@ -20,7 +20,7 @@ VariablePolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 VariablePolicy.allow_read(VariablePresenter.default_attributes + [
 ], scopes=[
@@ -36,7 +36,7 @@ VariablePolicy.allow_read(VariablePresenter.default_attributes + [
     constants.CREATE,
     constants.DELETE,
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 VariablePolicy.allow_write([
     'name',
@@ -46,4 +46,4 @@ VariablePolicy.allow_write([
 ], on_action=[
     constants.CREATE,
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())

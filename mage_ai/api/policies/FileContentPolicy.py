@@ -18,7 +18,7 @@ FileContentPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 FileContentPolicy.allow_read(FileContentPresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -35,4 +35,4 @@ FileContentPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())

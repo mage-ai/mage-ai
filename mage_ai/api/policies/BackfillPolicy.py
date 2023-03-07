@@ -20,7 +20,7 @@ BackfillPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 BackfillPolicy.allow_read([
     'pipeline_run_dates',
@@ -37,7 +37,7 @@ BackfillPolicy.allow_read([] + BackfillPresenter.default_attributes, scopes=[
 ], on_action=[
     constants.CREATE,
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 BackfillPolicy.allow_write([
     'name',
@@ -45,7 +45,7 @@ BackfillPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 BackfillPolicy.allow_write([
     'block_uuid',
@@ -60,7 +60,7 @@ BackfillPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 BackfillPolicy.allow_query([
     'include_preview_runs',

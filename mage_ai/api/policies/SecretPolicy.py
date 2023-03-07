@@ -19,7 +19,7 @@ SecretPolicy.allow_actions([
     constants.DELETE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 SecretPolicy.allow_read(SecretPresenter.default_attributes + [
 ], scopes=[
@@ -34,7 +34,7 @@ SecretPolicy.allow_read(SecretPresenter.default_attributes + [
 ], on_action=[
     constants.CREATE,
     constants.DELETE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 SecretPolicy.allow_write([
     'name',
@@ -43,4 +43,4 @@ SecretPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
