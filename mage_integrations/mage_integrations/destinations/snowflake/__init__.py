@@ -146,6 +146,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     schema_name,
                     table_name,
                 ),
+                add_column_cmd='ADD',
                 column_identifier=self.column_identifier,
             ),
         ]
