@@ -507,6 +507,11 @@ class Pipeline:
             old_uuid = self.uuid
             new_name = data['name']
             new_uuid = clean_name(new_name)
+
+            all_pipelines = self.get_all_pipelines(self.repo_path)
+            if new_uuid in all_pipelines:
+                raise Exception(f'Pipeline {new_uuid} already exists. Choose a different name.')
+
             old_pipeline_path = self.dir_path
             self.name = new_name
             self.uuid = new_uuid
