@@ -7,6 +7,7 @@ from typing import Any, IO, Union
 import pyodbc
 import numpy as np
 
+
 class MSSQL(BaseSQL):
     def __init__(
         self,
@@ -33,6 +34,8 @@ class MSSQL(BaseSQL):
         )
 
     def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
+        # MSSQL doesn't support WITH statements in subqueries, so if the user uses a WITH
+        # statement in their query, it would break if we tried to enforce a limit.
         return query
 
     @classmethod
@@ -72,7 +75,7 @@ class MSSQL(BaseSQL):
                 f'WHERE table_name = \'{table_name}\'',
             ]))
             return len(cur.fetchall()) >= 1
-        
+
     def upload_dataframe(
         self,
         cursor: Any,
