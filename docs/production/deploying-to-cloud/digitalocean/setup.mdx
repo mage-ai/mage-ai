@@ -102,6 +102,14 @@ Run command to start Mage app in :
 docker run -d -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start default_repo
 ```
 
+<br />
+
+To update Mage to latest version, you can pull latest docker image with command:
+```bash
+docker pull mageai/mageai:latest
+```
+Then, just restart the Mage app with the same `docker run` command above.
+
 ---
 
 ## Misc
