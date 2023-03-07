@@ -58,7 +58,8 @@ class OAuthMiddleware(RequestHandler):
                 tokens = token_from_header.split(',')
                 token_from_header = find(lambda x: 'bearer' in x.lower(), tokens)
                 if token_from_header:
-                    token_from_header = (token_from_header.
+                    token_from_header = (
+                        token_from_header.
                         replace('Bearer ', '').
                         replace('bearer ', '')
                     )
