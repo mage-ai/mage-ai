@@ -41,7 +41,7 @@ def has_at_least_editor_role(user) -> bool:
 
 
 def has_at_least_editor_role_and_edit_access(user) -> bool:
-    return not DISABLE_EDIT_ACCESS and has_at_least_editor_role()
+    return not DISABLE_EDIT_ACCESS and has_at_least_editor_role(user)
 
 
 def has_at_least_viewer_role(user) -> bool:
