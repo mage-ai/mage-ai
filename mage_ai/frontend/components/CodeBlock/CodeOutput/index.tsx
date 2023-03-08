@@ -236,10 +236,16 @@ function CodeOutput({
       dataArray1 = dataArray1.filter(d => d);
 
       const dataArray = [];
-      dataArray1.forEach((data: string) => {
+      dataArray1.forEach((data: string | {
+        columns: string[];
+        rows: any[][];
+        shape: number[];
+      }) => {
         if (data && typeof data === 'string') {
           const lines = data.split('\n');
           dataArray.push(...lines);
+        } else if (typeof dataArray === 'object') {
+          dataArray.push(data);
         }
       });
 
@@ -279,6 +285,7 @@ function CodeOutput({
           });
         }
 
+
         if (data === null) {
           return;
         } else if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
@@ -315,6 +322,7 @@ function CodeOutput({
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
+
           isTable = true;
           const tableEl = createDataTableElement(
             isJsonString(data) ? JSON.parse(data) : data,
