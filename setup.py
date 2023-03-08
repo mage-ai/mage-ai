@@ -67,6 +67,7 @@ setuptools.setup(
         ],
         'postgres': [
             'psycopg2==2.9.3',
+            'psycopg2-binary==2.9.3',
             'sshtunnel==0.4.0',
         ],
         'redshift': [
@@ -117,6 +118,7 @@ setuptools.setup(
             'opensearch-py==2.0.0',
             'pika==1.3.1',
             'psycopg2==2.9.3',
+            'psycopg2-binary==2.9.3',
             'pyodbc==4.0.35',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',

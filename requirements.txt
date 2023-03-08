@@ -47,6 +47,7 @@ google-cloud-storage==2.5.0
 kubernetes==25.3.0
 mysql-connector-python==8.0.31
 psycopg2==2.9.3
+psycopg2-binary==2.9.3
 pyodbc==4.0.35
 redshift-connector==2.0.909
 snowflake-connector-python==2.7.9
