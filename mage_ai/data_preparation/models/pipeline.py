@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.strings import format_enum
@@ -497,19 +498,44 @@ class Pipeline:
             widgets=widgets_data,
         ))
 
+    @safe_db_query
+    def __transfer_related_models(self, old_uuid, new_uuid):
+        from mage_ai.orchestration.db.models import Backfill, PipelineRun, PipelineSchedule
+
+        # Migrate pipeline schedules
+        PipelineSchedule.query.filter(PipelineSchedule.pipeline_uuid == old_uuid).update({
+            PipelineSchedule.pipeline_uuid: new_uuid
+        }, synchronize_session=False)
+        # Migrate pipeline runs (block runs have foreign key ref to PipelineRun id)
+        PipelineRun.query.filter(PipelineRun.pipeline_uuid == old_uuid).update({
+            PipelineRun.pipeline_uuid: new_uuid
+        }, synchronize_session=False)
+        # Migrate backfills
+        Backfill.query.filter(Backfill.pipeline_uuid == old_uuid).update({
+            Backfill.pipeline_uuid: new_uuid
+        }, synchronize_session=False)
+        db_connection.session.commit()
+
     async def update(self, data, update_content=False):
         if 'name' in data and data['name'] != self.name:
             """
             Rename pipeline folder
             """
+            old_uuid = self.uuid
             new_name = data['name']
             new_uuid = clean_name(new_name)
+
+            all_pipelines = self.get_all_pipelines(self.repo_path)
+            if new_uuid in all_pipelines:
+                raise Exception(f'Pipeline {new_uuid} already exists. Choose a different name.')
+
             old_pipeline_path = self.dir_path
             self.name = new_name
             self.uuid = new_uuid
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
             self.save()
+            self.__transfer_related_models(old_uuid, new_uuid)
 
         if 'type' in data and data['type'] != self.type:
             """
