@@ -224,7 +224,10 @@ class Postgres(BaseSQL):
 
         for col in columns:
             print(col, df_[col].dtype)
-            if PandasTypes.OBJECT == df_[col].dtype:
+            df_col_dropna = df_[col].dropna()
+            if df_col_dropna.count() == 0:
+                continue
+            if PandasTypes.OBJECT == df_[col].dtype and type(df_col_dropna.iloc[0]) != str:
                 df_[col] = df_[col].apply(lambda x: json.dumps(x))
 
         df_.to_csv(
