@@ -1,9 +1,8 @@
 from datetime import datetime
 from mage_ai.data_preparation.models.errors import FileExistsError
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from typing import Callable, Dict, Tuple
+from typing import Dict, Tuple
 import aiofiles
-import inspect
 import os
 
 FILE_VERSIONS_DIR = '.file_versions'
@@ -60,7 +59,6 @@ class File:
     ):
         repo_path = repo_path or get_repo_path()
         file = File(filename, dir_path, repo_path)
-        file_path = file.file_path
 
         self.write(
             repo_path,
