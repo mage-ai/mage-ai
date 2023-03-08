@@ -16,8 +16,13 @@ class PipelinePresenter(BasePresenter):
 
     async def present(self, **kwargs):
         query = kwargs.get('query', {})
+        display_format = kwargs['format']
 
-        if constants.DETAIL == kwargs['format']:
+        include_extensions = query.get('includes_extensions', [True])
+        if include_extensions:
+            include_extensions = include_extensions[0]
+
+        if constants.DETAIL == display_format:
             include_content = query.get('includes_content', [True])
             if include_content:
                 include_content = include_content[0]
@@ -30,9 +35,6 @@ class PipelinePresenter(BasePresenter):
             if include_block_metadata:
                 include_block_metadata = include_block_metadata[0]
 
-            include_extensions = query.get('includes_extensions', [True])
-            if include_extensions:
-                include_extensions = include_extensions[0]
 
             return await self.model.to_dict_async(
                 include_block_metadata=include_block_metadata,
@@ -41,8 +43,10 @@ class PipelinePresenter(BasePresenter):
                 include_outputs=include_outputs,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
-
-        data = self.model.to_dict()
+        elif constants.UPDATE == display_format:
+            data = self.model.to_dict(include_extensions=include_extensions)
+        else:
+            data = self.model.to_dict()
 
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:

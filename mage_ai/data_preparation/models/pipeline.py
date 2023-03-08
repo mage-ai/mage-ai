@@ -608,99 +608,132 @@ class Pipeline:
             self.save()
             self.__transfer_related_models(old_uuid, new_uuid)
 
+        should_save = False
+
         if 'type' in data and data['type'] != self.type:
             """
             Update kernel
             """
             self.type = data['type']
-            self.save()
+            should_save = True
 
         if 'data_integration' in data:
             self.data_integration = data['data_integration']
+            should_save = True
+
+        if 'extensions' in data:
+            for extension_uuid, extension in data['extensions'].items():
+                if extension_uuid not in self.extensions:
+                    self.extensions[extension_uuid] = {}
+                self.extensions[extension_uuid] = merge_dict(
+                    self.extensions[extension_uuid],
+                    extension,
+                )
+            should_save = True
+
+        if should_save:
             self.save()
 
         if update_content:
             block_uuid_mapping = dict()
-            for key in ['blocks', 'widgets']:
-                if key in data:
-                    for block_data in data[key]:
-                        if 'uuid' not in block_data:
-                            continue
 
-                        widget = key == 'widgets'
-                        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
-                        block = mapping.get(block_data['uuid'])
-                        if block is None:
-                            continue
-                        if 'content' in block_data:
-                            await block.update_content_async(block_data['content'], widget=widget)
-                        if 'callback_content' in block_data \
-                                and block.callback_block:
-                            await block.callback_block.update_content_async(
-                                block_data['callback_content'],
-                                widget=widget,
-                            )
-                        if 'outputs' in block_data:
-                            await block.save_outputs_async(block_data['outputs'], override=True)
+            arr = []
 
-                        should_save = False
-                        name = block_data.get('name')
+            if 'blocks' in data:
+                arr.append(('blocks', data['blocks'], self.blocks_by_uuid))
+            if 'widgets' in data:
+                arr.append(('widgets', data['widgets'], self.widgets_by_uuid))
 
-                        if block_data.get('has_callback') is not None:
-                            block.update(extract(block_data, ['has_callback']))
+            if 'extensions' in data:
+                for extension_uuid, extension in data['extensions'].items():
+                    if 'blocks' in extension:
+                        arr.append((
+                            'extension_blocks',
+                            extension['blocks'],
+                            self.extensions.get(extension_uuid, {}).get('blocks_by_uuid', {}),
+                        ))
 
-                        configuration = block_data.get('configuration')
-                        if configuration:
-                            if configuration.get('dynamic') and not is_dynamic_block(block):
-                                for downstream_block in block.downstream_blocks:
-                                    dynamic_blocks = list(filter(
-                                        is_dynamic_block,
-                                        downstream_block.upstream_blocks,
-                                    ))
+            for tup in arr:
+                key, blocks_arr, mapping = tup
+                widget = key == 'widgets'
+                should_save_async = False
 
-                                    if len(dynamic_blocks) >= 1:
-                                        db_uuids = [block.uuid] + [b.uuid for b in dynamic_blocks]
-                                        raise NoMultipleDynamicUpstreamBlocks(
-                                            f'Block {downstream_block.uuid} can only have 1 '
-                                            'upstream block that is dynamic. Current request is '
-                                            'trying to set the following dynamic blocks as '
-                                            f"upstream: {', '.join(db_uuids)}.",
-                                        )
+                for block_data in blocks_arr:
+                    if 'uuid' not in block_data:
+                        continue
 
-                            block.configuration = configuration
-                            should_save = True
+                    block = mapping.get(block_data['uuid'])
+                    if block is None:
+                        continue
+                    if 'content' in block_data:
+                        await block.update_content_async(block_data['content'], widget=widget)
+                    if 'callback_content' in block_data \
+                            and block.callback_block:
+                        await block.callback_block.update_content_async(
+                            block_data['callback_content'],
+                            widget=widget,
+                        )
+                    if 'outputs' in block_data:
+                        await block.save_outputs_async(block_data['outputs'], override=True)
 
-                        if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
-                            update_model_settings(
-                                block,
-                                block.upstream_blocks,
-                                [],
-                                force_update=True,
-                            )
+                    name = block_data.get('name')
 
-                        if widget:
-                            keys_to_update = []
+                    if block_data.get('has_callback') is not None:
+                        block.update(extract(block_data, ['has_callback']))
 
-                            if name and name != block.name:
-                                keys_to_update.append('name')
+                    configuration = block_data.get('configuration')
+                    if configuration:
+                        if configuration.get('dynamic') and not is_dynamic_block(block):
+                            for downstream_block in block.downstream_blocks:
+                                dynamic_blocks = list(filter(
+                                    is_dynamic_block,
+                                    downstream_block.upstream_blocks,
+                                ))
 
-                            if block_data.get('upstream_blocks'):
-                                keys_to_update.append('upstream_blocks')
-                                block_data['upstream_blocks'] = [
-                                    block_uuid_mapping.get(b, b)
-                                    for b in block_data['upstream_blocks']
-                                ]
+                                if len(dynamic_blocks) >= 1:
+                                    db_uuids = [block.uuid] + [b.uuid for b in dynamic_blocks]
+                                    raise NoMultipleDynamicUpstreamBlocks(
+                                        f'Block {downstream_block.uuid} can only have 1 '
+                                        'upstream block that is dynamic. Current request is '
+                                        'trying to set the following dynamic blocks as '
+                                        f"upstream: {', '.join(db_uuids)}.",
+                                    )
 
-                            if len(keys_to_update) >= 1:
-                                block.update(extract(block_data, keys_to_update))
+                        block.configuration = configuration
+                        should_save_async = should_save_async or True
 
-                            should_save = True
-                        elif name and name != block.name:
-                            block.update(extract(block_data, ['name']))
-                            block_uuid_mapping[block_data.get('uuid')] = block.uuid
-                            should_save = True
-                        if should_save:
-                            await self.save_async(widget=widget)
+                    if BlockType.DBT == block.type and BlockLanguage.SQL == block.language:
+                        update_model_settings(
+                            block,
+                            block.upstream_blocks,
+                            [],
+                            force_update=True,
+                        )
+
+                    if widget:
+                        keys_to_update = []
+
+                        if name and name != block.name:
+                            keys_to_update.append('name')
+
+                        if block_data.get('upstream_blocks'):
+                            keys_to_update.append('upstream_blocks')
+                            block_data['upstream_blocks'] = [
+                                block_uuid_mapping.get(b, b)
+                                for b in block_data['upstream_blocks']
+                            ]
+
+                        if len(keys_to_update) >= 1:
+                            block.update(extract(block_data, keys_to_update))
+
+                        should_save_async = should_save_async or True
+                    elif name and name != block.name:
+                        block.update(extract(block_data, ['name']))
+                        block_uuid_mapping[block_data.get('uuid')] = block.uuid
+                        should_save_async = should_save_async or True
+
+                if should_save_async:
+                    await self.save_async(widget=widget)
 
     def __add_block_to_mapping(
         self,
@@ -986,20 +1019,34 @@ class Pipeline:
             file_version_only=True,
         )
 
-    async def save_async(self, block_uuid: str = None, widget: bool = False):
+    async def save_async(
+        self,
+        block_uuid: str = None,
+        extension_uuid: str = None,
+        widget: bool = False,
+    ) -> None:
         if block_uuid is not None:
             current_pipeline = await Pipeline.get_async(self.uuid, self.repo_path)
-            block = self.get_block(block_uuid, widget=widget)
+            block = self.get_block(block_uuid, extension_uuid=extension_uuid, widget=widget)
             if widget:
                 current_pipeline.widgets_by_uuid[block_uuid] = block
+            elif extension_uuid:
+                if extension_uuid not in self.extensions:
+                    self.extensions[extension_uuid] = {}
+                if 'blocks_by_uuid' not in self.extensions[extension_uuid]:
+                    self.extensions[extension_uuid]['blocks_by_uuid'] = {}
+                self.extensions[extension_uuid]['blocks_by_uuid'][block_uuid] = block
             else:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
-            pipeline_dict = current_pipeline.to_dict()
+            pipeline_dict = current_pipeline.to_dict(include_extensions=True)
         else:
             if self.data_integration is not None:
                 async with aiofiles.open(self.catalog_config_path, mode='w') as fp:
                     await fp.write(json.dumps(self.data_integration))
-            pipeline_dict = self.to_dict(exclude_data_integration=True)
+            pipeline_dict = self.to_dict(
+                exclude_data_integration=True,
+                include_extensions=True,
+            )
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')
 
