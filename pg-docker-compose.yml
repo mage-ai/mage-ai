@@ -26,6 +26,7 @@ services:
       - GCP_REGION=$GCP_REGION
       - ENV=dev
       - MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://postgres:postgres@postgres-db:5432/mage
+      - REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
     ports:
       - 6789:6789
     volumes:

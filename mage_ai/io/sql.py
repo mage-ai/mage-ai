@@ -47,6 +47,16 @@ class BaseSQL(BaseSQLConnection):
     ) -> str:
         return gen_table_creation_query(dtypes, schema_name, table_name)
 
+    def build_create_table_as_command(
+        self,
+        table_name: str,
+        query_string: str,
+    ) -> str:
+        return 'CREATE TABLE {} AS\n{}'.format(
+            table_name,
+            query_string,
+        )
+
     def open(self) -> None:
         """
         Opens a connection to the SQL database specified by the parameters.
@@ -236,7 +246,7 @@ class BaseSQL(BaseSQLConnection):
                             cur.execute(f'DELETE FROM {full_table_name}')
 
                 if query_string:
-                    query = 'CREATE TABLE {} AS\n{}'.format(
+                    query = self.build_create_table_as_command(
                         full_table_name,
                         query_string,
                     )

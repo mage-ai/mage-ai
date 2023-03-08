@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
+    mssql,
     mysql,
     postgres,
     redshift,
@@ -112,6 +113,46 @@ def execute_sql_code(
                     except Exception as err:
                         if '404' not in str(err):
                             raise err
+    elif DataSource.MSSQL.value == data_provider:
+        from mage_ai.io.mssql import MSSQL
+
+        with MSSQL.with_config(config_file_loader) as loader:
+            mssql.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                execution_partition=execution_partition,
+            )
+
+            query_string = mssql.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
+
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    None,
+                    table_name,
+                    query_string=query_string,
+                    drop_table_on_replace=True,
+                    if_exists=export_write_policy,
+                    index=False,
+                    verbose=BlockType.DATA_EXPORTER == block.type,
+                )
+
+                if should_query:
+                    return [
+                        loader.load(
+                            f'SELECT * FROM {table_name}',
+                            verbose=False,
+                        ),
+                    ]
     elif DataSource.MYSQL.value == data_provider:
         from mage_ai.io.mysql import MySQL
 

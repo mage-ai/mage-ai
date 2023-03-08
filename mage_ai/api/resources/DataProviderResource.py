@@ -8,6 +8,7 @@ import yaml
 
 DATA_PROVIDERS = [
     DataSource.BIGQUERY,
+    DataSource.MSSQL,
     DataSource.MYSQL,
     DataSource.POSTGRES,
     DataSource.REDSHIFT,

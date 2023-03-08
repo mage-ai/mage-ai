@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     execute_sql_code as execute_sql_code_orig,
+    mssql,
     mysql,
     postgres,
     redshift,
@@ -67,6 +68,8 @@ def parse_attributes(block) -> Dict:
         elif DataSource.REDSHIFT == profile.get('type'):
             source_name = profile['schema']
         elif DataSource.TRINO == profile.get('type'):
+            source_name = profile['schema']
+        elif DataSource.MSSQL == profile.get('type'):
             source_name = profile['schema']
 
     return dict(
@@ -420,6 +423,20 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider_schema=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
+    elif DataSource.MSSQL == profile_type:
+        config_file_loader = ConfigFileLoader(config=dict(
+            MSSQL_DATABASE=profile.get('database'),
+            MSSQL_DRIVER=profile.get('driver'),
+            MSSQL_HOST=profile.get('server'),
+            MSSQL_PASSWORD=profile.get('password'),
+            MSSQL_PORT=profile.get('port'),
+            MSSQL_USER=profile.get('user'),
+        ))
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=profile.get('database'),
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
     elif DataSource.MYSQL == profile_type:
         host = profile.get('server')
         password = profile.get('password')
@@ -564,6 +581,16 @@ def create_upstream_tables(
                 cascade_on_drop=True,
                 **kwargs_shared,
             )
+    elif DataSource.MSSQL == data_provider:
+        from mage_ai.io.mssql import MSSQL
+
+        with MSSQL.with_config(config_file_loader) as loader:
+            mssql.create_upstream_block_tables(
+                loader,
+                block,
+                cascade_on_drop=False,
+                **kwargs_shared,
+            )
     elif DataSource.MYSQL == data_provider:
         from mage_ai.io.mysql import MySQL
 
@@ -681,6 +708,10 @@ def interpolate_refs_with_table_names(
         database = profile['dbname']
         schema = profile['schema']
         quote_str = '"'
+    elif DataSource.MSSQL == profile_type:
+        database = configuration['data_provider_database']
+        schema = None
+        quote_str = '`'
     elif DataSource.MYSQL == profile_type:
         database = configuration['data_provider_database']
         schema = None
@@ -758,6 +789,11 @@ def execute_query(
         from mage_ai.io.postgres import Postgres
 
         with Postgres.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
+    elif DataSource.MSSQL == data_provider:
+        from mage_ai.io.mssql import MSSQL
+
+        with MSSQL.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
     elif DataSource.MYSQL == data_provider:
         from mage_ai.io.mysql import MySQL
