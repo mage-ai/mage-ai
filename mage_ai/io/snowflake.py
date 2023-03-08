@@ -1,5 +1,6 @@
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.shared.hash import merge_dict
 from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
@@ -279,12 +280,16 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
         Args:
             config (BaseConfigLoader): Configuration loader object
         """
-        return cls(
+        conn_kwargs = dict(
             user=config[ConfigKey.SNOWFLAKE_USER],
             password=config[ConfigKey.SNOWFLAKE_PASSWORD],
             account=config[ConfigKey.SNOWFLAKE_ACCOUNT],
             warehouse=config[ConfigKey.SNOWFLAKE_DEFAULT_WH],
             database=database or config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
             schema=schema or config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
-            **kwargs,
+        )
+        if ConfigKey.SNOWFLAKE_ROLE in config:
+            conn_kwargs['role'] = config[ConfigKey.SNOWFLAKE_ROLE]
+        return cls(
+            **merge_dict(conn_kwargs, kwargs),
         )
