@@ -68,7 +68,7 @@ An example `io_config.yaml` file in this instance would be:
 default:
     SNOWFLAKE_USER: my_username
     SNOWFLAKE_PASSWORD: my_password
-    SNOWFLAKE_ACCOUNT_ID: example.us-west-2
+    SNOWFLAKE_ACCOUNT: example.us-west-2
 ```
 
 with which a Snowflake data loading client can be constructed as:
@@ -831,6 +831,7 @@ SNOWFLAKE_ACCOUNT: Snowflake account ID (including region, excluding "snowflake-
 SNOWFLAKE_DEFAULT_WH: Default warehouse to use. Optional, if unspecified warehouse not chosen.
 SNOWFLAKE_DEFAULT_DB: Default database to use. Optional, if unspecified database not chosen
 SNOWFLAKE_DEFAULT_SCHEMA: Default schema to use. Optional, if unspecified schema not chosen
+SNOWFLAKE_ROLE: Snowflake role
 ```
 
 <h3> Constructor </h3>
