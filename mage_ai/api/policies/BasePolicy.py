@@ -212,7 +212,6 @@ class BasePolicy():
                     })
                     raise ApiError(error)
                 elif config.get(self.__current_scope(), {}).get('condition'):
-                    print('OMGGGGGGGGGGGGGGG', key, value, config)
                     self.__validate_condition(
                         key,
                         config[self.__current_scope()]['condition'],
