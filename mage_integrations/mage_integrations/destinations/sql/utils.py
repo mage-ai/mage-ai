@@ -66,14 +66,13 @@ def build_alter_table_command(
     column_type_mapping: Dict,
     columns: List[str],
     full_table_name: str,
-    add_column_cmd: str = 'ADD COLUMN',
     column_identifier: str = '',
 ) -> str:
     if not columns:
         return None
 
     columns_and_types = [
-        f"{add_column_cmd} {column_identifier}{clean_column_name(col)}{column_identifier}" +
+        f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
         f" {column_type_mapping[col]['type_converted']}" for col
         in columns
     ]

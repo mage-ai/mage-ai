@@ -5,10 +5,12 @@ from mage_integrations.destinations.constants import (
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.snowflake.constants import SNOWFLAKE_COLUMN_TYPE_VARIANT
-from mage_integrations.destinations.snowflake.utils import convert_column_type
+from mage_integrations.destinations.snowflake.utils import (
+    build_alter_table_command,
+    convert_column_type,
+)
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
-    build_alter_table_command,
     build_create_table_command,
     build_insert_command,
     column_type_mapping,
@@ -146,7 +148,6 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                     schema_name,
                     table_name,
                 ),
-                add_column_cmd='ADD',
                 column_identifier=self.column_identifier,
             ),
         ]
