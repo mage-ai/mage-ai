@@ -10,7 +10,7 @@ from mage_ai.api.utils import (
     is_owner,
 )
 from mage_ai.services.tracking.metrics import increment
-from mage_ai.settings import DISABLE_EDIT_ACCESS
+from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS
 from mage_ai.shared.hash import extract
 import importlib
 import inflection
@@ -236,7 +236,7 @@ class BasePolicy():
         return self.parent_resource_attr
 
     def __current_scope(self):
-        if self.current_user or DISABLE_EDIT_ACCESS:
+        if self.current_user or DISABLE_NOTEBOOK_EDIT_ACCESS:
             return OauthScope.CLIENT_PRIVATE
         else:
             return OauthScope.CLIENT_PUBLIC

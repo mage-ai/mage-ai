@@ -37,7 +37,10 @@ from mage_ai.server.utils.output_display import (
     get_block_output_process_code,
     get_pipeline_execution_code,
 )
-from mage_ai.settings import DISABLE_EDIT_ACCESS, REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings import (
+    DISABLE_NOTEBOOK_EDIT_ACCESS,
+    REQUIRE_USER_AUTHENTICATION,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.utils.code import reload_all_repo_modules
 from jupyter_client import KernelClient
@@ -164,7 +167,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         api_key = message.get('api_key')
         token = message.get('token')
 
-        if REQUIRE_USER_AUTHENTICATION or DISABLE_EDIT_ACCESS:
+        if REQUIRE_USER_AUTHENTICATION or DISABLE_NOTEBOOK_EDIT_ACCESS:
             valid = False
 
             if api_key and token:
@@ -178,7 +181,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         oauth_token.user and \
                         has_at_least_editor_role(oauth_token.user)
 
-            if not valid or DISABLE_EDIT_ACCESS:
+            if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS:
                 return self.send_message(
                     dict(
                         data=ApiError.UNAUTHORIZED_ACCESS['message'],
