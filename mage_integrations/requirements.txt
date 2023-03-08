@@ -12,6 +12,7 @@ httpx==0.23.1
 httpx[http2]
 mysql-connector-python==8.0.31
 pendulum==1.2.0
+psycopg2==2.9.3
 psycopg2-binary==2.9.3
 pyarrow==10.0.1
 pymongo==4.3.3
