@@ -798,6 +798,8 @@ class Pipeline:
     def update_block(self, block, upstream_block_uuids=None, widget=False):
         save_kwargs = dict()
 
+        is_extension = BlockType.EXTENSION == block.type
+
         if upstream_block_uuids is not None:
             mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
             dynamic_upstream_blocks = list(filter(
@@ -815,22 +817,25 @@ class Pipeline:
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
             if curr_upstream_block_uuids != new_upstream_block_uuids:
-                # There are currently no upstream blocks that are widgets (e.g. chart)
-                upstream_blocks_added = self.get_blocks(
-                    new_upstream_block_uuids - curr_upstream_block_uuids,
-                    widget=False,
-                )
-                # There are currently no upstream blocks that are widgets (e.g. chart)
-                upstream_blocks_removed = self.get_blocks(
-                    curr_upstream_block_uuids - new_upstream_block_uuids,
-                    widget=False,
-                )
-                for b in upstream_blocks_added:
-                    b.downstream_blocks.append(block)
-                for b in upstream_blocks_removed:
-                    b.downstream_blocks = [
-                        db for db in b.downstream_blocks if db.uuid != block.uuid
-                    ]
+                # Only set upstream block’s downstream to the current block if current block
+                # is not an extension block
+                if not is_extension:
+                    # There are currently no upstream blocks that are widgets (e.g. chart)
+                    upstream_blocks_added = self.get_blocks(
+                        new_upstream_block_uuids - curr_upstream_block_uuids,
+                        widget=False,
+                    )
+                    # There are currently no upstream blocks that are widgets (e.g. chart)
+                    upstream_blocks_removed = self.get_blocks(
+                        curr_upstream_block_uuids - new_upstream_block_uuids,
+                        widget=False,
+                    )
+                    for b in upstream_blocks_added:
+                        b.downstream_blocks.append(block)
+                    for b in upstream_blocks_removed:
+                        b.downstream_blocks = [
+                            db for db in b.downstream_blocks if db.uuid != block.uuid
+                        ]
 
                 # All blocks will depend on non-widget type blocks
                 block.update_upstream_blocks(self.get_blocks(upstream_block_uuids, widget=False))
@@ -839,6 +844,12 @@ class Pipeline:
 
         if widget:
             self.widgets_by_uuid[block.uuid] = block
+        elif is_extension:
+            if 'blocks_by_uuid' not in self.extensions[block.extension_uuid]:
+                self.extensions[block.extension_uuid]['blocks_by_uuid'] = {}
+            self.extensions[block.extension_uuid]['blocks_by_uuid'].update({
+                block.uuid: block,
+            })
         else:
             self.blocks_by_uuid[block.uuid] = block
 
@@ -857,10 +868,17 @@ class Pipeline:
                 old_variables_path,
                 Variable.dir_path(self.dir_path, new_uuid),
             )
-        if old_uuid in self.blocks_by_uuid:
+        if BlockType.EXTENSION == block.type:
+            blocks_by_uuid = self.extensions[block.extension_uuid].get('blocks_by_uuid', {})
+            if old_uuid in blocks_by_uuid:
+                self.extensions[block.extension_uuid]['blocks_by_uuid'] = {
+                    new_uuid if k == old_uuid else k: v for k, v in blocks_by_uuid.items()
+                }
+        elif old_uuid in self.blocks_by_uuid:
             self.blocks_by_uuid = {
                 new_uuid if k == old_uuid else k: v for k, v in self.blocks_by_uuid.items()
             }
+
         self.save()
         return block
 
@@ -883,10 +901,12 @@ class Pipeline:
         shutil.rmtree(self.dir_path)
 
     def delete_block(self, block: Block, widget: bool = False, commit: bool = True) -> None:
+        is_extension = BlockType.EXTENSION == block.type
+
         mapping = {}
         if widget:
             mapping = self.widgets_by_uuid
-        elif BlockType.EXTENSION == block.type:
+        elif is_extension:
             mapping = self.extensions.get(block.extension_uuid, {}).get('blocks_by_uuid', {})
         else:
             mapping = self.blocks_by_uuid
@@ -926,6 +946,8 @@ class Pipeline:
 
         if widget:
             del self.widgets_by_uuid[block.uuid]
+        elif is_extension:
+            del self.extensions[block.extension_uuid]['blocks_by_uuid'][block.uuid]
         else:
             del self.blocks_by_uuid[block.uuid]
         if commit:
@@ -1002,8 +1024,14 @@ class Pipeline:
             Defaults to 'A cycle was detected'
         """
         combined_blocks = dict()
-        combined_blocks.update(self.blocks_by_uuid)
+
+        for extension in self.extensions.values():
+            if 'blocks_by_uuid' not in extension:
+                continue
+            combined_blocks.update(extension['blocks_by_uuid'])
+
         combined_blocks.update(self.widgets_by_uuid)
+        combined_blocks.update(self.blocks_by_uuid)
         status = {uuid: 'unvisited' for uuid in combined_blocks}
 
         def __print_cycle(start_uuid: str, virtual_stack: List[StackFrame]):
