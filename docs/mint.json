@@ -316,9 +316,9 @@
         {
           "group": "Configuration",
           "pages": [
+            "production/configuring-production-settings/overview",
             "production/configuring-production-settings/secrets",
-            "production/configuring-production-settings/compute-resource",
-            "production/databases/default"
+            "production/configuring-production-settings/compute-resource"
           ]
         },
         {
