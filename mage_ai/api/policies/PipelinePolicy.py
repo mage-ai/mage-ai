@@ -47,6 +47,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 
 PipelinePolicy.allow_write([
     'clone_pipeline_uuid',
+    'included_blocks',
     'name',
     'type',
 ], scopes=[

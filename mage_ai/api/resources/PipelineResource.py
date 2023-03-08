@@ -84,7 +84,8 @@ class PipelineResource(BaseResource):
             )
         else:
             source = Pipeline.get(clone_pipeline_uuid)
-            pipeline = Pipeline.duplicate(source, name)
+            included_blocks = payload.get('included_blocks', [])
+            pipeline = Pipeline.duplicate(source, name, included_blocks=included_blocks)
 
         return self(pipeline, user, **kwargs)
 

@@ -136,7 +136,12 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def duplicate(self, source_pipeline: 'Pipeline', duplicate_pipeline_name: str):
+    def duplicate(
+        self,
+        source_pipeline: 'Pipeline',
+        duplicate_pipeline_name: str,
+        included_blocks: List[str] = [],
+    ):
         duplicate_pipeline = self.create(
             duplicate_pipeline_name,
             pipeline_type=source_pipeline.type,
@@ -145,14 +150,14 @@ class Pipeline:
         # first pass to load blocks
         for block_uuid in source_pipeline.blocks_by_uuid:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
-            if source_block.type == BlockType.SCRATCHPAD:
+            if source_block.type == BlockType.SCRATCHPAD or block_uuid not in included_blocks:
                 continue
             new_block = Block.get_block(source_block.name, source_block.uuid, source_block.type)
             duplicate_pipeline.add_block(new_block)
         # second pass to make connections
         for block_uuid in source_pipeline.blocks_by_uuid:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
-            if source_block.type == BlockType.SCRATCHPAD:
+            if source_block.type == BlockType.SCRATCHPAD or block_uuid not in included_blocks:
                 continue
             duplicate_block = duplicate_pipeline.blocks_by_uuid[block_uuid]
             duplicate_block.upstream_blocks = duplicate_pipeline.get_blocks(
