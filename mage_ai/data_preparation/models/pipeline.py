@@ -15,7 +15,10 @@ from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
-from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.data_preparation.variable_manager import (
+    VariableManager,
+    get_global_variables,
+)
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.shared.hash import extract, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
@@ -133,8 +136,8 @@ class Pipeline:
         return pipeline
 
     @classmethod
-    def duplicate(cls, source_pipeline: 'Pipeline', duplicate_pipeline_name: str):
-        duplicate_pipeline = cls.create(
+    def duplicate(self, source_pipeline: 'Pipeline', duplicate_pipeline_name: str):
+        duplicate_pipeline = self.create(
             duplicate_pipeline_name,
             pipeline_type=source_pipeline.type,
             repo_path=source_pipeline.repo_path,
@@ -170,7 +173,12 @@ class Pipeline:
             duplicate_pipeline.add_block(
                 new_widget, source_widget.upstream_block_uuids, widget=True
             )
+        # Add variables
+        source_pipeline_variables = get_global_variables(source_pipeline.uuid)
+        if source_pipeline_variables:
+            duplicate_pipeline.variables = source_pipeline_variables
         duplicate_pipeline.save()
+
         return duplicate_pipeline
 
     @classmethod
