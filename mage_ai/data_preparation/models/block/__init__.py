@@ -43,7 +43,7 @@ from mage_ai.shared.utils import (
     is_spark_env,
 )
 from queue import Queue
-from typing import Any, Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List, Set, Tuple
 import asyncio
 import functools
 import json
@@ -850,7 +850,7 @@ class Block:
             stdout = sys.stdout
 
         # Fetch input variables
-        input_vars, upstream_block_uuids = self.fetch_input_variables(
+        input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
             input_args,
             execution_partition,
             global_vars,
@@ -870,6 +870,10 @@ class Block:
             outputs_from_input_vars = dict()
 
         with redirect_stdout(stdout):
+            global_vars_copy = global_vars.copy()
+            for kwargs_var in kwargs_vars:
+                global_vars_copy.update(kwargs_var)
+
             outputs = self._execute_block(
                 outputs_from_input_vars,
                 custom_code=custom_code,
@@ -877,7 +881,7 @@ class Block:
                 input_vars=input_vars,
                 logger=logger,
                 logging_tags=logging_tags,
-                global_vars=global_vars,
+                global_vars=global_vars_copy,
                 test_execution=test_execution,
                 input_from_output=input_from_output,
                 runtime_arguments=runtime_arguments,
@@ -975,7 +979,7 @@ class Block:
         global_vars: Dict = None,
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
-    ):
+    ) -> Tuple[List, List, List]:
         return fetch_input_variables(
             self.pipeline,
             self.upstream_block_uuids,
