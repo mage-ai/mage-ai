@@ -220,6 +220,11 @@ class BaseSQL(BaseSQLConnection):
             dtypes = infer_dtypes(df)
             df = clean_df_for_export(df, self.clean, dtypes)
 
+            # Clean column names
+            col_mapping = {col: self._clean_column_name(col) for col in df.columns}
+            df = df.rename(columns=col_mapping)
+            dtypes = infer_dtypes(df)
+
         def __process():
             buffer = StringIO()
             table_exists = self.table_exists(schema_name, table_name)

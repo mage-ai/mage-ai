@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from mage_ai.io.constants import SQL_RESERVED_WORDS
 from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
 from typing import IO, Any, Callable, Union
@@ -275,7 +276,10 @@ class BaseSQLDatabase(BaseIO):
         return query_string.strip(' \n\t')
 
     def _clean_column_name(self, column_name: str) -> str:
-        return re.sub(r'\W', '_', column_name.lower())
+        col_new = re.sub(r'\W', '_', column_name.lower())
+        if col_new.upper() in SQL_RESERVED_WORDS:
+            col_new = f'_{col_new}'
+        return col_new
 
 
 class BaseSQLConnection(BaseSQLDatabase):
