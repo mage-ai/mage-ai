@@ -1,7 +1,7 @@
 from mage_ai.shared.array import find, unique_by
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name as clean_name_orig
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 import json
 import pandas as pd
 
@@ -289,9 +289,11 @@ def fetch_input_variables(
     global_vars: Dict = None,
     dynamic_block_index: int = None,
     dynamic_upstream_block_uuids: List[str] = None,
-):
+) -> Tuple[List, List, List]:
     spark = (global_vars or dict()).get('spark')
     upstream_block_uuids_final = []
+
+    kwargs_vars = []
 
     input_vars = []
     if input_args is not None:
@@ -338,6 +340,14 @@ def fetch_input_variables(
                     if type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
                         val = arr[index_to_use]
                 input_vars[idx] = val
+
+                # output_0 is the metadata for dynamic blocks
+                if len(variable_values) >= 2:
+                    arr = variable_values[1]
+                    index_to_use = 0 if dynamic_block_index is None else dynamic_block_index
+                    if type(arr) is list and len(arr) >= 1 and index_to_use < len(arr):
+                        val = arr[index_to_use]
+                    kwargs_vars.append(val)
             elif not dynamic_upstream_block_uuids or not upstream_in_dynamic_upstream:
                 if type(variable_values) is list and len(variable_values) == 1:
                     final_val = variable_values[0]
@@ -368,12 +378,12 @@ def fetch_input_variables(
                 )
 
                 final_value = []
-                for key, variables in input_variables_by_uuid.items():
+                for upstream_block_uuid, variables in input_variables_by_uuid.items():
                     end_idx = 1 if upstream_is_dynamic else len(variables)
                     for var in variables[:end_idx]:
                         variable_values = pipeline.variable_manager.get_variable(
                             pipeline.uuid,
-                            key,
+                            upstream_block_uuid,
                             var,
                             partition=execution_partition,
                             spark=spark,
@@ -389,6 +399,22 @@ def fetch_input_variables(
                         else:
                             final_value.append(val)
 
+                    # output_0 is the metadata for dynamic blocks
+                    if dynamic_block_index is not None and \
+                            upstream_is_dynamic and \
+                            len(variables) >= 1:
+                        var = variables[1]
+                        variable_values = pipeline.variable_manager.get_variable(
+                            pipeline.uuid,
+                            upstream_block_uuid,
+                            var,
+                            partition=execution_partition,
+                            spark=spark,
+                        )
+                        if dynamic_block_index < len(variable_values):
+                            val = variable_values[dynamic_block_index]
+                            kwargs_vars.append(val)
+
                 if len(final_value) >= 1 and type(final_value[0]) is pd.DataFrame:
                     final_value = pd.concat(final_value)
 
@@ -402,7 +428,6 @@ def fetch_input_variables(
                         type(final_value) is list and \
                             len(final_value) == 1:
                         final_value = final_value[0]
-
                 input_vars[idx] = final_value
 
-    return input_vars, upstream_block_uuids_final
+    return input_vars, kwargs_vars, upstream_block_uuids_final
