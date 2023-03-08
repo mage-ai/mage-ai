@@ -23,6 +23,7 @@ class Preferences:
                 preferences = config_dict
 
             self.sync_config = preferences.get('sync_config', dict())
+            self.git_config = preferences.get('git_config', dict())
         except Exception:
             traceback.print_exc()
             pass
