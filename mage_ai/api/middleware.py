@@ -86,12 +86,14 @@ class OAuthMiddleware(RequestHandler):
             elif oauth_client.client_id != OAUTH2_APPLICATION_CLIENT_ID:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
             else:
+                should_check = False
                 oauth_token = None
                 if token_from_header:
                     oauth_token, valid = authenticate_client_and_token(
                         oauth_client.id,
                         token_from_header,
                     )
+                    should_check = True
                 elif COOKIE_OAUTH_TOKEN in cookies:
                     token_data = decode_token(cookies[COOKIE_OAUTH_TOKEN])
                     if 'token' in token_data:
@@ -99,17 +101,19 @@ class OAuthMiddleware(RequestHandler):
                             oauth_client.id,
                             decode_token(cookies[COOKIE_OAUTH_TOKEN])['token'],
                         )
+                    should_check = True
 
-                if oauth_token:
-                    if valid:
-                        self.request.__setattr__('oauth_token', oauth_token)
-                        self.request.__setattr__(
-                            'current_user', oauth_token.user)
+                if should_check:
+                    if oauth_token:
+                        if valid:
+                            self.request.__setattr__('oauth_token', oauth_token)
+                            self.request.__setattr__(
+                                'current_user', oauth_token.user)
+                        else:
+                            self.request.__setattr__(
+                                'error', ApiError.EXPIRED_OAUTH_TOKEN)
                     else:
                         self.request.__setattr__(
-                            'error', ApiError.EXPIRED_OAUTH_TOKEN)
-                else:
-                    self.request.__setattr__(
-                        'error', ApiError.INVALID_OAUTH_TOKEN)
+                            'error', ApiError.INVALID_OAUTH_TOKEN)
         else:
             self.request.__setattr__('error', ApiError.INVALID_API_KEY)
