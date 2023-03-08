@@ -9,9 +9,9 @@ USER root
 # Download ODBC headers for pyodbc
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 RUN curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
-RUN apt-get update
-RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
-RUN apt install unixodbc-dev
+RUN apt -y update
+RUN ACCEPT_EULA=Y apt -y install msodbcsql18
+RUN apt -y install unixodbc-dev
 
 # Install NFS dependencies, and pymssql dependencies
 RUN apt -y install curl freetds-dev freetds-bin
