@@ -13,6 +13,7 @@ export const VH_PERCENTAGE = 90;
 export enum ViewKeyEnum {
   CHARTS = 'charts',
   DATA = 'data',
+  FILE_VERSIONS = 'file_versions',
   GRAPHS = 'graphs',
   REPORTS = 'reports',
   SECRETS = 'secrets',

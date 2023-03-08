@@ -18,6 +18,7 @@ import FileType, {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
   SpecialFileEnum,
 } from '@interfaces/FileType';
+import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -333,20 +334,35 @@ function FileEditor({
   return (
     <div ref={containerRef}>
       <Spacing p={2}>
-        <ButtonGroup>
-          {addToPipelineEl}
+        <FlexContainer justifyContent="space-between">
+          <ButtonGroup>
+            {addToPipelineEl}
 
-          <Button
-            disabled={!content}
-            onClick={(e) => {
-              e.preventDefault();
-              saveFile(content, file);
-            }}
-            title={content ? null : 'No changes have been made to this file.'}
-          >
-            Save file content
-          </Button>
-        </ButtonGroup>
+            <Button
+              disabled={!content}
+              onClick={(e) => {
+                e.preventDefault();
+                saveFile(content, file);
+              }}
+              title={content ? null : 'No changes have been made to this file.'}
+            >
+              Save file content
+            </Button>
+          </ButtonGroup>
+
+          <ButtonGroup>
+            <Button
+              compact
+              onClick={() => {
+                openSidekickView(ViewKeyEnum.FILE_VERSIONS);
+              }}
+              small
+              title="View previous changes to this file."
+            >
+              Show versions
+            </Button>
+          </ButtonGroup>
+        </FlexContainer>
       </Spacing>
 
       {codeEditorEl}

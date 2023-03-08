@@ -15,6 +15,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
+import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
 import KernelOutputType from '@interfaces/KernelOutputType';
@@ -85,6 +86,7 @@ export type SidekickProps = {
   sampleData: SampleDataType;
   secrets: SecretType[];
   selectedBlock: BlockType;
+  selectedFilePath?: string;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
@@ -120,6 +122,7 @@ function Sidekick({
   savePipelineContent,
   secrets,
   selectedBlock,
+  selectedFilePath,
   setAnyInputFocused,
   setDisableShortcuts,
   setEditingBlock,
@@ -197,13 +200,23 @@ function Sidekick({
     />
   ), [
     afterWidth,
-    blockRefs?.current,
     blocks,
     fetchVariables,
     globalVariables,
     pipeline,
     selectedBlock,
-    setSelectedBlock,
+  ]);
+
+  const fileVersionsMemo = useMemo(() => (
+    <FileVersions
+      selectedBlock={selectedBlock}
+      selectedFilePath={selectedFilePath}
+      width={afterWidth}
+    />
+  ), [
+    afterWidth,
+    selectedBlock,
+    selectedFilePath,
   ]);
 
   const secretsMemo = useMemo(() => (
@@ -343,6 +356,7 @@ function Sidekick({
         }
         {ViewKeyEnum.SECRETS === activeView && secretsMemo}
         {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
+        {ViewKeyEnum.FILE_VERSIONS === activeView && fileVersionsMemo}
 
         {(isIntegration
           || (selectedBlock && hasData)

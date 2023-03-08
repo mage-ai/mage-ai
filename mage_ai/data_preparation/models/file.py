@@ -1,7 +1,7 @@
 from datetime import datetime
 from mage_ai.data_preparation.models.errors import FileExistsError
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 import aiofiles
 import os
 
@@ -207,6 +207,30 @@ class File:
         except FileNotFoundError as err:
             print(err)
         return ''
+
+    def file_versions(self) -> List[str]:
+        file_path_versions_dir = self.file_path_versions_dir(
+            self.repo_path,
+            self.dir_path,
+            self.filename,
+        )
+        file_versions = []
+        step = 0
+        for _, _, files in os.walk(file_path_versions_dir):
+            if step >= 1:
+                continue
+            file_versions += files
+            step += 1
+
+        file_path_versions_dir_without_repo = file_path_versions_dir.replace(
+            os.path.join(self.repo_path, ''),
+            '',
+        )
+        return [File(
+            v,
+            file_path_versions_dir_without_repo,
+            self.repo_path,
+        ) for v in sorted(file_versions, reverse=True)]
 
     def update_content(self, content: str):
         self.write(

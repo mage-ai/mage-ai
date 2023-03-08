@@ -1482,6 +1482,7 @@ function PipelineDetailPage({
       savePipelineContent={savePipelineContent}
       secrets={secrets}
       selectedBlock={selectedBlock}
+      selectedFilePath={selectedFilePath}
       setAnyInputFocused={setAnyInputFocused}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
@@ -1522,6 +1523,7 @@ function PipelineDetailPage({
     savePipelineContent,
     secrets,
     selectedBlock,
+    selectedFilePath,
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
@@ -1608,6 +1610,7 @@ function PipelineDetailPage({
     blocks,
     dataProviders,
     deleteBlock,
+    disableShortcuts,
     fetchFileTree,
     fetchPipeline,
     fetchSampleData,
@@ -1955,8 +1958,8 @@ function PipelineDetailPage({
         <div
           style={{
             height: selectedFilePath ? 0 : null,
-            visibility: selectedFilePath ? 'hidden' : null,
             opacity: selectedFilePath ? 0 : null,
+            visibility: selectedFilePath ? 'hidden' : null,
           }}
         >
           {pipelineDetailMemo}
