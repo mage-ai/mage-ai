@@ -11,7 +11,7 @@ RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
 RUN apt install unixodbc-dev
 
 # Install NFS dependencies, and pymssql dependencies
-RUN apt -y update && apt -y install nfs-common freetds-dev freetds-bin
+RUN apt -y install nfs-common freetds-dev freetds-bin
 
 # Install Mage
 RUN ${PIP} install --upgrade pip

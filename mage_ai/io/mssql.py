@@ -1,11 +1,12 @@
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import BadConversionError, PandasTypes
+from mage_ai.io.export_utils import PandasTypes
 from mage_ai.io.base import QUERY_ROW_LIMIT
 from mage_ai.io.sql import BaseSQL
 from pandas import DataFrame, Series
 from typing import Any, IO, Union
-import pyodbc
+import json
 import numpy as np
+import pyodbc
 
 
 class MSSQL(BaseSQL):
@@ -17,8 +18,6 @@ class MSSQL(BaseSQL):
         user: str,
         schema: str = None,
         port: int = 1433,
-        charset='utf8',
-        tds_version='7.3',
         **kwargs,
     ):
         super().__init__(
@@ -28,8 +27,6 @@ class MSSQL(BaseSQL):
             password=password,
             schema=schema,
             port=port,
-            charset=charset,
-            tds_version=tds_version,
             **kwargs
         )
 
@@ -51,7 +48,7 @@ class MSSQL(BaseSQL):
         )
 
     def open(self) -> None:
-        with self.printer.print_msg('Opening connection to MySQL database'):
+        with self.printer.print_msg('Opening connection to MSSQL database'):
             driver = self.settings['driver']
             server = self.settings['server']
             database = self.settings['database']
@@ -67,6 +64,16 @@ class MSSQL(BaseSQL):
                 'TrustServerCertificate=yes;'
             )
             self._ctx = pyodbc.connect(connection_string)
+
+    def build_create_table_as_command(
+        self,
+        table_name: str,
+        query_string: str
+    ) -> str:
+        return 'SELECT * INTO {}\nFROM ({}) AS prev'.format(
+            table_name,
+            query_string,
+        )
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
@@ -85,7 +92,19 @@ class MSSQL(BaseSQL):
     ) -> None:
         values_placeholder = ', '.join(["?" for i in range(len(df.columns))])
         values = []
-        for i, row in df.iterrows():
+        df_ = df.copy()
+        columns = df_.columns
+        for col in columns:
+            dtype = df_[col].dtype
+            if dtype == PandasTypes.OBJECT:
+                df_[col] = df_[col].apply(lambda x: json.dumps(x))
+            elif dtype in (
+                PandasTypes.MIXED,
+                PandasTypes.UNKNOWN_ARRAY,
+                PandasTypes.COMPLEX,
+            ):
+                df_[col] = df_[col].astype('string')
+        for i, row in df_.iterrows():
             values.append(tuple(row))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'
@@ -96,11 +115,9 @@ class MSSQL(BaseSQL):
             PandasTypes.MIXED,
             PandasTypes.UNKNOWN_ARRAY,
             PandasTypes.COMPLEX,
+            PandasTypes.OBJECT,
         ):
-            raise BadConversionError(
-                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to '
-                'a MSSQL datatype.'
-            )
+            return 'text'
         elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
             try:
                 if column.dt.tz:

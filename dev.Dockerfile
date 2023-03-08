@@ -14,7 +14,7 @@ RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
 RUN apt install unixodbc-dev
 
 # Install NFS dependencies, and pymssql dependencies
-RUN apt -y update && apt -y install curl freetds-dev freetds-bin
+RUN apt -y install curl freetds-dev freetds-bin
 
 # Install R
 # RUN apt install -y r-base

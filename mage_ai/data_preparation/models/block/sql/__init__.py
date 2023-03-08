@@ -141,7 +141,9 @@ def execute_sql_code(
                     table_name,
                     query_string=query_string,
                     drop_table_on_replace=True,
-                    **kwargs_shared,
+                    if_exists=export_write_policy,
+                    index=False,
+                    verbose=BlockType.DATA_EXPORTER == block.type,
                 )
 
                 if should_query:
