@@ -18,7 +18,7 @@ KernelPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 KernelPolicy.allow_read(KernelPresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -31,7 +31,7 @@ KernelPolicy.allow_read(KernelPresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 KernelPolicy.allow_write([
   'action_type',
@@ -39,4 +39,4 @@ KernelPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())

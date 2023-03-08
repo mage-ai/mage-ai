@@ -20,7 +20,7 @@ WidgetPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -34,7 +34,7 @@ WidgetPolicy.allow_read(WidgetPresenter.default_attributes + [], scopes=[
     constants.CREATE,
     constants.DELETE,
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 WidgetPolicy.allow_write([
     'config',
@@ -51,4 +51,4 @@ WidgetPolicy.allow_write([
 ], on_action=[
     constants.CREATE,
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())

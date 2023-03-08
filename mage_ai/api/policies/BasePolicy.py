@@ -5,10 +5,12 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.utils import (
     has_at_least_admin_role,
     has_at_least_editor_role,
+    has_at_least_editor_role_and_edit_access,
     has_at_least_viewer_role,
     is_owner,
 )
 from mage_ai.services.tracking.metrics import increment
+from mage_ai.settings import DISABLE_NOTEBOOK_EDIT_ACCESS
 from mage_ai.shared.hash import extract
 import importlib
 import inflection
@@ -130,13 +132,13 @@ class BasePolicy():
     def has_at_least_editor_role(self) -> bool:
         return has_at_least_editor_role(self.current_user)
 
+    def has_at_least_editor_role_and_edit_access(self) -> bool:
+        return has_at_least_editor_role_and_edit_access(self.current_user)
+
     def has_at_least_viewer_role(self) -> bool:
         return has_at_least_viewer_role(self.current_user)
 
     def authorize_action(self, action):
-        if self.is_owner():
-            return True
-
         config = self.__class__.action_rule(action)
         if config:
             self.__validate_scopes(action, config.keys())
@@ -234,7 +236,7 @@ class BasePolicy():
         return self.parent_resource_attr
 
     def __current_scope(self):
-        if self.current_user:
+        if self.current_user or DISABLE_NOTEBOOK_EDIT_ACCESS:
             return OauthScope.CLIENT_PRIVATE
         else:
             return OauthScope.CLIENT_PUBLIC
@@ -265,6 +267,8 @@ class BasePolicy():
 
     def __validate_scopes(self, val, scopes):
         error = ApiError.UNAUTHORIZED_ACCESS
+        if self.is_owner():
+            return
         if OauthScope.CLIENT_ALL in scopes:
             return
         elif not self.current_user and OauthScope.CLIENT_PUBLIC not in scopes:
