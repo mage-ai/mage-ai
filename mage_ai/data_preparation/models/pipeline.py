@@ -18,7 +18,7 @@ from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, g
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.shared.hash import extract, merge_dict
+from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
@@ -40,6 +40,7 @@ class Pipeline:
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.data_integration = None
+        self.extensions = {}
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.schedules = []
@@ -385,6 +386,7 @@ class Pipeline:
                 content=c.get('content'),
                 executor_config=c.get('executor_config'),
                 executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
+                extension_uuid=c.get('extension_uuid'),
                 has_callback=c.get('has_callback'),
                 language=c.get('language'),
                 pipeline=self,
@@ -406,12 +408,13 @@ class Pipeline:
             all_blocks,
         )
 
-        self.extensions = {}
-        for uuid, config in config.get('extensions', {}).items():
+        for extension_uuid, config in config.get('extensions', {}).items():
             extension_configs = config.get('blocks') or []
-            extension_blocks = [build_shared_args_kwargs(c) for c in extension_configs]
+            extension_blocks = [build_shared_args_kwargs(merge_dict(c, dict(
+                extension_uuid=extension_uuid,
+            ))) for c in extension_configs]
 
-            self.extensions[uuid] = merge_dict(config, dict(
+            self.extensions[extension_uuid] = merge_dict(config, dict(
                 blocks_by_uuid=self.__initialize_blocks_by_uuid(
                     extension_configs,
                     extension_blocks,
@@ -456,38 +459,67 @@ class Pipeline:
 
     def to_dict(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
-        exclude_data_integration=False,
+        include_content: bool = False,
+        include_extensions: bool = False,
+        include_outputs: bool = False,
+        sample_count: int = None,
+        exclude_data_integration: bool = False,
     ) -> Dict:
+        blocks_data = [
+            b.to_dict(
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+                check_if_file_exists=True,
+            )
+            for b in self.blocks_by_uuid.values()
+        ]
+        widgets_data = [
+            b.to_dict(
+                include_content=include_content,
+                include_outputs=include_outputs,
+                sample_count=sample_count,
+            )
+            for b in self.widgets_by_uuid.values()
+        ]
+        data = dict(
+            blocks=blocks_data,
+            widgets=widgets_data,
+        )
+
+        if include_extensions:
+            extensions_data = {}
+            for extension_uuid, extension in self.extensions.items():
+                blocks = []
+                if 'blocks_by_uuid' in extension:
+                    blocks = [
+                        b.to_dict(
+                            include_content=include_content,
+                            include_outputs=include_outputs,
+                            sample_count=sample_count,
+                          ) for b in extension['blocks_by_uuid'].values()
+                    ]
+                extensions_data[extension_uuid] = merge_dict(
+                    ignore_keys(extension, [
+                        'blocks',
+                        'blocks_by_uuid',
+                    ]),
+                    dict(
+                        blocks=blocks,
+                    ),
+                )
+            data.update(extensions=extensions_data)
+
         return merge_dict(
             self.to_dict_base(exclude_data_integration=exclude_data_integration),
-            dict(
-                blocks=[
-                    b.to_dict(
-                        include_content=include_content,
-                        include_outputs=include_outputs,
-                        sample_count=sample_count,
-                        check_if_file_exists=True,
-                    )
-                    for b in self.blocks_by_uuid.values()
-                ],
-                widgets=[
-                    b.to_dict(
-                        include_content=include_content,
-                        include_outputs=include_outputs,
-                        sample_count=sample_count,
-                    )
-                    for b in self.widgets_by_uuid.values()
-                ],
-            ),
+            data,
         )
 
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
         include_content: bool = False,
+        include_extensions: bool = False,
         include_outputs: bool = False,
         sample_count: int = None,
     ):
@@ -507,10 +539,35 @@ class Pipeline:
                 sample_count=sample_count,
               ) for b in self.widgets_by_uuid.values()]
         )
-        return merge_dict(self.to_dict_base(), dict(
+        data = dict(
             blocks=blocks_data,
             widgets=widgets_data,
-        ))
+        )
+
+        if include_extensions:
+            extensions_data = {}
+            for extension_uuid, extension in self.extensions.items():
+                blocks = []
+                if 'blocks_by_uuid' in extension:
+                    blocks = await asyncio.gather(
+                        *[b.to_dict_async(
+                            include_content=include_content,
+                            include_outputs=include_outputs,
+                            sample_count=sample_count,
+                          ) for b in extension['blocks_by_uuid'].values()]
+                    )
+                extensions_data[extension_uuid] = merge_dict(
+                    ignore_keys(extension, [
+                        'blocks',
+                        'blocks_by_uuid',
+                    ]),
+                    dict(
+                        blocks=blocks,
+                    ),
+                )
+            data.update(extensions=extensions_data)
+
+        return merge_dict(self.to_dict_base(), data)
 
     @safe_db_query
     def __transfer_related_models(self, old_uuid, new_uuid):
@@ -667,13 +724,32 @@ class Pipeline:
 
         return mapping
 
-    def add_block(self, block, upstream_block_uuids=[], priority=None, widget=False):
+    def add_block(
+        self,
+        block: Block,
+        upstream_block_uuids: List[str] = [],
+        priority: int = None,
+        widget: bool = False,
+    ) -> Block:
         if widget:
             self.widgets_by_uuid = self.__add_block_to_mapping(
                 self.widgets_by_uuid,
                 block,
                 # All blocks will depend on non-widget type blocks
                 upstream_blocks=self.get_blocks(upstream_block_uuids, widget=False),
+                priority=priority,
+            )
+        elif BlockType.EXTENSION == block.type:
+            extension_uuid = block.extension_uuid
+            if extension_uuid not in self.extensions:
+                self.extensions[extension_uuid] = {}
+
+            blocks_by_uuid = self.extensions[extension_uuid].get('blocks_by_uuid', {})
+
+            self.extensions[extension_uuid]['blocks_by_uuid'] = self.__add_block_to_mapping(
+                blocks_by_uuid,
+                block,
+                upstream_blocks=self.get_blocks(upstream_block_uuids),
                 priority=priority,
             )
         else:
@@ -688,10 +764,22 @@ class Pipeline:
         self.save()
         return block
 
-    def get_block(self, block_uuid, check_template: bool = False, widget: bool = False) -> Block:
-        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
-        block = mapping.get(block_uuid)
+    def get_block(
+        self,
+        block_uuid: str,
+        check_template: bool = False,
+        extension_uuid: str = None,
+        widget: bool = False,
+    ) -> Block:
+        mapping = {}
+        if widget:
+            mapping = self.widgets_by_uuid
+        elif extension_uuid:
+            mapping = self.extensions.get(extension_uuid, {}).get('blocks_by_uuid', {})
+        else:
+            mapping = self.blocks_by_uuid
 
+        block = mapping.get(block_uuid)
         if not block:
             block = mapping.get(block_uuid.split(':')[0])
 
@@ -794,8 +882,14 @@ class Pipeline:
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
 
-    def delete_block(self, block, widget=False, commit=True):
-        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+    def delete_block(self, block: Block, widget: bool = False, commit: bool = True) -> None:
+        mapping = {}
+        if widget:
+            mapping = self.widgets_by_uuid
+        elif BlockType.EXTENSION == block.type:
+            mapping = self.extensions.get(block.extension_uuid, {}).get('blocks_by_uuid', {})
+        else:
+            mapping = self.blocks_by_uuid
 
         if block.uuid not in mapping:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
@@ -846,12 +940,15 @@ class Pipeline:
                 current_pipeline.widgets_by_uuid[block_uuid] = block
             else:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
-            pipeline_dict = current_pipeline.to_dict()
+            pipeline_dict = current_pipeline.to_dict(include_extensions=True)
         else:
             if self.data_integration is not None:
                 with open(self.catalog_config_path, 'w') as fp:
                     json.dump(self.data_integration, fp)
-            pipeline_dict = self.to_dict(exclude_data_integration=True)
+            pipeline_dict = self.to_dict(
+                exclude_data_integration=True,
+                include_extensions=True,
+            )
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')
 

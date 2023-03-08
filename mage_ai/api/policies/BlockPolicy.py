@@ -53,6 +53,7 @@ BlockPolicy.allow_write([
     'configuration',
     'content',
     'converted_from',
+    'extension_uuid',
     'has_callback',
     'language',
     'metadata',
@@ -77,6 +78,7 @@ BlockPolicy.allow_write([
     'downstream_blocks',
     'executor_config',
     'executor_type',
+    'extension_uuid',
     'has_callback',
     'language',
     'metadata',
@@ -100,4 +102,13 @@ BlockPolicy.allow_query([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.DETAIL,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+BlockPolicy.allow_query([
+    'extension_uuid',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DELETE,
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

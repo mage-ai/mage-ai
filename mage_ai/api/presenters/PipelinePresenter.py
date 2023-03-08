@@ -30,9 +30,14 @@ class PipelinePresenter(BasePresenter):
             if include_block_metadata:
                 include_block_metadata = include_block_metadata[0]
 
+            include_extensions = query.get('includes_extensions', [True])
+            if include_extensions:
+                include_extensions = include_extensions[0]
+
             return await self.model.to_dict_async(
                 include_block_metadata=include_block_metadata,
                 include_content=include_content,
+                include_extensions=include_extensions,
                 include_outputs=include_outputs,
                 sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
