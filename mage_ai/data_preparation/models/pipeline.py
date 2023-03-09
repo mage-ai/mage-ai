@@ -843,6 +843,9 @@ class Pipeline:
             raise Exception('Writing empty pipeline metadata is prevented.')
 
         content = yaml.dump(pipeline_dict)
+
+        safe_write(self.config_path, content)
+
         File.create(
             PIPELINE_CONFIG_FILE,
             f'{PIPELINES_FOLDER}/{self.uuid}',
@@ -850,8 +853,6 @@ class Pipeline:
             repo_path=self.repo_path,
             file_version_only=True,
         )
-
-        safe_write(self.config_path, content)
 
     async def save_async(self, block_uuid: str = None, widget: bool = False):
         if block_uuid is not None:
@@ -871,15 +872,16 @@ class Pipeline:
             raise Exception('Writing empty pipeline metadata is prevented.')
 
         content = yaml.dump(pipeline_dict)
-        File.create_async(
+
+        await safe_write_async(self.config_path, content)
+
+        await File.create_async(
             PIPELINE_CONFIG_FILE,
             f'{PIPELINES_FOLDER}/{self.uuid}',
             content=content,
             repo_path=self.repo_path,
             file_version_only=True,
         )
-
-        await safe_write_async(self.config_path, content)
 
     def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
         """
