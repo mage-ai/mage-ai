@@ -140,6 +140,7 @@ function FileEditor({
   }, [
     fetchVariables,
     filePath,
+    setFilesTouched,
     updateFile,
   ]);
 

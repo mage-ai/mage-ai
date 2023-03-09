@@ -15,6 +15,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
+import FileType from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
@@ -209,6 +210,9 @@ function Sidekick({
 
   const fileVersionsMemo = useMemo(() => (
     <FileVersions
+      onClickRowAction={(file: FileType) => {
+        alert(JSON.stringify(file));
+      }}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
       width={afterWidth}
