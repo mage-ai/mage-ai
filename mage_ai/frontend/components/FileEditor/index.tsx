@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useGlobalState } from '@storage/state';
 import { useMutation } from 'react-query';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -55,8 +56,8 @@ type FileEditorProps = {
   filePath: string;
   openSidekickView: (newView: ViewKeyEnum) => void;
   pipeline: PipelineType;
-  projectName: string;
   selectedFilePath: string;
+  setErrors?: (errors: ErrorsType) => void;
   setFilesTouched: (data: {
     [path: string]: boolean;
   }) => void;
@@ -71,11 +72,12 @@ function FileEditor({
   filePath,
   openSidekickView,
   pipeline,
-  projectName,
   selectedFilePath,
+  setErrors,
   setFilesTouched,
   setSelectedBlock,
 }: FileEditorProps) {
+  const [, setApiReloads] = useGlobalState('apiReloads');
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const containerRef = useRef(null);
@@ -99,19 +101,20 @@ function FileEditor({
   }, [selectedFilePath]);
 
   const [updateFile] = useMutation(
-    api.file_contents.useUpdate(file?.path),
+    api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => true,
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
+          callback: () => {
+            setApiReloads(prev => ({
+              ...prev,
+              [`FileVersions/${file?.path}`]: Number(new Date()),
+            }));
           },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
         },
       ),
     },

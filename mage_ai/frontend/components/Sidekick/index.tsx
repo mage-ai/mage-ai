@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
+import ApiReloader from '@components/ApiReloader';
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
   InsightType,
@@ -15,7 +16,6 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
-import FileType from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
@@ -210,17 +210,16 @@ function Sidekick({
 
   const fileVersionsMemo = useMemo(() => (
     <FileVersions
-      onClickRowAction={(file: FileType) => {
-        alert(JSON.stringify(file));
-      }}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
-      width={afterWidth}
+      setErrors={setErrors}
+      width={afterWidth > SCROLLBAR_WIDTH ? afterWidth - SCROLLBAR_WIDTH : afterWidth}
     />
   ), [
     afterWidth,
     selectedBlock,
     selectedFilePath,
+    setErrors,
   ]);
 
   const secretsMemo = useMemo(() => (
@@ -360,7 +359,15 @@ function Sidekick({
         }
         {ViewKeyEnum.SECRETS === activeView && secretsMemo}
         {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
-        {ViewKeyEnum.FILE_VERSIONS === activeView && fileVersionsMemo}
+        {ViewKeyEnum.FILE_VERSIONS === activeView && (
+          <ApiReloader uuid={`FileVersions/${selectedFilePath
+              ? decodeURIComponent(selectedFilePath)
+              : ''
+            }`
+          }>
+            {fileVersionsMemo}
+          </ApiReloader>
+        )}
 
         {(isIntegration
           || (selectedBlock && hasData)

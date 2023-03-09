@@ -1,8 +1,11 @@
+import { useGlobalState } from '@storage/state';
 import { useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import CodeEditor from '@components/CodeEditor';
+import ErrorsType from '@interfaces/ErrorsType';
 import FileType, { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -16,22 +19,27 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { buildFileExtensionRegExp } from '@components/FileEditor/utils';
 import { dateFormatLongFromUnixTimestamp } from '@utils/date';
 import { isJsonString } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+import { pauseEvent } from '@utils/events';
 import { pushAtIndex } from '@utils/array';
 
 type FileVersionsProps = {
-  onClickRowAction: (file: FileType) => void;
+  onActionCallback?: (file: FileType) => void;
   selectedBlock?: BlockType;
   selectedFilePath?: string;
+  setErrors: (errors: ErrorsType) => void;
   width: number;
 };
 
 function FileVersions({
-  onClickRowAction,
+  onActionCallback,
   selectedBlock,
   selectedFilePath,
+  setErrors,
   width,
 }: FileVersionsProps) {
-  const { data: dataFileVersions1 } =
+  const [, setApiReloads] = useGlobalState('apiReloads');
+  const { data: dataFileVersions1, mutate: fetchFileVersions1 } =
     api.file_versions.files.list(selectedFilePath && encodeURIComponent(selectedFilePath));
   const fileVersions: FileType[] = useMemo(() => dataFileVersions1?.file_versions || [], [
     dataFileVersions1,
@@ -44,7 +52,7 @@ function FileVersions({
   ]);
 
   const { data: dataFileContent } = api.file_contents.detail(selectedFileVersion
-    ?  encodeURIComponent(selectedFileVersion.path)
+    ? encodeURIComponent(selectedFileVersion.path)
     : null,
   );
   const fileContent: FileType = useMemo(() => dataFileContent?.file_content, [
@@ -57,10 +65,38 @@ function FileVersions({
     regex,
   ]);
 
+  const [updateFile, { isLoading }] = useMutation(
+    api.file_contents.useUpdate(selectedFilePath && encodeURIComponent(selectedFilePath)),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (resp) => {
+            if (selectedFilePath) {
+              fetchFileVersions1();
+            }
+
+            setApiReloads(prev => ({
+              ...prev,
+              [`FileEditor/${resp?.file_content?.path}`]: Number(new Date()),
+            }));
+
+            setSelectedFileVersionIndex(prev => prev + 1);
+            onActionCallback?.(resp);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const rowsMemo = useMemo(() => {
     let arr = fileVersions.map((file: FileType) => {
       const {
         name,
+        path,
       } = file;
 
       return [
@@ -69,29 +105,43 @@ function FileVersions({
             <Text default monospace>
               {dateFormatLongFromUnixTimestamp(name, { withSeconds: true })}
             </Text>
-            <Spacing px={PADDING_UNITS}>
+            <Spacing px={PADDING_UNITS * 2}>
               <Text monospace>
                 {name}
               </Text>
             </Spacing>
           </Flex>
 
-          <Button
-            compact
-            onClick={() => onClickRowAction(file)}
-            small
-          >
-            Replace with this version
-          </Button>
+          {selectedFileVersion && selectedFileVersion?.path === path && (
+            <Button
+              compact
+              loading={isLoading}
+              onClick={(e) => {
+                pauseEvent(e);
+                updateFile({
+                  file_content: {
+                    version: name,
+                  },
+                });
+              }}
+              small
+            >
+              Replace with this version
+            </Button>
+          )}
         </FlexContainer>,
       ];
     });
 
     if (selectedFileVersion) {
-      let el = <Spinner key="spinner" />;
+      let el = (
+        <Spacing p={PADDING_UNITS}>
+          <Spinner key="spinner" />
+        </Spacing>
+      );
 
-      if (fileContent?.path === selectedFileVersion?.path && fileContent?.content) {
-        const { content } = fileContent;
+      if (fileContent && fileContent?.path === selectedFileVersion?.path) {
+        const { content = '' } = fileContent;
         el = (
           <CodeEditor
             autoHeight
@@ -117,9 +167,10 @@ function FileVersions({
     fileContent,
     fileExtension,
     fileVersions,
-    onClickRowAction,
+    isLoading,
     selectedFileVersion,
     selectedFileVersionIndex,
+    updateFile,
     width,
   ]);
 
@@ -141,7 +192,7 @@ function FileVersions({
         buildRowProps={(rowIndex: number) => {
           if (selectedFileVersion && selectedFileVersionIndex + 1 === rowIndex) {
             return {
-              renderCell: (cell, colIndex: number) => cell,
+              renderCell: (cell) => cell,
               renderRow: cells => cells,
             };
           }

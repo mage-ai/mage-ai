@@ -31,6 +31,7 @@ FileContentPolicy.allow_write([
     'content',
     'name',
     'path',
+    'version',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

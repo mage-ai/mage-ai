@@ -12,7 +12,7 @@ function ApiReloader({
   uuid,
   uuids = [],
 }: ApiReloaderProps) {
-  const [apiReloads, setApiReloads] = useGlobalState('apiReloads');
+  const [apiReloads] = useGlobalState('apiReloads');
   const allUuids = [...uuids];
   if (uuid) {
     allUuids.push(uuid);
