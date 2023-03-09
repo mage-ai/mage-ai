@@ -1,0 +1,24 @@
+---
+title: "Production Configuration"
+sidebarTitle: "Overview"
+---
+
+## Settings
+
+### Read only access
+
+You can configure Mage to not allow any edits to pipelines or blocks. Users will only
+be able to create triggers and view the existing pipelines. They will also have access to
+features such as syncing with Github and future remote repository integrations.
+
+To enable this feature set the following environment variable:
+`export DISABLE_NOTEBOOK_EDIT_ACCESS=1`
+
+### Databases
+
+By default, Mage uses sqlite to store orchestration data (trigger, pipeline run, and block run). To use a different database, you can set the `MAGE_DATABASE_CONNECTION_URL` environment variable.
+
+In production, you can set the environment variable in the corresponding Terraform script.
+
+#### Postgres
+`export MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://user:password@host:port/dbname`
