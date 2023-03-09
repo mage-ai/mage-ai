@@ -18,7 +18,7 @@ BLACKLISTED_DIRS = frozenset([
 ])
 INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 MAX_DEPTH = 30
-MAX_NUMBER_OF_FILE_VERSIONS = int(os.getenv('MAX_NUMBER_OF_FILE_VERSIONS', 100))
+MAX_NUMBER_OF_FILE_VERSIONS = int(os.getenv('MAX_NUMBER_OF_FILE_VERSIONS', 100) or 100)
 
 
 class File:
