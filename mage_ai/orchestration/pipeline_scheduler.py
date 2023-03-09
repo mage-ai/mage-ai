@@ -333,6 +333,15 @@ class PipelineScheduler:
             )
 
             if dynamic_upstream_block_uuids:
+                if self.allow_blocks_to_fail:
+                    completed_block_uuids = [
+                        b.block_uuid for b in self.pipeline_run.block_runs
+                        if b.status in [
+                            BlockRun.BlockRunStatus.COMPLETED,
+                            BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                            BlockRun.BlockRunStatus.FAILED,
+                        ]
+                    ]
                 completed = all(uuid in completed_block_uuids
                                 for uuid in dynamic_upstream_block_uuids)
             else:
@@ -346,12 +355,41 @@ class PipelineScheduler:
         return executable_block_runs
 
     def __update_block_run_statuses(self) -> None:
-        failed_block_uuids = set(b.block_uuid for b in self.failed_block_runs)
+        failed_block_uuids = [
+            b.block_uuid for b in self.pipeline_run.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                BlockRun.BlockRunStatus.FAILED,
+            ]
+        ]
+        updated_status = False
         for block_run in self.initial_block_runs:
-            block = self.pipeline.get_block(block_run.block_uuid)
-            if any(b in failed_block_uuids for b in block.upstream_block_uuids):
-                block_run.update(
-                    status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
+                'dynamic_upstream_block_uuids',
+            )
+
+            if dynamic_upstream_block_uuids:
+                if all(
+                    b in failed_block_uuids
+                    for b in dynamic_upstream_block_uuids
+                ):
+                    block_run.update(
+                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+                    updated_status = True
+            else:
+                block = self.pipeline.get_block(block_run.block_uuid)
+                if any(
+                    b in failed_block_uuids
+                    for b in block.upstream_block_uuids
+                ):
+                    block_run.update(
+                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+                    updated_status = True
+
+        self.pipeline_run.refresh()
+        # keep iterating through block runs until no more updates can be made
+        if updated_status:
+            self.__update_block_run_statuses()
 
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
         self.__update_block_run_statuses()

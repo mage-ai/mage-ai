@@ -1,4 +1,6 @@
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from mage_ai.orchestration.job_manager import JobType
 from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
@@ -6,6 +8,7 @@ from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
+    create_pipeline_with_dynamic_blocks,
 )
 from unittest.mock import MagicMock, patch
 
@@ -16,6 +19,10 @@ class PipelineSchedulerTests(DBTestCase):
         super().setUpClass()
         self.pipeline = create_pipeline_with_blocks(
             'test pipeline',
+            self.repo_path,
+        )
+        self.dynamic_pipeline = create_pipeline_with_dynamic_blocks(
+            'test dynamic pipeline',
             self.repo_path,
         )
 
@@ -108,9 +115,9 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline_2')
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        mock_has_pipelien_run_job = MagicMock()
-        mock_job_manager.has_pipeline_run_job = mock_has_pipelien_run_job
-        mock_has_pipelien_run_job.return_value = False
+        mock_has_pipeline_run_job = MagicMock()
+        mock_job_manager.has_pipeline_run_job = mock_has_pipeline_run_job
+        mock_has_pipeline_run_job.return_value = False
         mock_job_manager.add_job = MagicMock()
         scheduler.schedule()
         mock_job_manager.add_job.assert_called_once_with(
@@ -170,3 +177,132 @@ class PipelineSchedulerTests(DBTestCase):
             block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.RUNNING)
+
+    # dynamic block tests
+    @patch('mage_ai.orchestration.pipeline_scheduler.run_block')
+    @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')
+    def test_schedule_for_dynamic_blocks(self, mock_job_manager, mock_run_pipeline):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_dynamic_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        scheduler.schedule()
+        for b in pipeline_run.block_runs:
+            if b.block_uuid == 'block1':
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
+                b.update(status=BlockRun.BlockRunStatus.COMPLETED)
+            else:
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.INITIAL)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            with patch.object(Block, 'output_variables') as mock_block_variables:
+                with patch.object(VariableManager, 'get_variable') as mock_variable:
+                    mock_block_variables.return_value = ['values', 'metadata']
+                    # only mock the metadata
+                    mock_variable.return_value = [
+                        {
+                            'block_uuid': 'for_user_1'
+                        },
+                        {
+                            'block_uuid': 'for_user_2'
+                        }
+                    ]
+                    scheduler.on_block_complete_without_schedule('block1')
+                    mock_schedule.assert_not_called()
+                    block_run1 = BlockRun.get(
+                        pipeline_run_id=pipeline_run.id,
+                        block_uuid='block2:for_user_1',
+                    )
+                    self.assertTrue(block_run1 is not None)
+                    block_run2 = BlockRun.get(
+                        pipeline_run_id=pipeline_run.id,
+                        block_uuid='block2:for_user_2',
+                    )
+                    self.assertTrue(block_run2 is not None)
+
+        scheduler.schedule()
+        for b in pipeline_run.block_runs:
+            if b.block_uuid.startswith('block2'):
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
+
+    @patch('mage_ai.orchestration.pipeline_scheduler.run_block')
+    @patch('mage_ai.orchestration.pipeline_scheduler.job_manager')
+    def test_schedule_for_dynamic_blocks_allow_blocks_to_fail(
+        self,
+        mock_job_manager,
+        mock_run_pipeline,
+    ):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_dynamic_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        scheduler.schedule()
+        for b in pipeline_run.block_runs:
+            if b.block_uuid == 'block1':
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
+                b.update(status=BlockRun.BlockRunStatus.COMPLETED)
+            else:
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.INITIAL)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            with patch.object(Block, 'output_variables') as mock_block_variables:
+                with patch.object(VariableManager, 'get_variable') as mock_variable:
+                    mock_block_variables.return_value = ['values', 'metadata']
+                    # only mock the metadata
+                    mock_variable.return_value = [
+                        {
+                            'block_uuid': 'for_user_1'
+                        },
+                        {
+                            'block_uuid': 'for_user_2'
+                        }
+                    ]
+                    scheduler.on_block_complete_without_schedule('block1')
+                    mock_schedule.assert_not_called()
+                    block_run1 = BlockRun.get(
+                        pipeline_run_id=pipeline_run.id,
+                        block_uuid='block2:for_user_1',
+                    )
+                    self.assertTrue(block_run1 is not None)
+                    block_run2 = BlockRun.get(
+                        pipeline_run_id=pipeline_run.id,
+                        block_uuid='block2:for_user_2',
+                    )
+                    self.assertTrue(block_run2 is not None)
+
+        scheduler.schedule()
+        for b in pipeline_run.block_runs:
+            if b.block_uuid.startswith('block2'):
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
+
+    def test_on_block_complete_dynamic_blocks(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_dynamic_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            with patch.object(Block, 'output_variables') as mock_block_variables:
+                with patch.object(VariableManager, 'get_variable') as mock_variable:
+                    mock_block_variables.return_value = ['values', 'metadata']
+                    # only mock the metadata
+                    mock_variable.return_value = [
+                        {
+                            'block_uuid': 'for_user_1'
+                        },
+                        {
+                            'block_uuid': 'for_user_2'
+                        }
+                    ]
+                    scheduler.on_block_complete_without_schedule('block1')
+                    mock_schedule.assert_not_called()
+                    block_run1 = BlockRun.get(
+                        pipeline_run_id=pipeline_run.id,
+                        block_uuid='block2:for_user_1',
+                    )
+                    self.assertTrue(block_run1 is not None)
+                    block_run2 = BlockRun.get(
+                        pipeline_run_id=pipeline_run.id,
+                        block_uuid='block2:for_user_2',
+                    )
+                    self.assertTrue(block_run2 is not None)

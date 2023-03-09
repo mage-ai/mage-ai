@@ -34,6 +34,28 @@ def create_pipeline_with_blocks(name: str, repo_path: str):
     return pipeline
 
 
+def create_pipeline_with_dynamic_blocks(name: str, repo_path: str):
+    pipeline = Pipeline.create(
+        name,
+        repo_path=repo_path,
+    )
+    block1 = Block.create(
+        'block1',
+        'data_loader',
+        repo_path,
+        language='python',
+        configuration=dict(dynamic=True),
+    )
+    block2 = Block.create(
+        'block2', 'transformer', repo_path, language='python')
+    block3 = Block.create(
+        'block3', 'data_exporter', repo_path, language='python')
+    pipeline.add_block(block1)
+    pipeline.add_block(block2, upstream_block_uuids=['block1'])
+    pipeline.add_block(block3, upstream_block_uuids=['block2'])
+    return pipeline
+
+
 def create_pipeline_run(pipeline_uuid: str):
     pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
     return pipeline_run
