@@ -40,6 +40,19 @@ If you’re looking for cool projects to ship, check out the following:
    ```
 3. Open your browser and go to [http://localhost:3000](http://localhost:3000).
 
+### Errors
+
+#### Permission denied
+
+If you get an error relating to permission denied when trying to execute a script,
+it might have something to do with SELinux.
+
+Two or more containers are trying to mount the same volume. With SELinux it’s not possible without
+the `z` option.
+
+For more information about using the `z` option,
+read [Docker’s documentation](https://docs.docker.com/storage/bind-mounts/).
+
 ---
 
 ## Debugging
