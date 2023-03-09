@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.constants import (
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
 )
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
@@ -840,7 +841,18 @@ class Pipeline:
             pipeline_dict = self.to_dict(exclude_data_integration=True)
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')
-        safe_write(self.config_path, yaml.dump(pipeline_dict))
+
+        content = yaml.dump(pipeline_dict)
+
+        safe_write(self.config_path, content)
+
+        File.create(
+            PIPELINE_CONFIG_FILE,
+            f'{PIPELINES_FOLDER}/{self.uuid}',
+            content=content,
+            repo_path=self.repo_path,
+            file_version_only=True,
+        )
 
     async def save_async(self, block_uuid: str = None, widget: bool = False):
         if block_uuid is not None:
@@ -858,7 +870,18 @@ class Pipeline:
             pipeline_dict = self.to_dict(exclude_data_integration=True)
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')
-        await safe_write_async(self.config_path, yaml.dump(pipeline_dict))
+
+        content = yaml.dump(pipeline_dict)
+
+        await safe_write_async(self.config_path, content)
+
+        await File.create_async(
+            PIPELINE_CONFIG_FILE,
+            f'{PIPELINES_FOLDER}/{self.uuid}',
+            content=content,
+            repo_path=self.repo_path,
+            file_version_only=True,
+        )
 
     def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
         """

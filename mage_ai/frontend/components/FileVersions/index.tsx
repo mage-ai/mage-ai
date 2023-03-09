@@ -60,8 +60,8 @@ function FileVersions({
   ]);
 
   const regex = useMemo(() => buildFileExtensionRegExp(), []);
-  const fileExtension = useMemo(() => fileContent?.path?.match(regex)?.[0]?.split('.')?.[1], [
-    fileContent,
+  const fileExtension = useMemo(() => selectedFilePath?.match(regex)?.[0]?.split('.')?.[1], [
+    selectedFilePath,
     regex,
   ]);
 
@@ -75,9 +75,20 @@ function FileVersions({
               fetchFileVersions1();
             }
 
+            const fileContentPath = resp?.file_content?.path;
+            let key = `FileEditor/${fileContentPath}`;
+
+            if (fileContentPath) {
+              const parts = fileContentPath.split('/');
+              if ('pipelines' === parts[0]) {
+                const pipelineUUID = parts.slice(1, parts.length - 1).join('/');
+                key = `PipelineDetail/${pipelineUUID}`;
+              }
+            }
+
             setApiReloads(prev => ({
               ...prev,
-              [`FileEditor/${resp?.file_content?.path}`]: Number(new Date()),
+              [key]: Number(new Date()),
             }));
 
             setSelectedFileVersionIndex(prev => prev + 1);
