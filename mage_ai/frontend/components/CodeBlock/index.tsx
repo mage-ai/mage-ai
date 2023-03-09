@@ -244,6 +244,8 @@ function CodeBlockProps({
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT[0]);
 
   const isDBT = BlockTypeEnum.DBT === block?.type;
+  const isSQLBlock = BlockLanguageEnum.SQL === block?.language;
+  const isRBlock = BlockLanguageEnum.R === block?.language;
 
   const {
     callback_content: callbackContentOrig,
@@ -1188,7 +1190,7 @@ function CodeBlockProps({
                       setAnyInputFocused(true);
                     }}
                     placeholder={dbtProjectName
-                      ? BlockLanguageEnum.SQL === block?.language
+                      ? isSQLBlock
                         ? dbtProfileData?.target
                         : null
                       : 'Select project first'
@@ -1300,7 +1302,7 @@ function CodeBlockProps({
             </CodeHelperStyle>
           )}
 
-          {BlockLanguageEnum.SQL === block.language
+          {isSQLBlock
             && !codeCollapsed
             && BlockTypeEnum.DBT !== block.type
             && (
@@ -1602,13 +1604,17 @@ function CodeBlockProps({
             && (pipeline?.type !== PipelineTypeEnum.STREAMING)
             && (
             <CodeHelperStyle>
-              <Text small>
-                {BlockLanguageEnum.SQL !== block.language && 'Positional arguments for decorated function:'}
-                {BlockLanguageEnum.SQL === block.language && 'Tables available in query from upstream blocks:'}
-              </Text>
+              <Spacing mr={5}>
+                <Text small>
+                  {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
+                  {isSQLBlock && 'The interpolated tables below are available in queries from upstream blocks. \
+                    For example, you can use the query "SELECT * FROM {{ df_1 }}" to insert all the rows from an \
+                    upstream block into the designated database table.'}
+                </Text>
+              </Spacing>
 
               <Spacing mt={1}>
-                {BlockLanguageEnum.SQL !== block.language && (
+                {(!isSQLBlock && !isRBlock) && (
                   <>
                     <Text monospace muted small>
                       {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
@@ -1625,6 +1631,15 @@ function CodeBlockProps({
                     </Text>
                   </>
                 )}
+                {isRBlock && (
+                  <>
+                    <Text monospace muted small>
+                      {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
+                        || (BlockTypeEnum.TRANSFORMER === block.type && 'transform')}
+                      &nbsp;← function({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
+                    </Text>
+                  </>
+                )}
 
                 {block.upstream_blocks.map((blockUUID, i) => {
                   const b = blocksMapping[blockUUID];
@@ -1632,16 +1647,21 @@ function CodeBlockProps({
                       b?.type,
                       { blockColor: b?.color, theme: themeContext },
                     ).accent;
+                  const sqlVariable = `{{ df_${i + 1} }}`;
 
                   return (
                     <div key={blockUUID}>
-                      {BlockLanguageEnum.SQL !== block.language && (
+                      {(!isSQLBlock && !isRBlock) && (
                         <Text inline monospace muted small>
                           &nbsp;&nbsp;&nbsp;&nbsp;data{i >= 1 ? `_${i + 1}` : null}
                         </Text>
-                      )}{BlockLanguageEnum.SQL === block.language && (
+                      )}{isSQLBlock && (
                         <Text inline monospace muted small>
-                          {`{{ df_${i + 1} }}`}
+                          {sqlVariable}
+                        </Text>
+                      )}{isRBlock && (
+                        <Text inline monospace muted small>
+                          &nbsp;&nbsp;&nbsp;&nbsp;{`df${i + 1}`}
                         </Text>
                       )} <Text inline monospace muted small>→</Text> <Link
                         color={blockColor}

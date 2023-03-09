@@ -1,5 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
-import { ThemeContext } from 'styled-components';
+import React, { useCallback, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 
@@ -9,6 +8,7 @@ import Col from '@components/shared/Grid/Col';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType, { VariableType } from '@interfaces/PipelineVariableType';
 import Row from '@components/shared/Grid/Row';
@@ -41,6 +41,12 @@ const SAMPLE_SOURCE = `
 
 const SAMPLE_KWARGS_SOURCE = `
     var = kwargs['variable_name']
+`;
+const SAMPLE_SQL_VARIABLE_SOURCE = `
+    {{ variable_name }}
+`;
+const SAMPLE_R_VARIABLE_SOURCE = `
+    var <- global_vars['variable_name']
 `;
 
 const BUILD_CODE_SNIPPET_PREVIEW = (
@@ -319,15 +325,63 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
 
       <Spacing mb={PADDING_UNITS}>
         <Text>
-          Global variables will be passed into all non-scratchpad blocks as keyword arguments. To load a global variable, use the following syntax:
+          Global variables will be passed into all non-scratchpad blocks as keyword arguments
+          (Python), interpolated variables (SQL), or vector elements (R). To load a global
+          variable, use the following syntax:
         </Text>
       </Spacing>
 
       <Spacing mb={PADDING_UNITS}>
+        <Text bold large>
+          For Python (
+          <Link
+            href="https://docs.mage.ai/production/configuring-production-settings/runtime-variable"
+            large
+            openNewWindow
+          >
+            docs
+          </Link>):
+        </Text>
         <CodeBlock
           language="python"
           small
           source={SAMPLE_KWARGS_SOURCE}
+        />
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text bold large>
+          For SQL (
+          <Link
+            href="https://docs.mage.ai/guides/sql-blocks#variables"
+            large
+            openNewWindow
+          >
+            docs
+          </Link>):
+        </Text>
+        <CodeBlock
+          language="sql"
+          small
+          source={SAMPLE_SQL_VARIABLE_SOURCE}
+        />
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text bold large>
+          For R (
+          <Link
+            href="https://docs.mage.ai/guides/r-blocks#runtime-variables"
+            large
+            openNewWindow
+          >
+            docs
+          </Link>):
+        </Text>
+        <CodeBlock
+          language="r"
+          small
+          source={SAMPLE_R_VARIABLE_SOURCE}
         />
       </Spacing>
 
