@@ -135,12 +135,12 @@ class Pipeline:
 
     @classmethod
     def duplicate(
-        self,
+        cls,
         source_pipeline: 'Pipeline',
         duplicate_pipeline_name: str = None,
     ):
         duplicate_pipeline_uuid = duplicate_pipeline_name
-        pipeline_uuids = self.get_all_pipelines(source_pipeline.repo_path)
+        pipeline_uuids = cls.get_all_pipelines(source_pipeline.repo_path)
         pipeline_count = len(pipeline_uuids)
         cleaned_source_pipeline_name = clean_name(source_pipeline.name)
         if duplicate_pipeline_uuid is None:
@@ -151,7 +151,7 @@ class Pipeline:
             identifier += 1
             duplicate_pipeline_uuid = f'{cleaned_source_pipeline_name}_copy_{identifier}'
 
-        duplicate_pipeline = self.create(
+        duplicate_pipeline = cls.create(
             duplicate_pipeline_uuid,
             pipeline_type=source_pipeline.type,
             repo_path=source_pipeline.repo_path,
@@ -170,16 +170,7 @@ class Pipeline:
             yaml.dump(duplicate_pipeline_dict)
         )
 
-        if duplicate_pipeline.type == PipelineType.INTEGRATION:
-            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-                import IntegrationPipeline
-
-            return IntegrationPipeline(
-                duplicate_pipeline_uuid,
-                repo_path=duplicate_pipeline.repo_path,
-            )
-
-        return self(
+        return cls.get(
             duplicate_pipeline_uuid,
             repo_path=duplicate_pipeline.repo_path
         )
