@@ -145,7 +145,7 @@ class Pipeline:
         pipeline_uuids = self.get_all_pipelines(source_pipeline.repo_path)
         pipeline_count = len(pipeline_uuids)
         if duplicate_pipeline_uuid is None:
-            duplicate_pipeline_uuid = f'{source_pipeline.name}_copy_{pipeline_count}'
+            duplicate_pipeline_uuid = f'{source_pipeline.name}_copy'
 
         identifier = pipeline_count
         while duplicate_pipeline_uuid in pipeline_uuids:
