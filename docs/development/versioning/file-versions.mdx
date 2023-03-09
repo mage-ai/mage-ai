@@ -1,0 +1,33 @@
+---
+title: "File versioning in Mage"
+sidebarTitle: "File versions"
+description: "Mage can automatically keep track of previous versions of a file. Any update to the contents of a file will create a new version that can be used to restore a file to a previous state."
+---
+
+## Configure the number of versions per file
+
+You can set how many previous versions to keep track of for every file.
+
+Set the following environment variable name and value:
+
+|   |   |
+| --- | --- |
+| Name | `MAX_NUMBER_OF_FILE_VERSIONS` |
+| Value | Any integer value. |
+| Default | `100` |
+
+## How to view file versions
+
+1. Open a pipeline.
+1. Edit the pipeline.
+1. In the file browser on the left side of the page, click on a file.
+1. Near the top on the right side, click the button <b>Show versions</b>.
+1. A list of previous versions for that file will appear in the right side panel.
+
+![File versions](https://github.com/mage-ai/assets/blob/main/notebook/file-versions.jpg?raw=true)
+
+## How to restore to a previous version
+
+1. In the right side panel, click on a previous version.
+1. Click the button labeled <b>Replace with this version</b>.
+1. The contents of the file will be updated with the contents from the previous version.
