@@ -8,6 +8,20 @@ class SyncPolicy(BasePolicy):
     pass
 
 
+SyncPolicy.allow_actions([
+    constants.DETAIL,
+    constants.LIST,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+SyncPolicy.allow_actions([
+    constants.CREATE,
+    constants.UPDATE,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_editor_role())
+
 SyncPolicy.allow_read(SyncPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
