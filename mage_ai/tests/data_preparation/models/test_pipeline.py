@@ -448,13 +448,12 @@ class PipelineTest(DBTestCase):
         self.assertFalse(os.access(block4.file_path, os.F_OK))
         self.assertFalse(os.access(block5.file_path, os.F_OK))
 
-    def test_duplicate(self):
-        pipeline = self.__create_pipeline_with_blocks('test pipeline 7')
-        duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate pipeline')
+    def test_duplicate_standard_pipeline(self):
+        pipeline = self.__create_pipeline_with_blocks('test_pipeline_7a')
+        duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate_pipeline')
         for block_uuid in pipeline.blocks_by_uuid:
             original = pipeline.blocks_by_uuid[block_uuid]
             duplicate = duplicate_pipeline.blocks_by_uuid[block_uuid]
-            print(original.type)
             self.assertEqual(original.name, duplicate.name)
             self.assertEqual(original.uuid, duplicate.uuid)
             self.assertEqual(original.type, duplicate.type)
@@ -463,12 +462,24 @@ class PipelineTest(DBTestCase):
         for widget_uuid in pipeline.widgets_by_uuid:
             original = pipeline.widgets_by_uuid[widget_uuid]
             duplicate = duplicate_pipeline.widgets_by_uuid[widget_uuid]
-            print(original.type)
             self.assertEqual(original.name, duplicate.name)
             self.assertEqual(original.uuid, duplicate.uuid)
             self.assertEqual(original.type, duplicate.type)
             self.assertEqual(original.chart_type, duplicate.chart_type)
             self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
+
+    def test_duplicate_integration_pipeline(self):
+        pipeline = self.__create_pipeline_with_integration('test_pipeline_7b')
+        duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate_pipeline_2')
+        for block_uuid in pipeline.blocks_by_uuid:
+            original = pipeline.blocks_by_uuid[block_uuid]
+            duplicate = duplicate_pipeline.blocks_by_uuid[block_uuid]
+            self.assertEqual(original.name, duplicate.name)
+            self.assertEqual(original.uuid, duplicate.uuid)
+            self.assertEqual(original.type, duplicate.type)
+            self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
+            self.assertEqual(original.downstream_block_uuids, duplicate.downstream_block_uuids)
+            self.assertEqual(pipeline.data_integration, duplicate_pipeline.data_integration)
 
     def test_cycle_detection(self):
         pipeline = self.__create_pipeline_with_blocks('test pipeline 8')
