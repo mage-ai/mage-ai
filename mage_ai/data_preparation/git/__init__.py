@@ -1,19 +1,15 @@
 from dataclasses import dataclass
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.shared.config import BaseConfig
+from mage_ai.data_preparation.sync import SyncConfig
 from typing import List
+import asyncio
 import git
 import os
-
-
-@dataclass
-class GitConfig(BaseConfig):
-    remote_repo_link: str
-    repo_path: str = os.getcwd()
+import subprocess
 
 
 class Git:
-    def __init__(self, git_config: GitConfig):
+    def __init__(self, git_config: SyncConfig):
         self.remote_repo_link = git_config.remote_repo_link
         self.repo_path = git_config.repo_path
         self.git_config = git_config
@@ -28,12 +24,26 @@ class Git:
     @classmethod
     def get_manager(self):
         preferences = get_preferences()
-        git_config = GitConfig.load(config=preferences.git_config)
+        git_config = SyncConfig.load(config=preferences.sync_config)
         return Git(git_config)
 
     @property
     def current_branch(self):
         return self.repo.git.branch('--show-current')
+    
+    async def check_connection(self):
+        proc = subprocess.Popen(['git', 'ls-remote'], cwd=self.repo_path)
+        ct = 0
+        while ct < 20:
+            if proc.poll() is not None:
+                proc.kill()
+                return
+            ct += 1
+            await asyncio.sleep(0.5)
+        if proc.poll() is None:
+            proc.kill()
+            raise Exception(
+                "Can't connect to remote, make sure your SSH key is set up properly.")
     
     def all_branches(self):
         return [head.name for head in self.repo.heads]

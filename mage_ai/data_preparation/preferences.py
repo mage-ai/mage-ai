@@ -27,6 +27,9 @@ class Preferences:
         except Exception:
             traceback.print_exc()
             pass
+    
+    def is_valid_git_config(self):
+        return 'remote_repo_link' in self.sync_config and 'repo_path' in self.sync_config
 
     def update_preferences(self, updates: Dict):
         preferences = self.to_dict()

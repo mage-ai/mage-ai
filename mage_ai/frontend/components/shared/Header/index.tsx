@@ -30,6 +30,9 @@ import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { redirectToUrl } from '@utils/url';
+import { Branch } from '@oracle/icons';
+import { useModal } from '@context/Modal';
+import GitActions from '@components/VersionControl/GitActions';
 
 export type BreadcrumbType = {
   bold?: boolean;
@@ -69,6 +72,12 @@ function Header({
   const menuRef = useRef(null);
   const refUserMenu = useRef(null);
   const router = useRouter();
+
+  const {
+    data: dataGitBranch,
+    mutate: fetchBranch,
+  } = api.git_branches.detail('test');
+  const branch = useMemo(() => dataGitBranch?.['git_branch']?.['name'], [dataGitBranch]);
 
   const {
     data: dataProjects,
@@ -211,6 +220,17 @@ function Header({
     });
   }
 
+  const [showModal, hideModal] = useModal(() => (
+    <GitActions
+      branch={branch}
+      fetchBranch={fetchBranch}
+    />
+  ), {
+  }, [branch, fetchBranch], {
+    background: true,
+    uuid: 'git_actions',
+  });
+
   return (
     <HeaderStyle>
       <ClientOnly>
@@ -259,6 +279,28 @@ function Header({
                     </Text>
                   </Text>
                 </Button>
+              </Spacing>
+            )}
+
+            {branch && (
+              <Spacing ml={2}>
+                <KeyboardShortcutButton
+                  blackBorder
+                  block
+                  compact
+                  noHoverUnderline
+                  onClick={showModal}
+                  sameColorAsText
+                  uuid="Header/git_branch"
+                >
+                  <FlexContainer alignItems="center">
+                    <Branch size={1.5 * UNIT} />
+                    <Spacing ml={1} />
+                    <Text monospace small>
+                      {branch}
+                    </Text>
+                  </FlexContainer>
+                </KeyboardShortcutButton>
               </Spacing>
             )}
 

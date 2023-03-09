@@ -1,0 +1,286 @@
+import Headline from '@oracle/elements/Headline';
+import React, { useMemo, useState } from 'react';
+import api from '@api';
+import Text from '@oracle/elements/Text';
+import Select from '@oracle/elements/Inputs/Select';
+import { useMutation } from 'react-query';
+import { onSuccess } from '@api/utils/response';
+import { useRouter } from 'next/router';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Button from '@oracle/elements/Button';
+import Panel from '@oracle/components/Panel/v2';
+import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
+
+const GIT_ACTION_OPTIONS = [
+  'create new branch',
+  'commit',
+  'pull',
+  'reset',
+]
+
+type GitActionsProps = {
+  branch: string;
+  fetchBranch: () => void;
+};
+
+function GitActions({
+  branch,
+  fetchBranch,
+}: GitActionsProps) {
+  const [payload, setPayload] = useState<object>();
+  const [confirmMessage, setConfirmMessage] = useState<string>();
+  const [action, setAction] = useState<string>();
+  const [message, setMessage] = useState<string>();
+  const [error, setError] = useState<string>();
+
+  const {
+    data: dataAllGitBranches,
+    mutate: fetchAllBranches,
+  } = api.git_branches.list();
+  const allBranches = useMemo(
+    () => dataAllGitBranches?.['git_branches'],
+    [dataAllGitBranches],
+  );
+
+  const [switchBranch, { isLoading: isLoadingSwitchBranch }] = useMutation(
+    api.git_branches.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchAllBranches();
+            window.location.reload();
+          },
+          onErrorCallback: ({
+            error: {
+              exception,
+            },
+          }) => {
+            setError(exception);
+          },
+        },
+      ),
+    },
+  );
+
+  const [performAction, { isLoading: isLoadingPerformAction }] = useMutation(
+    api.git_branches.useUpdate(branch),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setError(null);
+            setMessage('DONE');
+          },
+          onErrorCallback: ({
+            error: {
+              exception,
+            },
+          }) => {
+            setError(exception);
+          },
+        },
+      ),
+    }
+  );
+
+  const isLoading = useMemo(
+    () => isLoadingSwitchBranch || isLoadingPerformAction,
+    [isLoadingSwitchBranch, isLoadingPerformAction],
+  );
+
+  return (
+    <div style={{
+      width: '400px',
+    }}>
+      <Panel>
+        <Spacing p={2}>
+          <Spacing mb={1}>
+            <Select
+              key="select_branch"
+              onChange={(e) => {
+                e.preventDefault();
+                // @ts-ignore
+                switchBranch({
+                  git_branch: {
+                    name: e.target.value
+                  },
+                });
+              }}
+              placeholder="Select a branch"
+              value={branch}
+            >
+              {allBranches?.map(({ name }) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+          </Spacing>
+          <Spacing mb={1}>
+            <Select
+              key="select_git_action"
+              onChange={(e) => {
+                e.preventDefault();
+                // @ts-ignore
+                setAction(e.target.value);
+                setMessage(null);
+                setPayload(null);
+              }}
+              placeholder="Select an action"
+              value={action}
+            >
+              {GIT_ACTION_OPTIONS.map(action => (
+                <option key={action} value={action}>
+                  {action}
+                </option>
+              ))}
+            </Select>
+          </Spacing>
+          {action === 'commit' && (
+            <FlexContainer justifyContent="space-between">
+              <TextInput
+                compact
+                label="Commit message"
+                monospace
+                onChange={e => setPayload({
+                  message: e.target.value,
+                })}
+                value={payload?.['message']}
+              />
+              <Button
+                borderLess
+                onClick={() => {
+                  // @ts-ignore
+                  performAction({
+                    git_branch: {
+                      action_type: 'commit',
+                      ...payload,
+                    }
+                  })
+                }}
+                success
+              >
+                Commit
+              </Button>
+              <Button
+                borderLess
+                onClick={() => {
+                  // @ts-ignore
+                  performAction({
+                    git_branch: {
+                      action_type: 'push',
+                    }
+                  })
+                }}
+                primary
+              >
+                Push
+              </Button>
+            </FlexContainer>
+          )}
+          {action === 'create new branch' && (
+            <FlexContainer justifyContent="space-between">
+              <TextInput
+                compact
+                label="Branch name"
+                monospace
+                onChange={e => setPayload({
+                  name: e.target.value
+                })}
+                value={payload?.['name']}
+              />
+              <Button
+                borderLess
+                onClick={() => {
+                  // @ts-ignore
+                  switchBranch({
+                    git_branch: payload,
+                  });
+                }}
+                primary
+              >
+                Create Branch
+              </Button>
+            </FlexContainer>
+          )}
+          {action === 'pull' && (
+            <Button
+              borderLess
+              onClick={() => {
+                // @ts-ignore
+                performAction({
+                  git_branch: {
+                    action_type: 'pull',
+                  },
+                });
+              }}
+              primary
+            >
+              Pull
+            </Button>
+          )}
+          {action === 'reset' && (
+            <>
+              {confirmMessage ? (
+                <FlexContainer>
+                  <Text>
+                    {confirmMessage}
+                  </Text>
+                  <Button
+                    borderLess
+                    onClick={() => {
+                      // @ts-ignore
+                      performAction({
+                        git_branch: {
+                          action_type: 'reset',
+                        },
+                      });
+                      setConfirmMessage(null);
+                    }}
+                    primary
+                  >
+                    Confirm
+                  </Button>
+                </FlexContainer>
+              ) : (
+                <Button
+                  borderLess
+                  onClick={() => {
+                    // @ts-ignore
+                    setConfirmMessage('Are you sure you want to reset your branch? Your local changes may be erased.')
+                  }}
+                  primary
+                >
+                  Reset branch
+                </Button>
+              )}
+            </>
+          )}
+          <Spacing mt={1}>
+            {isLoading && (<Spinner />)}
+            {!isLoading && (
+              <>
+                {!error && message && (
+                  <Text>
+                    {message}
+                  </Text>
+                )}
+                {error && (
+                  <Text danger>
+                    {error}
+                  </Text>
+                )}
+              </>
+            )}
+          </Spacing>
+          
+        </Spacing>
+      </Panel>
+    </div>
+  )
+}
+
+export default GitActions;
