@@ -56,3 +56,7 @@ def dask_from_pandas(df: pd.DataFrame) -> dd:
 def apply_transform(ddf: dd, apply_function) -> dd:
     res = ddf.apply(apply_function, axis=1, meta=ddf)
     return res.compute()
+
+
+def apply_transform_pandas(df: pd.DataFrame, apply_function) -> pd.DataFrame:
+    return df.apply(apply_function, axis=1)
