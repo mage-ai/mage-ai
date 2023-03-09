@@ -16,6 +16,19 @@ Set the following environment variable name and value:
 | Value | Any integer value. |
 | Default | `100` |
 
+## Where are the file versions stored?
+
+Each file version is stored in the following directory:
+
+```
+[project_name]/.file_versions
+```
+
+For example, if your project name is `demo_project`, then the directory will be `demo_project/.file_versions`.
+
+Please add `.file_versions` to your `.gitignore` file. 
+For more information, please read the [project setup guide](/development/project/setup#create-a-gitignore-file).
+
 ## How to view file versions
 
 1. Open a pipeline.
