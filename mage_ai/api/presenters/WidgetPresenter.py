@@ -10,6 +10,7 @@ class WidgetPresenter(BasePresenter):
         'downstream_blocks',
         'executor_config',
         'executor_type',
+        'has_callback',
         'language',
         'name',
         'outputs',
