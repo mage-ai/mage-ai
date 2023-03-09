@@ -139,51 +139,45 @@ class Pipeline:
     def duplicate(
         self,
         source_pipeline: 'Pipeline',
-        duplicate_pipeline_name: str,
+        duplicate_pipeline_name: str = None,
     ):
+        duplicate_pipeline_uuid = duplicate_pipeline_name
+        if duplicate_pipeline_uuid is None:
+            pipeline_count = len(self.get_all_pipelines(get_repo_path()))
+            duplicate_pipeline_uuid = f'{source_pipeline.name}_copy_{pipeline_count}'
+
         duplicate_pipeline = self.create(
-            duplicate_pipeline_name,
+            duplicate_pipeline_uuid,
             pipeline_type=source_pipeline.type,
             repo_path=source_pipeline.repo_path,
         )
-        # first pass to load blocks
-        for block_uuid in source_pipeline.blocks_by_uuid:
-            source_block = source_pipeline.blocks_by_uuid[block_uuid]
-            if source_block.type == BlockType.SCRATCHPAD:
-                continue
-            new_block = Block.get_block(source_block.name, source_block.uuid, source_block.type)
-            duplicate_pipeline.add_block(new_block)
-        # second pass to make connections
-        for block_uuid in source_pipeline.blocks_by_uuid:
-            source_block = source_pipeline.blocks_by_uuid[block_uuid]
-            if source_block.type == BlockType.SCRATCHPAD:
-                continue
-            duplicate_block = duplicate_pipeline.blocks_by_uuid[block_uuid]
-            duplicate_block.upstream_blocks = duplicate_pipeline.get_blocks(
-                source_block.upstream_block_uuids
-            )
-            duplicate_block.downstream_blocks = duplicate_pipeline.get_blocks(
-                source_block.downstream_block_uuids
-            )
-        # Add widgets
-        for widget_uuid in source_pipeline.widgets_by_uuid:
-            source_widget = source_pipeline.widgets_by_uuid[widget_uuid]
-            new_widget = Widget.get_block(
-                source_widget.name,
-                source_widget.uuid,
-                source_widget.type,
-                configuration=source_widget.configuration,
-            )
-            duplicate_pipeline.add_block(
-                new_widget, source_widget.upstream_block_uuids, widget=True
-            )
-        # Add variables
-        source_pipeline_variables = get_global_variables(source_pipeline.uuid)
-        if source_pipeline_variables:
-            duplicate_pipeline.variables = source_pipeline_variables
-        duplicate_pipeline.save()
 
-        return duplicate_pipeline
+        if source_pipeline.type == PipelineType.INTEGRATION and \
+                source_pipeline.data_integration is not None:
+            with open(duplicate_pipeline.catalog_config_path, 'w') as fp:
+                json.dump(source_pipeline.data_integration, fp)
+
+        duplicate_pipeline_dict = source_pipeline.to_dict(exclude_data_integration=True)
+        duplicate_pipeline_dict['uuid'] = duplicate_pipeline_uuid
+        duplicate_pipeline_dict['name'] = duplicate_pipeline_uuid
+        safe_write(
+            duplicate_pipeline.config_path,
+            yaml.dump(duplicate_pipeline_dict)
+        )
+
+        if duplicate_pipeline.type == PipelineType.INTEGRATION:
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
+                import IntegrationPipeline
+
+            return IntegrationPipeline(
+                duplicate_pipeline_uuid,
+                repo_path=duplicate_pipeline.repo_path,
+            )
+
+        return self(
+            duplicate_pipeline_uuid,
+            repo_path=duplicate_pipeline.repo_path
+        )
 
     @classmethod
     def get(self, uuid, repo_path: str = None):
