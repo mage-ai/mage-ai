@@ -10,6 +10,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
+import ApiReloader from '@components/ApiReloader';
 import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
   BlockLanguageEnum,
@@ -1482,6 +1483,7 @@ function PipelineDetailPage({
       savePipelineContent={savePipelineContent}
       secrets={secrets}
       selectedBlock={selectedBlock}
+      selectedFilePath={selectedFilePath}
       setAnyInputFocused={setAnyInputFocused}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
@@ -1522,6 +1524,7 @@ function PipelineDetailPage({
     savePipelineContent,
     secrets,
     selectedBlock,
+    selectedFilePath,
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
@@ -1608,6 +1611,7 @@ function PipelineDetailPage({
     blocks,
     dataProviders,
     deleteBlock,
+    disableShortcuts,
     fetchFileTree,
     fetchPipeline,
     fetchSampleData,
@@ -1955,8 +1959,8 @@ function PipelineDetailPage({
         <div
           style={{
             height: selectedFilePath ? 0 : null,
-            visibility: selectedFilePath ? 'hidden' : null,
             opacity: selectedFilePath ? 0 : null,
+            visibility: selectedFilePath ? 'hidden' : null,
           }}
         >
           {pipelineDetailMemo}
@@ -1971,30 +1975,32 @@ function PipelineDetailPage({
                 : 'none',
             }}
           >
-            <FileEditor
-              active={selectedFilePath === filePath}
-              addNewBlock={(
-                b: BlockRequestPayloadType,
-                cb: (block: BlockType) => void,
-              ) => {
-                addNewBlockAtIndex(
-                  b,
-                  blocks.length,
-                  cb,
-                  b.name,
-                );
-                router.push(`/pipelines/${pipelineUUID}/edit`);
-              }}
-              fetchPipeline={fetchPipeline}
-              fetchVariables={fetchVariables}
-              filePath={filePath}
-              openSidekickView={openSidekickView}
-              pipeline={pipeline}
-              projectName={projectName}
-              selectedFilePath={selectedFilePath}
-              setFilesTouched={setFilesTouched}
-              setSelectedBlock={setSelectedBlock}
-            />
+            <ApiReloader uuid={`FileEditor/${decodeURIComponent(filePath)}`}>
+              <FileEditor
+                active={selectedFilePath === filePath}
+                addNewBlock={(
+                  b: BlockRequestPayloadType,
+                  cb: (block: BlockType) => void,
+                ) => {
+                  addNewBlockAtIndex(
+                    b,
+                    blocks.length,
+                    cb,
+                    b.name,
+                  );
+                  router.push(`/pipelines/${pipelineUUID}/edit`);
+                }}
+                fetchPipeline={fetchPipeline}
+                fetchVariables={fetchVariables}
+                filePath={filePath}
+                openSidekickView={openSidekickView}
+                pipeline={pipeline}
+                selectedFilePath={selectedFilePath}
+                setErrors={setErrors}
+                setFilesTouched={setFilesTouched}
+                setSelectedBlock={setSelectedBlock}
+              />
+            </ApiReloader>
           </div>
         ))}
 

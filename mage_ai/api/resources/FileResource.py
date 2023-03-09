@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from typing import Dict
+import urllib.parse
 
 
 class FileResource(GenericResource):
@@ -49,19 +50,19 @@ class FileResource(GenericResource):
     @classmethod
     @safe_db_query
     def member(self, pk, user, **kwargs):
-        parts = pk.split('/')
-        file = File(
-            filename=parts[-1],
-            dir_path='/'.join(parts[:-1]),
-            repo_path=get_repo_path(),
-        )
-
+        file = self.get_model(pk)
         if not file.exists():
             error = ApiError.RESOURCE_NOT_FOUND.copy()
             error.update(message=f'File at {pk} cannot be found.')
             raise ApiError(error)
 
         return self(file, user, **kwargs)
+
+    @classmethod
+    @safe_db_query
+    def get_model(self, pk):
+        file_path = urllib.parse.unquote(pk)
+        return File.from_path(file_path, get_repo_path())
 
     @safe_db_query
     def delete(self, **kwargs):

@@ -1,9 +1,11 @@
+from datetime import datetime
 from mage_ai.data_preparation.models.errors import FileExistsError
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from typing import Dict
+from typing import Dict, List, Tuple
 import aiofiles
 import os
 
+FILE_VERSIONS_DIR = '.file_versions'
 BLACKLISTED_DIRS = frozenset([
     'venv',
     'env',
@@ -11,10 +13,12 @@ BLACKLISTED_DIRS = frozenset([
     '.logs',
     '.variables',
     '.DS_Store',
-    '__pycache__'
+    '__pycache__',
+    FILE_VERSIONS_DIR,
 ])
 INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 MAX_DEPTH = 30
+MAX_NUMBER_OF_FILE_VERSIONS = int(os.getenv('MAX_NUMBER_OF_FILE_VERSIONS', 100))
 
 
 class File:
@@ -53,21 +57,17 @@ class File:
         create_directories_if_not_exist: bool = True,
         overwrite: bool = True,
     ):
-
         repo_path = repo_path or get_repo_path()
         file = File(filename, dir_path, repo_path)
-        file_path = file.file_path
 
-        if self.file_exists(file_path) and not overwrite:
-            raise FileExistsError(f'File at {file_path} already exists.')
-
-        if create_directories_if_not_exist:
-            self.create_parent_directories(file_path)
-
-        write_type = 'wb' if content and type(content) is bytes else 'w'
-        with open(file_path, write_type) as f:
-            if content:
-                f.write(content)
+        self.write(
+            repo_path,
+            dir_path,
+            filename,
+            content,
+            create_directories_if_not_exist=create_directories_if_not_exist,
+            overwrite=overwrite,
+        )
 
         return file
 
@@ -79,6 +79,113 @@ class File:
     @classmethod
     def get_all_files(self, repo_path):
         return traverse(os.path.basename(repo_path), True, repo_path)
+
+    @classmethod
+    def file_path_versions_dir(
+        self,
+        repo_path: str,
+        dir_path: str,
+        filename: str,
+    ) -> Tuple[str, str]:
+        return os.path.join(
+            f'{repo_path}/{FILE_VERSIONS_DIR}',
+            dir_path.replace(repo_path, f'{repo_path}/{FILE_VERSIONS_DIR}'),
+            filename,
+        )
+
+    @classmethod
+    def write_preprocess(
+        self,
+        repo_path: str,
+        dir_path: str,
+        filename: str,
+        content: str,
+        create_directories_if_not_exist: bool = True,
+        overwrite: bool = True,
+    ):
+        file_path_main = os.path.join(repo_path, dir_path, filename)
+        file_path_versions_dir = self.file_path_versions_dir(repo_path, dir_path, filename)
+        file_path_versions = os.path.join(
+            file_path_versions_dir,
+            str(round(datetime.utcnow().timestamp())),
+        )
+
+        arr = [
+            (file_path_main, overwrite, create_directories_if_not_exist),
+        ]
+
+        if MAX_NUMBER_OF_FILE_VERSIONS >= 1:
+            arr.append((file_path_versions, True, True))
+
+            file_versions = []
+            step = 0
+            for _, _, files in os.walk(file_path_versions_dir):
+                if step >= 1:
+                    continue
+                file_versions += files
+                step += 1
+            number_of_file_versions = len(file_versions)
+
+            if number_of_file_versions >= MAX_NUMBER_OF_FILE_VERSIONS:
+                number_of_file_versions_to_delete = 1 + \
+                    (number_of_file_versions - MAX_NUMBER_OF_FILE_VERSIONS)
+                for fn in sorted(file_versions)[:number_of_file_versions_to_delete]:
+                    fn_path = os.path.join(file_path_versions_dir, fn)
+                    os.remove(fn_path)
+
+        for tup in arr:
+            file_path, should_overwrite, should_create_directories = tup
+            if self.file_exists(file_path) and not should_overwrite:
+                raise FileExistsError(f'File at {file_path} already exists.')
+
+            if should_create_directories:
+                self.create_parent_directories(file_path)
+
+            write_type = 'wb' if content and type(content) is bytes else 'w'
+            yield file_path, write_type, content
+
+    @classmethod
+    def write(
+        self,
+        repo_path: str,
+        dir_path: str,
+        filename: str,
+        content: str,
+        create_directories_if_not_exist: bool = True,
+        overwrite: bool = True,
+    ) -> None:
+        for file_path, write_type, content in self.write_preprocess(
+            repo_path,
+            dir_path,
+            filename,
+            content,
+            create_directories_if_not_exist,
+            overwrite,
+        ):
+            with open(file_path, write_type) as f:
+                if content:
+                    f.write(content)
+
+    @classmethod
+    async def write_async(
+        self,
+        repo_path: str,
+        dir_path: str,
+        filename: str,
+        content: str,
+        create_directories_if_not_exist: bool = True,
+        overwrite: bool = True,
+    ) -> None:
+        for file_path, write_type, content in self.write_preprocess(
+            repo_path,
+            dir_path,
+            filename,
+            content,
+            create_directories_if_not_exist,
+            overwrite,
+        ):
+            async with aiofiles.open(file_path, mode=write_type) as fp:
+                await fp.write(content)
 
     def exists(self) -> bool:
         return self.file_exists(self.file_path)
@@ -101,13 +208,45 @@ class File:
             print(err)
         return ''
 
-    def update_content(self, content):
-        with open(self.file_path, 'w') as fp:
-            fp.write(content)
+    def file_versions(self) -> List[str]:
+        file_path_versions_dir = self.file_path_versions_dir(
+            self.repo_path,
+            self.dir_path,
+            self.filename,
+        )
+        file_versions = []
+        step = 0
+        for _, _, files in os.walk(file_path_versions_dir):
+            if step >= 1:
+                continue
+            file_versions += files
+            step += 1
 
-    async def update_content_async(self, content):
-        async with aiofiles.open(self.file_path, mode='w') as fp:
-            await fp.write(content)
+        file_path_versions_dir_without_repo = file_path_versions_dir.replace(
+            os.path.join(self.repo_path, ''),
+            '',
+        )
+        return [File(
+            v,
+            file_path_versions_dir_without_repo,
+            self.repo_path,
+        ) for v in sorted(file_versions, reverse=True)]
+
+    def update_content(self, content: str):
+        self.write(
+            self.repo_path,
+            self.dir_path,
+            self.filename,
+            content,
+        )
+
+    async def update_content_async(self, content: str):
+        await self.write_async(
+            self.repo_path,
+            self.dir_path,
+            self.filename,
+            content,
+        )
 
     def delete(self):
         os.remove(self.file_path)
@@ -116,6 +255,21 @@ class File:
         full_path = os.path.join(self.repo_path, dir_path, filename)
         self.create_parent_directories(full_path)
         os.rename(self.file_path, full_path)
+
+        file_path_versions_dir = self.file_path_versions_dir(
+            self.repo_path,
+            self.dir_path,
+            self.filename,
+        )
+        if os.path.exists(file_path_versions_dir):
+            os.rename(
+                file_path_versions_dir,
+                self.file_path_versions_dir(
+                    self.repo_path,
+                    dir_path,
+                    filename,
+                ),
+            )
 
     def to_dict(self, include_content=False):
         data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))

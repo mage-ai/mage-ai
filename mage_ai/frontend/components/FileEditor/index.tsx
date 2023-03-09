@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useGlobalState } from '@storage/state';
 import { useMutation } from 'react-query';
 
 import AuthToken from '@api/utils/AuthToken';
@@ -13,11 +14,13 @@ import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/B
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import CodeEditor from '@components/CodeEditor';
+import ErrorsType from '@interfaces/ErrorsType';
 import FileType, {
   FileExtensionEnum,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
   SpecialFileEnum,
 } from '@interfaces/FileType';
+import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
@@ -54,8 +57,8 @@ type FileEditorProps = {
   filePath: string;
   openSidekickView: (newView: ViewKeyEnum) => void;
   pipeline: PipelineType;
-  projectName: string;
   selectedFilePath: string;
+  setErrors?: (errors: ErrorsType) => void;
   setFilesTouched: (data: {
     [path: string]: boolean;
   }) => void;
@@ -70,11 +73,12 @@ function FileEditor({
   filePath,
   openSidekickView,
   pipeline,
-  projectName,
   selectedFilePath,
+  setErrors,
   setFilesTouched,
   setSelectedBlock,
 }: FileEditorProps) {
+  const [, setApiReloads] = useGlobalState('apiReloads');
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const containerRef = useRef(null);
@@ -98,19 +102,20 @@ function FileEditor({
   }, [selectedFilePath]);
 
   const [updateFile] = useMutation(
-    api.file_contents.useUpdate(file?.path),
+    api.file_contents.useUpdate(file?.path && encodeURIComponent(file?.path)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => true,
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
+          callback: () => {
+            setApiReloads(prev => ({
+              ...prev,
+              [`FileVersions/${file?.path}`]: Number(new Date()),
+            }));
           },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -139,6 +144,7 @@ function FileEditor({
   }, [
     fetchVariables,
     filePath,
+    setFilesTouched,
     updateFile,
   ]);
 
@@ -333,20 +339,35 @@ function FileEditor({
   return (
     <div ref={containerRef}>
       <Spacing p={2}>
-        <ButtonGroup>
-          {addToPipelineEl}
+        <FlexContainer justifyContent="space-between">
+          <ButtonGroup>
+            {addToPipelineEl}
 
-          <Button
-            disabled={!content}
-            onClick={(e) => {
-              e.preventDefault();
-              saveFile(content, file);
-            }}
-            title={content ? null : 'No changes have been made to this file.'}
-          >
-            Save file content
-          </Button>
-        </ButtonGroup>
+            <Button
+              disabled={!content}
+              onClick={(e) => {
+                e.preventDefault();
+                saveFile(content, file);
+              }}
+              title={content ? null : 'No changes have been made to this file.'}
+            >
+              Save file content
+            </Button>
+          </ButtonGroup>
+
+          <ButtonGroup>
+            <Button
+              compact
+              onClick={() => {
+                openSidekickView(ViewKeyEnum.FILE_VERSIONS);
+              }}
+              small
+              title="View previous changes to this file."
+            >
+              Show versions
+            </Button>
+          </ButtonGroup>
+        </FlexContainer>
       </Spacing>
 
       {codeEditorEl}

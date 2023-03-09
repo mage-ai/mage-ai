@@ -26,6 +26,10 @@ type TableProps = {
     as: string;
     href: string;
   };
+  buildRowProps?: (rowIndex: number) => {
+    renderCell: (cell: any, colIndex: number) => any;
+    renderRow: (cells: any) => any;
+  };
   columnBorders?: boolean;
   columnFlex: number[];
   columnMaxWidth?: (colIndex: number) => string;
@@ -48,6 +52,7 @@ function Table({
   alignTop,
   borderCollapseSeparate,
   buildLinkProps,
+  buildRowProps,
   columnBorders,
   columnFlex,
   columnMaxWidth,
@@ -65,7 +70,9 @@ function Table({
   uuid,
   wrapColumns,
 }: TableProps) {
-  const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), columnFlex);
+  const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), [
+    columnFlex,
+  ]);
   const calculateCellWidth = useCallback((idx: number) => {
     if (columnFlex[idx]) {
       const width = Math.round(100 * (columnFlex[idx] / totalFlex));
@@ -73,39 +80,67 @@ function Table({
     }
 
     return null;
-  }, []);
+  }, [columnFlex, totalFlex]);
 
   const rowEls = useMemo(() => rows?.map((cells, rowIndex) => {
     const linkProps = buildLinkProps?.(rowIndex);
-    const cellEls = cells.map((cell, colIndex) => (
-      <TableDataStyle
-        alignTop={alignTop}
-        columnBorders={columnBorders}
-        compact={compact}
-        key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
-        last={colIndex === cells.length - 1}
-        maxWidth={columnMaxWidth?.(colIndex)}
-        noBorder={noBorder}
-        rowVerticalPadding={rowVerticalPadding}
-        selected={isSelectedRow?.(rowIndex)}
-        stickyFirstColumn={stickyFirstColumn && colIndex === 0}
-        width={calculateCellWidth(colIndex)}
-        wrapColumns={wrapColumns}
-      >
-        {cell}
-      </TableDataStyle>
-    ));
-    const rowEl = (
-      <TableRowStyle
-        highlightOnHover={highlightRowOnHover}
-        key={`${uuid}-row-${rowIndex}`}
-        noHover={!(linkProps || onClickRow)}
-        // @ts-ignore
-        onClick={onClickRow ? () => onClickRow(rowIndex) : null}
-      >
-        {cellEls}
-      </TableRowStyle>
-    );
+    const rowProps = buildRowProps?.(rowIndex) || {
+      renderCell: null,
+      renderRow: null,
+    };
+    const {
+      renderCell,
+      renderRow,
+    } = rowProps;
+
+    const cellEls = [];
+    cells.forEach((cell, colIndex) => {
+      if (cell !== null) {
+        let cellEl;
+        if (renderCell) {
+          cellEl = renderCell(cell, colIndex);
+        }
+
+        if (!cellEl) {
+          cellEl = (
+            <TableDataStyle
+              alignTop={alignTop}
+              columnBorders={columnBorders}
+              compact={compact}
+              key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
+              last={colIndex === cells.length - 1}
+              maxWidth={columnMaxWidth?.(colIndex)}
+              noBorder={noBorder}
+              rowVerticalPadding={rowVerticalPadding}
+              selected={isSelectedRow?.(rowIndex)}
+              stickyFirstColumn={stickyFirstColumn && colIndex === 0}
+              width={calculateCellWidth(colIndex)}
+              wrapColumns={wrapColumns}
+            >
+              {cell}
+            </TableDataStyle>
+          );
+        }
+
+        cellEls.push(cellEl);
+      }
+    });
+    let rowEl;
+    if (renderRow) {
+      rowEl = renderRow(cellEls);
+    } else {
+      rowEl = (
+        <TableRowStyle
+          highlightOnHover={highlightRowOnHover}
+          key={`${uuid}-row-${rowIndex}`}
+          noHover={!(linkProps || onClickRow)}
+          // @ts-ignore
+          onClick={onClickRow ? () => onClickRow(rowIndex) : null}
+        >
+          {cellEls}
+        </TableRowStyle>
+      );
+    }
 
     if (linkProps) {
       return (
@@ -135,13 +170,19 @@ function Table({
     alignTop,
     buildLinkProps,
     calculateCellWidth,
+    columnBorders,
     columnMaxWidth,
-    columns,
     compact,
+    buildRowProps,
+    highlightRowOnHover,
     isSelectedRow,
     noBorder,
     onClickRow,
+    rowVerticalPadding,
     rows,
+    stickyFirstColumn,
+    uuid,
+    wrapColumns,
   ]);
 
   return (

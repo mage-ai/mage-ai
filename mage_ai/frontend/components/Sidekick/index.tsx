@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
+import ApiReloader from '@components/ApiReloader';
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
   InsightType,
@@ -15,6 +16,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
+import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
 import KernelOutputType from '@interfaces/KernelOutputType';
@@ -85,6 +87,7 @@ export type SidekickProps = {
   sampleData: SampleDataType;
   secrets: SecretType[];
   selectedBlock: BlockType;
+  selectedFilePath?: string;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
@@ -120,6 +123,7 @@ function Sidekick({
   savePipelineContent,
   secrets,
   selectedBlock,
+  selectedFilePath,
   setAnyInputFocused,
   setDisableShortcuts,
   setEditingBlock,
@@ -197,13 +201,25 @@ function Sidekick({
     />
   ), [
     afterWidth,
-    blockRefs?.current,
     blocks,
     fetchVariables,
     globalVariables,
     pipeline,
     selectedBlock,
-    setSelectedBlock,
+  ]);
+
+  const fileVersionsMemo = useMemo(() => (
+    <FileVersions
+      selectedBlock={selectedBlock}
+      selectedFilePath={selectedFilePath}
+      setErrors={setErrors}
+      width={afterWidth > SCROLLBAR_WIDTH ? afterWidth - SCROLLBAR_WIDTH : afterWidth}
+    />
+  ), [
+    afterWidth,
+    selectedBlock,
+    selectedFilePath,
+    setErrors,
   ]);
 
   const secretsMemo = useMemo(() => (
@@ -343,6 +359,15 @@ function Sidekick({
         }
         {ViewKeyEnum.SECRETS === activeView && secretsMemo}
         {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
+        {ViewKeyEnum.FILE_VERSIONS === activeView && (
+          <ApiReloader uuid={`FileVersions/${selectedFilePath
+              ? decodeURIComponent(selectedFilePath)
+              : ''
+            }`
+          }>
+            {fileVersionsMemo}
+          </ApiReloader>
+        )}
 
         {(isIntegration
           || (selectedBlock && hasData)

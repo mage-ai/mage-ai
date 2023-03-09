@@ -37,6 +37,7 @@ export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
 export const FILES: 'files' = 'files';
 export const FILE_CONTENTS: 'file_contents' = 'file_contents';
+export const FILE_VERSIONS: 'file_versions' = 'file_versions';
 export const INSTANCES: 'instances' = 'instances';
 export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration_destinations';
 export const INTEGRATION_SAMPLES = 'integration_samples';
@@ -54,7 +55,7 @@ export const PROJECT_SETTINGS: 'project_settings' = 'project_settings';
 export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
 export const STATUS: 'status' = 'status';
-export const SYNCS: 'syncs' = 'syncs'
+export const SYNCS: 'syncs' = 'syncs';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const USERS: 'users' = 'users';
 export const VARIABLES: 'variables' = 'variables';
@@ -81,6 +82,8 @@ const RESOURCES: any[][] = [
   [FEATURE_SETS],
   [FILES],
   [FILE_CONTENTS],
+  [FILE_VERSIONS, BLOCKS],
+  [FILE_VERSIONS, FILES],
   [INSTANCES, CLUSTERS],
   [INTEGRATION_DESTINATIONS],
   [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],
