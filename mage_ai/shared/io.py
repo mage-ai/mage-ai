@@ -2,6 +2,7 @@ from typing import Callable
 import aiofiles
 import os
 import shutil
+import traceback
 
 
 def safe_write(filepath: str, content: str, write_func: Callable = None):
@@ -25,8 +26,11 @@ def safe_write(filepath: str, content: str, write_func: Callable = None):
     finally:
         if not success and prev_existed:
             shutil.copy2(temp_file_path, filepath)
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+        try:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+        except Exception:
+            traceback.print_exc()
 
 
 async def safe_write_async(filepath: str, content: str, write_func: Callable = None):
@@ -51,5 +55,8 @@ async def safe_write_async(filepath: str, content: str, write_func: Callable = N
     finally:
         if not success and prev_existed:
             shutil.copy2(temp_file_path, filepath)
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+        try:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+        except Exception:
+            traceback.print_exc()
