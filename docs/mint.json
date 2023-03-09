@@ -211,7 +211,13 @@
             "development/secrets/GCP"
           ]
         },
-        "developing-in-the-cloud/setting-up-git",
+        {
+          "group": "Versioning",
+          "pages": [
+            "developing-in-the-cloud/setting-up-git",
+            "development/versioning/file-versions"
+          ]
+        },
         {
           "group": "Team management",
           "pages": [
