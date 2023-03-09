@@ -161,7 +161,7 @@ class KafkaSource(BaseSource):
             return MessageToDict(obj)
         elif self.config.serde_config is not None and \
                 self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
-            return message.decode('utf-8')
+            return message
         else:
             return json.loads(message.decode('utf-8'))
 
