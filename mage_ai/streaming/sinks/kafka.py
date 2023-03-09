@@ -33,6 +33,7 @@ class SSLConfig:
 class KafkaConfig(BaseConfig):
     bootstrap_server: str
     topic: str
+    api_version: str = '0.10.2'
     security_protocol: SecurityProtocol = None
     ssl_config: SSLConfig = None
     sasl_config: SASLConfig = None
@@ -56,6 +57,7 @@ class KafkaSink(BaseSink):
         # Initialize kafka producer
         kwargs = dict(
             bootstrap_servers=self.config.bootstrap_server,
+            api_version=self.config.api_version,
         )
         if self.config.security_protocol == SecurityProtocol.SSL:
             kwargs['security_protocol'] = SecurityProtocol.SSL

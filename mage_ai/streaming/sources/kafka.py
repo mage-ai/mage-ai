@@ -19,6 +19,7 @@ class SecurityProtocol(str, Enum):
 class SerializationMethod(str, Enum):
     JSON = 'JSON'
     PROTOBUF = 'PROTOBUF'
+    RAW_VALUE = 'RAW_VALUE'
 
 
 @dataclass
@@ -48,6 +49,7 @@ class KafkaConfig(BaseConfig):
     bootstrap_server: str
     consumer_group: str
     topic: str
+    api_version: str = '0.10.2'
     batch_size: int = DEFAULT_BATCH_SIZE
     security_protocol: SecurityProtocol = None
     ssl_config: SSLConfig = None
@@ -77,6 +79,7 @@ class KafkaSource(BaseSource):
         consumer_kwargs = dict(
             group_id=self.config.consumer_group,
             bootstrap_servers=self.config.bootstrap_server,
+            api_version=self.config.api_version,
             enable_auto_commit=True,
         )
         if self.config.security_protocol == SecurityProtocol.SSL:
@@ -156,6 +159,9 @@ class KafkaSource(BaseSource):
             obj = self.schema_class()
             obj.ParseFromString(message)
             return MessageToDict(obj)
+        elif self.config.serde_config is not None and \
+                self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
+            return message
         else:
             return json.loads(message.decode('utf-8'))
 

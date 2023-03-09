@@ -9,6 +9,7 @@ connector_type: kafka
 bootstrap_server: "localhost:9092"
 topic: topic_name
 consumer_group: unique_consumer_group
+api_version: "0.10.2"
 batch_size: 100
 ```
 
@@ -50,3 +51,10 @@ serde_config:
   ```python
   from path.to.schema import SchemaClass
   ```
+
+## Pass raw message to transformer
+
+```yaml
+serde_config:
+  serialization_method: RAW_VALUE
+```
