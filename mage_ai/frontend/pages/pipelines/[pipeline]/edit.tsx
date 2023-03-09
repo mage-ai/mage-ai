@@ -1963,7 +1963,9 @@ function PipelineDetailPage({
             visibility: selectedFilePath ? 'hidden' : null,
           }}
         >
-          {pipelineDetailMemo}
+          <ApiReloader uuid={`PipelineDetail/${pipelineUUID}`}>
+            {pipelineDetailMemo}
+          </ApiReloader>
         </div>
 
         {filePathsFromUrl?.map((filePath: string) => (

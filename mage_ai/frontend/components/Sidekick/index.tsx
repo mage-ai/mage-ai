@@ -271,33 +271,35 @@ function Sidekick({
         onFocus={() => setDisableShortcuts(true)}
       >
         {activeView === ViewKeyEnum.TREE &&
-          <>
-            <DependencyGraph
-              blockRefs={blockRefs}
-              editingBlock={editingBlock}
-              enablePorts={!isIntegration}
-              fetchPipeline={fetchPipeline}
-              height={heightWindow - heightOffset - finalOutputHeight}
-              pipeline={pipeline}
-              runningBlocks={runningBlocks}
-              selectedBlock={selectedBlock}
-              setEditingBlock={setEditingBlock}
-              setErrors={setErrors}
-              setSelectedBlock={setSelectedBlock}
-            />
-            {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
-              <Spacing p={1}>
-                <PipelineExecution
-                  cancelPipeline={cancelPipeline}
-                  executePipeline={executePipeline}
-                  isPipelineExecuting={isPipelineExecuting}
-                  pipelineExecutionHidden={pipelineExecutionHidden}
-                  pipelineMessages={pipelineMessages}
-                  setPipelineExecutionHidden={setPipelineExecutionHidden}
-                />
-              </Spacing>
-            )}
-          </>
+          <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
+            <>
+              <DependencyGraph
+                blockRefs={blockRefs}
+                editingBlock={editingBlock}
+                enablePorts={!isIntegration}
+                fetchPipeline={fetchPipeline}
+                height={heightWindow - heightOffset - finalOutputHeight}
+                pipeline={pipeline}
+                runningBlocks={runningBlocks}
+                selectedBlock={selectedBlock}
+                setEditingBlock={setEditingBlock}
+                setErrors={setErrors}
+                setSelectedBlock={setSelectedBlock}
+              />
+              {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
+                <Spacing p={1}>
+                  <PipelineExecution
+                    cancelPipeline={cancelPipeline}
+                    executePipeline={executePipeline}
+                    isPipelineExecuting={isPipelineExecuting}
+                    pipelineExecutionHidden={pipelineExecutionHidden}
+                    pipelineMessages={pipelineMessages}
+                    setPipelineExecutionHidden={setPipelineExecutionHidden}
+                  />
+                </Spacing>
+              )}
+            </>
+          </ApiReloader>
         }
         {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
           <DataTable

@@ -55,6 +55,7 @@ class File:
         content: str = None,
         repo_path: str = None,
         create_directories_if_not_exist: bool = True,
+        file_version_only: bool = False,
         overwrite: bool = True,
     ):
         repo_path = repo_path or get_repo_path()
@@ -66,6 +67,33 @@ class File:
             filename,
             content,
             create_directories_if_not_exist=create_directories_if_not_exist,
+            file_version_only=file_version_only,
+            overwrite=overwrite,
+        )
+
+        return file
+
+    @classmethod
+    async def create_async(
+        self,
+        filename,
+        dir_path,
+        content: str = None,
+        repo_path: str = None,
+        create_directories_if_not_exist: bool = True,
+        file_version_only: bool = False,
+        overwrite: bool = True,
+    ):
+        repo_path = repo_path or get_repo_path()
+        file = File(filename, dir_path, repo_path)
+
+        await self.write_async(
+            repo_path,
+            dir_path,
+            filename,
+            content,
+            create_directories_if_not_exist=create_directories_if_not_exist,
+            file_version_only=file_version_only,
             overwrite=overwrite,
         )
 
@@ -101,6 +129,7 @@ class File:
         filename: str,
         content: str,
         create_directories_if_not_exist: bool = True,
+        file_version_only: bool = False,
         overwrite: bool = True,
     ):
         file_path_main = os.path.join(repo_path, dir_path, filename)
@@ -110,9 +139,10 @@ class File:
             str(round(datetime.utcnow().timestamp())),
         )
 
-        arr = [
-            (file_path_main, overwrite, create_directories_if_not_exist),
-        ]
+        arr = []
+
+        if not file_version_only:
+            arr.append((file_path_main, overwrite, create_directories_if_not_exist))
 
         if MAX_NUMBER_OF_FILE_VERSIONS >= 1:
             arr.append((file_path_versions, True, True))
@@ -152,6 +182,7 @@ class File:
         filename: str,
         content: str,
         create_directories_if_not_exist: bool = True,
+        file_version_only: bool = False,
         overwrite: bool = True,
     ) -> None:
         for file_path, write_type, content in self.write_preprocess(
@@ -159,8 +190,9 @@ class File:
             dir_path,
             filename,
             content,
-            create_directories_if_not_exist,
-            overwrite,
+            create_directories_if_not_exist=create_directories_if_not_exist,
+            file_version_only=file_version_only,
+            overwrite=overwrite,
         ):
             with open(file_path, write_type) as f:
                 if content:
@@ -174,6 +206,7 @@ class File:
         filename: str,
         content: str,
         create_directories_if_not_exist: bool = True,
+        file_version_only: bool = False,
         overwrite: bool = True,
     ) -> None:
         for file_path, write_type, content in self.write_preprocess(
@@ -181,8 +214,9 @@ class File:
             dir_path,
             filename,
             content,
-            create_directories_if_not_exist,
-            overwrite,
+            create_directories_if_not_exist=create_directories_if_not_exist,
+            file_version_only=file_version_only,
+            overwrite=overwrite,
         ):
             async with aiofiles.open(file_path, mode=write_type) as fp:
                 await fp.write(content)
