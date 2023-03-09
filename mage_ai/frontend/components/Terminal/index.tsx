@@ -242,7 +242,7 @@ function Terminal({
     For Safari, users need to allow the clipboard paste by clicking "Paste" \
 in the context menu that appears.`),
                 );
-            } else {
+            } else if (navigator?.clipboard?.read) {
               navigator.clipboard.read()
                 .then(clipboardItems => {
                   for (const clipboardItem of clipboardItems) {
@@ -258,6 +258,17 @@ in the context menu that appears.`),
     For Firefox, users need to allow clipboard paste by setting the "dom.events.asyncClipboard.read" \
 preference in "about:config" to "true" and clicking "Paste" in the context menu that appears.`),
                 );
+            } else {
+              alert(`If pasting is not working properly, you may need to adjust some settings in your browser.
+
+    For Firefox, users need to allow clipboard paste by setting both the "dom.events.asyncClipboard.clipboardItem" \
+and "dom.events.asyncClipboard.read" preferences in "about:config" to "true" and clicking "Paste" in the context \
+menu that appears.
+    For Chrome, users need to allow clipboard permissions for this site under \
+"Privacy and security" -> "Site settings".
+    For Safari, users need to allow the clipboard paste by clicking "Paste" \
+in the context menu that appears.
+`);
             }
           } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
             setCommand(prev => prev.slice(0, cursorIndex) + key + prev.slice(cursorIndex));
