@@ -1777,8 +1777,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
                 }}
                 blockIdx={blockIdx}
                 compact
-                hideCustom={pipeline?.type === PipelineTypeEnum.STREAMING}
-                hideDbt={pipeline?.type === PipelineTypeEnum.STREAMING}
+                hideCustom={isStreamingPipeline}
+                hideDbt={isStreamingPipeline}
                 onClickAddSingleDBTModel={onClickAddSingleDBTModel}
                 pipeline={pipeline}
                 setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
