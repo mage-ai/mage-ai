@@ -26,7 +26,7 @@ export function dateFormatLong(text, opts?) {
   return momentObj.format(DATE_FORMAT_LONG_NO_SEC);
 }
 
-export function dateFormatLongFromUnixTimestamp(text, opts: { withSeconds?: boolean }) {
+export function dateFormatLongFromUnixTimestamp(text, opts: { withSeconds?: boolean } = {}) {
   return moment.unix(text).format(opts?.withSeconds
     ? DATE_FORMAT_LONG
     : DATE_FORMAT_LONG_NO_SEC,

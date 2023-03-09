@@ -27,7 +27,8 @@ type TableProps = {
     href: string;
   };
   buildRowProps?: (rowIndex: number) => {
-    [key: string]: string | number;
+    renderCell: (cell: any, colIndex: number) => any;
+    renderRow: (cells: any) => any;
   };
   columnBorders?: boolean;
   columnFlex: number[];
@@ -83,7 +84,10 @@ function Table({
 
   const rowEls = useMemo(() => rows?.map((cells, rowIndex) => {
     const linkProps = buildLinkProps?.(rowIndex);
-    const rowProps = buildRowProps?.(rowIndex) || {};
+    const rowProps = buildRowProps?.(rowIndex) || {
+      renderCell: null,
+      renderRow: null,
+    };
     const {
       renderCell,
       renderRow,

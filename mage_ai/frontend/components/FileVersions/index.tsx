@@ -118,6 +118,7 @@ function FileVersions({
               loading={isLoading}
               onClick={(e) => {
                 pauseEvent(e);
+                // @ts-ignore
                 updateFile({
                   file_content: {
                     version: name,
@@ -192,7 +193,7 @@ function FileVersions({
         buildRowProps={(rowIndex: number) => {
           if (selectedFileVersion && selectedFileVersionIndex + 1 === rowIndex) {
             return {
-              renderCell: (cell) => cell,
+              renderCell: cell => cell,
               renderRow: cells => cells,
             };
           }

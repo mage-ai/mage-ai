@@ -14,6 +14,7 @@ import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/B
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import CodeEditor from '@components/CodeEditor';
+import ErrorsType from '@interfaces/ErrorsType';
 import FileType, {
   FileExtensionEnum,
   FILE_EXTENSION_TO_LANGUAGE_MAPPING,
