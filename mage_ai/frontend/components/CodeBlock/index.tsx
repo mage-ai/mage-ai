@@ -243,6 +243,7 @@ function CodeBlockProps({
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT[0]);
 
+  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipeline?.type;
   const isDBT = BlockTypeEnum.DBT === block?.type;
   const isSQLBlock = BlockLanguageEnum.SQL === block?.language;
   const isRBlock = BlockLanguageEnum.R === block?.language;
@@ -1601,7 +1602,7 @@ function CodeBlockProps({
           {block.upstream_blocks.length >= 1
             && !codeCollapsed
             && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(block.type)
-            && (pipeline?.type !== PipelineTypeEnum.STREAMING)
+            && !isStreamingPipeline
             && (
             <CodeHelperStyle>
               <Spacing mr={5}>
@@ -1777,6 +1778,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
                 blockIdx={blockIdx}
                 compact
                 hideCustom={pipeline?.type === PipelineTypeEnum.STREAMING}
+                hideDbt={pipeline?.type === PipelineTypeEnum.STREAMING}
                 onClickAddSingleDBTModel={onClickAddSingleDBTModel}
                 pipeline={pipeline}
                 setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
