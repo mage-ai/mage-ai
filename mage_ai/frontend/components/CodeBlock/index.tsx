@@ -1604,12 +1604,14 @@ function CodeBlockProps({
             && (pipeline?.type !== PipelineTypeEnum.STREAMING)
             && (
             <CodeHelperStyle>
-              <Text small>
-                {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
-                {isSQLBlock && 'The interpolated tables below are available in queries from upstream blocks. \
-                  For example, you can use the query "SELECT * FROM {{ df_1 }}" to insert all the rows from an \
-                  upstream block into the designated database table.'}
-              </Text>
+              <Spacing mr={5}>
+                <Text small>
+                  {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
+                  {isSQLBlock && 'The interpolated tables below are available in queries from upstream blocks. \
+                    For example, you can use the query "SELECT * FROM {{ df_1 }}" to insert all the rows from an \
+                    upstream block into the designated database table.'}
+                </Text>
+              </Spacing>
 
               <Spacing mt={1}>
                 {(!isSQLBlock && !isRBlock) && (
