@@ -95,35 +95,33 @@ function Table({
 
     const cellEls = [];
     cells.forEach((cell, colIndex) => {
-      if (cell !== null) {
-        let cellEl;
-        if (renderCell) {
-          cellEl = renderCell(cell, colIndex);
-        }
-
-        if (!cellEl) {
-          cellEl = (
-            <TableDataStyle
-              alignTop={alignTop}
-              columnBorders={columnBorders}
-              compact={compact}
-              key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
-              last={colIndex === cells.length - 1}
-              maxWidth={columnMaxWidth?.(colIndex)}
-              noBorder={noBorder}
-              rowVerticalPadding={rowVerticalPadding}
-              selected={isSelectedRow?.(rowIndex)}
-              stickyFirstColumn={stickyFirstColumn && colIndex === 0}
-              width={calculateCellWidth(colIndex)}
-              wrapColumns={wrapColumns}
-            >
-              {cell}
-            </TableDataStyle>
-          );
-        }
-
-        cellEls.push(cellEl);
+      let cellEl;
+      if (renderCell) {
+        cellEl = renderCell(cell, colIndex);
       }
+
+      if (!cellEl) {
+        cellEl = (
+          <TableDataStyle
+            alignTop={alignTop}
+            columnBorders={columnBorders}
+            compact={compact}
+            key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
+            last={colIndex === cells.length - 1}
+            maxWidth={columnMaxWidth?.(colIndex)}
+            noBorder={noBorder}
+            rowVerticalPadding={rowVerticalPadding}
+            selected={isSelectedRow?.(rowIndex)}
+            stickyFirstColumn={stickyFirstColumn && colIndex === 0}
+            width={calculateCellWidth(colIndex)}
+            wrapColumns={wrapColumns}
+          >
+            {cell}
+          </TableDataStyle>
+        );
+      }
+
+      cellEls.push(cellEl);
     });
     let rowEl;
     if (renderRow) {
