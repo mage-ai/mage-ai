@@ -24,6 +24,7 @@ import json
 import numpy as np
 import os
 import pandas as pd
+import traceback
 
 DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
 DATAFRAME_PARQUET_FILE = 'data.parquet'
@@ -307,8 +308,11 @@ class Variable:
             self.storage.makedirs(self.variable_path, exist_ok=True)
         file_path = os.path.join(self.variable_path, JSON_FILE)
         sample_file_path = os.path.join(self.variable_path, JSON_SAMPLE_FILE)
-        await self.storage.write_json_file_async(file_path, data)
-        await self.storage.write_json_file_async(sample_file_path, sample_output(data)[0])
+        try:
+            await self.storage.write_json_file_async(file_path, data)
+            await self.storage.write_json_file_async(sample_file_path, sample_output(data)[0])
+        except Exception:
+            traceback.print_exc()
 
     def __read_geo_dataframe(self, sample: bool = False, sample_count: int = None):
         import geopandas as gpd
