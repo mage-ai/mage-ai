@@ -204,6 +204,7 @@ function PipelineDetail({
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
 
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+  const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
 
   const uuidKeyboard = 'PipelineDetail/index';
   const {
@@ -556,10 +557,10 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         }, numberOfBlocks, setSelectedBlock);
         setTextareaFocused(true);
       }}
-      hideCustom={isIntegration}
+      hideCustom={isIntegration || isStreaming}
       hideDataExporter={isIntegration}
       hideDataLoader={isIntegration}
-      hideDbt={isIntegration || PipelineTypeEnum.STREAMING === pipeline?.type}
+      hideDbt={isIntegration || isStreaming}
       hideRecommendations={isIntegration}
       hideScratchpad={isIntegration}
       hideSensor={isIntegration}
