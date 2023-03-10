@@ -33,7 +33,6 @@ class GitBranchResource(GenericResource):
         git_manager = Git.get_manager()
         action_type = payload.get('action_type')
         if action_type == 'status':
-            print('HEYYYA')
             status = git_manager.status()
             self.model = dict(name=git_manager.current_branch, status=status)
         elif action_type == 'commit':

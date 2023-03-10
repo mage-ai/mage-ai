@@ -29,24 +29,33 @@ class Git:
         return self.repo.git.branch('--show-current')
     
     async def check_connection(self):
-        proc = subprocess.Popen(['git', 'ls-remote'], cwd=self.repo_path)
+        proc = subprocess.Popen(
+            ['git', 'ls-remote', self.origin.name],
+            cwd=self.repo_path,
+        )
         ct = 0
         while ct < 20:
-            if proc.poll() is not None:
+            return_code = proc.poll()
+            if return_code is not None:
                 proc.kill()
-                return
+                break
             ct += 1
             await asyncio.sleep(0.5)
-        if proc.poll() is None:
+
+        if return_code is not None and return_code != 0:
+            raise Exception(
+                "Error connecting to remote, make sure your SSH key is set up properly.")
+
+        if return_code is None:
             proc.kill()
             raise Exception(
-                "Can't connect to remote, make sure your SSH key is set up properly.")
+                "Connecting to remote timed out, make sure your SSH key is set up properly.")
     
     def all_branches(self):
         return [head.name for head in self.repo.heads]
 
     def reset(self, branch: str = None):
-        self.origin.fetch(kill_after_timeout=60)
+        self.origin.fetch()
         if branch is None:
             branch = self.current_branch
         self.repo.git.reset('--hard', f'origin/{branch}')
