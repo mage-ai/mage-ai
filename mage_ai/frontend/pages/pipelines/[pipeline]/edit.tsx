@@ -1951,7 +1951,6 @@ function PipelineDetailPage({
         mainContainerRef={mainContainerRef}
         page={page}
         pipeline={pipeline}
-        projectName={projectName}
         setAfterHidden={setAfterHidden}
         setAfterWidthForChildren={setAfterWidthForChildren}
         setErrors={setErrors}

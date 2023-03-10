@@ -53,7 +53,7 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import {
   VERTICAL_NAVIGATION_WIDTH,
   VerticalNavigationStyle,
-} from '@components/Dashboard/index.style.tsx';
+} from '@components/Dashboard/index.style';
 import { buildNavigationItems } from './Navigation/constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';

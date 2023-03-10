@@ -27,7 +27,7 @@ const ICON_SIZE = 3 * UNIT;
 
 export type NavigationItem = {
   Icon: any;
-  IconSelected: any;
+  IconSelected?: any;
   id: string;
   isSelected?: (pathname: string, item: NavigationItem) => boolean;
   label: () => string;
