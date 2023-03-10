@@ -112,6 +112,9 @@ class PipelineScheduler:
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
         self.__run_heartbeat()
 
+        for b in self.pipeline_run.block_runs:
+            b.refresh()
+
         if PipelineType.STREAMING == self.pipeline.type:
             self.__schedule_pipeline()
         else:
@@ -205,8 +208,6 @@ class PipelineScheduler:
         if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
             return
         else:
-            for b in self.pipeline_run.block_runs:
-                b.refresh()
             self.schedule()
 
     def on_block_complete_without_schedule(self, block_uuid: str) -> None:
