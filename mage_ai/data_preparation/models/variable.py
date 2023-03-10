@@ -399,10 +399,12 @@ class Variable:
                         # df_output[c] = series_non_null.astype(str)
                         pass
 
-                if coltype.__module__ == np.__name__:
-                    column_types[c] = type(series_non_null.iloc[0].item()).__name__
-                else:
+                colNotNumpyType = coltype.__module__ != np.__name__
+                colIsNumpyArrayType = coltype.__name__ == np.ndarray.__name__
+                if colNotNumpyType or colIsNumpyArrayType:
                     column_types[c] = coltype.__name__
+                else:
+                    column_types[c] = type(series_non_null.iloc[0].item()).__name__
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
 
