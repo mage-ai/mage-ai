@@ -15,6 +15,7 @@ import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
+import Extensions from '@components/PipelineDetail/Extensions';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -155,7 +156,6 @@ function Sidekick({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
   const widthOffset = VERTICAL_NAVIGATION_WIDTH;
-  const totalWidth = useMemo(() => afterWidthProp, [afterWidthProp]);
   const afterWidth = useMemo(() => afterWidthProp - widthOffset, [afterWidthProp, widthOffset]);
 
   const {
@@ -471,6 +471,12 @@ function Sidekick({
               />
             </div>
           )}
+
+          {ViewKeyEnum.EXTENSIONS === activeView && (
+            <Extensions
+              pipeline={pipeline}
+            />
+          )}
         </SidekickContainerStyle>
 
         <VerticalNavigationStyle borderLeft>
@@ -478,6 +484,7 @@ function Sidekick({
             aligned="right"
             navigationItems={buildNavigationItems({
               activeView,
+              pipelineUUID: pipeline?.uuid,
               setActiveSidekickView,
             })}
           />

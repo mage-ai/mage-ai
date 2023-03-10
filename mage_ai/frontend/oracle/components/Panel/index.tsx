@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
@@ -20,18 +20,30 @@ const HEADER_STYLES = css`
 
 const PanelStyle = styled.div<{
   borderless?: boolean;
+  dark?: boolean;
   fullHeight?: boolean;
+  fullWidth?: boolean;
   maxHeight?: string;
   minWidth?: number;
   overflowVisible?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
-  width: 100%;
+
+  ${props => props.fullWidth && `
+    width: 100%;
+  `}
 
   ${props => `
-    background-color: ${(props.theme.background || light.background).panel};
-    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
+  `}
+
+  ${props => !props.dark && `
+    background-color: ${(props.theme.background || dark.background).panel};
+  `}
+
+  ${props => props.dark && `
+    background-color: ${(props.theme.background || dark.background).content};
   `}
 
   ${props => !props.fullHeight && `
@@ -67,8 +79,8 @@ const HeaderStyle = styled.div<{
   border-top-right-radius: ${BORDER_RADIUS}px;
 
   ${props => `
-    background-color: ${(props.theme.background || light.background).chartBlock};
-    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    background-color: ${(props.theme.background || dark.background).chartBlock};
+    border-bottom: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
   ${props => props.height && `
@@ -117,18 +129,20 @@ export type PanelProps = {
   children?: any;
   containerRef?: any;
   contentContainerRef?: any;
+  dark?: boolean;
+  footer?: JSX.Element;
+  fullHeight?: boolean;
+  fullWidth?: boolean;
   header?: JSX.Element;
   headerHeight?: number;
   headerIcon?: JSX.Element;
   headerPaddingVertical?: number;
   headerTitle?: string;
   maxHeight?: string;
-  footer?: JSX.Element;
-  fullHeight?: boolean;
+  minWidth?: number;
   noPadding?: boolean;
   overflowVisible?: boolean;
   subtitle?: string;
-  minWidth?: number;
 };
 
 function Panel({
@@ -136,8 +150,10 @@ function Panel({
   children,
   containerRef,
   contentContainerRef,
+  dark,
   footer,
   fullHeight = true,
+  fullWidth = true,
   header,
   headerHeight,
   headerIcon,
@@ -152,7 +168,9 @@ function Panel({
   return (
     <PanelStyle
       borderless={borderless}
+      dark={dark}
       fullHeight={fullHeight}
+      fullWidth={fullWidth}
       maxHeight={maxHeight}
       minWidth={minWidth}
       overflowVisible={overflowVisible}

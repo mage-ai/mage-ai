@@ -32,6 +32,7 @@ export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
 export const EVENT_MATCHERS = 'event_matchers';
 export const EVENT_RULES = 'event_rules';
+export const EXTENSION_OPTIONS = 'extension_options';
 export const FEATURES: 'features' = 'features';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
@@ -80,6 +81,7 @@ const RESOURCES: any[][] = [
   [DOWNLOADS, FEATURE_SETS],
   [EVENT_MATCHERS],
   [EVENT_RULES],
+  [EXTENSION_OPTIONS],
   [FEATURE_SETS],
   [FILES],
   [FILE_CONTENTS],

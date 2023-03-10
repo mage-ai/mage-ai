@@ -39,6 +39,11 @@ export default interface PipelineType {
   data_integration?: {
     catalog: CatalogType;
   };
+  extensions?: {
+    [key: string]: {
+      blocks: BlockType[];
+    };
+  };
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;

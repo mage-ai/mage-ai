@@ -9,7 +9,6 @@ import {
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
 import ApiReloader from '@components/ApiReloader';
 import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
@@ -19,14 +18,12 @@ import BlockType, {
   SampleDataType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import DataProviderType from '@interfaces/DataProviderType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabs from '@components/PipelineDetail/FileTabs';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
@@ -40,14 +37,12 @@ import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
-import RecommendationsWindow from '@components/RecommendationsWindow';
 import Sidekick from '@components/Sidekick';
+import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
-import SuggestionType from '@interfaces/SuggestionType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add, Close } from '@oracle/icons';
+import { Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
 import {
@@ -59,14 +54,13 @@ import {
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import {
-  NAV_ICON_MAPPING,
   SIDEKICK_VIEWS,
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
@@ -78,7 +72,7 @@ import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
-import { isJsonString, randomNameGenerator } from '@utils/string';
+import { randomNameGenerator } from '@utils/string';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
@@ -184,6 +178,7 @@ function PipelineDetailPage({
         [VIEW_QUERY_PARAM]: newView,
       }, {
         pushHistory,
+        replaceParams: {},
       });
     }
   }, []);
@@ -1695,94 +1690,6 @@ function PipelineDetailPage({
     updatePipelineMetadata,
   ]);
 
-  const afterHeader = useMemo(() => {
-    const validBlocks = blocks?.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type);
-
-    return (
-      <FlexContainer
-        alignItems="center"
-        fullWidth
-        justifyContent="space-between"
-      >
-        <Flex>
-          {finalSidekickViews.map(({ key, label }: any) => {
-            const active = key === activeSidekickView;
-            const Icon = NAV_ICON_MAPPING[key];
-
-            return (
-              <Spacing key={key} pl={1}>
-                <KeyboardShortcutButton
-                  beforeElement={Icon && <Icon />}
-                  blackBorder
-                  compact
-                  onClick={() => setActiveSidekickView(key)}
-                  selected={active}
-                  uuid={key}
-                >
-                  {label}
-                </KeyboardShortcutButton>
-              </Spacing>
-            );
-          })}
-        </Flex>
-
-        <Spacing
-          px={1}
-          ref={refAddChart}
-          style={{
-            position: 'relative',
-          }}
-        >
-          <KeyboardShortcutButton
-            beforeElement={<Add />}
-            blackBorder
-            compact
-            disabled={validBlocks?.length === 0}
-            onClick={() => setShowAddCharts(true)}
-            primaryGradient
-            uuid="Pipeline/afterHeader/add_chart"
-          >
-            Add chart
-          </KeyboardShortcutButton>
-
-          <ClickOutside
-            disableEscape
-            onClickOutside={() => setShowAddCharts(false)}
-            open={showAddCharts}
-          >
-            <AddChartMenu
-              addWidget={(
-                widget: BlockType,
-                {
-                  onCreateCallback,
-                }: {
-                  onCreateCallback?: (block: BlockType) => void;
-                },
-              ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
-              block={validBlocks[validBlocks.length - 1]}
-              onClickCallback={() => setShowAddCharts(false)}
-              open={showAddCharts}
-              parentRef={refAddChart}
-              rightOffset={UNIT * 2}
-              runBlock={runBlock}
-            />
-          </ClickOutside>
-        </Spacing>
-      </FlexContainer>
-    );
-  }, [
-    activeSidekickView,
-    addWidgetAtIndex,
-    blocks,
-    finalSidekickViews,
-    refAddChart,
-    runBlock,
-    setActiveSidekickView,
-    setShowAddCharts,
-    showAddCharts,
-    widgets,
-  ]);
-
   const integrationOutputsMemo = useMemo(
     () => integrationStreams
       ?.filter(stream => find(
@@ -1896,7 +1803,12 @@ function PipelineDetailPage({
 
       <PipelineLayout
         after={sideKick}
-        // afterHeader={afterHeader}
+        afterHeader={(
+          <SidekickHeader
+            activeView={activeSidekickView}
+            pipeline={pipeline}
+          />
+        )}
         afterHidden={afterHidden}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
