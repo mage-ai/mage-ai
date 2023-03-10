@@ -29,5 +29,9 @@ class GitSync(BaseSync):
             verbose=True,
         ):
             # use subprocess because the gitpython command wasn't timing out correctly
-            subprocess.run(['git', 'fetch', self.origin.name], timeout=30)
+            subprocess.run(
+                ['git', 'fetch', self.origin.name],
+                cwd=self.repo_path,
+                timeout=30,
+            )
             self.repo.git.reset('--hard', f'{self.origin.name}/{self.branch}')
