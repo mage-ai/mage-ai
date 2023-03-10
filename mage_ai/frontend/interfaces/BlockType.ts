@@ -25,6 +25,7 @@ export enum BlockTypeEnum {
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
   DBT = 'dbt',
+  EXTENSION = 'extension',
   SCRATCHPAD = 'scratchpad',
   SENSOR = 'sensor',
   TRANSFORMER = 'transformer',
@@ -126,10 +127,12 @@ export interface BlockRequestPayloadType {
     action_type?: ActionTypeEnum;
     axis?: AxisEnum;
     suggested_action?: SuggestionType;
+    template_path?: string;
   };
   configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  extension_uuid?: string;
   language?: BlockLanguageEnum;
   name?: string;
   priority?: number;

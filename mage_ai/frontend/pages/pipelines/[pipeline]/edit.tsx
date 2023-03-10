@@ -1443,12 +1443,10 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
-  const finalSidekickViews = outputBlocks?.length > 0
-    ? SIDEKICK_VIEWS
-    : SIDEKICK_VIEWS.filter(({ key }) => key !== ViewKeyEnum.DATA);
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
+      addNewBlockAtIndex={addNewBlockAtIndex}
       afterWidth={afterWidthForChildren}
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
@@ -1492,6 +1490,7 @@ function PipelineDetailPage({
     />
   ), [
     activeSidekickView,
+    addNewBlockAtIndex,
     afterWidthForChildren,
     autocompleteItems,
     blockRefs,
@@ -1710,7 +1709,7 @@ function PipelineDetailPage({
           </KeyboardShortcutButton>
         </Spacing>
       )),
-    [blockSampleData, integrationStreams, selectedStream]
+    [blockSampleData, integrationStreams, selectedStream],
   );
 
   const fileTreeRef = useRef(null);

@@ -5,7 +5,7 @@ EXTENSION_UUID = 'great_expectations'
 EXTENSION_TEMPLATES = [
     dict(
         description='Base template with no additional code.',
-        name='Default',
+        name='Empty template',
         path='extensions/great_expectations/default.jinja',
         uuid='default',
     ),

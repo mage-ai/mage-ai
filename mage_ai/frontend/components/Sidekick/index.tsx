@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import ApiReloader from '@components/ApiReloader';
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
+  BlockRequestPayloadType,
   InsightType,
   MetadataType,
   SampleDataType,
@@ -66,6 +67,12 @@ const MAX_COLUMNS = 100;
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
+  addNewBlockAtIndex: (
+    block: BlockRequestPayloadType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name?: string,
+  ) => Promise<any>;
   afterWidth: number;
   blockRefs?: {
     [current: string]: any;
@@ -106,6 +113,7 @@ export type SidekickProps = {
 
 function Sidekick({
   activeView,
+  addNewBlockAtIndex,
   afterWidth: afterWidthProp,
   autocompleteItems,
   blockRefs,
@@ -474,6 +482,7 @@ function Sidekick({
 
           {ViewKeyEnum.EXTENSIONS === activeView && (
             <Extensions
+              addNewBlockAtIndex={addNewBlockAtIndex}
               pipeline={pipeline}
             />
           )}
