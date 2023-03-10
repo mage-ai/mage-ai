@@ -77,9 +77,8 @@ class OAuthMiddleware(RequestHandler):
                 cookies[cookie_name] = cookie_value
 
         if api_key:
-            oauth_client = Oauth2Application.query.filter(
-                Oauth2Application.client_id == api_key,
-            ).first()
+            oauth_client = Oauth2Application.query_client(api_key)
+
             self.request.__setattr__('oauth_client', oauth_client)
             if not oauth_client:
                 self.request.__setattr__('error', ApiError.INVALID_API_KEY)
