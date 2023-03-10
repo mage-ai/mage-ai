@@ -16,7 +16,7 @@ import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
-import Extensions from '@components/PipelineDetail/Extensions';
+import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -109,7 +109,7 @@ export type SidekickProps = {
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
-} & SetEditingBlockType & ChartsPropsShared;
+} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
   activeView,
@@ -120,6 +120,7 @@ function Sidekick({
   blocks,
   cancelPipeline,
   chartRefs,
+  deleteBlock,
   deleteWidget,
   editingBlock,
   executePipeline,
@@ -483,6 +484,7 @@ function Sidekick({
           {ViewKeyEnum.EXTENSIONS === activeView && (
             <Extensions
               addNewBlockAtIndex={addNewBlockAtIndex}
+              deleteBlock={deleteBlock}
               pipeline={pipeline}
             />
           )}

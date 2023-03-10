@@ -500,14 +500,20 @@ function PipelineDetail({
     addNewBlockAtIndex,
     blocks,
     codeBlocks,
+    fetchFileTree,
     fetchPipeline,
+    fetchSampleData,
     globalVariables,
     onChangeCodeBlock,
-    onChangeCodeBlock,
+    openSidekickView,
     pipeline,
     savePipelineContent,
     setErrors,
+    setIntegrationStreams,
+    setOutputBlocks,
     setSelectedBlock,
+    setSelectedOutputBlock,
+    setSelectedStream,
   ]);
 
   const addNewBlocksMemo = useMemo(() => (
@@ -570,11 +576,16 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
     />
   ), [
+    addNewBlockAtIndex,
     blocks,
     isIntegration,
-    pipeline,
+    isStreaming,
+    numberOfBlocks,
     onClickAddSingleDBTModel,
+    pipeline,
     setRecsWindowOpenBlockIdx,
+    setSelectedBlock,
+    setTextareaFocused,
   ]);
 
   return (

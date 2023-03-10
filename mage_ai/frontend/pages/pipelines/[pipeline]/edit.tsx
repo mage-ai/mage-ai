@@ -713,11 +713,20 @@ function PipelineDetailPage({
 
   const [deleteBlock] = useMutation(
     ({
+      extension_uuid: extensionUUID,
       uuid,
-    }: BlockType) => api.blocks.pipelines.useDelete(
-      pipelineUUID,
-      encodeURIComponent(uuid),
-    )(),
+    }: BlockType) => {
+      const query = {};
+      if (extensionUUID) {
+        query.extension_uuid = extensionUUID;
+      }
+
+      return api.blocks.pipelines.useDelete(
+        pipelineUUID,
+        encodeURIComponent(uuid),
+        query,
+      )()
+    },
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -1446,13 +1455,19 @@ function PipelineDetailPage({
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
-      addNewBlockAtIndex={addNewBlockAtIndex}
+      addNewBlockAtIndex={(block, idx, onCreateCallback, name) => new Promise(() => showModal({
+        block,
+        idx,
+        name,
+        onCreateCallback,
+      }))}
       afterWidth={afterWidthForChildren}
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
       cancelPipeline={cancelPipeline}
       chartRefs={chartRefs}
+      deleteBlock={deleteBlock}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       executePipeline={executePipeline}
@@ -1490,12 +1505,12 @@ function PipelineDetailPage({
     />
   ), [
     activeSidekickView,
-    addNewBlockAtIndex,
     afterWidthForChildren,
     autocompleteItems,
     blockRefs,
     blocks,
     cancelPipeline,
+    deleteBlock,
     deleteWidget,
     editingBlock,
     executePipeline,
@@ -1524,6 +1539,7 @@ function PipelineDetailPage({
     setEditingBlock,
     setErrors,
     setTextareaFocused,
+    showModal,
     statistics,
     textareaFocused,
     updateWidget,

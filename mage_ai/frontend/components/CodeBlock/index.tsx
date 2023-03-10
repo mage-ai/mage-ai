@@ -152,19 +152,19 @@ type CodeBlockProps = {
     runUpstream?: boolean;
     runTests?: boolean;
   }) => void;
-  runningBlocks: BlockType[];
+  runningBlocks?: BlockType[];
   savePipelineContent: (payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
-  setAnyInputFocused: (value: boolean) => void;
+  setAnyInputFocused?: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
-  widgets: BlockType[];
+  widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
 function CodeBlockProps({
@@ -318,7 +318,7 @@ function CodeBlockProps({
   const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const hasDownstreamWidgets = useMemo(() => !!widgets.find(({
+  const hasDownstreamWidgets = useMemo(() => !!widgets?.find(({
     upstream_blocks: upstreamBlocks,
   }: BlockType) => upstreamBlocks.includes(block.uuid)), [
     block,
@@ -382,7 +382,7 @@ function CodeBlockProps({
       setRunEndTime,
     ]);
 
-  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
+  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === block.uuid)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
   useEffect(() => {
@@ -519,8 +519,8 @@ function CodeBlockProps({
   const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
-      setAnyInputFocused(false);
-      setSelected(true);
+      setAnyInputFocused?.(false);
+      setSelected?.(true);
     }
   }, [
     selected,
@@ -1733,7 +1733,7 @@ function CodeBlockProps({
           onMouseEnter={() => setAddNewBlocksVisible(true)}
           onMouseLeave={() => {
             setAddNewBlocksVisible(false);
-            setAddNewBlockMenuOpenIdx(null);
+            setAddNewBlockMenuOpenIdx?.(null);
           }}
         >
           {addNewBlocksVisible && (

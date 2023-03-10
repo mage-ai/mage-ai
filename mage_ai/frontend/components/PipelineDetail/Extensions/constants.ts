@@ -10,5 +10,6 @@ export type ExtensionProps = {
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
   ) => Promise<any>;
+  deleteBlock: (block: BlockType) => Promise<any>;
   pipeline: PipelineType;
 };

@@ -19,10 +19,14 @@ import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 
+export type ExtensionsProps = {
+
+} & ExtensionProps;
+
 function Extensions({
-  addNewBlockAtIndex,
   pipeline,
-}: ExtensionProps) {
+  ...props
+}: ExtensionsProps) {
   const { data } = api.extension_options.list();
   const extensionOptions: ExtensionOptionType[] = useMemo(() => data?.extension_options || [], [data]);
   const extensionOptionsByUUID = useMemo(() => indexBy(extensionOptions, ({ uuid }) => uuid), [
@@ -35,11 +39,11 @@ function Extensions({
   ]);
 
   const sharedProps = useMemo(() => ({
-    addNewBlockAtIndex,
+    ...props,
     pipeline,
   }), [
-    addNewBlockAtIndex,
     pipeline,
+    props,
   ]);
 
   return (
