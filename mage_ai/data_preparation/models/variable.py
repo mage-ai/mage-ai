@@ -10,8 +10,8 @@ from mage_ai.data_preparation.models.constants import (
     VARIABLE_DIR,
 )
 from mage_ai.data_preparation.models.utils import (
-    apply_transform,
-    dask_from_pandas,
+    apply_transform_pandas,
+    # dask_from_pandas,
     deserialize_columns,
     serialize_columns,
 )
@@ -359,8 +359,8 @@ class Variable:
         if os.path.exists(column_types_filename):
             with open(column_types_filename, 'r') as f:
                 column_types = json.load(f)
-                ddf = dask_from_pandas(df)
-                df = apply_transform(ddf, lambda row: deserialize_columns(row, column_types))
+                # ddf = dask_from_pandas(df)
+                df = apply_transform_pandas(df, lambda row: deserialize_columns(row, column_types))
 
         return df
 
@@ -408,9 +408,9 @@ class Variable:
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
 
-        ddf = dask_from_pandas(df_output)
-        df_output_serialized = apply_transform(
-            ddf,
+        # ddf = dask_from_pandas(df_output)
+        df_output_serialized = apply_transform_pandas(
+            df_output,
             lambda row: serialize_columns(row, column_types),
         )
 
