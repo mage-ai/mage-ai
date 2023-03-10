@@ -27,7 +27,7 @@ from mage_integrations.utils.schema_helpers import (
 )
 from singer.schema import Schema
 from time import sleep
-from typing import Any, Callable, Dict, Generator, List, Tuple
+from typing import Any, Dict, Generator, List, Tuple
 
 
 class Source(BaseSource):
@@ -60,10 +60,10 @@ class Source(BaseSource):
                 * DATA_TYPE
                 * IS_NULLABLE
                 """
-                column_key = column_data[2]
-                column_name = column_data[3]
-                column_type = column_data[4].lower()
-                is_nullable = column_data[5]
+                column_key = self.__decode(column_data[2])
+                column_name = self.__decode(column_data[3])
+                column_type = self.__decode(column_data[4].lower())
+                is_nullable = self.__decode(column_data[5])
 
                 column_format = None
                 column_properties = None
@@ -250,6 +250,14 @@ WHERE table_schema = '{schema}'
 
     def _replication_method(self, stream, bookmarks: Dict = None):
         return stream.replication_method
+
+    def __decode(self, bytes_or_str):
+        if type(bytes_or_str) is bytes:
+            try:
+                return bytes_or_str.decode('utf-8')
+            except Exception:
+                pass
+        return bytes_or_str
 
     def __fetch_rows(
         self,
