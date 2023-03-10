@@ -1,6 +1,7 @@
 import {
   BLACK,
   BLUE,
+  BLUE_LIGHT,
   BLUE_DARK,
   BLUE_HIGHLIGHT,
   BLUE_TEXT,
@@ -187,6 +188,7 @@ export default {
     hoverOverlay: 'rgba(255, 255, 255, 0.1)',
     linkPrimary: BLUE_TEXT,
     linkPrimaryHover: BLUE_DARK,
+    linkPrimaryLight: BLUE_LIGHT,
     linkSecondary: PURPLE,
     linkSecondaryDisabled: PURPLE_LIGHT,
     rowHoverBackground: 'rgba(0, 0, 0, 0.1)',
