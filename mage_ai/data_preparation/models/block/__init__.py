@@ -217,6 +217,7 @@ class Block:
         content: str = None,
         executor_config: Dict = None,
         executor_type: ExecutorType = ExecutorType.LOCAL_PYTHON,
+        extension_uuid: str = None,
         status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
         language: BlockLanguage = BlockLanguage.PYTHON,
@@ -229,6 +230,7 @@ class Block:
         self._content = content
         self.executor_config = executor_config
         self.executor_type = executor_type
+        self.extension_uuid = extension_uuid
         self.status = status
         self.pipeline = pipeline
         self.language = language or BlockLanguage.PYTHON
@@ -421,6 +423,7 @@ class Block:
         repo_path,
         color=None,
         configuration=None,
+        extension_uuid: str = None,
         language=None,
         pipeline=None,
         priority=None,
@@ -468,6 +471,7 @@ class Block:
             block_type,
             block_color=color,
             configuration=configuration,
+            extension_uuid=extension_uuid,
             language=language,
             pipeline=pipeline,
         )
@@ -531,7 +535,7 @@ class Block:
     def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]):
         return all(b.uuid in completed_block_uuids for b in self.upstream_blocks)
 
-    def delete(self, widget=False, commit=True):
+    def delete(self, widget: bool = False, commit: bool = True) -> None:
         """
         1. If pipeline is not None, delete the block from the pipeline but not delete the block
         file.
@@ -654,7 +658,7 @@ class Block:
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
             )
-            block_output = output['output'] or []
+            block_output = self.post_process_output(output)
             variable_mapping = dict()
 
             if BlockType.CHART == self.type:
@@ -715,6 +719,9 @@ class Block:
                 self.__update_pipeline_block(widget=BlockType.CHART == self.type)
 
         return output
+
+    def post_process_output(self, output: Dict) -> List:
+        return output['output'] or []
 
     async def execute(
         self,

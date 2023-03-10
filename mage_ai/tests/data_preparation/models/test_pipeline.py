@@ -523,10 +523,12 @@ class PipelineTest(DBTestCase):
         self.assertTrue(os.path.exists(pipeline.config_path))
         with open(pipeline.config_path) as f:
             config_json = yaml.full_load(f)
+            print('WTFFFFFFFFFFF', config_json)
             self.assertEqual(
                 config_json,
                 {
                     "data_integration": None,
+                    "extensions": {},
                     "name": "test_pipeline_9",
                     "type": "integration",
                     "uuid": "test_pipeline_9",

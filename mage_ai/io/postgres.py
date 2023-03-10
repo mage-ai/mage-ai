@@ -223,7 +223,6 @@ class Postgres(BaseSQL):
         columns = df_.columns
 
         for col in columns:
-            print(col, df_[col].dtype)
             df_col_dropna = df_[col].dropna()
             if df_col_dropna.count() == 0:
                 continue

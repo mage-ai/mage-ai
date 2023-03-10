@@ -85,7 +85,7 @@ def get_content_inside_triple_quotes(parts):
 
 
 def add_internal_output_info(code: str) -> str:
-    if code.startswith('%%sql') or code.startswith('%%bash'):
+    if code.startswith('%%sql') or code.startswith('%%bash') or len(code) == 0:
         return code
     code_lines = remove_comments(code.split('\n'))
     code_lines = remove_empty_last_lines(code_lines)

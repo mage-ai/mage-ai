@@ -22,6 +22,7 @@ class BlockResource(GenericResource):
             color=payload.get('color'),
             config=payload.get('config'),
             configuration=payload.get('configuration'),
+            extension_uuid=payload.get('extension_uuid'),
             language=payload.get('language'),
             pipeline=pipeline,
             priority=payload.get('priority'),
@@ -42,13 +43,23 @@ class BlockResource(GenericResource):
     def member(self, pk, user, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
 
+        query = kwargs.get('query', {})
+        extension_uuid = query.get('extension_uuid', [None])
+        if extension_uuid:
+            extension_uuid = extension_uuid[0]
+
         pipeline = kwargs.get('parent_model')
         if pipeline:
-            block = pipeline.get_block(pk)
+            block = pipeline.get_block(pk, extension_uuid=extension_uuid)
             if block:
                 return self(block, user, **kwargs)
             else:
-                error.update(message=f'Block {pk} does not exist in pipeline {pipeline.uuid}.')
+                if extension_uuid:
+                    message = f'Block {pk} does not exist in pipeline {pipeline.uuid} ' \
+                        f'for extension {extension_uuid}.'
+                else:
+                    message = f'Block {pk} does not exist in pipeline {pipeline.uuid}.'
+                error.update(message=message)
                 raise ApiError(error)
 
         block_type_and_uuid = urllib.parse.unquote(pk)

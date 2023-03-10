@@ -17,6 +17,10 @@ def data_loader(function):
     return function
 
 
+def extension(function):
+    return function
+
+
 def sensor(function):
     return function
 
