@@ -399,9 +399,9 @@ class Variable:
                         # df_output[c] = series_non_null.astype(str)
                         pass
 
-                colNotNumpyType = coltype.__module__ != np.__name__
-                colIsNumpyArrayType = coltype.__name__ == np.ndarray.__name__
-                if colNotNumpyType or colIsNumpyArrayType:
+                col_not_numpy_type = coltype.__module__ != np.__name__
+                col_is_numpy_array_type = coltype.__name__ == np.ndarray.__name__
+                if col_not_numpy_type or col_is_numpy_array_type:
                     column_types[c] = coltype.__name__
                 else:
                     column_types[c] = type(series_non_null.iloc[0].item()).__name__
