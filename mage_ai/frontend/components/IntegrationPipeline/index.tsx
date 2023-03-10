@@ -542,6 +542,7 @@ function IntegrationPipeline({
         For more information, check out the <Link
           href={href}
           openNewWindow
+          primary
         >
           documentation
         </Link>.
@@ -726,6 +727,7 @@ function IntegrationPipeline({
                         read the <Link
                           href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
                           openNewWindow
+                          primary
                         >
                           {dataLoaderBlockContent.source} documentation
                         </Link>
@@ -1027,6 +1029,7 @@ function IntegrationPipeline({
                       read the <Link
                         href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
                         openNewWindow
+                        primary
                       >
                         {dataExporterBlockContent.destination} documentation
                       </Link>.

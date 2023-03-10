@@ -164,7 +164,7 @@ function PipelineSchedules({
                     href={'/pipelines/[pipeline]/edit'}
                     passHref
                   >
-                    <Link>
+                    <Link primary>
                       Click here
                     </Link>
                   </NextLink> <Text inline>
