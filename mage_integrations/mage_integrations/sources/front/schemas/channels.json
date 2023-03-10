@@ -1,0 +1,28 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "address": {
+      "type": ["null", "string"]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "send_as": {
+      "type": ["null", "string"]
+    },
+    "settings": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "is_private": {
+      "type": ["null", "boolean"]
+    },
+    "is_valid": {
+      "type": ["null", "boolean"]
+    }
+  }
+}
