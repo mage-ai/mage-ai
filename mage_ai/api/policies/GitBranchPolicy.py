@@ -22,7 +22,8 @@ GitBranchPolicy.allow_actions([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 GitBranchPolicy.allow_read([
-    'name'
+    'name',
+    'status',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[

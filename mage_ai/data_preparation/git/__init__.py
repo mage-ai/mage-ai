@@ -57,6 +57,9 @@ class Git:
     def pull(self):
         self.origin.pull(self.current_branch)
 
+    def status(self) -> str:
+        return self.repo.git.status()
+
     def commit(self, message):
         if self.repo.index.diff(None) or self.repo.untracked_files:
             self.repo.git.add('.')

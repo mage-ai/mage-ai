@@ -5,6 +5,7 @@ export const OUTPUT_HEIGHT = 300;
 
 export const OutputContainerStyle = styled.div<{
   height?: number;
+  maxHeight?: number;
   noScrollbarTrackBackground?: boolean;
 }>`
   ${ScrollbarStyledCss}
@@ -16,6 +17,6 @@ export const OutputContainerStyle = styled.div<{
   `}
 
   ${props => !props.height && `
-    height: ${OUTPUT_HEIGHT}px;
+    max-height: ${props.maxHeight || OUTPUT_HEIGHT}px;
   `}
 `;

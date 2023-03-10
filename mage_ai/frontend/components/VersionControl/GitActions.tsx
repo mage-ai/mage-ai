@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Ansi from 'ansi-to-react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -11,6 +12,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import { onSuccess } from '@api/utils/response';
+import { OutputContainerStyle } from '@components/PipelineDetail/PipelineExecution/index.style';
 
 
 const GIT_ACTION_OPTIONS = [
@@ -65,6 +67,23 @@ function GitActions({
     },
   );
 
+  const [getStatus, { isLoading: isLoadingGetStatus }] = useMutation(
+    () => api.git_branches.useUpdate(branch)({ git_branch: { action_type: 'status' } }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          onErrorCallback: ({
+            error: {
+              exception,
+            },
+          }) => {
+            setError(exception);
+          },
+        },
+      ),
+    }
+  );
+
   const [performAction, { isLoading: isLoadingPerformAction }] = useMutation(
     api.git_branches.useUpdate(branch),
     {
@@ -85,6 +104,16 @@ function GitActions({
       ),
     }
   );
+  
+  const [status, setStatus] = useState<string>();
+
+  const updateStatus = useCallback(() => {
+    getStatus().then(({ data }) => {
+      const status = data?.['git_branch']?.['status']
+      console.log('git status:', status);
+      setStatus(status);
+    });
+  }, [getStatus])
 
   const isLoading = useMemo(
     () => isLoadingSwitchBranch || isLoadingPerformAction,
@@ -124,7 +153,9 @@ function GitActions({
               key="select_git_action"
               onChange={(e) => {
                 e.preventDefault();
-                // @ts-ignore
+                if (e.target.value === 'commit') {
+                  updateStatus();
+                }
                 setAction(e.target.value);
                 setMessage(null);
                 setPayload(null);
@@ -140,46 +171,57 @@ function GitActions({
             </Select>
           </Spacing>
           {action === 'commit' && (
-            <FlexContainer justifyContent="space-between">
-              <TextInput
-                compact
-                label="Commit message"
-                monospace
-                onChange={e => setPayload({
-                  message: e.target.value,
-                })}
-                value={payload?.['message']}
-              />
-              <Button
-                borderLess
-                onClick={() => {
-                  // @ts-ignore
-                  performAction({
-                    git_branch: {
-                      action_type: 'commit',
-                      ...payload,
-                    }
-                  })
-                }}
-                success
-              >
-                Commit
-              </Button>
-              <Button
-                borderLess
-                onClick={() => {
-                  // @ts-ignore
-                  performAction({
-                    git_branch: {
-                      action_type: 'push',
-                    }
-                  })
-                }}
-                primary
-              >
-                Push
-              </Button>
-            </FlexContainer>
+            <>
+              <Spacing m={1}>
+                <OutputContainerStyle maxHeight={400} noScrollbarTrackBackground>
+                  {status?.split('\\n')?.map((t) => (
+                    <Text key={t} preWrap small>
+                      {t}
+                    </Text>
+                  ))}
+                </OutputContainerStyle>
+              </Spacing>
+              <FlexContainer justifyContent="space-between">
+                <TextInput
+                  compact
+                  label="Commit message"
+                  monospace
+                  onChange={e => setPayload({
+                    message: e.target.value,
+                  })}
+                  value={payload?.['message']}
+                />
+                <Button
+                  borderLess
+                  onClick={() => {
+                    // @ts-ignore
+                    performAction({
+                      git_branch: {
+                        action_type: 'commit',
+                        ...payload,
+                      }
+                    })
+                  }}
+                  success
+                >
+                  Commit
+                </Button>
+                <Button
+                  borderLess
+                  onClick={() => {
+                    // @ts-ignore
+                    performAction({
+                      git_branch: {
+                        action_type: 'push',
+                      }
+                    })
+                  }}
+                  primary
+                >
+                  Push
+                </Button>
+              </FlexContainer>
+            </>
           )}
           {action === 'create new branch' && (
             <FlexContainer justifyContent="space-between">
