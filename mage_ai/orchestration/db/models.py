@@ -199,6 +199,13 @@ class Oauth2Application(BaseModel):
 
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='oauth2_application')
 
+    @classmethod
+    @safe_db_query
+    def query_client(self, api_key: str):
+        return self.query.filter(
+            Oauth2Application.client_id == api_key,
+        ).first()
+
 
 class Oauth2AccessToken(BaseModel):
     expires = Column(DateTime(timezone=True))
