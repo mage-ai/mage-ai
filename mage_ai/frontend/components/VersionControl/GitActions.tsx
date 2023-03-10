@@ -1,17 +1,17 @@
-import Headline from '@oracle/elements/Headline';
 import React, { useMemo, useState } from 'react';
-import api from '@api';
-import Text from '@oracle/elements/Text';
-import Select from '@oracle/elements/Inputs/Select';
 import { useMutation } from 'react-query';
-import { onSuccess } from '@api/utils/response';
-import { useRouter } from 'next/router';
-import TextInput from '@oracle/elements/Inputs/TextInput';
-import FlexContainer from '@oracle/components/FlexContainer';
+
 import Button from '@oracle/elements/Button';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Panel from '@oracle/components/Panel/v2';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import api from '@api';
+import { onSuccess } from '@api/utils/response';
+
 
 const GIT_ACTION_OPTIONS = [
   'create new branch',
@@ -248,10 +248,8 @@ function GitActions({
               ) : (
                 <Button
                   borderLess
-                  onClick={() => {
-                    // @ts-ignore
-                    setConfirmMessage('Are you sure you want to reset your branch? Your local changes may be erased.')
-                  }}
+                  onClick={() => setConfirmMessage(
+                    'Are you sure you want to reset your branch? Your local changes may be erased.')}
                   primary
                 >
                   Reset branch

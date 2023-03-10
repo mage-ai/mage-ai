@@ -1,15 +1,12 @@
-from dataclasses import dataclass
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.sync import SyncConfig
-from typing import List
+from mage_ai.data_preparation.sync import GitConfig
 import asyncio
 import git
-import os
 import subprocess
 
 
 class Git:
-    def __init__(self, git_config: SyncConfig):
+    def __init__(self, git_config: GitConfig):
         self.remote_repo_link = git_config.remote_repo_link
         self.repo_path = git_config.repo_path
         self.git_config = git_config
@@ -24,7 +21,7 @@ class Git:
     @classmethod
     def get_manager(self):
         preferences = get_preferences()
-        git_config = SyncConfig.load(config=preferences.sync_config)
+        git_config = GitConfig.load(config=preferences.sync_config)
         return Git(git_config)
 
     @property
@@ -48,9 +45,11 @@ class Git:
     def all_branches(self):
         return [head.name for head in self.repo.heads]
 
-    def reset(self):
+    def reset(self, branch: str = None):
         self.origin.fetch(kill_after_timeout=60)
-        self.repo.git.reset('--hard', f'origin/{self.current_branch}')
+        if branch is None:
+            branch = self.current_branch
+        self.repo.git.reset('--hard', f'origin/{branch}')
 
     def push(self):
         self.repo.git.push('--set-upstream', self.origin.name, self.current_branch)

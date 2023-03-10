@@ -16,7 +16,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
-from mage_ai.data_preparation.sync import SyncConfig
+from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import (
@@ -68,7 +68,7 @@ class PipelineScheduler:
 
     def start(self, should_schedule: bool = True) -> None:
         if get_preferences().sync_config:
-            sync_config = SyncConfig.load(config=get_preferences().sync_config)
+            sync_config = GitConfig.load(config=get_preferences().sync_config)
             if sync_config.sync_on_pipeline_run:
                 sync = GitSync(sync_config)
                 sync.sync_data()

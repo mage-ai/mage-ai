@@ -10,6 +10,7 @@ import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import GitActions from '@components/VersionControl/GitActions';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -22,6 +23,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
+import { Branch } from '@oracle/icons';
 import {
   HeaderStyle,
   LOGO_HEIGHT,
@@ -30,9 +32,7 @@ import { LinkStyle } from '@components/PipelineDetail/FileHeaderMenu/index.style
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { redirectToUrl } from '@utils/url';
-import { Branch } from '@oracle/icons';
 import { useModal } from '@context/Modal';
-import GitActions from '@components/VersionControl/GitActions';
 
 export type BreadcrumbType = {
   bold?: boolean;
