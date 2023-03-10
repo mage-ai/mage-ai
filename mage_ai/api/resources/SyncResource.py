@@ -38,6 +38,7 @@ class SyncResource(GenericResource):
         if action_type == 'sync_data':
             if sync_config.type == SyncType.GIT:
                 sync = GitSync(sync_config)
+                print('STARTING SYNC')
                 sync.sync_data()
 
         return self

@@ -2,6 +2,7 @@ from mage_ai.data_preparation.sync import SyncConfig
 from mage_ai.data_preparation.sync.base_sync import BaseSync
 from mage_ai.shared.logger import VerboseFunctionExec
 import git
+import subprocess
 
 
 class GitSync(BaseSync):
@@ -13,14 +14,15 @@ class GitSync(BaseSync):
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
             self.repo = git.Repo.init(self.repo_path)
-            self.repo.create_remote('origin', self.remote_repo_link)
 
+        try:
+            self.repo.create_remote('origin', self.remote_repo_link)
+        except git.exc.GitCommandError:
+            self.repo.remotes.origin.set_url(self.remote_repo_link)
+            
         self.origin = self.repo.remotes.origin
 
     def sync_data(self):
-        with VerboseFunctionExec(
-            f'Syncing data with remote repo {self.remote_repo_link}',
-            verbose=True,
-        ):
-            self.origin.fetch(kill_after_timeout=60)
-            self.repo.git.reset('--hard', f'origin/{self.branch}')
+        # use subprocess because the gitpython command wasn't timing out correctly
+        subprocess.run(['git', 'fetch', self.origin.name], timeout=30)
+        self.repo.git.reset('--hard', f'{self.origin.name}/{self.branch}')
