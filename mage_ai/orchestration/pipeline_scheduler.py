@@ -323,18 +323,31 @@ class PipelineScheduler:
 
     @property
     def executable_block_runs(self) -> List[BlockRun]:
+        completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
+        finished_block_uuids = set(
+            b.block_uuid for b in self.pipeline_run.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.COMPLETED,
+                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                BlockRun.BlockRunStatus.FAILED,
+            ]
+        )
+
         executable_block_runs = list()
         for block_run in self.initial_block_runs:
             completed = False
-            completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
 
             dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
                 'dynamic_upstream_block_uuids',
             )
 
             if dynamic_upstream_block_uuids:
-                completed = all(uuid in completed_block_uuids
-                                for uuid in dynamic_upstream_block_uuids)
+                if self.allow_blocks_to_fail:
+                    completed = all(uuid in finished_block_uuids
+                                    for uuid in dynamic_upstream_block_uuids)
+                else:
+                    completed = all(uuid in completed_block_uuids
+                                    for uuid in dynamic_upstream_block_uuids)
             else:
                 block = self.pipeline.get_block(block_run.block_uuid)
                 completed = block is not None and \
@@ -345,16 +358,49 @@ class PipelineScheduler:
 
         return executable_block_runs
 
-    def __update_block_run_statuses(self) -> None:
-        failed_block_uuids = set(b.block_uuid for b in self.failed_block_runs)
-        for block_run in self.initial_block_runs:
-            block = self.pipeline.get_block(block_run.block_uuid)
-            if any(b in failed_block_uuids for b in block.upstream_block_uuids):
-                block_run.update(
-                    status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+    def __update_block_run_statuses(self, block_runs: List[BlockRun]) -> None:
+        failed_block_uuids = set(
+            b.block_uuid for b in self.pipeline_run.block_runs
+            if b.status in [
+                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                BlockRun.BlockRunStatus.FAILED,
+            ]
+        )
+        not_updated_block_runs = []
+        for block_run in block_runs:
+            updated_status = False
+            dynamic_upstream_block_uuids = block_run.metrics and block_run.metrics.get(
+                'dynamic_upstream_block_uuids',
+            )
+
+            if dynamic_upstream_block_uuids:
+                if all(
+                    b in failed_block_uuids
+                    for b in dynamic_upstream_block_uuids
+                ):
+                    block_run.update(
+                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+                    updated_status = True
+            else:
+                block = self.pipeline.get_block(block_run.block_uuid)
+                if any(
+                    b in failed_block_uuids
+                    for b in block.upstream_block_uuids
+                ):
+                    block_run.update(
+                        status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+                    updated_status = True
+
+            if not updated_status:
+                not_updated_block_runs.append(block_run)
+
+        self.pipeline_run.refresh()
+        # keep iterating through block runs until no more updates can be made
+        if len(block_runs) != len(not_updated_block_runs):
+            self.__update_block_run_statuses(not_updated_block_runs)
 
     def __schedule_blocks(self, block_runs: List[BlockRun] = None) -> None:
-        self.__update_block_run_statuses()
+        self.__update_block_run_statuses(self.initial_block_runs)
         block_runs_to_schedule = \
             self.executable_block_runs if block_runs is None else block_runs
         block_runs_to_schedule = \
