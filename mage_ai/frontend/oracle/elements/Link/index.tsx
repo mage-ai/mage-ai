@@ -44,6 +44,7 @@ export type LinkProps = {
   overflow?: string;
   pointerEventsEnabled?: boolean;
   preventDefault?: boolean;
+  primary?: boolean;
   sameColorAsText?: boolean;
   secondary?: boolean;
   selected?: boolean;
@@ -102,6 +103,13 @@ export const SHARED_LINK_STYLES = css<any>`
   `}
   ${props => props.centerAlign && `
     text-align: center;
+  `}
+
+  ${props => props.primary && `
+    color: ${(props.theme.interactive || dark.interactive).linkPrimaryLight};
+    &:hover {
+      color: ${(props.theme.interactive || dark.interactive).linkPrimaryLight};
+    }
   `}
 
   ${props => props.secondary && `

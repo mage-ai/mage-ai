@@ -338,6 +338,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
             href="https://docs.mage.ai/production/configuring-production-settings/runtime-variable"
             large
             openNewWindow
+            primary
           >
             docs
           </Link>):
@@ -356,6 +357,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
             href="https://docs.mage.ai/guides/sql-blocks#variables"
             large
             openNewWindow
+            primary
           >
             docs
           </Link>):
@@ -374,6 +376,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
             href="https://docs.mage.ai/guides/r-blocks#runtime-variables"
             large
             openNewWindow
+            primary
           >
             docs
           </Link>):
