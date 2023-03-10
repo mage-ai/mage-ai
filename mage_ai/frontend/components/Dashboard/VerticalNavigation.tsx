@@ -27,26 +27,28 @@ const ICON_SIZE = 3 * UNIT;
 
 export type NavigationItem = {
   Icon: any;
-  IconSelected: any;
+  IconSelected?: any;
   id: string;
-  isSelected?: (pathname: string) => boolean;
+  isSelected?: (pathname: string, item: NavigationItem) => boolean;
   label: () => string;
-  linkProps: {
+  linkProps?: {
     as?: string;
     href: string;
   };
+  onClick?: (e: any) => void;
 };
 
 export type VerticalNavigationProps = {
+  aligned?: 'left' | 'right';
   navigationItems?: NavigationItem[];
 };
 
 function VerticalNavigation({
+  aligned,
   navigationItems,
 }: VerticalNavigationProps) {
   const router = useRouter();
   const { pathname } = router;
-
 
   const buttons = useMemo(() => {
     const defaultItems = [
@@ -99,16 +101,18 @@ function VerticalNavigation({
 
     const items = navigationItems || defaultItems;
 
-    return items.map(({
-      Icon,
-      IconSelected,
-      id,
-      isSelected,
-      label,
-      linkProps,
-    }, idx: number) => {
+    return items.map((item, idx: number) => {
+      const {
+        Icon,
+        IconSelected,
+        id,
+        isSelected,
+        label,
+        linkProps,
+        onClick,
+      } = item;
       const selected: boolean = isSelected
-        ? isSelected(pathname)
+        ? isSelected(pathname, item)
         : !!pathname.match(new RegExp(`^/${id}[/]*`));
       const IconToUse = (selected && IconSelected) ? IconSelected : Icon;
 
@@ -118,6 +122,7 @@ function VerticalNavigation({
           mt={idx >= 1 ? PADDING_UNITS : 0}
         >
           <Tooltip
+            appearBefore={'right' === aligned}
             height={5 * UNIT}
             label={label()}
             size={null}
@@ -130,6 +135,7 @@ function VerticalNavigation({
                 basic
                 borderWidth={2}
                 linkProps={linkProps}
+                onClick={onClick}
                 paddingUnits={1}
               >
                 <div
@@ -143,18 +149,19 @@ function VerticalNavigation({
               </GradientButton>
             )}
 
-            {!selected && (
+            {(!selected || (selected && !IconSelected)) && (
               <KeyboardShortcutButton
                 block
+                linkProps={linkProps}
                 noHoverUnderline
                 noPadding
-                linkProps={linkProps}
+                onClick={onClick}
                 sameColorAsText
                 uuid={`VerticalNavigation/${id}`}
               >
                 <NavigationItemStyle primary={!IconToUse}>
                   {IconToUse
-                    ? <IconToUse muted size={ICON_SIZE} />
+                    ? <IconToUse muted={!selected} size={ICON_SIZE} />
                     : <Text>Edit</Text>
                   }
                 </NavigationItemStyle>
@@ -165,6 +172,7 @@ function VerticalNavigation({
       );
     });
   }, [
+    aligned,
     navigationItems,
     pathname,
   ]);

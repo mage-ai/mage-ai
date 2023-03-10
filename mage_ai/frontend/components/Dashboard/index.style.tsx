@@ -7,7 +7,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
-export const VERTICAL_NAVIGATION_WIDTH = (PADDING_UNITS * UNIT) + (5 * UNIT) + (PADDING_UNITS * UNIT);
+export const VERTICAL_NAVIGATION_WIDTH = (PADDING_UNITS * UNIT) + (5 * UNIT) + (PADDING_UNITS * UNIT) + 1;
 
 export const ContainerStyle = styled.div`
   display: flex;
@@ -22,12 +22,21 @@ export const ContainerStyle = styled.div`
   `}
 `;
 
-export const VerticalNavigationStyle = styled.div`
+export const VerticalNavigationStyle = styled.div<{
+  borderLeft?: boolean;
+}>`
   padding: ${PADDING_UNITS * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
-    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
+
+  ${props => props.borderLeft && `
+    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
+
+  ${props => !props.borderLeft && `
+    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 `;
 

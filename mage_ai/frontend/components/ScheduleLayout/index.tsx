@@ -67,7 +67,6 @@ function ScheduleLayout({
       mainContainerRef={mainContainerRef}
       page="schedules"
       pipeline={pipeline}
-      projectName={projectName}
       setErrors={setErrors}
     >
       {children}

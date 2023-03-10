@@ -41,7 +41,9 @@ function Secrets({
   const [newSecretName, setNewSecretName] = useState<string>();
   const [newSecretValue, setNewSecretValue] = useState<string>();
 
-  const tableWidth = useMemo(() => width - 4 * UNIT, [width]);
+  const tableWidth = useMemo(() => width - (PADDING_UNITS * UNIT * 2), [width]);
+
+  console.log('wtf', tableWidth)
 
   const [createSecret] = useMutation(
     api.secrets.useCreate(),
@@ -260,6 +262,7 @@ function Secrets({
           language="yaml"
           small
           source={SAMPLE_SECRET_VALUE}
+          maxWidth={tableWidth}
         />
       </Spacing>
       <Spacing mb={PADDING_UNITS}>
@@ -272,6 +275,7 @@ function Secrets({
           language="python"
           small
           source={SECRET_IN_CODE}
+          maxWidth={tableWidth}
         />
       </Spacing>
     </Spacing>

@@ -56,34 +56,37 @@ def fetch_template_source(
 ) -> str:
     template_source = ''
 
-    if language in [BlockLanguage.PYTHON, BlockLanguage.R, BlockLanguage.YAML]:
-        if block_type == BlockType.DATA_LOADER:
-            template_source = __fetch_data_loader_templates(
-                config,
-                language=language,
-                pipeline_type=pipeline_type,
-            )
-        elif block_type == BlockType.TRANSFORMER:
-            template_source = __fetch_transformer_templates(
-                config,
-                language=language,
-                pipeline_type=pipeline_type,
-            )
-        elif block_type == BlockType.DATA_EXPORTER:
-            template_source = __fetch_data_exporter_templates(
-                config,
-                language=language,
-                pipeline_type=pipeline_type,
-            )
-        elif block_type == BlockType.SENSOR:
-            template_source = __fetch_sensor_templates(config)
-        elif block_type == BlockType.CUSTOM:
-            template_source = __fetch_custom_templates(
-                config,
-                language=language,
-            )
-        elif block_type == BlockType.CALLBACK:
-            template_source = __fetch_callback_templates()
+    if language not in [BlockLanguage.PYTHON, BlockLanguage.R, BlockLanguage.YAML]:
+        return template_source
+
+    if block_type == BlockType.DATA_LOADER:
+        template_source = __fetch_data_loader_templates(
+            config,
+            language=language,
+            pipeline_type=pipeline_type,
+        )
+    elif block_type == BlockType.TRANSFORMER:
+        template_source = __fetch_transformer_templates(
+            config,
+            language=language,
+            pipeline_type=pipeline_type,
+        )
+    elif block_type == BlockType.DATA_EXPORTER:
+        template_source = __fetch_data_exporter_templates(
+            config,
+            language=language,
+            pipeline_type=pipeline_type,
+        )
+    elif block_type == BlockType.SENSOR:
+        template_source = __fetch_sensor_templates(config)
+    elif block_type == BlockType.CUSTOM:
+        template_source = __fetch_custom_templates(
+            config,
+            language=language,
+        )
+    elif block_type == BlockType.CALLBACK:
+        template_source = __fetch_callback_templates()
+
     return template_source
 
 

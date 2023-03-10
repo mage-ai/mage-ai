@@ -29,6 +29,7 @@ import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
+import VerticalNavigation from '@components/Dashboard/VerticalNavigation';
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Close } from '@oracle/icons';
 import {
@@ -49,6 +50,11 @@ import {
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import {
+  VERTICAL_NAVIGATION_WIDTH,
+  VerticalNavigationStyle,
+} from '@components/Dashboard/index.style';
+import { buildNavigationItems } from './Navigation/constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
@@ -88,6 +94,10 @@ export type SidekickProps = {
   secrets: SecretType[];
   selectedBlock: BlockType;
   selectedFilePath?: string;
+  setActiveSidekickView?: (
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
@@ -95,7 +105,7 @@ export type SidekickProps = {
 
 function Sidekick({
   activeView,
-  afterWidth,
+  afterWidth: afterWidthProp,
   autocompleteItems,
   blockRefs,
   blocks,
@@ -124,6 +134,7 @@ function Sidekick({
   secrets,
   selectedBlock,
   selectedFilePath,
+  setActiveSidekickView,
   setAnyInputFocused,
   setDisableShortcuts,
   setEditingBlock,
@@ -142,6 +153,10 @@ function Sidekick({
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [pipelineExecutionHidden, setPipelineExecutionHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
+
+  const widthOffset = VERTICAL_NAVIGATION_WIDTH;
+  const totalWidth = useMemo(() => afterWidthProp, [afterWidthProp]);
+  const afterWidth = useMemo(() => afterWidthProp - widthOffset, [afterWidthProp, widthOffset]);
 
   const {
     block: blockEditing,
@@ -264,188 +279,210 @@ function Sidekick({
           ))}
         </Spacing>
       }
-      <SidekickContainerStyle
-        fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
-        heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
-        onBlur={() => setDisableShortcuts(false)}
-        onFocus={() => setDisableShortcuts(true)}
-      >
-        {activeView === ViewKeyEnum.TREE &&
-          <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
-            <>
-              <DependencyGraph
-                blockRefs={blockRefs}
-                editingBlock={editingBlock}
-                enablePorts={!isIntegration}
-                fetchPipeline={fetchPipeline}
-                height={heightWindow - heightOffset - finalOutputHeight}
-                pipeline={pipeline}
-                runningBlocks={runningBlocks}
-                selectedBlock={selectedBlock}
-                setEditingBlock={setEditingBlock}
-                setErrors={setErrors}
-                setSelectedBlock={setSelectedBlock}
-              />
-              {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
-                <Spacing p={1}>
-                  <PipelineExecution
-                    cancelPipeline={cancelPipeline}
-                    executePipeline={executePipeline}
-                    isPipelineExecuting={isPipelineExecuting}
-                    pipelineExecutionHidden={pipelineExecutionHidden}
-                    pipelineMessages={pipelineMessages}
-                    setPipelineExecutionHidden={setPipelineExecutionHidden}
-                  />
-                </Spacing>
-              )}
-            </>
-          </ApiReloader>
-        }
-        {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
-          <DataTable
-            columnHeaderHeight={
-              (isEmptyObject(columnTypes)
-                && isEmptyObject(insightsByFeatureUUID)
-                && isEmptyObject(insightsOverview))
-              ? 0
-              : TABLE_COLUMN_HEADER_HEIGHT
-            }
-            columns={columns}
-            height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
-            noBorderBottom
-            noBorderLeft
-            noBorderRight
-            noBorderTop
-            renderColumnHeader={renderColumnHeader}
-            rows={rows}
-            width={afterWidth}
-          />
-      )}
-        {activeView === ViewKeyEnum.REPORTS &&
-          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
-            <FlexContainer flexDirection="column" fullWidth>
-              {qualityMetrics && (
-                <StatsTable
-                  stats={qualityMetrics}
-                  title="Quality metrics"
+
+      <FlexContainer>
+        <SidekickContainerStyle
+          fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
+          heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
+          onBlur={() => setDisableShortcuts(false)}
+          onFocus={() => setDisableShortcuts(true)}
+          widthOffset={widthOffset}
+        >
+          {activeView === ViewKeyEnum.TREE &&
+            <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
+              <>
+                <DependencyGraph
+                  blockRefs={blockRefs}
+                  editingBlock={editingBlock}
+                  enablePorts={!isIntegration}
+                  fetchPipeline={fetchPipeline}
+                  height={heightWindow - heightOffset - finalOutputHeight}
+                  pipeline={pipeline}
+                  runningBlocks={runningBlocks}
+                  selectedBlock={selectedBlock}
+                  setEditingBlock={setEditingBlock}
+                  setErrors={setErrors}
+                  setSelectedBlock={setSelectedBlock}
                 />
-              )}
-              {statsSample && (
-                <Spacing mt={PADDING_UNITS}>
+                {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
+                  <Spacing p={1}>
+                    <PipelineExecution
+                      cancelPipeline={cancelPipeline}
+                      executePipeline={executePipeline}
+                      isPipelineExecuting={isPipelineExecuting}
+                      pipelineExecutionHidden={pipelineExecutionHidden}
+                      pipelineMessages={pipelineMessages}
+                      setPipelineExecutionHidden={setPipelineExecutionHidden}
+                    />
+                  </Spacing>
+                )}
+              </>
+            </ApiReloader>
+          }
+          {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
+            <DataTable
+              columnHeaderHeight={
+                (isEmptyObject(columnTypes)
+                  && isEmptyObject(insightsByFeatureUUID)
+                  && isEmptyObject(insightsOverview))
+                ? 0
+                : TABLE_COLUMN_HEADER_HEIGHT
+              }
+              columns={columns}
+              height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
+              noBorderBottom
+              noBorderLeft
+              noBorderRight
+              noBorderTop
+              renderColumnHeader={renderColumnHeader}
+              rows={rows}
+              width={afterWidth}
+            />
+          )}
+          {activeView === ViewKeyEnum.REPORTS &&
+            <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
+              <FlexContainer flexDirection="column" fullWidth>
+                {qualityMetrics && (
                   <StatsTable
-                    stats={statsSample}
-                    title="Statistics"
+                    stats={qualityMetrics}
+                    title="Quality metrics"
                   />
-                </Spacing>
-              )}
-              {features.length > 0 && (
-                <Spacing mt={PADDING_UNITS}>
-                  <FeatureProfiles
-                    features={features}
-                    statistics={statistics}
-                  />
-                </Spacing>
-              )}
-            </FlexContainer>
-          </PaddingContainerStyle>
-        }
-        {activeView === ViewKeyEnum.GRAPHS &&
-          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
-            <BlockCharts
-              afterWidth={afterWidth}
-              features={features}
-              insightsOverview={insightsOverview}
-              statistics={statistics}
-            />
-          </PaddingContainerStyle>
-        }
-        {ViewKeyEnum.SECRETS === activeView && secretsMemo}
-        {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
-        {ViewKeyEnum.FILE_VERSIONS === activeView && (
-          <ApiReloader uuid={`FileVersions/${selectedFilePath
-              ? decodeURIComponent(selectedFilePath)
-              : ''
-            }`
-          }>
-            {fileVersionsMemo}
-          </ApiReloader>
-        )}
+                )}
+                {statsSample && (
+                  <Spacing mt={PADDING_UNITS}>
+                    <StatsTable
+                      stats={statsSample}
+                      title="Statistics"
+                    />
+                  </Spacing>
+                )}
+                {features.length > 0 && (
+                  <Spacing mt={PADDING_UNITS}>
+                    <FeatureProfiles
+                      features={features}
+                      statistics={statistics}
+                    />
+                  </Spacing>
+                )}
+              </FlexContainer>
+            </PaddingContainerStyle>
+          }
+          {activeView === ViewKeyEnum.GRAPHS &&
+            <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
+              <BlockCharts
+                afterWidth={afterWidth}
+                features={features}
+                insightsOverview={insightsOverview}
+                statistics={statistics}
+              />
+            </PaddingContainerStyle>
+          }
+          {ViewKeyEnum.SECRETS === activeView && secretsMemo}
+          {ViewKeyEnum.VARIABLES === activeView && globalVariablesMemo}
+          {ViewKeyEnum.FILE_VERSIONS === activeView && (
+            <ApiReloader uuid={`FileVersions/${selectedFilePath
+                ? decodeURIComponent(selectedFilePath)
+                : ''
+              }`
+            }>
+              {fileVersionsMemo}
+            </ApiReloader>
+          )}
 
-        {(isIntegration
-          || (selectedBlock && hasData)
-          || (!selectedBlock && hasData && activeView === ViewKeyEnum.DATA))
-          ? null
-          : (MESSAGE_VIEWS.includes(activeView) &&
-            <FlexContainer
-              alignItems="center"
-              justifyContent="center"
-              verticalHeight={VH_PERCENTAGE}
-              verticalHeightOffset={heightOffset}
-              width={afterWidth}
-            >
-              <Text
-                center
-                default
-                disableWordBreak
-                large
-                monospace
+          {(isIntegration
+            || (selectedBlock && hasData)
+            || (!selectedBlock && hasData && activeView === ViewKeyEnum.DATA))
+            ? null
+            : (MESSAGE_VIEWS.includes(activeView) &&
+              <FlexContainer
+                alignItems="center"
+                justifyContent="center"
+                verticalHeight={VH_PERCENTAGE}
+                verticalHeightOffset={heightOffset}
+                width={afterWidth}
               >
-                {!selectedBlock
-                  ? 'Select a block for insights'
-                  : (!hasData && 'No data or insights available')
-                }
-              </Text>
-            </FlexContainer>
-          )
-        }
+                <Text
+                  center
+                  default
+                  disableWordBreak
+                  large
+                  monospace
+                >
+                  {!selectedBlock
+                    ? 'Select a block for insights'
+                    : (!hasData && 'No data or insights available')
+                  }
+                </Text>
+              </FlexContainer>
+            )
+          }
 
-        {ViewKeyEnum.CHARTS === activeView && (widgets.length > 0
-          ?
-            <Charts
-              autocompleteItems={autocompleteItems}
-              blockRefs={blockRefs}
-              blocks={blocks}
-              chartRefs={chartRefs}
-              deleteWidget={deleteWidget}
-              fetchFileTree={fetchFileTree}
-              fetchPipeline={fetchPipeline}
-              messages={messages}
-              onChangeChartBlock={onChangeChartBlock}
-              pipeline={pipeline}
-              runBlock={runBlock}
-              runningBlocks={runningBlocks}
-              savePipelineContent={savePipelineContent}
-              selectedBlock={selectedBlock}
-              setAnyInputFocused={setAnyInputFocused}
-              setSelectedBlock={setSelectedBlock}
-              setTextareaFocused={setTextareaFocused}
-              textareaFocused={textareaFocused}
-              updateWidget={updateWidget}
-              widgets={widgets}
-              width={afterWidth}
-            />
-          :
-            <FlexContainer
-              alignItems="center"
-              justifyContent="center"
-              verticalHeight={VH_PERCENTAGE}
-              verticalHeightOffset={heightOffset}
-              width={afterWidth}
+          {ViewKeyEnum.CHARTS === activeView && (widgets.length > 0
+            ?
+              <Charts
+                autocompleteItems={autocompleteItems}
+                blockRefs={blockRefs}
+                blocks={blocks}
+                chartRefs={chartRefs}
+                deleteWidget={deleteWidget}
+                fetchFileTree={fetchFileTree}
+                fetchPipeline={fetchPipeline}
+                messages={messages}
+                onChangeChartBlock={onChangeChartBlock}
+                pipeline={pipeline}
+                runBlock={runBlock}
+                runningBlocks={runningBlocks}
+                savePipelineContent={savePipelineContent}
+                selectedBlock={selectedBlock}
+                setAnyInputFocused={setAnyInputFocused}
+                setSelectedBlock={setSelectedBlock}
+                setTextareaFocused={setTextareaFocused}
+                textareaFocused={textareaFocused}
+                updateWidget={updateWidget}
+                widgets={widgets}
+                width={afterWidth}
+              />
+            :
+              <FlexContainer
+                alignItems="center"
+                justifyContent="center"
+                verticalHeight={VH_PERCENTAGE}
+                verticalHeightOffset={heightOffset}
+                width={afterWidth}
+              >
+                <Spacing pl={1} />
+                <EmptyCharts size={358} />
+                <Spacing pr={1} />
+              </FlexContainer>
+          )}
+
+          {ViewKeyEnum.TERMINAL === activeView && (
+            <div
+              style={{
+                height: '100%',
+                position: 'relative',
+                width: afterWidth,
+              }}
             >
-              <Spacing pl={1} />
-              <EmptyCharts size={358} />
-              <Spacing pr={1} />
-            </FlexContainer>
-        )}
+              <Terminal
+                interruptKernel={interruptKernel}
+                onFocus={() => setSelectedBlock(null)}
+                width={afterWidth}
+              />
+            </div>
+          )}
+        </SidekickContainerStyle>
 
-        {ViewKeyEnum.TERMINAL === activeView && (
-          <Terminal
-            interruptKernel={interruptKernel}
-            onFocus={() => setSelectedBlock(null)}
-            width={afterWidth}
+        <VerticalNavigationStyle borderLeft>
+          <VerticalNavigation
+            aligned="right"
+            navigationItems={buildNavigationItems({
+              activeView,
+              setActiveSidekickView,
+            })}
           />
-        )}
-      </SidekickContainerStyle>
+        </VerticalNavigationStyle>
+      </FlexContainer>
     </>
   );
 }

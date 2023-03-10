@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.extension.constants import (
-    EXTENSIONS,
-    EXTENSION_GREAT_EXPECTATIONS,
+from mage_ai.extensions.constants import (
+    EXTENSION_UUIDS,
+    EXTENSION_UUID_GREAT_EXPECTATIONS,
 )
 from mage_ai.data_preparation.models.block.extension.great_expectations import GreatExpectations
 from typing import Dict, List
@@ -19,15 +19,15 @@ class ExtensionBlock(Block):
                     "must be in the following format: @extension('extension_name')",
                 )
 
-            if extension_name not in EXTENSIONS:
+            if extension_name not in EXTENSION_UUIDS:
                 raise Exception(
                     f"Extension '{extension_name}' in @extension decorator must be 1 of: "
-                    f"{', '.join(EXTENSIONS)}",
+                    f"{', '.join(EXTENSION_UUIDS)}",
                 )
 
             def inner(function):
                 def func(*args, **kwargs):
-                    if EXTENSION_GREAT_EXPECTATIONS == extension_name:
+                    if EXTENSION_UUID_GREAT_EXPECTATIONS == extension_name:
                         ge = GreatExpectations(self)
                         validators = ge.build_validators(*args, **kwargs)
                         function(*validators)

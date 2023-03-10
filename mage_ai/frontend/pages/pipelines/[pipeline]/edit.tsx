@@ -1091,7 +1091,6 @@ function PipelineDetailPage({
       }),
     },
   )), [
-    activeSidekickView,
     fetchFileTree,
     fetchPipeline,
     createWidget,
@@ -1484,6 +1483,7 @@ function PipelineDetailPage({
       secrets={secrets}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
+      setActiveSidekickView={setActiveSidekickView}
       setAnyInputFocused={setAnyInputFocused}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
@@ -1525,6 +1525,7 @@ function PipelineDetailPage({
     secrets,
     selectedBlock,
     selectedFilePath,
+    setActiveSidekickView,
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
@@ -1895,7 +1896,7 @@ function PipelineDetailPage({
 
       <PipelineLayout
         after={sideKick}
-        afterHeader={afterHeader}
+        // afterHeader={afterHeader}
         afterHidden={afterHidden}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
@@ -1950,7 +1951,6 @@ function PipelineDetailPage({
         mainContainerRef={mainContainerRef}
         page={page}
         pipeline={pipeline}
-        projectName={projectName}
         setAfterHidden={setAfterHidden}
         setAfterWidthForChildren={setAfterWidthForChildren}
         setErrors={setErrors}

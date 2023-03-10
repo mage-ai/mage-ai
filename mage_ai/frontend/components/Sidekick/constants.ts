@@ -5,6 +5,7 @@ import {
   NavGraph,
   NavReport,
   NavTree,
+  Terminal,
 } from '@oracle/icons';
 
 export const VIEW_QUERY_PARAM = 'sideview';
@@ -35,13 +36,34 @@ export const MESSAGE_VIEWS = [
   ViewKeyEnum.GRAPHS,
 ];
 
-export const SIDEKICK_VIEWS = [
-  { key: ViewKeyEnum.TREE, label: 'Tree' },
-  { key: ViewKeyEnum.CHARTS, label: 'Charts' },
-  { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
-  { key: ViewKeyEnum.SECRETS, label: 'Secrets' },
-  { key: ViewKeyEnum.DATA, label: 'Data' },
-  { key: ViewKeyEnum.TERMINAL, label: 'Terminal' },
+export const SIDEKICK_VIEWS: {
+  key: ViewKeyEnum;
+  label: string;
+}[] = [
+  {
+    key: ViewKeyEnum.TREE,
+    label: 'Tree',
+  },
+  {
+    key: ViewKeyEnum.CHARTS,
+    label: 'Charts',
+  },
+  {
+    key: ViewKeyEnum.VARIABLES,
+    label: 'Variables',
+  },
+  {
+    key: ViewKeyEnum.SECRETS,
+    label: 'Secrets',
+  },
+  {
+    key: ViewKeyEnum.DATA,
+    label: 'Data',
+  },
+  {
+    key: ViewKeyEnum.TERMINAL,
+    label: 'Terminal',
+  },
   // { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   // { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
 ];
@@ -52,6 +74,7 @@ export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.GRAPHS]: NavGraph,
   [ViewKeyEnum.REPORTS]: NavReport,
   [ViewKeyEnum.SECRETS]: Code,
+  [ViewKeyEnum.TERMINAL]: Terminal,
   [ViewKeyEnum.TREE]: NavTree,
   [ViewKeyEnum.VARIABLES]: Alphabet,
 };
