@@ -119,11 +119,13 @@ export const Branch = build([{
   stroke: 'white',
   strokeWidth: '1.125',
   strokeLinejoin: 'round',
+  useStroke: true,
 }, {
   d: 'M3 7.5H6C7.65685 7.5 9 6.15685 9 4.5V1.5M9 1.5L7.5 3M9 1.5L10.5 3',
   stroke: 'white',
   strokeWidth: '1.125',
   strokeLinejoin: 'round',
+  useStroke: true,
 }], {
   fill: 'none',
   viewBox: '0 0 12 12',

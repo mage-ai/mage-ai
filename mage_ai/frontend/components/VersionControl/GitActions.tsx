@@ -13,6 +13,8 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
 import { onSuccess } from '@api/utils/response';
 import { OutputContainerStyle } from '@components/PipelineDetail/PipelineExecution/index.style';
+import { Branch } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 
 const GIT_ACTION_OPTIONS = [
@@ -128,6 +130,8 @@ function GitActions({
         <Spacing p={2}>
           <Spacing mb={1}>
             <Select
+              beforeIcon={<Branch />}
+              compact
               key="select_branch"
               onChange={(e) => {
                 e.preventDefault();
@@ -150,6 +154,7 @@ function GitActions({
           </Spacing>
           <Spacing mb={1}>
             <Select
+              compact
               key="select_git_action"
               onChange={(e) => {
                 e.preventDefault();

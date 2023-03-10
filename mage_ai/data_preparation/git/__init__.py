@@ -27,7 +27,7 @@ class Git:
     @property
     def current_branch(self):
         return self.repo.git.branch('--show-current')
-    
+
     async def check_connection(self):
         proc = subprocess.Popen(
             ['git', 'ls-remote', self.origin.name],
@@ -50,7 +50,7 @@ class Git:
             proc.kill()
             raise Exception(
                 "Connecting to remote timed out, make sure your SSH key is set up properly.")
-    
+
     def all_branches(self):
         return [head.name for head in self.repo.heads]
 
