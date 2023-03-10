@@ -199,6 +199,7 @@ class Oauth2Application(BaseModel):
 
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='oauth2_application')
 
+    @classmethod
     @safe_db_query
     def query_client(self, api_key: str):
         return self.query.filter(
