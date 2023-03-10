@@ -92,6 +92,8 @@ PipelinePolicy.allow_query([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_query([
+    'status[]',
+    'type[]',
     'update_content',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,

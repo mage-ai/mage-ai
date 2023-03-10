@@ -19,6 +19,8 @@ class PipelineResource(BaseResource):
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:
             include_schedules = include_schedules[0]
+        pipeline_types = query.get('type[]', [])
+        pipeline_statuses = query.get('status[]', [])
 
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
@@ -56,12 +58,24 @@ class PipelineResource(BaseResource):
         mapping = {}
         if include_schedules:
             mapping = query_pipeline_schedules(pipeline_uuids)
+        if pipeline_types:
+            pipelines = [p for p in pipelines if p.type in pipeline_types]
 
+        filtered_pipelines = []
         for pipeline in pipelines:
             schedules = []
             if mapping.get(pipeline.uuid):
                 schedules = mapping[pipeline.uuid]
             pipeline.schedules = schedules
+
+            if pipeline_statuses and (
+                any(s.status in pipeline_statuses for s in pipeline.schedules) or
+                ('no_schedules' in pipeline_statuses and len(pipeline.schedules) == 0)
+            ):
+                filtered_pipelines.append(pipeline)
+
+        if include_schedules and pipeline_statuses:
+            pipelines = filtered_pipelines
 
         return self.build_result_set(
             pipelines,
