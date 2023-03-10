@@ -22,7 +22,7 @@ class BlockResource(GenericResource):
             color=payload.get('color'),
             config=payload.get('config'),
             configuration=payload.get('configuration'),
-            extension_uuid = payload.get('extension_uuid'),
+            extension_uuid=payload.get('extension_uuid'),
             language=payload.get('language'),
             pipeline=pipeline,
             priority=payload.get('priority'),

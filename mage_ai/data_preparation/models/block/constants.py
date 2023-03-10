@@ -4,7 +4,7 @@ from mage_ai.data_preparation.models.block import (
     SensorBlock,
 )
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
-from mage_ai.data_preparation.models.block.extension import ExtensionBlock
+from mage_ai.data_preparation.models.block.extension.block import ExtensionBlock
 from mage_ai.data_preparation.models.constants import BlockType
 
 

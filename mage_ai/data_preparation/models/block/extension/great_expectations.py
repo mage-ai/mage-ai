@@ -6,14 +6,14 @@ import pandas as pd
 
 
 class GreatExpectations():
-    def __init__(self, block: 'Block'):
+    def __init__(self, block):
         self.block = block
 
     def build_validators(
         self,
         *args,
         **kwargs,
-    ) -> List['Validator']:
+    ) -> List:
         validators = []
 
         for idx, df in enumerate(args):

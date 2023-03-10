@@ -35,7 +35,6 @@ class PipelinePresenter(BasePresenter):
             if include_block_metadata:
                 include_block_metadata = include_block_metadata[0]
 
-
             return await self.model.to_dict_async(
                 include_block_metadata=include_block_metadata,
                 include_content=include_content,

@@ -4,8 +4,7 @@ from mage_ai.data_preparation.models.block.extension.constants import (
     EXTENSION_GREAT_EXPECTATIONS,
 )
 from mage_ai.data_preparation.models.block.extension.great_expectations import GreatExpectations
-from mage_ai.data_preparation.models.block.utils import fetch_input_variables
-from typing import Any, Dict, List
+from typing import Dict, List
 
 
 class ExtensionBlock(Block):
@@ -22,7 +21,7 @@ class ExtensionBlock(Block):
 
             if extension_name not in EXTENSIONS:
                 raise Exception(
-                    f"Extension name '{extension_name}' in @extension decorator must be 1 of the following: "
+                    f"Extension '{extension_name}' in @extension decorator must be 1 of: "
                     f"{', '.join(EXTENSIONS)}",
                 )
 
