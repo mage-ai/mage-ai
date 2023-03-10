@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-import { ALL_HEADERS_HEIGHT, ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import { ALL_HEADERS_HEIGHT } from '@components/TripleLayout/index.style';
 import { COLUMN_HEADER_CHART_HEIGHT } from '@components/datasets/overview/utils';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -11,6 +11,7 @@ export const TABLE_COLUMN_HEADER_HEIGHT = COLUMN_HEADER_CHART_HEIGHT + (UNIT * 3
 export const SidekickContainerStyle = styled.div<{
   fullWidth: boolean;
   heightOffset: number;
+  widthOffset: number;
 }>`
   position: relative;
   width: fit-content;
@@ -20,7 +21,7 @@ export const SidekickContainerStyle = styled.div<{
   `}
 
   ${props => props.fullWidth && `
-    width: 100%;
+    width: calc(100% - ${props.widthOffset || 0}px);
   `}
 `;
 

@@ -41,7 +41,6 @@ type PipelineLayoutProps = {
   mainContainerRef?: any;
   page: string;
   pipeline: PipelineType;
-  projectName: string;
   setAfterHidden?: (value: boolean) => void;
   setAfterWidthForChildren?: (width: number) => void;
   setErrors?: (errors: any) => void;
@@ -62,7 +61,6 @@ function PipelineLayout({
   mainContainerRef,
   page,
   pipeline,
-  projectName,
   setAfterHidden: setAfterHiddenProp,
   setAfterWidthForChildren,
   setErrors,
@@ -99,7 +97,7 @@ function PipelineLayout({
     afterWidth,
     beforeHidden,
     beforeWidth,
-    mainContainerRef?.current,
+    mainContainerRef,
     setMainContainerWidth,
     widthWindow,
   ]);
@@ -130,8 +128,8 @@ function PipelineLayout({
       {
         label: () => 'Pipelines',
         linkProps: {
-          href: '/pipelines',
           as: '/pipelines',
+          href: '/pipelines',
         },
       },
     ];
@@ -143,8 +141,8 @@ function PipelineLayout({
           bold: PAGE_NAME_EDIT !== page,
           label: () => pipeline?.name,
           linkProps: {
-            href: '/pipelines/[pipeline]',
             as: `/pipelines/${pipeline?.uuid}`,
+            href: '/pipelines/[pipeline]',
           },
         },
       ]);
@@ -170,7 +168,6 @@ function PipelineLayout({
   }, [
     page,
     pipeline,
-    projectName,
     projects,
   ]);
 
