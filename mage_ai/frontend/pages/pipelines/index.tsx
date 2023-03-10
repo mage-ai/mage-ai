@@ -1,21 +1,19 @@
 import { MutateFunction, useMutation } from 'react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
-import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
-import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
+import { ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
@@ -27,14 +25,10 @@ function PipelineListPage() {
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
-  const [newPipelineMenuOpen, setNewPipelineMenuOpen] = useState(false);
   const [errors, setErrors] = useState<ErrorsType>(null);
-  const newPipelineMenuRef = useRef(null);
 
   const { data, mutate: fetchPipelines } = api.pipelines.list({ include_schedules: 1 });
-
   const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
-  const closeNewPipelineMenu = useCallback(() => setNewPipelineMenuOpen(false), []);
 
   const [createPipeline, { isLoading }]: [MutateFunction<any>, { isLoading: boolean }] = useMutation(
     api.pipelines.useCreate(),
@@ -88,61 +82,43 @@ function PipelineListPage() {
       errors={errors}
       setErrors={setErrors}
       subheaderChildren={
-        <FlyoutMenuWrapper
-          disableKeyboardShortcuts
-          items={[
-            {
-              label: () => 'Standard (batch)',
-              onClick: () => createPipeline({
-                pipeline: {
-                  name: randomNameGenerator(),
-                },
-              }),
-              uuid: 'Pipelines/NewPipelineMenu/standard',
-            },
-            {
-              label: () => 'Data integration',
-              onClick: () => createPipeline({
-                pipeline: {
-                  name: randomNameGenerator(),
-                  type: PipelineTypeEnum.INTEGRATION,
-                },
-              }),
-              uuid: 'Pipelines/NewPipelineMenu/integration',
-            },
-            {
-              label: () => 'Streaming',
-              onClick: () => createPipeline({
-                pipeline: {
-                  name: randomNameGenerator(),
-                  type: PipelineTypeEnum.STREAMING,
-                },
-              }),
-              uuid: 'Pipelines/NewPipelineMenu/streaming',
-            },
-          ]}
-          onClickCallback={closeNewPipelineMenu}
-          onClickOutside={closeNewPipelineMenu}
-          open={newPipelineMenuOpen}
-          parentRef={newPipelineMenuRef}
-          roundedStyle
-          uuid="pipelines/new_pipeline_menu"
-        >
-          <KeyboardShortcutButton
-            background={BUTTON_GRADIENT}
-            beforeElement={<Add size={2.5 * UNIT} />}
-            bold
-            inline
-            loading={isLoading}
-            onClick={e => {
-              e.preventDefault();
-              setNewPipelineMenuOpen(prevOpenState => !prevOpenState);
-            }}
-            uuid="pipelines/new_pipeline_button"
-          >
-            New pipeline
-          </KeyboardShortcutButton>
-        </FlyoutMenuWrapper>
+        <Toolbar
+          addButtonProps={{
+            isLoading,
+            label: 'New pipeline',
+            menuItems: [
+              {
+                label: () => 'Standard (batch)',
+                onClick: () => createPipeline({
+                  pipeline: {
+                    name: randomNameGenerator(),
+                  },
+                }),
+                uuid: 'Pipelines/NewPipelineMenu/standard',
+              },
+              {
+                label: () => 'Data integration',
+                onClick: () => createPipeline({
+                  pipeline: {
+                    name: randomNameGenerator(),
+                    type: PipelineTypeEnum.INTEGRATION,
+                  },
+                }),
+                uuid: 'Pipelines/NewPipelineMenu/integration',
+              },
+              {
+                label: () => 'Streaming',
+                onClick: () => createPipeline({
+                  pipeline: {
+                    name: randomNameGenerator(),
+                    type: PipelineTypeEnum.STREAMING,
+                  },
+                }),
+                uuid: 'Pipelines/NewPipelineMenu/streaming',
+              },
+            ],
+          }}
+        />
       }
       title="Pipelines"
       uuid="pipelines/index"
