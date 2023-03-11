@@ -17,4 +17,7 @@ def reload_all_repo_modules(content: str) -> None:
 
         if len(matches) >= 1:
             m1, m2 = matches[0]
-            importlib.reload(importlib.import_module(m1 or m2))
+            try:
+                importlib.reload(importlib.import_module(m1 or m2))
+            except Exception:
+                pass
