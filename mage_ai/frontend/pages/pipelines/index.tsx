@@ -8,6 +8,7 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import PipelineType, { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Toolbar from '@components/shared/Table/Toolbar';
@@ -133,124 +134,133 @@ function PipelineListPage() {
       title="Pipelines"
       uuid="pipelines/index"
     >
-      <Table
-        buildLinkProps={(rowIndex: number) => ({
-          as: `/pipelines/${pipelines[rowIndex].uuid}`,
-          href: '/pipelines/[pipeline]',
-        })}
-        columnFlex={[null, 1, 7, 1, 1, 1, null]}
-        columns={[
-          {
-            label: () => '',
-            uuid: 'action',
-          },
-          {
-            uuid: 'Status',
-          },
-          {
-            uuid: 'Name',
-          },
-          {
-            uuid: 'Type',
-          },
-          {
-            uuid: 'Blocks',
-          },
-          {
-            uuid: 'Triggers',
-          },
-          {
-            label: () => '',
-            uuid: 'view',
-          },
-        ]}
-        rows={pipelines.map((pipeline, idx) => {
-          const {
-            blocks,
-            name,
-            schedules,
-            type,
-            uuid,
-          } = pipeline;
-          const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
-          const schedulesCount = schedules.length;
-          const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+      {pipelines.length === 0
+        ?
+          <Spacing px ={3} py={1}>
+            <Text bold default monospace muted>
+              No pipelines available
+            </Text>
+          </Spacing>
+        :
+          <Table
+            buildLinkProps={(rowIndex: number) => ({
+              as: `/pipelines/${pipelines[rowIndex].uuid}`,
+              href: '/pipelines/[pipeline]',
+            })}
+            columnFlex={[null, 1, 7, 1, 1, 1, null]}
+            columns={[
+              {
+                label: () => '',
+                uuid: 'action',
+              },
+              {
+                uuid: 'Status',
+              },
+              {
+                uuid: 'Name',
+              },
+              {
+                uuid: 'Type',
+              },
+              {
+                uuid: 'Blocks',
+              },
+              {
+                uuid: 'Triggers',
+              },
+              {
+                label: () => '',
+                uuid: 'view',
+              },
+            ]}
+            rows={pipelines.map((pipeline, idx) => {
+              const {
+                blocks,
+                name,
+                schedules,
+                type,
+                uuid,
+              } = pipeline;
+              const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
+              const schedulesCount = schedules.length;
+              const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
 
-          return [
-            schedulesCount >= 1
-              ? (
-                <Button
-                iconOnly
-                  loading={!!pipelinesEditing[uuid]}
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={(e) => {
-                    pauseEvent(e);
-                    setPipelinesEditing(prev => ({
-                      ...prev,
-                      [uuid]: true,
-                    }));
-                    updatePipeline({
-                      ...pipeline,
-                      status: isActive
-                        ? ScheduleStatusEnum.INACTIVE
-                        : ScheduleStatusEnum.ACTIVE,
-                    });
-                  }}
+              return [
+                schedulesCount >= 1
+                  ? (
+                    <Button
+                    iconOnly
+                      loading={!!pipelinesEditing[uuid]}
+                      noBackground
+                      noBorder
+                      noPadding
+                      onClick={(e) => {
+                        pauseEvent(e);
+                        setPipelinesEditing(prev => ({
+                          ...prev,
+                          [uuid]: true,
+                        }));
+                        updatePipeline({
+                          ...pipeline,
+                          status: isActive
+                            ? ScheduleStatusEnum.INACTIVE
+                            : ScheduleStatusEnum.ACTIVE,
+                        });
+                      }}
+                    >
+                      {isActive
+                        ? <Pause muted size={2 * UNIT} />
+                        : <PlayButtonFilled default size={2 * UNIT} />
+                      }
+                    </Button>
+                  )
+                  : null
+                ,
+                <Text
+                  default={!isActive}
+                  key={`pipeline_status_${idx}`}
+                  monospace
+                  success={!!isActive}
                 >
                   {isActive
-                    ? <Pause muted size={2 * UNIT} />
-                    : <PlayButtonFilled default size={2 * UNIT} />
+                    ? ScheduleStatusEnum.ACTIVE
+                    : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
                   }
-                </Button>
-              )
-              : null
-            ,
-            <Text
-              default={!isActive}
-              key={`pipeline_status_${idx}`}
-              monospace
-              success={!!isActive}
-            >
-              {isActive
-                ? ScheduleStatusEnum.ACTIVE
-                : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
-              }
-            </Text>,
-            <Text
-              key={`pipeline_name_${idx}`}
-            >
-              {uuid}
-            </Text>,
-            <Text
-              key={`pipeline_type_${idx}`}
-            >
-              {type === PipelineTypeEnum.PYTHON ? 'Standard' : capitalize(type)}
-            </Text>,
-            <Text
-              default={blocksCount === 0}
-              key={`pipeline_block_count_${idx}`}
-              monospace
-            >
-              {blocksCount}
-            </Text>,
-            <Text
-              default={schedulesCount === 0}
-              key={`pipeline_trigger_count_${idx}`}
-              monospace
-            >
-              {schedulesCount}
-            </Text>,
-            <Flex
-              flex={1} justifyContent="flex-end"
-              key={`chevron_icon_${idx}`}
-            >
-              <ChevronRight default size={2 * UNIT} />
-            </Flex>,
-          ];
-        })}
-      />
+                </Text>,
+                <Text
+                  key={`pipeline_name_${idx}`}
+                >
+                  {uuid}
+                </Text>,
+                <Text
+                  key={`pipeline_type_${idx}`}
+                >
+                  {type === PipelineTypeEnum.PYTHON ? 'Standard' : capitalize(type)}
+                </Text>,
+                <Text
+                  default={blocksCount === 0}
+                  key={`pipeline_block_count_${idx}`}
+                  monospace
+                >
+                  {blocksCount}
+                </Text>,
+                <Text
+                  default={schedulesCount === 0}
+                  key={`pipeline_trigger_count_${idx}`}
+                  monospace
+                >
+                  {schedulesCount}
+                </Text>,
+                <Flex
+                  flex={1} justifyContent="flex-end"
+                  key={`chevron_icon_${idx}`}
+                >
+                  <ChevronRight default size={2 * UNIT} />
+                </Flex>,
+              ];
+            })}
+          />
+      }
     </Dashboard>
   );
 }
