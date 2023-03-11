@@ -34,6 +34,9 @@ type ToggleMenuProps = {
   parentRef: React.RefObject<any>;
   query: { [keyof: string]: string[] };
   setOpen: (open: boolean) => void;
+  toggleValueMapping?: {
+    [keyof: string]: string;
+  };
 };
 
 function ToggleMenu({
@@ -46,6 +49,7 @@ function ToggleMenu({
   parentRef,
   query,
   setOpen,
+  toggleValueMapping,
 }: ToggleMenuProps) {
   const router = useRouter();
   const [highlightedOptionKey, setHighlightedOptionKey] = useState<string>(null);
@@ -96,7 +100,7 @@ function ToggleMenu({
                 Object.entries((optionsState || options)?.[highlightedOptionKey] || {}).map(([value, enabled]) => (
                   <ToggleValueStyle key={value}>
                     <Text>
-                      {removeUnderscore(capitalize(value))}
+                      {toggleValueMapping?.[value] || removeUnderscore(capitalize(value))}
                     </Text>
                     <ToggleSwitch
                       checked={enabled}

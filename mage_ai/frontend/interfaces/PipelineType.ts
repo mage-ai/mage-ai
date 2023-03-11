@@ -11,6 +11,13 @@ export enum PipelineTypeEnum {
   STREAMING = 'streaming',
 }
 
+export const PIPELINE_TYPE_LABEL_MAPPING = {
+  [PipelineTypeEnum.INTEGRATION]: 'Integration',
+  [PipelineTypeEnum.PYTHON]: 'Standard',
+  [PipelineTypeEnum.PYSPARK]: 'PySpark',
+  [PipelineTypeEnum.STREAMING]: 'Streaming',
+};
+
 /*
 * These are not actual attributes on the Pipeline model. They are statuses
 * depending on the status of the pipeline schedules (triggers) for a pipeline.

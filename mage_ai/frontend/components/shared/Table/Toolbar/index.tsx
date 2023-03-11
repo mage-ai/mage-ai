@@ -16,10 +16,13 @@ type ToolbarProps = {
     label?: string;
     menuItems?: any[];
     isLoading?: boolean;
-  }
+  };
   filterOptions?: {
     [keyof: string]: string[];
-  }
+  };
+  filterValueLabelMapping?: {
+    [keyof: string]: string;
+  };
   groupings?: string[];
   query?: {
     [keyof: string]: string[];
@@ -29,6 +32,7 @@ type ToolbarProps = {
 function Toolbar({
   addButtonProps,
   filterOptions,
+  filterValueLabelMapping,
   groupings,
   query = {},
 }: ToolbarProps) {
@@ -100,6 +104,7 @@ function Toolbar({
       parentRef={filterButtonMenuRef}
       query={query}
       setOpen={setFilterButtonMenuOpen}
+      toggleValueMapping={filterValueLabelMapping}
     >
       <KeyboardShortcutButton
         beforeElement={<Filter size={2 * UNIT} />}
@@ -117,6 +122,7 @@ function Toolbar({
     closeFilterButtonMenu,
     filterButtonMenuOpen,
     filterOptionsEnabledMapping,
+    filterValueLabelMapping,
     query,
   ]);
 

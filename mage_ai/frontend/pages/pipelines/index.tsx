@@ -6,7 +6,11 @@ import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
-import PipelineType, { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
+import PipelineType, {
+  PipelineStatusEnum,
+  PipelineTypeEnum,
+  PIPELINE_TYPE_LABEL_MAPPING,
+} from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -128,6 +132,7 @@ function PipelineListPage() {
             status: Object.values(PipelineStatusEnum),
             type: Object.values(PipelineTypeEnum),
           }}
+          filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
           query={query}
         />
       }
