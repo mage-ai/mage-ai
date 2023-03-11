@@ -9,6 +9,9 @@ from typing import IO, Mapping, Union
 import numpy as np
 
 
+QUERY_ROW_LIMIT = 10_000_000
+
+
 class MySQL(BaseSQL):
     def __init__(
         self,
@@ -133,3 +136,14 @@ class MySQL(BaseSQL):
             print(f'Invalid datatype provided: {dtype}')
 
         return 'CHAR(255)'
+
+    def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
+        query = query.strip(';')
+
+        return f"""
+SELECT *
+FROM (
+    {query}
+) a
+LIMIT {limit}
+"""
