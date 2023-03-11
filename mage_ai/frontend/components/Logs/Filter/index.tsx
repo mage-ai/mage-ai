@@ -1,5 +1,5 @@
 import { ThemeContext } from 'styled-components';
-import { useCallback, useMemo, useContext } from 'react';
+import { useMemo, useContext } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -11,15 +11,13 @@ import Text from '@oracle/elements/Text';
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { FilterRowStyle } from './index.style';
-import { LIMIT_PARAM, LOG_FILE_COUNT_INTERVAL, OFFSET_PARAM } from '../Toolbar/constants';
 import { LogLevelEnum, LOG_LEVELS } from '@interfaces/LogType';
 import { LogLevelIndicatorStyle } from '../index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { goToWithQuery } from '@utils/routing';
-import { remove } from '@utils/array';
+import { goToWithFilters } from '@utils/routing';
 
 export type FilterQueryType = {
   'block_run_id[]'?: string[];
@@ -42,45 +40,6 @@ function Filter({
   query,
 }: FilterProps) {
   const themeContext = useContext(ThemeContext);
-  const goTo = useCallback((
-    q1: any,
-    { isList, resetLimitParams }: { isList: boolean, resetLimitParams?: boolean },
-  ) => {
-    let q2 = { ...query };
-
-    if (isList) {
-      Object.entries(q1).forEach(([k1, v]) => {
-        const value = String(v);
-        const k2 = `${k1}[]`;
-        let arr = q2[k2];
-        if (arr && Array.isArray(arr)) {
-          arr = arr.map(String);
-          if (arr.includes(value)) {
-            q2[k2] = remove(arr, val => val === value);
-          } else {
-            q2[k2] = arr.concat(value);
-          }
-        } else {
-          q2[k2] = [value];
-        }
-      });
-    } else {
-      q2 = {
-        ...q2,
-        ...q1,
-      };
-    }
-
-    if (resetLimitParams) {
-      q2[LIMIT_PARAM] = LOG_FILE_COUNT_INTERVAL;
-      q2[OFFSET_PARAM] = 0;
-    }
-
-    goToWithQuery(q2);
-  }, [
-    query,
-  ]);
-
   const queryLevels: string[] = useMemo(() => query['level[]'], [query]);
   const queryBlockTypes: string[] = useMemo(() => query['block_type[]'], [query]);
   const queryBlockUUIDs: string[] = useMemo(() => query['block_uuid[]'], [query]);
@@ -105,7 +64,7 @@ function Filter({
               noBackground
               noBorder
               noPadding
-              onClick={() => goTo({ level }, { isList: true })}
+              onClick={() => goToWithFilters(query, { level }, { isList: true })}
             >
               <FilterRowStyle>
                 <FlexContainer alignItems="center">
@@ -141,7 +100,7 @@ function Filter({
               noBackground
               noBorder
               noPadding
-              onClick={() => goTo({ block_type: blockType }, { isList: true })}
+              onClick={() => goToWithFilters(query, { block_type: blockType }, { isList: true })}
             >
               <FilterRowStyle>
                 <FlexContainer alignItems="center">
@@ -179,7 +138,8 @@ function Filter({
               noBackground
               noBorder
               noPadding
-              onClick={() => goTo(
+              onClick={() => goToWithFilters(
+                query,
                 { block_uuid: block.uuid },
                 { isList: true, resetLimitParams: true },
               )}
@@ -224,7 +184,7 @@ function Filter({
                 noBorder
                 noPadding
                 key={`pipeline-schedule-${pipelineScheduleID}`}
-                onClick={() => goTo({ pipeline_schedule_id: pipelineScheduleID }, { isList: true })}
+                onClick={() => goToWithFilters(query, { pipeline_schedule_id: pipelineScheduleID }, { isList: true })}
               >
                 <FilterRowStyle>
                   <FlexContainer alignItems="center">
@@ -258,7 +218,7 @@ function Filter({
                 noBackground
                 noBorder
                 noPadding
-                onClick={() => goTo({ pipeline_run_id: id }, { isList: true })}
+                onClick={() => goToWithFilters(query, { pipeline_run_id: id }, { isList: true })}
               >
                 <FilterRowStyle>
                   <FlexContainer alignItems="center">
@@ -292,7 +252,7 @@ function Filter({
                 noBackground
                 noBorder
                 noPadding
-                onClick={() => goTo({ block_run_id: id }, { isList: true })}
+                onClick={() => goToWithFilters(query, { block_run_id: id }, { isList: true })}
               >
                 <FilterRowStyle>
                   <FlexContainer alignItems="center">
