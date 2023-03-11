@@ -241,6 +241,12 @@ function GreatExpectations({
         <Text default>
           Add an extension block to start writing expectations for blocks in the current pipeline.
         </Text>
+        <Spacing mt={1}>
+          <Text default>
+            When a block in your pipeline runs, it’ll run any tests you define in its code.
+            All associated extension blocks will also run during that phase.
+          </Text>
+        </Spacing>
       </Spacing>
 
       {codeBlocks}

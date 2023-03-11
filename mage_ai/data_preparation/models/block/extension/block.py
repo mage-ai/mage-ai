@@ -29,11 +29,13 @@ class ExtensionBlock(Block):
                 def func(*args, **kwargs):
                     if EXTENSION_UUID_GREAT_EXPECTATIONS == extension_name:
                         ge = GreatExpectations(self)
-                        validators = ge.build_validators(*args, **kwargs)
+                        validators_and_uuids = ge.build_validators(*args, **kwargs)
+                        validators = [t[0] for t in validators_and_uuids]
                         function(*validators)
 
                         validation_results = []
-                        for validator in validators:
+                        for validator, uuid in validators_and_uuids:
+                            print(f'Validating expectations for block {uuid}.')
                             validation_result = validator.validate()
                             for result in validation_result.results:
                                 if not result.get('success', False):

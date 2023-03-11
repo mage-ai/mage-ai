@@ -2,7 +2,7 @@ import { ThemeContext } from 'styled-components';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ErrorsType from '@interfaces/ErrorsType';
 import Checkbox from '@oracle/elements/Checkbox';
@@ -101,18 +101,28 @@ function CodeBlockExtraContent({
 
   const blocksFiltered = useMemo(() => blocks?.filter(({
     name,
+    type,
     uuid,
-  }) => name?.toLowerCase().includes(blockNameFilter?.toLowerCase())
+  }) => (
+    name?.toLowerCase().includes(blockNameFilter?.toLowerCase())
     || uuid?.toLowerCase().includes(blockNameFilter?.toLowerCase())
+  ) && [
+    BlockTypeEnum.DATA_EXPORTER,
+    BlockTypeEnum.DATA_LOADER,
+    BlockTypeEnum.DBT,
+    BlockTypeEnum.TRANSFORMER,
+  ].includes(type),
   ) || [], [
     blockNameFilter,
     blocks,
   ]);
+
   const blockOptions = useMemo(() => {
     const arr = [];
 
     blocksFiltered?.forEach(({
       color: colorInit,
+      language,
       type,
       uuid,
     }, idx: number) => {
@@ -129,6 +139,7 @@ function CodeBlockExtraContent({
       }
 
       const checked: boolean = !!upstreamBlocksByUUID?.[uuid];
+      const disabled: boolean = ![BlockLanguageEnum.PYTHON].includes(language);
 
       arr.push(
         <Spacing
@@ -149,26 +160,34 @@ function CodeBlockExtraContent({
 
               <Spacing mr={1} />
 
-              <Text>
+              <Text monospace muted={disabled} small>
                 {uuid}
               </Text>
             </Flex>
 
-            <Checkbox
-              checked={checked}
-              onClick={() => {
-                setUpstreamBlocksByUUID((prev) => {
-                  const d = { ...prev };
-                  if (checked) {
-                    delete d[uuid];
-                  } else {
-                    d[uuid] = uuid;
-                  }
+            {disabled && (
+              <Text inline monospace muted small>
+                {language} support coming soon
+              </Text>
+            )}
+            {!disabled && (
+              <Checkbox
+                checked={!disabled && checked}
+                disabled={disabled}
+                onClick={() => {
+                  setUpstreamBlocksByUUID((prev) => {
+                    const d = { ...prev };
+                    if (checked) {
+                      delete d[uuid];
+                    } else {
+                      d[uuid] = uuid;
+                    }
 
-                  return d;
-                });
-              }}
-            />
+                    return d;
+                  });
+                }}
+              />
+            )}
           </FlexContainer>
         </Spacing>,
       );
@@ -229,10 +248,10 @@ function CodeBlockExtraContent({
         )}
       </ClickOutside>
 
-      {block?.upstream_blocks?.length >= 1 && (
+      {!optionsVisible && block?.upstream_blocks?.length >= 1 && (
         <Spacing pb={1} pr={1}>
           <Spacing mt={1} pl={1}>
-            <Text small muted>
+            <Text muted small>
               Click a block name below to run expectations on it.
             </Text>
           </Spacing>
@@ -272,7 +291,9 @@ function CodeBlockExtraContent({
                     }}
                     small
                   >
-                    {uuid}
+                    <Text monospace small>
+                      {uuid}
+                    </Text>
                   </Button>
                 </Spacing>
               );

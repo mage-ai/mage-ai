@@ -235,6 +235,9 @@ def add_execution_code(
 
     if extension_uuid:
         extension_uuid = f"'{extension_uuid}'"
+    if upstream_blocks:
+        upstream_blocks = ', '.join([f"'{u}'" for u in upstream_blocks])
+        upstream_blocks = f'[{upstream_blocks}]'
 
     run_settings_json = json.dumps(run_settings or {})
 
@@ -277,6 +280,11 @@ def execute_custom_code():
         repo_config={repo_config},
     )
     block = pipeline.get_block(block_uuid, extension_uuid={extension_uuid}, widget={widget})
+
+    upstream_blocks = {upstream_blocks}
+    if upstream_blocks and len(upstream_blocks) >= 1:
+        blocks = pipeline.get_blocks({upstream_blocks}, widget={widget})
+        block.upstream_blocks = blocks
 
     code = r\'\'\'
 {escaped_code}
