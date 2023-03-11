@@ -37,9 +37,14 @@ class ExtensionBlock(Block):
                         for validator, uuid in validators_and_uuids:
                             validation_result = validator.validate()
                             for result in validation_result.results:
-                                if not result.get('success', False):
+                                if result.get('success', False):
+                                    print(
+                                        f'Expectations from extension {self.uuid} for ' +
+                                        f'block {uuid} succeeded.',
+                                    )
+                                else:
                                     raise Exception(
-                                        f'Expectation from extension {self.uuid} for ' +
+                                        f'Expectations from extension {self.uuid} for ' +
                                         f'block {uuid} failed:\n{result}\n',
                                     )
 

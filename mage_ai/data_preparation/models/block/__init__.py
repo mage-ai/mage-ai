@@ -1519,14 +1519,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if tests_passed != len(test_functions):
             raise Exception(f'Failed to pass tests for block {self.uuid}')
 
-        handle_run_tests(
-            self,
-            dynamic_block_uuid=dynamic_block_uuid,
-            execution_partition=execution_partition,
-            global_vars=global_vars,
-            logger=logger,
-            logging_tags=logging_tags,
-        )
+        with redirect_stdout(stdout):
+            handle_run_tests(
+                self,
+                dynamic_block_uuid=dynamic_block_uuid,
+                execution_partition=execution_partition,
+                global_vars=global_vars,
+                logger=logger,
+                logging_tags=logging_tags,
+            )
 
     def analyze_outputs(self, variable_mapping, shape_only: bool = False):
         if self.pipeline is None:
