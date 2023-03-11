@@ -19,9 +19,7 @@ import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 
-export type ExtensionsProps = {
-
-} & ExtensionProps;
+export type ExtensionsProps = {} & ExtensionProps;
 
 function Extensions({
   pipeline,

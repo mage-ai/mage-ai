@@ -834,7 +834,13 @@ class Pipeline:
     def get_executable_blocks(self):
         return [b for b in self.blocks_by_uuid.values() if b.executable]
 
-    def has_block(self, block_uuid):
+    def has_block(self, block_uuid: str, extension_uuid: str = None):
+        if extension_uuid:
+            return self.extensions and \
+                extension_uuid in self.extensions and \
+                'blocks_by_uuid' in self.extensions[extension_uuid] and \
+                block_uuid in self.extensions[extension_uuid]['blocks_by_uuid']
+
         return block_uuid in self.blocks_by_uuid
 
     def update_block(self, block, upstream_block_uuids=None, widget=False):
@@ -910,7 +916,7 @@ class Pipeline:
 
         return block
 
-    def update_block_uuid(self, block, old_uuid):
+    def update_block_uuid(self, block: str, old_uuid: str, widget: bool = False):
         new_uuid = block.uuid
         if new_uuid == old_uuid:
             return
@@ -920,7 +926,12 @@ class Pipeline:
                 old_variables_path,
                 Variable.dir_path(self.dir_path, new_uuid),
             )
-        if BlockType.EXTENSION == block.type:
+
+        if widget and old_uuid in self.widgets_by_uuid:
+            self.widgets_by_uuid = {
+                new_uuid if k == old_uuid else k: v for k, v in self.widgets_by_uuid.items()
+            }
+        elif BlockType.EXTENSION == block.type:
             blocks_by_uuid = self.extensions[block.extension_uuid].get('blocks_by_uuid', {})
             if old_uuid in blocks_by_uuid:
                 self.extensions[block.extension_uuid]['blocks_by_uuid'] = {

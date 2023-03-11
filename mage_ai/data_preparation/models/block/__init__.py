@@ -454,7 +454,7 @@ class Block:
             file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
             file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
             if os.path.exists(file_path):
-                if pipeline is not None and pipeline.has_block(uuid):
+                if pipeline is not None and pipeline.has_block(uuid, extension_uuid=extension_uuid):
                     raise Exception(f'Block {uuid} already exists. Please use a different name.')
             else:
                 load_template(
@@ -1855,10 +1855,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self.uuid = new_uuid
         new_file_path = self.file_path
         if self.pipeline is not None:
-            if self.pipeline.has_block(new_uuid):
+            if self.pipeline.has_block(new_uuid, extension_uuid=self.extension_uuid):
                 raise Exception(
                     f'Block {new_uuid} already exists in pipeline. Please use a different name.'
                 )
+
         if os.path.exists(new_file_path):
             raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
 
@@ -1868,7 +1869,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         os.rename(old_file_path, new_file_path)
         if self.pipeline is not None:
-            self.pipeline.update_block_uuid(self, old_uuid)
+            self.pipeline.update_block_uuid(self, old_uuid, widget=BlockType.CHART == self.type)
 
     def __update_pipeline_block(self, widget=False):
         if self.pipeline is None:

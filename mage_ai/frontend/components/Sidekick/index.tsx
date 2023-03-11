@@ -485,6 +485,7 @@ function Sidekick({
 
           {ViewKeyEnum.EXTENSIONS === activeView && (
             <Extensions
+              addNewBlockAtIndex={addNewBlockAtIndex}
               autocompleteItems={autocompleteItems}
               blockRefs={blockRefs}
               blocks={blocks}

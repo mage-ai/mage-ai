@@ -1,5 +1,6 @@
 import {
   createRef,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -9,14 +10,23 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import ExtensionOptionType, { ExtensionOptionTemplateType } from '@interfaces/ExtensionOptionType';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
-import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { Add } from '@oracle/icons';
+import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { ExtensionProps } from '../constants';
+import {
+  KEY_CODES_SYSTEM,
+  KEY_CODE_CONTROL,
+  KEY_CODE_ESCAPE,
+  KEY_CODE_META,
+  KEY_CODE_S,
+} from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { useKeyboardContext } from '@context/Keyboard';
 
 type GreatExpectationsProps = {
   extensionOption: ExtensionOptionType;
@@ -54,14 +64,21 @@ function GreatExpectations({
   const templates: ExtensionOptionTemplateType[] = useMemo(() => extensionOption?.templates || [], [
     extensionOption,
   ]);
-  // const blocks = useMemo(() => pipeline?.blocks || [], [pipeline]);
-  // const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const extension = useMemo(() => extensions?.[extensionUUID], [
     extensionUUID,
     extensions,
   ]);
   const extensionBlocks = useMemo(() => extension?.blocks || [], [extension]);
+  const extensionBlocksByUUID = useMemo(() => indexBy(extensionBlocks, ({ uuid }) => uuid), [
+    extensionBlocks,
+  ]);
+  const isSelected = useMemo(() => extensionUUID === selectedBlock?.extension_uuid
+    && extensionBlocksByUUID[selectedBlock?.uuid], [
+    extensionBlocksByUUID,
+    extensionUUID,
+    selectedBlock,
+  ]);
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -77,7 +94,11 @@ function GreatExpectations({
     },
   }), {}), [runningBlocks]);
 
-  const codeBlocks = useMemo(() => extensionBlocks.map((block: BlockType, idx: number) => {
+  const codeBlocks = useMemo(() => extensionBlocks.map((blockInit: BlockType, idx: number) => {
+    const block = {
+      ...blockInit,
+      extension_uuid: extensionUUID,
+    };
     const {
       type,
       uuid,
@@ -167,6 +188,37 @@ function GreatExpectations({
     setTextareaFocused,
     textareaFocused,
   ]);
+
+  const uuidKeyboard = 'Extensions/GreatExpectations/index';
+  const {
+    disableGlobalKeyboardShortcuts,
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping) => {
+      if (disableGlobalKeyboardShortcuts || !isSelected) {
+        return;
+      }
+
+      if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
+        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
+      ) {
+        event.preventDefault();
+        savePipelineContent();
+      }
+    },
+    [
+      isSelected,
+      savePipelineContent,
+    ],
+  );
 
   return (
     <>

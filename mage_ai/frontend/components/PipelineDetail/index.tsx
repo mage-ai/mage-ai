@@ -220,17 +220,19 @@ function PipelineDetail({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (disableShortcuts || disableGlobalKeyboardShortcuts) {
-        return;
-      }
-
       if (pipelineContentTouched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
         event.preventDefault();
         const warning = 'You have changes that are unsaved. Click cancel and save your changes before reloading page.';
         if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
           location.reload();
         }
-      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
+      }
+
+      if (disableShortcuts || disableGlobalKeyboardShortcuts) {
+        return;
+      }
+
+      if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
         || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
       ) {
         event.preventDefault();
