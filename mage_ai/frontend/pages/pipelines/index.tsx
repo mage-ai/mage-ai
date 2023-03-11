@@ -13,6 +13,7 @@ import PipelineType, {
 } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Toolbar from '@components/shared/Table/Toolbar';
@@ -139,14 +140,19 @@ function PipelineListPage() {
       title="Pipelines"
       uuid="pipelines/index"
     >
-      {pipelines.length === 0
-        ?
+      {pipelines?.length === 0
+        ? (
           <Spacing px ={3} py={1}>
-            <Text bold default monospace muted>
-              No pipelines available
-            </Text>
+            {!data
+              ?
+                <Spinner inverted large />
+              :
+                <Text bold default monospace muted>
+                  No pipelines available
+                </Text>
+            }
           </Spacing>
-        :
+        ): (
           <Table
             buildLinkProps={(rowIndex: number) => ({
               as: `/pipelines/${pipelines[rowIndex].uuid}`,
@@ -265,7 +271,7 @@ function PipelineListPage() {
               ];
             })}
           />
-      }
+      )}
     </Dashboard>
   );
 }
