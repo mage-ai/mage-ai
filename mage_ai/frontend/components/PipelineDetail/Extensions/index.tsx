@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import ExtensionOptionType, { ExtensionTypeEnum } from '@interfaces/ExtensionOptionType';
 import Flex from '@oracle/components/Flex';
@@ -25,12 +26,14 @@ function Extensions({
   pipeline,
   ...props
 }: ExtensionsProps) {
+  const router = useRouter();
+
   const { data } = api.extension_options.list();
   const extensionOptions: ExtensionOptionType[] = useMemo(() => data?.extension_options || [], [data]);
   const extensionOptionsByUUID = useMemo(() => indexBy(extensionOptions, ({ uuid }) => uuid), [
     extensionOptions,
   ]);
-  const { extension: selectedExtensionUUID } = queryFromUrl();
+  const [selectedExtensionUUID, setSelectedExtensionUUID] = useState<string>(null);
   const extensionOption = useMemo(() => extensionOptionsByUUID[selectedExtensionUUID], [
     extensionOptionsByUUID,
     selectedExtensionUUID,
@@ -43,6 +46,10 @@ function Extensions({
     pipeline,
     props,
   ]);
+
+  useEffect(() => {
+    setSelectedExtensionUUID(queryFromUrl()?.extension);
+  }, [router.asPath]);
 
   return (
     <>

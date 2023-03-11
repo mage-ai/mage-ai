@@ -35,11 +35,13 @@ class ExtensionBlock(Block):
 
                         validation_results = []
                         for validator, uuid in validators_and_uuids:
-                            print(f'Validating expectations for block {uuid}.')
                             validation_result = validator.validate()
                             for result in validation_result.results:
                                 if not result.get('success', False):
-                                    raise Exception(f'Expectation failed:\n{result}\n')
+                                    raise Exception(
+                                        f'Expectation from extension {self.uuid} for ' +
+                                        f'block {uuid} failed:\n{result}\n',
+                                    )
 
                             validation_results.append(validation_result)
 

@@ -5,6 +5,7 @@ from logging import Logger
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
 )
+from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     fetch_input_variables,
@@ -1517,6 +1518,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 print(message)
         if tests_passed != len(test_functions):
             raise Exception(f'Failed to pass tests for block {self.uuid}')
+
+        handle_run_tests(
+            self,
+            dynamic_block_uuid=dynamic_block_uuid,
+            execution_partition=execution_partition,
+            global_vars=global_vars,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
 
     def analyze_outputs(self, variable_mapping, shape_only: bool = False):
         if self.pipeline is None:
