@@ -131,8 +131,10 @@ type CodeBlockProps = {
   dataProviders: DataProviderType[];
   defaultValue?: string;
   executionState: ExecutionStateEnum;
+  extraContent?: any;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  hideRunButton?: boolean;
   mainContainerRef?: any;
   mainContainerWidth: number;
   messages: KernelOutputType[];
@@ -167,7 +169,7 @@ type CodeBlockProps = {
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
-function CodeBlockProps({
+function CodeBlock({
   addNewBlock,
   addNewBlockMenuOpenIdx,
   addWidget,
@@ -180,9 +182,11 @@ function CodeBlockProps({
   defaultValue = '',
   deleteBlock,
   executionState,
+  extraContent,
   fetchFileTree,
   fetchPipeline,
   height,
+  hideRunButton,
   interruptKernel,
   mainContainerRef,
   mainContainerWidth,
@@ -608,7 +612,7 @@ function CodeBlockProps({
             },
           });
         }
-      } else if (selected) {
+      } else if (selected && !hideRunButton) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
         ) {
@@ -627,6 +631,7 @@ function CodeBlockProps({
     [
       addNewBlock,
       block,
+      hideRunButton,
       isEditingBlock,
       newBlockUuid,
       runBlockAndTrack,
@@ -699,10 +704,12 @@ function CodeBlockProps({
         setTextareaFocused={setTextareaFocused}
         shortcuts={[
           (monaco, editor) => executeCode(monaco, () => {
-            runBlockAndTrack({
-              block,
-              code: editor.getValue(),
-            });
+            if (!hideRunButton) {
+              runBlockAndTrack({
+                block,
+                code: editor.getValue(),
+              });
+            }
           }),
         ]}
         textareaFocused={textareaFocused}
@@ -751,6 +758,8 @@ function CodeBlockProps({
     dbtProjectName,
     hasCallback,
     height,
+    hideRunButton,
+    onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
     runBlockAndTrack,
@@ -1083,7 +1092,7 @@ function CodeBlockProps({
             fetchPipeline={fetchPipeline}
             interruptKernel={interruptKernel}
             pipeline={pipeline}
-            runBlock={runBlockAndTrack}
+            runBlock={hideRunButton ? null : runBlockAndTrack}
             savePipelineContent={savePipelineContent}
             setErrors={setErrors}
             setOutputCollapsed={setOutputCollapsed}
@@ -1710,6 +1719,10 @@ function CodeBlockProps({
             </>
           )}
 
+          {extraContent && React.cloneElement(extraContent, {
+            runBlockAndTrack,
+          })}
+
           {block?.error && (
             <Spacing p={PADDING_UNITS}>
               <Text bold danger>
@@ -1800,4 +1813,4 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
   );
 }
 
-export default React.forwardRef(CodeBlockProps);
+export default React.forwardRef(CodeBlock);

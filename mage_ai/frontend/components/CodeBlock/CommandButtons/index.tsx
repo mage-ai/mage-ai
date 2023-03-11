@@ -59,7 +59,7 @@ type CommandButtonsProps = {
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   pipeline?: PipelineType;
-  runBlock: (payload: {
+  runBlock?: (payload: {
     block: BlockType;
     code?: string;
     disableReset?: boolean;
@@ -175,7 +175,7 @@ function CommandButtons({
         />
       )}
 
-      {(!isInProgress && !isStreamingPipeline) &&  (
+      {runBlock && (!isInProgress && !isStreamingPipeline) &&  (
         <>
           <Tooltip
             appearBefore

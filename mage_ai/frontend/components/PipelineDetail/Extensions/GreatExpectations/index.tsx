@@ -9,6 +9,7 @@ import {
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
+import CodeBlockExtraContent from './CodeBlockExtraContent';
 import ExtensionOptionType, { ExtensionOptionTemplateType } from '@interfaces/ExtensionOptionType';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -37,6 +38,7 @@ function GreatExpectations({
   autocompleteItems,
   blockRefs,
   blocks,
+  blocksInNotebook,
   deleteBlock,
   extensionOption,
   fetchFileTree,
@@ -51,6 +53,7 @@ function GreatExpectations({
   savePipelineContent,
   selectedBlock,
   setAnyInputFocused,
+  setErrors,
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
@@ -133,8 +136,18 @@ function GreatExpectations({
             setAnyInputFocused(false);
           }}
           executionState={executionState}
+          extraContent={(
+            <CodeBlockExtraContent
+              block={block}
+              blocks={blocksInNotebook}
+              onUpdateCallback={fetchPipeline}
+              pipeline={pipeline}
+              setErrors
+            />
+          )}
           fetchFileTree={fetchFileTree}
           fetchPipeline={fetchPipeline}
+          hideRunButton
           interruptKernel={interruptKernel}
           // mainContainerRef={mainContainerRef}
           // mainContainerWidth={mainContainerWidth}
@@ -154,7 +167,7 @@ function GreatExpectations({
           setAnyInputFocused={setAnyInputFocused}
           // setCreatingNewDBTModel={setCreatingNewDBTModel}
           // setEditingBlock={setEditingBlock}
-          // setErrors={setErrors}
+          setErrors={setErrors}
           // setOutputBlocks={setOutputBlocks}
           // setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
           setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
@@ -168,6 +181,7 @@ function GreatExpectations({
     autocompleteItems,
     blockRefs,
     blocks,
+    blocksInNotebook,
     deleteBlock,
     extensionBlocks,
     extensionUUID,
@@ -184,6 +198,7 @@ function GreatExpectations({
     savePipelineContent,
     selectedBlock,
     setAnyInputFocused,
+    setErrors,
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,

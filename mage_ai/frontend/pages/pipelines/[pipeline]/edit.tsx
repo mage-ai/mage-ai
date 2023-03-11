@@ -1466,19 +1466,25 @@ function PipelineDetailPage({
       runTests = false,
     } = payload;
 
-    const { uuid } = block;
+    const {
+      extension_uuid: extensionUUID,
+      upstream_blocks: upstreamBlocks,
+      uuid,
+    } = block;
     const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
     if (!isAlreadyRunning || ignoreAlreadyRunning) {
       sendMessage(JSON.stringify({
         ...sharedWebsocketData,
         code,
+        extension_uuid: extensionUUID,
         pipeline_uuid: pipeline?.uuid,
         run_downstream: runDownstream,
         run_settings: runSettings,
         run_tests: runTests,
         run_upstream: runUpstream,
         type: block.type,
+        upstream_blocks: upstreamBlocks,
         uuid,
       }));
 
@@ -1545,6 +1551,7 @@ function PipelineDetailPage({
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
+      blocksInNotebook={blocksInNotebook}
       cancelPipeline={cancelPipeline}
       chartRefs={chartRefs}
       deleteBlock={deleteBlock}
@@ -1591,6 +1598,7 @@ function PipelineDetailPage({
     autocompleteItems,
     blockRefs,
     blocks,
+    blocksInNotebook,
     cancelPipeline,
     deleteBlock,
     deleteWidget,

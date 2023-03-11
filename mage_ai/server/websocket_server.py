@@ -305,16 +305,18 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_type = message.get('type')
         block_uuid = message.get('uuid')
         custom_code = message.get('code')
+        extension_uuid = message.get('extension_uuid')
         run_downstream = message.get('run_downstream')
+        run_settings = message.get('run_settings')
         run_tests = message.get('run_tests')
         run_upstream = message.get('run_upstream')
-        run_settings = message.get('run_settings')
+        upstream_blocks = message.get('upstream_blocks')
 
         pipeline_uuid = pipeline.uuid
 
         widget = BlockType.CHART == block_type
 
-        block = pipeline.get_block(block_uuid, widget=widget)
+        block = pipeline.get_block(block_uuid, extension_uuid=extension_uuid, widget=widget)
 
         reload_all_repo_modules(custom_code)
 
@@ -350,14 +352,16 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     global_vars,
                     analyze_outputs=False,
                     block_type=block_type,
+                    extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(remote=remote_execution),
+                    run_settings=run_settings,
                     run_tests=run_tests,
                     run_upstream=run_upstream,
                     update_status=False if remote_execution else True,
+                    upstream_blocks=upstream_blocks,
                     widget=widget,
-                    run_settings=run_settings,
                 )
 
             msg_id = client.execute(add_internal_output_info(code))

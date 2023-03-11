@@ -192,6 +192,12 @@ export function useListWithParent(
   };
 }
 
-export function useUpdate(ctx: any, resource: string, id: string, body: object) {
-  return buildFetch(buildUrl(resource, id), { ctx, body, method: PUT });
+export function useUpdate(
+  ctx: any,
+  resource: string,
+  id: string,
+  body: object,
+  query: object = {},
+) {
+  return buildFetch(buildUrl(resource, id, null, null, query), { body, ctx, method: PUT });
 }

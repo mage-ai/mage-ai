@@ -78,6 +78,7 @@ export type SidekickProps = {
     [current: string]: any;
   };
   blocks: BlockType[];
+  blocksInNotebook: BlockType[];
   cancelPipeline: () => void;
   editingBlock: {
     upstreamBlocks: {
@@ -118,6 +119,7 @@ function Sidekick({
   autocompleteItems,
   blockRefs,
   blocks,
+  blocksInNotebook,
   cancelPipeline,
   chartRefs,
   deleteBlock,
@@ -489,6 +491,7 @@ function Sidekick({
               autocompleteItems={autocompleteItems}
               blockRefs={blockRefs}
               blocks={blocks}
+              blocksInNotebook={blocksInNotebook}
               deleteBlock={deleteBlock}
               fetchFileTree={fetchFileTree}
               fetchPipeline={fetchPipeline}
@@ -502,6 +505,7 @@ function Sidekick({
               savePipelineContent={savePipelineContent}
               selectedBlock={selectedBlock}
               setAnyInputFocused={setAnyInputFocused}
+              setErrors={setErrors}
               setSelectedBlock={setSelectedBlock}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={textareaFocused}

@@ -220,16 +220,21 @@ def add_execution_code(
     global_vars,
     analyze_outputs: bool = False,
     block_type: BlockType = None,
+    extension_uuid: str = None,
     kernel_name: str = None,
     pipeline_config: Dict = None,
     repo_config: Dict = None,
+    run_settings: Dict = None,
     run_tests: bool = False,
     run_upstream: bool = False,
     update_status: bool = True,
+    upstream_blocks: List[str] = None,
     widget: bool = False,
-    run_settings: Dict = None,
 ) -> str:
     escaped_code = code.replace("'''", "\"\"\"")
+
+    if extension_uuid:
+        extension_uuid = f"'{extension_uuid}'"
 
     run_settings_json = json.dumps(run_settings or {})
 
@@ -271,7 +276,7 @@ def execute_custom_code():
         config={pipeline_config},
         repo_config={repo_config},
     )
-    block = pipeline.get_block(block_uuid, widget={widget})
+    block = pipeline.get_block(block_uuid, extension_uuid={extension_uuid}, widget={widget})
 
     code = r\'\'\'
 {escaped_code}
