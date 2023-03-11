@@ -19,8 +19,22 @@ class PipelineResource(BaseResource):
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:
             include_schedules = include_schedules[0]
-        pipeline_types = query.get('type[]', [])
-        pipeline_statuses = query.get('status[]', [])
+
+        pipeline_types = query.get('type[]', [None])
+        if pipeline_types:
+            pipeline_types = pipeline_types[0]
+        if pipeline_types:
+            pipeline_types = pipeline_types.split(',')
+        else:
+            pipeline_types = []
+
+        pipeline_statuses = query.get('status[]', [None])
+        if pipeline_statuses:
+            pipeline_statuses = pipeline_statuses[0]
+        if pipeline_statuses:
+            pipeline_statuses = pipeline_statuses.split(',')
+        else:
+            pipeline_statuses = []
 
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
@@ -69,7 +83,11 @@ class PipelineResource(BaseResource):
             pipeline.schedules = schedules
 
             if pipeline_statuses and (
-                any(s.status in pipeline_statuses for s in pipeline.schedules) or
+                ('active' in pipeline_statuses and
+                    any(s.status == 'active' for s in pipeline.schedules)) or
+                ('inactive' in pipeline_statuses and
+                    len(pipeline.schedules) > 0 and
+                    all(s.status == 'inactive' for s in pipeline.schedules)) or
                 ('no_schedules' in pipeline_statuses and len(pipeline.schedules) == 0)
             ):
                 filtered_pipelines.append(pipeline)
