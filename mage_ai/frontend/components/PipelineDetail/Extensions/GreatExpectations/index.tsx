@@ -7,6 +7,7 @@ import {
  } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
 import ExtensionOptionType, { ExtensionOptionTemplateType } from '@interfaces/ExtensionOptionType';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -17,12 +18,11 @@ import { Add } from '@oracle/icons';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { ExtensionProps } from '../constants';
 import {
-  KEY_CODES_SYSTEM,
   KEY_CODE_CONTROL,
-  KEY_CODE_ESCAPE,
   KEY_CODE_META,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { ICON_SIZE, IconContainerStyle } from '../../AddNewBlocks/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -231,44 +231,51 @@ function GreatExpectations({
       {codeBlocks}
 
       <Spacing mt={PADDING_UNITS}>
-        <FlyoutMenuWrapper
-          disableKeyboardShortcuts
-          items={templates?.map(({
-            description,
-            name,
-            path,
-            uuid,
-          }) => ({
-            label: () => name,
-            onClick: () => addNewBlockAtIndex({
-              config: {
-                template_path: path,
-              },
-              extension_uuid: extensionUUID,
-              type: BlockTypeEnum.EXTENSION,
-            }),
-            tooltip: () => description,
-            uuid,
-          }))}
-          onClickCallback={() => setDropdownMenuVisible(false)}
-          open={dropdownMenuVisible}
-          parentRef={refParent}
-          uuid="Extension"
+        <ClickOutside
+          onClickOutside={() => setDropdownMenuVisible(false)}
+          open
         >
-          <KeyboardShortcutButton
-            beforeElement={
-              <Add />
-            }
-            inline
-            onClick={(e) => {
-              e.preventDefault();
-              setDropdownMenuVisible(true);
-            }}
-            uuid="AddNewBlocks/Extension"
+          <FlyoutMenuWrapper
+            disableKeyboardShortcuts
+            items={templates?.map(({
+              description,
+              name,
+              path,
+              uuid,
+            }) => ({
+              label: () => name,
+              onClick: () => addNewBlockAtIndex({
+                config: {
+                  template_path: path,
+                },
+                extension_uuid: extensionUUID,
+                type: BlockTypeEnum.EXTENSION,
+              }),
+              tooltip: () => description,
+              uuid,
+            }))}
+            onClickCallback={() => setDropdownMenuVisible(false)}
+            open={dropdownMenuVisible}
+            parentRef={refParent}
+            uuid="Extension"
           >
-            Add extension block
-          </KeyboardShortcutButton>
-        </FlyoutMenuWrapper>
+            <KeyboardShortcutButton
+              beforeElement={
+                <IconContainerStyle teal>
+                  <Add size={ICON_SIZE} />
+                </IconContainerStyle>
+              }
+              inline
+              onClick={(e) => {
+                e.preventDefault();
+                setDropdownMenuVisible(true);
+              }}
+              uuid="AddNewBlocks/Extension"
+            >
+              Extension block
+            </KeyboardShortcutButton>
+          </FlyoutMenuWrapper>
+        </ClickOutside>
       </Spacing>
     </>
   );
