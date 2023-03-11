@@ -257,7 +257,10 @@ function CodeBlockProps({
     if (callbackContentOrig !== callbackContent) {
       setCallbackContent(callbackContentOrig);
     }
-  }, [callbackContentOrig]);
+  }, [
+    callbackContent,
+    callbackContentOrig,
+  ]);
 
   const blockPrevious = usePrevious(block);
   useEffect(() => {
@@ -265,7 +268,7 @@ function CodeBlockProps({
       const {
         messages: messagesInit,
       } = initializeContentAndMessages([block]);
-      const msgs = messagesInit?.[block?.uuid];
+      const msgs = messagesInit?.[block?.type]?.[block?.uuid];
       if (msgs?.length >= 1) {
         setMessages(msgs);
       }
@@ -1027,7 +1030,10 @@ function CodeBlockProps({
                 appearBefore
                 block
                 label={`
-                  ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
+                  ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0
+                    ? 'Click to select 1 or more blocks to depend on.'
+                    : 'Edit parent blocks.'
+                  }
                 `}
                 size={null}
                 widthFitContent={numberOfParentBlocks >= 1}

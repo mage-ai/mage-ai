@@ -134,7 +134,9 @@ function Sidekick({
   isPipelineExecuting,
   messages,
   metadata,
+  onChangeCallbackBlock,
   onChangeChartBlock,
+  onChangeCodeBlock,
   pipeline,
   pipelineMessages,
   runBlock,
@@ -483,9 +485,26 @@ function Sidekick({
 
           {ViewKeyEnum.EXTENSIONS === activeView && (
             <Extensions
-              addNewBlockAtIndex={addNewBlockAtIndex}
+              autocompleteItems={autocompleteItems}
+              blockRefs={blockRefs}
+              blocks={blocks}
               deleteBlock={deleteBlock}
+              fetchFileTree={fetchFileTree}
+              fetchPipeline={fetchPipeline}
+              interruptKernel={interruptKernel}
+              messages={messages}
+              onChangeCallbackBlock={onChangeCallbackBlock}
+              onChangeCodeBlock={onChangeCodeBlock}
               pipeline={pipeline}
+              runBlock={runBlock}
+              runningBlocks={runningBlocks}
+              savePipelineContent={savePipelineContent}
+              selectedBlock={selectedBlock}
+              setAnyInputFocused={setAnyInputFocused}
+              setSelectedBlock={setSelectedBlock}
+              setTextareaFocused={setTextareaFocused}
+              textareaFocused={textareaFocused}
+              width={afterWidth}
             />
           )}
         </SidekickContainerStyle>

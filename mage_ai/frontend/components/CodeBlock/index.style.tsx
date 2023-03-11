@@ -50,7 +50,7 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.DBT === blockType) {
     accent = (theme?.accent || dark.accent).dbt;
     accentLight = (theme?.accent || dark.accent).dbtLight;
-  } else if (blockColor === BlockColorEnum.TEAL) {
+  } else if (BlockTypeEnum.EXTENSION === blockType || blockColor === BlockColorEnum.TEAL) {
     accent = (theme?.accent || dark.accent).teal;
     accentLight = (theme?.accent || dark.accent).tealLight;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType

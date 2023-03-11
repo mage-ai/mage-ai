@@ -262,7 +262,16 @@ class Pipeline:
         )
 
     def block_deletable(self, block, widget=False):
-        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+        mapping = {}
+        if widget:
+            mapping = self.widgets_by_uuid
+        elif BlockType.EXTENSION == block.type and block.extension_uuid:
+            if block.extension_uuid not in self.extensions:
+                self.extensions[block.extension_uuid] = {}
+            mapping = self.extensions[block.extension_uuid].get('blocks_by_uuid', {})
+        else:
+            mapping = self.blocks_by_uuid
+
         if block.uuid not in mapping:
             return True
         return len(mapping[block.uuid].downstream_blocks) == 0
@@ -831,10 +840,20 @@ class Pipeline:
     def update_block(self, block, upstream_block_uuids=None, widget=False):
         save_kwargs = dict()
 
+        extension_uuid = block.extension_uuid
         is_extension = BlockType.EXTENSION == block.type
 
         if upstream_block_uuids is not None:
-            mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+            mapping = {}
+            if widget:
+                mapping = self.widgets_by_uuid
+            elif is_extension and extension_uuid:
+                if extension_uuid not in self.extensions:
+                    self.extensions[extension_uuid] = {}
+                mapping = self.extensions[extension_uuid].get('blocks_by_uuid', {})
+            else:
+                mapping = self.blocks_by_uuid
+
             dynamic_upstream_blocks = list(filter(
                 is_dynamic_block,
                 [mapping[b_uuid] for b_uuid in upstream_block_uuids if b_uuid in mapping],
@@ -887,7 +906,7 @@ class Pipeline:
             self.blocks_by_uuid[block.uuid] = block
 
         self.validate('A cycle was formed while updating a block')
-        self.save(**save_kwargs, widget=widget)
+        self.save(extension_uuid=extension_uuid, **save_kwargs, widget=widget)
 
         return block
 
@@ -987,12 +1006,23 @@ class Pipeline:
             self.save()
         return block
 
-    def save(self, block_uuid: str = None, widget: bool = False):
+    def save(
+        self,
+        block_uuid: str = None,
+        extension_uuid: str = None,
+        widget: bool = False,
+    ):
         if block_uuid is not None:
             current_pipeline = Pipeline(self.uuid, self.repo_path)
-            block = self.get_block(block_uuid, widget=widget)
+            block = self.get_block(block_uuid, extension_uuid=extension_uuid, widget=widget)
             if widget:
                 current_pipeline.widgets_by_uuid[block_uuid] = block
+            elif BlockType.EXTENSION == block.type:
+                if extension_uuid not in self.extensions:
+                    self.extensions[extension_uuid] = {}
+                if 'blocks_by_uuid' not in self.extensions[extension_uuid]:
+                    self.extensions[extension_uuid]['blocks_by_uuid'] = {}
+                self.extensions[extension_uuid]['blocks_by_uuid'][block_uuid] = block
             else:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict(include_extensions=True)

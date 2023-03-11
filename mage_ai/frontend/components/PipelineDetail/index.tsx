@@ -96,8 +96,8 @@ type PipelineDetailProps = {
   messages: {
     [uuid: string]: KernelOutputType[];
   };
-  onChangeCallbackBlock: (uuid: string, value: string) => void;
-  onChangeCodeBlock: (uuid: string, value: string) => void;
+  onChangeCallbackBlock: (type: string, uuid: string, value: string) => void;
+  onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
@@ -410,8 +410,8 @@ function PipelineDetail({
           mainContainerWidth={mainContainerWidth}
           messages={messages[uuid]}
           noDivider={idx === numberOfBlocks - 1 || isIntegration}
-          onCallbackChange={(value: string) => onChangeCallbackBlock(uuid, value)}
-          onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+          onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
+          onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
           onClickAddSingleDBTModel={onClickAddSingleDBTModel}
           openSidekickView={openSidekickView}
           pipeline={pipeline}

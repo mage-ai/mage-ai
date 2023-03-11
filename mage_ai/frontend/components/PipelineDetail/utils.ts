@@ -18,6 +18,7 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
   blocks?.forEach(({
     content,
     outputs,
+    type,
     uuid,
   }: BlockType) => {
     if (outputs?.length >= 1) {
@@ -43,7 +44,12 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
         return textDataJsonString;
       });
     }
-    contentByBlockUUID[uuid] = content;
+
+    if (!contentByBlockUUID[type]) {
+      contentByBlockUUID[type] = {};
+    }
+
+    contentByBlockUUID[type][uuid] = content;
   });
 
   return {
