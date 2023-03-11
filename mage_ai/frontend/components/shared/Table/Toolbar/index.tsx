@@ -6,14 +6,10 @@ import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleMenu from '@oracle/components/ToggleMenu';
 import { Add, Filter } from '@oracle/icons';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { UNIT } from '@oracle/styles/units/spacing';
-
-export type FilterQueryType = {
-  'type[]'?: string[];
-  'status[]'?: string[];
-};
 
 type ToolbarProps = {
   addButtonProps?: {
@@ -21,14 +17,20 @@ type ToolbarProps = {
     menuItems?: any[];
     isLoading?: boolean;
   }
+  filterOptions?: {
+    [keyof: string]: string[];
+  }
   groupings?: string[];
-  query?: FilterQueryType;
+  query?: {
+    [keyof: string]: string[];
+  };
 };
 
 function Toolbar({
   addButtonProps,
+  filterOptions,
   groupings,
-  query,
+  query = {},
 }: ToolbarProps) {
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
@@ -37,6 +39,18 @@ function Toolbar({
 
   const closeAddButtonMenu = useCallback(() => setAddButtonMenuOpen(false), []);
   const closeFilterButtonMenu = useCallback(() => setFilterButtonMenuOpen(false), []);
+
+  const filterOptionsEnabledMapping = useMemo(() => (
+    Object.entries(filterOptions).reduce((mapping, [filterKey, values]) => {
+      mapping[filterKey] = {};
+      values.forEach(value => {
+        const filterValueEnabled = query[`${filterKey}[]`]?.includes(value) || false;
+        mapping[filterKey][value] = filterValueEnabled;
+      });
+
+      return mapping;
+    }, {})
+  ), [filterOptions, query]);
 
   const {
     label: addButtonLabel,
@@ -77,15 +91,15 @@ function Toolbar({
   ]);
 
   const filterButtonEl = useMemo(() => (
-    <FlyoutMenuWrapper
-      disableKeyboardShortcuts
-      items={[]}
+    <ToggleMenu
+      compact
       onClickCallback={closeFilterButtonMenu}
       onClickOutside={closeFilterButtonMenu}
       open={filterButtonMenuOpen}
+      options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
-      roundedStyle
-      uuid="table/toolbar/filter_menu"
+      query={query}
+      setOpen={setFilterButtonMenuOpen}
     >
       <KeyboardShortcutButton
         beforeElement={<Filter size={2 * UNIT} />}
@@ -98,8 +112,13 @@ function Toolbar({
       >
         Filter
       </KeyboardShortcutButton>
-    </FlyoutMenuWrapper>
-  ), [closeFilterButtonMenu, filterButtonMenuOpen]);
+    </ToggleMenu>
+  ), [
+    closeFilterButtonMenu,
+    filterButtonMenuOpen,
+    filterOptionsEnabledMapping,
+    query,
+  ]);
 
   return (
     <FlexContainer alignItems="center">

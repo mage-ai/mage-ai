@@ -6,7 +6,7 @@ import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
-import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import PipelineType, { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -19,6 +19,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { queryFromUrl } from '@utils/url';
 
 function PipelineListPage() {
   const router = useRouter();
@@ -27,7 +28,11 @@ function PipelineListPage() {
   }>({});
   const [errors, setErrors] = useState<ErrorsType>(null);
 
-  const { data, mutate: fetchPipelines } = api.pipelines.list({ include_schedules: 1 });
+  const query = queryFromUrl();
+  const { data, mutate: fetchPipelines } = api.pipelines.list({
+    ...query,
+    include_schedules: 1,
+  });
   const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
 
   const [createPipeline, { isLoading }]: [MutateFunction<any>, { isLoading: boolean }] = useMutation(
@@ -118,6 +123,11 @@ function PipelineListPage() {
               },
             ],
           }}
+          filterOptions={{
+            status: Object.values(PipelineStatusEnum),
+            type: Object.values(PipelineTypeEnum),
+          }}
+          query={query}
         />
       }
       title="Pipelines"
