@@ -1642,7 +1642,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             if not global_vars.get('spark'):
                 try:
                     from pyspark.sql import SparkSession
-                    global_vars['spark'] = SparkSession.builder.getOrCreate()
+                    global_vars['spark'] = SparkSession.builder.master(
+                        os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
                 except Exception:
                     pass
         return global_vars
