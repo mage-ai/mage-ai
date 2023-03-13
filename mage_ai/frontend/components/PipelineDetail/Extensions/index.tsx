@@ -57,7 +57,10 @@ function Extensions({
         {!selectedExtensionUUID && (
           <Spacing mb={PADDING_UNITS}>
             <Text default>
-              Select a power up to configure it for the current pipeline.
+              Power up your pipelines with these extensions.
+              Click on a power up below to configure it for <Text inline monospace>
+                {pipeline?.uuid}
+              </Text>.
             </Text>
           </Spacing>
         )}
