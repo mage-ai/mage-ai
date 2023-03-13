@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Ansi from 'ansi-to-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -11,10 +10,9 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { onSuccess } from '@api/utils/response';
-import { OutputContainerStyle } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { Branch } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { OutputContainerStyle } from '@components/PipelineDetail/PipelineExecution/index.style';
+import { onSuccess } from '@api/utils/response';
 
 
 const GIT_ACTION_OPTIONS = [
