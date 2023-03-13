@@ -3,7 +3,7 @@ import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 
 export const SECTION_UUID_WORKSPACE = 'Workspace';
 export const SECTION_ITEM_UUID_PREFERENCES = 'Preferences';
-export const SECTION_ITEM_UUID_SYNC_DATA = 'Sync data';
+export const SECTION_ITEM_UUID_GIT_SETTINGS = 'Git settings';
 export const SECTION_ITEM_UUID_USERS = 'Users';
 
 export const SECTION_UUID_ACCOUNT = 'Account';
@@ -33,7 +33,7 @@ export const SECTIONS = ({ owner, roles }: UserType) => {
       linkProps: {
         href: '/settings/workspace/sync_data',
       },
-      uuid: SECTION_ITEM_UUID_SYNC_DATA,
+      uuid: SECTION_ITEM_UUID_GIT_SETTINGS,
     });
   }
 

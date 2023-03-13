@@ -112,7 +112,6 @@ function GitActions({
   const updateStatus = useCallback(() => {
     getStatus().then(({ data }) => {
       const status = data?.['git_branch']?.['status']
-      console.log('git status:', status);
       setStatus(status);
     });
   }, [getStatus])

@@ -14,7 +14,14 @@ class Git:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
             self.repo = git.Repo.init(self.repo_path)
+            # need to commit something to initialize the repository
+            self.commit('Initial commit')
+
+        try:
             self.repo.create_remote('origin', self.remote_repo_link)
+        except git.exc.GitCommandError:
+            # if the remote already exists
+            self.repo.remotes.origin.set_url(self.remote_repo_link)
 
         self.origin = self.repo.remotes.origin
 
@@ -75,9 +82,7 @@ class Git:
             self.repo.index.commit(message)
 
     def change_branch(self, branch):
-        if self.current_branch == branch:
-            pass
-        elif branch in self.repo.heads:
+        if branch in self.repo.heads:
             current = self.repo.heads[branch]
             current.checkout()
         else:
