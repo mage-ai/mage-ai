@@ -75,6 +75,12 @@ class PipelineType(str, Enum):
     STREAMING = 'streaming'
 
 
+class PipelineStatus(str, Enum):
+    ACTIVE = 'active',              # At least one active trigger
+    INACTIVE = 'inactive',          # All inactive triggers
+    NO_SCHEDULES = 'no_schedules',  # No triggers
+
+
 BLOCK_LANGUAGE_TO_FILE_EXTENSION = {
     BlockLanguage.PYTHON: 'py',
     BlockLanguage.R: 'r',

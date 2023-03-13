@@ -1,5 +1,6 @@
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
+from mage_ai.data_preparation.models.constants import PipelineStatus
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
@@ -19,6 +20,18 @@ class PipelineResource(BaseResource):
         include_schedules = query.get('include_schedules', [False])
         if include_schedules:
             include_schedules = include_schedules[0]
+
+        pipeline_types = query.get('type[]', [])
+        if pipeline_types:
+            pipeline_types = pipeline_types[0]
+        if pipeline_types:
+            pipeline_types = pipeline_types.split(',')
+
+        pipeline_statuses = query.get('status[]', [])
+        if pipeline_statuses:
+            pipeline_statuses = pipeline_statuses[0]
+        if pipeline_statuses:
+            pipeline_statuses = pipeline_statuses.split(',')
 
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
 
@@ -56,12 +69,31 @@ class PipelineResource(BaseResource):
         mapping = {}
         if include_schedules:
             mapping = query_pipeline_schedules(pipeline_uuids)
+        if pipeline_types:
+            pipelines = [p for p in pipelines if p.type in pipeline_types]
 
+        filtered_pipelines = []
         for pipeline in pipelines:
             schedules = []
             if mapping.get(pipeline.uuid):
                 schedules = mapping[pipeline.uuid]
             pipeline.schedules = schedules
+
+            if pipeline_statuses and (
+                (PipelineStatus.ACTIVE in pipeline_statuses and
+                    any(s.status == PipelineSchedule.ScheduleStatus.ACTIVE
+                        for s in pipeline.schedules)) or
+                (PipelineStatus.INACTIVE in pipeline_statuses and
+                    len(pipeline.schedules) > 0 and
+                    all(s.status == PipelineSchedule.ScheduleStatus.INACTIVE
+                        for s in pipeline.schedules)) or
+                (PipelineStatus.NO_SCHEDULES in pipeline_statuses and
+                    len(pipeline.schedules) == 0)
+            ):
+                filtered_pipelines.append(pipeline)
+
+        if include_schedules and pipeline_statuses:
+            pipelines = filtered_pipelines
 
         return self.build_result_set(
             pipelines,

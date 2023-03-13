@@ -1,40 +1,45 @@
 import { MutateFunction, useMutation } from 'react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
-import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import PipelineType, {
+  PipelineStatusEnum,
+  PipelineTypeEnum,
+  PIPELINE_TYPE_LABEL_MAPPING,
+} from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
-import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
+import { ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { queryFromUrl } from '@utils/url';
 
 function PipelineListPage() {
   const router = useRouter();
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
-  const [newPipelineMenuOpen, setNewPipelineMenuOpen] = useState(false);
   const [errors, setErrors] = useState<ErrorsType>(null);
-  const newPipelineMenuRef = useRef(null);
 
-  const { data, mutate: fetchPipelines } = api.pipelines.list({ include_schedules: 1 });
-
+  const query = queryFromUrl();
+  const { data, mutate: fetchPipelines } = api.pipelines.list({
+    ...query,
+    include_schedules: 1,
+  });
   const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
-  const closeNewPipelineMenu = useCallback(() => setNewPipelineMenuOpen(false), []);
 
   const [createPipeline, { isLoading }]: [MutateFunction<any>, { isLoading: boolean }] = useMutation(
     api.pipelines.useCreate(),
@@ -88,183 +93,185 @@ function PipelineListPage() {
       errors={errors}
       setErrors={setErrors}
       subheaderChildren={
-        <FlyoutMenuWrapper
-          disableKeyboardShortcuts
-          items={[
-            {
-              label: () => 'Standard (batch)',
-              onClick: () => createPipeline({
-                pipeline: {
-                  name: randomNameGenerator(),
-                },
-              }),
-              uuid: 'Pipelines/NewPipelineMenu/standard',
-            },
-            {
-              label: () => 'Data integration',
-              onClick: () => createPipeline({
-                pipeline: {
-                  name: randomNameGenerator(),
-                  type: PipelineTypeEnum.INTEGRATION,
-                },
-              }),
-              uuid: 'Pipelines/NewPipelineMenu/integration',
-            },
-            {
-              label: () => 'Streaming',
-              onClick: () => createPipeline({
-                pipeline: {
-                  name: randomNameGenerator(),
-                  type: PipelineTypeEnum.STREAMING,
-                },
-              }),
-              uuid: 'Pipelines/NewPipelineMenu/streaming',
-            },
-          ]}
-          onClickCallback={closeNewPipelineMenu}
-          onClickOutside={closeNewPipelineMenu}
-          open={newPipelineMenuOpen}
-          parentRef={newPipelineMenuRef}
-          roundedStyle
-          uuid="pipelines/new_pipeline_menu"
-        >
-          <KeyboardShortcutButton
-            background={BUTTON_GRADIENT}
-            beforeElement={<Add size={2.5 * UNIT} />}
-            bold
-            inline
-            loading={isLoading}
-            onClick={e => {
-              e.preventDefault();
-              setNewPipelineMenuOpen(prevOpenState => !prevOpenState);
-            }}
-            uuid="pipelines/new_pipeline_button"
-          >
-            New pipeline
-          </KeyboardShortcutButton>
-        </FlyoutMenuWrapper>
+        <Toolbar
+          addButtonProps={{
+            isLoading,
+            label: 'New pipeline',
+            menuItems: [
+              {
+                label: () => 'Standard (batch)',
+                onClick: () => createPipeline({
+                  pipeline: {
+                    name: randomNameGenerator(),
+                  },
+                }),
+                uuid: 'Pipelines/NewPipelineMenu/standard',
+              },
+              {
+                label: () => 'Data integration',
+                onClick: () => createPipeline({
+                  pipeline: {
+                    name: randomNameGenerator(),
+                    type: PipelineTypeEnum.INTEGRATION,
+                  },
+                }),
+                uuid: 'Pipelines/NewPipelineMenu/integration',
+              },
+              {
+                label: () => 'Streaming',
+                onClick: () => createPipeline({
+                  pipeline: {
+                    name: randomNameGenerator(),
+                    type: PipelineTypeEnum.STREAMING,
+                  },
+                }),
+                uuid: 'Pipelines/NewPipelineMenu/streaming',
+              },
+            ],
+          }}
+          filterOptions={{
+            status: Object.values(PipelineStatusEnum),
+            type: Object.values(PipelineTypeEnum),
+          }}
+          filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
+          query={query}
+        />
       }
       title="Pipelines"
       uuid="pipelines/index"
     >
-      <Table
-        buildLinkProps={(rowIndex: number) => ({
-          as: `/pipelines/${pipelines[rowIndex].uuid}`,
-          href: '/pipelines/[pipeline]',
-        })}
-        columnFlex={[null, 1, 7, 1, 1, 1, null]}
-        columns={[
-          {
-            label: () => '',
-            uuid: 'action',
-          },
-          {
-            uuid: 'Status',
-          },
-          {
-            uuid: 'Name',
-          },
-          {
-            uuid: 'Type',
-          },
-          {
-            uuid: 'Blocks',
-          },
-          {
-            uuid: 'Triggers',
-          },
-          {
-            label: () => '',
-            uuid: 'view',
-          },
-        ]}
-        rows={pipelines.map((pipeline, idx) => {
-          const {
-            blocks,
-            name,
-            schedules,
-            type,
-            uuid,
-          } = pipeline;
-          const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
-          const schedulesCount = schedules.length;
-          const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+      {pipelines?.length === 0
+        ? (
+          <Spacing px ={3} py={1}>
+            {!data
+              ?
+                <Spinner inverted large />
+              :
+                <Text bold default monospace muted>
+                  No pipelines available
+                </Text>
+            }
+          </Spacing>
+        ): (
+          <Table
+            buildLinkProps={(rowIndex: number) => ({
+              as: `/pipelines/${pipelines[rowIndex].uuid}`,
+              href: '/pipelines/[pipeline]',
+            })}
+            columnFlex={[null, 1, 7, 1, 1, 1, null]}
+            columns={[
+              {
+                label: () => '',
+                uuid: 'action',
+              },
+              {
+                uuid: 'Status',
+              },
+              {
+                uuid: 'Name',
+              },
+              {
+                uuid: 'Type',
+              },
+              {
+                uuid: 'Blocks',
+              },
+              {
+                uuid: 'Triggers',
+              },
+              {
+                label: () => '',
+                uuid: 'view',
+              },
+            ]}
+            rows={pipelines.map((pipeline, idx) => {
+              const {
+                blocks,
+                name,
+                schedules,
+                type,
+                uuid,
+              } = pipeline;
+              const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
+              const schedulesCount = schedules.length;
+              const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
 
-          return [
-            schedulesCount >= 1
-              ? (
-                <Button
-                iconOnly
-                  loading={!!pipelinesEditing[uuid]}
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={(e) => {
-                    pauseEvent(e);
-                    setPipelinesEditing(prev => ({
-                      ...prev,
-                      [uuid]: true,
-                    }));
-                    updatePipeline({
-                      ...pipeline,
-                      status: isActive
-                        ? ScheduleStatusEnum.INACTIVE
-                        : ScheduleStatusEnum.ACTIVE,
-                    });
-                  }}
+              return [
+                schedulesCount >= 1
+                  ? (
+                    <Button
+                    iconOnly
+                      loading={!!pipelinesEditing[uuid]}
+                      noBackground
+                      noBorder
+                      noPadding
+                      onClick={(e) => {
+                        pauseEvent(e);
+                        setPipelinesEditing(prev => ({
+                          ...prev,
+                          [uuid]: true,
+                        }));
+                        updatePipeline({
+                          ...pipeline,
+                          status: isActive
+                            ? ScheduleStatusEnum.INACTIVE
+                            : ScheduleStatusEnum.ACTIVE,
+                        });
+                      }}
+                    >
+                      {isActive
+                        ? <Pause muted size={2 * UNIT} />
+                        : <PlayButtonFilled default size={2 * UNIT} />
+                      }
+                    </Button>
+                  )
+                  : null
+                ,
+                <Text
+                  default={!isActive}
+                  key={`pipeline_status_${idx}`}
+                  monospace
+                  success={!!isActive}
                 >
                   {isActive
-                    ? <Pause muted size={2 * UNIT} />
-                    : <PlayButtonFilled default size={2 * UNIT} />
+                    ? ScheduleStatusEnum.ACTIVE
+                    : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
                   }
-                </Button>
-              )
-              : null
-            ,
-            <Text
-              default={!isActive}
-              key={`pipeline_status_${idx}`}
-              monospace
-              success={!!isActive}
-            >
-              {isActive
-                ? ScheduleStatusEnum.ACTIVE
-                : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
-              }
-            </Text>,
-            <Text
-              key={`pipeline_name_${idx}`}
-            >
-              {uuid}
-            </Text>,
-            <Text
-              key={`pipeline_type_${idx}`}
-            >
-              {type === PipelineTypeEnum.PYTHON ? 'Standard' : capitalize(type)}
-            </Text>,
-            <Text
-              default={blocksCount === 0}
-              key={`pipeline_block_count_${idx}`}
-              monospace
-            >
-              {blocksCount}
-            </Text>,
-            <Text
-              default={schedulesCount === 0}
-              key={`pipeline_trigger_count_${idx}`}
-              monospace
-            >
-              {schedulesCount}
-            </Text>,
-            <Flex
-              flex={1} justifyContent="flex-end"
-              key={`chevron_icon_${idx}`}
-            >
-              <ChevronRight default size={2 * UNIT} />
-            </Flex>,
-          ];
-        })}
-      />
+                </Text>,
+                <Text
+                  key={`pipeline_name_${idx}`}
+                >
+                  {uuid}
+                </Text>,
+                <Text
+                  key={`pipeline_type_${idx}`}
+                >
+                  {type === PipelineTypeEnum.PYTHON ? 'Standard' : capitalize(type)}
+                </Text>,
+                <Text
+                  default={blocksCount === 0}
+                  key={`pipeline_block_count_${idx}`}
+                  monospace
+                >
+                  {blocksCount}
+                </Text>,
+                <Text
+                  default={schedulesCount === 0}
+                  key={`pipeline_trigger_count_${idx}`}
+                  monospace
+                >
+                  {schedulesCount}
+                </Text>,
+                <Flex
+                  flex={1} justifyContent="flex-end"
+                  key={`chevron_icon_${idx}`}
+                >
+                  <ChevronRight default size={2 * UNIT} />
+                </Flex>,
+              ];
+            })}
+          />
+      )}
     </Dashboard>
   );
 }
