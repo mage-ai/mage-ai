@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import { MutateFunction, useMutation } from 'react-query';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -6,6 +7,7 @@ import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
+import Link from '@oracle/elements/Link';
 import PipelineType, {
   PipelineStatusEnum,
   PipelineTypeEnum,
@@ -19,7 +21,7 @@ import Text from '@oracle/elements/Text';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
+import { File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
@@ -177,8 +179,8 @@ function PipelineListPage() {
                 uuid: 'Triggers',
               },
               {
-                label: () => '',
-                uuid: 'view',
+                center: true,
+                uuid: 'Open',
               },
             ]}
             isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
@@ -204,6 +206,13 @@ function PipelineListPage() {
               const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
               const schedulesCount = schedules.length;
               const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+              const sharedOpenButtonProps = {
+                borderRadius: UNIT,
+                iconOnly: true,
+                noBackground: true,
+                noBorder: true,
+                outline: true,
+              };
 
               return [
                 schedulesCount >= 1
@@ -247,11 +256,16 @@ function PipelineListPage() {
                     : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
                   }
                 </Text>,
-                <Text
+                <NextLink
+                  as={`/pipelines/${uuid}`}
+                  href="/pipelines/[pipeline]"
                   key={`pipeline_name_${idx}`}
+                  passHref
                 >
-                  {uuid}
-                </Text>,
+                  <Link sameColorAsText>
+                    {uuid}
+                  </Link>
+                </NextLink>,
                 <Text
                   key={`pipeline_type_${idx}`}
                 >
@@ -275,7 +289,31 @@ function PipelineListPage() {
                   flex={1} justifyContent="flex-end"
                   key={`chevron_icon_${idx}`}
                 >
-                  <ChevronRight default size={2 * UNIT} />
+                  <Button
+                    {...sharedOpenButtonProps}
+                    onClick={() => {
+                      router.push(
+                        '/pipelines/[pipeline]',
+                        `/pipelines/${uuid}`,
+                      );
+                    }}
+                    title="Detail"
+                  >
+                    <Open default size={2 * UNIT} />
+                  </Button>
+                  <Spacing mr={1} />
+                  <Button
+                    {...sharedOpenButtonProps}
+                    onClick={() => {
+                      router.push(
+                        '/pipelines/[pipeline]/logs',
+                        `/pipelines/${uuid}/logs`,
+                      );
+                    }}
+                    title="Logs"
+                  >
+                    <File default size={2 * UNIT} />
+                  </Button>
                 </Flex>,
               ];
             })}

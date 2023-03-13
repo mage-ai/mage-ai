@@ -14,6 +14,7 @@ import {
 } from './index.style';
 
 export type ColumnType = {
+  center?: boolean;
   label?: () => any | string;
   tooltipMessage?: string
   uuid: string;
@@ -186,6 +187,7 @@ function Table({
     isSelectedRow,
     noBorder,
     onClickRow,
+    onDoubleClickRow,
     rowVerticalPadding,
     rows,
     stickyFirstColumn,
@@ -209,7 +211,10 @@ function Table({
               noBorder={noBorder}
               sticky={stickyHeader}
             >
-              <FlexContainer alignItems="center">
+              <FlexContainer
+                alignItems="center"
+                justifyContent={col.center ? 'center': 'flex-start'}
+              >
                 <Text bold leftAligned monospace muted>
                   {col.label ? col.label() : col.uuid}
                 </Text>
