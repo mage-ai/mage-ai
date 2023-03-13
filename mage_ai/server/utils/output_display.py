@@ -353,7 +353,8 @@ def get_pipeline_execution_code(
     if pipeline_config['type'] == 'databricks':
         spark_session_init = '''
 from pyspark.sql import SparkSession
-spark = SparkSession.builder.getOrCreate()
+import os
+spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
 '''
 
     return f"""

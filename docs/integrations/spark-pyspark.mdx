@@ -3,13 +3,87 @@ title: "Spark and PySpark"
 sidebarTitle: "Spark"
 description:
   "This is a guide for using Spark (PySpark) with Mage in different cloud
-  providers (see a specific section for the cloud provider you use)."
+  providers or Kubernetes cluster."
 ---
 
 Want to become a
 [Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/front/0/3/030f4058-54e5-4333-bd6c-2789c334bf12.jpg)?
 
 ![](https://user-images.githubusercontent.com/78053898/199308674-afd8860e-09de-4003-a7ed-9ab2db221b0c.png)
+
+## Kubernetes
+
+When you run Mage and Spark in the same Kubernetes cluster, you can set the environment variable `SPARK_MASTER_HOST`
+to the url of the master node of the Spark cluster in Mage container. Then you'll be able to connect Mage to your Spark
+cluster and execute PySpark code in Mage.
+
+Here is an overview of the steps required to use Mage with Spark in Kubernetes cluster.
+
+### 1. Run Spark cluser in Kubernetes cluster
+You can use Helm command to run Spark cluster in the Kubernetes cluster:
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install my-release bitnami/spark
+```
+Then follow the instructions from the output to get the Spark master WebUI URL:
+```bash
+kubectl port-forward --namespace default svc/my-release-spark-master-svc 80:80
+echo "Visit http://127.0.0.1:80 to use your application"
+```
+Find the Spark Master URL at the top of the web page. 
+
+### 2. Build Mage docker image with Spark environment
+* Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
+* Build the docker image with the command `docker build -t mage_spark .`
+
+
+### 3. Run Mage in Kubernetes cluster with the `SPARK_MASTER_HOST` environment variable
+* Use the docker image built from step 2 as the container image in your Kubernetes yaml file.
+* Add `SPARK_MASTER_HOST` environment variable with the Spark Master URL from step 1 to your the container spec
+in your Kubernetes yaml file.
+* Then deploy Mage to Kubernetes with the updated yaml file.
+
+Here is the example Pod config:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mage-server
+spec:
+  containers:
+  - name: mage-server
+    image: mage_spark
+    imagePullPolicy: Never
+    ports:
+    - containerPort: 6789
+    volumeMounts:
+    - name: mage-fs
+      mountPath: /home/src
+    env:
+      - name: KUBE_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+      - name: SPARK_MASTER_HOST
+        value: "spark://spark_master_url:7077"
+  volumes:
+  - name: mage-fs
+    hostPath:
+      path: /path/to/mage_project
+  serviceAccountName: mage-user
+```
+
+### 4. Run PySpark code in Mage
+When Mage pod is running, you can create a "Standard(batch)" pipeline and then write PySpark code in any blocks.
+
+In `Scratchpad` block, you'll need to manually create the Spark session with the code:
+```python
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
+```
+
+In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
+
 
 ## AWS
 
