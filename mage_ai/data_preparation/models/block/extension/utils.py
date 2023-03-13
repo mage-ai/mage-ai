@@ -7,7 +7,7 @@ from typing import Dict
 
 
 def handle_run_tests(
-    block: 'Block',
+    block,
     dynamic_block_uuid: str = None,
     execution_partition: str = None,
     global_vars: Dict = {},
