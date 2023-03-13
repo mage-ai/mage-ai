@@ -3,8 +3,10 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
+from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import User
+from mage_ai.settings import AUTHENTIFICATION_MODE
 
 
 class SessionResource(BaseResource):
@@ -24,6 +26,31 @@ class SessionResource(BaseResource):
             raise ApiError(error)
 
         user = None
+        if AUTHENTIFICATION_MODE.lower() == 'ldap':
+            # we can use just the method verify here authz=verify(username,password)
+            conn = new_ldap_connection()
+            auth, user_dn = conn.authenticate(email, password)
+            if not auth:
+                if user_dn != "":
+                    error.update({'message': 'wrong password.'})
+                raise ApiError(error)
+
+            authz = conn.authorize(user_dn)
+            if not authz:
+                error.update(
+                        {'message': 'user not authorized. contact your admin'})
+                raise ApiError(error)
+            if email:
+                user = User.query.filter(User.username == email).first()
+            if not user:  # noqa: E712
+                print('first user login, creating user.')
+                user = User.create(
+                    roles=2,
+                    username=email,
+                )
+            oauth_token = generate_access_token(user, kwargs['oauth_client'])
+            return self(oauth_token, user, **kwargs)
+
         if email:
             user = User.query.filter(User.email == email).first()
         elif username:

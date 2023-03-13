@@ -44,7 +44,12 @@ from mage_ai.server.scheduler_manager import (
 )
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket_server import WebSocketServer
-from mage_ai.settings import OAUTH2_APPLICATION_CLIENT_ID, REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings import (
+    OAUTH2_APPLICATION_CLIENT_ID,
+    REQUIRE_USER_AUTHENTICATION,
+    AUTHENTIFICATION_MODE,
+    LDAP_ADMIN_USERNAME,
+)
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -277,14 +282,20 @@ async def main(
         user = User.query.filter(User.owner == True).first()  # noqa: E712
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
-            password_salt = generate_salt()
-            user = User.create(
-                email='admin@admin.com',
-                password_hash=create_bcrypt_hash('admin', password_salt),
-                password_salt=password_salt,
-                owner=True,
-                username='admin',
-            )
+            if AUTHENTIFICATION_MODE.lower() == 'ldap':
+                user = User.create(
+                    owner=True,
+                    username=LDAP_ADMIN_USERNAME,
+                )
+            else:
+                password_salt = generate_salt()
+                user = User.create(
+                    email='admin@admin.com',
+                    password_hash=create_bcrypt_hash('admin', password_salt),
+                    password_salt=password_salt,
+                    owner=True,
+                    username='admin',
+                )
 
         oauth_client = Oauth2Application.query.filter(
             Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,
