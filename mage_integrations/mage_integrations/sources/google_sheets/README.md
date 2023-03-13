@@ -17,8 +17,7 @@ Prerequisites:
 * Enable Google Sheets API: https://console.cloud.google.com/apis/library/sheets.googleapis.com
 * Give service account Editor or Viewer permission by adding service account's email to your spreadsheet.
 
-We expect the each sheet's data meet the following requirements
+We expect each sheet's data to meet the following requirements
 * Sheet is not empty.
-* The first row contains the column names.
-* There're no duplicate column names in the first row.
+* The first row contains the column names. There're no duplicate column names in the first row.
 * The following rows contain the values. The values are not [errorType or formulaType](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ExtendedValue).
