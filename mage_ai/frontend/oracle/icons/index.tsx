@@ -114,6 +114,23 @@ export const Binary = build([{
   viewBox: '0 0 12 12',
 });
 
+export const Branch = build([{
+  d: 'M3 11.25V0.75',
+  stroke: 'white',
+  strokeWidth: '1.125',
+  strokeLinejoin: 'round',
+  useStroke: true,
+}, {
+  d: 'M3 7.5H6C7.65685 7.5 9 6.15685 9 4.5V1.5M9 1.5L7.5 3M9 1.5L10.5 3',
+  stroke: 'white',
+  strokeWidth: '1.125',
+  strokeLinejoin: 'round',
+  useStroke: true,
+}], {
+  fill: 'none',
+  viewBox: '0 0 12 12',
+});
+
 export const CalendarDate = build([{
   d: 'M12.0833 3.33317H11.5V2.1665H10.3333V3.33317H5.66667V2.1665H4.5V3.33317H3.91667C3.26917 3.33317 2.75583 3.85817 2.75583 4.49984L2.75 12.6665C2.75 13.3082 3.26917 13.8332 3.91667 13.8332H12.0833C12.725 13.8332 13.25 13.3082 13.25 12.6665V4.49984C13.25 3.85817 12.725 3.33317 12.0833 3.33317ZM12.0833 12.6665H3.91667V6.83317H12.0833V12.6665ZM12.0833 5.6665H3.91667V4.49984H12.0833V5.6665ZM8 8.58317H10.9167V11.4998H8V8.58317Z',
 }], {

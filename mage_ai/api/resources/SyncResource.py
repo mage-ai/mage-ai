@@ -1,7 +1,7 @@
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.git import Git
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.sync import SyncType, SyncConfig
-from mage_ai.data_preparation.sync.git_sync import GitSync
+from mage_ai.data_preparation.sync import GitConfig
 
 
 class SyncResource(GenericResource):
@@ -17,14 +17,12 @@ class SyncResource(GenericResource):
 
     @classmethod
     def create(self, payload, user, **kwargs):
-        sync_config = SyncConfig.load(config=payload)
+        sync_config = GitConfig.load(config=payload)
         get_preferences().update_preferences(
             dict(sync_config=sync_config.to_dict())
         )
 
-        if sync_config.type == SyncType.GIT:
-            # set up Git repo
-            GitSync(sync_config)
+        Git(sync_config)
 
         return self(get_preferences().sync_config, user, **kwargs)
 
@@ -33,11 +31,11 @@ class SyncResource(GenericResource):
         return self(get_preferences().sync_config, user, **kwargs)
 
     def update(self, payload, **kwargs):
-        sync_config = SyncConfig.load(config=self.model)
+        git_manager = Git.get_manager()
+        config = git_manager.git_config
         action_type = payload.get('action_type')
         if action_type == 'sync_data':
-            if sync_config.type == SyncType.GIT:
-                sync = GitSync(sync_config)
-                sync.sync_data()
+            git_manager.check_connection()
+            git_manager.reset(config.branch)
 
         return self

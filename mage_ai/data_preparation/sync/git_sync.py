@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.sync import SyncConfig
+from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.base_sync import BaseSync
 from mage_ai.shared.logger import VerboseFunctionExec
 import git
@@ -6,7 +6,7 @@ import subprocess
 
 
 class GitSync(BaseSync):
-    def __init__(self, sync_config: SyncConfig):
+    def __init__(self, sync_config: GitConfig):
         self.remote_repo_link = sync_config.remote_repo_link
         self.repo_path = sync_config.repo_path
         self.branch = sync_config.branch
