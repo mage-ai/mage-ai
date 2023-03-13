@@ -40,6 +40,7 @@ type TableProps = {
   noBorder?: boolean;
   noHeader?: boolean;
   onClickRow?: (index: number) => void;
+  onDoubleClickRow?: (index: number) => void;
   rows: any[][];
   rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
@@ -63,6 +64,7 @@ function Table({
   noBorder,
   noHeader,
   onClickRow,
+  onDoubleClickRow,
   rows,
   rowVerticalPadding,
   stickyFirstColumn,
@@ -127,13 +129,21 @@ function Table({
     if (renderRow) {
       rowEl = renderRow(cellEls);
     } else {
+      const handleRowClick = (rowIndex: number, event: React.MouseEvent) => {
+        if (event?.detail === 1) {
+          onClickRow(rowIndex);
+        } else if (onDoubleClickRow && event?.detail === 2) {
+          onDoubleClickRow(rowIndex);
+        }
+      };
+
       rowEl = (
         <TableRowStyle
           highlightOnHover={highlightRowOnHover}
           key={`${uuid}-row-${rowIndex}`}
           noHover={!(linkProps || onClickRow)}
           // @ts-ignore
-          onClick={onClickRow ? () => onClickRow(rowIndex) : null}
+          onClick={onClickRow ? (e) => handleRowClick(rowIndex, e) : null}
         >
           {cellEls}
         </TableRowStyle>

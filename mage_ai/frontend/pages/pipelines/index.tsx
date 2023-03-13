@@ -29,6 +29,7 @@ import { queryFromUrl } from '@utils/url';
 
 function PipelineListPage() {
   const router = useRouter();
+  const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
@@ -154,10 +155,6 @@ function PipelineListPage() {
           </Spacing>
         ): (
           <Table
-            buildLinkProps={(rowIndex: number) => ({
-              as: `/pipelines/${pipelines[rowIndex].uuid}`,
-              href: '/pipelines/[pipeline]',
-            })}
             columnFlex={[null, 1, 7, 1, 1, 1, null]}
             columns={[
               {
@@ -184,6 +181,18 @@ function PipelineListPage() {
                 uuid: 'view',
               },
             ]}
+            isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
+            onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
+              const pipeline = pipelines[rowIndex];
+
+              return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
+            })}
+            onDoubleClickRow={(rowIndex: number) => {
+              router.push(
+                  '/pipelines/[pipeline]',
+                  `/pipelines/${pipelines[rowIndex].uuid}`,
+              );
+            }}
             rows={pipelines.map((pipeline, idx) => {
               const {
                 blocks,
@@ -200,7 +209,7 @@ function PipelineListPage() {
                 schedulesCount >= 1
                   ? (
                     <Button
-                    iconOnly
+                      iconOnly
                       loading={!!pipelinesEditing[uuid]}
                       noBackground
                       noBorder
