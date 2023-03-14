@@ -15,15 +15,13 @@ import { CodeEditorStyle } from './index.style';
 import { onSuccess } from '@api/utils/response';
 import { singularize } from '@utils/string';
 
-
 type SourceConfigProps = {
   api: string;
   block: BlockType;
   blockContent: any;
-  onChangeCodeBlock: any;
+  onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
   pipeline: PipelineType;
 };
-
 
 function SourceConfig({
   api: apiName,
@@ -50,7 +48,7 @@ function SourceConfig({
         response,
         {
           callback: (res) => {
-            const key = singularize(apiName)
+            const key = singularize(apiName);
             setConnected(res?.[key]?.['success']);
             setError(res?.[key]?.['error_message']);
           },
@@ -79,7 +77,7 @@ function SourceConfig({
           language={BlockLanguageEnum.YAML}
           onChange={(val: string) => {
             setBlockConfig(val);
-            onChangeCodeBlock(block.uuid, stringify({
+            onChangeCodeBlock(block.type, block.uuid, stringify({
               ...blockContent,
               config: parse(val),
             }));

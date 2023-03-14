@@ -509,7 +509,6 @@ function Sidekick({
               setSelectedBlock={setSelectedBlock}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={textareaFocused}
-              width={afterWidth}
             />
           )}
         </SidekickContainerStyle>

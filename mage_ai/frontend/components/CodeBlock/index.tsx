@@ -121,14 +121,14 @@ import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
-  addNewBlock: (block: BlockType) => Promise<any>;
-  addNewBlockMenuOpenIdx: number;
+  addNewBlock?: (block: BlockType) => Promise<any>;
+  addNewBlockMenuOpenIdx?: number;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
   blockRefs: any;
   blockIdx: number;
   blocks: BlockType[];
-  dataProviders: DataProviderType[];
+  dataProviders?: DataProviderType[];
   defaultValue?: string;
   executionState: ExecutionStateEnum;
   extraContent?: any;
@@ -136,13 +136,13 @@ type CodeBlockProps = {
   fetchPipeline: () => void;
   hideRunButton?: boolean;
   mainContainerRef?: any;
-  mainContainerWidth: number;
+  mainContainerWidth?: number;
   messages: KernelOutputType[];
   noDivider?: boolean;
   onCallbackChange?: (value: string) => void;
   onChange?: (value: string) => void;
-  onClickAddSingleDBTModel: (blockIdx: number) => void;
-  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  onClickAddSingleDBTModel?: (blockIdx: number) => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   runBlock: (payload: {
     block: BlockType;
@@ -163,9 +163,9 @@ type CodeBlockProps = {
   setAnyInputFocused?: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
-  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
-  setRecsWindowOpenBlockIdx: (idx: number) => void;
-  setSelectedOutputBlock: (block: BlockType) => void;
+  setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setRecsWindowOpenBlockIdx?: (idx: number) => void;
+  setSelectedOutputBlock?: (block: BlockType) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -617,7 +617,7 @@ function CodeBlock({
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
         ) {
           runBlockAndTrack({ block });
-        } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
+        } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping) && addNewBlock) {
           event.preventDefault();
           addNewBlock({
             language: block.language,
@@ -1755,7 +1755,7 @@ function CodeBlock({
             setAddNewBlockMenuOpenIdx?.(null);
           }}
         >
-          {addNewBlocksVisible && (
+          {addNewBlocksVisible && addNewBlock && (
             <Spacing mt={2}>
               <AddNewBlocks
                 addNewBlock={(newBlock: BlockRequestPayloadType) => {

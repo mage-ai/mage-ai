@@ -11,6 +11,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -27,7 +28,7 @@ type CodeBlockExtraContentProps = {
   blocks: BlockType[];
   onUpdateCallback?: () => void;
   pipeline: PipelineType;
-  runBlockAndTrack: (payload: {
+  runBlockAndTrack?: (payload: {
     block: BlockType,
     code?: string,
     disableReset?: boolean,
@@ -70,6 +71,8 @@ function CodeBlockExtraContent({
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     ({
       upstream_blocks: upstreamBlocks,
+    }: {
+      upstream_blocks: string[];
     }) => api.blocks.pipelines.useUpdate(
       pipeline?.uuid,
       encodeURIComponent(block?.uuid),
@@ -281,8 +284,9 @@ function CodeBlockExtraContent({
                   <Button
                     backgroundColor={color}
                     compact
+                    disabled={!runBlockAndTrack}
                     onClick={() => {
-                      runBlockAndTrack({
+                      runBlockAndTrack?.({
                         block: {
                           ...block,
                           upstream_blocks: [b?.uuid],

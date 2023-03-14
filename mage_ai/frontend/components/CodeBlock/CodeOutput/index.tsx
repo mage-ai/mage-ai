@@ -671,10 +671,10 @@ function CodeOutput({
                       noPadding
                       onClick={() => {
                         addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
-                        openSidekickView(ViewKeyEnum.DATA);
-                        setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                        openSidekickView?.(ViewKeyEnum.DATA);
+                        setOutputBlocks?.((prevOutputBlocks: BlockType[]) => {
                           if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
-                            setSelectedOutputBlock(block);
+                            setSelectedOutputBlock?.(block);
                             return prevOutputBlocks.concat(block);
                           } else {
                             return prevOutputBlocks;

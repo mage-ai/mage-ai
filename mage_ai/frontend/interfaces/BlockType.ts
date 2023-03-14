@@ -154,6 +154,7 @@ export default interface BlockType {
     error: string;
     message: string;
   };
+  extension_uuid?: string;
   file?: string;
   has_callback?: boolean;
   language?: BlockLanguageEnum;

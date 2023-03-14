@@ -33,7 +33,7 @@ export const buildConvertBlockMenuItems = (
   b: BlockType,
   blocks: BlockType[],
   baseUUID: string,
-  addNewBlock: (block: BlockType) => Promise<any>,
+  addNewBlock: (block: BlockRequestPayloadType) => Promise<any>,
 ): FlyoutMenuItemType[] => {
   const upstreamBlocks = [];
   let currentIndex = blocks.findIndex(({ uuid }) => uuid === b.uuid);

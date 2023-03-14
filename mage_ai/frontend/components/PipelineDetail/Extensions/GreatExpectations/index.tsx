@@ -142,36 +142,26 @@ function GreatExpectations({
               blocks={blocksInNotebook}
               onUpdateCallback={fetchPipeline}
               pipeline={pipeline}
-              setErrors
+              setErrors={setErrors}
             />
           )}
           fetchFileTree={fetchFileTree}
           fetchPipeline={fetchPipeline}
           hideRunButton
           interruptKernel={interruptKernel}
-          // mainContainerRef={mainContainerRef}
-          // mainContainerWidth={mainContainerWidth}
           messages={messages[uuid]}
           noDivider
           onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
           onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
-          // onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-          // openSidekickView={openSidekickView}
           pipeline={pipeline}
           ref={blockRefs.current[path]}
           runBlock={runBlock}
           runningBlocks={runningBlocks}
           savePipelineContent={savePipelineContent}
           selected={selected}
-          // setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
           setAnyInputFocused={setAnyInputFocused}
-          // setCreatingNewDBTModel={setCreatingNewDBTModel}
-          // setEditingBlock={setEditingBlock}
           setErrors={setErrors}
-          // setOutputBlocks={setOutputBlocks}
-          // setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
           setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-          // setSelectedOutputBlock={setSelectedOutputBlock}
           setTextareaFocused={setTextareaFocused}
           textareaFocused={selected && textareaFocused}
         />
@@ -265,13 +255,16 @@ function GreatExpectations({
               uuid,
             }) => ({
               label: () => name,
-              onClick: () => addNewBlockAtIndex({
-                config: {
-                  template_path: path,
+              onClick: () => addNewBlockAtIndex(
+                {
+                  config: {
+                    template_path: path,
+                  },
+                  extension_uuid: extensionUUID,
+                  type: BlockTypeEnum.EXTENSION,
                 },
-                extension_uuid: extensionUUID,
-                type: BlockTypeEnum.EXTENSION,
-              }),
+                extensionBlocks?.length || 0,
+              ),
               tooltip: () => description,
               uuid,
             }))}

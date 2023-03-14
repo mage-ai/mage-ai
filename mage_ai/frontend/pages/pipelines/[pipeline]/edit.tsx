@@ -35,7 +35,11 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
-import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
+import PipelineType, {
+  PIPELINE_TYPE_TO_KERNEL_NAME,
+  PipelineExtensionsType,
+  PipelineTypeEnum,
+} from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
@@ -178,7 +182,7 @@ function PipelineDetailPage({
         [VIEW_QUERY_PARAM]: newView,
       }, {
         pushHistory,
-        replaceParams: {},
+        replaceParams: true,
       });
     }
   }, []);
@@ -492,6 +496,7 @@ function PipelineDetailPage({
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
     pipeline?: PipelineType | {
+      extensions?: PipelineExtensionsType;
       name: string;
       type: string;
     };
@@ -500,7 +505,9 @@ function PipelineDetailPage({
   }) => {
     const {
       block: blockOverride,
-      pipeline: pipelineOverride = {},
+      pipeline: pipelineOverride = {
+        extensions: {},
+      },
     } = payload || {};
     const { contentOnly } = opts || {};
 
@@ -539,7 +546,7 @@ function PipelineDetailPage({
             type,
           } = d;
 
-          if (BlockTypeEnum.SCRATCHPAD === type || hasError || 'table' !== type) {
+          if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
             if (Array.isArray(data)) {
               d.data = data.reduce((acc, text: string) => {
                 if (text.match(INTERNAL_OUTPUT_REGEX)) {
@@ -602,7 +609,7 @@ function PipelineDetailPage({
       }
     });
 
-    const extensionsToSave = {
+    const extensionsToSave: PipelineExtensionsType = {
       ...pipeline?.extensions,
       ...pipelineOverride?.extensions,
     };
@@ -610,6 +617,7 @@ function PipelineDetailPage({
       if (!extensionsToSave[extensionUUID]) {
         extensionsToSave[extensionUUID] = {};
       }
+      // @ts-ignore
       extensionsToSave[extensionUUID]['blocks'] = arr;
     });
 
@@ -773,7 +781,9 @@ function PipelineDetailPage({
       extension_uuid: extensionUUID,
       uuid,
     }: BlockType) => {
-      const query = {};
+      const query: {
+        extension_uuid?: string;
+      } = {};
       if (extensionUUID) {
         query.extension_uuid = extensionUUID;
       }
@@ -962,8 +972,8 @@ function PipelineDetailPage({
     name: string = randomNameGenerator(),
   ): Promise<any> => {
     let blockContent;
-    if (block.converted_from_type && b.converted_from_uuid) {
-      blockContent = contentByBlockUUID.current[block.converted_from_type]?.[b.converted_from_uuid];
+    if (block.converted_from_type && block.converted_from_uuid) {
+      blockContent = contentByBlockUUID.current[block.converted_from_type]?.[block.converted_from_uuid];
     }
 
     const {
@@ -1042,6 +1052,7 @@ function PipelineDetailPage({
               },
             }) => setBlocks((blocksPrev) => {
               const blocksNew = [...blocksNewInit];
+              // @ts-ignore
               Object.entries(extensions || {}).forEach(([extensionUUID, { blocks }]) => {
                 if (blocks) {
                   blocksNew.push(...blocks.map(b => ({ ...b, extension_uuid: extensionUUID })));
@@ -1201,6 +1212,7 @@ function PipelineDetailPage({
         arr.push(...pipeline?.blocks);
       }
       if (typeof pipeline?.extensions !== 'undefined') {
+        // @ts-ignore
         Object.entries(pipeline?.extensions || {}).forEach(([extensionUUID, { blocks }]) => {
           if (blocks) {
             arr.push(...blocks.map(b => ({ ...b, extension_uuid: extensionUUID })));

@@ -95,11 +95,7 @@ function Extensions({
                 justifyContent="space-between"
               >
                 <Flex alignItems="center">
-                  <PanelV2
-                    borderless
-                    fullHeight={false}
-                    fullWidth={false}
-                  >
+                  <PanelV2 fullWidth={false}>
                     <Spacing p={PADDING_UNITS}>
                       <FlexContainer alignItems="center">
                         <Image
