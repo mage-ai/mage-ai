@@ -2,6 +2,7 @@ import os
 
 
 DEBUG = os.getenv('DEBUG', False)
+HIDE_ENV_VAR_VALUES = int(os.getenv('HIDE_ENV_VAR_VALUES', 1) or 1) == 1
 QUERY_API_KEY = 'api_key'
 
 """

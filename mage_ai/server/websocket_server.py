@@ -39,6 +39,7 @@ from mage_ai.server.utils.output_display import (
 )
 from mage_ai.settings import (
     DISABLE_NOTEBOOK_EDIT_ACCESS,
+    HIDE_ENV_VAR_VALUES,
     REQUIRE_USER_AUTHENTICATION,
 )
 from mage_ai.shared.hash import merge_dict
@@ -261,7 +262,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             return False
 
         def filter_out_sensitive_data(message):
-            if not message.get('data'):
+            if not message.get('data') or not HIDE_ENV_VAR_VALUES:
                 return message
             data = message['data']
             if type(data) is str:
