@@ -75,6 +75,7 @@ function InputModal({
               }
               onSave(inputValue);
             }}
+            outline
             primary
             uuid="Inputs/InputModal/SaveInput"
           >

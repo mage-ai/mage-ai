@@ -317,7 +317,7 @@ function PipelineListPage() {
               const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
 
               return [
-                schedulesCount >= 1
+                (schedulesCount >= 1 || !!pipelinesEditing[uuid])
                   ? (
                     <Button
                       iconOnly

@@ -17,6 +17,8 @@ import {
   BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   BORDER_WIDTH,
+  OUTLINE_OFFSET,
+  OUTLINE_WIDTH,
 } from '@oracle/styles/units/borders';
 import {
   FONT_FAMILY_BOLD,
@@ -81,6 +83,7 @@ export type KeyboardShortcutButtonProps = {
   noBackground?: boolean;
   noPadding?: boolean;
   noHover?: boolean;
+  outline?: boolean;
   padding?: number;
   paddingBottom?: number;
   paddingTop?: number;
@@ -140,6 +143,24 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
 
   ${props => !props.wrapText && `
     white-space: nowrap;
+  `}
+
+  ${props => props.outline && !props.disabled && `
+    &:hover {
+      box-shadow:
+        0 0 0 ${OUTLINE_OFFSET}px ${(props.theme || dark).background.panel},
+        0 0 0 ${OUTLINE_OFFSET + OUTLINE_WIDTH}px ${(props.theme.interactive || dark.interactive).hoverOverlay};
+    }
+
+    &:focus {
+      box-shadow:
+        0 0 0 ${OUTLINE_OFFSET}px ${(props.theme || dark).background.panel},
+        0 0 0 ${OUTLINE_OFFSET + OUTLINE_WIDTH}px ${(props.theme.interactive || dark.interactive).focusBorder};
+    }
+
+    &:active {
+      box-shadow: none;
+    }
   `}
 
   ${props => !props.secondary && `

@@ -7,7 +7,6 @@ import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
@@ -241,12 +240,6 @@ function Toolbar({
       <Spacing mr={BUTTON_PADDING} />
       {filterButtonEl}
 
-      {(isLoadingSecondaryAction || isLoadingDelete) &&
-        <Spacing ml={2}>
-          <Spinner inverted />
-        </Spacing>
-      }
-
       {(!isViewerRole && onSecondaryActionClick) &&
         <Spacing ml={BUTTON_PADDING}>
           <Tooltip
@@ -296,10 +289,11 @@ function Toolbar({
             label={`Delete ${item}`}
           >
             <KeyboardShortcutButton
-              Icon={Trash}
+              Icon={!isLoadingDelete && Trash}
               bold
               disabled={disabledActions}
               greyBorder
+              loading={isLoadingDelete}
               onClick={() => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.DELETE)}
               smallIcon
               uuid="table/toolbar/delete_button"
