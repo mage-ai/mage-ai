@@ -24,6 +24,7 @@ const PanelStyle = styled.div<{
   fullHeight?: boolean;
   fullWidth?: boolean;
   maxHeight?: string;
+  maxWidth?: number;
   minWidth?: number;
   overflowVisible?: boolean;
 }>`
@@ -52,6 +53,10 @@ const PanelStyle = styled.div<{
 
   ${props => props.maxHeight && `
     max-height: ${props.maxHeight};
+  `}
+
+  ${props => props.maxWidth && `
+    max-width: ${props.maxWidth}px;
   `}
 
   ${props => props.minWidth && `
@@ -130,15 +135,16 @@ export type PanelProps = {
   containerRef?: any;
   contentContainerRef?: any;
   dark?: boolean;
+  fullWidth?: boolean;
   footer?: JSX.Element;
   fullHeight?: boolean;
-  fullWidth?: boolean;
   header?: JSX.Element;
   headerHeight?: number;
   headerIcon?: JSX.Element;
   headerPaddingVertical?: number;
   headerTitle?: string;
   maxHeight?: string;
+  maxWidth?: number;
   minWidth?: number;
   noPadding?: boolean;
   overflowVisible?: boolean;
@@ -160,10 +166,11 @@ function Panel({
   headerPaddingVertical,
   headerTitle,
   maxHeight,
+  maxWidth,
+  minWidth,
   noPadding,
   overflowVisible,
   subtitle,
-  minWidth,
 }: PanelProps) {
   return (
     <PanelStyle
@@ -172,6 +179,7 @@ function Panel({
       fullHeight={fullHeight}
       fullWidth={fullWidth}
       maxHeight={maxHeight}
+      maxWidth={maxWidth}
       minWidth={minWidth}
       overflowVisible={overflowVisible}
       ref={containerRef}

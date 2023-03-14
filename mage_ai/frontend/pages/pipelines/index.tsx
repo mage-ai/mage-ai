@@ -7,6 +7,7 @@ import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
+import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
 import PipelineType, {
   PipelineStatusEnum,
@@ -29,6 +30,7 @@ import { capitalize, randomNameGenerator } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
+import { useModal } from '@context/Modal';
 
 const sharedOpenButtonProps = {
   borderRadius: BORDER_RADIUS_SMALL,
@@ -86,9 +88,9 @@ function PipelineListPage() {
     { isLoading: boolean },
   ] = useCreatePipelineMutation(() => fetchPipelines?.());
 
-  const [updatePipeline] = useMutation(
+  const [updatePipeline, { isLoading: isLoadingUpdate }] = useMutation(
     (pipeline: PipelineType & {
-      status: ScheduleStatusEnum;
+      status?: ScheduleStatusEnum;
     }) => api.pipelines.useUpdate(pipeline.uuid)({ pipeline }),
     {
       onSuccess: (response: any) => onSuccess(
@@ -103,6 +105,7 @@ function PipelineListPage() {
               [uuid]: false,
             }));
             fetchPipelines();
+            hideInputModal?.();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -129,6 +132,38 @@ function PipelineListPage() {
     },
   );
 
+  const [showInputModal, hideInputModal] = useModal(({
+    pipelineName,
+  }: {
+    pipelineName: string;
+  }) => (
+    <InputModal
+      isLoading={isLoadingUpdate}
+      onClose={hideInputModal}
+      onSave={(name: string) => {
+        if (selectedPipeline) {
+          const selectedPipelineUUID = selectedPipeline.uuid;
+          setPipelinesEditing(prev => ({
+            ...prev,
+            [selectedPipelineUUID]: true,
+          }));
+          updatePipeline({
+            name,
+            uuid: selectedPipelineUUID,
+          });
+        }
+      }}
+      title="Rename pipeline"
+      value={pipelineName}
+    />
+  ), {} , [
+    isLoadingUpdate,
+    selectedPipeline,
+  ], {
+    background: true,
+    uuid: 'rename_pipeline_and_save',
+  });
+
   return (
     <Dashboard
       errors={errors}
@@ -137,7 +172,7 @@ function PipelineListPage() {
         <Toolbar
           addButtonProps={{
             isLoading: isLoadingCreate,
-            label: 'New pipeline',
+            label: 'New',
             menuItems: [
               {
                 label: () => 'Standard (batch)',
@@ -182,6 +217,13 @@ function PipelineListPage() {
             type: Object.values(PipelineTypeEnum),
           }}
           filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
+          moreActionsMenuItems={[
+            {
+              label: () => 'Rename pipeline',
+              onClick: () => showInputModal({ pipelineName: selectedPipeline?.name }),
+              uuid: 'Pipelines/MoreActionsMenu/rename',
+            },
+          ]}
           query={query}
           secondaryActionButtonProps={{
             Icon: Clone,

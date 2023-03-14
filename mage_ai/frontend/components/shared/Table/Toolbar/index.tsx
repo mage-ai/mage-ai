@@ -7,7 +7,6 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
-import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
 import { Add, Ellipsis, Filter, Trash } from '@oracle/icons';
@@ -181,6 +180,40 @@ function Toolbar({
     query,
   ]);
 
+  const moreActionsButtonEl = useMemo(() => (
+    <FlyoutMenuWrapper
+      disableKeyboardShortcuts
+      items={moreActionsMenuItems}
+      onClickCallback={closeMenu}
+      onClickOutside={closeMenu}
+      open={menuOpenIdx === MenuOpenEnum.MORE_ACTIONS}
+      parentRef={moreActionsButtonMenuRef}
+      roundedStyle
+      uuid="table/toolbar/more_actions_menu"
+    >
+      <Tooltip
+        label="More actions"
+        size={null}
+        widthFitContent
+      >
+        <KeyboardShortcutButton
+          Icon={Ellipsis}
+          bold
+          greyBorder
+          onClick={() => setMenuOpenIdx(prevState => (
+            prevState === MenuOpenEnum.MORE_ACTIONS ? null : MenuOpenEnum.MORE_ACTIONS
+          ))}
+          smallIcon
+          uuid="table/toolbar/more_actions_button"
+        />
+      </Tooltip>
+    </FlyoutMenuWrapper>
+  ), [
+    closeMenu,
+    menuOpenIdx,
+    moreActionsMenuItems,
+  ]);
+
   return (
     <FlexContainer alignItems="center">
       {addButtonEl}
@@ -274,33 +307,7 @@ function Toolbar({
 
       {(selectedRowId && moreActionsMenuItems?.length > 0) &&
         <Spacing ml={BUTTON_PADDING}>
-          <FlyoutMenuWrapper
-            disableKeyboardShortcuts
-            items={moreActionsMenuItems}
-            onClickCallback={closeMenu}
-            onClickOutside={closeMenu}
-            open={menuOpenIdx === MenuOpenEnum.MORE_ACTIONS}
-            parentRef={moreActionsButtonMenuRef}
-            roundedStyle
-            uuid="table/toolbar/more_actions_menu"
-          >
-            <Tooltip
-              label="More actions"
-              size={null}
-              widthFitContent
-            >
-              <KeyboardShortcutButton
-                Icon={Ellipsis}
-                bold
-                greyBorder
-                onClick={() => setMenuOpenIdx(prevState => (
-                  prevState === MenuOpenEnum.MORE_ACTIONS ? null : MenuOpenEnum.MORE_ACTIONS
-                ))}
-                smallIcon
-                uuid="table/toolbar/more_actions_button"
-              />
-            </Tooltip>
-          </FlyoutMenuWrapper>
+          {moreActionsButtonEl}
         </Spacing>
       }
     </FlexContainer>
