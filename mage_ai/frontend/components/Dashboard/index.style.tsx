@@ -41,12 +41,14 @@ export const VerticalNavigationStyle = styled.div<{
 `;
 
 export const SubheaderStyle = styled.div`
-  width: fit-content;
+  width: 100%;
   padding: ${PADDING_UNITS * UNIT}px;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 2;
 
   ${props => `
+    background-color: ${(props.theme.background || dark.background).page};
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 `;
