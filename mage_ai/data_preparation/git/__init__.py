@@ -4,6 +4,8 @@ import asyncio
 import git
 import subprocess
 
+REMOTE_NAME = 'mage-repo'
+
 
 class Git:
     def __init__(self, git_config: GitConfig):
@@ -18,12 +20,14 @@ class Git:
             self.commit('Initial commit')
 
         try:
-            self.repo.create_remote('origin', self.remote_repo_link)
+            self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
         except git.exc.GitCommandError:
             # if the remote already exists
-            self.repo.remotes.origin.set_url(self.remote_repo_link)
+            pass
 
-        self.origin = self.repo.remotes.origin
+        self.origin = self.repo.remotes[REMOTE_NAME]
+        if self.remote_repo_link not in self.origin.urls:
+            self.origin.set_url(self.remote_repo_link)
 
     @classmethod
     def get_manager(self):
@@ -56,7 +60,9 @@ class Git:
         if return_code is None:
             proc.kill()
             raise Exception(
-                "Connecting to remote timed out, make sure your SSH key is set up properly.")
+                "Connecting to remote timed out, make sure your SSH key is set up properly"
+                " and your repository host is added as a known host. More information here:"
+                " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
 
     def all_branches(self):
         return [head.name for head in self.repo.heads]
@@ -65,10 +71,14 @@ class Git:
         self.origin.fetch()
         if branch is None:
             branch = self.current_branch
-        self.repo.git.reset('--hard', f'origin/{branch}')
+        self.repo.git.reset('--hard', f'{self.origin.name}/{branch}')
 
     def push(self):
-        self.repo.git.push('--set-upstream', self.origin.name, self.current_branch)
+        self.repo.git.push(
+            '--set-upstream',
+            self.origin.name,
+            self.current_branch
+        )
 
     def pull(self):
         self.origin.pull(self.current_branch)
