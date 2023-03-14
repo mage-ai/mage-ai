@@ -126,6 +126,7 @@ export enum IntegrationSourceEnum {
   GOOGLE_SHEETS = 'google_sheets',
   INTERCOM = 'intercom',
   MYSQL = 'mysql',
+  PIPEDRIVE = 'pipedrive',
   POSTGRESQL = 'postgresql',
   REDSHIFT = 'redshift',
   SALESFORCE = 'salesforce',

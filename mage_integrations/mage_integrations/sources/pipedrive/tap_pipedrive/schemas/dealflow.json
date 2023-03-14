@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    
+    "item_id": {
+      "type": "integer"
+    },
+
+    "user_id": {
+      "type": "integer"
+    },
+ 
+    "field_key": {
+      "type": ["null", "string"]
+    },
+
+    "old_value": {
+      "type": ["null", "string"]
+    },
+
+    "new_value": {
+      "type": ["null", "string"]
+    },
+
+    "is_bulk_update_flag": {
+      "type": ["null", "boolean"]
+    },
+
+    "log_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+
+    "change_source": {
+      "type": ["null", "string"]
+    },
+
+    "additional_data": {
+      "type": ["null", "string"]
+    }
+  }
+}
