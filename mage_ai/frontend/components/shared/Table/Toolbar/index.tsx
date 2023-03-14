@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import Badge from '@oracle/components/Badge';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -7,6 +8,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
 import { Add, Ellipsis, Filter, Trash } from '@oracle/icons';
@@ -22,6 +24,7 @@ import {
 } from './constants';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
 
 type ToolbarProps = {
@@ -64,7 +67,7 @@ type ToolbarProps = {
 function Toolbar({
   addButtonProps,
   deleteRowProps,
-  filterOptions,
+  filterOptions = {},
   filterValueLabelMapping,
   moreActionsMenuItems,
   groupings,
@@ -155,6 +158,10 @@ function Toolbar({
     isLoadingAddButton,
   ]);
 
+  const filtersAppliedCount = useMemo(
+    () => getNestedTruthyValuesCount(filterOptionsEnabledMapping),
+    [filterOptionsEnabledMapping],
+  );
   const filterButtonEl = useMemo(() => (
     <ToggleMenu
       compact
@@ -169,6 +176,15 @@ function Toolbar({
     >
       <KeyboardShortcutButton
         {...SHARED_BUTTON_PROPS}
+        afterElement={filtersAppliedCount > 0
+          ?
+            <Badge cyan noVerticalPadding>
+              <Text bold inverted>
+                {filtersAppliedCount}
+              </Text>
+            </Badge>
+          : null
+        }
         beforeElement={<Filter size={2 * UNIT} />}
         onClick={() => setFilterButtonMenuOpen(prevOpenState => !prevOpenState)}
         uuid="table/toolbar/filter_button"

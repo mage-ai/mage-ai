@@ -9,7 +9,9 @@ import { REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 
 export type BadgeProps = {
   children?: any;
+  cyan?: boolean;
   disabled?: boolean;
+  noVerticalPadding?: boolean;
   quantifier?: boolean;
   regular?: boolean;
   small?: boolean;
@@ -34,9 +36,19 @@ const BadgeStyle = styled.p<BadgeProps>`
     padding: ${UNIT * 1}px ${UNIT * 1.25}px;
   `};
 
+  ${props => props.noVerticalPadding && `
+    padding-bottom: 0;
+    padding-top: 0;
+  `}
+
   ${props => !props.disabled && `
     background-color: ${(props.theme || dark).background.row};
     color: ${(props.theme || dark).content.muted};
+  `}
+
+  ${props => props.cyan && `
+    background-color: ${(props.theme || dark).accent.cyan};
+    color: ${(props.theme || dark).monotone.black};
   `}
 
   ${props => props.disabled && `
