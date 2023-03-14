@@ -7,8 +7,6 @@ import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import { KEY_CODE_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 
 type InputModalProps = {
   description?: string;
@@ -69,13 +67,15 @@ function InputModal({
           <KeyboardShortcutButton
             bold
             inline
-            keyboardShortcutValidation={({
-              keyMapping,
-            }) => onlyKeysPresent([KEY_CODE_ENTER], keyMapping)}
             loading={isLoading}
-            onClick={() => onSave(inputValue || value)}
+            onClick={() => {
+              if (inputValue === value || !inputValue) {
+                onClose();
+                return;
+              }
+              onSave(inputValue);
+            }}
             primary
-            tabIndex={0}
             uuid="Inputs/InputModal/SaveInput"
           >
             Save
