@@ -288,6 +288,7 @@
           "group": "Deployment",
           "pages": [
             "production/deploying-to-cloud/using-terraform",
+            "production/deploying-to-cloud/using-helm",
             {
               "group": "AWS",
               "pages": [
