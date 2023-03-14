@@ -282,7 +282,7 @@ function Header({
               </Spacing>
             )}
 
-            {/* {branch && (
+            {branch && (
               <Spacing ml={2}>
                 <KeyboardShortcutButton
                   blackBorder
@@ -302,7 +302,7 @@ function Header({
                   </FlexContainer>
                 </KeyboardShortcutButton>
               </Spacing>
-            )} */}
+            )}
 
             {version && typeof(version) !== 'undefined' && (
               <Spacing ml={2}>

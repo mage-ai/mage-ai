@@ -15,12 +15,12 @@ import { OutputContainerStyle } from '@components/PipelineDetail/PipelineExecuti
 import { onSuccess } from '@api/utils/response';
 
 
-const GIT_ACTION_OPTIONS = [
-  'create new branch',
-  'commit',
-  'pull',
-  'reset',
-]
+const GIT_ACTION_OPTIONS = {
+  'new_branch': 'Create new branch',
+  'commit': 'Commit & push',
+  'pull': 'Pull',
+  'reset_hard': 'Hard reset',
+}
 
 type GitActionsProps = {
   branch: string;
@@ -104,6 +104,30 @@ function GitActions({
       ),
     }
   );
+
+  const [
+    performActionWithRefresh,
+    { isLoading: isLoadingPerformActionWithRefresh },
+  ] = useMutation(
+    api.git_branches.useUpdate(branch),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setError(null);
+            window.location.reload();
+          },
+          onErrorCallback: ({
+            error: {
+              exception,
+            },
+          }) => {
+            setError(exception);
+          },
+        },
+      ),
+    }
+  );
   
   const [status, setStatus] = useState<string>();
 
@@ -115,8 +139,15 @@ function GitActions({
   }, [getStatus])
 
   const isLoading = useMemo(
-    () => isLoadingSwitchBranch || isLoadingPerformAction,
-    [isLoadingSwitchBranch, isLoadingPerformAction],
+    () =>
+      isLoadingSwitchBranch ||
+      isLoadingPerformAction ||
+      isLoadingPerformActionWithRefresh,
+    [
+      isLoadingSwitchBranch,
+      isLoadingPerformAction,
+      isLoadingPerformActionWithRefresh,
+    ],
   );
 
   return (
@@ -165,160 +196,165 @@ function GitActions({
               placeholder="Select an action"
               value={action}
             >
-              {GIT_ACTION_OPTIONS.map(action => (
-                <option key={action} value={action}>
-                  {action}
+              {Object.entries(GIT_ACTION_OPTIONS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
                 </option>
               ))}
             </Select>
           </Spacing>
-          {action === 'commit' && (
+          {isLoading ? (
+            <Spinner color="white" />
+          ) : (
             <>
-              <Spacing m={1}>
-                <OutputContainerStyle maxHeight={400} noScrollbarTrackBackground>
-                  {status?.split('\\n')?.map((t) => (
-                    <Text key={t} preWrap small>
-                      {t}
-                    </Text>
-                  ))}
-                </OutputContainerStyle>
-              </Spacing>
-              <FlexContainer justifyContent="space-between">
-                <TextInput
-                  compact
-                  label="Commit message"
-                  monospace
-                  onChange={e => setPayload({
-                    message: e.target.value,
-                  })}
-                  value={payload?.['message']}
-                />
-                <Button
-                  borderLess
-                  onClick={() => {
-                    // @ts-ignore
-                    performAction({
-                      git_branch: {
-                        action_type: 'commit',
-                        ...payload,
-                      }
-                    })
-                  }}
-                  success
-                >
-                  Commit
-                </Button>
-                <Button
-                  borderLess
-                  onClick={() => {
-                    // @ts-ignore
-                    performAction({
-                      git_branch: {
-                        action_type: 'push',
-                      }
-                    })
-                  }}
-                  primary
-                >
-                  Push
-                </Button>
-              </FlexContainer>
-            </>
-          )}
-          {action === 'create new branch' && (
-            <FlexContainer justifyContent="space-between">
-              <TextInput
-                compact
-                label="Branch name"
-                monospace
-                onChange={e => setPayload({
-                  name: e.target.value
-                })}
-                value={payload?.['name']}
-              />
-              <Button
-                borderLess
-                onClick={() => {
-                  // @ts-ignore
-                  switchBranch({
-                    git_branch: payload,
-                  });
-                }}
-                primary
-              >
-                Create Branch
-              </Button>
-            </FlexContainer>
-          )}
-          {action === 'pull' && (
-            <Button
-              borderLess
-              onClick={() => {
-                // @ts-ignore
-                performAction({
-                  git_branch: {
-                    action_type: 'pull',
-                  },
-                });
-              }}
-              primary
-            >
-              Pull
-            </Button>
-          )}
-          {action === 'reset' && (
-            <>
-              {confirmMessage ? (
-                <FlexContainer>
-                  <Text>
-                    {confirmMessage}
-                  </Text>
+              {action === 'commit' && (
+                <>
+                  <Spacing m={1}>
+                    <OutputContainerStyle maxHeight={400} noScrollbarTrackBackground>
+                      {status?.split('\\n')?.map((t) => (
+                        <Text key={t} monospace preWrap small>
+                          {t}
+                        </Text>
+                      ))}
+                    </OutputContainerStyle>
+                  </Spacing>
+                  <FlexContainer justifyContent="space-between">
+                    <TextInput
+                      compact
+                      label="Commit message"
+                      monospace
+                      onChange={e => setPayload({
+                        message: e.target.value,
+                      })}
+                      required
+                      value={payload?.['message']}
+                    />
+                    <Button
+                      borderLess
+                      onClick={() => {
+                        // @ts-ignore
+                        performAction({
+                          git_branch: {
+                            action_type: 'commit',
+                            ...payload,
+                          }
+                        })
+                      }}
+                      success
+                    >
+                      Commit
+                    </Button>
+                    <Button
+                      borderLess
+                      onClick={() => {
+                        // @ts-ignore
+                        performAction({
+                          git_branch: {
+                            action_type: 'push',
+                          }
+                        })
+                      }}
+                      primary
+                    >
+                      Push
+                    </Button>
+                  </FlexContainer>
+                </>
+              )}
+              {action === 'new_branch' && (
+                <FlexContainer justifyContent="space-between">
+                  <TextInput
+                    compact
+                    label="Branch name"
+                    monospace
+                    onChange={e => setPayload({
+                      name: e.target.value
+                    })}
+                    value={payload?.['name']}
+                  />
                   <Button
                     borderLess
                     onClick={() => {
                       // @ts-ignore
-                      performAction({
-                        git_branch: {
-                          action_type: 'reset',
-                        },
+                      switchBranch({
+                        git_branch: payload,
                       });
-                      setConfirmMessage(null);
                     }}
                     primary
                   >
-                    Confirm
+                    Create Branch
                   </Button>
                 </FlexContainer>
-              ) : (
+              )}
+              {action === 'pull' && (
                 <Button
                   borderLess
-                  onClick={() => setConfirmMessage(
-                    'Are you sure you want to reset your branch? Your local changes may be erased.')}
+                  onClick={() => {
+                    // @ts-ignore
+                    performActionWithRefresh({
+                      git_branch: {
+                        action_type: 'pull',
+                      },
+                    });
+                  }}
                   primary
                 >
-                  Reset branch
+                  Pull
                 </Button>
               )}
+              {action === 'reset_hard' && (
+                <>
+                  <Spacing mb={1}>
+                    <Text>
+                      {confirmMessage || 'This will reset your local branch to match the remote branch.'}
+                    </Text>
+                  </Spacing>
+                  {confirmMessage ? (
+                    <Button
+                      borderLess
+                      onClick={() => {
+                        setConfirmMessage(null);
+                        // @ts-ignore
+                        performActionWithRefresh({
+                          git_branch: {
+                            action_type: 'reset',
+                          },
+                        });
+                      }}
+                      warning
+                    >
+                      Confirm
+                    </Button>
+                  ) : (
+                    <Button
+                      borderLess
+                      onClick={() => setConfirmMessage(
+                        'Are you sure you want to reset your branch? Your local changes may be erased.')}
+                      primary
+                    >
+                      Reset branch
+                    </Button>
+                  )}
+                </>
+              )}
+              <Spacing mt={1}>
+                {!isLoading && (
+                  <>
+                    {!error && message && (
+                      <Text>
+                        {message}
+                      </Text>
+                    )}
+                    {error && (
+                      <Text danger>
+                        {error}
+                      </Text>
+                    )}
+                  </>
+                )}
+              </Spacing>
             </>
           )}
-          <Spacing mt={1}>
-            {isLoading && (<Spinner />)}
-            {!isLoading && (
-              <>
-                {!error && message && (
-                  <Text>
-                    {message}
-                  </Text>
-                )}
-                {error && (
-                  <Text danger>
-                    {error}
-                  </Text>
-                )}
-              </>
-            )}
-          </Spacing>
-          
         </Spacing>
       </Panel>
     </div>

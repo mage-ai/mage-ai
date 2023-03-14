@@ -1,3 +1,4 @@
+from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.git import Git
 from mage_ai.data_preparation.preferences import get_preferences
@@ -37,6 +38,12 @@ class GitBranchResource(GenericResource):
             self.model = dict(name=git_manager.current_branch, status=status)
         elif action_type == 'commit':
             message = payload.get('message')
+            if not message:
+                error = ApiError.RESOURCE_ERROR
+                error.update({
+                    'message': 'Message is empty, please add a message for your commit.',
+                })
+                raise ApiError(error)
             git_manager.commit(message)
         elif action_type == 'push':
             await git_manager.check_connection()

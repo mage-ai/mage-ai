@@ -35,7 +35,8 @@ export interface SyncFieldType {
 
 function SyncData() {
   const { data: dataSyncs } = api.syncs.list();
-  const [sync, setSync] = useState<SyncType>(null);
+  const [sync, setSync] = useState<SyncType>();
+  const [error, setError] = useState<string>();
 
   useEffect(() => {
     if (dataSyncs) {
@@ -63,17 +64,11 @@ function SyncData() {
           },
           onErrorCallback: ({
             error: {
+              exception,
               message,
-              type,
             },
           }) => {
-            toast.error(
-              message,
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: type,
-              },
-            );
+            setError(exception);
           },
         }
       )
@@ -98,17 +93,11 @@ function SyncData() {
           },
           onErrorCallback: ({
             error: {
+              exception,
               message,
-              type,
             },
           }) => {
-            toast.error(
-              message,
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: type,
-              },
-            );
+            setError(exception);
           },
         }
       )
@@ -120,7 +109,12 @@ function SyncData() {
       uuidItemSelected={SECTION_ITEM_UUID_GIT_SETTINGS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
-      <Spacing p={PADDING_UNITS}>
+      <Spacing
+        p={PADDING_UNITS}
+        style={{
+          width: '600px',
+        }}
+      >
         <Headline level={5}>
           Git repository settings
         </Headline>
@@ -134,76 +128,73 @@ function SyncData() {
             </Text>
           </Text>
         </Spacing>
-        
-        <FlexContainer alignItems="center">
-          <form>
-            {GIT_FIELDS.map(({
-              autoComplete,
-              disabled,
-              label,
-              required,
-              type,
-              uuid,
-            }: SyncFieldType) => (
-              <Spacing key={uuid} mt={2}>
-                <TextInput
-                  autoComplete={autoComplete}
-                  disabled={disabled}
-                  label={label}
-                  // @ts-ignore
-                  onChange={e => {
-                    setSync(prev => ({
-                      ...prev,
-                      [uuid]: e.target.value,
-                    }));
-                  }}
-                  primary
-                  required={required}
-                  setContentOnMount
-                  type={type}
-                  value={sync?.[uuid] || ''}
-                />
-              </Spacing>
-            ))}
-          </form>
-        </FlexContainer>
+        <form>
+          {GIT_FIELDS.map(({
+            autoComplete,
+            disabled,
+            label,
+            required,
+            type,
+            uuid,
+          }: SyncFieldType) => (
+            <Spacing key={uuid} mt={2}>
+              <TextInput
+                autoComplete={autoComplete}
+                disabled={disabled}
+                fullWidth
+                label={label}
+                // @ts-ignore
+                onChange={e => {
+                  setSync(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+                setContentOnMount
+                type={type}
+                value={sync?.[uuid] || ''}
+              />
+            </Spacing>
+          ))}
+        </form>
         <Spacing mt={2}>
           <Text>
             You can also set up your project to only sync with a specified branch.
           </Text>
         </Spacing>
-        <FlexContainer>
-          <form>
-            {SYNC_FIELDS.map(({
-              autoComplete,
-              disabled,
-              label,
-              required,
-              type,
-              uuid,
-            }: SyncFieldType) => (
-              <Spacing key={uuid} mt={2}>
-                <TextInput
-                  autoComplete={autoComplete}
-                  disabled={disabled}
-                  label={label}
-                  // @ts-ignore
-                  onChange={e => {
-                    setSync(prev => ({
-                      ...prev,
-                      [uuid]: e.target.value,
-                    }));
-                  }}
-                  primary
-                  required={required}
-                  setContentOnMount
-                  type={type}
-                  value={sync?.[uuid] || ''}
-                />
-              </Spacing>
-            ))}
-          </form>
-        </FlexContainer>
+        <form>
+          {SYNC_FIELDS.map(({
+            autoComplete,
+            disabled,
+            label,
+            required,
+            type,
+            uuid,
+          }: SyncFieldType) => (
+            <Spacing key={uuid} mt={2}>
+              <TextInput
+                autoComplete={autoComplete}
+                disabled={disabled}
+                fullWidth
+                label={label}
+                // @ts-ignore
+                onChange={e => {
+                  setSync(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+                setContentOnMount
+                type={type}
+                value={sync?.[uuid] || ''}
+              />
+            </Spacing>
+          ))}
+        </form>
         <FlexContainer alignItems="center">
           <Spacing mt={2}>
             <Checkbox
@@ -240,17 +231,27 @@ function SyncData() {
         <Spacing mt={2}>
           <Button
             loading={isLoadingRunSync}
-            // @ts-ignore
-            onClick={() => runSync({
-              sync: {
-                action_type: 'sync_data',
-              },
-            })}
+            onClick={() => {
+              setError(null);
+              // @ts-ignore
+              runSync({
+                sync: {
+                  action_type: 'sync_data',
+                },
+              });
+            }}
             success
           >
             Run sync
           </Button>
         </Spacing>
+        {error && (
+          <Spacing mt={1}>
+            <Text danger>
+              {error}
+            </Text>
+          </Spacing>
+        )}
       </Spacing>
     </SettingsDashboard>
   );
