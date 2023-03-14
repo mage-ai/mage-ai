@@ -13,6 +13,7 @@ import CodeBlockExtraContent from './CodeBlockExtraContent';
 import ExtensionOptionType, { ExtensionOptionTemplateType } from '@interfaces/ExtensionOptionType';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { Add } from '@oracle/icons';
@@ -235,6 +236,22 @@ function GreatExpectations({
           <Text default>
             When a block in your pipeline runs, it’ll run any tests you define in its code.
             All associated extension blocks will also run during that phase.
+            Learn more about the <Link
+              href="https://docs.mage.ai/development/testing/great-expectations"
+              openNewWindow
+            >
+              Great Expectation power up
+            </Link>.
+          </Text>
+        </Spacing>
+        <Spacing mt={1}>
+          <Text default>
+            For all available expectations, read Great Expectation’s <Link
+              href="https://greatexpectations.io/expectations/"
+              openNewWindow
+            >
+              documentation
+            </Link>.
           </Text>
         </Spacing>
       </Spacing>

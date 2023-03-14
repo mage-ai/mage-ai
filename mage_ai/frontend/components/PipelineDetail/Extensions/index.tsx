@@ -56,11 +56,22 @@ function Extensions({
         {!selectedExtensionUUID && (
           <Spacing mb={PADDING_UNITS}>
             <Text default>
-              Power up your pipelines with these extensions.
-              Click on a power up below to configure it for <Text inline monospace>
-                {pipeline?.uuid}
-              </Text>.
+              Power up your pipeline with extensions.
+              Learn more about <Link
+                href="https://docs.mage.ai/design/blocks/extension"
+                openNewWindow
+              >
+                extension blocks
+              </Link>.
             </Text>
+
+            <Spacing mt={1}>
+              <Text default>
+                Click on a power up below to add and configure it for the <Text inline monospace>
+                  {pipeline?.uuid}
+                </Text> pipeline.
+              </Text>
+            </Spacing>
           </Spacing>
         )}
         {!data && !selectedExtensionUUID && <Spinner />}

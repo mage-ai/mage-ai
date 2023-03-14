@@ -78,7 +78,13 @@ export const SHARED_LINK_STYLES = css<any>`
     !props.secondary &&
     !props.color &&
     `
-    color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    color: ${(props.theme.interactive || dark.interactive).linkText};
+
+    &:active,
+    &:focus,
+    &:hover {
+      color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover};
+    }
   `}
 
   ${(props) => props.color && `
