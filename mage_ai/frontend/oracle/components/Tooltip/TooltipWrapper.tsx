@@ -11,6 +11,7 @@ export type TooltipWrapperProps = {
   alignLeft?: boolean;
   appearAbove?: boolean;
   appearBefore?: boolean;
+  autoHide?: boolean;
   autoWidth?: boolean;
   basic?: boolean;
   block?: boolean;
@@ -150,6 +151,7 @@ function TooltipWrapper({
   alignLeft,
   appearAbove,
   appearBefore,
+  autoHide,
   autoWidth,
   basic,
   block,
@@ -197,11 +199,18 @@ function TooltipWrapper({
       clearInterval(interval);
     }
 
-    return () => {
-      return clearInterval(interval);
-    };
+    if (autoHide) {
+      setTimeout(() => {
+        setVisibleInterval(false);
+        setVisible(false);
+      }, visibleDelay * 3);
+    }
+
+    return () => clearInterval(interval);
   }, [
+    autoHide,
     setVisible,
+    visibleDelay,
     visibleInterval,
   ]);
 

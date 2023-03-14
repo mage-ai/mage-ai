@@ -289,7 +289,7 @@ function PipelineListPage() {
               },
               {
                 center: true,
-                uuid: 'Open',
+                uuid: 'Actions',
               },
             ]}
             isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}

@@ -20,3 +20,9 @@ export enum ConfirmDialogueOpenEnum {
   SECONDARY = 1,
   DELETE = 2,
 }
+
+export const SHARED_TOOLTIP_PROPS = {
+  autoHide: true,
+  size: null,
+  widthFitContent: true,
+};

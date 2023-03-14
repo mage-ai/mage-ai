@@ -18,9 +18,11 @@ import {
   POPUP_MENU_WIDTH,
   POPUP_TOP_OFFSET,
   SHARED_BUTTON_PROPS,
+  SHARED_TOOLTIP_PROPS,
 } from './constants';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { isViewer } from '@utils/session';
 
 type ToolbarProps = {
   addButtonProps?: {
@@ -71,6 +73,7 @@ function Toolbar({
   selectedRowId,
   setSelectedRow,
 }: ToolbarProps) {
+  const isViewerRole = isViewer();
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
   const moreActionsButtonMenuRef = useRef(null);
@@ -78,6 +81,7 @@ function Toolbar({
   const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState(false);
   const [menuOpenIdx, setMenuOpenIdx] = useState<number>(null);
   const [confirmationDialogueOpenIdx, setConfirmationDialogueOpenIdx] = useState<number>(null);
+  const disabledActions = !selectedRowId;
 
   const closeAddButtonMenu = useCallback(() => setAddButtonMenuOpen(false), []);
   const closeFilterButtonMenu = useCallback(() => setFilterButtonMenuOpen(false), []);
@@ -192,13 +196,13 @@ function Toolbar({
       uuid="table/toolbar/more_actions_menu"
     >
       <Tooltip
+        {...SHARED_TOOLTIP_PROPS}
         label="More actions"
-        size={null}
-        widthFitContent
       >
         <KeyboardShortcutButton
           Icon={Ellipsis}
           bold
+          disabled={disabledActions}
           greyBorder
           onClick={() => setMenuOpenIdx(prevState => (
             prevState === MenuOpenEnum.MORE_ACTIONS ? null : MenuOpenEnum.MORE_ACTIONS
@@ -212,6 +216,7 @@ function Toolbar({
     closeMenu,
     menuOpenIdx,
     moreActionsMenuItems,
+    selectedRowId,
   ]);
 
   return (
@@ -226,16 +231,16 @@ function Toolbar({
         </Spacing>
       }
 
-      {(onSecondaryActionClick && selectedRowId) &&
+      {(!isViewerRole && onSecondaryActionClick) &&
         <Spacing ml={BUTTON_PADDING}>
           <Tooltip
+            {...SHARED_TOOLTIP_PROPS}
             label={secondaryActionTooltip}
-            size={null}
-            widthFitContent
           >
             <KeyboardShortcutButton
               Icon={!isLoadingSecondaryAction && secondaryActionIcon}
               bold
+              disabled={disabledActions}
               greyBorder
               loading={isLoadingSecondaryAction}
               onClick={openSecondaryActionConfirmDialogue
@@ -268,16 +273,16 @@ function Toolbar({
         </Spacing>
       }
 
-      {(onDelete && selectedRowId) &&
+      {(!isViewerRole && onDelete) &&
         <Spacing ml={BUTTON_PADDING}>
           <Tooltip
+            {...SHARED_TOOLTIP_PROPS}
             label={`Delete ${item}`}
-            size={null}
-            widthFitContent
           >
             <KeyboardShortcutButton
               Icon={Trash}
               bold
+              disabled={disabledActions}
               greyBorder
               onClick={() => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.DELETE)}
               smallIcon
@@ -305,7 +310,7 @@ function Toolbar({
         </Spacing>
       }
 
-      {(selectedRowId && moreActionsMenuItems?.length > 0) &&
+      {(!isViewerRole && moreActionsMenuItems?.length > 0) &&
         <Spacing ml={BUTTON_PADDING}>
           {moreActionsButtonEl}
         </Spacing>
