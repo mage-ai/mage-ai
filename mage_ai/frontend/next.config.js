@@ -25,5 +25,8 @@ module.exports = removeImports({
       unoptimized: true
     }
   },
+  images: {
+    unoptimized: true
+  },
   reactStrictMode: true,
 });
