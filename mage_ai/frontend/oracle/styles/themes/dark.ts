@@ -98,6 +98,7 @@ export default {
     table: '#292A2F',
   },
   borders: {
+    button: '#454850',
     contrast: WHITE,
     danger: RED,
     dark: '#000000',

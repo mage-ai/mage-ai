@@ -63,6 +63,7 @@ export type KeyboardShortcutButtonProps = {
   fitContentWidth?: boolean;
   fire?: boolean;
   grey300?: boolean;
+  greyBorder?: boolean;
   halfPaddingBottom?: boolean;
   halfPaddingLeft?: boolean;
   halfPaddingRight?: boolean;
@@ -80,6 +81,7 @@ export type KeyboardShortcutButtonProps = {
   noBackground?: boolean;
   noPadding?: boolean;
   noHover?: boolean;
+  padding?: number;
   paddingBottom?: number;
   paddingTop?: number;
   pill?: boolean;
@@ -89,6 +91,7 @@ export type KeyboardShortcutButtonProps = {
   selected?: boolean;
   shadow?: boolean;
   small?: boolean;
+  smallIcon?: boolean;
   spacious?: boolean;
   shortWidth?: boolean;
   type?: ButtonTypeEnum;
@@ -253,6 +256,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     }
   `}
 
+  ${props => props.greyBorder && `
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.button};
+  `}
+
   ${props => props.blackBorder && `
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).black};
   `}
@@ -367,7 +374,11 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.withIcon && `
-    padding: ${(UNIT * 1.25) - 1}px !important;
+    padding: ${(UNIT * 1.25) - 1}px;
+  `}
+
+  ${props => props.padding > 0 && `
+    padding: ${props.padding}px;
   `}
 
   ${props => props.shadow && `
@@ -407,6 +418,8 @@ function KeyboardShortcutButton({
   mutedDisabled,
   noHover,
   onClick: onClickProp,
+  padding,
+  smallIcon,
   type = ButtonTypeEnum.BUTTON,
   useModelTheme,
   ...props
@@ -465,6 +478,10 @@ function KeyboardShortcutButton({
               logEventCustom(logEvent, eventType, { eventProperties, userProperties });
               onClick?.(event);
             }}
+            padding={(smallIcon && !children)
+              ? 11    // 11px padding to match size of button with text
+              : padding
+            }
             type={(asHref || linkHref) ? null : type}
             useModelTheme={useModelTheme}
             withIcon={!!Icon}
@@ -472,7 +489,7 @@ function KeyboardShortcutButton({
             {beforeElement && !loading && (
               <>
                 {beforeElement}
-                <Spacing mr={1} />
+                <Spacing mr={1}/>
               </>
             )}
 
@@ -482,14 +499,17 @@ function KeyboardShortcutButton({
               {Icon && (
                 <Icon
                   muted={disabled || mutedDisabled}
-                  size={UNIT * 2.5}
+                  size={smallIcon ? (UNIT * 2) : (UNIT * 2.5)}
                 />
               )}
 
               {Icon && children && <Spacing mr={1} />}
 
               {loading && (
-                <Spinner inverted={!inverted} />
+                <Spinner
+                  inverted={!inverted}
+                  small={smallIcon}
+                />
               )}
               {!loading && children}
             </Flex>

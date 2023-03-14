@@ -21,7 +21,7 @@ import Text from '@oracle/elements/Text';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
+import { Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
@@ -44,7 +44,7 @@ function PipelineListPage() {
   });
   const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
 
-  const [createPipeline, { isLoading }]: [MutateFunction<any>, { isLoading: boolean }] = useMutation(
+  const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
     api.pipelines.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -54,7 +54,7 @@ function PipelineListPage() {
               uuid,
             },
           }) => {
-            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
+            onSuccessCallback?.(uuid);
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -64,6 +64,18 @@ function PipelineListPage() {
       ),
     },
   );
+  const [createPipeline, { isLoading: isLoadingCreate }]: [
+    MutateFunction<any>,
+    { isLoading: boolean },
+  ] = useCreatePipelineMutation((pipelineUUID: string) => router.push(
+    '/pipelines/[pipeline]/edit',
+    `/pipelines/${pipelineUUID}/edit`,
+  ));
+  const [clonePipeline, { isLoading: isLoadingClone }]: [
+    MutateFunction<any>,
+    { isLoading: boolean },
+  ] = useCreatePipelineMutation(() => fetchPipelines?.());
+
   const [updatePipeline] = useMutation(
     (pipeline: PipelineType & {
       status: ScheduleStatusEnum;
@@ -90,6 +102,22 @@ function PipelineListPage() {
       ),
     },
   );
+  const [deletePipeline] = useMutation(
+    (uuid: string) => api.pipelines.useDelete(uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelines?.();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   return (
     <Dashboard
@@ -98,7 +126,7 @@ function PipelineListPage() {
       subheaderChildren={
         <Toolbar
           addButtonProps={{
-            isLoading,
+            isLoading: isLoadingCreate,
             label: 'New pipeline',
             menuItems: [
               {
@@ -132,12 +160,28 @@ function PipelineListPage() {
               },
             ],
           }}
+          deleteRowProps={{
+            confirmationMessage: 'This is irreversible and will immediately delete everything associated \
+              with the pipeline, including its blocks, triggers, runs, logs, and history.',
+            item: 'pipeline',
+            onDelete: () => deletePipeline(selectedPipeline?.uuid),
+          }}
           filterOptions={{
             status: Object.values(PipelineStatusEnum),
             type: Object.values(PipelineTypeEnum),
           }}
           filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
           query={query}
+          secondaryActionButtonProps={{
+            Icon: Clone,
+            isLoading: isLoadingClone,
+            onClick: () => clonePipeline({
+              pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
+            }),
+            tooltip: 'Clone pipeline',
+          }}
+          selectedRowId={selectedPipeline?.uuid}
+          setSelectedRow={setSelectedPipeline}
         />
       }
       title="Pipelines"
