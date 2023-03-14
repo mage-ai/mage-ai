@@ -6,20 +6,19 @@ import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
 import { Add, Filter, Trash } from '@oracle/icons';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
+import {
+  BUTTON_PADDING,
+  POPUP_MENU_WIDTH,
+  POPUP_TOP_OFFSET,
+  SHARED_BUTTON_PROPS,
+} from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-
-const BUTTON_PADDING = `${UNIT * 1.5}px`;
-const SHARED_BUTTON_PROPS = {
-  bold: true,
-  greyBorder: true,
-  paddingBottom: 9,
-  paddingTop: 9,
-};
 
 type ToolbarProps = {
   addButtonProps?: {
@@ -29,6 +28,7 @@ type ToolbarProps = {
   };
   deleteRowProps?: {
     confirmationMessage: string;
+    isLoading: boolean;
     item: string;
     onDelete: (id: string) => void;
   }
@@ -49,6 +49,7 @@ type ToolbarProps = {
   };
   secondaryActionButtonProps?: {
     Icon: any;
+    confirmationDescription?: string;
     confirmationMessage?: string;
     isLoading?: boolean;
     label?: string;
@@ -76,14 +77,15 @@ function Toolbar({
   const filterButtonMenuRef = useRef(null);
   const [addButtonMenuOpen, setAddButtonMenuOpen] = useState(false);
   const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState(false);
-  const [confirmationAction, setConfirmationAction] = useState(null);
-  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState(false);
+  const [deleteConfirmDialogueOpen, setDeleteConfirmDialogueOpen] = useState(false);
+  const [secondaryConfirmDialogueOpen, setSecondaryConfirmDialogueOpen] = useState(false);
 
   const closeAddButtonMenu = useCallback(() => setAddButtonMenuOpen(false), []);
   const closeFilterButtonMenu = useCallback(() => setFilterButtonMenuOpen(false), []);
 
   const {
     Icon: secondaryActionIcon,
+    confirmationDescription: secondaryActionConfirmDescription,
     confirmationMessage: secondaryActionConfirmMessage,
     isLoading: isLoadingSecondaryAction,
     label: secondaryActionLabel,
@@ -93,6 +95,7 @@ function Toolbar({
   } = secondaryActionButtonProps || {};
   const {
     confirmationMessage: deleteConfirmMessage,
+    isLoading: isLoadingDelete,
     item,
     onDelete,
   } = deleteRowProps || {};
@@ -179,13 +182,20 @@ function Toolbar({
     query,
   ]);
 
-  const closeConfirmationDialogue = useCallback(() => setConfirmationDialogueOpen(false), []);
+  const closeDeleteConfirmationDialogue = useCallback(() => setDeleteConfirmDialogueOpen(false), []);
+  const closeSecondaryConfirmationDialogue = useCallback(() => setSecondaryConfirmDialogueOpen(false), []);
 
   return (
     <FlexContainer alignItems="center">
       {addButtonEl}
       <Spacing mr={BUTTON_PADDING} />
       {filterButtonEl}
+
+      {(isLoadingSecondaryAction || isLoadingDelete) &&
+        <Spacing ml={2}>
+          <Spinner inverted />
+        </Spacing>
+      }
 
       {(onSecondaryActionClick && selectedRowId) &&
         <Spacing ml={BUTTON_PADDING}>
@@ -199,13 +209,33 @@ function Toolbar({
               bold
               greyBorder
               loading={isLoadingSecondaryAction}
-              onClick={onSecondaryActionClick}
+              onClick={openSecondaryActionConfirmDialogue
+                ? () => setSecondaryConfirmDialogueOpen(prevState => !prevState)
+                : onSecondaryActionClick
+              }
               smallIcon
               uuid="table/toolbar/secondary_action_button"
             >
               {secondaryActionLabel}
             </KeyboardShortcutButton>
           </Tooltip>
+          <ClickOutside
+            onClickOutside={closeSecondaryConfirmationDialogue}
+            open={secondaryConfirmDialogueOpen}
+          >
+            <PopupMenu
+              onCancel={closeSecondaryConfirmationDialogue}
+              onClick={() => {
+                onSecondaryActionClick();
+                closeSecondaryConfirmationDialogue();
+                setSelectedRow(null);
+              }}
+              subtitle={secondaryActionConfirmDescription}
+              title={secondaryActionConfirmMessage}
+              top={POPUP_TOP_OFFSET}
+              width={POPUP_MENU_WIDTH}
+            />
+          </ClickOutside>
         </Spacing>
       }
 
@@ -220,27 +250,27 @@ function Toolbar({
               Icon={Trash}
               bold
               greyBorder
-              onClick={() => setConfirmationDialogueOpen(prevState => !prevState)}
+              onClick={() => setDeleteConfirmDialogueOpen(prevState => !prevState)}
               smallIcon
               uuid="table/toolbar/delete_button"
             />
           </Tooltip>
           <ClickOutside
-            onClickOutside={closeConfirmationDialogue}
-            open={confirmationDialogueOpen}
+            onClickOutside={closeDeleteConfirmationDialogue}
+            open={deleteConfirmDialogueOpen}
           >
             <PopupMenu
               danger
-              onCancel={closeConfirmationDialogue}
+              onCancel={closeDeleteConfirmationDialogue}
               onClick={() => {
                 onDelete(selectedRowId);
-                closeConfirmationDialogue();
+                closeDeleteConfirmationDialogue();
                 setSelectedRow(null);
               }}
               subtitle={deleteConfirmMessage}
               title={`Are you sure you want to delete the ${item} ${selectedRowId}?`}
-              top={58}
-              width={UNIT * 40}
+              top={POPUP_TOP_OFFSET}
+              width={POPUP_MENU_WIDTH}
             />
           </ClickOutside>
         </Spacing>

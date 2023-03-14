@@ -112,7 +112,7 @@ function PipelineListPage() {
       ),
     },
   );
-  const [deletePipeline] = useMutation(
+  const [deletePipeline, { isLoading: isLoadingDelete }] = useMutation(
     (uuid: string) => api.pipelines.useDelete(uuid)(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -173,6 +173,7 @@ function PipelineListPage() {
           deleteRowProps={{
             confirmationMessage: 'This is irreversible and will immediately delete everything associated \
               with the pipeline, including its blocks, triggers, runs, logs, and history.',
+            isLoading: isLoadingDelete,
             item: 'pipeline',
             onDelete: () => deletePipeline(selectedPipeline?.uuid),
           }}
@@ -184,10 +185,15 @@ function PipelineListPage() {
           query={query}
           secondaryActionButtonProps={{
             Icon: Clone,
+            confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
+              configuration and code blocks. The blocks use the same block files as the original pipeline. \
+              Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
+            confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
             isLoading: isLoadingClone,
             onClick: () => clonePipeline({
               pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
             }),
+            openConfirmationDialogue: true,
             tooltip: 'Clone pipeline',
           }}
           selectedRowId={selectedPipeline?.uuid}

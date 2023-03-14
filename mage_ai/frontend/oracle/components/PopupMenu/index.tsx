@@ -64,7 +64,11 @@ function PopupMenu({
             loading={isLoading}
             onClick={onClick}
           >
-            <Text bold danger={danger}>
+            <Text
+              bold
+              danger={danger}
+              success={!danger}
+            >
               Confirm
             </Text>
           </Button>
