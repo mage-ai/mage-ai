@@ -84,7 +84,8 @@
             "design/blocks/data-exporter",
             "design/blocks/scratchpad",
             "design/blocks/sensor",
-            "design/blocks/dynamic-blocks"
+            "design/blocks/dynamic-blocks",
+            "design/blocks/extension"
           ]
         }
       ]
@@ -201,7 +202,8 @@
         {
           "group": "Testing",
           "pages": [
-            "guides/data-validation"
+            "guides/data-validation",
+            "development/testing/great-expectations"
           ]
         },
         {
@@ -389,7 +391,8 @@
         "integrations/dbt-cloud",
         "integrations/hightouch",
         "integrations/stitch",
-        "integrations/metaplane"
+        "integrations/metaplane",
+        "integrations/great-expectations"
       ]
     },
     {
