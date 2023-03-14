@@ -107,10 +107,17 @@ function PipelineListPage() {
             fetchPipelines();
             hideInputModal?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            const pipelineUUID = response?.url_parameters?.pk;
+            setPipelinesEditing(prev => ({
+              ...prev,
+              [pipelineUUID]: false,
+            }));
+            setErrors({
+              errors,
+              response,
+            });
+          },
         },
       ),
     },
