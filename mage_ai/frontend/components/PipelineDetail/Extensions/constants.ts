@@ -19,7 +19,9 @@ export type ExtensionProps = {
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   interruptKernel: () => void;
-  messages: KernelOutputType[];
+  messages: {
+    [uuid: string]: KernelOutputType[];
+  };
   onChangeCallbackBlock: (type: string, uuid: string, value: string) => void;
   onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
   pipeline: PipelineType;
