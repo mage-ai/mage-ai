@@ -44,7 +44,7 @@ import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 
 export type CommandButtonsSharedProps = {
-  addWidget: (widget: BlockType, opts?: {
+  addWidget?: (widget: BlockType, opts?: {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
   blocks: BlockType[];
@@ -59,7 +59,7 @@ type CommandButtonsProps = {
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   pipeline?: PipelineType;
-  runBlock: (payload: {
+  runBlock?: (payload: {
     block: BlockType;
     code?: string;
     disableReset?: boolean;
@@ -175,7 +175,7 @@ function CommandButtons({
         />
       )}
 
-      {(!isInProgress && !isStreamingPipeline) &&  (
+      {runBlock && (!isInProgress && !isStreamingPipeline) &&  (
         <>
           <Tooltip
             appearBefore
@@ -356,22 +356,24 @@ function CommandButtons({
             </Tooltip>
           </Spacing>
 
-          <ClickOutside
-            disableEscape
-            onClickOutside={() => setShowAddCharts(false)}
-            open={showAddCharts}
-          >
-            <AddChartMenu
-              addWidget={addWidget}
-              block={block}
-              onClickCallback={() => setShowAddCharts(false)}
+          {addWidget && (
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowAddCharts(false)}
               open={showAddCharts}
-              parentRef={refAddChart}
-              rightOffset={UNIT * 9}
-              runBlock={runBlock}
-              topOffset={UNIT * 2}
-            />
-          </ClickOutside>
+            >
+              <AddChartMenu
+                addWidget={addWidget}
+                block={block}
+                onClickCallback={() => setShowAddCharts(false)}
+                open={showAddCharts}
+                parentRef={refAddChart}
+                rightOffset={UNIT * 9}
+                runBlock={runBlock}
+                topOffset={UNIT * 2}
+              />
+            </ClickOutside>
+          )}
         </>
       )}
 

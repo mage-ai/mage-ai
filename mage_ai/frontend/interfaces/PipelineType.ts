@@ -33,12 +33,19 @@ export const PIPELINE_TYPE_TO_KERNEL_NAME = {
   [PipelineTypeEnum.PYSPARK]: 'pysparkkernel',
 };
 
+export interface PipelineExtensionsType {
+  [key: string]: {
+    blocks?: BlockType[];
+  };
+}
+
 export default interface PipelineType {
   actions?: TransformerActionType[];
   blocks?: BlockType[];
   data_integration?: {
     catalog: CatalogType;
   };
+  extensions?: PipelineExtensionsType;
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;

@@ -60,7 +60,7 @@ type IntegrationPipelineProps = {
   fetchPipeline: () => void;
   fetchSampleData: () => void;
   globalVariables: PipelineVariableType[];
-  onChangeCodeBlock: (uuid: string, value: string) => void;
+  onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   savePipelineContent: (payload?: {
@@ -134,6 +134,8 @@ function IntegrationPipeline({
   ), [
     dataLoaderBlock,
     dataLoaderBlockContent,
+    onChangeCodeBlock,
+    pipeline,
   ]);
 
   const dataExporterBlock: BlockType =
@@ -156,6 +158,8 @@ function IntegrationPipeline({
   ), [
     dataExporterBlock,
     dataExporterBlockContent,
+    onChangeCodeBlock,
+    pipeline,
   ]);
 
   const catalog: CatalogType =
@@ -285,7 +289,7 @@ function IntegrationPipeline({
 
             const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
             if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
-              onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+              onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
                 ...dataLoaderBlockContent,
                 catalog: {},
               }));
@@ -353,7 +357,7 @@ function IntegrationPipeline({
 
     const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
     if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
-      onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+      onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
         ...dataLoaderBlockContent,
         catalog: {},
       }));
@@ -392,7 +396,7 @@ function IntegrationPipeline({
 
     const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
     if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
-      onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+      onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
         ...dataLoaderBlockContent,
         catalog: {},
       }));
@@ -578,7 +582,7 @@ function IntegrationPipeline({
         } else {
           const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
           if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
-            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+            onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
               ...dataLoaderBlockContent,
               catalog: {},
             }));
@@ -666,7 +670,7 @@ function IntegrationPipeline({
                       }
 
                       if (dataLoaderBlock) {
-                        onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                        onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
                           ...dataLoaderBlockContent,
                           catalog: {},
                           config,
@@ -675,8 +679,8 @@ function IntegrationPipeline({
                       } else {
                         addNewBlockAtIndex({
                           content: stringify({
-                            source: sourceUUID,
                             config,
+                            source: sourceUUID,
                           }),
                           language: BlockLanguageEnum.YAML,
                           type: BlockTypeEnum.DATA_LOADER,
@@ -950,7 +954,7 @@ function IntegrationPipeline({
                     }
 
                     if (dataExporterBlock) {
-                      onChangeCodeBlock(dataExporterBlock.uuid, stringify({
+                      onChangeCodeBlock(dataExporterBlock.type, dataExporterBlock.uuid, stringify({
                         ...dataExporterBlockContent,
                         destination: destinationUUID,
                       }));

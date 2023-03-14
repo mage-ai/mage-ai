@@ -25,6 +25,7 @@ export enum BlockTypeEnum {
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
   DBT = 'dbt',
+  EXTENSION = 'extension',
   SCRATCHPAD = 'scratchpad',
   SENSOR = 'sensor',
   TRANSFORMER = 'transformer',
@@ -74,6 +75,7 @@ export const BLOCK_TYPES_NO_DATA_TABLE = [
 ];
 
 export const BLOCK_TYPES_WITH_NO_PARENTS = [
+  BlockTypeEnum.EXTENSION,
   BlockTypeEnum.SCRATCHPAD,
 ];
 
@@ -126,10 +128,13 @@ export interface BlockRequestPayloadType {
     action_type?: ActionTypeEnum;
     axis?: AxisEnum;
     suggested_action?: SuggestionType;
+    template_path?: string;
   };
   configuration?: ConfigurationType;
   content?: string;
-  converted_from?: string;
+  converted_from_type?: string;
+  converted_from_uuid?: string;
+  extension_uuid?: string;
   language?: BlockLanguageEnum;
   name?: string;
   priority?: number;
@@ -149,6 +154,7 @@ export default interface BlockType {
     error: string;
     message: string;
   };
+  extension_uuid?: string;
   file?: string;
   has_callback?: boolean;
   language?: BlockLanguageEnum;
@@ -184,6 +190,7 @@ export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.CUSTOM]: 'Custom',
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
+  [BlockTypeEnum.EXTENSION]: 'Extension',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
   [BlockTypeEnum.SENSOR]: 'Sensor',
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',

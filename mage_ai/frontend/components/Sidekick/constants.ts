@@ -1,12 +1,14 @@
 import {
   Alphabet,
   Code,
+  Lightning,
   NavData,
   NavGraph,
   NavReport,
   NavTree,
   Terminal,
 } from '@oracle/icons';
+import { indexBy } from '@utils/array';
 
 export const VIEW_QUERY_PARAM = 'sideview';
 export const VH_PERCENTAGE = 90;
@@ -14,6 +16,7 @@ export const VH_PERCENTAGE = 90;
 export enum ViewKeyEnum {
   CHARTS = 'charts',
   DATA = 'data',
+  EXTENSIONS = 'power_ups',
   FILE_VERSIONS = 'file_versions',
   GRAPHS = 'graphs',
   REPORTS = 'reports',
@@ -26,6 +29,7 @@ export enum ViewKeyEnum {
 export const FULL_WIDTH_VIEWS = [
   ViewKeyEnum.CHARTS,
   ViewKeyEnum.DATA,
+  ViewKeyEnum.EXTENSIONS,
   ViewKeyEnum.REPORTS,
   ViewKeyEnum.TREE,
 ];
@@ -57,6 +61,10 @@ export const SIDEKICK_VIEWS: {
     label: 'Secrets',
   },
   {
+    key: ViewKeyEnum.EXTENSIONS,
+    label: 'Power ups',
+  },
+  {
     key: ViewKeyEnum.DATA,
     label: 'Data',
   },
@@ -68,9 +76,12 @@ export const SIDEKICK_VIEWS: {
   // { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
 ];
 
+export const SIDEKICK_VIEWS_BY_KEY = indexBy(SIDEKICK_VIEWS, ({ key }) => key);
+
 export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.CHARTS]: NavGraph,
   [ViewKeyEnum.DATA]: NavData,
+  [ViewKeyEnum.EXTENSIONS]: Lightning,
   [ViewKeyEnum.GRAPHS]: NavGraph,
   [ViewKeyEnum.REPORTS]: NavReport,
   [ViewKeyEnum.SECRETS]: Code,

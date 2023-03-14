@@ -156,6 +156,7 @@ function VerticalNavigation({
                 noHoverUnderline
                 noPadding
                 onClick={onClick}
+                primary={selected}
                 sameColorAsText
                 uuid={`VerticalNavigation/${id}`}
               >

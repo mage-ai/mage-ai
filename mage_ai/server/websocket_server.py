@@ -272,10 +272,15 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         execution_metadata = message.get('execution_metadata')
         msg_id_value = execution_metadata if execution_metadata is not None \
             else WebSocketServer.running_executions_mapping.get(msg_id, dict())
+        block_type = msg_id_value.get('block_type')
         block_uuid = msg_id_value.get('block_uuid')
         pipeline_uuid = msg_id_value.get('pipeline_uuid')
 
-        output_dict = dict(uuid=block_uuid, pipeline_uuid=pipeline_uuid)
+        output_dict = dict(
+            block_type=block_type,
+            pipeline_uuid=pipeline_uuid,
+            uuid=block_uuid,
+        )
 
         message_final = merge_dict(
             message,
@@ -300,16 +305,18 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_type = message.get('type')
         block_uuid = message.get('uuid')
         custom_code = message.get('code')
+        extension_uuid = message.get('extension_uuid')
         run_downstream = message.get('run_downstream')
+        run_settings = message.get('run_settings')
         run_tests = message.get('run_tests')
         run_upstream = message.get('run_upstream')
-        run_settings = message.get('run_settings')
+        upstream_blocks = message.get('upstream_blocks')
 
         pipeline_uuid = pipeline.uuid
 
         widget = BlockType.CHART == block_type
 
-        block = pipeline.get_block(block_uuid, widget=widget)
+        block = pipeline.get_block(block_uuid, extension_uuid=extension_uuid, widget=widget)
 
         reload_all_repo_modules(custom_code)
 
@@ -317,7 +324,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         client = self.init_kernel_client(kernel_name)
 
-        value = dict(block_uuid=block_uuid)
+        value = dict(
+            block_type=block_type or block.type,
+            block_uuid=block_uuid,
+        )
 
         if not custom_code and BlockType.SCRATCHPAD == block_type:
             self.send_message(
@@ -342,14 +352,16 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     global_vars,
                     analyze_outputs=False,
                     block_type=block_type,
+                    extension_uuid=extension_uuid,
                     kernel_name=kernel_name,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(remote=remote_execution),
+                    run_settings=run_settings,
                     run_tests=run_tests,
                     run_upstream=run_upstream,
                     update_status=False if remote_execution else True,
+                    upstream_blocks=upstream_blocks,
                     widget=widget,
-                    run_settings=run_settings,
                 )
 
             msg_id = client.execute(add_internal_output_info(code))

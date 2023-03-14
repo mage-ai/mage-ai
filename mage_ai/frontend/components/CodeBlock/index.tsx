@@ -121,26 +121,28 @@ import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
-  addNewBlock: (block: BlockType) => Promise<any>;
-  addNewBlockMenuOpenIdx: number;
+  addNewBlock?: (block: BlockType) => Promise<any>;
+  addNewBlockMenuOpenIdx?: number;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
   blockRefs: any;
   blockIdx: number;
   blocks: BlockType[];
-  dataProviders: DataProviderType[];
+  dataProviders?: DataProviderType[];
   defaultValue?: string;
   executionState: ExecutionStateEnum;
+  extraContent?: any;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  hideRunButton?: boolean;
   mainContainerRef?: any;
-  mainContainerWidth: number;
+  mainContainerWidth?: number;
   messages: KernelOutputType[];
   noDivider?: boolean;
   onCallbackChange?: (value: string) => void;
   onChange?: (value: string) => void;
-  onClickAddSingleDBTModel: (blockIdx: number) => void;
-  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  onClickAddSingleDBTModel?: (blockIdx: number) => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   runBlock: (payload: {
     block: BlockType;
@@ -152,22 +154,22 @@ type CodeBlockProps = {
     runUpstream?: boolean;
     runTests?: boolean;
   }) => void;
-  runningBlocks: BlockType[];
+  runningBlocks?: BlockType[];
   savePipelineContent: (payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
-  setAnyInputFocused: (value: boolean) => void;
+  setAnyInputFocused?: (value: boolean) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
-  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
-  setRecsWindowOpenBlockIdx: (idx: number) => void;
-  setSelectedOutputBlock: (block: BlockType) => void;
-  widgets: BlockType[];
+  setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setRecsWindowOpenBlockIdx?: (idx: number) => void;
+  setSelectedOutputBlock?: (block: BlockType) => void;
+  widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
-function CodeBlockProps({
+function CodeBlock({
   addNewBlock,
   addNewBlockMenuOpenIdx,
   addWidget,
@@ -180,9 +182,11 @@ function CodeBlockProps({
   defaultValue = '',
   deleteBlock,
   executionState,
+  extraContent,
   fetchFileTree,
   fetchPipeline,
   height,
+  hideRunButton,
   interruptKernel,
   mainContainerRef,
   mainContainerWidth,
@@ -257,7 +261,10 @@ function CodeBlockProps({
     if (callbackContentOrig !== callbackContent) {
       setCallbackContent(callbackContentOrig);
     }
-  }, [callbackContentOrig]);
+  }, [
+    callbackContent,
+    callbackContentOrig,
+  ]);
 
   const blockPrevious = usePrevious(block);
   useEffect(() => {
@@ -265,7 +272,7 @@ function CodeBlockProps({
       const {
         messages: messagesInit,
       } = initializeContentAndMessages([block]);
-      const msgs = messagesInit?.[block?.uuid];
+      const msgs = messagesInit?.[block?.type]?.[block?.uuid];
       if (msgs?.length >= 1) {
         setMessages(msgs);
       }
@@ -318,7 +325,7 @@ function CodeBlockProps({
   const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const hasDownstreamWidgets = useMemo(() => !!widgets.find(({
+  const hasDownstreamWidgets = useMemo(() => !!widgets?.find(({
     upstream_blocks: upstreamBlocks,
   }: BlockType) => upstreamBlocks.includes(block.uuid)), [
     block,
@@ -382,7 +389,7 @@ function CodeBlockProps({
       setRunEndTime,
     ]);
 
-  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
+  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === block.uuid)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
   useEffect(() => {
@@ -519,8 +526,8 @@ function CodeBlockProps({
   const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
-      setAnyInputFocused(false);
-      setSelected(true);
+      setAnyInputFocused?.(false);
+      setSelected?.(true);
     }
   }, [
     selected,
@@ -605,12 +612,12 @@ function CodeBlockProps({
             },
           });
         }
-      } else if (selected) {
+      } else if (selected && !hideRunButton) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
         ) {
           runBlockAndTrack({ block });
-        } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
+        } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping) && addNewBlock) {
           event.preventDefault();
           addNewBlock({
             language: block.language,
@@ -624,6 +631,7 @@ function CodeBlockProps({
     [
       addNewBlock,
       block,
+      hideRunButton,
       isEditingBlock,
       newBlockUuid,
       runBlockAndTrack,
@@ -696,10 +704,12 @@ function CodeBlockProps({
         setTextareaFocused={setTextareaFocused}
         shortcuts={[
           (monaco, editor) => executeCode(monaco, () => {
-            runBlockAndTrack({
-              block,
-              code: editor.getValue(),
-            });
+            if (!hideRunButton) {
+              runBlockAndTrack({
+                block,
+                code: editor.getValue(),
+              });
+            }
           }),
         ]}
         textareaFocused={textareaFocused}
@@ -748,6 +758,8 @@ function CodeBlockProps({
     dbtProjectName,
     hasCallback,
     height,
+    hideRunButton,
+    onCallbackChange,
     onChange,
     onDidChangeCursorPosition,
     runBlockAndTrack,
@@ -1027,7 +1039,10 @@ function CodeBlockProps({
                 appearBefore
                 block
                 label={`
-                  ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
+                  ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0
+                    ? 'Click to select 1 or more blocks to depend on.'
+                    : 'Edit parent blocks.'
+                  }
                 `}
                 size={null}
                 widthFitContent={numberOfParentBlocks >= 1}
@@ -1077,7 +1092,7 @@ function CodeBlockProps({
             fetchPipeline={fetchPipeline}
             interruptKernel={interruptKernel}
             pipeline={pipeline}
-            runBlock={runBlockAndTrack}
+            runBlock={hideRunButton ? null : runBlockAndTrack}
             savePipelineContent={savePipelineContent}
             setErrors={setErrors}
             setOutputCollapsed={setOutputCollapsed}
@@ -1704,6 +1719,10 @@ function CodeBlockProps({
             </>
           )}
 
+          {extraContent && React.cloneElement(extraContent, {
+            runBlockAndTrack,
+          })}
+
           {block?.error && (
             <Spacing p={PADDING_UNITS}>
               <Text bold danger>
@@ -1733,10 +1752,10 @@ function CodeBlockProps({
           onMouseEnter={() => setAddNewBlocksVisible(true)}
           onMouseLeave={() => {
             setAddNewBlocksVisible(false);
-            setAddNewBlockMenuOpenIdx(null);
+            setAddNewBlockMenuOpenIdx?.(null);
           }}
         >
-          {addNewBlocksVisible && (
+          {addNewBlocksVisible && addNewBlock && (
             <Spacing mt={2}>
               <AddNewBlocks
                 addNewBlock={(newBlock: BlockRequestPayloadType) => {
@@ -1794,4 +1813,4 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
   );
 }
 
-export default React.forwardRef(CodeBlockProps);
+export default React.forwardRef(CodeBlock);

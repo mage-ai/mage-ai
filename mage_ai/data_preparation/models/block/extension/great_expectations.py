@@ -1,6 +1,6 @@
 from great_expectations.core.batch import RuntimeBatchRequest
 from mage_ai.data_preparation.models.constants import BlockLanguage
-from typing import List
+from typing import Any, List, Tuple
 import great_expectations as gx
 import pandas as pd
 
@@ -13,7 +13,7 @@ class GreatExpectations():
         self,
         *args,
         **kwargs,
-    ) -> List:
+    ) -> List[Tuple[Any, str]]:
         validators = []
 
         for idx, df in enumerate(args):
@@ -77,6 +77,6 @@ class GreatExpectations():
                 expectation_suite_name=expectation_suite_name,
             )
 
-            validators.append(validator)
+            validators.append((validator, uuid))
 
         return validators

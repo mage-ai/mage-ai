@@ -71,7 +71,7 @@ export function createStatisticsSample({
   if (currentStats.length === 0) {
     return null;
   }
-  
+
   const currentTypes: string[] = Object.values(columnTypes);
   const currentTotal = currentTypes.length;
   const rowData: StatRowType[] = [];
@@ -140,12 +140,12 @@ export function addTriggerVariables(variablesArr, scheduleType) {
   if (scheduleType === ScheduleTypeEnum.TIME) {
     variablesArr.push({
       uuid: 'execution_date',
-      value: '<run datetime>'
+      value: '<run datetime>',
     });
   } else if (scheduleType === ScheduleTypeEnum.EVENT) {
     variablesArr.push({
       uuid: 'event',
-      value: '<trigger event>'
+      value: '<trigger event>',
     });
   }
 
@@ -156,7 +156,7 @@ export function parseVariables(variables) {
   if (!variables) {
     return variables;
   }
-  
+
   return Object.entries(variables).reduce(
     (prev, [uuid, value]: [string, string]) => {
       let updatedValue = value;

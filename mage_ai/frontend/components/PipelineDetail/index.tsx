@@ -96,8 +96,8 @@ type PipelineDetailProps = {
   messages: {
     [uuid: string]: KernelOutputType[];
   };
-  onChangeCallbackBlock: (uuid: string, value: string) => void;
-  onChangeCodeBlock: (uuid: string, value: string) => void;
+  onChangeCallbackBlock: (type: string, uuid: string, value: string) => void;
+  onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
@@ -220,17 +220,19 @@ function PipelineDetail({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (disableShortcuts || disableGlobalKeyboardShortcuts) {
-        return;
-      }
-
       if (pipelineContentTouched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
         event.preventDefault();
         const warning = 'You have changes that are unsaved. Click cancel and save your changes before reloading page.';
         if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
           location.reload();
         }
-      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
+      }
+
+      if (disableShortcuts || disableGlobalKeyboardShortcuts) {
+        return;
+      }
+
+      if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
         || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
       ) {
         event.preventDefault();
@@ -410,8 +412,8 @@ function PipelineDetail({
           mainContainerWidth={mainContainerWidth}
           messages={messages[uuid]}
           noDivider={idx === numberOfBlocks - 1 || isIntegration}
-          onCallbackChange={(value: string) => onChangeCallbackBlock(uuid, value)}
-          onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+          onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
+          onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
           onClickAddSingleDBTModel={onClickAddSingleDBTModel}
           openSidekickView={openSidekickView}
           pipeline={pipeline}
@@ -500,14 +502,20 @@ function PipelineDetail({
     addNewBlockAtIndex,
     blocks,
     codeBlocks,
+    fetchFileTree,
     fetchPipeline,
+    fetchSampleData,
     globalVariables,
     onChangeCodeBlock,
-    onChangeCodeBlock,
+    openSidekickView,
     pipeline,
     savePipelineContent,
     setErrors,
+    setIntegrationStreams,
+    setOutputBlocks,
     setSelectedBlock,
+    setSelectedOutputBlock,
+    setSelectedStream,
   ]);
 
   const addNewBlocksMemo = useMemo(() => (
@@ -570,11 +578,16 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
     />
   ), [
+    addNewBlockAtIndex,
     blocks,
     isIntegration,
-    pipeline,
+    isStreaming,
+    numberOfBlocks,
     onClickAddSingleDBTModel,
+    pipeline,
     setRecsWindowOpenBlockIdx,
+    setSelectedBlock,
+    setTextareaFocused,
   ]);
 
   return (

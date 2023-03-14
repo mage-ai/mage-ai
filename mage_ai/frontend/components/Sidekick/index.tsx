@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import ApiReloader from '@components/ApiReloader';
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
+  BlockRequestPayloadType,
   InsightType,
   MetadataType,
   SampleDataType,
@@ -15,6 +16,7 @@ import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
+import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FileVersions from '@components/FileVersions';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -65,11 +67,18 @@ const MAX_COLUMNS = 100;
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
+  addNewBlockAtIndex: (
+    block: BlockRequestPayloadType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name?: string,
+  ) => Promise<any>;
   afterWidth: number;
   blockRefs?: {
     [current: string]: any;
   };
   blocks: BlockType[];
+  blocksInNotebook: BlockType[];
   cancelPipeline: () => void;
   editingBlock: {
     upstreamBlocks: {
@@ -101,16 +110,19 @@ export type SidekickProps = {
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
-} & SetEditingBlockType & ChartsPropsShared;
+} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
   activeView,
+  addNewBlockAtIndex,
   afterWidth: afterWidthProp,
   autocompleteItems,
   blockRefs,
   blocks,
+  blocksInNotebook,
   cancelPipeline,
   chartRefs,
+  deleteBlock,
   deleteWidget,
   editingBlock,
   executePipeline,
@@ -124,7 +136,9 @@ function Sidekick({
   isPipelineExecuting,
   messages,
   metadata,
+  onChangeCallbackBlock,
   onChangeChartBlock,
+  onChangeCodeBlock,
   pipeline,
   pipelineMessages,
   runBlock,
@@ -155,7 +169,6 @@ function Sidekick({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
   const widthOffset = VERTICAL_NAVIGATION_WIDTH;
-  const totalWidth = useMemo(() => afterWidthProp, [afterWidthProp]);
   const afterWidth = useMemo(() => afterWidthProp - widthOffset, [afterWidthProp, widthOffset]);
 
   const {
@@ -471,6 +484,33 @@ function Sidekick({
               />
             </div>
           )}
+
+          {ViewKeyEnum.EXTENSIONS === activeView && (
+            <Extensions
+              addNewBlockAtIndex={addNewBlockAtIndex}
+              autocompleteItems={autocompleteItems}
+              blockRefs={blockRefs}
+              blocks={blocks}
+              blocksInNotebook={blocksInNotebook}
+              deleteBlock={deleteBlock}
+              fetchFileTree={fetchFileTree}
+              fetchPipeline={fetchPipeline}
+              interruptKernel={interruptKernel}
+              messages={messages}
+              onChangeCallbackBlock={onChangeCallbackBlock}
+              onChangeCodeBlock={onChangeCodeBlock}
+              pipeline={pipeline}
+              runBlock={runBlock}
+              runningBlocks={runningBlocks}
+              savePipelineContent={savePipelineContent}
+              selectedBlock={selectedBlock}
+              setAnyInputFocused={setAnyInputFocused}
+              setErrors={setErrors}
+              setSelectedBlock={setSelectedBlock}
+              setTextareaFocused={setTextareaFocused}
+              textareaFocused={textareaFocused}
+            />
+          )}
         </SidekickContainerStyle>
 
         <VerticalNavigationStyle borderLeft>
@@ -478,6 +518,7 @@ function Sidekick({
             aligned="right"
             navigationItems={buildNavigationItems({
               activeView,
+              pipelineUUID: pipeline?.uuid,
               setActiveSidekickView,
             })}
           />

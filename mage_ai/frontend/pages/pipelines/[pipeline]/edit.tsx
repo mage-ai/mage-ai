@@ -9,7 +9,6 @@ import {
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
 import ApiReloader from '@components/ApiReloader';
 import AuthToken from '@api/utils/AuthToken';
 import BlockType, {
@@ -19,14 +18,12 @@ import BlockType, {
   SampleDataType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import ClickOutside from '@oracle/components/ClickOutside';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import DataProviderType from '@interfaces/DataProviderType';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FileTabs from '@components/PipelineDetail/FileTabs';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
@@ -38,16 +35,18 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
-import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
+import PipelineType, {
+  PIPELINE_TYPE_TO_KERNEL_NAME,
+  PipelineExtensionsType,
+  PipelineTypeEnum,
+} from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
-import RecommendationsWindow from '@components/RecommendationsWindow';
 import Sidekick from '@components/Sidekick';
+import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
-import SuggestionType from '@interfaces/SuggestionType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add, Close } from '@oracle/icons';
+import { Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
 import {
@@ -59,14 +58,13 @@ import {
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import {
-  NAV_ICON_MAPPING,
   SIDEKICK_VIEWS,
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
@@ -78,7 +76,7 @@ import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
-import { isJsonString, randomNameGenerator } from '@utils/string';
+import { randomNameGenerator } from '@utils/string';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
@@ -184,6 +182,7 @@ function PipelineDetailPage({
         [VIEW_QUERY_PARAM]: newView,
       }, {
         pushHistory,
+        replaceParams: true,
       });
     }
   }, []);
@@ -208,24 +207,28 @@ function PipelineDetailPage({
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
 
-  const setCallbackByBlockUUID = useCallback((data: {
-    [uuid: string]: string;
-  }) => {
+  const setCallbackByBlockUUID = useCallback((type: string, uuid: string, value: string) => {
+    const d = callbackByBlockUUID.current || {};
     callbackByBlockUUID.current = {
-      ...callbackByBlockUUID.current,
-      ...data,
+      ...d,
+      [type]: {
+        ...(d[type] || {}),
+        [uuid]: value,
+      },
     };
   }, [callbackByBlockUUID]);
-  const setContentByBlockUUID = useCallback((data: {
-    [uuid: string]: string;
-  }) => {
+  const setContentByBlockUUID = useCallback((type: string, uuid: string, value: string) => {
+    const d = contentByBlockUUID.current || {};
     contentByBlockUUID.current = {
-      ...contentByBlockUUID.current,
-      ...data,
+      ...d,
+      [type]: {
+        ...(d[type] || {}),
+        [uuid]: value,
+      },
     };
   }, [contentByBlockUUID]);
-  const onChangeCallbackBlock = useCallback((uuid: string, value: string) => {
-    setCallbackByBlockUUID({ [uuid]: value });
+  const onChangeCallbackBlock = useCallback((type: string, uuid: string, value: string) => {
+    setCallbackByBlockUUID(type, uuid, value);
     setPipelineContentTouched(true);
   },
     [
@@ -233,8 +236,8 @@ function PipelineDetailPage({
       setPipelineContentTouched,
     ],
   );
-  const onChangeCodeBlock = useCallback((uuid: string, value: string) => {
-    setContentByBlockUUID({ [uuid]: value });
+  const onChangeCodeBlock = useCallback((type: string, uuid: string, value: string) => {
+    setContentByBlockUUID(type, uuid, value);
     setPipelineContentTouched(true);
   },
     [
@@ -493,6 +496,7 @@ function PipelineDetailPage({
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
     pipeline?: PipelineType | {
+      extensions?: PipelineExtensionsType;
       name: string;
       type: string;
     };
@@ -501,96 +505,129 @@ function PipelineDetailPage({
   }) => {
     const {
       block: blockOverride,
-      pipeline: pipelineOverride = {},
+      pipeline: pipelineOverride = {
+        extensions: {},
+      },
     } = payload || {};
     const { contentOnly } = opts || {};
 
     setPipelineLastSaved(new Date());
+
+    const blocksByExtensions = {};
+    const blocksToSave = [];
+
+    blocks.forEach((block: BlockType) => {
+      const {
+        extension_uuid: extensionUUID,
+        type,
+        uuid,
+      } = block;
+
+      let contentToSave = contentByBlockUUID.current[type]?.[uuid];
+      if (typeof contentToSave === 'undefined') {
+        contentToSave = block.content;
+      }
+
+      let callbackToSave = callbackByBlockUUID.current[type]?.[uuid];
+      if (typeof callbackToSave === 'undefined') {
+        callbackToSave = block.callback_content;
+      }
+
+      let outputs;
+      const messagesForBlock = messages[uuid]?.filter(m => !!m);
+      const hasError = messagesForBlock?.find(({ error }) => error);
+
+      if (messagesForBlock) {
+        const arr2 = [];
+
+        messagesForBlock.forEach((d: KernelOutputType) => {
+          const {
+            data,
+            type,
+          } = d;
+
+          if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
+            if (Array.isArray(data)) {
+              d.data = data.reduce((acc, text: string) => {
+                if (text.match(INTERNAL_OUTPUT_REGEX)) {
+                  return acc;
+                }
+
+                return acc.concat(text);
+              }, []);
+            }
+
+            arr2.push(d);
+          }
+        });
+
+        // @ts-ignore
+        outputs = arr2.map((d: KernelOutputType, idx: number) => ({
+          text_data: JSON.stringify(d),
+          variable_uuid: `${uuid}_${idx}`,
+        }));
+      }
+
+      const blockPayload: BlockType = {
+        ...block,
+        callback_content: callbackToSave,
+        content: contentToSave,
+        outputs,
+      };
+
+      if (blockOverride?.uuid === uuid) {
+        Object.entries(blockOverride).forEach(([k, v]) => {
+          if (typeof v === 'object' && !Array.isArray(v) && !!v) {
+            Object.entries(v).forEach(([k2, v2]) => {
+              if (!blockPayload[k]) {
+                blockPayload[k] = {};
+              }
+              blockPayload[k][k2] = v2;
+            });
+          } else {
+            blockPayload[k] = v;
+          }
+        });
+      }
+
+      if (contentOnly) {
+        return {
+          callback_content: blockPayload.callback_content,
+          content: blockPayload.content,
+          outputs: blockPayload.outputs,
+          uuid: blockPayload.uuid,
+        };
+      }
+
+      if ([BlockTypeEnum.EXTENSION].includes(type)) {
+        if (!blocksByExtensions[extensionUUID]) {
+          blocksByExtensions[extensionUUID] = [];
+        }
+        blocksByExtensions[extensionUUID].push(blockPayload);
+      } else {
+        blocksToSave.push(blockPayload);
+      }
+    });
+
+    const extensionsToSave: PipelineExtensionsType = {
+      ...pipeline?.extensions,
+      ...pipelineOverride?.extensions,
+    };
+    Object.entries(blocksByExtensions).forEach(([extensionUUID, arr]) => {
+      if (!extensionsToSave[extensionUUID]) {
+        extensionsToSave[extensionUUID] = {};
+      }
+      // @ts-ignore
+      extensionsToSave[extensionUUID]['blocks'] = arr;
+    });
 
     // @ts-ignore
     return updatePipeline({
       pipeline: {
         ...pipeline,
         ...pipelineOverride,
-        blocks: blocks.map((block: BlockType) => {
-          let contentToSave = contentByBlockUUID.current[block.uuid];
-          if (typeof contentToSave === 'undefined') {
-            contentToSave = block.content;
-          }
-
-          let callbackToSave = callbackByBlockUUID.current[block.uuid];
-          if (typeof callbackToSave === 'undefined') {
-            callbackToSave = block.callback_content;
-          }
-
-          let outputs;
-          const messagesForBlock = messages[block.uuid]?.filter(m => !!m);
-          const hasError = messagesForBlock?.find(({ error }) => error);
-
-          if (messagesForBlock) {
-            const arr2 = [];
-
-            messagesForBlock.forEach((d: KernelOutputType) => {
-              const {
-                data,
-                type,
-              } = d;
-
-              if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
-                if (Array.isArray(data)) {
-                  d.data = data.reduce((acc, text: string) => {
-                    if (text.match(INTERNAL_OUTPUT_REGEX)) {
-                      return acc;
-                    }
-
-                    return acc.concat(text);
-                  }, []);
-                }
-
-                arr2.push(d);
-              }
-            });
-
-            // @ts-ignore
-            outputs = arr2.map((d: KernelOutputType, idx: number) => ({
-              text_data: JSON.stringify(d),
-              variable_uuid: `${block.uuid}_${idx}`,
-            }));
-          }
-
-          const blockPayload: BlockType = {
-            ...block,
-            callback_content: callbackToSave,
-            content: contentToSave,
-            outputs,
-          };
-
-          if (blockOverride?.uuid === block.uuid) {
-            Object.entries(blockOverride).forEach(([k, v]) => {
-              if (typeof v === 'object' && !Array.isArray(v) && !!v) {
-                Object.entries(v).forEach(([k2, v2]) => {
-                  if (!blockPayload[k]) {
-                    blockPayload[k] = {};
-                  }
-                  blockPayload[k][k2] = v2;
-                });
-              } else {
-                blockPayload[k] = v;
-              }
-            });
-          }
-
-          if (contentOnly) {
-            return {
-              callback_content: blockPayload.callback_content,
-              content: blockPayload.content,
-              outputs: blockPayload.outputs,
-              uuid: blockPayload.uuid,
-            };
-          }
-
-          return blockPayload;
-        }),
+        blocks: blocksToSave,
+        extensions: extensionsToSave,
         widgets: widgets.map((block: BlockType) => {
           let contentToSave = contentByWidgetUUID.current[block.uuid];
           const tempData = widgetTempData.current[block.uuid] || {};
@@ -656,7 +693,7 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  // // Files
+  // Files
   const openFile = useCallback((filePath: string) => {
     savePipelineContent();
 
@@ -676,6 +713,27 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
+  const {
+    blocksInNotebook,
+    blocksInSidekick,
+  } = useMemo(() => {
+    const blocksInNotebookInner = [];
+    const blocksInSidekickInner = [];
+
+    blocks.forEach((block: BlockType) => {
+      if (BlockTypeEnum.EXTENSION === block.type) {
+        blocksInSidekickInner.push(block);
+      } else {
+        blocksInNotebookInner.push(block);
+      }
+    });
+
+    return {
+      blocksInNotebook: blocksInNotebookInner,
+      blocksInSidekick: blocksInSidekickInner,
+    };
+  }, [blocks]);
+
   const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => savePipelineContent({
       pipeline: {
         name,
@@ -692,7 +750,8 @@ function PipelineDetailPage({
           if (type !== pipeline?.type) {
             fetchPipeline();
           }
-          updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
+          updateCollapsedBlockStates(blocksInNotebook, pipelineUUID, uuid);
+          updateCollapsedBlockStates(blocksInSidekick, pipelineUUID, uuid);
         }
       } else if (resp?.data?.error) {
         setErrors(err => ({
@@ -707,7 +766,8 @@ function PipelineDetailPage({
         }));
       }
     }), [
-    blocks,
+    blocksInNotebook,
+    blocksInSidekick,
     fetchFileTree,
     fetchPipeline,
     openFile,
@@ -718,11 +778,22 @@ function PipelineDetailPage({
 
   const [deleteBlock] = useMutation(
     ({
+      extension_uuid: extensionUUID,
       uuid,
-    }: BlockType) => api.blocks.pipelines.useDelete(
-      pipelineUUID,
-      encodeURIComponent(uuid),
-    )(),
+    }: BlockType) => {
+      const query: {
+        extension_uuid?: string;
+      } = {};
+      if (extensionUUID) {
+        query.extension_uuid = extensionUUID;
+      }
+
+      return api.blocks.pipelines.useDelete(
+        pipelineUUID,
+        encodeURIComponent(uuid),
+        query,
+      )();
+    },
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -734,7 +805,10 @@ function PipelineDetailPage({
           }) => {
             setBlocks((blocksPrevious) => removeAtIndex(
               blocksPrevious,
-              blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
+              blocksPrevious.findIndex(({
+                type: type2,
+                uuid: uuid2,
+              }: BlockType) => type === type2 && uuid === uuid2),
             ));
             fetchPipeline();
             setSelectedBlock(null);
@@ -898,8 +972,8 @@ function PipelineDetailPage({
     name: string = randomNameGenerator(),
   ): Promise<any> => {
     let blockContent;
-    if (block.converted_from) {
-      blockContent = contentByBlockUUID.current[block.converted_from];
+    if (block.converted_from_type && block.converted_from_uuid) {
+      blockContent = contentByBlockUUID.current[block.converted_from_type]?.[block.converted_from_uuid];
     }
 
     const {
@@ -973,9 +1047,18 @@ function PipelineDetailPage({
             fetchFileTree();
             fetchPipeline().then(({
               pipeline: {
-                blocks: blocksNew,
+                blocks: blocksNewInit,
+                extensions,
               },
             }) => setBlocks((blocksPrev) => {
+              const blocksNew = [...blocksNewInit];
+              // @ts-ignore
+              Object.entries(extensions || {}).forEach(([extensionUUID, { blocks }]) => {
+                if (blocks) {
+                  blocksNew.push(...blocks.map(b => ({ ...b, extension_uuid: extensionUUID })));
+                }
+              });
+
               const blocksPrevMapping = indexBy(blocksPrev, ({ uuid }) => uuid);
               const blocksFinal = [];
               blocksNew.forEach((blockNew: BlockType) => {
@@ -1123,11 +1206,24 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
-    if (typeof pipeline?.blocks !== 'undefined') {
-      setBlocks(pipeline.blocks);
+    if (typeof pipeline?.blocks !== 'undefined' || typeof pipeline?.extensions !== 'undefined') {
+      const arr = [];
+      if (typeof pipeline?.blocks !== 'undefined') {
+        arr.push(...pipeline?.blocks);
+      }
+      if (typeof pipeline?.extensions !== 'undefined') {
+        // @ts-ignore
+        Object.entries(pipeline?.extensions || {}).forEach(([extensionUUID, { blocks }]) => {
+          if (blocks) {
+            arr.push(...blocks.map(b => ({ ...b, extension_uuid: extensionUUID })));
+          }
+        });
+      }
+      setBlocks(arr);
     }
   }, [
     pipeline?.blocks,
+    pipeline?.extensions,
   ]);
 
   useEffect(() => {
@@ -1187,12 +1283,10 @@ function PipelineDetailPage({
       } = initializeContentAndMessages(pipeline.widgets);
       contentByWidgetUUID.current = contentByBlockUUIDResults;
 
-      setMessages((messagesPrev) => {
-        return {
-          ...messagesInit,
-          ...messagesPrev,
-        };
-      });
+      setMessages((messagesPrev) => ({
+        ...messagesInit,
+        ...messagesPrev,
+      }));
     }
   }, [
     pipeline?.widgets,
@@ -1273,12 +1367,14 @@ function PipelineDetailPage({
       if (lastMessage) {
         const message: KernelOutputType = JSON.parse(lastMessage.data);
         const {
+          block_type: blockType,
           execution_state: executionState,
           msg_type: msgType,
           uuid,
         } = message;
 
-        const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2);
+        const block =
+          blocks.find(({ type: type2, uuid: uuid2 }) => blockType === type2 && uuid === uuid2);
 
         if (msgType !== 'stream_pipeline') {
           // @ts-ignore
@@ -1382,19 +1478,25 @@ function PipelineDetailPage({
       runTests = false,
     } = payload;
 
-    const { uuid } = block;
+    const {
+      extension_uuid: extensionUUID,
+      upstream_blocks: upstreamBlocks,
+      uuid,
+    } = block;
     const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
     if (!isAlreadyRunning || ignoreAlreadyRunning) {
       sendMessage(JSON.stringify({
         ...sharedWebsocketData,
         code,
+        extension_uuid: extensionUUID,
         pipeline_uuid: pipeline?.uuid,
         run_downstream: runDownstream,
         run_settings: runSettings,
         run_tests: runTests,
         run_upstream: runUpstream,
         type: block.type,
+        upstream_blocks: upstreamBlocks,
         uuid,
       }));
 
@@ -1448,18 +1550,23 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
-  const finalSidekickViews = outputBlocks?.length > 0
-    ? SIDEKICK_VIEWS
-    : SIDEKICK_VIEWS.filter(({ key }) => key !== ViewKeyEnum.DATA);
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
+      addNewBlockAtIndex={(block, idx, onCreateCallback, name) => new Promise(() => showModal({
+        block,
+        idx,
+        name,
+        onCreateCallback,
+      }))}
       afterWidth={afterWidthForChildren}
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
+      blocksInNotebook={blocksInNotebook}
       cancelPipeline={cancelPipeline}
       chartRefs={chartRefs}
+      deleteBlock={deleteBlock}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       executePipeline={executePipeline}
@@ -1473,7 +1580,9 @@ function PipelineDetailPage({
       isPipelineExecuting={isPipelineExecuting}
       messages={messages}
       metadata={metadata}
+      onChangeCallbackBlock={onChangeCallbackBlock}
       onChangeChartBlock={onChangeChartBlock}
+      onChangeCodeBlock={onChangeCodeBlock}
       pipeline={pipeline}
       pipelineMessages={pipelineMessages}
       runBlock={runBlock}
@@ -1501,7 +1610,9 @@ function PipelineDetailPage({
     autocompleteItems,
     blockRefs,
     blocks,
+    blocksInNotebook,
     cancelPipeline,
+    deleteBlock,
     deleteWidget,
     editingBlock,
     executePipeline,
@@ -1515,7 +1626,9 @@ function PipelineDetailPage({
     isPipelineExecuting,
     messages,
     metadata,
+    onChangeCallbackBlock,
     onChangeChartBlock,
+    onChangeCodeBlock,
     pipeline,
     pipelineMessages,
     runBlock,
@@ -1530,6 +1643,7 @@ function PipelineDetailPage({
     setEditingBlock,
     setErrors,
     setTextareaFocused,
+    showModal,
     statistics,
     textareaFocused,
     updateWidget,
@@ -1560,7 +1674,7 @@ function PipelineDetailPage({
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
-      blocks={blocks}
+      blocks={blocksInNotebook}
       dataProviders={dataProviders}
       deleteBlock={deleteBlock}
       disableShortcuts={disableShortcuts}
@@ -1609,7 +1723,7 @@ function PipelineDetailPage({
     autocompleteItems,
     automaticallyNameBlocks,
     blockRefs,
-    blocks,
+    blocksInNotebook,
     dataProviders,
     deleteBlock,
     disableShortcuts,
@@ -1695,94 +1809,6 @@ function PipelineDetailPage({
     updatePipelineMetadata,
   ]);
 
-  const afterHeader = useMemo(() => {
-    const validBlocks = blocks?.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type);
-
-    return (
-      <FlexContainer
-        alignItems="center"
-        fullWidth
-        justifyContent="space-between"
-      >
-        <Flex>
-          {finalSidekickViews.map(({ key, label }: any) => {
-            const active = key === activeSidekickView;
-            const Icon = NAV_ICON_MAPPING[key];
-
-            return (
-              <Spacing key={key} pl={1}>
-                <KeyboardShortcutButton
-                  beforeElement={Icon && <Icon />}
-                  blackBorder
-                  compact
-                  onClick={() => setActiveSidekickView(key)}
-                  selected={active}
-                  uuid={key}
-                >
-                  {label}
-                </KeyboardShortcutButton>
-              </Spacing>
-            );
-          })}
-        </Flex>
-
-        <Spacing
-          px={1}
-          ref={refAddChart}
-          style={{
-            position: 'relative',
-          }}
-        >
-          <KeyboardShortcutButton
-            beforeElement={<Add />}
-            blackBorder
-            compact
-            disabled={validBlocks?.length === 0}
-            onClick={() => setShowAddCharts(true)}
-            primaryGradient
-            uuid="Pipeline/afterHeader/add_chart"
-          >
-            Add chart
-          </KeyboardShortcutButton>
-
-          <ClickOutside
-            disableEscape
-            onClickOutside={() => setShowAddCharts(false)}
-            open={showAddCharts}
-          >
-            <AddChartMenu
-              addWidget={(
-                widget: BlockType,
-                {
-                  onCreateCallback,
-                }: {
-                  onCreateCallback?: (block: BlockType) => void;
-                },
-              ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
-              block={validBlocks[validBlocks.length - 1]}
-              onClickCallback={() => setShowAddCharts(false)}
-              open={showAddCharts}
-              parentRef={refAddChart}
-              rightOffset={UNIT * 2}
-              runBlock={runBlock}
-            />
-          </ClickOutside>
-        </Spacing>
-      </FlexContainer>
-    );
-  }, [
-    activeSidekickView,
-    addWidgetAtIndex,
-    blocks,
-    finalSidekickViews,
-    refAddChart,
-    runBlock,
-    setActiveSidekickView,
-    setShowAddCharts,
-    showAddCharts,
-    widgets,
-  ]);
-
   const integrationOutputsMemo = useMemo(
     () => integrationStreams
       ?.filter(stream => find(
@@ -1803,7 +1829,7 @@ function PipelineDetailPage({
           </KeyboardShortcutButton>
         </Spacing>
       )),
-    [blockSampleData, integrationStreams, selectedStream]
+    [blockSampleData, integrationStreams, selectedStream],
   );
 
   const fileTreeRef = useRef(null);
@@ -1896,7 +1922,12 @@ function PipelineDetailPage({
 
       <PipelineLayout
         after={sideKick}
-        // afterHeader={afterHeader}
+        afterHeader={(
+          <SidekickHeader
+            activeView={activeSidekickView}
+            pipeline={pipeline}
+          />
+        )}
         afterHidden={afterHidden}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer

@@ -33,7 +33,7 @@ export const buildConvertBlockMenuItems = (
   b: BlockType,
   blocks: BlockType[],
   baseUUID: string,
-  addNewBlock: (block: BlockType) => Promise<any>,
+  addNewBlock: (block: BlockRequestPayloadType) => Promise<any>,
 ): FlyoutMenuItemType[] => {
   const upstreamBlocks = [];
   let currentIndex = blocks.findIndex(({ uuid }) => uuid === b.uuid);
@@ -56,7 +56,8 @@ export const buildConvertBlockMenuItems = (
       label: () => `Convert to ${lowercase(BLOCK_TYPE_NAME_MAPPING[blockType])}`,
       // @ts-ignore
       onClick: () => addNewBlock({
-        converted_from: b.uuid,
+        converted_from_type: blockType,
+        converted_from_uuid: b.uuid,
         type: blockType,
         upstream_blocks: upstreamBlocks,
       }),
@@ -109,147 +110,150 @@ export const getMoreActionsItems = (
   } = configuration || {};
   const isDBT = BlockTypeEnum.DBT === block?.type;
 
-  const items: FlyoutMenuItemType[] = [
-    {
+  const items: FlyoutMenuItemType[] = [];
+
+  if (BlockTypeEnum.EXTENSION === block.type) {
+  } else {
+    items.push({
       label: () => isDBT
         ? 'Execute and run upstream blocks'
         : 'Execute with upstream blocks',
       onClick: () => runBlock({ block, runUpstream: true }),
       uuid: 'execute_upstream',
-    },
-  ];
-
-  if (!isDBT) {
-    items.push({
-      label: () => 'Execute block and run tests',
-      onClick: () => runBlock({ block, runTests: true }),
-      uuid: 'run_tests',
     });
-  }
 
-  const {
-    blocksMapping,
-    fetchFileTree,
-    fetchPipeline,
-    savePipelineContent,
-    updatePipeline,
-  } = opts || {};
-
-  // If current block’s downstream has other dynamic blocks,
-  // disable this button
-  const otherDynamicBlocks = [];
-  downstreamBlocks.forEach((uuid1: string) => {
-    const b = blocksMapping?.[uuid1];
-    if (b) {
-      b.upstream_blocks.forEach((uuid2: string) => {
-        if (blocksMapping?.[uuid2]?.configuration?.dynamic) {
-          otherDynamicBlocks.push(blocksMapping[uuid2]);
-        }
+    if (!isDBT) {
+      items.push({
+        label: () => 'Execute block and run tests',
+        onClick: () => runBlock({ block, runTests: true }),
+        uuid: 'run_tests',
       });
     }
-  });
 
-  if (isDBT) {
-    items.unshift(...[
-      {
-        label: () => 'Run model',
-        onClick: () => runBlock({
-          block,
-          runSettings: {
-            run_model: true,
-          },
-        }),
-        tooltip: () => 'Execute command dbt run.',
-        uuid: 'run_model',
-      },
-      {
-        label: () => 'Test model',
-        onClick: () => runBlock({
-          block,
-          runSettings: {
-            test_model: true,
-          },
-        }),
-        tooltip: () => 'Execute command dbt test.',
-        uuid: 'test_model',
-      },
-      {
-        label: () => 'Build model',
-        onClick: () => runBlock({
-          block,
-          runSettings: {
-            build_model: true,
-          },
-        }),
-        tooltip: () => 'Execute command dbt build.',
-        uuid: 'build_model',
-      },
-      {
-        label: () => 'Add upstream models',
-        onClick: () => {
-          updatePipeline({
-            pipeline: {
-              add_upstream_for_block_uuid: block?.uuid,
-            },
-          });
-        },
-        tooltip: () => 'Add upstream models for this model to the pipeline.',
-        uuid: 'add_upstream_models',
-      },
-    ]);
-  }
+    const {
+      blocksMapping,
+      fetchFileTree,
+      fetchPipeline,
+      savePipelineContent,
+      updatePipeline,
+    } = opts || {};
 
-  if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
-    items.push({
-      label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
-      onClick: () => savePipelineContent({
-        block: {
-          ...block,
-          configuration: {
-            ...configuration,
-            dynamic: !dynamic,
-          },
-        },
-      }),
-      uuid: 'dynamic',
+    // If current block’s downstream has other dynamic blocks,
+    // disable this button
+    const otherDynamicBlocks = [];
+    downstreamBlocks.forEach((uuid1: string) => {
+      const b = blocksMapping?.[uuid1];
+      if (b) {
+        b.upstream_blocks.forEach((uuid2: string) => {
+          if (blocksMapping?.[uuid2]?.configuration?.dynamic) {
+            otherDynamicBlocks.push(blocksMapping[uuid2]);
+          }
+        });
+      }
     });
-  }
 
-  if (blocksMapping) {
-    const dynamicChildBlock = upstreamBlocks?.find(
-      (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
-    );
+    if (isDBT) {
+      items.unshift(...[
+        {
+          label: () => 'Run model',
+          onClick: () => runBlock({
+            block,
+            runSettings: {
+              run_model: true,
+            },
+          }),
+          tooltip: () => 'Execute command dbt run.',
+          uuid: 'run_model',
+        },
+        {
+          label: () => 'Test model',
+          onClick: () => runBlock({
+            block,
+            runSettings: {
+              test_model: true,
+            },
+          }),
+          tooltip: () => 'Execute command dbt test.',
+          uuid: 'test_model',
+        },
+        {
+          label: () => 'Build model',
+          onClick: () => runBlock({
+            block,
+            runSettings: {
+              build_model: true,
+            },
+          }),
+          tooltip: () => 'Execute command dbt build.',
+          uuid: 'build_model',
+        },
+        {
+          label: () => 'Add upstream models',
+          onClick: () => {
+            updatePipeline({
+              pipeline: {
+                add_upstream_for_block_uuid: block?.uuid,
+              },
+            });
+          },
+          tooltip: () => 'Add upstream models for this model to the pipeline.',
+          uuid: 'add_upstream_models',
+        },
+      ]);
+    }
 
-    if (dynamicChildBlock) {
+    if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
       items.push({
-        label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
+        label: () => dynamic ? 'Disable block as dynamic' : 'Set block as dynamic',
         onClick: () => savePipelineContent({
           block: {
             ...block,
             configuration: {
               ...configuration,
-              reduce_output: !reduceOutput,
+              dynamic: !dynamic,
             },
           },
         }),
-        uuid: 'reduce_output',
+        uuid: 'dynamic',
       });
     }
-  }
 
-  items.push({
-    label: () => has_callback ? 'Remove callback' : 'Add callback',
-    onClick: () => savePipelineContent({
-      block: {
-        ...block,
-        has_callback: !has_callback,
-      },
-    }).then(() => {
-      fetchFileTree();
-      fetchPipeline();
-    }),
-    uuid: 'has_callback',
-  })
+    if (blocksMapping) {
+      const dynamicChildBlock = upstreamBlocks?.find(
+        (uuid: string) => blocksMapping?.[uuid]?.configuration?.dynamic,
+      );
+
+      if (dynamicChildBlock) {
+        items.push({
+          label: () => reduceOutput ? 'Don’t reduce output' : 'Reduce output',
+          onClick: () => savePipelineContent({
+            block: {
+              ...block,
+              configuration: {
+                ...configuration,
+                reduce_output: !reduceOutput,
+              },
+            },
+          }),
+          uuid: 'reduce_output',
+        });
+      }
+    }
+
+    items.push({
+      label: () => has_callback ? 'Remove callback' : 'Add callback',
+      onClick: () => savePipelineContent({
+        block: {
+          ...block,
+          has_callback: !has_callback,
+        },
+      }).then(() => {
+        fetchFileTree();
+        fetchPipeline();
+      }),
+      uuid: 'has_callback',
+    });
+  }
 
   items.push({
     label: () => 'Delete block',

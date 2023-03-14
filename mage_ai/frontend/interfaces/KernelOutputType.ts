@@ -1,3 +1,5 @@
+import { BlockTypeEnum } from './BlockType';
+
 export enum ExecutionStateEnum {
   BUSY = 'busy', // Code is being executed
   IDLE = 'idle', // Nothing is being done
@@ -27,6 +29,7 @@ export enum MsgType {
 
 export default interface KernelOutputType {
   data?: string | string[];
+  block_type?: BlockTypeEnum;
   error?: string;
   execution_state: ExecutionStateEnum;
   metadata?: {

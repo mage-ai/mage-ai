@@ -59,7 +59,13 @@ def fetch_template_source(
     if language not in [BlockLanguage.PYTHON, BlockLanguage.R, BlockLanguage.YAML]:
         return template_source
 
-    if block_type == BlockType.DATA_LOADER:
+    if 'template_path' in config:
+        return (
+            template_env.get_template(config['template_path']).render(
+                code=config.get('existing_code', ''),
+            )
+        )
+    elif block_type == BlockType.DATA_LOADER:
         template_source = __fetch_data_loader_templates(
             config,
             language=language,
