@@ -23,11 +23,21 @@ import api from '@api';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
+
+const sharedOpenButtonProps = {
+  borderRadius: BORDER_RADIUS_SMALL,
+  iconOnly: true,
+  noBackground: true,
+  noBorder: true,
+  outline: true,
+  padding: '4px',
+};
 
 function PipelineListPage() {
   const router = useRouter();
@@ -250,13 +260,6 @@ function PipelineListPage() {
               const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
               const schedulesCount = schedules.length;
               const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
-              const sharedOpenButtonProps = {
-                borderRadius: UNIT,
-                iconOnly: true,
-                noBackground: true,
-                noBorder: true,
-                outline: true,
-              };
 
               return [
                 schedulesCount >= 1
