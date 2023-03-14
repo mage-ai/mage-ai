@@ -15,7 +15,6 @@ import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import {
   BUTTON_PADDING,
   ConfirmDialogueOpenEnum,
-  MenuOpenEnum,
   POPUP_MENU_WIDTH,
   POPUP_TOP_OFFSET,
   SHARED_BUTTON_PROPS,
@@ -79,15 +78,16 @@ function Toolbar({
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
   const moreActionsButtonMenuRef = useRef(null);
-  const [addButtonMenuOpen, setAddButtonMenuOpen] = useState(false);
-  const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState(false);
-  const [menuOpenIdx, setMenuOpenIdx] = useState<number>(null);
+
+  const [addButtonMenuOpen, setAddButtonMenuOpen] = useState<boolean>(false);
+  const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState<boolean>(false);
+  const [moreActionsMenuOpen, setMoreActionsMenuOpen] = useState<boolean>(false);
   const [confirmationDialogueOpenIdx, setConfirmationDialogueOpenIdx] = useState<number>(null);
   const disabledActions = !selectedRowId;
 
   const closeAddButtonMenu = useCallback(() => setAddButtonMenuOpen(false), []);
   const closeFilterButtonMenu = useCallback(() => setFilterButtonMenuOpen(false), []);
-  const closeMenu = useCallback(() => setMenuOpenIdx(null), []);
+  const closeMoreActionsMenu = useCallback(() => setMoreActionsMenuOpen(null), []);
   const closeConfirmationDialogue = useCallback(() => setConfirmationDialogueOpenIdx(null), []);
 
   const {
@@ -196,6 +196,7 @@ function Toolbar({
     filterButtonMenuOpen,
     filterOptionsEnabledMapping,
     filterValueLabelMapping,
+    filtersAppliedCount,
     query,
   ]);
 
@@ -203,9 +204,9 @@ function Toolbar({
     <FlyoutMenuWrapper
       disableKeyboardShortcuts
       items={moreActionsMenuItems}
-      onClickCallback={closeMenu}
-      onClickOutside={closeMenu}
-      open={menuOpenIdx === MenuOpenEnum.MORE_ACTIONS}
+      onClickCallback={closeMoreActionsMenu}
+      onClickOutside={closeMoreActionsMenu}
+      open={moreActionsMenuOpen}
       parentRef={moreActionsButtonMenuRef}
       roundedStyle
       uuid="table/toolbar/more_actions_menu"
@@ -219,19 +220,17 @@ function Toolbar({
           bold
           disabled={disabledActions}
           greyBorder
-          onClick={() => setMenuOpenIdx(prevState => (
-            prevState === MenuOpenEnum.MORE_ACTIONS ? null : MenuOpenEnum.MORE_ACTIONS
-          ))}
+          onClick={() => setMoreActionsMenuOpen(prevState => !prevState)}
           smallIcon
           uuid="table/toolbar/more_actions_button"
         />
       </Tooltip>
     </FlyoutMenuWrapper>
   ), [
-    closeMenu,
-    menuOpenIdx,
+    closeMoreActionsMenu,
+    disabledActions,
+    moreActionsMenuOpen,
     moreActionsMenuItems,
-    selectedRowId,
   ]);
 
   return (

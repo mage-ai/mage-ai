@@ -10,12 +10,6 @@ export const SHARED_BUTTON_PROPS = {
   paddingTop: 9,
 };
 
-export enum MenuOpenEnum {
-  NEW = 1,
-  FILTER = 2,
-  MORE_ACTIONS = 3,
-}
-
 export enum ConfirmDialogueOpenEnum {
   SECONDARY = 1,
   DELETE = 2,
