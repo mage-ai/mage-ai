@@ -20,13 +20,7 @@ module.exports = removeImports({
     ignoreDuringBuilds: true,
   },
   experimental: {
-    esmExternals: true,
-    images: {
-      unoptimized: true
-    }
-  },
-  images: {
-    unoptimized: true
+    esmExternals: true
   },
   reactStrictMode: true,
 });

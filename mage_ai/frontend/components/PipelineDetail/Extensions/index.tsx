@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -98,7 +97,7 @@ function Extensions({
                   <PanelV2 fullWidth={false}>
                     <Spacing p={PADDING_UNITS}>
                       <FlexContainer alignItems="center">
-                        <Image
+                        <img
                           alt={name}
                           height={UNIT * 3}
                           src={`/images/extensions/${uuid}/logo.png`}
