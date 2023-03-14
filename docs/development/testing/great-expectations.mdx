@@ -25,6 +25,8 @@ They must be Python blocks (SQL block support coming soon).
         response = requests.get(url)
         return pd.read_csv(io.StringIO(response.text), sep=',')
     ```
+    
+    For more expectations, read Great Expectation’s [documentation](https://greatexpectations.io/expectations/).
 
 1. [Add Great Expectations power up to your pipeline](/design/blocks/extension#how-to-add-extensions-to-your-pipeline).
 1. In the list of available power ups, click the option for <b>Great Expectations</b>.
