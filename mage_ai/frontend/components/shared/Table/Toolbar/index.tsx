@@ -10,20 +10,23 @@ import Spinner from '@oracle/components/Spinner';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Filter, Trash } from '@oracle/icons';
+import { Add, Ellipsis, Filter, Trash } from '@oracle/icons';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import {
   BUTTON_PADDING,
+  ConfirmDialogueOpenEnum,
+  MenuOpenEnum,
   POPUP_MENU_WIDTH,
   POPUP_TOP_OFFSET,
   SHARED_BUTTON_PROPS,
 } from './constants';
+import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type ToolbarProps = {
   addButtonProps?: {
     label?: string;
-    menuItems?: any[];
+    menuItems?: FlyoutMenuItemType[];
     isLoading?: boolean;
   };
   deleteRowProps?: {
@@ -38,11 +41,7 @@ type ToolbarProps = {
   filterValueLabelMapping?: {
     [keyof: string]: string;
   };
-  moreActionsLinkProps?: {
-    label: string;
-    onClick: () => void;
-    uuid: string;
-  }[];
+  moreActionsMenuItems?: FlyoutMenuItemType[];
   groupings?: string[];
   query?: {
     [keyof: string]: string[];
@@ -66,7 +65,7 @@ function Toolbar({
   deleteRowProps,
   filterOptions,
   filterValueLabelMapping,
-  moreActionsLinkProps,
+  moreActionsMenuItems,
   groupings,
   query = {},
   secondaryActionButtonProps,
@@ -75,13 +74,16 @@ function Toolbar({
 }: ToolbarProps) {
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
+  const moreActionsButtonMenuRef = useRef(null);
   const [addButtonMenuOpen, setAddButtonMenuOpen] = useState(false);
   const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState(false);
-  const [deleteConfirmDialogueOpen, setDeleteConfirmDialogueOpen] = useState(false);
-  const [secondaryConfirmDialogueOpen, setSecondaryConfirmDialogueOpen] = useState(false);
+  const [menuOpenIdx, setMenuOpenIdx] = useState<number>(null);
+  const [confirmationDialogueOpenIdx, setConfirmationDialogueOpenIdx] = useState<number>(null);
 
   const closeAddButtonMenu = useCallback(() => setAddButtonMenuOpen(false), []);
   const closeFilterButtonMenu = useCallback(() => setFilterButtonMenuOpen(false), []);
+  const closeMenu = useCallback(() => setMenuOpenIdx(null), []);
+  const closeConfirmationDialogue = useCallback(() => setConfirmationDialogueOpenIdx(null), []);
 
   const {
     Icon: secondaryActionIcon,
@@ -165,10 +167,7 @@ function Toolbar({
       <KeyboardShortcutButton
         {...SHARED_BUTTON_PROPS}
         beforeElement={<Filter size={2 * UNIT} />}
-        onClick={e => {
-          e.preventDefault();
-          setFilterButtonMenuOpen(prevOpenState => !prevOpenState);
-        }}
+        onClick={() => setFilterButtonMenuOpen(prevOpenState => !prevOpenState)}
         uuid="table/toolbar/filter_button"
       >
         Filter
@@ -181,9 +180,6 @@ function Toolbar({
     filterValueLabelMapping,
     query,
   ]);
-
-  const closeDeleteConfirmationDialogue = useCallback(() => setDeleteConfirmDialogueOpen(false), []);
-  const closeSecondaryConfirmationDialogue = useCallback(() => setSecondaryConfirmDialogueOpen(false), []);
 
   return (
     <FlexContainer alignItems="center">
@@ -210,7 +206,7 @@ function Toolbar({
               greyBorder
               loading={isLoadingSecondaryAction}
               onClick={openSecondaryActionConfirmDialogue
-                ? () => setSecondaryConfirmDialogueOpen(prevState => !prevState)
+                ? () => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.SECONDARY)
                 : onSecondaryActionClick
               }
               smallIcon
@@ -220,14 +216,14 @@ function Toolbar({
             </KeyboardShortcutButton>
           </Tooltip>
           <ClickOutside
-            onClickOutside={closeSecondaryConfirmationDialogue}
-            open={secondaryConfirmDialogueOpen}
+            onClickOutside={closeConfirmationDialogue}
+            open={confirmationDialogueOpenIdx === ConfirmDialogueOpenEnum.SECONDARY}
           >
             <PopupMenu
-              onCancel={closeSecondaryConfirmationDialogue}
+              onCancel={closeConfirmationDialogue}
               onClick={() => {
                 onSecondaryActionClick();
-                closeSecondaryConfirmationDialogue();
+                closeConfirmationDialogue();
                 setSelectedRow(null);
               }}
               subtitle={secondaryActionConfirmDescription}
@@ -250,21 +246,21 @@ function Toolbar({
               Icon={Trash}
               bold
               greyBorder
-              onClick={() => setDeleteConfirmDialogueOpen(prevState => !prevState)}
+              onClick={() => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.DELETE)}
               smallIcon
               uuid="table/toolbar/delete_button"
             />
           </Tooltip>
           <ClickOutside
-            onClickOutside={closeDeleteConfirmationDialogue}
-            open={deleteConfirmDialogueOpen}
+            onClickOutside={closeConfirmationDialogue}
+            open={confirmationDialogueOpenIdx === ConfirmDialogueOpenEnum.DELETE}
           >
             <PopupMenu
               danger
-              onCancel={closeDeleteConfirmationDialogue}
+              onCancel={closeConfirmationDialogue}
               onClick={() => {
                 onDelete(selectedRowId);
-                closeDeleteConfirmationDialogue();
+                closeConfirmationDialogue();
                 setSelectedRow(null);
               }}
               subtitle={deleteConfirmMessage}
@@ -273,6 +269,38 @@ function Toolbar({
               width={POPUP_MENU_WIDTH}
             />
           </ClickOutside>
+        </Spacing>
+      }
+
+      {(selectedRowId && moreActionsMenuItems?.length > 0) &&
+        <Spacing ml={BUTTON_PADDING}>
+          <FlyoutMenuWrapper
+            disableKeyboardShortcuts
+            items={moreActionsMenuItems}
+            onClickCallback={closeMenu}
+            onClickOutside={closeMenu}
+            open={menuOpenIdx === MenuOpenEnum.MORE_ACTIONS}
+            parentRef={moreActionsButtonMenuRef}
+            roundedStyle
+            uuid="table/toolbar/more_actions_menu"
+          >
+            <Tooltip
+              label="More actions"
+              size={null}
+              widthFitContent
+            >
+              <KeyboardShortcutButton
+                Icon={Ellipsis}
+                bold
+                greyBorder
+                onClick={() => setMenuOpenIdx(prevState => (
+                  prevState === MenuOpenEnum.MORE_ACTIONS ? null : MenuOpenEnum.MORE_ACTIONS
+                ))}
+                smallIcon
+                uuid="table/toolbar/more_actions_button"
+              />
+            </Tooltip>
+          </FlyoutMenuWrapper>
         </Spacing>
       }
     </FlexContainer>
