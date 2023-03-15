@@ -363,7 +363,7 @@ class Block:
         if not statement_partial:
             matches = re.findall('insert into[\s]+([\w.]+)', self.content, re.IGNORECASE)
             if len(matches) >= 1:
-                return matches[0]
+                return matches[len(matches) - 1]
             else:
                 return None
 
