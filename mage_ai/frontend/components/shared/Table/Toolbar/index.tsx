@@ -12,7 +12,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Ellipsis, Filter, Search, Trash } from '@oracle/icons';
+import { Add, Close, Ellipsis, Filter, Search, Trash } from '@oracle/icons';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import {
@@ -87,6 +87,7 @@ function Toolbar({
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
   const moreActionsButtonMenuRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const [addButtonMenuOpen, setAddButtonMenuOpen] = useState<boolean>(false);
   const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState<boolean>(false);
@@ -344,7 +345,13 @@ function Toolbar({
           <Spacing ml={BUTTON_PADDING} />
           <Flex flex={1}>
             <TextInput
-              beforeIcon={<Search size={UNIT * 1.5} />}
+              afterIcon={searchValue ? <Close /> : null}
+              afterIconClick={() => {
+                onSearchChange('');
+                searchInputRef?.current?.focus();
+              }}
+              afterIconSize={UNIT * 1.5}
+              beforeIcon={<Search />}
               borderRadius={BORDER_RADIUS}
               defaultColor
               fullWidth
@@ -353,6 +360,7 @@ function Toolbar({
               onChange={e => onSearchChange(e.target.value)}
               paddingVertical={9}
               placeholder={searchPlaceholder ? searchPlaceholder : null}
+              ref={searchInputRef}
               value={searchValue}
             />
           </Flex>
