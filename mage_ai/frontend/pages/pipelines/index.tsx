@@ -106,6 +106,7 @@ function PipelineListPage() {
             }));
             fetchPipelines();
             hideInputModal?.();
+            setSelectedPipeline(null);
           },
           onErrorCallback: (response, errors) => {
             const pipelineUUID = response?.url_parameters?.pk;
@@ -140,28 +141,39 @@ function PipelineListPage() {
   );
 
   const [showInputModal, hideInputModal] = useModal(({
+    pipelineDescription,
     pipelineName,
   }: {
-    pipelineName: string;
+    pipelineDescription?: string;
+    pipelineName?: string;
   }) => (
     <InputModal
       isLoading={isLoadingUpdate}
       onClose={hideInputModal}
-      onSave={(name: string) => {
+      onSave={(value: string) => {
         if (selectedPipeline) {
           const selectedPipelineUUID = selectedPipeline.uuid;
+          const pipelineUpdateRequestBody: PipelineType = {
+            uuid: selectedPipelineUUID,
+          };
+          if (pipelineName) {
+            pipelineUpdateRequestBody.name = value;
+          } else {
+            pipelineUpdateRequestBody.description = value;
+          }
+
           setPipelinesEditing(prev => ({
             ...prev,
             [selectedPipelineUUID]: true,
           }));
-          updatePipeline({
-            name,
-            uuid: selectedPipelineUUID,
-          });
+          updatePipeline(pipelineUpdateRequestBody);
         }
       }}
-      title="Rename pipeline"
-      value={pipelineName}
+      title={pipelineName
+        ? 'Rename pipeline'
+        : 'Edit description'
+      }
+      value={pipelineName ? pipelineName : pipelineDescription}
     />
   ), {} , [
     isLoadingUpdate,
@@ -228,7 +240,12 @@ function PipelineListPage() {
             {
               label: () => 'Rename pipeline',
               onClick: () => showInputModal({ pipelineName: selectedPipeline?.name }),
-              uuid: 'Pipelines/MoreActionsMenu/rename',
+              uuid: 'Pipelines/MoreActionsMenu/Rename',
+            },
+            {
+              label: () => 'Edit description',
+              onClick: () => showInputModal({ pipelineDescription: selectedPipeline?.description }),
+              uuid: 'Pipelines/MoreActionsMenu/EditDescription',
             },
           ]}
           query={query}
@@ -375,6 +392,8 @@ function PipelineListPage() {
                 <Text
                   default
                   key={`pipeline_description_${idx}`}
+                  title={description}
+                  width={UNIT * 90}
                 >
                   {description}
                 </Text>,
