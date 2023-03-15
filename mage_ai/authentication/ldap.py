@@ -7,8 +7,8 @@ from mage_ai.settings import (
     LDAP_BIND_DN,
     LDAP_BIND_PASSWORD,
     LDAP_BASE_DN,
-    LDAP_AUTHENTICATATION_FILTER,
-    LDAP_AUTORIZATION_FILTER,
+    LDAP_AUTHENTICATION_FILTER,
+    LDAP_AUTHORIZATION_FILTER,
 )
 
 
@@ -90,8 +90,8 @@ def new_ldap_connection() -> LDAPConnection:
         LDAP_BIND_DN,
         LDAP_BIND_PASSWORD,
         LDAP_BASE_DN,
-        LDAP_AUTHENTICATATION_FILTER,
-        LDAP_AUTORIZATION_FILTER,
+        LDAP_AUTHENTICATION_FILTER,
+        LDAP_AUTHORIZATION_FILTER,
     )
 
 
@@ -101,6 +101,6 @@ def verify(username, password: str) -> bool:
         LDAP_BIND_DN,
         LDAP_BIND_PASSWORD,
         LDAP_BASE_DN,
-        LDAP_AUTHENTICATATION_FILTER,
-        LDAP_AUTORIZATION_FILTER,
+        LDAP_AUTHENTICATION_FILTER,
+        LDAP_AUTHORIZATION_FILTER,
     ).verify(username, password)

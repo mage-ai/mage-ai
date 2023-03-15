@@ -48,7 +48,7 @@ class SessionOperationTests(BaseApiTestCase):
 
         self.assertIsNotNone(response['error'])
 
-    @patch('mage_ai.api.resources.SessionResource.AUTHENTIFICATION_MODE', 'ldap')
+    @patch('mage_ai.api.resources.SessionResource.AUTHENTICATION_MODE', 'ldap')
     @patch.object(LDAPConnection, 'authorize')
     @patch.object(LDAPConnection, 'authenticate')
     async def test_ldap_login(self, mock_authenticate, mock_authorize):
@@ -70,7 +70,7 @@ class SessionOperationTests(BaseApiTestCase):
         mock_authorize.assert_called_once_with("Julius_Novachrono")
         self.assertIsNotNone(User.query.filter(User.username == username).first())
 
-    @patch('mage_ai.api.resources.SessionResource.AUTHENTIFICATION_MODE', 'ldap')
+    @patch('mage_ai.api.resources.SessionResource.AUTHENTICATION_MODE', 'ldap')
     @patch.object(LDAPConnection, 'authorize')
     @patch.object(LDAPConnection, 'authenticate')
     async def test_ldap_login_unauthenticated(self, mock_authenticate, mock_authorize):
@@ -93,7 +93,7 @@ class SessionOperationTests(BaseApiTestCase):
         self.assertIsNone(User.query.filter(User.username == username).first())
         self.assertIsNotNone(response['error'])
 
-    @patch('mage_ai.api.resources.SessionResource.AUTHENTIFICATION_MODE', 'ldap')
+    @patch('mage_ai.api.resources.SessionResource.AUTHENTICATION_MODE', 'ldap')
     @patch.object(LDAPConnection, 'authorize')
     @patch.object(LDAPConnection, 'authenticate')
     async def test_ldap_login_unauthorized(self, mock_authenticate, mock_authorize):
