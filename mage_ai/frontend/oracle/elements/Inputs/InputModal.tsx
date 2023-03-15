@@ -14,6 +14,7 @@ type InputModalProps = {
   isLoading?: boolean;
   maxWidth?: number;
   minWidth?: number;
+  noEmptyValue?: boolean;
   onClose: () => void;
   onSave: (value: string) => void;
   textArea?: boolean;
@@ -26,6 +27,7 @@ function InputModal({
   isLoading,
   maxWidth,
   minWidth,
+  noEmptyValue,
   onClose,
   onSave,
   textArea,
@@ -75,7 +77,7 @@ function InputModal({
             inline
             loading={isLoading}
             onClick={() => {
-              if (inputValue === value || !inputValue) {
+              if (inputValue === value || noEmptyValue) {
                 onClose();
                 return;
               }

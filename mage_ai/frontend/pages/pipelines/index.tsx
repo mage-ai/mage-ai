@@ -150,6 +150,7 @@ function PipelineListPage() {
     <InputModal
       isLoading={isLoadingUpdate}
       minWidth={UNIT * 55}
+      noEmptyValue={!!pipelineName}
       onClose={hideInputModal}
       onSave={(value: string) => {
         if (selectedPipeline) {
