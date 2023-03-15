@@ -5,7 +5,6 @@ import { CSSTransition } from 'react-transition-group';
 import Text, { SHARED_LARGE_TEXT_RESPONSIVE_STYLES } from '../Text';
 import dark from '@oracle/styles/themes/dark';
 import {
-  BORDER_RADIUS,
   BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   BORDER_WIDTH,
@@ -39,6 +38,7 @@ export type InputWrapperProps = {
   beforeIcon?: any;
   bold?: boolean;
   borderless?: boolean;
+  borderRadius?: number;
   compact?: boolean
   danger?: boolean;
   defaultColor?: boolean;
@@ -48,6 +48,7 @@ export type InputWrapperProps = {
   fire?: boolean;
   fitContent?: boolean;
   fullWidth?: boolean;
+  greyBorder?: boolean;
   holder?: string;
   info?: boolean;
   inputWidth?: number;
@@ -58,6 +59,7 @@ export type InputWrapperProps = {
   labelFixed?: string;
   large?: boolean;
   maxHeight?: number;
+  maxWidth?: number;
   meta?: MetaType;
   minWidth?: number;
   monospace?: boolean;
@@ -233,6 +235,10 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     border-bottom-right-radius: 0;
   `}
 
+  ${props => props.borderRadius && `
+    border-radius: ${props.borderRadius}px;
+  `}
+
   ${props => props.borderless && `
     border-style: none;
   `}
@@ -366,6 +372,10 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
 
   ${props => props.minWidth && `
     min-width: ${props.minWidth}px;
+  `}
+
+  ${props => props.maxWidth && `
+    max-width: ${props.maxWidth}px;
   `}
 
   ${props => props.inputWidth && `
@@ -576,6 +586,10 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground} !important;
     }
+  `}
+
+  ${props => props.greyBorder && `
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.button};
   `}
 
   ${props => props.width && `

@@ -44,6 +44,7 @@ const sharedOpenButtonProps = {
 function PipelineListPage() {
   const router = useRouter();
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
+  const [searchText, setSearchText] = useState<string>(null);
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
@@ -54,7 +55,19 @@ function PipelineListPage() {
     ...query,
     include_schedules: 1,
   });
-  const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
+  const pipelines: PipelineType[] = useMemo(() => {
+    let pipelinesFinal: PipelineType[] = data?.pipelines || [];
+    if (searchText) {
+      const lowercaseSearchText = searchText.toLowerCase();
+      pipelinesFinal = pipelinesFinal.filter(({ name, description, uuid }) =>
+         name?.toLowerCase().includes(lowercaseSearchText)
+          || uuid?.toLowerCase().includes(lowercaseSearchText)
+          || description?.toLowerCase().includes(lowercaseSearchText),
+      );
+    }
+
+    return pipelinesFinal;
+  }, [data?.pipelines, searchText]);
 
   const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
     api.pipelines.useCreate(),
@@ -248,6 +261,10 @@ function PipelineListPage() {
         },
       ]}
       query={query}
+      searchProps={{
+        onChange: setSearchText,
+        value: searchText,
+      }}
       secondaryActionButtonProps={{
         Icon: Clone,
         confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
@@ -272,6 +289,7 @@ function PipelineListPage() {
     isLoadingCreate,
     isLoadingDelete,
     query,
+    searchText,
     selectedPipeline?.description,
     selectedPipeline?.name,
     selectedPipeline?.uuid,
@@ -345,7 +363,6 @@ function PipelineListPage() {
               const {
                 blocks,
                 description,
-                name,
                 schedules,
                 type,
                 uuid,
