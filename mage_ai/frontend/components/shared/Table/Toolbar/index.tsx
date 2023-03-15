@@ -181,6 +181,7 @@ function Toolbar({
       compact
       onClickCallback={closeFilterButtonMenu}
       onClickOutside={closeFilterButtonMenu}
+      onSecondaryClick={() => router.push('/pipelines')}
       open={filterButtonMenuOpen}
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
