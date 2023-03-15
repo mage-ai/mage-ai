@@ -39,6 +39,7 @@ class Pipeline:
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.data_integration = None
+        self.description = None
         self.extensions = {}
         self.name = None
         self.repo_path = repo_path or get_repo_path()
@@ -376,6 +377,7 @@ class Pipeline:
         else:
             self.data_integration = catalog
         self.name = config.get('name')
+        self.description = config.get('description')
         self.type = config.get('type') or self.type
 
         self.block_configs = config.get('blocks') or []
@@ -458,6 +460,7 @@ class Pipeline:
     def to_dict_base(self, exclude_data_integration=False) -> Dict:
         base = dict(
             data_integration=self.data_integration if not exclude_data_integration else None,
+            description=self.description,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             uuid=self.uuid,
@@ -618,6 +621,10 @@ class Pipeline:
             self.__transfer_related_models(old_uuid, new_uuid)
 
         should_save = False
+
+        if 'description' in data and data['description'] != self.description:
+            self.description = data['description']
+            should_save = True
 
         if 'type' in data and data['type'] != self.type:
             """

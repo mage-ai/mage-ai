@@ -7,6 +7,7 @@ class PipelinePresenter(BasePresenter):
     default_attributes = [
         'blocks',
         'data_integration',
+        'description',
         'name',
         'type',
         'uuid',
