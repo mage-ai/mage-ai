@@ -44,6 +44,7 @@ const sharedOpenButtonProps = {
 function PipelineListPage() {
   const router = useRouter();
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
+  const [searchText, setSearchText] = useState<string>(null);
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
@@ -54,7 +55,19 @@ function PipelineListPage() {
     ...query,
     include_schedules: 1,
   });
-  const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
+  const pipelines: PipelineType[] = useMemo(() => {
+    let pipelinesFinal: PipelineType[] = data?.pipelines || [];
+    if (searchText) {
+      const lowercaseSearchText = searchText.toLowerCase();
+      pipelinesFinal = pipelinesFinal.filter(({ name, description, uuid }) =>
+         name?.toLowerCase().includes(lowercaseSearchText)
+          || uuid?.toLowerCase().includes(lowercaseSearchText)
+          || description?.toLowerCase().includes(lowercaseSearchText),
+      );
+    }
+
+    return pipelinesFinal;
+  }, [data?.pipelines, searchText]);
 
   const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
     api.pipelines.useCreate(),
@@ -186,89 +199,108 @@ function PipelineListPage() {
     uuid: 'rename_pipeline_and_save',
   });
 
+  const toolbarEl = useMemo(() => (
+    <Toolbar
+      addButtonProps={{
+        isLoading: isLoadingCreate,
+        label: 'New',
+        menuItems: [
+          {
+            label: () => 'Standard (batch)',
+            onClick: () => createPipeline({
+              pipeline: {
+                name: randomNameGenerator(),
+              },
+            }),
+            uuid: 'Pipelines/NewPipelineMenu/standard',
+          },
+          {
+            label: () => 'Data integration',
+            onClick: () => createPipeline({
+              pipeline: {
+                name: randomNameGenerator(),
+                type: PipelineTypeEnum.INTEGRATION,
+              },
+            }),
+            uuid: 'Pipelines/NewPipelineMenu/integration',
+          },
+          {
+            label: () => 'Streaming',
+            onClick: () => createPipeline({
+              pipeline: {
+                name: randomNameGenerator(),
+                type: PipelineTypeEnum.STREAMING,
+              },
+            }),
+            uuid: 'Pipelines/NewPipelineMenu/streaming',
+          },
+        ],
+      }}
+      deleteRowProps={{
+        confirmationMessage: 'This is irreversible and will immediately delete everything associated \
+          with the pipeline, including its blocks, triggers, runs, logs, and history.',
+        isLoading: isLoadingDelete,
+        item: 'pipeline',
+        onDelete: () => deletePipeline(selectedPipeline?.uuid),
+      }}
+      filterOptions={{
+        status: Object.values(PipelineStatusEnum),
+        type: Object.values(PipelineTypeEnum),
+      }}
+      filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
+      moreActionsMenuItems={[
+        {
+          label: () => 'Rename pipeline',
+          onClick: () => showInputModal({ pipelineName: selectedPipeline?.name }),
+          uuid: 'Pipelines/MoreActionsMenu/Rename',
+        },
+        {
+          label: () => 'Edit description',
+          onClick: () => showInputModal({ pipelineDescription: selectedPipeline?.description }),
+          uuid: 'Pipelines/MoreActionsMenu/EditDescription',
+        },
+      ]}
+      query={query}
+      searchProps={{
+        onChange: setSearchText,
+        value: searchText,
+      }}
+      secondaryActionButtonProps={{
+        Icon: Clone,
+        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
+          configuration and code blocks. The blocks use the same block files as the original pipeline. \
+          Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
+        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
+        isLoading: isLoadingClone,
+        onClick: () => clonePipeline({
+          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
+        }),
+        openConfirmationDialogue: true,
+        tooltip: 'Clone pipeline',
+      }}
+      selectedRowId={selectedPipeline?.uuid}
+      setSelectedRow={setSelectedPipeline}
+    />
+  ), [
+    clonePipeline,
+    createPipeline,
+    deletePipeline,
+    isLoadingClone,
+    isLoadingCreate,
+    isLoadingDelete,
+    query,
+    searchText,
+    selectedPipeline?.description,
+    selectedPipeline?.name,
+    selectedPipeline?.uuid,
+    showInputModal,
+  ]);
+
   return (
     <Dashboard
       errors={errors}
       setErrors={setErrors}
-      subheaderChildren={
-        <Toolbar
-          addButtonProps={{
-            isLoading: isLoadingCreate,
-            label: 'New',
-            menuItems: [
-              {
-                label: () => 'Standard (batch)',
-                onClick: () => createPipeline({
-                  pipeline: {
-                    name: randomNameGenerator(),
-                  },
-                }),
-                uuid: 'Pipelines/NewPipelineMenu/standard',
-              },
-              {
-                label: () => 'Data integration',
-                onClick: () => createPipeline({
-                  pipeline: {
-                    name: randomNameGenerator(),
-                    type: PipelineTypeEnum.INTEGRATION,
-                  },
-                }),
-                uuid: 'Pipelines/NewPipelineMenu/integration',
-              },
-              {
-                label: () => 'Streaming',
-                onClick: () => createPipeline({
-                  pipeline: {
-                    name: randomNameGenerator(),
-                    type: PipelineTypeEnum.STREAMING,
-                  },
-                }),
-                uuid: 'Pipelines/NewPipelineMenu/streaming',
-              },
-            ],
-          }}
-          deleteRowProps={{
-            confirmationMessage: 'This is irreversible and will immediately delete everything associated \
-              with the pipeline, including its blocks, triggers, runs, logs, and history.',
-            isLoading: isLoadingDelete,
-            item: 'pipeline',
-            onDelete: () => deletePipeline(selectedPipeline?.uuid),
-          }}
-          filterOptions={{
-            status: Object.values(PipelineStatusEnum),
-            type: Object.values(PipelineTypeEnum),
-          }}
-          filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
-          moreActionsMenuItems={[
-            {
-              label: () => 'Rename pipeline',
-              onClick: () => showInputModal({ pipelineName: selectedPipeline?.name }),
-              uuid: 'Pipelines/MoreActionsMenu/Rename',
-            },
-            {
-              label: () => 'Edit description',
-              onClick: () => showInputModal({ pipelineDescription: selectedPipeline?.description }),
-              uuid: 'Pipelines/MoreActionsMenu/EditDescription',
-            },
-          ]}
-          query={query}
-          secondaryActionButtonProps={{
-            Icon: Clone,
-            confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
-              configuration and code blocks. The blocks use the same block files as the original pipeline. \
-              Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
-            confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
-            isLoading: isLoadingClone,
-            onClick: () => clonePipeline({
-              pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
-            }),
-            openConfirmationDialogue: true,
-            tooltip: 'Clone pipeline',
-          }}
-          selectedRowId={selectedPipeline?.uuid}
-          setSelectedRow={setSelectedPipeline}
-        />
-      }
+      subheaderChildren={toolbarEl}
       title="Pipelines"
       uuid="pipelines/index"
     >
@@ -331,7 +363,6 @@ function PipelineListPage() {
               const {
                 blocks,
                 description,
-                name,
                 schedules,
                 type,
                 uuid,

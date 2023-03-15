@@ -2,15 +2,18 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import Badge from '@oracle/components/Badge';
 import ClickOutside from '@oracle/components/ClickOutside';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Ellipsis, Filter, Trash } from '@oracle/icons';
+import { Add, Close, Ellipsis, Filter, Search, Trash } from '@oracle/icons';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import {
   BUTTON_PADDING,
@@ -48,6 +51,11 @@ type ToolbarProps = {
   query?: {
     [keyof: string]: string[];
   };
+  searchProps?: {
+    placeholder?: string;
+    onChange: (text: string) => void;
+    value: string;
+  }
   secondaryActionButtonProps?: {
     Icon: any;
     confirmationDescription?: string;
@@ -70,6 +78,7 @@ function Toolbar({
   moreActionsMenuItems,
   groupings,
   query = {},
+  searchProps,
   secondaryActionButtonProps,
   selectedRowId,
   setSelectedRow,
@@ -78,6 +87,7 @@ function Toolbar({
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
   const moreActionsButtonMenuRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const [addButtonMenuOpen, setAddButtonMenuOpen] = useState<boolean>(false);
   const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState<boolean>(false);
@@ -106,6 +116,11 @@ function Toolbar({
     item,
     onDelete,
   } = deleteRowProps || {};
+  const {
+    placeholder: searchPlaceholder,
+    onChange: onSearchChange,
+    value: searchValue,
+  } = searchProps || {};
 
   const filterOptionsEnabledMapping = useMemo(() => (
     Object.entries(filterOptions).reduce((mapping, [filterKey, values]) => {
@@ -323,6 +338,33 @@ function Toolbar({
         <Spacing ml={BUTTON_PADDING}>
           {moreActionsButtonEl}
         </Spacing>
+      }
+
+      {onSearchChange &&
+        <>
+          <Spacing ml={BUTTON_PADDING} />
+          <Flex flex={1}>
+            <TextInput
+              afterIcon={searchValue ? <Close /> : null}
+              afterIconClick={() => {
+                onSearchChange('');
+                searchInputRef?.current?.focus();
+              }}
+              afterIconSize={UNIT * 1.5}
+              beforeIcon={<Search />}
+              borderRadius={BORDER_RADIUS}
+              defaultColor
+              fullWidth
+              greyBorder
+              maxWidth={UNIT * 60}
+              onChange={e => onSearchChange(e.target.value)}
+              paddingVertical={9}
+              placeholder={searchPlaceholder ? searchPlaceholder : null}
+              ref={searchInputRef}
+              value={searchValue}
+            />
+          </Flex>
+        </>
       }
     </FlexContainer>
   );
