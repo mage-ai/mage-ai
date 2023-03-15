@@ -77,7 +77,7 @@ function InputModal({
             inline
             loading={isLoading}
             onClick={() => {
-              if (inputValue === value || noEmptyValue) {
+              if (inputValue === value || (noEmptyValue && !inputValue)) {
                 onClose();
                 return;
               }
