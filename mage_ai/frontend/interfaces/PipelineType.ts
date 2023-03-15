@@ -28,6 +28,11 @@ export enum PipelineStatusEnum {
   NO_SCHEDULES = 'no_schedules',    // No triggers
 }
 
+export enum PipelineQueryEnum {
+  STATUS = 'status[]',
+  TYPE = 'type[]',
+}
+
 export const PIPELINE_TYPE_TO_KERNEL_NAME = {
   [PipelineTypeEnum.PYTHON]: 'python3',
   [PipelineTypeEnum.PYSPARK]: 'pysparkkernel',

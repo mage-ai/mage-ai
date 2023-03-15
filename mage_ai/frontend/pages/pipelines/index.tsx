@@ -10,6 +10,7 @@ import Flex from '@oracle/components/Flex';
 import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
 import PipelineType, {
+  PipelineQueryEnum,
   PipelineStatusEnum,
   PipelineTypeEnum,
   PIPELINE_TYPE_LABEL_MAPPING,
@@ -27,9 +28,9 @@ import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
+import { filterQuery, queryFromUrl } from '@utils/url';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
-import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 
 const sharedOpenButtonProps = {
@@ -50,7 +51,8 @@ function PipelineListPage() {
   }>({});
   const [errors, setErrors] = useState<ErrorsType>(null);
 
-  const query = queryFromUrl();
+  const q = queryFromUrl();
+  const query = filterQuery(q, [PipelineQueryEnum.STATUS, PipelineQueryEnum.TYPE]);
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
     include_schedules: 1,
