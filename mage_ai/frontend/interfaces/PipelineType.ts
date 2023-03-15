@@ -45,6 +45,7 @@ export default interface PipelineType {
   data_integration?: {
     catalog: CatalogType;
   };
+  description?: string;
   extensions?: PipelineExtensionsType;
   id?: number;
   metadata?: PipelineMetadataType;

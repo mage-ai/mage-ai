@@ -266,7 +266,7 @@ function PipelineListPage() {
           </Spacing>
         ): (
           <Table
-            columnFlex={[null, 1, 7, 1, 1, 1, null]}
+            columnFlex={[null, 1, 3, 4, 1, 1, 1, null]}
             columns={[
               {
                 label: () => '',
@@ -277,6 +277,9 @@ function PipelineListPage() {
               },
               {
                 uuid: 'Name',
+              },
+              {
+                uuid: 'Description',
               },
               {
                 uuid: 'Type',
@@ -307,6 +310,7 @@ function PipelineListPage() {
             rows={pipelines.map((pipeline, idx) => {
               const {
                 blocks,
+                description,
                 name,
                 schedules,
                 type,
@@ -368,6 +372,12 @@ function PipelineListPage() {
                     {uuid}
                   </Link>
                 </NextLink>,
+                <Text
+                  default
+                  key={`pipeline_description_${idx}`}
+                >
+                  {description}
+                </Text>,
                 <Text
                   key={`pipeline_type_${idx}`}
                 >
