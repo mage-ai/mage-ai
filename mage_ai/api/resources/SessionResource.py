@@ -6,7 +6,7 @@ from mage_ai.authentication.passwords import verify_password
 from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models import User
-from mage_ai.settings import AUTHENTIFICATION_MODE
+from mage_ai.settings import AUTHENTICATION_MODE
 
 
 class SessionResource(BaseResource):
@@ -26,7 +26,7 @@ class SessionResource(BaseResource):
             raise ApiError(error)
 
         user = None
-        if AUTHENTIFICATION_MODE.lower() == 'ldap':
+        if AUTHENTICATION_MODE.lower() == 'ldap':
             # we can use just the method verify here authz=verify(username,password)
             conn = new_ldap_connection()
             auth, user_dn = conn.authenticate(email, password)

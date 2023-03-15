@@ -47,7 +47,7 @@ from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
     OAUTH2_APPLICATION_CLIENT_ID,
     REQUIRE_USER_AUTHENTICATION,
-    AUTHENTIFICATION_MODE,
+    AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
 )
 from tornado import autoreload
@@ -282,7 +282,7 @@ async def main(
         user = User.query.filter(User.owner == True).first()  # noqa: E712
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
-            if AUTHENTIFICATION_MODE.lower() == 'ldap':
+            if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
                     owner=True,
                     username=LDAP_ADMIN_USERNAME,
