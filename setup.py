@@ -116,6 +116,7 @@ setuptools.setup(
             'great_expectations==0.15.50',
             'kafka-python==2.0.2',
             'kubernetes==25.3.0',
+            'ldap3==2.9.1',
             'opensearch-py==2.0.0',
             'pika==1.3.1',
             'psycopg2==2.9.3',
