@@ -39,9 +39,11 @@ from mage_ai.server.utils.output_display import (
 )
 from mage_ai.settings import (
     DISABLE_NOTEBOOK_EDIT_ACCESS,
+    HIDE_ENV_VAR_VALUES,
     REQUIRE_USER_AUTHENTICATION,
 )
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.security import filter_out_env_var_values
 from mage_ai.utils.code import reload_all_repo_modules
 from jupyter_client import KernelClient
 from typing import Dict
@@ -259,6 +261,16 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             return False
 
+        def filter_out_sensitive_data(message):
+            if not message.get('data') or not HIDE_ENV_VAR_VALUES:
+                return message
+            data = message['data']
+            if type(data) is str:
+                data = [data]
+            data = [filter_out_env_var_values(data_value) for data_value in data]
+            message['data'] = data
+            return message
+
         msg_id = message.get('msg_id')
         if msg_id is None:
             return
@@ -268,6 +280,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         if should_filter_message(message):
             return
+
+        message = filter_out_sensitive_data(message)
 
         execution_metadata = message.get('execution_metadata')
         msg_id_value = execution_metadata if execution_metadata is not None \
