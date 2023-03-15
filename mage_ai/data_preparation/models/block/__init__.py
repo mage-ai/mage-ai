@@ -251,6 +251,10 @@ class Block:
         self.dynamic_block_uuid = None
         self.dynamic_upstream_block_uuids = None
 
+        # Spark session
+        self.spark = None
+        self.spark_init = False
+
     @property
     def uuid(self):
         return self.dynamic_block_uuid or self._uuid
@@ -1051,6 +1055,7 @@ class Block:
                 block_uuid,
                 v,
                 partition=execution_partition,
+                spark=self.__get_spark_session()
             )
 
             if variable_type is not None and variable_object.variable_type != variable_type:
@@ -1651,13 +1656,22 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 is_spark_env()):
             global_vars = global_vars or dict()
             if not global_vars.get('spark'):
-                try:
-                    from pyspark.sql import SparkSession
-                    global_vars['spark'] = SparkSession.builder.master(
-                        os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
-                except Exception:
-                    pass
+                spark = self.__get_spark_session()
+                if spark is not None:
+                    global_vars['spark'] = spark
         return global_vars
+
+    def __get_spark_session(self):
+        if self.spark_init:
+            return self.spark
+        try:
+            from pyspark.sql import SparkSession
+            self.spark = SparkSession.builder.master(
+                os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
+        except Exception:
+            self.spark = None
+        self.spark_init = True
+        return self.spark
 
     def __store_variables_prepare(
         self,
@@ -1710,7 +1724,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             dynamic_block_uuid,
         )
         for uuid, data in variables_data['variable_mapping'].items():
-            if spark is not None and type(data) is pd.DataFrame:
+            if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
+                    and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
