@@ -149,6 +149,7 @@ function PipelineListPage() {
   }) => (
     <InputModal
       isLoading={isLoadingUpdate}
+      minWidth={UNIT * 55}
       onClose={hideInputModal}
       onSave={(value: string) => {
         if (selectedPipeline) {
@@ -169,6 +170,7 @@ function PipelineListPage() {
           updatePipeline(pipelineUpdateRequestBody);
         }
       }}
+      textArea={!pipelineName}
       title={pipelineName
         ? 'Rename pipeline'
         : 'Edit description'

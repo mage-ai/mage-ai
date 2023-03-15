@@ -11,14 +11,12 @@ const TextInputStyle = styled.textarea<TextAreaProps>`
   ${SHARED_INPUT_STYLES}
 `;
 
-const TextInput = ({ rows = 3, ...props }: TextAreaProps, ref) => {
-  return (
-    <InputWrapper
-      {...props}
-      input={<TextInputStyle rows={rows} {...props} />}
-      ref={ref}
-    />
-  );
-};
+const TextInput = ({ rows = 3, ...props }: TextAreaProps, ref) => (
+  <InputWrapper
+    {...props}
+    input={<TextInputStyle rows={rows} {...props} />}
+    ref={ref}
+  />
+);
 
 export default React.forwardRef(TextInput);
