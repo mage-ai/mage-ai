@@ -29,6 +29,7 @@ class PipelineTest(DBTestCase):
 
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
+            description=None,
             name='test pipeline 2',
             uuid='test_pipeline_2',
             type='python',
@@ -153,6 +154,7 @@ class PipelineTest(DBTestCase):
         pipeline = Pipeline('test_pipeline_3', self.repo_path)
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
+            description=None,
             name='test pipeline 3',
             uuid='test_pipeline_3',
             type='python',
@@ -222,6 +224,7 @@ class PipelineTest(DBTestCase):
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
+            description=None,
             name='test pipeline 4',
             uuid='test_pipeline_4',
             type='python',
@@ -312,6 +315,7 @@ class PipelineTest(DBTestCase):
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
+            description=None,
             name='test pipeline 5',
             uuid='test_pipeline_5',
             type='python',
@@ -523,11 +527,11 @@ class PipelineTest(DBTestCase):
         self.assertTrue(os.path.exists(pipeline.config_path))
         with open(pipeline.config_path) as f:
             config_json = yaml.full_load(f)
-            print('WTFFFFFFFFFFF', config_json)
             self.assertEqual(
                 config_json,
                 {
                     "data_integration": None,
+                    "description": None,
                     "extensions": {},
                     "name": "test_pipeline_9",
                     "type": "integration",

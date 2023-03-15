@@ -6,6 +6,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import Panel from '@oracle/components/Panel';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 
 type InputModalProps = {
@@ -13,8 +14,10 @@ type InputModalProps = {
   isLoading?: boolean;
   maxWidth?: number;
   minWidth?: number;
+  noEmptyValue?: boolean;
   onClose: () => void;
   onSave: (value: string) => void;
+  textArea?: boolean;
   title: string;
   value: string;
 };
@@ -24,13 +27,16 @@ function InputModal({
   isLoading,
   maxWidth,
   minWidth,
+  noEmptyValue,
   onClose,
   onSave,
+  textArea,
   title,
   value,
 }: InputModalProps) {
   const refTextInput = useRef(null);
   const [inputValue, setInputValue] = useState<string>(value);
+  const TextEl = textArea ? TextArea : TextInput;
 
   useEffect(() => {
     refTextInput?.current?.focus();
@@ -46,10 +52,12 @@ function InputModal({
       </Text>
 
       <Spacing mt={1}>
-        <TextInput
+        <TextEl
           monospace
           onChange={e => setInputValue(e.target.value)}
           ref={refTextInput}
+          // @ts-ignore
+          rows={textArea ? 7 : null}
           value={inputValue}
         />
       </Spacing>
@@ -69,7 +77,7 @@ function InputModal({
             inline
             loading={isLoading}
             onClick={() => {
-              if (inputValue === value || !inputValue) {
+              if (inputValue === value || (noEmptyValue && !inputValue)) {
                 onClose();
                 return;
               }
