@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import { MutateFunction, useMutation } from 'react-query';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -6,6 +7,8 @@ import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
+import InputModal from '@oracle/elements/Inputs/InputModal';
+import Link from '@oracle/elements/Link';
 import PipelineType, {
   PipelineStatusEnum,
   PipelineTypeEnum,
@@ -19,16 +22,28 @@ import Text from '@oracle/elements/Text';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
+import { Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl } from '@utils/url';
+import { useModal } from '@context/Modal';
+
+const sharedOpenButtonProps = {
+  borderRadius: BORDER_RADIUS_SMALL,
+  iconOnly: true,
+  noBackground: true,
+  noBorder: true,
+  outline: true,
+  padding: '4px',
+};
 
 function PipelineListPage() {
   const router = useRouter();
+  const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
@@ -41,7 +56,7 @@ function PipelineListPage() {
   });
   const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
 
-  const [createPipeline, { isLoading }]: [MutateFunction<any>, { isLoading: boolean }] = useMutation(
+  const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
     api.pipelines.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -51,7 +66,7 @@ function PipelineListPage() {
               uuid,
             },
           }) => {
-            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
+            onSuccessCallback?.(uuid);
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -61,9 +76,21 @@ function PipelineListPage() {
       ),
     },
   );
-  const [updatePipeline] = useMutation(
+  const [createPipeline, { isLoading: isLoadingCreate }]: [
+    MutateFunction<any>,
+    { isLoading: boolean },
+  ] = useCreatePipelineMutation((pipelineUUID: string) => router.push(
+    '/pipelines/[pipeline]/edit',
+    `/pipelines/${pipelineUUID}/edit`,
+  ));
+  const [clonePipeline, { isLoading: isLoadingClone }]: [
+    MutateFunction<any>,
+    { isLoading: boolean },
+  ] = useCreatePipelineMutation(() => fetchPipelines?.());
+
+  const [updatePipeline, { isLoading: isLoadingUpdate }] = useMutation(
     (pipeline: PipelineType & {
-      status: ScheduleStatusEnum;
+      status?: ScheduleStatusEnum;
     }) => api.pipelines.useUpdate(pipeline.uuid)({ pipeline }),
     {
       onSuccess: (response: any) => onSuccess(
@@ -78,6 +105,30 @@ function PipelineListPage() {
               [uuid]: false,
             }));
             fetchPipelines();
+            hideInputModal?.();
+          },
+          onErrorCallback: (response, errors) => {
+            const pipelineUUID = response?.url_parameters?.pk;
+            setPipelinesEditing(prev => ({
+              ...prev,
+              [pipelineUUID]: false,
+            }));
+            setErrors({
+              errors,
+              response,
+            });
+          },
+        },
+      ),
+    },
+  );
+  const [deletePipeline, { isLoading: isLoadingDelete }] = useMutation(
+    (uuid: string) => api.pipelines.useDelete(uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelines?.();
           },
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -88,6 +139,38 @@ function PipelineListPage() {
     },
   );
 
+  const [showInputModal, hideInputModal] = useModal(({
+    pipelineName,
+  }: {
+    pipelineName: string;
+  }) => (
+    <InputModal
+      isLoading={isLoadingUpdate}
+      onClose={hideInputModal}
+      onSave={(name: string) => {
+        if (selectedPipeline) {
+          const selectedPipelineUUID = selectedPipeline.uuid;
+          setPipelinesEditing(prev => ({
+            ...prev,
+            [selectedPipelineUUID]: true,
+          }));
+          updatePipeline({
+            name,
+            uuid: selectedPipelineUUID,
+          });
+        }
+      }}
+      title="Rename pipeline"
+      value={pipelineName}
+    />
+  ), {} , [
+    isLoadingUpdate,
+    selectedPipeline,
+  ], {
+    background: true,
+    uuid: 'rename_pipeline_and_save',
+  });
+
   return (
     <Dashboard
       errors={errors}
@@ -95,8 +178,8 @@ function PipelineListPage() {
       subheaderChildren={
         <Toolbar
           addButtonProps={{
-            isLoading,
-            label: 'New pipeline',
+            isLoading: isLoadingCreate,
+            label: 'New',
             menuItems: [
               {
                 label: () => 'Standard (batch)',
@@ -129,12 +212,41 @@ function PipelineListPage() {
               },
             ],
           }}
+          deleteRowProps={{
+            confirmationMessage: 'This is irreversible and will immediately delete everything associated \
+              with the pipeline, including its blocks, triggers, runs, logs, and history.',
+            isLoading: isLoadingDelete,
+            item: 'pipeline',
+            onDelete: () => deletePipeline(selectedPipeline?.uuid),
+          }}
           filterOptions={{
             status: Object.values(PipelineStatusEnum),
             type: Object.values(PipelineTypeEnum),
           }}
           filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
+          moreActionsMenuItems={[
+            {
+              label: () => 'Rename pipeline',
+              onClick: () => showInputModal({ pipelineName: selectedPipeline?.name }),
+              uuid: 'Pipelines/MoreActionsMenu/rename',
+            },
+          ]}
           query={query}
+          secondaryActionButtonProps={{
+            Icon: Clone,
+            confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
+              configuration and code blocks. The blocks use the same block files as the original pipeline. \
+              Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
+            confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
+            isLoading: isLoadingClone,
+            onClick: () => clonePipeline({
+              pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
+            }),
+            openConfirmationDialogue: true,
+            tooltip: 'Clone pipeline',
+          }}
+          selectedRowId={selectedPipeline?.uuid}
+          setSelectedRow={setSelectedPipeline}
         />
       }
       title="Pipelines"
@@ -154,10 +266,6 @@ function PipelineListPage() {
           </Spacing>
         ): (
           <Table
-            buildLinkProps={(rowIndex: number) => ({
-              as: `/pipelines/${pipelines[rowIndex].uuid}`,
-              href: '/pipelines/[pipeline]',
-            })}
             columnFlex={[null, 1, 7, 1, 1, 1, null]}
             columns={[
               {
@@ -180,10 +288,22 @@ function PipelineListPage() {
                 uuid: 'Triggers',
               },
               {
-                label: () => '',
-                uuid: 'view',
+                center: true,
+                uuid: 'Actions',
               },
             ]}
+            isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
+            onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
+              const pipeline = pipelines[rowIndex];
+
+              return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
+            })}
+            onDoubleClickRow={(rowIndex: number) => {
+              router.push(
+                  '/pipelines/[pipeline]',
+                  `/pipelines/${pipelines[rowIndex].uuid}`,
+              );
+            }}
             rows={pipelines.map((pipeline, idx) => {
               const {
                 blocks,
@@ -197,10 +317,10 @@ function PipelineListPage() {
               const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
 
               return [
-                schedulesCount >= 1
+                (schedulesCount >= 1 || !!pipelinesEditing[uuid])
                   ? (
                     <Button
-                    iconOnly
+                      iconOnly
                       loading={!!pipelinesEditing[uuid]}
                       noBackground
                       noBorder
@@ -238,11 +358,16 @@ function PipelineListPage() {
                     : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
                   }
                 </Text>,
-                <Text
+                <NextLink
+                  as={`/pipelines/${uuid}`}
+                  href="/pipelines/[pipeline]"
                   key={`pipeline_name_${idx}`}
+                  passHref
                 >
-                  {uuid}
-                </Text>,
+                  <Link sameColorAsText>
+                    {uuid}
+                  </Link>
+                </NextLink>,
                 <Text
                   key={`pipeline_type_${idx}`}
                 >
@@ -266,7 +391,31 @@ function PipelineListPage() {
                   flex={1} justifyContent="flex-end"
                   key={`chevron_icon_${idx}`}
                 >
-                  <ChevronRight default size={2 * UNIT} />
+                  <Button
+                    {...sharedOpenButtonProps}
+                    onClick={() => {
+                      router.push(
+                        '/pipelines/[pipeline]',
+                        `/pipelines/${uuid}`,
+                      );
+                    }}
+                    title="Detail"
+                  >
+                    <Open default size={2 * UNIT} />
+                  </Button>
+                  <Spacing mr={1} />
+                  <Button
+                    {...sharedOpenButtonProps}
+                    onClick={() => {
+                      router.push(
+                        '/pipelines/[pipeline]/logs',
+                        `/pipelines/${uuid}/logs`,
+                      );
+                    }}
+                    title="Logs"
+                  >
+                    <File default size={2 * UNIT} />
+                  </Button>
                 </Flex>,
               ];
             })}

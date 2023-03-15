@@ -43,8 +43,6 @@ function Secrets({
 
   const tableWidth = useMemo(() => width - (PADDING_UNITS * UNIT * 2), [width]);
 
-  console.log('wtf', tableWidth)
-
   const [createSecret] = useMutation(
     api.secrets.useCreate(),
     {

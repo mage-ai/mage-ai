@@ -14,6 +14,7 @@ import {
 } from './index.style';
 
 export type ColumnType = {
+  center?: boolean;
   label?: () => any | string;
   tooltipMessage?: string
   uuid: string;
@@ -40,6 +41,7 @@ type TableProps = {
   noBorder?: boolean;
   noHeader?: boolean;
   onClickRow?: (index: number) => void;
+  onDoubleClickRow?: (index: number) => void;
   rows: any[][];
   rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
@@ -63,6 +65,7 @@ function Table({
   noBorder,
   noHeader,
   onClickRow,
+  onDoubleClickRow,
   rows,
   rowVerticalPadding,
   stickyFirstColumn,
@@ -127,13 +130,21 @@ function Table({
     if (renderRow) {
       rowEl = renderRow(cellEls);
     } else {
+      const handleRowClick = (rowIndex: number, event: React.MouseEvent) => {
+        if (event?.detail === 1) {
+          onClickRow(rowIndex);
+        } else if (onDoubleClickRow && event?.detail === 2) {
+          onDoubleClickRow(rowIndex);
+        }
+      };
+
       rowEl = (
         <TableRowStyle
           highlightOnHover={highlightRowOnHover}
           key={`${uuid}-row-${rowIndex}`}
           noHover={!(linkProps || onClickRow)}
           // @ts-ignore
-          onClick={onClickRow ? () => onClickRow(rowIndex) : null}
+          onClick={onClickRow ? (e) => handleRowClick(rowIndex, e) : null}
         >
           {cellEls}
         </TableRowStyle>
@@ -176,6 +187,7 @@ function Table({
     isSelectedRow,
     noBorder,
     onClickRow,
+    onDoubleClickRow,
     rowVerticalPadding,
     rows,
     stickyFirstColumn,
@@ -199,7 +211,10 @@ function Table({
               noBorder={noBorder}
               sticky={stickyHeader}
             >
-              <FlexContainer alignItems="center">
+              <FlexContainer
+                alignItems="center"
+                justifyContent={col.center ? 'center': 'flex-start'}
+              >
                 <Text bold leftAligned monospace muted>
                   {col.label ? col.label() : col.uuid}
                 </Text>
