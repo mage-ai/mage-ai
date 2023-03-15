@@ -29,8 +29,14 @@ export enum PipelineStatusEnum {
 }
 
 export enum PipelineQueryEnum {
+  GROUP = 'group_by',
   STATUS = 'status[]',
   TYPE = 'type[]',
+}
+
+export enum PipelineGroupingEnum {
+  STATUS = 'status',
+  TYPE = 'type',
 }
 
 export const PIPELINE_TYPE_TO_KERNEL_NAME = {

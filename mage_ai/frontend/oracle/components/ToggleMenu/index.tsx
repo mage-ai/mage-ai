@@ -138,6 +138,7 @@ function ToggleMenu({
                   updatedQuery,
                   {
                     addingMultipleValues: true,
+                    pushHistory: true,
                   });
               }}
               secondary

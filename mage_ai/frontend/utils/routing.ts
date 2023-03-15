@@ -59,11 +59,13 @@ export function goToWithFilters(
     addingMultipleValues,
     isList,
     itemsPerPage,
+    pushHistory = false,
     resetLimitParams,
   }: {
     addingMultipleValues?: boolean;
     isList?: boolean,
     itemsPerPage?: number,
+    pushHistory?: boolean,
     resetLimitParams?: boolean,
   },
 ) {
@@ -104,5 +106,5 @@ export function goToWithFilters(
     updatedQuery[OFFSET_PARAM] = 0;
   }
 
-  goToWithQuery(updatedQuery);
+  goToWithQuery(updatedQuery, { pushHistory });
 }

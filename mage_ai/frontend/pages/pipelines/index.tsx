@@ -10,6 +10,7 @@ import Flex from '@oracle/components/Flex';
 import InputModal from '@oracle/elements/Inputs/InputModal';
 import Link from '@oracle/elements/Link';
 import PipelineType, {
+  PipelineGroupingEnum,
   PipelineQueryEnum,
   PipelineStatusEnum,
   PipelineTypeEnum,
@@ -29,6 +30,7 @@ import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator } from '@utils/string';
 import { filterQuery, queryFromUrl } from '@utils/url';
+import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { useModal } from '@context/Modal';
@@ -250,6 +252,26 @@ function PipelineListPage() {
         type: Object.values(PipelineTypeEnum),
       }}
       filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
+      groupMenuItems={[
+        {
+          label: () => 'Status',
+          onClick: () => goToWithQuery({
+            [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.STATUS,
+          }, {
+            pushHistory: true,
+          }),
+          uuid: 'Pipelines/GroupMenu/Status',
+        },
+        {
+          label: () => 'Type',
+          onClick: () => goToWithQuery({
+            [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.TYPE,
+          }, {
+            pushHistory: true,
+          }),
+          uuid: 'Pipelines/GroupMenu/Type',
+        },
+      ]}
       moreActionsMenuItems={[
         {
           label: () => 'Rename pipeline',
