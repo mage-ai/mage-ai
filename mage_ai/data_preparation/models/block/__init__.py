@@ -361,7 +361,11 @@ class Block:
         )
 
         if not statement_partial:
-            matches = re.findall(r'insert into[\s]+([\w.]+)', self.content, re.IGNORECASE)
+            matches = re.findall(
+                r'insert(?: overwrite)*(?: into)*[\s]+([\w.]+)',
+                self.content,
+                re.IGNORECASE,
+            )
             if len(matches) >= 1:
                 return matches[len(matches) - 1]
             else:
