@@ -79,7 +79,7 @@ setuptools.setup(
             'botocore==1.29.60',
         ],
         'snowflake': [
-            'snowflake-connector-python==2.7.9',
+            'snowflake-connector-python==2.8.1',
         ],
         'spark': [
             'boto3==1.26.60',
@@ -123,7 +123,7 @@ setuptools.setup(
             'pyodbc==4.0.35',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',
-            'snowflake-connector-python==2.7.9',
+            'snowflake-connector-python==2.8.1',
             'sshtunnel==0.4.0',
         ],
     },

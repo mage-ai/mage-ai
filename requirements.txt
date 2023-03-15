@@ -52,7 +52,7 @@ psycopg2==2.9.3
 psycopg2-binary==2.9.3
 pyodbc==4.0.35
 redshift-connector==2.0.909
-snowflake-connector-python==2.7.9
+snowflake-connector-python==2.8.1
 sshtunnel==0.4.0
 tables==3.7.0
 trino==0.321.0
