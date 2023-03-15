@@ -82,6 +82,7 @@ def execute_sql_code(
                 loader,
                 block,
                 query_string,
+                configuration=configuration,
                 should_query=should_query,
             )
         else:
@@ -132,6 +133,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -172,6 +174,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -209,6 +212,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -246,6 +250,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -287,6 +292,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -329,6 +335,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -358,6 +365,7 @@ def execute_raw_sql(
     loader,
     block: 'Block',
     query_string: str,
+    configuration: Dict = {},
     should_query: bool = False,
 ) -> List[Any]:
     queries = []

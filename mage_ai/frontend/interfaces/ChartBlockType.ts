@@ -19,6 +19,7 @@ export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
 export const CONFIG_KEY_DATA_PROVIDER_TABLE = 'data_provider_table';
 export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
 export const CONFIG_KEY_DBT_PROFILE_TARGET = 'dbt_profile_target';
+export const CONFIG_KEY_DISABLE_CREATE_TABLE = 'disable_create_table';
 export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
 export const CONFIG_KEY_LIMIT = 'limit';
 export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';
