@@ -1,12 +1,10 @@
-import json
-from typing import List
-
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.pipedrive.tap_pipedrive.tap import PipedriveTap
 from mage_integrations.utils.dictionary import ignore_keys
 from singer import catalog as catalog_singer
-
+from typing import List
+import json
 
 class Pipedrive(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
