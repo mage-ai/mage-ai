@@ -4,11 +4,11 @@ from mage_integrations.sources.pipedrive.tap_pipedrive.tap import PipedriveTap
 from mage_integrations.utils.dictionary import ignore_keys
 from singer import catalog as catalog_singer
 from typing import List
-import json
+
 
 class Pipedrive(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
-        pipedrive_tap = PipedriveTap(json.loads(json.dumps(self.config)),
+        pipedrive_tap = PipedriveTap(self.config,
                                      self.state)
 
         catalog = pipedrive_tap.do_discover().to_dict()
@@ -29,7 +29,7 @@ class Pipedrive(Source):
 
     def sync(self, catalog) -> None:
 
-        pipedrive_tap = PipedriveTap(json.loads(json.dumps(self.config)),
+        pipedrive_tap = PipedriveTap(self.config,
                                      self.state)
         pipedrive_tap.do_sync(catalog)
 
