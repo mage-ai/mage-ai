@@ -62,7 +62,15 @@ a table created in your database or data warehouse.
 If you toggle this setting, you’re responsible for writing the `CREATE TABLE` command and the
 `INSERT` command.
 
-For example:
+For example, if a table already exists then you can write the `INSERT` statement:
+
+```sql
+INSERT INTO mage.users
+SELECT 1 AS id, 'Urza' AS username;
+```
+
+If the table doesn’t exist yet, you can write both the `CREATE TABLE` statement
+and the `INSERT` statement:
 
 ```sql
 CREATE TABLE IF NOT EXISTS mage.users (
@@ -80,13 +88,6 @@ INSERT INTO mage.users
 SELECT
     *
 FROM users;
-```
-
-or 
-
-```sql
-INSERT INTO mage.users
-SELECT 1 AS id;
 ```
 
 This SQL query will create a table named `mage.users` with 2 columns: `id` as a `BIGINT`
