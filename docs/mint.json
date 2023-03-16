@@ -175,6 +175,13 @@
           ]
         },
         {
+          "group": "Dependencies",
+          "pages": [
+            "development/dependencies/requirements",
+            "development/dependencies/custom-files"
+          ]
+        },
+        {
           "group": "Streaming pipelines",
           "pages": [
             "guides/streaming/overview",
