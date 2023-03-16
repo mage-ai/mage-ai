@@ -26,7 +26,9 @@ SELECT 5 AS id;
 
         self.assertEqual(len(queries), 3)
 
-        self.assertEqual(queries[0], """COPY public.temp_table FROM 's3://bucket/object_key/filename.csv'
+        self.assertEqual(
+            queries[0],
+            """COPY public.temp_table FROM 's3://bucket/object_key/filename.csv'
   CREDENTIALS 'aws_access_key_id=abc123;aws_secret_access_key=efg456'
   CSV
   IGNOREHEADER 1""")
