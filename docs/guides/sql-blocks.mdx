@@ -82,10 +82,25 @@ SELECT
 FROM users;
 ```
 
+or 
+
+```sql
+INSERT INTO mage.users
+SELECT 1 AS id;
+```
+
 This SQL query will create a table named `mage.users` with 2 columns: `id` as a `BIGINT`
 and `username` as a `VARCHAR(255)`.
 
 Then, it’ll insert a single row into that table.
+
+#### Required SQL statements
+
+When writing raw SQL, you must at least have an `INSERT` statement. The `CREATE TABLE` statement is optional.
+
+#### Multiple SQL statements
+
+You can execute multiple SQL statements in a SQL block. Separate your SQL statements using a semi-colon (`;`).
 
 ### Automatic naming of tables
 
