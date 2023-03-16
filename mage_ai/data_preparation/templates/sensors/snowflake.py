@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
-from mage_ai.io.mysql import MySQL
+from mage_ai.io.snowflake import Snowflake
 from os import path
 
 if 'sensor' not in globals():
@@ -8,9 +8,9 @@ if 'sensor' not in globals():
 
 
 @sensor
-def query_mysql_and_check_condition(**kwargs) -> bool:
+def query_snowflake_and_check_condition(**kwargs) -> bool:
     """
-    Template code for checking the results of a MySQL query.
+    Template code for checking the results of a Snowflake query.
     Specify your configuration settings in 'io_config.yaml'.
 
     Return: True if the sensor should complete, False if it should
@@ -20,9 +20,9 @@ def query_mysql_and_check_condition(**kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    query = 'Your MySQL query'  # Specify your SQL query here
+    query = 'Your Snowflake query'  # Specify your SQL query here
 
-    with MySQL.with_config(
+    with Snowflake.with_config(
             ConfigFileLoader(config_path, config_profile)) as loader:
         df = loader.load(query)
 

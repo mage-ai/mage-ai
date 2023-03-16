@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
-from mage_ai.io.mysql import MySQL
 from os import path
 
 if 'sensor' not in globals():
@@ -8,9 +8,9 @@ if 'sensor' not in globals():
 
 
 @sensor
-def query_mysql_and_check_condition(**kwargs) -> bool:
+def query_bigquery_and_check_condition(**kwargs) -> bool:
     """
-    Template code for checking the results of a MySQL query.
+    Template code for checking the results of a BigQuery query.
     Specify your configuration settings in 'io_config.yaml'.
 
     Return: True if the sensor should complete, False if it should
@@ -20,14 +20,13 @@ def query_mysql_and_check_condition(**kwargs) -> bool:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    query = 'Your MySQL query'  # Specify your SQL query here
+    query = 'Your BigQuery query'  # Specify your SQL query here
 
-    with MySQL.with_config(
-            ConfigFileLoader(config_path, config_profile)) as loader:
-        df = loader.load(query)
+    loader = BigQuery.with_config(ConfigFileLoader(config_path, config_profile))
+    df = loader.load(query)
 
-        # Add your checks here
-        if df.empty:
-            return False
+    # Add your checks here
+    if df.empty:
+        return False
 
     return True
