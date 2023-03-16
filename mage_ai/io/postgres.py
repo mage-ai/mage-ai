@@ -1,6 +1,7 @@
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.utils import is_port_in_use
 from pandas import DataFrame, Series
 from psycopg2 import connect, _psycopg
 from sshtunnel import SSHTunnelForwarder
@@ -87,10 +88,21 @@ class Postgres(BaseSQL):
                     ssh_setting['ssh_pkey'] = self.settings['ssh_pkey']
                 else:
                     ssh_setting['ssh_password'] = self.settings['ssh_password']
-                self.ssh_tunnel = SSHTunnelForwarder(
+
+                # Find an available local port
+                local_port = port
+                max_local_port = local_port + 100
+                while is_port_in_use(local_port):
+                    if local_port > max_local_port:
+                        raise Exception(
+                            'Unable to find an open port, please clear your running processes '
+                            'if possible.'
+                        )
+                    local_port += 1
+                self.local_port = SSHTunnelForwarder(
                     (self.settings['ssh_host'], self.settings['ssh_port']),
                     remote_bind_address=(host, port),
-                    local_bind_address=('', port),
+                    local_bind_address=('', local_port),
                     **ssh_setting,
                 )
                 self.ssh_tunnel.start()

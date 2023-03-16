@@ -50,6 +50,7 @@ from mage_ai.settings import (
     AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
 )
+from mage_ai.shared.utils import is_port_in_use
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -58,7 +59,6 @@ import argparse
 import asyncio
 import json
 import os
-import socket
 import tornado.ioloop
 import tornado.web
 
@@ -253,11 +253,6 @@ async def main(
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     app = make_app()
-
-    def is_port_in_use(port: int) -> bool:
-        print(f'Checking port {port}...')
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            return s.connect_ex(('localhost', port)) == 0
 
     port = int(port)
     max_port = port + 100
