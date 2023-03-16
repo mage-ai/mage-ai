@@ -1,7 +1,7 @@
-from mage_ai.data_preparation.shared.utils import is_port_in_use
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.utils import is_port_in_use
 from pandas import DataFrame, Series
 from psycopg2 import connect, _psycopg
 from sshtunnel import SSHTunnelForwarder
