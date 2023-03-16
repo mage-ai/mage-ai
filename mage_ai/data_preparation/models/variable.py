@@ -175,6 +175,8 @@ class Variable:
         """
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.SPARK_DATAFRAME:
+            return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return await self.__read_dataframe_analysis_async(
                 dataframe_analysis_keys=dataframe_analysis_keys,
@@ -367,7 +369,7 @@ class Variable:
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
         if spark is None:
             return None
-        return (
+        df = (
             spark.read
             .format('csv')
             .option('header', 'true')
@@ -375,6 +377,9 @@ class Variable:
             .option('delimiter', ',')
             .load(self.variable_path)
         )
+        if sample and sample_count:
+            df = df.limit(sample_count)
+        return df
 
     def __write_geo_dataframe(self, data) -> None:
         os.makedirs(self.variable_path, exist_ok=True)
