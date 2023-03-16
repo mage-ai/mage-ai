@@ -66,6 +66,9 @@ def get_secret_value(name: str) -> str:
     from mage_ai.orchestration.db.models import Secret
     fernet = Fernet(get_encryption_key())
 
-    secret = Secret.query.filter(Secret.name == name).one_or_none()
-    if secret:
-        return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
+    try:
+        secret = Secret.query.filter(Secret.name == name).one_or_none()
+        if secret:
+            return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
+    except Exception:
+        print(f'WARNING: Could not find secret value for secret {name}')
