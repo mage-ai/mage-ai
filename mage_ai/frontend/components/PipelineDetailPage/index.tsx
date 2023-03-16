@@ -1,6 +1,4 @@
 import { useMemo } from 'react';
-import { useMutation } from 'react-query';
-import { useRouter } from 'next/router';
 
 import BackfillGradient from '@oracle/icons/custom/BackfillGradient';
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
@@ -28,7 +26,7 @@ import {
   TodoList,
 } from '@oracle/icons';
 import { BannerStyle } from './index.style';
-import { BreadcrumbType, MenuItemType } from '@components/shared/Header';
+import { BreadcrumbType } from '@components/shared/Header';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PageNameEnum } from './constants';
 import {
@@ -37,8 +35,6 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { isViewer } from '@utils/session';
-import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -86,7 +82,6 @@ function PipelineDetailPage({
   title,
   uuid,
 }: PipelineDetailPageProps) {
-  const router = useRouter();
   const { height } = useWindowSize();
 
   const pipelineUUID = pipelineProp.uuid;
@@ -96,73 +91,6 @@ function PipelineDetailPage({
     revalidateOnFocus: false,
   });
   const pipeline = data?.pipeline;
-
-  const [createPipeline] = useMutation(
-    api.pipelines.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
-          },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-  const [deletePipeline] = useMutation(
-    (uuid: string) => api.pipelines.useDelete(uuid)(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            router.push('/pipelines');
-          },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
-  const headerMenuItems: MenuItemType[] = [
-    {
-      label: () => 'New standard pipeline',
-      // @ts-ignore
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-        },
-      }),
-      uuid: 'PipelineDetail/Header/new_standard_pipeline',
-    },
-    {
-      label: () => 'New streaming pipeline',
-      // @ts-ignore
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-          type: PipelineTypeEnum.STREAMING,
-        },
-      }),
-      uuid: 'PipelineDetail/Header/new_streaming_pipeline',
-    },
-    {
-      label: () => 'Delete current pipeline',
-      onClick: () => deletePipeline(pipelineUUID),
-      openConfirmationDialogue: true,
-      uuid: 'PipelineDetail/Header/delete_pipeline',
-    },
-  ];
 
   const after = useMemo(() => {
     if (afterProp) {
@@ -322,7 +250,6 @@ function PipelineDetailPage({
         before={before}
         beforeWidth={beforeWidth}
         breadcrumbs={breadcrumbs}
-        headerMenuItems={headerMenuItems}
         navigationItems={navigationItems}
         subheaderChildren={typeof subheader !== 'undefined' && subheader}
         title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
