@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "active_flag": {
+      "type": ["null", "boolean"]
+    },
+    "code": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "symbol": {
+      "type": ["null", "string"]
+    },
+    "is_custom_flag": {
+      "type": ["null", "boolean"]
+    },
+    "decimal_points": {
+      "type": ["null", "integer"]
+    },
+    "id": {
+      "type": "integer"
+    }
+  }
+}

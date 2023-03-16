@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "company_id": {
+      "type": ["null", "integer"]
+    },
+    "user_id": {
+      "type": ["null", "integer"]
+    },
+    "done": {
+      "type": ["null", "boolean"]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "reference_type": {
+      "type": ["null", "string"]
+    },
+    "reference_id": {
+      "type": ["null", "integer"]
+    },
+    "due_date": {
+      "type": ["null", "string"]
+    },
+    "due_time": {
+      "type": ["null", "string"]
+    },
+    "duration": {
+      "type": ["null", "string"]
+    },
+    "add_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "marked_as_done_time": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "subject": {
+      "type": ["null", "string"]
+    },
+    "deal_id": {
+      "type": ["null", "integer"]
+    },
+    "org_id": {
+      "type": ["null", "integer"]
+    },
+    "person_id": {
+      "type": ["null", "integer"]
+    },
+    "active_flag": {
+      "type": ["null", "boolean"]
+    },
+    "update_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "gcal_event_id": {
+      "type": ["null", "string"]
+    },
+    "google_calendar_id": {
+      "type": ["null", "string"]
+    },
+    "google_calendar_etag": {
+      "type": ["null", "string"]
+    },
+    "note": {
+      "type": ["null", "string"]
+    },
+    "participants": {
+      "type": ["null", "array"],
+      "items": {
+        "type": "object",
+        "properties": {
+          "person_id": {
+            "type": "integer"
+          },
+          "primary_flag": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "person_name": {
+      "type": ["null", "string"]
+    },
+    "org_name": {
+      "type": ["null", "string"]
+    },
+    "deal_title": {
+      "type": ["null", "string"]
+    },
+    "assigned_to_user_id": {
+      "type": ["null", "integer"]
+    },
+    "created_by_user_id": {
+      "type": ["null", "integer"]
+    },
+    "owner_name": {
+      "type": ["null", "string"]
+    },
+    "person_dropbox_bcc": {
+      "type": ["null", "string"]
+    },
+    "deal_dropbox_bcc": {
+      "type": ["null", "string"]
+    }
+  }
+}
