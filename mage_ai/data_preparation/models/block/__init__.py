@@ -4,6 +4,7 @@ from inspect import Parameter, signature
 from logging import Logger
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
+    is_spark_dataframe,
 )
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
@@ -251,6 +252,10 @@ class Block:
         self.dynamic_block_index = None
         self.dynamic_block_uuid = None
         self.dynamic_upstream_block_uuids = None
+
+        # Spark session
+        self.spark = None
+        self.spark_init = False
 
     @property
     def uuid(self):
@@ -1053,7 +1058,6 @@ class Block:
             block_uuid,
             partition=execution_partition,
         )
-
         if not include_print_outputs:
             all_variables = self.output_variables(execution_partition=execution_partition)
 
@@ -1063,6 +1067,7 @@ class Block:
                 block_uuid,
                 v,
                 partition=execution_partition,
+                spark=self.__get_spark_session(),
             )
 
             if variable_type is not None and variable_object.variable_type != variable_type:
@@ -1071,6 +1076,7 @@ class Block:
             data = variable_object.read_data(
                 sample=True,
                 sample_count=sample_count,
+                spark=self.__get_spark_session(),
             )
             if type(data) is pd.DataFrame:
                 try:
@@ -1130,6 +1136,19 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                     type=DataType.TEXT,
                     variable_uuid=v,
                 )
+            elif is_spark_dataframe(data):
+                df = data.toPandas()
+                columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+                data = dict(
+                    sample_data=dict(
+                        columns=columns_to_display,
+                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+                    ),
+                    type=DataType.TABLE,
+                    variable_uuid=v,
+                )
+                data_products.append(data)
+                continue
             outputs.append(data)
         return outputs + data_products
 
@@ -1166,6 +1185,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 block_uuid,
                 v,
                 partition=execution_partition,
+                spark=self.__get_spark_session(),
             )
 
             if variable_type is not None and variable_object.variable_type != variable_type:
@@ -1174,6 +1194,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             data = await variable_object.read_data_async(
                 sample=True,
                 sample_count=sample_count,
+                spark=self.__get_spark_session(),
             )
             if type(data) is pd.DataFrame:
                 try:
@@ -1233,6 +1254,19 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     type=DataType.TEXT,
                     variable_uuid=v,
                 )
+            elif is_spark_dataframe(data):
+                df = data.toPandas()
+                columns_to_display = df.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
+                data = dict(
+                    sample_data=dict(
+                        columns=columns_to_display,
+                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+                    ),
+                    type=DataType.TABLE,
+                    variable_uuid=v,
+                )
+                data_products.append(data)
+                continue
             outputs.append(data)
         return outputs + data_products
 
@@ -1663,13 +1697,22 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 is_spark_env()):
             global_vars = global_vars or dict()
             if not global_vars.get('spark'):
-                try:
-                    from pyspark.sql import SparkSession
-                    global_vars['spark'] = SparkSession.builder.master(
-                        os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
-                except Exception:
-                    pass
+                spark = self.__get_spark_session()
+                if spark is not None:
+                    global_vars['spark'] = spark
         return global_vars
+
+    def __get_spark_session(self):
+        if self.spark_init:
+            return self.spark
+        try:
+            from pyspark.sql import SparkSession
+            self.spark = SparkSession.builder.master(
+                os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
+        except Exception:
+            self.spark = None
+        self.spark_init = True
+        return self.spark
 
     def __store_variables_prepare(
         self,
@@ -1722,7 +1765,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             dynamic_block_uuid,
         )
         for uuid, data in variables_data['variable_mapping'].items():
-            if spark is not None and type(data) is pd.DataFrame:
+            if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
+                    and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
