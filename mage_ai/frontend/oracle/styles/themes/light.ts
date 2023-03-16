@@ -67,6 +67,7 @@ export default {
     info: YELLOW,
     light: '#2F3034',
     medium: '#D5D7DC',
+    medium2: '#141414',
     success: GREEN,
   },
   brand: {
@@ -182,6 +183,7 @@ export default {
   },
   shadow: {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
+    frame: '0px 10px 40px rgba(0, 0, 0, 0.26)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
   },

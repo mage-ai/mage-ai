@@ -6,8 +6,8 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light';
-import { ArrowRight } from '@oracle/icons';
+import dark from '@oracle/styles/themes/dark';
+import { ChevronDown } from '@oracle/icons';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -40,20 +40,20 @@ type AccordionPanelInternalProps = {
 };
 
 const AccordionPanelStyle = styled.div<AccordionPanelProps>`
-  .accordion-panel-chevron-right-exit-done {
+  .accordion-panel-chevron-down-exit-done {
     transform: rotate(0deg);
     transition: all 200ms;
   }
-  .accordion-panel-chevron-right-enter-active {
-    transform: rotate(90deg);
+  .accordion-panel-chevron-down-enter-active {
+    transform: rotate(180deg);
     transition: all 200ms;
   }
-  .accordion-panel-chevron-right-enter-done,
-  .accordion-panel-chevron-right-enter-done-visible {
-    transform: rotate(90deg);
+  .accordion-panel-chevron-down-enter-done,
+  .accordion-panel-chevron-down-enter-done-visible {
+    transform: rotate(180deg);
     transition: all 300ms;
   }
-  .accordion-panel-chevron-right-exit {
+  .accordion-panel-chevron-down-exit {
     transform: rotate(0deg);
     transition: all 300ms;
   }
@@ -93,11 +93,15 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   ${SHARED_LINK_STYLES}
   display: block;
   position: relative;
-  padding: ${UNIT * 2.5}px ${UNIT * 2}px;
+  padding: ${UNIT * 2}px ${UNIT * 2}px;
   z-index: 1;
 
-  ${props => !props.last && props.visible && `
-    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+  ${props => props.visible && `
+    border-bottom: 1px solid ${(props.theme || dark).borders.medium2};
+  `}
+
+  ${props => !props.first && props.visible && `
+    border-top: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
   ${props => props.first && `
@@ -121,16 +125,16 @@ const TitleStyle = styled.a<AccordionPanelProps>`
 
   ${props => `
     &:hover {
-      background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
+      background-color: ${(props.theme || dark).background.page};
     }
 
     &:active {
-      background-color: ${(props.theme.interactive || light.interactive).activeOverlay};
+      background-color: ${(props.theme || dark).background.page};
     }
   `}
 
   ${props => !props.visible && `
-    background-color: ${(props.theme.background || light.background).header};
+    background-color: ${(props.theme.background || dark.background).content};
   `}
 
   ${props => props.titleXPadding && `
@@ -226,17 +230,7 @@ const AccordionPanel = ({
       visible={visible && !visibleHighlightDisabled}
     >
       <FlexContainer alignItems="center">
-        <CSSTransition
-          classNames="accordion-panel-chevron-right"
-          in={visible}
-          timeout={400}
-        >
-          <Flex className={visible && visibleCount === 0 && 'accordion-panel-chevron-right-enter-done-visible'}>
-            <ArrowRight default />
-          </Flex>
-        </CSSTransition>
-
-        <Spacing ml={1}>
+        <Spacing mr={1}>
           <FlexContainer alignItems="center">
             {beforeTitleElement}
 
@@ -245,12 +239,23 @@ const AccordionPanel = ({
             <Text
               bold
               default={!visible}
+              large
               wind={highlighted}
             >
               {title}
             </Text>
           </FlexContainer>
         </Spacing>
+
+        <CSSTransition
+          classNames="accordion-panel-chevron-down"
+          in={visible}
+          timeout={400}
+        >
+          <Flex className={visible && visibleCount === 0 && 'accordion-panel-chevron-down-enter-done-visible'}>
+            <ChevronDown default size={UNIT * 2} />
+          </Flex>
+        </CSSTransition>
       </FlexContainer>
     </TitleStyle>
 
