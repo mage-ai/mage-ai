@@ -23,8 +23,10 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
+import dark from '@oracle/styles/themes/dark';
+
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
+import { Check, Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -55,6 +57,7 @@ function PipelineListPage() {
 
   const q = queryFromUrl();
   const query = filterQuery(q, [PipelineQueryEnum.STATUS, PipelineQueryEnum.TYPE]);
+  const groupByQuery = q?.[PipelineQueryEnum.GROUP];
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
     include_schedules: 1,
@@ -253,21 +256,43 @@ function PipelineListPage() {
       }}
       filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
       groupButtonProps={{
-        groupByLabel: q?.[PipelineQueryEnum.GROUP],
+        groupByLabel: groupByQuery,
         menuItems: [
           {
+            beforeIcon: (
+              <Check
+                fill={groupByQuery === PipelineGroupingEnum.STATUS
+                  ? dark.content.default
+                  : dark.interactive.transparent
+                }
+                size={UNIT * 2}
+              />
+            ),
             label: () => 'Status',
             onClick: () => goToWithQuery({
-              [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.STATUS,
+              [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.STATUS
+                ? null
+                : PipelineGroupingEnum.STATUS,
             }, {
               pushHistory: true,
             }),
             uuid: 'Pipelines/GroupMenu/Status',
           },
           {
+            beforeIcon: (
+              <Check
+                fill={groupByQuery === PipelineGroupingEnum.TYPE
+                  ? dark.content.default
+                  : dark.interactive.transparent
+                }
+                size={UNIT * 2}
+              />
+            ),
             label: () => 'Type',
             onClick: () => goToWithQuery({
-              [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.TYPE,
+              [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TYPE
+                ? null
+                : PipelineGroupingEnum.TYPE,
             }, {
               pushHistory: true,
             }),

@@ -1,7 +1,11 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import {
+  BORDER_RADIUS,
+  BORDER_STYLE,
+  BORDER_WIDTH,
+} from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
@@ -30,6 +34,7 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
   `}
 
   ${props => props.roundedStyle && `
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.button};
     border-radius: ${BORDER_RADIUS}px;
 
     div:first-child {
@@ -58,7 +63,7 @@ const SHARED_STYLES = css<LinkProps>`
   padding: ${UNIT}px;
 
   ${props => props.largePadding && `
-    padding: ${UNIT * 2}px;
+    padding: ${UNIT * 1.5}px;
     padding-right: ${UNIT * 6}px;
   `}
 

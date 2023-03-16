@@ -156,6 +156,7 @@ function Toolbar({
       open={addButtonMenuOpen}
       parentRef={addButtonMenuRef}
       roundedStyle
+      topOffset={1}
       uuid="Table/Toolbar/NewItemMenu"
     >
       <KeyboardShortcutButton
@@ -238,6 +239,7 @@ function Toolbar({
       open={groupButtonMenuOpen}
       parentRef={groupButtonMenuRef}
       roundedStyle
+      topOffset={1}
       uuid="Table/Toolbar/GroupMenu"
     >
       <KeyboardShortcutButton
@@ -266,6 +268,7 @@ function Toolbar({
       open={moreActionsMenuOpen}
       parentRef={moreActionsButtonMenuRef}
       roundedStyle
+      topOffset={1}
       uuid="Table/Toolbar/MoreActionsMenu"
     >
       <Tooltip

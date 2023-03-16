@@ -1,6 +1,7 @@
 import React, { createRef, useEffect, useRef, useState } from 'react';
 import NextLink from 'next/link';
 
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
@@ -23,6 +24,7 @@ import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type FlyoutMenuItemType = {
+  beforeIcon?: JSX.Element;
   bold?: boolean;
   disabled?: boolean;
   indent?: boolean;
@@ -175,6 +177,7 @@ function FlyoutMenu({
         width={width}
       >
         {items?.map(({
+          beforeIcon,
           bold,
           disabled,
           items,
@@ -254,15 +257,23 @@ function FlyoutMenu({
                 fullWidth
                 justifyContent="space-between"
               >
-                {typeof labelToRender === 'string' && (
-                  <Text
-                    bold={bold}
-                    disabled={disabled}
-                    noWrapping
-                  >
-                    {labelToRender}
-                  </Text>
-                )}
+                <Flex alignItems="center">
+                  {beforeIcon &&
+                    <>
+                      {beforeIcon}
+                      <Spacing mr="4px" />
+                    </>
+                  }
+                  {typeof labelToRender === 'string' && (
+                    <Text
+                      bold={bold}
+                      disabled={disabled}
+                      noWrapping
+                    >
+                      {labelToRender}
+                    </Text>
+                  )}
+                </Flex>
                 {typeof labelToRender !== 'string' && labelToRender}
 
                 {items && (
