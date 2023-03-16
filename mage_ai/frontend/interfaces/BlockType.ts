@@ -201,6 +201,7 @@ export const CONVERTIBLE_BLOCK_TYPES = [
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.TRANSFORMER,
   BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.SENSOR,
 ];
 
 export const BLOCK_TYPE_ABBREVIATION_MAPPING = {

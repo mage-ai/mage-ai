@@ -71,6 +71,10 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.SNOWFLAKE,
   ],
+  [BlockTypeEnum.SENSOR]: [
+    DataSourceTypeEnum.GENERIC,
+    DataSourceTypeEnum.S3,
+  ],
 };
 
 export default DataSourceTypeEnum;
