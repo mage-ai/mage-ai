@@ -3,6 +3,7 @@ from mage_ai.shared.strings import replacer
 from typing import List
 import os
 import re
+import socket
 
 
 def clean_name(name, allow_characters: List[str] = []):
@@ -96,6 +97,12 @@ def convert_python_type_to_trino_type(python_type):
     elif python_type is datetime:
         return 'TIMESTAMP'
     return 'VARCHAR'
+
+
+def is_port_in_use(port: int) -> bool:
+    print(f'Checking port {port}...')
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
 
 
 def is_spark_env():
