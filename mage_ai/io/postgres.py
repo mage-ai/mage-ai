@@ -95,7 +95,8 @@ class Postgres(BaseSQL):
                 while is_port_in_use(local_port):
                     if local_port > max_local_port:
                         raise Exception(
-                            'Unable to find an open port, please clear your running processes if possible.'
+                            'Unable to find an open port, please clear your running processes '
+                            'if possible.'
                         )
                     local_port += 1
                 self.local_port = SSHTunnelForwarder(
