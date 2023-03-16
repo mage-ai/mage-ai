@@ -1,6 +1,6 @@
 export const VARIABLE_NAME_BUCKETS = 'buckets';
 export const VARIABLE_NAME_CHART_STYLE = 'chart_style';
-export const VARIABLE_NAME_GROUP_BY = 'group_by'
+export const VARIABLE_NAME_GROUP_BY = 'group_by';
 export const VARIABLE_NAME_HEIGHT = 'height';
 export const VARIABLE_NAME_INDEX = 'index';
 export const VARIABLE_NAME_LEGEND_LABELS = 'legend_labels';
@@ -13,12 +13,13 @@ export const VARIABLE_NAME_Y = 'y';
 export const VARIABLE_NAME_Y_SORT_ORDER = 'y_sort_order';
 
 export const CONFIG_KEY_DATA_PROVIDER = 'data_provider';
-export const CONFIG_KEY_DATA_PROVIDER_DATABASE = 'data_provider_database'
+export const CONFIG_KEY_DATA_PROVIDER_DATABASE = 'data_provider_database';
 export const CONFIG_KEY_DATA_PROVIDER_PROFILE = 'data_provider_profile';
 export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
 export const CONFIG_KEY_DATA_PROVIDER_TABLE = 'data_provider_table';
 export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
 export const CONFIG_KEY_DBT_PROFILE_TARGET = 'dbt_profile_target';
+export const CONFIG_KEY_DISABLE_CREATE_TABLE = 'disable_create_table';
 export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
 export const CONFIG_KEY_LIMIT = 'limit';
 export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';

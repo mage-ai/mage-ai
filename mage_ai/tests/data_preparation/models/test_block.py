@@ -1,4 +1,5 @@
 from async_timeout import asyncio
+from faker import Faker
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -384,3 +385,65 @@ def on_failure_callback(**kwargs):
             upstream_blocks=['test_transformer_2'],
             uuid='test_data_exporter',
         ))
+
+    def test_full_table_name(self):
+        faker = Faker()
+        pipeline = Pipeline.create(faker.name(), repo_path=self.repo_path)
+        block = Block.create(faker.name(), 'data_loader', self.repo_path, pipeline=pipeline)
+
+        def get_block():
+            return Pipeline.get(pipeline.uuid).get_block(block.uuid)
+
+        with open(block.file_path, 'w') as file:
+            file.write('')
+        self.assertEqual(get_block().full_table_name, None)
+
+        with open(block.file_path, 'w') as file:
+            file.write("""
+CREATE TABLE mage.users_v1 (
+    id BIGINT
+);
+""")
+        self.assertEqual(get_block().full_table_name, 'mage.users_v1')
+
+        with open(block.file_path, 'w') as file:
+            file.write("""
+CREATE TABLE mage.users_v1 (
+    id BIGINT
+);
+
+INSERT INTO mage.users_v2
+SELECT 1 AS id;
+""")
+        self.assertEqual(get_block().full_table_name, 'mage.users_v1')
+
+        with open(block.file_path, 'w') as file:
+            file.write("""
+INSERT INTO mage.users_v2
+SELECT 1 AS id;
+""")
+        self.assertEqual(get_block().full_table_name, 'mage.users_v2')
+
+        with open(block.file_path, 'w') as file:
+            file.write("""
+INSERT INTO mage.users_v2
+SELECT 1 AS id;
+
+INSERT INTO mage.users_v3
+SELECT 1 AS id;
+""")
+        self.assertEqual(get_block().full_table_name, 'mage.users_v3')
+
+        with open(block.file_path, 'w') as file:
+            file.write("""
+INSERT mage.users_v2
+SELECT 1 AS id;
+""")
+        self.assertEqual(get_block().full_table_name, 'mage.users_v2')
+
+        with open(block.file_path, 'w') as file:
+            file.write("""
+INSERT OVERWRITE INTO mage.users_v2
+SELECT 1 AS id;
+""")
+        self.assertEqual(get_block().full_table_name, 'mage.users_v2')

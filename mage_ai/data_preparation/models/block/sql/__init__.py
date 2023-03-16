@@ -18,7 +18,9 @@ from mage_ai.io.config import ConfigFileLoader
 from os import path
 from time import sleep
 from typing import Any, Dict, List
+import re
 
+MAGE_SEMI_COLON = '__MAGE_SEMI_COLON__'
 PREVIEWABLE_BLOCK_TYPES = [
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
@@ -82,6 +84,7 @@ def execute_sql_code(
                 loader,
                 block,
                 query_string,
+                configuration=configuration,
                 should_query=should_query,
             )
         else:
@@ -132,6 +135,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -172,6 +176,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -209,6 +214,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -246,6 +252,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -287,6 +294,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -329,6 +337,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    configuration=configuration,
                     should_query=should_query,
                 )
             else:
@@ -354,34 +363,55 @@ def execute_sql_code(
                     ]
 
 
+def split_query_string(query_string: str) -> List[str]:
+    text_parts = []
+
+    matches = re.finditer(r"'(.*?)'|\"(.*?)\"", query_string, re.IGNORECASE)
+
+    previous_idx = 0
+
+    for idx, match in enumerate(matches):
+        matched_string = match.group()
+        updated_string = re.sub(r';', MAGE_SEMI_COLON, matched_string)
+
+        start_idx, end_idx = match.span()
+
+        previous_chunk = query_string[previous_idx:start_idx]
+        text_parts.append(previous_chunk)
+        text_parts.append(updated_string)
+        previous_idx = end_idx
+
+    text_parts.append(query_string[previous_idx:])
+
+    text_combined = ''.join(text_parts)
+    queries = text_combined.split(';')
+
+    arr = []
+    for query in queries:
+        query = query.strip()
+        if query:
+            lines = query.split('\n')
+            query = '\n'.join(list(filter(lambda x: not x.startswith('--'), lines)))
+            query = query.strip()
+            query = re.sub(MAGE_SEMI_COLON, ';', query)
+            arr.append(query)
+
+    return arr
+
+
 def execute_raw_sql(
     loader,
     block: 'Block',
     query_string: str,
+    configuration: Dict = {},
     should_query: bool = False,
 ) -> List[Any]:
     queries = []
     fetch_query_at_indexes = []
 
-    # create_statement, query_statement = extract_and_replace_text_between_strings(
-    #     query_string,
-    #     'create',
-    #     ';',
-    #     case_sensitive=True,
-    # )
-
-    # if create_statement:
-    #     queries.append(create_statement)
-    #     fetch_query_at_indexes.append(False)
-
-    # queries.append(query_statement)
-    # fetch_query_at_indexes.append(False)
-
-    for query in query_string.split(';'):
-        query = query.strip()
-        if query and not query.startswith('--'):
-            queries.append(query)
-            fetch_query_at_indexes.append(False)
+    for query in split_query_string(query_string):
+        queries.append(query)
+        fetch_query_at_indexes.append(False)
 
     if should_query:
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')

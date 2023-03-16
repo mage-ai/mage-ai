@@ -50,6 +50,7 @@ import functools
 import json
 import os
 import pandas as pd
+import re
 import simplejson
 import sys
 import time
@@ -353,16 +354,27 @@ class Block:
         if not self.content:
             return None
 
-        create_statement_partial, _ = extract_and_replace_text_between_strings(
+        statement_partial, _ = extract_and_replace_text_between_strings(
             self.content,
             'create',
             r'\(',
         )
 
-        if not create_statement_partial:
+        if not statement_partial:
+            matches = re.findall(
+                r'insert(?: overwrite)*(?: into)*[\s]+([\w.]+)',
+                self.content,
+                re.IGNORECASE,
+            )
+            if len(matches) >= 1:
+                return matches[len(matches) - 1]
+            else:
+                return None
+
+        if not statement_partial:
             return None
 
-        parts = create_statement_partial[:len(create_statement_partial) - 1].strip().split(' ')
+        parts = statement_partial[:len(statement_partial) - 1].strip().split(' ')
         return parts[-1]
 
     @classmethod
