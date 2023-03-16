@@ -252,26 +252,29 @@ function PipelineListPage() {
         type: Object.values(PipelineTypeEnum),
       }}
       filterValueLabelMapping={PIPELINE_TYPE_LABEL_MAPPING}
-      groupMenuItems={[
-        {
-          label: () => 'Status',
-          onClick: () => goToWithQuery({
-            [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.STATUS,
-          }, {
-            pushHistory: true,
-          }),
-          uuid: 'Pipelines/GroupMenu/Status',
-        },
-        {
-          label: () => 'Type',
-          onClick: () => goToWithQuery({
-            [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.TYPE,
-          }, {
-            pushHistory: true,
-          }),
-          uuid: 'Pipelines/GroupMenu/Type',
-        },
-      ]}
+      groupButtonProps={{
+        groupByLabel: q?.[PipelineQueryEnum.GROUP],
+        menuItems: [
+          {
+            label: () => 'Status',
+            onClick: () => goToWithQuery({
+              [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.STATUS,
+            }, {
+              pushHistory: true,
+            }),
+            uuid: 'Pipelines/GroupMenu/Status',
+          },
+          {
+            label: () => 'Type',
+            onClick: () => goToWithQuery({
+              [PipelineQueryEnum.GROUP]: PipelineGroupingEnum.TYPE,
+            }, {
+              pushHistory: true,
+            }),
+            uuid: 'Pipelines/GroupMenu/Type',
+          },
+        ],
+      }}
       moreActionsMenuItems={[
         {
           label: () => 'Rename pipeline',

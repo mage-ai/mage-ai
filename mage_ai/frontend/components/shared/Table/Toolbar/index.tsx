@@ -48,7 +48,10 @@ type ToolbarProps = {
     [keyof: string]: string;
   };
   moreActionsMenuItems?: FlyoutMenuItemType[];
-  groupMenuItems?: FlyoutMenuItemType[];
+  groupButtonProps?: {
+    menuItems: FlyoutMenuItemType[];
+    groupByLabel?: string;
+  }
   query?: {
     [keyof: string]: string[];
   };
@@ -76,8 +79,8 @@ function Toolbar({
   deleteRowProps,
   filterOptions = {},
   filterValueLabelMapping,
+  groupButtonProps,
   moreActionsMenuItems,
-  groupMenuItems,
   query = {},
   searchProps,
   secondaryActionButtonProps,
@@ -222,6 +225,10 @@ function Toolbar({
     router,
   ]);
 
+  const {
+    groupByLabel,
+    menuItems: groupMenuItems,
+  } = groupButtonProps || {};
   const groupButtonEl = useMemo(() => (
     <FlyoutMenuWrapper
       disableKeyboardShortcuts
@@ -241,7 +248,7 @@ function Toolbar({
         }}
         uuid="Table/Toolbar/GroupButton"
       >
-        Group
+        {groupByLabel ? `Grouped by ${groupByLabel}` : 'Group'}
       </KeyboardShortcutButton>
     </FlyoutMenuWrapper>
   ), [
