@@ -195,49 +195,50 @@ function Table({
     wrapColumns,
   ]);
 
+  const headerRowEl = useMemo(() => (
+    <TableRowStyle noHover>
+      {columns?.map((col, idx) => (
+        <TableHeadStyle
+          columnBorders={columnBorders}
+          compact={compact}
+          key={`${uuid}-col-${col.uuid}-${idx}`}
+          last={idx === columns.length - 1}
+          noBorder={noBorder}
+          sticky={stickyHeader}
+        >
+          <FlexContainer
+            alignItems="center"
+            justifyContent={col.center ? 'center': 'flex-start'}
+          >
+            <Text bold leftAligned monospace muted>
+              {col.label ? col.label() : col.uuid}
+            </Text>
+            {col.tooltipMessage && (
+              <Spacing ml="4px">
+                <Tooltip
+                  appearBefore
+                  label={(
+                    <Text leftAligned>
+                      {col.tooltipMessage}
+                    </Text>
+                  )}
+                  lightBackground
+                  primary
+                />
+              </Spacing>
+            )}
+          </FlexContainer>
+        </TableHeadStyle>
+      ))}
+    </TableRowStyle>
+  ), [columnBorders, columns, compact, noBorder, stickyHeader, uuid]);
+
   return (
     <TableStyle
       borderCollapseSeparate={borderCollapseSeparate}
       columnBorders={columnBorders}
     >
-      {columns?.length >= 1 && !noHeader && (
-        <TableRowStyle noHover>
-          {columns.map((col, idx) => (
-            <TableHeadStyle
-              columnBorders={columnBorders}
-              compact={compact}
-              key={`${uuid}-col-${col.uuid}-${idx}`}
-              last={idx === columns.length - 1}
-              noBorder={noBorder}
-              sticky={stickyHeader}
-            >
-              <FlexContainer
-                alignItems="center"
-                justifyContent={col.center ? 'center': 'flex-start'}
-              >
-                <Text bold leftAligned monospace muted>
-                  {col.label ? col.label() : col.uuid}
-                </Text>
-                {col.tooltipMessage && (
-                  <Spacing ml="4px">
-                    <Tooltip
-                      appearBefore
-                      label={(
-                        <Text leftAligned>
-                          {col.tooltipMessage}
-                        </Text>
-                      )}
-                      lightBackground
-                      primary
-                    />
-                  </Spacing>
-                )}
-              </FlexContainer>
-            </TableHeadStyle>
-          ))}
-        </TableRowStyle>
-      )}
-
+      {(columns?.length >= 1 && !noHeader) && headerRowEl}
       {rowEls}
     </TableStyle>
   );

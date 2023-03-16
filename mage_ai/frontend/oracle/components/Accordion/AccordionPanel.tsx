@@ -101,7 +101,7 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   `}
 
   ${props => !props.first && props.visible && `
-    border-top: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
+    border-top: 1px solid ${(props.theme || dark).borders.medium2};
   `}
 
   ${props => props.first && `
