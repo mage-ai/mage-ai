@@ -8,6 +8,7 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import SettingsDashboard from '@components/settings/Dashboard';
+import { Col } from '@components/shared/Grid';
 import Spacing from '@oracle/elements/Spacing';
 import SyncType, {
   GIT_FIELDS,
@@ -16,7 +17,11 @@ import SyncType, {
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import {
   SECTION_ITEM_UUID_GIT_SETTINGS,
   SECTION_UUID_WORKSPACE,
@@ -35,12 +40,11 @@ export interface SyncFieldType {
 
 function SyncData() {
   const { data: dataSyncs } = api.syncs.list();
-  const [sync, setSync] = useState<SyncType>();
-  const [error, setError] = useState<string>();
+  const [sync, setSync] = useState<SyncType>(null);
 
   useEffect(() => {
     if (dataSyncs) {
-      setSync(dataSyncs?.syncs?.[0])
+      setSync(dataSyncs?.syncs?.[0]);
     }
   }, [dataSyncs]);
 
@@ -64,11 +68,17 @@ function SyncData() {
           },
           onErrorCallback: ({
             error: {
-              exception,
               message,
+              type,
             },
           }) => {
-            setError(exception);
+            toast.error(
+              message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
           },
         }
       )
@@ -93,11 +103,17 @@ function SyncData() {
           },
           onErrorCallback: ({
             error: {
-              exception,
               message,
+              type,
             },
           }) => {
-            setError(exception);
+            toast.error(
+              message,
+              {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                toastId: type,
+              },
+            );
           },
         }
       )
@@ -109,13 +125,8 @@ function SyncData() {
       uuidItemSelected={SECTION_ITEM_UUID_GIT_SETTINGS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
-      <Spacing
-        p={PADDING_UNITS}
-        style={{
-          width: '600px',
-        }}
-      >
-        <Headline level={5}>
+      <Spacing p={PADDING_UNITS}>
+        <Headline>
           Git repository settings
         </Headline>
         <Spacing mt={1}>
@@ -128,73 +139,77 @@ function SyncData() {
             </Text>
           </Text>
         </Spacing>
-        <form>
-          {GIT_FIELDS.map(({
-            autoComplete,
-            disabled,
-            label,
-            required,
-            type,
-            uuid,
-          }: SyncFieldType) => (
-            <Spacing key={uuid} mt={2}>
-              <TextInput
-                autoComplete={autoComplete}
-                disabled={disabled}
-                fullWidth
-                label={label}
-                // @ts-ignore
-                onChange={e => {
-                  setSync(prev => ({
-                    ...prev,
-                    [uuid]: e.target.value,
-                  }));
-                }}
-                primary
-                required={required}
-                setContentOnMount
-                type={type}
-                value={sync?.[uuid] || ''}
-              />
-            </Spacing>
-          ))}
-        </form>
-        <Spacing mt={2}>
+
+        <FlexContainer alignItems="center">
+          <form>
+            {GIT_FIELDS.map(({
+              autoComplete,
+              disabled,
+              label,
+              required,
+              type,
+              uuid,
+            }: SyncFieldType) => (
+              <Spacing key={uuid} mt={2}>
+                <TextInput
+                  autoComplete={autoComplete}
+                  disabled={disabled}
+                  label={label}
+                  // @ts-ignore
+                  onChange={e => {
+                    setSync(prev => ({
+                      ...prev,
+                      [uuid]: e.target.value,
+                    }));
+                  }}
+                  primary
+                  required={required}
+                  setContentOnMount
+                  type={type}
+                  value={sync?.[uuid] || ''}
+                />
+              </Spacing>
+            ))}
+          </form>
+        </FlexContainer>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Text>
             You can also set up your project to only sync with a specified branch.
           </Text>
         </Spacing>
-        <form>
-          {SYNC_FIELDS.map(({
-            autoComplete,
-            disabled,
-            label,
-            required,
-            type,
-            uuid,
-          }: SyncFieldType) => (
-            <Spacing key={uuid} mt={2}>
-              <TextInput
-                autoComplete={autoComplete}
-                disabled={disabled}
-                fullWidth
-                label={label}
-                // @ts-ignore
-                onChange={e => {
-                  setSync(prev => ({
-                    ...prev,
-                    [uuid]: e.target.value,
-                  }));
-                }}
-                primary
-                required={required}
-                setContentOnMount
-                type={type}
-                value={sync?.[uuid] || ''}
-              />
-            </Spacing>
-          ))}
-        </form>
+        <FlexContainer>
+          <form>
+            {SYNC_FIELDS.map(({
+              autoComplete,
+              disabled,
+              label,
+              required,
+              type,
+              uuid,
+            }: SyncFieldType) => (
+              <Spacing key={uuid} mt={2}>
+                <TextInput
+                  autoComplete={autoComplete}
+                  disabled={disabled}
+                  label={label}
+                  // @ts-ignore
+                  onChange={e => {
+                    setSync(prev => ({
+                      ...prev,
+                      [uuid]: e.target.value,
+                    }));
+                  }}
+                  primary
+                  required={required}
+                  setContentOnMount
+                  type={type}
+                  value={sync?.[uuid] || ''}
+                />
+              </Spacing>
+            ))}
+          </form>
+        </FlexContainer>
         <FlexContainer alignItems="center">
           <Spacing mt={2}>
             <Checkbox
@@ -203,8 +218,8 @@ function SyncData() {
               onClick={() => {
                 setSync(prev => ({
                   ...prev,
-                  sync_on_pipeline_run: !sync?.sync_on_pipeline_run
-                }))
+                  sync_on_pipeline_run: !sync?.sync_on_pipeline_run,
+                }));
               }}
             />
           </Spacing>
@@ -214,44 +229,48 @@ function SyncData() {
             loading={isLoadingCreateSync}
             // @ts-ignore
             onClick={() => createSync({
-              sync: sync
+              sync: sync,
             })}
             primary
           >
-            Save
+            Save repository settings
           </Button>
         </Spacing>
-        <Spacing mt={2}>
-          <Text>
-            Running the sync from this page will
-            run a one time sync with the remote repository. This may overwrite your
-            existing data, so make sure you've committed or backed up your current changes.
-          </Text>
+
+        <Spacing mt={UNITS_BETWEEN_SECTIONS}>
+          <Col lg={6}>
+            <Headline>
+              Synchronize code from remote repository
+            </Headline>
+
+            <Spacing mt={1}>
+              <Text>
+                Running the sync from this page will
+                run a one time sync with the remote repository.
+                <br />
+                This may <Text bold danger inline>overwrite</Text> your
+                existing data, so make sure you’ve committed or backed up your current changes.
+              </Text>
+            </Spacing>
+
+            <Spacing mt={2}>
+              <Button
+                loading={isLoadingRunSync}
+                onClick={() => confirm(
+                  'Are you sure you want to sync code from a remote repository and ' +
+                  'overwrite the current code base?',
+                  // @ts-ignore
+                  () => runSync({
+                    sync: {
+                      action_type: 'sync_data',
+                    },
+                }))}
+              >
+                Synchronize code
+              </Button>
+            </Spacing>
+          </Col>
         </Spacing>
-        <Spacing mt={2}>
-          <Button
-            loading={isLoadingRunSync}
-            onClick={() => {
-              setError(null);
-              // @ts-ignore
-              runSync({
-                sync: {
-                  action_type: 'sync_data',
-                },
-              });
-            }}
-            success
-          >
-            Run sync
-          </Button>
-        </Spacing>
-        {error && (
-          <Spacing mt={1}>
-            <Text danger>
-              {error}
-            </Text>
-          </Spacing>
-        )}
       </Spacing>
     </SettingsDashboard>
   );

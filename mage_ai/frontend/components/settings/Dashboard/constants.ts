@@ -31,7 +31,7 @@ export const SECTIONS = ({ owner, roles }: UserType) => {
   if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
     workspaceItems.push({
       linkProps: {
-        href: '/settings/workspace/sync_data',
+        href: '/settings/workspace/sync-data',
       },
       uuid: SECTION_ITEM_UUID_GIT_SETTINGS,
     });
