@@ -114,12 +114,15 @@ def init_repo(repo_path: str) -> None:
     if os.path.exists(repo_path):
         raise FileExistsError(f'Repository {repo_path} already exists')
 
-    os.makedirs(os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR), exist_ok=True)
+    os.makedirs(
+        os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
+        exist_ok=True,
+    )
     copy_template_directory('repo', repo_path)
 
 
 def get_data_dir() -> str:
-    return os.getenv(MAGE_DATA_DIR_ENV_VAR, DEFAULT_MAGE_DATA_DIR)
+    return os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR
 
 
 def get_repo_name() -> str:
