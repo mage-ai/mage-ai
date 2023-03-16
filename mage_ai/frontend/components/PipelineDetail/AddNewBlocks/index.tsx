@@ -57,6 +57,7 @@ const TRANSFORMER_BUTTON_INDEX = 1;
 const DATA_EXPORTER_BUTTON_INDEX = 2;
 const DBT_BUTTON_INDEX = 3;
 const CUSTOM_BUTTON_INDEX = 4;
+const SENSOR_BUTTON_INDEX = 6;
 
 function AddNewBlocks({
   addNewBlock,
@@ -83,6 +84,7 @@ function AddNewBlocks({
   const dataExporterButtonRef = useRef(null);
   const dbtButtonRef = useRef(null);
   const customBlockButtonRef = useRef(null);
+  const sensorButtonRef = useRef(null);
   const sharedProps = {
     compact,
     inline: true,
@@ -438,39 +440,39 @@ function AddNewBlocks({
             </ButtonWrapper>
           )}
 
-          {!isStreamingPipeline &&
-            <ButtonWrapper>
-              {!hideSensor && (
-                <>
-                  <Tooltip
-                    block
-                    label="Add a sensor so that other blocks only run when sensor is complete."
-                    maxWidth={MAX_TOOLTIP_WIDTH}
-                    size={null}
-                  >
-                    <KeyboardShortcutButton
-                      {...sharedProps}
-                      beforeElement={
-                        <IconContainerStyle compact={compact}>
-                          <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-                        </IconContainerStyle>
-                      }
-                      onClick={(e) => {
-                        e.preventDefault();
-                        addNewBlock({
-                          language: BlockLanguageEnum.PYTHON,
-                          type: BlockTypeEnum.SENSOR,
-                        });
-                      }}
-                      uuid="AddNewBlocks/Sensor"
-                    >
-                      Sensor
-                    </KeyboardShortcutButton>
-                  </Tooltip>
-                </>
-              )}
+          {!isStreamingPipeline && !hideSensor && (
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === SENSOR_BUTTON_INDEX}>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.SENSOR, pipelineType)}
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex === SENSOR_BUTTON_INDEX}
+                parentRef={sensorButtonRef}
+                uuid="sensor_button"
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact}>
+                      <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setButtonMenuOpenIndex(val =>
+                      val === SENSOR_BUTTON_INDEX
+                        ? null
+                        : SENSOR_BUTTON_INDEX,
+                    );
+                    handleBlockZIndex(SENSOR_BUTTON_INDEX);
+                  }}
+                  uuid="AddNewBlocks/Sensor"
+                >
+                  Sensor
+                </KeyboardShortcutButton>
+              </FlyoutMenuWrapper>
             </ButtonWrapper>
-          }
+          )}
 
           {/*{!hideRecommendations && (
             <KeyboardShortcutButton

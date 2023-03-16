@@ -41,7 +41,7 @@ const getDataSourceTypes = (
       ],
       [BlockTypeEnum.TRANSFORMER]: [
         DataSourceTypeEnum.GENERIC,
-      ],
+      ]
     };
   }
 
@@ -112,7 +112,8 @@ export const getdataSourceMenuItems = (
 
   if (pipelineType === PipelineTypeEnum.PYSPARK
     || (pipelineType === PipelineTypeEnum.PYTHON && blockType === BlockTypeEnum.TRANSFORMER)
-    || (pipelineType === PipelineTypeEnum.STREAMING)) {
+    || (pipelineType === PipelineTypeEnum.STREAMING)
+    || (blockType === BlockTypeEnum.SENSOR)) {
     return dataSourceMenuItemsMapping[blockType];
   } else {
     return [
