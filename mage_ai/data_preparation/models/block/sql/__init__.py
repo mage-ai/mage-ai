@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.block.sql import (
     trino,
 )
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    has_create_or_insert_statement,
     interpolate_vars,
 )
 from mage_ai.data_preparation.models.constants import BlockType
@@ -389,11 +390,15 @@ def split_query_string(query_string: str) -> List[str]:
     arr = []
     for query in queries:
         query = query.strip()
+        if not query:
+            continue
+
+        lines = query.split('\n')
+        query = '\n'.join(list(filter(lambda x: not x.startswith('--'), lines)))
+        query = query.strip()
+        query = re.sub(MAGE_SEMI_COLON, ';', query)
+
         if query:
-            lines = query.split('\n')
-            query = '\n'.join(list(filter(lambda x: not x.startswith('--'), lines)))
-            query = query.strip()
-            query = re.sub(MAGE_SEMI_COLON, ';', query)
             arr.append(query)
 
     return arr
@@ -409,11 +414,23 @@ def execute_raw_sql(
     queries = []
     fetch_query_at_indexes = []
 
-    for query in split_query_string(query_string):
-        queries.append(query)
-        fetch_query_at_indexes.append(False)
+    has_create_or_insert = has_create_or_insert_statement(query_string)
 
-    if should_query:
+    for query in split_query_string(query_string):
+        if has_create_or_insert:
+            queries.append(query)
+            fetch_query_at_indexes.append(False)
+        else:
+            if should_query:
+                query = f"""SELECT *
+FROM (
+    {query}
+) AS {block.table_name}__limit
+LIMIT 1000"""
+            queries.append(query)
+            fetch_query_at_indexes.append(True)
+
+    if should_query and has_create_or_insert:
         queries.append(f'SELECT * FROM {block.full_table_name} LIMIT 1000')
         fetch_query_at_indexes.append(block.full_table_name)
 

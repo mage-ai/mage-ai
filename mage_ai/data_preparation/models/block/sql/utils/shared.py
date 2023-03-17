@@ -47,23 +47,33 @@ def interpolate_input(block, query, replace_func=None):
     for idx, upstream_block in enumerate(block.upstream_blocks):
         matcher1 = '{} df_{} {}'.format('{{', idx + 1, '}}')
 
-        if BlockLanguage.SQL == upstream_block.type:
+        is_sql = BlockLanguage.SQL == upstream_block.language
+        if is_sql:
             configuration = upstream_block.configuration
         else:
             configuration = block.configuration
+        use_raw_sql = configuration.get('use_raw_sql')
 
         database = configuration.get('data_provider_database', '')
         schema = configuration.get('data_provider_schema', '')
 
+        replace_with = __replace_func(database, schema, upstream_block.table_name)
+        upstream_block_content = upstream_block.content
+        if is_sql and use_raw_sql and not has_create_or_insert_statement(upstream_block_content):
+            upstream_query = interpolate_input(upstream_block, upstream_block_content)
+            replace_with = f"""(
+    {upstream_query}
+) AS {upstream_block.table_name}"""
+
         query = re.sub(
             '{}[ ]*df_{}[ ]*{}'.format(r'\{\{', idx + 1, r'\}\}'),
-            __replace_func(database, schema, upstream_block.table_name),
+            replace_with,
             query,
         )
 
         query = query.replace(
             f'{matcher1}',
-            __replace_func(database, schema, upstream_block.table_name),
+            replace_with,
         )
 
     return query
@@ -170,3 +180,39 @@ def extract_and_replace_text_between_strings(
     new_text = text[0:max(start_idx - 1, 0)] + replace_string + text[end_idx + 1:]
 
     return extracted_text, new_text
+
+
+def remove_comments(text: str) -> str:
+    lines = text.split('\n')
+    return '\n'.join(line for line in lines if not line.startswith('--'))
+
+
+def extract_create_statement_table_name(text: str) -> str:
+    statement_partial, _ = extract_and_replace_text_between_strings(
+        remove_comments(text),
+        r'create table(?: if not exists)*',
+        r'\(',
+    )
+    if not statement_partial:
+        return None
+
+    parts = statement_partial[:len(statement_partial) - 1].strip().split(' ')
+    return parts[-1]
+
+
+def extract_insert_statement_table_names(text: str) -> List[str]:
+    matches = re.findall(
+        r'insert(?: overwrite)*(?: into)*[\s]+([\w.]+)',
+        remove_comments(text),
+        re.IGNORECASE,
+    )
+    return matches
+
+
+def has_create_or_insert_statement(text: str) -> bool:
+    table_name = extract_create_statement_table_name(text)
+    if table_name:
+        return True
+
+    matches = extract_insert_statement_table_names(text)
+    return len(matches) >= 1
