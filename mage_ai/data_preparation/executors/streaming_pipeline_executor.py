@@ -3,6 +3,7 @@ from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecuto
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
+from mage_ai.shared.hash import merge_dict
 from typing import Callable, Dict, List, Union
 import os
 import yaml
@@ -83,7 +84,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
             if not build_block_output_stdout:
                 self.logger.exception(
                         f'Failed to execute streaming pipeline {self.pipeline.uuid}',
-                        error=e,
+                        **merge_dict(dict(error=e), tags),
                     )
             raise e
 
