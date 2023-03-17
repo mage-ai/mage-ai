@@ -52,7 +52,7 @@ class LoggerManager:
                 handler = self.create_stream_handler()
             else:
                 log_filepath = self.get_log_filepath(create_dir=True)
-                handler = logging.RotatingFileHandler(
+                handler = logging.handlers.RotatingFileHandler(
                     log_filepath,
                     backupCount=10,
                     maxBytes=MAX_LOG_FILE_SIZE,
