@@ -51,7 +51,6 @@ import functools
 import json
 import os
 import pandas as pd
-import re
 import simplejson
 import sys
 import time
@@ -353,34 +352,22 @@ class Block:
     @property
     def full_table_name(self) -> str:
         from mage_ai.data_preparation.models.block.sql.utils.shared import (
-            extract_and_replace_text_between_strings,
+            extract_create_statement_table_name,
+            extract_insert_statement_table_names,
         )
 
         if not self.content:
             return None
 
-        statement_partial, _ = extract_and_replace_text_between_strings(
-            self.content,
-            'create',
-            r'\(',
-        )
+        table_name = extract_create_statement_table_name(self.content)
+        if table_name:
+            return table_name
 
-        if not statement_partial:
-            matches = re.findall(
-                r'insert(?: overwrite)*(?: into)*[\s]+([\w.]+)',
-                self.content,
-                re.IGNORECASE,
-            )
-            if len(matches) >= 1:
-                return matches[len(matches) - 1]
-            else:
-                return None
-
-        if not statement_partial:
+        matches = extract_insert_statement_table_names(self.content)
+        if len(matches) == 0:
             return None
 
-        parts = statement_partial[:len(statement_partial) - 1].strip().split(' ')
-        return parts[-1]
+        return matches[len(matches) - 1]
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs):
