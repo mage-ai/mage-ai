@@ -99,7 +99,7 @@ class Postgres(BaseSQL):
                             'if possible.'
                         )
                     local_port += 1
-                self.local_port = SSHTunnelForwarder(
+                self.ssh_tunnel = SSHTunnelForwarder(
                     (self.settings['ssh_host'], self.settings['ssh_port']),
                     remote_bind_address=(host, port),
                     local_bind_address=('', local_port),
