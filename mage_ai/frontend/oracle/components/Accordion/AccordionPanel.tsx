@@ -25,6 +25,7 @@ export type AccordionPanelProps = {
   noBackground?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
+  singlePanel?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;
   visible?: boolean;
@@ -99,6 +100,24 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   padding: ${UNIT * 2}px ${UNIT * 2}px;
   z-index: 1;
 
+  ${props => `
+    &:hover,
+    &:focus {
+      outline: none;
+    }
+    ${outline(props)}
+
+    background-color: ${(props.theme.background || dark.background).panel};
+
+    &:hover {
+      background-color: ${(props.theme || dark).background.page};
+    }
+
+    &:active {
+      background-color: ${(props.theme || dark).background.page};
+    }
+  `}
+
   ${props => props.visible && `
     border-bottom: 1px solid ${(props.theme || dark).borders.medium2};
   `}
@@ -112,30 +131,9 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     border-top-right-radius: ${BORDER_RADIUS}px;
   `}
 
-  ${props => props.last && !props.visible && `
+  ${props => (props.last || props.singlePanel) && !props.visible && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
-  `}
-
-  ${props => `
-    &:hover,
-    &:focus {
-      outline: none;
-    }
-
-    ${outline(props)}
-  `}
-
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).panel};
-
-    &:hover {
-      background-color: ${(props.theme || dark).background.page};
-    }
-
-    &:active {
-      background-color: ${(props.theme || dark).background.page};
-    }
   `}
 
   ${props => props.titleXPadding && `
@@ -199,6 +197,7 @@ const AccordionPanel = ({
   onClick,
   onEntered,
   onExited,
+  singlePanel,
   title,
   titleXPadding,
   visible,
@@ -228,6 +227,7 @@ const AccordionPanel = ({
           }
         }
       }}
+      singlePanel={singlePanel}
       titleXPadding={titleXPadding}
       visible={visible && !visibleHighlightDisabled}
     >

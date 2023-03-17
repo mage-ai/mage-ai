@@ -69,7 +69,8 @@ const Accordion = ({
   return (
     <AccordionStyle {...props}>
       {React.Children.map(children, (child, idx) => {
-        const last = idx === (children || []).length - 1;
+        const panelCount = React.Children.count(children);
+        const last = idx === (panelCount - 1);
         const visible: boolean = visibleMapping[idx];
 
         return (
@@ -98,6 +99,7 @@ const Accordion = ({
                     onClick(newVisibleMapping);
                   }
                 },
+                singlePanel: panelCount === 1,
                 visible,
                 visibleCount: visibleCount[idx] || 0,
                 visibleHighlightDisabled: typeof activeItemIndex !== 'undefined'
