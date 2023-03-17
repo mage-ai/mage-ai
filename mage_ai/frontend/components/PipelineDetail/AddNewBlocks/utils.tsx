@@ -41,7 +41,7 @@ const getDataSourceTypes = (
       ],
       [BlockTypeEnum.TRANSFORMER]: [
         DataSourceTypeEnum.GENERIC,
-      ]
+      ],
     };
   }
 
@@ -56,7 +56,7 @@ export const createDataSourceMenuItems = (
   const requiresConfigFile = (pipelineType === PipelineTypeEnum.STREAMING)
     && (blockType === BlockTypeEnum.DATA_LOADER || blockType === BlockTypeEnum.DATA_EXPORTER);
 
-  return (getDataSourceTypes(pipelineType)[blockType])
+  return (getDataSourceTypes(pipelineType)[blockType] || [])
     .map((sourceType: DataSourceTypeEnum) => ({
       indent: blockType === BlockTypeEnum.TRANSFORMER,
       label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
