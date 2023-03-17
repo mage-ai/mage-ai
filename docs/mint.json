@@ -202,7 +202,8 @@
                 "guides/streaming/destinations/opensearch",
                 "guides/streaming/destinations/redshift"
               ]
-            }
+            },
+            "guides/streaming/contributing"
           ]
         },
         "production/configuring-production-settings/runtime-variable",
