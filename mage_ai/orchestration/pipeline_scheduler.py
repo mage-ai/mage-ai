@@ -19,7 +19,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db.models import (
+from mage_ai.orchestration.db.models.schedules import (
     Backfill,
     BlockRun,
     EventMatcher,

@@ -1,6 +1,6 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import BlockRun
+from mage_ai.orchestration.db.models.schedules import BlockRun
 
 
 class OutputResource(GenericResource):

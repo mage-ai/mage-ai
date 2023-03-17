@@ -1,7 +1,7 @@
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import index_by, merge_dict

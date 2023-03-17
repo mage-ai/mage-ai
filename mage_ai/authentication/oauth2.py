@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from mage_ai.orchestration.db.models import Oauth2AccessToken, Oauth2Application, User
+from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Oauth2Application, User
 from typing import Dict
 import jwt
 import secrets

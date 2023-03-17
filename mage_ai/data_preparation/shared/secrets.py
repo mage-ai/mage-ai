@@ -10,7 +10,7 @@ DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
 
 def create_secret(name: str, value: str):
-    from mage_ai.orchestration.db.models import Secret
+    from mage_ai.orchestration.db.models.secrets import Secret
     secrets_dir = os.path.join(
         get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
     key_file = os.path.join(secrets_dir, 'key')
@@ -49,7 +49,7 @@ def get_encryption_key() -> str:
 
 
 def get_secrets() -> Dict[str, str]:
-    from mage_ai.orchestration.db.models import Secret
+    from mage_ai.orchestration.db.models.secrets import Secret
     fernet = Fernet(get_encryption_key())
 
     secrets = Secret.query.filter(Secret.repo_name == get_repo_path())
@@ -63,7 +63,7 @@ def get_secrets() -> Dict[str, str]:
 
 
 def get_secret_value(name: str) -> str:
-    from mage_ai.orchestration.db.models import Secret
+    from mage_ai.orchestration.db.models.secrets import Secret
     fernet = Fernet(get_encryption_key())
 
     try:

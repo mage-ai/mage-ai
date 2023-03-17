@@ -3,7 +3,11 @@ from faker import Faker
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.orchestration.db.models import PipelineRun, PipelineSchedule, User
+from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.orchestration.db.models.schedules import (
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.shared.hash import merge_dict
 from typing import Dict, Union
 

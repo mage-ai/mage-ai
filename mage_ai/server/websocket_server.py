@@ -14,7 +14,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db.models import Oauth2Application
+from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.server.active_kernel import (
     get_active_kernel_client,
     get_active_kernel_name,
