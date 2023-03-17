@@ -97,7 +97,21 @@ Then, it’ll insert a single row into that table.
 
 #### Required SQL statements
 
-When writing raw SQL, you must at least have an `INSERT` statement. The `CREATE TABLE` statement is optional.
+When writing raw SQL, you must at least 1 of the following statements:
+
+- `SELECT`
+    ```sql
+    SELECT 1;
+    ```
+- `INSERT`
+    ```sql
+    INSERT INTO some_table
+    SELECT 1;
+    ```
+- `CREATE TABLE`
+    ```sql
+    CREATE TABLE some_table (id BIGINT);
+    ```
 
 #### Multiple SQL statements
 

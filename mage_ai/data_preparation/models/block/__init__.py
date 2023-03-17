@@ -51,7 +51,6 @@ import functools
 import json
 import os
 import pandas as pd
-import re
 import simplejson
 import sys
 import time
