@@ -25,6 +25,7 @@ def check_condition(**kwargs) -> bool:
     bucket_name = 'your_bucket_name'
     s3_path = 'path/to/folder/or/file'
 
-    return S3.with_config(ConfigFileLoader(config_path, config_profile)).exists(
+    config_file_loader = ConfigFileLoader(config_path, config_profile)
+    return S3.with_config(config_file_loader).exists(
         bucket_name, s3_path
     )
