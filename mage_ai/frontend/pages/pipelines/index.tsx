@@ -30,7 +30,7 @@ import { Check, Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { capitalize, randomNameGenerator } from '@utils/string';
+import { capitalize, randomNameGenerator, removeUnderscore } from '@utils/string';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
@@ -268,7 +268,7 @@ function PipelineListPage() {
                 size={UNIT * 2}
               />
             ),
-            label: () => 'Status',
+            label: () => capitalize(PipelineGroupingEnum.STATUS),
             onClick: () => goToWithQuery({
               [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.STATUS
                 ? null
@@ -288,7 +288,7 @@ function PipelineListPage() {
                 size={UNIT * 2}
               />
             ),
-            label: () => 'Type',
+            label: () => capitalize(PipelineGroupingEnum.TYPE),
             onClick: () => goToWithQuery({
               [PipelineQueryEnum.GROUP]: groupByQuery === PipelineGroupingEnum.TYPE
                 ? null
@@ -337,6 +337,7 @@ function PipelineListPage() {
     clonePipeline,
     createPipeline,
     deletePipeline,
+    groupByQuery,
     isLoadingClone,
     isLoadingCreate,
     isLoadingDelete,
@@ -377,7 +378,7 @@ function PipelineListPage() {
                 uuid: 'action',
               },
               {
-                uuid: 'Status',
+                uuid: capitalize(PipelineGroupingEnum.STATUS),
               },
               {
                 uuid: 'Name',
@@ -386,7 +387,7 @@ function PipelineListPage() {
                 uuid: 'Description',
               },
               {
-                uuid: 'Type',
+                uuid: capitalize(PipelineGroupingEnum.TYPE),
               },
               {
                 uuid: 'Blocks',
@@ -399,6 +400,18 @@ function PipelineListPage() {
                 uuid: 'Actions',
               },
             ]}
+            grouping={{
+              column: capitalize(groupByQuery),
+              columnIndex: groupByQuery === PipelineGroupingEnum.STATUS
+                ? 1
+                : (groupByQuery === PipelineGroupingEnum.TYPE ? 4 : null),
+              values: groupByQuery === PipelineGroupingEnum.STATUS
+                  ? Object.values(PipelineStatusEnum).map(val => removeUnderscore(val))
+                  : (groupByQuery === PipelineGroupingEnum.TYPE
+                    ? Object.values(PipelineTypeEnum).map(val => PIPELINE_TYPE_LABEL_MAPPING[val])
+                    : []
+                  ),
+            }}
             isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
             onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
               const pipeline = pipelines[rowIndex];
@@ -486,7 +499,7 @@ function PipelineListPage() {
                 <Text
                   key={`pipeline_type_${idx}`}
                 >
-                  {type === PipelineTypeEnum.PYTHON ? 'Standard' : capitalize(type)}
+                  {PIPELINE_TYPE_LABEL_MAPPING[type]}
                 </Text>,
                 <Text
                   default={blocksCount === 0}

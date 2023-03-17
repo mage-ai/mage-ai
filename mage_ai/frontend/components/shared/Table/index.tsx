@@ -1,17 +1,21 @@
 import NextLink from 'next/link';
 import { useCallback, useMemo } from 'react';
 
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel'
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import {
+  TableContainerStyle,
   TableDataStyle,
   TableHeadStyle,
   TableRowStyle,
   TableStyle,
 } from './index.style';
+import { capitalize } from '@utils/string';
 
 export type ColumnType = {
   center?: boolean;
@@ -36,6 +40,11 @@ type TableProps = {
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
+  grouping?: {
+    column: string;
+    columnIndex: number;
+    values: string[];
+  };
   highlightRowOnHover?: boolean;
   isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
@@ -60,6 +69,7 @@ function Table({
   columnMaxWidth,
   columns = [],
   compact,
+  grouping,
   highlightRowOnHover,
   isSelectedRow,
   noBorder,
@@ -232,16 +242,74 @@ function Table({
       ))}
     </TableRowStyle>
   ), [columnBorders, columns, compact, noBorder, stickyHeader, uuid]);
+  
+  const tableEl = useMemo(() => {
+    if (grouping && grouping?.column && grouping?.values?.length > 0) {
+      const {
+        columnIndex: groupingColumnIndex,
+        values: groupingValues,
+      } = grouping;
+      const groupedRowElsByValue = rowEls?.reduce((acc, rowEl) => {
+        const groupingValue = rowEl?.props?.children?.[groupingColumnIndex]?.props?.children?.props?.children;
+        const groupingTitle = capitalize(groupingValue);
+        if (groupingValues.includes(groupingValue)) {
+          acc[groupingTitle] = (acc[groupingTitle] || []).concat(rowEl);
+        }
+  
+        return acc;
+      }, {});
+      const rowElGroupings = Object.entries(groupedRowElsByValue);
 
-  return (
-    <TableStyle
-      borderCollapseSeparate={borderCollapseSeparate}
-      columnBorders={columnBorders}
-    >
-      {(columns?.length >= 1 && !noHeader) && headerRowEl}
-      {rowEls}
-    </TableStyle>
-  );
+      return (
+        <TableContainerStyle includePadding>
+          {rowElGroupings.map(([groupingValue, groupingRowEls], idx) => (
+            <Spacing key={groupingValue} mb={idx === rowElGroupings.length - 1 ? 0 : 2}>
+              <Accordion
+                visibleMapping={{
+                  '0': true,
+                }}
+              >
+                <AccordionPanel
+                  noPaddingContent
+                  title={groupingValue}
+                >
+                  <TableStyle
+                    borderCollapseSeparate={borderCollapseSeparate}
+                    columnBorders={columnBorders}
+                  >
+                    <>
+                      {(columns?.length >= 1 && !noHeader) && headerRowEl}
+                      {groupingRowEls}
+                    </>
+                  </TableStyle>
+                </AccordionPanel>
+              </Accordion>
+            </Spacing>
+          ))}
+        </TableContainerStyle>
+      );
+    }
+
+    return (
+      <TableStyle
+        borderCollapseSeparate={borderCollapseSeparate}
+        columnBorders={columnBorders}
+      >
+        {(columns?.length >= 1 && !noHeader) && headerRowEl}
+        {rowEls}
+      </TableStyle>
+    );
+  }, [
+    borderCollapseSeparate,
+    columnBorders,
+    columns?.length,
+    grouping,
+    headerRowEl,
+    noHeader,
+    rowEls,
+  ]);
+
+  return tableEl;
 }
 
 export default Table;
