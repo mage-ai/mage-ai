@@ -5,12 +5,17 @@ import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const TableContainerStyle = styled.div<{
+  includePadding?: boolean;
   minHeight?: number;
   overflowVisible?: boolean;
 }>`
   position: relative;
   overflow: auto;
   ${ScrollbarStyledCss}
+
+  ${props => props.includePadding && `
+    padding: ${UNIT * 2}px;
+  `}
 
   ${props => props.minHeight && `
     min-height: ${props.minHeight}px;

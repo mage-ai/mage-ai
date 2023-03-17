@@ -9,6 +9,7 @@ import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { ChevronDown } from '@oracle/icons';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss }  from '@oracle/styles/scrollbars';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { outline } from '@oracle/styles/mixins';
@@ -65,6 +66,7 @@ const AccordionPanelStyle = styled.div<AccordionPanelProps>`
     transition: max-height 400ms ease-in-out;
   }
   .accordion-panel-content-enter-active {
+    max-height: 100vh;
     ${props => props.maxHeight && `
       max-height: ${props.maxHeight}px;
     `}
@@ -75,6 +77,7 @@ const AccordionPanelStyle = styled.div<AccordionPanelProps>`
 
   .accordion-panel-content-exit {
     display: block;
+    max-height: 100vh;
     ${props => props.maxHeight && `
       max-height: ${props.maxHeight}px;
     `}
@@ -124,6 +127,8 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   `}
 
   ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+
     &:hover {
       background-color: ${(props.theme || dark).background.page};
     }
@@ -131,10 +136,6 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     &:active {
       background-color: ${(props.theme || dark).background.page};
     }
-  `}
-
-  ${props => !props.visible && `
-    background-color: ${(props.theme.background || dark.background).content};
   `}
 
   ${props => props.titleXPadding && `
@@ -146,6 +147,7 @@ const TitleStyle = styled.a<AccordionPanelProps>`
 const ContentStyle = styled.div<AccordionPanelProps>`
   padding-left: ${UNIT * 2}px;
   padding-right: ${UNIT * 2}px;
+  ${ScrollbarStyledCss}
 
   ${props => props.hideScrollbar && `
     ::-webkit-scrollbar {
@@ -191,7 +193,7 @@ const AccordionPanel = ({
   hideScrollbar,
   highlighted,
   last,
-  maxHeight = 1000,
+  maxHeight,
   noBackground,
   noPaddingContent,
   onClick,
