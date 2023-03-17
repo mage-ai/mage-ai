@@ -258,7 +258,8 @@ function Table({
   
         return acc;
       }, {});
-      const rowElGroupings = Object.entries(groupedRowElsByValue);
+      const rowElGroupings = Object.entries(groupedRowElsByValue)
+        .sort((a, b) => a[0].localeCompare(b[0]));
 
       return (
         <TableContainerStyle includePadding>
