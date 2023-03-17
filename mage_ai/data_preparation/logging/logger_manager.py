@@ -7,6 +7,8 @@ import io
 import logging
 import os
 
+MAX_LOG_FILE_SIZE = 5 * 1024 * 1024
+
 
 class LoggerManager:
     def __init__(
@@ -50,7 +52,11 @@ class LoggerManager:
                 handler = self.create_stream_handler()
             else:
                 log_filepath = self.get_log_filepath(create_dir=True)
-                handler = logging.FileHandler(log_filepath)
+                handler = logging.handlers.RotatingFileHandler(
+                    log_filepath,
+                    backupCount=10,
+                    maxBytes=MAX_LOG_FILE_SIZE,
+                )
 
             handler.setLevel(self.log_level)
             handler.setFormatter(self.formatter)
