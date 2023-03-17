@@ -45,7 +45,7 @@ export const SubheaderStyle = styled.div`
   padding: ${PADDING_UNITS * UNIT}px;
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).page};

@@ -196,6 +196,7 @@ export default {
     linkSecondaryDisabled: PURPLE_LIGHT,
     linkText: BLUE_LINK,
     rowHoverBackground: 'rgba(0, 0, 0, 0.1)',
+    transparent: 'rgba(255, 255, 255, 0)',
   },
   loader: {
     color: '#EB0032',
@@ -229,6 +230,7 @@ export default {
   },
   shadow: {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
+    frame: '0px 10px 40px rgba(0, 0, 0, 0.26)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
     small: '0px, 4px, rgba(0, 0, 0, 0.25)',

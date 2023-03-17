@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -25,6 +24,7 @@ type ToggleMenuProps = {
   compact?: boolean;
   onClickCallback: () => void;
   onClickOutside: () => void;
+  onSecondaryClick: () => void;
   open: boolean;
   options: {
     [keyof: string]: {
@@ -44,6 +44,7 @@ function ToggleMenu({
   compact,
   onClickCallback,
   onClickOutside,
+  onSecondaryClick,
   open,
   options = {},
   parentRef,
@@ -51,7 +52,6 @@ function ToggleMenu({
   setOpen,
   toggleValueMapping,
 }: ToggleMenuProps) {
-  const router = useRouter();
   const [highlightedOptionKey, setHighlightedOptionKey] = useState<string>(null);
   const [optionsState, setOptionsState] = useState(options);
 
@@ -138,6 +138,7 @@ function ToggleMenu({
                   updatedQuery,
                   {
                     addingMultipleValues: true,
+                    pushHistory: true,
                   });
               }}
               secondary
@@ -149,7 +150,7 @@ function ToggleMenu({
               noBackground
               onClick={() => {
                 setOpen(false);
-                router.push('/pipelines');
+                onSecondaryClick?.();
               }}
             >
               Defaults

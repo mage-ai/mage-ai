@@ -3,8 +3,8 @@ import styled from 'styled-components';
 
 import AccordionPanelImport, { AccordionPanelProps } from './AccordionPanel';
 import Divider from '@oracle/elements/Divider';
-import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import dark from '@oracle/styles/themes/dark';
+import { BORDER_WIDTH, BORDER_RADIUS, BORDER_STYLE } from '@oracle/styles/units/borders';
 
 export type AccordionProps = {
   activeItemIndex?: number;
@@ -30,15 +30,20 @@ type AccordionPanelContainerProps = {
 const AccordionStyle = styled.div<AccordionProps>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
-  border-width: 1px;
-  border-style: solid;
+  border-width: ${BORDER_WIDTH}px;
+  border-style: ${BORDER_STYLE};
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).content};
+    box-shadow: ${(props.theme || dark).shadow.frame};
+  `}
 
   ${props => !props.highlighted && `
-    border-color: ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-color: ${(props.theme || dark).background.panel};
   `}
 
   ${props => props.highlighted && `
-    border-color: ${(props.theme.brand || light.brand).wind400};
+    border-color: ${(props.theme || dark).brand.wind400};
   `}
 `;
 
@@ -64,7 +69,8 @@ const Accordion = ({
   return (
     <AccordionStyle {...props}>
       {React.Children.map(children, (child, idx) => {
-        const last = idx === (children || []).length - 1;
+        const panelCount = React.Children.count(children);
+        const last = idx === (panelCount - 1);
         const visible: boolean = visibleMapping[idx];
 
         return (
@@ -93,6 +99,7 @@ const Accordion = ({
                     onClick(newVisibleMapping);
                   }
                 },
+                singlePanel: panelCount === 1,
                 visible,
                 visibleCount: visibleCount[idx] || 0,
                 visibleHighlightDisabled: typeof activeItemIndex !== 'undefined'

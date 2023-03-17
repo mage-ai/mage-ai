@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Badge from '@oracle/components/Badge';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -12,7 +13,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleMenu from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
-import { Add, Close, Ellipsis, Filter, Search, Trash } from '@oracle/icons';
+import { Add, Close, Ellipsis, Filter, Group, Search, Trash } from '@oracle/icons';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import {
@@ -47,7 +48,10 @@ type ToolbarProps = {
     [keyof: string]: string;
   };
   moreActionsMenuItems?: FlyoutMenuItemType[];
-  groupings?: string[];
+  groupButtonProps?: {
+    menuItems: FlyoutMenuItemType[];
+    groupByLabel?: string;
+  }
   query?: {
     [keyof: string]: string[];
   };
@@ -75,8 +79,8 @@ function Toolbar({
   deleteRowProps,
   filterOptions = {},
   filterValueLabelMapping,
+  groupButtonProps,
   moreActionsMenuItems,
-  groupings,
   query = {},
   searchProps,
   secondaryActionButtonProps,
@@ -84,19 +88,23 @@ function Toolbar({
   setSelectedRow,
 }: ToolbarProps) {
   const isViewerRole = isViewer();
+  const router = useRouter();
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
+  const groupButtonMenuRef = useRef(null);
   const moreActionsButtonMenuRef = useRef(null);
   const searchInputRef = useRef(null);
 
   const [addButtonMenuOpen, setAddButtonMenuOpen] = useState<boolean>(false);
   const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState<boolean>(false);
+  const [groupButtonMenuOpen, setGroupButtonMenuOpen] = useState<boolean>(false);
   const [moreActionsMenuOpen, setMoreActionsMenuOpen] = useState<boolean>(false);
   const [confirmationDialogueOpenIdx, setConfirmationDialogueOpenIdx] = useState<number>(null);
   const disabledActions = !selectedRowId;
 
   const closeAddButtonMenu = useCallback(() => setAddButtonMenuOpen(false), []);
   const closeFilterButtonMenu = useCallback(() => setFilterButtonMenuOpen(false), []);
+  const closeGroupButtonMenu = useCallback(() => setGroupButtonMenuOpen(false), []);
   const closeMoreActionsMenu = useCallback(() => setMoreActionsMenuOpen(null), []);
   const closeConfirmationDialogue = useCallback(() => setConfirmationDialogueOpenIdx(null), []);
 
@@ -148,7 +156,8 @@ function Toolbar({
       open={addButtonMenuOpen}
       parentRef={addButtonMenuRef}
       roundedStyle
-      uuid="table/toolbar/new_item_menu"
+      topOffset={1}
+      uuid="Table/Toolbar/NewItemMenu"
     >
       <KeyboardShortcutButton
         {...SHARED_BUTTON_PROPS}
@@ -159,7 +168,7 @@ function Toolbar({
           e.preventDefault();
           setAddButtonMenuOpen(prevOpenState => !prevOpenState);
         }}
-        uuid="table/toolbar/add_button"
+        uuid="Table/Toolbar/AddButton"
       >
         {addButtonLabel}
       </KeyboardShortcutButton>
@@ -181,6 +190,7 @@ function Toolbar({
       compact
       onClickCallback={closeFilterButtonMenu}
       onClickOutside={closeFilterButtonMenu}
+      onSecondaryClick={() => router.push('/pipelines')}
       open={filterButtonMenuOpen}
       options={filterOptionsEnabledMapping}
       parentRef={filterButtonMenuRef}
@@ -201,7 +211,7 @@ function Toolbar({
         }
         beforeElement={<Filter size={2 * UNIT} />}
         onClick={() => setFilterButtonMenuOpen(prevOpenState => !prevOpenState)}
-        uuid="table/toolbar/filter_button"
+        uuid="Table/Toolbar/FilterButton"
       >
         Filter
       </KeyboardShortcutButton>
@@ -213,6 +223,40 @@ function Toolbar({
     filterValueLabelMapping,
     filtersAppliedCount,
     query,
+    router,
+  ]);
+
+  const {
+    groupByLabel,
+    menuItems: groupMenuItems,
+  } = groupButtonProps || {};
+  const groupButtonEl = useMemo(() => (
+    <FlyoutMenuWrapper
+      disableKeyboardShortcuts
+      items={groupMenuItems}
+      onClickCallback={closeGroupButtonMenu}
+      onClickOutside={closeGroupButtonMenu}
+      open={groupButtonMenuOpen}
+      parentRef={groupButtonMenuRef}
+      roundedStyle
+      topOffset={1}
+      uuid="Table/Toolbar/GroupMenu"
+    >
+      <KeyboardShortcutButton
+        {...SHARED_BUTTON_PROPS}
+        beforeElement={<Group size={2.5 * UNIT} />}
+        onClick={() => {
+          setGroupButtonMenuOpen(prevOpenState => !prevOpenState);
+        }}
+        uuid="Table/Toolbar/GroupButton"
+      >
+        {groupByLabel ? `Grouped by ${groupByLabel}` : 'Group'}
+      </KeyboardShortcutButton>
+    </FlyoutMenuWrapper>
+  ), [
+    closeGroupButtonMenu,
+    groupButtonMenuOpen,
+    groupMenuItems,
   ]);
 
   const moreActionsButtonEl = useMemo(() => (
@@ -224,7 +268,8 @@ function Toolbar({
       open={moreActionsMenuOpen}
       parentRef={moreActionsButtonMenuRef}
       roundedStyle
-      uuid="table/toolbar/more_actions_menu"
+      topOffset={1}
+      uuid="Table/Toolbar/MoreActionsMenu"
     >
       <Tooltip
         {...SHARED_TOOLTIP_PROPS}
@@ -237,7 +282,7 @@ function Toolbar({
           greyBorder
           onClick={() => setMoreActionsMenuOpen(prevState => !prevState)}
           smallIcon
-          uuid="table/toolbar/more_actions_button"
+          uuid="Table/Toolbar/MoreActionsButton"
         />
       </Tooltip>
     </FlyoutMenuWrapper>
@@ -253,6 +298,12 @@ function Toolbar({
       {addButtonEl}
       <Spacing mr={BUTTON_PADDING} />
       {filterButtonEl}
+
+      {groupMenuItems?.length > 0 &&
+        <Spacing ml={BUTTON_PADDING}>
+          {groupButtonEl}
+        </Spacing>
+      }
 
       {(!isViewerRole && onSecondaryActionClick) &&
         <Spacing ml={BUTTON_PADDING}>
@@ -271,7 +322,7 @@ function Toolbar({
                 : onSecondaryActionClick
               }
               smallIcon
-              uuid="table/toolbar/secondary_action_button"
+              uuid="Table/Toolbar/SecondaryActionButton"
             >
               {secondaryActionLabel}
             </KeyboardShortcutButton>
@@ -310,7 +361,7 @@ function Toolbar({
               loading={isLoadingDelete}
               onClick={() => setConfirmationDialogueOpenIdx(ConfirmDialogueOpenEnum.DELETE)}
               smallIcon
-              uuid="table/toolbar/delete_button"
+              uuid="Table/Toolbar/DeleteButton"
             />
           </Tooltip>
           <ClickOutside

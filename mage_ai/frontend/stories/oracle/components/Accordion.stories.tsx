@@ -23,7 +23,7 @@ const Template: Story<AccordionProps> = (args) => <TemplateWithTheme {...args} /
 export const Regular = Template.bind({});
 Regular.args = {
   children: [
-    <AccordionPanel title="Class in session">
+    <AccordionPanel key={1} title="Class in session">
       <Text>
         There was a rush of air as several figures seemed to slide from the shadows,
         stepping out of the surrounding mesas at impossible angles.
@@ -32,16 +32,16 @@ Regular.args = {
         the man with the fox-thing. Slowly, he raised his hands in surrender.
       </Text>
     </AccordionPanel>,
-    <AccordionPanel title="Lessons">
+    <AccordionPanel key={2} title="Lessons">
       <Text>
-        He wasn't excited about facing Extus again—not after failing his mission.
+        He wasn&#39;t excited about facing Extus again—not after failing his mission.
         But he would worry about that when he got out alive.
-        Tavver had seen true darkness in that professor's violet eyes.
-        She'd meant to kill him—and for what?
+        Tavver had seen true darkness in that professor&#39;s violet eyes.
+        She&#39;d meant to kill him—and for what?
         So that Extus could have some dusty old book he remembered from however many years ago?
       </Text>
     </AccordionPanel>,
-    <AccordionPanel title="Extracurriculars">
+    <AccordionPanel key={3} title="Extracurriculars">
       <Text>
         Looking out the window over his desk,
         Will could see the winds of autumn stirring fallen leaves across the courtyard.

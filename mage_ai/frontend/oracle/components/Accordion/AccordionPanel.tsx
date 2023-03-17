@@ -6,9 +6,10 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light';
-import { ArrowRight } from '@oracle/icons';
+import dark from '@oracle/styles/themes/dark';
+import { ChevronDown } from '@oracle/icons';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss }  from '@oracle/styles/scrollbars';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { outline } from '@oracle/styles/mixins';
@@ -24,6 +25,7 @@ export type AccordionPanelProps = {
   noBackground?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
+  singlePanel?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;
   visible?: boolean;
@@ -40,20 +42,20 @@ type AccordionPanelInternalProps = {
 };
 
 const AccordionPanelStyle = styled.div<AccordionPanelProps>`
-  .accordion-panel-chevron-right-exit-done {
+  .accordion-panel-chevron-down-exit-done {
     transform: rotate(0deg);
     transition: all 200ms;
   }
-  .accordion-panel-chevron-right-enter-active {
-    transform: rotate(90deg);
+  .accordion-panel-chevron-down-enter-active {
+    transform: rotate(180deg);
     transition: all 200ms;
   }
-  .accordion-panel-chevron-right-enter-done,
-  .accordion-panel-chevron-right-enter-done-visible {
-    transform: rotate(90deg);
+  .accordion-panel-chevron-down-enter-done,
+  .accordion-panel-chevron-down-enter-done-visible {
+    transform: rotate(180deg);
     transition: all 300ms;
   }
-  .accordion-panel-chevron-right-exit {
+  .accordion-panel-chevron-down-exit {
     transform: rotate(0deg);
     transition: all 300ms;
   }
@@ -65,6 +67,7 @@ const AccordionPanelStyle = styled.div<AccordionPanelProps>`
     transition: max-height 400ms ease-in-out;
   }
   .accordion-panel-content-enter-active {
+    max-height: 100vh;
     ${props => props.maxHeight && `
       max-height: ${props.maxHeight}px;
     `}
@@ -75,6 +78,7 @@ const AccordionPanelStyle = styled.div<AccordionPanelProps>`
 
   .accordion-panel-content-exit {
     display: block;
+    max-height: 100vh;
     ${props => props.maxHeight && `
       max-height: ${props.maxHeight}px;
     `}
@@ -93,11 +97,33 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   ${SHARED_LINK_STYLES}
   display: block;
   position: relative;
-  padding: ${UNIT * 2.5}px ${UNIT * 2}px;
+  padding: ${UNIT * 2}px ${UNIT * 2}px;
   z-index: 1;
 
-  ${props => !props.last && props.visible && `
-    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+  ${props => `
+    &:hover,
+    &:focus {
+      outline: none;
+    }
+    ${outline(props)}
+
+    background-color: ${(props.theme.background || dark.background).table};
+
+    &:hover {
+      background-color: ${(props.theme || dark).background.page};
+    }
+
+    &:active {
+      background-color: ${(props.theme || dark).background.page};
+    }
+  `}
+
+  ${props => props.visible && `
+    border-bottom: 1px solid ${(props.theme || dark).borders.medium2};
+  `}
+
+  ${props => !props.first && props.visible && `
+    border-top: 1px solid ${(props.theme || dark).borders.medium2};
   `}
 
   ${props => props.first && `
@@ -105,32 +131,9 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     border-top-right-radius: ${BORDER_RADIUS}px;
   `}
 
-  ${props => props.last && !props.visible && `
+  ${props => (props.last || props.singlePanel) && !props.visible && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
-  `}
-
-  ${props => `
-    &:hover,
-    &:focus {
-      outline: none;
-    }
-
-    ${outline(props)}
-  `}
-
-  ${props => `
-    &:hover {
-      background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
-    }
-
-    &:active {
-      background-color: ${(props.theme.interactive || light.interactive).activeOverlay};
-    }
-  `}
-
-  ${props => !props.visible && `
-    background-color: ${(props.theme.background || light.background).header};
   `}
 
   ${props => props.titleXPadding && `
@@ -142,6 +145,7 @@ const TitleStyle = styled.a<AccordionPanelProps>`
 const ContentStyle = styled.div<AccordionPanelProps>`
   padding-left: ${UNIT * 2}px;
   padding-right: ${UNIT * 2}px;
+  ${ScrollbarStyledCss}
 
   ${props => props.hideScrollbar && `
     ::-webkit-scrollbar {
@@ -187,12 +191,13 @@ const AccordionPanel = ({
   hideScrollbar,
   highlighted,
   last,
-  maxHeight = 1000,
+  maxHeight,
   noBackground,
   noPaddingContent,
   onClick,
   onEntered,
   onExited,
+  singlePanel,
   title,
   titleXPadding,
   visible,
@@ -222,21 +227,12 @@ const AccordionPanel = ({
           }
         }
       }}
+      singlePanel={singlePanel}
       titleXPadding={titleXPadding}
       visible={visible && !visibleHighlightDisabled}
     >
       <FlexContainer alignItems="center">
-        <CSSTransition
-          classNames="accordion-panel-chevron-right"
-          in={visible}
-          timeout={400}
-        >
-          <Flex className={visible && visibleCount === 0 && 'accordion-panel-chevron-right-enter-done-visible'}>
-            <ArrowRight default />
-          </Flex>
-        </CSSTransition>
-
-        <Spacing ml={1}>
+        <Spacing mr={1}>
           <FlexContainer alignItems="center">
             {beforeTitleElement}
 
@@ -245,12 +241,23 @@ const AccordionPanel = ({
             <Text
               bold
               default={!visible}
+              large
               wind={highlighted}
             >
               {title}
             </Text>
           </FlexContainer>
         </Spacing>
+
+        <CSSTransition
+          classNames="accordion-panel-chevron-down"
+          in={visible}
+          timeout={400}
+        >
+          <Flex className={visible && visibleCount === 0 && 'accordion-panel-chevron-down-enter-done-visible'}>
+            <ChevronDown default size={UNIT * 2} />
+          </Flex>
+        </CSSTransition>
       </FlexContainer>
     </TitleStyle>
 
