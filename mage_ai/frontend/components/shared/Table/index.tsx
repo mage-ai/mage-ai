@@ -2,14 +2,13 @@ import NextLink from 'next/link';
 import { useCallback, useMemo } from 'react';
 
 import Accordion from '@oracle/components/Accordion';
-import AccordionPanel from '@oracle/components/Accordion/AccordionPanel'
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import {
-  TableContainerStyle,
   TableDataStyle,
   TableHeadStyle,
   TableRowStyle,
@@ -262,7 +261,7 @@ function Table({
         .sort((a, b) => a[0].localeCompare(b[0]));
 
       return (
-        <TableContainerStyle includePadding>
+        <>
           {rowElGroupings.map(([groupingValue, groupingRowEls], idx) => (
             <Spacing key={groupingValue} mb={idx === rowElGroupings.length - 1 ? 0 : 2}>
               <Accordion
@@ -287,7 +286,7 @@ function Table({
               </Accordion>
             </Spacing>
           ))}
-        </TableContainerStyle>
+        </>
       );
     }
 

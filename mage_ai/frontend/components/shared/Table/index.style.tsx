@@ -6,6 +6,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export const TableContainerStyle = styled.div<{
   includePadding?: boolean;
+  maxHeight?: string;
   minHeight?: number;
   overflowVisible?: boolean;
 }>`
@@ -15,6 +16,10 @@ export const TableContainerStyle = styled.div<{
 
   ${props => props.includePadding && `
     padding: ${UNIT * 2}px;
+  `}
+
+  ${props => props.maxHeight && `
+    max-height: ${props.maxHeight};
   `}
 
   ${props => props.minHeight && `

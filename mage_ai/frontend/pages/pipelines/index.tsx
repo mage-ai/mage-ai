@@ -29,6 +29,8 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator, removeUnderscore } from '@utils/string';
 import { filterQuery, queryFromUrl } from '@utils/url';
@@ -370,185 +372,192 @@ function PipelineListPage() {
             }
           </Spacing>
         ): (
-          <Table
-            columnFlex={[null, 1, 3, 4, 1, 1, 1, null]}
-            columns={[
-              {
-                label: () => '',
-                uuid: 'action',
-              },
-              {
-                uuid: capitalize(PipelineGroupingEnum.STATUS),
-              },
-              {
-                uuid: 'Name',
-              },
-              {
-                uuid: 'Description',
-              },
-              {
-                uuid: capitalize(PipelineGroupingEnum.TYPE),
-              },
-              {
-                uuid: 'Blocks',
-              },
-              {
-                uuid: 'Triggers',
-              },
-              {
-                center: true,
-                uuid: 'Actions',
-              },
-            ]}
-            grouping={{
-              column: capitalize(groupByQuery),
-              columnIndex: groupByQuery === PipelineGroupingEnum.STATUS
-                ? 1
-                : (groupByQuery === PipelineGroupingEnum.TYPE ? 4 : null),
-              values: groupByQuery === PipelineGroupingEnum.STATUS
-                  ? Object.values(PipelineStatusEnum).map(val => removeUnderscore(val))
-                  : (groupByQuery === PipelineGroupingEnum.TYPE
-                    ? Object.values(PipelineTypeEnum).map(val => PIPELINE_TYPE_LABEL_MAPPING[val])
-                    : []
-                  ),
-            }}
-            isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
-            onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
-              const pipeline = pipelines[rowIndex];
+          <TableContainerStyle
+            includePadding={!!groupByQuery}
+            // Height of table = viewport height - (header height + subheader height)
+            maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74}px)`}
+          >
+            <Table
+              columnFlex={[null, 1, 3, 4, 1, 1, 1, null]}
+              columns={[
+                {
+                  label: () => '',
+                  uuid: 'action',
+                },
+                {
+                  uuid: capitalize(PipelineGroupingEnum.STATUS),
+                },
+                {
+                  uuid: 'Name',
+                },
+                {
+                  uuid: 'Description',
+                },
+                {
+                  uuid: capitalize(PipelineGroupingEnum.TYPE),
+                },
+                {
+                  uuid: 'Blocks',
+                },
+                {
+                  uuid: 'Triggers',
+                },
+                {
+                  center: true,
+                  uuid: 'Actions',
+                },
+              ]}
+              grouping={{
+                column: capitalize(groupByQuery),
+                columnIndex: groupByQuery === PipelineGroupingEnum.STATUS
+                  ? 1
+                  : (groupByQuery === PipelineGroupingEnum.TYPE ? 4 : null),
+                values: groupByQuery === PipelineGroupingEnum.STATUS
+                    ? Object.values(PipelineStatusEnum).map(val => removeUnderscore(val))
+                    : (groupByQuery === PipelineGroupingEnum.TYPE
+                      ? Object.values(PipelineTypeEnum).map(val => PIPELINE_TYPE_LABEL_MAPPING[val])
+                      : []
+                    ),
+              }}
+              isSelectedRow={(rowIndex: number) => pipelines[rowIndex]?.uuid === selectedPipeline?.uuid}
+              onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
+                const pipeline = pipelines[rowIndex];
 
-              return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
-            })}
-            onDoubleClickRow={(rowIndex: number) => {
-              router.push(
-                  '/pipelines/[pipeline]',
-                  `/pipelines/${pipelines[rowIndex].uuid}`,
-              );
-            }}
-            rows={pipelines.map((pipeline, idx) => {
-              const {
-                blocks,
-                description,
-                schedules,
-                type,
-                uuid,
-              } = pipeline;
-              const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
-              const schedulesCount = schedules.length;
-              const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+                return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
+              })}
+              onDoubleClickRow={(rowIndex: number) => {
+                router.push(
+                    '/pipelines/[pipeline]',
+                    `/pipelines/${pipelines[rowIndex].uuid}`,
+                );
+              }}
+              rows={pipelines.map((pipeline, idx) => {
+                const {
+                  blocks,
+                  description,
+                  schedules,
+                  type,
+                  uuid,
+                } = pipeline;
+                const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
+                const schedulesCount = schedules.length;
+                const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
 
-              return [
-                (schedulesCount >= 1 || !!pipelinesEditing[uuid])
-                  ? (
+                return [
+                  (schedulesCount >= 1 || !!pipelinesEditing[uuid])
+                    ? (
+                      <Button
+                        iconOnly
+                        loading={!!pipelinesEditing[uuid]}
+                        noBackground
+                        noBorder
+                        noPadding
+                        onClick={(e) => {
+                          pauseEvent(e);
+                          setPipelinesEditing(prev => ({
+                            ...prev,
+                            [uuid]: true,
+                          }));
+                          updatePipeline({
+                            ...pipeline,
+                            status: isActive
+                              ? ScheduleStatusEnum.INACTIVE
+                              : ScheduleStatusEnum.ACTIVE,
+                          });
+                        }}
+                      >
+                        {isActive
+                          ? <Pause muted size={2 * UNIT} />
+                          : <PlayButtonFilled default size={2 * UNIT} />
+                        }
+                      </Button>
+                    )
+                    : null
+                  ,
+                  <Text
+                    default={!isActive}
+                    key={`pipeline_status_${idx}`}
+                    monospace
+                    success={!!isActive}
+                  >
+                    {isActive
+                      ? ScheduleStatusEnum.ACTIVE
+                      : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
+                    }
+                  </Text>,
+                  <NextLink
+                    as={`/pipelines/${uuid}`}
+                    href="/pipelines/[pipeline]"
+                    key={`pipeline_name_${idx}`}
+                    passHref
+                  >
+                    <Link sameColorAsText>
+                      {uuid}
+                    </Link>
+                  </NextLink>,
+                  <Text
+                    default
+                    key={`pipeline_description_${idx}`}
+                    title={description}
+                    width={UNIT * 90}
+                  >
+                    {description}
+                  </Text>,
+                  <Text
+                    key={`pipeline_type_${idx}`}
+                  >
+                    {PIPELINE_TYPE_LABEL_MAPPING[type]}
+                  </Text>,
+                  <Text
+                    default={blocksCount === 0}
+                    key={`pipeline_block_count_${idx}`}
+                    monospace
+                  >
+                    {blocksCount}
+                  </Text>,
+                  <Text
+                    default={schedulesCount === 0}
+                    key={`pipeline_trigger_count_${idx}`}
+                    monospace
+                  >
+                    {schedulesCount}
+                  </Text>,
+                  <Flex
+                    flex={1} justifyContent="flex-end"
+                    key={`chevron_icon_${idx}`}
+                  >
                     <Button
-                      iconOnly
-                      loading={!!pipelinesEditing[uuid]}
-                      noBackground
-                      noBorder
-                      noPadding
-                      onClick={(e) => {
-                        pauseEvent(e);
-                        setPipelinesEditing(prev => ({
-                          ...prev,
-                          [uuid]: true,
-                        }));
-                        updatePipeline({
-                          ...pipeline,
-                          status: isActive
-                            ? ScheduleStatusEnum.INACTIVE
-                            : ScheduleStatusEnum.ACTIVE,
-                        });
+                      {...sharedOpenButtonProps}
+                      onClick={() => {
+                        router.push(
+                          '/pipelines/[pipeline]',
+                          `/pipelines/${uuid}`,
+                        );
                       }}
+                      title="Detail"
                     >
-                      {isActive
-                        ? <Pause muted size={2 * UNIT} />
-                        : <PlayButtonFilled default size={2 * UNIT} />
-                      }
+                      <Open default size={2 * UNIT} />
                     </Button>
-                  )
-                  : null
-                ,
-                <Text
-                  default={!isActive}
-                  key={`pipeline_status_${idx}`}
-                  monospace
-                  success={!!isActive}
-                >
-                  {isActive
-                    ? ScheduleStatusEnum.ACTIVE
-                    : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
-                  }
-                </Text>,
-                <NextLink
-                  as={`/pipelines/${uuid}`}
-                  href="/pipelines/[pipeline]"
-                  key={`pipeline_name_${idx}`}
-                  passHref
-                >
-                  <Link sameColorAsText>
-                    {uuid}
-                  </Link>
-                </NextLink>,
-                <Text
-                  default
-                  key={`pipeline_description_${idx}`}
-                  title={description}
-                  width={UNIT * 90}
-                >
-                  {description}
-                </Text>,
-                <Text
-                  key={`pipeline_type_${idx}`}
-                >
-                  {PIPELINE_TYPE_LABEL_MAPPING[type]}
-                </Text>,
-                <Text
-                  default={blocksCount === 0}
-                  key={`pipeline_block_count_${idx}`}
-                  monospace
-                >
-                  {blocksCount}
-                </Text>,
-                <Text
-                  default={schedulesCount === 0}
-                  key={`pipeline_trigger_count_${idx}`}
-                  monospace
-                >
-                  {schedulesCount}
-                </Text>,
-                <Flex
-                  flex={1} justifyContent="flex-end"
-                  key={`chevron_icon_${idx}`}
-                >
-                  <Button
-                    {...sharedOpenButtonProps}
-                    onClick={() => {
-                      router.push(
-                        '/pipelines/[pipeline]',
-                        `/pipelines/${uuid}`,
-                      );
-                    }}
-                    title="Detail"
-                  >
-                    <Open default size={2 * UNIT} />
-                  </Button>
-                  <Spacing mr={1} />
-                  <Button
-                    {...sharedOpenButtonProps}
-                    onClick={() => {
-                      router.push(
-                        '/pipelines/[pipeline]/logs',
-                        `/pipelines/${uuid}/logs`,
-                      );
-                    }}
-                    title="Logs"
-                  >
-                    <File default size={2 * UNIT} />
-                  </Button>
-                </Flex>,
-              ];
-            })}
-          />
-      )}
+                    <Spacing mr={1} />
+                    <Button
+                      {...sharedOpenButtonProps}
+                      onClick={() => {
+                        router.push(
+                          '/pipelines/[pipeline]/logs',
+                          `/pipelines/${uuid}/logs`,
+                        );
+                      }}
+                      title="Logs"
+                    >
+                      <File default size={2 * UNIT} />
+                    </Button>
+                  </Flex>,
+                ];
+              })}
+            />
+          </TableContainerStyle>
+        )
+      }
     </Dashboard>
   );
 }
