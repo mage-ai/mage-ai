@@ -554,6 +554,7 @@ function PipelineListPage() {
                   </Flex>,
                 ];
               })}
+              stickyHeader
             />
           </TableContainerStyle>
         )

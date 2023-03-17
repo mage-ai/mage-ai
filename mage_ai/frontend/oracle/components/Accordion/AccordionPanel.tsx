@@ -107,7 +107,7 @@ const TitleStyle = styled.a<AccordionPanelProps>`
     }
     ${outline(props)}
 
-    background-color: ${(props.theme.background || dark.background).panel};
+    background-color: ${(props.theme.background || dark.background).table};
 
     &:hover {
       background-color: ${(props.theme || dark).background.page};
