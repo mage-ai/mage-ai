@@ -46,7 +46,7 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.security import filter_out_env_var_values
 from mage_ai.utils.code import reload_all_repo_modules
 from jupyter_client import KernelClient
-from typing import Dict
+from typing import Dict, List
 import asyncio
 import json
 import multiprocessing
@@ -289,6 +289,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_type = msg_id_value.get('block_type')
         block_uuid = msg_id_value.get('block_uuid')
         pipeline_uuid = msg_id_value.get('pipeline_uuid')
+        
+        error = message.get('error')
+        if error:
+            message['data'] = error[0:1] + error[-2:]
 
         output_dict = dict(
             block_type=block_type,
@@ -484,6 +488,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
+
+    # def __format_error(error: List[str]) -> List[str]:
+    #     for line in error:
+    #         if line 
+    #         print(line)
+    #     return error[0:1] + error[-2:]
 
 
 class StreamBlockOutputToQueue(object):
