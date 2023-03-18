@@ -41,6 +41,9 @@ function PipelineExecution({
   setPipelineExecutionHidden,
 }: PipelineExecutionProps) {
   const numberOfMessages = useMemo(() => pipelineMessages?.length || 0, [pipelineMessages]);
+  const truncatedPipelineMessages = useMemo(() => (
+    numberOfMessages > 100 ? pipelineMessages.slice(-100) : pipelineMessages
+  ), [numberOfMessages, pipelineMessages]);
 
   const togglePipelineExecution = useCallback(() => {
     const val = !pipelineExecutionHidden;
@@ -108,7 +111,7 @@ function PipelineExecution({
               hasError={false}
               selected
             >
-              {pipelineMessages.map(({
+              {truncatedPipelineMessages.map(({
                 data: dataInit,
                 type: dataType,
               }: KernelOutputType, idx: number) => {
