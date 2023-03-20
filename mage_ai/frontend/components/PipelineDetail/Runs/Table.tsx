@@ -121,7 +121,7 @@ function RetryButton({
       <Button
         backgroundColor={isCancelingPipeline && dark.accent.yellow}
         beforeIcon={
-          RunStatus.INITIAL !== status && (
+          (RunStatus.INITIAL !== status && !disabled) && (
             <>
               {RunStatus.COMPLETED === status && <Check size={2 * UNIT} />}
               {[RunStatus.FAILED, RunStatus.CANCELLED].includes(status) && (
