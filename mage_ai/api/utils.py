@@ -1,4 +1,4 @@
-from mage_ai.orchestration.db.models import Oauth2AccessToken
+from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken
 from mage_ai.settings import (
     DISABLE_NOTEBOOK_EDIT_ACCESS,
     REQUIRE_USER_AUTHENTICATION,

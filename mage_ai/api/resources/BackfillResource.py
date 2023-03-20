@@ -2,7 +2,7 @@ from datetime import datetime
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.orchestration.backfills.service import start_backfill, cancel_backfill
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import Backfill
+from mage_ai.orchestration.db.models.schedules import Backfill
 from mage_ai.shared.hash import extract, merge_dict
 from sqlalchemy import desc
 

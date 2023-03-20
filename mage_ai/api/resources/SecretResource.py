@@ -2,7 +2,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.shared.secrets import create_secret, get_repo_path
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import Secret
+from mage_ai.orchestration.db.models.secrets import Secret
 from mage_ai.shared.hash import extract
 
 ALLOWED_PAYLOAD_KEYS = [

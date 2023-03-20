@@ -4,7 +4,7 @@ from datetime import datetime
 from functools import reduce
 from mage_ai.api.operations.constants import READ
 from mage_ai.api.resources.BaseResource import BaseResource
-from mage_ai.orchestration.db.models import BaseModel
+from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.shared.hash import merge_dict
 import importlib
 import inspect

@@ -583,7 +583,11 @@ class Pipeline:
 
     @safe_db_query
     def __transfer_related_models(self, old_uuid, new_uuid):
-        from mage_ai.orchestration.db.models import Backfill, PipelineRun, PipelineSchedule
+        from mage_ai.orchestration.db.models.schedules import (
+            Backfill,
+            PipelineRun,
+            PipelineSchedule,
+        )
 
         # Migrate pipeline schedules
         PipelineSchedule.query.filter(PipelineSchedule.pipeline_uuid == old_uuid).update({

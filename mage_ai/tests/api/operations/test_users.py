@@ -1,4 +1,4 @@
-from mage_ai.orchestration.db.models import User
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.tests.api.operations.base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
 

@@ -2,15 +2,17 @@ from croniter import croniter
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.utils import get_all_ancestors, is_dynamic_block
+from mage_ai.data_preparation.models.block.utils import (
+    get_all_ancestors,
+    is_dynamic_block,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.errors import ValidationError
+from mage_ai.orchestration.db.models.base import Base, BaseModel
 from mage_ai.shared.array import find
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
-from mage_ai.shared.strings import camel_to_snake_case
 from mage_ai.shared.utils import clean_name
 from sqlalchemy import (
     Column,
@@ -22,113 +24,12 @@ from sqlalchemy import (
     JSON,
     String,
     Table,
-    Text,
 )
-from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import joinedload, relationship, validates
-from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
-import re
 import uuid
-
-
-Base = declarative_base()
-
-
-class classproperty(property):
-    def __get__(self, owner_self, owner_cls):
-        return self.fget(owner_cls)
-
-
-class BaseModel(Base):
-    __abstract__ = True
-
-    @declared_attr
-    def __tablename__(cls):
-        return camel_to_snake_case(cls.__name__)
-
-    @classproperty
-    def query(cls):
-        return db_connection.session.query(cls)
-
-    @classproperty
-    def select(cls):
-        return db_connection.session.query
-
-    @property
-    def session(self):
-        return db_connection.session
-
-    id = Column(
-        Integer,
-        primary_key=True,
-        autoincrement=True,
-    )
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
-    @classmethod
-    def create(self, **kwargs):
-        model = self(**kwargs)
-        model.save()
-        return model
-
-    def full_clean(self, **kwargs) -> None:
-        pass
-
-    @classmethod
-    @safe_db_query
-    def get(self, uuid):
-        return self.query.get(uuid)
-
-    def save(self, commit=True) -> None:
-        self.session.add(self)
-        if commit:
-            try:
-                self.session.commit()
-            except Exception as e:
-                self.session.rollback()
-                raise e
-
-    def update(self, **kwargs) -> None:
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-        try:
-            self.session.commit()
-        except Exception as e:
-            self.session.rollback()
-            raise e
-
-    def delete(self, commit: bool = True) -> None:
-        self.session.delete(self)
-        if commit:
-            try:
-                self.session.commit()
-            except Exception as e:
-                self.session.rollback()
-                raise e
-
-    def refresh(self):
-        self.session.refresh(self)
-
-    def to_dict(self, include_attributes=[]) -> Dict:
-        def __format_value(value):
-            if type(value) is datetime:
-                return str(value)
-            elif type(value) is InstrumentedList:
-                return [__format_value(v) for v in value]
-            elif hasattr(value, 'to_dict'):
-                return value.to_dict()
-            return value
-        obj_dict = {c.name: __format_value(getattr(self, c.name)) for c in self.__table__.columns}
-        if include_attributes is not None and len(include_attributes) > 0:
-            for attr in include_attributes:
-                if hasattr(self, attr):
-                    obj_dict[attr] = __format_value(getattr(self, attr))
-        return obj_dict
 
 
 pipeline_schedule_event_matcher_association_table = Table(
@@ -137,88 +38,6 @@ pipeline_schedule_event_matcher_association_table = Table(
     Column('pipeline_schedule_id', ForeignKey('pipeline_schedule.id')),
     Column('event_matcher_id', ForeignKey('event_matcher.id')),
 )
-
-
-class User(BaseModel):
-    avatar = Column(String(255), default=None)
-    email = Column(String(255), default=None, index=True, unique=True)
-    first_name = Column(String(255), default=None)
-    last_name = Column(String(255), default=None)
-    owner = Column(Boolean, default=False)
-    password_hash = Column(String(255), default=None)
-    password_salt = Column(String(255), default=None)
-    roles = Column(Integer, default=None)
-    username = Column(String(255), default=None, index=True, unique=True)
-
-    oauth2_applications = relationship('Oauth2Application', back_populates='user')
-    oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='user')
-
-    @validates('email')
-    def validate_email(self, key, value):
-        if value:
-            regex = re.compile(r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])")  # noqa: E501
-            if not re.fullmatch(regex, value):
-                raise ValidationError('Email address is invalid.', metadata=dict(
-                    key=key,
-                    value=value,
-                ))
-        return value
-
-    @property
-    def roles_display(self) -> str:
-        if self.owner:
-            return 'Owner'
-        elif self.roles:
-            if self.roles & 1 != 0:
-                return 'Admin'
-            elif self.roles & 2 != 0:
-                return 'Editor'
-            elif self.roles & 4 != 0:
-                return 'Viewer'
-
-
-class Oauth2Application(BaseModel):
-    class AuthorizationGrantType(str, enum.Enum):
-        AUTHORIZATION_CODE = 'authorization-code'
-        CLIENT_CREDENTIALS = 'client-credentials'
-
-    class ClientType(str, enum.Enum):
-        PRIVATE = 'private'
-        PUBLIC = 'public'
-
-    authorization_grant_type = Column(
-        Enum(AuthorizationGrantType),
-        default=AuthorizationGrantType.AUTHORIZATION_CODE,
-    )
-    client_id = Column(String(255), index=True, unique=True)
-    client_type = Column(Enum(ClientType), default=ClientType.PRIVATE)
-    name = Column(String(255))
-    redirect_uris = Column(String(255), default=None)
-    user = relationship(User, back_populates='oauth2_applications')
-    user_id = Column(Integer, ForeignKey('user.id'))
-
-    oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='oauth2_application')
-
-    @classmethod
-    @safe_db_query
-    def query_client(self, api_key: str):
-        return self.query.filter(
-            Oauth2Application.client_id == api_key,
-        ).first()
-
-
-class Oauth2AccessToken(BaseModel):
-    expires = Column(DateTime(timezone=True))
-    oauth2_application = relationship(Oauth2Application, back_populates='oauth2_access_tokens')
-    oauth2_application_id = Column(Integer, ForeignKey('oauth2_application.id'))
-    token = Column(String(255), index=True, unique=True)
-    user = relationship(User, back_populates='oauth2_access_tokens')
-    user_id = Column(Integer, ForeignKey('user.id'))
-
-    def is_valid(self) -> bool:
-        return self.token and \
-            self.expires and \
-            self.expires >= datetime.utcnow().replace(tzinfo=self.expires.tzinfo)
 
 
 class PipelineSchedule(BaseModel):
@@ -710,9 +529,3 @@ class Backfill(BaseModel):
                 Backfill.pipeline_schedule_id.in_(pipeline_schedule_ids),
             )
         return []
-
-
-class Secret(BaseModel):
-    name = Column(String(255), unique=True)
-    value = Column(Text)
-    repo_name = Column(String(255))

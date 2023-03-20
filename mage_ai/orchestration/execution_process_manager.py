@@ -1,4 +1,4 @@
-from mage_ai.orchestration.db.models import PipelineRun
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 import multiprocessing
 
 

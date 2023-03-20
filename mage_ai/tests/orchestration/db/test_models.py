@@ -1,9 +1,9 @@
 from datetime import datetime
-from mage_ai.orchestration.db.models import (
+from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run,

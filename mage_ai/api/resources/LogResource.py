@@ -4,7 +4,7 @@ from mage_ai.api.operations.constants import META_KEY_LIMIT
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
 from sqlalchemy.orm import aliased
 from typing import Dict, List
 

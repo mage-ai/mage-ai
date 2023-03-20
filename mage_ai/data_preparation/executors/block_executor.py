@@ -2,7 +2,7 @@ from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
-from mage_ai.orchestration.db.models import PipelineRun
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from typing import Callable, Dict, List, Union
@@ -233,7 +233,7 @@ class BlockExecutor:
             if not block_run_id:
                 block_run_id = int(callback_url.split('/')[-1])
 
-            from mage_ai.orchestration.db.models import BlockRun
+            from mage_ai.orchestration.db.models.schedules import BlockRun
 
             block_run = BlockRun.query.get(block_run_id)
             block_run.update(status=status)

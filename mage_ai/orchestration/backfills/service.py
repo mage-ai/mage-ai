@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from mage_ai.orchestration.db.models import Backfill, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import Backfill, PipelineRun, PipelineSchedule
 from mage_ai.shared.hash import merge_dict
 from typing import Dict, List
 import dateutil.parser

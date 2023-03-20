@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
-from mage_ai.orchestration.db.models import PipelineRun, BlockRun
+from mage_ai.orchestration.db.models.schedules import PipelineRun, BlockRun
 from sqlalchemy import or_
 from typing import Dict, List, Tuple
 import json

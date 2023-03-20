@@ -1,7 +1,7 @@
 from mage_ai.shared.hash import merge_dict
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import (
+from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,

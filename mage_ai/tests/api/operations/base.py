@@ -1,7 +1,7 @@
 from faker import Faker
 from mage_ai.api.operations import constants
 from mage_ai.api.operations.base import BaseOperation
-from mage_ai.orchestration.db.models import User
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
 from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
 from typing import Dict, List, Union

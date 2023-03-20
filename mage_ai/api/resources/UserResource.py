@@ -3,7 +3,7 @@ from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt, verify_password
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models import User
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.hash import extract, ignore_keys
 
 

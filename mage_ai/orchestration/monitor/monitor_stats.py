@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from mage_ai.shared.hash import group_by, merge_dict
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from sqlalchemy.orm import joinedload
 from typing import Callable, Dict, List
 import dateutil.parser

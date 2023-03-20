@@ -8,7 +8,7 @@ from mage_ai.data_preparation.repo_manager import (
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
-from mage_ai.orchestration.db.models import Oauth2Application, User
+from mage_ai.orchestration.db.models.oauth import Oauth2Application, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (

@@ -1,4 +1,4 @@
-from mage_ai.orchestration.db.models import User
+from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.array import find
 import importlib
 

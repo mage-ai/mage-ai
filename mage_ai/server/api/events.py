@@ -1,5 +1,5 @@
 from .base import BaseDetailHandler, BaseHandler
-from mage_ai.orchestration.db.models import EventMatcher, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import EventMatcher, PipelineSchedule
 from mage_ai.orchestration.triggers.event_trigger import EventTrigger
 import json
 

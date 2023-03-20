@@ -1,5 +1,5 @@
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db import safe_db_query
 from sqlalchemy.orm import aliased
 
