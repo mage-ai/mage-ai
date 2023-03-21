@@ -3,6 +3,7 @@ from typing import Dict
 import dask.dataframe as dd
 import pandas as pd
 import simplejson
+import traceback
 
 MAX_PARTITION_BYTE_SIZE = 100 * 1024 * 1024
 JSON_SERIALIZABLE_COLUMN_TYPES = [
@@ -12,6 +13,12 @@ JSON_SERIALIZABLE_COLUMN_TYPES = [
 STRING_SERIALIZABLE_COLUMN_TYPES = [
     'ObjectId',
 ]
+
+CAST_TYPE_COLUMN_TYPES = set([
+    'Int64',
+    'int64',
+    'float64',
+])
 
 
 def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
@@ -31,6 +38,16 @@ def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
                 row[column] = str(val)
 
     return row
+
+
+def cast_column_types(df: pd.DataFrame, column_types: Dict):
+    for column, column_type in column_types.items():
+        if column_type in CAST_TYPE_COLUMN_TYPES:
+            try:
+                df[column] = df[column].astype(column_type)
+            except Exception:
+                traceback.print_exc()
+    return df
 
 
 def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:

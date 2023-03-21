@@ -12,6 +12,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.utils import (
     apply_transform_pandas,
     # dask_from_pandas,
+    cast_column_types,
     deserialize_columns,
     serialize_columns,
 )
@@ -363,7 +364,7 @@ class Variable:
                 column_types = json.load(f)
                 # ddf = dask_from_pandas(df)
                 df = apply_transform_pandas(df, lambda row: deserialize_columns(row, column_types))
-
+                df = cast_column_types(df, column_types)
         return df
 
     def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
@@ -392,24 +393,28 @@ class Variable:
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types
         for c in df_output.columns:
-            series_non_null = df_output[c].dropna()
-            if len(series_non_null) > 0:
-                coltype = type(series_non_null.iloc[0])
+            c_dtype = df_output[c].dtype
+            if not is_object_dtype(c_dtype):
+                column_types[c] = str(c_dtype)
+            else:
+                series_non_null = df_output[c].dropna()
+                if len(series_non_null) > 0:
+                    coltype = type(series_non_null.iloc[0])
 
-                if is_object_dtype(series_non_null.dtype):
-                    try:
-                        df_output[c] = series_non_null.astype(coltype)
-                    except Exception:
-                        # Fall back to convert to string
-                        # df_output[c] = series_non_null.astype(str)
-                        pass
+                    if is_object_dtype(series_non_null.dtype):
+                        try:
+                            df_output[c] = series_non_null.astype(coltype)
+                        except Exception:
+                            # Fall back to convert to string
+                            # df_output[c] = series_non_null.astype(str)
+                            pass
 
-                col_not_numpy_type = coltype.__module__ != np.__name__
-                col_is_numpy_array_type = coltype.__name__ == np.ndarray.__name__
-                if col_not_numpy_type or col_is_numpy_array_type:
-                    column_types[c] = coltype.__name__
-                else:
-                    column_types[c] = type(series_non_null.iloc[0].item()).__name__
+                    col_not_numpy_type = coltype.__module__ != np.__name__
+                    col_is_numpy_array_type = coltype.__name__ == np.ndarray.__name__
+                    if col_not_numpy_type or col_is_numpy_array_type:
+                        column_types[c] = coltype.__name__
+                    else:
+                        column_types[c] = type(series_non_null.iloc[0].item()).__name__
 
         self.storage.makedirs(self.variable_path, exist_ok=True)
 
