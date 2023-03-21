@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.shared.hash import merge_dict
 from typing import Callable, Dict, List, Union
+import asyncio
 import os
 import yaml
 
@@ -89,6 +90,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
             raise e
 
     def __execute_in_python(self):
+        from mage_ai.streaming.sources.base import SourceConsumeMethod
         from mage_ai.streaming.sources.source_factory import SourceFactory
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
         source_config = yaml.safe_load(self.source_block.content)
@@ -110,8 +112,19 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 )['output']
             sink.batch_write(messages)
 
+        async def handle_event_async(message, **kwargs):
+            if self.transformer_block is not None:
+                messages = self.transformer_block.execute_block(
+                    input_args=[[message]],
+                    global_vars=kwargs,
+                )['output']
+            sink.batch_write(messages)
+
         # Long running method
-        source.batch_read(handler=handle_batch_events)
+        if source.consume_method == SourceConsumeMethod.BATCH_READ:
+            source.batch_read(handler=handle_batch_events)
+        elif source.consume_method == SourceConsumeMethod.READ_ASYNC:
+            asyncio.run(source.read_async(handler=handle_event_async))
 
     def __excute_in_flink(self):
         """

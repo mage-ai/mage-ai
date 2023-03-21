@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from kafka import KafkaConsumer
 from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.sources.base import BaseSource
+from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
 from enum import Enum
 from typing import Callable, Dict
 import importlib
@@ -123,6 +123,13 @@ class KafkaSource(BaseSource):
             self.__print_message(message)
             data = self.__deserialize_message(message.value)
             handler(data)
+
+    async def read_async(self, handler: Callable):
+        self._print('Start consuming messages asynchronously.')
+        for message in self.consumer:
+            self.__print_message(message)
+            data = self.__deserialize_message(message.value)
+            await handler(data)
 
     def batch_read(self, handler: Callable):
         self._print('Start consuming messages.')
