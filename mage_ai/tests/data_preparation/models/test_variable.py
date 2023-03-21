@@ -3,6 +3,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable, VariableType
 from mage_ai.tests.base_test import DBTestCase
 from pandas.testing import assert_frame_equal
+import numpy as np
 import os
 import pandas as pd
 
@@ -41,11 +42,12 @@ class VariableTest(DBTestCase):
         )
         df2 = pd.DataFrame(
             [
-                [1, 'test', 3.123],
-                [2, 'test2', 4.321],
+                [1, 'test', 3.123, np.NaN],
+                [2, 'test2', 4.321, np.NaN],
             ],
-            columns=['col1', 'col2', 'col3']
+            columns=['col1', 'col2', 'col3', 'col4']
         )
+        df2['col4'] = df2['col4'].astype('Int64')
         variable1.write_data(df1)
         variable2.write_data(df2)
         variable_dir_path = os.path.join(pipeline.dir_path, '.variables')
