@@ -84,6 +84,7 @@ spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).get
 
 In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
 
+---
 
 ## Standalone Spark cluster
 
@@ -115,6 +116,7 @@ spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).get
 
 In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
 
+---
 
 ## AWS
 
@@ -482,9 +484,13 @@ starting it again.
 Please make sure to terminate your EMR cluster when you’re done using it so you
 can save money.
 
+---
+
 ## [WIP] GCP
 
 Coming soon...
+
+---
 
 ## [WIP] Azure
 
