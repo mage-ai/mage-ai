@@ -406,6 +406,7 @@ function PipelineDetail({
           executionState={executionState}
           fetchFileTree={fetchFileTree}
           fetchPipeline={fetchPipeline}
+          hideRunButton={isStreaming}
           interruptKernel={interruptKernel}
           key={uuid}
           mainContainerRef={mainContainerRef}
