@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from kafka import KafkaConsumer
 from mage_ai.shared.config import BaseConfig
-from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
+from mage_ai.streaming.sources.base import BaseSource
 from enum import Enum
 from typing import Callable, Dict
 import importlib
