@@ -175,7 +175,7 @@ function Terminal({
           }));
           setCommand('');
           interruptKernel();
-        } else if (!busy) {
+        } else if (true) {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
             const minIdx = Math.max(0, cursorIndex - 1);
             setCommand(prev => prev.slice(0, minIdx) + prev.slice(cursorIndex));
@@ -382,13 +382,13 @@ in the context menu that appears.
             return acc.concat(arr);
           }, [])}
 
-          {busy && (
+          {/* {busy && (
             <Spacing mt={1}>
               <Spinner />
             </Spacing>
-          )}
+          )} */}
 
-          {!busy && (
+          {(
             <InputStyle
               focused={focus
                 && (command.length === 0 || cursorIndex > command.length)}
