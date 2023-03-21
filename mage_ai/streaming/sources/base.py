@@ -1,10 +1,18 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from enum import Enum
+from typing import Callable, Dict
 import json
+
+
+class SourceConsumeMethod(str, Enum):
+    BATCH_READ = 'BATCH_READ'
+    READ = 'READ'
+    READ_ASYNC = 'READ_ASYNC'
 
 
 class BaseSource(ABC):
     config_class = None
+    consume_method = SourceConsumeMethod.BATCH_READ
 
     def __init__(self, config: Dict, **kwargs):
         if self.config_class is not None:
@@ -19,11 +27,15 @@ class BaseSource(ABC):
         pass
 
     @abstractmethod
-    def read(self):
+    def read(self, handler: Callable):
         pass
 
+    async def read_async(self, handler: Callable):
+        self._print('Start consuming messages asynchronously.')
+        return self.read(handler)
+
     @abstractmethod
-    def batch_read(self):
+    def batch_read(self, handler: Callable):
         pass
 
     def read_checkpoint(self):

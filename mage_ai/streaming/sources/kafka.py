@@ -124,6 +124,13 @@ class KafkaSource(BaseSource):
             data = self.__deserialize_message(message.value)
             handler(data)
 
+    async def read_async(self, handler: Callable):
+        self._print('Start consuming messages asynchronously.')
+        for message in self.consumer:
+            self.__print_message(message)
+            data = self.__deserialize_message(message.value)
+            await handler(data)
+
     def batch_read(self, handler: Callable):
         self._print('Start consuming messages.')
         if self.config.batch_size > 0:
