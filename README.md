@@ -226,9 +226,9 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 # 👩‍🏫 Tutorials
 
 - [Load data from API, transform it, and export it to PostgreSQL](https://docs.mage.ai/tutorials/load-api-data)
-- [Integrate Mage into an existing Airflow project](https://docs.mage.ai/integrations/dbt-models)
+- [Integrate Mage into an existing Airflow project](https://docs.mage.ai/integrations/airflow)
 - [Train model on Titanic dataset](https://docs.mage.ai/tutorials/train-model)
-- [Set up DBT models and orchestrate DBT runs](https://docs.mage.ai/integrations/airflow)
+- [Set up DBT models and orchestrate DBT runs](https://docs.mage.ai/integrations/dbt-models)
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
