@@ -1,16 +1,16 @@
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet
 from mage_ai.data_preparation.repo_manager import (
     get_data_dir,
     get_repo_path
 )
-from mage_ai.orchestration.db.models.secrets import Secret
-from typing import List
+from typing import Dict
 import os
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
 
 def create_secret(name: str, value: str):
+    from mage_ai.orchestration.db.models.secrets import Secret
     secrets_dir = os.path.join(
         get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
     key_file = os.path.join(secrets_dir, 'key')
@@ -42,44 +42,33 @@ def get_encryption_key() -> str:
     secrets_dir = os.path.join(
         get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
     key_file = os.path.join(secrets_dir, 'key')
-
-    try:
-        with open(key_file, 'r') as f:
-            key = f.read()
-    except Exception:
-        key = None
+    with open(key_file, 'r') as f:
+        key = f.read()
 
     return key
 
 
-def get_valid_secrets() -> List[Secret]:
-    key = get_encryption_key()
-    if not key:
-        return []
-
-    fernet = Fernet(key)
+def get_secrets() -> Dict[str, str]:
+    from mage_ai.orchestration.db.models.secrets import Secret
+    fernet = Fernet(get_encryption_key())
 
     secrets = Secret.query.filter(Secret.repo_name == get_repo_path())
-    valid_secrets = []
+    secret_obj = {}
     if secrets.count() > 0:
         for secret in secrets:
-            try:
+            secret_obj[secret.name] = \
                 fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
-                valid_secrets.append(secret)
-            except InvalidToken:
-                pass
 
-    return valid_secrets
+    return secret_obj
 
 
 def get_secret_value(name: str) -> str:
+    from mage_ai.orchestration.db.models.secrets import Secret
     fernet = Fernet(get_encryption_key())
 
-    secret = None
     try:
         secret = Secret.query.filter(Secret.name == name).one_or_none()
+        if secret:
+            return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
     except Exception:
         print(f'WARNING: Could not find secret value for secret {name}')
-
-    if secret:
-        return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
