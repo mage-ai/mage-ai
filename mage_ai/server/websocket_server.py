@@ -46,7 +46,7 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.security import filter_out_env_var_values
 from mage_ai.utils.code import reload_all_repo_modules
 from jupyter_client import KernelClient
-from typing import Dict
+from typing import Dict, List
 import asyncio
 import json
 import multiprocessing
@@ -290,6 +290,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_uuid = msg_id_value.get('block_uuid')
         pipeline_uuid = msg_id_value.get('pipeline_uuid')
 
+        error = message.get('error')
+        if error:
+            message['data'] = self.__format_error(error)
+
         output_dict = dict(
             block_type=block_type,
             pipeline_uuid=pipeline_uuid,
@@ -484,6 +488,27 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
+
+    def __format_error(error: List[str]) -> List[str]:
+        initial_regex = r'.*execute_custom_code\(\).*'
+        end_regex = r'.*Block.[_a-z]*\(.*'
+        initial_idx = 0
+        end_idx = 0
+        for idx, line in enumerate(error):
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            line_without_ansi = ansi_escape.sub('', line)
+            if re.match(initial_regex, line_without_ansi) and not initial_idx:
+                initial_idx = idx
+            if re.match(end_regex, line_without_ansi):
+                end_idx = idx
+
+        try:
+            if initial_idx and end_idx:
+                return error[:initial_idx - 1] + error[end_idx + 1:]
+        except Exception:
+            pass
+
+        return error
 
 
 class StreamBlockOutputToQueue(object):
