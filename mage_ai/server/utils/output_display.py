@@ -266,7 +266,6 @@ from mage_ai.shared.array import find
 import datetime
 import json
 import pandas as pd
-import traceback
 
 
 db_connection.start_session()
