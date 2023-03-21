@@ -84,6 +84,39 @@ spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).get
 
 In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
 
+---
+
+## Standalone Spark cluster
+
+### 1. Build Mage docker image with Spark environment
+* Download the [Dockerfile template](https://github.com/mage-ai/mage-ai/blob/master/integrations/spark/Dockerfile) for Mage with Spark environment.
+* Build the docker image with the command `docker build -t mage_spark .`
+
+
+### 2. Start Mage with `SPARK_MASTER_HOST` environment variable
+Type this command in your terminal to start Mage using docker
+
+```bash
+docker run -it --name mage_spark -e SPARK_MASTER_HOST='host' -p 6789:6789 -v $(pwd):/home/src mage_spark \
+  /app/run_app.sh mage start demo_project
+```
+Notes
+* `demo_project` is the name of your project, you can change it to anything you want
+* Set the Spark cluster's master node url as the value for environment variable `SPARK_MASTER_HOST`
+
+
+### 3. Run PySpark code in Mage
+When Mage is running, you can create a "Standard(batch)" pipeline and then write PySpark code in any blocks.
+
+In `Scratchpad` block, you'll need to manually create the Spark session with the code:
+```python
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
+```
+
+In other blocks, you can access the Spark session from the `kwargs` via `kwargs['spark']`.
+
+---
 
 ## AWS
 
@@ -451,9 +484,13 @@ starting it again.
 Please make sure to terminate your EMR cluster when you’re done using it so you
 can save money.
 
+---
+
 ## [WIP] GCP
 
 Coming soon...
+
+---
 
 ## [WIP] Azure
 
