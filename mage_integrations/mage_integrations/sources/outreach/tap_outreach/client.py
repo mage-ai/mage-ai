@@ -21,7 +21,7 @@ class RateLimitError(Exception):
 class OutreachClient(object):
     BASE_URL = 'https://api.outreach.io/api/v2/'
 
-    def __init__(self, config):
+    def __init__(self, config, logger=LOGGER):
         self.__user_agent = config.get('user_agent')
         self.__client_id = config.get('client_id')
         self.__client_secret = config.get('client_secret')
@@ -31,6 +31,7 @@ class OutreachClient(object):
         self.__access_token = None
         self.__expires_at = None
         self.__session = requests.Session()
+        self.logger = logger
 
     def __enter__(self):
         return self
@@ -58,11 +59,14 @@ class OutreachClient(object):
                       10)  # pad by 10 seconds for clock drift
 
     def sleep_for_reset_period(self, response):
-        reset = datetime.fromtimestamp(
-            int(response.headers['x-ratelimit-reset']))
-        sleep_time = (reset - datetime.now()).total_seconds() + \
-            10  # pad for clock drift/sync issues
-        LOGGER.warn(
+        if response.headers.get('x-ratelimit-reset'):
+            reset = datetime.fromtimestamp(
+                int(response.headers['x-ratelimit-reset']))
+            sleep_time = (reset - datetime.now()).total_seconds() + 10
+        else:
+            self.logger.info('Key x-ratelimit-reset is not in response header.')
+            sleep_time = 30
+        self.logger.info(
             'Sleeping for {:.2f} seconds for next rate limit window'.format(sleep_time))
         time.sleep(sleep_time)
 
@@ -104,7 +108,7 @@ class OutreachClient(object):
             raise Server5xxError(response.text)
 
         if response.status_code == 429:
-            LOGGER.warn('Rate limit hit - 429')
+            self.logger.info('Rate limit hit - 429')
             self.sleep_for_reset_period(response)
             raise RateLimitError()
 
@@ -115,7 +119,7 @@ class OutreachClient(object):
             quota_used = 1 - int(response.headers['x-ratelimit-remaining']) / \
                 int(response.headers['x-ratelimit-remaining'])
             if quota_used > float(self.__quota_limit):
-                LOGGER.warn(
+                self.logger.info(
                     'Quota used: {:.2f} / {}'.format(quota_used, self.__quota_limit))
                 self.sleep_for_reset_period(response)
 

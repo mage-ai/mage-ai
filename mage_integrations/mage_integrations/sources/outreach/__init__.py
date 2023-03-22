@@ -27,7 +27,7 @@ class Outreach(Source):
         return Catalog(catalog_entries)
 
     def sync(self, catalog: Catalog) -> None:
-        with OutreachClient(self.config) as client:
+        with OutreachClient(self.config, logger=self.logger) as client:
             check_auth(client)
             sync(
                 client,
