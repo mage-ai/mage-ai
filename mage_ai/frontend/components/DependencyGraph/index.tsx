@@ -28,7 +28,9 @@ import {
   NodeType,
   PortType,
   SideEnum,
-  SHARED_PORT_PROPS } from './constants';
+  SHARED_PORT_PROPS,
+  ZOOMABLE_CANVAS_SIZE,
+} from './constants';
 import { GraphContainerStyle } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -580,6 +582,8 @@ function DependencyGraph({
           }}
           edges={edges}
           fit
+          maxHeight={ZOOMABLE_CANVAS_SIZE}
+          maxWidth={ZOOMABLE_CANVAS_SIZE}
           node={(node) => (
             <Node
               {...node}

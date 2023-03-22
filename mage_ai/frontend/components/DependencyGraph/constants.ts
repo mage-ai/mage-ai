@@ -5,6 +5,7 @@ import BlockType, {
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const MIN_NODE_WIDTH = UNIT * 20;
+export const ZOOMABLE_CANVAS_SIZE = 5200;
 
 export const SHARED_PORT_PROPS = {
   height: 10,
