@@ -6,7 +6,7 @@ from typing import Dict, Generator, List
 
 class Commercetools(Source):
     """
-    Front API doc: https://dev.frontapp.com/reference/introduction
+    Commercetools API doc: https://docs.commercetools.com/api/
     """
 
     def __init__(self, **kwargs):
