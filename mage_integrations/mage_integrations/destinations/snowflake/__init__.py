@@ -31,6 +31,7 @@ def convert_array(value, column_settings):
         elif is_number(val_str):
             return val_str
         else:
+            val_str = val_str.replace("'", "\\'")
             return f"'{val_str}'"
 
     if type(value) is list and value:
