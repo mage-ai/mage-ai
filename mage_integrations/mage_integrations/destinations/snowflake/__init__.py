@@ -11,12 +11,12 @@ from mage_integrations.destinations.snowflake.utils import (
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
+    clean_column_name,
     build_create_table_command,
     build_insert_command,
     column_type_mapping,
     convert_column_to_type,
 )
-from mage_integrations.destinations.utils import clean_column_name
 from mage_integrations.utils.array import batch
 from mage_integrations.utils.strings import is_number
 from typing import Dict, List, Tuple
