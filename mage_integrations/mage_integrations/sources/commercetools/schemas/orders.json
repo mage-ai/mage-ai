@@ -25,7 +25,7 @@
       "additionalProperties": true
     },
     "completedAt": {
-      "type": ["null", "integer"],
+      "type": ["null", "string"],
       "format": "date-time"
     },
     "orderNumber": {
