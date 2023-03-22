@@ -201,6 +201,7 @@ export const createColorMenuItems = (
         </Text>
       </FlexContainer>
     ),
+    leftAligned: true,
     onClick: () => {
       addNewBlock({
         color,

@@ -32,6 +32,7 @@ export type FlyoutMenuItemType = {
   keyTextGroups?: NumberOrString[][];
   keyboardShortcutValidation?: (ks: KeyboardShortcutType, index?: number) => boolean;
   label: () => string | any;
+  leftAligned?: boolean;
   linkProps?: {
     as?: string;
     href: string;
@@ -185,6 +186,7 @@ function FlyoutMenu({
           isGroupingTitle,
           keyTextGroups,
           label,
+          leftAligned,
           linkProps,
           onClick,
           openConfirmationDialogue,
@@ -255,7 +257,7 @@ function FlyoutMenu({
               <FlexContainer
                 alignItems="center"
                 fullWidth
-                justifyContent="space-between"
+                justifyContent={leftAligned ? 'flex-start' : 'space-between'}
               >
                 <Flex alignItems="center">
                   {beforeIcon &&
