@@ -130,7 +130,14 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         results = self.build_connection().load(query)
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+
+        def format_col_name(col_name: str):
+            if self.disable_double_quotes and col_name:
+                return col_name.upper()
+            return col_name
+
+        new_columns = [c for c in schema_columns
+                       if format_col_name(clean_column_name(c)) not in current_columns]
 
         if not new_columns:
             return []
