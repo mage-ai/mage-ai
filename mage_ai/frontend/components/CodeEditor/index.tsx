@@ -60,7 +60,7 @@ type CodeEditorProps = {
   padding?: boolean;
   placeholder?: string;
   readOnly?: boolean;
-  shortcuts?: ((monaco: any, editor: any, block?: BlockType) => void)[];
+  shortcuts?: ((monaco: any, editor: any) => void)[];
   showLineNumbers?: boolean;
   tabSize?: number;
   theme?: any;
