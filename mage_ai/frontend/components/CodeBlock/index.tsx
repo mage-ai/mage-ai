@@ -1781,7 +1781,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
                   content = addScratchpadNote(newBlock, content);
 
                   if (BlockLanguageEnum.SQL === block.language) {
-                    content = addSqlBlockNote(content);
                     configuration = {
                       ...selectKeys(block.configuration, [
                         CONFIG_KEY_DATA_PROVIDER,
@@ -1792,6 +1791,9 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
                       ]),
                       ...configuration,
                     };
+                  }
+                  if (BlockLanguageEnum.SQL === newBlock.language) {
+                    content = addSqlBlockNote(content);
                   }
 
                   return addNewBlock({
