@@ -64,9 +64,9 @@ class OutreachClient(object):
                 int(response.headers['x-ratelimit-reset']))
             sleep_time = (reset - datetime.now()).total_seconds() + 10
         else:
-            self.logger.warn('Key x-ratelimit-reset is not in response header.')
+            self.logger.info('Key x-ratelimit-reset is not in response header.')
             sleep_time = 30
-        self.logger.warn(
+        self.logger.info(
             'Sleeping for {:.2f} seconds for next rate limit window'.format(sleep_time))
         time.sleep(sleep_time)
 
@@ -108,7 +108,7 @@ class OutreachClient(object):
             raise Server5xxError(response.text)
 
         if response.status_code == 429:
-            self.logger.warn('Rate limit hit - 429')
+            self.logger.info('Rate limit hit - 429')
             self.sleep_for_reset_period(response)
             raise RateLimitError()
 
@@ -119,7 +119,7 @@ class OutreachClient(object):
             quota_used = 1 - int(response.headers['x-ratelimit-remaining']) / \
                 int(response.headers['x-ratelimit-remaining'])
             if quota_used > float(self.__quota_limit):
-                self.logger.warn(
+                self.logger.info(
                     'Quota used: {:.2f} / {}'.format(quota_used, self.__quota_limit))
                 self.sleep_for_reset_period(response)
 
