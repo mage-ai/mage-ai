@@ -24,7 +24,7 @@
     },
     "expectedDelivery": {
       "type": ["null", "string"],
-      "format": " date-time"
+      "format": "date-time"
     },
     "custom": {
       "type": ["null", "object"],
@@ -32,7 +32,7 @@
     },
     "createdAt": {
       "type": ["null", "string"],
-      "format": " date-time"
+      "format": "date-time"
     },
     "createdBy": {
       "type": ["null", "object"],
@@ -40,7 +40,7 @@
     },
     "lastModifiedAt": {
       "type": ["null", "string"],
-      "format": " date-time"
+      "format": "date-time"
     },
     "lastModifiedBy": {
       "type": ["null", "object"],
