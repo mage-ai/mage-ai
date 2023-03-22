@@ -6,6 +6,8 @@ import React, {
 } from 'react';
 import * as ReactDOM from 'react-dom';
 import Editor from '@monaco-editor/react';
+
+import BlockType from '@interfaces/BlockType';
 import Text from '@oracle/elements/Text';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -50,6 +52,7 @@ type CodeEditorProps = {
   autocompleteProviders?: ProvidersType;
   autoHeight?: boolean;
   autoSave?: boolean;
+  block?: BlockType;
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
@@ -69,6 +72,7 @@ function CodeEditor({
   autocompleteProviders,
   autoHeight,
   autoSave,
+  block,
   fontSize = DEFAULT_FONT_SIZE,
   height,
   language,
@@ -96,7 +100,6 @@ function CodeEditor({
   const [completionDisposable, setCompletionDisposable] = useState([]);
   const [monacoInstance, setMonacoInstance] = useState(null);
   const [mounted, setMounted] = useState<boolean>(false);
-  const [heightOfContent, setHeightOfContent] = useState(height);
   const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
 
   const handleEditorWillMount = useCallback((monaco) => {
@@ -240,6 +243,23 @@ function CodeEditor({
     textareaFocused,
     textareaFocusedPrevious,
   ]);
+
+  useEffect(() => {
+    if (monacoRef?.current && editorRef?.current) {
+      const shortcuts = [];
+      shortcutsProp?.forEach((func) => {
+        shortcuts.push(func(monacoRef?.current, editorRef?.current));
+      });
+      addKeyboardShortcut(monacoRef?.current, editorRef?.current, shortcuts);
+    }
+  /*
+   * The original block scope when the component was mounted is retained in the
+   * shortcuts unless we re-add them when the block connections change. For example,
+   * if a block originally had 1 upstream dependency but we add an additional dependency
+   * and then try to execute the block via editor shortcut, the code execution only includes
+   * the initial single upstream dependency because the shortcut's scope doesn't change.
+   */
+  }, [block?.downstream_blocks, block?.upstream_blocks]);
 
   useEffect(
     () => () => {

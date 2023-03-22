@@ -58,7 +58,6 @@ import {
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import {
-  SIDEKICK_VIEWS,
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
@@ -104,7 +103,6 @@ function PipelineDetailPage({
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
-  const [showAddCharts, setShowAddCharts] = useState<boolean>(false);
   const [filesTouched, setFilesTouched] = useState<{
     [filePath: string]: boolean;
   }>({});
@@ -144,7 +142,6 @@ function PipelineDetailPage({
   });
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
-  const projectName = useMemo(() => files?.[0]?.name, [files]);
   const pipeline = data?.pipeline;
 
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
@@ -200,7 +197,6 @@ function PipelineDetailPage({
     setAfterHidden(false);
   }, [setActiveSidekickView]);
 
-  const refAddChart = useRef(null);
   const blockRefs = useRef({});
   const chartRefs = useRef({});
   const callbackByBlockUUID = useRef({});
@@ -483,7 +479,10 @@ function PipelineDetailPage({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => setPipelineContentTouched(false),
+          callback: () => {
+            setPipelineContentTouched(false);
+            fetchPipeline();
+          },
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
@@ -591,12 +590,12 @@ function PipelineDetailPage({
       }
 
       if (contentOnly) {
-        return {
+        return blocksToSave.push({
           callback_content: blockPayload.callback_content,
           content: blockPayload.content,
           outputs: blockPayload.outputs,
           uuid: blockPayload.uuid,
-        };
+        });
       }
 
       if ([BlockTypeEnum.EXTENSION].includes(type)) {
@@ -1271,7 +1270,6 @@ function PipelineDetailPage({
     blocks,
     blocksPrevious,
     pipeline?.blocks,
-    setBlocks,
     setMessages,
   ]);
 
@@ -1290,7 +1288,6 @@ function PipelineDetailPage({
     }
   }, [
     pipeline?.widgets,
-    setBlocks,
     setMessages,
     widgets,
   ]);

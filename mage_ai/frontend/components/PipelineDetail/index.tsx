@@ -452,6 +452,7 @@ function PipelineDetail({
     fetchPipeline,
     interruptKernel,
     isIntegration,
+    isStreaming,
     mainContainerRef,
     mainContainerWidth,
     messages,

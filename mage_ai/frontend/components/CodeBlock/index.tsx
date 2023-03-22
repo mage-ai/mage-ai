@@ -688,6 +688,7 @@ function CodeBlock({
       <CodeEditor
         autoHeight
         autocompleteProviders={autocompleteProviders}
+        block={block}
         height={height}
         language={block.language}
         onChange={(val: string) => {
@@ -706,6 +707,10 @@ function CodeBlock({
           (monaco, editor) => executeCode(monaco, () => {
             if (!hideRunButton) {
               runBlockAndTrack({
+                /*
+                 * This block doesn't get updated when the upstream dependencies change,
+                 * so we need to update the shortcuts in the CodeEditor component.
+                 */
                 block,
                 code: editor.getValue(),
               });
