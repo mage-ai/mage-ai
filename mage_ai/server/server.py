@@ -61,6 +61,7 @@ import json
 import os
 import tornado.ioloop
 import tornado.web
+import webbrowser
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -268,7 +269,9 @@ async def main(
         address=host if host != 'localhost' else None,
     )
 
-    print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
+    url = f'http://{host or "localhost"}:{port}'
+    webbrowser.open_new_tab(url)
+    print(f'Mage is running at {url} and serving project {project}')
 
     db_connection.start_session(force=True)
 
