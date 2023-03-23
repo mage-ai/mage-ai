@@ -15,7 +15,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { ChevronRight } from '@oracle/icons';
-import { MonitorTypeEnum } from '@components/Monitor/constants';
+import { MonitorTypeEnum, TOOLTIP_LEFT_OFFSET } from '@components/Monitor/constants';
 import { SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
@@ -86,8 +86,8 @@ function PipelineRunsMonitor({
   } = dataMonitor?.monitor_stat || {};
 
   const dateRange = useMemo(() => {
-    let date = new Date()
-    const dateRange = []
+    const date = new Date();
+    const dateRange = [];
     for (let i = 0; i < 90; i++) {
       dateRange.unshift(date.toISOString().split('T')[0]);
       date.setDate(date.getDate() - 1);
@@ -167,9 +167,7 @@ function PipelineRunsMonitor({
     });
 
     return arr;
-  }, [
-    pipeline,
-  ]);
+  }, []);
 
   return (
     <Monitor
@@ -193,18 +191,19 @@ function PipelineRunsMonitor({
             height={200}
             keys={BAR_STACK_STATUSES}
             margin={{
-              top: 10,
               bottom: 30,
               left: 35,
-              right: 0
+              right: 0,
+              top: 10,
             }}
+            tooltipLeftOffset={TOOLTIP_LEFT_OFFSET}
             xLabelFormat={label => moment(label).format('MMM DD')}
           />
         </Spacing>
         {pipelineRunsData && Object.entries(pipelineRunsData).map(([id, stats]) => {
           const pipelineSchedule = pipelineSchedulesById?.[id];
           return (
-            <Spacing mt={3}>
+            <Spacing key={id} mt={3}>
               <FlexContainer alignItems="center">
                 <Spacing mx={1}>
                   <GradientTextStyle>
@@ -238,11 +237,12 @@ function PipelineRunsMonitor({
                   height={200}
                   keys={BAR_STACK_STATUSES}
                   margin={{
-                    top: 10,
                     bottom: 30,
                     left: 35,
-                    right: 0
+                    right: 0,
+                    top: 10,
                   }}
+                  tooltipLeftOffset={TOOLTIP_LEFT_OFFSET}
                   xLabelFormat={label => moment(label).format('MMM DD')}
                 />
               </Spacing>

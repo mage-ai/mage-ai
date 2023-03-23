@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import moment from 'moment';
 import { ThemeContext } from 'styled-components';
 
@@ -11,16 +11,13 @@ import PipelineType from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
-import api, { MONITOR_STATS } from '@api';
-import buildUrl from '@api/utils/url';
+import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BAR_STACK_COLORS, BAR_STACK_STATUSES } from '.';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
-import { MonitorTypeEnum } from '@components/Monitor/constants';
+import { MonitorTypeEnum, TOOLTIP_LEFT_OFFSET } from '@components/Monitor/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
-import { onSuccess } from '@api/utils/response';
-import { useMutation } from 'react-query';
 
 type BlockRunsMonitorProps = {
   pipeline: PipelineType;
@@ -110,9 +107,7 @@ function BlockRunsMonitor({
     });
 
     return arr;
-  }, [
-    pipeline,
-  ]);
+  }, []);
 
   return (
     <Monitor
@@ -140,7 +135,7 @@ function BlockRunsMonitor({
               All
             </option>
             {pipelineSchedules && pipelineSchedules.map(schedule => (
-              <option value={schedule.id}>
+              <option key={schedule.id} value={schedule.id}>
                 {schedule.name}
               </option>
             ))}
@@ -182,6 +177,7 @@ function BlockRunsMonitor({
                   right: 0,
                   top: 10,
                 }}
+                tooltipLeftOffset={TOOLTIP_LEFT_OFFSET}
                 xLabelFormat={label => moment(label).format('MMM DD')}
               />
             </Spacing>
