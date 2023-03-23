@@ -52,8 +52,10 @@ class BaseModel(Base):
 
     @classmethod
     def create(self, **kwargs):
+        commit = kwargs.get('commit', True)
+        kwargs.pop('commit', None)
         model = self(**kwargs)
-        model.save()
+        model.save(commit=commit)
         return model
 
     def full_clean(self, **kwargs) -> None:
@@ -100,6 +102,10 @@ class BaseModel(Base):
             if type(value) is datetime:
                 return str(value)
             elif type(value) is InstrumentedList:
+                try:
+                    value = sorted(value, key=lambda x: x.id)
+                except Exception:
+                    pass
                 return [__format_value(v) for v in value]
             elif hasattr(value, 'to_dict'):
                 return value.to_dict()
