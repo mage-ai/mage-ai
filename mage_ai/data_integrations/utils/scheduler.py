@@ -1,6 +1,7 @@
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.shared.array import find
@@ -143,15 +144,22 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
             arr += [
                 pipeline_run.create_block_run(
                     f'{data_loader_block.uuid}:{tap_stream_id}:{idx}',
+                    commit=False,
                 ),
             ] + [pipeline_run.create_block_run(
                     f'{b.uuid}:{tap_stream_id}:{idx}',
+                    commit=False,
                 ) for b in transformer_blocks] + [
                 pipeline_run.create_block_run(
                     f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}',
+                    commit=False,
                 ),
             ]
-
+            try:
+                db_connection.session.commit()
+            except Exception as e:
+                db_connection.session.rollback()
+                raise Exception(f'Failed to create block runs for {tap_stream_id}:{idx}.') from e
     return arr
 
 

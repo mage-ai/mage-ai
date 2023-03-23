@@ -19,6 +19,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import get_global_variables
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
     BlockRun,
@@ -665,6 +666,10 @@ def run_integration_pipeline(
                     )
                     continue
 
+                pipeline_run.refresh()
+                if pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
+                    return
+
                 block_run.update(
                     started_at=datetime.now(),
                     status=BlockRun.BlockRunStatus.RUNNING,
@@ -841,6 +846,8 @@ def schedule_all():
     1. Check whether any new pipeline runs need to be scheduled.
     2. In active pipeline runs, check whether any block runs need to be scheduled.
     """
+    db_connection.session.expire_all()
+
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
 
     active_pipeline_schedules = \
@@ -906,6 +913,7 @@ def schedule_all():
         pipeline_uuids=repo_pipelines,
         include_block_runs=True,
     )
+    print(f'Active pipeline runs: {[p.id for p in active_pipeline_runs]}')
 
     for r in active_pipeline_runs:
         try:
