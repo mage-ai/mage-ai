@@ -269,7 +269,8 @@ async def main(
         address=host if host != 'localhost' else None,
     )
 
-    webbrowser.open_new_tab(url := f'http://{host or "localhost"}:{port}')
+    url = f'http://{host or "localhost"}:{port}'
+    webbrowser.open_new_tab(url)
     print(f'Mage is running at {url} and serving project {project}')
 
     db_connection.start_session(force=True)
