@@ -14,8 +14,8 @@ from typing import Callable, Dict, List
 import json
 
 
-def clean_column_name(col):
-    col_new = clean_column_name_orig(col)
+def clean_column_name(col, lower_case: bool = True):
+    col_new = clean_column_name_orig(col, lower_case=lower_case)
     if col_new.upper() in SQL_RESERVED_WORDS_SUBSET:
         col_new = f'_{col_new}'
     return col_new
