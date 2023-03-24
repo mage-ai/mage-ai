@@ -5,13 +5,13 @@ from mage_integrations.destinations.constants import (
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.mysql.utils import (
+    build_alter_table_command,
     build_create_table_command,
     clean_column_name,
     convert_column_type,
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
-    build_alter_table_command,
     build_insert_command,
     column_type_mapping,
 )
