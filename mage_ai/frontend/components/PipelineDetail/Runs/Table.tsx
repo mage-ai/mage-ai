@@ -22,6 +22,7 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { dateFormatLong } from '@utils/date';
 import { getTimeInUTC } from '@components/Triggers/utils';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
@@ -86,7 +87,13 @@ function RetryButton({
     // @ts-ignore
     createPipelineRun({
       pipeline_run: {
-        execution_date: pipelineRun?.execution_date,
+        execution_date: dateFormatLong(
+          new Date().toISOString(),
+          {
+            includeSeconds: true,
+            utcFormat: true,
+          },
+        ),
         pipeline_schedule_id: pipelineRun?.pipeline_schedule_id,
         pipeline_uuid: pipelineRun?.pipeline_uuid,
         variables: pipelineRun?.variables,

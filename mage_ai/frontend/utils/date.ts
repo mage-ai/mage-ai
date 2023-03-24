@@ -12,9 +12,21 @@ export function dateFormatShort(text) {
   return formatDateShort(moment(text));
 }
 
-export function dateFormatLong(text, opts?) {
-  const { utcFormat, dayAgo } = opts;
+export function dateFormatLong(
+  text: string,
+  opts?: {
+    dayAgo?: boolean;
+    includeSeconds?: boolean;
+    utcFormat?: boolean;
+  },
+) {
+  const {
+    dayAgo,
+    includeSeconds,
+    utcFormat,
+  } = opts;
   let momentObj = moment(text);
+  let dateFormat = DATE_FORMAT_LONG_NO_SEC;
 
   if (utcFormat) {
     momentObj = momentObj.utc();
@@ -22,8 +34,11 @@ export function dateFormatLong(text, opts?) {
   if (dayAgo) {
     momentObj = momentObj.subtract(1, 'days');
   }
+  if (includeSeconds) {
+    dateFormat = DATE_FORMAT_LONG;
+  }
 
-  return momentObj.format(DATE_FORMAT_LONG_NO_SEC);
+  return momentObj.format(dateFormat);
 }
 
 export function dateFormatLongFromUnixTimestamp(text, opts: { withSeconds?: boolean } = {}) {
