@@ -91,7 +91,7 @@ SELECT
 FROM information_schema.columns
 WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
         """)
-        current_columns = [r[0].lower() for r in results]
+        current_columns = [r[0].lower() if self.use_lowercase else r[0] for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns
                        if self.clean_column_name(c) not in current_columns]
