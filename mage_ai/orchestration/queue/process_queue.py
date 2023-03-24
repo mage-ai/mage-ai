@@ -50,6 +50,9 @@ class ProcessQueue(Queue):
         if not job:
             return
         if isinstance(job, int):
+            if job == os.getpid():
+                # Update the job status before the process is killed
+                self.job_dict[job_id] = JobStatus.CANCELLED
             try:
                 os.kill(job, signal.SIGKILL)
             except Exception as err:
