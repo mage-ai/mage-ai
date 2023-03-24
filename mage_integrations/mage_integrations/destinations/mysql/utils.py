@@ -20,6 +20,28 @@ def clean_column_name(col):
     return col_new
 
 
+def build_alter_table_command(
+    column_type_mapping: Dict,
+    columns: List[str],
+    full_table_name: str,
+    column_identifier: str = '',
+) -> str:
+    if not columns:
+        return None
+
+    columns_and_types = []
+    for col in columns:
+        column_name = f'{column_identifier}{clean_column_name(col)}{column_identifier}'
+        column_type = column_type_mapping[col]['type_converted']
+        if COLUMN_TYPE_INTEGER == column_type_mapping[col]['type']:
+            column_type = 'INTEGER'
+        col_statement = f'ADD COLUMN {column_name} {column_type}'
+        columns_and_types.append(col_statement)
+
+    # TODO: support add new unique constraints
+    return f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
+
+
 def build_create_table_command(
     column_type_mapping: Dict,
     columns: List[str],
