@@ -39,8 +39,16 @@ export const InnerStyle = styled.div`
   padding: ${PADDING_UNITS * UNIT}px;
 `;
 
-export const LineStyle = styled.div`
-  height: ${ROW_HEIGHT}px;
+export const LineStyle = styled.div<{
+  numberOfLines?: number;
+}>`
+  ${props => props.numberOfLines && `
+    height: ${ROW_HEIGHT * props.numberOfLines}px;
+  `}
+
+  ${props => !props.numberOfLines && `
+    height: ${ROW_HEIGHT}px;
+  `}
 `;
 
 const TerminalCursorStyleCss = css<{

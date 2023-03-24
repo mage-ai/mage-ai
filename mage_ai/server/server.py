@@ -314,6 +314,9 @@ async def main(
     )
     periodic_callback.start()
 
+    # from mage_ai.server.terminal import connect
+    # connect()
+
     get_messages(
         lambda content: WebSocketServer.send_message(
             parse_output_message(content),

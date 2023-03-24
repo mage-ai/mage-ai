@@ -32,6 +32,7 @@ from mage_ai.server.execution_manager import (
 )
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.terminal import command_handler, terminate_process
 from mage_ai.server.utils.output_display import (
     add_internal_output_info,
     add_execution_code,
@@ -206,6 +207,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         check_if_pipeline_running = message.get('check_if_pipeline_running')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
         pipeline_uuid = message.get('pipeline_uuid')
+        command = message.get('command')
         pipeline = None
         if pipeline_uuid:
             pipeline = Pipeline.get(pipeline_uuid, get_repo_path())

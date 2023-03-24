@@ -1,6 +1,6 @@
 import Ansi from 'ansi-to-react';
 import useWebSocket from 'react-use-websocket';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -37,6 +37,7 @@ import { getWebSocket } from '@api/utils/url';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
+import { getNewUUID } from '@utils/string';
 
 export const DEFAULT_TERMINAL_UUID = 'terminal';
 
@@ -88,6 +89,13 @@ function Terminal({
 
         setKernelOutputs(prev => {
           if (data) {
+            // const last = prev.pop();
+            // if (last.msg_id == data.msg_id) {
+            //   data.data = last.data + data.data;
+            // } else {
+            //   prev.push(last);
+            // }
+            console.log('message data:', data);
             return prev.concat(data);
           }
 
@@ -97,10 +105,23 @@ function Terminal({
     }
   }, [
     lastMessage,
-    setBusy,
-    setKernelOutputs,
+    // setBusy,
+    // setKernelOutputs,
     terminalUUID,
   ]);
+
+  const kernelOutputsUpdated = useMemo(() => {
+    return kernelOutputs.reduce((acc, data) => {
+      const last = acc[acc.length - 1];
+      const copy = JSON.parse(JSON.stringify(data));
+      if (data?.msg_id && last?.msg_id == data.msg_id) {
+        copy.data = last?.data + data.data;
+      } else if (last) {
+        return acc.concat(copy);
+      }
+      return acc.slice(0, acc.length - 1).concat(copy);
+    }, []);
+  }, [kernelOutputs]);
 
   useEffect(() => {
     if (refContainer.current && refInner.current) {
@@ -108,7 +129,7 @@ function Terminal({
       refContainer.current.scrollTo(0, height);
     }
   }, [
-    kernelOutputs,
+    kernelOutputsUpdated,
     refContainer,
     refInner,
   ]);
@@ -164,18 +185,14 @@ function Terminal({
 
       if (focus) {
         pauseEvent(event);
-
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
-          setBusy(false);
-          // @ts-ignore
-          setKernelOutputs(prev => prev.concat({
-            command: true,
-            data: command?.trim()?.length >= 1 ? command : '\n',
-            type: DataTypeEnum.TEXT,
+          sendMessage(JSON.stringify({
+            api_key: OAUTH2_APPLICATION_CLIENT_ID,
+            terminate_shell_process: true,
+            token: (new AuthToken()).decodedToken.token,
+            uuid: terminalUUID,
           }));
-          setCommand('');
-          interruptKernel();
-        } else if (true) {
+        } else {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
             const minIdx = Math.max(0, cursorIndex - 1);
             setCommand(prev => prev.slice(0, minIdx) + prev.slice(cursorIndex));
@@ -201,21 +218,25 @@ function Terminal({
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             const finalEnteredCommand = finalCommand + command;
+            const commandRunning = busy;
             if (finalEnteredCommand?.length >= 1) {
               setBusy(true);
               sendMessage(JSON.stringify({
                 api_key: OAUTH2_APPLICATION_CLIENT_ID,
-                code: `!${finalEnteredCommand}`,
+                command: finalEnteredCommand,
                 token: (new AuthToken()).decodedToken.token,
                 uuid: terminalUUID,
+                msg_id: getNewUUID(),
               }));
-              setCommandIndex(commandHistory.length + 1);
-              setCommandHistory(prev => prev.concat(command));
+              if (!commandRunning) {
+                setCommandIndex(commandHistory.length + 1);
+                setCommandHistory(prev => prev.concat(command));
+              }
               setCursorIndex(0);
             }
             // @ts-ignore
             setKernelOutputs(prev => prev.concat({
-              command: true,
+              command: !commandRunning,
               data: command?.trim()?.length >= 1 ? command : '\n',
               type: DataTypeEnum.TEXT,
             }));
@@ -317,7 +338,7 @@ in the context menu that appears.
           ref={refInner}
           width={width}
         >
-          {kernelOutputs?.reduce((acc, kernelOutput: KernelOutputType & {
+          {kernelOutputsUpdated?.reduce((acc, kernelOutput: KernelOutputType & {
             command: boolean;
           }, idx: number) => {
             const {
@@ -370,8 +391,9 @@ in the context menu that appears.
                     </LineStyle>,
                   );
                 } else {
+                  const numberOfLines = data.split('\n').length;
                   arr.push(
-                    <LineStyle key={key}>
+                    <LineStyle key={key} numberOfLines={numberOfLines}>
                       {displayElement}
                     </LineStyle>,
                   );
@@ -394,9 +416,11 @@ in the context menu that appears.
                 && (command.length === 0 || cursorIndex > command.length)}
             >
               <Text monospace>
-                <Text inline monospace warning>
-                  →&nbsp;
-                </Text>
+                {!busy && (
+                  <Text inline monospace warning>
+                    →&nbsp;
+                  </Text>
+                )}
                 {command?.split('').map(((char: string, idx: number) => (
                   <CharacterStyle
                     focusBeginning={focus && cursorIndex === 0 && idx === 0}

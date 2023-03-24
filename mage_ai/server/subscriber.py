@@ -1,4 +1,5 @@
 from datetime import datetime
+from jupyter_client import KernelClient
 from mage_ai.server.active_kernel import get_active_kernel_client
 
 
