@@ -1,4 +1,7 @@
-from mage_integrations.connections.mysql import MySQL as MySQLConnection
+from mage_integrations.connections.mysql import (
+    ConnectionMethod,
+    MySQL as MySQLConnection,
+)
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     INTERNAL_COLUMN_CREATED_AT,
@@ -19,6 +22,10 @@ from typing import Dict, List, Tuple
 
 
 class MySQL(Destination):
+    @property
+    def use_lowercase(self):
+        return self.config.get('use_lowercase', True)
+
     def build_connection(self) -> MySQLConnection:
         return MySQLConnection(
             database=self.config['database'],
@@ -26,6 +33,12 @@ class MySQL(Destination):
             password=self.config['password'],
             port=self.config.get('port'),
             username=self.config['username'],
+            connection_method=self.config.get('connection_method', ConnectionMethod.DIRECT),
+            ssh_host=self.config.get('ssh_host'),
+            ssh_port=self.config.get('ssh_port', 22),
+            ssh_username=self.config.get('ssh_username'),
+            ssh_password=self.config.get('ssh_password'),
+            ssh_pkey=self.config.get('ssh_pkey'),
         )
 
     def build_create_schema_commands(
@@ -58,6 +71,7 @@ class MySQL(Destination):
                 key_properties=self.key_properties.get(stream),
                 schema=schema,
                 unique_constraints=unique_constraints,
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -77,9 +91,10 @@ SELECT
 FROM information_schema.columns
 WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
         """)
-        current_columns = [r[0].lower() for r in results]
+        current_columns = [r[0].lower() if self.use_lowercase else r[0] for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+        new_columns = [c for c in schema_columns
+                       if self.clean_column_name(c) not in current_columns]
 
         if not new_columns:
             return []
@@ -94,6 +109,7 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
                 ),
                 columns=new_columns,
                 full_table_name=f'{database_name}.{table_name}',
+                use_lowercase=self.use_lowercase,
             ),
         ]
 
@@ -119,7 +135,7 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
             if COLUMN_TYPE_OBJECT == y['type'] else x,
         )
-        insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
+        insert_columns = ', '.join([self.clean_column_name(col) for col in insert_columns])
         insert_values = ', '.join(insert_values)
 
         insert_into = f'INTO {table_name} ({insert_columns})'
@@ -127,7 +143,7 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
 
         if unique_constraints and unique_conflict_method:
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-                columns_cleaned = [clean_column_name(col) for col in columns]
+                columns_cleaned = [self.clean_column_name(col) for col in columns]
                 update_command = [f'{col} = new.{col}' for col in columns_cleaned
                                   if col != INTERNAL_COLUMN_CREATED_AT]
                 commands_after += [
@@ -148,6 +164,9 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
             # For example, if it inserts 2 and updates 2, that will yield 4.
             'SELECT ROW_COUNT()',
         ]
+
+    def clean_column_name(self, column_name: str):
+        return clean_column_name(column_name, lower_case=self.use_lowercase)
 
     def does_table_exist(
         self,

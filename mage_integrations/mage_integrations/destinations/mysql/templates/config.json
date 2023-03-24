@@ -4,5 +4,6 @@
   "password": "",
   "port": 3306,
   "table": "",
-  "username": ""
+  "username": "",
+  "use_lowercase": true
 }

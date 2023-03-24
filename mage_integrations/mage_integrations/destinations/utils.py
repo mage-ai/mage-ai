@@ -13,8 +13,10 @@ else:
     from collections import MutableMapping
 
 
-def clean_column_name(column_name):
-    return re.sub('\W', '_', column_name.lower())
+def clean_column_name(column_name, lower_case: bool = True):
+    if lower_case:
+        column_name = column_name.lower()
+    return re.sub('\W', '_', column_name)
 
 
 def flatten_record(d, parent_key='', sep='__'):
