@@ -1,6 +1,6 @@
 from croniter import croniter
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
@@ -124,7 +124,7 @@ class PipelineSchedule(BaseModel):
         if self.schedule_interval is None:
             return None
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if self.schedule_interval == '@once':
             return now
         elif self.schedule_interval == '@daily':
