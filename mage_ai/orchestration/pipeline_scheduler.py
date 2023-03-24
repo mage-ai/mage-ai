@@ -971,7 +971,7 @@ def get_variables(pipeline_run, extra_variables: Dict = {}) -> Dict:
         variables['hr'] = pipeline_run.execution_date.strftime('%H')
 
     variables['env'] = ENV_PROD
-    variables['event'] = event_variables
+    variables['event'] = merge_dict(variables.get('event', {}), event_variables)
     variables['execution_date'] = pipeline_run.execution_date
     variables['execution_partition'] = pipeline_run.execution_partition
     variables.update(extra_variables)
