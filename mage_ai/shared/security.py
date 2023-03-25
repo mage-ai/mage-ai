@@ -2,9 +2,11 @@ import os
 
 MIN_SECRET_ENV_VAR_LENGTH = 8
 WHITELISTED_ENV_VARS = set([
+    'MAGE_DATA_DIR',
     'MAGE_REPO_PATH',
     'HOME',
     'PWD',
+    'PYTHONPATH',
 ])
 
 
