@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.git import Git
-from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.base_sync import BaseSync
 from mage_ai.shared.logger import VerboseFunctionExec

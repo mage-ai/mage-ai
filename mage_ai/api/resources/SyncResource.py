@@ -1,10 +1,10 @@
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.shared.secrets import create_secret
 from mage_ai.data_preparation.git import (
     GIT_SSH_PRIVATE_KEY_SECRET_NAME,
     GIT_SSH_PUBLIC_KEY_SECRET_NAME,
 )
+from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.data_preparation.shared.secrets import create_secret
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.db.models.secrets import Secret
