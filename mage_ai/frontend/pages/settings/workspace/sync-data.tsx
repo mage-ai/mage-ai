@@ -8,10 +8,10 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import SettingsDashboard from '@components/settings/Dashboard';
-import { Col } from '@components/shared/Grid';
 import Spacing from '@oracle/elements/Spacing';
 import SyncType, {
   GIT_FIELDS,
+  OPTIONAL_GIT_FIELDS,
   SYNC_FIELDS,
 } from '@interfaces/SyncType';
 import Text from '@oracle/elements/Text';
@@ -33,6 +33,7 @@ export interface SyncFieldType {
   autoComplete?: string;
   disabled?: boolean;
   label: string;
+  labelDescription?: string;
   required?: boolean;
   type?: string;
   uuid: string;
@@ -41,6 +42,7 @@ export interface SyncFieldType {
 function SyncData() {
   const { data: dataSyncs } = api.syncs.list();
   const [sync, setSync] = useState<SyncType>(null);
+  const [error, setError] = useState<string>(null);
 
   useEffect(() => {
     if (dataSyncs) {
@@ -68,18 +70,10 @@ function SyncData() {
           },
           onErrorCallback: ({
             error: {
+              exception,
               message,
-              type,
             },
-          }) => {
-            toast.error(
-              message,
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: type,
-              },
-            );
-          },
+          }) => setError(exception),
         }
       )
     }
@@ -103,18 +97,10 @@ function SyncData() {
           },
           onErrorCallback: ({
             error: {
+              exception,
               message,
-              type,
             },
-          }) => {
-            toast.error(
-              message,
-              {
-                position: toast.POSITION.BOTTOM_RIGHT,
-                toastId: type,
-              },
-            );
-          },
+          }) => setError(exception),
         }
       )
     }
@@ -125,14 +111,19 @@ function SyncData() {
       uuidItemSelected={SECTION_ITEM_UUID_GIT_SETTINGS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
-      <Spacing p={PADDING_UNITS}>
+      <Spacing
+        p={PADDING_UNITS}
+        style={{
+          width: '600px',
+        }}
+      >
         <Headline>
           Git repository settings
         </Headline>
         <Spacing mt={1}>
-          <Text>
+          <Text bold>
             You can enable the Git integration by supplying the url
-            for your remote repository. <Text inline>
+            for your remote repository. <Text bold inline>
               You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git" openNewWindow>
                 set up your SSH key
               </Link> if you have not done so already.
@@ -140,76 +131,72 @@ function SyncData() {
           </Text>
         </Spacing>
 
-        <FlexContainer alignItems="center">
-          <form>
-            {GIT_FIELDS.map(({
-              autoComplete,
-              disabled,
-              label,
-              required,
-              type,
-              uuid,
-            }: SyncFieldType) => (
-              <Spacing key={uuid} mt={2}>
-                <TextInput
-                  autoComplete={autoComplete}
-                  disabled={disabled}
-                  label={label}
-                  // @ts-ignore
-                  onChange={e => {
-                    setSync(prev => ({
-                      ...prev,
-                      [uuid]: e.target.value,
-                    }));
-                  }}
-                  primary
-                  required={required}
-                  setContentOnMount
-                  type={type}
-                  value={sync?.[uuid] || ''}
-                />
-              </Spacing>
-            ))}
-          </form>
-        </FlexContainer>
+        <form>
+          {GIT_FIELDS.map(({
+            autoComplete,
+            disabled,
+            label,
+            required,
+            type,
+            uuid,
+          }: SyncFieldType) => (
+            <Spacing key={uuid} mt={2}>
+              <TextInput
+                autoComplete={autoComplete}
+                disabled={disabled}
+                label={label}
+                // @ts-ignore
+                onChange={e => {
+                  setSync(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+                setContentOnMount
+                type={type}
+                value={sync?.[uuid] || ''}
+              />
+            </Spacing>
+          ))}
+        </form>
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <Text>
-            You can also set up your project to only sync with a specified branch.
+          <Text bold>
+            (OPTIONAL) You can also set up your project to only sync with a specified branch.
           </Text>
         </Spacing>
-        <FlexContainer>
-          <form>
-            {SYNC_FIELDS.map(({
-              autoComplete,
-              disabled,
-              label,
-              required,
-              type,
-              uuid,
-            }: SyncFieldType) => (
-              <Spacing key={uuid} mt={2}>
-                <TextInput
-                  autoComplete={autoComplete}
-                  disabled={disabled}
-                  label={label}
-                  // @ts-ignore
-                  onChange={e => {
-                    setSync(prev => ({
-                      ...prev,
-                      [uuid]: e.target.value,
-                    }));
-                  }}
-                  primary
-                  required={required}
-                  setContentOnMount
-                  type={type}
-                  value={sync?.[uuid] || ''}
-                />
-              </Spacing>
-            ))}
-          </form>
-        </FlexContainer>
+        <form>
+          {SYNC_FIELDS.map(({
+            autoComplete,
+            disabled,
+            label,
+            required,
+            type,
+            uuid,
+          }: SyncFieldType) => (
+            <Spacing key={uuid} mt={2}>
+              <TextInput
+                autoComplete={autoComplete}
+                disabled={disabled}
+                label={label}
+                // @ts-ignore
+                onChange={e => {
+                  setSync(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+                setContentOnMount
+                type={type}
+                value={sync?.[uuid] || ''}
+              />
+            </Spacing>
+          ))}
+        </form>
         <FlexContainer alignItems="center">
           <Spacing mt={2}>
             <Checkbox
@@ -224,6 +211,52 @@ function SyncData() {
             />
           </Spacing>
         </FlexContainer>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Text bold>
+            (OPTIONAL) Filling out these fields will allow Mage to recover
+            your Git settings if they get reset.
+          </Text>
+        </Spacing>
+        <form>
+          {OPTIONAL_GIT_FIELDS.map(({
+            autoComplete,
+            disabled,
+            label,
+            labelDescription,
+            required,
+            type,
+            uuid,
+          }: SyncFieldType) => (
+            <Spacing key={uuid} mt={2}>
+              {labelDescription && (
+                <Spacing mb={1}>
+                  <Text small>
+                    {labelDescription}
+                  </Text>
+                </Spacing>
+              )}
+              <TextInput  
+                autoComplete={autoComplete}
+                disabled={disabled}
+                label={label}
+                // @ts-ignore
+                onChange={e => {
+                  setSync(prev => ({
+                    ...prev,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                primary
+                required={required}
+                setContentOnMount
+                type={type}
+                value={sync?.[uuid] || ''}
+              />
+            </Spacing>
+          ))}
+        </form>
+
         <Spacing mt={2}>
           <Button
             loading={isLoadingCreateSync}
@@ -238,39 +271,44 @@ function SyncData() {
         </Spacing>
 
         <Spacing mt={UNITS_BETWEEN_SECTIONS}>
-          <Col lg={6}>
-            <Headline>
-              Synchronize code from remote repository
-            </Headline>
+          <Headline>
+            Synchronize code from remote repository
+          </Headline>
 
-            <Spacing mt={1}>
-              <Text>
-                Running the sync from this page will
-                run a one time sync with the remote repository.
-                <br />
-                This may <Text bold danger inline>overwrite</Text> your
-                existing data, so make sure you’ve committed or backed up your current changes.
-              </Text>
-            </Spacing>
+          <Spacing mt={1}>
+            <Text>
+              Running the sync from this page will
+              run a one time sync with the remote repository.
+              <br />
+              This may <Text bold danger inline>overwrite</Text> your
+              existing data, so make sure you’ve committed or backed up your current changes.
+            </Text>
+          </Spacing>
 
-            <Spacing mt={2}>
-              <Button
-                loading={isLoadingRunSync}
-                onClick={() => confirm(
-                  'Are you sure you want to sync code from a remote repository and ' +
-                  'overwrite the current code base?',
-                  // @ts-ignore
-                  () => runSync({
-                    sync: {
-                      action_type: 'sync_data',
-                    },
-                }))}
-              >
-                Synchronize code
-              </Button>
-            </Spacing>
-          </Col>
+          <Spacing mt={2}>
+            <Button
+              loading={isLoadingRunSync}
+              onClick={() => confirm(
+                'Are you sure you want to sync code from a remote repository and ' +
+                'overwrite the current code base?',
+                // @ts-ignore
+                () => runSync({
+                  sync: {
+                    action_type: 'sync_data',
+                  },
+              }))}
+            >
+              Synchronize code
+            </Button>
+          </Spacing>
         </Spacing>
+        {error && (
+          <Spacing mt={1}>
+            <Text danger>
+              {error}
+            </Text>
+          </Spacing>
+        )}
       </Spacing>
     </SettingsDashboard>
   );
