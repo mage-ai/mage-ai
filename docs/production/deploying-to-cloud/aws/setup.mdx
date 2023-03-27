@@ -339,6 +339,14 @@ A sample output could look like this:
 ```
 Destroy complete! Resources: 10 destroyed.
 ```
+### Authentication with ECS task execution role
+Mage creates an ECS task execution role with the format `{app_name}-execution-task-role`.
+You can grant the ECS task permissions to access other AWS services by attaching IAM policies to this ECS task execution role.
+
+
+For example, if you want to list the AWS events that can be used for event triggers, you can attach IAM Policy `CloudWatchEventsReadOnlyAccess`
+to your ECS task execution role.
+
 ---
 
 ## Deploy to EKS cluster
