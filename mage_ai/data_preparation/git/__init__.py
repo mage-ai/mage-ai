@@ -136,5 +136,9 @@ class Git:
                     f.write(base64.b64decode(private_key).decode('utf-8'))
                 os.chmod(private_key_file, 0o600)
 
+        known_hosts_file = \
+            os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'known_hosts')
+        if not os.path.exists(known_hosts_file):
+            open(known_hosts_file, 'w').close()
         args = shlex.split(f'ssh-keyscan -t rsa github.com >> {DEFAULT_SSH_KEY_DIRECTORY}/known_hosts')  # noqa: E501
         subprocess.run(args=args)

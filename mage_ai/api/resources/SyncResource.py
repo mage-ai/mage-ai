@@ -7,6 +7,7 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import create_secret
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
+from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.secrets import Secret
 
 
@@ -22,6 +23,7 @@ class SyncResource(GenericResource):
         )
 
     @classmethod
+    @safe_db_query
     def create(self, payload, user, **kwargs):
         ssh_public_key = payload.get('ssh_public_key')
         ssh_private_key = payload.get('ssh_private_key')
