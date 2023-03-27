@@ -118,6 +118,8 @@ class Git:
                 'user', 'email', self.git_config.email).release()
 
     def __setup_ssh_config(self):
+        if not os.path.exists(DEFAULT_SSH_KEY_DIRECTORY):
+            os.mkdir(DEFAULT_SSH_KEY_DIRECTORY, 0o700)
         public_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'id_rsa.pub')
         private_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'id_rsa')
         if not os.path.exists(public_key_file) and \
@@ -126,7 +128,7 @@ class Git:
             if public_key:
                 with open(public_key_file, 'w') as f:
                     f.write(base64.b64decode(public_key).decode('utf-8'))
-                os.chmod(public_key_file, 0o600)
+                os.chmod(public_key_file, 0o644)
 
             private_key = get_secret_value(GIT_SSH_PRIVATE_KEY_SECRET_NAME)
             if private_key:

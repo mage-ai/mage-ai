@@ -8,7 +8,6 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import SettingsDashboard from '@components/settings/Dashboard';
-import { Col } from '@components/shared/Grid';
 import Spacing from '@oracle/elements/Spacing';
 import SyncType, {
   GIT_FIELDS,
@@ -29,7 +28,6 @@ import {
 } from '@components/settings/Dashboard/constants';
 import { onSuccess } from '@api/utils/response';
 import { useMutation } from 'react-query';
-import TextArea from '@oracle/elements/Inputs/TextArea';
 
 export interface SyncFieldType {
   autoComplete?: string;
@@ -60,7 +58,7 @@ function SyncData() {
           callback: ({ sync }) => {
             if (sync) {
               setSync(sync);
-              // window.location.reload();
+              window.location.reload();
               toast.success(
                 'Sync saved',
                 {

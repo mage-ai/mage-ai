@@ -238,7 +238,7 @@ function GitActions({
                             action_type: 'commit',
                             ...payload,
                           }
-                        })
+                        }).then(() => updateStatus());
                       }}
                       success
                     >
@@ -252,7 +252,7 @@ function GitActions({
                           git_branch: {
                             action_type: 'push',
                           }
-                        })
+                        });
                       }}
                       primary
                     >

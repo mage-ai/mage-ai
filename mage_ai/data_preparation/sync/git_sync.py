@@ -4,9 +4,6 @@ from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.base_sync import BaseSync
 from mage_ai.shared.logger import VerboseFunctionExec
 import asyncio
-import os
-
-DEFAULT_SSH_KEY_DIRECTORY = '~/.ssh'
 
 
 class GitSync(BaseSync):
