@@ -59,9 +59,13 @@ import argparse
 import asyncio
 import json
 import os
+import terminado
 import tornado.ioloop
 import tornado.web
 import webbrowser
+
+import logging
+from tornado import gen
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -148,7 +152,36 @@ class ApiProjectSettingsHandler(BaseHandler):
         ]))
 
 
+class TerminalWebsocketServer(terminado.TermSocket):
+    def check_origin(self, origin):
+        return True
+    
+    @gen.coroutine
+    def on_message(self, message):
+        """Handle incoming websocket message
+
+        We send JSON arrays, where the first element is a string indicating
+        what kind of message this is. Data associated with the message follows.
+        """
+        print("TermSocket.on_message: %s - (%s) %s", self.term_name, type(message), len(message) if isinstance(message, bytes) else message[:250])
+        command = json.loads(message)
+        msg_type = command[0]
+        assert self.terminal is not None
+        if msg_type == "stdin":
+            yield self.stdin_to_ptyproc(command[1])
+            if self._enable_output_logging:
+                if command[1] == "\r":
+                    self.log_terminal_output(f"STDIN: {self._user_command}")
+                    self._user_command = ""
+                else:
+                    self._user_command += command[1]
+        elif msg_type == "set_size":
+            self.size = command[1:3]
+            self.terminal.resize_to_smallest()
+
+
 def make_app():
+    term_manager = terminado.SingleTermManager(shell_command=['bash'])
     routes = [
         (r'/', MainPageHandler),
         (r'/pipelines', MainPageHandler),
@@ -180,7 +213,7 @@ def make_app():
             {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
         ),
         (r'/websocket/', WebSocketServer),
-
+        (r'/test/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
         # These are hard to test until we do a full Docker build and deploy to cloud
         (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
         (
@@ -269,6 +302,8 @@ async def main(
         address=host if host != 'localhost' else None,
     )
 
+    tornado.ioloop.IOLoop.instance().start()
+
     url = f'http://{host or "localhost"}:{port}'
     webbrowser.open_new_tab(url)
     print(f'Mage is running at {url} and serving project {project}')
@@ -313,9 +348,6 @@ async def main(
         SCHEDULER_AUTO_RESTART_INTERVAL,
     )
     periodic_callback.start()
-
-    # from mage_ai.server.terminal import connect
-    # connect()
 
     get_messages(
         lambda content: WebSocketServer.send_message(

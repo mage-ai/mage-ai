@@ -32,7 +32,7 @@ from mage_ai.server.execution_manager import (
 )
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
-from mage_ai.server.terminal import command_handler, terminate_process
+# from mage_ai.server.terminal import command_handler
 from mage_ai.server.utils.output_display import (
     add_internal_output_info,
     add_execution_code,

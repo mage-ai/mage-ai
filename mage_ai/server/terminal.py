@@ -2,12 +2,13 @@ import asyncio
 import json
 import os
 import pty
-import pyte
+# import pyte
 import shlex
 import select
 import signal
 import subprocess
 import threading
+import sys
 
 
 class TerminalStatus:
@@ -21,64 +22,70 @@ class TerminalStatus:
 status = TerminalStatus()
 
 
-class Terminal:
-    def __init__(self, columns, lines, p_in):
-        self.screen = pyte.HistoryScreen(columns, lines)
-        self.screen.set_mode(pyte.modes.LNM)
-        self.screen.write_process_input = \
-            lambda data: p_in.write(data.encode())
-        self.stream = pyte.ByteStream()
-        self.stream.attach(self.screen)
+# class Terminal:
+#     def __init__(self, columns, lines, p_in):
+#         self.screen = pyte.HistoryScreen(columns, lines)
+#         self.screen.set_mode(pyte.modes.LNM)
+#         self.screen.write_process_input = \
+#             lambda data: p_in.write(data.encode())
+#         self.stream = pyte.ByteStream()
+#         self.stream.attach(self.screen)
 
-    def feed(self, data):
-        self.stream.feed(data)
+#     def feed(self, data):
+#         self.stream.feed(data)
 
-    def dumps(self):
-        cursor = self.screen.cursor
-        lines = []
-        for y in self.screen.dirty:
-            line = self.screen.buffer[y]
-            data = [(char.data, char.reverse, char.fg, char.bg)
-                    for char in (line[x] for x in range(self.screen.columns))]
-            lines.append((y, data))
+#     def dumps(self):
+#         cursor = self.screen.cursor
+#         lines = []
+#         for y in self.screen.dirty:
+#             line = self.screen.buffer[y]
+#             data_list = [char.data
+#                          for char in (line[x] for x in range(self.screen.columns))]
+#             data = ''.join(data_list)
+#             lines.append((y, data))
 
-        self.screen.dirty.clear()
-        return json.dumps({"c": (cursor.x, cursor.y), "lines": lines})
-
-
-def open_terminal(command="bash", columns=1000, lines=100):
-    p_pid, master_fd = pty.fork()
-    if p_pid == 0:  # Child.
-        argv = shlex.split(command)
-        env = dict(TERM="linux", LC_ALL="en_GB.UTF-8",
-                   COLUMNS=str(columns), LINES=str(lines))
-        os.execvpe(argv[0], argv, env)
-
-    # File-like object for I/O with the child process aka command.
-    p_out = os.fdopen(master_fd, "w+b", 0)
-    return Terminal(columns, lines, p_out), p_pid, p_out
+#         self.screen.dirty.clear()
+#         return json.dumps({"c": (cursor.x, cursor.y), "lines": lines})
 
 
-async def command_handler(command: str, send_output):
-    terminal, pid, pout = open_terminal()
-    send_output(terminal.dumps(), 'busy')
+# def open_terminal(command="bash", columns=80, lines=24):
+#     p_pid, master_fd = pty.fork()
+#     if p_pid == 0:  # Child.
+#         argv = shlex.split(command)
+#         env = dict(TERM="linux", COLUMNS=str(columns), LINES=str(lines))
+#         os.execvpe(argv[0], argv, env)
+#     if master_fd:
+#         # File-like object for I/O with the child process aka command.
+#         p_out = os.fdopen(master_fd, "w+b", 0)
+#         return Terminal(columns, lines, p_out), p_pid, p_out
 
-    def on_master_output():
-        terminal.feed(pout.read(65536))
-        send_output(terminal.dumps(), 'busy')
 
-    loop = asyncio.get_event_loop()
-    loop.add_reader(pout, on_master_output)
-    try:
-        pout.write(command.encode())
-    except (asyncio.CancelledError,
-            OSError):
-        pass
-    finally:
-        loop.remove_reader(pout)
-        os.kill(pid, signal.SIGTERM)
-        pout.close()
-        send_output('', 'idle')
+# async def command_handler(command: str, send_output):
+#     terminal, pid, pout = open_terminal()
+#     # send_output(terminal.dumps(), 'busy')
+
+#     print('process id:', pid)
+
+#     def on_master_output():
+#         test = pout.read(65536)
+#         print('input:', test)
+#         terminal.feed(test)
+#         send_output(terminal.dumps(), 'busy')
+
+#     loop = asyncio.get_event_loop()
+#     loop.add_reader(pout, on_master_output)
+#     try:
+#         print('command:', command)
+#         pout.write(command.encode())
+#     except (asyncio.CancelledError,
+#             OSError):
+#         print('ERROR!')
+#     finally:
+#         print('CLEAN UP!')
+        # loop.remove_reader(pout)
+        # os.kill(pid, signal.SIGTERM)
+        # pout.close()
+        # send_output('', 'idle')
 
 
 # subprocess implementation

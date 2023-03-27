@@ -1,12 +1,17 @@
 import { useCallback } from 'react';
 import { useMutation } from 'react-query';
+import dynamic from 'next/dynamic';
 
 import Dashboard from '@components/Dashboard';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import Terminal from '@components/Terminal';
+// import Terminal from '@components/Terminal';
 import api from '@api';
 import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import { onSuccess } from '@api/utils/response';
+
+const DynamicTerminal = dynamic(() => import('components/Terminal'), {
+  ssr: false
+})
 
 function TerminalPage() {
   const [updateKernel] = useMutation(
@@ -34,7 +39,7 @@ function TerminalPage() {
       title="Terminal"
       uuid="terminal/index"
     >
-      <Terminal
+      <DynamicTerminal
         interruptKernel={interruptKernel}
       />
     </Dashboard>
