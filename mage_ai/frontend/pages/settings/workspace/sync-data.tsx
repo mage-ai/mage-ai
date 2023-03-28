@@ -232,7 +232,13 @@ function SyncData() {
               />
             </Spacing>
             <Text bold large>
-              Use Git sync
+              Use <Link
+                bold
+                href="https://docs.mage.ai/production/data-sync/git#git-sync"
+                large
+                openNewWindow>
+                  Git Sync
+                </Link>
             </Text>
           </FlexContainer>
         </Spacing>
