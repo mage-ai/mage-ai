@@ -7,6 +7,16 @@ By default, logs for each pipeline run will be stored in the
 
 Learn more about logs [here](/design/core-abstractions#log).
 
+## Set logging level
+The default logging level is `INFO`. To customize the logging level for logs of block runs and pipeline runs,
+you can set the `level` of `logging_config` in your project's `metadata.yaml` file.
+
+Example logging config to only log errors:
+```yaml
+logging_config:
+  level: ERROR
+```
+
 ## Logging to external destination
 
 ### S3
