@@ -14,7 +14,7 @@ You must enter the following credentials when configuring this source:
 | `aws_region` | Region where the bucket is located. | `us-west-2` (default value) |
 | `aws_secret_access_key` | AWS secret access key. | `xyz456` |
 | `bucket` | Name of the AWS S3 bucket to save data in. | `user_generated_content` |
-| `file_type` | The type of S3 files. Supported file type values: `parquet`, `csv`, `infer`. If the file type is `infer`, we infer the file type from the file extension. | `infer` |
-| `prefix` | The path of the location where you have files. Don’t include the `s3`, the bucket name, or the table name in this path value.  | `users/ds/20221225` |
+| `file_type` | The type of S3 files. Supported file type values: `parquet`, `csv`. | `parquet` or `csv` |
+| `object_key_path` | The path of the location where you have files. Don’t include the `s3`, the bucket name, or the table name in this path value.  | `users/ds/20221225` |
 
 <br />
