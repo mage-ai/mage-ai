@@ -1357,6 +1357,7 @@ function PipelineDetailPage({
 
   // WebSocket
   const {
+    getWebSocket: getWebSocketObj,
     sendMessage,
   } = useWebSocket(getWebSocket(), {
     onClose: () => console.log('socketUrlPublish closed'),
@@ -1418,7 +1419,8 @@ function PipelineDetailPage({
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
       if (didUnmountRef?.current === false) {
-        // Will attempt to reconnect on all close events, such as server shutting down
+        // Will attempt to reconnect on all close events, such as
+        // server shutting down, except when page unmounts.
         console.log('Attempting to reconnect...');
         return true;
       }
@@ -1426,10 +1428,6 @@ function PipelineDetailPage({
       return false;
     },
   });
-
-  useEffect(() => () => {
-    didUnmountRef.current = true;
-  }, []);
 
   const executePipeline = useCallback(() => {
     savePipelineContent().then(() => {
@@ -1460,6 +1458,14 @@ function PipelineDetailPage({
     sendMessage,
     sharedWebsocketData,
   ]);
+
+  useEffect(() => {
+    window.addEventListener('pagehide', cancelPipeline);
+
+    return () => {
+      didUnmountRef.current = true;
+    };
+  }, [cancelPipeline]);
 
   const runBlockOrig = useCallback((payload: {
     block: BlockType;
