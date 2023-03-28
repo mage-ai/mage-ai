@@ -198,7 +198,7 @@ function Sidekick({
   });
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-  const finalOutputHeight = isIntegration
+  const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
     ? -78   // Hide entire output area
     : (pipelineExecutionHidden ? -22 : OUTPUT_HEIGHT);
 
@@ -317,7 +317,7 @@ function Sidekick({
                   setErrors={setErrors}
                   setSelectedBlock={setSelectedBlock}
                 />
-                {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
+                {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
                   <Spacing p={1}>
                     <PipelineExecution
                       cancelPipeline={cancelPipeline}
