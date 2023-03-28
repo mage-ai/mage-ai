@@ -21,7 +21,7 @@ class AmazonS3(Destination):
         return self.config.get('file_type')
 
     @property
-    def prefix(self) -> str:
+    def object_key_path(self) -> str:
         return self.config['object_key_path']
 
     @property
@@ -74,7 +74,7 @@ class AmazonS3(Destination):
         filename = datetime.now().strftime('%Y%m%d-%H%M%S')
         filename = f'{filename}.{self.file_type}'
 
-        object_key = os.path.join(self.object_key, table_name)
+        object_key = os.path.join(self.object_key_path, table_name, filename)
 
         client.put_object(Body=buffer, Bucket=self.bucket, Key=object_key)
 
