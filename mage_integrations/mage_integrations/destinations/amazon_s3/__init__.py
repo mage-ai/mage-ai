@@ -1,7 +1,7 @@
 from botocore.config import Config
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.utils import update_record_with_internal_columns
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 from typing import Dict, List
 import argparse
@@ -73,10 +73,18 @@ class AmazonS3(Destination):
 
         buffer.seek(0)
 
-        filename = datetime.now().strftime('%Y%m%d-%H%M%S')
+        curr_time = datetime.now(timezone.utc)
+
+        filename = curr_time.strftime('%Y%m%d-%H%M%S')
         filename = f'{filename}.{self.file_type}'
 
-        object_key = os.path.join(self.object_key_path, table_name, filename)
+        object_key = os.path.join(self.object_key_path, table_name)
+
+        date_partition_format = self.config.get('date_partition_format')
+        if date_partition_format:
+            object_key = os.path.join(object_key, curr_time.strftime(date_partition_format))
+
+        object_key = os.path.join(object_key, filename)
 
         client.put_object(Body=buffer, Bucket=self.bucket, Key=object_key)
 

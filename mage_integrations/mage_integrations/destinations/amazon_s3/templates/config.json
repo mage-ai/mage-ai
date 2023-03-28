@@ -5,5 +5,6 @@
   "bucket": null,
   "file_type": "parquet",
   "object_key_path": null,
-  "table": null
+  "table": null,
+  "date_partition_format": null
 }
