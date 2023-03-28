@@ -1,4 +1,4 @@
-import useWebSocket from 'react-use-websocket';
+import useWebSocket, { resetGlobalState } from 'react-use-websocket';
 import {
   useCallback,
   useEffect,
@@ -111,6 +111,7 @@ function PipelineDetailPage({
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
 
   const mainContainerRef = useRef(null);
+  const didUnmountRef = useRef(false);
 
   // Kernels
   const [messages, setMessages] = useState<{
@@ -1356,10 +1357,9 @@ function PipelineDetailPage({
 
   // WebSocket
   const {
-    // lastMessage,
-    // readyState,
     sendMessage,
   } = useWebSocket(getWebSocket(), {
+    onClose: () => console.log('socketUrlPublish closed'),
     onMessage: (lastMessage) => {
       if (lastMessage) {
         const message: KernelOutputType = JSON.parse(lastMessage.data);
@@ -1417,12 +1417,19 @@ function PipelineDetailPage({
     },
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
-      // Will attempt to reconnect on all close events, such as server shutting down
-      console.log('Attempting to reconnect...');
+      if (didUnmountRef?.current === false) {
+        // Will attempt to reconnect on all close events, such as server shutting down
+        console.log('Attempting to reconnect...');
+        return true;
+      }
 
-      return true;
+      return false;
     },
   });
+
+  useEffect(() => () => {
+    didUnmountRef.current = true;
+  }, []);
 
   const executePipeline = useCallback(() => {
     savePipelineContent().then(() => {
