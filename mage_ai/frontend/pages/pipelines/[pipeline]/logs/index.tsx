@@ -151,8 +151,8 @@ function PipelineLogsPage({
       } = dataLogs.logs?.[0] || {};
 
       return {
-        blockRunLogs: brLogs,
-        pipelineRunLogs: prLogs,
+        blockRunLogs: brLogs.flat(),
+        pipelineRunLogs: prLogs.flat(),
         totalBlockRunLogCount: brLogCount,
         totalPipelineRunLogCount: prLogCount,
       };
@@ -169,9 +169,7 @@ function PipelineLogsPage({
   ]);
   const allPastLogsLoaded = +q?._limit >= totalBlockRunLogCount && +q?._limit >= totalPipelineRunLogCount;
   const logsAll: LogType[] = useMemo(() => sortByKey(
-      blockRunLogs
-        .concat(pipelineRunLogs)
-        .reduce((acc, log) => acc.concat(initializeLogs(log)), []),
+      blockRunLogs.concat(pipelineRunLogs),
       ({ data }) => data?.timestamp || 0,
     ), [
     blockRunLogs,

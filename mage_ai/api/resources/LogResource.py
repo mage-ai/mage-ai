@@ -7,8 +7,63 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
 from sqlalchemy.orm import aliased
 from typing import Dict, List
+import json
+import re
+import time
 
 MAX_LOG_FILES = 20
+TIMESTAMP_REGEX = re.compile(r'([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (.+)')
+
+
+def is_json_string(string):
+    if not string:
+        return False
+
+    try:
+        json.loads(string)
+    except ValueError:
+        return False
+
+    return True
+
+
+def initialize_log(log):
+    content = log['content']
+    match = re.match(TIMESTAMP_REGEX, content)
+
+    datetime = match.group(1) if match else None
+    data_raw = match.group(2) if match else None
+
+    data = {}
+    if data_raw and is_json_string(data_raw):
+        data = json.loads(data_raw)
+
+    return {
+        **log,
+        'created_at': datetime,
+        'data': data,
+    }
+
+
+def initialize_logs(log) -> List[Dict]:
+    content = log['content']
+    parts = re.split(TIMESTAMP_REGEX, content)
+    arr = []
+
+    subparts = []
+    for part in parts:
+        if part == '\n':
+            if len(subparts) >= 1:
+                arr.append(' '.join(subparts).strip())
+            subparts = []
+        elif len(list(filter(bool, subparts))) <= 1:
+            subparts.append(part.strip())
+    arr.append(' '.join(subparts).strip())
+
+    return list(map(lambda content2: initialize_log({
+        **log,
+        'content': content2,
+    }), arr))
 
 
 class LogResource(GenericResource):
@@ -35,6 +90,8 @@ class LogResource(GenericResource):
         pipeline_uuid = pipeline.uuid
 
         start_timestamp = query_arg.get('start_timestamp', [None])
+        unix_start_timestamp = None
+        unix_end_timestamp = None
         if start_timestamp:
             start_timestamp = start_timestamp[0]
         end_timestamp = query_arg.get('end_timestamp', [None])
@@ -44,12 +101,14 @@ class LogResource(GenericResource):
         error = ApiError.RESOURCE_INVALID.copy()
         if start_timestamp:
             try:
+                unix_start_timestamp = int(start_timestamp)
                 start_timestamp = datetime.fromtimestamp(int(start_timestamp))
             except (ValueError, OverflowError):
                 error.update(message='Value is invalid for start_timestamp.')
                 raise ApiError(error)
         if end_timestamp:
             try:
+                unix_end_timestamp = int(end_timestamp)
                 end_timestamp = datetime.fromtimestamp(int(end_timestamp))
             except (ValueError, OverflowError):
                 error.update(message='Value is invalid for end_timestamp.')
@@ -123,17 +182,6 @@ class LogResource(GenericResource):
                     filter(a.id.in_(pipeline_run_ids))
                 )
 
-            if start_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date >= start_timestamp)
-                )
-
-            if end_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date <= end_timestamp)
-                )
             total_pipeline_run_log_count = query.count()
             if meta.get(META_KEY_LIMIT, None) is not None:
                 rows = query.limit(meta[META_KEY_LIMIT])
@@ -156,9 +204,20 @@ class LogResource(GenericResource):
                 model.pipeline_schedule_id = row.pipeline_schedule_id
                 model.pipeline_uuid = row.pipeline_uuid
                 logs = await model.logs_async()
+                logs_parsed = initialize_logs(logs)
+                if unix_start_timestamp:
+                    logs_parsed = [
+                        l for l in logs_parsed
+                        if l.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
+                    ]
+                if unix_end_timestamp:
+                    logs_parsed = [
+                        l for l in logs_parsed
+                        if l.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
+                    ]
                 pipeline_log_file_path = logs.get('path')
                 if pipeline_log_file_path not in processed_pipeline_run_log_files:
-                    pipeline_run_logs.append(logs)
+                    pipeline_run_logs.append(logs_parsed)
                     processed_pipeline_run_log_files.add(pipeline_log_file_path)
                 if len(pipeline_run_logs) >= MAX_LOG_FILES:
                     break
@@ -200,18 +259,6 @@ class LogResource(GenericResource):
                     filter(a.id.in_(pipeline_run_ids))
                 )
 
-            if start_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date >= start_timestamp)
-                )
-
-            if end_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date <= end_timestamp)
-                )
-
             if meta.get(META_KEY_LIMIT, None) is not None:
                 rows = query.limit(meta[META_KEY_LIMIT])
             else:
@@ -241,9 +288,20 @@ class LogResource(GenericResource):
             model2.pipeline_run = model
 
             logs = await model2.logs_async()
+            logs_parsed = initialize_logs(logs)
             block_log_file_path = logs.get('path')
+            if unix_start_timestamp:
+                logs_parsed = [
+                    l for l in logs_parsed
+                    if l.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
+                ]
+            if unix_end_timestamp:
+                logs_parsed = [
+                    l for l in logs_parsed
+                    if l.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
+                ]
             if block_log_file_path not in processed_block_run_log_files:
-                block_run_logs.append(logs)
+                block_run_logs.append(logs_parsed)
                 processed_block_run_log_files.add(block_log_file_path)
 
             if len(block_run_logs) >= MAX_LOG_FILES:
