@@ -207,13 +207,13 @@ class LogResource(GenericResource):
                 logs_parsed = initialize_logs(logs)
                 if unix_start_timestamp:
                     logs_parsed = [
-                        l for l in logs_parsed
-                        if l.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
+                        log for log in logs_parsed
+                        if log.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
                     ]
                 if unix_end_timestamp:
                     logs_parsed = [
-                        l for l in logs_parsed
-                        if l.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
+                        log for log in logs_parsed
+                        if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
                     ]
                 pipeline_log_file_path = logs.get('path')
                 if pipeline_log_file_path not in processed_pipeline_run_log_files:
@@ -292,13 +292,13 @@ class LogResource(GenericResource):
             block_log_file_path = logs.get('path')
             if unix_start_timestamp:
                 logs_parsed = [
-                    l for l in logs_parsed
-                    if l.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
+                    log for log in logs_parsed
+                    if log.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
                 ]
             if unix_end_timestamp:
                 logs_parsed = [
-                    l for l in logs_parsed
-                    if l.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
+                    log for log in logs_parsed
+                    if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
                 ]
             if block_log_file_path not in processed_block_run_log_files:
                 block_run_logs.append(logs_parsed)
