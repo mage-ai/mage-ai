@@ -43,7 +43,7 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { calculateStartTimestamp } from '@utils/number';
 import { find, indexBy, sortByKey } from '@utils/array';
-import { formatTimestamp, initializeLogs } from '@utils/models/log';
+import { formatTimestamp } from '@utils/models/log';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
@@ -388,7 +388,6 @@ function PipelineLogsPage({
           }}
           rows={logsFiltered?.map(({
             content,
-            createdAt,
             data,
             name,
           }: LogType) => {
@@ -396,7 +395,6 @@ function PipelineLogsPage({
               block_uuid: blockUUIDProp,
               level,
               message,
-              pipeline_uuid: pUUID,
               timestamp,
             } = data || {};
 
