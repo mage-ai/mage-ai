@@ -26,6 +26,8 @@ SyncPolicy.allow_read(SyncPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
+    constants.DETAIL,
+    constants.LIST,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
