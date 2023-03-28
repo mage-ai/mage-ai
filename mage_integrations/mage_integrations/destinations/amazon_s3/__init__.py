@@ -1,12 +1,14 @@
 from botocore.config import Config
-from mage_integrations.destinations.base import Destination, main
+from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.utils import update_record_with_internal_columns
 from datetime import datetime
 from io import BytesIO
 from typing import Dict, List
+import argparse
 import boto3
-import pandas as pd
 import os
+import pandas as pd
+import sys
 
 
 class AmazonS3(Destination):
@@ -88,4 +90,8 @@ class AmazonS3(Destination):
 
 
 if __name__ == '__main__':
-    main(AmazonS3)
+    destination = AmazonS3(
+        argument_parser=argparse.ArgumentParser(),
+        batch_processing=True,
+    )
+    destination.process(sys.stdin.buffer)
