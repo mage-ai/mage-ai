@@ -339,9 +339,9 @@
           ]
         },
         {
-          "group": "Syncing data",
+          "group": "Version control",
           "pages": [
-            "production/data-sync/github"
+            "production/data-sync/git"
           ]
         }
       ]

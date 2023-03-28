@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
@@ -16,6 +17,7 @@ import SyncType, {
 } from '@interfaces/SyncType';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import {
   PADDING_UNITS,
@@ -27,7 +29,6 @@ import {
   SECTION_UUID_WORKSPACE,
 } from '@components/settings/Dashboard/constants';
 import { onSuccess } from '@api/utils/response';
-import { useMutation } from 'react-query';
 
 export interface SyncFieldType {
   autoComplete?: string;
@@ -44,9 +45,13 @@ function SyncData() {
   const [sync, setSync] = useState<SyncType>(null);
   const [error, setError] = useState<string>(null);
 
+  const [showSyncSettings, setShowSyncSettings] = useState<boolean>(null);
+
   useEffect(() => {
     if (dataSyncs) {
-      setSync(dataSyncs?.syncs?.[0]);
+      const initialSync = dataSyncs?.syncs?.[0];
+      setSync(initialSync);
+      setShowSyncSettings(!!initialSync?.branch);
     }
   }, [dataSyncs]);
 
@@ -164,57 +169,7 @@ function SyncData() {
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Text bold>
-            (OPTIONAL) You can also set up your project to only sync with a specified branch.
-          </Text>
-        </Spacing>
-        <form>
-          {SYNC_FIELDS.map(({
-            autoComplete,
-            disabled,
-            label,
-            required,
-            type,
-            uuid,
-          }: SyncFieldType) => (
-            <Spacing key={uuid} mt={2}>
-              <TextInput
-                autoComplete={autoComplete}
-                disabled={disabled}
-                label={label}
-                // @ts-ignore
-                onChange={e => {
-                  setSync(prev => ({
-                    ...prev,
-                    [uuid]: e.target.value,
-                  }));
-                }}
-                primary
-                required={required}
-                setContentOnMount
-                type={type}
-                value={sync?.[uuid] || ''}
-              />
-            </Spacing>
-          ))}
-        </form>
-        <FlexContainer alignItems="center">
-          <Spacing mt={2}>
-            <Checkbox
-              checked={sync?.sync_on_pipeline_run}
-              label="Sync before each trigger run"
-              onClick={() => {
-                setSync(prev => ({
-                  ...prev,
-                  sync_on_pipeline_run: !sync?.sync_on_pipeline_run,
-                }));
-              }}
-            />
-          </Spacing>
-        </FlexContainer>
-
-        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-          <Text bold>
-            (OPTIONAL) Filling out these fields will allow Mage to recover
+            (OPTIONAL, BUT RECOMMENDED) Filling out these fields will allow Mage to recover
             your Git settings if they get reset.
           </Text>
         </Spacing>
@@ -256,6 +211,84 @@ function SyncData() {
             </Spacing>
           ))}
         </form>
+        
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer alignItems="center">
+            <Spacing mr={2}>
+              <ToggleSwitch
+                checked={!!showSyncSettings}
+                onCheck={() => setShowSyncSettings(prev => {
+                  // @ts-ignore
+                  const newVal = !prev;
+                  if (!newVal) {
+                    setSync(prevSync => ({
+                      ...prevSync,
+                      branch: null,
+                      sync_on_pipeline_run: false,
+                    }));
+                  }
+                  return newVal;
+                })}
+              />
+            </Spacing>
+            <Text bold large>
+              Use Git sync
+            </Text>
+          </FlexContainer>
+        </Spacing>
+        {showSyncSettings && (
+          <>
+            <Spacing mt={1}>
+              <Text bold>
+                (OPTIONAL) You can also set up your project to only sync with a specified branch.
+              </Text>
+            </Spacing>
+            <form>
+              {SYNC_FIELDS.map(({
+                autoComplete,
+                disabled,
+                label,
+                required,
+                type,
+                uuid,
+              }: SyncFieldType) => (
+                <Spacing key={uuid} mt={2}>
+                  <TextInput
+                    autoComplete={autoComplete}
+                    disabled={disabled}
+                    label={label}
+                    // @ts-ignore
+                    onChange={e => {
+                      setSync(prev => ({
+                        ...prev,
+                        [uuid]: e.target.value,
+                      }));
+                    }}
+                    primary
+                    required={required}
+                    setContentOnMount
+                    type={type}
+                    value={sync?.[uuid] || ''}
+                  />
+                </Spacing>
+              ))}
+            </form>
+            <FlexContainer alignItems="center">
+              <Spacing mt={2}>
+                <Checkbox
+                  checked={sync?.sync_on_pipeline_run}
+                  label="Sync before each trigger run"
+                  onClick={() => {
+                    setSync(prev => ({
+                      ...prev,
+                      sync_on_pipeline_run: !sync?.sync_on_pipeline_run,
+                    }));
+                  }}
+                />
+              </Spacing>
+            </FlexContainer>
+          </>
+        )}
 
         <Spacing mt={2}>
           <Button
@@ -270,43 +303,46 @@ function SyncData() {
           </Button>
         </Spacing>
 
-        <Spacing mt={UNITS_BETWEEN_SECTIONS}>
-          <Headline>
-            Synchronize code from remote repository
-          </Headline>
-
-          <Spacing mt={1}>
-            <Text>
-              Running the sync from this page will
-              run a one time sync with the remote repository.
-              <br />
-              This may <Text bold danger inline>overwrite</Text> your
-              existing data, so make sure you’ve committed or backed up your current changes.
-            </Text>
-          </Spacing>
-
-          <Spacing mt={2}>
-            <Button
-              loading={isLoadingRunSync}
-              onClick={() => confirm(
-                'Are you sure you want to sync code from a remote repository and ' +
-                'overwrite the current code base?',
-                // @ts-ignore
-                () => runSync({
-                  sync: {
-                    action_type: 'sync_data',
-                  },
-              }))}
-            >
-              Synchronize code
-            </Button>
-          </Spacing>
-        </Spacing>
         {error && (
           <Spacing mt={1}>
             <Text danger>
               {error}
             </Text>
+          </Spacing>
+        )}
+        
+        {showSyncSettings && (
+          <Spacing mt={UNITS_BETWEEN_SECTIONS}>
+            <Headline>
+              Synchronize code from remote repository
+            </Headline>
+
+            <Spacing mt={1}>
+              <Text>
+                Running the sync from this page will
+                run a one time sync with the remote repository.
+                <br />
+                This may <Text bold danger inline>overwrite</Text> your
+                existing data, so make sure you’ve committed or backed up your current changes.
+              </Text>
+            </Spacing>
+
+            <Spacing mt={2}>
+              <Button
+                loading={isLoadingRunSync}
+                onClick={() => confirm(
+                  'Are you sure you want to sync code from a remote repository and ' +
+                  'overwrite the current code base?',
+                  // @ts-ignore
+                  () => runSync({
+                    sync: {
+                      action_type: 'sync_data',
+                    },
+                }))}
+              >
+                Synchronize code
+              </Button>
+            </Spacing>
           </Spacing>
         )}
       </Spacing>

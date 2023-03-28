@@ -51,6 +51,7 @@ export const SYNC_FIELDS = [
   {
     autoComplete: 'branch',
     label: 'Branch name',
+    required: true,
     uuid: 'branch',
   },
 ];
