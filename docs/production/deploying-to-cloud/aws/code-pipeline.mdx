@@ -1,6 +1,6 @@
 ---
 title: "Deploy to AWS ECS with AWS CodePipeline"
-sidebarTitle: "Setup"
+sidebarTitle: "CodePipeline"
 ---
 
 ## Pre-requisites
@@ -20,8 +20,14 @@ This document also assumes that you have already set up your ECS cluster, servic
 ### AWS CodeCommit
 
 The pipeline that is created through the Terraform scripts has a AWS CodeCommit repo as a source. You
-will need to have a CodeCommit repo already set up that has your Mage repository code. You will also need
-to add a `buildspec.yml` file to your repository. The `buildspec.yml` file can follow the following format:
+will need to have a CodeCommit repo already set up that has your Mage repository code.
+
+Your CodeCommit repository should have a Dockerfile in the top level of your CodeCommit.
+[Here is a reference Dockerfile](https://github.com/mage-ai/docker/blob/master/Dockerfile)
+that you can use for your own Dockerfile.
+
+You will also need to add a `buildspec.yml` file to your repository.
+The `buildspec.yml` file can follow the following format:
 
 ```
 version: 0.2

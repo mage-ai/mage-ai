@@ -305,7 +305,8 @@
                 "production/deploying-to-cloud/aws/terraform-apply-policy",
                 "production/deploying-to-cloud/aws/terraform-destroy-policy",
                 "production/deploying-to-cloud/aws/emr-policy",
-                "production/deploying-to-cloud/aws-without-terraform"
+                "production/deploying-to-cloud/aws-without-terraform",
+                "production/deploying-to-cloud/aws/code-pipeline"
               ]
             },
             {
