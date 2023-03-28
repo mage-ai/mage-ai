@@ -1,4 +1,5 @@
 DESTINATIONS = [
+    dict(name='Amazon S3'),
     dict(name='BigQuery'),
     dict(name='Delta Lake S3'),
     dict(
