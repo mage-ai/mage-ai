@@ -71,6 +71,8 @@ class AmazonS3(Destination):
         else:
             raise Exception(f'File type {self.file_type} is not supported.')
 
+        buffer.seek(0)
+
         filename = datetime.now().strftime('%Y%m%d-%H%M%S')
         filename = f'{filename}.{self.file_type}'
 
