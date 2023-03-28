@@ -94,7 +94,7 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
     elif COLUMN_TYPE_INTEGER == column_type:
         return 'UNSIGNED'
     elif COLUMN_TYPE_NUMBER == column_type:
-        return 'DECIMAL'
+        return 'DOUBLE PRECISION'
     elif COLUMN_TYPE_OBJECT == column_type:
         return 'JSON'
     elif COLUMN_TYPE_STRING == column_type:
