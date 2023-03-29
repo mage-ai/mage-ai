@@ -23,6 +23,7 @@ from mage_ai.server.active_kernel import (
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.server.execution_manager import (
     cancel_pipeline_execution,
+    check_pipeline_process_status,
     delete_pipeline_copy_config,
     reset_execution_manager,
     set_current_message_task,
@@ -200,7 +201,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             return
         global_vars = message.get('global_vars')
         cancel_pipeline = message.get('cancel_pipeline')
+        skip_publish_message = message.get('skip_publish_message')
         execute_pipeline = message.get('execute_pipeline')
+        check_if_pipeline_running = message.get('check_if_pipeline_running')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = None
@@ -220,7 +223,13 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         global_vars['event'] = dict()
 
         if cancel_pipeline:
-            cancel_pipeline_execution(pipeline, publish_pipeline_message)
+            cancel_pipeline_execution(
+                pipeline,
+                publish_pipeline_message,
+                skip_publish_message,
+            )
+        elif check_if_pipeline_running:
+            check_pipeline_process_status(pipeline, publish_pipeline_message)
         elif not pipeline:
             code = message.get('code')
             # Need to use Python magic command for changing directories

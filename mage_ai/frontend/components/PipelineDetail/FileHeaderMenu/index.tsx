@@ -147,7 +147,14 @@ function FileHeaderMenu({
     }
 
     return items;
-  }, [isPipelineExecuting]);
+  }, [
+    cancelPipeline,
+    executePipeline,
+    interruptKernel,
+    isPipelineExecuting,
+    restartKernel,
+    setMessages,
+  ]);
 
   const uuidKeyboard = 'FileHeaderMenu/index';
   const {

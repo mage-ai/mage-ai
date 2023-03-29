@@ -80,6 +80,7 @@ export type SidekickProps = {
   blocks: BlockType[];
   blocksInNotebook: BlockType[];
   cancelPipeline: () => void;
+  checkIfPipelineRunning: () => void;
   editingBlock: {
     upstreamBlocks: {
       block: BlockType;
@@ -122,6 +123,7 @@ function Sidekick({
   blocksInNotebook,
   cancelPipeline,
   chartRefs,
+  checkIfPipelineRunning,
   deleteBlock,
   deleteWidget,
   editingBlock,
@@ -198,7 +200,7 @@ function Sidekick({
   });
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-  const finalOutputHeight = isIntegration
+  const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
     ? -78   // Hide entire output area
     : (pipelineExecutionHidden ? -22 : OUTPUT_HEIGHT);
 
@@ -317,10 +319,11 @@ function Sidekick({
                   setErrors={setErrors}
                   setSelectedBlock={setSelectedBlock}
                 />
-                {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
+                {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
                   <Spacing p={1}>
                     <PipelineExecution
                       cancelPipeline={cancelPipeline}
+                      checkIfPipelineRunning={checkIfPipelineRunning}
                       executePipeline={executePipeline}
                       isPipelineExecuting={isPipelineExecuting}
                       pipelineExecutionHidden={pipelineExecutionHidden}

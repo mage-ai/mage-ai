@@ -25,6 +25,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export type PipelineExecutionProps = {
   cancelPipeline: () => void;
+  checkIfPipelineRunning: () => void;
   executePipeline: () => void;
   isPipelineExecuting: boolean;
   pipelineExecutionHidden: boolean;
@@ -34,6 +35,7 @@ export type PipelineExecutionProps = {
 
 function PipelineExecution({
   cancelPipeline,
+  checkIfPipelineRunning,
   executePipeline,
   isPipelineExecuting,
   pipelineExecutionHidden,
@@ -60,6 +62,8 @@ function PipelineExecution({
         <Flex>
           <Button
             beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+            compact={isPipelineExecuting}
+            disabled={isPipelineExecuting}
             loading={isPipelineExecuting}
             onClick={executePipeline}
             success
@@ -74,20 +78,29 @@ function PipelineExecution({
           </Button>
           <Spacing ml={1} />
           {isPipelineExecuting && (
-            <Button
-              beforeIcon={<Close inverted size={UNIT * 2}/>}
-              onClick={cancelPipeline}
-              success
-            >
-              <Text
-                bold
-                inverted
-                primary={false}
+            <>
+              <Button
+                beforeIcon={<Close inverted size={UNIT * 2}/>}
+                onClick={cancelPipeline}
+                success
               >
-                Cancel Pipeline
-              </Text>
-            </Button>
+                <Text
+                  bold
+                  inverted
+                  primary={false}
+                >
+                  Cancel pipeline
+                </Text>
+              </Button>
+              <Spacing ml={1} />
+            </>
           )}
+          <Button
+            onClick={checkIfPipelineRunning}
+            secondary
+          >
+            Running status
+          </Button>
         </Flex>
         <Flex alignItems="center">
           <Text>
