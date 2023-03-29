@@ -1,18 +1,13 @@
 import Ansi from 'ansi-to-react';
 import useWebSocket from 'react-use-websocket';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Terminal as XTerminal } from 'xterm'
 
 import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
-import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
   DataTypeEnum,
   DATA_TYPE_TEXTLIKE,
-  ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
-import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import {
   CharacterStyle,
@@ -34,13 +29,10 @@ import {
   KEY_CODE_V,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { getTerminalWebSocket, getWebSocket } from '@api/utils/url';
+import { getWebSocket } from '@api/utils/url';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
-import { getNewUUID } from '@utils/string';
-
-// import 'xterm/css/xterm.css';
 
 export const DEFAULT_TERMINAL_UUID = 'terminal';
 
@@ -77,60 +69,19 @@ function Terminal({
     lastMessage,
     readyState,
     sendMessage,
-  } = useWebSocket(getTerminalWebSocket(), {});
+  } = useWebSocket(getWebSocket('terminal'), {});
 
   useEffect(() => {
     if (lastMessage) {
-      console.log('last message:', lastMessage);
-
-      // const data = lastMessage?.data ? JSON.parse(lastMessage.data) : null;
-
-      // if (data?.uuid === terminalUUID) {
-      //   if (ExecutionStateEnum.BUSY === data?.execution_state) {
-      //     setBusy(true);
-      //   } else if (ExecutionStateEnum.IDLE === data?.execution_state) {
-      //     setBusy(false);
-      //   }
-
       const msg = JSON.parse(lastMessage.data);
-      console.log('msg:', msg);
-
-      // setKernelOutputs(prev => {
-      //   if (msg[0] === 'stdout') {
-      //     const dataSplit = msg[1].split('\n');
-      //     // @ts-ignore
-      //     const dataUpdated = dataSplit.map(d => ({
-      //       data: d,
-      //       type: DataTypeEnum.TEXT,
-      //     }));
-      //     return prev.concat(dataUpdated);
-      //   }
-      //   return prev;
-      // });
 
       setStdout(prev => {
-        const p = prev || ' ';
+        const p = prev || '';
         if (msg[0] === 'stdout') {
           return p + msg[1];
         }
         return p;
       })
-
-      // setKernelOutputs(prev => {
-      //   if (data) {
-      //     const last = prev.pop();
-      //     if (last.msg_id == data.msg_id) {
-      //       data.data = last.data + data.data;
-      //     } else {
-      //       prev.push(last);
-      //     }
-      //     console.log('message data:', data);
-      //     return prev.concat(data);
-      //   }
-
-      //     return prev;
-      //   });
-      // }
     }
   }, [
     lastMessage,
@@ -141,27 +92,18 @@ function Terminal({
     if (!stdout) {
       return [];
     }
+    
+    // Filter out commands to configure settings
+    const splitStdout =
+      stdout
+        .split('\n')
+        .filter(d => !d.includes("# Mage terminal settings command"));
 
-    return stdout.split('\n').map(d => ({
+    return splitStdout.map(d => ({
       data: d,
       type: DataTypeEnum.TEXT,
     }));
   }, [stdout]);
-
-  console.log('kernel outputs:', kernelOutputsUpdated);
-
-  // const kernelOutputsUpdated = useMemo(() => {
-  //   return kernelOutputs.reduce((acc, data) => {
-  //     const last = acc[acc.length - 1];
-  //     const copy = JSON.parse(JSON.stringify(data));
-  //     if (data?.msg_id && last?.msg_id == data.msg_id) {
-  //       copy.data = last?.data + data.data;
-  //     } else if (last) {
-  //       return acc.concat(copy);
-  //     }
-  //     return acc.slice(0, acc.length - 1).concat(copy);
-  //   }, []);
-  // }, [kernelOutputs]);
 
   useEffect(() => {
     if (refContainer.current && refInner.current) {
@@ -257,22 +199,10 @@ function Terminal({
               setCursorIndex(nextCommand.length);
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
-            const finalEnteredCommand = finalCommand + command;
-            // const commandRunning = busy;
+            const finalEnteredCommand = finalCommand + command + '\n';
             if (finalEnteredCommand?.length >= 1) {
-              // setBusy(true);
-              // sendMessage(JSON.stringify({
-              //   api_key: OAUTH2_APPLICATION_CLIENT_ID,
-              //   command: finalEnteredCommand,
-              //   token: (new AuthToken()).decodedToken.token,
-              //   uuid: terminalUUID,
-              //   msg_id: getNewUUID(),
-              // }));
               sendMessage(JSON.stringify([
                 'stdin', finalEnteredCommand
-              ]));
-              sendMessage(JSON.stringify([
-                'stdin', '\n'
               ]));
               setCommandIndex(commandHistory.length + 1);
               setCommandHistory(prev => prev.concat(command));
@@ -358,50 +288,11 @@ in the context menu that appears.
     ],
   );
 
-  // const terminalRef = useRef(null);
-  // const term = new XTerminal({
-  //   cols: 80,
-  //   rows: 24,
-  // });
-
-  // useEffect(() => {
-  //   sendMessage(JSON.stringify([
-  //     'set_size',
-  //     24,
-  //     80,
-  //     window.innerHeight,
-  //     window.innerWidth,
-  //   ]))
-  //   term.onData(data => {
-  //     // console.log('stdin data:', encodeURI(data));
-  //     sendMessage(JSON.stringify([
-  //       'stdin', data
-  //     ]));
-  //   });
-  //   if (terminalRef.current) {
-  //     term.open(terminalRef.current);
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   if (lastMessage) {
-  //     const msg = JSON.parse(lastMessage.data);
-  //     // console.log('msg:', msg);
-  //     if (msg[0] === 'stdout') {
-  //       console.log('write message to term:', msg[1]);
-  //       term.write(msg[1]);
-  //     }
-  //   }
-  // }, [lastMessage]);
-
   const lastCommand = useMemo(() => {
     return kernelOutputsUpdated[kernelOutputsUpdated.length - 1]?.data;
   }, [kernelOutputsUpdated]);
 
-  // console.log('stdout:', stdout);
-
   return (
-    // <div ref={terminalRef} />
     <ContainerStyle
       ref={refContainer}
       width={width}
@@ -463,7 +354,6 @@ in the context menu that appears.
                         {data}
                       </Ansi>
                     )}
-                    {!data && <>&nbsp;</>}
                   </Text>
                 );
               }
@@ -471,18 +361,7 @@ in the context menu that appears.
               if (displayElement) {
                 const key = `command-${idx}-${idxInner}-${data}`;
 
-                if (command) {
-                  // arr.push(
-                  //   <LineStyle key={key}>
-                  //     <FlexContainer alignItems="center">
-                  //       <Text inline monospace warning>
-                  //         →&nbsp;
-                  //       </Text>
-                  //       {displayElement}
-                  //     </FlexContainer>
-                  //   </LineStyle>,
-                  // );
-                } else {
+                if (!command) {
                   const numberOfLines = data.split('\n').length;
                   arr.push(
                     <LineStyle key={key} numberOfLines={numberOfLines}>
@@ -504,18 +383,11 @@ in the context menu that appears.
               <Text monospace>
                 {!busy && (
                   <Text inline monospace>
-                    {lastCommand ? (
+                    {lastCommand && (
                       <Ansi>
                         {lastCommand}
                       </Ansi>
-                    ) : (
-                      "→&nbsp;"
                     )}
-                    {/* {stdout && (
-                      <Ansi>
-                        {stdout}
-                      </Ansi>
-                    )} */}
                   </Text>
                 )}
                 {command?.split('').map(((char: string, idx: number) => (
