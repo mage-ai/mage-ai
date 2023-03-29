@@ -155,7 +155,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
 
 def make_app():
-    term_manager = terminado.SingleTermManager(shell_command=['bash'])
+    term_manager = terminado.UniqueTermManager(shell_command=['bash'])
 
     # Turn enable-bracketed-paste off since it can mess up the output.
     terminal = term_manager.get_terminal('tty')
