@@ -5,4 +5,6 @@ class GitBranchPresenter(BasePresenter):
     default_attributes = [
         'name',
         'status',
+        'message',
+        'action_type',
     ]

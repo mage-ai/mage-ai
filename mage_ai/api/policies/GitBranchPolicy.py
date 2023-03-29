@@ -31,18 +31,13 @@ GitBranchPolicy.allow_read(GitBranchPresenter.default_attributes, scopes=[
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
-GitBranchPolicy.allow_write([
-    'name',
-], scopes=[
+GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[
     constants.CREATE,
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
-GitBranchPolicy.allow_write([
-    'name',
-    'message'
-], scopes=[
+GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE
 ], on_action=[
     constants.UPDATE,
