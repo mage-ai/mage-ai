@@ -168,16 +168,18 @@ function Terminal({
       if (focus) {
         pauseEvent(event);
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
-          const finalEnteredCommand = finalCommand + command + '\x03';
-            if (finalEnteredCommand?.length >= 1) {
-              sendMessage(JSON.stringify([
-                'stdin', finalEnteredCommand
-              ]));
-              setCommandIndex(commandHistory.length + 1);
-              setCursorIndex(0);
-            }
-            setFinalCommand('');
-            setCommand('');
+          const finalEnteredCommand = finalCommand + command;
+          if (finalEnteredCommand?.length >= 0) {
+            sendMessage(JSON.stringify([
+              'stdin', finalEnteredCommand
+            ]));
+            sendMessage(JSON.stringify([
+              'stdin', '\x03'
+            ]));
+            setCursorIndex(0);
+          }
+          setFinalCommand('');
+          setCommand('');
         } else {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
             const minIdx = Math.max(0, cursorIndex - 1);
@@ -203,9 +205,12 @@ function Terminal({
               setCursorIndex(nextCommand.length);
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
-            const finalEnteredCommand = finalCommand + command + '\n';
+            const finalEnteredCommand = finalCommand + command;
             sendMessage(JSON.stringify([
               'stdin', finalEnteredCommand
+            ]));
+            sendMessage(JSON.stringify([
+              'stdin', '\r'
             ]));
             if (finalEnteredCommand?.length >= 2) {
               setCommandIndex(commandHistory.length + 1);
