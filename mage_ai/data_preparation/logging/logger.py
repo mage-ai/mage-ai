@@ -1,6 +1,7 @@
 from datetime import datetime
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.hash import merge_dict
+from typing import Dict
 import logging
 import simplejson
 import traceback
@@ -8,8 +9,9 @@ import uuid
 
 
 class DictLogger():
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, logging_tags: Dict = dict()):
         self.logger = logger
+        self.logging_tags = logging_tags
 
     def critical(self, message, **kwargs):
         self.__send_message('critical', message, **kwargs)
@@ -54,7 +56,7 @@ class DictLogger():
             data['error_stacktrace'] = str(error),
 
         msg = simplejson.dumps(
-            merge_dict(kwargs, data),
+            merge_dict(self.logging_tags or dict(), merge_dict(kwargs, data)),
             default=encode_complex,
             ignore_nan=True,
         )

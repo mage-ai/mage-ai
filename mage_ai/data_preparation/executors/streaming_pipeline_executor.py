@@ -1,11 +1,13 @@
 from contextlib import redirect_stderr, redirect_stdout
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
+from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.shared.hash import merge_dict
 from typing import Callable, Dict, List, Union
 import asyncio
+import logging
 import os
 import yaml
 
@@ -74,13 +76,18 @@ class StreamingPipelineExecutor(PipelineExecutor):
 
         tags = self._build_tags(**kwargs)
         if build_block_output_stdout:
+            stdout_logger = logging.getLogger('streaming_pipeline_executor')
+            self.logger = DictLogger(stdout_logger)
             stdout = build_block_output_stdout(self.pipeline.uuid)
         else:
+            self.logger = DictLogger(self.logger_manager.logger, logging_tags=tags)
             stdout = StreamToLogger(self.logger, logging_tags=tags)
         try:
             with redirect_stdout(stdout):
                 with redirect_stderr(stdout):
-                    self.__execute_in_python()
+                    self.__execute_in_python(
+                        build_block_output_stdout=build_block_output_stdout,
+                    )
         except Exception as e:
             if not build_block_output_stdout:
                 self.logger.exception(
@@ -89,7 +96,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
                     )
             raise e
 
-    def __execute_in_python(self):
+    def __execute_in_python(self, build_block_output_stdout: Callable[..., object] = None):
         from mage_ai.streaming.sources.base import SourceConsumeMethod
         from mage_ai.streaming.sources.source_factory import SourceFactory
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
@@ -106,17 +113,29 @@ class StreamingPipelineExecutor(PipelineExecutor):
 
         def handle_batch_events(messages: List[Union[Dict, str]], **kwargs):
             if self.transformer_block is not None:
-                messages = self.transformer_block.execute_block(
-                    input_args=[messages],
+                execute_block_kwargs = dict(
                     global_vars=kwargs,
+                    input_args=[messages],
+                    logger=self.logger,
+                )
+                if build_block_output_stdout:
+                    execute_block_kwargs['build_block_output_stdout'] = build_block_output_stdout
+                messages = self.transformer_block.execute_block(
+                    **execute_block_kwargs,
                 )['output']
             sink.batch_write(messages)
 
         async def handle_event_async(message, **kwargs):
             if self.transformer_block is not None:
-                messages = self.transformer_block.execute_block(
-                    input_args=[[message]],
+                execute_block_kwargs = dict(
                     global_vars=kwargs,
+                    input_args=[[message]],
+                    logger=self.logger,
+                )
+                if build_block_output_stdout:
+                    execute_block_kwargs['build_block_output_stdout'] = build_block_output_stdout
+                messages = self.transformer_block.execute_block(
+                    **execute_block_kwargs,
                 )['output']
             sink.batch_write(messages)
 

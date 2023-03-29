@@ -854,10 +854,10 @@ class Block:
             ),
         )
         # Set up logger
-        if logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        elif build_block_output_stdout:
+        if build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
+        elif logger is not None:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
 
@@ -950,6 +950,8 @@ class Block:
         else:
             block_function = self._validate_execution(decorated_functions, input_vars)
             if block_function is not None:
+                if logger and 'logger' not in global_vars:
+                    global_vars['logger'] = logger
                 outputs = self.execute_block_function(
                     block_function,
                     input_vars,
@@ -1480,10 +1482,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
             return
 
-        if logger is not None:
-            stdout = StreamToLogger(logger, logging_tags=logging_tags)
-        elif build_block_output_stdout:
+        if build_block_output_stdout:
             stdout = build_block_output_stdout(self.uuid)
+        elif logger is not None:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
 
