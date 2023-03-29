@@ -1,4 +1,4 @@
-import useWebSocket, { resetGlobalState } from 'react-use-websocket';
+import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
   useEffect,
@@ -1418,14 +1418,10 @@ function PipelineDetailPage({
     },
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
-      if (didUnmountRef?.current === false) {
-        // Will attempt to reconnect on all close events, such as
-        // server shutting down, except when page unmounts.
-        console.log('Attempting to reconnect...');
-        return true;
-      }
+      // Will attempt to reconnect on all close events, such as server shutting down.
+      console.log('Attempting to reconnect...');
 
-      return false;
+      return true;
     },
   });
 
@@ -1459,13 +1455,42 @@ function PipelineDetailPage({
     sharedWebsocketData,
   ]);
 
+  // The cancelPipeline method is not called with an arg due to "Converting circular
+  // structure to JSON" TypeError when "Cancel Pipeline" button is clicked.
+  const cancelPipelineWithoutMessage = useCallback(() => {
+    sendMessage(JSON.stringify({
+      ...sharedWebsocketData,
+      cancel_pipeline: true,
+      pipeline_uuid: pipelineUUID,
+      skip_publish_message: true,
+    }));
+  }, [
+    pipelineUUID,
+    sendMessage,
+    sharedWebsocketData,
+  ]);
+
+  const checkIfPipelineRunning = useCallback(() => {
+    sendMessage(JSON.stringify({
+      ...sharedWebsocketData,
+      check_if_pipeline_running: true,
+      pipeline_uuid: pipelineUUID,
+    }));
+  }, [
+    pipelineUUID,
+    sendMessage,
+    sharedWebsocketData,
+  ]);
+
   useEffect(() => {
-    window.addEventListener('pagehide', cancelPipeline);
+    window.addEventListener('pagehide', cancelPipelineWithoutMessage);
+    router?.events?.on('routeChangeStart', cancelPipelineWithoutMessage);
 
     return () => {
-      didUnmountRef.current = true;
+      router?.events?.off('routeChangeStart', cancelPipelineWithoutMessage);
+      window.removeEventListener('pagehide', cancelPipelineWithoutMessage);
     };
-  }, [cancelPipeline]);
+  }, [cancelPipelineWithoutMessage, router?.events]);
 
   const runBlockOrig = useCallback((payload: {
     block: BlockType;
@@ -1576,6 +1601,7 @@ function PipelineDetailPage({
       blocksInNotebook={blocksInNotebook}
       cancelPipeline={cancelPipeline}
       chartRefs={chartRefs}
+      checkIfPipelineRunning={checkIfPipelineRunning}
       deleteBlock={deleteBlock}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
@@ -1622,6 +1648,7 @@ function PipelineDetailPage({
     blocks,
     blocksInNotebook,
     cancelPipeline,
+    checkIfPipelineRunning,
     deleteBlock,
     deleteWidget,
     editingBlock,

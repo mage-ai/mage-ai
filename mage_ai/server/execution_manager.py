@@ -23,6 +23,22 @@ class PipelineExecution:
 pipeline_execution = PipelineExecution()
 
 
+def check_pipeline_process_status(
+    pipeline: Pipeline,
+    publish_message: Callable[..., None],
+) -> None:
+    current_process = pipeline_execution.current_pipeline_process
+    is_alive = False
+    if current_process:
+        is_alive = current_process.is_alive()
+    status = 'running' if is_alive else 'not running'
+
+    publish_message(
+        f'Pipeline {pipeline.uuid} is currently {status}.',
+        metadata=dict(pipeline_uuid=pipeline.uuid),
+    )
+
+
 def set_current_pipeline_process(process: multiprocessing.Process) -> None:
     """
     Set the process that the current pipeline execution is running in.
@@ -40,20 +56,22 @@ def set_current_message_task(task: asyncio.Task) -> None:
 def cancel_pipeline_execution(
     pipeline: Pipeline,
     publish_message: Callable[..., None],
+    skip_publish_message: bool = False,
 ) -> None:
     """
-    Cancel the current pipeline execution running in the saved process
-    if there the process is alive.
+    Cancel the current pipeline execution running in the saved
+    process if the process is alive.
     """
     current_process = pipeline_execution.current_pipeline_process
     if current_process.is_alive():
         pipeline_execution.current_pipeline_process.terminate()
     pipeline_execution.current_message_task.cancel()
-    publish_message(
-        'Pipeline execution cancelled... reverting state to previous iteration',
-        execution_state='idle',
-        metadata=dict(pipeline_uuid=pipeline.uuid),
-    )
+    if not skip_publish_message:
+        publish_message(
+            'Pipeline execution cancelled... reverting state to previous iteration',
+            execution_state='idle',
+            metadata=dict(pipeline_uuid=pipeline.uuid),
+        )
     config_path = pipeline_execution.previous_config_path
     if config_path is not None and os.path.isdir(config_path):
         copy_file(

@@ -80,6 +80,7 @@ export type SidekickProps = {
   blocks: BlockType[];
   blocksInNotebook: BlockType[];
   cancelPipeline: () => void;
+  checkIfPipelineRunning: () => void;
   editingBlock: {
     upstreamBlocks: {
       block: BlockType;
@@ -122,6 +123,7 @@ function Sidekick({
   blocksInNotebook,
   cancelPipeline,
   chartRefs,
+  checkIfPipelineRunning,
   deleteBlock,
   deleteWidget,
   editingBlock,
@@ -321,6 +323,7 @@ function Sidekick({
                   <Spacing p={1}>
                     <PipelineExecution
                       cancelPipeline={cancelPipeline}
+                      checkIfPipelineRunning={checkIfPipelineRunning}
                       executePipeline={executePipeline}
                       isPipelineExecuting={isPipelineExecuting}
                       pipelineExecutionHidden={pipelineExecutionHidden}
