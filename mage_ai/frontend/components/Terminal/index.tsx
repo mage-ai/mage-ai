@@ -168,12 +168,16 @@ function Terminal({
       if (focus) {
         pauseEvent(event);
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
-          sendMessage(JSON.stringify({
-            api_key: OAUTH2_APPLICATION_CLIENT_ID,
-            terminate_shell_process: true,
-            token: (new AuthToken()).decodedToken.token,
-            uuid: terminalUUID,
-          }));
+          const finalEnteredCommand = finalCommand + command + '\x03';
+            if (finalEnteredCommand?.length >= 1) {
+              sendMessage(JSON.stringify([
+                'stdin', finalEnteredCommand
+              ]));
+              setCommandIndex(commandHistory.length + 1);
+              setCursorIndex(0);
+            }
+            setFinalCommand('');
+            setCommand('');
         } else {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
             const minIdx = Math.max(0, cursorIndex - 1);
