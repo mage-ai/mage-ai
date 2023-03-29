@@ -3,6 +3,7 @@ from enum import Enum
 from mage_ai.services.email.config import EmailConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
+from mage_ai.services.google_chat.config import GoogleChatConfig
 from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 import traceback
@@ -26,6 +27,7 @@ class NotificationConfig(BaseConfig):
     email_config: EmailConfig = None
     slack_config: SlackConfig = None
     teams_config: TeamsConfig = None
+    google_chat_config: GoogleChatConfig = None
 
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
@@ -48,6 +50,15 @@ class NotificationConfig(BaseConfig):
             except Exception:
                 traceback.print_exc()
                 notification_config.teams_config = None
+        if notification_config.google_chat_config is not None and \
+                type(notification_config.google_chat_config) is dict:
+            try:
+                notification_config.google_chat_config = GoogleChatConfig.load(
+                    config=notification_config.google_chat_config,
+                )
+            except Exception:
+                traceback.print_exc()
+                notification_config.google_chat_config = None
         if notification_config.email_config is not None and \
                 type(notification_config.email_config) is dict:
             try:

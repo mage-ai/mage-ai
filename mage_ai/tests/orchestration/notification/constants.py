@@ -22,6 +22,15 @@ SLACK_NOTIFICATION_CONFIG = dict(
     )
 )
 
+GOOGLE_CHAT_NOTIFICATION_CONFIG = dict(
+    alert_on=[
+        'trigger_failure',
+        'trigger_success',
+    ],
+    google_chat_config=dict(
+        webhook_url='test_webhook_url',
+    )
+)
 
 TEAMS_NOTIFICATION_CONFIG = dict(
     alert_on=[
