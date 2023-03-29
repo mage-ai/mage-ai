@@ -31,11 +31,12 @@ import { saveCode } from './keyboard_shortcuts/shortcuts';
 
 export type OnDidChangeCursorPositionParameterType = {
   editorRect: {
-    height: number;
+    height?: number;
     top: number;
   };
   position: {
-    lineNumber: number;
+    lineNumber?: number;
+    lineNumberTop: number;
   };
 };
 
@@ -165,6 +166,7 @@ function CodeEditor({
           height,
           top,
         } = editor._domElement.getBoundingClientRect();
+        const lineNumberTop = editor.getTopForLineNumber(lineNumber);
 
         onDidChangeCursorPosition({
           editorRect: {
@@ -172,7 +174,7 @@ function CodeEditor({
             top: Number(top),
           },
           position: {
-            lineNumber: Number(lineNumber),
+            lineNumberTop,
           },
         });
       });

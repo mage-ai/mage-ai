@@ -216,7 +216,6 @@ function TripleLayout({
     width,
   ]);
 
-
   const shouldHideAfterWrapper = hideAfterCompletely && afterHidden;
   const afterWidthFinal = shouldHideAfterWrapper
     ? 0
