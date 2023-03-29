@@ -111,7 +111,6 @@ function PipelineDetailPage({
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
 
   const mainContainerRef = useRef(null);
-  const didUnmountRef = useRef(false);
 
   // Kernels
   const [messages, setMessages] = useState<{
@@ -1357,7 +1356,6 @@ function PipelineDetailPage({
 
   // WebSocket
   const {
-    getWebSocket: getWebSocketObj,
     sendMessage,
   } = useWebSocket(getWebSocket(), {
     onClose: () => console.log('socketUrlPublish closed'),
@@ -1419,7 +1417,7 @@ function PipelineDetailPage({
     onOpen: () => console.log('socketUrlPublish opened'),
     reconnectAttempts: 10,
     reconnectInterval: 3000,
-    shouldReconnect: (closeEvent) => {
+    shouldReconnect: () => {
       // Will attempt to reconnect on all close events, such as server shutting down.
       console.log('Attempting to reconnect...');
 
