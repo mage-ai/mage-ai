@@ -1417,6 +1417,8 @@ function PipelineDetailPage({
       }
     },
     onOpen: () => console.log('socketUrlPublish opened'),
+    reconnectAttempts: 10,
+    reconnectInterval: 3000,
     shouldReconnect: (closeEvent) => {
       // Will attempt to reconnect on all close events, such as server shutting down.
       console.log('Attempting to reconnect...');
@@ -1456,7 +1458,7 @@ function PipelineDetailPage({
   ]);
 
   // The cancelPipeline method is not called with an arg due to "Converting circular
-  // structure to JSON" TypeError when "Cancel Pipeline" button is clicked.
+  // structure to JSON" TypeError when "Cancel pipeline" button is clicked.
   const cancelPipelineWithoutMessage = useCallback(() => {
     sendMessage(JSON.stringify({
       ...sharedWebsocketData,

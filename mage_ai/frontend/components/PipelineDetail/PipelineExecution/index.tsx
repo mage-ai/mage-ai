@@ -89,7 +89,7 @@ function PipelineExecution({
                   inverted
                   primary={false}
                 >
-                  Cancel Pipeline
+                  Cancel pipeline
                 </Text>
               </Button>
               <Spacing ml={1} />
