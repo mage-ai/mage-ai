@@ -296,13 +296,15 @@ class File:
             self.filename,
         )
         if os.path.exists(file_path_versions_dir):
+            new_path = self.file_path_versions_dir(
+                self.repo_path,
+                dir_path,
+                filename,
+            )
+            os.makedirs(new_path, exist_ok=True)
             os.rename(
                 file_path_versions_dir,
-                self.file_path_versions_dir(
-                    self.repo_path,
-                    dir_path,
-                    filename,
-                ),
+                new_path,
             )
 
     def to_dict(self, include_content=False):
