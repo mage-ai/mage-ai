@@ -231,9 +231,9 @@ Now inside Mage, you can load or refer to your `credentials.json` file using the
 Alter the Docker command slightly to work for Windows file path syntax:
 
 ```bash
-docker run -it -p 6789:6789
-    -v "C:\Some Path\dragon\secrets\credentials.json":/home/secrets
-    -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai \
+docker run -it -p 6789:6789 ^
+    -v "C:\Some Path\dragon\secrets\credentials.json":/home/secrets ^
+    -v "C:\Some Path\To Your Current Directory":/home/src mageai/mageai ^
     /app/run_app.sh mage start [project_name]
 ```
 
