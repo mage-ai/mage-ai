@@ -1,6 +1,6 @@
 from datetime import datetime
 from mage_ai.api.errors import ApiError
-from mage_ai.api.operations.constants import META_KEY_LIMIT
+from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
@@ -184,7 +184,12 @@ class LogResource(GenericResource):
 
             total_pipeline_run_log_count = query.count()
             if meta.get(META_KEY_LIMIT, None) is not None:
-                rows = query.limit(meta[META_KEY_LIMIT])
+                rows_list = query.all()
+                limit = int(meta[META_KEY_LIMIT])
+                rows = rows_list[:limit]
+                if meta.get(META_KEY_OFFSET, None) is not None:
+                    offset = int(meta[META_KEY_OFFSET])
+                    rows = rows_list[offset:limit]
             else:
                 rows = query.all()
             return dict(
@@ -260,7 +265,12 @@ class LogResource(GenericResource):
                 )
 
             if meta.get(META_KEY_LIMIT, None) is not None:
-                rows = query.limit(meta[META_KEY_LIMIT])
+                rows_list = query.all()
+                limit = int(meta[META_KEY_LIMIT])
+                rows = rows_list[:limit]
+                if meta.get(META_KEY_OFFSET, None) is not None:
+                    offset = int(meta[META_KEY_OFFSET])
+                    rows = rows_list[offset:limit]
             else:
                 rows = query.all()
 
