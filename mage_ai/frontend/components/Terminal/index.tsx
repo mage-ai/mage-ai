@@ -204,20 +204,14 @@ function Terminal({
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             const finalEnteredCommand = finalCommand + command + '\n';
-            if (finalEnteredCommand?.length >= 1) {
-              sendMessage(JSON.stringify([
-                'stdin', finalEnteredCommand
-              ]));
+            sendMessage(JSON.stringify([
+              'stdin', finalEnteredCommand
+            ]));
+            if (finalEnteredCommand?.length >= 2) {
               setCommandIndex(commandHistory.length + 1);
               setCommandHistory(prev => prev.concat(command));
               setCursorIndex(0);
             }
-            // @ts-ignore
-            setKernelOutputs(prev => prev.concat({
-              command: true,
-              data: command?.trim()?.length >= 1 ? command : '\n',
-              type: DataTypeEnum.TEXT,
-            }));
             setFinalCommand('');
             setCommand('');
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
@@ -382,7 +376,7 @@ in the context menu that appears.
           {(
             <InputStyle
               focused={focus
-                && (command.length === 0 || cursorIndex > command.length)}
+                && (command?.length === 0 || cursorIndex > command?.length)}
             >
               <Text monospace>
                 {!busy && (
