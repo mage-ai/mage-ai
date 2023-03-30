@@ -337,7 +337,7 @@ class Block:
 
     @property
     def table_name(self) -> str:
-        if self.configuration and 'data_provider_table' in self.configuration:
+        if self.configuration and self.configuration.get('data_provider_table'):
             return self.configuration['data_provider_table']
 
         table_name = f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_'\

@@ -421,12 +421,6 @@ def execute_raw_sql(
             queries.append(query)
             fetch_query_at_indexes.append(False)
         else:
-            if should_query:
-                query = f"""SELECT *
-FROM (
-    {query}
-) AS {block.table_name}__limit
-LIMIT 1000"""
             queries.append(query)
             fetch_query_at_indexes.append(True)
 

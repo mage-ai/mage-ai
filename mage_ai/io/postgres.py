@@ -1,6 +1,7 @@
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import is_port_in_use
 from pandas import DataFrame, Series
 from psycopg2 import connect, _psycopg
@@ -9,6 +10,7 @@ from typing import Union, IO
 import json
 import numpy as np
 import pandas as pd
+import simplejson
 
 
 class Postgres(BaseSQL):
@@ -239,7 +241,11 @@ class Postgres(BaseSQL):
             if df_col_dropna.count() == 0:
                 continue
             if PandasTypes.OBJECT == df_[col].dtype and type(df_col_dropna.iloc[0]) != str:
-                df_[col] = df_[col].apply(lambda x: json.dumps(x))
+                df_[col] = df_[col].apply(lambda x: simplejson.dumps(
+                    x,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ))
 
         df_.to_csv(
             buffer,
