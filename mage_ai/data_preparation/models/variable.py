@@ -19,6 +19,7 @@ from mage_ai.data_preparation.models.utils import (
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.shared.parsers import sample_output
+from mage_ai.shared.utils import clean_name
 from pandas.api.types import is_object_dtype
 from typing import Any, Dict, List
 import json
@@ -60,12 +61,13 @@ class Variable:
         #     raise Exception(f'Pipeline path {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
+        self.block_dir_name = clean_name(self.block_uuid)
         self.partition = partition
         self.variable_dir_path = os.path.join(
             pipeline_path,
             VARIABLE_DIR,
             partition or '',
-            block_uuid,
+            self.block_dir_name,
         )
         if not self.storage.path_exists(self.variable_dir_path):
             self.storage.makedirs(self.variable_dir_path)
@@ -79,7 +81,7 @@ class Variable:
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
-        return os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
+        return os.path.join(pipeline_path, VARIABLE_DIR, clean_name(block_uuid))
 
     def check_variable_type(self, spark=None):
         """

@@ -235,7 +235,7 @@ class VariableManager:
             self.__pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
             partition or '',
-            block_uuid,
+            clean_name(block_uuid),
         )
         if not self.storage.path_exists(variable_dir_path):
             return []
