@@ -24,6 +24,7 @@ from mage_ai.shared.utils import clean_name
 from typing import Callable, Dict, List
 import aiofiles
 import asyncio
+import datetime
 import json
 import os
 import shutil
@@ -46,6 +47,7 @@ class Pipeline:
         self.schedules = []
         self.uuid = uuid
         self.type = PipelineType.PYTHON
+        self.updated_at = datetime.datetime.now()
         self.widget_configs = []
         if config is None:
             self.load_config_from_yaml()
@@ -378,6 +380,7 @@ class Pipeline:
             self.data_integration = catalog
         self.name = config.get('name')
         self.description = config.get('description')
+        self.updated_at = config.get('updated_at')
         self.type = config.get('type') or self.type
 
         self.block_configs = config.get('blocks') or []
@@ -463,6 +466,7 @@ class Pipeline:
             description=self.description,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
+            updated_at=self.updated_at,
             uuid=self.uuid,
         )
         if self.variables is not None:
@@ -635,6 +639,10 @@ class Pipeline:
             Update kernel
             """
             self.type = data['type']
+            should_save = True
+
+        if 'updated_at' in data and data['updated_at'] != self.updated_at:
+            self.updated_at = data['updated_at']
             should_save = True
 
         if 'data_integration' in data:

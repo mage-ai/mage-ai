@@ -46,6 +46,7 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
 import { Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
@@ -71,6 +72,7 @@ import {
   removeDataOutputBlockUUID,
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
+import { dateFormatLong } from '@utils/date';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
@@ -627,6 +629,13 @@ function PipelineDetailPage({
         ...pipelineOverride,
         blocks: blocksToSave,
         extensions: extensionsToSave,
+        updated_at: dateFormatLong(
+          new Date().toISOString(),
+          {
+            includeSeconds: true,
+            utcFormat: true,
+          },
+        ),
         widgets: widgets.map((block: BlockType) => {
           let contentToSave = contentByWidgetUUID.current[block.uuid];
           const tempData = widgetTempData.current[block.uuid] || {};
