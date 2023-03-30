@@ -142,6 +142,8 @@ function PipelineDetailPage({
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
     includes_outputs: isEmptyObject(messages),
+  }, {
+    refreshInterval: 60000,
   });
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
