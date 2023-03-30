@@ -482,14 +482,22 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
     elif DataSource.SNOWFLAKE == profile_type:
         database = profile.get('database')
         schema = profile.get('schema')
-        config_file_loader = ConfigFileLoader(config=dict(
-            SNOWFLAKE_USER=profile.get('user'),
-            SNOWFLAKE_PASSWORD=profile.get('password'),
+        config = dict(
             SNOWFLAKE_ACCOUNT=profile.get('account'),
-            SNOWFLAKE_DEFAULT_WH=profile.get('warehouse'),
             SNOWFLAKE_DEFAULT_DB=profile.get('database'),
             SNOWFLAKE_DEFAULT_SCHEMA=profile.get('schema'),
-        ))
+            SNOWFLAKE_DEFAULT_WH=profile.get('warehouse'),
+            SNOWFLAKE_USER=profile.get('user'),
+        )
+
+        if 'password' in profile:
+            config['SNOWFLAKE_PASSWORD'] = profile['password']
+        if 'private_key_passphrase' in profile:
+            config['SNOWFLAKE_PRIVATE_KEY_PASSPHRASE'] = profile['private_key_passphrase']
+        if 'private_key_path' in profile:
+            config['SNOWFLAKE_PRIVATE_KEY_PATH'] = profile['private_key_path']
+
+        config_file_loader = ConfigFileLoader(config=config)
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=database,
