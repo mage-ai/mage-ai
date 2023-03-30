@@ -95,6 +95,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=False,
                 ),
             ],
+            updated_at=None,
             widgets=[
                 dict(
                     language='python',
@@ -205,6 +206,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=False,
                 )
             ],
+            updated_at=None,
             widgets=[],
         ))
 
@@ -290,6 +292,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=True,
                 )
             ],
+            updated_at=None,
             widgets=[],
         ))
 
@@ -426,6 +429,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=True,
                 )
             ],
+            updated_at=None,
             widgets=[],
         ))
 
@@ -535,6 +539,7 @@ class PipelineTest(DBTestCase):
                     "extensions": {},
                     "name": "test_pipeline_9",
                     "type": "integration",
+                    "updated_at": None,
                     "uuid": "test_pipeline_9",
                     "blocks": [
                         {

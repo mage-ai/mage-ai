@@ -63,5 +63,6 @@ export default interface PipelineType {
   name?: string;
   schedules?: PipelineScheduleType[];
   type?: PipelineTypeEnum;
+  updated_at?: string;
   uuid: string;
 }

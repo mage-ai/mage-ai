@@ -7,10 +7,12 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 type PopupMenuProps = {
   bottom?: number;
+  centerOnScreen?: boolean;
   danger?: boolean;
   left?: number;
   isLoading?: boolean;
-  onCancel: () => void;
+  neutral?: boolean;
+  onCancel?: () => void;
   onClick: (item: any) => void;
   right?: number;
   subtitle?: string;
@@ -23,9 +25,11 @@ const DEFAULT_CONTAINER_WIDTH = UNIT * 32;
 
 function PopupMenu({
   bottom,
+  centerOnScreen,
   danger,
   left,
   isLoading,
+  neutral,
   onCancel,
   onClick,
   right,
@@ -37,6 +41,7 @@ function PopupMenu({
   return (
     <PopupMenuContainer
       bottom={bottom}
+      centerOnScreen={centerOnScreen}
       left={left}
       right={right}
       top={top}
@@ -54,12 +59,16 @@ function PopupMenu({
       </FlexContainer>
       <Spacing mt={2}>
         <FlexContainer alignItems="center" justifyContent="center">
-          <Button
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Spacing mr={1} />
+          {onCancel &&
+            <>
+              <Button
+                onClick={onCancel}
+              >
+                Cancel
+              </Button>
+              <Spacing mr={1} />
+            </>
+          }
           <Button
             loading={isLoading}
             onClick={onClick}
@@ -67,7 +76,7 @@ function PopupMenu({
             <Text
               bold
               danger={danger}
-              success={!danger}
+              success={!danger && !neutral}
             >
               Confirm
             </Text>

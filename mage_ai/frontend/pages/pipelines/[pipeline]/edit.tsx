@@ -40,12 +40,14 @@ import PipelineType, {
   PipelineExtensionsType,
   PipelineTypeEnum,
 } from '@interfaces/PipelineType';
+import PopupMenu from '@oracle/components/PopupMenu';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
 import { Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
@@ -80,6 +82,7 @@ import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
+import { utcNowDate } from '@utils/date';
 
 type PipelineDetailPageProps = {
   newPipelineSchedule: boolean;
@@ -139,13 +142,46 @@ function PipelineDetailPage({
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID, {
     includes_outputs: isEmptyObject(messages),
+  }, {
+    refreshInterval: 60000,
   });
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
   const pipeline = data?.pipeline;
-
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
+  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
+  const [pipelineLastSavedState, setPipelineLastSavedState] = useState<Date>(utcNowDate({ dateObj: true }));
+  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+
+  const [showStalePipelineMessageModal, hideStalePipelineMessageModal] = useModal(() => (
+    <PopupMenu
+      centerOnScreen
+      neutral
+      onClick={hideStalePipelineMessageModal}
+      subtitle="Please refresh your page to have the most up-to-date data before making any changes."
+      title="Your pipeline may be stale."
+      width={UNIT * 34}
+    />
+  ), {}, [], {
+    background: true,
+    uuid: 'stale_pipeline_message',
+  });
+
+  useEffect(() => {
+    if (data?.pipeline?.updated_at
+      && pipelineLastSaved?.toISOString() !== new Date(data?.pipeline?.updated_at).toISOString()) {
+      setPipelineLastSaved(new Date(data.pipeline.updated_at));
+    }
+    if (pipelineLastSaved && Number(pipelineLastSaved) > Number(pipelineLastSavedState)) {
+      showStalePipelineMessageModal();
+    }
+  }, [
+    data?.pipeline?.updated_at,
+    pipelineLastSaved,
+    pipelineLastSavedState,
+    showStalePipelineMessageModal,
+  ]);
   useEffect(() => {
     if (data?.error) {
       setErrors({
@@ -154,8 +190,6 @@ function PipelineDetailPage({
       });
     }
   }, [data]);
-  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
-  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
 
   const qUrl = queryFromUrl();
   const {
@@ -338,7 +372,6 @@ function PipelineDetailPage({
     });
     setMessages({});
     setPipelineContentTouched(false);
-    setPipelineLastSaved(null);
     setRunningBlocks([]);
     setSelectedBlock(null);
   }, []);
@@ -384,16 +417,6 @@ function PipelineDetailPage({
     metadata = {},
     statistics = {},
   } = blockAnalysis?.analyses?.[0] || {};
-  const {
-    data: selectedBlockAnalysis,
-    mutate: fetchSecondBlockAnalysis,
-  } = api.blocks.pipelines.analyses.detail(
-    pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.CHART
-      && recsWindowOpenBlockIdx !== null
-      && selectedBlock?.uuid,
-  );
-  const selectedBlockSuggestions = selectedBlockAnalysis?.analyses?.[0]?.suggestions || [];
 
   useEffect(() => {
     if (runningBlocks.length === 0) {
@@ -510,7 +533,13 @@ function PipelineDetailPage({
     } = payload || {};
     const { contentOnly } = opts || {};
 
-    setPipelineLastSaved(new Date());
+    if (pipelineLastSaved && Number(pipelineLastSaved) > Number(pipelineLastSavedState)) {
+      showStalePipelineMessageModal();
+      return;
+    }
+    const utcNowDateObj = utcNowDate({ dateObj: true });
+    const utcNowDateString = utcNowDate();
+    setPipelineLastSavedState(utcNowDateObj);
 
     const blocksByExtensions = {};
     const blocksToSave = [];
@@ -627,6 +656,7 @@ function PipelineDetailPage({
         ...pipelineOverride,
         blocks: blocksToSave,
         extensions: extensionsToSave,
+        updated_at: utcNowDateString,
         widgets: widgets.map((block: BlockType) => {
           let contentToSave = contentByWidgetUUID.current[block.uuid];
           const tempData = widgetTempData.current[block.uuid] || {};
@@ -687,7 +717,9 @@ function PipelineDetailPage({
     blocks,
     messages,
     pipeline,
-    setPipelineLastSaved,
+    pipelineLastSaved,
+    pipelineLastSavedState,
+    showStalePipelineMessageModal,
     updatePipeline,
     widgets,
   ]);
@@ -705,8 +737,8 @@ function PipelineDetailPage({
       filePaths.push(filePathEncoded);
     }
     goToWithQuery({
-      'file_paths[]': filePaths,
       file_path: filePathEncoded,
+      'file_paths[]': filePaths,
     });
   }, [
     savePipelineContent,
@@ -956,13 +988,6 @@ function PipelineDetailPage({
     },
   }), [updateKernel]);
 
-  const restartKernelWithConfirm = useCallback(() => {
-    const warning = 'Do you want to restart the kernel? All variables will be cleared.';
-    if (typeof window !== 'undefined' && window.confirm(warning)) {
-      restartKernel();
-    }
-  }, [restartKernel]);
-
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
   const addNewBlockAtIndex = useCallback((
     block: BlockRequestPayloadType,
@@ -1094,7 +1119,7 @@ function PipelineDetailPage({
     setAutomaticallyNameBlocks(!!get(LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS));
   }, []);
 
-  const [showModal, hideModal] = useModal(({
+  const [showAddBlockModal, hideAddBlockModal] = useModal(({
     block,
     idx,
     name = randomNameGenerator(),
@@ -1108,7 +1133,7 @@ function PipelineDetailPage({
     <ConfigureBlock
       block={block}
       defaultName={name}
-      onClose={hideModal}
+      onClose={hideAddBlockModal}
       onSave={(opts: {
         name?: string;
       } = {}) => addNewBlockAtIndex(
@@ -1116,7 +1141,7 @@ function PipelineDetailPage({
         idx,
         onCreateCallback,
         opts?.name,
-      ).then(() => hideModal())}
+      ).then(() => hideAddBlockModal())}
       pipeline={pipeline}
     />
   ), {
@@ -1129,10 +1154,6 @@ function PipelineDetailPage({
   });
 
   // Widgets
-  const {
-    data: dataWidgets,
-    mutate: fetchWidgets,
-  } = api.widgets.pipelines.list(!afterHidden && pipelineUUID);
   const [createWidget] = useMutation(api.widgets.pipelines.useCreate(pipelineUUID));
   const addWidgetAtIndex = useCallback((
     widget: BlockType,
@@ -1588,7 +1609,7 @@ function PipelineDetailPage({
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
-      addNewBlockAtIndex={(block, idx, onCreateCallback, name) => new Promise(() => showModal({
+      addNewBlockAtIndex={(block, idx, onCreateCallback, name) => new Promise(() => showAddBlockModal({
         block,
         idx,
         name,
@@ -1680,7 +1701,7 @@ function PipelineDetailPage({
     setEditingBlock,
     setErrors,
     setTextareaFocused,
-    showModal,
+    showAddBlockModal,
     statistics,
     textareaFocused,
     updateWidget,
@@ -1696,7 +1717,7 @@ function PipelineDetailPage({
               addNewBlockAtIndex(block, idx, onCreateCallback, name);
             } else {
               // @ts-ignore
-              showModal({ block, idx, name, onCreateCallback });
+              showAddBlockModal({ block, idx, name, onCreateCallback });
             }
           })
       }
@@ -1794,7 +1815,7 @@ function PipelineDetailPage({
     setRunningBlocks,
     setSelectedBlock,
     setTextareaFocused,
-    showModal,
+    showAddBlockModal,
     textareaFocused,
     widgets,
   ]);
@@ -2084,26 +2105,6 @@ function PipelineDetailPage({
           }
         />
       </PipelineLayout>
-
-      {/*{recsWindowOpenBlockIdx !== null &&
-        <RecommendationsWindow
-          addNewBlockAtIndex={addNewBlockAtIndex}
-          blockInsertionIndex={recsWindowOpenBlockIdx}
-          blocks={blocks}
-          loading={!selectedBlockAnalysis && selectedBlock !== null}
-          selectedBlock={selectedBlock}
-          setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
-          setSelectedBlock={setSelectedBlock}
-          suggestions={selectedBlockSuggestions}
-        >
-          {selectedBlockSuggestions?.map((suggestion: SuggestionType, idx: number) => (
-            <RecommendationRow
-              key={`${addUnderscores(suggestion.title)}_${idx}`}
-              suggestion={suggestion}
-            />
-          ))}
-        </RecommendationsWindow>
-      }*/}
     </>
   );
 }
@@ -2111,41 +2112,6 @@ function PipelineDetailPage({
 PipelineDetailPage.getInitialProps = async (ctx: any) => {
   const { pipeline: pipelineUUID }: { pipeline: string } = ctx.query;
   const page = PAGE_NAME_EDIT;
-
-  // let pipelineScheduleId;
-  // let pipelineScheduleAction;
-  // let newPipelineSchedule = false;
-
-  // if (Array.isArray(slugArray)) {
-  //   pipelineUUID = slugArray[0];
-  //   if (slugArray.length > 1) {
-  //     page = 'jobs';
-  //     newPipelineSchedule = slugArray[1] === 'new_schedule';
-  //   }
-  //   if (!newPipelineSchedule && slugArray.length > 2) {
-  //     pipelineScheduleId = slugArray[2];
-  //     if (slugArray.length > 3) {
-  //       pipelineScheduleAction = slugArray[3];
-  //     }
-  //   }
-
-  // }
-
-  // const initialProps = {
-  //   newPipelineSchedule,
-  //   page,
-  //   pipeline: {
-  //     uuid: pipelineUUID,
-  //   },
-  // };
-
-  // if (pipelineScheduleId) {
-  //   initialProps['pipelineSchedule'] = {
-  //     id: pipelineScheduleId,
-  //     pipeline_uuid: pipelineUUID,
-  //   };
-  //   initialProps['pipelineScheduleAction'] = pipelineScheduleAction;
-  // }
 
   const initialProps = {
       page,

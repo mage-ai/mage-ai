@@ -10,6 +10,7 @@ class PipelinePresenter(BasePresenter):
         'description',
         'name',
         'type',
+        'updated_at',
         'uuid',
         'variables',
         'widgets',
