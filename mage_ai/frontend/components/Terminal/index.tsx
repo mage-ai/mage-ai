@@ -52,7 +52,6 @@ function Terminal({
   const refContainer = useRef(null);
   const refInner = useRef(null);
 
-  const [busy, setBusy] = useState<boolean>(false);
   const [command, setCommand] = useState<string>('');
   const [commandIndex, setCommandIndex] = useState<number>(0);
   const [finalCommand, setFinalCommand] = useState<string>('');
@@ -278,13 +277,11 @@ in the context menu that appears.
       }
     },
     [
-      busy,
       command,
       commandHistory,
       commandIndex,
       focus,
       interruptKernel,
-      setBusy,
       setCommand,
       setCommandHistory,
       setCommandIndex,
@@ -385,15 +382,13 @@ in the context menu that appears.
                 && (command?.length === 0 || cursorIndex > command?.length)}
             >
               <Text monospace>
-                {!busy && (
-                  <Text inline monospace>
-                    {lastCommand && (
-                      <Ansi>
-                        {lastCommand}
-                      </Ansi>
-                    )}
-                  </Text>
-                )}
+                <Text inline monospace>
+                  {lastCommand && (
+                    <Ansi>
+                      {lastCommand}
+                    </Ansi>
+                  )}
+                </Text>
                 {command?.split('').map(((char: string, idx: number) => (
                   <CharacterStyle
                     focusBeginning={focus && cursorIndex === 0 && idx === 0}
