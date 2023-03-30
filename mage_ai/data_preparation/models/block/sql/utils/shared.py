@@ -30,8 +30,14 @@ def should_cache_data_from_upstream(
     config1 = block.configuration or {}
     config2 = upstream_block.configuration or {}
 
-    loader1 = ConfigFileLoader(config_path, config1.get('data_provider_profile'))
-    loader2 = ConfigFileLoader(config_path, config2.get('data_provider_profile'))
+    data_provider1 = config1.get('data_provider_profile')
+    data_provider2 = config2.get('data_provider_profile')
+
+    if config1.get('use_raw_sql'):
+        return False
+
+    loader1 = ConfigFileLoader(config_path, data_provider1)
+    loader2 = ConfigFileLoader(config_path, data_provider2)
 
     return not all([config1.get(k) == config2.get(k) for k in config_keys]) \
         or not all([loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys])
@@ -42,7 +48,7 @@ def interpolate_input(block, query, replace_func=None):
         if replace_func:
             return replace_func(db, schema, tn)
 
-        return f'{schema}.{tn}'
+        return '.'.join(list(filter(lambda x: x, [db, schema, tn])))
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
         matcher1 = '{} df_{} {}'.format('{{', idx + 1, '}}')
@@ -54,12 +60,34 @@ def interpolate_input(block, query, replace_func=None):
             configuration = block.configuration
         use_raw_sql = configuration.get('use_raw_sql')
 
-        database = configuration.get('data_provider_database', '')
-        schema = configuration.get('data_provider_schema', '')
+        data_provider1 = block.configuration.get('data_provider')
+        data_provider2 = upstream_block.configuration.get('data_provider')
+        is_same_data_providers = data_provider1 == data_provider2
 
+        if block.configuration.get('use_raw_sql'):
+            if data_provider1 != data_provider2:
+                raise Exception(
+                    f'Variable interpolation when using raw SQL for {matcher1} '
+                    'is not supported because '
+                    f'upstream block {upstream_block.uuid} is using a different '
+                    f'data provider ({data_provider2}) than {block.uuid}’s data provider '
+                    f'({data_provider1}). Please disable using raw SQL and try again.',
+                )
+
+        if is_same_data_providers:
+            database = configuration.get('data_provider_database', '')
+            schema = configuration.get('data_provider_schema', '')
+        else:
+            database = block.configuration.get('data_provider_database', '')
+            schema = block.configuration.get('data_provider_schema', '')
         replace_with = __replace_func(database, schema, upstream_block.table_name)
+
         upstream_block_content = upstream_block.content
-        if is_sql and use_raw_sql and not has_create_or_insert_statement(upstream_block_content):
+        if is_sql and \
+                use_raw_sql and \
+                is_same_data_providers and not \
+                has_create_or_insert_statement(upstream_block_content):
+
             upstream_query = interpolate_input(upstream_block, upstream_block_content)
             replace_with = f"""(
     {upstream_query}
