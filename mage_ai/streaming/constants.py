@@ -9,6 +9,7 @@ class SourceType(str, Enum):
 
 
 class SinkType(str, Enum):
+    AMAZON_S3 = 'amazon_s3'
     KAFKA = 'kafka'
     KINESIS = 'kinesis'
     OPENSEARCH = 'opensearch'
