@@ -145,9 +145,16 @@ function PipelineDetailPage({
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
   const pipeline = data?.pipeline;
-
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
+  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
+  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+  useEffect(() => {
+    if (data?.pipeline?.updated_at
+      && pipelineLastSaved?.toISOString() !== new Date(data?.pipeline?.updated_at).toISOString()) {
+      setPipelineLastSaved(new Date(data.pipeline.updated_at));
+    }
+  }, [data?.pipeline?.updated_at, pipelineLastSaved]);
   useEffect(() => {
     if (data?.error) {
       setErrors({
@@ -156,8 +163,6 @@ function PipelineDetailPage({
       });
     }
   }, [data]);
-  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
-  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
 
   const qUrl = queryFromUrl();
   const {
@@ -340,7 +345,6 @@ function PipelineDetailPage({
     });
     setMessages({});
     setPipelineContentTouched(false);
-    setPipelineLastSaved(null);
     setRunningBlocks([]);
     setSelectedBlock(null);
   }, []);
@@ -386,16 +390,6 @@ function PipelineDetailPage({
     metadata = {},
     statistics = {},
   } = blockAnalysis?.analyses?.[0] || {};
-  const {
-    data: selectedBlockAnalysis,
-    mutate: fetchSecondBlockAnalysis,
-  } = api.blocks.pipelines.analyses.detail(
-    pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.CHART
-      && recsWindowOpenBlockIdx !== null
-      && selectedBlock?.uuid,
-  );
-  const selectedBlockSuggestions = selectedBlockAnalysis?.analyses?.[0]?.suggestions || [];
 
   useEffect(() => {
     if (runningBlocks.length === 0) {
@@ -511,8 +505,6 @@ function PipelineDetailPage({
       },
     } = payload || {};
     const { contentOnly } = opts || {};
-
-    setPipelineLastSaved(new Date());
 
     const blocksByExtensions = {};
     const blocksToSave = [];
@@ -696,7 +688,6 @@ function PipelineDetailPage({
     blocks,
     messages,
     pipeline,
-    setPipelineLastSaved,
     updatePipeline,
     widgets,
   ]);
@@ -714,8 +705,8 @@ function PipelineDetailPage({
       filePaths.push(filePathEncoded);
     }
     goToWithQuery({
-      'file_paths[]': filePaths,
       file_path: filePathEncoded,
+      'file_paths[]': filePaths,
     });
   }, [
     savePipelineContent,
@@ -965,13 +956,6 @@ function PipelineDetailPage({
     },
   }), [updateKernel]);
 
-  const restartKernelWithConfirm = useCallback(() => {
-    const warning = 'Do you want to restart the kernel? All variables will be cleared.';
-    if (typeof window !== 'undefined' && window.confirm(warning)) {
-      restartKernel();
-    }
-  }, [restartKernel]);
-
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
   const addNewBlockAtIndex = useCallback((
     block: BlockRequestPayloadType,
@@ -1138,10 +1122,6 @@ function PipelineDetailPage({
   });
 
   // Widgets
-  const {
-    data: dataWidgets,
-    mutate: fetchWidgets,
-  } = api.widgets.pipelines.list(!afterHidden && pipelineUUID);
   const [createWidget] = useMutation(api.widgets.pipelines.useCreate(pipelineUUID));
   const addWidgetAtIndex = useCallback((
     widget: BlockType,
