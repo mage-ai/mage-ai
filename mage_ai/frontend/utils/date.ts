@@ -41,6 +41,22 @@ export function dateFormatLong(
   return momentObj.format(dateFormat);
 }
 
+export function utcNowDate(opts?: { dateObj?: boolean }): any {
+  const utcDate: string = dateFormatLong(
+    new Date().toISOString(),
+    {
+      includeSeconds: true,
+      utcFormat: true,
+    },
+  );
+
+  if (opts?.dateObj) {
+    return new Date(utcDate);
+  }
+
+  return utcDate;
+}
+
 export function dateFormatLongFromUnixTimestamp(text, opts: { withSeconds?: boolean } = {}) {
   return moment.unix(text).format(opts?.withSeconds
     ? DATE_FORMAT_LONG
