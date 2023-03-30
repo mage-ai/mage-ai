@@ -103,10 +103,11 @@ function PipelineExecution({
           </Button>
         </Flex>
         <Flex alignItems="center">
+          <Spacing ml={1} />
           <Text>
             Hide
           </Text>
-          <Spacing pr={1} />
+          <Spacing mr={1} />
           <ToggleSwitch
             checked={pipelineExecutionHidden}
             onCheck={togglePipelineExecution}
