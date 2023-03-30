@@ -7,7 +7,6 @@ from pandas import DataFrame, Series
 from psycopg2 import connect, _psycopg
 from sshtunnel import SSHTunnelForwarder
 from typing import Union, IO
-import json
 import numpy as np
 import pandas as pd
 import simplejson

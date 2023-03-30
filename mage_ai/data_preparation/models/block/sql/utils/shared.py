@@ -87,6 +87,7 @@ def interpolate_input(block, query, replace_func=None):
             use_raw_sql and \
             is_same_data_providers and not \
             has_create_or_insert_statement(upstream_block_content):
+
             upstream_query = interpolate_input(upstream_block, upstream_block_content)
             replace_with = f"""(
     {upstream_query}

@@ -434,6 +434,23 @@
       ]
     },
     {
+      "group": "Contributing",
+      "pages": [
+        {
+          "group": "Backend",
+          "pages": [
+            "contributing/backend/overview"
+          ]
+        },
+        {
+          "group": "Frontend",
+          "pages": [
+            "contributing/frontend/overview"
+          ]
+        }
+      ]
+    },
+    {
       "group": "About",
       "pages": [
         "about/features",
