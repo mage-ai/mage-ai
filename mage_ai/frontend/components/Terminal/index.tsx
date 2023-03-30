@@ -367,7 +367,7 @@ in the context menu that appears.
                 if (!command) {
                   const numberOfLines = data.split('\n').length;
                   arr.push(
-                    <LineStyle key={key} numberOfLines={numberOfLines}>
+                    <LineStyle key={key}>
                       {displayElement}
                     </LineStyle>,
                   );
