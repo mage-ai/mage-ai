@@ -604,7 +604,6 @@ def sync_contacts(STATE, ctx, logger=LOGGER):
                     logger=logger,
                 )
                 vids = []
-                break
 
         _sync_contact_vids(
             catalog,
