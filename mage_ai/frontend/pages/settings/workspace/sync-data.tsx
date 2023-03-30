@@ -335,16 +335,14 @@ function SyncData() {
 
             <Spacing mt={2}>
               <Button
+                danger
                 loading={isLoadingRunSync}
-                onClick={() => confirm(
-                  'Are you sure you want to sync code from a remote repository and ' +
-                  'overwrite the current code base?',
-                  // @ts-ignore
-                  () => runSync({
-                    sync: {
-                      action_type: 'sync_data',
-                    },
-                }))}
+                // @ts-ignore
+                onClick={() => runSync({
+                  sync: {
+                    action_type: 'sync_data',
+                  },
+                })}
               >
                 Synchronize code
               </Button>
