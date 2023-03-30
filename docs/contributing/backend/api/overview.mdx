@@ -1,0 +1,84 @@
+---
+title: "API overview"
+sidebarTitle: "Overview"
+description: "The front-end client (e.g. browser) creates, reads, updates, and deletes (CRUD)
+resources by using the backend server’s API."
+---
+
+## Components
+
+There are 3 components to an API endpoint:
+
+1. [Resource](/contributing/backend/api/resources)
+1. [Policy](/contributing/backend/api/policies)
+1. [Presenter](/contributing/backend/api/presenters)
+
+You’ll need to create each of those 3 components for every new API endpoint.
+
+Refer to each documentation on how to create and configure them.
+
+## Testing
+
+Create a test file in `mage_ai/tests/api/operations/test_[resource_name].py`;
+replace `resource_name` with the name of your resource.
+
+Paste in the following sample code into your file:
+
+```python
+from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.tests.api.operations.base import BaseApiTestCase
+from mage_ai.tests.factory import create_user
+
+
+class SomeResourceOperationTests(BaseApiTestCase):
+    model_class = User
+
+    async def test_execute_delete(self):
+        user = create_user(email=self.faker.email())
+
+        await self.base_test_execute_delete(user.id)
+
+    async def test_execute_detail(self):
+        user = create_user()
+        await self.base_test_execute_detail(user.id, dict(
+            email=user.email,
+            username=user.username,
+        ))
+```
+
+This is only a sample test file. It’s running tests on the `UserResource`.
+You’ll need to update the test logic to unit test your custom API endpoint.
+
+## Authentication
+
+Most API endpoints require authentication. The API request must include the following:
+
+1. API key
+1. OAuth token
+
+### API key
+
+The API request must include the API key in the query parameter as `api_key` or
+in the request payload body as `api_key`.
+
+### OAuth token
+
+The API request must include the OAuth token using the `authorization` header in the request.
+
+### Example
+
+```curl
+curl -X GET "localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2" \
+    -H "authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww
+```
+
+or
+
+```curl
+curl -X POST "localhost:6789/api/pipelines" \
+    -H "authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww
+    -d '{
+        "api_key": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2",
+        "pipeline": {}
+    }'
+```
