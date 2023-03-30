@@ -69,7 +69,9 @@ function Terminal({
     lastMessage,
     readyState,
     sendMessage,
-  } = useWebSocket(getWebSocket('terminal'), {});
+  } = useWebSocket(getWebSocket('terminal'), {
+    shouldReconnect: () => true,
+  });
 
   useEffect(() => {
     if (lastMessage) {
@@ -365,9 +367,8 @@ in the context menu that appears.
                 const key = `command-${idx}-${idxInner}-${data}`;
 
                 if (!command) {
-                  const numberOfLines = data.split('\n').length;
                   arr.push(
-                    <LineStyle key={key} numberOfLines={numberOfLines}>
+                    <LineStyle key={key}>
                       {displayElement}
                     </LineStyle>,
                   );
