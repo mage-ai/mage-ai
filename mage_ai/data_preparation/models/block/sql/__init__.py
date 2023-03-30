@@ -275,9 +275,9 @@ def execute_sql_code(
     elif DataSource.SNOWFLAKE.value == data_provider:
         from mage_ai.io.snowflake import Snowflake
 
-        table_name = table_name.upper()
-        database = database.upper()
-        schema = schema.upper()
+        table_name = table_name.upper() if table_name else table_name
+        database = database.upper() if database else database
+        schema = schema.upper() if schema else schema
 
         with Snowflake.with_config(config_file_loader, database=database, schema=schema) as loader:
             snowflake.create_upstream_block_tables(

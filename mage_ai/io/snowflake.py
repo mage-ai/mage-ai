@@ -1,3 +1,5 @@
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.shared.hash import merge_dict
@@ -79,12 +81,19 @@ class Snowflake(BaseSQLConnection):
                 if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
                         fetch_query_at_indexes[idx]:
 
-                    full_table_name = fetch_query_at_indexes[idx]
-                    columns = self.get_columns(
-                        cursor,
-                        full_table_name=full_table_name,
-                    )
                     rows = cursor.execute(query, **variables).fetchall()
+
+                    full_table_name = fetch_query_at_indexes[idx]
+
+                    columns = []
+                    if type(full_table_name) is str:
+                        columns = self.get_columns(
+                            cursor,
+                            full_table_name=full_table_name,
+                        )
+                    elif len(rows) >= 1 and len(rows[0]) >= 1:
+                        columns = [f'col_{i}' for i in range(len(rows[0]))]
+
                     result = pd.DataFrame(rows, columns=columns)
                 else:
                     result = cursor.execute(query, **variables)
@@ -281,15 +290,37 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
             config (BaseConfigLoader): Configuration loader object
         """
         conn_kwargs = dict(
-            user=config[ConfigKey.SNOWFLAKE_USER],
-            password=config[ConfigKey.SNOWFLAKE_PASSWORD],
             account=config[ConfigKey.SNOWFLAKE_ACCOUNT],
-            warehouse=config[ConfigKey.SNOWFLAKE_DEFAULT_WH],
             database=database or config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
             schema=schema or config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
+            user=config[ConfigKey.SNOWFLAKE_USER],
+            warehouse=config[ConfigKey.SNOWFLAKE_DEFAULT_WH],
         )
+
         if ConfigKey.SNOWFLAKE_ROLE in config:
             conn_kwargs['role'] = config[ConfigKey.SNOWFLAKE_ROLE]
+
+        if ConfigKey.SNOWFLAKE_PASSWORD in config:
+            conn_kwargs['password'] = config[ConfigKey.SNOWFLAKE_PASSWORD]
+        elif ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH in config:
+            with open(config[ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH], 'rb') as key:
+                password = None
+                if ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE in config:
+                    password = config[ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE].encode()
+
+                p_key = serialization.load_pem_private_key(
+                    key.read(),
+                    password=password,
+                    backend=default_backend()
+                )
+
+            pkb = p_key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+            conn_kwargs['private_key'] = pkb
+
         return cls(
             **merge_dict(conn_kwargs, kwargs),
         )
