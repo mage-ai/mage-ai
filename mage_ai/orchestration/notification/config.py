@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from mage_ai.services.email.config import EmailConfig
+from mage_ai.services.google_chat.config import GoogleChatConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
-from mage_ai.services.google_chat.config import GoogleChatConfig
 from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 import traceback
@@ -25,9 +25,9 @@ DEFAULT_ALERT_ON = [
 class NotificationConfig(BaseConfig):
     alert_on: List[AlertOn] = field(default_factory=lambda: DEFAULT_ALERT_ON)
     email_config: EmailConfig = None
+    google_chat_config: GoogleChatConfig = None
     slack_config: SlackConfig = None
     teams_config: TeamsConfig = None
-    google_chat_config: GoogleChatConfig = None
 
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
