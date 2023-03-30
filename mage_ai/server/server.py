@@ -153,14 +153,17 @@ class TerminalWebsocketServer(terminado.TermSocket):
     def check_origin(self, origin):
         return True
 
+    def open(self, url_component=None):
+        super().open(url_component)
+
+        # Turn enable-bracketed-paste off since it can mess up the output.
+        self.terminal.ptyproc.write(
+            "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
+        self.terminal.read_buffer.clear()
+
 
 def make_app():
     term_manager = terminado.UniqueTermManager(shell_command=['bash'])
-
-    # Turn enable-bracketed-paste off since it can mess up the output.
-    terminal = term_manager.get_terminal('tty')
-    terminal.ptyproc.write(
-        "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
     routes = [
         (r'/', MainPageHandler),
         (r'/pipelines', MainPageHandler),
