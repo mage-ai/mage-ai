@@ -416,11 +416,10 @@ function CodeBlock({
 
   const onDidChangeCursorPosition = useCallback(({
     editorRect: {
-      height,
       top,
     },
     position: {
-      lineNumber,
+      lineNumberTop,
     },
   }: OnDidChangeCursorPositionParameterType) => {
     if (mainContainerRef?.current) {
@@ -428,16 +427,14 @@ function CodeBlock({
         height: mainContainerHeight,
       } = mainContainerRef.current.getBoundingClientRect();
 
-      const heightAtLineNumber = lineNumber * SINGLE_LINE_HEIGHT;
-
-      if (top + heightAtLineNumber > mainContainerHeight) {
+      if (top + lineNumberTop > mainContainerHeight) {
         const newY = mainContainerRef.current.scrollTop
-          + ((heightAtLineNumber - mainContainerHeight) + top);
+          + ((lineNumberTop - mainContainerHeight) + top);
 
         mainContainerRef.current.scrollTo(0, newY);
-      } else if (heightAtLineNumber + top < SINGLE_LINE_HEIGHT) {
+      } else if (lineNumberTop + top < SINGLE_LINE_HEIGHT) {
         const newY = mainContainerRef.current.scrollTop
-          + ((heightAtLineNumber + top) - SINGLE_LINE_HEIGHT);
+          + ((lineNumberTop + top) - SINGLE_LINE_HEIGHT);
         mainContainerRef.current.scrollTo(0, newY);
       }
     }
