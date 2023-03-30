@@ -141,11 +141,19 @@ function SyncData() {
             autoComplete,
             disabled,
             label,
+            labelDescription,
             required,
             type,
             uuid,
           }: SyncFieldType) => (
             <Spacing key={uuid} mt={2}>
+              {labelDescription && (
+                <Spacing mb={1}>
+                  <Text small>
+                    {labelDescription}
+                  </Text>
+                </Spacing>
+              )}
               <TextInput
                 autoComplete={autoComplete}
                 disabled={disabled}
