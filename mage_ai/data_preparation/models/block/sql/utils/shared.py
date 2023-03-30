@@ -84,9 +84,9 @@ def interpolate_input(block, query, replace_func=None):
 
         upstream_block_content = upstream_block.content
         if is_sql and \
-            use_raw_sql and \
-            is_same_data_providers and not \
-            has_create_or_insert_statement(upstream_block_content):
+                use_raw_sql and \
+                is_same_data_providers and not \
+                has_create_or_insert_statement(upstream_block_content):
 
             upstream_query = interpolate_input(upstream_block, upstream_block_content)
             replace_with = f"""(
