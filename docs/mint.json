@@ -197,6 +197,7 @@
             {
               "group": "Destinations",
               "pages": [
+                "guides/streaming/destinations/amazon-s3",
                 "guides/streaming/destinations/kafka",
                 "guides/streaming/destinations/kinesis",
                 "guides/streaming/destinations/opensearch",

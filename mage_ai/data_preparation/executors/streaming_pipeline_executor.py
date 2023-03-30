@@ -109,7 +109,13 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 'streaming_checkpoint',
             ),
         )
-        sink = SinkFactory.get_sink(sink_config)
+        sink = SinkFactory.get_sink(
+            sink_config,
+            buffer_path=os.path.join(
+                self.pipeline.pipeline_variables_dir,
+                'buffer',
+            ),
+        )
 
         def handle_batch_events(messages: List[Union[Dict, str]], **kwargs):
             if self.transformer_block is not None:
