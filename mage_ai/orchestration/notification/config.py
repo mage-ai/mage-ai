@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from mage_ai.services.email.config import EmailConfig
+from mage_ai.services.google_chat.config import GoogleChatConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
 from mage_ai.shared.config import BaseConfig
@@ -24,6 +25,7 @@ DEFAULT_ALERT_ON = [
 class NotificationConfig(BaseConfig):
     alert_on: List[AlertOn] = field(default_factory=lambda: DEFAULT_ALERT_ON)
     email_config: EmailConfig = None
+    google_chat_config: GoogleChatConfig = None
     slack_config: SlackConfig = None
     teams_config: TeamsConfig = None
 
@@ -48,6 +50,15 @@ class NotificationConfig(BaseConfig):
             except Exception:
                 traceback.print_exc()
                 notification_config.teams_config = None
+        if notification_config.google_chat_config is not None and \
+                type(notification_config.google_chat_config) is dict:
+            try:
+                notification_config.google_chat_config = GoogleChatConfig.load(
+                    config=notification_config.google_chat_config,
+                )
+            except Exception:
+                traceback.print_exc()
+                notification_config.google_chat_config = None
         if notification_config.email_config is not None and \
                 type(notification_config.email_config) is dict:
             try:

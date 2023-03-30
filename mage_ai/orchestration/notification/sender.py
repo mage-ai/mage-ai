@@ -2,6 +2,7 @@ from mage_ai.orchestration.notification.config import AlertOn, NotificationConfi
 from mage_ai.services.email.email import send_email
 from mage_ai.services.slack.slack import send_slack_message
 from mage_ai.services.teams.teams import send_teams_message
+from mage_ai.services.google_chat.google_chat import send_google_chat_message
 import os
 
 
@@ -22,6 +23,9 @@ class NotificationSender:
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
             send_teams_message(self.config.teams_config, message)
+
+        if self.config.google_chat_config is not None and self.config.google_chat_config.is_valid:
+            send_google_chat_message(self.config.google_chat_config, message)
 
         if self.config.email_config is not None and email_subject is not None:
             send_email(
