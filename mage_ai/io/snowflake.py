@@ -1,7 +1,5 @@
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import dsa
-from cryptography.hazmat.primitives.asymmetric import rsa
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.shared.hash import merge_dict
@@ -9,7 +7,6 @@ from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
 from typing import Dict, List, Union
-import os
 import pandas as pd
 
 
@@ -311,7 +308,7 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
                 if ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE in config:
                     password = config[ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE].encode()
 
-                p_key= serialization.load_pem_private_key(
+                p_key = serialization.load_pem_private_key(
                     key.read(),
                     password=password,
                     backend=default_backend()
