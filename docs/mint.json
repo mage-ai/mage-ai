@@ -440,7 +440,22 @@
         {
           "group": "Backend",
           "pages": [
-            "contributing/backend/overview"
+            "contributing/backend/overview",
+            {
+              "group": "API",
+              "pages": [
+                "contributing/backend/api/overview",
+                "contributing/backend/api/resources",
+                "contributing/backend/api/policies",
+                "contributing/backend/api/presenters",
+                {
+                  "group": "Routes",
+                  "pages": [
+                    "contributing/backend/api/pipelines"
+                  ]
+                }
+              ]
+            }
           ]
         },
         {
@@ -471,5 +486,8 @@
     "amplitude": {
       "apiKey": "b3c3b09423fea2abaae92c08b44de1c3"
     }
+  },
+  "api": {
+    "hidePlayground": true
   }
 }

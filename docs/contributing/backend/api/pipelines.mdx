@@ -1,0 +1,180 @@
+---
+title: "Pipelines"
+description: "Data pipeline containing execution settings, resources, block information, and
+block dependencies."
+---
+
+<RequestExample>
+```curl ENDPOINTS
+   GET /api/pipelines
+  POST /api/pipelines
+   GET /api/pipelines/:id
+   PUT /api/pipelines/:id
+DELETE /api/pipelines/:id
+```
+</RequestExample>
+
+---
+
+## Pipeline object
+
+<ResponseField name="blocks" type="array of objects">
+  Array of block objects.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Description for the pipeline.
+</ResponseField>
+
+<ResponseField name="extensions" type="array of objects">
+  Array of extension block objects.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Human friendly name of the pipeline.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  `databricks`, `integration`, `pyspark`, `python`, `streaming`
+</ResponseField>
+
+<ResponseField name="uuid" type="string" required>
+  Unique identifier for the pipeline.
+</ResponseField>
+
+<ResponseField name="variables" type="object">
+  Object containing variables for the pipeline.
+
+  <Expandable title="properties" defaultOpen="true">
+    <ResponseField name="[key]" type="string">
+      The property name is user defined.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="widgets" type="array of objects">
+  Array of widget block objects.
+</ResponseField>
+
+<ResponseExample>
+```json PIPELINE OBJECT
+{
+  "blocks": [
+    {
+      "all_upstream_blocks_executed": true,
+      "color": null,
+      "configuration": {},
+      "downstream_blocks": [
+        "fill_in_missing_values"
+      ],
+      "executor_config": null,
+      "executor_type": "local_python",
+      "has_callback": null,
+      "name": "load_titanic",
+      "language": "python",
+      "status": "executed",
+      "type": "data_loader",
+      "upstream_blocks": [],
+      "uuid": "load_titanic",
+      "content": "...",
+      "metadata": {}
+    },
+    {
+      "all_upstream_blocks_executed": true,
+      "color": null,
+      "configuration": {},
+      "downstream_blocks": [
+        "export_titanic_clean"
+      ],
+      "executor_config": null,
+      "executor_type": "local_python",
+      "has_callback": null,
+      "name": "fill_in_missing_values",
+      "language": "python",
+      "status": "not_executed",
+      "type": "transformer",
+      "upstream_blocks": [
+        "load_titanic"
+      ],
+      "uuid": "fill_in_missing_values",
+      "content": "...",
+      "metadata": {}
+    },
+    {
+      "all_upstream_blocks_executed": false,
+      "color": null,
+      "configuration": {},
+      "downstream_blocks": [],
+      "executor_config": null,
+      "executor_type": "local_python",
+      "has_callback": null,
+      "name": "export_titanic_clean",
+      "language": "python",
+      "status": "not_executed",
+      "type": "data_exporter",
+      "upstream_blocks": [
+        "fill_in_missing_values"
+      ],
+      "uuid": "export_titanic_clean",
+      "content": "...",
+      "metadata": {}
+    }
+  ],
+  "description": null,
+  "extensions": {},
+  "name": "example_pipeline",
+  "type": "python",
+  "uuid": "example_pipeline",
+  "variables": {
+    "env": "prod"
+  },
+  "widgets": []
+}
+```
+</ResponseExample>
+
+## Read all pipelines
+
+<CodeGroup>
+```curl cURL
+curl -X GET "localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2" \
+    -H "authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww"
+```
+</CodeGroup>
+
+```json
+{
+  "pipelines": [
+    {
+      "uuid": "example_pipeline"
+    }
+  ],
+  "metadata": {}
+}
+```
+
+---
+
+## Create pipeline
+
+TBD
+
+---
+
+## Read pipeline
+
+TBD
+
+---
+
+## Update pipeline
+
+TBD
+
+---
+
+## Delete pipeline
+
+TBD
+
+---
