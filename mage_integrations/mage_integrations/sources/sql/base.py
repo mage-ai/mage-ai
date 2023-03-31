@@ -81,7 +81,7 @@ class Source(BaseSource):
                     column_types.append(COLUMN_TYPE_INTEGER)
                 elif 'double' in column_type or 'float' in column_type or \
                         'numeric' in column_type or 'decimal' in column_type or \
-                        'real' in column_type:
+                        'real' in column_type or 'number' in column_type:
                     column_types.append(COLUMN_TYPE_NUMBER)
                 elif 'datetime' in column_type or 'timestamp' in column_type or 'date' in column_type:
                     column_format = COLUMN_FORMAT_DATETIME
