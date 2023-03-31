@@ -2,7 +2,7 @@ import { indexBy } from '@utils/array';
 
 export enum ProviderEventTypeEnum {
   AWS = 'aws_event',
-};
+}
 
 export const PROVIDER_EVENTS: {
   label: () => string;

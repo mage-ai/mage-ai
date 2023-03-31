@@ -76,6 +76,7 @@ PipelineSchedulePolicy.allow_write([
     'schedule_interval',
     'schedule_type',
     'settings',
+    'sla',
     'start_time',
     'status',
     'variables',

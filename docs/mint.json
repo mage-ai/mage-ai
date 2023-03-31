@@ -451,7 +451,10 @@
                 {
                   "group": "Routes",
                   "pages": [
-                    "contributing/backend/api/pipelines"
+                    "contributing/backend/api/sessions",
+                    "contributing/backend/api/pipelines",
+                    "contributing/backend/api/pipeline-schedules",
+                    "contributing/backend/api/logs"
                   ]
                 }
               ]

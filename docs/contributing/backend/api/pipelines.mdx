@@ -4,22 +4,128 @@ description: "Data pipeline containing execution settings, resources, block info
 block dependencies."
 ---
 
-<RequestExample>
-```curl ENDPOINTS
-   GET /api/pipelines
-  POST /api/pipelines
-   GET /api/pipelines/:id
-   PUT /api/pipelines/:id
-DELETE /api/pipelines/:id
-```
-</RequestExample>
-
----
-
 ## Pipeline object
+
+
+```json
+{
+  "blocks": [
+    {
+      "all_upstream_blocks_executed": true,
+      "color": null,
+      "configuration": {},
+      "downstream_blocks": [],
+      "executor_config": null,
+      "executor_type": "local_python",
+      "has_callback": null,
+      "name": "load_titanic",
+      "language": "python",
+      "status": "executed",
+      "type": "data_loader",
+      "upstream_blocks": [],
+      "uuid": "load_titanic",
+      "content": "...",
+      "metadata": {}
+    }
+  ],
+  "description": null,
+  "extensions": {},
+  "name": "example_pipeline",
+  "schedules": [
+    {
+      "created_at": "2023-03-14T23:24:17.814478+00:00",
+      "id": 59,
+      "name": "dry haze",
+      "pipeline_uuid": "aged_night",
+      "schedule_interval": null,
+      "schedule_type": "api",
+      "start_time": "2023-03-14T23:25:00+00:00",
+      "status": "inactive",
+      "updated_at": "2023-03-14T23:25:27.351528+00:00"
+    }
+  ],
+  "type": "python",
+  "uuid": "example_pipeline",
+  "variables": {
+    "env": "prod"
+  },
+  "widgets": []
+}
+```
 
 <ResponseField name="blocks" type="array of objects">
   Array of block objects.
+
+  <Expandable title="properties">
+    <ResponseField name="all_upstream_blocks_executed" type="boolean">
+      Whether or not all upstream blocks have been successfully executed.
+    </ResponseField>
+    <ResponseField name="color" type="string">
+      The color of the block in the notebook UI.
+    </ResponseField>
+    <ResponseField name="configuration" type="object">
+      Miscellaneous configuration settings for the block.
+
+      <Expandable title="properties">
+        <ResponseField name="data_provider" type="string">
+          Database or data warehouse for the SQL block to connect to.
+        </ResponseField>
+        <ResponseField name="data_provider_database" type="string">
+          Database name to use when saving the output of the SQL block.
+        </ResponseField>
+        <ResponseField name="data_provider_profile" type="string">
+          Profile target for the dbt block.
+        </ResponseField>
+        <ResponseField name="data_provider_schema" type="string">
+          Schema name to use when saving the output of the SQL block.
+        </ResponseField>
+        <ResponseField name="data_provider_table" type="string">
+          Table name to use when saving the output of the SQL block.
+        </ResponseField>
+        <ResponseField name="export_write_policy" type="string">
+          Whether to `replace` the existing table of the SQL block output, `append`, or
+          raise an error and `fail`.
+        </ResponseField>
+        <ResponseField name="use_raw_sql" type="string">
+          Toggle writing raw SQL in the block. Read more [here](/guides/sql-blocks#using-raw-sql).
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="content" type="string">
+      Block file contents.
+    </ResponseField>
+    <ResponseField name="downstream_blocks" type="array of strings">
+      The block UUIDs that depend on this block.
+    </ResponseField>
+    <ResponseField name="executor_config" type="object">
+    </ResponseField>
+    <ResponseField name="executor_type" type="string">
+      `ecs`, `gcp_cloud_run`, `k8s`, `local_python`, `pyspark`
+    </ResponseField>
+    <ResponseField name="has_callback" type="boolean">
+    </ResponseField>
+    <ResponseField name="language" type="string">
+      `python`, `r`, `sql`, `yaml`
+    </ResponseField>
+    <ResponseField name="metadata" type="object">
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Human readable name of block.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Status of block: `executed`, `failed`, `not_executed`, `updated`
+    </ResponseField>
+    <ResponseField name="type" type="string" required>
+      Type of block:
+      `callback`, `chart`, `custom`, `data_exporter`, `data_loader`, `extension`, `dbt`, `scratchpad`, `sensor`, `transformer`
+    </ResponseField>
+    <ResponseField name="upstream_blocks" type="string">
+      The block UUIDs that this block depends on.
+    </ResponseField>
+    <ResponseField name="uuid" type="string" required>
+      Unique identifier for the block.
+    </ResponseField>
+  </Expandable>
 </ResponseField>
 
 <ResponseField name="description" type="string">
@@ -27,11 +133,45 @@ DELETE /api/pipelines/:id
 </ResponseField>
 
 <ResponseField name="extensions" type="array of objects">
-  Array of extension block objects.
+  Array of extension block objects. Same shape as `blocks`.
 </ResponseField>
 
 <ResponseField name="name" type="string" required>
   Human friendly name of the pipeline.
+</ResponseField>
+
+<ResponseField name="schedules" type="array of objects" required>
+  Array of trigger objects.
+
+  <Expandable title="properties">
+    <ResponseField name="created_at" type="string" required>
+      Date and time the trigger was created.
+    </ResponseField>
+    <ResponseField name="id" type="integer" required>
+      Trigger ID.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Name of trigger.
+    </ResponseField>
+    <ResponseField name="pipeline_uuid" type="string" required>
+      Pipeline UUID the trigger belongs to.
+    </ResponseField>
+    <ResponseField name="schedule_interval" type="string">
+      `@once`, `@hourly`, `@daily`, `@weekly`, `@monthly`
+    </ResponseField>
+    <ResponseField name="schedule_type" type="string" required>
+      Trigger type: `api`, `event`, `time`
+    </ResponseField>
+    <ResponseField name="start_time" type="datetime">
+      Date and time when the trigger should start running.
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      `active`, `inactive`
+    </ResponseField>
+    <ResponseField name="updated_at" type="datetime" required>
+      Date and time the trigger was last updated.
+    </ResponseField>
+  </Expandable>
 </ResponseField>
 
 <ResponseField name="type" type="string" required>
@@ -53,92 +193,22 @@ DELETE /api/pipelines/:id
 </ResponseField>
 
 <ResponseField name="widgets" type="array of objects">
-  Array of widget block objects.
+  Array of widget block objects. Same shape as `blocks`.
 </ResponseField>
-
-<ResponseExample>
-```json PIPELINE OBJECT
-{
-  "blocks": [
-    {
-      "all_upstream_blocks_executed": true,
-      "color": null,
-      "configuration": {},
-      "downstream_blocks": [
-        "fill_in_missing_values"
-      ],
-      "executor_config": null,
-      "executor_type": "local_python",
-      "has_callback": null,
-      "name": "load_titanic",
-      "language": "python",
-      "status": "executed",
-      "type": "data_loader",
-      "upstream_blocks": [],
-      "uuid": "load_titanic",
-      "content": "...",
-      "metadata": {}
-    },
-    {
-      "all_upstream_blocks_executed": true,
-      "color": null,
-      "configuration": {},
-      "downstream_blocks": [
-        "export_titanic_clean"
-      ],
-      "executor_config": null,
-      "executor_type": "local_python",
-      "has_callback": null,
-      "name": "fill_in_missing_values",
-      "language": "python",
-      "status": "not_executed",
-      "type": "transformer",
-      "upstream_blocks": [
-        "load_titanic"
-      ],
-      "uuid": "fill_in_missing_values",
-      "content": "...",
-      "metadata": {}
-    },
-    {
-      "all_upstream_blocks_executed": false,
-      "color": null,
-      "configuration": {},
-      "downstream_blocks": [],
-      "executor_config": null,
-      "executor_type": "local_python",
-      "has_callback": null,
-      "name": "export_titanic_clean",
-      "language": "python",
-      "status": "not_executed",
-      "type": "data_exporter",
-      "upstream_blocks": [
-        "fill_in_missing_values"
-      ],
-      "uuid": "export_titanic_clean",
-      "content": "...",
-      "metadata": {}
-    }
-  ],
-  "description": null,
-  "extensions": {},
-  "name": "example_pipeline",
-  "type": "python",
-  "uuid": "example_pipeline",
-  "variables": {
-    "env": "prod"
-  },
-  "widgets": []
-}
-```
-</ResponseExample>
 
 ## Read all pipelines
 
+`GET /api/pipelines`
+
+<ParamField query="include_schedules" type="integer">
+  If `1`, each pipeline object in the response will include the triggers associated to it.
+</ParamField>
+
 <CodeGroup>
 ```curl cURL
-curl -X GET "localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2" \
-    -H "authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww"
+curl --request GET \
+  --url 'http://localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+  --header 'Authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww'
 ```
 </CodeGroup>
 
@@ -146,7 +216,26 @@ curl -X GET "localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ
 {
   "pipelines": [
     {
-      "uuid": "example_pipeline"
+      "blocks": [],
+      "data_integration": null,
+      "description": null,
+      "name": "example_pipeline",
+      "schedules": [],
+      "type": "python",
+      "updated_at": null,
+      "uuid": "example_pipeline",
+      "widgets": []
+    },
+    {
+      "blocks": [],
+      "data_integration": null,
+      "description": null,
+      "name": "etl_pipeline",
+      "schedules": [],
+      "type": "python",
+      "updated_at": null,
+      "uuid": "etl_pipeline",
+      "widgets": []
     }
   ],
   "metadata": {}
@@ -157,24 +246,24 @@ curl -X GET "localhost:6789/api/pipelines?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ
 
 ## Create pipeline
 
-TBD
+*WIP*
 
 ---
 
 ## Read pipeline
 
-TBD
+*WIP*
 
 ---
 
 ## Update pipeline
 
-TBD
+*WIP*
 
 ---
 
 ## Delete pipeline
 
-TBD
+*WIP*
 
 ---

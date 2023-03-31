@@ -1,0 +1,222 @@
+---
+title: "Pipeline schedules"
+description: "Triggers for a pipeline."
+---
+
+## Pipeline schedule object
+
+
+```json
+{
+  "created_at": "2023-03-01 20:27:23.645692+00:00",
+  "event_matchers": [],
+  "id": 41,
+  "last_pipeline_run_status": null,
+  "name": "dark brook",
+  "pipeline_runs_count": 0,
+  "pipeline_uuid": "dry_bird",
+  "schedule_interval": "@once",
+  "schedule_type": "time",
+  "settings": {
+    "allow_blocks_to_fail": true,
+    "skip_if_previous_running": false
+  },
+  "sla": 950400,
+  "start_time": "2023-03-01 22:04:00+00:00",
+  "status": "inactive",
+  "token": "1dca215c01564d48bf0d3db7d5450a20",
+  "updated_at": "2023-03-01 22:04:29.761238+00:00",
+  "variables": {
+    "env": "dev"
+  }
+}
+```
+
+<ResponseField name="created_at" type="string" required>
+  Date and time the trigger was created.
+</ResponseField>
+
+<ResponseField name="event_matchers" type="array of objects">
+  Event matching logic for event triggers.
+
+  <Expandable title="properties">
+    <ResponseField name="event_type" type="string" required>
+      `aws_event`
+    </ResponseField>
+    <ResponseField name="id" type="string" required>
+      Event matcher ID.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Name of event matcher.
+    </ResponseField>
+    <ResponseField name="pattern" type="string">
+    </ResponseField>
+    <ResponseField name="pipeline_schedule_ids" type="array of integers">
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="id" type="integer" required>
+  Trigger ID.
+</ResponseField>
+
+<ResponseField name="last_pipeline_run_status" type="string">
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Name of trigger.
+</ResponseField>
+
+<ResponseField name="pipeline_runs_count" type="integer">
+</ResponseField>
+
+<ResponseField name="pipeline_uuid" type="string" required>
+  Pipeline UUID the trigger belongs to.
+</ResponseField>
+
+<ResponseField name="schedule_interval" type="string">
+  `@once`, `@hourly`, `@daily`, `@weekly`, `@monthly`
+</ResponseField>
+
+<ResponseField name="schedule_type" type="string" required>
+  Trigger type: `api`, `event`, `time`
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  Additional settings for the trigger.
+
+  <Expandable title="properties" defaultOpen="true">
+    <ResponseField name="allow_blocks_to_fail" type="boolean">
+      If `true`, then blocks in the pipeline will continue to run even if unrelated blocks fail.
+    </ResponseField>
+
+    <ResponseField name="skip_if_previous_running" type="boolean">
+      If `true`, then new pipeline runs won’t be triggered until the most recent pipeline run is
+      no longer running.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="sla" type="integer">
+  If the pipeline run has been running for more than the SLA value, then the pipeline will fail.
+</ResponseField>
+
+<ResponseField name="start_time" type="datetime">
+  Date and time when the trigger should start running.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  `active`, `inactive`
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  Unique string used in the URL when triggering pipeline via API request.
+</ResponseField>
+
+<ResponseField name="updated_at" type="datetime" required>
+  Date and time the trigger was last updated.
+</ResponseField>
+
+<ResponseField name="variables" type="object">
+  Object containing variables for the pipeline that is being overwritten by this trigger.
+
+  <Expandable title="properties" defaultOpen="true">
+    <ResponseField name="[key]" type="string">
+      The property name is user defined.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Read all pipeline schedules
+
+`GET /api/pipelines/:pipeline_uuid/pipeline_schedules`
+
+<ParamField path="pipeline_uuid" type="string" required>
+  Pipeline UUID that the pipeline schedules should all belong to.
+</ParamField>
+
+<CodeGroup>
+```curl cURL
+curl --request GET \
+  --url 'http://localhost:6789/api/pipelines/:pipeline_uuid/pipeline_schedules?api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+  --header 'Authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww' \
+```
+</CodeGroup>
+
+```json
+{
+  "pipeline_schedules": [
+    {
+      "id": 42,
+      "created_at": "2023-03-01 22:04:33.609624+00:00",
+      "updated_at": "2023-03-01 22:04:35.163834+00:00",
+      "name": "dry darkness",
+      "pipeline_uuid": "dry_bird",
+      "schedule_type": "time",
+      "start_time": "2023-03-01 22:04:00+00:00",
+      "schedule_interval": "@hourly",
+      "status": "inactive",
+      "variables": null,
+      "sla": null,
+      "token": "f176321c4eac425782236acd0eb9886d",
+      "settings": {},
+      "event_matchers": [],
+      "last_pipeline_run_status": null,
+      "pipeline_runs_count": 0
+    },
+    {
+      "id": 41,
+      "created_at": "2023-03-01 20:27:23.645692+00:00",
+      "updated_at": "2023-03-31 05:15:51.171762+00:00",
+      "name": "dark brook",
+      "pipeline_uuid": "dry_bird",
+      "schedule_type": "time",
+      "start_time": "2023-03-01 22:04:00+00:00",
+      "schedule_interval": "@once",
+      "status": "inactive",
+      "variables": {
+        "env": "dev2"
+      },
+      "sla": 950400,
+      "token": "1dca215c01564d48bf0d3db7d5450a20",
+      "settings": {
+        "skip_if_previous_running": true,
+        "allow_blocks_to_fail": true
+      },
+      "event_matchers": [],
+      "last_pipeline_run_status": null,
+      "pipeline_runs_count": 0
+    }
+  ],
+  "metadata": {
+    "count": 3,
+    "next": false
+  }
+}
+```
+
+---
+
+## Create pipeline schedule
+
+*WIP*
+
+---
+
+## Read pipeline schedule
+
+*WIP*
+
+---
+
+## Update pipeline schedule
+
+*WIP*
+
+---
+
+## Delete pipeline schedule
+
+*WIP*
+
+---

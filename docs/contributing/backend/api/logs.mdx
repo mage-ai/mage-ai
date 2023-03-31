@@ -1,0 +1,144 @@
+---
+title: "Logs"
+description: "Log entries."
+---
+
+## Log object
+
+
+```json
+{
+  "block_run_logs": [
+    {
+      "name": "export_titanic_clean.log",
+      "path": "/root/.mage_data/default_repo/pipelines/example_pipeline/.logs/54/20230308T045259/export_titanic_clean.log",
+      "content": ""
+    }s
+  ],
+  "pipeline_run_logs": [
+    {
+      "name": "pipeline.log",
+      "path": "/root/.mage_data/default_repo/pipelines/example_pipeline/.logs/55/20230308T045408/pipeline.log",
+      "content": "2023-03-08T04:54:08 {\"cpu\": 0.21, \"cpu_total\": 8, \"cpu_usage\": 0.02625, \"memory\": 4013, \"memory_total\": 17010, \"memory_usage\": 0.23592004703115815, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251248.712125, \"uuid\": \"161125d3c3944d109ce945fa31f8c8a2\"}\n2023-03-08T04:54:08 {\"block_run_id\": 648, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 648: pipeline example_pipeline block load_titanic\", \"timestamp\": 1678251248.796509, \"uuid\": \"2223dba30d2d4217828ce031f5aa0f05\"}\n2023-03-08T04:54:09 {\"block_run_id\": 648, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 648 (block_uuid: load_titanic) completes.\", \"timestamp\": 1678251249.079394, \"uuid\": \"8c2a6c5ce8d64bbf96b51de463b0e91a\"}\n2023-03-08T04:54:18 {\"cpu\": 0.21, \"cpu_total\": 8, \"cpu_usage\": 0.02625, \"memory\": 4016, \"memory_total\": 17010, \"memory_usage\": 0.23609641387419164, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251258.908166, \"uuid\": \"fd079d501f33478985bf260b92d567f3\"}\n2023-03-08T04:54:18 {\"block_run_id\": 649, \"block_uuid\": \"fill_in_missing_values\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 649: pipeline example_pipeline block fill_in_missing_values\", \"timestamp\": 1678251258.997002, \"uuid\": \"8c4c4d69560a4083a4ff0bf30722e3fa\"}\n2023-03-08T04:54:19 {\"block_run_id\": 649, \"block_uuid\": \"fill_in_missing_values\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 649 (block_uuid: fill_in_missing_values) completes.\", \"timestamp\": 1678251259.224986, \"uuid\": \"44a35d24ae874e77af98cc1e6ab86278\"}\n2023-03-08T04:54:29 {\"cpu\": 0.2, \"cpu_total\": 8, \"cpu_usage\": 0.025, \"memory\": 4016, \"memory_total\": 17010, \"memory_usage\": 0.23609641387419164, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251269.186595, \"uuid\": \"97affe68017a4c65a69fad3492b80ea5\"}\n2023-03-08T04:54:29 {\"block_run_id\": 650, \"block_uuid\": \"export_titanic_clean\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 650: pipeline example_pipeline block export_titanic_clean\", \"timestamp\": 1678251269.292511, \"uuid\": \"97aa24db4b6e4da1b6f98222e1d0cd06\"}\n2023-03-08T04:54:29 {\"block_run_id\": 650, \"block_uuid\": \"export_titanic_clean\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 650 (block_uuid: export_titanic_clean) completes.\", \"timestamp\": 1678251269.383662, \"uuid\": \"d06e3d9dcb2448a583ae323e25e04045\"}\n2023-03-08T04:54:30 {\"block_run_id\": 651, \"block_uuid\": \"falling_glitter\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 651: pipeline example_pipeline block falling_glitter\", \"timestamp\": 1678251270.335112, \"uuid\": \"70b81921cb374e0d9c712ce6379f2148\"}\n2023-03-08T04:54:30 {\"block_run_id\": 651, \"block_uuid\": \"falling_glitter\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 651 (block_uuid: falling_glitter) completes.\", \"timestamp\": 1678251270.571607, \"uuid\": \"f2220d588ca746f49b5fafca1113be16\"}\n2023-03-08T04:54:38 {\"cpu\": 0.2, \"cpu_total\": 8, \"cpu_usage\": 0.025, \"memory\": 4019, \"memory_total\": 17010, \"memory_usage\": 0.23627278071722516, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251278.430712, \"uuid\": \"3de507ebca894100b20ae4a1645724d7\"}\n"
+    }
+  ],
+  "total_block_run_log_count": 1,
+  "total_pipeline_run_log_count": 1
+}
+```
+
+<ResponseField name="block_run_logs" type="array of objects" required>
+  Logs for block runs.
+
+  <Expandable title="properties" defaultOpen="true">
+    <ResponseField name="name" type="string" required>
+      File name of log file.
+    </ResponseField>
+
+    <ResponseField name="path" type="string" required>
+      Full path of log file.
+    </ResponseField>
+
+    <ResponseField name="content" type="string" required>
+      Contents of log file.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="pipeline_run_logs" type="array of objects" required>
+  Logs for pipeline runs.
+
+  <Expandable title="properties" defaultOpen="true">
+    <ResponseField name="name" type="string" required>
+      File name of log file.
+    </ResponseField>
+
+    <ResponseField name="path" type="string" required>
+      Full path of log file.
+    </ResponseField>
+
+    <ResponseField name="content" type="string" required>
+      Contents of log file.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total_block_run_log_count" type="integer" required>
+  Number of block run logs in the API response.
+</ResponseField>
+
+<ResponseField name="total_pipeline_run_log_count" type="integer" required>
+  Number of pipeline run logs in the API response.
+</ResponseField>
+
+## Read all logs
+
+`GET /api/pipelines/:pipeline_uuid/logs`
+
+<ParamField path="pipeline_uuid" type="string" required>
+  Pipeline UUID of the logs.
+
+  Example: `example_pipeline`
+</ParamField>
+
+<ParamField query="_limit" type="integer">
+  Maximum number of logs to be returned in the API response.
+
+  Example: `20`
+</ParamField>
+
+<ParamField query="_offset" type="integer">
+  Read logs after N number of logs, where N equals `_offset`.
+
+  Example: `10`
+</ParamField>
+
+<ParamField query="start_timestamp" type="integer">
+  Read logs on or after a specified timestamp.
+
+  Example: `1677648116`
+</ParamField>
+
+<CodeGroup>
+```curl cURL
+curl --request GET \
+  --url 'http://localhost:6789/api/pipelines/example_pipeline/logs?_limit=20&_offset=0&start_timestamp=1677648116&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+  --header 'Authorization: Bearer ZKXScwLKLZUujbw7vwMeWnhtTTSLqifw8_RnBHYipww' \
+```
+</CodeGroup>
+
+```json
+{
+  "logs": [
+    {
+      "block_run_logs": [
+        {
+          "name": "solitary_brook.log",
+          "path": "/root/.mage_data/default_repo/pipelines/example_pipeline/.logs/54/20230308T045259/solitary_brook.log",
+          "content": "2023-03-08T04:53:00 {\"block_run_id\": 646, \"block_uuid\": \"solitary_brook\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"custom\", \"level\": \"INFO\", \"message\": \"Start executing block with BlockExecutor.\", \"timestamp\": 1678251180.333347, \"uuid\": \"a81cdf9dea544f8eadb1a4a24cb2f443\"}\n2023-03-08T04:53:00 {\"block_run_id\": 646, \"block_uuid\": \"solitary_brook\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"custom\", \"level\": \"LOG\", \"message\": \"--------------------------------------------------------------\", \"timestamp\": 1678251180.349959, \"uuid\": \"cb164b8742f542198bfd306880fc0faa\"}\n2023-03-08T04:53:00 {\"block_run_id\": 646, \"block_uuid\": \"solitary_brook\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"custom\", \"level\": \"LOG\", \"message\": \"1/1 tests passed.\", \"timestamp\": 1678251180.350598, \"uuid\": \"0f0d072a01e247ecaa2cd588983c26e6\"}\n2023-03-08T04:53:00 {\"block_run_id\": 646, \"block_uuid\": \"solitary_brook\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"custom\", \"level\": \"INFO\", \"message\": \"Finish executing block with BlockExecutor.\", \"timestamp\": 1678251180.351186, \"uuid\": \"5d437c952e8347a39241b1fd376f27ac\"}\n"
+        },
+        {
+          "name": "load_titanic.log",
+          "path": "/root/.mage_data/default_repo/pipelines/example_pipeline/.logs/54/20230308T045259/load_titanic.log",
+          "content": "2023-03-08T04:52:59 {\"block_run_id\": 642, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"data_loader\", \"level\": \"INFO\", \"message\": \"Start executing block with BlockExecutor.\", \"timestamp\": 1678251179.304807, \"uuid\": \"dac74ebe1f9a438fb03c7c5de6e672cd\"}\n2023-03-08T04:52:59 {\"block_run_id\": 642, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"data_loader\", \"level\": \"LOG\", \"message\": \"--------------------------------------------------------------\", \"timestamp\": 1678251179.997668, \"uuid\": \"5931238c13334ec78b2b36bb8c6c0dfb\"}\n2023-03-08T04:52:59 {\"block_run_id\": 642, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"data_loader\", \"level\": \"LOG\", \"message\": \"1/1 tests passed.\", \"timestamp\": 1678251179.998194, \"uuid\": \"edb2596886d64f8e8552cd62a998bae5\"}\n2023-03-08T04:52:59 {\"block_run_id\": 642, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"block_type\": \"data_loader\", \"level\": \"INFO\", \"message\": \"Finish executing block with BlockExecutor.\", \"timestamp\": 1678251179.998854, \"uuid\": \"6eba80fc11b047c0b3a08b3e46001a7a\"}\n"
+        }
+      ],
+      "pipeline_run_logs": [
+        {
+          "name": "pipeline.log",
+          "path": "/root/.mage_data/default_repo/pipelines/example_pipeline/.logs/55/20230308T045408/pipeline.log",
+          "content": "2023-03-08T04:54:08 {\"cpu\": 0.21, \"cpu_total\": 8, \"cpu_usage\": 0.02625, \"memory\": 4013, \"memory_total\": 17010, \"memory_usage\": 0.23592004703115815, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251248.712125, \"uuid\": \"161125d3c3944d109ce945fa31f8c8a2\"}\n2023-03-08T04:54:08 {\"block_run_id\": 648, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 648: pipeline example_pipeline block load_titanic\", \"timestamp\": 1678251248.796509, \"uuid\": \"2223dba30d2d4217828ce031f5aa0f05\"}\n2023-03-08T04:54:09 {\"block_run_id\": 648, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 648 (block_uuid: load_titanic) completes.\", \"timestamp\": 1678251249.079394, \"uuid\": \"8c2a6c5ce8d64bbf96b51de463b0e91a\"}\n2023-03-08T04:54:18 {\"cpu\": 0.21, \"cpu_total\": 8, \"cpu_usage\": 0.02625, \"memory\": 4016, \"memory_total\": 17010, \"memory_usage\": 0.23609641387419164, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251258.908166, \"uuid\": \"fd079d501f33478985bf260b92d567f3\"}\n2023-03-08T04:54:18 {\"block_run_id\": 649, \"block_uuid\": \"fill_in_missing_values\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 649: pipeline example_pipeline block fill_in_missing_values\", \"timestamp\": 1678251258.997002, \"uuid\": \"8c4c4d69560a4083a4ff0bf30722e3fa\"}\n2023-03-08T04:54:19 {\"block_run_id\": 649, \"block_uuid\": \"fill_in_missing_values\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 649 (block_uuid: fill_in_missing_values) completes.\", \"timestamp\": 1678251259.224986, \"uuid\": \"44a35d24ae874e77af98cc1e6ab86278\"}\n2023-03-08T04:54:29 {\"cpu\": 0.2, \"cpu_total\": 8, \"cpu_usage\": 0.025, \"memory\": 4016, \"memory_total\": 17010, \"memory_usage\": 0.23609641387419164, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251269.186595, \"uuid\": \"97affe68017a4c65a69fad3492b80ea5\"}\n2023-03-08T04:54:29 {\"block_run_id\": 650, \"block_uuid\": \"export_titanic_clean\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 650: pipeline example_pipeline block export_titanic_clean\", \"timestamp\": 1678251269.292511, \"uuid\": \"97aa24db4b6e4da1b6f98222e1d0cd06\"}\n2023-03-08T04:54:29 {\"block_run_id\": 650, \"block_uuid\": \"export_titanic_clean\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 650 (block_uuid: export_titanic_clean) completes.\", \"timestamp\": 1678251269.383662, \"uuid\": \"d06e3d9dcb2448a583ae323e25e04045\"}\n2023-03-08T04:54:30 {\"block_run_id\": 651, \"block_uuid\": \"falling_glitter\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 543, BlockRun 651: pipeline example_pipeline block falling_glitter\", \"timestamp\": 1678251270.335112, \"uuid\": \"70b81921cb374e0d9c712ce6379f2148\"}\n2023-03-08T04:54:30 {\"block_run_id\": 651, \"block_uuid\": \"falling_glitter\", \"pipeline_run_id\": 543, \"pipeline_schedule_id\": 55, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 651 (block_uuid: falling_glitter) completes.\", \"timestamp\": 1678251270.571607, \"uuid\": \"f2220d588ca746f49b5fafca1113be16\"}\n2023-03-08T04:54:38 {\"cpu\": 0.2, \"cpu_total\": 8, \"cpu_usage\": 0.025, \"memory\": 4019, \"memory_total\": 17010, \"memory_usage\": 0.23627278071722516, \"pipeline_run_id\": 543, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 543 in schedule 55 is alive.\", \"timestamp\": 1678251278.430712, \"uuid\": \"3de507ebca894100b20ae4a1645724d7\"}\n"
+        },
+        {
+          "name": "pipeline.log",
+          "path": "/root/.mage_data/default_repo/pipelines/example_pipeline/.logs/54/20230308T045259/pipeline.log",
+          "content": "2023-03-08T04:52:59 {\"cpu\": 0.21, \"cpu_total\": 8, \"cpu_usage\": 0.02625, \"memory\": 3995, \"memory_total\": 17010, \"memory_usage\": 0.2348618459729571, \"pipeline_run_id\": 542, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 542 in schedule 54 is alive.\", \"timestamp\": 1678251179.224265, \"uuid\": \"b176369d919c46968e080831d43680e9\"}\n2023-03-08T04:52:59 {\"block_run_id\": 642, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 542, BlockRun 642: pipeline example_pipeline block load_titanic\", \"timestamp\": 1678251179.301796, \"uuid\": \"af1c33a85ea24deab85a322d9bafd957\"}\n2023-03-08T04:53:00 {\"block_run_id\": 642, \"block_uuid\": \"load_titanic\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 642 (block_uuid: load_titanic) completes.\", \"timestamp\": 1678251180.009846, \"uuid\": \"72b541210f0c4ac0a4ec97f74561cc33\"}\n2023-03-08T04:53:00 {\"block_run_id\": 646, \"block_uuid\": \"solitary_brook\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 542, BlockRun 646: pipeline example_pipeline block solitary_brook\", \"timestamp\": 1678251180.329502, \"uuid\": \"01eda42eedab40148aa0736e3c9c9aab\"}\n2023-03-08T04:53:00 {\"block_run_id\": 646, \"block_uuid\": \"solitary_brook\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 646 (block_uuid: solitary_brook) completes.\", \"timestamp\": 1678251180.376799, \"uuid\": \"1969d5a8568f4f0abda6de0b1b086901\"}\n2023-03-08T04:53:08 {\"cpu\": 0.21, \"cpu_total\": 8, \"cpu_usage\": 0.02625, \"memory\": 3986, \"memory_total\": 17010, \"memory_usage\": 0.23433274544385654, \"pipeline_run_id\": 542, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Pipeline example_pipeline for run 542 in schedule 54 is alive.\", \"timestamp\": 1678251188.508837, \"uuid\": \"c617abd74f6c4e28837767d715c4469f\"}\n2023-03-08T04:53:08 {\"block_run_id\": 643, \"block_uuid\": \"fill_in_missing_values\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 542, BlockRun 643: pipeline example_pipeline block fill_in_missing_values\", \"timestamp\": 1678251188.610335, \"uuid\": \"bead27aa82a944bfb5b710fc2756d795\"}\n2023-03-08T04:53:08 {\"block_run_id\": 643, \"block_uuid\": \"fill_in_missing_values\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 643 (block_uuid: fill_in_missing_values) completes.\", \"timestamp\": 1678251188.772267, \"uuid\": \"1ef0927575dc41a5a77d8f37f4d0c804\"}\n2023-03-08T04:53:09 {\"block_run_id\": 647, \"block_uuid\": \"aged_river\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"Execute PipelineRun 542, BlockRun 647: pipeline example_pipeline block aged_river\", \"timestamp\": 1678251189.640267, \"uuid\": \"4e862d9e3ea14e0882757d8433bdeef9\"}\n2023-03-08T04:53:09 {\"block_run_id\": 647, \"block_uuid\": \"aged_river\", \"pipeline_run_id\": 542, \"pipeline_schedule_id\": 54, \"pipeline_uuid\": \"example_pipeline\", \"level\": \"INFO\", \"message\": \"BlockRun 647 (block_uuid: aged_river) failed.\", \"timestamp\": 1678251189.675047, \"uuid\": \"c2338f69eace40969c126b3b7a7245fe\"}\n"
+        }
+      ],
+      "total_block_run_log_count": 2,
+      "total_pipeline_run_log_count": 2
+    }
+  ],
+  "metadata": {}
+}
+```
