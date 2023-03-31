@@ -16,6 +16,7 @@ export const GIT_FIELDS = [
   {
     autoComplete: 'repo_path',
     label: 'Local directory path',
+    labelDescription: "Defaults to Python's os.getcwd() if omitted. Mage will create this local directory if it doesn't already exist.",
     uuid: 'repo_path'
   },
 ];
