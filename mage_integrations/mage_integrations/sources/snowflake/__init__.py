@@ -37,7 +37,7 @@ SELECT
     , COLUMN_NAME
     , DATA_TYPE
     , IS_NULLABLE
-FROM {database}.INFORMATION_SCHEMA.COLUMNS
+FROM "{database}".INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = '{schema}'
         """
 
@@ -45,6 +45,11 @@ WHERE TABLE_SCHEMA = '{schema}'
             table_names = ', '.join([f"'{n}'" for n in streams])
             query += f'\nAND TABLE_NAME IN ({table_names})'
         return query
+
+    def build_table_name(self, stream) -> str:
+        table_name = stream.tap_stream_id
+
+        return f'{self.table_prefix}"{table_name}"'
 
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
