@@ -54,7 +54,7 @@ function getHost(){
 }
 
 
-export function getWebSocket() {
+export function getWebSocket(path='') {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
   const PORT = '6789';
@@ -63,7 +63,7 @@ export function getWebSocket() {
   if (windowDefined && window.location.protocol?.match(/https/)) {
     prefix = 'wss://';
   }
-  return `${prefix}${getHostCore(windowDefined, LOCALHOST, PORT)}/websocket/`;
+  return `${prefix}${getHostCore(windowDefined, LOCALHOST, PORT)}/websocket/${path}`;
 }
 
 export function buildUrl(

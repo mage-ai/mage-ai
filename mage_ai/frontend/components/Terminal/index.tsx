@@ -1,17 +1,13 @@
 import Ansi from 'ansi-to-react';
 import useWebSocket from 'react-use-websocket';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
-import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
   DataTypeEnum,
   DATA_TYPE_TEXTLIKE,
-  ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
-import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import {
   CharacterStyle,
@@ -56,7 +52,6 @@ function Terminal({
   const refContainer = useRef(null);
   const refInner = useRef(null);
 
-  const [busy, setBusy] = useState<boolean>(false);
   const [command, setCommand] = useState<string>('');
   const [commandIndex, setCommandIndex] = useState<number>(0);
   const [finalCommand, setFinalCommand] = useState<string>('');
@@ -67,40 +62,49 @@ function Terminal({
     command: boolean;
   })[]>([]);
 
+  const [stdout, setStdout] = useState<string>();
+
   const {
     lastMessage,
     readyState,
     sendMessage,
-  } = useWebSocket(getWebSocket(), {
+  } = useWebSocket(getWebSocket('terminal'), {
     shouldReconnect: () => true,
   });
 
   useEffect(() => {
     if (lastMessage) {
-      const data = lastMessage?.data ? JSON.parse(lastMessage.data) : null;
+      const msg = JSON.parse(lastMessage.data);
 
-      if (data?.uuid === terminalUUID) {
-        if (ExecutionStateEnum.BUSY === data?.execution_state) {
-          setBusy(true);
-        } else if (ExecutionStateEnum.IDLE === data?.execution_state) {
-          setBusy(false);
+      setStdout(prev => {
+        const p = prev || '';
+        if (msg[0] === 'stdout') {
+          return p + msg[1];
         }
-
-        setKernelOutputs(prev => {
-          if (data) {
-            return prev.concat(data);
-          }
-
-          return prev;
-        });
-      }
+        return p;
+      })
     }
   }, [
     lastMessage,
-    setBusy,
-    setKernelOutputs,
     terminalUUID,
   ]);
+
+  const kernelOutputsUpdated = useMemo(() => {
+    if (!stdout) {
+      return [];
+    }
+    
+    // Filter out commands to configure settings
+    const splitStdout =
+      stdout
+        .split('\n')
+        .filter(d => !d.includes("# Mage terminal settings command"));
+
+    return splitStdout.map(d => ({
+      data: d,
+      type: DataTypeEnum.TEXT,
+    }));
+  }, [stdout]);
 
   useEffect(() => {
     if (refContainer.current && refInner.current) {
@@ -108,7 +112,7 @@ function Terminal({
       refContainer.current.scrollTo(0, height);
     }
   }, [
-    kernelOutputs,
+    kernelOutputsUpdated,
     refContainer,
     refInner,
   ]);
@@ -164,18 +168,20 @@ function Terminal({
 
       if (focus) {
         pauseEvent(event);
-
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
-          setBusy(false);
-          // @ts-ignore
-          setKernelOutputs(prev => prev.concat({
-            command: true,
-            data: command?.trim()?.length >= 1 ? command : '\n',
-            type: DataTypeEnum.TEXT,
-          }));
+          const finalEnteredCommand = finalCommand + command;
+          if (finalEnteredCommand?.length >= 0) {
+            sendMessage(JSON.stringify([
+              'stdin', finalEnteredCommand
+            ]));
+            sendMessage(JSON.stringify([
+              'stdin', '\x03'
+            ]));
+            setCursorIndex(0);
+          }
+          setFinalCommand('');
           setCommand('');
-          interruptKernel();
-        } else if (!busy) {
+        } else {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
             const minIdx = Math.max(0, cursorIndex - 1);
             setCommand(prev => prev.slice(0, minIdx) + prev.slice(cursorIndex));
@@ -201,24 +207,17 @@ function Terminal({
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             const finalEnteredCommand = finalCommand + command;
-            if (finalEnteredCommand?.length >= 1) {
-              setBusy(true);
-              sendMessage(JSON.stringify({
-                api_key: OAUTH2_APPLICATION_CLIENT_ID,
-                code: `!${finalEnteredCommand}`,
-                token: (new AuthToken()).decodedToken.token,
-                uuid: terminalUUID,
-              }));
+            sendMessage(JSON.stringify([
+              'stdin', finalEnteredCommand
+            ]));
+            sendMessage(JSON.stringify([
+              'stdin', '\r'
+            ]));
+            if (finalEnteredCommand?.length >= 2) {
               setCommandIndex(commandHistory.length + 1);
               setCommandHistory(prev => prev.concat(command));
               setCursorIndex(0);
             }
-            // @ts-ignore
-            setKernelOutputs(prev => prev.concat({
-              command: true,
-              data: command?.trim()?.length >= 1 ? command : '\n',
-              type: DataTypeEnum.TEXT,
-            }));
             setFinalCommand('');
             setCommand('');
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
@@ -278,13 +277,11 @@ in the context menu that appears.
       }
     },
     [
-      busy,
       command,
       commandHistory,
       commandIndex,
       focus,
       interruptKernel,
-      setBusy,
       setCommand,
       setCommandHistory,
       setCommandIndex,
@@ -292,6 +289,10 @@ in the context menu that appears.
       terminalUUID,
     ],
   );
+
+  const lastCommand = useMemo(() => {
+    return kernelOutputsUpdated[kernelOutputsUpdated.length - 1]?.data;
+  }, [kernelOutputsUpdated]);
 
   return (
     <ContainerStyle
@@ -317,9 +318,14 @@ in the context menu that appears.
           ref={refInner}
           width={width}
         >
-          {kernelOutputs?.reduce((acc, kernelOutput: KernelOutputType & {
-            command: boolean;
+          {kernelOutputsUpdated?.reduce((acc, kernelOutput: {
+            command?: string;
+            data: string;
+            type: DataTypeEnum;
           }, idx: number) => {
+            if (idx == kernelOutputsUpdated.length - 1) {
+              return acc;
+            }
             const {
               command,
               data: dataInit,
@@ -350,7 +356,6 @@ in the context menu that appears.
                         {data}
                       </Ansi>
                     )}
-                    {!data && <>&nbsp;</>}
                   </Text>
                 );
               }
@@ -358,18 +363,7 @@ in the context menu that appears.
               if (displayElement) {
                 const key = `command-${idx}-${idxInner}-${data}`;
 
-                if (command) {
-                  arr.push(
-                    <LineStyle key={key}>
-                      <FlexContainer alignItems="center">
-                        <Text inline monospace warning>
-                          →&nbsp;
-                        </Text>
-                        {displayElement}
-                      </FlexContainer>
-                    </LineStyle>,
-                  );
-                } else {
+                if (!command) {
                   arr.push(
                     <LineStyle key={key}>
                       {displayElement}
@@ -382,20 +376,18 @@ in the context menu that appears.
             return acc.concat(arr);
           }, [])}
 
-          {busy && (
-            <Spacing mt={1}>
-              <Spinner />
-            </Spacing>
-          )}
-
-          {!busy && (
+          {(
             <InputStyle
               focused={focus
-                && (command.length === 0 || cursorIndex > command.length)}
+                && (command?.length === 0 || cursorIndex > command?.length)}
             >
               <Text monospace>
-                <Text inline monospace warning>
-                  →&nbsp;
+                <Text inline monospace>
+                  {lastCommand && (
+                    <Ansi>
+                      {lastCommand}
+                    </Ansi>
+                  )}
                 </Text>
                 {command?.split('').map(((char: string, idx: number) => (
                   <CharacterStyle

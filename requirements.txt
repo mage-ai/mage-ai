@@ -32,6 +32,7 @@ scikit-learn>=1.0
 simplejson
 six>=1.15.0
 sqlalchemy>=1.4.20, <2.0.0
+terminado==0.17.1
 tornado==6.1
 typer[all]==0.7.0
 

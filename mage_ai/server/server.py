@@ -59,6 +59,7 @@ import argparse
 import asyncio
 import json
 import os
+import terminado
 import tornado.ioloop
 import tornado.web
 import webbrowser
@@ -148,7 +149,21 @@ class ApiProjectSettingsHandler(BaseHandler):
         ]))
 
 
+class TerminalWebsocketServer(terminado.TermSocket):
+    def check_origin(self, origin):
+        return True
+
+    def open(self, url_component=None):
+        super().open(url_component)
+
+        # Turn enable-bracketed-paste off since it can mess up the output.
+        self.terminal.ptyproc.write(
+            "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
+        self.terminal.read_buffer.clear()
+
+
 def make_app():
+    term_manager = terminado.UniqueTermManager(shell_command=['bash'])
     routes = [
         (r'/', MainPageHandler),
         (r'/pipelines', MainPageHandler),
@@ -180,7 +195,7 @@ def make_app():
             {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
         ),
         (r'/websocket/', WebSocketServer),
-
+        (r'/websocket/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
         # These are hard to test until we do a full Docker build and deploy to cloud
         (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
         (
