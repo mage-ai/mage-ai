@@ -73,7 +73,7 @@ function RetryButton({
           callback: () => {
             onSuccessProp();
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => setErrors?.({
             errors,
             response,
           }),
@@ -260,7 +260,7 @@ function PipelineRunsTable({
           },
           onErrorCallback: (response, errors) => {
             setCancelingRunId(null);
-            setErrors({
+            setErrors?.({
               errors,
               response,
             });

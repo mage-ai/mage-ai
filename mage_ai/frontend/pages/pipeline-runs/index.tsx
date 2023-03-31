@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Dashboard from '@components/Dashboard';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
@@ -21,6 +22,7 @@ import { queryFromUrl, queryString } from '@utils/url';
 
 function RunListPage() {
   const router = useRouter();
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
 
@@ -47,6 +49,8 @@ function RunListPage() {
 
   return (
     <Dashboard
+      errors={errors}
+      setErrors={setErrors}
       title="Pipeline runs"
       uuid="pipeline_runs/index"
     >
@@ -90,6 +94,7 @@ function RunListPage() {
       <PipelineRunsTable
         fetchPipelineRuns={fetchPipelineRuns}
         pipelineRuns={pipelineRuns}
+        setErrors={setErrors}
       />
       <Spacing p={2}>
         <Paginate
