@@ -221,7 +221,10 @@ class IntegrationBlock(Block):
                                         for k, v in properties_updated.items()
                                     }
 
+                                if df.shape[0] == 0:
+                                    continue
                                 record_transformed = df.to_dict('records')[0]
+
                                 line = json.dumps(merge_dict(
                                     data,
                                     dict(record=record_transformed),
