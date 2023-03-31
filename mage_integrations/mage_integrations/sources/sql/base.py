@@ -80,14 +80,15 @@ class Source(BaseSource):
                 elif 'int' in column_type or 'bigint' in column_type:
                     column_types.append(COLUMN_TYPE_INTEGER)
                 elif 'double' in column_type or 'float' in column_type or \
-                        'numeric' in column_type or 'decimal' in column_type:
+                        'numeric' in column_type or 'decimal' in column_type or \
+                        'real' in column_type or 'number' in column_type:
                     column_types.append(COLUMN_TYPE_NUMBER)
                 elif 'datetime' in column_type or 'timestamp' in column_type or 'date' in column_type:
                     column_format = COLUMN_FORMAT_DATETIME
                     column_types.append(COLUMN_TYPE_STRING)
                     # TODO (tommy dang): remove this so we allow any columns to be used as a bookmark
                     valid_replication_keys.append(column_name)
-                elif 'json' in column_type:
+                elif 'json' in column_type or 'variant' in column_type:
                     column_properties = {}
                     column_types.append(COLUMN_TYPE_OBJECT)
                 elif 'uuid' in column_type:

@@ -13,7 +13,6 @@ from mage_ai.data_preparation.templates.utils import (
 from mage_ai.io.base import DataSource
 from typing import Mapping, Union
 import json
-import os
 
 
 MAP_DATASOURCE_TO_HANDLER = {
