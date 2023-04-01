@@ -608,7 +608,7 @@ class Pipeline:
         db_connection.session.commit()
 
     async def update(self, data, update_content=False):
-        if 'name' in data and data['name'] != self.name:
+        if 'name' in data and self.name and data['name'] != self.name:
             """
             Rename pipeline folder
             """
