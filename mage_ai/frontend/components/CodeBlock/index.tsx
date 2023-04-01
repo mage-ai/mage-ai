@@ -102,6 +102,7 @@ import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import {
   TABS_DBT,
   TAB_DBT_LINEAGE_UUID,
+  TAB_DBT_LOGS_UUID,
   TAB_DBT_SQL_UUID,
 } from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
@@ -216,6 +217,8 @@ function CodeBlock({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
 
+  const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
+
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
@@ -223,7 +226,6 @@ function CodeBlock({
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
 
-  const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
   const [dataProviderConfig, setDataProviderConfig] = useState({
     [CONFIG_KEY_DATA_PROVIDER]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER],
     [CONFIG_KEY_DATA_PROVIDER_DATABASE]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER_DATABASE],
@@ -237,6 +239,7 @@ function CodeBlock({
     [CONFIG_KEY_LIMIT]: blockConfiguration[CONFIG_KEY_LIMIT],
     [CONFIG_KEY_USE_RAW_SQL]: !!blockConfiguration[CONFIG_KEY_USE_RAW_SQL],
   });
+
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
@@ -251,6 +254,30 @@ function CodeBlock({
   const isDBT = BlockTypeEnum.DBT === block?.type;
   const isSQLBlock = BlockLanguageEnum.SQL === block?.language;
   const isRBlock = BlockLanguageEnum.R === block?.language;
+
+  const dbtMetadata = useMemo(() => block?.metadata?.dbt || { project: null, projects: {} }, [block]);
+  const dbtProjects = useMemo(() => dbtMetadata.projects || {}, [dbtMetadata]);
+  const dbtProjectName =
+    useMemo(() => dbtMetadata.project || dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME], [
+      dataProviderConfig,
+      dbtMetadata,
+    ]);
+  const dbtProfileData = useMemo(() => dbtProjects[dbtProjectName] || {
+    target: null,
+    targets: [],
+  }, [
+    dbtProjectName,
+    dbtProjects,
+  ]);
+
+  const dbtProfileTargets = useMemo(() => dbtProfileData.targets || [], [dbtProfileData]);
+  const dbtProfileTarget = useMemo(() => dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET], [
+    dataProviderConfig,
+  ]);
+
+  const [manuallyEnterTarget, setManuallyEnterTarget] = useState<boolean>(dbtProfileTarget &&
+    !dbtProfileTargets?.includes(dbtProfileTarget),
+  );
 
   const {
     callback_content: callbackContentOrig,
@@ -332,62 +359,68 @@ function CodeBlock({
     widgets,
   ]);
 
-  const runBlockAndTrack = useCallback(
-    (payload?: {
-      block: BlockType;
-      code?: string;
-      disableReset?: boolean;
-      runDownstream?: boolean;
-      runSettings?: {
-        run_model?: boolean;
-      };
-      runUpstream?: boolean;
-      runTests?: boolean;
-    }) => {
+  const runBlockAndTrack = useCallback((payload?: {
+    block: BlockType;
+    code?: string;
+    disableReset?: boolean;
+    runDownstream?: boolean;
+    runSettings?: {
+      run_model?: boolean;
+    };
+    runUpstream?: boolean;
+    runTests?: boolean;
+  }) => {
+    const {
+      block: blockPayload,
+      code,
+      disableReset,
+      runDownstream,
+      runSettings,
+      runUpstream,
+      runTests: runTestsInit,
+    } = payload || {};
+
+    let runTests = runTestsInit;
+    if (runTests === null || typeof runTests === 'undefined') {
       const {
-        block: blockPayload,
-        code,
-        disableReset,
-        runDownstream,
-        runSettings,
-        runUpstream,
-        runTests: runTestsInit,
-      } = payload || {};
+        type: blockType,
+      } = blockPayload || {};
+      runTests = [
+        BlockTypeEnum.DATA_LOADER,
+        BlockTypeEnum.DATA_EXPORTER,
+        BlockTypeEnum.TRANSFORMER,
+      ].includes(blockType);
+    }
 
-      let runTests = runTestsInit;
-      if (runTests === null || typeof runTests === 'undefined') {
-        const {
-          type: blockType,
-        } = blockPayload || {};
-        runTests = [
-          BlockTypeEnum.DATA_LOADER,
-          BlockTypeEnum.DATA_EXPORTER,
-          BlockTypeEnum.TRANSFORMER,
-        ].includes(blockType);
-      }
+    if (isDBT && TAB_DBT_LOGS_UUID !== selectedTab) {
+      setSelectedTab(TAB_DBT_LOGS_UUID);
+    }
 
-      runBlock({
-        block: blockPayload,
-        code: code || content,
-        runDownstream: runDownstream || hasDownstreamWidgets,
-        runSettings,
-        runTests: runTests || false,
-        runUpstream: runUpstream || false,
-      });
+    runBlock({
+      block: blockPayload,
+      code: code || content,
+      runDownstream: runDownstream || hasDownstreamWidgets,
+      runSettings,
+      runTests: runTests || false,
+      runUpstream: runUpstream || false,
+    });
 
-      if (!disableReset) {
-        setRunCount(1 + Number(runCount));
-        setRunEndTime(null);
-        setOutputCollapsed(false);
-      }
-    }, [
-      content,
-      hasDownstreamWidgets,
-      runCount,
-      runBlock,
-      setRunCount,
-      setRunEndTime,
-    ]);
+    if (!disableReset) {
+      setRunCount(1 + Number(runCount));
+      setRunEndTime(null);
+      setOutputCollapsed(false);
+    }
+  }, [
+    content,
+    hasDownstreamWidgets,
+    isDBT,
+    runBlock,
+    runCount,
+    selectedTab,
+    setRunCount,
+    setRunEndTime,
+    setSelectedTab,
+  ]);
 
   const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === block.uuid)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
@@ -665,21 +698,6 @@ function CodeBlock({
     savePipelineContent,
   ]);
 
-  const dbtMetadata = useMemo(() => block?.metadata?.dbt || { project: null, projects: {} }, [block]);
-  const dbtProjects = useMemo(() => dbtMetadata.projects || {}, [dbtMetadata]);
-  const dbtProjectName =
-    useMemo(() => dbtMetadata.project || dataProviderConfig[CONFIG_KEY_DBT_PROJECT_NAME], [
-      dataProviderConfig,
-      dbtMetadata,
-    ]);
-  const dbtProfileData = useMemo(() => dbtProjects[dbtProjectName] || {
-    target: null,
-    targets: [],
-  }, [
-    dbtProjectName,
-    dbtProjects,
-  ]);
-
   const codeEditorEl = useMemo(() => (
     <>
       <CodeEditor
@@ -872,10 +890,12 @@ function CodeBlock({
         ...payload,
       };
 
-      if ((data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE])
-        || data[CONFIG_KEY_DBT_PROFILE_TARGET]
-        || data[CONFIG_KEY_DBT_PROJECT_NAME]
-        || data[CONFIG_KEY_LIMIT]
+      if ((typeof data[CONFIG_KEY_DATA_PROVIDER] !== 'undefined'
+        && data[CONFIG_KEY_DATA_PROVIDER_PROFILE] !== 'undefined'
+      )
+        || typeof data[CONFIG_KEY_DBT_PROFILE_TARGET] !== 'undefined'
+        || typeof data[CONFIG_KEY_DBT_PROJECT_NAME] !== 'undefined'
+        || typeof data[CONFIG_KEY_LIMIT] !== 'undefined'
       ) {
         savePipelineContent({
           block: {
@@ -975,11 +995,17 @@ function CodeBlock({
 
               <FlexContainer alignItems="center">
                 {isDBT && BlockLanguageEnum.YAML !== block.language && (
-                  <Text monospace muted>
-                    {getModelName(block, {
+                  <Tooltip
+                    block
+                    label={getModelName(block, {
                       fullPath: true,
                     })}
-                  </Text>
+                    size={null}
+                  >
+                    <Text monospace muted>
+                      {getModelName(block)}
+                    </Text>
+                  </Tooltip>
                 )}
 
                 {(!isDBT || BlockLanguageEnum.YAML === block.language) && (
@@ -1189,41 +1215,116 @@ function CodeBlock({
                     <Text monospace muted small>
                       Target
                     </Text>
+
                     <span>&nbsp;</span>
-                    <Select
-                      compact
-                      disabled={!dbtProjectName}
-                      monospace
-                      onBlur={() => setTimeout(() => {
-                        setAnyInputFocused(false);
-                      }, 300)}
-                      onChange={(e) => {
-                        // @ts-ignore
-                        updateDataProviderConfig({
-                          [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
-                        });
-                        e.preventDefault();
-                      }}
-                      onClick={pauseEvent}
-                      onFocus={() => {
-                        setAnyInputFocused(true);
-                      }}
-                      placeholder={dbtProjectName
-                        ? isSQLBlock
-                          ? dbtProfileData?.target
-                          : null
-                        : 'Select project first'
-                      }
-                      small
-                      value={dataProviderConfig[CONFIG_KEY_DBT_PROFILE_TARGET] || ''}
-                    >
-                      <option value="" />
-                      {dbtProfileData.targets?.map((target: string) => (
-                        <option key={target} value={target}>
-                          {target}
-                        </option>
-                      ))}
-                    </Select>
+
+                    {!manuallyEnterTarget && (
+                      <Select
+                        compact
+                        disabled={!dbtProjectName}
+                        monospace
+                        onBlur={() => setTimeout(() => {
+                          setAnyInputFocused(false);
+                        }, 300)}
+                        onChange={(e) => {
+                          // @ts-ignore
+                          updateDataProviderConfig({
+                            [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                          });
+                          e.preventDefault();
+                        }}
+                        onClick={pauseEvent}
+                        onFocus={() => {
+                          setAnyInputFocused(true);
+                        }}
+                        placeholder={dbtProjectName
+                          ? isSQLBlock
+                            ? dbtProfileData?.target
+                            : null
+                          : 'Select project first'
+                        }
+                        small
+                        value={dbtProfileTarget || ''}
+                      >
+                        <option value="" />
+                        {dbtProfileTargets?.map((target: string) => (
+                          <option key={target} value={target}>
+                            {target}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+
+                    {manuallyEnterTarget && (
+                      <TextInput
+                        compact
+                        monospace
+                        onBlur={() => setTimeout(() => {
+                          setAnyInputFocused(false);
+                        }, 300)}
+                        onChange={(e) => {
+                          // @ts-ignore
+                          updateDataProviderConfig({
+                            [CONFIG_KEY_DBT_PROFILE_TARGET]: e.target.value,
+                          });
+                          e.preventDefault();
+                        }}
+                        onClick={pauseEvent}
+                        onFocus={() => {
+                          setAnyInputFocused(true);
+                        }}
+                        placeholder={dbtProjectName
+                          ? isSQLBlock
+                            ? dbtProfileData?.target
+                            : null
+                          : 'Select project first'
+                        }
+                        small
+                        value={dbtProfileTarget || ''}
+                        width={UNIT * 21}
+                      />
+                    )}
+
+                    <Spacing mr={1} />
+
+                    <FlexContainer alignItems="center">
+                      <Tooltip
+                        block
+                        description={
+                          <Text default inline>
+                            Manually type the name of the target you want to use in the profile.
+                            <br />
+                            Interpolate environment variables and
+                            global variables using the following syntax:
+                            <br />
+                            <Text default inline monospace>
+                              {'{{ env_var(\'NAME\') }}'}
+                            </Text> or <Text default inline monospace>
+                              {'{{ variables(\'NAME\') }}'}
+                            </Text>
+                          </Text>
+                        }
+                        size={null}
+                        widthFitContent
+                      >
+                        <FlexContainer alignItems="center">
+                          <Checkbox
+                            checked={manuallyEnterTarget}
+                            label={
+                              <Text muted small>
+                                Manually enter target
+                              </Text>
+                            }
+                            onClick={(e) => {
+                              pauseEvent(e);
+                              setManuallyEnterTarget(!manuallyEnterTarget);
+                            }}
+                          />
+                          <span>&nbsp;</span>
+                          <Info muted />
+                        </FlexContainer>
+                      </Tooltip>
+                    </FlexContainer>
                   </Flex>
 
                   {BlockLanguageEnum.YAML !== block.language && (

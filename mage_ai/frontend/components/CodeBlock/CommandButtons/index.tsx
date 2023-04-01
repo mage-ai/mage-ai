@@ -177,32 +177,58 @@ function CommandButtons({
 
       {runBlock && (!isInProgress && !isStreamingPipeline) &&  (
         <>
-          <Tooltip
-            appearBefore
-            default
-            label={(
-              <Text>
-                {isDBT ? 'Compile and preview data' : 'Run block'}
-                &nbsp;
-                &nbsp;
-                <KeyboardTextGroup
-                  inline
-                  keyTextGroups={[[
-                    isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
-                    KEY_SYMBOL_ENTER,
-                  ]]}
-                  monospace
-                  uuidForKey={uuid}
-                />
-              </Text>
-            )}
-            size={UNIT * 3}
-            widthFitContent
-          >
+          {!isDBT && (
+            <Tooltip
+              appearBefore
+              default
+              label={(
+                <Text>
+                  {isDBT ? 'Compile and preview data' : 'Run block'}
+                  &nbsp;
+                  &nbsp;
+                  <KeyboardTextGroup
+                    inline
+                    keyTextGroups={[[
+                      isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
+                      KEY_SYMBOL_ENTER,
+                    ]]}
+                    monospace
+                    uuidForKey={uuid}
+                  />
+                </Text>
+              )}
+              size={UNIT * 3}
+              widthFitContent
+            >
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => {
+                  if (upstreamBlocksExecuted) {
+                    runBlock({ block });
+                  } else {
+                    setShowExecuteActions(true);
+                  }
+                }}
+              >
+                <Circle
+                  color={color}
+                  size={UNIT * 3}
+                >
+                  <PlayButtonFilled
+                    black
+                    size={UNIT * 1.5}
+                  />
+                </Circle>
+              </Button>
+            </Tooltip>
+          )}
+          {isDBT && (
             <Button
-              noBackground
-              noBorder
-              noPadding
+              backgroundColor={color}
+              beforeIcon={<PlayButtonFilled size={UNIT * 1.5} />}
+              compact
               onClick={() => {
                 if (upstreamBlocksExecuted) {
                   runBlock({ block });
@@ -210,18 +236,11 @@ function CommandButtons({
                   setShowExecuteActions(true);
                 }
               }}
+              small
             >
-              <Circle
-                color={color}
-                size={UNIT * 3}
-              >
-                <PlayButtonFilled
-                  black
-                  size={UNIT * 1.5}
-                />
-              </Circle>
+              Compile & preview
             </Button>
-          </Tooltip>
+          )}
           <ClickOutside
             disableEscape
             onClickOutside={() => setShowExecuteActions(false)}
