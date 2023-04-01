@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.google_ads.tap_google_ads.discover import \
@@ -9,6 +7,7 @@ from mage_integrations.sources.google_ads.tap_google_ads.discover import \
 from mage_integrations.sources.google_ads.tap_google_ads.sync import do_sync
 from mage_integrations.utils.dictionary import ignore_keys
 from singer import catalog as catalog_singer
+from typing import Dict, List
 
 
 class GoogleAds(Source):
