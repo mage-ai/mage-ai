@@ -361,30 +361,39 @@ function Edit({
             Frequency
           </Text>
         </FlexContainer>,
-        <Select
-          key="frequency_input"
-          monospace
-          onChange={(e) => {
-            e.preventDefault();
-            const interval = e.target.value;
-            setSchedule(s => ({
-              ...s,
-              schedule_interval: interval,
-            }));
-          }}
-          placeholder="Choose the frequency to run"
-          value={scheduleInterval}
-        >
-          {!scheduleInterval && <option value="" />}
-          {Object.values(ScheduleIntervalEnum).map(value => (
-            <option key={value} value={value}>
-              {value.substring(1)}
+        <div key="frequency_input">
+          <Select
+            monospace
+            onChange={(e) => {
+              e.preventDefault();
+              const interval = e.target.value;
+              setSchedule(s => ({
+                ...s,
+                schedule_interval: interval,
+              }));
+            }}
+            placeholder="Choose the frequency to run"
+            value={scheduleInterval}
+          >
+            {!scheduleInterval && <option value="" />}
+            {Object.values(ScheduleIntervalEnum).map(value => (
+              <option key={value} value={value}>
+                {value.substring(1)}
+              </option>
+            ))}
+            <option key="custom" value="custom">
+              custom
             </option>
-          ))}
-          <option key="custom" value="custom">
-            custom
-          </option>
-        </Select>,
+          </Select>
+
+          <Spacing mt={1} p={1}>
+            <Text muted small>
+              If you don’t see the frequency option you need, select <Text inline monospace small>
+                custom
+              </Text> and enter CRON syntax.
+            </Text>
+          </Spacing>
+        </div>,
       ],
       [
         <FlexContainer
@@ -451,16 +460,36 @@ function Edit({
               Cron expression
             </Text>
           </FlexContainer>,
-          <TextInput
-            key="cron_expression_input"
-            monospace
-            onChange={(e) => {
-              e.preventDefault();
-              setCustomInterval(e.target.value);
-            }}
-            placeholder="* * * * *"
-            value={customInterval}
-          />,
+          <div key="cron_expression_input">
+            <TextInput
+              monospace
+              onChange={(e) => {
+                e.preventDefault();
+                setCustomInterval(e.target.value);
+              }}
+              placeholder="* * * * *"
+              value={customInterval}
+            />
+
+            <Spacing mt={1} p={1}>
+              <Text muted small>
+                If you want this pipeline to trigger every 1 minute,
+                the CRON syntax is <Text inline monospace small>
+                  */1 * * * *
+                </Text>.
+              </Text>
+
+              <Text muted small>
+                For more CRON syntax examples, check out this <Link
+                  href="https://crontab.guru/"
+                  openNewWindow
+                  small
+                >
+                  resource
+                </Link>.
+              </Text>
+            </Spacing>
+          </div>,
         ],
       );
     }
@@ -484,7 +513,10 @@ function Edit({
   }, [
     customInterval,
     date,
-    schedule,
+    isCustomInterval,
+    isStreamingPipeline,
+    name,
+    scheduleInterval,
     showCalendar,
     time,
   ]);
