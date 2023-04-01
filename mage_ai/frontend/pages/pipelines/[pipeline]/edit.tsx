@@ -73,11 +73,11 @@ import {
   removeDataOutputBlockUUID,
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
+import { cleanName, randomNameGenerator } from '@utils/string';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
-import { randomNameGenerator } from '@utils/string';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
@@ -396,7 +396,7 @@ function PipelineDetailPage({
     if (isIntegration) {
       return find(
         blockSampleData?.outputs,
-        ({ variable_uuid }) => variable_uuid === `output_sample_data_${selectedStream}`,
+        ({ variable_uuid }) => variable_uuid === `output_sample_data_${cleanName(selectedStream)}`,
       )?.sample_data;
     } else {
       return blockSampleData?.outputs?.[0]?.sample_data;
@@ -1871,7 +1871,7 @@ function PipelineDetailPage({
     () => integrationStreams
       ?.filter(stream => find(
         blockSampleData?.outputs,
-        ({ variable_uuid }) => variable_uuid === `output_sample_data_${stream}`,
+        ({ variable_uuid }) => variable_uuid === `output_sample_data_${cleanName(stream)}`,
       ))
       ?.map(stream => (
         <Spacing key={stream} pl={1}>

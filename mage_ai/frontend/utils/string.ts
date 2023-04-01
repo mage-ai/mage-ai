@@ -291,7 +291,7 @@ export function randomSimpleHashGenerator() {
 }
 
 export function cleanName(name: string): string {
-  return name.toLowerCase().replace(/\W+/g, '_');
+  return name?.toLowerCase().replace(/\W+/g, '_');
 }
 
 export function removeExtensionFromFilename(filename: string): string {
