@@ -16,5 +16,4 @@ class GitSync(BaseSync):
             f'Syncing data with remote repo {self.remote_repo_link}',
             verbose=True,
         ):
-            asyncio.run(self.git_manager.check_connection())
             self.git_manager.reset(self.branch)

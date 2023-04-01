@@ -9,6 +9,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    JSON,
     String,
 )
 from sqlalchemy.orm import relationship, validates
@@ -26,6 +27,7 @@ class User(BaseModel):
     password_salt = Column(String(255), default=None)
     roles = Column(Integer, default=None)
     username = Column(String(255), default=None, index=True, unique=True)
+    preferences = Column(JSON, default=None)
 
     oauth2_applications = relationship('Oauth2Application', back_populates='user')
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='user')

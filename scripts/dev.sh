@@ -62,6 +62,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --require-user-authentication)
+    REQUIRE_USER_AUTHENTICATION=1
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument

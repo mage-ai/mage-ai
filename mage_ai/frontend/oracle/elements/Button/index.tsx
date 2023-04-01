@@ -335,6 +335,7 @@ const Button = ({
   beforeIcon,
   children,
   compact,
+  danger,
   disabled,
   iconOnly,
   id,
@@ -359,6 +360,7 @@ const Button = ({
     <ElToUse
       {...props}
       compact={compact}
+      danger={danger}
       disabled={disabled}
       hasOnClick={!!onClick || asHref || linkHref}
       iconOnly={iconOnly}
@@ -387,7 +389,7 @@ const Button = ({
             </Flex>
           </Spacing>
         )}
-        {loading && <Spinner inverted={secondary} size={compact ? 20 : 24} />}
+        {loading && <Spinner inverted={danger || secondary} size={compact ? 20 : 24} />}
         {!loading && (
           <Flex>
             {!iconOnly && children}

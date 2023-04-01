@@ -7,9 +7,9 @@ from mage_ai.data_preparation.preferences import get_preferences
 class GitBranchResource(GenericResource):
     @classmethod
     def collection(self, query, meta, user, **kwargs):
-        git_manager = Git.get_manager()
+        git_manager = Git.get_manager(user=user)
         return self.build_result_set(
-            [dict(name=branch) for branch in git_manager.all_branches()],
+            [dict(name=branch) for branch in git_manager.branches],
             user,
             **kwargs,
         )
@@ -17,7 +17,7 @@ class GitBranchResource(GenericResource):
     @classmethod
     def create(self, payload, user, **kwargs):
         branch = payload.get('name')
-        git_manager = Git.get_manager()
+        git_manager = Git.get_manager(user=user)
         git_manager.change_branch(branch)
 
         return self(dict(name=git_manager.current_branch), user, **kwargs)
@@ -25,13 +25,13 @@ class GitBranchResource(GenericResource):
     @classmethod
     async def member(self, pk, user, **kwargs):
         branch = None
-        if get_preferences().is_valid_git_config():
-            git_manager = Git.get_manager()
+        if get_preferences(user=user).is_valid_git_config():
+            git_manager = Git.get_manager(user=user)
             branch = git_manager.current_branch
         return self(dict(name=branch), user, **kwargs)
 
     async def update(self, payload, **kwargs):
-        git_manager = Git.get_manager()
+        git_manager = Git.get_manager(user=self.current_user)
         action_type = payload.get('action_type')
         if action_type == 'status':
             status = git_manager.status()
@@ -46,13 +46,10 @@ class GitBranchResource(GenericResource):
                 raise ApiError(error)
             git_manager.commit(message)
         elif action_type == 'push':
-            await git_manager.check_connection()
             git_manager.push()
         elif action_type == 'pull':
-            await git_manager.check_connection()
             git_manager.pull()
         elif action_type == 'reset':
-            await git_manager.check_connection()
             git_manager.reset()
 
         return self
