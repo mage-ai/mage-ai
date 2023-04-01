@@ -454,6 +454,7 @@
                     "contributing/backend/api/sessions",
                     "contributing/backend/api/pipelines",
                     "contributing/backend/api/pipeline-schedules",
+                    "contributing/backend/api/pipeline-runs",
                     "contributing/backend/api/logs"
                   ]
                 }
