@@ -1,0 +1,268 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "adRotationMode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "baseAdGroup": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "campaign": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "cpcBidMicros": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "cpmBidMicros": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "cpvBidMicros": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "displayCustomBidDimension": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "effectiveTargetCpaMicros": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "effectiveTargetCpaSource": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "effectiveTargetRoas": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "singer.decimal"
+    },
+    "effectiveTargetRoasSource": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "excludedParentAssetFieldTypes": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "explorerAutoOptimizerSetting": {
+      "$ref": "#/definitions/ExplorerAutoOptimizerSetting"
+    },
+    "finalUrlSuffix": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "labels": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "percentCpcBidMicros": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "resourceName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "status": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "targetCpaMicros": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "targetCpmMicros": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "targetRoas": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "singer.decimal"
+    },
+    "targetingSetting": {
+      "$ref": "#/definitions/TargetingSetting"
+    },
+    "trackingUrlTemplate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "urlCustomParameters": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "$ref": "#/definitions/CustomParameter"
+      }
+    },
+    "definitions": {
+      "ExplorerAutoOptimizerSetting": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "optIn": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "TargetRestriction": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "bidOnly": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "targetingDimension": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "TargetRestrictionOperation": {
+        "operator": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "value": {
+          "$ref": "#/definitions/TargetRestriction"
+        }
+      },
+      "TargetingSetting": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "targetRestrictionOperations": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/definitions/TargetRestrictionOperation"
+            }
+          },
+          "targetRestrictions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/definitions/TargetRestriction"
+            }
+          }
+        }
+      },
+      "CustomParameter": {
+        "key": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "value": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    }
+  }
+}

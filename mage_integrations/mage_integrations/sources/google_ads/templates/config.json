@@ -1,0 +1,13 @@
+{
+    "developer_token": "",
+    "oauth_client_id": "",
+    "oauth_client_secret": "",
+    "refresh_token": "",
+    "start_date": "2020-01-01T00:00:00Z",
+    "login_customer_ids": [
+        {
+            "customerId": "",
+            "loginCustomerId": null
+        }
+    ]
+}
