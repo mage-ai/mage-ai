@@ -1129,7 +1129,7 @@ class Pipeline:
         with open(test_path, mode='r') as fp:
             try:
                 yaml.full_load(fp)
-            except yaml.scanner.ScannerError as e:
+            except yaml.scanner.ScannerError:
                 success = False
 
         os.remove(test_path)
