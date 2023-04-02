@@ -1085,6 +1085,8 @@ class Pipeline:
         extension_uuid: str = None,
         widget: bool = False,
     ) -> None:
+        blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
+
         if block_uuid is not None:
             current_pipeline = await Pipeline.get_async(self.uuid, self.repo_path)
             block = self.get_block(block_uuid, extension_uuid=extension_uuid, widget=widget)
@@ -1110,7 +1112,30 @@ class Pipeline:
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')
 
+        blocks_updated = sorted([b['uuid'] for b in pipeline_dict.get('blocks', [])])
+
+        if blocks_current != blocks_updated:
+            raise Exception(
+                'Blocks cannot be added or removed when saving content, please try again.',
+            )
+
         content = yaml.dump(pipeline_dict)
+
+        test_path = f'{self.config_path}.test'
+        async with aiofiles.open(test_path, mode='w') as fp:
+            await fp.write(content)
+
+        success = True
+        with open(test_path, mode='r') as fp:
+            try:
+                yaml.full_load(fp)
+            except yaml.scanner.ScannerError:
+                success = False
+
+        os.remove(test_path)
+
+        if not success:
+            raise Exception('Invalid pipeline metadata.yaml content, please try saving again.')
 
         await safe_write_async(self.config_path, content)
 
