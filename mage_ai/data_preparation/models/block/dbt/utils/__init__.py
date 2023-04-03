@@ -1,4 +1,5 @@
 from contextlib import redirect_stdout
+from datetime import datetime
 from jinja2 import Template
 from logging import Logger
 from mage_ai.data_preparation.models.block import Block
@@ -861,10 +862,21 @@ def build_command_line_arguments(
         elif run_settings.get('test_model'):
             dbt_command = 'test'
 
+    variables_json = {}
+    for k, v in variables.items():
+        if type(v) is str or \
+                type(v) is int or \
+                type(v) is bool or \
+                type(v) is float or \
+                type(v) is dict or \
+                type(v) is list or \
+                type(v) is datetime:
+            variables_json[k] = v
+
     args = [
         '--vars',
         simplejson.dumps(
-            variables,
+            variables_json,
             default=encode_complex,
             ignore_nan=True,
         ),
@@ -1038,8 +1050,6 @@ def upstream_blocks_from_sources(block: Block) -> List[Block]:
         if source_name not in mapping:
             mapping[source_name] = {}
         mapping[source_name][table_name] = True
-
-    print(mapping)
 
     attributes_dict = parse_attributes(block)
     source_name = attributes_dict['source_name']
