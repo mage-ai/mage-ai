@@ -865,13 +865,12 @@ def build_command_line_arguments(
     variables_json = {}
     for k, v in variables.items():
         if type(v) is str or \
-            type(v) is int or \
-            type(v) is bool or \
-            type(v) is float or \
-            type(v) is dict or \
-            type(v) is list or \
-            type(v) is datetime:
-
+                type(v) is int or \
+                type(v) is bool or \
+                type(v) is float or \
+                type(v) is dict or \
+                type(v) is list or \
+                type(v) is datetime:
             variables_json[k] = v
 
     args = [
