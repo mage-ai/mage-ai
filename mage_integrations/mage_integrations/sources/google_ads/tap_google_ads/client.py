@@ -1,4 +1,4 @@
-from mage_integrations.sources.google_ads.google.ads.googleads.client import GoogleAdsClient
+from google.ads.googleads.client import GoogleAdsClient
 
 
 def create_sdk_client(config, login_customer_id=None):

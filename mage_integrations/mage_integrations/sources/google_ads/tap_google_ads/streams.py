@@ -6,7 +6,7 @@ import singer
 from singer import Transformer
 from singer import utils, metrics
 from google.protobuf.json_format import MessageToJson
-from mage_integrations.sources.google_ads.google.ads.googleads.errors import GoogleAdsException
+from google.ads.googleads.errors import GoogleAdsException
 from google.api_core.exceptions import ServerError, TooManyRequests
 from requests.exceptions import ReadTimeout
 import backoff
