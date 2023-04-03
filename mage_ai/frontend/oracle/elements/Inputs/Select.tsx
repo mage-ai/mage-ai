@@ -71,7 +71,6 @@ const Select = ({
         {(label || placeholder) && (
         <option
           disabled
-          selected
           value=""
         >
           {label || placeholder}

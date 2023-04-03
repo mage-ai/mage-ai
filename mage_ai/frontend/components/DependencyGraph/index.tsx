@@ -460,6 +460,21 @@ function DependencyGraph({
     runningBlocksMapping,
   ]);
 
+  const containerHeight = useMemo(() => {
+    let v = 0;
+    if (height) {
+      v += height;
+    }
+    if (heightOffset) {
+      v -= heightOffset;
+    };
+
+    return Math.max(0, v);
+  }, [
+    height,
+    heightOffset,
+  ]);
+
   return (
     <>
       {blockEditing && (
@@ -545,7 +560,7 @@ function DependencyGraph({
         </Spacing>
       )}
 
-      <GraphContainerStyle height={height - (heightOffset)}>
+      <GraphContainerStyle height={containerHeight}>
         <Canvas
           arrow={null}
           disabled={disabledProp}

@@ -49,9 +49,9 @@ def parse_attributes(block) -> Dict:
         model_name = '.'.join(parts[:-1])
         file_extension = parts[-1]
 
-    project_full_path = f'{get_repo_path()}/dbt/{project_name}'
-
     full_path = f'{get_repo_path()}/dbt/{file_path}'
+
+    project_full_path = f'{get_repo_path()}/dbt/{project_name}'
 
     models_folder_path = f'{project_full_path}/models'
     sources_full_path = f'{models_folder_path}/mage_sources.yml'
@@ -60,6 +60,8 @@ def parse_attributes(block) -> Dict:
     profiles_full_path = f'{project_full_path}/profiles.yml'
     profile_target = configuration.get('dbt_profile_target')
     profile = load_profile(project_name, profiles_full_path, profile_target)
+
+    dbt_project_full_path = f'{project_full_path}/dbt_project.yml'
 
     source_name = f'mage_{project_name}'
     if profile:
@@ -73,11 +75,13 @@ def parse_attributes(block) -> Dict:
             source_name = profile['schema']
 
     return dict(
+        dbt_project_full_path=dbt_project_full_path,
         file_extension=file_extension,
         file_path=file_path,
         filename=filename,
         full_path=full_path,
         model_name=model_name,
+        models_folder_path=models_folder_path,
         profiles_full_path=profiles_full_path,
         project_full_path=project_full_path,
         project_name=project_name,
@@ -111,8 +115,7 @@ def add_blocks_upstream_from_refs(
     read_only: bool = False,
 ) -> None:
     attributes_dict = parse_attributes(block)
-    project_name = attributes_dict['project_name']
-    models_folder_path = f'{get_repo_path()}/dbt/{project_name}/models'
+    models_folder_path = attributes_dict['models_folder_path']
 
     files_by_name = {}
     for file_path_orig in files_in_path(models_folder_path):
@@ -959,6 +962,40 @@ def run_dbt_tests(
         raise Exception('DBT test failed.')
 
 
+def get_dbt_project_settings(block: 'Block') -> Dict:
+    attributes_dict = parse_attributes(block)
+    dbt_project_full_path = attributes_dict['dbt_project_full_path']
+
+    config = {}
+    with open(dbt_project_full_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    return config
+
+
+def get_model_configurations_from_dbt_project_settings(block: 'Block') -> Dict:
+    dbt_project = get_dbt_project_settings(block)
+
+    if not dbt_project.get('models'):
+        return
+
+    attributes_dict = parse_attributes(block)
+    project_name = attributes_dict['project_name']
+    if not dbt_project['models'].get(project_name):
+        return
+
+    models_folder_path = attributes_dict['models_folder_path']
+    full_path = attributes_dict['full_path']
+    parts = full_path.replace(models_folder_path, '').split('/')
+    parts = list(filter(lambda x: x, parts))
+    if len(parts) >= 2:
+        models_subfolder = parts[0]
+        if dbt_project['models'][project_name].get(models_subfolder):
+            return dbt_project['models'][project_name][models_subfolder]
+
+    return dbt_project['models'][project_name]
+
+
 def fetch_model_data(
     block: 'Block',
     profile_target: str,
@@ -982,6 +1019,11 @@ def fetch_model_data(
             f'WARNING: Cannot fetch data from model {model_name}, ' +
             f'no schema found in profile target {profile_target}.',
         )
+
+    # Check dbt_profiles for schema to append
+    model_configurations = get_model_configurations_from_dbt_project_settings(block)
+    if model_configurations and model_configurations.get('schema'):
+        schema = f"{schema}_{model_configurations['schema']}"
 
     query_string = f'SELECT * FROM {schema}.{model_name}'
 

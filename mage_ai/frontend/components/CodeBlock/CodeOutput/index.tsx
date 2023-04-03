@@ -201,6 +201,7 @@ function CodeOutput({
           columns={columns}
           disableScrolling={!selectedProp}
           index={index}
+          key={`data-table-${index}`}
           maxHeight={UNIT * 60}
           noBorderBottom
           noBorderLeft

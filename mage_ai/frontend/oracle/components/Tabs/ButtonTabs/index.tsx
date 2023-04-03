@@ -96,12 +96,11 @@ function ButtonTabs({
         );
       } else {
         arr.push(
-          <div style={{ padding: 4 }}>
+          <div key={`button-tab-${uuid}`} style={{ padding: 4 }}>
             <Button
               borderLess
               compact={small}
               default
-              key={`button-tab-${uuid}`}
               onClick={(e) => {
                 pauseEvent(e);
                 onClickTab(tab);
@@ -120,6 +119,7 @@ function ButtonTabs({
   }, [
     onClickTab,
     selectedTabUUID,
+    small,
     tabs,
   ]);
 
