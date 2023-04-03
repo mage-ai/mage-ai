@@ -115,7 +115,6 @@ def add_blocks_upstream_from_refs(
     read_only: bool = False,
 ) -> None:
     attributes_dict = parse_attributes(block)
-    project_name = attributes_dict['project_name']
     models_folder_path = attributes_dict['models_folder_path']
 
     files_by_name = {}
