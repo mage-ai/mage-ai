@@ -1,10 +1,14 @@
 from enum import Enum
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
+from mage_ai.server.logger import Logger
 import multiprocessing
 import traceback
 
+
 SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
+
+logger = Logger().new_server_logger(__name__)
 
 
 def run_scheduler():
@@ -37,14 +41,14 @@ class SchedulerManager:
 
     def get_status(self, auto_restart: bool = False):
         if auto_restart and self.status == self.SchedulerStatus.RUNNING and not self.is_alive:
-            print('Restarting pipeline scheduler.')
+            logger.info('Restarting pipeline scheduler.')
             self.start_scheduler()
         if self.is_alive:
             return SchedulerManager.SchedulerStatus.RUNNING
         return SchedulerManager.SchedulerStatus.STOPPED
 
     def start_scheduler(self):
-        print('Start scheduler.')
+        logger.info('Start scheduler.')
         if self.is_alive:
             return
 
@@ -54,7 +58,7 @@ class SchedulerManager:
         self.status = self.SchedulerStatus.RUNNING
 
     def stop_scheduler(self):
-        print('Stop scheduler.')
+        logger.info('Stop scheduler.')
         if self.is_alive:
             self.scheduler_process.terminate()
             self.scheduler_process = None
@@ -66,4 +70,4 @@ scheduler_manager = SchedulerManager()
 
 def check_scheduler_status():
     status = scheduler_manager.get_status(auto_restart=True)
-    print(f'Scheduler status: {status}.')
+    logger.info(f'Scheduler status: {status}.')

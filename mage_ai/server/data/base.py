@@ -1,6 +1,6 @@
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.server.logger import Logger
 import json
-import logging
 import os
 import os.path
 import pandas as pd
@@ -9,7 +9,7 @@ import simplejson
 # This is equivalent to ./files
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
-logger = logging.getLogger(__name__)
+logger = Logger().new_server_logger(__name__)
 
 
 class Model:

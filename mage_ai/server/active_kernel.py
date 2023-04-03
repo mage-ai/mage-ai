@@ -1,6 +1,9 @@
 from jupyter_client import KernelClient, KernelManager
 from jupyter_client.kernelspec import NoSuchKernel
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
+from mage_ai.server.logger import Logger
+
+logger = Logger().new_server_logger(__name__)
 
 
 class ActiveKernel():
@@ -13,14 +16,14 @@ active_kernel = ActiveKernel()
 
 
 def switch_active_kernel(kernel_name: KernelName) -> None:
-    print(f'Switch active kernel: {kernel_name}')
+    logger.info(f'Switch active kernel: {kernel_name}')
     if kernel_managers[kernel_name].is_alive():
-        print(f'Kernel {kernel_name} is already alive.')
+        logger.info(f'Kernel {kernel_name} is already alive.')
         return
 
     for kernel in kernel_managers.values():
         if kernel.is_alive():
-            print(f'Shut down current kernel {kernel}.')
+            logger.info(f'Shut down current kernel {kernel}.')
             kernel.request_shutdown()
 
     try:

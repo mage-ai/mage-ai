@@ -1,7 +1,7 @@
 from datetime import datetime
-import logging
+from mage_ai.server.logger import Logger
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = Logger().new_server_logger(__name__)
 
 
 def debug(text):

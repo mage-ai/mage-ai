@@ -10,8 +10,11 @@ from mage_ai.cluster_manager.constants import (
     KUBE_NAMESPACE,
     KUBE_STORAGE_CLASS_NAME
 )
+from mage_ai.server.logger import Logger
 import os
 import yaml
+
+logger = Logger().new_server_logger(__name__)
 
 
 class ClusterType(str, Enum):
@@ -32,7 +35,7 @@ class ApiInstancesHandler(BaseHandler):
                 ecs_instance_manager = EcsTaskManager(cluster_name)
                 instances = ecs_instance_manager.list_tasks()
             except Exception as e:
-                print(str(e))
+                logger.error(str(e))
                 instances = list()
         elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager

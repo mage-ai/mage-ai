@@ -21,6 +21,7 @@ from mage_ai.server.active_kernel import (
     switch_active_kernel,
 )
 from mage_ai.shared.constants import ENV_DEV
+from mage_ai.server.logger import Logger
 from mage_ai.server.execution_manager import (
     cancel_pipeline_execution,
     check_pipeline_process_status,
@@ -56,6 +57,8 @@ import re
 import tornado.websocket
 import traceback
 import uuid
+
+logger = Logger().new_server_logger(__name__)
 
 
 def run_pipeline(
@@ -314,7 +317,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             output_dict,
         )
 
-        print(
+        logger.info(
             f'[{block_uuid}] Sending message for {msg_id} to '
             f'{len(self.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
         )

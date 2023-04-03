@@ -1,9 +1,12 @@
 from mage_ai.data_preparation.models.block import PYTHON_COMMAND
+from mage_ai.server.logger import Logger
 from typing import List, Dict
 import importlib
 import json
 import subprocess
 import traceback
+
+logger = Logger().new_server_logger(__name__)
 
 
 def get_collection(key: str, available_options: List[Dict]):
@@ -38,8 +41,8 @@ def get_collection(key: str, available_options: List[Dict]):
                     except Exception:
                         pass
             except Exception as err:
-                print(f"Failed to load source {d['uuid']}: {err}")
-                print(traceback.format_exc())
+                logger.error(f"Failed to load source {d['uuid']}: {err}")
+                logger.error(traceback.format_exc())
                 continue
 
         collection.append(d)

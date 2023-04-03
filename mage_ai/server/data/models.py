@@ -3,11 +3,11 @@ from mage_ai.server.client.mage import Mage
 from mage_ai.server.data.base import Model
 from mage_ai.shared.constants import SAMPLE_SIZE
 from mage_ai.shared.hash import merge_dict
-import logging
+from mage_ai.server.logger import Logger
 import os
 import os.path
 
-logger = logging.getLogger(__name__)
+logger = Logger().new_server_logger(__name__)
 
 
 # right now, we are writing the models to local files to reduce dependencies
