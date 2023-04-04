@@ -139,7 +139,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 start_lsn=start_lsn,
                 options=dict(
                     proto_version='1',
-                    publication_names='mage_pub',
+                    publication_names=self.config.get('publication_name', 'mage_pub'),
                 ),
             )
 

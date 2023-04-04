@@ -17,6 +17,7 @@ You must enter the following credentials when configuring this source:
 | `schema` | Schema of the data you want to read data from. | `public` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
 | `replication_slot` | Name of the slot used in logical replication. | `mage_slot` |
+| `publication_name` | Name of the publication used in logical replication. | `mage_pub` |
 
 <br />
 
