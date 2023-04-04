@@ -122,6 +122,7 @@ export enum IntegrationSourceEnum {
   AMPLITUDE = 'amplitude',
   BIGQUERY = 'bigquery',
   CHARGEBEE = 'chargebee',
+  GOOGLE_ADS = 'google_ads',
   GOOGLE_SEARCH_CONSOLE = 'google_search_console',
   GOOGLE_SHEETS = 'google_sheets',
   INTERCOM = 'intercom',
