@@ -44,7 +44,7 @@ def replace_single_quotes_with_double(v: str) -> str:
         v = json.dumps(v)
     # Remove emoji code
     if type(v) is str:
-        v = re.sub(r'(\\ud83d\\ude[0-4][0-f])|(\\ud83c\\udf[0-f][0-f])|(\\ud83d\\u[0-d][-d][0-f][0-f]])|(\\ud83d\\ude[8-f][0-f])|(\\ud83c\\udd[e-f][0-f])|(\\ud83e\\udd[1-f][0-f])', '', v)
+        v = re.sub(r'(\\ud83d\\ud[0-f][0-f][0-f])|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])', '', v)
         v = EMOJI_PATTERN.sub(r'', v)
     if type(v) is not str:
         v = str(v)
@@ -160,7 +160,8 @@ def convert_json_or_string(value, column_type_dict):
     if COLUMN_TYPE_OBJECT == column_type:
         value = f"'{replace_single_quotes_with_double(value)}'"
         value = f'TO_JSON({value})'
-
+    else:
+        value = EMOJI_PATTERN.sub(r'', value)
     return value
 
 
