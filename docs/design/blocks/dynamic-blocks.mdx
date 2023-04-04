@@ -29,7 +29,7 @@ def load_data(*args, **kwargs) -> List[List[Dict]]:
 
     return [
         users,
-        metadata,
+        metadata, # optional
     ]
 ```
 
@@ -127,7 +127,7 @@ The return output data of this downstream transformer block will be:
 > The transformer block is returning a list as its output data.
 > The list of items is used as positional arguments in any downstream block of this transformer block.
 
-#### Metadata for downstream blocks
+#### Metadata for downstream blocks (optional)
 
 The 2nd item in the list is a list of dictionaries.
 These dictionaries contain metadata for each downstream block.
