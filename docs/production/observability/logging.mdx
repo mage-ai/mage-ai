@@ -2,12 +2,19 @@
 title: "Logging"
 ---
 
+## Server Logging
+
+The server logger can be configured to adjust the amount of detail that is included in the server logs. This can be helpful for debugging or troubleshooting server issues. You can change the verbosity level of the logger by setting the `SERVER_VERBOSITY` environment variable.
+
+The `SERVER_VERBOSITY` variable accepts the following values: `DEBUG`, `INFO`, `WARNING`, `ERROR` and `CRITICAL`.
+
+## Pipelines logging
 By default, logs for each pipeline run will be stored in the
 `<path_to_project>/pipelines/<pipeline_name>/.logs` folder.
 
 Learn more about logs [here](/design/core-abstractions#log).
 
-## Set logging level
+### Set logging level
 The default logging level is `INFO`. To customize the logging level for logs of block runs and pipeline runs,
 you can set the `level` of `logging_config` in your project's `metadata.yaml` file.
 

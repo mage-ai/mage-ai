@@ -37,6 +37,10 @@ class LoggingLevel(str, Enum):
     ERROR = 'ERROR'
     CRITICAL = 'CRITICAL'
 
+    @classmethod
+    def is_valid_level(cls, level: str) -> bool:
+        return level.upper() in cls.__members__
+
 
 class VerboseFunctionExec:
     def __init__(

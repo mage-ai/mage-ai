@@ -5,7 +5,8 @@ from mage_ai.server.app import (
     server_config,
 )
 from mage_ai.server.constants import SERVER_PORT
-import logging
+from mage_ai.server.logger import Logger
+
 import os
 
 
@@ -15,7 +16,7 @@ FRONTEND_DIST_PATH = os.path.abspath(
 FRONTEND_STATIC_PATH = '/_next/static'
 IFRAME_HEIGHT = 1000
 
-logger = logging.getLogger(__name__)
+logger = Logger().new_server_logger(__name__)
 
 
 class NotebookType(str, Enum):

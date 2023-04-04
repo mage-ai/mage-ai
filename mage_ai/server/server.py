@@ -49,11 +49,14 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
+    SERVER_VERBOSITY
 )
+from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
+from tornado.options import options
 from typing import Union
 import argparse
 import asyncio
@@ -368,6 +371,8 @@ def start_server(
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler()
 
+        if LoggingLevel.is_valid_level(SERVER_VERBOSITY):
+            options.logging = SERVER_VERBOSITY
         enable_pretty_logging()
 
         # Start web server

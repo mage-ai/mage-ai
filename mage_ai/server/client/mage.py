@@ -1,10 +1,10 @@
 from mage_ai.shared.hash import merge_dict
+from mage_ai.server.logger import Logger
 
 import json
-import logging
 import requests
 
-logger = logging.getLogger(__name__)
+logger = Logger().new_server_logger(__name__)
 
 
 class Mage:
