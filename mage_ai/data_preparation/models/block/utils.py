@@ -402,7 +402,8 @@ def fetch_input_variables(
                     # output_0 is the metadata for dynamic blocks
                     if dynamic_block_index is not None and \
                             upstream_is_dynamic and \
-                            len(variables) >= 1:
+                            len(variables) >= 2:
+
                         var = variables[1]
                         variable_values = pipeline.variable_manager.get_variable(
                             pipeline.uuid,
