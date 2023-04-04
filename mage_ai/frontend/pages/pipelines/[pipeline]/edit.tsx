@@ -1606,6 +1606,14 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
+  const {
+    lastMessage: lastTerminalMessage,
+    sendMessage: sendTerminalMessage,
+  } = useWebSocket(getWebSocket('terminal'), {
+    shouldReconnect: () => true,
+    queryParams: sharedWebsocketData,
+  });
+
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -1635,6 +1643,7 @@ function PipelineDetailPage({
       insights={insights}
       interruptKernel={interruptKernel}
       isPipelineExecuting={isPipelineExecuting}
+      lastTerminalMessage={lastTerminalMessage}
       messages={messages}
       metadata={metadata}
       onChangeCallbackBlock={onChangeCallbackBlock}
@@ -1649,6 +1658,7 @@ function PipelineDetailPage({
       secrets={secrets}
       selectedBlock={selectedBlock}
       selectedFilePath={selectedFilePath}
+      sendTerminalMessage={sendTerminalMessage}
       setActiveSidekickView={setActiveSidekickView}
       setAnyInputFocused={setAnyInputFocused}
       setDisableShortcuts={setDisableShortcuts}
@@ -1682,6 +1692,7 @@ function PipelineDetailPage({
     insights,
     interruptKernel,
     isPipelineExecuting,
+    lastTerminalMessage,
     messages,
     metadata,
     onChangeCallbackBlock,
@@ -1696,6 +1707,7 @@ function PipelineDetailPage({
     secrets,
     selectedBlock,
     selectedFilePath,
+    sendTerminalMessage,
     setActiveSidekickView,
     setAnyInputFocused,
     setEditingBlock,
@@ -2087,6 +2099,7 @@ function PipelineDetailPage({
                 openSidekickView={openSidekickView}
                 pipeline={pipeline}
                 selectedFilePath={selectedFilePath}
+                sendTerminalMessage={sendTerminalMessage}
                 setErrors={setErrors}
                 setFilesTouched={setFilesTouched}
                 setSelectedBlock={setSelectedBlock}

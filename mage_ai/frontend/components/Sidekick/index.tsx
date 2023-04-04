@@ -96,6 +96,7 @@ export type SidekickProps = {
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
   globalVariables: PipelineVariableType[];
+  lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
   pipeline: PipelineType;
   pipelineMessages: KernelOutputType[];
@@ -104,6 +105,7 @@ export type SidekickProps = {
   secrets: SecretType[];
   selectedBlock: BlockType;
   selectedFilePath?: string;
+  sendTerminalMessage: (message: string, keep?: boolean) => void;
   setActiveSidekickView?: (
     newView: ViewKeyEnum,
     pushHistory?: boolean,
@@ -136,6 +138,7 @@ function Sidekick({
   insights,
   interruptKernel,
   isPipelineExecuting,
+  lastTerminalMessage,
   messages,
   metadata,
   onChangeCallbackBlock,
@@ -150,6 +153,7 @@ function Sidekick({
   secrets,
   selectedBlock,
   selectedFilePath,
+  sendTerminalMessage,
   setActiveSidekickView,
   setAnyInputFocused,
   setDisableShortcuts,
@@ -482,7 +486,9 @@ function Sidekick({
             >
               <Terminal
                 interruptKernel={interruptKernel}
+                lastMessage={lastTerminalMessage}
                 onFocus={() => setSelectedBlock(null)}
+                sendMessage={sendTerminalMessage}
                 width={afterWidth}
               />
             </div>

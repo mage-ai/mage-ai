@@ -1,4 +1,3 @@
-from mage_ai.api.middleware import OAuthMiddleware
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -44,6 +43,7 @@ from mage_ai.server.scheduler_manager import (
     scheduler_manager,
 )
 from mage_ai.server.subscriber import get_messages
+from mage_ai.server.terminal_server import TerminalWebsocketServer
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
     OAUTH2_APPLICATION_CLIENT_ID,
@@ -63,7 +63,6 @@ import os
 import terminado
 import tornado.ioloop
 import tornado.web
-import uuid
 import webbrowser
 
 
@@ -151,43 +150,7 @@ class ApiProjectSettingsHandler(BaseHandler):
         ]))
 
 
-class TerminalWebsocketServer(terminado.TermSocket):
-    def check_origin(self, origin):
-        return True
-
-    def open(self, url_component=None):
-        super().open(url_component)
-
-        # Turn enable-bracketed-paste off since it can mess up the output.
-        self.terminal.ptyproc.write(
-            "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
-        self.terminal.read_buffer.clear()
-
-    @gen.coroutine
-    def on_message(self, message):
-        """Handle incoming websocket message
-
-        We send JSON arrays, where the first element is a string indicating
-        what kind of message this is. Data associated with the message follows.
-        """
-        # logging.info("TermSocket.on_message: %s - (%s) %s", self.term_name, type(message), len(message) if isinstance(message, bytes) else message[:250])
-        command = json.loads(message)
-        msg_type = command[0]
-        assert self.terminal is not None
-        if msg_type == "stdin":
-            yield self.stdin_to_ptyproc(command[1])
-            if self._enable_output_logging:
-                if command[1] == "\r":
-                    self.log_terminal_output(f"STDIN: {self._user_command}")
-                    self._user_command = ""
-                else:
-                    self._user_command += command[1]
-        elif msg_type == "set_size":
-            self.size = command[1:3]
-            self.terminal.resize_to_smallest()
-
-
-def make_app(uuid=str(uuid.uuid4())):
+def make_app():
     term_manager = terminado.NamedTermManager(shell_command=['bash'])
     routes = [
         (r'/', MainPageHandler),
