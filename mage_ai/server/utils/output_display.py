@@ -283,7 +283,7 @@ def execute_custom_code():
 
     upstream_blocks = {upstream_blocks}
     if upstream_blocks and len(upstream_blocks) >= 1:
-        blocks = pipeline.get_blocks({upstream_blocks}, widget={widget})
+        blocks = pipeline.get_blocks({upstream_blocks})
         block.upstream_blocks = blocks
 
     code = r\'\'\'

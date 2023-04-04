@@ -17,6 +17,7 @@ from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, g
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.strings import format_enum
@@ -908,7 +909,9 @@ class Pipeline:
                         widget=False,
                     )
                     for b in upstream_blocks_added:
-                        b.downstream_blocks.append(block)
+                        if not find(lambda x: x.uuid == block.uuid, b.downstream_blocks):
+                            b.downstream_blocks.append(block)
+
                     for b in upstream_blocks_removed:
                         b.downstream_blocks = [
                             db for db in b.downstream_blocks if db.uuid != block.uuid
