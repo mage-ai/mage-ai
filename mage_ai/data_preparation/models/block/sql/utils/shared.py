@@ -22,9 +22,6 @@ def should_cache_data_from_upstream(
         # TODO (tommy dang): check to see if the upstream block has the same data source
         return True
 
-    if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
-        return True
-
     config_path = path.join(get_repo_path(), 'io_config.yaml')
 
     config1 = block.configuration or {}
@@ -35,6 +32,9 @@ def should_cache_data_from_upstream(
 
     if config1.get('use_raw_sql'):
         return False
+
+    if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
+        return True
 
     loader1 = ConfigFileLoader(config_path, data_provider1)
     loader2 = ConfigFileLoader(config_path, data_provider2)
@@ -65,7 +65,7 @@ def interpolate_input(block, query, replace_func=None):
         is_same_data_providers = data_provider1 == data_provider2
 
         if block.configuration.get('use_raw_sql'):
-            if data_provider1 != data_provider2:
+            if is_sql and data_provider1 != data_provider2:
                 raise Exception(
                     f'Variable interpolation when using raw SQL for {matcher1} '
                     'is not supported because '
