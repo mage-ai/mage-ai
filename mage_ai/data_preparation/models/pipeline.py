@@ -1135,7 +1135,10 @@ class Pipeline:
             except yaml.scanner.ScannerError:
                 success = False
 
-        os.remove(test_path)
+        try:
+            os.remove(test_path)
+        except Exception as err:
+            print(err)
 
         if not success:
             raise Exception('Invalid pipeline metadata.yaml content, please try saving again.')
