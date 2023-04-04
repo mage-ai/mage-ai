@@ -340,8 +340,7 @@ in the context menu that appears.
                 displayElement = (
                   <Text
                     monospace
-                    noWrapping
-                    pre
+                    preWrap
                   >
                     {data && (
                       <Ansi>
@@ -357,9 +356,11 @@ in the context menu that appears.
 
                 if (!command) {
                   arr.push(
-                    <LineStyle key={key}>
+                    // <LineStyle key={key}>
+                    <>
                       {displayElement}
-                    </LineStyle>,
+                    </>
+                    // </LineStyle>,
                   );
                 }
               }
