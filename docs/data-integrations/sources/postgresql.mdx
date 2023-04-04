@@ -84,6 +84,10 @@ on Linux, run the following commands:
     | --- | --- | --- |
     | `mage_pub` | `public` | `users` |
 
+1. Grant the database user permission to read the replication slot:
+    ```sql
+    ALTER ROLE <username> WITH REPLICATION;
+    ```
 <br />
 
 #### Create data integration pipeline in Mage
