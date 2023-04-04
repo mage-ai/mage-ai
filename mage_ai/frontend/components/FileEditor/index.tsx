@@ -251,7 +251,7 @@ function FileEditor({
   const {
     lastJsonMessage,
     sendMessage,
-  } = useWebSocket(getWebSocket(), {
+  } = useWebSocket(getWebSocket('terminal'), {
     shouldReconnect: () => true,
   });
 
@@ -283,12 +283,9 @@ function FileEditor({
         loading={loading}
         onClick={() => {
           openSidekickView(ViewKeyEnum.TERMINAL);
-          sendMessage(JSON.stringify({
-            api_key: OAUTH2_APPLICATION_CLIENT_ID,
-            code: `!pip install -r ${repoPath}/requirements.txt`,
-            token: (new AuthToken()).decodedToken.token,
-            uuid: DEFAULT_TERMINAL_UUID,
-          }));
+          sendMessage(JSON.stringify([
+            'stdin', `pip install -r ${repoPath}/requirements.txt\x03`,
+          ]));
         }}
         title={!repoPath
           ? 'Please use right panel terminal to install packages.'
