@@ -86,6 +86,7 @@ class BaseSQL(BaseSQLConnection):
         self,
         cursor,
         df: DataFrame,
+        db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None
@@ -276,8 +277,8 @@ class BaseSQL(BaseSQLConnection):
                         )
                     cur.execute(query)
                 else:
+                    db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
                     if should_create_table:
-                        db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
                         query = self.build_create_table_command(
                             db_dtypes,
                             schema_name,
@@ -289,6 +290,7 @@ class BaseSQL(BaseSQLConnection):
                     self.upload_dataframe(
                         cur,
                         df,
+                        db_dtypes,
                         dtypes,
                         full_table_name,
                         buffer,

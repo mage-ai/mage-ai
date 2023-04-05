@@ -87,6 +87,7 @@ class MSSQL(BaseSQL):
         self,
         cursor: Any,
         df: DataFrame,
+        db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
