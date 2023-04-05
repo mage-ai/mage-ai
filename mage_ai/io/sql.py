@@ -80,6 +80,7 @@ class BaseSQL(BaseSQLConnection):
         self,
         cursor,
         df: DataFrame,
+        dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:
@@ -268,7 +269,7 @@ class BaseSQL(BaseSQLConnection):
                         query = self.build_create_table_command(db_dtypes, schema_name, table_name)
                         cur.execute(query)
 
-                    self.upload_dataframe(cur, df, full_table_name, buffer)
+                    self.upload_dataframe(cur, df, dtypes, full_table_name, buffer)
             self.conn.commit()
 
         if verbose:

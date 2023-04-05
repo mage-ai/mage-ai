@@ -15,7 +15,7 @@ from pandas import DataFrame, Series
 from trino.auth import BasicAuthentication
 from trino.dbapi import Connection, Cursor as CursorParent
 from trino.transaction import IsolationLevel
-from typing import IO, Mapping, Union
+from typing import IO, List, Mapping, Union
 import pandas as pd
 
 
@@ -123,6 +123,7 @@ class Trino(BaseSQL):
         self,
         cursor: Cursor,
         df: DataFrame,
+        dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:

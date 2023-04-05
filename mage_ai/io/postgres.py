@@ -6,10 +6,19 @@ from mage_ai.shared.utils import is_port_in_use
 from pandas import DataFrame, Series
 from psycopg2 import connect, _psycopg
 from sshtunnel import SSHTunnelForwarder
-from typing import Union, IO
+from typing import IO, List, Union
 import numpy as np
 import pandas as pd
 import simplejson
+
+
+JSON_SERIALIZABLE_TYPES = frozenset([
+    PandasTypes.DATE,
+    PandasTypes.DATETIME,
+    PandasTypes.DATETIME64,
+    PandasTypes.OBJECT,
+    PandasTypes.TIME,
+])
 
 
 class Postgres(BaseSQL):
@@ -159,9 +168,9 @@ class Postgres(BaseSQL):
             column_type = None
 
             if len(values) >= 1:
-                value = values[0]
                 column_type = 'JSONB'
 
+                value = values[0]
                 if type(value) is list:
                     if len(value) >= 1:
                         item = value[0]
@@ -204,7 +213,7 @@ class Postgres(BaseSQL):
             return 'bytea'
         elif dtype in (PandasTypes.FLOATING, PandasTypes.DECIMAL, PandasTypes.MIXED_INTEGER_FLOAT):
             return 'double precision'
-        elif dtype == PandasTypes.INTEGER:
+        elif dtype == PandasTypes.INTEGER or dtype == PandasTypes.INT64:
             max_int, min_int = column.max(), column.min()
             if np.int16(max_int) == max_int and np.int16(min_int) == min_int:
                 return 'smallint'
@@ -229,6 +238,7 @@ class Postgres(BaseSQL):
         self,
         cursor: _psycopg.cursor,
         df: DataFrame,
+        dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:
@@ -239,28 +249,32 @@ class Postgres(BaseSQL):
             df_col_dropna = df_[col].dropna()
             if df_col_dropna.count() == 0:
                 continue
-            if PandasTypes.OBJECT == df_[col].dtype and type(df_col_dropna.iloc[0]) != str:
+            print(f'col {dtypes[col]} {df_[col].dtype}')
+            if dtypes[col] in JSON_SERIALIZABLE_TYPES \
+                    or (df_[col].dtype == PandasTypes.OBJECT and
+                        type(df_col_dropna.iloc[0]) != str):
                 df_[col] = df_[col].apply(lambda x: simplejson.dumps(
                     x,
                     default=encode_complex,
                     ignore_nan=True,
                 ))
 
-        df_.to_csv(
-            buffer,
-            header=False,
-            index=False,
-            na_rep='',
+        values = []
+
+        for _, row in df_.iterrows():
+            t = tuple(row)
+            print(f'tuple: {t}')
+            if len(t) == 1:
+                values.append(f'({str(t[0])})')
+            else:
+                values.append(str(t))
+        values_string = ', '.join(values)
+        insert_columns = ', '.join(df_.columns.tolist())
+
+        commands = [
+            f'INSERT INTO {full_table_name} ({insert_columns})',
+            f'VALUES {values_string}',
+        ]
+        cursor.execute(
+            '\n'.join(commands)
         )
-
-        buffer.seek(0)
-
-        columns_names = ', '.join(columns)
-        cursor.copy_expert(f"""
-COPY {full_table_name} FROM STDIN (
-    FORMAT csv
-    , DELIMITER \',\'
-    , NULL \'\'
-    , FORCE_NULL({columns_names})
-);
-    """, buffer)
