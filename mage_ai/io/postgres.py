@@ -239,6 +239,7 @@ class Postgres(BaseSQL):
         self,
         cursor: _psycopg.cursor,
         df: DataFrame,
+        db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
@@ -246,6 +247,13 @@ class Postgres(BaseSQL):
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> None:
+        def clean_array_value(val):
+            if val is None or type(val) is not str or len(val) < 2:
+                return val
+            if val[0] == '[' and val[-1] == ']':
+                return '{' + val[1:-1] + '}'
+            return val
+
         df_ = df.copy()
         columns = df_.columns
 
@@ -261,6 +269,8 @@ class Postgres(BaseSQL):
                     default=encode_complex,
                     ignore_nan=True,
                 ))
+                if '[]' in db_dtypes[col]:
+                    df_[col] = df_[col].apply(lambda x: clean_array_value(x))
 
         values = []
 

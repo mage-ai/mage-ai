@@ -74,6 +74,7 @@ class MySQL(BaseSQL):
         self,
         cursor: MySQLCursor,
         df: DataFrame,
+        db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
