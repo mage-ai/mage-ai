@@ -2,14 +2,12 @@ from datetime import datetime
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
-from mage_ai.data_preparation.models.constants import PipelineType, PIPELINES_FOLDER
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.orchestration.pipeline_scheduler import get_variables, stop_pipeline_run
 from sqlalchemy.orm import selectinload
-import os
 
 
 class PipelineRunResource(DatabaseResource):
