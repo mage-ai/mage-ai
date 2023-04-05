@@ -24,24 +24,30 @@ create new rows, update existing rows, or delete rows in the destination.
 
 #### Setup in PostgreSQL
 
-1. Open the `postgresql.conf` file. Here is an example location on Mac OSX:
-`/Users/Mage/Library/Application Support/Postgres/var-14/postgresql.conf`.
-1. Under the settings section, change the value of `wal_level` to `logical`. The line in your
-`postgresql.conf` file should look like this:
-    ```text
-    wal_level = logical
-    ```
-1. Restart the PostgreSQL service or database. You can do this via the PostgreSQL app or if you’re
-on Linux, run the following commands:
-    ```bash
-    sudo service postgresql stop
-    sudo service postgresql start
-    ```
-1. Run the following query in your PostgreSQL database: `SHOW wal_level`. The result should be:
+1. Enable logical replication in Postgres config
+    1. Local Postgres
+        1. Open the `postgresql.conf` file. Here is an example location on Mac OSX:
+            `/Users/Mage/Library/Application Support/Postgres/var-14/postgresql.conf`.
+        1. Under the settings section, change the value of `wal_level` to `logical`. The line in your
+        `postgresql.conf` file should look like this:
+            ```text
+            wal_level = logical
+            ```
+        1. Restart the PostgreSQL service or database. You can do this via the PostgreSQL app or if you’re
+        on Linux, run the following commands:
+            ```bash
+            sudo service postgresql stop
+            sudo service postgresql start
+            ```
+        1. Run the following query in your PostgreSQL database: `SHOW wal_level`. The result should be:
 
-    | `wal_level` |
-    | --- |
-    | `logical` |
+            | `wal_level` |
+            | --- |
+            | `logical` |
+    1. AWS RDS/Aurora
+        1. Follow this [doc](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Replication.Logical.html#AuroraPostgreSQL.Replication.Logical.Configure)
+            to set up PostgreSQL logical replication for an Aurora PostgreSQL DB cluster
+        1. Logical replication for AWS RDS (PostgreSQL) can be set up in a similar way with the Aurora cluster.
 
 1. Run the following command in PostgreSQL to create a replication slot:
     ```sql
