@@ -32,6 +32,7 @@ from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
+from mage_ai.server.logger import Logger
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
@@ -42,6 +43,8 @@ import pytz
 import traceback
 
 MEMORY_USAGE_MAXIMUM = 0.95
+
+logger = Logger().new_server_logger(__name__)
 
 
 class PipelineScheduler:
@@ -860,6 +863,8 @@ def schedule_all():
 
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
 
+    sync_schedules(list(repo_pipelines))
+
     active_pipeline_schedules = \
         list(PipelineSchedule.active_schedules(pipeline_uuids=repo_pipelines))
 
@@ -923,25 +928,25 @@ def schedule_all():
         pipeline_uuids=repo_pipelines,
         include_block_runs=True,
     )
-    print(f'Active pipeline runs: {[p.id for p in active_pipeline_runs]}')
+    logger.info(f'Active pipeline runs: {[p.id for p in active_pipeline_runs]}')
 
     for r in active_pipeline_runs:
         try:
             r.refresh()
             PipelineScheduler(r).schedule()
         except Exception:
-            print(f'Failed to schedule {r}')
+            logger.exception(f'Failed to schedule {r}')
             traceback.print_exc()
             continue
     job_manager.clean_up_jobs()
 
 
 def schedule_with_event(event: Dict = dict()):
-    print(f'Schedule with event {event}')
+    logger.info(f'Schedule with event {event}')
     all_event_matchers = EventMatcher.active_event_matchers()
     for e in all_event_matchers:
         if e.match(event):
-            print(f'Event matched with {e}')
+            logger.info(f'Event matched with {e}')
             pipeline_schedules = e.active_pipeline_schedules()
             for p in pipeline_schedules:
                 payload = dict(
@@ -953,7 +958,15 @@ def schedule_with_event(event: Dict = dict()):
                 pipeline_run = PipelineRun.create(**payload)
                 PipelineScheduler(pipeline_run).start(should_schedule=True)
         else:
-            print(f'Event not matched with {e}')
+            logger.info(f'Event not matched with {e}')
+
+
+def sync_schedules(pipeline_uuids: List[str]):
+    # Sync schedule configs from triggers.yaml to DB
+    for pipeline_uuid in pipeline_uuids:
+        pipeline_triggers = []
+    for pipeline_trigger in pipeline_triggers:
+        PipelineSchedule.create_or_update(pipeline_trigger)
 
 
 def get_variables(pipeline_run, extra_variables: Dict = {}) -> Dict:

@@ -1,5 +1,4 @@
 from croniter import croniter
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
@@ -7,10 +6,16 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+    SettingsConfig,
+    Trigger,
+)
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.base import Base, BaseModel
 from mage_ai.shared.array import find
-from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.utils import clean_name
@@ -41,27 +46,6 @@ pipeline_schedule_event_matcher_association_table = Table(
 
 
 class PipelineSchedule(BaseModel):
-    class ScheduleStatus(str, enum.Enum):
-        ACTIVE = 'active'
-        INACTIVE = 'inactive'
-
-    class ScheduleType(str, enum.Enum):
-        API = 'api'
-        EVENT = 'event'
-        TIME = 'time'
-
-    class ScheduleInterval(str, enum.Enum):
-        ONCE = '@once'
-        HOURLY = '@hourly'
-        DAILY = '@daily'
-        WEEKLY = '@weekly'
-        MONTHLY = '@monthly'
-
-    @dataclass
-    class SettingsConfig(BaseConfig):
-        skip_if_previous_running: bool = False
-        allow_blocks_to_fail: bool = False
-
     name = Column(String(255))
     pipeline_uuid = Column(String(255))
     schedule_type = Column(Enum(ScheduleType))
@@ -84,7 +68,7 @@ class PipelineSchedule(BaseModel):
 
     def get_settings(self) -> 'SettingsConfig':
         settings = self.settings if self.settings else dict()
-        return self.__class__.SettingsConfig.load(config=settings)
+        return SettingsConfig.load(config=settings)
 
     @property
     def pipeline_runs_count(self) -> int:
@@ -93,7 +77,7 @@ class PipelineSchedule(BaseModel):
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
         if schedule_interval and schedule_interval not in \
-                [e.value for e in self.__class__.ScheduleInterval]:
+                [e.value for e in ScheduleInterval]:
             if not croniter.is_valid(schedule_interval):
                 raise ValueError('Cron expression is invalid.')
 
@@ -108,7 +92,7 @@ class PipelineSchedule(BaseModel):
     @classmethod
     @safe_db_query
     def active_schedules(self, pipeline_uuids: List[str] = None) -> List['PipelineSchedule']:
-        query = self.query.filter(self.status == self.ScheduleStatus.ACTIVE)
+        query = self.query.filter(self.status == ScheduleStatus.ACTIVE)
         if pipeline_uuids is not None:
             query = query.filter(PipelineSchedule.pipeline_uuid.in_(pipeline_uuids))
         return query.all()
@@ -119,6 +103,10 @@ class PipelineSchedule(BaseModel):
             kwargs['token'] = uuid.uuid4().hex
         model = super().create(**kwargs)
         return model
+
+    @classmethod
+    def create_or_update(self, trigger_config: Trigger):
+        pass
 
     def current_execution_date(self) -> datetime:
         if self.schedule_interval is None:
@@ -142,7 +130,7 @@ class PipelineSchedule(BaseModel):
 
     @safe_db_query
     def should_schedule(self) -> bool:
-        if self.status != self.__class__.ScheduleStatus.ACTIVE:
+        if self.status != ScheduleStatus.ACTIVE:
             return False
 
         if self.start_time is not None and compare(datetime.now(), self.start_time) == -1:
@@ -402,7 +390,7 @@ class EventMatcher(BaseModel):
     def active_event_matchers(self) -> List['EventMatcher']:
         return self.query.filter(
             EventMatcher.pipeline_schedules.any(
-                PipelineSchedule.status == PipelineSchedule.ScheduleStatus.ACTIVE
+                PipelineSchedule.status == ScheduleStatus.ACTIVE
             )
         ).all()
 
@@ -464,7 +452,7 @@ class EventMatcher(BaseModel):
 
     def active_pipeline_schedules(self) -> List[PipelineSchedule]:
         return [p for p in self.pipeline_schedules
-                if p.status == PipelineSchedule.ScheduleStatus.ACTIVE]
+                if p.status == ScheduleStatus.ACTIVE]
 
     def match(self, config: Dict) -> bool:
         def __match_dict(sub_pattern, sub_config):
