@@ -43,9 +43,15 @@ class BaseSQL(BaseSQLConnection):
         self,
         dtypes: Mapping[str, str],
         schema_name: str,
-        table_name: str
+        table_name: str,
+        unique_constraints: List[str] = [],
     ) -> str:
-        return gen_table_creation_query(dtypes, schema_name, table_name)
+        return gen_table_creation_query(
+            dtypes,
+            schema_name,
+            table_name,
+            unique_constraints=unique_constraints,
+        )
 
     def build_create_table_as_command(
         self,
@@ -80,6 +86,7 @@ class BaseSQL(BaseSQLConnection):
         self,
         cursor,
         df: DataFrame,
+        dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None
     ) -> None:
@@ -183,6 +190,9 @@ class BaseSQL(BaseSQLConnection):
         query_string: Union[str, None] = None,
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
+        allow_reserved_words: bool = False,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -221,7 +231,10 @@ class BaseSQL(BaseSQLConnection):
             df = clean_df_for_export(df, self.clean, dtypes)
 
             # Clean column names
-            col_mapping = {col: self._clean_column_name(col) for col in df.columns}
+            col_mapping = {col: self._clean_column_name(
+                                        col,
+                                        allow_reserved_words=allow_reserved_words)
+                           for col in df.columns}
             df = df.rename(columns=col_mapping)
             dtypes = infer_dtypes(df)
 
@@ -265,10 +278,24 @@ class BaseSQL(BaseSQLConnection):
                 else:
                     if should_create_table:
                         db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
-                        query = self.build_create_table_command(db_dtypes, schema_name, table_name)
+                        query = self.build_create_table_command(
+                            db_dtypes,
+                            schema_name,
+                            table_name,
+                            unique_constraints=unique_constraints,
+                        )
                         cur.execute(query)
 
-                    self.upload_dataframe(cur, df, full_table_name, buffer)
+                    self.upload_dataframe(
+                        cur,
+                        df,
+                        dtypes,
+                        full_table_name,
+                        buffer,
+                        allow_reserved_words=allow_reserved_words,
+                        unique_conflict_method=unique_conflict_method,
+                        unique_constraints=unique_constraints,
+                    )
             self.conn.commit()
 
         if verbose:

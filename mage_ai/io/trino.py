@@ -15,7 +15,7 @@ from pandas import DataFrame, Series
 from trino.auth import BasicAuthentication
 from trino.dbapi import Connection, Cursor as CursorParent
 from trino.transaction import IsolationLevel
-from typing import IO, Mapping, Union
+from typing import IO, List, Mapping, Union
 import pandas as pd
 
 
@@ -86,7 +86,8 @@ class Trino(BaseSQL):
         self,
         dtypes: Mapping[str, str],
         schema_name: str,
-        table_name: str
+        table_name: str,
+        unique_constraints: List[str] = [],
     ):
         query = []
         for cname in dtypes:
@@ -123,8 +124,10 @@ class Trino(BaseSQL):
         self,
         cursor: Cursor,
         df: DataFrame,
+        dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        **kwargs,
     ) -> None:
         values = []
         for _, row in df.iterrows():

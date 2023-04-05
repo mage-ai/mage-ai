@@ -1,4 +1,5 @@
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.parsers import encode_complex
@@ -6,10 +7,19 @@ from mage_ai.shared.utils import is_port_in_use
 from pandas import DataFrame, Series
 from psycopg2 import connect, _psycopg
 from sshtunnel import SSHTunnelForwarder
-from typing import Union, IO
+from typing import IO, List, Union
 import numpy as np
 import pandas as pd
 import simplejson
+
+
+JSON_SERIALIZABLE_TYPES = frozenset([
+    PandasTypes.DATE,
+    PandasTypes.DATETIME,
+    PandasTypes.DATETIME64,
+    PandasTypes.OBJECT,
+    PandasTypes.TIME,
+])
 
 
 class Postgres(BaseSQL):
@@ -159,9 +169,9 @@ class Postgres(BaseSQL):
             column_type = None
 
             if len(values) >= 1:
-                value = values[0]
                 column_type = 'JSONB'
 
+                value = values[0]
                 if type(value) is list:
                     if len(value) >= 1:
                         item = value[0]
@@ -204,7 +214,7 @@ class Postgres(BaseSQL):
             return 'bytea'
         elif dtype in (PandasTypes.FLOATING, PandasTypes.DECIMAL, PandasTypes.MIXED_INTEGER_FLOAT):
             return 'double precision'
-        elif dtype == PandasTypes.INTEGER:
+        elif dtype == PandasTypes.INTEGER or dtype == PandasTypes.INT64:
             max_int, min_int = column.max(), column.min()
             if np.int16(max_int) == max_int and np.int16(min_int) == min_int:
                 return 'smallint'
@@ -229,8 +239,12 @@ class Postgres(BaseSQL):
         self,
         cursor: _psycopg.cursor,
         df: DataFrame,
+        dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        allow_reserved_words: bool = False,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
     ) -> None:
         df_ = df.copy()
         columns = df_.columns
@@ -239,28 +253,47 @@ class Postgres(BaseSQL):
             df_col_dropna = df_[col].dropna()
             if df_col_dropna.count() == 0:
                 continue
-            if PandasTypes.OBJECT == df_[col].dtype and type(df_col_dropna.iloc[0]) != str:
+            if dtypes[col] in JSON_SERIALIZABLE_TYPES \
+                    or (df_[col].dtype == PandasTypes.OBJECT and
+                        type(df_col_dropna.iloc[0]) != str):
                 df_[col] = df_[col].apply(lambda x: simplejson.dumps(
                     x,
                     default=encode_complex,
                     ignore_nan=True,
                 ))
 
-        df_.to_csv(
-            buffer,
-            header=False,
-            index=False,
-            na_rep='',
+        values = []
+
+        for _, row in df_.iterrows():
+            t = tuple(row)
+            if len(t) == 1:
+                value = f'({str(t[0])})'
+            else:
+                value = str(t)
+            values.append(value.replace('None', 'NULL'))
+        values_string = ', '.join(values)
+        insert_columns = ', '.join([f'"{col}"'for col in columns])
+
+        commands = [
+            f'INSERT INTO {full_table_name} ({insert_columns})',
+            f'VALUES {values_string}',
+        ]
+        if unique_constraints and unique_conflict_method:
+            unique_constraints = \
+                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                 for col in unique_constraints]
+            columns_cleaned = \
+                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                 for col in columns]
+
+            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
+            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
+                commands.append(
+                    f"DO UPDATE SET {', '.join(update_command)}",
+                )
+            else:
+                commands.append('DO NOTHING')
+        cursor.execute(
+            '\n'.join(commands)
         )
-
-        buffer.seek(0)
-
-        columns_names = ', '.join(columns)
-        cursor.copy_expert(f"""
-COPY {full_table_name} FROM STDIN (
-    FORMAT csv
-    , DELIMITER \',\'
-    , NULL \'\'
-    , FORCE_NULL({columns_names})
-);
-    """, buffer)
