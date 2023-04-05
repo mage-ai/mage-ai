@@ -190,6 +190,7 @@ class BaseSQL(BaseSQLConnection):
         query_string: Union[str, None] = None,
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
+        allow_reserved_words: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> None:
@@ -230,7 +231,10 @@ class BaseSQL(BaseSQLConnection):
             df = clean_df_for_export(df, self.clean, dtypes)
 
             # Clean column names
-            col_mapping = {col: self._clean_column_name(col) for col in df.columns}
+            col_mapping = {col: self._clean_column_name(
+                                        col,
+                                        allow_reserved_words=allow_reserved_words)
+                           for col in df.columns}
             df = df.rename(columns=col_mapping)
             dtypes = infer_dtypes(df)
 
@@ -288,6 +292,7 @@ class BaseSQL(BaseSQLConnection):
                         dtypes,
                         full_table_name,
                         buffer,
+                        allow_reserved_words=allow_reserved_words,
                         unique_conflict_method=unique_conflict_method,
                         unique_constraints=unique_constraints,
                     )

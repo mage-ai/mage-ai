@@ -242,6 +242,7 @@ class Postgres(BaseSQL):
         dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
+        allow_reserved_words: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> None:
@@ -252,7 +253,6 @@ class Postgres(BaseSQL):
             df_col_dropna = df_[col].dropna()
             if df_col_dropna.count() == 0:
                 continue
-            print(f'col {dtypes[col]} {df_[col].dtype}')
             if dtypes[col] in JSON_SERIALIZABLE_TYPES \
                     or (df_[col].dtype == PandasTypes.OBJECT and
                         type(df_col_dropna.iloc[0]) != str):
@@ -266,21 +266,24 @@ class Postgres(BaseSQL):
 
         for _, row in df_.iterrows():
             t = tuple(row)
-            print(f'tuple: {t}')
             if len(t) == 1:
                 values.append(f'({str(t[0])})')
             else:
                 values.append(str(t))
         values_string = ', '.join(values)
-        insert_columns = ', '.join(df_.columns.tolist())
+        insert_columns = ', '.join([f'"{col}"'for col in columns])
 
         commands = [
             f'INSERT INTO {full_table_name} ({insert_columns})',
             f'VALUES {values_string}',
         ]
         if unique_constraints and unique_conflict_method:
-            unique_constraints = [self._clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [self._clean_column_name(col) for col in columns]
+            unique_constraints = \
+                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                 for col in unique_constraints]
+            columns_cleaned = \
+                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                 for col in columns]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
