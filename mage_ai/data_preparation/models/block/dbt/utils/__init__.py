@@ -912,11 +912,13 @@ def build_command_line_arguments(
         project_full_path = f'{get_repo_path()}/dbt/{project_name}'
         args += block.content.split(' ')
 
+    profiles_dir = f'{project_full_path}/.mage_temp_profiles'
+
     args += [
         '--project-dir',
         project_full_path,
         '--profiles-dir',
-        project_full_path,
+        profiles_dir,
     ]
 
     dbt_profile_target = block.configuration.get('dbt_profile_target') \
@@ -934,6 +936,7 @@ def build_command_line_arguments(
 
     return dbt_command, args, dict(
         profile_target=dbt_profile_target,
+        profiles_dir=profiles_dir,
         project_full_path=project_full_path,
     )
 

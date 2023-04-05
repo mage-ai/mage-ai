@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     create_upstream_tables,
     fetch_model_data,
     load_profiles_async,
+    load_profiles_file,
     parse_attributes,
     query_from_compiled_sql,
     run_dbt_tests,
@@ -15,7 +16,9 @@ from mage_ai.shared.hash import merge_dict
 from typing import Any, Dict, List
 import json
 import os
+import shutil
 import subprocess
+import yaml
 
 
 class DBTBlock(Block):
@@ -120,7 +123,19 @@ class DBTBlock(Block):
             test_execution=test_execution,
         )
         project_full_path = command_line_dict['project_full_path']
+        profiles_dir = command_line_dict['profiles_dir']
         dbt_profile_target = command_line_dict['profile_target']
+
+        # Create a temporary profiles file with variables and secrets interpolated
+        attributes_dict = parse_attributes(self)
+        profiles_full_path = attributes_dict['profiles_full_path']
+        profile = load_profiles_file(profiles_full_path)
+
+        temp_profile_full_path = f'{profiles_dir}/profiles.yml'
+        os.makedirs(os.path.dirname(temp_profile_full_path), exist_ok=True)
+
+        with open(temp_profile_full_path, 'w') as f:
+            yaml.safe_dump(profile, f)
 
         is_sql = BlockLanguage.SQL == self.language
         if is_sql:
@@ -213,5 +228,10 @@ class DBTBlock(Block):
                     override_outputs=True,
                 )
                 outputs = [df]
+
+        try:
+            shutil.rmtree(profiles_dir)
+        except Exception as err:
+            print(f'Error removing temporary profile at {temp_profile_full_path}: {err}')
 
         return outputs
