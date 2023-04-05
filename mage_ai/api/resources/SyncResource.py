@@ -4,14 +4,15 @@ from mage_ai.data_preparation.preferences import (
     Preferences,
 )
 from mage_ai.data_preparation.shared.secrets import create_secret
-from mage_ai.data_preparation.sync import GitConfig
+from mage_ai.data_preparation.sync import (
+    GitConfig,
+    GIT_SSH_PRIVATE_KEY_SECRET_NAME,
+    GIT_SSH_PUBLIC_KEY_SECRET_NAME,
+)
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.secrets import Secret
-
-GIT_SSH_PUBLIC_KEY_SECRET_NAME = 'mage_git_ssh_public_key_b64'
-GIT_SSH_PRIVATE_KEY_SECRET_NAME = 'mage_git_ssh_private_key_b64'
 
 
 def get_ssh_public_key_secret_name(user: User = None) -> str:

@@ -193,9 +193,11 @@ function GitActions({
                 setMessage(null);
                 setPayload(null);
               }}
-              placeholder="Select an action"
               value={action}
             >
+              <option value="">
+                Select an action
+              </option>
               {Object.entries(GIT_ACTION_OPTIONS).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v}
