@@ -180,9 +180,18 @@ class Pipeline:
         )
 
     @classmethod
-    def get(self, uuid, repo_path: str = None):
+    def get(self, uuid, repo_path: str = None, check_if_exists: bool = False):
         from mage_ai.data_preparation.models.pipelines.integration_pipeline \
             import IntegrationPipeline
+
+        if check_if_exists and not os.path.exists(
+            os.path.join(
+                repo_path or get_repo_path(),
+                PIPELINES_FOLDER,
+                uuid,
+            ),
+        ):
+            return None
 
         pipeline = self(uuid, repo_path=repo_path)
         if PipelineType.INTEGRATION == pipeline.type:

@@ -28,7 +28,6 @@ function PipelineSyncs({
   const pipelineUUID = pipeline.uuid;
   const {
     data: dataPipelineRuns,
-    mutate: fetchPipelineRuns,
   } = api.pipeline_runs.list({
     _limit: 20,
     _offset: 0,
@@ -111,8 +110,9 @@ function PipelineSyncs({
 
     return arr;
   }, [
+    pipelineUUID,
     selectedPipelineRun,
-    selectedStream
+    selectedStream,
   ]);
 
   return (

@@ -81,34 +81,10 @@ class PipelineScheduler:
             self.schedule()
 
     def stop(self) -> None:
-        if self.pipeline_run.status not in [PipelineRun.PipelineRunStatus.INITIAL,
-                                            PipelineRun.PipelineRunStatus.RUNNING]:
-            return
-
-        self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
-
-        # Cancel all the block runs
-        block_runs_to_cancel = []
-        running_blocks = []
-        for b in self.pipeline_run.block_runs:
-            if b.status in [
-                BlockRun.BlockRunStatus.INITIAL,
-                BlockRun.BlockRunStatus.QUEUED,
-                BlockRun.BlockRunStatus.RUNNING,
-            ]:
-                block_runs_to_cancel.append(b)
-            if b.status == BlockRun.BlockRunStatus.RUNNING:
-                running_blocks.append(b)
-        BlockRun.batch_update_status(
-            [b.id for b in block_runs_to_cancel],
-            BlockRun.BlockRunStatus.CANCELLED,
+        stop_pipeline_run(
+            self.pipeline_run,
+            self.pipeline,
         )
-
-        if self.pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
-            job_manager.kill_pipeline_run_job(self.pipeline_run.id)
-        else:
-            for b in running_blocks:
-                job_manager.kill_block_run_job(b.id)
 
     def schedule(self, block_runs: List[BlockRun] = None) -> None:
         self.__run_heartbeat()
@@ -804,6 +780,40 @@ def run_pipeline(pipeline_run_id, variables, tags):
         global_vars=variables,
         tags=tags,
     )
+
+
+def stop_pipeline_run(
+    pipeline_run: PipelineRun,
+    pipeline: Pipeline = None,
+) -> None:
+    if pipeline_run.status not in [PipelineRun.PipelineRunStatus.INITIAL,
+                                   PipelineRun.PipelineRunStatus.RUNNING]:
+        return
+
+    pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+
+    # Cancel all the block runs
+    block_runs_to_cancel = []
+    running_blocks = []
+    for b in pipeline_run.block_runs:
+        if b.status in [
+            BlockRun.BlockRunStatus.INITIAL,
+            BlockRun.BlockRunStatus.QUEUED,
+            BlockRun.BlockRunStatus.RUNNING,
+        ]:
+            block_runs_to_cancel.append(b)
+        if b.status == BlockRun.BlockRunStatus.RUNNING:
+            running_blocks.append(b)
+    BlockRun.batch_update_status(
+        [b.id for b in block_runs_to_cancel],
+        BlockRun.BlockRunStatus.CANCELLED,
+    )
+
+    if pipeline and pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
+        job_manager.kill_pipeline_run_job(pipeline_run.id)
+    else:
+        for b in running_blocks:
+            job_manager.kill_block_run_job(b.id)
 
 
 def check_sla():

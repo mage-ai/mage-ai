@@ -6,7 +6,7 @@ from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.orchestration.pipeline_scheduler import get_variables
+from mage_ai.orchestration.pipeline_scheduler import get_variables, stop_pipeline_run
 from sqlalchemy.orm import selectinload
 
 
@@ -219,8 +219,11 @@ class PipelineRunResource(DatabaseResource):
 
             return super().update(dict(status=PipelineRun.PipelineRunStatus.RUNNING))
         elif PipelineRun.PipelineRunStatus.CANCELLED == payload.get('status'):
-            from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+            pipeline = Pipeline.get(
+                self.model.pipeline_uuid,
+                check_if_exists=True,
+            )
 
-            PipelineScheduler(self.model).stop()
+            stop_pipeline_run(self.model, pipeline)
 
         return self

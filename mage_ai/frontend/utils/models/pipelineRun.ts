@@ -57,7 +57,7 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
       && blockRunsForStream.every(({ status }) => RunStatusBlockRun.COMPLETED === status)
       && records === null
     ) {
-      records = 0
+      records = 0;
     }
 
     if (metricsPipeline?.[stream]?.record_counts) {
@@ -104,7 +104,7 @@ export function getRecordsData(pipelineRun: PipelineRunType, streamToSelect: str
 
       if (obj2?.error) {
         if (!errors[stream]) {
-          errors[stream] = {}
+          errors[stream] = {};
         }
 
         errors[stream][key] = {
