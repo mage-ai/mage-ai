@@ -1,4 +1,5 @@
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
 from mage_ai.io.export_utils import BadConversionError, PandasTypes
 from mage_ai.io.sql import BaseSQL
 from mage_ai.shared.parsers import encode_complex
@@ -240,7 +241,9 @@ class Postgres(BaseSQL):
         df: DataFrame,
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
     ) -> None:
         df_ = df.copy()
         columns = df_.columns
@@ -275,6 +278,18 @@ class Postgres(BaseSQL):
             f'INSERT INTO {full_table_name} ({insert_columns})',
             f'VALUES {values_string}',
         ]
+        if unique_constraints and unique_conflict_method:
+            unique_constraints = [self._clean_column_name(col) for col in unique_constraints]
+            columns_cleaned = [self._clean_column_name(col) for col in columns]
+
+            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
+            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
+                commands.append(
+                    f"DO UPDATE SET {', '.join(update_command)}",
+                )
+            else:
+                commands.append('DO NOTHING')
         cursor.execute(
             '\n'.join(commands)
         )

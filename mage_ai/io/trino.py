@@ -86,7 +86,8 @@ class Trino(BaseSQL):
         self,
         dtypes: Mapping[str, str],
         schema_name: str,
-        table_name: str
+        table_name: str,
+        unique_constraints: List[str] = [],
     ):
         query = []
         for cname in dtypes:
@@ -125,7 +126,8 @@ class Trino(BaseSQL):
         df: DataFrame,
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        **kwargs,
     ) -> None:
         values = []
         for _, row in df.iterrows():

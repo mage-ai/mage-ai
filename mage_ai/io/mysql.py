@@ -47,7 +47,8 @@ class MySQL(BaseSQL):
         self,
         dtypes: Mapping[str, str],
         schema_name: str,
-        table_name: str
+        table_name: str,
+        unique_constraints: List[str] = [],
     ) -> str:
         query = []
         for cname in dtypes:
@@ -75,7 +76,8 @@ class MySQL(BaseSQL):
         df: DataFrame,
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        **kwargs,
     ) -> None:
         values_placeholder = ', '.join(["%s" for i in range(len(df.columns))])
         values = []

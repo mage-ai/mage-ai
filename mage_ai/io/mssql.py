@@ -89,7 +89,8 @@ class MSSQL(BaseSQL):
         df: DataFrame,
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
+        **kwargs,
     ) -> None:
         values_placeholder = ', '.join(["?" for i in range(len(df.columns))])
         values = []

@@ -43,9 +43,15 @@ class BaseSQL(BaseSQLConnection):
         self,
         dtypes: Mapping[str, str],
         schema_name: str,
-        table_name: str
+        table_name: str,
+        unique_constraints: List[str] = [],
     ) -> str:
-        return gen_table_creation_query(dtypes, schema_name, table_name)
+        return gen_table_creation_query(
+            dtypes,
+            schema_name,
+            table_name,
+            unique_constraints=unique_constraints,
+        )
 
     def build_create_table_as_command(
         self,
@@ -184,6 +190,8 @@ class BaseSQL(BaseSQLConnection):
         query_string: Union[str, None] = None,
         drop_table_on_replace: bool = False,
         cascade_on_drop: bool = False,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -266,10 +274,23 @@ class BaseSQL(BaseSQLConnection):
                 else:
                     if should_create_table:
                         db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
-                        query = self.build_create_table_command(db_dtypes, schema_name, table_name)
+                        query = self.build_create_table_command(
+                            db_dtypes,
+                            schema_name,
+                            table_name,
+                            unique_constraints=unique_constraints,
+                        )
                         cur.execute(query)
 
-                    self.upload_dataframe(cur, df, dtypes, full_table_name, buffer)
+                    self.upload_dataframe(
+                        cur,
+                        df,
+                        dtypes,
+                        full_table_name,
+                        buffer,
+                        unique_conflict_method=unique_conflict_method,
+                        unique_constraints=unique_constraints,
+                    )
             self.conn.commit()
 
         if verbose:
