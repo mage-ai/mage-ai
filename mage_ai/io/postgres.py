@@ -267,9 +267,10 @@ class Postgres(BaseSQL):
         for _, row in df_.iterrows():
             t = tuple(row)
             if len(t) == 1:
-                values.append(f'({str(t[0])})')
+                value = f'({str(t[0])})'
             else:
-                values.append(str(t))
+                value = str(t)
+            values.append(value.replace('None', 'NULL'))
         values_string = ', '.join(values)
         insert_columns = ', '.join([f'"{col}"'for col in columns])
 
