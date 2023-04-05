@@ -1,5 +1,6 @@
 from functools import reduce
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
+from google.oauth2 import service_account
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
     MAX_QUERY_BUFFER,
@@ -45,6 +46,20 @@ class BigQuery(Destination):
     SCHEMA_CONFIG_KEY = 'dataset'
 
     BATCH_SIZE = 500
+
+    def _process(self, input_buffer) -> None:
+        if self.config.get('use_gcs'):
+            path = self.config['path_to_credentials_json_file']
+            credentials = service_account.Credentials.from_service_account_file(path)
+            client = storage.Client(credentials=credentials)
+            bucket_name = self.config.get('bucket_name')
+
+            object_key = str(uuid.uuid4())
+            bucket = client.get_bucket(bucket_name)
+            blob = bucket.blob(object_key, chunk_size=10485760)
+            blob.upload_from_filename(self.input_file_path)
+        else:
+            super()._process(input_buffer)
 
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
