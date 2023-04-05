@@ -69,7 +69,7 @@ class Git:
 
         if return_code is None:
             proc.kill()
-            raise Exception(
+            raise TimeoutError(
                 "Connecting to remote timed out, make sure your SSH key is set up properly"
                 " and your repository host is added as a known host. More information here:"
                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
@@ -82,39 +82,52 @@ class Git:
         def wrapper(self, *args, **kwargs):
             if not os.path.exists(DEFAULT_SSH_KEY_DIRECTORY):
                 os.mkdir(DEFAULT_SSH_KEY_DIRECTORY, 0o700)
-            secret_name = self.git_config.ssh_public_key_secret_name
-            public_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, secret_name)
-            if not os.path.exists(public_key_file):
-                try:
-                    public_key = get_secret_value(secret_name)
-                    if public_key:
-                        with open(public_key_file, 'w') as f:
-                            f.write(base64.b64decode(public_key).decode('utf-8'))
-                        os.chmod(public_key_file, 0o600)
-                except Exception:
-                    pass
-            secret_name = self.git_config.ssh_private_key_secret_name
-            private_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, secret_name)
-            if not os.path.exists(private_key_file):
-                try:
-                    private_key = get_secret_value(secret_name)
-                    if private_key:
-                        with open(private_key_file, 'w') as f:
-                            f.write(base64.b64decode(private_key).decode('utf-8'))
-                        os.chmod(private_key_file, 0o600)
-                except Exception:
-                    pass
-
-            url = f'ssh://{self.git_config.remote_repo_link}'
-            hostname = urlparse(url).hostname
-            if hostname:
-                cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'  # noqa: E501
-                proc = subprocess.Popen(args=cmd, shell=True)
-                proc.wait()
+            pubk_secret_name = self.git_config.ssh_public_key_secret_name
+            if pubk_secret_name:
+                public_key_file = os.path.join(
+                    DEFAULT_SSH_KEY_DIRECTORY,
+                    f'id_rsa_{pubk_secret_name}.pub'
+                )
+                if not os.path.exists(public_key_file):
+                    try:
+                        public_key = get_secret_value(pubk_secret_name)
+                        if public_key:
+                            with open(public_key_file, 'w') as f:
+                                f.write(base64.b64decode(public_key).decode('utf-8'))
+                            os.chmod(public_key_file, 0o600)
+                    except Exception:
+                        pass
+            pk_secret_name = self.git_config.ssh_private_key_secret_name
+            private_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'id_rsa')
+            if pk_secret_name:
+                private_key_file = os.path.join(
+                    DEFAULT_SSH_KEY_DIRECTORY,
+                    f'id_rsa_{pk_secret_name}'
+                )
+                if not os.path.exists(private_key_file):
+                    try:
+                        private_key = get_secret_value(pk_secret_name)
+                        if private_key:
+                            with open(private_key_file, 'w') as f:
+                                f.write(base64.b64decode(private_key).decode('utf-8'))
+                            os.chmod(private_key_file, 0o600)
+                    except Exception:
+                        pass
 
             git_ssh_cmd = f'ssh -i {private_key_file}'
             with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
-                asyncio.run(self.check_connection())
+                try:
+                    asyncio.run(self.check_connection())
+                except TimeoutError as e:
+                    url = f'ssh://{self.git_config.remote_repo_link}'
+                    hostname = urlparse(url).hostname
+                    if hostname:
+                        cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'  # noqa: E501
+                        proc = subprocess.Popen(args=cmd, shell=True)
+                        proc.wait()
+                        asyncio.run(self.check_connection())
+                    else:
+                        raise e
                 func(self, *args, **kwargs)
 
         return wrapper
