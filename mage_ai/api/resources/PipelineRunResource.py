@@ -221,13 +221,10 @@ class PipelineRunResource(DatabaseResource):
 
             return super().update(dict(status=PipelineRun.PipelineRunStatus.RUNNING))
         elif PipelineRun.PipelineRunStatus.CANCELLED == payload.get('status'):
-            pipeline = None
-            if os.path.exists(os.path.join(
-                get_repo_path(),
-                PIPELINES_FOLDER,
+            pipeline = Pipeline.get(
                 self.model.pipeline_uuid,
-            )):
-                pipeline = Pipeline.get(self.model.pipeline_uuid)
+                check_if_exists=True,
+            )
 
             stop_pipeline_run(self.model, pipeline)
 
