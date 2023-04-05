@@ -58,6 +58,7 @@ type FileEditorProps = {
   openSidekickView: (newView: ViewKeyEnum) => void;
   pipeline: PipelineType;
   selectedFilePath: string;
+  sendTerminalMessage: (message: string, keep?: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
   setFilesTouched: (data: {
     [path: string]: boolean;
@@ -74,6 +75,7 @@ function FileEditor({
   openSidekickView,
   pipeline,
   selectedFilePath,
+  sendTerminalMessage,
   setErrors,
   setFilesTouched,
   setSelectedBlock,
@@ -248,33 +250,6 @@ function FileEditor({
     </Button>
   );
 
-  const {
-    lastJsonMessage,
-    sendMessage,
-  } = useWebSocket(getWebSocket(), {
-    shouldReconnect: () => true,
-  });
-
-  useEffect(() => {
-    if (lastJsonMessage) {
-      // @ts-ignore
-      const jsonMessage: KernelOutputType = lastJsonMessage;
-      const executionState = jsonMessage?.execution_state;
-      const messageUUID = jsonMessage?.uuid;
-
-      if (messageUUID === DEFAULT_TERMINAL_UUID) {
-        if (ExecutionStateEnum.BUSY === executionState) {
-          setLoading(true);
-        } else if (ExecutionStateEnum.IDLE === executionState) {
-          setLoading(false);
-        }
-      }
-    }
-  }, [
-    lastJsonMessage,
-    setLoading,
-  ]);
-
   const installPackagesButtonEl = (
     <Spacing m={2}>
       <KeyboardShortcutButton
@@ -283,12 +258,9 @@ function FileEditor({
         loading={loading}
         onClick={() => {
           openSidekickView(ViewKeyEnum.TERMINAL);
-          sendMessage(JSON.stringify({
-            api_key: OAUTH2_APPLICATION_CLIENT_ID,
-            code: `!pip install -r ${repoPath}/requirements.txt`,
-            token: (new AuthToken()).decodedToken.token,
-            uuid: DEFAULT_TERMINAL_UUID,
-          }));
+          sendTerminalMessage(JSON.stringify([
+            'stdin', `pip install -r ${repoPath}/requirements.txt\r`,
+          ]));
         }}
         title={!repoPath
           ? 'Please use right panel terminal to install packages.'

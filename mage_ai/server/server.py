@@ -43,6 +43,7 @@ from mage_ai.server.scheduler_manager import (
     scheduler_manager,
 )
 from mage_ai.server.subscriber import get_messages
+from mage_ai.server.terminal_server import TerminalWebsocketServer
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
     OAUTH2_APPLICATION_CLIENT_ID,
@@ -152,21 +153,8 @@ class ApiProjectSettingsHandler(BaseHandler):
         ]))
 
 
-class TerminalWebsocketServer(terminado.TermSocket):
-    def check_origin(self, origin):
-        return True
-
-    def open(self, url_component=None):
-        super().open(url_component)
-
-        # Turn enable-bracketed-paste off since it can mess up the output.
-        self.terminal.ptyproc.write(
-            "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
-        self.terminal.read_buffer.clear()
-
-
 def make_app():
-    term_manager = terminado.UniqueTermManager(shell_command=['bash'])
+    term_manager = terminado.NamedTermManager(shell_command=['bash'])
     routes = [
         (r'/', MainPageHandler),
         (r'/pipelines', MainPageHandler),

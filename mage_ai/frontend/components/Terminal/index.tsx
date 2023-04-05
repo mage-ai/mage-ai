@@ -1,8 +1,6 @@
 import Ansi from 'ansi-to-react';
-import useWebSocket from 'react-use-websocket';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
 import KernelOutputType, {
   DataTypeEnum,
@@ -28,8 +26,6 @@ import {
   KEY_CODE_META,
   KEY_CODE_V,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { getWebSocket } from '@api/utils/url';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -38,14 +34,18 @@ export const DEFAULT_TERMINAL_UUID = 'terminal';
 
 type TerminalProps = {
   interruptKernel: () => void;
+  lastMessage: WebSocketEventMap['message'] | null;
   onFocus?: () => void;
+  sendMessage: (message: string, keep?: boolean) => void;
   uuid?: string;
   width?: number;
 };
 
 function Terminal({
   interruptKernel,
+  lastMessage,
   onFocus,
+  sendMessage,
   uuid: terminalUUID = DEFAULT_TERMINAL_UUID,
   width,
 }: TerminalProps) {
@@ -63,14 +63,6 @@ function Terminal({
   })[]>([]);
 
   const [stdout, setStdout] = useState<string>();
-
-  const {
-    lastMessage,
-    readyState,
-    sendMessage,
-  } = useWebSocket(getWebSocket('terminal'), {
-    shouldReconnect: () => true,
-  });
 
   useEffect(() => {
     if (lastMessage) {
