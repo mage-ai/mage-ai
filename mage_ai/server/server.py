@@ -50,7 +50,8 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
-    SERVER_VERBOSITY
+    SERVER_VERBOSITY,
+    SHELL_COMMAND,
 )
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -154,7 +155,12 @@ class ApiProjectSettingsHandler(BaseHandler):
 
 
 def make_app():
-    term_manager = terminado.NamedTermManager(shell_command=['bash'])
+    shell_command = SHELL_COMMAND
+    if shell_command is None:
+        shell_command = 'bash'
+        if os.name == 'nt':
+            shell_command = 'cmd'
+    term_manager = terminado.NamedTermManager(shell_command=[shell_command])
     routes = [
         (r'/', MainPageHandler),
         (r'/pipelines', MainPageHandler),
