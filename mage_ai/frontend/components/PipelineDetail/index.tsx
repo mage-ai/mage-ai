@@ -402,7 +402,6 @@ function PipelineDetail({
             deleteBlock(b);
             setAnyInputFocused(false);
           }}
-          disableShortcuts={disableShortcuts}
           executionState={executionState}
           fetchFileTree={fetchFileTree}
           fetchPipeline={fetchPipeline}
