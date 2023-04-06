@@ -60,9 +60,10 @@ description: "Sign in and retrieve an OAuth token."
 ```curl cURL
 curl --request POST \
   --url http://localhost:6789/api/sessions \
+  --header 'Content-Type: application/json' \
   --header 'X-API-KEY: zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
   --data '{
-  "sessions": {
+  "session": {
     "email": "admin@admin.com",
     "password": "admin"
   }
