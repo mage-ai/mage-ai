@@ -1137,20 +1137,21 @@ class Pipeline:
         async with aiofiles.open(test_path, mode='w') as fp:
             await fp.write(content)
 
-        success = True
-        with open(test_path, mode='r') as fp:
+        if os.path.isfile(test_path):
+            success = True
+            with open(test_path, mode='r') as fp:
+                try:
+                    yaml.full_load(fp)
+                except yaml.scanner.ScannerError:
+                    success = False
+
             try:
-                yaml.full_load(fp)
-            except yaml.scanner.ScannerError:
-                success = False
+                os.remove(test_path)
+            except Exception as err:
+                print(err)
 
-        try:
-            os.remove(test_path)
-        except Exception as err:
-            print(err)
-
-        if not success:
-            raise Exception('Invalid pipeline metadata.yaml content, please try saving again.')
+            if not success:
+                raise Exception('Invalid pipeline metadata.yaml content, please try saving again.')
 
         await safe_write_async(self.config_path, content)
 
