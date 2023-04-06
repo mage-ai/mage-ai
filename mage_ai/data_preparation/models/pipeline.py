@@ -1137,7 +1137,6 @@ class Pipeline:
         async with aiofiles.open(test_path, mode='w') as fp:
             await fp.write(content)
 
-
         if os.path.isfile(test_path):
             success = True
             with open(test_path, mode='r') as fp:
