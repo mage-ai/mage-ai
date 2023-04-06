@@ -124,6 +124,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 type CodeBlockProps = {
   addNewBlock?: (block: BlockType) => Promise<any>;
   addNewBlockMenuOpenIdx?: number;
+  allowCodeBlockShortcuts?: boolean;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
   blockRefs: any;
@@ -175,6 +176,7 @@ function CodeBlock({
   addNewBlock,
   addNewBlockMenuOpenIdx,
   addWidget,
+  allowCodeBlockShortcuts,
   autocompleteItems,
   block,
   blockIdx,
@@ -629,7 +631,7 @@ function CodeBlock({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (disableShortcuts) {
+      if (disableShortcuts && !allowCodeBlockShortcuts) {
         return;
       }
 

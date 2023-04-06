@@ -75,6 +75,7 @@ type PipelineDetailProps = {
   addWidget: (widget: BlockType, opts?: {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
+  allowCodeBlockShortcuts?: boolean;
   anyInputFocused: boolean;
   autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
@@ -132,6 +133,7 @@ type PipelineDetailProps = {
 function PipelineDetail({
   addNewBlockAtIndex,
   addWidget,
+  allowCodeBlockShortcuts,
   anyInputFocused,
   autocompleteItems,
   blockRefs,
@@ -391,6 +393,7 @@ function PipelineDetail({
           }}
           addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
           addWidget={addWidget}
+          allowCodeBlockShortcuts={allowCodeBlockShortcuts}
           autocompleteItems={autocompleteItems}
           block={block}
           blockIdx={idx}
@@ -443,11 +446,13 @@ function PipelineDetail({
     addNewBlockAtIndex,
     addNewBlockMenuOpenIdx,
     addWidget,
+    allowCodeBlockShortcuts,
     autocompleteItems,
     blockRefs,
     blocks,
     dataProviders,
     deleteBlock,
+    disableShortcuts,
     fetchFileTree,
     fetchPipeline,
     interruptKernel,

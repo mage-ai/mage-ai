@@ -112,7 +112,7 @@ function PipelineDetailPage({
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
-
+  const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
   const mainContainerRef = useRef(null);
 
   // Kernels
@@ -1663,6 +1663,7 @@ function PipelineDetailPage({
       selectedFilePath={selectedFilePath}
       sendTerminalMessage={sendTerminalMessage}
       setActiveSidekickView={setActiveSidekickView}
+      setAllowCodeBlockShortcuts={setAllowCodeBlockShortcuts}
       setAnyInputFocused={setAnyInputFocused}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
@@ -1744,6 +1745,7 @@ function PipelineDetailPage({
           onCreateCallback?: (block: BlockType) => void;
         },
       ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
+      allowCodeBlockShortcuts={allowCodeBlockShortcuts}
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
