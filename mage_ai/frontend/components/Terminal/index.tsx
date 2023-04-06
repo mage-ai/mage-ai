@@ -340,8 +340,9 @@ in the context menu that appears.
                 displayElement = (
                   <Text
                     monospace
-                    noWrapping
-                    pre
+                    preWrap
+                    // This used to be a no wrap Text component, but changing it
+                    // to no wrap for now. Please change it back if you see any issues.
                   >
                     {data && (
                       <Ansi>
@@ -357,9 +358,11 @@ in the context menu that appears.
 
                 if (!command) {
                   arr.push(
-                    <LineStyle key={key}>
+                    // <LineStyle key={key}>
+                    <div key={key}>
                       {displayElement}
-                    </LineStyle>,
+                    </div>
+                    // </LineStyle>,
                   );
                 }
               }

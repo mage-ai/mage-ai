@@ -177,8 +177,9 @@ function SyncData() {
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Text bold>
-            (OPTIONAL, BUT RECOMMENDED) Filling out these fields will allow Mage to recover
-            your Git settings if they get reset.
+            (OPTIONAL) These fields are recommended if your Git and SSH settings can be reset unexpectedly.
+            Filling out these fields will allow Mage to continue to connect to the remote Git
+            repository.
           </Text>
         </Spacing>
         <form>
@@ -343,7 +344,6 @@ function SyncData() {
 
             <Spacing mt={2}>
               <Button
-                danger
                 loading={isLoadingRunSync}
                 // @ts-ignore
                 onClick={() => runSync({
@@ -351,6 +351,7 @@ function SyncData() {
                     action_type: 'sync_data',
                   },
                 })}
+                warning
               >
                 Synchronize code
               </Button>
