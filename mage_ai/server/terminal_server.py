@@ -76,3 +76,4 @@ class TerminalWebsocketServer(terminado.TermSocket):
         if self.term_command == 'bash':
             terminal.ptyproc.write(
                 "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
+        terminal.read_buffer.clear()
