@@ -6,6 +6,7 @@ from mage_integrations.destinations.bigquery.constants import (
     MAX_QUERY_PARAMETERS,
     MAX_QUERY_PARAMETERS_SIZE,
     MAX_QUERY_STRING_SIZE,
+    MAX_SUBQUERY_COUNT,
     QUERY_JOB_MAX_TIMEOUT_SECONDS,
 )
 from mage_integrations.destinations.bigquery.utils import (
@@ -513,6 +514,8 @@ WHERE table_id = '{table_name}'
         jobs = []
         job_results = []
 
+        max_subquery_count = self.config.get('max_subquery_count', MAX_SUBQUERY_COUNT)
+
         insert_statement = f"INSERT INTO {full_table_name} ({insert_columns}) VALUES"
 
         while len(insert_values) >= 1:
@@ -526,7 +529,8 @@ WHERE table_id = '{table_name}'
             while query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * MAX_QUERY_BUFFER) and \
                     len(query_parameters) < (MAX_QUERY_PARAMETERS * MAX_QUERY_BUFFER) and \
                     query_size < (MAX_QUERY_STRING_SIZE * MAX_QUERY_BUFFER) and \
-                    row_idx + 1 < len(insert_values):
+                    row_idx + 1 < len(insert_values) and \
+                    len(row_values) < max_subquery_count:
 
                 row_idx += 1
 
