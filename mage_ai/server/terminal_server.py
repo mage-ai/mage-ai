@@ -3,13 +3,27 @@ from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
 import terminado
 import tornado.websocket
-
+import json
 import os
+import re
 
 
 class TerminalWebsocketServer(terminado.TermSocket):
     def check_origin(self, origin):
         return True
+    
+    def on_pty_read(self, text):
+        """Data read from pty; send to frontend"""
+        print('STDOUT TEXT:', text)
+        ansi_escape = re.compile(r'(?:\x1B\]0;).*\x07')
+        updated_text = ansi_escape.sub('', text)
+        print('STDOUT TEXT SUB:', text)
+        self.send_json_message(["stdout", updated_text])
+
+    def send_json_message(self, content):
+        json_msg = json.dumps(content, ensure_ascii=False)
+        print('STDOUT TEXT JSON:', json_msg)
+        self.write_message(json_msg)
 
     def open(self, *args, **kwargs):
         """Websocket connection opened.
