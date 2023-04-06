@@ -110,6 +110,7 @@ export type SidekickProps = {
     newView: ViewKeyEnum,
     pushHistory?: boolean,
   ) => void;
+  setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
@@ -155,6 +156,7 @@ function Sidekick({
   selectedFilePath,
   sendTerminalMessage,
   setActiveSidekickView,
+  setAllowCodeBlockShortcuts,
   setAnyInputFocused,
   setDisableShortcuts,
   setEditingBlock,
@@ -303,8 +305,18 @@ function Sidekick({
         <SidekickContainerStyle
           fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
           heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
-          onBlur={() => setDisableShortcuts(false)}
-          onFocus={() => setDisableShortcuts(true)}
+          onBlur={() => {
+            if (!selectedFilePath) {
+              setDisableShortcuts(false);
+            }
+            setAllowCodeBlockShortcuts?.(false);
+          }}
+          onFocus={() => {
+            setDisableShortcuts(true);
+            if (activeView === ViewKeyEnum.TREE) {
+              setAllowCodeBlockShortcuts?.(true);
+            }
+          }}
           widthOffset={widthOffset}
         >
           {activeView === ViewKeyEnum.TREE &&

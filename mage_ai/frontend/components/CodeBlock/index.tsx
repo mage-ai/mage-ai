@@ -124,6 +124,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 type CodeBlockProps = {
   addNewBlock?: (block: BlockType) => Promise<any>;
   addNewBlockMenuOpenIdx?: number;
+  allowCodeBlockShortcuts?: boolean;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
   blockRefs: any;
@@ -131,6 +132,7 @@ type CodeBlockProps = {
   blocks: BlockType[];
   dataProviders?: DataProviderType[];
   defaultValue?: string;
+  disableShortcuts?: boolean;
   executionState: ExecutionStateEnum;
   extraContent?: any;
   fetchFileTree: () => void;
@@ -174,6 +176,7 @@ function CodeBlock({
   addNewBlock,
   addNewBlockMenuOpenIdx,
   addWidget,
+  allowCodeBlockShortcuts,
   autocompleteItems,
   block,
   blockIdx,
@@ -182,6 +185,7 @@ function CodeBlock({
   dataProviders,
   defaultValue = '',
   deleteBlock,
+  disableShortcuts,
   executionState,
   extraContent,
   fetchFileTree,
@@ -627,6 +631,10 @@ function CodeBlock({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
+      if (disableShortcuts && !allowCodeBlockShortcuts) {
+        return;
+      }
+
       if (isEditingBlock
         && String(keyHistory[0]) === String(KEY_CODE_ENTER)
         && String(keyHistory[1]) !== String(KEY_CODE_META)

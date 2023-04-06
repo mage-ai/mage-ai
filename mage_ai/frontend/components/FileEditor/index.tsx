@@ -59,6 +59,7 @@ type FileEditorProps = {
   pipeline: PipelineType;
   selectedFilePath: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
+  setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
   setFilesTouched: (data: {
     [path: string]: boolean;
@@ -76,6 +77,7 @@ function FileEditor({
   pipeline,
   selectedFilePath,
   sendTerminalMessage,
+  setDisableShortcuts,
   setErrors,
   setFilesTouched,
   setSelectedBlock,
@@ -96,6 +98,12 @@ function FileEditor({
 
   const [content, setContent] = useState<string>(file?.content);
   const [touched, setTouched] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (active) {
+      setDisableShortcuts(true);
+    }
+  }, [active, setDisableShortcuts]);
 
   useEffect(() => {
     if (selectedFilePath) {

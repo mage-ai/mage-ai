@@ -62,7 +62,6 @@ import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/A
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { pauseEvent } from '@utils/events';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -76,6 +75,7 @@ type PipelineDetailProps = {
   addWidget: (widget: BlockType, opts?: {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
+  allowCodeBlockShortcuts?: boolean;
   anyInputFocused: boolean;
   autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
@@ -133,6 +133,7 @@ type PipelineDetailProps = {
 function PipelineDetail({
   addNewBlockAtIndex,
   addWidget,
+  allowCodeBlockShortcuts,
   anyInputFocused,
   autocompleteItems,
   blockRefs,
@@ -392,6 +393,7 @@ function PipelineDetail({
           }}
           addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
           addWidget={addWidget}
+          allowCodeBlockShortcuts={allowCodeBlockShortcuts}
           autocompleteItems={autocompleteItems}
           block={block}
           blockIdx={idx}
@@ -403,6 +405,7 @@ function PipelineDetail({
             deleteBlock(b);
             setAnyInputFocused(false);
           }}
+          disableShortcuts={disableShortcuts}
           executionState={executionState}
           fetchFileTree={fetchFileTree}
           fetchPipeline={fetchPipeline}
@@ -443,11 +446,13 @@ function PipelineDetail({
     addNewBlockAtIndex,
     addNewBlockMenuOpenIdx,
     addWidget,
+    allowCodeBlockShortcuts,
     autocompleteItems,
     blockRefs,
     blocks,
     dataProviders,
     deleteBlock,
+    disableShortcuts,
     fetchFileTree,
     fetchPipeline,
     interruptKernel,
