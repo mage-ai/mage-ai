@@ -1,0 +1,23 @@
+---
+title: "Mage environment variables"
+sidebarTitle: "Environment variables"
+description: "Configure Mage settings through environment variables."
+---
+
+| Variable name             | Description                   | Example values     |
+| ------------------------- | ----------------------------- | ----------------- |
+| `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | postgresql+psycopg2://user:password@host:port/dbname |
+| `REQUIRE_USER_AUTHENTICATION`  | Enable user authentication in Mage. [More information](/production/authentication/overview) | 1 |
+| `AUTHENTICATION_MODE` | Set the authentication mode in Mage. Omitting the variable will default to basic password authentication. | `ldap` |
+| `LDAP_ADMIN_USERNAME`  | [More information](/production/authentication/overview#ldap) | See link                     |
+| `LDAP_SERVER`          | [More information](/production/authentication/overview#ldap) | See link          |
+| `LDAP_BIND_DN`         | [More information](/production/authentication/overview#ldap) | See link |
+| `LDAP_BIND_PASSWORD`   | [More information](/production/authentication/overview#ldap) | See link                  |
+| `LDAP_BASE_DN`         | [More information](/production/authentication/overview#ldap) | See link         |
+| `LDAP_AUTHENTICATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
+| `LDAP_AUTHORIZATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
+| `DISABLE_NOTEBOOK_EDIT_ACCESS` | Enabling this variable will disable edit and run access to all pipelines and blocks. [More information](/production/configuring-production-settings/overview#read-only-access) | 1 |
+| `SERVER_VERBOSITY` | [More information](/production/observability/logging#server-logging) | See link |
+| `SHELL_COMMAND` | Set shell command to use for the Mage terminal. Default command is `bash` for macOS/Unix and `cmd` for Windows. | `bash`, `cmd`, ... |
+| `HIDE_ENV_VAR_VALUES` | Filter out environment variables in notebook output. | 1 |
+| `DEBUG` | Turn on "debug" mode. Mage will output more logs that could be useful for debugging issues. | 1 |
