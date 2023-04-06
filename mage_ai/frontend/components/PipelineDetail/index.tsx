@@ -334,7 +334,7 @@ function PipelineDetail({
       if (pipelineContentTouched) {
         savePipelineContent();
       }
-    }, 5000);
+    }, 1000 * 10);
 
     return () => {
       clearInterval(autoSaveInterval);
@@ -347,8 +347,6 @@ function PipelineDetail({
   useEffect(() => {
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
   }, [pipeline]);
-
-
 
   const onClickAddSingleDBTModel = useCallback((blockIndex: number) => {
     setAddDBTModelVisible(true);

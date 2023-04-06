@@ -1794,6 +1794,7 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     addWidgetAtIndex,
+    allowCodeBlockShortcuts,
     anyInputFocused,
     autocompleteItems,
     automaticallyNameBlocks,
