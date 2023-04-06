@@ -68,19 +68,17 @@ function Terminal({
     if (lastMessage) {
       const msg = JSON.parse(lastMessage.data);
 
-      console.log('terminal message:', msg);
-
       setStdout(prev => {
         const p = prev || '';
         if (msg[0] === 'stdout') {
-          return p + msg[1];
+          const out = msg[1];
+          return p + out;
         }
         return p;
       })
     }
   }, [
     lastMessage,
-    terminalUUID,
   ]);
 
   const kernelOutputsUpdated = useMemo(() => {
