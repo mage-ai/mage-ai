@@ -4,6 +4,8 @@ from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
 import terminado
 import tornado.websocket
 
+import os
+
 
 class TerminalWebsocketServer(terminado.TermSocket):
     def check_origin(self, origin):
@@ -60,6 +62,6 @@ class TerminalWebsocketServer(terminado.TermSocket):
             self.on_pty_read(buffered)
 
         # Turn enable-bracketed-paste off since it can mess up the output.
-        terminal.ptyproc.write(
-            "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
-        terminal.read_buffer.clear()
+        if os.name != 'nt':
+            terminal.ptyproc.write(
+                "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
