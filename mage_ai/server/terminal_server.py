@@ -7,13 +7,17 @@ import re
 
 
 class TerminalWebsocketServer(terminado.TermSocket):
+    @property
+    def term_command(self):
+        return next(iter(self.term_manager.shell_command))
+
     def check_origin(self, origin):
         return True
 
     def on_pty_read(self, text):
         """Data read from pty; send to frontend"""
         updated_text = text
-        if self.term_manager.shell_command == 'cmd':
+        if self.term_command == 'cmd':
             xterm_escape = re.compile(r'(?:\x1B\]0;).*\x07')
             updated_text = xterm_escape.sub('', text)
         self.send_json_message(["stdout", updated_text])
@@ -69,6 +73,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
             self.on_pty_read(buffered)
 
         # Turn enable-bracketed-paste off since it can mess up the output.
-        if self.term_manager.shell_command == 'bash':
+        if self.term_command == 'bash':
             terminal.ptyproc.write(
                 "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
+        terminal.read_buffer.clear()
