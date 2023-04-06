@@ -462,6 +462,9 @@ function PipelineDetailPage({
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
   useEffect(() => {
+    if (!filePathFromUrl) {
+      setDisableShortcuts(false);
+    }
     setSelectedFilePath(filePathFromUrl);
   }, [
     filePathFromUrl,
@@ -2100,6 +2103,7 @@ function PipelineDetailPage({
                 pipeline={pipeline}
                 selectedFilePath={selectedFilePath}
                 sendTerminalMessage={sendTerminalMessage}
+                setDisableShortcuts={setDisableShortcuts}
                 setErrors={setErrors}
                 setFilesTouched={setFilesTouched}
                 setSelectedBlock={setSelectedBlock}

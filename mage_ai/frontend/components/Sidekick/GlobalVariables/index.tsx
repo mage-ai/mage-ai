@@ -133,7 +133,7 @@ function GlobalVariables({
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
-      let updatedValue = newVariableValue
+      let updatedValue = newVariableValue;
       try {
         updatedValue = JSON.parse(newVariableValue);
       } catch {
@@ -245,6 +245,7 @@ function GlobalVariables({
         <VariableRow
           deleteVariable={() => deleteVariable(variable.uuid)}
           fetchVariables={fetchVariables}
+          key={variable.uuid}
           pipelineUUID={pipelineUUID}
           variable={variable}
         />
@@ -277,6 +278,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
           <VariableRow
             copyText={copyText(variable.uuid)}
             hideEdit
+            key={variable.uuid}
             pipelineUUID={pipelineUUID}
             variable={variable}
           />
@@ -398,18 +400,22 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
         </Text>
       </Spacing>
 
-      {Object.values(ScheduleTypeEnum).map((value) => (
-        <Spacing mb={PADDING_UNITS}>
+      {Object.values(ScheduleTypeEnum).map((value, idx) => (
+        <Spacing
+          key={`${value}_${idx}`}
+          mb={PADDING_UNITS}
+        >
           <Spacing mb={PADDING_UNITS}>
             <Text large monospace>
               {capitalizeRemoveUnderscoreLower(SCHEDULE_TYPE_TO_LABEL[value]?.())}
             </Text>
           </Spacing>
-          {addTriggerVariables([], value).map((variable) => (
+          {addTriggerVariables([], value).map((variable, idx) => (
             <VariableRow
               hideEdit
-              variable={variable}
+              key={`var_${value}_${idx}`}
               pipelineUUID={pipelineUUID}
+              variable={variable}
             />
           ))}
         </Spacing>

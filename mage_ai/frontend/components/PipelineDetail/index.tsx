@@ -62,7 +62,6 @@ import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/A
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { pauseEvent } from '@utils/events';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 
