@@ -883,10 +883,22 @@ function CodeBlock({
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
 
+  const timeout = useRef(null);
   const updateDataProviderConfig = useCallback((payload) => {
+    clearTimeout(timeout.current);
+
     setDataProviderConfig((dataProviderConfigPrev) => {
       const data = {
         ...dataProviderConfigPrev,
+        ...payload,
+      };
+
+      return data;
+    });
+
+    timeout.current = setTimeout(() => {
+      const data = {
+        ...dataProviderConfig,
         ...payload,
       };
 
@@ -904,11 +916,10 @@ function CodeBlock({
           },
         });
       }
-
-      return data;
-    });
+    }, 1000);
   }, [
     block,
+    dataProviderConfig,
     savePipelineContent,
   ]);
 
