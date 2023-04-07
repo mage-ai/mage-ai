@@ -78,6 +78,11 @@ create new rows, update existing rows, or delete rows in the destination.
 
     <sub>Replace `some_schema` with the schema of the table and `some_table_name` with the name
     of the table you want to replicate.</sub>
+    
+    Run the following command to add or remove a table from publication.
+    ```sql
+    ALTER PUBLICATION mage_pub ADD/DROP TABLE table_name;
+    ```
 
 1. Verify that the publication was created successfully by running the following command in PostgreSQL:
     ```sql
