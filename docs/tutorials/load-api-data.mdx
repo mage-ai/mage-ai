@@ -157,11 +157,8 @@ Let’s transform the data in 2 ways:
 
 
     @test
-    def test_output(output, *args) -> None:
-        """
-        Template code for testing the output of the block.
-        """
-        assert output is not None, 'The output is undefined'
+    def test_number_of_columns(df, *args) -> None:
+        assert len(df.columns) >= 11, 'There needs to be at least 11 columns.'
     ```
 
 1. Run the block by clicking the play icon button or using the keyboard
