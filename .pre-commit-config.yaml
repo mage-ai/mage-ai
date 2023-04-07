@@ -1,0 +1,37 @@
+---
+minimum_pre_commit_version: 2.16.0
+exclude: >
+  (?x)^(
+      .+/.venv/.+|.+/dist/.+|.+/.autovenv|.+/docs/|.github
+  )$
+fail_fast: true
+default_language_version:
+  python: python3
+default_stages:
+  - prepare-commit-msg
+  - commit
+
+repos:
+
+  # Python: Black formatter
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        args: [--safe, --quiet, --config=./pyproject.toml]
+        files: \.pyi?$
+        exclude: .github/|mage_ai/data_preparation/templates
+        # override until resolved: https://github.com/psf/black/issues/402
+        types: []
+  
+  # Flake8
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: ["--config=.flake8", "mage_ai/"]
+        # exclude: *fixtures
+        exclude: scala|doc/|tests/
+        additional_dependencies:
+          # Finding likely bugs and design problems in your program.
+          - flake8-bugbear  
