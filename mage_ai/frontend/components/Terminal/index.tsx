@@ -62,6 +62,9 @@ function Terminal({
     command: boolean;
   })[]>([]);
 
+  console.log('cursor index:', cursorIndex);
+  console.log('command:', command);
+
   const [stdout, setStdout] = useState<string>();
 
   useEffect(() => {
@@ -104,6 +107,7 @@ function Terminal({
       refContainer.current.scrollTo(0, height);
     }
   }, [
+    command,
     kernelOutputsUpdated,
     refContainer,
     refInner,
@@ -123,32 +127,13 @@ function Terminal({
     setCursorIndex(currIdx => currIdx > 0 ? currIdx - 1 : currIdx);
   }, []);
   const increaseCursorIndex = useCallback(() => {
-    setCursorIndex(currIdx => (currIdx <= command.length) ? currIdx + 1 : currIdx);
-  }, [command]);
+    setCursorIndex(currIdx => (currIdx < command.length) ? currIdx + 1 : currIdx);
+  }, [command, setCursorIndex]);
 
   const handleCopiedText = useCallback((clipText) => {
-    const lines = clipText?.split(/\n/) || [];
-    if (lines.length > 1) {
-      const enteredLines = lines.slice(0, -1);
-      enteredLines[0] = command + enteredLines[0];
-      const lineCommands = enteredLines.map((line, idx) => ({
-        command: idx === 0,
-        data: line,
-        type: DataTypeEnum.TEXT,
-      }));
-      setCommandIndex(commandHistory.length + enteredLines.length);
-      setCommandHistory(prev => prev.concat(enteredLines));
-      // @ts-ignore
-      setKernelOutputs(prev => prev.concat(lineCommands));
-      setFinalCommand(prev => prev + enteredLines.join('\n'));
-      const currentCommand = (lines.slice(-1)[0] || '').trim();
-      setCommand(currentCommand);
-      setCursorIndex(currentCommand.length);
-    } else {
-      setCommand(prev => prev + clipText);
-      setCursorIndex(command.length + clipText.length);
-    }
-  }, [command, commandHistory]);
+    setCommand(prev => prev + clipText);
+    setCursorIndex(command.length + clipText.length);
+  }, [command]);
 
   registerOnKeyDown(
     terminalUUID,
@@ -263,7 +248,7 @@ in the context menu that appears.
             }
           } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
             setCommand(prev => prev.slice(0, cursorIndex) + key + prev.slice(cursorIndex));
-            increaseCursorIndex();
+            setCursorIndex(currIdx => currIdx + 1);
           }
         }
       }
@@ -374,7 +359,7 @@ in the context menu that appears.
           {(
             <InputStyle
               focused={focus
-                && (command?.length === 0 || cursorIndex > command?.length)}
+                && (command?.length === 0)}
             >
               <Text monospace>
                 <Text inline monospace>
@@ -384,13 +369,14 @@ in the context menu that appears.
                     </Ansi>
                   )}
                 </Text>
-                {command?.split('').map(((char: string, idx: number) => (
+                {command?.split('').map(((char: string, idx: number, arr: string[]) => (
                   <CharacterStyle
                     focusBeginning={focus && cursorIndex === 0 && idx === 0}
-                    focused={focus && cursorIndex === idx + 1}
+                    focused={focus && (cursorIndex === idx + 1 || cursorIndex >= arr.length && idx === arr.length - 1)}
                     key={`command-${idx}-${char}`}
                   >
                     {char === ' ' && <>&nbsp;</>}
+                    {char === '\n' && <br />}
                     {char !== ' ' && char}
                   </CharacterStyle>
                 )))}
