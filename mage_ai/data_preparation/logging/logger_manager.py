@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_ai.data_preparation.logging import LoggingConfig
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
@@ -79,8 +80,10 @@ class LoggerManager:
         if not os.path.exists(path):
             os.makedirs(path)
 
-    def get_log_filepath_prefix(self):
+    def get_log_filepath_prefix(self, include_date_hour_subpath=False):
         logs_dir = self.logs_dir or self.repo_config.variables_dir
+        current_date = datetime.utcnow().strftime('%Y%m%d')
+        current_hour = datetime.utcnow().strftime('%H')
 
         return os.path.join(
             logs_dir,
@@ -88,13 +91,17 @@ class LoggerManager:
             self.pipeline_uuid,
             LOGS_DIR,
             self.partition or '',
+            current_date if include_date_hour_subpath else '',
+            current_hour if include_date_hour_subpath else '',
         )
 
     def get_log_filepath(self, create_dir: bool = False):
         if self.pipeline_uuid is None:
             raise Exception('Please specify a pipeline uuid in your logger.')
 
-        prefix = self.get_log_filepath_prefix()
+        prefix = self.get_log_filepath_prefix(
+            include_date_hour_subpath=True if create_dir else False,
+        )
 
         if create_dir:
             self.create_log_filepath_dir(prefix)
