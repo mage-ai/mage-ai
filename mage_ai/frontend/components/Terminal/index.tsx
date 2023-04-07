@@ -54,16 +54,12 @@ function Terminal({
 
   const [command, setCommand] = useState<string>('');
   const [commandIndex, setCommandIndex] = useState<number>(0);
-  const [finalCommand, setFinalCommand] = useState<string>('');
   const [cursorIndex, setCursorIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [focus, setFocus] = useState<boolean>(false);
   const [kernelOutputs, setKernelOutputs] = useState<(KernelOutputType & {
     command: boolean;
   })[]>([]);
-
-  console.log('cursor index:', cursorIndex);
-  console.log('command:', command);
 
   const [stdout, setStdout] = useState<string>();
 
@@ -128,12 +124,48 @@ function Terminal({
   }, []);
   const increaseCursorIndex = useCallback(() => {
     setCursorIndex(currIdx => (currIdx < command.length) ? currIdx + 1 : currIdx);
-  }, [command, setCursorIndex]);
+  }, [command]);
+
+  const sendCommand = useCallback((cmd) => {
+    sendMessage(JSON.stringify([
+      'stdin', cmd
+    ]));
+    sendMessage(JSON.stringify([
+      'stdin', '\r'
+    ]));
+    if (cmd?.length >= 2) {
+      setCommandIndex(commandHistory.length + 1);
+      setCommandHistory(prev => prev.concat(cmd));
+      setCursorIndex(0);
+    }
+    setCommand('');
+  }, [
+    commandHistory,
+    sendMessage,
+    setCommand,
+    setCommandHistory,
+    setCommandIndex,
+    setCursorIndex,
+  ]);
 
   const handleCopiedText = useCallback((clipText) => {
-    setCommand(prev => prev + clipText);
-    setCursorIndex(command.length + clipText.length);
-  }, [command]);
+    const lines = clipText?.split(/\n/) || [];
+    if (lines.length > 1) {
+      const enteredLines = lines.slice(0, -1);
+      sendCommand(command + enteredLines.join('\n'));
+      const currentCommand = (lines.slice(-1)[0] || '').trim();
+      setCommand(currentCommand);
+      setCursorIndex(currentCommand.length);
+    } else {
+      setCommand(prev => prev + clipText);
+      setCursorIndex(command.length + clipText.length);
+    }
+  }, [
+    command,
+    sendCommand,
+    setCommand,
+    setCursorIndex,
+  ]);
 
   registerOnKeyDown(
     terminalUUID,
@@ -146,17 +178,15 @@ function Terminal({
       if (focus) {
         pauseEvent(event);
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
-          const finalEnteredCommand = finalCommand + command;
-          if (finalEnteredCommand?.length >= 0) {
+          if (command?.length >= 0) {
             sendMessage(JSON.stringify([
-              'stdin', finalEnteredCommand
+              'stdin', command
             ]));
             sendMessage(JSON.stringify([
               'stdin', '\x03'
             ]));
             setCursorIndex(0);
           }
-          setFinalCommand('');
           setCommand('');
         } else {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
@@ -183,20 +213,7 @@ function Terminal({
               setCursorIndex(nextCommand.length);
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
-            const finalEnteredCommand = finalCommand + command;
-            sendMessage(JSON.stringify([
-              'stdin', finalEnteredCommand
-            ]));
-            sendMessage(JSON.stringify([
-              'stdin', '\r'
-            ]));
-            if (finalEnteredCommand?.length >= 2) {
-              setCommandIndex(commandHistory.length + 1);
-              setCommandHistory(prev => prev.concat(command));
-              setCursorIndex(0);
-            }
-            setFinalCommand('');
-            setCommand('');
+            sendCommand(command);
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
             navigator.clipboard.writeText(window.getSelection().toString());
           } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)
@@ -372,7 +389,11 @@ in the context menu that appears.
                 {command?.split('').map(((char: string, idx: number, arr: string[]) => (
                   <CharacterStyle
                     focusBeginning={focus && cursorIndex === 0 && idx === 0}
-                    focused={focus && (cursorIndex === idx + 1 || cursorIndex >= arr.length && idx === arr.length - 1)}
+                    focused={
+                      focus && 
+                        (cursorIndex === idx + 1 ||
+                          cursorIndex >= arr.length && idx === arr.length - 1)
+                    }
                     key={`command-${idx}-${char}`}
                   >
                     {char === ' ' && <>&nbsp;</>}
