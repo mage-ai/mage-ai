@@ -123,7 +123,7 @@ Your chart should look like:
 
 ## 4. Transform data
 
-Let’s transform the data in 2 ways: 
+Let’s transform the data in 2 ways:
 - Add a column that counts the number of meals for each user.
 - Clean the column names to properly store in a PostgreSQL database.
 
@@ -132,40 +132,36 @@ Let’s transform the data in 2 ways:
 1. Click the `+ Transformer` button, select `Python`, select `Generic`.
 1. Rename the block to `transform data`.
 1. Paste the following code into the block:
-    
+
     ```python
-    from mage_ai.data_cleaner.transformer_actions.base import BaseAction
-    from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-    from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-    from os import path
-    from pandas import DataFrame
+    def number_of_rows_per_key(df, key, column_name):
+        data = df.groupby(key)[key].agg(['count'])
+        data.columns = [column_name]
+        return data
+
+
+    def clean_column(column_name):
+        return column_name.lower().replace(' ', '_')
 
 
     @transformer
-    def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
-        aggregate_action = build_transformer_action(
-            df,
-            action_type=ActionType.COUNT_DISTINCT,
-            action_code='',  # Enter filtering condition on rows before aggregation
-            arguments=['meal transaction ID'],  # Enter the columns to compute aggregate over
-            axis=Axis.COLUMN,
-            options={'groupby_columns': ['user ID']},  # Enter columns to group by
-            outputs=[
-                # The number of outputs below must match the number of arguments
-                {'uuid': 'number of meals', 'column_type': 'number'},
-            ],
-        )
+    def transform(df, *args, **kwargs):
+        # Add number of meals for each user
+        df_new_column = number_of_rows_per_key(df, 'user ID', 'number of meals')
+        df = df.join(df_new_column, on='user ID')
 
-        df = BaseAction(aggregate_action).execute(df)
+        # Clean column names
+        df.columns = [clean_column(col) for col in df.columns]
 
-        clean_action = build_transformer_action(
-            df,
-            action_type=ActionType.CLEAN_COLUMN_NAME,
-            arguments=df.columns,
-            axis=Axis.COLUMN,
-        )
+        return df
 
-        return BaseAction(clean_action).execute(df)
+
+    @test
+    def test_output(output, *args) -> None:
+        """
+        Template code for testing the output of the block.
+        """
+        assert output is not None, 'The output is undefined'
     ```
 
 1. Run the block by clicking the play icon button or using the keyboard
