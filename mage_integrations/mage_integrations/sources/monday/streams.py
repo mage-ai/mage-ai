@@ -8,9 +8,7 @@ class BaseStream:
         self.stream = stream
         self.logger = logger
 
-    def get_next_page_token(
-        self, response: Dict, previous_token: Optional[Any]
-    ) -> Any:
+    def get_next_page_token(self, response: Dict, previous_token: Optional[Any]) -> Any:
         return None
 
     def get_url_params(
@@ -73,10 +71,7 @@ class BoardsStream(BaseStream):
     def get_url_params(
         self, context: Optional[dict], next_page_token: Optional[Any]
     ) -> Dict[str, Any]:
-        return {
-            "page": next_page_token or 1,
-            "board_limit": self.config["board_limit"]
-        }
+        return {"page": next_page_token or 1, "board_limit": self.config["board_limit"]}
 
     @property
     def query(self) -> str:
@@ -123,9 +118,7 @@ class BoardsStream(BaseStream):
             item["id"] = int(item["id"])
         return row
 
-    def get_next_page_token(
-        self, response: Dict, previous_token: Optional[Any]
-    ) -> Any:
+    def get_next_page_token(self, response: Dict, previous_token: Optional[Any]) -> Any:
         current_page = previous_token if previous_token is not None else 1
         if len(response["data"][self.name]) == self.config["board_limit"]:
             next_page_token = current_page + 1
@@ -145,9 +138,7 @@ class BoardViewsStream(BaseStream):
     def get_url_params(
         self, context: Optional[dict], next_page_token: Optional[Any]
     ) -> Dict[str, Any]:
-        return {
-            "board_id": context["board_id"]
-        }
+        return {"board_id": context["board_id"]}
 
     @property
     def query(self) -> str:
@@ -180,9 +171,7 @@ class GroupsStream(BaseStream):
     def get_url_params(
         self, context: Optional[dict], next_page_token: Optional[Any]
     ) -> Dict[str, Any]:
-        return {
-            "board_id": context["board_id"]
-        }
+        return {"board_id": context["board_id"]}
 
     @property
     def query(self) -> str:

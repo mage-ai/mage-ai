@@ -13,11 +13,7 @@ class HttpClient:
         }
 
     def make_request(
-        self,
-        url_path: str,
-        method: str = 'GET',
-        params: Dict = dict(),
-        payload: Dict = dict()
+        self, url_path: str, method: str = 'GET', params: Dict = dict(), payload: Dict = dict()
     ):
         url = self.BASE_URL + url_path
         response = None

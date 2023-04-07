@@ -18,7 +18,7 @@ import inflection
 ALL_ACTIONS = 'all'
 
 
-class BasePolicy():
+class BasePolicy:
     action_rules = {}
     query_rules = {}
     read_rules = {}
@@ -67,8 +67,7 @@ class BasePolicy():
             if not self.action_rules[self.__name__].get(key):
                 self.action_rules[self.__name__][key] = {}
             for scope in kwargs.get('scopes', []):
-                self.action_rules[self.__name__][key][scope] = extract(kwargs, [
-                                                                       'condition'])
+                self.action_rules[self.__name__][key][scope] = extract(kwargs, ['condition'])
 
     @classmethod
     def allow_query(self, array, **kwargs):
@@ -78,8 +77,7 @@ class BasePolicy():
             if not self.query_rules[self.__name__].get(key):
                 self.query_rules[self.__name__][key] = {}
             for scope in kwargs.get('scopes', []):
-                self.query_rules[self.__name__][key][scope] = extract(kwargs, [
-                                                                      'condition'])
+                self.query_rules[self.__name__][key][scope] = extract(kwargs, ['condition'])
 
     @classmethod
     def allow_read(self, array, **kwargs):
@@ -94,8 +92,9 @@ class BasePolicy():
                 if not self.read_rules[self.__name__][key].get(scope):
                     self.read_rules[self.__name__][key][scope] = {}
                 for action in actions:
-                    self.read_rules[self.__name__][key][scope][action] = extract(kwargs, [
-                                                                                 'condition'])
+                    self.read_rules[self.__name__][key][scope][action] = extract(
+                        kwargs, ['condition']
+                    )
 
     @classmethod
     def allow_write(self, array, **kwargs):
@@ -110,8 +109,9 @@ class BasePolicy():
                 if not self.write_rules[self.__name__][key].get(scope):
                     self.write_rules[self.__name__][key][scope] = {}
                 for action in actions:
-                    self.write_rules[self.__name__][key][scope][action] = extract(kwargs, [
-                                                                                  'condition'])
+                    self.write_rules[self.__name__][key][scope][action] = extract(
+                        kwargs, ['condition']
+                    )
 
     @classmethod
     def resource_name(self):
@@ -119,9 +119,7 @@ class BasePolicy():
 
     @classmethod
     def resource_name_singular(self):
-        return inflection.underscore(
-            self.__name__.replace(
-                'Policy', '')).lower()
+        return inflection.underscore(self.__name__.replace('Policy', '')).lower()
 
     def is_owner(self) -> bool:
         return is_owner(self.current_user)
@@ -143,12 +141,16 @@ class BasePolicy():
         if config:
             self.__validate_scopes(action, config.keys())
             if config.get(self.__current_scope(), {}).get('condition'):
-                self.__validate_condition(
-                    action, config[self.__current_scope()]['condition'])
+                self.__validate_condition(action, config[self.__current_scope()]['condition'])
         else:
             error = ApiError.UNAUTHORIZED_ACCESS
-            error.update({'message': 'The {} action is disabled for {}.'.format(
-                action, self.resource_name()), })
+            error.update(
+                {
+                    'message': 'The {} action is disabled for {}.'.format(
+                        action, self.resource_name()
+                    ),
+                }
+            )
             raise ApiError(error)
 
     def authorize_attribute(self, read_or_write, attrb, **kwargs):
@@ -175,14 +177,16 @@ class BasePolicy():
 
         if config is None:
             error = ApiError.UNAUTHORIZED_ACCESS
-            error.update({
-                'message': '{} of {} on {} is disabled for {}.'.format(
-                    read_or_write,
-                    attrb,
-                    api_operation_action,
-                    self.__class__.resource_name(),
-                ),
-            })
+            error.update(
+                {
+                    'message': '{} of {} on {} is disabled for {}.'.format(
+                        read_or_write,
+                        attrb,
+                        api_operation_action,
+                        self.__class__.resource_name(),
+                    ),
+                }
+            )
             raise ApiError(error)
         cond = config.get('condition')
         if cond:
@@ -202,14 +206,17 @@ class BasePolicy():
         for key, value in query.items():
             if key != settings.QUERY_API_KEY:
                 error_message = 'Query parameter {} of value {} is not permitted.'.format(
-                    key, value)
+                    key, value
+                )
                 config = self.__class__.query_rule(key)
 
                 if not config:
                     error = ApiError.UNAUTHORIZED_ACCESS
-                    error.update({
-                        'message': error_message,
-                    })
+                    error.update(
+                        {
+                            'message': error_message,
+                        }
+                    )
                     raise ApiError(error)
                 elif config.get(self.__current_scope(), {}).get('condition'):
                     self.__validate_condition(
@@ -230,7 +237,8 @@ class BasePolicy():
             )
             self.parent_resource_attr = getattr(
                 importlib.import_module(
-                    'mage_ai.api.resources.{}Resource'.format(parent_model_class)),
+                    'mage_ai.api.resources.{}Resource'.format(parent_model_class)
+                ),
                 '{}Resource'.format(parent_model_class),
             )(self.parent_model(), self.current_user, **self.options)
         return self.parent_resource_attr
@@ -244,21 +252,22 @@ class BasePolicy():
     def __validate_condition(self, action, cond, **kwargs):
         if cond and not cond(self):
             error = ApiError.UNAUTHORIZED_ACCESS
-            error.update({
-                'message': kwargs.get(
-                    'message',
-                    'Unauthorized access for {}, failed condition.'.format(action),
-                ),
-            })
+            error.update(
+                {
+                    'message': kwargs.get(
+                        'message',
+                        'Unauthorized access for {}, failed condition.'.format(action),
+                    ),
+                }
+            )
             increment(
                 'api_error.unauthorized_access',
                 tags={
                     'action': action,
                     'policy_class_name': self.__class__.__name__,
-                    'id': self.resource.id if hasattr(
-                        self.resource,
-                        'id') else None,
-                })
+                    'id': self.resource.id if hasattr(self.resource, 'id') else None,
+                },
+            )
             if settings.DEBUG:
                 error['debug'] = {
                     'action': action,
@@ -272,9 +281,11 @@ class BasePolicy():
         if OauthScope.CLIENT_ALL in scopes:
             return
         elif not self.current_user and OauthScope.CLIENT_PUBLIC not in scopes:
-            error.update({
-                'message': 'Private access for {} only, invalid scope.'.format(val),
-            })
+            error.update(
+                {
+                    'message': 'Private access for {} only, invalid scope.'.format(val),
+                }
+            )
             if settings.DEBUG:
                 error['debug'] = {
                     'class': self.__class__.__name__,
@@ -282,9 +293,11 @@ class BasePolicy():
                 }
             raise ApiError(error)
         elif self.current_user and OauthScope.CLIENT_PRIVATE not in scopes:
-            error.update({
-                'message': 'Public access for {} only, invalid scope.'.format(val),
-            })
+            error.update(
+                {
+                    'message': 'Public access for {} only, invalid scope.'.format(val),
+                }
+            )
             if settings.DEBUG:
                 error['debug'] = {
                     'scopes': scopes,

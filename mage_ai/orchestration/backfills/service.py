@@ -53,11 +53,13 @@ def preview_run_dates(backfill: Backfill) -> List[Dict]:
 def cancel_backfill(backfill: Backfill) -> None:
     for pipeline_run in PipelineRun.query.filter(
         PipelineRun.backfill_id == backfill.id,
-        PipelineRun.status.not_in([
-            PipelineRun.PipelineRunStatus.CANCELLED,
-            PipelineRun.PipelineRunStatus.COMPLETED,
-            PipelineRun.PipelineRunStatus.FAILED,
-        ]),
+        PipelineRun.status.not_in(
+            [
+                PipelineRun.PipelineRunStatus.CANCELLED,
+                PipelineRun.PipelineRunStatus.COMPLETED,
+                PipelineRun.PipelineRunStatus.FAILED,
+            ]
+        ),
     ):
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
 
@@ -70,11 +72,14 @@ def __build_variables_list(backfill: Backfill) -> List[Dict]:
         return []
 
     dates = __build_dates(backfill)
-    return [{
-        'ds': execution_date.strftime('%Y-%m-%d'),
-        'execution_date': execution_date.isoformat(),
-        'hr': execution_date.strftime('%H'),
-    } for execution_date in dates]
+    return [
+        {
+            'ds': execution_date.strftime('%Y-%m-%d'),
+            'execution_date': execution_date.isoformat(),
+            'hr': execution_date.strftime('%H'),
+        }
+        for execution_date in dates
+    ]
 
 
 def __build_dates(backfill: Backfill) -> List[datetime]:

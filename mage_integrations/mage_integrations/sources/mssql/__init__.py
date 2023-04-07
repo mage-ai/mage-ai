@@ -1,6 +1,4 @@
-from mage_integrations.connections.mssql import (
-    MSSQL as MSSQLConnection
-)
+from mage_integrations.connections.mssql import MSSQL as MSSQLConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.constants import (
     COLUMN_FORMAT_DATETIME,

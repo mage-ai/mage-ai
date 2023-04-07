@@ -20,11 +20,7 @@ class Paystack(Source):
     ) -> Generator[List[Dict], None, None]:
         tap_stream_id = stream.tap_stream_id
         stream_obj = STREAMS[tap_stream_id](
-            self.config,
-            self.state,
-            stream,
-            self.client,
-            self.logger
+            self.config, self.state, stream, self.client, self.logger
         )
 
         bookmark_properties = self._get_bookmark_properties_for_stream(stream)
@@ -39,6 +35,7 @@ class Paystack(Source):
 
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].VALID_REPLICATION_KEYS
+
 
 if __name__ == '__main__':
     main(Paystack)

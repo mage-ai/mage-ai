@@ -72,28 +72,21 @@ class BlockRunResource(DatabaseResource):
         ]
 
         query = (
-            BlockRun.
-            select(*columns).
-            join(b, a.pipeline_run_id == b.id).
-            join(c, b.pipeline_schedule_id == c.id)
+            BlockRun.select(*columns)
+            .join(b, a.pipeline_run_id == b.id)
+            .join(c, b.pipeline_schedule_id == c.id)
         )
 
         pipeline_run_id = query_arg.get('pipeline_run_id', [None])
         if pipeline_run_id:
             pipeline_run_id = pipeline_run_id[0]
         if pipeline_run_id:
-            query = (
-                query.
-                filter(a.pipeline_run_id == int(pipeline_run_id))
-            )
+            query = query.filter(a.pipeline_run_id == int(pipeline_run_id))
 
         pipeline_uuid = query_arg.get('pipeline_uuid', [None])
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
         if pipeline_uuid:
-            query = (
-                query.
-                filter(c.pipeline_uuid == pipeline_uuid)
-            )
+            query = query.filter(c.pipeline_uuid == pipeline_uuid)
 
         return query.order_by(a.created_at.desc(), a.completed_at.desc())

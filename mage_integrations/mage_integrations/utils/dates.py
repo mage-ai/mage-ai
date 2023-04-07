@@ -1,6 +1,7 @@
 import datetime
 import math
 
+
 def date_intervals(start_date, end_date, timedelta):
     tzinfos = list(filter(lambda x: x, [end_date.tzinfo, start_date.tzinfo]))
     if len(tzinfos) == 1:
@@ -25,10 +26,12 @@ def date_intervals(start_date, end_date, timedelta):
         remainder = total_seconds % timedelta_seconds
         if remainder:
             last_end_time = arr[-1][1]
-            arr.append((
-                last_end_time + datetime.timedelta(seconds=1),
-                last_end_time + datetime.timedelta(seconds=remainder),
-            ))
+            arr.append(
+                (
+                    last_end_time + datetime.timedelta(seconds=1),
+                    last_end_time + datetime.timedelta(seconds=remainder),
+                )
+            )
     else:
         arr.append((start_date, end_date))
 

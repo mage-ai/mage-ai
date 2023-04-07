@@ -42,28 +42,26 @@ class PipelineResource(BaseResource):
                 print(f'Error loading pipeline {uuid}: {err}.')
                 return None
 
-        pipelines = await asyncio.gather(
-            *[get_pipeline(uuid) for uuid in pipeline_uuids]
-        )
+        pipelines = await asyncio.gather(*[get_pipeline(uuid) for uuid in pipeline_uuids])
         pipelines = [p for p in pipelines if p is not None]
 
         @safe_db_query
         def query_pipeline_schedules(pipeline_uuids):
             a = aliased(PipelineSchedule, name='a')
             result = (
-                PipelineSchedule.
-                select(*[
-                    a.created_at,
-                    a.id,
-                    a.name,
-                    a.pipeline_uuid,
-                    a.schedule_interval,
-                    a.schedule_type,
-                    a.start_time,
-                    a.status,
-                    a.updated_at,
-                ]).
-                filter(a.pipeline_uuid.in_(pipeline_uuids))
+                PipelineSchedule.select(
+                    *[
+                        a.created_at,
+                        a.id,
+                        a.name,
+                        a.pipeline_uuid,
+                        a.schedule_interval,
+                        a.schedule_type,
+                        a.start_time,
+                        a.status,
+                        a.updated_at,
+                    ]
+                ).filter(a.pipeline_uuid.in_(pipeline_uuids))
             ).all()
             return group_by(lambda x: x.pipeline_uuid, result)
 
@@ -81,15 +79,25 @@ class PipelineResource(BaseResource):
             pipeline.schedules = schedules
 
             if pipeline_statuses and (
-                (PipelineStatus.ACTIVE in pipeline_statuses and
-                    any(s.status == PipelineSchedule.ScheduleStatus.ACTIVE
-                        for s in pipeline.schedules)) or
-                (PipelineStatus.INACTIVE in pipeline_statuses and
-                    len(pipeline.schedules) > 0 and
-                    all(s.status == PipelineSchedule.ScheduleStatus.INACTIVE
-                        for s in pipeline.schedules)) or
-                (PipelineStatus.NO_SCHEDULES in pipeline_statuses and
-                    len(pipeline.schedules) == 0)
+                (
+                    PipelineStatus.ACTIVE in pipeline_statuses
+                    and any(
+                        s.status == PipelineSchedule.ScheduleStatus.ACTIVE
+                        for s in pipeline.schedules
+                    )
+                )
+                or (
+                    PipelineStatus.INACTIVE in pipeline_statuses
+                    and len(pipeline.schedules) > 0
+                    and all(
+                        s.status == PipelineSchedule.ScheduleStatus.INACTIVE
+                        for s in pipeline.schedules
+                    )
+                )
+                or (
+                    PipelineStatus.NO_SCHEDULES in pipeline_statuses
+                    and len(pipeline.schedules) == 0
+                )
             ):
                 filtered_pipelines.append(pipeline)
 
@@ -173,23 +181,22 @@ class PipelineResource(BaseResource):
         @safe_db_query
         def update_schedule_status(status, pipeline_uuid):
             schedules = (
-                PipelineSchedule.
-                query.
-                filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
+                PipelineSchedule.query.filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
             ).all()
             for schedule in schedules:
                 schedule.update(status=status)
 
         @safe_db_query
         def cancel_pipeline_runs(status, pipeline_uuid):
-            pipeline_runs = (
-                PipelineRun.
-                query.
-                filter(PipelineRun.pipeline_uuid == pipeline_uuid).
-                filter(PipelineRun.status.in_([
-                    PipelineRun.PipelineRunStatus.INITIAL,
-                    PipelineRun.PipelineRunStatus.RUNNING,
-                ]))
+            pipeline_runs = PipelineRun.query.filter(
+                PipelineRun.pipeline_uuid == pipeline_uuid
+            ).filter(
+                PipelineRun.status.in_(
+                    [
+                        PipelineRun.PipelineRunStatus.INITIAL,
+                        PipelineRun.PipelineRunStatus.RUNNING,
+                    ]
+                )
             )
             for pipeline_run in pipeline_runs:
                 PipelineScheduler(pipeline_run).stop()

@@ -6,13 +6,12 @@ from base import FacebookBaseTest
 
 
 class FacebookAttributionWindow(FacebookBaseTest):
-
     @staticmethod
     def name():
         return "tap_tester_facebook_attribution_window"
 
     def streams_to_test(self):
-        """ 'attribution window' is only supported for 'ads_insights' streams """
+        """'attribution window' is only supported for 'ads_insights' streams"""
         return [stream for stream in self.expected_streams() if self.is_insight(stream)]
 
     def get_properties(self, original: bool = True):
@@ -21,7 +20,7 @@ class FacebookAttributionWindow(FacebookBaseTest):
             'account_id': os.getenv('TAP_FACEBOOK_ACCOUNT_ID'),
             'start_date': self.start_date,
             'end_date': self.end_date,
-            'insights_buffer_days': str(self.ATTRIBUTION_WINDOW)
+            'insights_buffer_days': str(self.ATTRIBUTION_WINDOW),
         }
         if original:
             return return_value
@@ -54,7 +53,7 @@ class FacebookAttributionWindow(FacebookBaseTest):
 
     def run_test(self, attr_window, start_date, end_date):
         """
-            Test to check the attribution window
+        Test to check the attribution window
         """
 
         expected_streams = self.streams_to_test()
@@ -71,7 +70,9 @@ class FacebookAttributionWindow(FacebookBaseTest):
 
         # Select only the expected streams tables
         catalog_entries = [ce for ce in found_catalogs if ce['tap_stream_id'] in expected_streams]
-        self.perform_and_verify_table_and_field_selection(conn_id, catalog_entries, select_all_fields=True)
+        self.perform_and_verify_table_and_field_selection(
+            conn_id, catalog_entries, select_all_fields=True
+        )
 
         # Run a sync job using orchestrator
         self.run_and_verify_sync(conn_id)
@@ -81,11 +82,12 @@ class FacebookAttributionWindow(FacebookBaseTest):
 
         for stream in expected_streams:
             with self.subTest(stream=stream):
-
                 replication_key = next(iter(expected_replication_keys[stream]))
 
                 # get records
-                records = [record.get('data') for record in sync_records.get(stream).get('messages')]
+                records = [
+                    record.get('data') for record in sync_records.get(stream).get('messages')
+                ]
 
                 # check for the record is between attribution date and start date
                 is_between = False
@@ -94,11 +96,18 @@ class FacebookAttributionWindow(FacebookBaseTest):
                     replication_key_value = record.get(replication_key)
 
                     # Verify the sync records respect the attribution window
-                    self.assertGreaterEqual(self.parse_date(replication_key_value), self.parse_date(start_date_with_attribution_window),
-                                            msg="The record does not respect the attribution window.")
+                    self.assertGreaterEqual(
+                        self.parse_date(replication_key_value),
+                        self.parse_date(start_date_with_attribution_window),
+                        msg="The record does not respect the attribution window.",
+                    )
 
                     # verify if the record's bookmark value is between start date and attribution window
-                    if self.parse_date(start_date_with_attribution_window) <= self.parse_date(replication_key_value) <= self.parse_date(start_date):
+                    if (
+                        self.parse_date(start_date_with_attribution_window)
+                        <= self.parse_date(replication_key_value)
+                        <= self.parse_date(start_date)
+                    ):
                         is_between = True
 
                     self.assertTrue(is_between)

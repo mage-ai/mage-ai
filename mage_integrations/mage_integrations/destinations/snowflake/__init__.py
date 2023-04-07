@@ -44,12 +44,11 @@ def convert_array(value, column_settings):
 def convert_column_if_json(value, column_type):
     if SNOWFLAKE_COLUMN_TYPE_VARIANT == column_type:
         value = (
-            value.
-            replace('\\n', '\\\\n').
-            encode('unicode_escape').
-            decode().
-            replace("'", "\\'").
-            replace('\\"', '\\\\"')
+            value.replace('\\n', '\\\\n')
+            .encode('unicode_escape')
+            .decode()
+            .replace("'", "\\'")
+            .replace('\\"', '\\\\"')
         )
         # Arrêté N°2018-61
         # Arr\u00eat\u00e9 N\u00b02018-61
@@ -136,8 +135,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
                 return col_name.upper()
             return col_name
 
-        new_columns = [c for c in schema_columns
-                       if format_col_name(clean_column_name(c)) not in current_columns]
+        new_columns = [
+            c
+            for c in schema_columns
+            if format_col_name(clean_column_name(c)) not in current_columns
+        ]
 
         if not new_columns:
             return []
@@ -206,20 +208,28 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
 
         if unique_constraints and unique_conflict_method:
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
-            commands = [
-                drop_temp_table_command,
-            ] + self.build_create_table_commands(
-                schema=schema,
-                schema_name=schema_name,
-                stream=None,
-                table_name=f'temp_{table_name}',
-                database_name=database_name,
-                unique_constraints=unique_constraints,
-            ) + ['\n'.join([
-                f'INSERT INTO {full_table_name_temp} ({insert_columns})',
-                f'SELECT {select_values}',
-                f'FROM VALUES {insert_values}',
-            ])]
+            commands = (
+                [
+                    drop_temp_table_command,
+                ]
+                + self.build_create_table_commands(
+                    schema=schema,
+                    schema_name=schema_name,
+                    stream=None,
+                    table_name=f'temp_{table_name}',
+                    database_name=database_name,
+                    unique_constraints=unique_constraints,
+                )
+                + [
+                    '\n'.join(
+                        [
+                            f'INSERT INTO {full_table_name_temp} ({insert_columns})',
+                            f'SELECT {select_values}',
+                            f'FROM VALUES {insert_values}',
+                        ]
+                    )
+                ]
+            )
 
             unique_constraints_clean = [
                 f'{self.column_identifier}{clean_column_name(col)}{self.column_identifier}'
@@ -254,11 +264,13 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             ]
 
         return [
-            '\n'.join([
-                f'INSERT INTO {full_table_name} ({insert_columns})',
-                f'SELECT {select_values}',
-                f'FROM VALUES {insert_values}',
-            ]),
+            '\n'.join(
+                [
+                    f'INSERT INTO {full_table_name} ({insert_columns})',
+                    f'SELECT {select_values}',
+                    f'FROM VALUES {insert_values}',
+                ]
+            ),
         ]
 
     def build_create_schema_commands(
@@ -291,9 +303,11 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         # This method will fail if the schema didn’t exist prior to running this destination.
         # The create schema command will only commit if the entire transaction was successful.
         # Checking the existence of a table in a non-existent schema will fail.
-        data = self.build_connection().execute([
-            f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database_name}.{schema_name}',
-        ])
+        data = self.build_connection().execute(
+            [
+                f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database_name}.{schema_name}',
+            ]
+        )
 
         return len(data[0]) >= 1
 

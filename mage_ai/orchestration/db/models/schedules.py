@@ -79,7 +79,7 @@ class PipelineSchedule(BaseModel):
     event_matchers = relationship(
         'EventMatcher',
         secondary=pipeline_schedule_event_matcher_association_table,
-        back_populates='pipeline_schedules'
+        back_populates='pipeline_schedules',
     )
 
     def get_settings(self) -> 'SettingsConfig':
@@ -92,8 +92,9 @@ class PipelineSchedule(BaseModel):
 
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
-        if schedule_interval and schedule_interval not in \
-                [e.value for e in self.__class__.ScheduleInterval]:
+        if schedule_interval and schedule_interval not in [
+            e.value for e in self.__class__.ScheduleInterval
+        ]:
             if not croniter.is_valid(schedule_interval):
                 raise ValueError('Cron expression is invalid.')
 
@@ -132,8 +133,9 @@ class PipelineSchedule(BaseModel):
         elif self.schedule_interval == '@hourly':
             return now.replace(second=0, microsecond=0, minute=0)
         elif self.schedule_interval == '@weekly':
-            return now.replace(second=0, microsecond=0, minute=0, hour=0) - \
-                timedelta(days=now.weekday())
+            return now.replace(second=0, microsecond=0, minute=0, hour=0) - timedelta(
+                days=now.weekday()
+            )
         elif self.schedule_interval == '@monthly':
             return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         else:
@@ -164,8 +166,7 @@ class PipelineSchedule(BaseModel):
             if current_execution_date is None:
                 return False
             if not find(
-                lambda x: compare(x.execution_date, current_execution_date) == 0,
-                self.pipeline_runs
+                lambda x: compare(x.execution_date, current_execution_date) == 0, self.pipeline_runs
             ):
                 return True
         return False
@@ -195,8 +196,10 @@ class PipelineRun(BaseModel):
     backfill = relationship('Backfill', back_populates='pipeline_runs')
 
     def __repr__(self):
-        return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
-               f' execution_date={self.execution_date})'
+        return (
+            f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'
+            f' execution_date={self.execution_date})'
+        )
 
     @property
     def block_runs_count(self) -> int:
@@ -207,10 +210,12 @@ class PipelineRun(BaseModel):
         if self.execution_date is None:
             return str(self.pipeline_schedule_id)
         else:
-            return '/'.join([
-                        str(self.pipeline_schedule_id),
-                        self.execution_date.strftime(format='%Y%m%dT%H%M%S'),
-                    ])
+            return '/'.join(
+                [
+                    str(self.pipeline_schedule_id),
+                    self.execution_date.strftime(format='%Y%m%dT%H%M%S'),
+                ]
+            )
 
     @property
     def pipeline(self) -> 'Pipeline':
@@ -274,10 +279,12 @@ class PipelineRun(BaseModel):
     ):
         return self.query.filter(
             PipelineRun.pipeline_schedule_id.in_(pipeline_schedules),
-            PipelineRun.status.in_([
-                self.PipelineRunStatus.INITIAL,
-                self.PipelineRunStatus.RUNNING,
-            ]),
+            PipelineRun.status.in_(
+                [
+                    self.PipelineRunStatus.INITIAL,
+                    self.PipelineRunStatus.RUNNING,
+                ]
+            ),
             PipelineRun.passed_sla.is_(False),
         ).all()
 
@@ -300,18 +307,17 @@ class PipelineRun(BaseModel):
         return [self.create_block_run(b.uuid) for b in arr]
 
     def any_blocks_failed(self) -> bool:
-        return any(
-            b.status == BlockRun.BlockRunStatus.FAILED
-            for b in self.block_runs
-        )
+        return any(b.status == BlockRun.BlockRunStatus.FAILED for b in self.block_runs)
 
     def all_blocks_completed(self, include_failed_blocks: bool = False) -> bool:
         statuses = [BlockRun.BlockRunStatus.COMPLETED]
         if include_failed_blocks:
-            statuses.extend([
-                BlockRun.BlockRunStatus.FAILED,
-                BlockRun.BlockRunStatus.UPSTREAM_FAILED,
-            ])
+            statuses.extend(
+                [
+                    BlockRun.BlockRunStatus.FAILED,
+                    BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+                ]
+            )
         return all(b.status in statuses for b in self.block_runs)
 
 
@@ -356,9 +362,9 @@ class BlockRun(BaseModel):
     @classmethod
     @safe_db_query
     def batch_update_status(self, block_run_ids: List[int], status):
-        BlockRun.query.filter(BlockRun.id.in_(block_run_ids)).update({
-            BlockRun.status: status
-        }, synchronize_session=False)
+        BlockRun.query.filter(BlockRun.id.in_(block_run_ids)).update(
+            {BlockRun.status: status}, synchronize_session=False
+        )
         db_connection.session.commit()
 
     @classmethod
@@ -457,14 +463,16 @@ class EventMatcher(BaseModel):
 
             if event_matcher.event_type == EventMatcher.EventType.AWS_EVENT:
                 from mage_ai.services.aws.events.events import update_event_rule_targets
+
                 # For AWS event, update related AWS infra (add trigger to lambda function)
                 update_event_rule_targets(event_matcher.name)
 
         return [t[0] for t in event_matchers_and_pipeline_schedule_ids]
 
     def active_pipeline_schedules(self) -> List[PipelineSchedule]:
-        return [p for p in self.pipeline_schedules
-                if p.status == PipelineSchedule.ScheduleStatus.ACTIVE]
+        return [
+            p for p in self.pipeline_schedules if p.status == PipelineSchedule.ScheduleStatus.ACTIVE
+        ]
 
     def match(self, config: Dict) -> bool:
         def __match_dict(sub_pattern, sub_config):
@@ -480,6 +488,7 @@ class EventMatcher(BaseModel):
                 elif not __match_dict(v, sub_config[k]):
                     return False
             return True
+
         return __match_dict(self.pattern, config)
 
 

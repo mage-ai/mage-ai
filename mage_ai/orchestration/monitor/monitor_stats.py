@@ -31,11 +31,14 @@ class MonitorStats:
             start_time = end_time - timedelta(days=30)
         else:
             start_time = dateutil.parser.parse(start_time)
-        new_kwargs = merge_dict(dict(
-            pipeline_uuid=pipeline_uuid,
-            start_time=start_time,
-            end_time=end_time,
-        ), kwargs)
+        new_kwargs = merge_dict(
+            dict(
+                pipeline_uuid=pipeline_uuid,
+                start_time=start_time,
+                end_time=end_time,
+            ),
+            kwargs,
+        )
         if stats_type == MonitorStatsType.PIPELINE_RUN_COUNT:
             return self.get_pipeline_run_count(**new_kwargs)
         elif stats_type == MonitorStatsType.PIPELINE_RUN_TIME:
@@ -95,11 +98,15 @@ class MonitorStats:
         pipeline_run_by_date = group_by(lambda p: p.created_at.strftime('%Y-%m-%d'), pipeline_runs)
 
         def __mean_runtime(pipeline_runs):
-            runtime_list = [(p.completed_at - p.created_at).total_seconds()
-                            for p in pipeline_runs if p.completed_at > p.created_at]
+            runtime_list = [
+                (p.completed_at - p.created_at).total_seconds()
+                for p in pipeline_runs
+                if p.completed_at > p.created_at
+            ]
             if len(runtime_list) == 0:
                 return 0
             return sum(runtime_list) / len(runtime_list)
+
         pipeline_run_time_by_date = {k: __mean_runtime(v) for k, v in pipeline_run_by_date.items()}
         return {pipeline_uuid: dict(name=pipeline_uuid, data=pipeline_run_time_by_date)}
 
@@ -145,8 +152,11 @@ class MonitorStats:
         block_runs = block_runs.filter(BlockRun.completed_at != None).all()  # noqa: E711
 
         def __stats_func(block_runs):
-            runtime_list = [(b.completed_at - b.created_at).total_seconds()
-                            for b in block_runs if b.completed_at > b.created_at]
+            runtime_list = [
+                (b.completed_at - b.created_at).total_seconds()
+                for b in block_runs
+                if b.completed_at > b.created_at
+            ]
             if len(runtime_list) == 0:
                 return 0
             return sum(runtime_list) / len(runtime_list)
@@ -158,7 +168,7 @@ class MonitorStats:
         pipeline_uuid: str = None,
         start_time: datetime = None,
         end_time: datetime = None,
-        **kwargs
+        **kwargs,
     ) -> Dict:
         pipeline_runs = PipelineRun.query.options(joinedload(PipelineRun.pipeline_schedule))
         if pipeline_uuid is not None:
@@ -184,15 +194,11 @@ class MonitorStats:
     ) -> Dict:
         block_runs = BlockRun.query
         if pipeline_uuid is not None:
-            block_runs = (
-                block_runs.
-                join(
-                    PipelineRun,
-                    PipelineRun.id == BlockRun.pipeline_run_id,
-                ).
-                filter(
-                    PipelineRun.pipeline_uuid == pipeline_uuid,
-                )
+            block_runs = block_runs.join(
+                PipelineRun,
+                PipelineRun.id == BlockRun.pipeline_run_id,
+            ).filter(
+                PipelineRun.pipeline_uuid == pipeline_uuid,
             )
         if start_time is not None:
             block_runs = block_runs.filter(BlockRun.created_at >= start_time)
@@ -206,11 +212,7 @@ class MonitorStats:
             )
         return block_runs
 
-    def __cal_block_run_stats(
-        self,
-        block_runs: List[BlockRun],
-        stats_func: Callable
-    ) -> Dict:
+    def __cal_block_run_stats(self, block_runs: List[BlockRun], stats_func: Callable) -> Dict:
         block_runs_by_uuid = group_by(lambda b: b.block_uuid, block_runs)
         block_run_stats = dict()
         for uuid, sub_block_runs in block_runs_by_uuid.items():

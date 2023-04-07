@@ -20,17 +20,17 @@ EMOJI_PATTERN = re.compile(
     u"\U00002702-\U000027B0"  # dingbats
     u"\U000024C2-\U0001F251"  # enclosed characters
     u"\U0001f926-\U0001f937"  # woman, man, and other emojis with skin tones
-    u"\U0001F1F2"             # regional indicator symbol letters A
-    u"\U0001F1F4"             # regional indicator symbol letters B
-    u"\U0001F620"             # angry face
-    u"\u200d"                 # zero width joiner
-    u"\u2640-\u2642"          # male and female symbols
-    u"\u2600-\u2B55"          # weather symbols
-    u"\u23cf"                 # eject button
-    u"\u23e9"                 # fast forward button
-    u"\u231a"                 # watch
-    u"\ufe0f"                 # emoji variation selector-16
-    u"\u3030"                 # wavy dash
+    u"\U0001F1F2"  # regional indicator symbol letters A
+    u"\U0001F1F4"  # regional indicator symbol letters B
+    u"\U0001F620"  # angry face
+    u"\u200d"  # zero width joiner
+    u"\u2640-\u2642"  # male and female symbols
+    u"\u2600-\u2B55"  # weather symbols
+    u"\u23cf"  # eject button
+    u"\u23e9"  # fast forward button
+    u"\u231a"  # watch
+    u"\ufe0f"  # emoji variation selector-16
+    u"\u3030"  # wavy dash
     u"\U00002500-\U00002BEF"  # Chinese characters
     u"\U00010000-\U0010ffff"  # other characters
     u'\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]|[\uD83C-\uDBFF\uDC00-\uDFFF]+'
@@ -44,7 +44,11 @@ def replace_single_quotes_with_double(v: str) -> str:
         v = json.dumps(v)
     # Remove emoji code
     if type(v) is str:
-        v = re.sub(r'(\\ud83d\\ud[0-f][0-f][0-f])|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])', '', v)
+        v = re.sub(
+            r'(\\ud83d\\ud[0-f][0-f][0-f])|(\\ud83c\\ud[0-f][0-f][0-f])|(\\ud83e\\ud[0-f][0-f][0-f])',
+            '',
+            v,
+        )
         v = EMOJI_PATTERN.sub(r'', v)
     if type(v) is not str:
         v = str(v)
@@ -67,9 +71,14 @@ def convert_array(value: str, column_type_dict: Dict) -> str:
         return f'[{arr_string}]'
 
     if type(value) is list:
-        value_next = [f"CAST('{replace_single_quotes_with_double(v)}' AS {item_type_converted})" for v in value]
+        value_next = [
+            f"CAST('{replace_single_quotes_with_double(v)}' AS {item_type_converted})"
+            for v in value
+        ]
     else:
-        value_next = [f"CAST('{replace_single_quotes_with_double(value)}' AS {item_type_converted})"]
+        value_next = [
+            f"CAST('{replace_single_quotes_with_double(value)}' AS {item_type_converted})"
+        ]
 
     arr_string = ', '.join([str(v) for v in value_next])
 
@@ -83,9 +92,9 @@ def convert_column_type(
 ) -> str:
     if COLUMN_TYPE_OBJECT == column_type:
         return 'JSON'
-    elif COLUMN_TYPE_STRING == column_type \
-            and COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-
+    elif COLUMN_TYPE_STRING == column_type and COLUMN_FORMAT_DATETIME == column_settings.get(
+        'format'
+    ):
         return 'DATETIME'
     elif COLUMN_TYPE_BOOLEAN == column_type:
         return 'BOOL'
@@ -166,10 +175,7 @@ def convert_json_or_string(value, column_type_dict):
 
 
 def remove_duplicate_rows(
-    row_data: List[Dict],
-    unique_constraints: List[str],
-    logger=None,
-    tags: Dict = {}
+    row_data: List[Dict], unique_constraints: List[str], logger=None, tags: Dict = {}
 ) -> List[Dict]:
     if not unique_constraints or len(unique_constraints) == 0:
         return row_data

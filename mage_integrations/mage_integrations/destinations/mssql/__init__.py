@@ -1,6 +1,4 @@
-from mage_integrations.connections.mssql import (
-    MSSQL as MSSQLConnection
-)
+from mage_integrations.connections.mssql import MSSQL as MSSQLConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     UNIQUE_CONFLICT_METHOD_UPDATE,
@@ -88,7 +86,8 @@ END
             columns=columns,
             records=records,
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
-            if COLUMN_TYPE_OBJECT == y['type'] else x,
+            if COLUMN_TYPE_OBJECT == y['type']
+            else x,
         )
         insert_columns = ', '.join([clean_column_name(col) for col in insert_columns])
         insert_values = ', '.join(insert_values)
@@ -135,10 +134,14 @@ END
         database_name: str = None,
     ) -> bool:
         connection = self.build_connection()
-        data = connection.load('\n'.join([
-            'SELECT * FROM information_schema.tables ',
-            f'WHERE table_schema = \'{schema_name}\' AND table_name = \'{table_name}\'',
-        ]))
+        data = connection.load(
+            '\n'.join(
+                [
+                    'SELECT * FROM information_schema.tables ',
+                    f'WHERE table_schema = \'{schema_name}\' AND table_name = \'{table_name}\'',
+                ]
+            )
+        )
         return len(data) >= 1
 
     def calculate_records_inserted_and_updated(

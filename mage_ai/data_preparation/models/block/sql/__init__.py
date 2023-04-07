@@ -267,11 +267,11 @@ def execute_sql_code(
 
                 if should_query:
                     return [
-                            loader.load(
-                                f'SELECT * FROM {schema}.{table_name}',
-                                verbose=False,
-                            ),
-                        ]
+                        loader.load(
+                            f'SELECT * FROM {schema}.{table_name}',
+                            verbose=False,
+                        ),
+                    ]
     elif DataSource.SNOWFLAKE.value == data_provider:
         from mage_ai.io.snowflake import Snowflake
 
@@ -371,7 +371,7 @@ def split_query_string(query_string: str) -> List[str]:
 
     previous_idx = 0
 
-    for idx, match in enumerate(matches):
+    for _idx, match in enumerate(matches):
         matched_string = match.group()
         updated_string = re.sub(r';', MAGE_SEMI_COLON, matched_string)
 

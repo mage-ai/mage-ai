@@ -1,19 +1,20 @@
 import os
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 
 from functools import reduce
+
 # TODO fix setup.py? so zenpy module is availalble on dev_vm without manually running pip install
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Group, Organization, Tag, User
 
 from base import ZendeskTest
 
+
 class ZendeskAllStreams(ZendeskTest):
     def name(self):
         return "tap_tester_zendesk_all_streams"
-
 
     def expected_sync_streams(self):
         return {
@@ -29,7 +30,6 @@ class ZendeskAllStreams(ZendeskTest):
             "ticket_metrics",
         }
 
-
     def expected_pks(self):
         return {
             "tickets": {"id"},
@@ -44,7 +44,6 @@ class ZendeskAllStreams(ZendeskTest):
             "ticket_metrics": {"id"},
         }
 
-
     def refresh_tags(self, records):
         # Zenpy client credentials to connect to API
         creds = {
@@ -55,7 +54,11 @@ class ZendeskAllStreams(ZendeskTest):
 
         test_tags = ['test_tag_1', 'test_tag_2', 'test_tag_3']
         # filter out closed tickets since we cannot update them to refresh thier tags
-        unclosed_tickets = [t for t in records.get('tickets').get('messages') if t.get('data').get('status') != 'closed']
+        unclosed_tickets = [
+            t
+            for t in records.get('tickets').get('messages')
+            if t.get('data').get('status') != 'closed'
+        ]
         self.assertGreaterEqual(len(unclosed_tickets), 3)
         last_3_unclosed_tickets = unclosed_tickets[-3:]
 
@@ -69,10 +72,9 @@ class ZendeskAllStreams(ZendeskTest):
                 # replace old tags. adding the same tag does not create duplicates
                 zenpy_client.tickets.add_tags(tic.get('data').get('id'), tag_list)
             # add / refresh test tags
-            zenpy_client.tickets.add_tags(tic.get('data').get('id'), test_tags[0:(i+1)])
+            zenpy_client.tickets.add_tags(tic.get('data').get('id'), test_tags[0 : (i + 1)])
             # mark tags as refreshed as soon as we successfully get through one loop
             self.tags_are_stale = False
-
 
     def test_run(self):
         # Default test setup
@@ -89,13 +91,17 @@ class ZendeskAllStreams(ZendeskTest):
         self.assertEqual(len(self.found_catalogs), len(self.expected_check_streams()))
 
         # Verify the schemas discovered were exactly what we expect
-        found_catalog_names = {catalog['tap_stream_id']
-                               for catalog in self.found_catalogs
-                               if catalog['tap_stream_id'] in self.expected_check_streams()}
+        found_catalog_names = {
+            catalog['tap_stream_id']
+            for catalog in self.found_catalogs
+            if catalog['tap_stream_id'] in self.expected_check_streams()
+        }
         self.assertSetEqual(self.expected_check_streams(), found_catalog_names)
 
         # Select our catalogs
-        our_catalogs = [c for c in self.found_catalogs if c.get('tap_stream_id') in self.expected_sync_streams()]
+        our_catalogs = [
+            c for c in self.found_catalogs if c.get('tap_stream_id') in self.expected_sync_streams()
+        ]
         for c in our_catalogs:
             c_annotated = menagerie.get_annotated_schema(conn_id, c['stream_id'])
             c_metadata = self.to_map(c_annotated['metadata'])
@@ -118,7 +124,7 @@ class ZendeskAllStreams(ZendeskTest):
 
         # If all tags have aged out then refresh them and run another sync, tags not used in over
         # 60 days will automatically age out.  Removing and re-adding the tag will refresh it
-        if not records.get('tags').get('messages',[]):
+        if not records.get('tags').get('messages', []):
             self.refresh_tags(records)
 
             # Run a second sync job to pick up new tags, should be faster since we haven't touched state
@@ -129,9 +135,8 @@ class ZendeskAllStreams(ZendeskTest):
             tags_records = runner.get_records_from_target_output()
             self.assertGreater(len(tags_records, 0))
 
-
         for stream in self.expected_sync_streams():
-            messages = records.get(stream,{}).get('messages',[])
+            messages = records.get(stream, {}).get('messages', [])
 
             if stream == 'tags':
                 # check to see if tags were already refreshed or not
@@ -142,9 +147,16 @@ class ZendeskAllStreams(ZendeskTest):
                     # tags were already refreshed so records were missing from first sync
                     messages = tags_records.get(stream).get('messages')
 
-            if stream in  ['tickets', 'groups', 'users']:
-                self.assertGreater(len(messages), 100, msg="Stream {} has fewer than 100 records synced".format(stream))
+            if stream in ['tickets', 'groups', 'users']:
+                self.assertGreater(
+                    len(messages),
+                    100,
+                    msg="Stream {} has fewer than 100 records synced".format(stream),
+                )
             for m in messages:
                 pk_set = self.expected_pks()[stream]
                 for pk in pk_set:
-                    self.assertIsNotNone(m.get('data', {}).get(pk), msg="Missing primary-key for message {}".format(m))
+                    self.assertIsNotNone(
+                        m.get('data', {}).get(pk),
+                        msg="Missing primary-key for message {}".format(m),
+                    )

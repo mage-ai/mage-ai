@@ -1,12 +1,13 @@
 import datetime
 
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 from tap_tester import LOGGER
 
 from base import HubspotBaseTest
 from client import TestClient
+
 
 def get_matching_actual_record_by_pk(expected_primary_key_dict, actual_records):
     ret_records = []
@@ -22,6 +23,7 @@ def get_matching_actual_record_by_pk(expected_primary_key_dict, actual_records):
         can_save = True
     return ret_records
 
+
 FIELDS_ADDED_BY_TAP = {
     # In 'contacts' streams 'versionTimeStamp' is not available in response of the second call.
     # In the 1st call, Tap retrieves records of all contacts and from those records, it collects vids(id of contact).
@@ -29,7 +31,7 @@ FIELDS_ADDED_BY_TAP = {
     # In the 2nd call, vids collected from the 1st call will be used to retrieve the whole contact record.
     # Here, the records collected for detailed contact information do not contain the versionTimestamp field.
     # So, we add the versionTimestamp field(fetched from 1st call records) explicitly in the record of 2nd call.
-    "contacts": { "versionTimestamp" }
+    "contacts": {"versionTimestamp"}
 }
 
 KNOWN_EXTRA_FIELDS = {
@@ -41,7 +43,7 @@ KNOWN_EXTRA_FIELDS = {
 }
 
 KNOWN_MISSING_FIELDS = {
-    'contacts':{ # BUG https://jira.talendforge.org/browse/TDL-16016
+    'contacts': {  # BUG https://jira.talendforge.org/browse/TDL-16016
         'property_hs_latest_source_data_2',
         'property_hs_latest_source',
         'property_hs_latest_source_data_1',
@@ -66,7 +68,7 @@ KNOWN_MISSING_FIELDS = {
         'bcc',
         'suppressedReason',
         'cc',
-     },
+    },
     'workflows': {  # BUG https://jira.talendforge.org/browse/TDL-14998
         'migrationStatus',
         'updateSource',
@@ -77,9 +79,7 @@ KNOWN_MISSING_FIELDS = {
         'portalId',
         'contactCounts',
     },
-    'owners': {  # BUG https://jira.talendforge.org/browse/TDL-15000
-        'activeSalesforceId'
-    },
+    'owners': {'activeSalesforceId'},  # BUG https://jira.talendforge.org/browse/TDL-15000
     'forms': {  # BUG https://jira.talendforge.org/browse/TDL-15001
         'alwaysCreateNewCompany',
         'themeColor',
@@ -138,24 +138,25 @@ KNOWN_MISSING_FIELDS = {
         'property_hs_analytics_latest_source_data_2',
         'property_hs_analytics_latest_source_data_2_contact',
     },
-    'subscription_changes':{
-        'normalizedEmailId'
-    }
+    'subscription_changes': {'normalizedEmailId'},
 }
 
 
 class TestHubspotAllFields(HubspotBaseTest):
     """Test that with all fields selected for a stream we replicate data as expected"""
+
     @staticmethod
     def name():
         return "tt_hubspot_all_fields_dynamic"
 
     def streams_under_test(self):
         """expected streams minus the streams not under test"""
-        return self.expected_streams().difference({
-            'owners',
-            'subscription_changes', # BUG_TDL-14938 https://jira.talendforge.org/browse/TDL-14938
-        })
+        return self.expected_streams().difference(
+            {
+                'owners',
+                'subscription_changes',  # BUG_TDL-14938 https://jira.talendforge.org/browse/TDL-14938
+            }
+        )
 
     def setUp(self):
         self.maxDiff = None  # see all output in failure
@@ -172,7 +173,9 @@ class TestHubspotAllFields(HubspotBaseTest):
         for stream in streams:
             # Get all records
             if stream == 'contacts_by_company':
-                company_ids = [company['companyId'] for company in self.expected_records['companies']]
+                company_ids = [
+                    company['companyId'] for company in self.expected_records['companies']
+                ]
                 self.expected_records[stream] = test_client.read(stream, parent_ids=company_ids)
             else:
                 self.expected_records[stream] = test_client.read(stream)
@@ -180,19 +183,17 @@ class TestHubspotAllFields(HubspotBaseTest):
         for stream, records in self.expected_records.items():
             LOGGER.info("The test client found %s %s records.", len(records), stream)
 
-
         self.convert_datatype(self.expected_records)
 
     def convert_datatype(self, expected_records):
         for stream, records in expected_records.items():
             for record in records:
-
                 # convert timestamps to string formatted datetime
                 timestamp_keys = {'timestamp'}
                 for key in timestamp_keys:
                     timestamp = record.get(key)
                     if timestamp:
-                        unformatted = datetime.datetime.fromtimestamp(timestamp/1000)
+                        unformatted = datetime.datetime.fromtimestamp(timestamp / 1000)
                         formatted = datetime.datetime.strftime(unformatted, self.BASIC_DATE_FORMAT)
                         record[key] = formatted
 
@@ -209,9 +210,7 @@ class TestHubspotAllFields(HubspotBaseTest):
         for catalog_entry in catalog_entries:
             stream_schema = menagerie.get_annotated_schema(conn_id, catalog_entry['stream_id'])
             connections.select_catalog_and_fields_via_metadata(
-                conn_id,
-                catalog_entry,
-                stream_schema
+                conn_id, catalog_entry, stream_schema
             )
 
         # Run sync
@@ -221,31 +220,40 @@ class TestHubspotAllFields(HubspotBaseTest):
         # Test by Stream
         for stream in expected_streams:
             with self.subTest(stream=stream):
-
                 # gather expected values
                 replication_method = self.expected_replication_method()[stream]
                 primary_keys = sorted(self.expected_primary_keys()[stream])
 
                 # gather replicated records
-                actual_records = [message['data']
-                                  for message in synced_records[stream]['messages']
-                                  if message['action'] == 'upsert']
+                actual_records = [
+                    message['data']
+                    for message in synced_records[stream]['messages']
+                    if message['action'] == 'upsert'
+                ]
 
                 for expected_record in self.expected_records[stream]:
-
-                    primary_key_dict = {primary_key: expected_record[primary_key] for primary_key in primary_keys}
+                    primary_key_dict = {
+                        primary_key: expected_record[primary_key] for primary_key in primary_keys
+                    }
                     primary_key_values = list(primary_key_dict.values())
 
                     with self.subTest(expected_record=primary_key_dict):
                         # grab the replicated record that corresponds to expected_record by checking primary keys
-                        matching_actual_records_by_pk = get_matching_actual_record_by_pk(primary_key_dict, actual_records)
+                        matching_actual_records_by_pk = get_matching_actual_record_by_pk(
+                            primary_key_dict, actual_records
+                        )
                         if not matching_actual_records_by_pk:
-                            LOGGER.warn("Expected %s record was not replicated: %s",
-                                        stream, primary_key_dict)
-                            continue # skip this expected record if it isn't replicated
+                            LOGGER.warn(
+                                "Expected %s record was not replicated: %s",
+                                stream,
+                                primary_key_dict,
+                            )
+                            continue  # skip this expected record if it isn't replicated
                         actual_record = matching_actual_records_by_pk[0]
 
-                        expected_keys = set(expected_record.keys()).union(FIELDS_ADDED_BY_TAP.get(stream, {}))
+                        expected_keys = set(expected_record.keys()).union(
+                            FIELDS_ADDED_BY_TAP.get(stream, {})
+                        )
                         actual_keys = set(actual_record.keys())
 
                         # NB: KNOWN_MISSING_FIELDS is a dictionary of streams to aggregated missing fields.
@@ -295,16 +303,20 @@ class TestHubspotAllFields(HubspotBaseTest):
                         # self.assertDictEqual(expected_record, actual_record)
 
                 # Toss out a warn if tap is replicating more than the expected records were replicated
-                expected_primary_key_values = {tuple([record[primary_key]
-                                                      for primary_key in primary_keys])
-                                               for record in self.expected_records[stream]}
-                actual_records_primary_key_values = {tuple([record[primary_key]
-                                                            for primary_key in primary_keys])
-                                                     for record in actual_records}
+                expected_primary_key_values = {
+                    tuple([record[primary_key] for primary_key in primary_keys])
+                    for record in self.expected_records[stream]
+                }
+                actual_records_primary_key_values = {
+                    tuple([record[primary_key] for primary_key in primary_keys])
+                    for record in actual_records
+                }
                 if expected_primary_key_values.issubset(actual_records_primary_key_values):
-                    LOGGER.warn("Unexpected %s records replicated: %s",
-                                stream,
-                                actual_records_primary_key_values - expected_primary_key_values)
+                    LOGGER.warn(
+                        "Unexpected %s records replicated: %s",
+                        stream,
+                        actual_records_primary_key_values - expected_primary_key_values,
+                    )
 
 
 class TestHubspotAllFieldsStatic(TestHubspotAllFields):
@@ -320,4 +332,4 @@ class TestHubspotAllFieldsStatic(TestHubspotAllFields):
         }
 
     def get_properties(self):
-        return {'start_date' : '2021-05-02T00:00:00Z'}
+        return {'start_date': '2021-05-02T00:00:00Z'}

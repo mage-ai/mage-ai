@@ -10,9 +10,7 @@ def get_all_event_rules():
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     client = boto3.client('events', config=config)
-    response = client.list_rules(
-        Limit=EVENT_RULE_LIMIT
-    )
+    response = client.list_rules(Limit=EVENT_RULE_LIMIT)
     formatted_rules = [
         dict(
             name=r['Name'],

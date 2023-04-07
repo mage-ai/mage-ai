@@ -85,11 +85,7 @@ class HightouchClient(HttpClient):
                     f"request {run_id}. Will try again, but if you see this error, please let "
                     "someone at Hightouch know.",
                 )
-            if (
-                poll_timeout
-                and datetime.now()
-                > poll_start + timedelta(seconds=poll_timeout)
-            ):
+            if poll_timeout and datetime.now() > poll_start + timedelta(seconds=poll_timeout):
                 raise Exception(
                     f"Sync {sync_id} for run: {run_id} time out after "
                     f"{datetime.now() - poll_start}. Last status was {sync_run['status']}."

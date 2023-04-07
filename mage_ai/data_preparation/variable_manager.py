@@ -54,7 +54,7 @@ class VariableManager:
         variable_uuid: str,
         data: Any,
         partition: str = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
     ) -> None:
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
@@ -82,7 +82,7 @@ class VariableManager:
         variable_uuid: str,
         data: Any,
         partition: str = None,
-        variable_type: VariableType = None
+        variable_type: VariableType = None,
     ) -> None:
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
@@ -103,16 +103,13 @@ class VariableManager:
         variable.variable_type = variable_type
         await variable.write_data_async(data)
 
-    def clean_variables(
-        self,
-        pipeline_uuid: str = None
-    ):
+    def clean_variables(self, pipeline_uuid: str = None):
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         repo_config = get_repo_config()
-        min_partition = (datetime.utcnow() -
-                         str_to_timedelta(repo_config.variables_retention_period)).strftime(
-                            format='%Y%m%dT%H%M%S')
+        min_partition = (
+            datetime.utcnow() - str_to_timedelta(repo_config.variables_retention_period)
+        ).strftime(format='%Y%m%dT%H%M%S')
         print(f'Clean variables before partition {min_partition}')
         if pipeline_uuid is None:
             pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
@@ -207,6 +204,7 @@ class VariableManager:
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
         from mage_ai.data_preparation.models.pipeline import Pipeline
+
         pipeline = Pipeline.get(pipeline_uuid, repo_path=self.repo_path)
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)
         if not self.storage.path_exists(variable_dir_path):
@@ -258,9 +256,7 @@ class S3VariableManager(VariableManager):
         self.storage = S3Storage(dirpath=variables_dir)
 
 
-def clean_variables(
-    pipeline_uuid: str = None
-):
+def clean_variables(pipeline_uuid: str = None):
     variables_dir = get_variables_dir()
     VariableManager(variables_dir=variables_dir).clean_variables(pipeline_uuid=pipeline_uuid)
 
@@ -272,6 +268,7 @@ def get_global_variables(
     Get all global variables. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
+
     pipeline = Pipeline.get(pipeline_uuid)
     if pipeline.variables is not None:
         global_variables = pipeline.variables
@@ -296,6 +293,7 @@ def get_global_variable(
     Get global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
+
     pipeline = Pipeline.get(pipeline_uuid)
     if pipeline.variables is not None:
         return pipeline.variables.get(key)
@@ -307,12 +305,7 @@ def get_global_variable(
         )
 
 
-def get_variable(
-    pipeline_uuid: str,
-    block_uuid: str,
-    key: str,
-    **kwargs
-) -> Any:
+def get_variable(pipeline_uuid: str, block_uuid: str, key: str, **kwargs) -> Any:
     """
     Set block intermediate variable by key.
     Block intermediate variables are stored in variables dir.
@@ -334,6 +327,7 @@ def set_global_variable(
     Set global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
+
     pipeline = Pipeline.get(pipeline_uuid)
 
     if pipeline.variables is None:
@@ -349,6 +343,7 @@ def delete_global_variable(
     Delete global variable by key. Global variables are stored together with project's code.
     """
     from mage_ai.data_preparation.models.pipeline import Pipeline
+
     pipeline = Pipeline.get(pipeline_uuid)
     if pipeline.variables is not None:
         pipeline.delete_global_variable(key)

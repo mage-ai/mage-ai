@@ -1,6 +1,7 @@
 import singer
 from tap_pipedrive.stream import PipedriveIterStream
 
+
 class DealsProductsStream(PipedriveIterStream):
     base_endpoint = 'deals'
     id_endpoint = 'deals/{}/products'

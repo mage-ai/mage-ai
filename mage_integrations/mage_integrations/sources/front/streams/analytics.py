@@ -36,7 +36,9 @@ class AnalyticsStream(BaseStream):
             end_date = dateutil.parser.parse(self.config.get('end_date')).replace(tzinfo=pytz.utc)
         else:
             if incremental_range == 'daily':
-                end_date = now.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=pytz.utc)
+                end_date = now.replace(hour=0, minute=0, second=0, microsecond=0).replace(
+                    tzinfo=pytz.utc
+                )
             elif incremental_range == 'hourly':
                 end_date = now.replace(minute=0, second=0, microsecond=0).replace(tzinfo=pytz.utc)
         self.logger.info('end_date: {} '.format(end_date))
@@ -69,10 +71,11 @@ class AnalyticsStream(BaseStream):
     def get_metrics(self, metrics: List[str], start_date, end_date):
         ut_start_date = int(start_date.timestamp())
         ut_end_date = int(end_date.timestamp())
-        self.logger.info(f'Metrics query - metrics: {metrics} start_date: {start_date} '
-                         f'end_date: {end_date} ut_start_date: {ut_start_date} '
-                         f'ut_end_date: {ut_end_date}.'
-                         )
+        self.logger.info(
+            f'Metrics query - metrics: {metrics} start_date: {start_date} '
+            f'end_date: {end_date} ut_start_date: {ut_start_date} '
+            f'ut_end_date: {ut_end_date}.'
+        )
         response = self.client.post(
             path='/analytics/reports',
             data={

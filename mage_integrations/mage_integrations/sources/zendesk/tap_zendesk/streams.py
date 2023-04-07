@@ -32,24 +32,24 @@ CUSTOM_TYPES = {
     'checkbox': 'boolean',
 }
 
-DEFAULT_SEARCH_WINDOW_SIZE = (60 * 60 * 24) * 30 # defined in seconds, default to a month (30 days)
+DEFAULT_SEARCH_WINDOW_SIZE = (60 * 60 * 24) * 30  # defined in seconds, default to a month (30 days)
+
 
 def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
+
 def process_custom_field(field):
-    """ Take a custom field description and return a schema for it. """
+    """Take a custom field description and return a schema for it."""
     zendesk_type = field.type
     json_type = CUSTOM_TYPES.get(zendesk_type)
     if json_type is None:
-        raise Exception("Discovered unsupported type for custom field {} (key: {}): {}"
-                        .format(field.title,
-                                field.key,
-                                zendesk_type))
-    field_schema = {'type': [
-        json_type,
-        'null'
-    ]}
+        raise Exception(
+            "Discovered unsupported type for custom field {} (key: {}): {}".format(
+                field.title, field.key, zendesk_type
+            )
+        )
+    field_schema = {'type': [json_type, 'null']}
 
     if zendesk_type == 'date':
         field_schema['format'] = 'datetime'
@@ -58,7 +58,8 @@ def process_custom_field(field):
 
     return field_schema
 
-class Stream():
+
+class Stream:
     name = None
     replication_method = None
     replication_key = None
@@ -75,7 +76,7 @@ class Stream():
         if config_request_timeout and float(config_request_timeout):
             self.request_timeout = float(config_request_timeout)
         else:
-            self.request_timeout = REQUEST_TIMEOUT # If value is 0,"0","" or not passed then it set default to 300 seconds.
+            self.request_timeout = REQUEST_TIMEOUT  # If value is 0,"0","" or not passed then it set default to 300 seconds.
 
     def get_bookmark(self, state):
         return utils.strptime_with_tz(singer.get_bookmark(state, self.name, self.replication_key))
@@ -85,14 +86,13 @@ class Stream():
         if value and utils.strptime_with_tz(value) > current_bookmark:
             singer.write_bookmark(state, self.name, self.replication_key, value)
 
-
     def load_schema(self):
         schema_file = "schemas/{}.json".format(self.name)
         with open(get_abs_path(schema_file)) as f:
             schema = json.load(f)
         return self._add_custom_fields(schema)
 
-    def _add_custom_fields(self, schema): # pylint: disable=no-self-use
+    def _add_custom_fields(self, schema):  # pylint: disable=no-self-use
         return schema
 
     def load_metadata(self):
@@ -125,6 +125,7 @@ class Stream():
 
         http.call_api(url, self.request_timeout, params={'per_page': 1}, headers=HEADERS)
 
+
 class CursorBasedStream(Stream):
     item_key = None
     endpoint = None
@@ -135,8 +136,11 @@ class CursorBasedStream(Stream):
         '''
         url = self.endpoint.format(self.config['subdomain'])
         # Pass `request_timeout` parameter
-        for page in http.get_cursor_based(url, self.config['access_token'], self.request_timeout, **kwargs):
+        for page in http.get_cursor_based(
+            url, self.config['access_token'], self.request_timeout, **kwargs
+        ):
             yield from page[self.item_key]
+
 
 class CursorBasedExportStream(Stream):
     endpoint = None
@@ -148,7 +152,9 @@ class CursorBasedExportStream(Stream):
         '''
         url = self.endpoint.format(self.config['subdomain'])
         # Pass `request_timeout` parameter
-        for page in http.get_incremental_export(url, self.config['access_token'], self.request_timeout, start_time):
+        for page in http.get_incremental_export(
+            url, self.config['access_token'], self.request_timeout, start_time
+        ):
             yield from page[self.item_key]
 
 
@@ -160,17 +166,26 @@ def raise_or_log_zenpy_apiexception(schema, stream, e):
     if not isinstance(e, zenpy.lib.exception.APIException):
         raise ValueError("Called with a bad exception type") from e
 
-    #If read permission is not available in OAuth access_token, then it returns the below error.
-    if json.loads(e.args[0]).get('description') == "You are missing the following required scopes: read":
-        LOGGER.warning("The account credentials supplied do not have access to `%s` custom fields.",
-                       stream)
+    # If read permission is not available in OAuth access_token, then it returns the below error.
+    if (
+        json.loads(e.args[0]).get('description')
+        == "You are missing the following required scopes: read"
+    ):
+        LOGGER.warning(
+            "The account credentials supplied do not have access to `%s` custom fields.", stream
+        )
         return schema
     error = json.loads(e.args[0]).get('error')
     # check if the error is of type dictionary and the message retrieved from the dictionary
     # is the expected message. If so, only then print the logger message and return the schema
-    if isinstance(error, dict) and error.get('message', None) == "You do not have access to this page. Please contact the account owner of this help desk for further help.":
-        LOGGER.warning("The account credentials supplied do not have access to `%s` custom fields.",
-                       stream)
+    if (
+        isinstance(error, dict)
+        and error.get('message', None)
+        == "You do not have access to this page. Please contact the account owner of this help desk for further help."
+    ):
+        LOGGER.warning(
+            "The account credentials supplied do not have access to `%s` custom fields.", stream
+        )
         return schema
     else:
         raise e
@@ -188,13 +203,17 @@ class Organizations(Stream):
         # NB: Zenpy doesn't have a public endpoint for this at time of writing
         #     Calling into underlying query method to grab all fields
         try:
-            field_gen = self.client.organizations._query_zendesk(endpoint.organization_fields, # pylint: disable=protected-access
-                                                                 'organization_field')
+            field_gen = self.client.organizations._query_zendesk(
+                endpoint.organization_fields,  # pylint: disable=protected-access
+                'organization_field',
+            )
         except zenpy.lib.exception.APIException as e:
             return raise_or_log_zenpy_apiexception(schema, self.name, e)
         schema['properties']['organization_fields']['properties'] = {}
         for field in field_gen:
-            schema['properties']['organization_fields']['properties'][field.key] = process_custom_field(field)
+            schema['properties']['organization_fields']['properties'][
+                field.key
+            ] = process_custom_field(field)
 
         return schema
 
@@ -214,6 +233,7 @@ class Organizations(Stream):
         start_time = datetime.datetime.utcnow().strftime(START_DATE_FORMAT)
         self.client.organizations.incremental(start_time=start_time)
 
+
 class Users(Stream):
     name = "users"
     replication_method = "INCREMENTAL"
@@ -226,12 +246,16 @@ class Users(Stream):
             return raise_or_log_zenpy_apiexception(schema, self.name, e)
         schema['properties']['user_fields']['properties'] = {}
         for field in field_gen:
-            schema['properties']['user_fields']['properties'][field.key] = process_custom_field(field)
+            schema['properties']['user_fields']['properties'][field.key] = process_custom_field(
+                field
+            )
 
         return schema
 
     def sync(self, state):
-        original_search_window_size = int(self.config.get('search_window_size', DEFAULT_SEARCH_WINDOW_SIZE))
+        original_search_window_size = int(
+            self.config.get('search_window_size', DEFAULT_SEARCH_WINDOW_SIZE)
+        )
         search_window_size = original_search_window_size
         bookmark = self.get_bookmark(state)
         start = bookmark - datetime.timedelta(seconds=1)
@@ -245,7 +269,9 @@ class Users(Stream):
             parsed_start = singer.strftime(start, "%Y-%m-%dT%H:%M:%SZ")
             parsed_end = min(singer.strftime(end, "%Y-%m-%dT%H:%M:%SZ"), parsed_sync_end)
             LOGGER.info("Querying for users between %s and %s", parsed_start, parsed_end)
-            users = self.client.search("", updated_after=parsed_start, updated_before=parsed_end, type="user")
+            users = self.client.search(
+                "", updated_after=parsed_start, updated_before=parsed_end, type="user"
+            )
 
             # NB: Zendesk will return an error on the 1001st record, so we
             # need to check total response size before iterating
@@ -254,26 +280,39 @@ class Users(Stream):
                 if search_window_size > 1:
                     search_window_size = search_window_size // 2
                     end = start + datetime.timedelta(seconds=search_window_size)
-                    LOGGER.info("users - Detected Search API response size too large. Cutting search window in half to %s seconds.", search_window_size)
+                    LOGGER.info(
+                        "users - Detected Search API response size too large. Cutting search window in half to %s seconds.",
+                        search_window_size,
+                    )
                     continue
 
-                raise Exception("users - Unable to get all users within minimum window of a single second ({}), found {} users within this timestamp. Zendesk can only provide a maximum of 1000 users per request. See: https://develop.zendesk.com/hc/en-us/articles/360022563994--BREAKING-New-Search-API-Result-Limits".format(parsed_start, users.count))
+                raise Exception(
+                    "users - Unable to get all users within minimum window of a single second ({}), found {} users within this timestamp. Zendesk can only provide a maximum of 1000 users per request. See: https://develop.zendesk.com/hc/en-us/articles/360022563994--BREAKING-New-Search-API-Result-Limits".format(
+                        parsed_start, users.count
+                    )
+                )
 
             # Consume the records to account for dates lower than window start
-            users = [user for user in users] # pylint: disable=unnecessary-comprehension
+            users = [user for user in users]  # pylint: disable=unnecessary-comprehension
 
             if not all(parsed_start <= user.updated_at for user in users):
                 # Only retry up to 30 minutes (60 attempts at 30 seconds each)
                 if num_retries < 60:
-                    LOGGER.info("users - Record found before date window start. Waiting 30 seconds, then retrying window for consistency. (Retry #%s)", num_retries + 1)
+                    LOGGER.info(
+                        "users - Record found before date window start. Waiting 30 seconds, then retrying window for consistency. (Retry #%s)",
+                        num_retries + 1,
+                    )
                     time.sleep(30)
                     num_retries += 1
                     continue
                 bad_users = [user for user in users if user.updated_at < parsed_start]
-                raise AssertionError("users - Record (user-id: {}) found before date window start and did not resolve after 30 minutes of retrying. Details: window start ({}) is not less than or equal to updated_at value(s) {}".format(
-                    [user.id for user in bad_users],
-                    parsed_start,
-                    [str(user.updated_at) for user in bad_users]))
+                raise AssertionError(
+                    "users - Record (user-id: {}) found before date window start and did not resolve after 30 minutes of retrying. Details: window start ({}) is not less than or equal to updated_at value(s) {}".format(
+                        [user.id for user in bad_users],
+                        parsed_start,
+                        [str(user.updated_at) for user in bad_users],
+                    )
+                )
 
             # If we make it here, all quality checks have passed. Reset retry count.
             num_retries = 0
@@ -286,7 +325,10 @@ class Users(Stream):
             singer.write_state(state)
             if search_window_size <= original_search_window_size // 2:
                 search_window_size = search_window_size * 2
-                LOGGER.info("Successfully requested records. Doubling search window to %s seconds", search_window_size)
+                LOGGER.info(
+                    "Successfully requested records. Doubling search window to %s seconds",
+                    search_window_size,
+                )
             start = end - datetime.timedelta(seconds=1)
             end = start + datetime.timedelta(seconds=search_window_size)
 
@@ -297,7 +339,10 @@ class Users(Stream):
         # Convert datetime object to standard format with timezone. Used utcnow to reduce API call burden at discovery time.
         # Because API will return records from now which will be very less
         start_time = datetime.datetime.utcnow().strftime(START_DATE_FORMAT)
-        self.client.search("", updated_after=start_time, updated_before='2000-01-02T00:00:00Z', type="user")
+        self.client.search(
+            "", updated_after=start_time, updated_before='2000-01-02T00:00:00Z', type="user"
+        )
+
 
 class Tickets(CursorBasedExportStream):
     name = "tickets"
@@ -306,8 +351,7 @@ class Tickets(CursorBasedExportStream):
     item_key = "tickets"
     endpoint = "https://{}.zendesk.com/api/v2/incremental/tickets/cursor.json"
 
-    def sync(self, state): #pylint: disable=too-many-statements
-
+    def sync(self, state):  # pylint: disable=too-many-statements
         bookmark = self.get_bookmark(state)
 
         tickets = self.get_objects(bookmark)
@@ -318,10 +362,15 @@ class Tickets(CursorBasedExportStream):
 
         def emit_sub_stream_metrics(sub_stream):
             if sub_stream.is_selected():
-                singer.metrics.log(LOGGER, Point(metric_type='counter',
-                                                 metric=singer.metrics.Metric.record_count,
-                                                 value=sub_stream.count,
-                                                 tags={'endpoint':sub_stream.stream.tap_stream_id}))
+                singer.metrics.log(
+                    LOGGER,
+                    Point(
+                        metric_type='counter',
+                        metric=singer.metrics.Metric.record_count,
+                        value=sub_stream.count,
+                        tags={'endpoint': sub_stream.stream.tap_stream_id},
+                    ),
+                )
                 sub_stream.count = 0
 
         if audits_stream.is_selected():
@@ -330,11 +379,15 @@ class Tickets(CursorBasedExportStream):
         for ticket in tickets:
             zendesk_metrics.capture('ticket')
 
-            generated_timestamp_dt = datetime.datetime.utcfromtimestamp(ticket.get('generated_timestamp')).replace(tzinfo=pytz.UTC)
+            generated_timestamp_dt = datetime.datetime.utcfromtimestamp(
+                ticket.get('generated_timestamp')
+            ).replace(tzinfo=pytz.UTC)
 
             self.update_bookmark(state, utils.strftime(generated_timestamp_dt))
 
-            ticket.pop('fields') # NB: Fields is a duplicate of custom_fields, remove before emitting
+            ticket.pop(
+                'fields'
+            )  # NB: Fields is a duplicate of custom_fields, remove before emitting
             # yielding stream name with record in a tuple as it is used for obtaining only the parent records while sync
             yield (self.stream, ticket)
 
@@ -345,7 +398,11 @@ class Tickets(CursorBasedExportStream):
                 except http.ZendeskNotFoundError:
                     # Skip stream if ticket_audit does not found for particular ticekt_id. Earlier it throwing HTTPError
                     # but now as error handling updated, it throws ZendeskNotFoundError.
-                    message = "Unable to retrieve audits for ticket (ID: {}), record not found".format(ticket['id'])
+                    message = (
+                        "Unable to retrieve audits for ticket (ID: {}), record not found".format(
+                            ticket['id']
+                        )
+                    )
                     LOGGER.warning(message)
 
             if metrics_stream.is_selected():
@@ -355,7 +412,11 @@ class Tickets(CursorBasedExportStream):
                 except http.ZendeskNotFoundError:
                     # Skip stream if ticket_metric does not found for particular ticekt_id. Earlier it throwing HTTPError
                     # but now as error handling updated, it throws ZendeskNotFoundError.
-                    message = "Unable to retrieve metrics for ticket (ID: {}), record not found".format(ticket['id'])
+                    message = (
+                        "Unable to retrieve metrics for ticket (ID: {}), record not found".format(
+                            ticket['id']
+                        )
+                    )
                     LOGGER.warning(message)
 
             if comments_stream.is_selected():
@@ -367,7 +428,11 @@ class Tickets(CursorBasedExportStream):
                 except http.ZendeskNotFoundError:
                     # Skip stream if ticket_comment does not found for particular ticekt_id. Earlier it throwing HTTPError
                     # but now as error handling updated, it throws ZendeskNotFoundError.
-                    message = "Unable to retrieve comments for ticket (ID: {}), record not found".format(ticket['id'])
+                    message = (
+                        "Unable to retrieve comments for ticket (ID: {}), record not found".format(
+                            ticket['id']
+                        )
+                    )
                     LOGGER.warning(message)
 
             singer.write_state(state)
@@ -382,18 +447,25 @@ class Tickets(CursorBasedExportStream):
         '''
         url = self.endpoint.format(self.config['subdomain'])
         # Convert start_date parameter to timestamp to pass with request param
-        start_time = datetime.datetime.strptime(self.config['start_date'], START_DATE_FORMAT).timestamp()
+        start_time = datetime.datetime.strptime(
+            self.config['start_date'], START_DATE_FORMAT
+        ).timestamp()
         HEADERS['Authorization'] = 'Bearer {}'.format(self.config["access_token"])
 
-        http.call_api(url, self.request_timeout, params={'start_time': start_time, 'per_page': 1}, headers=HEADERS)
+        http.call_api(
+            url,
+            self.request_timeout,
+            params={'start_time': start_time, 'per_page': 1},
+            headers=HEADERS,
+        )
 
 
 class TicketAudits(Stream):
     name = "ticket_audits"
     replication_method = "INCREMENTAL"
     count = 0
-    endpoint='https://{}.zendesk.com/api/v2/tickets/{}/audits.json'
-    item_key='audits'
+    endpoint = 'https://{}.zendesk.com/api/v2/tickets/{}/audits.json'
+    item_key = 'audits'
 
     def get_objects(self, ticket_id):
         url = self.endpoint.format(self.config['subdomain'], ticket_id)
@@ -419,8 +491,9 @@ class TicketAudits(Stream):
         try:
             http.call_api(url, self.request_timeout, params={'per_page': 1}, headers=HEADERS)
         except http.ZendeskNotFoundError:
-            #Skip 404 ZendeskNotFoundError error as goal is just to check whether TicketComments have read permission or not
+            # Skip 404 ZendeskNotFoundError error as goal is just to check whether TicketComments have read permission or not
             pass
+
 
 class TicketMetrics(CursorBasedStream):
     name = "ticket_metrics"
@@ -448,15 +521,16 @@ class TicketMetrics(CursorBasedStream):
         try:
             http.call_api(url, self.request_timeout, params={'per_page': 1}, headers=HEADERS)
         except http.ZendeskNotFoundError:
-            #Skip 404 ZendeskNotFoundError error as goal is just to check whether TicketComments have read permission or not
+            # Skip 404 ZendeskNotFoundError error as goal is just to check whether TicketComments have read permission or not
             pass
+
 
 class TicketComments(Stream):
     name = "ticket_comments"
     replication_method = "INCREMENTAL"
     count = 0
     endpoint = "https://{}.zendesk.com/api/v2/tickets/{}/comments.json"
-    item_key='comments'
+    item_key = 'comments'
 
     def get_objects(self, ticket_id):
         url = self.endpoint.format(self.config['subdomain'], ticket_id)
@@ -482,8 +556,9 @@ class TicketComments(Stream):
         try:
             http.call_api(url, self.request_timeout, params={'per_page': 1}, headers=HEADERS)
         except http.ZendeskNotFoundError:
-            #Skip 404 ZendeskNotFoundError error as goal is to just check to whether TicketComments have read permission or not
+            # Skip 404 ZendeskNotFoundError error as goal is to just check to whether TicketComments have read permission or not
             pass
+
 
 class SatisfactionRatings(CursorBasedStream):
     name = "satisfaction_ratings"
@@ -522,6 +597,7 @@ class Groups(CursorBasedStream):
                 self.update_bookmark(state, group['updated_at'])
                 yield (self.stream, group)
 
+
 class Macros(CursorBasedStream):
     name = "macros"
     replication_method = "INCREMENTAL"
@@ -541,6 +617,7 @@ class Macros(CursorBasedStream):
                 self.update_bookmark(state, macro['updated_at'])
                 yield (self.stream, macro)
 
+
 class Tags(CursorBasedStream):
     name = "tags"
     replication_method = "FULL_TABLE"
@@ -548,11 +625,12 @@ class Tags(CursorBasedStream):
     endpoint = 'https://{}.zendesk.com/api/v2/tags'
     item_key = 'tags'
 
-    def sync(self, state): # pylint: disable=unused-argument
+    def sync(self, state):  # pylint: disable=unused-argument
         tags = self.get_objects()
 
         for tag in tags:
             yield (self.stream, tag)
+
 
 class TicketFields(CursorBasedStream):
     name = "ticket_fields"
@@ -572,6 +650,7 @@ class TicketFields(CursorBasedStream):
                 # so we can't save state until we've seen all records
                 self.update_bookmark(state, field['updated_at'])
                 yield (self.stream, field)
+
 
 class TicketForms(Stream):
     name = "ticket_forms"
@@ -596,13 +675,13 @@ class TicketForms(Stream):
         '''
         self.client.ticket_forms()
 
+
 class GroupMemberships(CursorBasedStream):
     name = "group_memberships"
     replication_method = "INCREMENTAL"
     replication_key = "updated_at"
     endpoint = 'https://{}.zendesk.com/api/v2/group_memberships'
     item_key = 'group_memberships'
-
 
     def sync(self, state):
         bookmark = self.get_bookmark(state)
@@ -619,17 +698,23 @@ class GroupMemberships(CursorBasedStream):
                     yield (self.stream, membership)
             else:
                 if membership['id']:
-                    LOGGER.info('group_membership record with id: ' + str(membership['id']) +
-                                ' does not have an updated_at field so it will be syncd...')
+                    LOGGER.info(
+                        'group_membership record with id: '
+                        + str(membership['id'])
+                        + ' does not have an updated_at field so it will be syncd...'
+                    )
                     yield (self.stream, membership)
                 else:
-                    LOGGER.info('Received group_membership record with no id or updated_at, skipping...')
+                    LOGGER.info(
+                        'Received group_membership record with no id or updated_at, skipping...'
+                    )
+
 
 class SLAPolicies(Stream):
     name = "sla_policies"
     replication_method = "FULL_TABLE"
 
-    def sync(self, state): # pylint: disable=unused-argument
+    def sync(self, state):  # pylint: disable=unused-argument
         for policy in self.client.sla_policies():
             yield (self.stream, policy)
 
@@ -638,6 +723,7 @@ class SLAPolicies(Stream):
         Check whether the permission was given to access stream resources or not.
         '''
         self.client.sla_policies()
+
 
 STREAMS = {
     "tickets": Tickets,

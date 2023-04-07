@@ -11,12 +11,7 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.messages import write_state
-from mage_integrations.sources.postgresql.decoders import (
-    Delete,
-    Insert,
-    Update,
-    decode_message
-)
+from mage_integrations.sources.postgresql.decoders import Delete, Insert, Update, decode_message
 from mage_integrations.sources.sql.base import Source
 from select import select
 from typing import Dict, Generator, List
@@ -83,13 +78,15 @@ WHERE  c.table_schema = '{schema}'
 
     def get_columns(self, table_name: str) -> List[str]:
         schema_name = self.config['schema']
-        results = self.build_connection().load(f"""
+        results = self.build_connection().load(
+            f"""
 SELECT
     column_name
     , data_type
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
-        """)
+        """
+        )
         return [r[0].lower() for r in results]
 
     def internal_column_schema(self, stream, bookmarks: Dict = None) -> Dict[str, Dict]:
@@ -152,7 +149,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             while True:
                 poll_duration = (datetime.datetime.now() - begin_ts).total_seconds()
                 if poll_duration > poll_total_seconds:
-                    self.logger.info(f'Breaking after {poll_duration} seconds of polling with no data')
+                    self.logger.info(
+                        f'Breaking after {poll_duration} seconds of polling with no data'
+                    )
                     break
 
                 msg = cur.read_message()
@@ -164,7 +163,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
                     decoded_payload = decode_message(msg.payload)
                     if msg.data_start < start_lsn:
-                        self.logger.info(f'Msg lsn {msg.data_start} smaller than start lsn {start_lsn}')
+                        self.logger.info(
+                            f'Msg lsn {msg.data_start} smaller than start lsn {start_lsn}'
+                        )
                         continue
                     if type(decoded_payload) in [Insert, Update]:
                         values = [c.col_data for c in decoded_payload.new_tuple.column_data]
@@ -175,8 +176,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                         values = [c.col_data for c in decoded_payload.old_tuple.column_data]
                         payload = dict(zip(columns, values))
                         payload[INTERNAL_COLUMN_LSN] = msg.data_start
-                        payload[INTERNAL_COLUMN_DELETED_AT] = \
-                            datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
+                        payload[INTERNAL_COLUMN_DELETED_AT] = datetime.datetime.utcnow().strftime(
+                            '%Y-%m-%d %H:%M:%S.%f'
+                        )
                         yield [payload]
                     cur.send_feedback(flush_lsn=msg.data_start)
                 else:
@@ -187,7 +189,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                         if not any(sel):
                             self.logger.info(
                                 f'No data for {timeout} seconds. sending feedback to server with NO'
-                                ' flush_lsn. just a keep-alive')
+                                ' flush_lsn. just a keep-alive'
+                            )
                             cur.send_feedback()
 
                     except InterruptedError:

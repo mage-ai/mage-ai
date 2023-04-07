@@ -38,11 +38,13 @@ def build_buckets(min_value, max_value, max_buckets):
         min_v = min_value + (i * bucket_interval)
         max_v = min_value + ((i + 1) * bucket_interval)
         if max_value >= min_v:
-            buckets.append(dict(
-                max_value=max_v,
-                min_value=min_v,
-                values=[],
-            ))
+            buckets.append(
+                dict(
+                    max_value=max_v,
+                    min_value=min_v,
+                    values=[],
+                )
+            )
 
     return buckets, bucket_interval
 
@@ -63,10 +65,12 @@ def build_histogram_data(arr, max_buckets):
     y = []
 
     for idx, bucket in enumerate(buckets):
-        x.append(dict(
-            max=bucket['max_value'],
-            min=bucket['min_value'],
-        ))
+        x.append(
+            dict(
+                max=bucket['max_value'],
+                min=bucket['min_value'],
+            )
+        )
         y.append(dict(value=count[idx]))
 
     return dict(
@@ -138,8 +142,9 @@ def build_time_series_buckets(df, datetime_column, time_interval, metrics):
         start_datetime = datetime(year, 1, 1, 0, 0, 0)
 
     df_copy = df.copy()
-    df_copy[datetime_column] = \
-        pd.to_datetime(df[datetime_column]).apply(lambda x: x if pd.isnull(x) else x.timestamp())
+    df_copy[datetime_column] = pd.to_datetime(df[datetime_column]).apply(
+        lambda x: x if pd.isnull(x) else x.timestamp()
+    )
 
     values = [[] for _ in metrics]
     buckets = []
@@ -152,11 +157,10 @@ def build_time_series_buckets(df, datetime_column, time_interval, metrics):
         max_date = datetime.fromtimestamp(min_date_ts) + TIME_INTERVAL_TO_TIME_DELTA[time_interval]
         buckets.append(max_date.timestamp())
 
-        df_in_range = df_copy[(
-            df_copy[datetime_column] >= min_date_ts
-        ) & (
-            df_copy[datetime_column] < max_date.timestamp()
-        )]
+        df_in_range = df_copy[
+            (df_copy[datetime_column] >= min_date_ts)
+            & (df_copy[datetime_column] < max_date.timestamp())
+        ]
 
         for idx, metric in enumerate(metrics):
             aggregation = metric['aggregation']

@@ -16,27 +16,28 @@ class Client(BaseClient):
 
     @property
     def base_url(self):
-        return f"https://api.{self.config['region']}.{self.config['host']}."\
-               f"commercetools.com/{self.config['project_key']}"
+        return (
+            f"https://api.{self.config['region']}.{self.config['host']}."
+            f"commercetools.com/{self.config['project_key']}"
+        )
 
     def get_access_token(self):
-        url = f"https://auth.{self.config['region']}.{self.config['host']}.commercetools."\
-              f"com/oauth/token?grant_type=client_credentials&scope=manage_project:"\
-              f"{self.config['project_key']}"
+        url = (
+            f"https://auth.{self.config['region']}.{self.config['host']}.commercetools."
+            f"com/oauth/token?grant_type=client_credentials&scope=manage_project:"
+            f"{self.config['project_key']}"
+        )
 
         response = requests.post(
             url,
             auth=(self.config['client_id'], self.config['client_secret']),
         )
         json_response = response.json()
-      
+
         return json_response.get('access_token') if json_response is not None else None
 
     def get_headers(self):
-        return {
-            'Authorization': self.token,
-            'Content-Type': 'application/json'
-        }
+        return {'Authorization': self.token, 'Content-Type': 'application/json'}
 
     def request(
         self,

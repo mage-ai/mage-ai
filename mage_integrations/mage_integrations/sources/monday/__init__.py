@@ -8,6 +8,7 @@ class Monday(Source):
     """
     API doc: https://developer.monday.com/api-reference/docs
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

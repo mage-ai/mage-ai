@@ -144,7 +144,7 @@ class DbtCloudClient(HttpClient):
                 target_name_override=target_name_override,
                 generate_docs_override=generate_docs_override,
                 timeout_seconds_override=timeout_seconds_override,
-                steps_override=steps_override
+                steps_override=steps_override,
             ),
         )
         if poll_status:
@@ -157,17 +157,15 @@ class DbtCloudClient(HttpClient):
                 print(f'Polling DBT Cloud run {run_id}. Current status: {job_run_status_msg}.')
 
                 if job_run_status in DbtCloudJobRunStatus.TERMINAL_STATUSES.value:
-                    print(f"Job run status for run {run_id}: {job_run_status_msg}. "
-                          "Polling complete")
+                    print(
+                        f"Job run status for run {run_id}: {job_run_status_msg}. "
+                        "Polling complete"
+                    )
 
                     if job_run_status == DbtCloudJobRunStatus.SUCCESS.value:
                         break
                     raise Exception(f'Job run {run_id} failed with status: {job_run_status_msg}.')
-                if (
-                    poll_timeout
-                    and datetime.now()
-                    > poll_start + timedelta(seconds=poll_timeout)
-                ):
+                if poll_timeout and datetime.now() > poll_start + timedelta(seconds=poll_timeout):
                     raise Exception(
                         f"Job run {run_id} for job {job_id} time out after "
                         f"{datetime.now() - poll_start}. Last status was {job_run_status_msg}."

@@ -1,5 +1,6 @@
 from mage_integrations.sources.chargebee.streams.base import BaseChargebeeStream
 
+
 class CommentsStream(BaseChargebeeStream):
     TABLE = 'comments'
     ENTITY = 'comment'

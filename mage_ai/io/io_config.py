@@ -20,10 +20,7 @@ class IOConfig:
     Wrapper around IO configuration file.
     """
 
-    def __init__(
-        self,
-        filepath: Union[os.PathLike, str] = './default_repo/io_config.yaml'
-    ) -> None:
+    def __init__(self, filepath: Union[os.PathLike, str] = './default_repo/io_config.yaml') -> None:
         """
         Initializes IO Configuration loader
 

@@ -100,8 +100,7 @@ def get_exception_for_status_code(status_code):
     """Map the input status_code with the corresponding Exception Class \
         using 'STATUS_CODE_EXCEPTION_MAPPING' dictionary."""
 
-    exception = STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get(
-                "raise_exception")
+    exception = STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get("raise_exception")
     # If exception is not mapped for any code then use Server4xxError and Server5xxError respectively
     if not exception:
         if status_code > 400 and status_code < 500:
@@ -111,6 +110,7 @@ def get_exception_for_status_code(status_code):
         else:
             exception = ChargebeeError
     return exception
+
 
 def raise_for_error(response):
     """Raises error class with appropriate msg for the response"""
@@ -124,9 +124,7 @@ def raise_for_error(response):
 
     msg = json_response.get(
         "message",
-        STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get(
-            "message", "Unknown Error"
-        ),
+        STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get("message", "Unknown Error"),
     )
     message = "HTTP-error-code: {}, Error: {}".format(status_code, msg)
 
@@ -134,7 +132,7 @@ def raise_for_error(response):
     raise exc(message) from None
 
 
-class ChargebeeClient():
+class ChargebeeClient:
     def __init__(self, config, api_result_limit=100, include_deleted=True):
         self.config = config
 
@@ -142,7 +140,7 @@ class ChargebeeClient():
         self.include_deleted = include_deleted
         self.user_agent = self.config.get('user_agent')
 
-        if self.config.get('include_deleted') in ['false','False', False]:
+        if self.config.get('include_deleted') in ['false', 'False', False]:
             self.include_deleted = False
 
     def get_headers(self):
@@ -154,7 +152,6 @@ class ChargebeeClient():
         return headers
 
     def get_params(self, params):
-
         if params is None:
             params = {}
 
@@ -165,7 +162,6 @@ class ChargebeeClient():
 
     @utils.ratelimit(100, 60)
     def make_request(self, url, method, params=None, body=None):
-
         if params is None:
             params = {}
 
@@ -186,7 +182,8 @@ class ChargebeeClient():
             headers=self.get_headers(),
             params=self.get_params(params),
             json=body,
-            timeout=request_timeout)
+            timeout=request_timeout,
+        )
 
         if response.status_code != 200:
             raise_for_error(response)

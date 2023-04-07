@@ -5,9 +5,7 @@ LOGGER = singer.get_logger()
 
 
 def get_last_record_value_for_table(state, table, field):
-    last_value = state.get('bookmarks', {}) \
-                      .get(table, {}) \
-                      .get(field)
+    last_value = state.get('bookmarks', {}).get(table, {}).get(field)
 
     if last_value is None:
         return None
@@ -33,9 +31,11 @@ def incorporate(state, table, key, value, force=False):
     if table not in new_state['bookmarks']:
         new_state['bookmarks'][table] = {}
 
-    if(new_state['bookmarks'].get(table, {}).get(key) is None or
-       new_state['bookmarks'].get(table, {}).get(key) < value or
-       force):
+    if (
+        new_state['bookmarks'].get(table, {}).get(key) is None
+        or new_state['bookmarks'].get(table, {}).get(key) < value
+        or force
+    ):
         new_state['bookmarks'][table][key] = value
 
     return new_state

@@ -108,8 +108,10 @@ class Metaplane(HttpClient):
                 start_date = monitors_started[monitor_id]
                 status_date = dateutil.parser.parse(monitor_status['createdAt'])
                 completed = status_date.timestamp() >= start_date.timestamp()
-                print(f'Monitor ID {monitor_id} completed: {completed}; started {start_date}, '
-                      f'last created {status_date}).')
+                print(
+                    f'Monitor ID {monitor_id} completed: {completed}; started {start_date}, '
+                    f'last created {status_date}).'
+                )
                 if completed:
                     passed = monitor_status['passed']
 
@@ -140,7 +142,11 @@ class Metaplane(HttpClient):
         return self.make_request(f'/{self.VERSION}/monitors/status/{monitor_id}')
 
     def run_monitors(self, monitor_ids: List[str]) -> Dict:
-        response = self.make_request(f'/{self.VERSION}/monitors/run', method='POST', payload=dict(
-            testIds=monitor_ids,
-        ))
+        response = self.make_request(
+            f'/{self.VERSION}/monitors/run',
+            method='POST',
+            payload=dict(
+                testIds=monitor_ids,
+            ),
+        )
         return dict(status=response.status_code)

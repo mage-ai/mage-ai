@@ -65,28 +65,30 @@ class Git:
 
         if return_code is not None and return_code != 0:
             raise Exception(
-                "Error connecting to remote, make sure your SSH key is set up properly.")
+                "Error connecting to remote, make sure your SSH key is set up properly."
+            )
 
         if return_code is None:
             proc.kill()
             raise TimeoutError(
                 "Connecting to remote timed out, make sure your SSH key is set up properly"
-                " and your repository host is added as a known host. More information here:"
-                " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
+                " and your repository host is added as a known host. More information here:"  # noqa: E501
+                " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts"  # noqa: E501
+            )
 
     def _remote_command(func):
         '''
         Decorator method for commands that need to connect to the remote repo. This decorator
         will configure and test SSH settings before executing the Git command.
         '''
+
         def wrapper(self, *args, **kwargs):
             if not os.path.exists(DEFAULT_SSH_KEY_DIRECTORY):
                 os.mkdir(DEFAULT_SSH_KEY_DIRECTORY, 0o700)
             pubk_secret_name = self.git_config.ssh_public_key_secret_name
             if pubk_secret_name:
                 public_key_file = os.path.join(
-                    DEFAULT_SSH_KEY_DIRECTORY,
-                    f'id_rsa_{pubk_secret_name}.pub'
+                    DEFAULT_SSH_KEY_DIRECTORY, f'id_rsa_{pubk_secret_name}.pub'
                 )
                 if not os.path.exists(public_key_file):
                     try:
@@ -101,8 +103,7 @@ class Git:
             private_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'id_rsa')
             if pk_secret_name:
                 private_key_file = os.path.join(
-                    DEFAULT_SSH_KEY_DIRECTORY,
-                    f'id_rsa_{pk_secret_name}'
+                    DEFAULT_SSH_KEY_DIRECTORY, f'id_rsa_{pk_secret_name}'
                 )
                 if not os.path.exists(private_key_file):
                     try:
@@ -141,11 +142,7 @@ class Git:
 
     @_remote_command
     def push(self):
-        self.repo.git.push(
-            '--set-upstream',
-            self.origin.name,
-            self.current_branch
-        )
+        self.repo.git.push('--set-upstream', self.origin.name, self.current_branch)
 
     @_remote_command
     def pull(self):
@@ -169,8 +166,6 @@ class Git:
 
     def __set_git_config(self):
         if self.git_config.username:
-            self.repo.config_writer().set_value(
-                'user', 'name', self.git_config.username).release()
+            self.repo.config_writer().set_value('user', 'name', self.git_config.username).release()
         if self.git_config.email:
-            self.repo.config_writer().set_value(
-                'user', 'email', self.git_config.email).release()
+            self.repo.config_writer().set_value('user', 'email', self.git_config.email).release()

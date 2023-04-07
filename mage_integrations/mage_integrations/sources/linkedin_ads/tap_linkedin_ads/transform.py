@@ -13,6 +13,7 @@ def convert(name):
     regsub = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', regsub).lower()
 
+
 def snake_case_to_camel_case(text):
     if not text:
         return text
@@ -22,6 +23,7 @@ def snake_case_to_camel_case(text):
     remaining_words = words[1:]
 
     return first_word + ''.join(word.title() for word in remaining_words)
+
 
 # Convert keys in json array
 def convert_array(arr):
@@ -75,9 +77,11 @@ def transform_accounts(data_dict):
 
 def transform_analytics(data_dict):
     # convert string numbers to float/decimal numbers
-    currency_fields = ['conversion_value_in_local_currency',
-                       'cost_in_local_currency',
-                       'cost_in_usd']
+    currency_fields = [
+        'conversion_value_in_local_currency',
+        'cost_in_local_currency',
+        'cost_in_usd',
+    ]
     for currency_field in currency_fields:
         if currency_field in data_dict:
             val = data_dict[currency_field]
@@ -92,18 +96,22 @@ def transform_analytics(data_dict):
     # Create start_at and end_at fields from nested date_range
     if 'date_range' in data_dict:
         if 'start' in data_dict['date_range']:
-            if 'day' in data_dict['date_range']['start'] \
-            and 'month' in data_dict['date_range']['start'] \
-            and 'year' in data_dict['date_range']['start']:
+            if (
+                'day' in data_dict['date_range']['start']
+                and 'month' in data_dict['date_range']['start']
+                and 'year' in data_dict['date_range']['start']
+            ):
                 year = data_dict['date_range']['start']['year']
                 month = data_dict['date_range']['start']['month']
                 day = data_dict['date_range']['start']['day']
                 start_at = datetime(year=year, month=month, day=day)
                 data_dict['start_at'] = start_at.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         if 'end' in data_dict['date_range']:
-            if 'day' in data_dict['date_range']['end'] \
-            and 'month' in data_dict['date_range']['end'] \
-            and 'year' in data_dict['date_range']['end']:
+            if (
+                'day' in data_dict['date_range']['end']
+                and 'month' in data_dict['date_range']['end']
+                and 'year' in data_dict['date_range']['end']
+            ):
                 year = data_dict['date_range']['end']['year']
                 month = data_dict['date_range']['end']['month']
                 day = data_dict['date_range']['end']['day']
@@ -112,7 +120,7 @@ def transform_analytics(data_dict):
     return data_dict
 
 
-def transform_campaigns(data_dict): #pylint: disable=too-many-branches,too-many-statements
+def transform_campaigns(data_dict):  # pylint: disable=too-many-branches,too-many-statements
     # convert string numbers to float/decimal numbers
     currency_fields = ['daily_budget', 'unit_cost']
     for currency_field in currency_fields:
@@ -143,8 +151,7 @@ def transform_campaigns(data_dict): #pylint: disable=too-many-branches,too-many-
         elif isinstance(or_dict[key], dict):
             val = []
             val.append('{}'.format(or_dict[key]))
-        append_dict = {'type': key,
-                       'values': val}
+        append_dict = {'type': key, 'values': val}
         new_dict['targeting']['excluded_targeting_facets'].append(append_dict)
         ky_cnt = ky_cnt + 1
 
@@ -167,8 +174,7 @@ def transform_campaigns(data_dict): #pylint: disable=too-many-branches,too-many-
         elif isinstance(or_dict[key], dict):
             val = []
             val.append('{}'.format(or_dict[key]))
-        append_dict = {'type': key,
-                       'values': val}
+        append_dict = {'type': key, 'values': val}
         new_dict['targeting']['included_targeting_facets'].append(append_dict)
         ky_cnt = ky_cnt + 1
 
@@ -191,8 +197,7 @@ def transform_campaigns(data_dict): #pylint: disable=too-many-branches,too-many-
         elif isinstance(or_dict[key], dict):
             val = []
             val.append('{}'.format(or_dict[key]))
-        append_dict = {'type': key,
-                       'values': val}
+        append_dict = {'type': key, 'values': val}
         new_dict['targeting_criteria']['exclude'].append(append_dict)
         ky_cnt = ky_cnt + 1
 
@@ -222,6 +227,7 @@ def transform_campaigns(data_dict): #pylint: disable=too-many-branches,too-many-
 
     return new_dict
 
+
 # Abstract variables to type with key/value pairs
 def transform_creatives(data_dict):
     if 'variables' not in data_dict:
@@ -241,10 +247,10 @@ def transform_creatives(data_dict):
         pnum = len(params) - 1
         while pk_cnt <= pnum:
             param_key = list(params)[pk_cnt]
-            param_value = new_dict.get('variables', {}).get('data', {}).get(key, {})\
-                .get(param_key, '')
-            val = {'key': param_key,
-                   'value': '{}'.format(param_value)}
+            param_value = (
+                new_dict.get('variables', {}).get('data', {}).get(key, {}).get(param_key, '')
+            )
+            val = {'key': param_key, 'value': '{}'.format(param_value)}
             new_dict['variables']['values'].append(val)
             pk_cnt = pk_cnt + 1
 
@@ -260,8 +266,9 @@ def transform_audit_fields(data_dict):
     if 'change_audit_stamps' in data_dict:
         if 'last_modified' in data_dict['change_audit_stamps']:
             if 'time' in data_dict['change_audit_stamps']['last_modified']:
-                data_dict['last_modified_time'] = data_dict['change_audit_stamps']\
-                    ['last_modified']['time']
+                data_dict['last_modified_time'] = data_dict['change_audit_stamps']['last_modified'][
+                    'time'
+                ]
         if 'created' in data_dict['change_audit_stamps']:
             if 'time' in data_dict['change_audit_stamps']['created']:
                 data_dict['created_time'] = data_dict['change_audit_stamps']['created']['time']
@@ -289,10 +296,9 @@ def transform_urn(data_dict):
                     except ValueError:
                         # Set ID as string
                         id_val = search.group(2)
-                        pass #pylint: disable=unnecessary-pass
+                        pass  # pylint: disable=unnecessary-pass
                     data_dict[new_key] = id_val
     return data_dict
-
 
 
 def transform_data(data_dict, stream_name):

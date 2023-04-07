@@ -7,9 +7,7 @@ import zenpy
 
 
 class Mockresponse:
-    def __init__(
-        self, resp, status_code, content=[""], headers=None, raise_error=False, text={}
-    ):
+    def __init__(self, resp, status_code, content=[""], headers=None, raise_error=False, text={}):
         self.json_data = resp
         self.status_code = status_code
         self.content = content
@@ -68,9 +66,7 @@ class TestBackoff(unittest.TestCase):
     in the test before making assertions
     """
 
-    @patch(
-        "requests.get", side_effect=[mocked_get(status_code=200, json=SINGLE_RESPONSE)]
-    )
+    @patch("requests.get", side_effect=[mocked_get(status_code=200, json=SINGLE_RESPONSE)])
     def test_get_cursor_based_gets_one_page(self, mock_get, mock_sleep):
         responses = [
             response
@@ -148,9 +144,7 @@ class TestBackoff(unittest.TestCase):
         actual_call_count = mock_get.call_count
         self.assertEqual(expected_call_count, actual_call_count)
 
-    @patch(
-        "requests.get", side_effect=[mocked_get(status_code=400, json={"key1": "val1"})]
-    )
+    @patch("requests.get", side_effect=[mocked_get(status_code=400, json={"key1": "val1"})])
     def test_get_cursor_based_handles_400(self, mock_get, mock_sleep):
         try:
             responses = [
@@ -172,9 +166,7 @@ class TestBackoff(unittest.TestCase):
 
     @patch(
         "requests.get",
-        side_effect=[
-            mocked_get(status_code=400, json={"error": "Couldn't authenticate you"})
-        ],
+        side_effect=[mocked_get(status_code=400, json={"error": "Couldn't authenticate you"})],
     )
     def test_get_cursor_based_handles_400_api_error_message(self, mock_get, mock_sleep):
         try:
@@ -186,18 +178,14 @@ class TestBackoff(unittest.TestCase):
             ]
 
         except http.ZendeskBadRequestError as e:
-            expected_error_message = (
-                "HTTP-error-code: 400, Error: Couldn't authenticate you"
-            )
+            expected_error_message = "HTTP-error-code: 400, Error: Couldn't authenticate you"
             # Verify the message formed for the custom exception
             self.assertEqual(str(e), expected_error_message)
 
         # Verify the request calls only 1 time
         self.assertEqual(mock_get.call_count, 1)
 
-    @patch(
-        "requests.get", side_effect=[mocked_get(status_code=401, json={"key1": "val1"})]
-    )
+    @patch("requests.get", side_effect=[mocked_get(status_code=401, json={"key1": "val1"})])
     def test_get_cursor_based_handles_401(self, mock_get, mock_sleep):
         try:
             responses = [
@@ -217,9 +205,7 @@ class TestBackoff(unittest.TestCase):
         # Verify the request calls only 1 time
         self.assertEqual(mock_get.call_count, 1)
 
-    @patch(
-        "requests.get", side_effect=[mocked_get(status_code=404, json={"key1": "val1"})]
-    )
+    @patch("requests.get", side_effect=[mocked_get(status_code=404, json={"key1": "val1"})])
     def test_get_cursor_based_handles_404(self, mock_get, mock_sleep):
         try:
             responses = [
@@ -229,7 +215,9 @@ class TestBackoff(unittest.TestCase):
                 )
             ]
         except http.ZendeskNotFoundError as e:
-            expected_error_message = "HTTP-error-code: 404, Error: The resource you have specified cannot be found."
+            expected_error_message = (
+                "HTTP-error-code: 404, Error: The resource you have specified cannot be found."
+            )
             # Verify the message formed for the custom exception
             self.assertEqual(str(e), expected_error_message)
 
@@ -255,9 +243,7 @@ class TestBackoff(unittest.TestCase):
         # Verify that requests.Session.request called 10 times
         self.assertEqual(mocked_request.call_count, 10)
 
-    @patch(
-        "requests.get", side_effect=[mocked_get(status_code=422, json={"key1": "val1"})]
-    )
+    @patch("requests.get", side_effect=[mocked_get(status_code=422, json={"key1": "val1"})])
     def test_get_cursor_based_handles_422(self, mock_get, mock_sleep):
         try:
             responses = [
@@ -386,9 +372,7 @@ class TestBackoff(unittest.TestCase):
         mock_get.side_effect = requests.exceptions.Timeout
 
         try:
-            responses = http.call_api(
-                url="some_url", request_timeout=300, params={}, headers={}
-            )
+            responses = http.call_api(url="some_url", request_timeout=300, params={}, headers={})
         except requests.exceptions.Timeout as e:
             pass
 
@@ -400,9 +384,7 @@ class TestBackoff(unittest.TestCase):
         mock_get.side_effect = ConnectionError
 
         try:
-            responses = http.call_api(
-                url="some_url", request_timeout=300, params={}, headers={}
-            )
+            responses = http.call_api(url="some_url", request_timeout=300, params={}, headers={})
         except ConnectionError as e:
             pass
 

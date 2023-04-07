@@ -116,9 +116,7 @@ class S3(BaseFile):
                 buffer.seek(0)
                 self.client.put_object(Body=buffer, Bucket=bucket_name, Key=object_key)
 
-    def exists(
-        self, bucket_name: str, prefix: str
-    ) -> bool:
+    def exists(self, bucket_name: str, prefix: str) -> bool:
         """
         Checks if content exists at a certain path in a S3 bucket.
         """

@@ -4,12 +4,11 @@ from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG,
-    GOOGLE_CHAT_NOTIFICATION_CONFIG
+    GOOGLE_CHAT_NOTIFICATION_CONFIG,
 )
 
 
 class NotificationConfigTests(TestCase):
-
     def test_load_config(self):
         notification_config_empty = dict()
         notification_config_email = EMAIL_NOTIFICATION_CONFIG

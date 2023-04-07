@@ -41,13 +41,15 @@ class IntegrationBlock(Block):
         query_data = runtime_arguments or {}
         query_data = query_data.copy()
 
-        tags = dict(block_tags=dict(
-            destination_table=destination_table,
-            index=index,
-            stream=stream,
-            type=self.type,
-            uuid=self.uuid,
-        ))
+        tags = dict(
+            block_tags=dict(
+                destination_table=destination_table,
+                index=index,
+                stream=stream,
+                type=self.type,
+                uuid=self.uuid,
+            )
+        )
         updated_logging_tags = merge_dict(
             logging_tags,
             dict(tags=tags),
@@ -64,16 +66,21 @@ class IntegrationBlock(Block):
             )
             source_output_file_path = self.pipeline.source_output_file_path(stream, index)
 
-            stream_catalog = get_catalog_by_stream(
-                self.pipeline.data_loader.file_path,
-                stream,
-                global_vars,
-                pipeline=self.pipeline,
-            ) or dict()
+            stream_catalog = (
+                get_catalog_by_stream(
+                    self.pipeline.data_loader.file_path,
+                    stream,
+                    global_vars,
+                    pipeline=self.pipeline,
+                )
+                or dict()
+            )
 
             if stream_catalog.get('replication_method') == 'INCREMENTAL':
-                from mage_integrations.sources.utils import \
-                    update_source_state_from_destination_state
+                from mage_integrations.sources.utils import (
+                    update_source_state_from_destination_state,
+                )
+
                 update_source_state_from_destination_state(
                     source_state_file_path,
                     destination_state_file_path,
@@ -131,8 +138,10 @@ class IntegrationBlock(Block):
                 raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
             file_size = os.path.getsize(source_output_file_path)
-            msg = f'Finished writing {file_size} bytes with {lines_in_file} lines to output '\
-                  f'file {source_output_file_path}.'
+            msg = (
+                f'Finished writing {file_size} bytes with {lines_in_file} lines to output '
+                f'file {source_output_file_path}.'
+            )
             if logger:
                 logger.info(msg, **updated_logging_tags)
             else:
@@ -216,8 +225,7 @@ class IntegrationBlock(Block):
                                     schema_updated = schema_original.copy()
                                     properties_original = schema_updated['schema']['properties']
                                     schema_updated['schema']['properties'] = {
-                                        k: properties_original[k]
-                                        if k in properties_original else v
+                                        k: properties_original[k] if k in properties_original else v
                                         for k, v in properties_updated.items()
                                     }
 
@@ -225,10 +233,12 @@ class IntegrationBlock(Block):
                                     continue
                                 record_transformed = df.to_dict('records')[0]
 
-                                line = json.dumps(merge_dict(
-                                    data,
-                                    dict(record=record_transformed),
-                                ))
+                                line = json.dumps(
+                                    merge_dict(
+                                        data,
+                                        dict(record=record_transformed),
+                                    )
+                                )
                                 records_transformed += 1
 
                                 if records_transformed % 1000 == 0:
@@ -251,8 +261,10 @@ class IntegrationBlock(Block):
 
             msg = f'Transformed {records_transformed} total records for stream {stream}.'
             file_size = os.path.getsize(source_output_file_path)
-            msg2 = f'Finished writing {file_size} bytes with {len(output_arr)} lines to '\
-                   f'output file {source_output_file_path}.'
+            msg2 = (
+                f'Finished writing {file_size} bytes with {len(output_arr)} lines to '
+                f'output file {source_output_file_path}.'
+            )
             if logger:
                 logger.info(msg, **updated_logging_tags)
                 logger.info(msg2, **updated_logging_tags)
@@ -273,27 +285,31 @@ class IntegrationBlock(Block):
             else:
                 print(msg)
 
-            proc = subprocess.Popen([
-                PYTHON_COMMAND,
-                self.pipeline.destination_file_path,
-                '--config_json',
-                build_config_json(
+            proc = subprocess.Popen(
+                [
+                    PYTHON_COMMAND,
+                    self.pipeline.destination_file_path,
+                    '--config_json',
+                    build_config_json(
+                        self.pipeline.data_exporter.file_path,
+                        global_vars,
+                        override=override,
+                    ),
+                    '--log_to_stdout',
+                    '1',
+                    '--settings',
                     self.pipeline.data_exporter.file_path,
-                    global_vars,
-                    override=override,
-                ),
-                '--log_to_stdout',
-                '1',
-                '--settings',
-                self.pipeline.data_exporter.file_path,
-                '--state',
-                self.pipeline.destination_state_file_path(
-                    destination_table=destination_table,
-                    stream=stream,
-                ),
-                '--input_file_path',
-                source_output_file_path,
-            ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    '--state',
+                    self.pipeline.destination_state_file_path(
+                        destination_table=destination_table,
+                        stream=stream,
+                    ),
+                    '--input_file_path',
+                    source_output_file_path,
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
 
             for line in proc.stdout:
                 print_log_from_line(
@@ -328,8 +344,10 @@ class DestinationBlock(IntegrationBlock):
     ):
         data = {}
         if state_stream and destination_table:
-            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-                import IntegrationPipeline
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
+
             integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
             destination_state_file_path = integration_pipeline.destination_state_file_path(
                 destination_table=destination_table,
@@ -354,10 +372,10 @@ class DestinationBlock(IntegrationBlock):
 
     def update(self, data, update_state=False):
         if update_state:
-            from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-                import IntegrationPipeline
-            from mage_integrations.destinations.utils \
-                import update_destination_state_bookmarks
+            from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+                IntegrationPipeline,
+            )
+            from mage_integrations.destinations.utils import update_destination_state_bookmarks
 
             integration_pipeline = IntegrationPipeline(self.pipeline.uuid)
             tap_stream_id = data.get('tap_stream_id')
@@ -369,9 +387,7 @@ class DestinationBlock(IntegrationBlock):
                     stream=tap_stream_id,
                 )
                 update_destination_state_bookmarks(
-                    destination_state_file_path,
-                    tap_stream_id,
-                    bookmark_values=bookmark_values
+                    destination_state_file_path, tap_stream_id, bookmark_values=bookmark_values
                 )
 
         return super().update(data)

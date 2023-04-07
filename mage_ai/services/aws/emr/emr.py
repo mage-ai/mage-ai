@@ -62,9 +62,7 @@ def create_a_new_cluster(
         ),
         Steps=__build_steps_config(steps),
         StepConcurrencyLevel=256,
-        Applications=[{
-            'Name': app
-        } for app in applications],
+        Applications=[{'Name': app} for app in applications],
         JobFlowRole='EMR_EC2_DefaultRole',
         ServiceRole='EMR_DefaultRole',
         EbsRootVolumeSize=10,
@@ -95,10 +93,7 @@ def create_a_new_cluster(
 
     if keep_alive and idle_timeout > 0:
         emr_client.put_auto_termination_policy(
-            ClusterId=cluster_id,
-            AutoTerminationPolicy={
-                'IdleTimeout': idle_timeout
-            }
+            ClusterId=cluster_id, AutoTerminationPolicy={'IdleTimeout': idle_timeout}
         )
 
     if done_status is None:
@@ -273,20 +268,23 @@ def __add_step(emr_client, cluster_id, steps):
 
 
 def __build_steps_config(steps):
-    return [{
-        'Name': step['name'],
-        'ActionOnFailure': 'CONTINUE',
-        'HadoopJarStep': {
-            'Jar': 'command-runner.jar',
-            'Args': [
-                'spark-submit',
-                '--deploy-mode',
-                'cluster',
-                step['script_uri'],
-                *step['script_args'],
-            ]
+    return [
+        {
+            'Name': step['name'],
+            'ActionOnFailure': 'CONTINUE',
+            'HadoopJarStep': {
+                'Jar': 'command-runner.jar',
+                'Args': [
+                    'spark-submit',
+                    '--deploy-mode',
+                    'cluster',
+                    step['script_uri'],
+                    *step['script_args'],
+                ],
+            },
         }
-    } for step in steps]
+        for step in steps
+    ]
 
 
 def __status_poller(intro, done_status, func):

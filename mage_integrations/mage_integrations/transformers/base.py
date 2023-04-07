@@ -133,11 +133,14 @@ class Transformer(Source, Destination):
             write_parquet_file(self.df_file_path, df)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
-            self.logger.exception(message, tags=dict(
-                error=str(err),
-                errors=traceback.format_stack(),
-                message=traceback.format_exc(),
-            ))
+            self.logger.exception(
+                message,
+                tags=dict(
+                    error=str(err),
+                    errors=traceback.format_stack(),
+                    message=traceback.format_exc(),
+                ),
+            )
             raise Exception(message)
 
     def load_data(
@@ -168,11 +171,14 @@ class Transformer(Source, Destination):
                 self.sync(catalog, dtypes)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {str(err)}.'
-            self.logger.exception(message, tags=dict(
-                error=str(err),
-                errors=traceback.format_stack(),
-                message=traceback.format_exc(),
-            ))
+            self.logger.exception(
+                message,
+                tags=dict(
+                    error=str(err),
+                    errors=traceback.format_stack(),
+                    message=traceback.format_exc(),
+                ),
+            )
             raise Exception(message)
 
 

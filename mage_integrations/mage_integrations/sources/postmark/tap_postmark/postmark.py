@@ -27,10 +27,12 @@ API_DATE_PATH: str = '?fromdate=:date:&todate=:date:'
 
 MESSAGES_MAX_HISTORY: timedelta = timedelta(days=45)  # noqa: WPS432
 
-HEADERS: MappingProxyType = MappingProxyType({  # Frozen dictionary
-    'Accept': 'application/json',
-    'X-Postmark-Server-Token': ':token:',
-})
+HEADERS: MappingProxyType = MappingProxyType(
+    {  # Frozen dictionary
+        'Accept': 'application/json',
+        'X-Postmark-Server-Token': ':token:',
+    }
+)
 
 
 class Postmark(object):  # noqa: WPS230
@@ -74,16 +76,13 @@ class Postmark(object):  # noqa: WPS230
         self._create_headers()
 
         for date_day in self._start_days_till_now(start_date_input):
-
             # Replace placeholder in reports path
             from_to_date: str = API_DATE_PATH.replace(
                 ':date:',
                 date_day,
             )
 
-            self.logger.info(
-                f'Recieving Bounce stats from {date_day}'
-            )
+            self.logger.info(f'Recieving Bounce stats from {date_day}')
 
             # Build URL
             url: str = (
@@ -131,16 +130,13 @@ class Postmark(object):  # noqa: WPS230
         self._create_headers()
 
         for date_day in self._start_days_till_now(start_date_input):
-
             # Replace placeholder in reports path
             from_to_date: str = API_DATE_PATH.replace(
                 ':date:',
                 date_day,
             )
 
-            self.logger.info(
-                f'Recieving Client stats from {date_day}'
-            )
+            self.logger.info(f'Recieving Client stats from {date_day}')
 
             # Build URL
             url: str = (
@@ -183,29 +179,23 @@ class Postmark(object):  # noqa: WPS230
             raise ValueError('The parameter start_date is required.')
 
         # Get the Cleaner
-        cleaner: Callable = CLEANERS.get(
-            'postmark_stats_outbound_overview', {}
-        )
+        cleaner: Callable = CLEANERS.get('postmark_stats_outbound_overview', {})
 
         # Create Header with Auth Token
         self._create_headers()
 
         for date_day in self._start_days_till_now(start_date_input):
-
             # Replace placeholder in reports path
             from_to_date: str = API_DATE_PATH.replace(
                 ':date:',
                 date_day,
             )
 
-            self.logger.info(
-                f'Recieving overview stats from {date_day}'
-            )
+            self.logger.info(f'Recieving overview stats from {date_day}')
 
             # Build URL
             url: str = (
-                f'{API_SCHEME}{API_BASE_URL}{API_STATS_PATH}'
-                f'{API_OUTBOUND_PATH}{from_to_date}'
+                f'{API_SCHEME}{API_BASE_URL}{API_STATS_PATH}' f'{API_OUTBOUND_PATH}{from_to_date}'
             )
 
             # Make the call to Postmark API
@@ -242,24 +232,19 @@ class Postmark(object):  # noqa: WPS230
             raise ValueError('The parameter start_date is required.')
 
         # Get the Cleaner
-        cleaner: Callable = CLEANERS.get(
-            'postmark_stats_outbound_platform', {}
-        )
+        cleaner: Callable = CLEANERS.get('postmark_stats_outbound_platform', {})
 
         # Create Header with Auth Token
         self._create_headers()
 
         for date_day in self._start_days_till_now(start_date_input):
-
             # Replace placeholder in reports path
             from_to_date: str = API_DATE_PATH.replace(
                 ':date:',
                 date_day,
             )
 
-            self.logger.info(
-                f'Recieving platform opens from {date_day}'
-            )
+            self.logger.info(f'Recieving platform opens from {date_day}')
 
             # Build URL
             url: str = (
@@ -317,17 +302,13 @@ class Postmark(object):  # noqa: WPS230
         self._create_headers()
 
         # Build URL
-        url: str = (
-            f'{API_SCHEME}{API_BASE_URL}{API_MESSAGES_PATH}'
-            f'{API_OUTBOUND_PATH}'
-        )
+        url: str = f'{API_SCHEME}{API_BASE_URL}{API_MESSAGES_PATH}' f'{API_OUTBOUND_PATH}'
 
         # Number of messages to fetch in a batch
         batch_size: int = 500
 
         # For every date between the start date and now
         for date_day in self._start_days_till_now(start_date_input):
-
             # Update http parameters
             http_parameters: dict = {
                 'count': batch_size,
@@ -342,7 +323,6 @@ class Postmark(object):  # noqa: WPS230
 
             # While there are more messages availbe
             while more:
-
                 # Batch counter
                 counter: int = (total // batch_size) + 1
 
@@ -372,14 +352,14 @@ class Postmark(object):  # noqa: WPS230
                 # Clean and yield the message
                 # for each message, creating a new API and get message details
                 for message in message_data:
-                    API_MESSAGEID: str = '/'+ message['MessageID']
+                    API_MESSAGEID: str = '/' + message['MessageID']
                     API_DETAILS = '/details'
                     url2: str = (
                         f'{API_SCHEME}{API_BASE_URL}{API_MESSAGES_PATH}'
                         f'{API_OUTBOUND_PATH}{API_MESSAGEID}{API_DETAILS}'
                     )
-                    
-                    details_response : httpx._models.Response = self.client.get(  # noqa
+
+                    details_response: httpx._models.Response = self.client.get(  # noqa
                         url2,
                         headers=self.headers,
                         params=http_parameters,
@@ -395,8 +375,8 @@ class Postmark(object):  # noqa: WPS230
                     # Extract messageEvent types frome the MessageEvent list
                     messageEvent_types: str = ''
                     for event in details_messageEvents:
-                        messageEvent_types = messageEvent_types + event['Type']+',' 
-                    messageEvent_types =  messageEvent_types[:-1] # Get rid of the last comma                     
+                        messageEvent_types = messageEvent_types + event['Type'] + ','
+                    messageEvent_types = messageEvent_types[:-1]  # Get rid of the last comma
                     message['MessageEvents'] = messageEvent_types
 
                     yield cleaner(date_day, message)
@@ -444,8 +424,7 @@ class Postmark(object):  # noqa: WPS230
 
         # Build URL
         url: str = (
-            f'{API_SCHEME}{API_BASE_URL}{API_MESSAGES_PATH}'
-            f'{API_OUTBOUND_PATH}{API_OPENS_PATH}'
+            f'{API_SCHEME}{API_BASE_URL}{API_MESSAGES_PATH}' f'{API_OUTBOUND_PATH}{API_OPENS_PATH}'
         )
 
         # Number of messages to fetch in a batch
@@ -453,7 +432,6 @@ class Postmark(object):  # noqa: WPS230
 
         # For every date between the start date and now
         for date_day in self._start_days_till_now(start_date_input):
-
             # Update http parameters
             http_parameters: dict = {
                 'count': batch_size,
@@ -468,7 +446,6 @@ class Postmark(object):  # noqa: WPS230
 
             # While there are more messages availbe
             while more:
-
                 # Batch counter
                 counter: int = (total // batch_size) + 1
 
@@ -541,8 +518,7 @@ class Postmark(object):  # noqa: WPS230
     def _create_headers(self) -> None:
         """Create authentication headers for requests."""
         headers: dict = dict(HEADERS)
-        headers['X-Postmark-Server-Token'] = \
-            headers['X-Postmark-Server-Token'].replace(
+        headers['X-Postmark-Server-Token'] = headers['X-Postmark-Server-Token'].replace(
             ':token:',
             self.postmark_server_token,
         )

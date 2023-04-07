@@ -8,10 +8,7 @@ COLUMN_TYPE_NUMBER = 'number'
 COLUMN_TYPE_OBJECT = 'object'
 COLUMN_TYPE_STRING = 'string'
 
-DATETIME_COLUMN_SCHEMA = {
-    "format": "date-time",
-    "type": ["null", "string"]
-}
+DATETIME_COLUMN_SCHEMA = {"format": "date-time", "type": ["null", "string"]}
 
 STREAM_OVERRIDE_SETTINGS_KEY = '_streams'
 STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY = 'columns'

@@ -8,9 +8,7 @@ from unittest.mock import patch
 
 class SourceFactoryTests(TestCase):
     def test_get_source_kafka(self):
-        with patch.object(KafkaSource,
-                          '__init__',
-                          return_value=None) as mock_init:
+        with patch.object(KafkaSource, '__init__', return_value=None) as mock_init:
             config = dict(
                 connector_type='kafka',
             )
@@ -19,9 +17,7 @@ class SourceFactoryTests(TestCase):
             mock_init.assert_called_once_with(config)
 
     def test_get_source_azure_event_hub(self):
-        with patch.object(AzureEventHubSource,
-                          '__init__',
-                          return_value=None) as mock_init:
+        with patch.object(AzureEventHubSource, '__init__', return_value=None) as mock_init:
             config = dict(
                 connector_type='azure_event_hub',
             )
@@ -30,9 +26,7 @@ class SourceFactoryTests(TestCase):
             mock_init.assert_called_once_with(config)
 
     def test_get_source_rabbitmq(self):
-        with patch.object(RabbitMQSource,
-                          '__init__',
-                          return_value=None) as mock_init:
+        with patch.object(RabbitMQSource, '__init__', return_value=None) as mock_init:
             config = dict(
                 connector_type='rabbitmq',
             )
@@ -41,13 +35,13 @@ class SourceFactoryTests(TestCase):
             mock_init.assert_called_once_with(config)
 
     def test_get_source_other(self):
-        s = "Consuming data from random is not supported " \
-            "in streaming pipelines yet."
+        s = "Consuming data from random is not supported " "in streaming pipelines yet."
         with self.assertRaises(Exception) as context:
-            SourceFactory.get_source(dict(
-                connector_type='random',
-            ))
+            SourceFactory.get_source(
+                dict(
+                    connector_type='random',
+                )
+            )
         self.assertTrue(
-            s
-            in str(context.exception),
+            s in str(context.exception),
         )

@@ -16,10 +16,7 @@ class Client(BaseClient):
         return 'https://api.monday.com/v2'
 
     def get_headers(self):
-        return {
-            'Authorization': self.config['api_token'],
-            'Content-Type': 'application/json'
-        }
+        return {'Authorization': self.config['api_token'], 'Content-Type': 'application/json'}
 
     def request(
         self,

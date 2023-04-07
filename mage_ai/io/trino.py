@@ -38,11 +38,7 @@ class ConnectionWrapper(Connection):
         else:
             request = self._create_request()
         return Cursor(
-            self,
-            request,
-            legacy_primitive_types
-            if legacy_primitive_types is not None
-            else False
+            self, request, legacy_primitive_types if legacy_primitive_types is not None else False
         )
 
 
@@ -68,7 +64,7 @@ class Trino(BaseSQL):
             password=password,
             port=port,
             schema=schema,
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
@@ -106,18 +102,18 @@ class Trino(BaseSQL):
             )
 
             if self.settings.get('password'):
-                connect_kwargs['auth'] = \
-                    BasicAuthentication(
-                        self.settings['user'], self.settings['password'])
+                connect_kwargs['auth'] = BasicAuthentication(
+                    self.settings['user'], self.settings['password']
+                )
                 connect_kwargs['http_scheme'] = 'https'
             self._ctx = ConnectionWrapper(**connect_kwargs)
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
             catalog = self.settings['catalog']
-            cur.execute('\n'.join([
-                f'SHOW TABLES FROM {catalog}.{schema_name} LIKE \'{table_name}\''
-            ]))
+            cur.execute(
+                '\n'.join([f'SHOW TABLES FROM {catalog}.{schema_name} LIKE \'{table_name}\''])
+            )
             return len(cur.fetchall()) >= 1
 
     def upload_dataframe(
@@ -155,9 +151,7 @@ class Trino(BaseSQL):
         cursor.execute(sql)
 
     def get_type(self, column: Series, dtype: str) -> str:
-        return convert_python_type_to_trino_type(
-            convert_pandas_dtype_to_python_type(dtype)
-        )
+        return convert_python_type_to_trino_type(convert_pandas_dtype_to_python_type(dtype))
 
     def export(
         self,
@@ -218,9 +212,7 @@ class Trino(BaseSQL):
 
                 if table_exists:
                     if ExportWritePolicy.FAIL == if_exists:
-                        raise ValueError(
-                            f'Table \'{full_table_name}\' already exists in database.'
-                        )
+                        raise ValueError(f'Table \'{full_table_name}\' already exists in database.')
                     elif ExportWritePolicy.REPLACE == if_exists:
                         if drop_table_on_replace:
                             cmd = f'DROP TABLE {full_table_name}'
@@ -245,10 +237,7 @@ class Trino(BaseSQL):
                     cur.execute(query)
                 else:
                     if should_create_table:
-                        db_dtypes = {
-                            col: self.get_type(df[col], dtypes[col])
-                            for col in dtypes
-                        }
+                        db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
                         query = self.build_create_table_command(
                             db_dtypes,
                             schema_name,
@@ -260,9 +249,7 @@ class Trino(BaseSQL):
             self.conn.commit()
 
         if verbose:
-            with self.printer.print_msg(
-                f'Exporting data to \'{full_table_name}\''
-            ):
+            with self.printer.print_msg(f'Exporting data to \'{full_table_name}\''):
                 __process()
         else:
             __process()

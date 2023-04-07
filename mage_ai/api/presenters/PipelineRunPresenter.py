@@ -21,13 +21,15 @@ class PipelineRunPresenter(BasePresenter):
 
     async def present(self, **kwargs):
         if constants.LIST == kwargs['format']:
-            return self.model.to_dict(include_attributes=[
-                'block_runs',
-                'block_runs_count',
-                'pipeline_schedule_name',
-                'pipeline_schedule_token',
-                'pipeline_schedule_type',
-            ])
+            return self.model.to_dict(
+                include_attributes=[
+                    'block_runs',
+                    'block_runs_count',
+                    'pipeline_schedule_name',
+                    'pipeline_schedule_token',
+                    'pipeline_schedule_type',
+                ]
+            )
         elif constants.DETAIL == kwargs['format']:
             block_runs = self.model.block_runs
             data = self.model.to_dict()
@@ -48,7 +50,8 @@ class PipelineRunPresenter(BasePresenter):
 
 PipelineRunPresenter.register_format(
     constants.LIST,
-    PipelineRunPresenter.default_attributes + [
+    PipelineRunPresenter.default_attributes
+    + [
         'block_runs',
         'block_runs_count',
         'pipeline_schedule_name',
@@ -59,7 +62,8 @@ PipelineRunPresenter.register_format(
 
 PipelineRunPresenter.register_format(
     constants.DETAIL,
-    PipelineRunPresenter.default_attributes + [
+    PipelineRunPresenter.default_attributes
+    + [
         'block_runs',
     ],
 )

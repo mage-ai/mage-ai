@@ -3,14 +3,16 @@ from unittest.mock import Mock
 from unittest import mock
 from tap_facebook import AdCreative, Ads, AdSets, Campaigns, AdsInsights, Leads
 
+
 @mock.patch("time.sleep")
 class TestAttributErrorBackoff(unittest.TestCase):
     """A set of unit tests to ensure that requests are retrying properly for AttributeError Error"""
+
     def test_get_adcreatives(self, mocked_sleep):
-        """ 
-            AdCreative.get_adcreatives calls a `facebook_business` method,`get_ad_creatives()`, to get a batch of ad creatives. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        AdCreative.get_adcreatives calls a `facebook_business` method,`get_ad_creatives()`, to get a batch of ad creatives.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
 
         # Mock get_ad_creatives function to throw AttributeError exception
@@ -27,10 +29,10 @@ class TestAttributErrorBackoff(unittest.TestCase):
         self.assertEquals(mocked_account.get_ad_creatives.call_count, 5)
 
     def test_call_get_ads(self, mocked_sleep):
-        """ 
-            Ads._call_get_ads calls a `facebook_business` method,`get_ads()`, to get a batch of ads. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        Ads._call_get_ads calls a `facebook_business` method,`get_ads()`, to get a batch of ads.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
 
         # Mock get_ads function to throw AttributeError exception
@@ -48,11 +50,11 @@ class TestAttributErrorBackoff(unittest.TestCase):
 
     @mock.patch("pendulum.parse")
     def test_ad_prepare_record(self, mocked_parse, mocked_sleep):
-        """ 
-            __iter__ of Ads calls a function _iterate which calls a nested prepare_record function.
-            Prepare_record calls a `facebook_business` method,`ad.api_get()`, to get a ad fields. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        __iter__ of Ads calls a function _iterate which calls a nested prepare_record function.
+        Prepare_record calls a `facebook_business` method,`ad.api_get()`, to get a ad fields.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
         # Mock ad object
         mocked_ad = Mock()
@@ -75,10 +77,10 @@ class TestAttributErrorBackoff(unittest.TestCase):
         self.assertEquals(mocked_ad.api_get.call_count, 5)
 
     def test__call_get_ad_sets(self, mocked_sleep):
-        """ 
-            AdSets._call_get_ad_sets calls a `facebook_business` method,`get_ad_sets()`, to get a batch of adsets. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        AdSets._call_get_ad_sets calls a `facebook_business` method,`get_ad_sets()`, to get a batch of adsets.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
 
         # Mock get_ad_sets function to throw AttributeError exception
@@ -96,11 +98,11 @@ class TestAttributErrorBackoff(unittest.TestCase):
 
     @mock.patch("pendulum.parse")
     def test_adset_prepare_record(self, mocked_parse, mocked_sleep):
-        """ 
-            __iter__ of AdSets calls a function _iterate which calls a nested prepare_record function.
-            Prepare_record calls a `facebook_business` method,`ad.api_get()`, to get a ad fields. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        __iter__ of AdSets calls a function _iterate which calls a nested prepare_record function.
+        Prepare_record calls a `facebook_business` method,`ad.api_get()`, to get a ad fields.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
 
         # Mock adset object
@@ -124,10 +126,10 @@ class TestAttributErrorBackoff(unittest.TestCase):
         self.assertEquals(mocked_adset.api_get.call_count, 5)
 
     def test__call_get_campaigns(self, mocked_sleep):
-        """ 
-            Campaigns._call_get_campaigns calls a `facebook_business` method,`get_campaigns()`, to get a batch of campaigns. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        Campaigns._call_get_campaigns calls a `facebook_business` method,`get_campaigns()`, to get a batch of campaigns.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
 
         # Mock get_campaigns function to throw AttributeError exception
@@ -145,11 +147,11 @@ class TestAttributErrorBackoff(unittest.TestCase):
 
     @mock.patch("pendulum.parse")
     def test_campaign_prepare_record(self, mocked_parse, mocked_sleep):
-        """ 
-            __iter__ of Campaigns calls a function _iterate which calls a nested prepare_record function.
-            Prepare_record calls a `facebook_business` method,`ad.api_get()`, to get a ad fields. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        __iter__ of Campaigns calls a function _iterate which calls a nested prepare_record function.
+        Prepare_record calls a `facebook_business` method,`ad.api_get()`, to get a ad fields.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
 
         # # Mock campaign object
@@ -173,10 +175,10 @@ class TestAttributErrorBackoff(unittest.TestCase):
         self.assertEquals(mocked_campaign.api_get.call_count, 5)
 
     def test_run_job(self, mocked_sleep):
-        """ 
-            AdsInsights.run_job calls a `facebook_business` method,`get_insights()`, to get a batch of insights. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        AdsInsights.run_job calls a `facebook_business` method,`get_insights()`, to get a batch of insights.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
 
         # Mock get_insights function to throw AttributeError exception

@@ -16,6 +16,7 @@ class TestDeals(unittest.TestCase):
     This class gets an access token for the tests to use and then tests
     assumptions we have about the tap
     """
+
     def setUp(self):
         """
         This functions reads in the variables need to get an access token
@@ -27,7 +28,6 @@ class TestDeals(unittest.TestCase):
 
         acquire_access_token_from_refresh_token()
 
-
     def test_can_fetch_hs_date_entered_props(self):
         """
         This test is written on the assumption that `sync_deals()` calls
@@ -35,34 +35,51 @@ class TestDeals(unittest.TestCase):
         """
         state = {}
         url = get_url('deals_all')
-        params = {'count': 250,
-                  'includeAssociations': False,
-                  'properties' : []}
+        params = {'count': 250, 'includeAssociations': False, 'properties': []}
         v3_fields = ['hs_date_entered_appointmentscheduled']
 
         records = list(
-            gen_request(state, 'deals', url, params, 'deals', "hasMore", ["offset"], ["offset"], v3_fields=v3_fields)
+            gen_request(
+                state,
+                'deals',
+                url,
+                params,
+                'deals',
+                "hasMore",
+                ["offset"],
+                ["offset"],
+                v3_fields=v3_fields,
+            )
         )
 
         for record in records:
             # The test account has a deal stage called "appointment scheduled"
-            value = record.get('properties',{}).get('hs_date_entered_appointmentscheduled')
-            error_msg = ('Could not find "hs_date_entered_appointment_scheduled"'
-                         'in {}').format(record)
+            value = record.get('properties', {}).get('hs_date_entered_appointmentscheduled')
+            error_msg = ('Could not find "hs_date_entered_appointment_scheduled"' 'in {}').format(
+                record
+            )
             self.assertIsNotNone(value, msg=error_msg)
 
     def test_process_v3_deals_records(self):
         self.maxDiff = None
         data = [
-            {'properties': {'field1': 'value1',
-                            'field2': 'value2',
-                            'hs_date_entered_field3': 'value3',
-                            'hs_date_exited_field4': 'value4',}},
+            {
+                'properties': {
+                    'field1': 'value1',
+                    'field2': 'value2',
+                    'hs_date_entered_field3': 'value3',
+                    'hs_date_exited_field4': 'value4',
+                }
+            },
         ]
 
         expected = [
-            {'properties': {'hs_date_entered_field3': {'value': 'value3'},
-                            'hs_date_exited_field4':  {'value': 'value4'},}},
+            {
+                'properties': {
+                    'hs_date_entered_field3': {'value': 'value3'},
+                    'hs_date_exited_field4': {'value': 'value4'},
+                }
+            },
         ]
 
         actual = process_v3_deals_records(data)
@@ -71,26 +88,50 @@ class TestDeals(unittest.TestCase):
 
     def test_merge_responses(self):
         v1_resp = [
-            {'dealId': '1',
-             'properties': {'field1': 'value1',}},
-            {'dealId': '2',
-             'properties': {'field3': 'value3',}},
+            {
+                'dealId': '1',
+                'properties': {
+                    'field1': 'value1',
+                },
+            },
+            {
+                'dealId': '2',
+                'properties': {
+                    'field3': 'value3',
+                },
+            },
         ]
 
         v3_resp = [
-            {'id': '1',
-             'properties': {'field2': 'value2',}},
-            {'id': '2',
-             'properties': {'field4': 'value4',}},
+            {
+                'id': '1',
+                'properties': {
+                    'field2': 'value2',
+                },
+            },
+            {
+                'id': '2',
+                'properties': {
+                    'field4': 'value4',
+                },
+            },
         ]
 
         expected = [
-            {'dealId': '1',
-             'properties': {'field1': 'value1',
-                            'field2': 'value2',}},
-            {'dealId': '2',
-             'properties': {'field3': 'value3',
-                            'field4': 'value4',}},
+            {
+                'dealId': '1',
+                'properties': {
+                    'field1': 'value1',
+                    'field2': 'value2',
+                },
+            },
+            {
+                'dealId': '2',
+                'properties': {
+                    'field3': 'value3',
+                    'field4': 'value4',
+                },
+            },
         ]
 
         merge_responses(v1_resp, v3_resp)

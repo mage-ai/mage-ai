@@ -17,10 +17,12 @@ class SessionOperationTests(BaseApiTestCase):
 
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=user.email,
-                password=password,
-            )),
+            payload=dict(
+                session=dict(
+                    email=user.email,
+                    password=password,
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()
@@ -38,10 +40,12 @@ class SessionOperationTests(BaseApiTestCase):
 
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=user.email,
-                password='not password',
-            )),
+            payload=dict(
+                session=dict(
+                    email=user.email,
+                    password='not password',
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()
@@ -58,10 +62,12 @@ class SessionOperationTests(BaseApiTestCase):
         username = "novachrono"
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=username,
-                password="Wizard King",
-            )),
+            payload=dict(
+                session=dict(
+                    email=username,
+                    password="Wizard King",
+                )
+            ),
             resource='sessions',
         )
         await operation.execute()
@@ -80,10 +86,12 @@ class SessionOperationTests(BaseApiTestCase):
         username = "licht"
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=username,
-                password="Golden Dawn",
-            )),
+            payload=dict(
+                session=dict(
+                    email=username,
+                    password="Golden Dawn",
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()
@@ -103,10 +111,12 @@ class SessionOperationTests(BaseApiTestCase):
         username = "yami"
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(session=dict(
-                email=username,
-                password="black bull",
-            )),
+            payload=dict(
+                session=dict(
+                    email=username,
+                    password="black bull",
+                )
+            ),
             resource='sessions',
         )
         response = await operation.execute()

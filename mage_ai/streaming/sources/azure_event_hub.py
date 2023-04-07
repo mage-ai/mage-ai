@@ -25,6 +25,7 @@ class AzureEventHubSource(BaseSource):
 
     def read(self, handler: Callable):
         try:
+
             def on_event(partition_context, event):
                 self._print(f'Received event from partition: {partition_context.partition_id}.')
                 self._print(f'Event: {event}')
@@ -44,11 +45,14 @@ class AzureEventHubSource(BaseSource):
 
     def batch_read(self, handler: Callable):
         try:
+
             def on_event_batch(partition_context, event_batch: List):
                 if len(event_batch) == 0:
                     return
-                self._print(f'Partition {partition_context.partition_id},'
-                            f'Received count: {len(event_batch)}')
+                self._print(
+                    f'Partition {partition_context.partition_id},'
+                    f'Received count: {len(event_batch)}'
+                )
                 self._print(f'Sample event: {event_batch[0]}')
 
                 # Handle events
@@ -79,12 +83,16 @@ class AzureEventHubSource(BaseSource):
         self._print(f'Partition: {partition_context.partition_id} has been initialized.')
 
     def on_partition_close(self, partition_context, reason):
-        self._print(f'Partition: {partition_context.partition_id} has been closed, '
-                    f'reason for closing: {reason}.')
+        self._print(
+            f'Partition: {partition_context.partition_id} has been closed, '
+            f'reason for closing: {reason}.'
+        )
 
     def on_error(self, partition_context, error):
         if partition_context:
-            self._print(f'An exception: {partition_context.partition_id} occurred during'
-                        f' receiving from Partition: {error}.')
+            self._print(
+                f'An exception: {partition_context.partition_id} occurred during'
+                f' receiving from Partition: {error}.'
+            )
         else:
             self._print(f'An exception: {error} occurred during the load balance process.')

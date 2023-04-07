@@ -3,13 +3,12 @@ import unittest
 from datetime import datetime as dt
 from datetime import timedelta
 
-import tap_tester.menagerie   as menagerie
+import tap_tester.menagerie as menagerie
 import tap_tester.connections as connections
-import tap_tester.runner      as runner
+import tap_tester.runner as runner
 
 
 class FreshdeskBaseTest(unittest.TestCase):
-
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
     FOREIGN_KEYS = "table-foreign-key-properties"
@@ -17,7 +16,7 @@ class FreshdeskBaseTest(unittest.TestCase):
     INCREMENTAL = "INCREMENTAL"
     FULL = "FULL_TABLE"
 
-    START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z" # %H:%M:%SZ
+    START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z"  # %H:%M:%SZ
     BOOKMARK_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
     EXPECTED_PAGE_SIZE = "expected-page-size"
@@ -30,10 +29,14 @@ class FreshdeskBaseTest(unittest.TestCase):
     start_date = ""
 
     def setUp(self):
-        missing_envs = [x for x in [
-            'TAP_FRESHDESK_API_KEY',
-            'TAP_FRESHDESK_SUBDOMAIN',
-        ] if os.getenv(x) is None]
+        missing_envs = [
+            x
+            for x in [
+                'TAP_FRESHDESK_API_KEY',
+                'TAP_FRESHDESK_SUBDOMAIN',
+            ]
+            if os.getenv(x) is None
+        ]
         if missing_envs:
             raise Exception("Missing environment variables: {}".format(missing_envs))
 
@@ -46,10 +49,10 @@ class FreshdeskBaseTest(unittest.TestCase):
         return "tap-freshdesk"
 
     def get_properties(self):
-        start_date = dt.today() - timedelta(days=5*365)
+        start_date = dt.today() - timedelta(days=5 * 365)
         start_date_with_fmt = dt.strftime(start_date, self.START_DATE_FORMAT)
 
-        return {'start_date' : start_date_with_fmt}
+        return {'start_date': start_date_with_fmt}
 
     def get_credentials(self):
         return {
@@ -58,59 +61,58 @@ class FreshdeskBaseTest(unittest.TestCase):
         }
 
     def required_environment_variables(self):
-        return set(['TAP_FRESHDESK_API_KEY',
-                    'TAP_FRESHDESK_SUBDOMAIN'])
+        return set(['TAP_FRESHDESK_API_KEY', 'TAP_FRESHDESK_SUBDOMAIN'])
 
     def expected_metadata(self):
         """The expected streams and metadata about the streams"""
-        return  {
+        return {
             "agents": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
             "companies": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
             "conversations": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
             "groups": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
             "roles": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
             "satisfaction_ratings": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
             "tickets": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
             "time_entries": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updated_at"},
-                self.EXPECTED_PAGE_SIZE: 100
+                self.EXPECTED_PAGE_SIZE: 100,
             },
         }
 
@@ -123,9 +125,10 @@ class FreshdeskBaseTest(unittest.TestCase):
         return a dictionary with key of table name
         and value as a set of primary key fields
         """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_fields(self):
         """
@@ -134,14 +137,17 @@ class FreshdeskBaseTest(unittest.TestCase):
         pks = self.expected_primary_keys()
         rks = self.expected_replication_keys()
 
-        return {stream: rks.get(stream, set()) | pks.get(stream, set())
-                for stream in self.expected_streams()}
+        return {
+            stream: rks.get(stream, set()) | pks.get(stream, set())
+            for stream in self.expected_streams()
+        }
 
     def expected_replication_method(self):
         """return a dictionary with key of table name and value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_METHOD, None)
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_streams(self):
         """A set of expected stream names"""
@@ -152,15 +158,16 @@ class FreshdeskBaseTest(unittest.TestCase):
         return a dictionary with key of table name
         and value as a set of replication key fields
         """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_page_limits(self):
-        return {table: properties.get(self.EXPECTED_PAGE_SIZE, set())
-                for table, properties
-                in self.expected_metadata().items()}
-
+        return {
+            table: properties.get(self.EXPECTED_PAGE_SIZE, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     ##########################
     #  Common Test Actions   #
@@ -195,8 +202,9 @@ class FreshdeskBaseTest(unittest.TestCase):
 
         found_catalogs = menagerie.get_catalogs(conn_id)
         self.assertEqual(
-            len(found_catalogs), 0,
-            msg="expected 0 length catalog for check job, conn_id: {}".format(conn_id)
+            len(found_catalogs),
+            0,
+            msg="expected 0 length catalog for check job, conn_id: {}".format(conn_id),
         )
         print("Verified len(found_catalogs) = 0 for job with conn_id: {}".format(conn_id))
 
@@ -214,20 +222,19 @@ class FreshdeskBaseTest(unittest.TestCase):
         # BHT Freshdesk bug, discovery_exit_status is left as "None", not being set to 0
         # as expected.  Dev is not spending time fixing Tier 3 tap issues so skip
         # verification in order to allow some level of regression test to run.
-        #menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
+        # menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
 
         # Verify actual rows were synced
-        sync_record_count = runner.examine_target_output_file(self,
-                                                              conn_id,
-                                                              self.expected_streams(),
-                                                              self.expected_primary_keys())
+        sync_record_count = runner.examine_target_output_file(
+            self, conn_id, self.expected_streams(), self.expected_primary_keys()
+        )
         total_row_count = sum(sync_record_count.values())
-        self.assertGreater(total_row_count, 0,
-                           msg="failed to replicate any data: {}".format(sync_record_count))
+        self.assertGreater(
+            total_row_count, 0, msg="failed to replicate any data: {}".format(sync_record_count)
+        )
         print("total replicated row count: {}".format(total_row_count))
 
         return sync_record_count
-
 
     @staticmethod
     def parse_date(date_value):
@@ -239,7 +246,7 @@ class FreshdeskBaseTest(unittest.TestCase):
             "%Y-%m-%dT%H:%M:%SZ",
             "%Y-%m-%dT%H:%M:%S.%f+00:00",
             "%Y-%m-%dT%H:%M:%S+00:00",
-            "%Y-%m-%d"
+            "%Y-%m-%d",
         }
         for date_format in date_formats:
             try:
@@ -248,8 +255,9 @@ class FreshdeskBaseTest(unittest.TestCase):
             except ValueError:
                 continue
 
-        raise NotImplementedError("Tests do not account for dates of this format: {}".format(date_value))
-
+        raise NotImplementedError(
+            "Tests do not account for dates of this format: {}".format(date_value)
+        )
 
     def timedelta_formatted(self, dtime, days=0, str_format="%Y-%m-%dT00:00:00Z"):
         date_stripped = dt.strptime(dtime, str_format)

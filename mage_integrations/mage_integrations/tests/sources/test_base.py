@@ -28,13 +28,19 @@ def build_sample_streams_catalog_entries():
 
 
 def build_sample_streams_list():
-    with open(os.path.join(
+    with open(
+        os.path.join(
             ABSOLUTE_PATH,
             'samples/demo_table_stream.json',
-        ), 'r') as f1, open(os.path.join(
+        ),
+        'r',
+    ) as f1, open(
+        os.path.join(
             ABSOLUTE_PATH,
             'samples/demo_users_stream.json',
-            ), 'r') as f2:
+        ),
+        'r',
+    ) as f2:
         demo_table_stream = json.load(f1)
         demo_users_stream = json.load(f2)
 
@@ -42,9 +48,7 @@ def build_sample_streams_list():
 
 
 def build_sample_streams_catalog():
-    return Catalog.from_dict(
-        dict(streams=build_sample_streams_list())
-    )
+    return Catalog.from_dict(dict(streams=build_sample_streams_list()))
 
 
 class BaseSourceTests(unittest.TestCase):
@@ -245,14 +249,12 @@ class BaseSourceTests(unittest.TestCase):
             tap_stream_id='demo_users',
         )
         with patch.object(
-            source,
-            '_get_bookmark_properties_for_stream',
-            return_value=['id']
+            source, '_get_bookmark_properties_for_stream', return_value=['id']
         ) as mock_get_bookmark_props:
             with patch.object(source, 'load_data') as mock_load_data:
                 source.sync_stream(stream)
                 mock_get_bookmark_props.assert_called_with(stream)
-                mock_load_data.assert_called_once() 
+                mock_load_data.assert_called_once()
 
     def test_write_records(self):
         source = Source(
@@ -285,7 +287,7 @@ class BaseSourceTests(unittest.TestCase):
                         'id': 2,
                         'last_name': 'scott',
                         'first_name': 'jason',
-                        'color': 'red'
+                        'color': 'red',
                     },
                     max_bookmark=[],
                 ),
@@ -312,7 +314,7 @@ class BaseSourceTests(unittest.TestCase):
                     id=Schema(type=['null', 'string']),
                     last_name=Schema(type=['null', 'string']),
                     first_name=Schema(type=['null', 'string']),
-                    color=Schema(type=['null', 'string'])
+                    color=Schema(type=['null', 'string']),
                 ),
                 type='object',
             ),
@@ -371,7 +373,7 @@ class BaseSourceTests(unittest.TestCase):
                 'tap_stream_id': 'demo_users',
             },
         )
-    
+
     def test_load_schemas_from_folder(self):
         # Testing with Stripe source, since not all of the
         # integration sources have "schemas" folders.

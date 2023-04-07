@@ -33,7 +33,7 @@ def singularize(name):
     return inflection.singularize(name)
 
 
-class BaseOperation():
+class BaseOperation:
     def __init__(self, **kwargs):
         self.action = kwargs.get('action')
         self.files = kwargs.get('files', {})
@@ -59,18 +59,20 @@ class BaseOperation():
         try:
             result = await self.__executed_result()
             presented = await self.__present_results(result)
-            attrb = flatten([d.keys() for d in presented]) if issubclass(
-                type(presented), list) else presented.keys()
+            attrb = (
+                flatten([d.keys() for d in presented])
+                if issubclass(type(presented), list)
+                else presented.keys()
+            )
             attrb = list(set(attrb))
-            if (issubclass(type(result), list) or issubclass(type(result), UserList)):
+            if issubclass(type(result), list) or issubclass(type(result), UserList):
                 results = result
             else:
                 results = [result]
             for res in results:
                 updated_options = await self.__updated_options()
                 policy = self.__policy_class()(res, self.user, **updated_options)
-                policy.authorize_attributes(
-                    READ, attrb, api_operation_action=self.action)
+                policy.authorize_attributes(READ, attrb, api_operation_action=self.action)
             response_key = self.resource if LIST == self.action else self.__resource_name_singular()
             response[response_key] = presented
 
@@ -170,8 +172,7 @@ class BaseOperation():
 
     async def __delete_show_or_update(self):
         updated_options = await self.__updated_options()
-        res = await self.__resource_class().process_member(
-            self.pk, self.user, **updated_options)
+        res = await self.__resource_class().process_member(self.pk, self.user, **updated_options)
 
         policy = self.__policy_class()(res, self.user, **updated_options)
         policy.authorize_action(self.action)
@@ -210,39 +211,42 @@ class BaseOperation():
         try:
             return getattr(
                 importlib.import_module(
-                    'mage_ai.api.monitors.{}Monitor'.format(
-                        self.__classified_class())), '{}Monitor'.format(
-                    self.__classified_class()), )
+                    'mage_ai.api.monitors.{}Monitor'.format(self.__classified_class())
+                ),
+                '{}Monitor'.format(self.__classified_class()),
+            )
         except ModuleNotFoundError:
             return BaseMonitor
 
     def __policy_class(self):
         return getattr(
             importlib.import_module(
-                'mage_ai.api.policies.{}Policy'.format(
-                    self.__classified_class())), '{}Policy'.format(
-                self.__classified_class()), )
+                'mage_ai.api.policies.{}Policy'.format(self.__classified_class())
+            ),
+            '{}Policy'.format(self.__classified_class()),
+        )
 
     def __presenter_class(self):
         return getattr(
             importlib.import_module(
-                'mage_ai.api.presenters.{}Presenter'.format(
-                    self.__classified_class())), '{}Presenter'.format(
-                self.__classified_class()), )
+                'mage_ai.api.presenters.{}Presenter'.format(self.__classified_class())
+            ),
+            '{}Presenter'.format(self.__classified_class()),
+        )
 
     def __resource_class(self):
         return getattr(
             importlib.import_module(
-                'mage_ai.api.resources.{}Resource'.format(
-                    self.__classified_class())), '{}Resource'.format(
-                self.__classified_class()), )
+                'mage_ai.api.resources.{}Resource'.format(self.__classified_class())
+            ),
+            '{}Resource'.format(self.__classified_class()),
+        )
 
     async def __parent_model(self):
         if self.resource_parent and self.resource_parent_id:
             parent_class = classify(singularize(self.resource_parent))
             parent_resource_class = getattr(
-                importlib.import_module(
-                    'mage_ai.api.resources.{}Resource'.format(parent_class)),
+                importlib.import_module('mage_ai.api.resources.{}Resource'.format(parent_class)),
                 '{}Resource'.format(parent_class),
             )
             try:
@@ -287,18 +291,19 @@ class BaseOperation():
 
     def __presentation_format(self):
         if not self.__presentation_format_attr:
-            self.__presentation_format_attr = self.meta.get(
-                META_KEY_FORMAT, self.action)
+            self.__presentation_format_attr = self.meta.get(META_KEY_FORMAT, self.action)
         return self.__presentation_format_attr
 
     async def __updated_options(self):
         if not self.__updated_options_attr:
             self.__updated_options_attr = self.__combined_options().copy()
-            self.__updated_options_attr.update({
-                'api_operation_action': self.action,
-                'oauth_client': self.oauth_client,
-                'oauth_token': self.oauth_token,
-                'parent_model': await self.__parent_model(),
-            })
+            self.__updated_options_attr.update(
+                {
+                    'api_operation_action': self.action,
+                    'oauth_client': self.oauth_client,
+                    'oauth_token': self.oauth_token,
+                    'parent_model': await self.__parent_model(),
+                }
+            )
             self.__updated_options_attr.update(self.headers)
         return self.__updated_options_attr

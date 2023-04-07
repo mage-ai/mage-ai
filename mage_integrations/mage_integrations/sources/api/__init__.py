@@ -36,7 +36,6 @@ class Api(Source):
                 for col in df.columns:
                     df_filtered = df[df[col].notnull()][[col]]
 
-
                     for k, v in infer_dtypes(df_filtered).items():
                         if 'mixed' == v:
                             counter = Counter(map(type, df_filtered[col].values))
@@ -61,10 +60,12 @@ class Api(Source):
                             ],
                         )
 
-                schema = Schema.from_dict(dict(
-                    properties=properties,
-                    type='object',
-                ))
+                schema = Schema.from_dict(
+                    dict(
+                        properties=properties,
+                        type='object',
+                    )
+                )
 
                 metadata = get_standard_metadata(
                     key_properties=[],
@@ -114,6 +115,7 @@ class Api(Source):
         self.logger.info(f'API request {self.http_method} {url} started.', tags=tags)
 
         import requests
+
         s = requests.Session()
         a = requests.adapters.HTTPAdapter(max_retries=100)
         b = requests.adapters.HTTPAdapter(max_retries=100)
@@ -127,7 +129,6 @@ class Api(Source):
             timeout=12,
             verify=False,
         )
-
 
     def load_data(
         self,
@@ -173,7 +174,9 @@ class Api(Source):
             for item in result:
                 if type(item) is not list:
                     item = [item]
-                rows.append({col: item[idx] if len(item) > idx else None for idx, col in enumerate(columns)})
+                rows.append(
+                    {col: item[idx] if len(item) > idx else None for idx, col in enumerate(columns)}
+                )
         else:
             rows = result
 

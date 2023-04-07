@@ -178,9 +178,7 @@ def write_deltalake(
         filesystem = pa_fs.PyFileSystem(DeltaStorageHandler(table_uri, storage_options))
 
     if table:  # already exists
-        if schema != table.schema().to_pyarrow() and not (
-            mode == "overwrite" and overwrite_schema
-        ):
+        if schema != table.schema().to_pyarrow() and not (mode == "overwrite" and overwrite_schema):
             raise ValueError(
                 "Schema of data does not match table schema\n"
                 f"Table schema:\n{schema}\nData Schema:\n{table.schema().to_pyarrow()}"
@@ -378,27 +376,19 @@ def get_file_stats_from_metadata(
     for column_idx in range(metadata.num_columns):
         name = metadata.row_group(0).column(column_idx).path_in_schema
         # If stats missing, then we can't know aggregate stats
-        if all(
-            group.column(column_idx).is_stats_set for group in iter_groups(metadata)
-        ):
+        if all(group.column(column_idx).is_stats_set for group in iter_groups(metadata)):
             stats["nullCount"][name] = sum(
-                group.column(column_idx).statistics.null_count
-                for group in iter_groups(metadata)
+                group.column(column_idx).statistics.null_count for group in iter_groups(metadata)
             )
 
             # Min / max may not exist for some column types, or if all values are null
             if any(
-                group.column(column_idx).statistics.has_min_max
-                for group in iter_groups(metadata)
+                group.column(column_idx).statistics.has_min_max for group in iter_groups(metadata)
             ):
                 # Min and Max are recorded in physical type, not logical type
                 # https://stackoverflow.com/questions/66753485/decoding-parquet-min-max-statistics-for-decimal-type
                 # TODO: Add logic to decode physical type for DATE, DECIMAL
-                logical_type = (
-                    metadata.row_group(0)
-                    .column(column_idx)
-                    .statistics.logical_type.type
-                )
+                logical_type = metadata.row_group(0).column(column_idx).statistics.logical_type.type
 
                 if PYARROW_MAJOR_VERSION < 8 and logical_type not in [
                     "STRING",
@@ -409,16 +399,14 @@ def get_file_stats_from_metadata(
                     continue
 
                 minimums = (
-                    group.column(column_idx).statistics.min
-                    for group in iter_groups(metadata)
+                    group.column(column_idx).statistics.min for group in iter_groups(metadata)
                 )
                 # If some row groups have all null values, their min and max will be null too.
                 stats["minValues"][name] = min(
                     minimum for minimum in minimums if minimum is not None
                 )
                 maximums = (
-                    group.column(column_idx).statistics.max
-                    for group in iter_groups(metadata)
+                    group.column(column_idx).statistics.max for group in iter_groups(metadata)
                 )
                 stats["maxValues"][name] = max(
                     maximum for maximum in maximums if maximum is not None

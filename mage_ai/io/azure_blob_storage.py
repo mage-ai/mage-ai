@@ -16,6 +16,7 @@ class AzureBlobStorage(BaseFile):
     - ".json"
     - ".parquet"
     """
+
     AUTHENTICATION_KEYS = [
         ConfigKey.AZURE_CLIENT_ID,
         ConfigKey.AZURE_CLIENT_SECRET,

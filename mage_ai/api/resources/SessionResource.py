@@ -21,8 +21,7 @@ class SessionResource(BaseResource):
         error.update({'message': 'Email/username and/or password invalid.'})
 
         if not (email or username) or not password:
-            error.update(
-                {'message': 'Email/username and password are required.'})
+            error.update({'message': 'Email/username and password are required.'})
             raise ApiError(error)
 
         user = None
@@ -37,8 +36,7 @@ class SessionResource(BaseResource):
 
             authz = conn.authorize(user_dn)
             if not authz:
-                error.update(
-                        {'message': 'user not authorized. contact your admin'})
+                error.update({'message': 'user not authorized. contact your admin'})
                 raise ApiError(error)
             if email:
                 user = User.query.filter(User.username == email).first()

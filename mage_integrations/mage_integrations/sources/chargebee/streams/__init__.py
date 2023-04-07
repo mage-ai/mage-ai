@@ -32,18 +32,15 @@ COMMON_AVAILABLE_STREAMS = [
     PromotionalCreditsStream,
     SubscriptionsStream,
     TransactionsStream,
-    VirtualBankAccountsStream
+    VirtualBankAccountsStream,
 ]
 
-PLAN_MODEL_AVAILABLE_STREAMS = COMMON_AVAILABLE_STREAMS + [
-    AddonsStream,
-    PlansStream
-]
+PLAN_MODEL_AVAILABLE_STREAMS = COMMON_AVAILABLE_STREAMS + [AddonsStream, PlansStream]
 
 ITEM_MODEL_AVAILABLE_STREAMS = COMMON_AVAILABLE_STREAMS + [
     ItemsStream,
     ItemPricesStream,
-    ItemFamiliesStream
+    ItemFamiliesStream,
 ]
 
 STREAMS = {
@@ -65,5 +62,5 @@ STREAMS = {
     PromotionalCreditsStream.TABLE: PromotionalCreditsStream,
     SubscriptionsStream.TABLE: SubscriptionsStream,
     TransactionsStream.TABLE: TransactionsStream,
-    VirtualBankAccountsStream.TABLE: VirtualBankAccountsStream
+    VirtualBankAccountsStream.TABLE: VirtualBankAccountsStream,
 }

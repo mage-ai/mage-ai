@@ -38,7 +38,6 @@ def main_impl():
 
 
 def main():
-
     google_logger = logging.getLogger("google")
     google_logger.setLevel(level=logging.CRITICAL)
 

@@ -154,10 +154,13 @@ class Source:
         Returns:
             List[Dict]: Description
         """
-        return [dict(
-            stream=stream_id,
-            tap_stream_id=stream_id,
-        ) for stream_id in self.get_stream_ids()]
+        return [
+            dict(
+                stream=stream_id,
+                tap_stream_id=stream_id,
+            )
+            for stream_id in self.get_stream_ids()
+        ]
 
     def get_stream_ids(self) -> List[str]:
         """
@@ -231,7 +234,11 @@ class Source:
             elif self.count_records_mode:
                 arr = []
                 selected_streams_arr = self.catalog.get_selected_streams(self.state or {}) or []
-                streams = [stream for stream in selected_streams_arr if stream.tap_stream_id in self.selected_streams]
+                streams = [
+                    stream
+                    for stream in selected_streams_arr
+                    if stream.tap_stream_id in self.selected_streams
+                ]
                 for stream in streams:
                     tap_stream_id = stream.tap_stream_id
                     count = self.count_records(
@@ -239,11 +246,13 @@ class Source:
                         bookmarks=self.__get_bookmarks_for_stream(stream),
                         query=self.query,
                     )
-                    arr.append(dict(
-                        count=count,
-                        id=tap_stream_id,
-                        stream=tap_stream_id,
-                    ))
+                    arr.append(
+                        dict(
+                            count=count,
+                            id=tap_stream_id,
+                            stream=tap_stream_id,
+                        )
+                    )
                 json.dump(arr, sys.stdout)
             elif self.show_templates:
                 json.dump(self.templates(), sys.stdout)
@@ -259,7 +268,7 @@ class Source:
                         updated_streams = self.discover(streams=streams_to_update).streams
                         updated_streams = group_by(
                             lambda s: s['tap_stream_id'] if type(s) is dict else s.tap_stream_id,
-                            updated_streams
+                            updated_streams,
                         )
                         for stream in self.catalog.streams:
                             if stream.tap_stream_id in updated_streams:
@@ -267,19 +276,24 @@ class Source:
                     catalog = self.catalog
 
                 if self.selected_streams:
-                    catalog.streams = list(filter(
-                        lambda x: x.tap_stream_id in self.selected_streams,
-                        catalog.streams,
-                    ))
+                    catalog.streams = list(
+                        filter(
+                            lambda x: x.tap_stream_id in self.selected_streams,
+                            catalog.streams,
+                        )
+                    )
 
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {str(err)}.'
-            self.logger.exception(message, tags=dict(
-                error=str(err),
-                errors=traceback.format_stack(),
-                message=traceback.format_exc(),
-            ))
+            self.logger.exception(
+                message,
+                tags=dict(
+                    error=str(err),
+                    errors=traceback.format_stack(),
+                    message=traceback.format_exc(),
+                ),
+            )
             raise Exception(message)
 
     def process_stream(self, stream, properties: Dict = None):
@@ -333,8 +347,7 @@ class Source:
         schema_properties_dict = schema_dict['properties']
         if properties:
             schema_dict['properties'] = {
-                k: schema_properties_dict[k]
-                if k in schema_properties_dict else v
+                k: schema_properties_dict[k] if k in schema_properties_dict else v
                 for k, v in properties.items()
             }
         else:
@@ -352,7 +365,8 @@ class Source:
 
         schema_data = dict(
             bookmark_properties=self._get_bookmark_properties_for_stream(
-                stream, bookmarks=bookmarks),
+                stream, bookmarks=bookmarks
+            ),
             disable_column_type_check=stream.disable_column_type_check,
             key_properties=stream.key_properties,
             partition_keys=stream.partition_keys,
@@ -391,8 +405,9 @@ class Source:
             int: Number of records.
         """
         start_date = None
-        if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and \
-           self.config.get('start_date'):
+        if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and self.config.get(
+            'start_date'
+        ):
             start_date = dateutil.parser.parse(self.config.get('start_date'))
 
         bookmark_properties = self._get_bookmark_properties_for_stream(stream)
@@ -443,9 +458,15 @@ class Source:
 
                 write_state(state)
 
-        self.logger.info(f'Load data for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
-            records=record_count,
-        )))
+        self.logger.info(
+            f'Load data for stream {tap_stream_id} completed.',
+            tags=merge_dict(
+                tags,
+                dict(
+                    records=record_count,
+                ),
+            ),
+        )
 
         return record_count
 
@@ -483,11 +504,14 @@ class Source:
             )
             final_record = record
 
-            if (stream.replication_method in [
+            if (
+                stream.replication_method
+                in [
                     REPLICATION_METHOD_INCREMENTAL,
                     REPLICATION_METHOD_LOG_BASED,
                 ]
-                    and bookmark_properties):
+                and bookmark_properties
+            ):
                 if self.is_sorted:
                     state = {}
 
@@ -534,9 +558,15 @@ class Source:
             self.process_stream(stream, properties)
             record_count = self.sync_stream(stream, properties)
 
-            self.logger.info(f'Sync for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
-                records=record_count,
-            )))
+            self.logger.info(
+                f'Sync for stream {tap_stream_id} completed.',
+                tags=merge_dict(
+                    tags,
+                    dict(
+                        records=record_count,
+                    ),
+                ),
+            )
 
         self.logger.info('Sync completed.')
 
@@ -566,7 +596,8 @@ class Source:
             replication_method=replication_method or self.get_forced_replication_method(stream_id),
             schema=schema.to_dict(),
             stream_id=stream_id,
-            valid_replication_keys=bookmark_properties or self.get_valid_replication_keys(stream_id),
+            valid_replication_keys=bookmark_properties
+            or self.get_valid_replication_keys(stream_id),
         )
 
         idx = find_index(lambda x: len(x['breadcrumb']) == 0, metadata)
@@ -576,28 +607,32 @@ class Source:
         if not replication_key and bookmark_properties and len(bookmark_properties) >= 1:
             replication_key = bookmark_properties[0]
 
-        return CatalogEntry(**merge_dict(
-            dict(
-                bookmark_properties=bookmark_properties,
-                database=None,
-                disable_column_type_check=None,
-                is_view=None,
-                key_properties=key_properties or [],  # User customizes this after creating catalog from discover.
-                metadata=metadata,
-                partition_keys=None,
-                replication_key=replication_key or '',
-                replication_method=replication_method or self.get_forced_replication_method(stream_id),
-                row_count=None,
-                schema=schema,
-                stream=stream_id,
-                stream_alias=None,
-                table=None,
-                tap_stream_id=stream_id,
-                unique_conflict_method=None,
-                unique_constraints=None,
-            ),
-            kwargs,
-        ))
+        return CatalogEntry(
+            **merge_dict(
+                dict(
+                    bookmark_properties=bookmark_properties,
+                    database=None,
+                    disable_column_type_check=None,
+                    is_view=None,
+                    key_properties=key_properties
+                    or [],  # User customizes this after creating catalog from discover.
+                    metadata=metadata,
+                    partition_keys=None,
+                    replication_key=replication_key or '',
+                    replication_method=replication_method
+                    or self.get_forced_replication_method(stream_id),
+                    row_count=None,
+                    schema=schema,
+                    stream=stream_id,
+                    stream_alias=None,
+                    table=None,
+                    tap_stream_id=stream_id,
+                    unique_conflict_method=None,
+                    unique_constraints=None,
+                ),
+                kwargs,
+            )
+        )
 
     def test_connection(self) -> None:
         """

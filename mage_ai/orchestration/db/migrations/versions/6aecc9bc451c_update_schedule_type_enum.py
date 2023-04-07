@@ -6,7 +6,6 @@ Create Date: 2023-01-05 15:17:52.800183
 
 """
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
@@ -29,8 +28,10 @@ def downgrade() -> None:
     if bind.engine.name == 'postgresql':
         op.execute("ALTER TYPE scheduletype RENAME TO scheduletype_old")
         op.execute("CREATE TYPE scheduletype AS ENUM('TIME')")
-        op.execute((
-            "ALTER TABLE pipeline_schedule ALTER COLUMN schedule_type TYPE scheduletype USING "
-            "schedule_type::text::scheduletype"
-        ))
+        op.execute(
+            (
+                "ALTER TABLE pipeline_schedule ALTER COLUMN schedule_type TYPE scheduletype USING "
+                "schedule_type::text::scheduletype"
+            )
+        )
         op.execute("DROP TYPE scheduletype_old")

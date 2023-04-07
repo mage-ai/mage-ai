@@ -27,7 +27,7 @@ import pandas as pd
 import pyarrow as pa
 import sys
 
-MAX_BYTE_SIZE_PER_WRITE = (5 * (1024 * 1024))
+MAX_BYTE_SIZE_PER_WRITE = 5 * (1024 * 1024)
 
 
 class DeltaLake(BaseDestination):
@@ -170,9 +170,12 @@ class DeltaLake(BaseDestination):
 
         idx = 0
         total_byte_size = int(df.memory_usage(deep=True).sum())
-        tags2 = merge_dict(tags, dict(
-            total_byte_size=total_byte_size,
-        ))
+        tags2 = merge_dict(
+            tags,
+            dict(
+                total_byte_size=total_byte_size,
+            ),
+        )
 
         self.logger.info(f'Inserting records for batch {idx} started.', tags=tags2)
 

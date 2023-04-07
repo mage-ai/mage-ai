@@ -21,32 +21,40 @@ class PipelineSchedulePresenter(BasePresenter):
 
     async def present(self, **kwargs):
         if constants.LIST == kwargs['format']:
-            return self.model.to_dict(include_attributes=[
-                'event_matchers',
-                'last_pipeline_run_status',
-                'pipeline_runs_count',
-            ])
+            return self.model.to_dict(
+                include_attributes=[
+                    'event_matchers',
+                    'last_pipeline_run_status',
+                    'pipeline_runs_count',
+                ]
+            )
         elif kwargs['format'] in [constants.DETAIL, constants.UPDATE]:
-            return self.model.to_dict(include_attributes=[
-                'event_matchers',
-            ])
+            return self.model.to_dict(
+                include_attributes=[
+                    'event_matchers',
+                ]
+            )
 
         return self.model.to_dict()
 
 
 PipelineSchedulePresenter.register_format(
     constants.LIST,
-    PipelineSchedulePresenter.default_attributes + [
+    PipelineSchedulePresenter.default_attributes
+    + [
         'event_matchers',
         'last_pipeline_run_status',
         'pipeline_runs_count',
     ],
 )
 
-PipelineSchedulePresenter.register_formats([
-    constants.DETAIL,
-    constants.UPDATE,
-], PipelineSchedulePresenter.default_attributes + [
+PipelineSchedulePresenter.register_formats(
+    [
+        constants.DETAIL,
+        constants.UPDATE,
+    ],
+    PipelineSchedulePresenter.default_attributes
+    + [
         'event_matchers',
     ],
 )

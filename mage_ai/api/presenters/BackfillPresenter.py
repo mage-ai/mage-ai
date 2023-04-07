@@ -35,11 +35,11 @@ class BackfillPresenter(BasePresenter):
         if include_run_count:
             include_run_count = include_run_count[0]
         if (
-            (include_preview_runs or include_run_count) and
-            self.model.start_datetime is not None and
-            self.model.end_datetime is not None and
-            self.model.interval_type is not None and
-            self.model.interval_units is not None
+            (include_preview_runs or include_run_count)
+            and self.model.start_datetime is not None
+            and self.model.end_datetime is not None
+            and self.model.interval_type is not None
+            and self.model.interval_units is not None
         ):
             pipeline_run_dates = preview_run_dates(self.model)
             data['total_run_count'] = len(pipeline_run_dates)

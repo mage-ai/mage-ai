@@ -30,10 +30,10 @@ class AmazonS3(Destination):
 
     def build_client(self):
         config = Config(
-           retries={
-              'max_attempts': 10,
-              'mode': 'standard',
-           },
+            retries={
+                'max_attempts': 10,
+                'mode': 'standard',
+            },
         )
 
         return boto3.client(

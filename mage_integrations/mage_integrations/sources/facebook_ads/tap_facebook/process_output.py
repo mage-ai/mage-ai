@@ -90,7 +90,7 @@ def main():
     writer = csv.DictWriter(
         sys.stdout,
         delimiter='\t',
-        fieldnames=['level', 'bd', 'nabd', 'naaw', 'success', 'duration']
+        fieldnames=['level', 'bd', 'nabd', 'naaw', 'success', 'duration'],
     )
     writer.writeheader()
 
@@ -102,8 +102,11 @@ def main():
     print('p(bd==c) = {}'.format(p_breakdown('c', records)))
     print('p(success and bd=c) = {}'.format(p_success_and_breakdown('c', records)))
     for breakdown in ['', 'ag', 'c', 'pd']:
-        print('p(success | bd={}) = {}'.format(
-            breakdown, p_success_given_breakdown(breakdown, records)))
+        print(
+            'p(success | bd={}) = {}'.format(
+                breakdown, p_success_given_breakdown(breakdown, records)
+            )
+        )
     for nabd in range(4):
         print('p(success | nabd={}) = {}'.format(nabd, p_success_given_nabd(nabd, records)))
     for naaw in range(6):

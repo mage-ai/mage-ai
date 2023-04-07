@@ -33,10 +33,14 @@ def get_access_token(token: str) -> Oauth2AccessToken:
 
 
 def encode_token(token: str, expires: datetime) -> str:
-    return jwt.encode({
-        'expires': expires.timestamp(),
-        'token': token,
-    }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(
+        {
+            'expires': expires.timestamp(),
+            'token': token,
+        },
+        JWT_SECRET,
+        algorithm=JWT_ALGORITHM,
+    )
 
 
 def decode_token(encoded_token: str) -> Dict:

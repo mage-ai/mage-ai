@@ -4,32 +4,28 @@ import time
 from datetime import timedelta
 
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 from base import ZendeskTest
 import unittest
 from functools import reduce
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Group, Organization, User
 
+
 class ZendeskBookmarks(ZendeskTest):
     def name(self):
         return "tap_tester_zendesk_bookmarks"
 
     def expected_sync_streams(self):
-        return {
-            'groups',
-            'organizations',
-            'satisfaction_ratings',
-            'users'
-        }
+        return {'groups', 'organizations', 'satisfaction_ratings', 'users'}
 
     def expected_pks(self):
         return {
             'groups': {"id"},
             'organizations': {"id"},
             'satisfaction_ratings': {"id"},
-            'users': {"id"}
+            'users': {"id"},
         }
 
     def tearDown(self):
@@ -42,7 +38,6 @@ class ZendeskBookmarks(ZendeskTest):
             self.client.organizations.delete(self.created_org)
         if hasattr(self, "created_user"):
             self.client.users.delete(self.created_user)
-
 
     def test_run(self):
         # Default test setup
@@ -59,13 +54,17 @@ class ZendeskBookmarks(ZendeskTest):
         self.assertEqual(len(self.found_catalogs), len(self.expected_check_streams()))
 
         # Verify the schemas discovered were exactly what we expect
-        found_catalog_names = {catalog['tap_stream_id']
-                               for catalog in self.found_catalogs
-                               if catalog['tap_stream_id'] in self.expected_check_streams()}
+        found_catalog_names = {
+            catalog['tap_stream_id']
+            for catalog in self.found_catalogs
+            if catalog['tap_stream_id'] in self.expected_check_streams()
+        }
         self.assertSetEqual(self.expected_check_streams(), found_catalog_names)
 
         # Select our catalogs
-        our_catalogs = [c for c in self.found_catalogs if c.get('tap_stream_id') in self.expected_sync_streams()]
+        our_catalogs = [
+            c for c in self.found_catalogs if c.get('tap_stream_id') in self.expected_sync_streams()
+        ]
         for catalog in our_catalogs:
             schema = menagerie.get_annotated_schema(conn_id, catalog['stream_id'])
             connections.select_catalog_and_fields_via_metadata(conn_id, catalog, schema, [], [])
@@ -96,7 +95,7 @@ class ZendeskBookmarks(ZendeskTest):
         creds = {
             "email": "dev@stitchdata.com",
             "subdomain": self.get_properties()['subdomain'],
-            "token": os.getenv('TAP_ZENDESK_API_TOKEN')
+            "token": os.getenv('TAP_ZENDESK_API_TOKEN'),
         }
 
         self.client = Zenpy(**creds)
@@ -125,36 +124,42 @@ class ZendeskBookmarks(ZendeskTest):
         # Check both sets of records and make sure we have our new rows
         records = runner.get_records_from_target_output()
         messages = records.get('groups', {}).get('messages', [])
-        new_record = [r for r in messages
-                      if r['data']['id'] == self.created_group.id]
+        new_record = [r for r in messages if r['data']['id'] == self.created_group.id]
         self.assertTrue(any(new_record))
-        self.assertEqual(len(messages), 2, msg="Sync'd incorrect count of messages: {}".format(len(messages)))
+        self.assertEqual(
+            len(messages), 2, msg="Sync'd incorrect count of messages: {}".format(len(messages))
+        )
 
         messages = records.get('organizations', {}).get('messages', [])
 
-        new_record = [r for r in messages
-                      if r['data']['id'] == self.created_org.id]
+        new_record = [r for r in messages if r['data']['id'] == self.created_org.id]
         self.assertTrue(any(new_record))
-        self.assertEqual(len(messages), 2, msg="Sync'd incorrect count of messages: {}".format(len(messages)))
+        self.assertEqual(
+            len(messages), 2, msg="Sync'd incorrect count of messages: {}".format(len(messages))
+        )
 
         messages = records.get('users', {}).get('messages', [])
-        new_record = [r for r in messages
-                      if r['data']['id'] == self.created_user.id]
+        new_record = [r for r in messages if r['data']['id'] == self.created_user.id]
         self.assertTrue(any(new_record))
         # NB: GreaterEqual because we suspect Zendesk updates users in the backend
         # >= 1 because we're no longer inclusive of the last replicated user record. The lookback will control this going forward.
         # If we get the user we wanted and then some, this assertion should succeed
-        self.assertGreaterEqual(len(messages), 1, msg="Sync'd incorrect count of messages: {}".format(len(messages)))
-
+        self.assertGreaterEqual(
+            len(messages), 1, msg="Sync'd incorrect count of messages: {}".format(len(messages))
+        )
 
         messages = records.get('satisfaction_ratings', {}).get('messages', [])
-        new_record = [r for r in messages
-                      if r['data']['id'] in [364471784994, 364465631433, 364465212373]]
+        new_record = [
+            r for r in messages if r['data']['id'] in [364471784994, 364465631433, 364465212373]
+        ]
         self.assertTrue(any(new_record))
-        self.assertGreaterEqual(len(messages), 3, msg="Sync'd incorrect count of messages: {}".format(len(messages)))
+        self.assertGreaterEqual(
+            len(messages), 3, msg="Sync'd incorrect count of messages: {}".format(len(messages))
+        )
         for message in messages:
-            self.assertGreaterEqual(message.get('data', {}).get('updated_at', ''),
-                                    satisfaction_ratings_bookmark)
+            self.assertGreaterEqual(
+                message.get('data', {}).get('updated_at', ''), satisfaction_ratings_bookmark
+            )
 
         # TODO NEW TEST: Ticket Audits/Comments, etc... -- make sure to test Audits+Comments selection permutations
         #       -- e.g., if Comments is selected, but not audits, ensure no audits data is emitted

@@ -9,7 +9,7 @@ EMAIL_NOTIFICATION_CONFIG = dict(
         smtp_user='test_user',
         smtp_password='test_password',
         to_emails=['test_to@xyz.com'],
-    )
+    ),
 )
 
 SLACK_NOTIFICATION_CONFIG = dict(
@@ -19,7 +19,7 @@ SLACK_NOTIFICATION_CONFIG = dict(
     ],
     slack_config=dict(
         webhook_url='test_webhook_url',
-    )
+    ),
 )
 
 GOOGLE_CHAT_NOTIFICATION_CONFIG = dict(
@@ -29,7 +29,7 @@ GOOGLE_CHAT_NOTIFICATION_CONFIG = dict(
     ],
     google_chat_config=dict(
         webhook_url='test_webhook_url',
-    )
+    ),
 )
 
 TEAMS_NOTIFICATION_CONFIG = dict(
@@ -39,7 +39,7 @@ TEAMS_NOTIFICATION_CONFIG = dict(
     ],
     teams_config=dict(
         webhook_url='test_webhook_url',
-    )
+    ),
 )
 
 
@@ -47,5 +47,5 @@ TEAMS_NOTIFICATION_CONFIG_NO_ALERT_ON = dict(
     alert_on=[],
     teams_config=dict(
         webhook_url='test_webhook_url',
-    )
+    ),
 )

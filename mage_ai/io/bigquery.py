@@ -58,13 +58,15 @@ class BigQuery(BaseSQLDatabase):
             self.client = Client(credentials=credentials, **kwargs)
 
     def get_column_types(self, schema: str, table_name: str) -> Dict:
-        results = self.client.query(f"""
+        results = self.client.query(
+            f"""
 SELECT
     column_name
     , data_type
 FROM {schema}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}'
-""")
+"""
+        )
 
         column_types = {}
         for col, col_type in results:
@@ -86,11 +88,13 @@ WHERE TABLE_NAME = '{table_name}'
             elif len(parts) == 3:
                 database, schema, table_name = parts
 
-            df_existing = self.client.query(f"""
+            df_existing = self.client.query(
+                f"""
     SELECT 1
     FROM `{database}.{schema}.__TABLES_SUMMARY__`
     WHERE table_id = '{table_name}'
-    """).to_dataframe()
+    """
+            ).to_dataframe()
 
             full_table_name = f'{database}.{schema}.{table_name}'
 
@@ -111,16 +115,17 @@ WHERE TABLE_NAME = '{table_name}'
             if not new_columns:
                 return
             dtypes = infer_dtypes(df)
-            dtypes = \
-                {k: convert_python_type_to_bigquery_type(convert_pandas_dtype_to_python_type(v))
-                 for k, v in dtypes.items()}
+            dtypes = {
+                k: convert_python_type_to_bigquery_type(convert_pandas_dtype_to_python_type(v))
+                for k, v in dtypes.items()
+            }
             columns_and_types = [
-                f"ADD COLUMN {self._clean_column_name(col)} {dtypes[col]}" for col
-                in new_columns
+                f"ADD COLUMN {self._clean_column_name(col)} {dtypes[col]}" for col in new_columns
             ]
             # TODO: support alter column type and drop columns
             alter_table_command = f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
             self.client.query(alter_table_command)
+
         if verbose:
             with self.printer.print_msg(f'Altering table \'{table_id}\''):
                 __process(database=database)
@@ -211,11 +216,13 @@ WHERE TABLE_NAME = '{table_name}'
                 elif len(parts) == 3:
                     database, schema, table_name = parts
 
-                df_existing = self.client.query(f"""
+                df_existing = self.client.query(
+                    f"""
 SELECT 1
 FROM `{database}.{schema}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
-""").to_dataframe()
+"""
+                ).to_dataframe()
 
                 full_table_name = f'{database}.{schema}.{table_name}'
 
@@ -313,14 +320,17 @@ WHERE table_id = '{table_name}'
         results = []
 
         for idx, query in enumerate(queries):
-            variables = query_variables[idx] \
-                        if query_variables and idx < len(query_variables) \
-                        else {}
+            variables = (
+                query_variables[idx] if query_variables and idx < len(query_variables) else {}
+            )
             query = self._clean_query(query)
             result = self.client.query(query, **variables)
 
-            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
-                    fetch_query_at_indexes[idx]:
+            if (
+                fetch_query_at_indexes
+                and idx < len(fetch_query_at_indexes)
+                and fetch_query_at_indexes[idx]
+            ):
                 result = result.to_dataframe()
 
             results.append(result)

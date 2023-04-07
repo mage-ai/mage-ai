@@ -13,8 +13,10 @@ class GoogleSheets(Connection):
         path_to_credentials_json_file: str = None,
     ):
         if not credentials_info and not path_to_credentials_json_file:
-            raise Exception('GoogleSheets connection requires credentials_info '
-                            'or path_to_credentials_json_file.')
+            raise Exception(
+                'GoogleSheets connection requires credentials_info '
+                'or path_to_credentials_json_file.'
+            )
 
         super().__init__()
         self.credentials_info = credentials_info
@@ -22,11 +24,11 @@ class GoogleSheets(Connection):
 
     def connect(self):
         """Create a connection to the Google Search Console API and return service object.
-        
+
         Returns:
             service (object): Google Search Console service object.
         """
-        
+
         scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
         if self.credentials_info is None:
             credentials = service_account.Credentials.from_service_account_file(
@@ -35,11 +37,7 @@ class GoogleSheets(Connection):
             )
         else:
             credentials = self.credentials_info
-        return build(
-            'sheets',
-            'v4',
-            credentials=credentials
-        )
+        return build('sheets', 'v4', credentials=credentials)
 
     def load(
         self,
@@ -71,8 +69,12 @@ class GoogleSheets(Connection):
         if sheet_title is not None:
             sheet_kwargs['includeGridData'] = True
             sheet_kwargs['ranges'] = f"'{sheet_title}'!1:2"
-        response = service.spreadsheets().get(
-            spreadsheetId=spreadsheet_id,
-            **sheet_kwargs,
-        ).execute()
+        response = (
+            service.spreadsheets()
+            .get(
+                spreadsheetId=spreadsheet_id,
+                **sheet_kwargs,
+            )
+            .execute()
+        )
         return response

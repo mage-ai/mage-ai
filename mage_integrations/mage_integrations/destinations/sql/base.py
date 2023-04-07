@@ -109,11 +109,17 @@ class Destination(BaseDestination):
             REPLICATION_METHOD_INCREMENTAL,
             REPLICATION_METHOD_LOG_BASED,
         ]:
-            friendly_table_name = '.'.join([x for x in [
-                database_name,
-                schema_name,
-                table_name,
-            ] if x])
+            friendly_table_name = '.'.join(
+                [
+                    x
+                    for x in [
+                        database_name,
+                        schema_name,
+                        table_name,
+                    ]
+                    if x
+                ]
+            )
 
             self.logger.info(f'Checking if table {friendly_table_name} exists...', tags=tags)
 
@@ -204,9 +210,10 @@ class Destination(BaseDestination):
             unique_constraints=unique_constraints,
         )
 
-        self.logger.info(f'Build insert commands for batch {idx} completed.', tags=merge_dict(tags2, dict(
-            insert_commands=len(cmds)
-        )))
+        self.logger.info(
+            f'Build insert commands for batch {idx} completed.',
+            tags=merge_dict(tags2, dict(insert_commands=len(cmds))),
+        )
         return cmds
 
     def process_queries(

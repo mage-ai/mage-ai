@@ -8,9 +8,7 @@ class OperationTests(BaseApiTestCase):
     async def test_execute_create_with_disable_edit_access(self):
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(block=dict(
-                name='test block'
-            )),
+            payload=dict(block=dict(name='test block')),
             resource='blocks',
         )
         response = await operation.execute()
@@ -22,9 +20,7 @@ class OperationTests(BaseApiTestCase):
     async def test_execute_create_with_disable_edit_access_and_user(self):
         operation = self.build_operation(
             action=constants.CREATE,
-            payload=dict(block=dict(
-                name='test block'
-            )),
+            payload=dict(block=dict(name='test block')),
             resource='blocks',
         )
         response = await operation.execute()

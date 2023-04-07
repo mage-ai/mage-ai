@@ -18,6 +18,7 @@ class BaseSink(ABC):
         self.buffer_start_time = None
         self.init_client()
 
+    @abstractmethod
     def init_client():
         pass
 
@@ -41,8 +42,9 @@ class BaseSink(ABC):
             return False
         if buffer_timeout_seconds <= 0:
             return False
-        return (datetime.now(timezone.utc) -
-                self.buffer_start_time).total_seconds() >= buffer_timeout_seconds
+        return (
+            datetime.now(timezone.utc) - self.buffer_start_time
+        ).total_seconds() >= buffer_timeout_seconds
 
     def read_buffer(self):
         buffer = []
@@ -54,7 +56,6 @@ class BaseSink(ABC):
                     buffer.append(json.loads(line))
         except Exception:
             traceback.print_exc()
-            pass
         return buffer
 
     def test_connection(self):

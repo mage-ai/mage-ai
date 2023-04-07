@@ -33,7 +33,7 @@ def clean_name(name, allow_characters: List[str] = []):
 def files_in_path(path, verbose=0):
     files = []
     # r=root, d=directories, f = files
-    for r, d, f in os.walk(path):
+    for r, _d, f in os.walk(path):
         for file in f:
             files.append(os.path.join(r, file))
 
@@ -46,7 +46,7 @@ def files_in_path(path, verbose=0):
 
 def files_in_single_path(path):
     f = []
-    for (dirpath, dirnames, filenames) in os.walk(path):
+    for dirpath, _dirnames, filenames in os.walk(path):
         f.extend([os.path.join(dirpath, file) for file in filenames])
         break
     return f
@@ -107,4 +107,5 @@ def is_port_in_use(port: int) -> bool:
 
 def is_spark_env():
     import importlib
+
     return importlib.util.find_spec('pyspark') is not None

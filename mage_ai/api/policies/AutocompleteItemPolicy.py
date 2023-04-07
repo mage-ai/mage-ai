@@ -8,14 +8,23 @@ class AutocompleteItemPolicy(BasePolicy):
     pass
 
 
-AutocompleteItemPolicy.allow_actions([
-    constants.LIST,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+AutocompleteItemPolicy.allow_actions(
+    [
+        constants.LIST,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-AutocompleteItemPolicy.allow_read(AutocompleteItemPresenter.default_attributes + [], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.LIST,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+AutocompleteItemPolicy.allow_read(
+    AutocompleteItemPresenter.default_attributes + [],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)

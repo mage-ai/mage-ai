@@ -214,8 +214,9 @@ class IntegrationPipeline(Pipeline):
 
         streams_updated = set()
         try:
-            streams = streams if streams else \
-                list(map(lambda s: s['tap_stream_id'], self.streams()))
+            streams = (
+                streams if streams else list(map(lambda s: s['tap_stream_id'], self.streams()))
+            )
             if file_path and len(streams) > 0:
                 run_args = [
                     PYTHON,

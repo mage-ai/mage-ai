@@ -30,10 +30,7 @@ class Client(object):
             return path
         return self.BASE_URL + path
 
-    @backoff.on_exception(backoff.expo,
-                          RateLimitException,
-                          max_tries=10,
-                          factor=2)
+    @backoff.on_exception(backoff.expo, RateLimitException, max_tries=10, factor=2)
     def request(self, method: str = 'get', path: str = None, url: str = None, **kwargs):
         if not path and not url:
             return

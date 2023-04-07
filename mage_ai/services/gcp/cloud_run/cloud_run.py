@@ -25,9 +25,7 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
     existing_service_name = os.getenv('GCP_SERVICE_NAME')
     services_client = run_v2.ServicesClient(credentials=credentials)
     existing_service = services_client.get_service(
-        run_v2.GetServiceRequest(
-            name=f'{resource_prefix}/services/{existing_service_name}'
-        )
+        run_v2.GetServiceRequest(name=f'{resource_prefix}/services/{existing_service_name}')
     )
     service_template = existing_service.template
 
@@ -45,8 +43,8 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
             service_account=service_template.service_account,
             execution_environment=service_template.execution_environment,
             encryption_key=service_template.encryption_key,
-            vpc_access=service_template.vpc_access
-        )
+            vpc_access=service_template.vpc_access,
+        ),
     )
     job = run_v2.Job(
         launch_stage=LaunchStage.BETA,
@@ -67,9 +65,9 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
         pass
 
     # Run job
-    operation = jobs_client.run_job(request=run_v2.RunJobRequest(
-        name=f'{resource_prefix}/jobs/{job_id}'
-    ))
+    operation = jobs_client.run_job(
+        request=run_v2.RunJobRequest(name=f'{resource_prefix}/jobs/{job_id}')
+    )
     print("Waiting for run_job operation to complete...")
 
     response = operation.result()

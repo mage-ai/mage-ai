@@ -3,6 +3,7 @@ import time
 from client import TestClient
 from base import HubspotBaseTest
 
+
 class TestHubspotTestClient(HubspotBaseTest):
     """
     Test the basic functionality of our Test Client. This is a tool for sanity checks, nothing more.
@@ -10,6 +11,7 @@ class TestHubspotTestClient(HubspotBaseTest):
     To check an individual crud method, uncomment the corresponding test case below, and execute this file
     as if it is a normal tap-tester test via bin/run-test.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.test_client = TestClient(self.get_properties()['start_date'])
@@ -64,10 +66,8 @@ class TestHubspotTestClient(HubspotBaseTest):
     #     assert len(old_records) < len(new_records), \
     #         f"Before post found {len(old_records)} records. After post found {len(new_records)} records"
 
-
     # def test_contacts_by_company_create(self):
     #     # Testing contacts_by_company PUT
-
 
     #     old_contact_records = self.test_client.get_contacts()
     #     old_company_records = self.test_client.get_companies('2021-08-25T00:00:00.000000Z')
@@ -76,7 +76,6 @@ class TestHubspotTestClient(HubspotBaseTest):
     #     new_records = self.test_client.get_contacts_by_company([old_company_records[0]["companyId"]])
     #     assert len(old_records) < len(new_records), \
     #         f"Before post found {len(old_records)} records. After post found {len(new_records)} records"
-
 
     # def test_deal_pipelines_create(self):
     #     # Testing deal_pipelines POST
@@ -107,7 +106,6 @@ class TestHubspotTestClient(HubspotBaseTest):
     #     assert len(old_records) < len(new_records), \
     #         f"Before post found {len(old_records)} records. After post found {len(new_records)} records"
 
-
     # def test_subscription_changes_and_email_events_create(self):
     #     # Testing subscription_changes  and email_events POST
 
@@ -134,7 +132,6 @@ class TestHubspotTestClient(HubspotBaseTest):
     #     assert len(old_records) < len(new_records), \
     #         f"Before post found {len(old_records)} records. After post found {len(new_records)} records"
 
-
     # def test_forms_create(self):
     #     # Testing create_forms POST
     #     old_records = self.test_client.get_forms()
@@ -142,7 +139,6 @@ class TestHubspotTestClient(HubspotBaseTest):
     #     new_records = self.test_client.get_forms()
     #     assert len(old_records) < len(new_records), \
     #         f"Before post found {len(old_records)} records. After post found {len(new_records)} records"
-
 
     # def test_workflows_create(self):
     #     # Testing create_workflows POST
@@ -153,11 +149,9 @@ class TestHubspotTestClient(HubspotBaseTest):
     #     assert len(old_records) < len(new_records), \
     #         f"Before post found {len(old_records)} records. After post found {len(new_records)} records"
 
-
     ##########################################################################
     ### TESTING UPDATES
     ##########################################################################
-
 
     # def test_workflows_update(self):    # TODO This failed to change the record
     #     # Testing update_workflows POST
@@ -173,7 +167,6 @@ class TestHubspotTestClient(HubspotBaseTest):
     #     workflow = self.test_client.create('workflows')
     #     workflow_id = workflow[0]['id']
     #     old_record = self.test_client._get_workflows_by_pk(workflow_id=workflow_id)
-
 
     #     # do the update
     #     our_record = self.test_client.update_workflows(workflow_id=workflow_id, contact_email=contact_email)
@@ -274,7 +267,6 @@ class TestHubspotTestClient(HubspotBaseTest):
 
     # def test_email_events_update(self):
     #     pass
-
 
     # def test_subscription_changes_update(self):
     #     pass

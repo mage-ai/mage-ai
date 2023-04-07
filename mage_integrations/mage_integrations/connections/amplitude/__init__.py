@@ -9,7 +9,7 @@ import json
 import requests
 import zipfile
 
-DATE_FORMAT = '%Y%m%dT%H' # 20150201T0
+DATE_FORMAT = '%Y%m%dT%H'  # 20150201T0
 URL = 'https://amplitude.com/api/2/export'
 
 
@@ -85,10 +85,13 @@ class Amplitude(Connection):
                                         decompressed_file = gzip.GzipFile(fileobj=file2)
                                         file_content += decompressed_file.read().decode('utf-8')
                         except zipfile.BadZipFile as err:
-                            self.exception(f'{err} when unzipping file.', tags=dict(
-                                error=err,
-                                filename=filename1,
-                            ))
+                            self.exception(
+                                f'{err} when unzipping file.',
+                                tags=dict(
+                                    error=err,
+                                    filename=filename1,
+                                ),
+                            )
 
         arr = file_content.split('\n')
 
@@ -98,10 +101,13 @@ class Amplitude(Connection):
                 try:
                     data.append(flatten(json.loads(i)))
                 except Exception as err:
-                    self.exception(f'{err} when loading from JSON string.', tags=dict(
-                        error=err,
-                        json_string=i,
-                    ))
+                    self.exception(
+                        f'{err} when loading from JSON string.',
+                        tags=dict(
+                            error=err,
+                            json_string=i,
+                        ),
+                    )
 
         return data
 
@@ -119,13 +125,25 @@ class Amplitude(Connection):
             self.info('Fetch files succeeded.', tags=tags)
             return io.BytesIO(response.content)
         elif response.status_code == 403 or response.status_code >= 500:
-            self.error('Failed to fetch files.', tags=merge_dict(tags, dict(
-                reason=response.reason,
-                status_code=response.status_code,
-            )))
+            self.error(
+                'Failed to fetch files.',
+                tags=merge_dict(
+                    tags,
+                    dict(
+                        reason=response.reason,
+                        status_code=response.status_code,
+                    ),
+                ),
+            )
         else:
-            self.error('Failed to fetch files.', tags=merge_dict(tags, dict(
-                status_code=response.status_code,
-            )))
+            self.error(
+                'Failed to fetch files.',
+                tags=merge_dict(
+                    tags,
+                    dict(
+                        status_code=response.status_code,
+                    ),
+                ),
+            )
 
         return None

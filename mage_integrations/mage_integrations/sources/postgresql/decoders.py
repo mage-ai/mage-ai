@@ -13,12 +13,12 @@ INT64 = 8
 
 
 def convert_pg_ts(_ts_in_microseconds: int) -> datetime:
-    ts = datetime(2000, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc) 
+    ts = datetime(2000, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
     return ts + timedelta(microseconds=_ts_in_microseconds)
 
 
 def convert_bytes_to_int(_in_bytes: bytes) -> int:
-    return int.from_bytes(_in_bytes, byteorder='big', signed=True)    
+    return int.from_bytes(_in_bytes, byteorder='big', signed=True)
 
 
 def convert_bytes_to_utf8(_in_bytes: Union[bytes, bytearray]) -> str:
@@ -28,7 +28,7 @@ def convert_bytes_to_utf8(_in_bytes: Union[bytes, bytearray]) -> str:
 @dataclass(frozen=True)
 class ColumnData:
     # col_data_category is NOT the type. it means null value/toasted(not sent)/text formatted
-    col_data_category: Optional[str] 
+    col_data_category: Optional[str]
     col_data_length: Optional[int] = None
     col_data: Optional[str] = None
 
@@ -63,10 +63,10 @@ class PgoutputMessage(ABC):
         return convert_bytes_to_int(self.buffer.read(INT16))
 
     def read_int32(self) -> int:
-        return convert_bytes_to_int(self.buffer.read(INT32)) 
+        return convert_bytes_to_int(self.buffer.read(INT32))
 
     def read_int64(self) -> int:
-        return convert_bytes_to_int(self.buffer.read(INT64)) 
+        return convert_bytes_to_int(self.buffer.read(INT64))
 
     def read_utf8(self, n: int = 1) -> str:
         return convert_bytes_to_utf8(self.buffer.read(n))
@@ -78,7 +78,7 @@ class PgoutputMessage(ABC):
     def read_string(self):
         output = bytearray()
         next_char = self.buffer.read(1)
-        while (next_char != b'\x00'):
+        while next_char != b'\x00':
             output += next_char
             next_char = self.buffer.read(1)
         return convert_bytes_to_utf8(output)
@@ -91,7 +91,7 @@ class PgoutputMessage(ABC):
 
     def read_tuple_data(self) -> TupleData:
         """
-        TupleData 
+        TupleData
         Int16  Number of columns.
         Next, one of the following submessages appears for each column (except generated columns):
                 Byte1('n') Identifies the data as NULL value.
@@ -113,7 +113,13 @@ class PgoutputMessage(ABC):
                 # t = tuple
                 col_data_length = self.read_int32()
                 col_data = self.read_utf8(col_data_length)
-                column_data.append(ColumnData(col_data_category=col_data_category, col_data_length=col_data_length, col_data=col_data))
+                column_data.append(
+                    ColumnData(
+                        col_data_category=col_data_category,
+                        col_data_length=col_data_length,
+                        col_data=col_data,
+                    )
+                )
             else:
                 # what happens with the generated columns? should an empty ColumnData be returned?
                 pass
@@ -129,6 +135,7 @@ class Begin(PgoutputMessage):
     commit_tx_ts Int64 Commit timestamp of the transaction. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
     tx_xid Int32 Xid of the transaction.
     """
+
     byte1: str
     final_tx_lsn: int
     commit_tx_ts: datetime
@@ -137,14 +144,16 @@ class Begin(PgoutputMessage):
     def decode_buffer(self):
         if self.byte1 != 'B':
             raise Exception('first byte in buffer does not match Begin message')
-        self.final_tx_lsn = self.read_int64() 
+        self.final_tx_lsn = self.read_int64()
         self.commit_tx_ts = self.read_timestamp()
         self.tx_xid = self.read_int64()
         return self
 
     def __repr__(self):
-        return f"\tOperation : BEGIN, \n\tbyte1 : '{self.byte1}', \n\tfinal_tx_lsn : {self.final_tx_lsn}, " \
-               f"\n\tcommit_tx_ts : {self.commit_tx_ts}, \n\ttx_xid : {self.tx_xid}"
+        return (
+            f"\tOperation : BEGIN, \n\tbyte1 : '{self.byte1}', \n\tfinal_tx_lsn : {self.final_tx_lsn}, "
+            f"\n\tcommit_tx_ts : {self.commit_tx_ts}, \n\ttx_xid : {self.tx_xid}"
+        )
 
 
 class Commit(PgoutputMessage):
@@ -155,6 +164,7 @@ class Commit(PgoutputMessage):
     final_tx_lsn: Int64 The end LSN of the transaction.
     Int64 Commit timestamp of the transaction. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
     """
+
     byte1: str
     flags: int
     lsn_commit: int
@@ -171,8 +181,10 @@ class Commit(PgoutputMessage):
         return self
 
     def __repr__(self):
-        return f"\tOperation : COMMIT, \n\tbyte1 : {self.byte1}, \n\tflags : {self.flags}, \n\tlsn_commit : {self.lsn_commit}, " \
-               f"\n\tfinal_tx_lsn : {self.final_tx_lsn}, \n\tcommit_tx_ts : {self.commit_tx_ts}"     
+        return (
+            f"\tOperation : COMMIT, \n\tbyte1 : {self.byte1}, \n\tflags : {self.flags}, \n\tlsn_commit : {self.lsn_commit}, "
+            f"\n\tfinal_tx_lsn : {self.final_tx_lsn}, \n\tcommit_tx_ts : {self.commit_tx_ts}"
+        )
 
 
 class Origin:
@@ -183,6 +195,7 @@ class Origin:
     Note that there can be multiple Origin messages inside a single transaction.
     This seems to be what origin means: https://www.postgresql.org/docs/12/replication-origins.html
     """
+
     pass
 
 
@@ -195,7 +208,7 @@ class Relation(PgoutputMessage):
     Int8 Replica identity setting for the relation (same as relreplident in pg_class).
         # select relreplident from pg_class where relname = 'test_table';
         # from reading the documentation and looking at the tables this is not int8 but a single character
-        # background: https://www.postgresql.org/docs/10/sql-altertable.html#SQL-CREATETABLE-REPLICA-IDENTITY 
+        # background: https://www.postgresql.org/docs/10/sql-altertable.html#SQL-CREATETABLE-REPLICA-IDENTITY
     Int16 Number of columns.
     Next, the following message part appears for each column (except generated columns):
         Int8 Flags for the column. Currently can be either 0 for no flags or 1 which marks the column as part of the key.
@@ -203,6 +216,7 @@ class Relation(PgoutputMessage):
         Int32 ID of the column's data type.
         Int32 Type modifier of the column (atttypmod).
     """
+
     byte1: str
     relation_id: int
     namespace: str
@@ -210,7 +224,7 @@ class Relation(PgoutputMessage):
     replica_identity_setting: str
     n_columns: int
     # TODO define column type, could eventually look this up from the DB
-    columns: List[Tuple[int, str, int, int]] 
+    columns: List[Tuple[int, str, int, int]]
 
     def decode_buffer(self):
         if self.byte1 != 'R':
@@ -228,14 +242,16 @@ class Relation(PgoutputMessage):
             data_type_id = self.read_int32()
             # TODO: check on use of signed / unsigned
             # check with select oid from pg_type where typname = <type>; timestamp == 1184, int4 = 23
-            col_modifier = self.read_int32()          
+            col_modifier = self.read_int32()
             self.columns.append((part_of_pkey, col_name, data_type_id, col_modifier))
 
     def __repr__(self):
-        return f"\tOperation : RELATION, \n\tbyte1 : '{self.byte1}', \n\trelation_id : {self.relation_id}" \
-               f",\n\tnamespace/schema : '{self.namespace}',\n\trelation_name : '{self.relation_name}'" \
-               f",\n\treplica_identity_setting : '{self.replica_identity_setting}',\n\tn_columns : {self.n_columns} " \
-               f",\n\tcolumns : {self.columns}"
+        return (
+            f"\tOperation : RELATION, \n\tbyte1 : '{self.byte1}', \n\trelation_id : {self.relation_id}"
+            f",\n\tnamespace/schema : '{self.namespace}',\n\trelation_name : '{self.relation_name}'"
+            f",\n\treplica_identity_setting : '{self.replica_identity_setting}',\n\tn_columns : {self.n_columns} "
+            f",\n\tcolumns : {self.columns}"
+        )
 
 
 class PgType:
@@ -246,6 +262,7 @@ class PgType:
     String Namespace (empty string for pg_catalog).
     String Name of the data type.
     """
+
     pass
 
 
@@ -256,22 +273,27 @@ class Insert(PgoutputMessage):
     Byte1('N') Identifies the following TupleData message as a new tuple.
     TupleData TupleData message part representing the contents of new tuple.
     """
+
     byte1: str
     relation_id: int
-    new_tuple_byte: str 
+    new_tuple_byte: str
     new_tuple: TupleData
 
     def decode_buffer(self):
         if self.byte1 != 'I':
-            raise Exception(f"first byte in buffer does not match Insert message (expected 'I', got '{self.byte1}'")
+            raise Exception(
+                f"first byte in buffer does not match Insert message (expected 'I', got '{self.byte1}'"
+            )
         self.relation_id = self.read_int32()
         self.new_tuple_byte = self.read_utf8()
         self.new_tuple = self.read_tuple_data()
         return self
 
     def __repr__(self):
-        return f"\tOperation : INSERT, \n\tbyte1: '{self.byte1}', \n\trelation_id : {self.relation_id}, " \
-               f"\n\tnew tuple byte: '{self.new_tuple_byte}', \n\tnew_tuple : {self.new_tuple}"
+        return (
+            f"\tOperation : INSERT, \n\tbyte1: '{self.byte1}', \n\trelation_id : {self.relation_id}, "
+            f"\n\tnew tuple byte: '{self.new_tuple_byte}', \n\tnew_tuple : {self.new_tuple}"
+        )
 
 
 class Update(PgoutputMessage):
@@ -285,6 +307,7 @@ class Update(PgoutputMessage):
     TupleData       TupleData message part representing the contents of a new tuple.
     The Update message may contain either a 'K' message part or an 'O' message part or neither of them, but never both of them.
     """
+
     byte1: str
     relation_id: int
     next_byte_identifier: Optional[str]
@@ -297,10 +320,12 @@ class Update(PgoutputMessage):
         self.optional_tuple_identifier = None
         self.old_tuple = None
         if self.byte1 != 'U':
-            raise Exception(f"first byte in buffer does not match Update message (expected 'U', got '{self.byte1}'")
+            raise Exception(
+                f"first byte in buffer does not match Update message (expected 'U', got '{self.byte1}'"
+            )
         self.relation_id = self.read_int32()
         # TODO test update to PK, test update with REPLICA IDENTITY = FULL
-        self.next_byte_identifier = self.read_utf8() # one of K, O or N
+        self.next_byte_identifier = self.read_utf8()  # one of K, O or N
         if self.next_byte_identifier == 'K' or self.next_byte_identifier == 'O':
             self.optional_tuple_identifier = self.next_byte_identifier
             self.old_tuple = self.read_tuple_data()
@@ -308,14 +333,18 @@ class Update(PgoutputMessage):
         else:
             self.new_tuple_byte = self.next_byte_identifier
         if self.new_tuple_byte != 'N':
-            raise Exception(f"did not find new_tuple_byte ('N') at position: {self.buffer.tell()}, found: '{self.new_tuple_byte}'")
+            raise Exception(
+                f"did not find new_tuple_byte ('N') at position: {self.buffer.tell()}, found: '{self.new_tuple_byte}'"
+            )
         self.new_tuple = self.read_tuple_data()
         return self
 
     def __repr__(self):
-        return f"\tOperation : UPDATE, \n\tbyte1 : '{self.byte1}', \n\trelation_id : {self.relation_id}, " \
-               f" \n\toptional_tuple_identifier : '{self.optional_tuple_identifier}', \n\toptional_old_tuple_data : {self.old_tuple}, " \
-               f" \n\tnew_tuple_byte : '{self.new_tuple_byte}', \n\tnew_tuple : {self.new_tuple}"
+        return (
+            f"\tOperation : UPDATE, \n\tbyte1 : '{self.byte1}', \n\trelation_id : {self.relation_id}, "
+            f" \n\toptional_tuple_identifier : '{self.optional_tuple_identifier}', \n\toptional_old_tuple_data : {self.old_tuple}, "
+            f" \n\tnew_tuple_byte : '{self.new_tuple_byte}', \n\tnew_tuple : {self.new_tuple}"
+        )
 
 
 class Delete(PgoutputMessage):
@@ -327,6 +356,7 @@ class Delete(PgoutputMessage):
     TupleData       TupleData message part representing the contents of the old tuple or primary key, depending on the previous field.
     The Delete message may contain either a 'K' message part or an 'O' message part, but never both of them.
     """
+
     byte1: str
     relation_id: int
     message_type: str
@@ -334,17 +364,21 @@ class Delete(PgoutputMessage):
 
     def decode_buffer(self):
         if self.byte1 != 'D':
-            raise Exception(f"first byte in buffer does not match Delete message (expected 'D', got '{self.byte1}'")
+            raise Exception(
+                f"first byte in buffer does not match Delete message (expected 'D', got '{self.byte1}'"
+            )
         self.relation_id = self.read_int32()
-        self.message_type = self.read_utf8() 
-        if self.message_type not in ['K','O']:
+        self.message_type = self.read_utf8()
+        if self.message_type not in ['K', 'O']:
             raise Exception(f"message type byte is not 'K' or 'O', got : '{self.message_type}'")
         self.old_tuple = self.read_tuple_data()
         return self
 
     def __repr__(self):
-        return f"\tOperation : DELETE, \n\tbyte1 : {self.byte1}, \n\trelation_id : {self.relation_id}, " \
-               f"\n\tmessage_type : {self.message_type}, \n\told_tuple : {self.old_tuple}"
+        return (
+            f"\tOperation : DELETE, \n\tbyte1 : {self.byte1}, \n\trelation_id : {self.relation_id}, "
+            f"\n\tmessage_type : {self.message_type}, \n\told_tuple : {self.old_tuple}"
+        )
 
 
 class Truncate(PgoutputMessage):
@@ -354,6 +388,7 @@ class Truncate(PgoutputMessage):
     Int8            Option bits for TRUNCATE: 1 for CASCADE, 2 for RESTART IDENTITY
     Int32           ID of the relation corresponding to the ID in the relation message. This field is repeated for each relation.
     """
+
     byte1: str
     number_of_relations: int
     option_bits: str
@@ -361,7 +396,9 @@ class Truncate(PgoutputMessage):
 
     def decode_buffer(self):
         if self.byte1 != 'T':
-            raise Exception(f"first byte in buffer does not match Truncate message (expected 'T', got '{self.byte1}'")
+            raise Exception(
+                f"first byte in buffer does not match Truncate message (expected 'T', got '{self.byte1}'"
+            )
         self.number_of_relations = self.read_int32()
         self.option_bits = self.read_int8()
         self.relation_ids = []
@@ -369,17 +406,21 @@ class Truncate(PgoutputMessage):
             self.relation_ids.append(self.read_int32())
 
     def __repr__(self):
-        return f"\tOperation : TRUNCATE, \n\tbyte1 : {self.byte1}, \n\tn_relations : {self.number_of_relations}, "\
-               f"\n\toption_bits : {self.option_bits}, relation_ids : {self.relation_ids}"
+        return (
+            f"\tOperation : TRUNCATE, \n\tbyte1 : {self.byte1}, \n\tn_relations : {self.number_of_relations}, "
+            f"\n\toption_bits : {self.option_bits}, relation_ids : {self.relation_ids}"
+        )
 
 
-def decode_message(_input_bytes: bytes) -> Optional[Union[Begin, Commit, Relation, Insert, Update, Delete, Truncate]]:
+def decode_message(
+    _input_bytes: bytes,
+) -> Optional[Union[Begin, Commit, Relation, Insert, Update, Delete, Truncate]]:
     """Peak first byte and initialise the appropriate message object"""
     first_byte = (_input_bytes[:1]).decode('utf-8')
     if first_byte == 'B':
         output = Begin(_input_bytes)
     elif first_byte == "C":
-        output = Commit(_input_bytes)   
+        output = Commit(_input_bytes)
     elif first_byte == "R":
         output = Relation(_input_bytes)
     elif first_byte == "I":

@@ -18,6 +18,7 @@ class GoogleAdsBase(unittest.TestCase):
     A bunch of shared methods that are used in tap-tester tests.
     Shared tap-specific methods (as needed).
     """
+
     AUTOMATIC_FIELDS = "automatic"
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
@@ -41,19 +42,23 @@ class GoogleAdsBase(unittest.TestCase):
         return "platform.google-ads"
 
     def get_properties(self):
-        #our test data is on the 9/15
-        return {'start_date':   '2018-04-12T00:00:00Z',
-                'end_date':     '2018-04-15T00:00:00Z',
-                'conversion_window_days' : '-1',
-                'user_id':      'not used?',
-                'customer_ids': os.getenv('TAP_ADWORDS_CUSTOMER_IDS')}
+        # our test data is on the 9/15
+        return {
+            'start_date': '2018-04-12T00:00:00Z',
+            'end_date': '2018-04-15T00:00:00Z',
+            'conversion_window_days': '-1',
+            'user_id': 'not used?',
+            'customer_ids': os.getenv('TAP_ADWORDS_CUSTOMER_IDS'),
+        }
 
     @staticmethod
     def get_credentials(self):
-        return {'developer_token': os.getenv('TAP_ADWORDS_DEVELOPER_TOKEN'),
-                'oauth_client_id': os.getenv('TAP_ADWORDS_OAUTH_CLIENT_ID'),
-                'oauth_client_secret': os.getenv('TAP_ADWORDS_OAUTH_CLIENT_SECRET'),
-                'refresh_token':     os.getenv('TAP_ADWORDS_REFRESH_TOKEN')}
+        return {
+            'developer_token': os.getenv('TAP_ADWORDS_DEVELOPER_TOKEN'),
+            'oauth_client_id': os.getenv('TAP_ADWORDS_OAUTH_CLIENT_ID'),
+            'oauth_client_secret': os.getenv('TAP_ADWORDS_OAUTH_CLIENT_SECRET'),
+            'refresh_token': os.getenv('TAP_ADWORDS_REFRESH_TOKEN'),
+        }
 
     def expected_metadata(self):
         """The expected streams and metadata about the streams"""
@@ -184,8 +189,6 @@ class GoogleAdsBase(unittest.TestCase):
             },
             # Custom Reports TODO
         }
-    
-
 
     def expected_sync_streams(self):
         """A set of expected stream names"""
@@ -207,18 +210,20 @@ class GoogleAdsBase(unittest.TestCase):
         return a dictionary with key of table name
         and value as a set of primary key fields
         """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_replication_keys(self):
         """
         return a dictionary with key of table name
         and value as a set of replication key fields
         """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_fields(self):
         auto_fields = {}
@@ -229,20 +234,25 @@ class GoogleAdsBase(unittest.TestCase):
 
     def expected_replication_method(self):
         """return a dictionary with key of table name nd value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
-
+        return {
+            table: properties.get(self.REPLICATION_METHOD, None)
+            for table, properties in self.expected_metadata().items()
+        }
 
     def setUp(self):
-        missing_envs = [x for x in [os.getenv('TAP_ADWORDS_DEVELOPER_TOKEN'),
-                                    os.getenv('TAP_ADWORDS_OAUTH_CLIENT_ID'),
-                                    os.getenv('TAP_ADWORDS_OAUTH_CLIENT_SECRET'),
-                                    os.getenv('TAP_ADWORDS_REFRESH_TOKEN'),
-                                    os.getenv('TAP_ADWORDS_CUSTOMER_IDS')] if x == None]
+        missing_envs = [
+            x
+            for x in [
+                os.getenv('TAP_ADWORDS_DEVELOPER_TOKEN'),
+                os.getenv('TAP_ADWORDS_OAUTH_CLIENT_ID'),
+                os.getenv('TAP_ADWORDS_OAUTH_CLIENT_SECRET'),
+                os.getenv('TAP_ADWORDS_REFRESH_TOKEN'),
+                os.getenv('TAP_ADWORDS_CUSTOMER_IDS'),
+            ]
+            if x == None
+        ]
         if len(missing_envs) != 0:
             raise Exception("Missing environment variables: {}".format(missing_envs))
-
 
     #########################
     #   Helper Methods      #
@@ -263,11 +273,15 @@ class GoogleAdsBase(unittest.TestCase):
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
         found_catalogs = menagerie.get_catalogs(conn_id)
-        self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
+        self.assertGreater(
+            len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id)
+        )
 
         found_catalog_names = set(map(lambda c: c['stream_name'], found_catalogs))
 
-        self.assertSetEqual(self.expected_sync_streams(), found_catalog_names, msg="discovered schemas do not match")
+        self.assertSetEqual(
+            self.expected_sync_streams(), found_catalog_names, msg="discovered schemas do not match"
+        )
         print("discovered schemas are OK")
 
         return found_catalogs
@@ -287,20 +301,25 @@ class GoogleAdsBase(unittest.TestCase):
 
         # Verify actual rows were synced
         sync_record_count = runner.examine_target_output_file(
-            self, conn_id, self.expected_sync_streams(), self.expected_primary_keys())
+            self, conn_id, self.expected_sync_streams(), self.expected_primary_keys()
+        )
         self.assertGreater(
-            sum(sync_record_count.values()), 0,
-            msg="failed to replicate any data: {}".format(sync_record_count)
+            sum(sync_record_count.values()),
+            0,
+            msg="failed to replicate any data: {}".format(sync_record_count),
         )
         print("total replicated row count: {}".format(sum(sync_record_count.values())))
 
         return sync_record_count
 
-
     # TODO we may need to account for exclusion rules
-    def perform_and_verify_table_and_field_selection(self, conn_id, test_catalogs,
-                                                     select_default_fields: bool = True,
-                                                     select_pagination_fields: bool = False):
+    def perform_and_verify_table_and_field_selection(
+        self,
+        conn_id,
+        test_catalogs,
+        select_default_fields: bool = True,
+        select_pagination_fields: bool = False,
+    ):
         """
         Perform table and field selection based off of the streams to select
         set and field selection parameters. Note that selecting all fields is not
@@ -313,9 +332,10 @@ class GoogleAdsBase(unittest.TestCase):
 
         # Select all available fields or select no fields from all testable streams
         self._select_streams_and_fields(
-            conn_id=conn_id, catalogs=test_catalogs,
+            conn_id=conn_id,
+            catalogs=test_catalogs,
             select_default_fields=select_default_fields,
-            select_pagination_fields=select_pagination_fields
+            select_pagination_fields=select_pagination_fields,
         )
 
         catalogs = menagerie.get_catalogs(conn_id)
@@ -332,20 +352,32 @@ class GoogleAdsBase(unittest.TestCase):
             print("Validating selection on {}: {}".format(cat['stream_name'], selected))
             if cat['stream_name'] not in expected_selected_streams:
                 self.assertFalse(selected, msg="Stream selected, but not testable.")
-                continue # Skip remaining assertions if we aren't selecting this stream
+                continue  # Skip remaining assertions if we aren't selecting this stream
             self.assertTrue(selected, msg="Stream not selected.")
 
             # collect field selection expecationas
             expected_automatic_fields = self.expected_automatic_fields()[cat['stream_name']]
-            selected_default_fields = expected_default_fields[cat['stream_name']] if select_default_fields else set()
-            selected_pagination_fields = expected_pagination_fields[cat['stream_name']] if select_pagination_fields else set()
+            selected_default_fields = (
+                expected_default_fields[cat['stream_name']] if select_default_fields else set()
+            )
+            selected_pagination_fields = (
+                expected_pagination_fields[cat['stream_name']]
+                if select_pagination_fields
+                else set()
+            )
 
             # Verify all intended fields within the stream are selected
-            expected_selected_fields = expected_automatic_fields | selected_default_fields | selected_pagination_fields
+            expected_selected_fields = (
+                expected_automatic_fields | selected_default_fields | selected_pagination_fields
+            )
             selected_fields = self._get_selected_fields_from_metadata(catalog_entry['metadata'])
             for field in expected_selected_fields:
                 field_selected = field in selected_fields
-                print("\tValidating field selection on {}.{}: {}".format(cat['stream_name'], field, field_selected))
+                print(
+                    "\tValidating field selection on {}.{}: {}".format(
+                        cat['stream_name'], field, field_selected
+                    )
+                )
             self.assertSetEqual(expected_selected_fields, selected_fields)
 
     @staticmethod
@@ -354,23 +386,27 @@ class GoogleAdsBase(unittest.TestCase):
         for field in metadata:
             is_field_metadata = len(field['breadcrumb']) > 1
             inclusion_automatic_or_selected = (
-                field['metadata']['selected'] is True or \
-                field['metadata']['inclusion'] == 'automatic'
+                field['metadata']['selected'] is True
+                or field['metadata']['inclusion'] == 'automatic'
             )
             if is_field_metadata and inclusion_automatic_or_selected:
                 selected_fields.add(field['breadcrumb'][1])
         return selected_fields
 
-    def _select_streams_and_fields(self, conn_id, catalogs, select_default_fields, select_pagination_fields):
+    def _select_streams_and_fields(
+        self, conn_id, catalogs, select_default_fields, select_pagination_fields
+    ):
         """Select all streams and all fields within streams"""
 
         for catalog in catalogs:
-
             schema_and_metadata = menagerie.get_annotated_schema(conn_id, catalog['stream_id'])
             metadata = schema_and_metadata['metadata']
 
-            properties = set(md['breadcrumb'][-1] for md in metadata
-                             if len(md['breadcrumb']) > 0 and md['breadcrumb'][0] == 'properties')
+            properties = set(
+                md['breadcrumb'][-1]
+                for md in metadata
+                if len(md['breadcrumb']) > 0 and md['breadcrumb'][0] == 'properties'
+            )
 
             # get a list of all properties so that none are selected
             if select_default_fields:
@@ -385,7 +421,8 @@ class GoogleAdsBase(unittest.TestCase):
                 non_selected_properties = properties
 
             connections.select_catalog_and_fields_via_metadata(
-                conn_id, catalog, schema_and_metadata, [], non_selected_properties)
+                conn_id, catalog, schema_and_metadata, [], non_selected_properties
+            )
 
     @staticmethod
     def parse_date(date_value):
@@ -397,7 +434,7 @@ class GoogleAdsBase(unittest.TestCase):
             "%Y-%m-%dT%H:%M:%SZ",
             "%Y-%m-%dT%H:%M:%S.%f+00:00",
             "%Y-%m-%dT%H:%M:%S+00:00",
-            "%Y-%m-%d"
+            "%Y-%m-%d",
         }
         for date_format in date_formats:
             try:
@@ -406,7 +443,9 @@ class GoogleAdsBase(unittest.TestCase):
             except ValueError:
                 continue
 
-        raise NotImplementedError("Tests do not account for dates of this format: {}".format(date_value))
+        raise NotImplementedError(
+            "Tests do not account for dates of this format: {}".format(date_value)
+        )
 
     def timedelta_formatted(self, dtime, days=0):
         try:
@@ -423,7 +462,9 @@ class GoogleAdsBase(unittest.TestCase):
                 return dt.strftime(return_date, self.REPLICATION_KEY_FORMAT)
 
             except ValueError:
-                return Exception("Datetime object is not of the format: {}".format(self.START_DATE_FORMAT))
+                return Exception(
+                    "Datetime object is not of the format: {}".format(self.START_DATE_FORMAT)
+                )
 
     ##########################################################################
     ### Tap Specific Methods

@@ -46,11 +46,7 @@ class VariableResource(GenericResource):
         variable_manager = VariableManager(variables_dir=get_variables_dir())
         variables_dict = variable_manager.get_variables_by_pipeline(pipeline_uuid)
         global_variables = [
-            dict(
-                uuid=uuid,
-                type=str(type(value)),
-                value=value
-            )
+            dict(uuid=uuid, type=str(type(value)), value=value)
             for uuid, value in get_global_variables(pipeline_uuid).items()
         ]
         global_variables_arr = [
@@ -65,12 +61,14 @@ class VariableResource(GenericResource):
                 block=dict(uuid=uuid),
                 pipeline=dict(uuid=pipeline_uuid),
                 variables=[
-                    get_variable_value(variable_manager, pipeline_uuid, uuid, var) for var in arr
+                    get_variable_value(variable_manager, pipeline_uuid, uuid, var)
+                    for var in arr
                     # Not return printed outputs
                     if var == 'df' or var.startswith('output')
-                  ],
+                ],
             )
-            for uuid, arr in variables_dict.items() if uuid != 'global'
+            for uuid, arr in variables_dict.items()
+            if uuid != 'global'
         ] + global_variables_arr
 
         return self.build_result_set(
@@ -104,13 +102,17 @@ class VariableResource(GenericResource):
 
         global_variables = get_global_variables(pipeline_uuid)
 
-        return self(dict(
-            block=dict(uuid='global'),
-            name=variable_uuid,
-            pipeline=dict(uuid=pipeline_uuid),
-            value=variable_value,
-            variables=list(global_variables.keys()),
-        ), user, **kwargs)
+        return self(
+            dict(
+                block=dict(uuid='global'),
+                name=variable_uuid,
+                pipeline=dict(uuid=pipeline_uuid),
+                value=variable_value,
+                variables=list(global_variables.keys()),
+            ),
+            user,
+            **kwargs,
+        )
 
     @classmethod
     @safe_db_query
@@ -141,13 +143,15 @@ class VariableResource(GenericResource):
 
         global_variables = get_global_variables(pipeline_uuid)
 
-        self.model.update(dict(
-            block=dict(uuid='global'),
-            name=variable_uuid,
-            pipeline=dict(uuid=pipeline_uuid),
-            value=variable_value,
-            variables=list(global_variables.keys()),
-        ))
+        self.model.update(
+            dict(
+                block=dict(uuid='global'),
+                name=variable_uuid,
+                pipeline=dict(uuid=pipeline_uuid),
+                value=variable_value,
+                variables=list(global_variables.keys()),
+            )
+        )
 
         return self
 

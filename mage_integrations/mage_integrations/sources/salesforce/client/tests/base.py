@@ -10,6 +10,7 @@ from datetime import datetime as dt
 from tap_tester import connections, menagerie, runner, LOGGER
 from tap_tester.base_case import BaseCase
 
+
 class SalesforceBaseTest(BaseCase):
     """
     Setup expectations for test sub classes.
@@ -25,6 +26,7 @@ class SalesforceBaseTest(BaseCase):
       timing        | https://stitchdata.atlassian.net/browse/SRCE-4816
       more data     | https://stitchdata.atlassian.net/browse/SRCE-4824
     """
+
     AUTOMATIC_FIELDS = "automatic"
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
@@ -56,7 +58,7 @@ class SalesforceBaseTest(BaseCase):
             'select_fields_by_default': 'true',
             'quota_percent_total': '80',
             'api_type': self.salesforce_api,
-            'is_sandbox': 'false'
+            'is_sandbox': 'false',
         }
 
         if original:
@@ -71,16 +73,18 @@ class SalesforceBaseTest(BaseCase):
     @staticmethod
     def get_credentials():
         """Authentication information for the test account"""
-        return {'refresh_token': os.getenv('TAP_SALESFORCE_REFRESH_TOKEN'),
-                'client_id': os.getenv('TAP_SALESFORCE_CLIENT_ID'),
-                'client_secret': os.getenv('TAP_SALESFORCE_CLIENT_SECRET')}
+        return {
+            'refresh_token': os.getenv('TAP_SALESFORCE_REFRESH_TOKEN'),
+            'client_id': os.getenv('TAP_SALESFORCE_CLIENT_ID'),
+            'client_secret': os.getenv('TAP_SALESFORCE_CLIENT_SECRET'),
+        }
 
     def expected_metadata(self):
         """The expected streams and metadata about the streams"""
         default = {
             self.PRIMARY_KEYS: {"Id"},
             self.REPLICATION_METHOD: self.INCREMENTAL,
-            self.REPLICATION_KEYS: {"SystemModstamp"}
+            self.REPLICATION_KEYS: {"SystemModstamp"},
         }
         default_full = {
             self.PRIMARY_KEYS: {"Id"},
@@ -487,7 +491,11 @@ class SalesforceBaseTest(BaseCase):
             'LoginAsEvent': incremental_created_date,  # new
             'LoginEvent': default_full,  # new
             'LoginGeo': default,  # new
-            'LoginHistory': {self.PRIMARY_KEYS: {'Id'}, self.REPLICATION_KEYS: {'LoginTime'},self.REPLICATION_METHOD: self.INCREMENTAL,},
+            'LoginHistory': {
+                self.PRIMARY_KEYS: {'Id'},
+                self.REPLICATION_KEYS: {'LoginTime'},
+                self.REPLICATION_METHOD: self.INCREMENTAL,
+            },
             'LoginIp': incremental_created_date,
             'LogoutEvent': default_full,  # new
             'MLField': default,  # removed # 6/13/2022 added back 7/10/2022
@@ -849,56 +857,70 @@ class SalesforceBaseTest(BaseCase):
         Return a set of streams that are child streams
         based on having foreign key metadata
         """
-        return {stream for stream, metadata in self.expected_metadata().items()
-                if metadata.get(self.FOREIGN_KEYS)}
+        return {
+            stream
+            for stream, metadata in self.expected_metadata().items()
+            if metadata.get(self.FOREIGN_KEYS)
+        }
 
     def expected_primary_keys(self):
         """
         return a dictionary with key of table name
         and value as a set of primary key fields
         """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_replication_keys(self):
         """
         return a dictionary with key of table name
         and value as a set of replication key fields
         """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_foreign_keys(self):
         """
         return a dictionary with key of table name
         and value as a set of foreign key fields
         """
-        return {table: properties.get(self.FOREIGN_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
-
+        return {
+            table: properties.get(self.FOREIGN_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_fields(self):
         auto_fields = {}
         for k, v in self.expected_metadata().items():
-            auto_fields[k] = v.get(self.PRIMARY_KEYS, set()) | v.get(self.REPLICATION_KEYS, set()) \
+            auto_fields[k] = (
+                v.get(self.PRIMARY_KEYS, set())
+                | v.get(self.REPLICATION_KEYS, set())
                 | v.get(self.FOREIGN_KEYS, set())
+            )
         return auto_fields
 
     def expected_replication_method(self):
         """return a dictionary with key of table name nd value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_METHOD, None)
+            for table, properties in self.expected_metadata().items()
+        }
 
     def setUp(self):
         """Verify that you have set the prerequisites to run the tap (creds, etc.)"""
-        missing_envs = [x for x in ['TAP_SALESFORCE_CLIENT_ID',
-                                    'TAP_SALESFORCE_CLIENT_SECRET',
-                                    'TAP_SALESFORCE_REFRESH_TOKEN']
-                        if os.getenv(x) is None]
+        missing_envs = [
+            x
+            for x in [
+                'TAP_SALESFORCE_CLIENT_ID',
+                'TAP_SALESFORCE_CLIENT_SECRET',
+                'TAP_SALESFORCE_REFRESH_TOKEN',
+            ]
+            if os.getenv(x) is None
+        ]
 
         if missing_envs:
             raise Exception("set environment variables")
@@ -922,7 +944,9 @@ class SalesforceBaseTest(BaseCase):
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
         found_catalogs = menagerie.get_catalogs(conn_id)
-        self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
+        self.assertGreater(
+            len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id)
+        )
 
         return found_catalogs
 
@@ -941,19 +965,20 @@ class SalesforceBaseTest(BaseCase):
 
         # Verify actual rows were synced
         sync_record_count = runner.examine_target_output_file(
-            self, conn_id, self.expected_streams(), self.expected_primary_keys())
+            self, conn_id, self.expected_streams(), self.expected_primary_keys()
+        )
         self.assertGreater(
-            sum(sync_record_count.values()), 0,
-            msg="failed to replicate any data: {}".format(sync_record_count)
+            sum(sync_record_count.values()),
+            0,
+            msg="failed to replicate any data: {}".format(sync_record_count),
         )
         LOGGER.info("total replicated row count: %s", sum(sync_record_count.values()))
 
         return sync_record_count
 
-    def perform_and_verify_table_and_field_selection(self,
-                                                     conn_id,
-                                                     test_catalogs,
-                                                     select_all_fields=True):
+    def perform_and_verify_table_and_field_selection(
+        self, conn_id, test_catalogs, select_all_fields=True
+    ):
         """
         Perform table and field selection based off of the streams to select
         set and field selection parameters.
@@ -979,19 +1004,27 @@ class SalesforceBaseTest(BaseCase):
             LOGGER.info("Validating selection on %s: %s", cat['stream_name'], selected)
             if cat['stream_name'] not in expected_selected:
                 self.assertFalse(selected, msg="Stream selected, but not testable.")
-                continue # Skip remaining assertions if we aren't selecting this stream
+                continue  # Skip remaining assertions if we aren't selecting this stream
             self.assertTrue(selected, msg="Stream not selected.")
 
             if select_all_fields:
                 # Verify all fields within each selected stream are selected
-                for field, field_props in catalog_entry.get('annotated-schema').get('properties').items():
+                for field, field_props in (
+                    catalog_entry.get('annotated-schema').get('properties').items()
+                ):
                     field_selected = field_props.get('selected')
-                    LOGGER.info("\tValidating selection on %s.%s: %s",
-                                cat['stream_name'], field, field_selected)
+                    LOGGER.info(
+                        "\tValidating selection on %s.%s: %s",
+                        cat['stream_name'],
+                        field,
+                        field_selected,
+                    )
                     self.assertTrue(field_selected, msg="Field not selected.")
             else:
                 # Verify only automatic fields are selected
-                expected_automatic_fields = self.expected_automatic_fields().get(cat['tap_stream_id'])
+                expected_automatic_fields = self.expected_automatic_fields().get(
+                    cat['tap_stream_id']
+                )
                 selected_fields = self.get_selected_fields_from_metadata(catalog_entry['metadata'])
                 self.assertEqual(expected_automatic_fields, selected_fields)
 
@@ -1000,17 +1033,20 @@ class SalesforceBaseTest(BaseCase):
         selected_fields = set()
         for field in metadata:
             is_field_metadata = len(field['breadcrumb']) > 1
-            if field['metadata'].get('inclusion') is None and is_field_metadata:  # BUG_SRCE-4313 remove when addressed
-                LOGGER.info("Error %s has no inclusion key in metadata", field)  # BUG_SRCE-4313 remove when addressed
+            if (
+                field['metadata'].get('inclusion') is None and is_field_metadata
+            ):  # BUG_SRCE-4313 remove when addressed
+                LOGGER.info(
+                    "Error %s has no inclusion key in metadata", field
+                )  # BUG_SRCE-4313 remove when addressed
                 continue  # BUG_SRCE-4313 remove when addressed
             inclusion_automatic_or_selected = (
-                field['metadata']['selected'] is True or \
-                field['metadata']['inclusion'] == 'automatic'
+                field['metadata']['selected'] is True
+                or field['metadata']['inclusion'] == 'automatic'
             )
             if is_field_metadata and inclusion_automatic_or_selected:
                 selected_fields.add(field['breadcrumb'][1])
         return selected_fields
-
 
     @staticmethod
     def select_all_streams_and_fields(conn_id, catalogs, select_all_fields: bool = True):
@@ -1021,28 +1057,50 @@ class SalesforceBaseTest(BaseCase):
             non_selected_properties = []
             if not select_all_fields:
                 # get a list of all properties so that none are selected
-                non_selected_properties = schema.get('annotated-schema', {}).get(
-                    'properties', {}).keys()
+                non_selected_properties = (
+                    schema.get('annotated-schema', {}).get('properties', {}).keys()
+                )
 
             connections.select_catalog_and_fields_via_metadata(
-                conn_id, catalog, schema, [], non_selected_properties)
+                conn_id, catalog, schema, [], non_selected_properties
+            )
 
     def set_replication_methods(self, conn_id, catalogs, replication_methods):
-
         replication_keys = self.expected_replication_keys()
 
         for catalog in catalogs:
-
             replication_method = replication_methods.get(catalog['stream_name'])
 
             if replication_method == self.INCREMENTAL:
                 replication_key = list(replication_keys.get(catalog['stream_name']))[0]
-                replication_md = [{ "breadcrumb": [], "metadata": {'replication-key': replication_key, "replication-method" : replication_method, "selected" : True}}]
+                replication_md = [
+                    {
+                        "breadcrumb": [],
+                        "metadata": {
+                            'replication-key': replication_key,
+                            "replication-method": replication_method,
+                            "selected": True,
+                        },
+                    }
+                ]
             else:
-                replication_md = [{ "breadcrumb": [], "metadata": {'replication-key': None, "replication-method" : "FULL_TABLE", "selected" : True}}]
+                replication_md = [
+                    {
+                        "breadcrumb": [],
+                        "metadata": {
+                            'replication-key': None,
+                            "replication-method": "FULL_TABLE",
+                            "selected": True,
+                        },
+                    }
+                ]
 
             connections.set_non_discoverable_metadata(
-                conn_id, catalog, menagerie.get_annotated_schema(conn_id, catalog['stream_id']), replication_md)
+                conn_id,
+                catalog,
+                menagerie.get_annotated_schema(conn_id, catalog['stream_id']),
+                replication_md,
+            )
 
     @staticmethod
     def parse_date(date_value):
@@ -1065,7 +1123,9 @@ class SalesforceBaseTest(BaseCase):
                         date_stripped = dt.strptime(date_value, "%Y-%m-%dT%H:%M:%S+00:00")
                         return date_stripped
                     except ValueError as e_final:
-                        raise NotImplementedError("We are not accounting for dates of this format: {}".format(date_value)) from e_final
+                        raise NotImplementedError(
+                            "We are not accounting for dates of this format: {}".format(date_value)
+                        ) from e_final
 
     def timedelta_formatted(self, dtime, days=0):
         try:
@@ -1082,7 +1142,9 @@ class SalesforceBaseTest(BaseCase):
                 return dt.strftime(return_date, self.BOOKMARK_COMPARISON_FORMAT)
 
             except ValueError:
-                return Exception("Datetime object is not of the format: {}".format(self.START_DATE_FORMAT))
+                return Exception(
+                    "Datetime object is not of the format: {}".format(self.START_DATE_FORMAT)
+                )
 
     ##########################################################################
     ### Tap Specific Methods
@@ -1123,7 +1185,7 @@ class SalesforceBaseTest(BaseCase):
 
     def get_unsupported_by_bulk_api(self):
         unsupported_streams_rest = self.get_unsupported_by_rest_api()
-        unsupported_streams_bulk_only= {
+        unsupported_streams_bulk_only = {
             'AcceptedEventRelation',
             'AssetTokenEvent',
             'AttachedContentNote',

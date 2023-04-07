@@ -1,7 +1,7 @@
 from mage_integrations.utils.logger import Logger
 
 
-class Connection():
+class Connection:
     def __init__(self, verbose: int = 1, **kwargs):
         self.logger = Logger(caller=self, verbose=verbose)
         self.verbose = verbose

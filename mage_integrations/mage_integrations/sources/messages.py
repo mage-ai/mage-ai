@@ -104,9 +104,11 @@ def write_record(stream_name, record, stream_alias=None, time_extracted=None):
 
     write_record("users", {"id": 2, "email": "mike@stitchdata.com"})
     """
-    write_message(RecordMessage(stream=(stream_alias or stream_name),
-                                record=record,
-                                time_extracted=time_extracted))
+    write_message(
+        RecordMessage(
+            stream=(stream_alias or stream_name), record=record, time_extracted=time_extracted
+        )
+    )
 
 
 def write_records(stream_name, records):

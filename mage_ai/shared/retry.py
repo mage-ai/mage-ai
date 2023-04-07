@@ -17,6 +17,7 @@ def retry(
         max_delay (int, optional): Maximum delay time.
         exponential_backoff (bool, optional): Whether to use exponential backoff retry.
     """
+
     def retry_decorator(func):
         def retry_func(*args, **kwargs):
             attempt = 0
@@ -38,5 +39,7 @@ def retry(
                     if exponential_backoff:
                         curr_delay *= 2
             return func(*args, **kwargs)
+
         return retry_func
+
     return retry_decorator

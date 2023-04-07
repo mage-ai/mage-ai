@@ -20,15 +20,22 @@ logging.getLogger('alembic').setLevel(config.get_section_option('logger_alembic'
 # add your model's MetaData object here for 'autogenerate' support
 
 
-sys.path.insert(0, os.path.dirname(
-    # mage_ai
+sys.path.insert(
+    0,
     os.path.dirname(
-        # orchestration
+        # mage_ai
         os.path.dirname(
-            # db
+            # orchestration
             os.path.dirname(
-                # migrations
-                os.path.dirname(os.path.abspath(__file__)))))))
+                # db
+                os.path.dirname(
+                    # migrations
+                    os.path.dirname(os.path.abspath(__file__))
+                )
+            )
+        )
+    ),
+)
 
 from mage_ai.orchestration.db.models.base import Base  # noqa: E402
 

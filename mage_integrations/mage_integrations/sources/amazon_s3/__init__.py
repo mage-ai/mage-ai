@@ -69,10 +69,10 @@ class AmazonS3(Source):
 
     def build_client(self):
         config = Config(
-           retries={
-              'max_attempts': 10,
-              'mode': 'standard',
-           },
+            retries={
+                'max_attempts': 10,
+                'mode': 'standard',
+            },
         )
 
         return boto3.client(
@@ -148,10 +148,12 @@ class AmazonS3(Source):
                 type=[COLUMN_TYPE_STRING],
             )
 
-            schema = Schema.from_dict(dict(
-                properties=properties,
-                type='object',
-            ))
+            schema = Schema.from_dict(
+                dict(
+                    properties=properties,
+                    type='object',
+                )
+            )
 
             metadata = get_standard_metadata(
                 key_properties=[],
@@ -216,8 +218,7 @@ class AmazonS3(Source):
 
         for d in self.list_objects(prefix, search_pattern):
             last_modified = d['LastModified'].strftime('%Y-%m-%d %H:%M:%S.%f')
-            if bookmark_last_modified is not None and \
-               last_modified <= bookmark_last_modified:
+            if bookmark_last_modified is not None and last_modified <= bookmark_last_modified:
                 continue
             df = self.__build_df(d['Key'])
             df[COLUMN_LAST_MODIFIED] = last_modified

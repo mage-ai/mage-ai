@@ -1,6 +1,6 @@
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 from base import ZendeskTest
 import unittest
 from functools import reduce
@@ -12,14 +12,10 @@ class ZendeskMinimalSelection(ZendeskTest):
         return "tap_tester_zendesk_minimal_selection"
 
     def expected_sync_streams(self):
-        return {
-            'users'
-        }
+        return {'users'}
 
     def expected_pks(self):
-        return {
-            'users': {'id'}
-        }
+        return {'users': {'id'}}
 
     def test_run(self):
         # Default test setup
@@ -36,18 +32,24 @@ class ZendeskMinimalSelection(ZendeskTest):
         self.assertEqual(len(self.found_catalogs), len(self.expected_check_streams()))
 
         # Verify the schemas discovered were exactly what we expect
-        found_catalog_names = {catalog['tap_stream_id']
-                               for catalog in self.found_catalogs
-                               if catalog['tap_stream_id'] in self.expected_check_streams()}
+        found_catalog_names = {
+            catalog['tap_stream_id']
+            for catalog in self.found_catalogs
+            if catalog['tap_stream_id'] in self.expected_check_streams()
+        }
         self.assertSetEqual(self.expected_check_streams(), found_catalog_names)
 
         # Select our catalogs
-        our_catalogs = [c for c in self.found_catalogs if c.get('tap_stream_id') in self.expected_sync_streams()]
+        our_catalogs = [
+            c for c in self.found_catalogs if c.get('tap_stream_id') in self.expected_sync_streams()
+        ]
         for c in our_catalogs:
             c_annotated = menagerie.get_annotated_schema(conn_id, c['stream_id'])
             c_metadata = metadata.to_map(c_annotated['metadata'])
             # Tags table only has name and count columns; don't select count
-            connections.select_catalog_and_fields_via_metadata(conn_id, c, c_annotated, [], ['name'])
+            connections.select_catalog_and_fields_via_metadata(
+                conn_id, c, c_annotated, [], ['name']
+            )
 
         # Clear state before our run
         menagerie.set_state(conn_id, {})
@@ -63,5 +65,7 @@ class ZendeskMinimalSelection(ZendeskTest):
             for m in messages:
                 pk_set = self.expected_pks()[stream]
                 for pk in pk_set:
-                    self.assertIsNotNone(m.get('data', {}).get(pk), msg="Missing primary-key for message {}".format(m))
-
+                    self.assertIsNotNone(
+                        m.get('data', {}).get(pk),
+                        msg="Missing primary-key for message {}".format(m),
+                    )

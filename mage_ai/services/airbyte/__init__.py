@@ -19,7 +19,7 @@ from time import sleep
 from typing import Dict
 
 
-class Airbyte():
+class Airbyte:
     def __init__(
         self,
         logger: Logger = None,

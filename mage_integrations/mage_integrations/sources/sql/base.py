@@ -79,11 +79,18 @@ class Source(BaseSource):
                     column_types.append(COLUMN_TYPE_BOOLEAN)
                 elif 'int' in column_type or 'bigint' in column_type:
                     column_types.append(COLUMN_TYPE_INTEGER)
-                elif 'double' in column_type or 'float' in column_type or \
-                        'numeric' in column_type or 'decimal' in column_type or \
-                        'real' in column_type or 'number' in column_type:
+                elif (
+                    'double' in column_type
+                    or 'float' in column_type
+                    or 'numeric' in column_type
+                    or 'decimal' in column_type
+                    or 'real' in column_type
+                    or 'number' in column_type
+                ):
                     column_types.append(COLUMN_TYPE_NUMBER)
-                elif 'datetime' in column_type or 'timestamp' in column_type or 'date' in column_type:
+                elif (
+                    'datetime' in column_type or 'timestamp' in column_type or 'date' in column_type
+                ):
                     column_format = COLUMN_FORMAT_DATETIME
                     column_types.append(COLUMN_TYPE_STRING)
                     # TODO (tommy dang): remove this so we allow any columns to be used as a bookmark
@@ -109,10 +116,12 @@ class Source(BaseSource):
                     type=column_types,
                 )
 
-            schema = Schema.from_dict(dict(
-                properties=properties,
-                type='object',
-            ))
+            schema = Schema.from_dict(
+                dict(
+                    properties=properties,
+                    type='object',
+                )
+            )
             metadata = get_standard_metadata(
                 key_properties=unique_constraints,
                 replication_method=REPLICATION_METHOD_FULL_TABLE,
@@ -193,8 +202,9 @@ class Source(BaseSource):
 
             loops += 1
 
-            if (custom_limit is not None and limit * loops >= custom_limit) or \
-                    len(rows_temp) < SUBBATCH_FETCH_LIMIT:
+            if (custom_limit is not None and limit * loops >= custom_limit) or len(
+                rows_temp
+            ) < SUBBATCH_FETCH_LIMIT:
                 break
 
         # If the query params doesn't have limit, then that's the last query in the batch.
@@ -318,11 +328,13 @@ WHERE table_schema = '{schema}'
         else:
             columns_statement = '\n, '.join(clean_columns)
 
-        query_string = '\n'.join([
-            'SELECT',
-            columns_statement,
-            f'FROM {self.build_table_name(stream)}',
-        ])
+        query_string = '\n'.join(
+            [
+                'SELECT',
+                columns_statement,
+                f'FROM {self.build_table_name(stream)}',
+            ]
+        )
 
         where_statements = []
         if bookmarks:
@@ -331,10 +343,7 @@ WHERE table_schema = '{schema}'
                     continue
                 where_statements.append(
                     self._build_comparison_statement(
-                        col,
-                        val,
-                        stream.schema.to_dict()['properties'],
-                        operator='>='
+                        col, val, stream.schema.to_dict()['properties'], operator='>='
                     )
                 )
 
@@ -343,9 +352,7 @@ WHERE table_schema = '{schema}'
                 if col in columns:
                     where_statements.append(
                         self._build_comparison_statement(
-                            col,
-                            val,
-                            stream.schema.to_dict()['properties']
+                            col, val, stream.schema.to_dict()['properties']
                         )
                     )
 
@@ -359,9 +366,12 @@ WHERE table_schema = '{schema}'
         ]
 
         if count_records:
-            self.logger.info(f'Counting records for {table_name} started.', tags=dict(
-                stream=table_name,
-            ))
+            self.logger.info(
+                f'Counting records for {table_name} started.',
+                tags=dict(
+                    stream=table_name,
+                ),
+            )
         else:
             with_limit_query_string += [
                 self._limit_query_string(limit, offset),
@@ -371,11 +381,14 @@ WHERE table_schema = '{schema}'
         rows_temp = self.build_connection().load(with_limit_query_string)
         if count_records:
             rows = [dict(number_of_records=row[0]) for row in rows_temp]
-            self.logger.info(f'Counting records for {table_name} completed.', tags=dict(
-                query=with_limit_query_string,
-                records=rows[0]['number_of_records'],
-                stream=table_name,
-            ))
+            self.logger.info(
+                f'Counting records for {table_name} completed.',
+                tags=dict(
+                    query=with_limit_query_string,
+                    records=rows[0]['number_of_records'],
+                    stream=table_name,
+                ),
+            )
         else:
             rows = self._convert_to_rows(columns, rows_temp)
 

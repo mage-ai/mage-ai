@@ -14,11 +14,13 @@ STRING_SERIALIZABLE_COLUMN_TYPES = [
     'ObjectId',
 ]
 
-CAST_TYPE_COLUMN_TYPES = set([
-    'Int64',
-    'int64',
-    'float64',
-])
+CAST_TYPE_COLUMN_TYPES = set(
+    [
+        'Int64',
+        'int64',
+        'float64',
+    ]
+)
 
 
 def serialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:

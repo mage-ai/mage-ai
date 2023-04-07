@@ -12,23 +12,19 @@ STREAM_CONFIGS = {
         'url_path': 'accounts',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': [
-            'creatorId',
-            'ownerId',
-            'updaterId'
-        ]
+        'fks': ['creatorId', 'ownerId', 'updaterId'],
     },
     'call_dispositions': {
         'url_path': 'callDispositions',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId']
+        'fks': ['creatorId'],
     },
     'call_purposes': {
         'url_path': 'callPurposes',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId']
+        'fks': ['creatorId'],
     },
     'calls': {
         'url_path': 'calls',
@@ -43,30 +39,27 @@ STREAM_CONFIGS = {
             'sequenceStateId',
             'sequenceStepId',
             'taskId',
-            'userId'
-        ]
+            'userId',
+        ],
     },
     'content_categories': {
         'url_path': 'contentCategories',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId']
+        'fks': ['creatorId'],
     },
-    'duties': {
-        'url_path': 'duties',
-        'replication': 'FULL_TABLE'
-    },
+    'duties': {'url_path': 'duties', 'replication': 'FULL_TABLE'},
     'events': {
         'url_path': 'events',
         'replication': 'INCREMENTAL',
         'filter_field': 'eventAt',
-        'fks': ['prospectId', 'userId']
+        'fks': ['prospectId', 'userId'],
     },
     'mailboxes': {
         'url_path': 'mailboxes',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId', 'updaterId']
+        'fks': ['creatorId', 'updaterId'],
     },
     'mailings': {
         'url_path': 'mailings',
@@ -81,25 +74,16 @@ STREAM_CONFIGS = {
             'sequenceStateId',
             'sequenceStepId',
             'taskId',
-            'templateId'
-        ]
+            'templateId',
+        ],
     },
     'opportunities': {
         'url_path': 'opportunities',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': [
-            'accountId',
-            'creatorId',
-            'opportunityStageId',
-            'ownerId'
-        ]
+        'fks': ['accountId', 'creatorId', 'opportunityStageId', 'ownerId'],
     },
-    'personas': {
-        'url_path': 'personas',
-        'replication': 'INCREMENTAL',
-        'filter_field': 'updatedAt'
-    },
+    'personas': {'url_path': 'personas', 'replication': 'INCREMENTAL', 'filter_field': 'updatedAt'},
     'prospects': {
         'url_path': 'prospects',
         'replication': 'INCREMENTAL',
@@ -111,38 +95,38 @@ STREAM_CONFIGS = {
             'ownerId',
             'personaId',
             'stageId',
-            'updaterId'
-        ]
+            'updaterId',
+        ],
     },
     'stages': {
         'url_path': 'stages',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId', 'updaterId']
+        'fks': ['creatorId', 'updaterId'],
     },
     'sequences': {
         'url_path': 'sequences',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId', 'ownerid', 'updaterId']
+        'fks': ['creatorId', 'ownerid', 'updaterId'],
     },
     'sequence_states': {
         'url_path': 'sequenceStates',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['accountid', 'creatorId', 'prospectId', 'sequenceId']
+        'fks': ['accountid', 'creatorId', 'prospectId', 'sequenceId'],
     },
     'sequence_steps': {
         'url_path': 'sequenceSteps',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId', 'sequenceId', 'updaterId']
+        'fks': ['creatorId', 'sequenceId', 'updaterId'],
     },
     'sequence_templates': {
         'url_path': 'sequenceTemplates',
         'replication': 'FULL_TABLE',
         'filter_field': 'updatedAt',
-        'fks': ['creatorId', 'updaterId']
+        'fks': ['creatorId', 'updaterId'],
     },
     'tasks': {
         'url_path': 'tasks',
@@ -163,27 +147,16 @@ STREAM_CONFIGS = {
             'subjectId',
             'taskPriorityId',
             'taskThemeId',
-            'templateId'
-        ]
+            'templateId',
+        ],
     },
-    'teams': {
-        'url_path': 'teams',
-        'replication': 'FULL_TABLE',
-        'fks': ['creatorId', 'updaterId']
-    },
+    'teams': {'url_path': 'teams', 'replication': 'FULL_TABLE', 'fks': ['creatorId', 'updaterId']},
     'users': {
         'url_path': 'users',
         'replication': 'INCREMENTAL',
         'filter_field': 'updatedAt',
-        'fks': [
-            'calendarId',
-            'mailboxId',
-            'profileId',
-            'roleId',
-            'creatorId',
-            'updaterId'
-        ]
-    }
+        'fks': ['calendarId', 'mailboxId', 'profileId', 'roleId', 'creatorId', 'updaterId'],
+    },
 }
 
 
@@ -218,28 +191,23 @@ def process_records(stream, mdata, max_modified, records, filter_field, fks):
     schema = stream.schema.to_dict()
     with metrics.record_counter(stream.tap_stream_id) as counter:
         for record in records:
-            record_flat = {
-                'id': record['id']
-            }
+            record_flat = {'id': record['id']}
             for prop, value in record['attributes'].items():
                 if prop == 'id':
-                    raise Exception(
-                        'Error flattening Outeach record - conflict with `id` key')
+                    raise Exception('Error flattening Outeach record - conflict with `id` key')
                 record_flat[prop] = value
 
             if 'relationships' in record:
                 for prop, value in record['relationships'].items():
                     if 'data' not in value and 'links' not in value:
-                        raise Exception(
-                            'Only `data` or `links` expected in relationships')
+                        raise Exception('Only `data` or `links` expected in relationships')
 
                     fk_field_name = '{}Id'.format(prop)
 
                     if 'data' in value and fk_field_name in fks:
                         data_value = value['data']
                         if data_value is not None and 'id' not in data_value:
-                            raise Exception(
-                                'null or `id` field expected for `data` relationship')
+                            raise Exception('null or `id` field expected for `data` relationship')
 
                         if fk_field_name in record_flat:
                             print(
@@ -256,9 +224,7 @@ def process_records(stream, mdata, max_modified, records, filter_field, fks):
                 max_modified = record_flat[filter_field]
 
             with Transformer() as transformer:
-                record_typed = transformer.transform(record_flat,
-                                                     schema,
-                                                     mdata)
+                record_typed = transformer.transform(record_flat, schema, mdata)
             singer.write_record(stream.tap_stream_id, record_typed)
             counter.increment()
         return max_modified
@@ -274,8 +240,10 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata, log
                 last_ds = dateutil.parser.parse(ds)
                 now = datetime.utcnow().replace(tzinfo=last_ds.tzinfo)
                 if now < last_ds + timedelta(days=1):
-                    logger.info(f'Skipping stream {stream.tap_stream_id} because bookmark '
-                                f'{last_datetime} is less than 1 day ago.')
+                    logger.info(
+                        f'Skipping stream {stream.tap_stream_id} because bookmark '
+                        f'{last_datetime} is less than 1 day ago.'
+                    )
                     return
             except dateutil.parser.ParserError:
                 pass
@@ -300,33 +268,24 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata, log
     while has_more:
         # query_params only needed for first page, next_url incl. params
         if page == 1:
-            query_params = {
-                'page[size]': count,
-                'count': 'false'
-            }
+            query_params = {'page[size]': count, 'count': 'false'}
             if stream_config.get('replication') == 'INCREMENTAL':
                 query_params[f'filter[{filter_field}]'] = f'{paginate_datetime}..inf'
                 query_params['sort'] = filter_field
 
-        logger.info('{} - Syncing data since {} - page: {}, limit: {}, offset: {}'.format(
-            stream.tap_stream_id,
-            last_datetime,
-            page,
-            count,
-            offset))
+        logger.info(
+            '{} - Syncing data since {} - page: {}, limit: {}, offset: {}'.format(
+                stream.tap_stream_id, last_datetime, page, count, offset
+            )
+        )
 
-        querystring = '&'.join(['%s=%s' % (key, value)
-                                for (key, value) in query_params.items()])
+        querystring = '&'.join(['%s=%s' % (key, value) for (key, value) in query_params.items()])
         if page == 1:
             data = client.get(
-                path=stream_config['url_path'],
-                params=querystring,
-                endpoint=stream_name)
+                path=stream_config['url_path'], params=querystring, endpoint=stream_name
+            )
         else:  # next_url
-            data = client.get(
-                url=next_url,
-                params=query_params,
-                endpoint=stream_name)
+            data = client.get(url=next_url, params=query_params, endpoint=stream_name)
 
         records = data.get('data', [])
         next_url = data.get('links', {}).get('next', None)
@@ -338,12 +297,7 @@ def sync_endpoint(client, config, catalog, state, start_date, stream, mdata, log
             offset += count
             page = page + 1
 
-        max_modified = process_records(stream,
-                                       mdata,
-                                       max_modified,
-                                       records,
-                                       filter_field,
-                                       fks)
+        max_modified = process_records(stream, mdata, max_modified, records, filter_field, fks)
 
         if stream_config.get('replication') == 'INCREMENTAL':
             write_bookmark(state, stream_name, max_modified, filter_field)

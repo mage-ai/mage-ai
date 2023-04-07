@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from mage_integrations.connections.google_search_console import \
-    GoogleSearchConsole as GoogleSearchConsoleConnection
+from mage_integrations.connections.google_search_console import (
+    GoogleSearchConsole as GoogleSearchConsoleConnection,
+)
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.google_search_console.streams import STREAMS
 from mage_integrations.utils.dictionary import merge_dict

@@ -55,8 +55,10 @@ class BlockResource(GenericResource):
                 return self(block, user, **kwargs)
             else:
                 if extension_uuid:
-                    message = f'Block {pk} does not exist in pipeline {pipeline.uuid} ' \
+                    message = (
+                        f'Block {pk} does not exist in pipeline {pipeline.uuid} '
                         f'for extension {extension_uuid}.'
+                    )
                 else:
                     message = f'Block {pk} does not exist in pipeline {pipeline.uuid}.'
                 error.update(message=message)

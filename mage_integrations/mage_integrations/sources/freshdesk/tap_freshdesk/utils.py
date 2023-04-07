@@ -40,7 +40,7 @@ def ratelimit(limit, every):
 
 def chunk(l, n):
     for i in range(0, len(l), n):
-        yield l[i:i + n]
+        yield l[i : i + n]
 
 
 def get_abs_path(path):

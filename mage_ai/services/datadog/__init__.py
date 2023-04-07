@@ -32,9 +32,11 @@ def gauge(metric, value, host='mage', tags={}):
 
 
 def increment(metric, tags={}, value=1):
-    return create_metrics([
-        (metric, value, tags),
-    ])
+    return create_metrics(
+        [
+            (metric, value, tags),
+        ]
+    )
 
 
 def create_metrics(metrics, host='mage', metric_type='count'):
@@ -42,13 +44,16 @@ def create_metrics(metrics, host='mage', metric_type='count'):
     # metrics = [
     #     ('metric', 'value', 'tags'),
     # ]
-    arr = [{
-        'host': host,
-        'metric': t[0],
-        'points': t[1],
-        'tags': t[2] if len(t) == 3 else {},
-        'type': metric_type,
-    } for t in metrics]
+    arr = [
+        {
+            'host': host,
+            'metric': t[0],
+            'points': t[1],
+            'tags': t[2] if len(t) == 3 else {},
+            'type': metric_type,
+        }
+        for t in metrics
+    ]
     return api.Metric.send(metrics=arr)
 
 
@@ -92,6 +97,7 @@ class timed_decorator(object):
     """
     @timed_decorator('metric.metric', tags={ 'key': 'value' })
     """
+
     def __init__(self, metric, tags={}):
         self.metric = metric
         self.tags = tags
@@ -100,6 +106,7 @@ class timed_decorator(object):
         def wrapped_f(*args):
             with statsd.timed(self.metric, tags=self.tags):
                 return f(*args)
+
         return wrapped_f
 
 
@@ -108,6 +115,7 @@ class timer(object):
     with timer('metric.metric', tags={ 'key': 'value' }):
         function()
     """
+
     def __init__(self, metric, tags={}):
         self.metric = metric
         self.start = None

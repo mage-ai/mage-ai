@@ -13,8 +13,10 @@ INTROSPECTION_URI = 'https://www.linkedin.com/oauth/v2/introspectToken'
 # set default timeout of 300 seconds
 REQUEST_TIMEOUT = 300
 
+
 class LinkedInError(Exception):
     pass
+
 
 class Server5xxError(LinkedInError):
     pass
@@ -22,6 +24,7 @@ class Server5xxError(LinkedInError):
 
 class Server429Error(LinkedInError):
     pass
+
 
 class LinkedInBadRequestError(LinkedInError):
     pass
@@ -38,17 +41,22 @@ class LinkedInMethodNotAllowedError(LinkedInError):
 class LinkedInNotFoundError(LinkedInError):
     pass
 
+
 class LinkedInForbiddenError(LinkedInError):
     pass
+
 
 class LinkedInLengthRequiredError(LinkedInError):
     pass
 
+
 class LinkedInRateLimitExceeededError(Server429Error):
     pass
 
+
 class LinkedInInternalServiceError(Server5xxError):
     pass
+
 
 class LinkedInGatewayTimeoutError(Server5xxError):
     pass
@@ -57,41 +65,42 @@ class LinkedInGatewayTimeoutError(Server5xxError):
 ERROR_CODE_EXCEPTION_MAPPING = {
     400: {
         "raise_exception": LinkedInBadRequestError,
-        "message": "The request is missing or has a bad parameter."
+        "message": "The request is missing or has a bad parameter.",
     },
     401: {
         "raise_exception": LinkedInUnauthorizedError,
-        "message": "Invalid authorization credentials."
+        "message": "Invalid authorization credentials.",
     },
     403: {
         "raise_exception": LinkedInForbiddenError,
-        "message": "User does not have permission to access the resource."
+        "message": "User does not have permission to access the resource.",
     },
     404: {
         "raise_exception": LinkedInNotFoundError,
-        "message": "The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account."
+        "message": "The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.",
     },
     405: {
         "raise_exception": LinkedInMethodNotAllowedError,
-        "message": "The provided HTTP method is not supported by the URL."
+        "message": "The provided HTTP method is not supported by the URL.",
     },
     411: {
         "raise_exception": LinkedInLengthRequiredError,
-        "message": "The server refuses to accept the request without a defined Content-Length header."
+        "message": "The server refuses to accept the request without a defined Content-Length header.",
     },
     429: {
         "raise_exception": LinkedInRateLimitExceeededError,
-        "message": "API rate limit exceeded, please retry after some time."
+        "message": "API rate limit exceeded, please retry after some time.",
     },
     500: {
         "raise_exception": LinkedInInternalServiceError,
-        "message": "An error has occurred at LinkedIn's end."
+        "message": "An error has occurred at LinkedIn's end.",
     },
     504: {
         "raise_exception": LinkedInGatewayTimeoutError,
-        "message": "A gateway timeout occurred. There is a problem at LinkedIn's end."
-    }
+        "message": "A gateway timeout occurred. There is a problem at LinkedIn's end.",
+    },
 }
+
 
 def raise_for_error(response):
     error_code = response.status_code
@@ -105,25 +114,35 @@ def raise_for_error(response):
         error_description = ERROR_CODE_EXCEPTION_MAPPING.get(error_code).get("message")
     else:
         # get message from the reponse if present or get custom message if not present
-        error_description = response_json.get("errorDetails", response_json.get("message", ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("message", "Unknown Error")))
+        error_description = response_json.get(
+            "errorDetails",
+            response_json.get(
+                "message",
+                ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("message", "Unknown Error"),
+            ),
+        )
 
     if response.status_code == 401 and 'Expired access token' in error_description:
-        LOGGER.error("Your access_token has expired as per LinkedIn’s security policy. Please re-authenticate your connection to generate a new token and resume extraction.")
+        LOGGER.error(
+            "Your access_token has expired as per LinkedIn’s security policy. Please re-authenticate your connection to generate a new token and resume extraction."
+        )
 
-    message = "HTTP-error-code: {}, Error: {}".format(
-                error_code, error_description)
+    message = "HTTP-error-code: {}, Error: {}".format(error_code, error_description)
 
     exc = ERROR_CODE_EXCEPTION_MAPPING.get(error_code, {}).get("raise_exception", LinkedInError)
     raise exc(message) from None
 
-class LinkedinClient: # pylint: disable=too-many-instance-attributes
-    def __init__(self, # pylint: disable=too-many-arguments
-                 client_id,
-                 client_secret,
-                 refresh_token,
-                 access_token,
-                 request_timeout=REQUEST_TIMEOUT,
-                 user_agent=None):
+
+class LinkedinClient:  # pylint: disable=too-many-instance-attributes
+    def __init__(
+        self,  # pylint: disable=too-many-arguments
+        client_id,
+        client_secret,
+        refresh_token,
+        access_token,
+        request_timeout=REQUEST_TIMEOUT,
+        user_agent=None,
+    ):
         self.__client_id = client_id
         self.__client_secret = client_secret
         self.__refresh_token = refresh_token
@@ -135,10 +154,9 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
         # if request_timeout is other than 0,"0" or "" then use request_timeout
         if request_timeout and float(request_timeout):
             request_timeout = float(request_timeout)
-        else: # If value is 0,"0" or "" then set default to 300 seconds.
+        else:  # If value is 0,"0" or "" then set default to 300 seconds.
             request_timeout = REQUEST_TIMEOUT
         self.request_timeout = request_timeout
-
 
     @property
     def access_token(self):
@@ -148,10 +166,12 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
     # hence added backoff for 'ConnectionError' too.
     # as 'check_access_token' is also called in 'request' hence added backoff here
     # instead of 'check_access_token' to avoid backoff 25 times
-    @backoff.on_exception(backoff.expo,
-                          (requests.exceptions.ConnectionError, requests.exceptions.Timeout),
-                          max_tries=5,
-                          factor=2)
+    @backoff.on_exception(
+        backoff.expo,
+        (requests.exceptions.ConnectionError, requests.exceptions.Timeout),
+        max_tries=5,
+        factor=2,
+    )
     def __enter__(self):
         self.fetch_and_set_access_token()
         return self
@@ -168,14 +188,11 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
         self.__expires = mock_expire
         return self.__expires
 
-
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, LinkedInUnauthorizedError),
-                          max_tries=5,
-                          factor=2)
+    @backoff.on_exception(
+        backoff.expo, (Server5xxError, LinkedInUnauthorizedError), max_tries=5, factor=2
+    )
     def get_token_expires(self):
         if not self.__expires:
-
             headers = {}
             if self.__user_agent:
                 headers['User-Agent'] = self.__user_agent
@@ -186,9 +203,10 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
                 data={
                     'client_id': self.__client_id,
                     'client_secret': self.__client_secret,
-                    'token': self.__access_token
+                    'token': self.__access_token,
                 },
-                timeout=self.request_timeout)
+                timeout=self.request_timeout,
+            )
 
             if response.status_code != 200:
                 raise_for_error(response)
@@ -197,11 +215,9 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
             self.__expires = datetime.fromtimestamp(data['expires_at'])
         return self.__expires
 
-
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, LinkedInUnauthorizedError),
-                          max_tries=5,
-                          factor=2)
+    @backoff.on_exception(
+        backoff.expo, (Server5xxError, LinkedInUnauthorizedError), max_tries=5, factor=2
+    )
     def refresh_access_token(self):
         headers = {}
         if self.__user_agent:
@@ -216,7 +232,8 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
                 'client_secret': self.__client_secret,
                 'refresh_token': self.__refresh_token,
             },
-            timeout=self.request_timeout)
+            timeout=self.request_timeout,
+        )
 
         if response.status_code != 200:
             raise_for_error(response)
@@ -229,30 +246,34 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
         # we receive and process that response some (very) small amount of time after it was true.
         self.__expires = datetime.utcnow() + timedelta(seconds=data['expires_in'])
 
-
     def fetch_and_set_access_token(self):
-
         # If refresh token is not provided then we are assuming that it is an old connection
         # and client has provided the valid access_token already
         if not self.__refresh_token:
             return
 
         if self.__access_token:
-
             if self.get_token_expires() > datetime.utcnow():
-                LOGGER.info('Existing token still valid; token expires %s', self.__expires.strftime("%Y-%m-%d %H:%M:%S"))
+                LOGGER.info(
+                    'Existing token still valid; token expires %s',
+                    self.__expires.strftime("%Y-%m-%d %H:%M:%S"),
+                )
                 return
 
         self.refresh_access_token()
-        LOGGER.info('Retrieved new access token; token expires %s', self.__expires.strftime("%Y-%m-%d %H:%M:%S"))
-
+        LOGGER.info(
+            'Retrieved new access token; token expires %s',
+            self.__expires.strftime("%Y-%m-%d %H:%M:%S"),
+        )
 
     # during 'Timeout' error there is also possibility of 'ConnectionError',
     # hence added backoff for 'ConnectionError' too.
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, requests.exceptions.ConnectionError, requests.exceptions.Timeout),
-                          max_tries=5,
-                          factor=2)
+    @backoff.on_exception(
+        backoff.expo,
+        (Server5xxError, requests.exceptions.ConnectionError, requests.exceptions.Timeout),
+        max_tries=5,
+        factor=2,
+    )
     def check_accounts(self, config):
         headers = {}
         if self.__user_agent:
@@ -265,9 +286,12 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
             invalid_account = []
             for account in account_list:
                 response = self.__session.get(
-                    url='https://api.linkedin.com/v2/adAccountUsersV2?q=accounts&count=1&start=0&accounts=urn:li:sponsoredAccount:{}'.format(account),
+                    url='https://api.linkedin.com/v2/adAccountUsersV2?q=accounts&count=1&start=0&accounts=urn:li:sponsoredAccount:{}'.format(
+                        account
+                    ),
                     headers=headers,
-                    timeout=self.request_timeout)
+                    timeout=self.request_timeout,
+                )
 
                 # Account users API will return 400 if account is not in number format.
                 # Account users API will return 404 if provided account is valid number but invalid LinkedIn Ads account
@@ -276,7 +300,11 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
                 elif response.status_code != 200:
                     raise_for_error(response)
             if invalid_account:
-                error_message = 'Invalid Linked Ads accounts provided during the configuration:{}'.format(invalid_account)
+                error_message = (
+                    'Invalid Linked Ads accounts provided during the configuration:{}'.format(
+                        invalid_account
+                    )
+                )
                 raise Exception(error_message) from None
 
     @backoff.on_exception(
@@ -285,16 +313,11 @@ class LinkedinClient: # pylint: disable=too-many-instance-attributes
         # Choosing a max time of 10 minutes since documentation for the
         # [ads reporting api](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting#data-throttling) says
         # "Data limit for all queries over a 5 min interval: 45 million metric values(where metric value is the value for a metric specified in the fields parameter)."
-        max_time=600, # seconds
+        max_time=600,  # seconds
         jitter=backoff.full_jitter,
     )
     # backoff for 'Timeout' error
-    @backoff.on_exception(
-        backoff.expo,
-        requests.exceptions.Timeout,
-        max_tries=5,
-        factor=2
-    )
+    @backoff.on_exception(backoff.expo, requests.exceptions.Timeout, max_tries=5, factor=2)
     def request(self, method, url=None, path=None, **kwargs):
         self.fetch_and_set_access_token()
         if not url and self.__base_url is None:

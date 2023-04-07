@@ -95,15 +95,25 @@ def iter_delivery_info_filter(stream_type):
     }
 
     filt_values = [
-        "active", "archived", "completed",
-        "limited", "not_delivering", "deleted",
-        "not_published", "pending_review", "permanently_deleted",
-        "recently_completed", "recently_rejected", "rejected",
-        "scheduled", "inactive"]
+        "active",
+        "archived",
+        "completed",
+        "limited",
+        "not_delivering",
+        "deleted",
+        "not_published",
+        "pending_review",
+        "permanently_deleted",
+        "recently_completed",
+        "recently_rejected",
+        "rejected",
+        "scheduled",
+        "inactive",
+    ]
 
     sub_list_length = 3
     for i in range(0, len(filt_values), sub_list_length):
-        filt['value'] = filt_values[i:i+sub_list_length]
+        filt['value'] = filt_values[i : i + sub_list_length]
         yield filt
 
 
@@ -116,9 +126,7 @@ def raise_from(singer_error, fb_error):
     if isinstance(fb_error, FacebookRequestError):
         http_method = fb_error.request_context().get('method', 'Unknown HTTP Method')
         error_message = '{}: {} Message: {}'.format(
-            http_method,
-            fb_error.http_status(),
-            fb_error.body().get('error', {}).get('message')
+            http_method, fb_error.http_status(), fb_error.body().get('error', {}).get('message')
         )
     else:
         # All other facebook errors are `FacebookError`s and we handle
@@ -131,27 +139,36 @@ def retry_pattern(backoff_type, exception, logger=LOGGER, **wait_gen_kwargs):
     def log_retry_attempt(details):
         _, exception, _ = sys.exc_info()
         logger.info(exception)
-        logger.info('Caught retryable error after %s tries. Waiting %s more seconds then retrying...',
-                    details["tries"],
-                    details["wait"])
+        logger.info(
+            'Caught retryable error after %s tries. Waiting %s more seconds then retrying...',
+            details["tries"],
+            details["wait"],
+        )
 
         if isinstance(exception, TypeError) and str(exception) == "string indices must be integers":
             logger.info('TypeError due to bad JSON response')
 
     def should_retry_api_error(exception):
-        if isinstance(exception, FacebookBadObjectError) or isinstance(exception, Timeout) or \
-                isinstance(exception, ConnectionError) or isinstance(exception, AttributeError):
+        if (
+            isinstance(exception, FacebookBadObjectError)
+            or isinstance(exception, Timeout)
+            or isinstance(exception, ConnectionError)
+            or isinstance(exception, AttributeError)
+        ):
             return True
         elif isinstance(exception, FacebookRequestError):
-            return (exception.api_transient_error()
-                    or exception.api_error_subcode() == 99
-                    or exception.http_status() == 500
-                    # This subcode corresponds to a race condition between AdsInsights job creation and polling
-                    or exception.api_error_subcode() == 33
-                    )
+            return (
+                exception.api_transient_error()
+                or exception.api_error_subcode() == 99
+                or exception.http_status() == 500
+                # This subcode corresponds to a race condition between AdsInsights job creation and polling
+                or exception.api_error_subcode() == 33
+            )
         elif isinstance(exception, InsightsJobTimeout):
             return True
-        elif isinstance(exception, TypeError) and str(exception) == "string indices must be integers":
+        elif (
+            isinstance(exception, TypeError) and str(exception) == "string indices must be integers"
+        ):
             return True
         return False
 
@@ -161,7 +178,7 @@ def retry_pattern(backoff_type, exception, logger=LOGGER, **wait_gen_kwargs):
         jitter=None,
         on_backoff=log_retry_attempt,
         giveup=lambda exc: not should_retry_api_error(exc),
-        **wait_gen_kwargs
+        **wait_gen_kwargs,
     )
 
 
@@ -224,10 +241,11 @@ class IncrementalStream(Stream):
                 yield {'record': record}
 
             if max_bookmark:
-                yield {'state': advance_bookmark(self,
-                                                 UPDATED_TIME_KEY,
-                                                 str(max_bookmark),
-                                                 logger=self.logger)}
+                yield {
+                    'state': advance_bookmark(
+                        self, UPDATED_TIME_KEY, str(max_bookmark), logger=self.logger
+                    )
+                }
 
 
 def batch_record_success(response, stream=None, transformer=None, schema=None):
@@ -271,7 +289,9 @@ class AdCreative(Stream):
 
     @retry_pattern(backoff.expo, (Timeout, ConnectionError), max_tries=5, factor=2)
     # Added retry_pattern to handle AttributeError raised from account.get_ad_creatives() below
-    @retry_pattern(backoff.expo, (FacebookRequestError, TypeError, AttributeError), max_tries=5, factor=5)
+    @retry_pattern(
+        backoff.expo, (FacebookRequestError, TypeError, AttributeError), max_tries=5, factor=5
+    )
     def get_adcreatives(self):
         return self.account.get_ad_creatives(
             fields=self.fields(),
@@ -299,32 +319,38 @@ class Ads(IncrementalStream):
         a generator, whose calls need decorated with a backoff.
         """
         self.logger.info(f'Call get ads with params: {params}')
-        return self.account.get_ads(fields=self.fields(), params=params)  # pylint: disable=no-member
+        return self.account.get_ads(
+            fields=self.fields(), params=params
+        )  # pylint: disable=no-member
 
     def __iter__(self):
         def do_request():
             params = {'limit': RESULT_RETURN_LIMIT}
             if self.current_bookmark:
-                params.update({
-                    'filtering': [
-                        {
-                            'field': 'ad.' + UPDATED_TIME_KEY,
-                            'operator': 'GREATER_THAN',
-                            'value': self.current_bookmark.int_timestamp,
-                        },
-                    ],
-                })
+                params.update(
+                    {
+                        'filtering': [
+                            {
+                                'field': 'ad.' + UPDATED_TIME_KEY,
+                                'operator': 'GREATER_THAN',
+                                'value': self.current_bookmark.int_timestamp,
+                            },
+                        ],
+                    }
+                )
             yield self._call_get_ads(params)
 
         def do_request_multiple():
             params = {'limit': RESULT_RETURN_LIMIT}
             bookmark_params = []
             if self.current_bookmark:
-                bookmark_params.append({
-                    'field': 'ad.' + UPDATED_TIME_KEY,
-                    'operator': 'GREATER_THAN',
-                    'value': self.current_bookmark.int_timestamp,
-                })
+                bookmark_params.append(
+                    {
+                        'field': 'ad.' + UPDATED_TIME_KEY,
+                        'operator': 'GREATER_THAN',
+                        'value': self.current_bookmark.int_timestamp,
+                    }
+                )
             for del_info_filt in iter_delivery_info_filter('ad'):
                 params.update({'filtering': [del_info_filt] + bookmark_params})
                 filt_ads = self._call_get_ads(params)
@@ -359,32 +385,38 @@ class AdSets(IncrementalStream):
         This is necessary because the functions that call this endpoint return
         a generator, whose calls need decorated with a backoff.
         """
-        return self.account.get_ad_sets(fields=self.fields(), params=params)  # pylint: disable=no-member
+        return self.account.get_ad_sets(
+            fields=self.fields(), params=params
+        )  # pylint: disable=no-member
 
     def __iter__(self):
         def do_request():
             params = {'limit': RESULT_RETURN_LIMIT}
             if self.current_bookmark:
-                params.update({
-                    'filtering': [
-                        {
-                            'field': 'adset.' + UPDATED_TIME_KEY,
-                            'operator': 'GREATER_THAN',
-                            'value': self.current_bookmark.int_timestamp
-                        }
-                    ]
-                })
+                params.update(
+                    {
+                        'filtering': [
+                            {
+                                'field': 'adset.' + UPDATED_TIME_KEY,
+                                'operator': 'GREATER_THAN',
+                                'value': self.current_bookmark.int_timestamp,
+                            }
+                        ]
+                    }
+                )
             yield self._call_get_ad_sets(params)
 
         def do_request_multiple():
             params = {'limit': RESULT_RETURN_LIMIT}
             bookmark_params = []
             if self.current_bookmark:
-                bookmark_params.append({
-                    'field': 'adset.' + UPDATED_TIME_KEY,
-                    'operator': 'GREATER_THAN',
-                    'value': self.current_bookmark.int_timestamp,
-                })
+                bookmark_params.append(
+                    {
+                        'field': 'adset.' + UPDATED_TIME_KEY,
+                        'operator': 'GREATER_THAN',
+                        'value': self.current_bookmark.int_timestamp,
+                    }
+                )
             for del_info_filt in iter_delivery_info_filter('adset'):
                 params.update({'filtering': [del_info_filt] + bookmark_params})
                 filt_adsets = self._call_get_ad_sets(params)
@@ -406,7 +438,6 @@ class AdSets(IncrementalStream):
 
 
 class Campaigns(IncrementalStream):
-
     key_properties = ['id']
 
     @retry_pattern(backoff.expo, (Timeout, ConnectionError), max_tries=5, factor=2)
@@ -431,26 +462,30 @@ class Campaigns(IncrementalStream):
         def do_request():
             params = {'limit': RESULT_RETURN_LIMIT}
             if self.current_bookmark:
-                params.update({
-                    'filtering': [
-                        {
-                            'field': 'campaign.' + UPDATED_TIME_KEY,
-                            'operator': 'GREATER_THAN',
-                            'value': self.current_bookmark.int_timestamp
-                        },
-                    ],
-                })
+                params.update(
+                    {
+                        'filtering': [
+                            {
+                                'field': 'campaign.' + UPDATED_TIME_KEY,
+                                'operator': 'GREATER_THAN',
+                                'value': self.current_bookmark.int_timestamp,
+                            },
+                        ],
+                    }
+                )
             yield self._call_get_campaigns(params, fields=fields)
 
         def do_request_multiple():
             params = {'limit': RESULT_RETURN_LIMIT}
             bookmark_params = []
             if self.current_bookmark:
-                bookmark_params.append({
-                    'field': 'campaign.' + UPDATED_TIME_KEY,
-                    'operator': 'GREATER_THAN',
-                    'value': self.current_bookmark.int_timestamp,
-                })
+                bookmark_params.append(
+                    {
+                        'field': 'campaign.' + UPDATED_TIME_KEY,
+                        'operator': 'GREATER_THAN',
+                        'value': self.current_bookmark.int_timestamp,
+                    }
+                )
             for del_info_filt in iter_delivery_info_filter('campaign'):
                 params.update({'filtering': [del_info_filt] + bookmark_params})
                 filt_campaigns = self._call_get_campaigns(params)
@@ -531,14 +566,18 @@ class Leads(Stream):
     # Added retry_pattern to handle AttributeError raised from ad.get_leads() below
     @retry_pattern(backoff.expo, (FacebookRequestError, AttributeError), max_tries=5, factor=5)
     def get_leads(self, ads, start_time, previous_start_time):
-        start_time = int(start_time.timestamp()) # Get unix timestamp
-        params = {'limit': RESULT_RETURN_LIMIT,
-                  'filtering': [{'field': 'time_created',
-                                 'operator': 'GREATER_THAN',
-                                 'value': previous_start_time - 1},
-                                {'field': 'time_created',
-                                 'operator': 'LESS_THAN',
-                                 'value': start_time}]}
+        start_time = int(start_time.timestamp())  # Get unix timestamp
+        params = {
+            'limit': RESULT_RETURN_LIMIT,
+            'filtering': [
+                {
+                    'field': 'time_created',
+                    'operator': 'GREATER_THAN',
+                    'value': previous_start_time - 1,
+                },
+                {'field': 'time_created', 'operator': 'LESS_THAN', 'value': start_time},
+            ],
+        }
         for ad in ads:
             yield from ad.get_leads(
                 fields=self.fields(),
@@ -547,9 +586,13 @@ class Leads(Stream):
 
     def sync(self):
         start_time = pendulum.utcnow()
-        previous_start_time = self.state.get("bookmarks", {}).get("leads", {}).get(
-            self.replication_key,
-            CONFIG.get('start_date'),
+        previous_start_time = (
+            self.state.get("bookmarks", {})
+            .get("leads", {})
+            .get(
+                self.replication_key,
+                CONFIG.get('start_date'),
+            )
         )
 
         previous_start_time = pendulum.parse(previous_start_time)
@@ -568,14 +611,10 @@ ALL_ACTION_ATTRIBUTION_WINDOWS = [
     '28d_click',
     '1d_view',
     '7d_view',
-    '28d_view'
+    '28d_view',
 ]
 
-ALL_ACTION_BREAKDOWNS = [
-    'action_type',
-    'action_target_id',
-    'action_destination'
-]
+ALL_ACTION_BREAKDOWNS = ['action_type', 'action_target_id', 'action_destination']
 
 
 def get_start(stream, bookmark_key, default_value=None, logger=LOGGER):
@@ -585,8 +624,7 @@ def get_start(stream, bookmark_key, default_value=None, logger=LOGGER):
     if current_bookmark is None:
         start_date = CONFIG.get('start_date')
         logger.info(
-            f'No bookmark found for {tap_stream_id}, using start_date '
-            f'instead...{start_date}'
+            f'No bookmark found for {tap_stream_id}, using start_date ' f'instead...{start_date}'
         )
         if start_date:
             return pendulum.parse(start_date)
@@ -604,15 +642,18 @@ def advance_bookmark(stream, bookmark_key, date, logger=LOGGER):
     current_bookmark = get_start(stream, bookmark_key)
 
     if date is None:
-        logger.info(f'Did not get a date for stream {tap_stream_id} '
-                    ' not advancing bookmark')
+        logger.info(f'Did not get a date for stream {tap_stream_id} ' ' not advancing bookmark')
     elif not current_bookmark or date > current_bookmark:
-        logger.info(f'Bookmark for stream {tap_stream_id} is currently {current_bookmark}, '
-                    f'advancing to {date}')
+        logger.info(
+            f'Bookmark for stream {tap_stream_id} is currently {current_bookmark}, '
+            f'advancing to {date}'
+        )
         state = singer.write_bookmark(state, tap_stream_id, bookmark_key, str(date))
     else:
-        logger.info(f'Bookmark for stream {tap_stream_id} is currently {current_bookmark} '
-                    f'not changing to {date}')
+        logger.info(
+            f'Bookmark for stream {tap_stream_id} is currently {current_bookmark} '
+            f'not changing to {date}'
+        )
     return state
 
 
@@ -625,8 +666,7 @@ class AdsInsights(Stream):
     options = attr.ib()
     action_breakdowns = attr.ib(default=ALL_ACTION_BREAKDOWNS)
     level = attr.ib(default='ad')
-    action_attribution_windows = attr.ib(
-        default=ALL_ACTION_ATTRIBUTION_WINDOWS)
+    action_attribution_windows = attr.ib(default=ALL_ACTION_ATTRIBUTION_WINDOWS)
     time_increment = attr.ib(default=1)
     limit = attr.ib(default=RESULT_RETURN_LIMIT)
 
@@ -646,7 +686,7 @@ class AdsInsights(Stream):
         'dma',
         'hourly_stats_aggregated_by_advertiser_time_zone',
     ]
-    FACEBOOK_INSIGHTS_RETENTION_PERIOD = 37     # months
+    FACEBOOK_INSIGHTS_RETENTION_PERIOD = 37  # months
 
     # pylint: disable=no-member,unsubscriptable-object,attribute-defined-outside-init
     def __attrs_post_init__(self):
@@ -691,8 +731,12 @@ class AdsInsights(Stream):
                 'fields': list(self.fields().difference(self.invalid_insights_fields)),
                 'time_increment': self.time_increment,
                 'action_attribution_windows': list(self.action_attribution_windows),
-                'time_ranges': [{'since': buffered_start_date.to_date_string(),
-                                 'until': buffered_start_date.to_date_string()}]
+                'time_ranges': [
+                    {
+                        'since': buffered_start_date.to_date_string(),
+                        'until': buffered_start_date.to_date_string(),
+                    }
+                ],
             }
             buffered_start_date = buffered_start_date.add(days=1)
 
@@ -706,15 +750,19 @@ class AdsInsights(Stream):
     # Added retry_pattern to handle AttributeError raised from requests call below
     @retry_pattern(
         backoff.expo,
-        (FacebookRequestError, InsightsJobTimeout, FacebookBadObjectError, TypeError, AttributeError),
+        (
+            FacebookRequestError,
+            InsightsJobTimeout,
+            FacebookBadObjectError,
+            TypeError,
+            AttributeError,
+        ),
         max_tries=5,
         factor=5,
     )
     def run_job(self, params):
         self.logger.info(f'Starting adsinsights job with params {params}')
-        job = self.account.get_insights(  # pylint: disable=no-member
-            params=params,
-            is_async=True)
+        job = self.account.get_insights(params=params, is_async=True)  # pylint: disable=no-member
         status = None
         time_start = time.time()
         sleep_time = 10
@@ -731,18 +779,25 @@ class AdsInsights(Stream):
                 return job
 
             if duration > INSIGHTS_MAX_WAIT_TO_START_SECONDS and percent_complete == 0:
-                pretty_error_message = ('Insights job {} did not start after {} seconds. ' +
-                                        'This is an intermittent error and may resolve itself on subsequent queries to the Facebook API. ' +
-                                        'You should deselect fields from the schema that are not necessary, ' +
-                                        'as that may help improve the reliability of the Facebook API.')
-                raise InsightsJobTimeout(pretty_error_message.format(job_id, INSIGHTS_MAX_WAIT_TO_START_SECONDS))
+                pretty_error_message = (
+                    'Insights job {} did not start after {} seconds. '
+                    + 'This is an intermittent error and may resolve itself on subsequent queries to the Facebook API. '
+                    + 'You should deselect fields from the schema that are not necessary, '
+                    + 'as that may help improve the reliability of the Facebook API.'
+                )
+                raise InsightsJobTimeout(
+                    pretty_error_message.format(job_id, INSIGHTS_MAX_WAIT_TO_START_SECONDS)
+                )
             elif duration > INSIGHTS_MAX_WAIT_TO_FINISH_SECONDS and status != "Job Completed":
-                pretty_error_message = ('Insights job {} did not complete after {} seconds. ' +
-                                        'This is an intermittent error and may resolve itself on subsequent queries to the Facebook API. ' +
-                                        'You should deselect fields from the schema that are not necessary, ' +
-                                        'as that may help improve the reliability of the Facebook API.')
-                raise InsightsJobTimeout(pretty_error_message.format(job_id,
-                                                                     INSIGHTS_MAX_WAIT_TO_FINISH_SECONDS//60))
+                pretty_error_message = (
+                    'Insights job {} did not complete after {} seconds. '
+                    + 'This is an intermittent error and may resolve itself on subsequent queries to the Facebook API. '
+                    + 'You should deselect fields from the schema that are not necessary, '
+                    + 'as that may help improve the reliability of the Facebook API.'
+                )
+                raise InsightsJobTimeout(
+                    pretty_error_message.format(job_id, INSIGHTS_MAX_WAIT_TO_FINISH_SECONDS // 60)
+                )
 
             self.logger.info(f'sleeping for {sleep_time} seconds until job is done')
             time.sleep(sleep_time)
@@ -771,39 +826,49 @@ class AdsInsights(Stream):
                 for time_range in params['time_ranges']:
                     if time_range['until']:
                         min_date_start_for_job = time_range['until']
-            yield {'state': advance_bookmark(self,
-                                             self.bookmark_key,
-                                             min_date_start_for_job,
-                                             logger=self.logger)}  # pylint: disable=no-member
+            yield {
+                'state': advance_bookmark(
+                    self, self.bookmark_key, min_date_start_for_job, logger=self.logger
+                )
+            }  # pylint: disable=no-member
 
 
 INSIGHTS_BREAKDOWNS_OPTIONS = {
     'ads_insights': {"breakdowns": []},
-    'ads_insights_age_and_gender': {"breakdowns": ['age', 'gender'],
-                                    "primary-keys": ['age', 'gender']},
-    'ads_insights_country': {"breakdowns": ['country'],
-                             "primary-keys": ['country']},
-    'ads_insights_platform_and_device': {"breakdowns": ['publisher_platform',
-                                                        'platform_position', 'impression_device'],
-                                         "primary-keys": ['publisher_platform',
-                                                          'platform_position', 'impression_device']},
-    'ads_insights_region': {'breakdowns': ['region'],
-                            'primary-keys': ['region']},
-    'ads_insights_dma': {"breakdowns": ['dma'],
-                         "primary-keys": ['dma']},
-    'ads_insights_hourly_advertiser': {'breakdowns': ['hourly_stats_aggregated_by_advertiser_time_zone'],
-                                       "primary-keys": ['hourly_stats_aggregated_by_advertiser_time_zone']},
+    'ads_insights_age_and_gender': {
+        "breakdowns": ['age', 'gender'],
+        "primary-keys": ['age', 'gender'],
+    },
+    'ads_insights_country': {"breakdowns": ['country'], "primary-keys": ['country']},
+    'ads_insights_platform_and_device': {
+        "breakdowns": ['publisher_platform', 'platform_position', 'impression_device'],
+        "primary-keys": ['publisher_platform', 'platform_position', 'impression_device'],
+    },
+    'ads_insights_region': {'breakdowns': ['region'], 'primary-keys': ['region']},
+    'ads_insights_dma': {"breakdowns": ['dma'], "primary-keys": ['dma']},
+    'ads_insights_hourly_advertiser': {
+        'breakdowns': ['hourly_stats_aggregated_by_advertiser_time_zone'],
+        "primary-keys": ['hourly_stats_aggregated_by_advertiser_time_zone'],
+    },
 }
 
 
-def initialize_stream(account, catalog_entry, state, logger=LOGGER):  # pylint: disable=too-many-return-statements
-
+def initialize_stream(
+    account, catalog_entry, state, logger=LOGGER
+):  # pylint: disable=too-many-return-statements
     name = catalog_entry.stream
     stream_alias = catalog_entry.stream_alias
 
     if name in INSIGHTS_BREAKDOWNS_OPTIONS:
-        return AdsInsights(name, account, stream_alias, catalog_entry, logger=logger, state=state,
-                           options=INSIGHTS_BREAKDOWNS_OPTIONS[name])
+        return AdsInsights(
+            name,
+            account,
+            stream_alias,
+            catalog_entry,
+            logger=logger,
+            state=state,
+            options=INSIGHTS_BREAKDOWNS_OPTIONS[name],
+        )
     elif name == 'campaigns':
         return Campaigns(name, account, stream_alias, catalog_entry, logger=logger, state=state)
     elif name == 'adsets':
@@ -867,8 +932,12 @@ def do_sync(account, catalog, state, logger=LOGGER):
                     if 'record' in message:
                         counter.increment()
                         time_extracted = utils.now()
-                        record = transformer.transform(message['record'], schema, metadata=metadata_map)
-                        singer.write_record(stream.name, record, stream.stream_alias, time_extracted)
+                        record = transformer.transform(
+                            message['record'], schema, metadata=metadata_map
+                        )
+                        singer.write_record(
+                            stream.name, record, stream.stream_alias, time_extracted
+                        )
                     elif 'state' in message:
                         singer.write_state(message['state'])
                     else:
@@ -886,9 +955,8 @@ def load_schema(stream):
     return schema
 
 
-def initialize_streams_for_discovery():     # pylint: disable=invalid-name
-    return [initialize_stream(None, CatalogEntry(stream=name), None)
-            for name in STREAMS]
+def initialize_streams_for_discovery():  # pylint: disable=invalid-name
+    return [initialize_stream(None, CatalogEntry(stream=name), None) for name in STREAMS]
 
 
 def discover_schemas():
@@ -908,7 +976,9 @@ def discover_schemas():
                 schema,
                 key_properties=stream.key_properties,
                 replication_method=stream.replication_method,
-                valid_replication_keys=[bookmark_key] if bookmark_key else None))
+                valid_replication_keys=[bookmark_key] if bookmark_key else None,
+            )
+        )
 
         if bookmark_key == UPDATED_TIME_KEY or bookmark_key == CREATED_TIME_KEY:
             mdata = metadata.write(mdata, ('properties', bookmark_key), 'inclusion', 'automatic')
@@ -917,23 +987,28 @@ def discover_schemas():
         if bookmark_key:
             bookmark_properties.append(bookmark_key)
 
-        result['streams'].append({
-            'bookmark_properties': bookmark_properties,
-            'key_properties': stream.key_properties,
-            'metadata': metadata.to_list(mdata),
-            'replication_method': stream.replication_method,
-            'schema': schema,
-            'stream': stream.name,
-            'tap_stream_id': stream.name,
-        })
+        result['streams'].append(
+            {
+                'bookmark_properties': bookmark_properties,
+                'key_properties': stream.key_properties,
+                'metadata': metadata.to_list(mdata),
+                'replication_method': stream.replication_method,
+                'schema': schema,
+                'stream': stream.name,
+                'tap_stream_id': stream.name,
+            }
+        )
     return result
 
 
 def load_shared_schema_refs():
     shared_schemas_path = get_abs_path('schemas/shared')
 
-    shared_file_names = [f for f in os.listdir(shared_schemas_path)
-                         if os.path.isfile(os.path.join(shared_schemas_path, f))]
+    shared_file_names = [
+        f
+        for f in os.listdir(shared_schemas_path)
+        if os.path.isfile(os.path.join(shared_schemas_path, f))
+    ]
 
     shared_schema_refs = {}
     for shared_file in shared_file_names:
@@ -969,7 +1044,7 @@ def setup_account(config):
         if config_request_timeout and float(config_request_timeout):
             request_timeout = float(config_request_timeout)
         else:
-            request_timeout = REQUEST_TIMEOUT # If value is 0,"0","" or not passed then set default to 300 seconds.
+            request_timeout = REQUEST_TIMEOUT  # If value is 0,"0","" or not passed then set default to 300 seconds.
 
         global API
         API = FacebookAdsApi.init(access_token=access_token, timeout=request_timeout)
@@ -1016,7 +1091,6 @@ def main_impl():
 
 
 def main():
-
     try:
         main_impl()
     except TapFacebookException as e:

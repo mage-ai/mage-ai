@@ -44,9 +44,12 @@ def display_inline_iframe(host='localhost', port=SERVER_PORT, notebook_type=None
 
     if notebook_type == NotebookType.GOOGLE_COLAB:
         from google.colab.output import eval_js
+
         path_to_server = eval_js(f'google.colab.kernel.proxyPort({SERVER_PORT})')
         __print_url()
-        display(Javascript("""
+        display(
+            Javascript(
+                """
             (async ()=>{
                 fm = document.createElement('iframe')
                 fm.src = await google.colab.kernel.proxyPort(%s)
@@ -55,7 +58,10 @@ def display_inline_iframe(host='localhost', port=SERVER_PORT, notebook_type=None
                 fm.frameBorder = 0
                 document.body.append(fm)
             })();
-            """ % (SERVER_PORT, IFRAME_HEIGHT)))
+            """
+                % (SERVER_PORT, IFRAME_HEIGHT)
+            )
+        )
     elif notebook_type == NotebookType.DATABRICKS:
         databricks_host = config.get('databricks_host')
         base_path = server_config.server_base_path

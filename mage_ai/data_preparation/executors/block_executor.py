@@ -12,12 +12,7 @@ import traceback
 
 
 class BlockExecutor:
-    def __init__(
-        self,
-        pipeline,
-        block_uuid,
-        execution_partition=None
-    ):
+    def __init__(self, pipeline, block_uuid, execution_partition=None):
         self.pipeline = pipeline
         self.block_uuid = block_uuid
         self.block = self.pipeline.get_block(self.block_uuid, check_template=True)
@@ -58,8 +53,11 @@ class BlockExecutor:
             self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
             if on_start is not None:
                 on_start(self.block_uuid)
-            pipeline_run = PipelineRun.query.get(kwargs['pipeline_run_id']) \
-                if 'pipeline_run_id' in kwargs else None
+            pipeline_run = (
+                PipelineRun.query.get(kwargs['pipeline_run_id'])
+                if 'pipeline_run_id' in kwargs
+                else None
+            )
             try:
                 result = self._execute(
                     analyze_outputs=analyze_outputs,
@@ -77,9 +75,15 @@ class BlockExecutor:
                     **kwargs,
                 )
             except Exception as e:
-                self.logger.exception('Failed to execute block.', **merge_dict(tags, dict(
-                    error=e,
-                )))
+                self.logger.exception(
+                    'Failed to execute block.',
+                    **merge_dict(
+                        tags,
+                        dict(
+                            error=e,
+                        ),
+                    ),
+                )
                 if on_failure is not None:
                     on_failure(
                         self.block_uuid,
@@ -113,7 +117,7 @@ class BlockExecutor:
                     'completed',
                     block_run_id=kwargs.get('block_run_id'),
                     callback_url=callback_url,
-                    tags=tags
+                    tags=tags,
                 )
             if self.block.callback_block:
                 self.block.callback_block.execute_callback(
@@ -184,8 +188,10 @@ class BlockExecutor:
         global_vars: Dict = None,
         **kwargs,
     ) -> List[str]:
-        cmd = f'/app/run_app.sh '\
-              f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
+        cmd = (
+            f'/app/run_app.sh '
+            f'mage run {self.pipeline.repo_config.repo_path} {self.pipeline.uuid}'
+        )
         options = [
             '--block-uuid',
             self.block_uuid,
@@ -244,11 +250,13 @@ class BlockExecutor:
         # Fall back to making API calls
         response = requests.put(
             callback_url,
-            data=json.dumps({
-                'block_run': {
-                    'status': status,
-                },
-            }),
+            data=json.dumps(
+                {
+                    'block_run': {
+                        'status': status,
+                    },
+                }
+            ),
             headers={
                 'Content-Type': 'application/json',
             },

@@ -3,7 +3,7 @@ from mage_ai.services.airbyte.config import AirbyteConfig
 import logging
 
 
-class AirbyteServer():
+class AirbyteServer:
     def __init__(self, config: AirbyteConfig):
         self.config = config
 

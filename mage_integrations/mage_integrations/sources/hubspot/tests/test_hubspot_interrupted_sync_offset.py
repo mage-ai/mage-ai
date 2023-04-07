@@ -3,8 +3,8 @@ from time import sleep
 import copy
 
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 
 from base import HubspotBaseTest
 from client import TestClient
@@ -12,6 +12,7 @@ from client import TestClient
 
 class TestHubspotInterruptedSyncOffsetContactLists(HubspotBaseTest):
     """Testing interrupted syncs for streams that implement unique bookmarking logic."""
+
     @staticmethod
     def name():
         return "tt_hubspot_interrupt_contact_lists"
@@ -20,19 +21,19 @@ class TestHubspotInterruptedSyncOffsetContactLists(HubspotBaseTest):
         """expected streams minus the streams not under test"""
         untested = {
             # Streams tested elsewhere
-            'companies', # covered in TestHubspotInterruptedSync1
-            'engagements', # covered in TestHubspotInterruptedSync1
+            'companies',  # covered in TestHubspotInterruptedSync1
+            'engagements',  # covered in TestHubspotInterruptedSync1
             # Feature Request | TDL-16095: [tap-hubspot] All incremental
             #                   streams should implement the interruptible sync feature
-            'forms', # TDL-16095
-            'owners', # TDL-16095
-            'workflows', # TDL-16095
+            'forms',  # TDL-16095
+            'owners',  # TDL-16095
+            'workflows',  # TDL-16095
             # Streams that do not apply
-            'deal_pipelines', # interruptible does not apply, child of deals
-            'campaigns', # unable to manually find a partial state with our test data
-            'email_events', # unable to manually find a partial state with our test data
-            'contacts_by_company', # interruptible does not apply, child of 'companies'
-            'subscription_changes', # BUG_TDL-14938
+            'deal_pipelines',  # interruptible does not apply, child of deals
+            'campaigns',  # unable to manually find a partial state with our test data
+            'email_events',  # unable to manually find a partial state with our test data
+            'contacts_by_company',  # interruptible does not apply, child of 'companies'
+            'subscription_changes',  # BUG_TDL-14938
         }
 
         return self.expected_streams() - untested
@@ -45,8 +46,8 @@ class TestHubspotInterruptedSyncOffsetContactLists(HubspotBaseTest):
 
     def get_properties(self):
         return {
-            'start_date' : datetime.strftime(
-                datetime.today()-timedelta(days=3), self.START_DATE_FORMAT
+            'start_date': datetime.strftime(
+                datetime.today() - timedelta(days=3), self.START_DATE_FORMAT
             ),
         }
 
@@ -54,11 +55,9 @@ class TestHubspotInterruptedSyncOffsetContactLists(HubspotBaseTest):
         self.maxDiff = None  # see all output in failure
 
     def test_run(self):
-
         # BUG TDL-16094 [tap-hubspot] `contacts` streams fails to recover from sync interruption
         if self.stream_to_interrupt() == 'contacts':
             self.skipTest("Skipping contacts TEST! See BUG[TDL-16094]")
-
 
         expected_streams = self.streams_to_test()
 
@@ -71,9 +70,7 @@ class TestHubspotInterruptedSyncOffsetContactLists(HubspotBaseTest):
         for catalog_entry in catalog_entries:
             stream_schema = menagerie.get_annotated_schema(conn_id, catalog_entry['stream_id'])
             connections.select_catalog_and_fields_via_metadata(
-                conn_id,
-                catalog_entry,
-                stream_schema
+                conn_id, catalog_entry, stream_schema
             )
 
         # Run sync 1
@@ -100,15 +97,13 @@ class TestHubspotInterruptedSyncOffsetContactLists(HubspotBaseTest):
 
 class TestHubspotInterruptedSyncOffsetContacts(TestHubspotInterruptedSyncOffsetContactLists):
     """Testing interrupted syncs for streams that implement unique bookmarking logic."""
+
     @staticmethod
     def name():
         return "tt_hubspot_interrupt_contacts"
 
     def get_properties(self):
-        return {
-            'start_date' : '2021-10-01T00:00:00Z'
-        }
-
+        return {'start_date': '2021-10-01T00:00:00Z'}
 
     def stream_to_interrupt(self):
         return 'contacts'
@@ -116,20 +111,22 @@ class TestHubspotInterruptedSyncOffsetContacts(TestHubspotInterruptedSyncOffsetC
     def state_to_inject(self):
         return {'offset': {'vidOffset': 3502}}
 
+
 class TestHubspotInterruptedSyncOffsetDeals(TestHubspotInterruptedSyncOffsetContactLists):
     """Testing interrupted syncs for streams that implement unique bookmarking logic."""
+
     @staticmethod
     def name():
         return "tt_hubspot_interrupt_deals"
 
     def get_properties(self):
-        return {
-            'start_date' : '2021-10-10T00:00:00Z'
-        }
+        return {'start_date': '2021-10-10T00:00:00Z'}
 
     def stream_to_interrupt(self):
         return 'deals'
 
     def state_to_inject(self):
-        return  {'property_hs_lastmodifieddate': '2021-10-13T08:32:08.383000Z',
-                 'offset': {'offset': 3442973342}}
+        return {
+            'property_hs_lastmodifieddate': '2021-10-13T08:32:08.383000Z',
+            'offset': {'offset': 3442973342},
+        }

@@ -1,7 +1,4 @@
-from mage_integrations.connections.mysql import (
-    ConnectionMethod,
-    MySQL as MySQLConnection
-)
+from mage_integrations.connections.mysql import ConnectionMethod, MySQL as MySQLConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.sql.base import Source
 from typing import List

@@ -1,11 +1,12 @@
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 import re
 
 from base import HubspotBaseTest
 
 STATIC_DATA_STREAMS = {'owners'}
+
 
 class TestHubspotAutomaticFields(HubspotBaseTest):
     @staticmethod
@@ -60,7 +61,6 @@ class TestHubspotAutomaticFields(HubspotBaseTest):
         # Assert the records for each stream
         for stream in expected_streams:
             with self.subTest(stream=stream):
-
                 # Verify that data is present
                 record_count = sync_record_count.get(stream, 0)
                 self.assertGreater(record_count, 0)
@@ -79,18 +79,20 @@ class TestHubspotAutomaticFields(HubspotBaseTest):
                     expected_keys = expected_keys.union({'engagement'})
                 # Verify that only the automatic fields are sent to the target
                 for actual_keys in record_messages_keys:
-                    self.assertSetEqual(actual_keys, expected_keys,
-                                        msg=f"Expected automatic fields: {expected_keys} and nothing else."
+                    self.assertSetEqual(
+                        actual_keys,
+                        expected_keys,
+                        msg=f"Expected automatic fields: {expected_keys} and nothing else.",
                     )
-
 
                 # BUG_TDL-14938 https://jira.talendforge.org/browse/TDL-14938
                 #               The subscription_changes stream does not have a valid pk to ensure no dupes are sent
                 if stream != 'subscription_changes':
-
                     # make sure there are no duplicate records by using the pks
                     pk = self.expected_primary_keys()[stream]
-                    pks_values = [tuple([message['data'][p] for p in pk]) for message in data['messages']]
+                    pks_values = [
+                        tuple([message['data'][p] for p in pk]) for message in data['messages']
+                    ]
                     self.assertEqual(len(pks_values), len(set(pks_values)))
 
 
@@ -105,5 +107,5 @@ class TestHubspotAutomaticFieldsStaticData(TestHubspotAutomaticFields):
 
     def get_properties(self):
         return {
-            'start_date' : '2021-08-19T00:00:00Z',
+            'start_date': '2021-08-19T00:00:00Z',
         }

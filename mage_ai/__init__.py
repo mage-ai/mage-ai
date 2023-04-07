@@ -25,6 +25,7 @@ def launch(
         infer_notebook_type,
         update_frontend_urls,
     )
+
     iframe_host = iframe_host or host
     iframe_port = iframe_port or port
     if notebook_type is None:
@@ -58,11 +59,13 @@ def launch(
 
 def remote_sync(api_key=None):
     from mage_ai.server.app import sync_pipelines
+
     sync_pipelines(api_key)
 
 
 def kill():
     from mage_ai.server.app import kill as kill_flask
+
     kill_flask()
 
 
@@ -104,6 +107,7 @@ def clean(
         clean_df,
         clean_df_with_pipeline,
     )
+
     if pipeline_uuid is not None:
         df_clean = clean_df_with_pipeline(df, id=pipeline_uuid, verbose=verbose)
     elif pipeline_path is not None:

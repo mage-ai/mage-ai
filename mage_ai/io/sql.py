@@ -89,7 +89,7 @@ class BaseSQL(BaseSQLConnection):
         db_dtypes: List[str],
         dtypes: List[str],
         full_table_name: str,
-        buffer: Union[IO, None] = None
+        buffer: Union[IO, None] = None,
     ) -> None:
         raise Exception('Subclasses must override this method.')
 
@@ -117,13 +117,16 @@ class BaseSQL(BaseSQLConnection):
 
         with self.conn.cursor() as cursor:
             for idx, query in enumerate(queries):
-                variables = query_variables[idx] \
-                                if query_variables and idx < len(query_variables) \
-                                else {}
+                variables = (
+                    query_variables[idx] if query_variables and idx < len(query_variables) else {}
+                )
                 query = self._clean_query(query)
 
-                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
-                        fetch_query_at_indexes[idx]:
+                if (
+                    fetch_query_at_indexes
+                    and idx < len(fetch_query_at_indexes)
+                    and fetch_query_at_indexes[idx]
+                ):
                     result = self.fetch_query(
                         cursor,
                         query,
@@ -177,8 +180,7 @@ class BaseSQL(BaseSQLConnection):
         query_string = self._clean_query(query_string)
 
         with self.printer.print_msg(print_message):
-            return read_sql(
-                self._enforce_limit(query_string, limit), self.conn, **kwargs)
+            return read_sql(self._enforce_limit(query_string, limit), self.conn, **kwargs)
 
     def export(
         self,
@@ -232,10 +234,10 @@ class BaseSQL(BaseSQLConnection):
             df = clean_df_for_export(df, self.clean, dtypes)
 
             # Clean column names
-            col_mapping = {col: self._clean_column_name(
-                                        col,
-                                        allow_reserved_words=allow_reserved_words)
-                           for col in df.columns}
+            col_mapping = {
+                col: self._clean_column_name(col, allow_reserved_words=allow_reserved_words)
+                for col in df.columns
+            }
             df = df.rename(columns=col_mapping)
             dtypes = infer_dtypes(df)
 
@@ -251,9 +253,7 @@ class BaseSQL(BaseSQLConnection):
 
                 if table_exists:
                     if ExportWritePolicy.FAIL == if_exists:
-                        raise ValueError(
-                            f'Table \'{full_table_name}\' already exists in database.'
-                        )
+                        raise ValueError(f'Table \'{full_table_name}\' already exists in database.')
                     elif ExportWritePolicy.REPLACE == if_exists:
                         if drop_table_on_replace:
                             cmd = f'DROP TABLE {full_table_name}'
@@ -301,9 +301,7 @@ class BaseSQL(BaseSQLConnection):
             self.conn.commit()
 
         if verbose:
-            with self.printer.print_msg(
-                f'Exporting data to \'{full_table_name}\''
-            ):
+            with self.printer.print_msg(f'Exporting data to \'{full_table_name}\''):
                 __process()
         else:
             __process()

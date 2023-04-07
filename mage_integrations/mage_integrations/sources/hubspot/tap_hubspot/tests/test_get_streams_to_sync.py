@@ -3,7 +3,6 @@ from tap_hubspot import get_streams_to_sync, parse_source_from_url, Stream
 
 
 class TestGetStreamsToSync(unittest.TestCase):
-
     def setUp(self):
         self.streams = [
             Stream('a', 'a', [], None, None),

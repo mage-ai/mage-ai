@@ -33,19 +33,27 @@ def create_dag(
     for uuid, b in pipeline.blocks_by_uuid.items():
         if b.type == 'scratchpad':
             continue
-        tasks.append(dict(
-            task_id=uuid,
-            upstream_task_ids=b.upstream_block_uuids,
-            python_callable=build_execute_block(b),
-        ))
+        tasks.append(
+            dict(
+                task_id=uuid,
+                upstream_task_ids=b.upstream_block_uuids,
+                python_callable=build_execute_block(b),
+            )
+        )
 
     def initialize_tasks(dag, tasks):
         operators = {}
 
         for task_dict in tasks:
-            task_operator = python_operator_class(dag=dag, **ignore_keys(task_dict, [
-                'upstream_task_ids',
-            ]))
+            task_operator = python_operator_class(
+                dag=dag,
+                **ignore_keys(
+                    task_dict,
+                    [
+                        'upstream_task_ids',
+                    ],
+                ),
+            )
             operators[task_operator.task_id] = task_operator
 
         for task_dict in tasks:
@@ -66,7 +74,7 @@ def create_dag(
                     catchup=False,
                 ),
                 dag_settings,
-            )
+            ),
         )
         globals_dict[dag_id] = dag
 

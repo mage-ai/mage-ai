@@ -18,10 +18,13 @@ class WidgetResource(GenericResource):
             include_outputs = include_outputs[0]
 
         collection = await asyncio.gather(
-            *[widget.to_dict_async(
-                include_content=True,
-                include_outputs=include_outputs,
-              ) for widget in pipeline.widgets_by_uuid.values()]
+            *[
+                widget.to_dict_async(
+                    include_content=True,
+                    include_outputs=include_outputs,
+                )
+                for widget in pipeline.widgets_by_uuid.values()
+            ]
         )
 
         return self.build_result_set(

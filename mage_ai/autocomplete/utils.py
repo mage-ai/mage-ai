@@ -27,7 +27,7 @@ def add_file(acc, path):
 
     def __should_include(file_name):
         tup = os.path.splitext(file_name)
-        if (len(tup) >= 2):
+        if len(tup) >= 2:
             file_extension = tup[1]
             return file_extension in FILE_EXTENSIONS_TO_INCLUDE
 
@@ -89,7 +89,7 @@ async def build_file_content_mapping(paths, files):
         module_name = '.'.join(parts).replace('.py', '')
 
         if '__init__.py' == parts[-1]:
-            path_sub = '/'.join(parts[:len(parts) - 1])
+            path_sub = '/'.join(parts[: len(parts) - 1])
             files += [fn for fn in reduce(add_file, [path_sub], []) if fn != file_name]
             module_name = module_name.replace('.__init__', '')
 
@@ -101,10 +101,12 @@ async def build_file_content_mapping(paths, files):
                     importlib.import_module(module_name),
                     class_name,
                 )
-                methods_for_class[class_name] = list(filter(
-                    lambda x: not re.match('^_', x),
-                    dir(klass),
-                ))
+                methods_for_class[class_name] = list(
+                    filter(
+                        lambda x: not re.match('^_', x),
+                        dir(klass),
+                    )
+                )
             except ImportError as err:
                 print(err)
 

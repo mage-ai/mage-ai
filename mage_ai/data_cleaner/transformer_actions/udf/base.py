@@ -1,7 +1,7 @@
 import importlib
 
 
-class BaseUDF():
+class BaseUDF:
     def __init__(self, df, arguments=[], code=None, options={}, kwargs={}):
         self.df = df
         self.arguments = arguments

@@ -58,9 +58,7 @@ class LDAPConnection(LDAPAuthenticator):
         try:
             if not self.conn:
                 self.bind()
-            self.conn.search(
-                self.base_dn, self.authentication_filter.format(username=username)
-            )
+            self.conn.search(self.base_dn, self.authentication_filter.format(username=username))
             if not self.conn.entries:
                 return False, ""
             user_dn = self.conn.entries[0].entry_dn

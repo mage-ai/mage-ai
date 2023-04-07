@@ -32,15 +32,19 @@ class PipedriveStream(object):
         return self.schema_cache
 
     def load_schema(self):
-        schema_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                   self.schema_path.format(self.schema))
+        schema_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), self.schema_path.format(self.schema)
+        )
         schema = singer.utils.load_json(schema_path)
         return schema
 
     def write_schema(self):
-        write_schema(self.schema, self.get_schema(),
-                     key_properties=self.key_properties,
-                     replication_method=self.replication_method)
+        write_schema(
+            self.schema,
+            self.get_schema(),
+            key_properties=self.key_properties,
+            replication_method=self.replication_method,
+        )
 
     def get_name(self):
         return self.endpoint
@@ -139,11 +143,10 @@ class PipedriveStream(object):
 
 class PipedriveIterStream(PipedriveStream):
     id_list = True
-    
-    def get_deal_ids(self, tap):
 
+    def get_deal_ids(self, tap):
         # note when the stream starts syncing
-        self.stream_start = pendulum.now('UTC') # explicitly set timezone to UTC
+        self.stream_start = pendulum.now('UTC')  # explicitly set timezone to UTC
 
         # create checkpoint at inital_state to only find stage changes more recent than initial_state (bookmark)
         checkpoint = self.initial_state
@@ -162,34 +165,46 @@ class PipedriveIterStream(PipedriveStream):
             tap.rate_throttling(response)
             self.paginate(response)
 
-            self.more_ids_to_get = self.more_items_in_collection  # note if there are more pages of ids to get
+            self.more_ids_to_get = (
+                self.more_items_in_collection
+            )  # note if there are more pages of ids to get
             self.next_start = self.start  # note pagination for next loop
 
             if not response.json().get('data'):
                 continue
 
             # find all deals ids for deals added or with stage changes after start and before stop
-            this_page_ids = self.find_deal_ids(response.json()['data'], start=checkpoint, stop=self.stream_start)
+            this_page_ids = self.find_deal_ids(
+                response.json()['data'], start=checkpoint, stop=self.stream_start
+            )
 
-            self.these_deals = this_page_ids  # need the list of deals to check for last id in the tap
+            self.these_deals = (
+                this_page_ids  # need the list of deals to check for last id in the tap
+            )
             for deal_id in this_page_ids:
                 yield deal_id
 
-
     def find_deal_ids(self, data, start, stop):
-
         # find all deals that were *added* after the start time and before the stop time
-        added_ids = [data[i]['id']
-                     for i in range(len(data))
-                     if (data[i]['add_time'] is not None
-                         and start <= pendulum.parse(data[i]['add_time']) < stop)]
+        added_ids = [
+            data[i]['id']
+            for i in range(len(data))
+            if (
+                data[i]['add_time'] is not None
+                and start <= pendulum.parse(data[i]['add_time']) < stop
+            )
+        ]
 
         # find all deals that a) had a stage change at any time (i.e., the stage_change_time is not None),
         #                     b) had a stage change after the start time and before the stop time, and
         #                     c) are not in added_ids
-        changed_ids = [data[i]['id']
-                       for i in range(len(data))
-                       if (data[i]['id'] not in added_ids)
-                       and (data[i]['stage_change_time'] is not None
-                            and start <= pendulum.parse(data[i]['stage_change_time']) < stop)]
+        changed_ids = [
+            data[i]['id']
+            for i in range(len(data))
+            if (data[i]['id'] not in added_ids)
+            and (
+                data[i]['stage_change_time'] is not None
+                and start <= pendulum.parse(data[i]['stage_change_time']) < stop
+            )
+        ]
         return added_ids + changed_ids

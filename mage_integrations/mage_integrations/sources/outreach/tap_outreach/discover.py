@@ -16,8 +16,9 @@ def get_schemas():
     schemas_metadata = {}
     schemas_path = get_abs_path('schemas')
 
-    file_names = [f for f in os.listdir(schemas_path)
-                  if os.path.isfile(os.path.join(schemas_path, f))]
+    file_names = [
+        f for f in os.listdir(schemas_path) if os.path.isfile(os.path.join(schemas_path, f))
+    ]
 
     for file_name in file_names:
         stream_name = file_name[:-5]
@@ -32,7 +33,7 @@ def get_schemas():
         meta = metadata.get_standard_metadata(
             schema=schema,
             key_properties=['id'],
-            replication_method='FULL_TABLE' if replication == 'full' else replication.upper()
+            replication_method='FULL_TABLE' if replication == 'full' else replication.upper(),
         )
 
         meta = metadata.to_map(meta)

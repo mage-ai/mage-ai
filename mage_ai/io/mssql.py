@@ -27,7 +27,7 @@ class MSSQL(BaseSQL):
             password=password,
             schema=schema,
             port=port,
-            **kwargs
+            **kwargs,
         )
 
     def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
@@ -65,11 +65,7 @@ class MSSQL(BaseSQL):
             )
             self._ctx = pyodbc.connect(connection_string)
 
-    def build_create_table_as_command(
-        self,
-        table_name: str,
-        query_string: str
-    ) -> str:
+    def build_create_table_as_command(self, table_name: str, query_string: str) -> str:
         return 'SELECT * INTO {}\nFROM ({}) AS prev'.format(
             table_name,
             query_string,
@@ -77,10 +73,14 @@ class MSSQL(BaseSQL):
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
-            cur.execute('\n'.join([
-                'SELECT TOP 1 * FROM information_schema.tables ',
-                f'WHERE table_name = \'{table_name}\'',
-            ]))
+            cur.execute(
+                '\n'.join(
+                    [
+                        'SELECT TOP 1 * FROM information_schema.tables ',
+                        f'WHERE table_name = \'{table_name}\'',
+                    ]
+                )
+            )
             return len(cur.fetchall()) >= 1
 
     def upload_dataframe(
@@ -107,7 +107,7 @@ class MSSQL(BaseSQL):
                 PandasTypes.COMPLEX,
             ):
                 df_[col] = df_[col].astype('string')
-        for i, row in df_.iterrows():
+        for _i, row in df_.iterrows():
             values.append(tuple(row))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'

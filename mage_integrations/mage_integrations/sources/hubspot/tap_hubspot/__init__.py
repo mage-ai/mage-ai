@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import json
+
 # pylint: disable=import-error
 import attr
 import backoff
@@ -21,7 +22,9 @@ from singer import (
     Transformer,
     _transform_datetime,
 )
-from mage_integrations.sources.hubspot.tap_hubspot.constants import BOOKMARK_PROPERTIES_BY_STREAM_NAME
+from mage_integrations.sources.hubspot.tap_hubspot.constants import (
+    BOOKMARK_PROPERTIES_BY_STREAM_NAME,
+)
 from mage_integrations.sources.messages import write_schema
 from mage_integrations.utils.logger import Logger
 
@@ -70,7 +73,6 @@ CONFIG = {
     "token_expires": None,
     "email_chunk_size": DEFAULT_CHUNK_SIZE,
     "subscription_chunk_size": DEFAULT_CHUNK_SIZE,
-
     # in config.json
     "redirect_uri": None,
     "client_id": None,
@@ -83,38 +85,31 @@ CONFIG = {
 STATE = {}
 
 ENDPOINTS = {
-    "contacts_properties":  "/properties/v1/contacts/properties",
-    "contacts_all":         "/contacts/v1/lists/all/contacts/all",
-    "contacts_recent":      "/contacts/v1/lists/recently_updated/contacts/recent",
-    "contacts_detail":      "/contacts/v1/contact/vids/batch/",
-
+    "contacts_properties": "/properties/v1/contacts/properties",
+    "contacts_all": "/contacts/v1/lists/all/contacts/all",
+    "contacts_recent": "/contacts/v1/lists/recently_updated/contacts/recent",
+    "contacts_detail": "/contacts/v1/contact/vids/batch/",
     "companies_properties": "/companies/v2/properties",
-    "companies_all":        "/companies/v2/companies/paged",
-    "companies_recent":     "/companies/v2/companies/recent/modified",
-    "companies_detail":     "/companies/v2/companies/{company_id}",
-    "contacts_by_company":  "/companies/v2/companies/{company_id}/vids",
-
-    "deals_properties":     "/properties/v1/deals/properties",
-    "deals_all":            "/deals/v1/deal/paged",
-    "deals_recent":         "/deals/v1/deal/recent/modified",
-    "deals_detail":         "/deals/v1/deal/{deal_id}",
-
-    "deals_v3_batch_read":  "/crm/v3/objects/deals/batch/read",
-    "deals_v3_properties":  "/crm/v3/properties/deals",
-
-    "deal_pipelines":       "/deals/v1/pipelines",
-
-    "campaigns_all":        "/email/public/v1/campaigns/by-id",
-    "campaigns_detail":     "/email/public/v1/campaigns/{campaign_id}",
-
-    "engagements_all":        "/engagements/v1/engagements/paged",
-
+    "companies_all": "/companies/v2/companies/paged",
+    "companies_recent": "/companies/v2/companies/recent/modified",
+    "companies_detail": "/companies/v2/companies/{company_id}",
+    "contacts_by_company": "/companies/v2/companies/{company_id}/vids",
+    "deals_properties": "/properties/v1/deals/properties",
+    "deals_all": "/deals/v1/deal/paged",
+    "deals_recent": "/deals/v1/deal/recent/modified",
+    "deals_detail": "/deals/v1/deal/{deal_id}",
+    "deals_v3_batch_read": "/crm/v3/objects/deals/batch/read",
+    "deals_v3_properties": "/crm/v3/properties/deals",
+    "deal_pipelines": "/deals/v1/pipelines",
+    "campaigns_all": "/email/public/v1/campaigns/by-id",
+    "campaigns_detail": "/email/public/v1/campaigns/{campaign_id}",
+    "engagements_all": "/engagements/v1/engagements/paged",
     "subscription_changes": "/email/public/v1/subscriptions/timeline",
-    "email_events":         "/email/public/v1/events",
-    "contact_lists":        "/contacts/v1/lists",
-    "forms":                "/forms/v2/forms",
-    "workflows":            "/automation/v3/workflows",
-    "owners":               "/owners/v2/owners",
+    "email_events": "/email/public/v1/events",
+    "contact_lists": "/contacts/v1/lists",
+    "forms": "/forms/v2/forms",
+    "workflows": "/automation/v3/workflows",
+    "owners": "/owners/v2/owners",
 }
 
 
@@ -154,7 +149,7 @@ def write_current_sync_start(state, tap_stream_id, start):
 
 
 def clean_state(state, logger=LOGGER):
-    """ Clear deprecated keys out of state. """
+    """Clear deprecated keys out of state."""
     for stream, bookmark_map in state.get("bookmarks", {}).items():
         if "last_sync_duration" in bookmark_map:
             logger.info(f'{stream} - Removing last_sync_duration from state.')
@@ -173,8 +168,7 @@ def get_field_type_schema(field_type):
         return {"type": ["null", "boolean"]}
 
     elif field_type == "datetime":
-        return {"type": ["null", "string"],
-                "format": "date-time"}
+        return {"type": ["null", "string"], "format": "date-time"}
 
     elif field_type == "number":
         # A value like 'N/A' can be returned for this type,
@@ -194,21 +188,20 @@ def get_field_schema(field_type, extras=False):
                 "timestamp": get_field_type_schema("datetime"),
                 "source": get_field_type_schema("string"),
                 "sourceId": get_field_type_schema("string"),
-            }
+            },
         }
     else:
         return {
             "type": "object",
             "properties": {
                 "value": get_field_type_schema(field_type),
-            }
+            },
         }
 
 
 def parse_custom_schema(entity_name, data):
     return {
-        field['name']: get_field_schema(field['type'], entity_name != 'contacts')
-        for field in data
+        field['name']: get_field_schema(field['type'], entity_name != 'contacts') for field in data
     }
 
 
@@ -227,9 +220,13 @@ def get_abs_path(path):
 
 def load_associated_company_schema():
     associated_company_schema = load_schema("companies")
-    #pylint: disable=line-too-long
-    associated_company_schema['properties']['company-id'] = associated_company_schema['properties'].pop('companyId')
-    associated_company_schema['properties']['portal-id'] = associated_company_schema['properties'].pop('portalId')
+    # pylint: disable=line-too-long
+    associated_company_schema['properties']['company-id'] = associated_company_schema[
+        'properties'
+    ].pop('companyId')
+    associated_company_schema['properties']['portal-id'] = associated_company_schema[
+        'properties'
+    ].pop('portalId')
     return associated_company_schema
 
 
@@ -263,7 +260,7 @@ def load_schema(entity_name):
     return schema
 
 
-#pylint: disable=invalid-name
+# pylint: disable=invalid-name
 def acquire_access_token_from_refresh_token():
     payload = {
         "grant_type": "refresh_token",
@@ -281,16 +278,18 @@ def acquire_access_token_from_refresh_token():
     auth = resp.json()
     CONFIG['access_token'] = auth['access_token']
     CONFIG['refresh_token'] = auth['refresh_token']
-    CONFIG['token_expires'] = (
-        datetime.datetime.utcnow() +
-        datetime.timedelta(seconds=auth['expires_in'] - 600))
+    CONFIG['token_expires'] = datetime.datetime.utcnow() + datetime.timedelta(
+        seconds=auth['expires_in'] - 600
+    )
     LOGGER.info("Token refreshed. Expires at %s", CONFIG['token_expires'])
 
 
 def giveup(exc):
-    return exc.response is not None \
-        and 400 <= exc.response.status_code < 500 \
+    return (
+        exc.response is not None
+        and 400 <= exc.response.status_code < 500
         and exc.response.status_code != 429
+    )
 
 
 def on_giveup(details):
@@ -300,8 +299,11 @@ def on_giveup(details):
         url = details['args']
         params = {}
 
-    raise Exception("Giving up on request after {} tries with url {} and params {}" \
-                    .format(details['tries'], url, params))
+    raise Exception(
+        "Giving up on request after {} tries with url {} and params {}".format(
+            details['tries'], url, params
+        )
+    )
 
 
 URL_SOURCE_RE = re.compile(BASE_URL + r'/(\w+)/')
@@ -324,7 +326,9 @@ def get_params_and_headers(params):
     params = params or {}
     hapikey = CONFIG['hapikey']
     if hapikey is None:
-        if 'access_token' not in CONFIG and (CONFIG['token_expires'] is None or CONFIG['token_expires'] < datetime.datetime.utcnow()):
+        if 'access_token' not in CONFIG and (
+            CONFIG['token_expires'] is None or CONFIG['token_expires'] < datetime.datetime.utcnow()
+        ):
             acquire_access_token_from_refresh_token()
         headers = {'Authorization': 'Bearer {}'.format(CONFIG['access_token'])}
     else:
@@ -339,16 +343,16 @@ def get_params_and_headers(params):
 
 # backoff for Timeout error is already included in "requests.exceptions.RequestException"
 # as it is a parent class of "Timeout" error
-@backoff.on_exception(backoff.constant,
-                      (requests.exceptions.RequestException,
-                       requests.exceptions.HTTPError),
-                      max_tries=5,
-                      jitter=None,
-                      giveup=giveup,
-                      on_giveup=on_giveup,
-                      interval=10)
+@backoff.on_exception(
+    backoff.constant,
+    (requests.exceptions.RequestException, requests.exceptions.HTTPError),
+    max_tries=5,
+    jitter=None,
+    giveup=giveup,
+    on_giveup=on_giveup,
+    interval=10,
+)
 def request(url, params=None, logger=LOGGER):
-
     params, headers = get_params_and_headers(params)
 
     req = requests.Request('GET', url, params=params, headers=headers).prepare()
@@ -386,26 +390,22 @@ def lift_properties_and_versions(record):
 
 # backoff for Timeout error is already included in "requests.exceptions.RequestException"
 # as it is a parent class of "Timeout" error
-@backoff.on_exception(backoff.constant,
-                      (requests.exceptions.RequestException,
-                       requests.exceptions.HTTPError),
-                      max_tries=5,
-                      jitter=None,
-                      giveup=giveup,
-                      on_giveup=on_giveup,
-                      interval=10)
+@backoff.on_exception(
+    backoff.constant,
+    (requests.exceptions.RequestException, requests.exceptions.HTTPError),
+    max_tries=5,
+    jitter=None,
+    giveup=giveup,
+    on_giveup=on_giveup,
+    interval=10,
+)
 def post_search_endpoint(url, data, params=None):
-
     params, headers = get_params_and_headers(params)
     headers['content-type'] = "application/json"
 
     with metrics.http_request_timer(url) as _:
         resp = requests.post(
-            url=url,
-            json=data,
-            params=params,
-            timeout=get_request_timeout(),
-            headers=headers
+            url=url, json=data, params=params, timeout=get_request_timeout(), headers=headers
         )
 
         resp.raise_for_status()
@@ -419,8 +419,7 @@ def merge_responses(v1_data, v3_data):
         for v3_record in v3_data:
             v3_id = v3_record.get('id')
             if str(v1_id) == v3_id:
-                v1_record['properties'] = {**v1_record['properties'],
-                                           **v3_record['properties']}
+                v1_record['properties'] = {**v1_record['properties'], **v3_record['properties']}
 
 
 def process_v3_deals_records(v3_data):
@@ -433,10 +432,12 @@ def process_v3_deals_records(v3_data):
     """
     transformed_v3_data = []
     for record in v3_data:
-        new_properties = {field_name : {'value': field_value}
-                          for field_name, field_value in record['properties'].items()
-                          if any(prefix in field_name for prefix in V3_PREFIXES)}
-        transformed_v3_data.append({**record, 'properties' : new_properties})
+        new_properties = {
+            field_name: {'value': field_value}
+            for field_name, field_value in record['properties'].items()
+            if any(prefix in field_name for prefix in V3_PREFIXES)
+        }
+        transformed_v3_data.append({**record, 'properties': new_properties})
     return transformed_v3_data
 
 
@@ -444,8 +445,10 @@ def get_v3_deals(v3_fields, v1_data):
     v1_ids = [{'id': str(record['dealId'])} for record in v1_data]
 
     # Sending the first v3_field is enough to get them all
-    v3_body = {'inputs': v1_ids,
-               'properties': [v3_fields[0]],}
+    v3_body = {
+        'inputs': v1_ids,
+        'properties': [v3_fields[0]],
+    }
     v3_url = get_url('deals_v3_batch_read')
     v3_resp = post_search_endpoint(v3_url, v3_body)
     return v3_resp.json()['results']
@@ -474,7 +477,9 @@ def gen_request(
             data = request(url, params, logger=logger).json()
 
             if data.get(path) is None:
-                raise RuntimeError("Unexpected API response: {} not in {}".format(path, data.keys()))
+                raise RuntimeError(
+                    "Unexpected API response: {} not in {}".format(path, data.keys())
+                )
 
             if v3_fields:
                 v3_data = get_v3_deals(v3_fields, data[path])
@@ -527,7 +532,9 @@ def _sync_contact_vids(
         # Explicitly add the bookmark field "versionTimestamp" and its value in the record.
         record[bookmark_key] = bookmark_values.get(record.get("vid"))
         record = bumble_bee.transform(lift_properties_and_versions(record), schema, mdata)
-        singer.write_record("contacts", record, catalog.get('stream_alias'), time_extracted=time_extracted)
+        singer.write_record(
+            "contacts", record, catalog.get('stream_alias'), time_extracted=time_extracted
+        )
 
 
 default_contact_params = {
@@ -580,9 +587,10 @@ def sync_contacts(STATE, ctx, logger=LOGGER):
             modified_time = None
             if bookmark_key in row:
                 modified_time = utils.strptime_with_tz(
-                    _transform_datetime( # pylint: disable=protected-access
-                        row[bookmark_key],
-                        UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING))
+                    _transform_datetime(  # pylint: disable=protected-access
+                        row[bookmark_key], UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING
+                    )
+                )
 
             if not modified_time or modified_time >= start:
                 vids.append(row['vid'])
@@ -630,7 +638,7 @@ def use_recent_companies_endpoint(response):
     return response["total"] < 10000
 
 
-default_contacts_by_company_params = {'count' : 100}
+default_contacts_by_company_params = {'count': 100}
 
 
 # NB> to do: support stream aliasing and field selection
@@ -645,21 +653,20 @@ def _sync_contacts_by_company(STATE, ctx, company_id):
             data = request(url, default_contacts_by_company_params).json()
 
             if data.get(path) is None:
-                raise RuntimeError("Unexpected API response: {} not in {}".format(path, data.keys()))
+                raise RuntimeError(
+                    "Unexpected API response: {} not in {}".format(path, data.keys())
+                )
 
             for row in data[path]:
                 counter.increment()
-                record = {'company-id': company_id,
-                          'contact-id': row}
+                record = {'company-id': company_id, 'contact-id': row}
                 record = bumble_bee.transform(lift_properties_and_versions(record), schema, mdata)
                 singer.write_record("contacts_by_company", record, time_extracted=utils.now())
 
     return STATE
 
 
-default_company_params = {
-    'limit': 250, 'properties': ["createdate", "hs_lastmodifieddate"]
-}
+default_company_params = {'limit': 250, 'properties': ["createdate", "hs_lastmodifieddate"]}
 
 
 def sync_companies(STATE, ctx, logger=LOGGER):
@@ -669,7 +676,9 @@ def sync_companies(STATE, ctx, logger=LOGGER):
     bookmark_key = 'property_hs_lastmodifieddate'
     bookmark_field_in_record = 'hs_lastmodifieddate'
 
-    start = utils.strptime_to_utc(get_start(STATE, "companies", bookmark_key, older_bookmark_key=bookmark_field_in_record))
+    start = utils.strptime_to_utc(
+        get_start(STATE, "companies", bookmark_key, older_bookmark_key=bookmark_field_in_record)
+    )
     logger.info(f'sync_companies from {start}')
 
     schema = catalog['schema']
@@ -724,11 +733,15 @@ def sync_companies(STATE, ctx, logger=LOGGER):
             if bookmark_field_in_record in row_properties:
                 # Hubspot returns timestamps in millis
                 timestamp_millis = row_properties[bookmark_field_in_record]['timestamp'] / 1000.0
-                modified_time = datetime.datetime.fromtimestamp(timestamp_millis, datetime.timezone.utc)
+                modified_time = datetime.datetime.fromtimestamp(
+                    timestamp_millis, datetime.timezone.utc
+                )
             elif 'createdate' in row_properties:
                 # Hubspot returns timestamps in millis
                 timestamp_millis = row_properties['createdate']['timestamp'] / 1000.0
-                modified_time = datetime.datetime.fromtimestamp(timestamp_millis, datetime.timezone.utc)
+                modified_time = datetime.datetime.fromtimestamp(
+                    timestamp_millis, datetime.timezone.utc
+                )
 
             if modified_time and modified_time >= max_bk_value:
                 max_bk_value = modified_time
@@ -736,7 +749,9 @@ def sync_companies(STATE, ctx, logger=LOGGER):
             if not modified_time or modified_time >= start:
                 record = request(get_url("companies_detail", company_id=row['companyId'])).json()
                 record = bumble_bee.transform(lift_properties_and_versions(record), schema, mdata)
-                singer.write_record("companies", record, catalog.get('stream_alias'), time_extracted=utils.now())
+                singer.write_record(
+                    "companies", record, catalog.get('stream_alias'), time_extracted=utils.now()
+                )
                 if CONTACTS_BY_COMPANY in ctx.selected_stream_ids:
                     STATE = _sync_contacts_by_company(STATE, ctx, record['companyId'])
 
@@ -752,7 +767,9 @@ def has_selected_custom_field(mdata):
     top_level_custom_props = [x for x in mdata if len(x) == 2 and 'property_' in x[1]]
     for prop in top_level_custom_props:
         # Return 'True' if the custom field is automatic.
-        if (mdata.get(prop, {}).get('selected') is True) or (mdata.get(prop, {}).get('inclusion') == "automatic"):
+        if (mdata.get(prop, {}).get('selected') is True) or (
+            mdata.get(prop, {}).get('inclusion') == "automatic"
+        ):
             return True
     return False
 
@@ -777,7 +794,9 @@ def sync_deals(STATE, ctx, logger=LOGGER):
     # So, here `older_bookmark_key` is the previous bookmark key that may be available in the state of
     # the existing connection.
 
-    start = utils.strptime_with_tz(get_start(STATE, "deals", bookmark_key, older_bookmark_key=last_modified_date))
+    start = utils.strptime_with_tz(
+        get_start(STATE, "deals", bookmark_key, older_bookmark_key=last_modified_date)
+    )
     max_bk_value = start
     logger.info(f'sync_deals from {start}')
     params = {
@@ -805,7 +824,7 @@ def sync_deals(STATE, ctx, logger=LOGGER):
     for key in mdata.keys():
         if 'associations' in key:
             assoc_mdata = mdata.get(key)
-            if (assoc_mdata.get('selected') and assoc_mdata.get('selected') is True):
+            if assoc_mdata.get('selected') and assoc_mdata.get('selected') is True:
                 params['includeAssociations'] = True
 
     v3_fields = None
@@ -820,11 +839,13 @@ def sync_deals(STATE, ctx, logger=LOGGER):
         params['allPropertiesFetchMode'] = 'latest_version'
 
         # Grab selected `hs_date_entered/exited` fields to call the v3 endpoint with
-        v3_fields = [breadcrumb[1].replace('property_', '')
-                     for breadcrumb, mdata_map in mdata.items()
-                     if breadcrumb
-                     and (mdata_map.get('selected') is True or has_selected_properties)
-                     and any(prefix in breadcrumb[1] for prefix in V3_PREFIXES)]
+        v3_fields = [
+            breadcrumb[1].replace('property_', '')
+            for breadcrumb, mdata_map in mdata.items()
+            if breadcrumb
+            and (mdata_map.get('selected') is True or has_selected_properties)
+            and any(prefix in breadcrumb[1] for prefix in V3_PREFIXES)
+        ]
 
     url = get_url('deals_all')
     with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
@@ -845,23 +866,30 @@ def sync_deals(STATE, ctx, logger=LOGGER):
             if last_modified_date in row_properties:
                 # Hubspot returns timestamps in millis
                 timestamp_millis = row_properties[last_modified_date]['timestamp'] / 1000.0
-                modified_time = datetime.datetime.fromtimestamp(timestamp_millis, datetime.timezone.utc)
+                modified_time = datetime.datetime.fromtimestamp(
+                    timestamp_millis, datetime.timezone.utc
+                )
             elif 'createdate' in row_properties:
                 # Hubspot returns timestamps in millis
                 timestamp_millis = row_properties['createdate']['timestamp'] / 1000.0
-                modified_time = datetime.datetime.fromtimestamp(timestamp_millis, datetime.timezone.utc)
+                modified_time = datetime.datetime.fromtimestamp(
+                    timestamp_millis, datetime.timezone.utc
+                )
             if modified_time and modified_time >= max_bk_value:
                 max_bk_value = modified_time
 
             if not modified_time or modified_time >= start:
                 record = bumble_bee.transform(lift_properties_and_versions(row), schema, mdata)
-                singer.write_record("deals", record, catalog.get('stream_alias'), time_extracted=utils.now())
+                singer.write_record(
+                    "deals", record, catalog.get('stream_alias'), time_extracted=utils.now()
+                )
 
     STATE = singer.write_bookmark(STATE, 'deals', bookmark_key, utils.strftime(max_bk_value))
     singer.write_state(STATE)
     return STATE
 
-#NB> no suitable bookmark is available: https://developers.hubspot.com/docs/methods/email/get_campaigns_by_id
+
+# NB> no suitable bookmark is available: https://developers.hubspot.com/docs/methods/email/get_campaigns_by_id
 def sync_campaigns(STATE, ctx, logger=LOGGER):
     catalog = ctx.get_catalog_from_id(singer.get_currently_syncing(STATE))
     mdata = metadata.to_map(catalog.get('metadata'))
@@ -899,7 +927,9 @@ def sync_campaigns(STATE, ctx, logger=LOGGER):
         ):
             record = request(get_url("campaigns_detail", campaign_id=row['id'])).json()
             record = bumble_bee.transform(lift_properties_and_versions(record), schema, mdata)
-            singer.write_record("campaigns", record, catalog.get('stream_alias'), time_extracted=utils.now())
+            singer.write_record(
+                "campaigns", record, catalog.get('stream_alias'), time_extracted=utils.now()
+            )
 
     return STATE
 
@@ -956,15 +986,21 @@ def sync_entity_chunked(STATE, catalog, entity_name, key_properties, path, logge
                     time_extracted = utils.now()
 
                     if data.get(path) is None:
-                        raise RuntimeError("Unexpected API response: {} not in {}".format(path, data.keys()))
+                        raise RuntimeError(
+                            "Unexpected API response: {} not in {}".format(path, data.keys())
+                        )
 
                     for row in data[path]:
                         counter.increment()
-                        record = bumble_bee.transform(lift_properties_and_versions(row), schema, mdata)
-                        singer.write_record(entity_name,
-                                            record,
-                                            catalog.get('stream_alias'),
-                                            time_extracted=time_extracted)
+                        record = bumble_bee.transform(
+                            lift_properties_and_versions(row), schema, mdata
+                        )
+                        singer.write_record(
+                            entity_name,
+                            record,
+                            catalog.get('stream_alias'),
+                            time_extracted=time_extracted,
+                        )
                     if data.get('hasMore'):
                         STATE = singer.set_offset(STATE, entity_name, 'offset', data['offset'])
                         singer.write_state(STATE)
@@ -976,7 +1012,10 @@ def sync_entity_chunked(STATE, catalog, entity_name, key_properties, path, logge
                 STATE,
                 entity_name,
                 'startTimestamp',
-                utils.strftime(datetime.datetime.fromtimestamp((start_ts / 1000), datetime.timezone.utc)))  # pylint: disable=line-too-long
+                utils.strftime(
+                    datetime.datetime.fromtimestamp((start_ts / 1000), datetime.timezone.utc)
+                ),
+            )  # pylint: disable=line-too-long
             singer.write_state(STATE)
             start_ts = end_ts
 
@@ -1053,7 +1092,9 @@ def sync_contact_lists(STATE, ctx, logger=LOGGER):
             record = bumble_bee.transform(lift_properties_and_versions(row), schema, mdata)
 
             if record[bookmark_key] >= start:
-                singer.write_record("contact_lists", record, catalog.get('stream_alias'), time_extracted=utils.now())
+                singer.write_record(
+                    "contact_lists", record, catalog.get('stream_alias'), time_extracted=utils.now()
+                )
             if record[bookmark_key] >= max_bk_value:
                 max_bk_value = record[bookmark_key]
 
@@ -1096,7 +1137,9 @@ def sync_forms(STATE, ctx, logger=LOGGER):
             record = bumble_bee.transform(lift_properties_and_versions(row), schema, mdata)
 
             if record[bookmark_key] >= start:
-                singer.write_record("forms", record, catalog.get('stream_alias'), time_extracted=time_extracted)
+                singer.write_record(
+                    "forms", record, catalog.get('stream_alias'), time_extracted=time_extracted
+                )
             if record[bookmark_key] >= max_bk_value:
                 max_bk_value = record[bookmark_key]
 
@@ -1141,7 +1184,9 @@ def sync_workflows(STATE, ctx, logger=LOGGER):
         for row in data['workflows']:
             record = bumble_bee.transform(lift_properties_and_versions(row), schema, mdata)
             if record[bookmark_key] >= start:
-                singer.write_record("workflows", record, catalog.get('stream_alias'), time_extracted=time_extracted)
+                singer.write_record(
+                    "workflows", record, catalog.get('stream_alias'), time_extracted=time_extracted
+                )
             if record[bookmark_key] >= max_bk_value:
                 max_bk_value = record[bookmark_key]
 
@@ -1189,7 +1234,9 @@ def sync_owners(STATE, ctx, logger=LOGGER):
                 max_bk_value = record[bookmark_key]
 
             if record[bookmark_key] >= start:
-                singer.write_record("owners", record, catalog.get('stream_alias'), time_extracted=time_extracted)
+                singer.write_record(
+                    "owners", record, catalog.get('stream_alias'), time_extracted=time_extracted
+                )
 
     STATE = singer.write_bookmark(STATE, 'owners', bookmark_key, max_bk_value)
     singer.write_state(STATE)
@@ -1258,7 +1305,12 @@ def sync_engagements(STATE, ctx, logger=LOGGER):
                 # hoist PK and bookmark field to top-level record
                 record['engagement_id'] = record['engagement']['id']
                 record[bookmark_key] = record['engagement'][bookmark_key]
-                singer.write_record("engagements", record, catalog.get('stream_alias'), time_extracted=time_extracted)
+                singer.write_record(
+                    "engagements",
+                    record,
+                    catalog.get('stream_alias'),
+                    time_extracted=time_extracted,
+                )
                 if record['engagement'][bookmark_key] >= max_bk_value:
                     max_bk_value = record['engagement'][bookmark_key]
 
@@ -1294,7 +1346,9 @@ def sync_deal_pipelines(STATE, ctx, logger=LOGGER):
     with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
         for row in data:
             record = bumble_bee.transform(lift_properties_and_versions(row), schema, mdata)
-            singer.write_record("deal_pipelines", record, catalog.get('stream_alias'), time_extracted=utils.now())
+            singer.write_record(
+                "deal_pipelines", record, catalog.get('stream_alias'), time_extracted=utils.now()
+            )
     singer.write_state(STATE)
     return STATE
 
@@ -1310,12 +1364,19 @@ class Stream:
 
 STREAMS = [
     # Do these first as they are incremental
-    Stream('subscription_changes', sync_subscription_changes, ['timestamp', 'portalId', 'recipient'], 'startTimestamp', 'INCREMENTAL'),
+    Stream(
+        'subscription_changes',
+        sync_subscription_changes,
+        ['timestamp', 'portalId', 'recipient'],
+        'startTimestamp',
+        'INCREMENTAL',
+    ),
     Stream('email_events', sync_email_events, ['id'], 'startTimestamp', 'INCREMENTAL'),
     Stream('contacts', sync_contacts, ["vid"], 'versionTimestamp', 'INCREMENTAL'),
     Stream('deals', sync_deals, ["dealId"], 'property_hs_lastmodifieddate', 'INCREMENTAL'),
-    Stream('companies', sync_companies, ["companyId"], 'property_hs_lastmodifieddate', 'INCREMENTAL'),
-
+    Stream(
+        'companies', sync_companies, ["companyId"], 'property_hs_lastmodifieddate', 'INCREMENTAL'
+    ),
     # Do these last as they are full table
     Stream('forms', sync_forms, ['guid'], 'updatedAt', 'FULL_TABLE'),
     Stream('workflows', sync_workflows, ['id'], 'updatedAt', 'FULL_TABLE'),
@@ -1323,7 +1384,7 @@ STREAMS = [
     Stream('campaigns', sync_campaigns, ["id"], None, 'FULL_TABLE'),
     Stream('contact_lists', sync_contact_lists, ["listId"], 'updatedAt', 'FULL_TABLE'),
     Stream('deal_pipelines', sync_deal_pipelines, ['pipelineId'], None, 'FULL_TABLE'),
-    Stream('engagements', sync_engagements, ["engagement_id"], 'lastUpdated', 'FULL_TABLE')
+    Stream('engagements', sync_engagements, ["engagement_id"], 'lastUpdated', 'FULL_TABLE'),
 ]
 
 
@@ -1331,10 +1392,8 @@ def get_streams_to_sync(streams, state):
     target_stream = singer.get_currently_syncing(state)
     result = streams
     if target_stream:
-        skipped = list(itertools.takewhile(
-            lambda x: x.tap_stream_id != target_stream, streams))
-        rest = list(itertools.dropwhile(
-            lambda x: x.tap_stream_id != target_stream, streams))
+        skipped = list(itertools.takewhile(lambda x: x.tap_stream_id != target_stream, streams))
+        rest = list(itertools.dropwhile(lambda x: x.tap_stream_id != target_stream, streams))
         result = rest + skipped  # Move skipped streams to end
     if not result:
         raise Exception('Unknown stream {} in state'.format(target_stream))
@@ -1358,8 +1417,10 @@ def do_sync(STATE, catalog, logger=LOGGER):
 
     remaining_streams = get_streams_to_sync(STREAMS, STATE)
     selected_streams = get_selected_streams(remaining_streams, ctx)
-    logger.info('Starting sync. Will sync these streams: '
-                f'{[stream.tap_stream_id for stream in selected_streams]}')
+    logger.info(
+        'Starting sync. Will sync these streams: '
+        f'{[stream.tap_stream_id for stream in selected_streams]}'
+    )
     for stream in selected_streams:
         logger.info(f'Syncing {stream.tap_stream_id}')
         STATE = singer.set_currently_syncing(STATE, stream.tap_stream_id)
@@ -1392,15 +1453,12 @@ class Context:
 
 
 # stream a is dependent on stream STREAM_DEPENDENCIES[a]
-STREAM_DEPENDENCIES = {
-    CONTACTS_BY_COMPANY: 'companies'
-}
+STREAM_DEPENDENCIES = {CONTACTS_BY_COMPANY: 'companies'}
 
 
 def validate_dependencies(ctx):
     errs = []
-    msg_tmpl = ("Unable to extract {0} data. "
-                "To receive {0} data, you also need to select {1}.")
+    msg_tmpl = "Unable to extract {0} data. " "To receive {0} data, you also need to select {1}."
 
     for k, v in STREAM_DEPENDENCIES.items():
         if k in ctx.selected_stream_ids and v not in ctx.selected_stream_ids:
@@ -1439,19 +1497,26 @@ def discover_schemas(logger=LOGGER):
         logger.info(f'Loading schema for {stream.tap_stream_id}')
         try:
             schema, mdata = load_discovered_schema(stream)
-            result['streams'].append({
-                'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(stream.tap_stream_id),
-                'key_properties': stream.key_properties,
-                'metadata': mdata,
-                'replication_method': stream.replication_method,
-                'schema': schema,
-                'stream': stream.tap_stream_id,
-                'tap_stream_id': stream.tap_stream_id,
-            })
+            result['streams'].append(
+                {
+                    'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(
+                        stream.tap_stream_id
+                    ),
+                    'key_properties': stream.key_properties,
+                    'metadata': mdata,
+                    'replication_method': stream.replication_method,
+                    'schema': schema,
+                    'stream': stream.tap_stream_id,
+                    'tap_stream_id': stream.tap_stream_id,
+                }
+            )
         except SourceUnavailableException as err:
-            logger.info(f'{err}', tags=dict(
-                stream=stream.tap_stream_id,
-            ))
+            logger.info(
+                f'{err}',
+                tags=dict(
+                    stream=stream.tap_stream_id,
+                ),
+            )
 
     try:
         # Load the contacts_by_company schema
@@ -1465,22 +1530,27 @@ def discover_schemas(logger=LOGGER):
         )
         schema, mdata = load_discovered_schema(contacts_by_company)
 
-        result['streams'].append({
-            'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(CONTACTS_BY_COMPANY),
-            'key_properties': [
-                'company-id',
-                'contact-id',
-            ],
-            'metadata': mdata,
-            'replication_method': 'FULL_TABLE',
-            'schema': schema,
-            'stream': CONTACTS_BY_COMPANY,
-            'tap_stream_id': CONTACTS_BY_COMPANY,
-        })
+        result['streams'].append(
+            {
+                'bookmark_properties': BOOKMARK_PROPERTIES_BY_STREAM_NAME.get(CONTACTS_BY_COMPANY),
+                'key_properties': [
+                    'company-id',
+                    'contact-id',
+                ],
+                'metadata': mdata,
+                'replication_method': 'FULL_TABLE',
+                'schema': schema,
+                'stream': CONTACTS_BY_COMPANY,
+                'tap_stream_id': CONTACTS_BY_COMPANY,
+            }
+        )
     except SourceUnavailableException as err:
-        logger.info(f'{err}', tags=dict(
-            stream=stream.tap_stream_id,
-        ))
+        logger.info(
+            f'{err}',
+            tags=dict(
+                stream=stream.tap_stream_id,
+            ),
+        )
 
     return result
 
@@ -1520,11 +1590,8 @@ def setup(config, state):
 
 def main_impl():
     args = utils.parse_args(
-        ["redirect_uri",
-         "client_id",
-         "client_secret",
-         "refresh_token",
-         "start_date"])
+        ["redirect_uri", "client_id", "client_secret", "refresh_token", "start_date"]
+    )
 
     setup(args.config, args.state)
 

@@ -3,23 +3,19 @@ import tap_hubspot
 from tap_hubspot import get_start
 from tap_hubspot import singer
 
-def get_state(key,value):
+
+def get_state(key, value):
     """
     Returns a mock state
     """
-    return {
-        "bookmarks": {
-            "stream_id_1": {
-                "offset": {},
-                key: value
-                }
-            }
-        }
+    return {"bookmarks": {"stream_id_1": {"offset": {}, key: value}}}
+
 
 class TestGetStart(unittest.TestCase):
     """
     Verify return value of `get_start` function.
     """
+
     def test_get_start_without_state(self):
         """
         This test verifies that `get_start` function returns start_date from CONFIG
@@ -82,10 +78,10 @@ class TestGetStart(unittest.TestCase):
                 "stream_id_1": {
                     "offset": {},
                     "old_bookmark": "OLD_BOOKMARK_VALUE",
-                    "current_bookmark": "CURR_BOOKMARK_VALUE"
-                    }
+                    "current_bookmark": "CURR_BOOKMARK_VALUE",
                 }
             }
+        }
         expected_value = "CURR_BOOKMARK_VALUE"
 
         returned_value = get_start(mock_state, "stream_id_1", "current_bookmark", "old_bookmark")

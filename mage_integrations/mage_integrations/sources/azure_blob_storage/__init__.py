@@ -78,10 +78,12 @@ class AzureBlobStorage(Source):
                         ],
                     )
 
-            schema = Schema.from_dict(dict(
-                properties=properties,
-                type='object',
-            ))
+            schema = Schema.from_dict(
+                dict(
+                    properties=properties,
+                    type='object',
+                )
+            )
 
             metadata = get_standard_metadata(
                 key_properties=[],

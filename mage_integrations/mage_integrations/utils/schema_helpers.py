@@ -13,10 +13,7 @@ def extract_selected_columns(metadata_array: List[dict]) -> List[str]:
     for d in metadata_array:
         breadcrumb = d.get('breadcrumb')
         metadata = d.get('metadata')
-        if breadcrumb and \
-           metadata and \
-           len(breadcrumb) == 2 and \
-           breadcrumb[0] == 'properties':
+        if breadcrumb and metadata and len(breadcrumb) == 2 and breadcrumb[0] == 'properties':
             column = breadcrumb[1]
             selected = metadata.get(METADATA_KEY_SELECTED, False)
 

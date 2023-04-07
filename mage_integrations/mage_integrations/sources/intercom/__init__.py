@@ -8,7 +8,6 @@ LOGGER = singer.get_logger()
 
 
 class Intercom(Source):
-
     def load_data(
         self,
         stream,
@@ -18,9 +17,7 @@ class Intercom(Source):
     ) -> Generator[List[Dict], None, None]:
         access_token = self.config.get('access_token')
         client = IntercomClient(
-            access_token,
-            self.config.get('request_timeout'),
-            self.config.get('user_agent')
+            access_token, self.config.get('request_timeout'), self.config.get('user_agent')
         )
         tap_stream_id = stream.tap_stream_id
         stream_obj = STREAMS[tap_stream_id](client)

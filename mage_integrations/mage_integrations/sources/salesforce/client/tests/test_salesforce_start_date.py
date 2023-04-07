@@ -6,6 +6,7 @@ from base import SalesforceBaseTest
 
 class SalesforceStartDateTest(SalesforceBaseTest):
     """Test that core objects do not obey the start date"""
+
     start_date_1 = ""
     start_date_2 = ""
 
@@ -45,10 +46,14 @@ class SalesforceStartDateTest(SalesforceBaseTest):
         found_catalogs_1 = self.run_and_verify_check_mode(conn_id_1)
 
         # table and field selection
-        test_catalogs_1_all_fields = [catalog for catalog in found_catalogs_1
-                                      if catalog.get('tap_stream_id') in self.expected_sync_streams()]
-        self.perform_and_verify_table_and_field_selection(conn_id_1, test_catalogs_1_all_fields,
-                                                    select_all_fields=True)
+        test_catalogs_1_all_fields = [
+            catalog
+            for catalog in found_catalogs_1
+            if catalog.get('tap_stream_id') in self.expected_sync_streams()
+        ]
+        self.perform_and_verify_table_and_field_selection(
+            conn_id_1, test_catalogs_1_all_fields, select_all_fields=True
+        )
 
         # run initial sync
         record_count_by_stream_1 = self.run_and_verify_sync(conn_id_1)
@@ -58,7 +63,9 @@ class SalesforceStartDateTest(SalesforceBaseTest):
         ### Update START DATE Between Sync3s
         ##########################################################################
 
-        LOGGER.info("REPLICATION START DATE CHANGE: %s ===>>> %s", self.start_date, self.start_date_2)
+        LOGGER.info(
+            "REPLICATION START DATE CHANGE: %s ===>>> %s", self.start_date, self.start_date_2
+        )
         self.start_date = self.start_date_2
 
         ##########################################################################
@@ -72,9 +79,14 @@ class SalesforceStartDateTest(SalesforceBaseTest):
         found_catalogs_2 = self.run_and_verify_check_mode(conn_id_2)
 
         # table and field selection
-        test_catalogs_2_all_fields = [catalog for catalog in found_catalogs_2
-                                      if catalog.get('tap_stream_id') in self.expected_sync_streams()]
-        self.perform_and_verify_table_and_field_selection(conn_id_2, test_catalogs_2_all_fields, select_all_fields=True)
+        test_catalogs_2_all_fields = [
+            catalog
+            for catalog in found_catalogs_2
+            if catalog.get('tap_stream_id') in self.expected_sync_streams()
+        ]
+        self.perform_and_verify_table_and_field_selection(
+            conn_id_2, test_catalogs_2_all_fields, select_all_fields=True
+        )
 
         # run sync
         record_count_by_stream_2 = self.run_and_verify_sync(conn_id_2)

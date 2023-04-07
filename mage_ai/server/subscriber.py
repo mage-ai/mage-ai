@@ -21,5 +21,6 @@ def get_messages(callback=None):
                     logger.warn(f'[{now}] No callback for message: {message}')
         except Exception as e:
             if str(e):
-                logger.error(f'[{now}] Error: {e}', )
-            pass
+                logger.error(
+                    f'[{now}] Error: {e}',
+                )

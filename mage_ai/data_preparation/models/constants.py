@@ -76,9 +76,9 @@ class PipelineType(str, Enum):
 
 
 class PipelineStatus(str, Enum):
-    ACTIVE = 'active',              # At least one active trigger
-    INACTIVE = 'inactive',          # All inactive triggers
-    NO_SCHEDULES = 'no_schedules',  # No triggers
+    ACTIVE = ('active',)  # At least one active trigger
+    INACTIVE = ('inactive',)  # All inactive triggers
+    NO_SCHEDULES = ('no_schedules',)  # No triggers
 
 
 BLOCK_LANGUAGE_TO_FILE_EXTENSION = {

@@ -171,12 +171,15 @@ class Redshift(BaseSQL):
                 elif type(df) is dict:
                     columns = df.keys()
 
-                columns_with_type = [(
-                    col,
-                    convert_python_type_to_redshift_type(
-                        convert_pandas_dtype_to_python_type(df.dtypes[col]),
-                    ),
-                ) for col in columns]
+                columns_with_type = [
+                    (
+                        col,
+                        convert_python_type_to_redshift_type(
+                            convert_pandas_dtype_to_python_type(df.dtypes[col]),
+                        ),
+                    )
+                    for col in columns
+                ]
 
             with self.conn.cursor() as cur:
                 if schema_name and create_schema:
@@ -343,10 +346,12 @@ class Redshift(BaseSQL):
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
             cur.execute(f'SET search_path TO {schema_name}')
-            cur.execute(f"""
+            cur.execute(
+                f"""
 SELECT 1
 FROM information_schema.tables
 WHERE table_schema = '{schema_name}'
 AND table_name = '{table_name}'
-""")
+"""
+            )
             return len(cur.fetchall()) >= 1

@@ -42,6 +42,7 @@ class FacebookBaseTest(BaseCase):
           "2021-04-07T00:00:00.000000Z" -> "2021-04-08T00:00:00.000000Z"
 
     """
+
     AUTOMATIC_FIELDS = "automatic"
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
@@ -70,7 +71,7 @@ class FacebookBaseTest(BaseCase):
         """Configuration properties required for the tap."""
         return_value = {
             'account_id': os.getenv('TAP_FACEBOOK_ACCOUNT_ID'),
-            'start_date' : '2021-04-07T00:00:00Z',
+            'start_date': '2021-04-07T00:00:00Z',
             'end_date': '2021-04-09T00:00:00Z',
             'insights_buffer_days': '1',
         }
@@ -94,7 +95,7 @@ class FacebookBaseTest(BaseCase):
             "ads": {
                 self.PRIMARY_KEYS: {"id", "updated_time"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"updated_time"}
+                self.REPLICATION_KEYS: {"updated_time"},
             },
             "adcreative": {
                 self.PRIMARY_KEYS: {"id"},
@@ -103,52 +104,70 @@ class FacebookBaseTest(BaseCase):
             "adsets": {
                 self.PRIMARY_KEYS: {"id", "updated_time"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"updated_time"}
+                self.REPLICATION_KEYS: {"updated_time"},
             },
             "campaigns": {
-                self.PRIMARY_KEYS: {"id", },
+                self.PRIMARY_KEYS: {
+                    "id",
+                },
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"updated_time"}
+                self.REPLICATION_KEYS: {"updated_time"},
             },
             "ads_insights": {
                 self.PRIMARY_KEYS: {"campaign_id", "adset_id", "ad_id", "date_start"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"date_start"}
+                self.REPLICATION_KEYS: {"date_start"},
             },
             "ads_insights_age_and_gender": {
                 self.PRIMARY_KEYS: {
-                    "campaign_id", "adset_id", "ad_id", "date_start", "age", "gender"
+                    "campaign_id",
+                    "adset_id",
+                    "ad_id",
+                    "date_start",
+                    "age",
+                    "gender",
                 },
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"date_start"}
+                self.REPLICATION_KEYS: {"date_start"},
             },
             "ads_insights_country": {
                 self.PRIMARY_KEYS: {"campaign_id", "adset_id", "ad_id", "date_start", "country"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"date_start"}
+                self.REPLICATION_KEYS: {"date_start"},
             },
             "ads_insights_platform_and_device": {
                 self.PRIMARY_KEYS: {
-                    "campaign_id", "adset_id", "ad_id", "date_start",
-                    "publisher_platform", "platform_position", "impression_device"
+                    "campaign_id",
+                    "adset_id",
+                    "ad_id",
+                    "date_start",
+                    "publisher_platform",
+                    "platform_position",
+                    "impression_device",
                 },
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"date_start"}
+                self.REPLICATION_KEYS: {"date_start"},
             },
             "ads_insights_region": {
                 self.PRIMARY_KEYS: {"region", "campaign_id", "adset_id", "ad_id", "date_start"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"date_start"}
+                self.REPLICATION_KEYS: {"date_start"},
             },
             "ads_insights_dma": {
                 self.PRIMARY_KEYS: {"dma", "campaign_id", "adset_id", "ad_id", "date_start"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"date_start"}
+                self.REPLICATION_KEYS: {"date_start"},
             },
             "ads_insights_hourly_advertiser": {
-                self.PRIMARY_KEYS: {"hourly_stats_aggregated_by_advertiser_time_zone", "campaign_id", "adset_id", "ad_id", "date_start"},
+                self.PRIMARY_KEYS: {
+                    "hourly_stats_aggregated_by_advertiser_time_zone",
+                    "campaign_id",
+                    "adset_id",
+                    "ad_id",
+                    "date_start",
+                },
                 self.REPLICATION_METHOD: self.INCREMENTAL,
-                self.REPLICATION_KEYS: {"date_start"}
+                self.REPLICATION_KEYS: {"date_start"},
             },
             # "leads": {
             #     self.PRIMARY_KEYS: {"id"},
@@ -156,7 +175,6 @@ class FacebookBaseTest(BaseCase):
             #     self.REPLICATION_KEYS: {"created_time"}
             # },
         }
-
 
     def expected_streams(self):
         """A set of expected stream names"""
@@ -167,56 +185,67 @@ class FacebookBaseTest(BaseCase):
         Return a set of streams that are child streams
         based on having foreign key metadata
         """
-        return {stream for stream, metadata in self.expected_metadata().items()
-                if metadata.get(self.FOREIGN_KEYS)}
+        return {
+            stream
+            for stream, metadata in self.expected_metadata().items()
+            if metadata.get(self.FOREIGN_KEYS)
+        }
 
     def expected_primary_keys(self):
         """
         return a dictionary with key of table name
         and value as a set of primary key fields
         """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_replication_keys(self):
         """
         return a dictionary with key of table name
         and value as a set of replication key fields
         """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_foreign_keys(self):
         """
         return a dictionary with key of table name
         and value as a set of foreign key fields
         """
-        return {table: properties.get(self.FOREIGN_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
-
+        return {
+            table: properties.get(self.FOREIGN_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_fields(self):
         auto_fields = {}
         for k, v in self.expected_metadata().items():
-            auto_fields[k] = v.get(self.PRIMARY_KEYS, set()) | v.get(self.REPLICATION_KEYS, set()) \
+            auto_fields[k] = (
+                v.get(self.PRIMARY_KEYS, set())
+                | v.get(self.REPLICATION_KEYS, set())
                 | v.get(self.FOREIGN_KEYS, set())
+            )
         return auto_fields
 
     def expected_replication_method(self):
         """return a dictionary with key of table name nd value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_METHOD, None)
+            for table, properties in self.expected_metadata().items()
+        }
 
     def setUp(self):
-        missing_envs = [x for x in [os.getenv('TAP_FACEBOOK_ACCESS_TOKEN'),
-                                    os.getenv('TAP_FACEBOOK_ACCOUNT_ID')] if x is None]
+        missing_envs = [
+            x
+            for x in [os.getenv('TAP_FACEBOOK_ACCESS_TOKEN'), os.getenv('TAP_FACEBOOK_ACCOUNT_ID')]
+            if x is None
+        ]
         if len(missing_envs) != 0:
             raise Exception("set environment variables")
-
 
     #########################
     #   Helper Methods      #
@@ -237,11 +266,15 @@ class FacebookBaseTest(BaseCase):
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
         found_catalogs = menagerie.get_catalogs(conn_id)
-        self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
+        self.assertGreater(
+            len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id)
+        )
 
         found_catalog_names = set(map(lambda c: c['stream_name'], found_catalogs))
 
-        self.assertSetEqual(self.expected_streams(), found_catalog_names, msg="discovered schemas do not match")
+        self.assertSetEqual(
+            self.expected_streams(), found_catalog_names, msg="discovered schemas do not match"
+        )
         LOGGER.info("discovered schemas are OK")
 
         return found_catalogs
@@ -261,19 +294,20 @@ class FacebookBaseTest(BaseCase):
 
         # Verify actual rows were synced
         sync_record_count = runner.examine_target_output_file(
-            self, conn_id, self.expected_streams(), self.expected_primary_keys())
+            self, conn_id, self.expected_streams(), self.expected_primary_keys()
+        )
         self.assertGreater(
-            sum(sync_record_count.values()), 0,
-            msg="failed to replicate any data: {}".format(sync_record_count)
+            sum(sync_record_count.values()),
+            0,
+            msg="failed to replicate any data: {}".format(sync_record_count),
         )
         LOGGER.info("total replicated row count: %s", sum(sync_record_count.values()))
 
         return sync_record_count
 
-    def perform_and_verify_table_and_field_selection(self,
-                                                     conn_id,
-                                                     test_catalogs,
-                                                     select_all_fields=True):
+    def perform_and_verify_table_and_field_selection(
+        self, conn_id, test_catalogs, select_all_fields=True
+    ):
         """
         Perform table and field selection based off of the streams to select
         set and field selection parameters.
@@ -299,15 +333,21 @@ class FacebookBaseTest(BaseCase):
             LOGGER.info("Validating selection on %s: %s", cat['stream_name'], selected)
             if cat['stream_name'] not in expected_selected:
                 self.assertFalse(selected, msg="Stream selected, but not testable.")
-                continue # Skip remaining assertions if we aren't selecting this stream
+                continue  # Skip remaining assertions if we aren't selecting this stream
             self.assertTrue(selected, msg="Stream not selected.")
 
             if select_all_fields:
                 # Verify all fields within each selected stream are selected
-                for field, field_props in catalog_entry.get('annotated-schema').get('properties').items():
+                for field, field_props in (
+                    catalog_entry.get('annotated-schema').get('properties').items()
+                ):
                     field_selected = field_props.get('selected')
-                    LOGGER.info("\tValidating selection on %s.%s: %s",
-                                cat['stream_name'], field, field_selected)
+                    LOGGER.info(
+                        "\tValidating selection on %s.%s: %s",
+                        cat['stream_name'],
+                        field,
+                        field_selected,
+                    )
                     self.assertTrue(field_selected, msg="Field not selected.")
             else:
                 # Verify only automatic fields are selected
@@ -321,13 +361,12 @@ class FacebookBaseTest(BaseCase):
         for field in metadata:
             is_field_metadata = len(field['breadcrumb']) > 1
             inclusion_automatic_or_selected = (
-                field['metadata']['selected'] is True or \
-                field['metadata']['inclusion'] == 'automatic'
+                field['metadata']['selected'] is True
+                or field['metadata']['inclusion'] == 'automatic'
             )
             if is_field_metadata and inclusion_automatic_or_selected:
                 selected_fields.add(field['breadcrumb'][1])
         return selected_fields
-
 
     @staticmethod
     def select_all_streams_and_fields(conn_id, catalogs, select_all_fields: bool = True):
@@ -338,11 +377,13 @@ class FacebookBaseTest(BaseCase):
             non_selected_properties = []
             if not select_all_fields:
                 # get a list of all properties so that none are selected
-                non_selected_properties = schema.get('annotated-schema', {}).get(
-                    'properties', {}).keys()
+                non_selected_properties = (
+                    schema.get('annotated-schema', {}).get('properties', {}).keys()
+                )
 
             connections.select_catalog_and_fields_via_metadata(
-                conn_id, catalog, schema, [], non_selected_properties)
+                conn_id, catalog, schema, [], non_selected_properties
+            )
 
     @staticmethod
     def parse_date(date_value):
@@ -354,7 +395,7 @@ class FacebookBaseTest(BaseCase):
             "%Y-%m-%dT%H:%M:%SZ",
             "%Y-%m-%dT%H:%M:%S.%f+00:00",
             "%Y-%m-%dT%H:%M:%S+00:00",
-            "%Y-%m-%d"
+            "%Y-%m-%d",
         }
         for date_format in date_formats:
             try:
@@ -363,7 +404,9 @@ class FacebookBaseTest(BaseCase):
             except ValueError:
                 continue
 
-        raise NotImplementedError("Tests do not account for dates of this format: {}".format(date_value))
+        raise NotImplementedError(
+            "Tests do not account for dates of this format: {}".format(date_value)
+        )
 
     def timedelta_formatted(self, dtime, days=0, date_format=''):
         try:
@@ -384,13 +427,21 @@ class FacebookBaseTest(BaseCase):
         return stream.startswith('ads_insights')
 
     def setUp(self):
-        LOGGER.info("-------------------------------------------- STARTING TEST ---------------------------------------------------")
+        LOGGER.info(
+            "-------------------------------------------- STARTING TEST ---------------------------------------------------"
+        )
         LOGGER.info("test: %s", self.name())
         LOGGER.info("streams covered: %s", self.streams_to_test())
-        LOGGER.info("--------------------------------------------------------------------------------------------------------------")
+        LOGGER.info(
+            "--------------------------------------------------------------------------------------------------------------"
+        )
 
     def tearDown(self):
-        LOGGER.info("--------------------------------------------- ENDING TEST ----------------------------------------------------")
+        LOGGER.info(
+            "--------------------------------------------- ENDING TEST ----------------------------------------------------"
+        )
         LOGGER.info("test: %s", self.name())
         LOGGER.info("streams covered: %s", self.streams_to_test())
-        LOGGER.info("--------------------------------------------------------------------------------------------------------------")
+        LOGGER.info(
+            "--------------------------------------------------------------------------------------------------------------"
+        )

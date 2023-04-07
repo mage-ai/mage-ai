@@ -5,8 +5,8 @@ import requests
 
 URL = 'https://raw.githubusercontent.com/mage-ai/datasets/master/titanic_survival.csv'
 
-class Titanic(Source):
 
+class Titanic(Source):
     def load_data(
         self,
         **kwargs,

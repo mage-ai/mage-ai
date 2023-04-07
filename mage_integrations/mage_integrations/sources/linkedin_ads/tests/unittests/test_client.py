@@ -6,20 +6,20 @@ import requests
 from datetime import datetime
 import calendar
 
+
 @mock.patch("requests.Session.post")
 class TestLinkedInClient(unittest.TestCase):
-
     def test_access_token_empty_expires(self, mocked_post):
         '''
         Ensure that we retrieve and set expires for client with no self.__expires
         '''
-        client = _client.LinkedinClient('client_id', 'client_secret', 'refresh_token', 'access_token')
+        client = _client.LinkedinClient(
+            'client_id', 'client_secret', 'refresh_token', 'access_token'
+        )
 
         future_time = int(datetime.utcnow().timestamp()) + 100
         mocked_response = mock.Mock()
-        mocked_response.json.return_value = {
-            "expires_at": future_time
-        }
+        mocked_response.json.return_value = {"expires_at": future_time}
         mocked_response.status_code = 200
         mocked_post.return_value = mocked_response
 
@@ -34,7 +34,9 @@ class TestLinkedInClient(unittest.TestCase):
         '''
         Ensure that we check and return on valid self.__expires
         '''
-        client = _client.LinkedinClient('client_id', 'client_secret', 'refresh_token', 'access_token')
+        client = _client.LinkedinClient(
+            'client_id', 'client_secret', 'refresh_token', 'access_token'
+        )
 
         future_time = int(datetime.utcnow().timestamp()) + 100
         mocked_response = mock.MagicMock()
@@ -50,20 +52,18 @@ class TestLinkedInClient(unittest.TestCase):
         expires = client.get_expires_time_for_test()
         self.assertEqual(expires, datetime.fromtimestamp(future_time))
 
-
     def test_access_token_expires_invalid(self, mocked_post):
         '''
         Ensure that we check self.__expires and retrieve new access token if it has expired
         '''
-        client = _client.LinkedinClient('client_id', 'client_secret', 'refresh_token', 'access_token')
+        client = _client.LinkedinClient(
+            'client_id', 'client_secret', 'refresh_token', 'access_token'
+        )
 
         old_time = int(datetime.utcnow().timestamp()) - 100
         mocked_response = mock.MagicMock()
         mocked_response.status_code = 200
-        mocked_response.json.return_value = {
-            "access_token": "abcdef12345",
-            "expires_in": 5184000
-        }
+        mocked_response.json.return_value = {"access_token": "abcdef12345", "expires_in": 5184000}
         mocked_post.return_value = mocked_response
 
         client.set_mock_expires_for_test(datetime.fromtimestamp(old_time))
@@ -82,10 +82,7 @@ class TestLinkedInClient(unittest.TestCase):
 
         old_time = int(datetime.utcnow().timestamp()) - 100
         mocked_response = mock.Mock()
-        mocked_response.json.return_value = {
-            "access_token": "abcdef12345",
-            "expires_in": 5184000
-        }
+        mocked_response.json.return_value = {"access_token": "abcdef12345", "expires_in": 5184000}
         mocked_response.status_code = 200
         mocked_post.return_value = mocked_response
 

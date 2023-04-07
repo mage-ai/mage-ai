@@ -104,36 +104,23 @@ class LogResource(GenericResource):
         @safe_db_query
         def get_pipeline_runs():
             query = (
-                PipelineRun.
-                select(*columns).
-                join(b, a.pipeline_schedule_id == b.id).
-                filter(b.pipeline_uuid == pipeline_uuid).
-                order_by(a.created_at.desc())
+                PipelineRun.select(*columns)
+                .join(b, a.pipeline_schedule_id == b.id)
+                .filter(b.pipeline_uuid == pipeline_uuid)
+                .order_by(a.created_at.desc())
             )
 
             if len(pipeline_schedule_ids):
-                query = (
-                    query.
-                    filter(a.pipeline_schedule_id.in_(pipeline_schedule_ids))
-                )
+                query = query.filter(a.pipeline_schedule_id.in_(pipeline_schedule_ids))
 
             if len(pipeline_run_ids):
-                query = (
-                    query.
-                    filter(a.id.in_(pipeline_run_ids))
-                )
+                query = query.filter(a.id.in_(pipeline_run_ids))
 
             if start_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date >= start_timestamp)
-                )
+                query = query.filter(a.execution_date >= start_timestamp)
 
             if end_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date <= end_timestamp)
-                )
+                query = query.filter(a.execution_date <= end_timestamp)
             total_pipeline_run_log_count = query.count()
             if meta.get(META_KEY_LIMIT, None) is not None:
                 rows = query.limit(meta[META_KEY_LIMIT])
@@ -166,51 +153,37 @@ class LogResource(GenericResource):
         @safe_db_query
         def get_block_runs():
             query = (
-                BlockRun.
-                select(*(columns + [
-                    c.block_uuid,
-                ])).
-                join(a, a.id == c.pipeline_run_id).
-                join(b, a.pipeline_schedule_id == b.id).
-                filter(b.pipeline_uuid == pipeline_uuid).
-                order_by(c.started_at.desc())
+                BlockRun.select(
+                    *(
+                        columns
+                        + [
+                            c.block_uuid,
+                        ]
+                    )
+                )
+                .join(a, a.id == c.pipeline_run_id)
+                .join(b, a.pipeline_schedule_id == b.id)
+                .filter(b.pipeline_uuid == pipeline_uuid)
+                .order_by(c.started_at.desc())
             )
 
             if len(block_uuids):
-                query = (
-                    query.
-                    filter(c.block_uuid.in_(block_uuids))
-                )
+                query = query.filter(c.block_uuid.in_(block_uuids))
 
             if len(block_run_ids):
-                query = (
-                    query.
-                    filter(c.id.in_(block_run_ids))
-                )
+                query = query.filter(c.id.in_(block_run_ids))
 
             if len(pipeline_schedule_ids):
-                query = (
-                    query.
-                    filter(a.pipeline_schedule_id.in_(pipeline_schedule_ids))
-                )
+                query = query.filter(a.pipeline_schedule_id.in_(pipeline_schedule_ids))
 
             if len(pipeline_run_ids):
-                query = (
-                    query.
-                    filter(a.id.in_(pipeline_run_ids))
-                )
+                query = query.filter(a.id.in_(pipeline_run_ids))
 
             if start_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date >= start_timestamp)
-                )
+                query = query.filter(a.execution_date >= start_timestamp)
 
             if end_timestamp:
-                query = (
-                    query.
-                    filter(a.execution_date <= end_timestamp)
-                )
+                query = query.filter(a.execution_date <= end_timestamp)
 
             if meta.get(META_KEY_LIMIT, None) is not None:
                 rows = query.limit(meta[META_KEY_LIMIT])

@@ -1,5 +1,7 @@
 [flake8]
-ignore = E121,E126,W503,W504
+ignore = E121,E126,W503,W504,B006,B017,B023,E203 
 exclude = mage_ai/data_preparation/templates,mage_ai/orchestration/db/migrations/versions/,mage_integrations/*
 max-line-length = 100
-max-complexity = 6
+; max-complexity = 6
+per-file-ignores =
+    mage_ai/cli/main.py: B008

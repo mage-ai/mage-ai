@@ -41,7 +41,11 @@ class MonitorStatResource(GenericResource):
             pipeline_schedule_id=pipeline_schedule_id,
         )
 
-        return self(dict(
-            stats_type=pk,
-            stats=stats,
-        ), user, **kwargs)
+        return self(
+            dict(
+                stats_type=pk,
+                stats=stats,
+            ),
+            user,
+            **kwargs,
+        )

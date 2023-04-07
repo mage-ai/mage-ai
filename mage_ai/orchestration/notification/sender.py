@@ -44,8 +44,10 @@ class NotificationSender:
             )
             email_content = f'{message}\n'
             if os.getenv('ENV') != 'production':
-                email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                                  'to check pipeline run results and logs.'
+                email_content += (
+                    f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '
+                    'to check pipeline run results and logs.'
+                )
             self.send(
                 message=message,
                 email_subject=f'Successfully ran Pipeline {pipeline.uuid}',
@@ -67,8 +69,10 @@ class NotificationSender:
             )
             email_content = f'{message}\n'
             if os.getenv('ENV') != 'production':
-                email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                                  'to check pipeline run results and logs.'
+                email_content += (
+                    f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '
+                    'to check pipeline run results and logs.'
+                )
             self.send(
                 message=message,
                 email_subject=f'Failed to run Mage pipeline {pipeline.uuid}',
@@ -85,8 +89,10 @@ class NotificationSender:
             )
             email_content = f'{message}\n'
             if os.getenv('ENV') != 'production':
-                email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                                  'to check pipeline run results and logs.'
+                email_content += (
+                    f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '
+                    'to check pipeline run results and logs.'
+                )
             self.send(
                 message=message,
                 email_subject=f'SLA passed for Mage pipeline {pipeline.uuid}',
@@ -94,5 +100,7 @@ class NotificationSender:
             )
 
     def __pipeline_run_url(self, pipeline, pipeline_run):
-        return f'http://localhost:6789/pipelines/{pipeline.uuid}/triggers/'\
-               f'{pipeline_run.pipeline_schedule_id}'
+        return (
+            f'http://localhost:6789/pipelines/{pipeline.uuid}/triggers/'
+            f'{pipeline_run.pipeline_schedule_id}'
+        )

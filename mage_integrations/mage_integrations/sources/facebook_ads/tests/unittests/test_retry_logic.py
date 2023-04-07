@@ -11,9 +11,11 @@ from facebook_business.adobjects.adaccount import AdAccount
 import requests
 from requests.models import Response
 
+
 class TestAdCreative(unittest.TestCase):
     """A set of unit tests to ensure that requests to get AdCreatives behave
     as expected"""
+
     def test_retries_on_500(self):
         """`AdCreative.sync.do_request()` calls a `facebook_business` method,
         `get_ad_creatives()`, to make a request to the API. We mock this
@@ -28,11 +30,7 @@ class TestAdCreative(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_ad_creatives = Mock()
         mocked_account.get_ad_creatives.side_effect = FacebookRequestError(
-            message='',
-            request_context={"":Mock()},
-            http_status=500,
-            http_headers=Mock(),
-            body={}
+            message='', request_context={"": Mock()}, http_status=500, http_headers=Mock(), body={}
         )
 
         # Initialize the object and call `sync()`
@@ -40,7 +38,7 @@ class TestAdCreative(unittest.TestCase):
         with self.assertRaises(FacebookRequestError):
             ad_creative_object.sync()
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_ad_creatives.call_count )
+        self.assertEquals(5, mocked_account.get_ad_creatives.call_count)
 
     def test_catch_a_type_error(self):
         """`AdCreative.sync.do_request()` calls a `facebook_business` method `get_ad_creatives()`.
@@ -57,7 +55,7 @@ class TestAdCreative(unittest.TestCase):
         with self.assertRaises(TypeError):
             ad_creative_object.sync()
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_ad_creatives.call_count )
+        self.assertEquals(5, mocked_account.get_ad_creatives.call_count)
 
     def test_retries_and_good_response(self):
         """Facebook has a class called `FacebookResponse` and it is created from a `requests.Response`. Some
@@ -72,7 +70,7 @@ class TestAdCreative(unittest.TestCase):
         """
         FacebookAdsApi.init(access_token='access_token')
 
-        expected_value = {"foo":"bar"}
+        expected_value = {"foo": "bar"}
 
         account = AdAccount('abc_123')
         patcher = patch('requests.Session.request')
@@ -88,7 +86,6 @@ class TestAdCreative(unittest.TestCase):
 
         mocked_good_response._content = byte_string
 
-
         mocked_request.side_effect = [mocked_bad_response, mocked_good_response]
 
         ad_creative_object = AdCreative('', account, '', '')
@@ -103,10 +100,10 @@ class TestAdCreative(unittest.TestCase):
         patcher.stop()
 
 
-
 class TestInsightJobs(unittest.TestCase):
     """A set of unit tests to ensure that requests to get AdsInsights behave
     as expected"""
+
     def test_retries_on_bad_data(self):
         """`AdInsights.run_job()` calls a `facebook_business` method,
         `get_insights()`, to make a request to the API. We mock this
@@ -119,14 +116,16 @@ class TestInsightJobs(unittest.TestCase):
         # Create the mock and force the function to throw an error
         mocked_account = Mock()
         mocked_account.get_insights = Mock()
-        mocked_account.get_insights.side_effect = FacebookBadObjectError("Bad data to set object data")
+        mocked_account.get_insights.side_effect = FacebookBadObjectError(
+            "Bad data to set object data"
+        )
 
         # Initialize the object and call `sync()`
         ad_creative_object = AdsInsights('', mocked_account, '', '', {}, {})
         with self.assertRaises(FacebookBadObjectError):
             ad_creative_object.run_job({})
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_insights.call_count )
+        self.assertEquals(5, mocked_account.get_insights.call_count)
 
     def test_retries_on_type_error(self):
         """`AdInsights.run_job()` calls a `facebook_business` method, `get_insights()`, to make a request to
@@ -144,7 +143,7 @@ class TestInsightJobs(unittest.TestCase):
         with self.assertRaises(TypeError):
             ad_creative_object.run_job({})
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_insights.call_count )
+        self.assertEquals(5, mocked_account.get_insights.call_count)
 
     def test_retries_and_good_response(self):
         """Facebook has a class called `FacebookResponse` and it is created from a `requests.Response`. Some
@@ -158,7 +157,7 @@ class TestInsightJobs(unittest.TestCase):
         """
         FacebookAdsApi.init(access_token='access_token')
 
-        expected_value = {"foo":"bar"}
+        expected_value = {"foo": "bar"}
 
         account = AdAccount('abc_123')
         patcher = patch('requests.Session.request')
@@ -187,7 +186,6 @@ class TestInsightJobs(unittest.TestCase):
         # Clean up tests
         patcher.stop()
 
-
     def test_job_polling_retry(self):
         """AdInsights.api_get() polls the job status of an insights job we've requested
         that Facebook generate. This test makes a request with a mock response to
@@ -199,16 +197,15 @@ class TestInsightJobs(unittest.TestCase):
         mocked_api_get = Mock()
         mocked_api_get.side_effect = FacebookRequestError(
             message='Unsupported get request; Object does not exist',
-            request_context={"":Mock()},
+            request_context={"": Mock()},
             http_status=400,
             http_headers=Mock(),
-            body={"error": {"error_subcode": 33}}
+            body={"error": {"error_subcode": 33}},
         )
         # Create the mock and force the function to throw an error
         mocked_account = Mock()
         mocked_account.get_insights = Mock()
         mocked_account.get_insights.return_value.api_get = mocked_api_get
-
 
         # Initialize the object and call `sync()`
         ad_insights_object = AdsInsights('', mocked_account, '', '', {}, {})
@@ -216,9 +213,7 @@ class TestInsightJobs(unittest.TestCase):
             ad_insights_object.run_job({})
         # 5 is the max tries specified in the tap
         self.assertEquals(25, mocked_account.get_insights.return_value.api_get.call_count)
-        self.assertEquals(5, mocked_account.get_insights.call_count )
-
-
+        self.assertEquals(5, mocked_account.get_insights.call_count)
 
     def test_job_polling_retry_succeeds_eventually(self):
         """AdInsights.api_get() polls the job status of an insights job we've requested
@@ -229,24 +224,24 @@ class TestInsightJobs(unittest.TestCase):
         """
 
         mocked_bad_response = FacebookRequestError(
-                message='Unsupported get request; Object does not exist',
-                request_context={"":Mock()},
-                http_status=400,
-                http_headers=Mock(),
-                body={"error": {"error_subcode": 33}}
-            )
+            message='Unsupported get request; Object does not exist',
+            request_context={"": Mock()},
+            http_status=400,
+            http_headers=Mock(),
+            body={"error": {"error_subcode": 33}},
+        )
 
         mocked_good_response = {
             "async_status": "Job Completed",
             "async_percent_completion": 100,
-            "id": "2134"
+            "id": "2134",
         }
 
         mocked_api_get = Mock()
         mocked_api_get.side_effect = [
             mocked_bad_response,
             mocked_bad_response,
-            mocked_good_response
+            mocked_good_response,
         ]
 
         # Create the mock and force the function to throw an error

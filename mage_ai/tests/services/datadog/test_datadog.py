@@ -22,23 +22,17 @@ class DatadogTests(TestCase):
         mock_dt.utcnow = Mock(return_value=dt)
         dd.gauge(TEST_METRIC, 5, tags=TAGS)
         mock_metric.assert_called_with(
-            host='mage',
-            metric=TEST_METRIC,
-            points=[(dt.timestamp(), 5)],
-            tags=TAGS,
-            type='gauge'
+            host='mage', metric=TEST_METRIC, points=[(dt.timestamp(), 5)], tags=TAGS, type='gauge'
         )
 
     @patch('datadog.api.Metric.send')
     def test_increment(self, mock_metric):
         dd.increment(TEST_METRIC, tags=TAGS)
-        mock_metric.assert_called_with(metrics=[{
-            'host': 'mage',
-            'metric': TEST_METRIC,
-            'points': 1,
-            'tags': TAGS,
-            'type': 'count'
-        }])
+        mock_metric.assert_called_with(
+            metrics=[
+                {'host': 'mage', 'metric': TEST_METRIC, 'points': 1, 'tags': TAGS, 'type': 'count'}
+            ]
+        )
 
     @patch('datadog.api.Metric.send')
     @patch('mage_ai.services.datadog.datetime')
@@ -51,7 +45,7 @@ class DatadogTests(TestCase):
             metric=TEST_METRIC,
             points=[(dt.timestamp(), 3)],
             tags=TAGS,
-            type='histogram'
+            type='histogram',
         )
 
     @patch('datadog.api.Metric.send')
@@ -61,9 +55,5 @@ class DatadogTests(TestCase):
         mock_dt.utcnow = Mock(return_value=dt)
         dd.timing(TEST_METRIC, 100, tags=TAGS)
         mock_metric.assert_called_with(
-            host='mage',
-            metric=TEST_METRIC,
-            points=[(dt.timestamp(), 100)],
-            tags=TAGS,
-            type='timer'
+            host='mage', metric=TEST_METRIC, points=[(dt.timestamp(), 100)], tags=TAGS, type='timer'
         )

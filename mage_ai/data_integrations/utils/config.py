@@ -26,10 +26,12 @@ def __get_settings(absolute_file_path, variables: Dict = {}, pipeline: 'Pipeline
     patterns = config.get(KEY_PATTERNS, {})
     destination_table_pattern = patterns.get(PATTERN_KEY_DESTINATION_TABLE)
 
-    if not settings.get('catalog') \
-        and pipeline \
-        and pipeline.data_integration \
-            and 'catalog' in pipeline.data_integration:
+    if (
+        not settings.get('catalog')
+        and pipeline
+        and pipeline.data_integration
+        and 'catalog' in pipeline.data_integration
+    ):
         settings['catalog'] = interpolate_variables(
             json.dumps(pipeline.data_integration['catalog']),
             variables,

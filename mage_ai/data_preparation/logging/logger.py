@@ -8,7 +8,7 @@ import traceback
 import uuid
 
 
-class DictLogger():
+class DictLogger:
     def __init__(self, logger: logging.Logger, logging_tags: Dict = dict()):
         self.logger = logger
         self.logging_tags = logging_tags
@@ -51,9 +51,9 @@ class DictLogger():
         )
 
         if error:
-            data['error'] = traceback.format_exc(),
-            data['error_stack'] = traceback.format_stack(),
-            data['error_stacktrace'] = str(error),
+            data['error'] = (traceback.format_exc(),)
+            data['error_stack'] = (traceback.format_stack(),)
+            data['error_stacktrace'] = (str(error),)
 
         msg = simplejson.dumps(
             merge_dict(self.logging_tags or dict(), merge_dict(kwargs, data)),

@@ -32,7 +32,7 @@ class DatabaseResource(BaseResource):
             start_idx = offset
             end_idx = start_idx + limit
 
-            results = total_results[start_idx:(end_idx + 1)]
+            results = total_results[start_idx : (end_idx + 1)]
 
         results_size = len(results)
         has_next = results_size > limit
@@ -56,16 +56,17 @@ class DatabaseResource(BaseResource):
         parent_model = kwargs.get('parent_model')
         if parent_model and self.parent_resource():
             column_name, parent_class = next(
-                (k, v) for k, v in self.parent_resource().items() if isinstance(
-                    parent_model, v.model_class))
+                (k, v)
+                for k, v in self.parent_resource().items()
+                if isinstance(parent_model, v.model_class)
+            )
             where = {}
             where[column_name] = parent_model.id
 
             filters = []
-            for col, val in merge_dict(query, where).items():
+            for _col, _val in merge_dict(query, where).items():
                 filters.append(self.model_class)
-            return self.model_class.query.filter(
-                **merge_dict(query, where)).all()
+            return self.model_class.query.filter(**merge_dict(query, where)).all()
         else:
             return self.model_class.query.filter(**query).all()
 
@@ -78,16 +79,18 @@ class DatabaseResource(BaseResource):
         if parent_model and self.parent_models():
             try:
                 column_name, parent_class = next(
-                    (k, v) for k, v in self.parent_models().items() if isinstance(
-                        parent_model, v))
+                    (k, v) for k, v in self.parent_models().items() if isinstance(parent_model, v)
+                )
                 payload[column_name] = parent_model.id
             except StopIteration:
                 pass
         if parent_model and self.parent_resource():
             try:
                 column_name, parent_class = next(
-                    (k, v) for k, v in self.parent_resource().items() if isinstance(
-                        parent_model, v.model_class))
+                    (k, v)
+                    for k, v in self.parent_resource().items()
+                    if isinstance(parent_model, v.model_class)
+                )
                 payload[column_name] = parent_model.id
             except StopIteration:
                 pass
@@ -98,12 +101,17 @@ class DatabaseResource(BaseResource):
             self.create_associated_resources(model, payload, user, **kwargs)
             return self(model, user, **kwargs)
         except ValidationError as err:
-            raise ApiError(merge_dict(ApiError.RESOURCE_INVALID, {
-                # We need to return 200 so the front end client can process the error response
-                # and show the user helpful errors.
-                'code': 200,
-                'errors': err.to_dict(),
-            }))
+            raise ApiError(
+                merge_dict(
+                    ApiError.RESOURCE_INVALID,
+                    {
+                        # We need to return 200 so the front end client can process the
+                        # error response and show the user helpful errors.
+                        'code': 200,
+                        'errors': err.to_dict(),
+                    },
+                )
+            )
 
     @classmethod
     @safe_db_query
@@ -111,7 +119,6 @@ class DatabaseResource(BaseResource):
         """
         Subclasses override this method
         """
-        pass
 
     @classmethod
     @safe_db_query
@@ -143,4 +150,3 @@ class DatabaseResource(BaseResource):
         """
         Subclasses override this method
         """
-        pass

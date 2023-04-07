@@ -20,16 +20,22 @@ def create_upstream_block_tables(
         parse_attributes,
         source_table_name_for_block,
     )
+
     configuration = configuration if configuration else block.configuration
 
-    for idx, upstream_block in enumerate(block.upstream_blocks):
-        if should_cache_data_from_upstream(block, upstream_block, [
-            'data_provider',
-        ], [
-            ConfigKey.SNOWFLAKE_ACCOUNT,
-            ConfigKey.SNOWFLAKE_DEFAULT_WH,
-            ConfigKey.SNOWFLAKE_DEFAULT_DB,
-        ]):
+    for _idx, upstream_block in enumerate(block.upstream_blocks):
+        if should_cache_data_from_upstream(
+            block,
+            upstream_block,
+            [
+                'data_provider',
+            ],
+            [
+                ConfigKey.SNOWFLAKE_ACCOUNT,
+                ConfigKey.SNOWFLAKE_DEFAULT_WH,
+                ConfigKey.SNOWFLAKE_DEFAULT_DB,
+            ],
+        ):
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
@@ -59,14 +65,7 @@ def create_upstream_block_tables(
                 schema_name = attributes_dict['source_name'].upper()
                 table_name = source_table_name_for_block(upstream_block).upper()
 
-            loader.export(
-                df,
-                table_name,
-                database,
-                schema_name,
-                if_exists='replace',
-                verbose=False
-            )
+            loader.export(df, table_name, database, schema_name, if_exists='replace', verbose=False)
 
 
 def interpolate_input_data(block, query):

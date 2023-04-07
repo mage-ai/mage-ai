@@ -73,14 +73,16 @@ class Snowflake(BaseSQLConnection):
 
         with self.conn.cursor() as cursor:
             for idx, query in enumerate(queries):
-                variables = query_variables[idx] \
-                                if query_variables and idx < len(query_variables) \
-                                else {}
+                variables = (
+                    query_variables[idx] if query_variables and idx < len(query_variables) else {}
+                )
                 query = self._clean_query(query)
 
-                if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
-                        fetch_query_at_indexes[idx]:
-
+                if (
+                    fetch_query_at_indexes
+                    and idx < len(fetch_query_at_indexes)
+                    and fetch_query_at_indexes[idx]
+                ):
                     rows = cursor.execute(query, **variables).fetchall()
 
                     full_table_name = fetch_query_at_indexes[idx]
@@ -220,8 +222,10 @@ class Snowflake(BaseSQLConnection):
                 cur.execute(f'CREATE SCHEMA IF NOT EXISTS {database}.{schema}')
 
                 cur.execute(f'USE DATABASE {database}')
-                cur.execute(f'SELECT * FROM information_schema.tables WHERE table_schema = '
-                            f'\'{schema}\' AND table_name = \'{table_name}\'')
+                cur.execute(
+                    f'SELECT * FROM information_schema.tables WHERE table_schema = '
+                    f'\'{schema}\' AND table_name = \'{table_name}\''
+                )
 
                 table_exists = cur.rowcount >= 1
                 should_create_table = not table_exists
@@ -246,15 +250,19 @@ class Snowflake(BaseSQLConnection):
                     cur.execute(f'USE DATABASE {database}')
 
                     if should_create_table:
-                        cur.execute(f"""
+                        cur.execute(
+                            f"""
 CREATE TABLE IF NOT EXISTS "{database}"."{schema}"."{table_name}" AS
 {query_string}
-""")
+"""
+                        )
                     else:
-                        cur.execute(f"""
+                        cur.execute(
+                            f"""
 INSERT INTO "{database}"."{schema}"."{table_name}"
 {query_string}
-""")
+"""
+                        )
 
                 else:
                     write_pandas(
@@ -268,9 +276,7 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
                     )
 
         if verbose:
-            with self.printer.print_msg(
-                f'Exporting data to \'{database}.{schema}.{table_name}\''
-            ):
+            with self.printer.print_msg(f'Exporting data to \'{database}.{schema}.{table_name}\''):
                 __process()
         else:
             __process()
@@ -309,9 +315,7 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
                     password = config[ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE].encode()
 
                 p_key = serialization.load_pem_private_key(
-                    key.read(),
-                    password=password,
-                    backend=default_backend()
+                    key.read(), password=password, backend=default_backend()
                 )
 
             pkb = p_key.private_bytes(

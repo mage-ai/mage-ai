@@ -29,15 +29,18 @@ def print_log_from_line(
         tags1 = data.get('tags')
 
         if 'timestamp' in data:
-            message = datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S') \
-                        + ' ' + str(message)
+            message = (
+                datetime.fromtimestamp(data['timestamp']).strftime('%Y-%m-%dT%H:%M:%S')
+                + ' '
+                + str(message)
+            )
 
         if message and (
             re.match(
                 '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} Unable to parse:',
                 message,
-            ) or
-            re.match('Unable to parse:', message)
+            )
+            or re.match('Unable to parse:', message)
         ):
             return
 
@@ -57,7 +60,7 @@ def print_log_from_line(
                         **merge_dict(
                             logging_tags,
                             dict(tags=merge_dict(tags, updated_tags)),
-                        )
+                        ),
                     )
                 except Exception:
                     pass

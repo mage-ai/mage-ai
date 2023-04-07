@@ -20,6 +20,7 @@ DEFAULT_VARIABLE_RETENTION_PERIOD = '30d'
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
         from mage_ai.data_preparation.shared.utils import get_template_vars
+
         self.repo_path = repo_path or get_repo_path()
         self.repo_name = os.path.basename(self.repo_path)
         try:
@@ -27,9 +28,7 @@ class RepoConfig:
                 metadata_path = os.path.join(self.repo_path, 'metadata.yaml')
                 if os.path.exists(metadata_path):
                     with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
-                        config_file = Template(f.read()).render(
-                            **get_template_vars()
-                        )
+                        config_file = Template(f.read()).render(**get_template_vars())
                         repo_config = yaml.full_load(config_file) or {}
                 else:
                     repo_config = dict()
@@ -50,8 +49,10 @@ class RepoConfig:
                     repo_config.get('variables_dir', DEFAULT_MAGE_DATA_DIR),
                 )
             if self.variables_dir is not None and not self.variables_dir.startswith('s3'):
-                if os.path.isabs(self.variables_dir) and self.variables_dir != self.repo_path and (
-                    not config_dict or not config_dict.get('variables_dir')
+                if (
+                    os.path.isabs(self.variables_dir)
+                    and self.variables_dir != self.repo_path
+                    and (not config_dict or not config_dict.get('variables_dir'))
                 ):
                     # If the variables_dir is an absolute path, not same as repo_path, and
                     # from config file
@@ -71,8 +72,9 @@ class RepoConfig:
 
             self.s3_bucket = None
             self.s3_path_prefix = None
-            if self.remote_variables_dir is not None and \
-                    self.remote_variables_dir.startswith('s3://'):
+            if self.remote_variables_dir is not None and self.remote_variables_dir.startswith(
+                's3://'
+            ):
                 path_parts = self.remote_variables_dir.replace('s3://', '').split('/')
                 self.s3_bucket = path_parts.pop(0)
                 self.s3_path_prefix = '/'.join(path_parts)
@@ -85,7 +87,6 @@ class RepoConfig:
             )
         except Exception:
             traceback.print_exc()
-            pass
 
     @classmethod
     def from_dict(self, config_dict: Dict) -> 'RepoConfig':

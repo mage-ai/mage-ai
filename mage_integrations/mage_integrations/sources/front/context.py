@@ -15,6 +15,7 @@ class Context(object):
     - catalog - A singer.catalog.Catalog. Note this will be None during
                 discovery.
     """
+
     def __init__(self, config, state):
         self.config = config
         self.state = state

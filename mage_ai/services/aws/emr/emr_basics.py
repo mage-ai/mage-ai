@@ -16,8 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 def run_job_flow(
-        name, log_uri, keep_alive, applications, job_flow_role, service_role,
-        security_groups, steps, emr_client):
+    name,
+    log_uri,
+    keep_alive,
+    applications,
+    job_flow_role,
+    service_role,
+    security_groups,
+    steps,
+    emr_client,
+):
     """
     Runs a job flow with the specified steps. A job flow creates a cluster of
     instances and adds steps to be run on the cluster. Steps added to the cluster
@@ -58,22 +66,28 @@ def run_job_flow(
                 'EmrManagedMasterSecurityGroup': security_groups['manager'].id,
                 'EmrManagedSlaveSecurityGroup': security_groups['worker'].id,
             },
-            Steps=[{
-                'Name': step['name'],
-                'ActionOnFailure': 'CONTINUE',
-                'HadoopJarStep': {
-                    'Jar': 'command-runner.jar',
-                    'Args': ['spark-submit', '--deploy-mode', 'cluster',
-                             step['script_uri'], *step['script_args']]
+            Steps=[
+                {
+                    'Name': step['name'],
+                    'ActionOnFailure': 'CONTINUE',
+                    'HadoopJarStep': {
+                        'Jar': 'command-runner.jar',
+                        'Args': [
+                            'spark-submit',
+                            '--deploy-mode',
+                            'cluster',
+                            step['script_uri'],
+                            *step['script_args'],
+                        ],
+                    },
                 }
-            } for step in steps],
-            Applications=[{
-                'Name': app
-            } for app in applications],
+                for step in steps
+            ],
+            Applications=[{'Name': app} for app in applications],
             JobFlowRole=job_flow_role.name,
             ServiceRole=service_role.name,
             EbsRootVolumeSize=10,
-            VisibleToAllUsers=True
+            VisibleToAllUsers=True,
         )
         cluster_id = response['JobFlowId']
         logger.info("Created cluster %s.", cluster_id)
@@ -134,15 +148,23 @@ def add_step(cluster_id, name, script_uri, script_args, emr_client):
     try:
         response = emr_client.add_job_flow_steps(
             JobFlowId=cluster_id,
-            Steps=[{
-                'Name': name,
-                'ActionOnFailure': 'CONTINUE',
-                'HadoopJarStep': {
-                    'Jar': 'command-runner.jar',
-                    'Args': ['spark-submit', '--deploy-mode', 'cluster',
-                             script_uri, *script_args]
+            Steps=[
+                {
+                    'Name': name,
+                    'ActionOnFailure': 'CONTINUE',
+                    'HadoopJarStep': {
+                        'Jar': 'command-runner.jar',
+                        'Args': [
+                            'spark-submit',
+                            '--deploy-mode',
+                            'cluster',
+                            script_uri,
+                            *script_args,
+                        ],
+                    },
                 }
-            }])
+            ],
+        )
         step_id = response['StepIds'][0]
         logger.info("Started step with ID %s", step_id)
     except ClientError:

@@ -35,12 +35,17 @@ class User(BaseModel):
     @validates('email')
     def validate_email(self, key, value):
         if value:
-            regex = re.compile(r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])")  # noqa: E501
+            regex = re.compile(
+                r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])"  # noqa: E501
+            )  # noqa: E501
             if not re.fullmatch(regex, value):
-                raise ValidationError('Email address is invalid.', metadata=dict(
-                    key=key,
-                    value=value,
-                ))
+                raise ValidationError(
+                    'Email address is invalid.',
+                    metadata=dict(
+                        key=key,
+                        value=value,
+                    ),
+                )
         return value
 
     @property
@@ -95,6 +100,8 @@ class Oauth2AccessToken(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'))
 
     def is_valid(self) -> bool:
-        return self.token and \
-            self.expires and \
-            self.expires >= datetime.utcnow().replace(tzinfo=self.expires.tzinfo)
+        return (
+            self.token
+            and self.expires
+            and self.expires >= datetime.utcnow().replace(tzinfo=self.expires.tzinfo)
+        )

@@ -17,9 +17,11 @@ class ApiTriggerPipelineHandler(BaseHandler):
     def post(self, pipeline_schedule_id, token: str = None):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
 
-        if PipelineSchedule.ScheduleType.API == pipeline_schedule.schedule_type and \
-            pipeline_schedule.token and \
-                pipeline_schedule.token != token:
+        if (
+            PipelineSchedule.ScheduleType.API == pipeline_schedule.schedule_type
+            and pipeline_schedule.token
+            and pipeline_schedule.token != token
+        ):
             raise UnauthenticatedRequestException(
                 f'Invalid token for pipeline schedule ID {pipeline_schedule_id}.',
             )
@@ -51,6 +53,7 @@ class ApiTriggerPipelineHandler(BaseHandler):
         pipeline_run = PipelineRun.create(**payload)
 
         from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+
         pipeline_scheduler = PipelineScheduler(pipeline_run)
 
         if is_integration:

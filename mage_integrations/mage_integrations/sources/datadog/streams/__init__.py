@@ -10,6 +10,7 @@ import singer
 
 DEFAULT_MAX_RECORDS = 100
 
+
 class DatadogStream:
     """
     Datadog API Reference: https://docs.datadoghq.com/api/latest/
@@ -35,12 +36,9 @@ class DatadogStream:
         Return the URL to hit for data from this stream.
         """
         return f'{self.BASE_PATH}{self.URL_PATH}'
-    
+
     def load_data(
-        self,
-        bookmarks: Dict = None,
-        bookmark_properties: List = None,
-        to_date: str = None
+        self, bookmarks: Dict = None, bookmark_properties: List = None, to_date: str = None
     ):
         table = self.TABLE
         done = False
@@ -48,7 +46,8 @@ class DatadogStream:
 
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
         self.logger.info(
-            f'Attempting to get the most recent bookmark_date for entity {self.ENTITY}.')
+            f'Attempting to get the most recent bookmark_date for entity {self.ENTITY}.'
+        )
         if bookmarks and bookmark_properties:
             bookmark_date = bookmarks.get(bookmark_properties[0])
 
@@ -89,17 +88,15 @@ class DatadogStream:
             bookmark_date = max_date
 
     def make_request(self, params):
-        return self.client.make_request(
-            url=self.get_url(),
-            method=self.API_METHOD,
-            params=params
-        )
+        return self.client.make_request(url=self.get_url(), method=self.API_METHOD, params=params)
 
     def next_page_token(self, response: Dict):
         return None
 
     def parse_response(self, response):
-        records = response if not self.parse_response_root else response.get(self.parse_response_root, [])
+        records = (
+            response if not self.parse_response_root else response.get(self.parse_response_root, [])
+        )
         return [self.transform_record(r) for r in records]
 
     def transform_record(self, record):
@@ -110,6 +107,7 @@ class Dashboards(DatadogStream):
     """
     https://docs.datadoghq.com/api/latest/dashboards/#get-all-dashboards
     """
+
     TABLE = 'dashboards'
     ENTITY = 'dashboard'
     API_METHOD = 'GET'
@@ -123,6 +121,7 @@ class Downtimes(DatadogStream):
     """
     https://docs.datadoghq.com/api/latest/downtimes/#get-all-downtimes
     """
+
     TABLE = 'downtimes'
     ENTITY = 'downtime'
     API_METHOD = 'GET'
@@ -134,6 +133,7 @@ class SyntheticTests(DatadogStream):
     """
     https://docs.datadoghq.com/api/latest/synthetics/#get-the-list-of-all-tests
     """
+
     TABLE = 'synthetic_tests'
     ENTITY = 'synthetic_test'
     API_METHOD = 'GET'
@@ -158,15 +158,11 @@ class IncrementalSearchableStream(DatadogStream):
         if not cursor:
             return {}
         else:
-            return {
-                'cursor': cursor
-            }
-        
+            return {'cursor': cursor}
+
     def make_request(self, params):
         return self.client.make_request(
-            url=self.get_url(),
-            method=self.API_METHOD,
-            body=self.get_payload(**params)
+            url=self.get_url(), method=self.API_METHOD, body=self.get_payload(**params)
         )
 
     def get_payload(self, cursor=None, **kwargs) -> Mapping[str, Any]:
@@ -187,6 +183,7 @@ class AuditLogs(IncrementalSearchableStream):
     """
     https://docs.datadoghq.com/api/latest/audit/#search-audit-logs-events
     """
+
     TABLE = 'audit_logs'
     ENTITY = 'audit_log'
     API_METHOD = 'POST'
@@ -198,6 +195,7 @@ class Logs(IncrementalSearchableStream):
     """
     https://docs.datadoghq.com/api/latest/logs/#search-logs
     """
+
     TABLE = 'logs'
     ENTITY = 'log'
     API_METHOD = 'POST'
@@ -214,6 +212,7 @@ class Metrics(BasedListStream):
     """
     https://docs.datadoghq.com/api/latest/metrics/#get-a-list-of-metrics
     """
+
     TABLE = 'metrics'
     ENTITY = 'metric'
     API_METHOD = 'GET'
@@ -237,6 +236,7 @@ class Incidents(PaginatedBasedListStream):
     """
     https://docs.datadoghq.com/api/latest/incidents/#get-a-list-of-incidents
     """
+
     TABLE = 'incidents'
     ENTITY = 'incident'
     API_METHOD = 'GET'
@@ -248,6 +248,7 @@ class IncidentTeams(PaginatedBasedListStream):
     """
     https://docs.datadoghq.com/api/latest/incident-teams/#get-a-list-of-all-incident-teams
     """
+
     TABLE = 'incident_teams'
     ENTITY = 'incident_team'
     API_METHOD = 'GET'
@@ -259,6 +260,7 @@ class Users(PaginatedBasedListStream):
     """
     https://docs.datadoghq.com/api/latest/users/#list-all-users
     """
+
     TABLE = 'users'
     ENTITY = 'user'
     API_METHOD = 'GET'

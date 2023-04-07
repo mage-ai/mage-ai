@@ -23,9 +23,7 @@ def check_status(
     __validate_pipeline_and_block(pipeline_uuid, block_uuid)
 
     pipeline_run = (
-        PipelineRun
-        .query
-        .join(PipelineRun.pipeline_schedule)
+        PipelineRun.query.join(PipelineRun.pipeline_schedule)
         .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
         .filter(PipelineRun.execution_date >= execution_date - timedelta(days=1))
         .order_by(PipelineRun.execution_date.desc())
@@ -35,9 +33,11 @@ def check_status(
     if pipeline_run is None:
         return False
 
-    if pipeline_run.execution_date != execution_date and \
-        pipeline_run.pipeline_schedule.schedule_interval != \
-            PipelineSchedule.ScheduleInterval.ONCE:
+    if (
+        pipeline_run.execution_date != execution_date
+        and pipeline_run.pipeline_schedule.schedule_interval
+        != PipelineSchedule.ScheduleInterval.ONCE
+    ):
         return False
 
     pipeline_run.refresh()

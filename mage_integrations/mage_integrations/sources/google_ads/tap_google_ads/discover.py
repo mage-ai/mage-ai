@@ -84,8 +84,7 @@ def get_attributes(api_objects, resource):
     for field in api_objects:
         root_object_name = field.name.split(".")[0]
         does_field_exist_on_resource = (
-            root_object_name == resource.name
-            or root_object_name in attributed_resources
+            root_object_name == resource.name or root_object_name in attributed_resources
         )
         is_field_an_attribute = CATEGORY_MAP[field.category] == "ATTRIBUTE"
         if is_field_an_attribute and does_field_exist_on_resource:
@@ -213,9 +212,8 @@ def create_resource_schema(config):
                 field_root_resource = get_root_resource_name(field_name)
                 compared_field_root_resource = get_root_resource_name(compared_field)
 
-                if (
-                    field_name != compared_field
-                    and not compared_field.startswith(f"{field_root_resource}.")
+                if field_name != compared_field and not compared_field.startswith(
+                    f"{field_root_resource}."
                 ):
                     field_to_check = field_root_resource or field_name
                     compared_field_to_check = compared_field_root_resource or compared_field
@@ -229,8 +227,10 @@ def create_resource_schema(config):
                     # each other's 'selectable_with' list, but Google is missing some of
                     # these so we have to check both ways
                     if (
-                        field_to_check not in resource_schema[compared_field_to_check]["selectable_with"]
-                        and compared_field_to_check not in resource_schema[field_to_check]["selectable_with"]
+                        field_to_check
+                        not in resource_schema[compared_field_to_check]["selectable_with"]
+                        and compared_field_to_check
+                        not in resource_schema[field_to_check]["selectable_with"]
                     ):
                         field["incompatible_fields"].append(compared_field)
 
@@ -239,10 +239,8 @@ def create_resource_schema(config):
 
 
 def do_discover_streams(stream_name_to_resource):
-
     streams = []
     for stream_name, stream in stream_name_to_resource.items():
-
         catalog_entry = {
             "tap_stream_id": stream_name,
             "stream": stream_name,
@@ -261,6 +259,6 @@ def do_discover(resource_schema):
 
     streams.extend(core_streams)
     streams.extend(report_streams)
-    
+
     data = {"streams": streams}
     return data

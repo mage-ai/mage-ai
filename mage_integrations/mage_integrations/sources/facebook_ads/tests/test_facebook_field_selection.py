@@ -7,7 +7,6 @@ from base import FacebookBaseTest
 
 
 class FacebookFieldSelection(FacebookBaseTest):  # TODO use base.py, determine if test is needed
-
     @staticmethod
     def name():
         return "tap_tester_facebook_field_selection"
@@ -32,18 +31,39 @@ class FacebookFieldSelection(FacebookBaseTest):  # TODO use base.py, determine i
     @staticmethod
     def expected_pks():
         return {
-            "ads" :                             {"id", "updated_time"},
-            "adcreative" :                      {"id"},
-            "adsets" :                          {"id", "updated_time"},
-            "campaigns" :                       {"id"},
-            "ads_insights" :                    {"campaign_id", "adset_id", "ad_id", "date_start"},
-            "ads_insights_age_and_gender" :     {"campaign_id", "adset_id", "ad_id", "date_start", "age", "gender"},
-            "ads_insights_country" :            {"campaign_id", "adset_id", "ad_id", "date_start", "country"},
-            "ads_insights_platform_and_device": {"campaign_id", "adset_id", "ad_id", "date_start", "publisher_platform", "platform_position", "impression_device"},
-            "ads_insights_region" :             {"campaign_id", "adset_id", "ad_id", "date_start"},
-            "ads_insights_dma" :                {"campaign_id", "adset_id", "ad_id", "date_start"},
-            "ads_insights_hourly_advertiser":   {"campaign_id", "adset_id", "ad_id", "date_start", "hourly_stats_aggregated_by_advertiser_time_zone"},
-            #"leads" :                           {"id"},
+            "ads": {"id", "updated_time"},
+            "adcreative": {"id"},
+            "adsets": {"id", "updated_time"},
+            "campaigns": {"id"},
+            "ads_insights": {"campaign_id", "adset_id", "ad_id", "date_start"},
+            "ads_insights_age_and_gender": {
+                "campaign_id",
+                "adset_id",
+                "ad_id",
+                "date_start",
+                "age",
+                "gender",
+            },
+            "ads_insights_country": {"campaign_id", "adset_id", "ad_id", "date_start", "country"},
+            "ads_insights_platform_and_device": {
+                "campaign_id",
+                "adset_id",
+                "ad_id",
+                "date_start",
+                "publisher_platform",
+                "platform_position",
+                "impression_device",
+            },
+            "ads_insights_region": {"campaign_id", "adset_id", "ad_id", "date_start"},
+            "ads_insights_dma": {"campaign_id", "adset_id", "ad_id", "date_start"},
+            "ads_insights_hourly_advertiser": {
+                "campaign_id",
+                "adset_id",
+                "ad_id",
+                "date_start",
+                "hourly_stats_aggregated_by_advertiser_time_zone",
+            },
+            # "leads" :                           {"id"},
         }
 
     def expected_automatic_fields(self):
@@ -52,14 +72,14 @@ class FacebookFieldSelection(FacebookBaseTest):  # TODO use base.py, determine i
         return return_value
 
     def get_properties(self):  # pylint: disable=arguments-differ
-        return {'start_date' : '2015-03-15T00:00:00Z',
-                'account_id': os.getenv('TAP_FACEBOOK_ACCOUNT_ID'),
-                'end_date': '2015-03-16T00:00:00+00:00',
-                'insights_buffer_days': '1'
+        return {
+            'start_date': '2015-03-15T00:00:00Z',
+            'account_id': os.getenv('TAP_FACEBOOK_ACCOUNT_ID'),
+            'end_date': '2015-03-16T00:00:00+00:00',
+            'insights_buffer_days': '1',
         }
 
     def test_run(self):
-
         expected_streams = self.streams_to_test()
 
         conn_id = connections.ensure_connection(self)
@@ -72,11 +92,13 @@ class FacebookFieldSelection(FacebookBaseTest):  # TODO use base.py, determine i
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
         found_catalogs = menagerie.get_catalogs(conn_id)
-        self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
+        self.assertGreater(
+            len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id)
+        )
 
         found_catalog_names = set(map(lambda c: c['tap_stream_id'], found_catalogs))
 
-        diff = expected_streams.symmetric_difference( found_catalog_names )
+        diff = expected_streams.symmetric_difference(found_catalog_names)
         self.assertEqual(len(diff), 0, msg="discovered schemas do not match: {}".format(diff))
         LOGGER.info("discovered schemas are kosher")
 
@@ -86,13 +108,19 @@ class FacebookFieldSelection(FacebookBaseTest):  # TODO use base.py, determine i
             if c['stream_name'] == 'ads':
                 continue
 
-            discovered_schema = menagerie.get_annotated_schema(conn_id, c['stream_id'])['annotated-schema']
-            all_excluded_fields[c['stream_name']] = list(set(discovered_schema.keys()) - self.expected_automatic_fields().get(c['stream_name'], set()))[:5]
+            discovered_schema = menagerie.get_annotated_schema(conn_id, c['stream_id'])[
+                'annotated-schema'
+            ]
+            all_excluded_fields[c['stream_name']] = list(
+                set(discovered_schema.keys())
+                - self.expected_automatic_fields().get(c['stream_name'], set())
+            )[:5]
             connections.select_catalog_and_fields_via_metadata(
                 conn_id,
                 c,
                 discovered_schema,
-                non_selected_fields=all_excluded_fields[c['stream_name']])
+                non_selected_fields=all_excluded_fields[c['stream_name']],
+            )
 
         # clear state
         menagerie.set_state(conn_id, {})
@@ -104,9 +132,15 @@ class FacebookFieldSelection(FacebookBaseTest):  # TODO use base.py, determine i
         menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
 
         # This should be validating the the PKs are written in each record
-        record_count_by_stream = runner.examine_target_output_file(self, conn_id, expected_streams, self.expected_pks())
-        replicated_row_count =  reduce(lambda accum,c : accum + c, record_count_by_stream.values())
-        self.assertGreater(replicated_row_count, 0, msg="failed to replicate any data: {}".format(record_count_by_stream))
+        record_count_by_stream = runner.examine_target_output_file(
+            self, conn_id, expected_streams, self.expected_pks()
+        )
+        replicated_row_count = reduce(lambda accum, c: accum + c, record_count_by_stream.values())
+        self.assertGreater(
+            replicated_row_count,
+            0,
+            msg="failed to replicate any data: {}".format(record_count_by_stream),
+        )
         print("total replicated row count: {}".format(replicated_row_count))
 
         synced_records = runner.get_records_from_target_output()

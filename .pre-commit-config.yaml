@@ -23,7 +23,19 @@ repos:
         exclude: .github/|mage_ai/data_preparation/templates
         # override until resolved: https://github.com/psf/black/issues/402
         types: []
-  
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.0.2
+    hooks:
+      - id: autoflake
+        exclude: mage_integrations/|tests/data/
+        args:
+          - --in-place
+          - --remove-all-unused-imports
+          - --expand-star-imports
+          - --remove-duplicate-keys
+          - --remove-unused-variables  
+
   # Flake8
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0

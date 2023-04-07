@@ -10,8 +10,9 @@ from typing import Dict, List, Optional, Union
 import requests
 import time
 
-LOG_TEXT_FOR_STREAMS_WITH_EXTRACTED_ROWS = \
+LOG_TEXT_FOR_STREAMS_WITH_EXTRACTED_ROWS = (
     'com.stitchdata.target-stitch-avro.flush-pipeline - send-stream-record-count-impl'
+)
 
 
 class StitchClient(HttpClient):
@@ -95,11 +96,7 @@ class StitchClient(HttpClient):
                         f'Extraction for source {source_id} failed with '
                         f'message: \"{error_message}\".'
                     )
-            if (
-                poll_timeout
-                and datetime.now()
-                > poll_start + timedelta(seconds=poll_timeout)
-            ):
+            if poll_timeout and datetime.now() > poll_start + timedelta(seconds=poll_timeout):
                 raise Exception(
                     f'Extraction for source {source_id} times out after '
                     f'{datetime.now() - poll_start}.'
@@ -121,12 +118,16 @@ class StitchClient(HttpClient):
                 if total_loads_count is None:
                     total_loads_count = loads_response['total']
                 current_count += len(loads)
-                loads = [load for load in loads if load['source_name'] == source['name']
-                         and load['stream_name'] in stream_names]
+                loads = [
+                    load
+                    for load in loads
+                    if load['source_name'] == source['name'] and load['stream_name'] in stream_names
+                ]
                 for load in loads:
                     if load['error_state'] is not None:
-                        error_message = \
-                            load['error_state']['notification_data']['warehouse_message']
+                        error_message = load['error_state']['notification_data'][
+                            'warehouse_message'
+                        ]
                         raise Exception(
                             f"Failed to load data for stream {load['stream_name']} with "
                             f"message: \"{error_message}\"."
@@ -144,17 +145,25 @@ class StitchClient(HttpClient):
             if completed_streams == total_streams:
                 print(f'Finish loading data for all streams: {succeeded_streams}.')
                 break
-            elif autocomplete_after_seconds and \
-                    datetime.now().timestamp() - autocomplete_after_seconds >= \
-                    poll_start.timestamp():
-                print(f'Automatically setting job as complete after {autocomplete_after_seconds} '
-                      'seconds.')
+            elif (
+                autocomplete_after_seconds
+                and datetime.now().timestamp() - autocomplete_after_seconds
+                >= poll_start.timestamp()
+            ):
+                print(
+                    f'Automatically setting job as complete after {autocomplete_after_seconds} '
+                    'seconds.'
+                )
                 break
             else:
-                percent_complete = round(
-                    100 * (completed_streams / total_streams),
-                    2,
-                ) if total_streams else 0
+                percent_complete = (
+                    round(
+                        100 * (completed_streams / total_streams),
+                        2,
+                    )
+                    if total_streams
+                    else 0
+                )
                 running_streams = [s for s in stream_names if s not in succeeded_streams]
                 print(
                     f'Polling Stitch load status for source {source_id}: {percent_complete}% '
@@ -162,11 +171,7 @@ class StitchClient(HttpClient):
                     f'Completed streams: {succeeded_streams}. '
                     f'Running streams: {running_streams}.'
                 )
-            if (
-                poll_timeout
-                and datetime.now()
-                > poll_start + timedelta(seconds=poll_timeout)
-            ):
+            if poll_timeout and datetime.now() > poll_start + timedelta(seconds=poll_timeout):
                 raise Exception(
                     f'Load for source {source_id} times out after {datetime.now() - poll_start}.'
                 )

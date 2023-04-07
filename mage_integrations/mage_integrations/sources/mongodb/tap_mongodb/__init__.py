@@ -19,13 +19,7 @@ from mage_integrations.sources.messages import write_schema
 
 LOGGER = singer.get_logger()
 
-REQUIRED_CONFIG_KEYS = [
-    'host',
-    'port',
-    'user',
-    'password',
-    'database'
-]
+REQUIRED_CONFIG_KEYS = ['host', 'port', 'user', 'password', 'database']
 
 IGNORE_DBS = ['system', 'local', 'config']
 ROLES_WITHOUT_FIND_PRIVILEGES = {
@@ -35,7 +29,7 @@ ROLES_WITHOUT_FIND_PRIVILEGES = {
     'clusterManager',
     'clusterMonitor',
     'hostManager',
-    'restore'
+    'restore',
 }
 ROLES_WITH_FIND_PRIVILEGES = {
     'read',
@@ -44,13 +38,9 @@ ROLES_WITH_FIND_PRIVILEGES = {
     'readWriteAnyDatabase',
     'dbOwner',
     'backup',
-    'root'
+    'root',
 }
-ROLES_WITH_ALL_DB_FIND_PRIVILEGES = {
-    'readAnyDatabase',
-    'readWriteAnyDatabase',
-    'root'
-}
+ROLES_WITH_ALL_DB_FIND_PRIVILEGES = {'readAnyDatabase', 'readWriteAnyDatabase', 'root'}
 
 
 def get_roles(client, config):
@@ -94,7 +84,8 @@ def get_roles(client, config):
         # for custom roles, get the "sub-roles"
         else:
             role_info_list = client[config['database']].command(
-                {'rolesInfo': {'role': role_name, 'db': config['database']}})
+                {'rolesInfo': {'role': role_name, 'db': config['database']}}
+            )
             role_info = [r for r in role_info_list.get('roles', []) if r['role'] == role_name]
             if len(role_info) != 1:
                 continue
@@ -103,6 +94,7 @@ def get_roles(client, config):
                     if sub_role.get('db'):
                         roles.append(sub_role)
     return roles
+
 
 def get_databases(client, config):
     roles = get_roles(client, config)
@@ -153,9 +145,7 @@ def produce_collection_schema(collection):
         'stream': collection_name,
         'metadata': metadata.to_list(mdata),
         'tap_stream_id': "{}-{}".format(collection_db_name, collection_name),
-        'schema': {
-            'type': 'object'
-        }
+        'schema': {'type': 'object'},
     }
 
 
@@ -167,23 +157,22 @@ def do_discover(client, config, databases=[], return_streams: bool = False):
         db = client[db_name]
 
         collection_names = db.list_collection_names()
-        for collection_name in [c for c in collection_names
-                                if not c.startswith("system.")]:
-
+        for collection_name in [c for c in collection_names if not c.startswith("system.")]:
             collection = db[collection_name]
             is_view = collection.options().get('viewOn') is not None
             # TODO: Add support for views
             if is_view:
                 continue
 
-            LOGGER.info("Getting collection info for db: %s, collection: %s",
-                        db_name, collection_name)
+            LOGGER.info(
+                "Getting collection info for db: %s, collection: %s", db_name, collection_name
+            )
             streams.append(produce_collection_schema(collection))
 
     if return_streams:
         return streams
 
-    json.dump({'streams' : streams}, sys.stdout, indent=2)
+    json.dump({'streams': streams}, sys.stdout, indent=2)
 
 
 def is_stream_selected(stream):
@@ -195,7 +184,6 @@ def is_stream_selected(stream):
 
 
 def get_streams_to_sync(streams, state):
-
     # get selected streams
     selected_streams = [s for s in streams if is_stream_selected(s)]
     # prioritize streams that have not been processed
@@ -215,12 +203,12 @@ def get_streams_to_sync(streams, state):
     # move onto streams with state (i.e. have been synced in the past)
     currently_syncing = singer.get_currently_syncing(state)
     if currently_syncing:
-        currently_syncing_stream = list(filter(
-            lambda s: s['tap_stream_id'] == currently_syncing,
-            ordered_streams))
-        non_currently_syncing_streams = list(filter(lambda s: s['tap_stream_id']
-                                                    != currently_syncing,
-                                                    ordered_streams))
+        currently_syncing_stream = list(
+            filter(lambda s: s['tap_stream_id'] == currently_syncing, ordered_streams)
+        )
+        non_currently_syncing_streams = list(
+            filter(lambda s: s['tap_stream_id'] != currently_syncing, ordered_streams)
+        )
 
         streams_to_sync = currently_syncing_stream + non_currently_syncing_streams
     else:
@@ -243,6 +231,7 @@ def write_schema_message(stream):
         unique_constraints=stream.get('unique_constraints'),
     )
 
+
 def load_stream_projection(stream):
     md_map = metadata.to_map(stream['metadata'])
     stream_projection = metadata.get(md_map, (), 'tap-mongodb.projection')
@@ -253,15 +242,19 @@ def load_stream_projection(stream):
         stream_projection = json.loads(stream_projection)
     except Exception as ex:
         err_msg = "The projection: {} for stream {} is not valid json"
-        raise common.InvalidProjectionException(err_msg.format(stream_projection,
-                                                               stream['tap_stream_id'])) from ex
+        raise common.InvalidProjectionException(
+            err_msg.format(stream_projection, stream['tap_stream_id'])
+        ) from ex
 
     if stream_projection and stream_projection.get('_id') == 0:
         raise common.InvalidProjectionException(
-            "Projection blacklists key property id for collection {}" \
-            .format(stream['tap_stream_id']))
+            "Projection blacklists key property id for collection {}".format(
+                stream['tap_stream_id']
+            )
+        )
 
     return stream_projection
+
 
 def clear_state_on_replication_change(stream, state):
     md_map = metadata.to_map(stream['metadata'])
@@ -270,7 +263,9 @@ def clear_state_on_replication_change(stream, state):
     # replication method changed
     current_replication_method = metadata.get(md_map, (), 'replication-method')
     last_replication_method = singer.get_bookmark(state, tap_stream_id, 'last_replication_method')
-    if last_replication_method is not None and (current_replication_method != last_replication_method):
+    if last_replication_method is not None and (
+        current_replication_method != last_replication_method
+    ):
         log_msg = 'Replication method changed from %s to %s, will re-replicate entire collection %s'
         LOGGER.info(log_msg, last_replication_method, current_replication_method, tap_stream_id)
         state = singer.reset_stream(state, tap_stream_id)
@@ -280,14 +275,21 @@ def clear_state_on_replication_change(stream, state):
         last_replication_key = singer.get_bookmark(state, tap_stream_id, 'replication_key_name')
         current_replication_key = metadata.get(md_map, (), 'replication-key')
         if last_replication_key is not None and (current_replication_key != last_replication_key):
-            log_msg = 'Replication Key changed from %s to %s, will re-replicate entire collection %s'
+            log_msg = (
+                'Replication Key changed from %s to %s, will re-replicate entire collection %s'
+            )
             LOGGER.info(log_msg, last_replication_key, current_replication_key, tap_stream_id)
             state = singer.reset_stream(state, tap_stream_id)
-        state = singer.write_bookmark(state, tap_stream_id, 'replication_key_name', current_replication_key)
+        state = singer.write_bookmark(
+            state, tap_stream_id, 'replication_key_name', current_replication_key
+        )
 
-    state = singer.write_bookmark(state, tap_stream_id, 'last_replication_method', current_replication_method)
+    state = singer.write_bookmark(
+        state, tap_stream_id, 'last_replication_method', current_replication_method
+    )
 
     return state
+
 
 def sync_stream(client, stream, state):
     tap_stream_id = stream['tap_stream_id']
@@ -296,7 +298,6 @@ def sync_stream(client, stream, state):
     common.TIMES[tap_stream_id] = 0
     common.SCHEMA_COUNT[tap_stream_id] = 0
     common.SCHEMA_TIMES[tap_stream_id] = 0
-
 
     md_map = metadata.to_map(stream['metadata'])
     replication_method = metadata.get(md_map, (), 'replication-method')
@@ -347,7 +348,10 @@ def sync_stream(client, stream, state):
         else:
             raise Exception(
                 "only FULL_TABLE, LOG_BASED, and INCREMENTAL replication \
-                methods are supported (you passed {})".format(replication_method))
+                methods are supported (you passed {})".format(
+                    replication_method
+                )
+            )
 
     state = singer.set_currently_syncing(state, None)
 
@@ -369,14 +373,16 @@ def build_client(config):
     verify_mode = config.get('verify_mode', 'true') == 'true'
     use_ssl = config.get('ssl') == 'true'
 
-    connection_params = {"host": config['host'],
-                         "port": int(config['port']),
-                         "username": config.get('user', None),
-                         "password": config.get('password', None),
-                         # "authSource": config['database'],
-                         "ssl": use_ssl,
-                         "replicaset": config.get('replica_set', None),
-                         "readPreference": 'secondaryPreferred'}
+    connection_params = {
+        "host": config['host'],
+        "port": int(config['port']),
+        "username": config.get('user', None),
+        "password": config.get('password', None),
+        # "authSource": config['database'],
+        "ssl": use_ssl,
+        "replicaset": config.get('replica_set', None),
+        "readPreference": 'secondaryPreferred',
+    }
 
     # NB: "ssl_cert_reqs" must ONLY be supplied if `SSL` is true.
     if not verify_mode and use_ssl:
@@ -384,13 +390,15 @@ def build_client(config):
 
     client = pymongo.MongoClient(**connection_params)
 
+    LOGGER.info(
+        'Connected to MongoDB host: %s, version: %s',
+        config['host'],
+        client.server_info().get('version', 'unknown'),
+    )
 
-    LOGGER.info('Connected to MongoDB host: %s, version: %s',
-                config['host'],
-                client.server_info().get('version', 'unknown'))
-
-    common.INCLUDE_SCHEMAS_IN_DESTINATION_STREAM_NAME = \
-        (config.get('include_schemas_in_destination_stream_name') == 'true')
+    common.INCLUDE_SCHEMAS_IN_DESTINATION_STREAM_NAME = (
+        config.get('include_schemas_in_destination_stream_name') == 'true'
+    )
 
     return client
 
@@ -406,6 +414,7 @@ def main_impl():
     elif args.catalog:
         state = args.state or {}
         do_sync(client, args.catalog.to_dict(), state)
+
 
 def main():
     try:

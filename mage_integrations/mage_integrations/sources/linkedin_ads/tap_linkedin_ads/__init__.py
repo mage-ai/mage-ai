@@ -13,10 +13,7 @@ from tap_linkedin_ads.sync import sync as _sync
 LOGGER = singer.get_logger()
 REQUEST_TIMEOUT = 300
 
-REQUIRED_CONFIG_KEYS = [
-    'access_token',
-    'user_agent'
-]
+REQUIRED_CONFIG_KEYS = ['access_token', 'user_agent']
 
 
 def do_discover(client, config, return_streams: bool = False):
@@ -32,29 +29,27 @@ def do_discover(client, config, return_streams: bool = False):
 
     json.dump(catalog_dict, sys.stdout, indent=2)
 
+
 @singer.utils.handle_top_exception(LOGGER)
 def main():
     parsed_args = singer.utils.parse_args(REQUIRED_CONFIG_KEYS)
     config = parsed_args.config
 
-    with LinkedinClient(parsed_args.config.get('client_id', None),
-                        parsed_args.config.get('client_secret', None),
-                        parsed_args.config.get('refresh_token', None),
-                        parsed_args.config.get('access_token'),
-                        REQUEST_TIMEOUT,
-                        parsed_args.config['user_agent']
-                        ) as client:
-
+    with LinkedinClient(
+        parsed_args.config.get('client_id', None),
+        parsed_args.config.get('client_secret', None),
+        parsed_args.config.get('refresh_token', None),
+        parsed_args.config.get('access_token'),
+        REQUEST_TIMEOUT,
+        parsed_args.config['user_agent'],
+    ) as client:
         state = {}
         if parsed_args.state:
             state = parsed_args.state
         if parsed_args.discover:
             do_discover(client, config)
         elif parsed_args.catalog:
-            _sync(client=client,
-                  config=config,
-                  catalog=parsed_args.catalog,
-                  state=state)
+            _sync(client=client, config=config, catalog=parsed_args.catalog, state=state)
 
 
 if __name__ == '__main__':

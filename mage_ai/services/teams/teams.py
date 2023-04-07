@@ -11,9 +11,11 @@ def send_teams_message(
         url=config.webhook_url,
         json={
             'summary': title,
-            'sections': [{
-                'activityTitle': title,
-                'activitySubtitle': message,
-            }],
+            'sections': [
+                {
+                    'activityTitle': title,
+                    'activitySubtitle': message,
+                }
+            ],
         },
     )

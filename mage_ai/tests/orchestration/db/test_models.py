@@ -24,7 +24,7 @@ class PipelineScheduleTests(DBTestCase):
 
     def test_pipeline_runs_count(self):
         pipeline_schedule = PipelineSchedule.create(pipeline_uuid='test_pipeline')
-        for i in range(5):
+        for _i in range(5):
             create_pipeline_run_with_schedule(
                 'test_pipeline',
                 pipeline_schedule_id=pipeline_schedule.id,
@@ -32,19 +32,10 @@ class PipelineScheduleTests(DBTestCase):
         self.assertEqual(pipeline_schedule.pipeline_runs_count, 5)
 
     def test_validate_schedule_interval(self):
-        PipelineSchedule.create(
-            pipeline_uuid='test_pipeline',
-            schedule_interval='@daily'
-        )
-        PipelineSchedule.create(
-            pipeline_uuid='test_pipeline',
-            schedule_interval='* * * * *'
-        )
+        PipelineSchedule.create(pipeline_uuid='test_pipeline', schedule_interval='@daily')
+        PipelineSchedule.create(pipeline_uuid='test_pipeline', schedule_interval='* * * * *')
         with self.assertRaises(ValueError) as context:
-            PipelineSchedule.create(
-                pipeline_uuid='test_pipeline',
-                schedule_interval='random_str'
-            )
+            PipelineSchedule.create(pipeline_uuid='test_pipeline', schedule_interval='random_str')
         self.assertTrue('Cron expression is invalid.' in str(context.exception))
 
     def test_active_schedules(self):
@@ -56,22 +47,14 @@ class PipelineScheduleTests(DBTestCase):
             'test active schedule 2',
             self.repo_path,
         )
-        PipelineSchedule.create(
-            pipeline_uuid='test_active_schedule_1',
-            schedule_interval='@daily'
-        )
+        PipelineSchedule.create(pipeline_uuid='test_active_schedule_1', schedule_interval='@daily')
         pipeline_schedule2 = PipelineSchedule.create(
-            pipeline_uuid='test_active_schedule_1',
-            schedule_interval='@daily'
+            pipeline_uuid='test_active_schedule_1', schedule_interval='@daily'
         )
         pipeline_schedule3 = PipelineSchedule.create(
-            pipeline_uuid='test_active_schedule_2',
-            schedule_interval='@daily'
+            pipeline_uuid='test_active_schedule_2', schedule_interval='@daily'
         )
-        PipelineSchedule.create(
-            pipeline_uuid='test_active_schedule_2',
-            schedule_interval='@daily'
-        )
+        PipelineSchedule.create(pipeline_uuid='test_active_schedule_2', schedule_interval='@daily')
         pipeline_schedule2.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
         pipeline_schedule3.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
         results1 = PipelineSchedule.active_schedules(pipeline_uuids=['test_active_schedule_1'])
@@ -86,12 +69,10 @@ class PipelineScheduleTests(DBTestCase):
 
     def test_should_schedule(self):
         pipeline_schedule1 = PipelineSchedule.create(
-            pipeline_uuid='test_pipeline',
-            schedule_interval='@daily'
+            pipeline_uuid='test_pipeline', schedule_interval='@daily'
         )
         pipeline_schedule2 = PipelineSchedule.create(
-            pipeline_uuid='test_pipeline',
-            schedule_interval='@daily'
+            pipeline_uuid='test_pipeline', schedule_interval='@daily'
         )
         pipeline_schedule2.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
         self.assertFalse(pipeline_schedule1.should_schedule())

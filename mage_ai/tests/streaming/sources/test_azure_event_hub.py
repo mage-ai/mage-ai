@@ -6,18 +6,22 @@ from unittest.mock import patch
 class KafkaTests(TestCase):
     def test_init(self):
         with patch.object(AzureEventHubSource, 'init_client') as mock_init_client:
-            AzureEventHubSource(dict(
-                connection_str='test_connection_str',
-                eventhub_name='test_eventhub_name',
-            ))
+            AzureEventHubSource(
+                dict(
+                    connection_str='test_connection_str',
+                    eventhub_name='test_eventhub_name',
+                )
+            )
             mock_init_client.assert_called_once()
 
     def test_init_invalid_config(self):
         with patch.object(AzureEventHubSource, 'init_client') as mock_init_client:
             with self.assertRaises(Exception) as context:
-                AzureEventHubSource(dict(
-                    connection_str='test_connection_str',
-                ))
+                AzureEventHubSource(
+                    dict(
+                        connection_str='test_connection_str',
+                    )
+                )
             self.assertTrue(
                 '__init__() missing 1 required positional argument: \'eventhub_name\''
                 in str(context.exception),

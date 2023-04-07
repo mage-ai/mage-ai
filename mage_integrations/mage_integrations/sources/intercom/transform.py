@@ -17,6 +17,7 @@ def denest_list_nodes(this_json, data_key, list_nodes):
         i = i + 1
     return new_json
 
+
 # De-nest conversation_parts from conversations w/ key conversation fields
 def transform_conversation_parts(this_json, data_key):
     new_json = []
@@ -66,21 +67,19 @@ def transform_json(this_json, stream_name, data_key):
 def find_datetimes_in_schema(schema):
     paths = []
     if 'properties' in schema and isinstance(schema, dict):
-        for k, v in schema['properties'].items(): #pylint: disable=invalid-name
+        for k, v in schema['properties'].items():  # pylint: disable=invalid-name
             if 'format' in v and v['format'] == 'date-time':
                 paths.append([k])
             else:
-                paths += [
-                    [k] + x for x in find_datetimes_in_schema(v)
-                ]
+                paths += [[k] + x for x in find_datetimes_in_schema(v)]
     if 'items' in schema and isinstance(schema, dict):
-        for k, v in schema.get('items').get('properties', {}).items(): #pylint: disable=invalid-name
+        for k, v in (
+            schema.get('items').get('properties', {}).items()
+        ):  # pylint: disable=invalid-name
             if 'format' in v and v['format'] == 'date-time':
                 paths.append([[k]])
             else:
-                paths += [
-                    [k] + x for x in find_datetimes_in_schema(v)
-                ]
+                paths += [[k] + x for x in find_datetimes_in_schema(v)]
     return paths
 
 
@@ -95,6 +94,7 @@ def get_integer_places(value):
             counter += 1
         return counter
 
+
 # Traverse dict by array of keys and return path's value
 def nested_get(dic, keys):
     for key in keys:
@@ -105,6 +105,7 @@ def nested_get(dic, keys):
         else:
             return None
     return dic
+
 
 # Set nested value by arrray of keys as path
 def nested_set(dic, keys, value):
@@ -117,6 +118,7 @@ def nested_set(dic, keys, value):
     else:
         for index, _ in enumerate(dic.get(keys[0])):
             dic[keys[0]][index][keys[-1][0]] = value[index]
+
 
 # API returns date times, epoch seconds and epoch millis
 # Transform datetimes to epoch millis

@@ -17,11 +17,10 @@ def build_find_filter(stream: Dict, state: Dict = {}) -> Dict:
     find_filter = {}
     if replication_key_value_bookmark:
         find_filter[replication_key_name] = {}
-        find_filter[replication_key_name]['$gte'] = \
-            common.string_to_class(
-                replication_key_value_bookmark,
-                stream_state.get('replication_key_type'),
-            )
+        find_filter[replication_key_name]['$gte'] = common.string_to_class(
+            replication_key_value_bookmark,
+            stream_state.get('replication_key_type'),
+        )
 
     return find_filter
 

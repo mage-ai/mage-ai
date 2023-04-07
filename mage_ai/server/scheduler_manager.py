@@ -6,7 +6,7 @@ import multiprocessing
 import traceback
 
 
-SCHEDULER_AUTO_RESTART_INTERVAL = 20_000    # in milliseconds
+SCHEDULER_AUTO_RESTART_INTERVAL = 20_000  # in milliseconds
 
 logger = Logger().new_server_logger(__name__)
 

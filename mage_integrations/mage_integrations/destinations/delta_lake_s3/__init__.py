@@ -14,6 +14,7 @@ class DeltaLakeS3(BaseDeltaLake):
     it’s because you have an ~/.aws/credentials file. Remove that file or else this error
     occurs occasionally from boto3.
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.aws_region = None
@@ -84,18 +85,20 @@ class DeltaLakeS3(BaseDeltaLake):
         }
 
     def build_table_uri(self, stream: str) -> str:
-        return '/'.join([
-            f"s3://{self.config['bucket']}",
-            self.config['object_key_path'],
-            self.table_name,
-        ])
+        return '/'.join(
+            [
+                f"s3://{self.config['bucket']}",
+                self.config['object_key_path'],
+                self.table_name,
+            ]
+        )
 
     def build_client(self):
         config = Config(
-           retries={
-              'max_attempts': 10,
-              'mode': 'standard',
-           },
+            retries={
+                'max_attempts': 10,
+                'mode': 'standard',
+            },
         )
 
         return boto3.client(

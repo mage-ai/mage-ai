@@ -32,9 +32,10 @@ def build_alter_table_command(
 
     columns_and_types = []
     for col in columns:
-        column_name = \
-            f'{column_identifier}{clean_column_name(col, lower_case=use_lowercase)}'\
+        column_name = (
+            f'{column_identifier}{clean_column_name(col, lower_case=use_lowercase)}'
             f'{column_identifier}'
+        )
         column_type = column_type_mapping[col]['type_converted']
         if COLUMN_TYPE_INTEGER == column_type_mapping[col]['type']:
             column_type = 'INTEGER'
@@ -73,11 +74,15 @@ def build_create_table_command(
         columns_and_types.append(col_statement)
 
     if unique_constraints:
-        unique_constraints = [clean_column_name(col, lower_case=use_lowercase)
-                              for col in unique_constraints]
-        index_name = '_'.join([
-            clean_column_name(full_table_name, lower_case=use_lowercase),
-        ] + unique_constraints)
+        unique_constraints = [
+            clean_column_name(col, lower_case=use_lowercase) for col in unique_constraints
+        ]
+        index_name = '_'.join(
+            [
+                clean_column_name(full_table_name, lower_case=use_lowercase),
+            ]
+            + unique_constraints
+        )
         index_name = f'unique{index_name}'[:64]
         columns_and_types.append(f"CONSTRAINT {index_name} Unique({', '.join(unique_constraints)})")
 

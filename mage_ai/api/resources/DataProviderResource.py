@@ -26,11 +26,14 @@ class DataProviderResource(GenericResource):
             except yaml.YAMLError as exc:
                 print(exc)
 
-        collection = [dict(
-            id=ds.title(),
-            profiles=[p for p in profiles if p != 'version'],
-            value=ds.value,
-        ) for ds in DATA_PROVIDERS]
+        collection = [
+            dict(
+                id=ds.title(),
+                profiles=[p for p in profiles if p != 'version'],
+                value=ds.value,
+            )
+            for ds in DATA_PROVIDERS
+        ]
 
         return self.build_result_set(
             collection,
