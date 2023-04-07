@@ -1,0 +1,10 @@
+{
+  "aws_access_key_id": null,
+  "aws_region": "us-west-2",
+  "aws_secret_access_key": null,
+  "bucket": null,
+  "file_type": "parquet",
+  "object_key_path": null,
+  "table": null,
+  "date_partition_format": null
+}
