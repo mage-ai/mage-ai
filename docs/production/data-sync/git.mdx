@@ -5,17 +5,18 @@ description: "Version control your Mage project with Git"
 
 ## Configure Git settings
 
-<Note>
-**SSH keys with passphrase**
+<Warning>
+**SSH keys with passphrase are not supported**
 
 The Git integration currently does not support repositories that require an SSH key with a passphrase.
 
-You can use the Mage terminal to perform your git actions. You'll still need to generate your SSH keys, and can start a
-ssh-agent so that you don't have to enter your passphrase every time you perform an action.
+You can, however, use the Mage terminal and the git CLI to perform your git actions.
+You'll still need to generate your SSH keys as normal. You can start a ssh-agent in the terminal so that
+you don't have to enter your SSH key passphrase every time you perform an action.
 
 `eval $(ssh-agent -s) && ssh-add ~/.ssh/id_rsa`
 
-</Note>
+</Warning>
 
 To use the Mage Git integration, you will need to first configure Git settings.
 The following instructions are tailored to Github, but the Git integration can work with

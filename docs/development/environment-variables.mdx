@@ -6,7 +6,7 @@ description: "Configure Mage settings through environment variables."
 
 | Variable name             | Description                   | Example values     |
 | ------------------------- | ----------------------------- | ----------------- |
-| `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | postgresql+psycopg2://user:password@host:port/dbname |
+| `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | [Example](/production/configuring-production-settings/overview#postgres) |
 | `REQUIRE_USER_AUTHENTICATION`  | Enable user authentication in Mage. [More information](/production/authentication/overview) | 1 |
 | `AUTHENTICATION_MODE` | Set the authentication mode in Mage. Omitting the variable will default to basic password authentication. | `ldap` |
 | `LDAP_ADMIN_USERNAME`  | [More information](/production/authentication/overview#ldap) | See link                     |
