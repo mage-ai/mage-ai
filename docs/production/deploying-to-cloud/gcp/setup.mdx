@@ -487,6 +487,17 @@ If it isn’t, add a new rule with the following values:
 
 If you still get 403, check to see if you’re using `http://` and NOT `https://`.
 
+**Container can’t start**
+
+If Cloud Run is deployed but the service failed because the container could’t start, 
+it is usually caused by the Docker image not being built using the correct platform tag.
+
+Pull the Mage Docker image using this command:
+
+```
+docker pull --platform linux/amd64 mageai/mageai:latest
+```
+
 ---
 
 ## Updating Mage versions
