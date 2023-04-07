@@ -105,8 +105,32 @@ class PipelineSchedule(BaseModel):
         return model
 
     @classmethod
+    @safe_db_query
     def create_or_update(self, trigger_config: Trigger):
-        pass
+        try:
+            existing_trigger = PipelineSchedule.query.filter(
+                self.name == trigger_config.name,
+                self.pipeline_uuid == trigger_config.pipeline_uuid,
+            ).one_or_none()
+        except Exception:
+            existing_trigger = None
+
+        kwargs = dict(
+            name=trigger_config.name,
+            pipeline_uuid=trigger_config.pipeline_uuid,
+            schedule_type=trigger_config.schedule_type,
+            start_time=trigger_config.start_time,
+            schedule_interval=trigger_config.schedule_interval,
+            status=trigger_config.status,
+            variables=trigger_config.variables,
+            sla=trigger_config.sla,
+            settings=trigger_config.settings,
+        )
+
+        if existing_trigger:
+            existing_trigger.update(**kwargs)
+        else:
+            self.create(**kwargs)
 
     def current_execution_date(self) -> datetime:
         if self.schedule_interval is None:

@@ -14,6 +14,12 @@ from mage_ai.data_preparation.models.block.utils import (
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+    get_triggers_by_pipeline,
+)
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
@@ -151,14 +157,14 @@ class PipelineScheduler:
                                 status=Backfill.Status.COMPLETED,
                             )
                             schedule.update(
-                                status=PipelineSchedule.ScheduleStatus.INACTIVE,
+                                status=ScheduleStatus.INACTIVE,
                             )
                     # If running once, update the schedule to inactive when pipeline run is done
-                    elif schedule.status == PipelineSchedule.ScheduleStatus.ACTIVE and \
-                            schedule.schedule_type == PipelineSchedule.ScheduleType.TIME and \
-                            schedule.schedule_interval == PipelineSchedule.ScheduleInterval.ONCE:
+                    elif schedule.status == ScheduleStatus.ACTIVE and \
+                            schedule.schedule_type == ScheduleType.TIME and \
+                            schedule.schedule_interval == ScheduleInterval.ONCE:
 
-                        schedule.update(status=PipelineSchedule.ScheduleStatus.INACTIVE)
+                        schedule.update(status=ScheduleStatus.INACTIVE)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_pipeline(block_runs)
             else:
@@ -527,16 +533,16 @@ def run_integration_pipeline(
     start_date = None
     date_diff = None
 
-    if PipelineSchedule.ScheduleInterval.ONCE == schedule_interval:
+    if ScheduleInterval.ONCE == schedule_interval:
         end_date = variables.get('_end_date')
         start_date = variables.get('_start_date')
-    elif PipelineSchedule.ScheduleInterval.HOURLY == schedule_interval:
+    elif ScheduleInterval.HOURLY == schedule_interval:
         date_diff = timedelta(hours=1)
-    elif PipelineSchedule.ScheduleInterval.DAILY == schedule_interval:
+    elif ScheduleInterval.DAILY == schedule_interval:
         date_diff = timedelta(days=1)
-    elif PipelineSchedule.ScheduleInterval.WEEKLY == schedule_interval:
+    elif ScheduleInterval.WEEKLY == schedule_interval:
         date_diff = timedelta(weeks=1)
-    elif PipelineSchedule.ScheduleInterval.MONTHLY == schedule_interval:
+    elif ScheduleInterval.MONTHLY == schedule_interval:
         date_diff = relativedelta(months=1)
 
     if date_diff is not None:
@@ -964,9 +970,11 @@ def schedule_with_event(event: Dict = dict()):
 def sync_schedules(pipeline_uuids: List[str]):
     # Sync schedule configs from triggers.yaml to DB
     for pipeline_uuid in pipeline_uuids:
-        pipeline_triggers = []
-    for pipeline_trigger in pipeline_triggers:
-        PipelineSchedule.create_or_update(pipeline_trigger)
+        pipeline_triggers = get_triggers_by_pipeline(pipeline_uuid)
+
+        logger.debug(f'Sync pipeline trigger configs for {pipeline_uuid}: {pipeline_triggers}.')
+        for pipeline_trigger in pipeline_triggers:
+            PipelineSchedule.create_or_update(pipeline_trigger)
 
 
 def get_variables(pipeline_run, extra_variables: Dict = {}) -> Dict:
