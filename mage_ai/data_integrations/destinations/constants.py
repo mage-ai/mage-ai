@@ -4,9 +4,9 @@ DESTINATIONS = [
     dict(name='Delta Lake S3'),
     dict(
         module_name='GoogleCloudStorage',
-        name='Microsoft SQL Server',
+        name='Google Cloud Storage',
         uuid='gcs',
-    ),    
+    ),
     dict(
         module_name='MSSQL',
         name='Microsoft SQL Server',
