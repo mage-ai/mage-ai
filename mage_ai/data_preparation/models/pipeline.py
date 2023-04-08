@@ -1054,6 +1054,8 @@ class Pipeline:
         extension_uuid: str = None,
         widget: bool = False,
     ):
+        blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
+
         if block_uuid is not None:
             current_pipeline = Pipeline(self.uuid, self.repo_path)
             block = self.get_block(block_uuid, extension_uuid=extension_uuid, widget=widget)
@@ -1078,6 +1080,13 @@ class Pipeline:
             )
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')
+
+        blocks_updated = sorted([b['uuid'] for b in pipeline_dict.get('blocks', [])])
+
+        if blocks_current != blocks_updated:
+            raise Exception(
+                'Blocks cannot be added or removed when saving content, please try again.',
+            )
 
         content = yaml.dump(pipeline_dict)
 
