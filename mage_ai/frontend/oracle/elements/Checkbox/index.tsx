@@ -154,7 +154,7 @@ const Checkbox = ({
       <LabelStyle
         onClick={(e) => {
           e.preventDefault();
-          if (onClick) {
+          if (onClick && !disabled) {
             onClick(e);
           }
         }}

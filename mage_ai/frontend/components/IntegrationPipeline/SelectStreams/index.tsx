@@ -27,10 +27,12 @@ type SelectStreamsProps = {
   catalog: CatalogType;
   isLoading: boolean;
   onActionCallback: (selectedStreams: {
-    [key: string]: boolean;
+    [key: string]: StreamType;
   }) => void;
   streams: StreamType[];
 };
+
+type StreamTypeWithMissingProp = StreamType & { isMissingStream?: boolean };
 
 enum FilterSelectionEnum {
   ALL = 'All',
@@ -46,8 +48,20 @@ function SelectStreams({
   onActionCallback,
   streams,
 }: SelectStreamsProps) {
-  const selectedStreamsInit = indexBy(catalog?.streams || [], ({ stream }) => stream);
-  const [selectedStreams, setSelectedStreams] = useState(selectedStreamsInit);
+  const selectedStreamsInit: { [key: string]: StreamType } = indexBy(catalog?.streams || [], ({ stream }) => stream);
+  const missingSelectedStreams = useMemo(() => {
+    const fetchedStreamsSet = new Set(streams.map(({ stream }) => stream));
+    return Object.values(selectedStreamsInit)
+      .filter(({ stream }) => !fetchedStreamsSet.has(stream))
+      .map(stream => ({ ...stream, isMissingStream: true }));
+  }, [selectedStreamsInit, streams]);
+
+  const selectedStreamsWithoutDeleted = { ...selectedStreamsInit };
+  missingSelectedStreams.forEach(({ stream }) => {
+    delete selectedStreamsWithoutDeleted[stream];
+  });
+
+  const [selectedStreams, setSelectedStreams] = useState(selectedStreamsWithoutDeleted);
   const [filterText, setFilterText] = useState<string>(null);
   const [filterMenuOpen, setFilterMenuOpen] = useState<boolean>(false);
   const [dropdownFilter, setDropdownFilter] = useState<FilterSelectionEnum>(FilterSelectionEnum.ALL);
@@ -55,7 +69,7 @@ function SelectStreams({
 
   const selectedStreamIds: string[] = getSelectedStreamIds(selectedStreams);
   const filteredSearchStreams = useMemo(() => {
-    let filteredStreams: StreamType[] = streams;
+    let filteredStreams: StreamTypeWithMissingProp[] = streams;
     filteredStreams = filteredStreams.filter(({ tap_stream_id }) => {
       if (dropdownFilter === FilterSelectionEnum.SELECTED) {
         return selectedStreamIds.includes(tap_stream_id);
@@ -167,8 +181,9 @@ function SelectStreams({
               uuid: 'Stream name',
             },
           ]}
-          rows={filteredSearchStreams.map((stream) => {
+          rows={filteredSearchStreams.concat(missingSelectedStreams).map((stream) => {
             const {
+              isMissingStream,
               stream: streamID,
             } = stream;
             const selected: boolean = !!selectedStreams[streamID];
@@ -176,6 +191,7 @@ function SelectStreams({
             return [
               <Checkbox
                 checked={selected}
+                disabled={!selected && isMissingStream}
                 key={`selected-${streamID}`}
                 onClick={() => {
                   setSelectedStreams(prev => ({
@@ -184,8 +200,13 @@ function SelectStreams({
                   }));
                 }}
               />,
-              <Text key={`stream-${streamID}`}>
-                {streamID}
+              <Text
+                danger={isMissingStream}
+                key={`stream-${streamID}`}
+                title={streamID}
+                width={TABLE_WIDTH - 48 - 32}
+              >
+                {streamID}{isMissingStream ? ' (no longer available)' : ''}
               </Text>,
             ];
           })}

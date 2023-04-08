@@ -271,6 +271,10 @@ class IntegrationPipeline(Pipeline):
                     json_object = next(extract_json_objects(line))
 
             error = dig(json_object, 'tags.error')
+            if not error:
+                raise Exception('The sample data was not able to be loaded. Please check \
+                                if the stream still exists. If it does not, click the "View and \
+                                select streams" button and confirm the valid streams.')
             raise Exception(error)
 
     def count_records(self) -> List[Dict]:
