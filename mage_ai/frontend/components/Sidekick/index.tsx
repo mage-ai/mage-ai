@@ -49,6 +49,8 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   PaddingContainerStyle,
   SidekickContainerStyle,
+  SidekickNavigationStyle,
+  SidekickStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
@@ -176,7 +178,7 @@ function Sidekick({
   const [pipelineExecutionHidden, setPipelineExecutionHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
-  const widthOffset = VERTICAL_NAVIGATION_WIDTH;
+  const widthOffset = VERTICAL_NAVIGATION_WIDTH + 1; // 1 for the border-left
   const afterWidth = useMemo(() => afterWidthProp - widthOffset, [afterWidthProp, widthOffset]);
 
   const {
@@ -207,8 +209,8 @@ function Sidekick({
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
-    ? -78   // Hide entire output area
-    : (pipelineExecutionHidden ? -22 : OUTPUT_HEIGHT);
+    ? -70   // Hide entire output area
+    : (pipelineExecutionHidden ? -16 : OUTPUT_HEIGHT);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -301,9 +303,9 @@ function Sidekick({
         </Spacing>
       }
 
-      <FlexContainer>
+      <SidekickStyle>
         <SidekickContainerStyle
-          fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
+          fullWidth
           heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
           onBlur={() => {
             if (!selectedFilePath) {
@@ -534,17 +536,19 @@ function Sidekick({
           )}
         </SidekickContainerStyle>
 
-        <VerticalNavigationStyle borderLeft>
-          <VerticalNavigation
-            aligned="right"
-            navigationItems={buildNavigationItems({
-              activeView,
-              pipelineUUID: pipeline?.uuid,
-              setActiveSidekickView,
-            })}
-          />
-        </VerticalNavigationStyle>
-      </FlexContainer>
+        <SidekickNavigationStyle>
+          <VerticalNavigationStyle>
+            <VerticalNavigation
+              aligned="right"
+              navigationItems={buildNavigationItems({
+                activeView,
+                pipelineUUID: pipeline?.uuid,
+                setActiveSidekickView,
+              })}
+            />
+          </VerticalNavigationStyle>
+        </SidekickNavigationStyle>
+      </SidekickStyle>
     </>
   );
 }
