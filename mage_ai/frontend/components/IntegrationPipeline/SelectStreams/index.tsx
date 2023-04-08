@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
@@ -49,7 +49,19 @@ function SelectStreams({
   streams,
 }: SelectStreamsProps) {
   const selectedStreamsInit: { [key: string]: StreamType } = indexBy(catalog?.streams || [], ({ stream }) => stream);
-  const [selectedStreams, setSelectedStreams] = useState(selectedStreamsInit);
+  const missingSelectedStreams = useMemo(() => {
+    const fetchedStreamsSet = new Set(streams.map(({ stream }) => stream));
+    return Object.values(selectedStreamsInit)
+      .filter(({ stream }) => !fetchedStreamsSet.has(stream))
+      .map(stream => ({ ...stream, isMissingStream: true }));
+  }, [selectedStreamsInit, streams]);
+
+  const selectedStreamsWithoutDeleted = { ...selectedStreamsInit };
+  missingSelectedStreams.forEach(({ stream }) => {
+    delete selectedStreamsWithoutDeleted[stream];
+  });
+
+  const [selectedStreams, setSelectedStreams] = useState(selectedStreamsWithoutDeleted);
   const [filterText, setFilterText] = useState<string>(null);
   const [filterMenuOpen, setFilterMenuOpen] = useState<boolean>(false);
   const [dropdownFilter, setDropdownFilter] = useState<FilterSelectionEnum>(FilterSelectionEnum.ALL);
@@ -73,13 +85,6 @@ function SelectStreams({
         stream?.toLowerCase().includes(filterText?.toLowerCase())
       )) : filteredStreams;
   }, [dropdownFilter, filterText, selectedStreamIds, streams]);
-
-  const missingSelectedStreams = useMemo(() => {
-    const fetchedStreamsSet = new Set(streams.map(({ stream }) => stream));
-    return Object.values(selectedStreamsInit)
-      .filter(({ stream }) => !fetchedStreamsSet.has(stream))
-      .map(stream => ({ ...stream, isMissingStream: true }));
-  }, [selectedStreamsInit, streams]);
 
   const allStreamsSelected = useMemo(() =>
     streams.every(({ stream }) => !!selectedStreams[stream]),
@@ -186,6 +191,7 @@ function SelectStreams({
             return [
               <Checkbox
                 checked={selected}
+                disabled={!selected && isMissingStream}
                 key={`selected-${streamID}`}
                 onClick={() => {
                   setSelectedStreams(prev => ({
