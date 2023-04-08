@@ -2,6 +2,9 @@ from async_timeout import asyncio
 from faker import Faker
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType
+from mage_ai.data_preparation.models.block.errors import (
+    HasDownstreamDependencies,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -447,3 +450,49 @@ INSERT OVERWRITE INTO mage.users_v2
 SELECT 1 AS id;
 """)
         self.assertEqual(get_block().full_table_name, 'mage.users_v2')
+
+    def test_delete(self):
+        pipeline = Pipeline.create(
+            'test pipeline delete',
+            repo_path=self.repo_path,
+        )
+        block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+        block2 = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline=pipeline,
+            upstream_block_uuids=['test_data_loader'],
+        )
+
+        self.assertRaises(HasDownstreamDependencies, block1.delete)
+
+        block2.delete()
+        self.assertIsNone(pipeline.get_block('test_transformer'))
+
+    def test_delete_force(self):
+        pipeline = Pipeline.create(
+            'test_pipeline_delete_force',
+            repo_path=self.repo_path,
+        )
+        block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+        Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline=pipeline,
+            upstream_block_uuids=['test_data_loader'],
+        )
+
+        test_block = Block.get_block('test_data_loader', 'test_data_loader', 'data_loader')
+
+        self.assertRaises(HasDownstreamDependencies, block1.delete)
+        self.assertRaises(HasDownstreamDependencies, test_block.delete)
+
+        test_block.delete(force=True)
+
+        pipeline = Pipeline.get('test_pipeline_delete_force')
+        self.assertIsNone(pipeline.get_block('test_data_loader'))
+
+        block2 = pipeline.get_block('test_transformer')
+        self.assertEqual([], block2.upstream_block_uuids)

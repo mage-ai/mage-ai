@@ -1,6 +1,9 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
-from mage_ai.data_preparation.models.block.errors import NoMultipleDynamicUpstreamBlocks
+from mage_ai.data_preparation.models.block.errors import (
+    HasDownstreamDependencies,
+    NoMultipleDynamicUpstreamBlocks,
+)
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -253,7 +256,7 @@ class Pipeline:
         ]
 
     @classmethod
-    def get_pipelines_by_block(self, block, repo_path=None, widget=False):
+    def get_pipelines_by_block(self, block, repo_path=None, widget=False) -> List['Pipeline']:
         repo_path = repo_path or get_repo_path()
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         pipelines = []
@@ -994,7 +997,13 @@ class Pipeline:
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
 
-    def delete_block(self, block: Block, widget: bool = False, commit: bool = True) -> None:
+    def delete_block(
+        self,
+        block: Block,
+        widget: bool = False,
+        commit: bool = True,
+        force: bool = False,
+    ) -> None:
         is_extension = BlockType.EXTENSION == block.type
 
         mapping = {}
@@ -1007,11 +1016,12 @@ class Pipeline:
 
         if block.uuid not in mapping:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
+
         if len(block.downstream_blocks) > 0:
             downstream_block_uuids = [
                 b.uuid for b in block.downstream_blocks if b.type != BlockType.CHART
             ]
-            if self.type == PipelineType.INTEGRATION:
+            if self.type == PipelineType.INTEGRATION or force:
                 for downstream_block in block.downstream_blocks:
                     upstream_block_uuids = list(filter(
                         lambda uuid: uuid != block.uuid,
@@ -1021,7 +1031,7 @@ class Pipeline:
                         upstream_blocks=[*upstream_block_uuids, *block.upstream_block_uuids]
                     ))
             elif len(downstream_block_uuids) > 0:
-                raise Exception(
+                raise HasDownstreamDependencies(
                     f'Block(s) {downstream_block_uuids} are depending on block {block.uuid}'
                     '. Please remove the downstream blocks first.'
                 )

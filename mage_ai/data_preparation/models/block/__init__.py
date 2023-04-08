@@ -6,6 +6,9 @@ from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
     is_spark_dataframe,
 )
+from mage_ai.data_preparation.models.block.errors import (
+    HasDownstreamDependencies,
+)
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -540,7 +543,12 @@ class Block:
     def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]):
         return all(b.uuid in completed_block_uuids for b in self.upstream_blocks)
 
-    def delete(self, widget: bool = False, commit: bool = True) -> None:
+    def delete(
+        self,
+        widget: bool = False,
+        commit: bool = True,
+        force: bool = False,
+    ) -> None:
         """
         1. If pipeline is not None, delete the block from the pipeline but not delete the block
         file.
@@ -550,7 +558,12 @@ class Block:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         if self.pipeline is not None:
-            self.pipeline.delete_block(self, widget=widget, commit=commit)
+            self.pipeline.delete_block(
+                self,
+                widget=widget,
+                commit=commit,
+                force=force,
+            )
             # For block_type SCRATCHPAD, also delete the file if possible
             if self.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
                 pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
@@ -562,14 +575,20 @@ class Block:
             return
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
         pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
+        if not force:
+            for p in pipelines:
+                if not p.block_deletable(self):
+                    raise HasDownstreamDependencies(
+                        f'Block {self.uuid} has downstream dependencies in pipeline {p.uuid}. '
+                        'Please remove the dependencies before deleting the block.'
+                    )
         for p in pipelines:
-            if not p.block_deletable(self):
-                raise Exception(
-                    f'Block {self.uuid} has downstream dependencies in pipeline {p.uuid}. '
-                    'Please remove the dependencies before deleting the block.'
-                )
-        for p in pipelines:
-            p.delete_block(p.get_block(self.uuid, widget=widget), widget=widget, commit=commit)
+            p.delete_block(
+                p.get_block(self.uuid, widget=widget),
+                widget=widget,
+                commit=commit,
+                force=force,
+            )
         os.remove(self.file_path)
 
     def execute_with_callback(

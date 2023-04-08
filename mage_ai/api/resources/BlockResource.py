@@ -98,7 +98,12 @@ class BlockResource(GenericResource):
 
     @safe_db_query
     def delete(self, **kwargs):
-        return self.model.delete()
+        query = kwargs.get('query', {})
+
+        force = query.get('force', [False])
+        if force:
+            force = force[0]
+        return self.model.delete(force=force)
 
     @safe_db_query
     def update(self, payload, **kwargs):
