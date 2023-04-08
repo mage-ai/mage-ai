@@ -274,7 +274,7 @@ class IntegrationPipeline(Pipeline):
             if not error:
                 raise Exception('The sample data was not able to be loaded. Please check \
                                 if the stream still exists. If it does not, click the "View and \
-                                select streams" button and deselect the invalid stream.')
+                                select streams" button and confirm the valid streams.')
             raise Exception(error)
 
     def count_records(self) -> List[Dict]:
