@@ -932,6 +932,22 @@ function PipelineDetailPage({
     },
   );
 
+  const [showDeleteConfirmation, hideDeleteConfirmation] = useModal((block: BlockType) => (
+    <PopupMenu
+      centerOnScreen
+      neutral
+      onClick={() => deleteBlockFile(block)}
+      onCancel={hideDeleteConfirmation}
+      subtitle={
+        "Deleting this block is dangerous. Your block may have downstream " +
+        "dependencies that depend on this block. You can delete this block anyway " +
+        "and remove it as a dependency from downstream blocks."
+      }
+      title="Your block has dependencies"
+      width={UNIT * 34}
+    />
+  ))
+
   const [deleteBlockFile] = useMutation(
     ({
       language,
@@ -953,12 +969,16 @@ function PipelineDetailPage({
             fetchPipeline();
             fetchFileTree();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            displayMessage: 'Error deleting block file. ' +
-              'Check that there are no downstream blocks, then try again.',
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            console.log('response:', response);
+            console.log('errors:', errors);
+            showDeleteConfirmation();
+            // setErrors({
+            //   displayMessage: response.exception,
+            //   errors,
+            //   response,
+            // });
+          },
         },
       ),
     },
@@ -1926,8 +1946,9 @@ function PipelineDetailPage({
         }
       }}
       blocks={blocks}
-      deleteBlockFile={deleteBlockFile}
+      // deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
+      fetchAutocompleteItems={fetchAutocompleteItems}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       files={files}
@@ -1949,6 +1970,7 @@ function PipelineDetailPage({
     blocks,
     deleteBlockFile,
     deleteWidget,
+    fetchAutocompleteItems,
     fetchFileTree,
     fetchPipeline,
     filePathsFromUrl?.length,
