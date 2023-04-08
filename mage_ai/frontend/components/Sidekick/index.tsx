@@ -178,7 +178,7 @@ function Sidekick({
   const [pipelineExecutionHidden, setPipelineExecutionHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
-  const widthOffset = VERTICAL_NAVIGATION_WIDTH;
+  const widthOffset = VERTICAL_NAVIGATION_WIDTH + 1; // 1 for the border-left
   const afterWidth = useMemo(() => afterWidthProp - widthOffset, [afterWidthProp, widthOffset]);
 
   const {
