@@ -43,13 +43,6 @@ class GoogleCloudStorage(Destination):
         """
         return self.config['object_key_path']
 
-    @property
-    def region(self) -> str:
-        """
-        str: The GCS region to export data to, default is 'us-west1'.
-        """
-        return self.config.get('region', 'us-west1')
-
     def __init__(self, **kwargs):
         """
         Initialize a new GoogleCloudStorage object.
