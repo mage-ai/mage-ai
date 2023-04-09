@@ -34,6 +34,8 @@ type PipelineLayoutProps = {
   afterSubheader?: any;
   before?: any;
   beforeHeader?: any;
+  beforeHeightOffset?: number;
+  beforeNavigationItems?: any;
   children: any;
   errors: any;
   headerOffset?: number;
@@ -54,6 +56,8 @@ function PipelineLayout({
   afterSubheader,
   before,
   beforeHeader,
+  beforeHeightOffset,
+  beforeNavigationItems,
   children,
   errors,
   headerOffset,
@@ -184,8 +188,10 @@ function PipelineLayout({
         afterWidth={afterWidth}
         before={before}
         beforeHeader={beforeHeader}
+        beforeHeightOffset={beforeHeightOffset}
         beforeHidden={beforeHidden}
         beforeMousedownActive={beforeMousedownActive}
+        beforeNavigationItems={beforeNavigationItems}
         beforeWidth={beforeWidth}
         header={headerMemo}
         headerOffset={headerOffset}
