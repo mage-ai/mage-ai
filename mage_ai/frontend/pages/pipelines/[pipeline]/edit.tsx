@@ -69,6 +69,9 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
+  buildNavigationItems as buildNavigationItemsSidekick,
+} from '@components/Sidekick/Navigation/constants';
+import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
   initializeContentAndMessages,
@@ -1971,7 +1974,6 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     blocks,
-    deleteBlockFile,
     deleteWidget,
     fetchAutocompleteItems,
     fetchFileTree,
@@ -2029,7 +2031,13 @@ function PipelineDetailPage({
             pipeline={pipeline}
           />
         )}
+        afterHeightOffset={HEADER_HEIGHT}
         afterHidden={afterHidden}
+        afterNavigationItems={buildNavigationItemsSidekick({
+          activeView: activeSidekickView,
+          pipelineUUID,
+          setActiveSidekickView,
+        })}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
             alignItems="center"
