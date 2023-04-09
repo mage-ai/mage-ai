@@ -202,9 +202,9 @@ If you’re running Mage using Docker, you must add the following command line f
 The command to run Mage using Docker could look like this:
 
 ```bash
-docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai \
+docker run -it -p 6789:6789 -v $(pwd):/home/src \
     -e SOME_VARIABLE_NAME_1=secret_value_1 -e SOME_VARIABLE_NAME_2=secret_value_2 \
-    /app/run_app.sh mage start demo_project
+    mageai/mageai /app/run_app.sh mage start demo_project
 ```
 
 See [here](/development/environment-variables) for a list of environment variables you can configure.
