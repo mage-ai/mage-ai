@@ -247,11 +247,30 @@ export const MainContentInnerStyle = styled.div`
   overflow: auto;
 `;
 
-export const BeforeNavigationStyle = styled.div`
+export const NavigationStyle = styled.div`
   position: relative;
 `;
 
-export const BeforeNavigationContainerStyle = styled.div<{
+export const NavigationInnerStyle = styled.div<{
+  aligned: 'left' | 'right';
+}>`
+  height: 100%;
+  position: fixed;
+
+  ${props => props.aligned === 'left' && `
+    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
+    left: 0;
+  `}
+
+  ${props => props.aligned === 'right' && `
+    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
+    right: 0;
+  `}
+`;
+
+
+export const NavigationContainerStyle = styled.div<{
+  aligned: 'left' | 'right';
   fullWidth: boolean;
   heightOffset: number;
   widthOffset: number;
@@ -270,17 +289,11 @@ export const BeforeNavigationContainerStyle = styled.div<{
     width: calc(100% - ${props.widthOffset || 0}px);
   `}
 
-  ${props => props.widthOffset && `
+  ${props => props.widthOffset && props.aligned === 'left' && `
     left: ${props.widthOffset}px;
   `}
-`;
 
-export const BeforeNavigationInnerStyle = styled.div`
-  height: 100%;
-  position: fixed;
-  left: 0;
-
-  ${props => `
-    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
+  ${props => props.widthOffset && props.aligned === 'right' && `
+    right: ${props.widthOffset}px;
   `}
 `;

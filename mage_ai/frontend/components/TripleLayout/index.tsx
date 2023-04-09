@@ -23,9 +23,6 @@ import {
   AsideSubheaderStyle,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
-  BeforeNavigationContainerStyle,
-  BeforeNavigationInnerStyle,
-  BeforeNavigationStyle,
   BeforeStyle,
   DRAGGABLE_WIDTH,
   DraggableStyle,
@@ -33,6 +30,9 @@ import {
   MainContentInnerStyle,
   MainContentStyle,
   MainWrapper,
+  NavigationContainerStyle,
+  NavigationInnerStyle,
+  NavigationStyle,
   NewHeaderStyle,
 } from './index.style';
 import {
@@ -58,6 +58,7 @@ type TripleLayoutProps = {
   afterHeightOffset?: number;
   afterHidden: boolean;
   afterMousedownActive: boolean;
+  afterNavigationItems?: NavigationItem[];
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
@@ -89,6 +90,7 @@ function TripleLayout({
   afterHeightOffset,
   afterHidden,
   afterMousedownActive,
+  afterNavigationItems,
   afterSubheader,
   afterWidth = 0,
   before,
@@ -236,6 +238,82 @@ function TripleLayout({
   const mainWidth =
     `calc(100% - ${beforeWidthFinal + afterWidthFinal + leftOffset}px)`;
 
+  const hasAfterNavigationItems = useMemo(() => afterNavigationItems?.length >= 1, [
+    afterNavigationItems,
+  ]);
+  const afterContent = useMemo(() => (
+    <>
+      {setAfterHidden && (
+        <>
+          <AsideHeaderStyle
+            style={{
+              width: hasAfterNavigationItems
+                ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 1)
+                : afterWidthFinal,
+            }}
+            visible={afterHidden}
+          >
+            <FlexContainer alignItems="center" fullHeight fullWidth>
+              <Flex>
+                <Spacing pl={afterHidden ? 1 : 2} />
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => toggleAfter()}
+                >
+                  {afterHidden && (
+                    <ChevronLeft
+                      neutral
+                      size={UNIT * 2}
+                    />
+                  )}
+                  {!afterHidden && (
+                    <ChevronRight
+                      neutral
+                      size={UNIT * 2}
+                    />
+                  )}
+                </Button>
+              </Flex>
+
+              {!afterHidden && afterHeader}
+            </FlexContainer>
+          </AsideHeaderStyle>
+
+          {!afterHidden && afterSubheader && (
+            <AsideSubheaderStyle
+              style={{
+                width: afterWidthFinal,
+              }}
+              visible={afterHidden}
+            >
+              {afterSubheader}
+            </AsideSubheaderStyle>
+          )}
+        </>
+      )}
+
+      <AfterInnerStyle
+        noScrollbarTrackBackground
+        ref={refAfterInner}
+        verticalOffset={afterHeightOffset}
+      >
+        {!afterHidden && after}
+      </AfterInnerStyle>
+    </>
+  ), [
+    after,
+    afterHeader,
+    afterHidden,
+    afterSubheader,
+    afterWidthFinal,
+    hasAfterNavigationItems,
+    refAfterInner,
+    setAfterHidden,
+    toggleAfter,
+  ]);
+
   const hasBeforeNavigationItems = useMemo(() => beforeNavigationItems?.length >= 1, [
     beforeNavigationItems,
   ]);
@@ -355,31 +433,32 @@ function TripleLayout({
           />
 
           {hasBeforeNavigationItems && (
-            <BeforeNavigationStyle>
+            <NavigationStyle>
               {!beforeHidden && (
                 <>
-                  <BeforeNavigationInnerStyle>
+                  <NavigationInnerStyle aligned="left">
                     <VerticalNavigationStyle borderLess>
                       <VerticalNavigation
                         aligned="left"
                         navigationItems={beforeNavigationItems}
                       />
                     </VerticalNavigationStyle>
-                  </BeforeNavigationInnerStyle>
+                  </NavigationInnerStyle>
 
-                  <BeforeNavigationContainerStyle
+                  <NavigationContainerStyle
+                    aligned="left"
                     fullWidth
                     heightOffset={beforeHeightOffset}
                     // 1 for the border-left
                     widthOffset={VERTICAL_NAVIGATION_WIDTH + 1}
                   >
                     {beforeContent}
-                  </BeforeNavigationContainerStyle>
+                  </NavigationContainerStyle>
                 </>
               )}
 
               {beforeHidden && beforeContent}
-            </BeforeNavigationStyle>
+            </NavigationStyle>
           )}
 
           {!hasBeforeNavigationItems && beforeContent}
@@ -423,61 +502,36 @@ function TripleLayout({
             ref={refAfterInnerDraggable}
           />
 
-          {setAfterHidden && (
-            <>
-              <AsideHeaderStyle
-                style={{
-                  width: afterWidthFinal,
-                }}
-                visible={afterHidden}
-              >
-                <FlexContainer alignItems="center" fullHeight fullWidth>
-                  <Flex>
-                    <Spacing pl={afterHidden ? 1 : 2} />
-                    <Button
-                      noBackground
-                      noBorder
-                      noPadding
-                      onClick={() => toggleAfter()}
-                    >
-                      {afterHidden && (
-                        <ChevronLeft
-                          neutral
-                          size={UNIT * 2}
-                        />
-                      )}
-                      {!afterHidden && (
-                        <ChevronRight
-                          neutral
-                          size={UNIT * 2}
-                        />
-                      )}
-                    </Button>
-                  </Flex>
+          {hasAfterNavigationItems && (
+            <NavigationStyle>
+              {!afterHidden && (
+                <>
+                  <NavigationInnerStyle aligned="right">
+                    <VerticalNavigationStyle borderLess>
+                      <VerticalNavigation
+                        aligned="right"
+                        navigationItems={afterNavigationItems}
+                      />
+                    </VerticalNavigationStyle>
+                  </NavigationInnerStyle>
 
-                  {!afterHidden && afterHeader}
-                </FlexContainer>
-              </AsideHeaderStyle>
-
-              {!afterHidden && afterSubheader && (
-                <AsideSubheaderStyle
-                  style={{
-                    width: afterWidthFinal,
-                  }}
-                  visible={afterHidden}
-                >
-                  {afterSubheader}
-                </AsideSubheaderStyle>
+                  <NavigationContainerStyle
+                    aligned="right"
+                    fullWidth
+                    heightOffset={afterHeightOffset}
+                    // 1 for the border-left
+                    widthOffset={VERTICAL_NAVIGATION_WIDTH + 1}
+                  >
+                    {afterContent}
+                  </NavigationContainerStyle>
+                </>
               )}
-            </>
+
+              {afterHidden && afterContent}
+            </NavigationStyle>
           )}
 
-          <AfterInnerStyle
-            noScrollbarTrackBackground
-            ref={refAfterInner}
-          >
-            {!afterHidden && after}
-          </AfterInnerStyle>
+          {!hasAfterNavigationItems && afterContent}
         </AfterStyle>
       )}
     </ClientOnly>
