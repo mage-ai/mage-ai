@@ -176,7 +176,7 @@ export const BeforeStyle = styled.aside`
 `;
 
 export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
-  verticaOffset?: number;
+  verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
   overflow: hidden;
@@ -193,7 +193,7 @@ export const AfterStyle = styled.aside`
 `;
 
 export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
-  verticaOffset?: number;
+  verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
 `;
