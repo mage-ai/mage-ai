@@ -22,10 +22,12 @@ export const ContainerStyle = styled.div`
   `}
 `;
 
-export const VerticalNavigationStyle = styled.div`
+export const VerticalNavigationStyle = styled.div<{
+  borderLess?: boolean;
+}>`
   padding: ${PADDING_UNITS * UNIT}px;
 
-  ${props => `
+  ${props => !props.borderLess && `
     background-color: ${(props.theme.background || dark.background).panel};
     border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}

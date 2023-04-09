@@ -45,9 +45,14 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
+import VerticalNavigation from '@components/Dashboard/VerticalNavigation';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
+import {
+  BeforeContainerStyle,
+  BeforeStyle,
+  NavigationStyle,
+} from './index.style';
 import { Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
@@ -59,13 +64,20 @@ import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   SpecialFileEnum,
 } from '@interfaces/FileType';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
+import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
+import {
+  VERTICAL_NAVIGATION_WIDTH,
+  VerticalNavigationStyle,
+} from '@components/Dashboard/index.style';
+import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
@@ -1910,6 +1922,7 @@ function PipelineDetailPage({
 
   const fileTreeRef = useRef(null);
   const before = useMemo(() => (
+
     <FileBrowser
       addNewBlock={(
         b: BlockRequestPayloadType,
@@ -2052,6 +2065,8 @@ function PipelineDetailPage({
         )}
         before={before}
         beforeHeader={beforeHeader}
+        beforeHeightOffset={HEADER_HEIGHT}
+        beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
         errors={errors}
         headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
         mainContainerHeader={mainContainerHeaderMemo}
