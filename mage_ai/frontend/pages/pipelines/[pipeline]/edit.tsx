@@ -45,14 +45,8 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Sidekick from '@components/Sidekick';
 import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
-import VerticalNavigation from '@components/Dashboard/VerticalNavigation';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import {
-  BeforeContainerStyle,
-  BeforeStyle,
-  NavigationStyle,
-} from './index.style';
 import { Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
@@ -73,10 +67,6 @@ import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import {
-  VERTICAL_NAVIGATION_WIDTH,
-  VerticalNavigationStyle,
-} from '@components/Dashboard/index.style';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
   convertBlockUUIDstoBlockTypes,
