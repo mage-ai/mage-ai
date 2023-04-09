@@ -9,7 +9,6 @@ from mage_ai.shared.utils import (
 )
 from pandas import DataFrame
 from typing import Dict, List, Mapping, Union
-import pandas as pd
 
 
 class BigQuery(BaseSQLDatabase):
@@ -199,9 +198,9 @@ WHERE TABLE_NAME = '{table_name}'
         """
 
         if type(df) is dict:
-            df = pd.DataFrame([df])
+            df = DataFrame([df])
         elif type(df) is list:
-            df = pd.DataFrame(df)
+            df = DataFrame(df)
 
         def __process(database: Union[str, None]):
             if query_string:

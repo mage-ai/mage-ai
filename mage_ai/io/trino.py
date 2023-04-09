@@ -16,7 +16,6 @@ from trino.auth import BasicAuthentication
 from trino.dbapi import Connection, Cursor as CursorParent
 from trino.transaction import IsolationLevel
 from typing import IO, List, Mapping, Union
-import pandas as pd
 
 
 class Cursor(CursorParent):
@@ -191,9 +190,9 @@ class Trino(BaseSQL):
         """
 
         if type(df) is dict:
-            df = pd.DataFrame([df])
+            df = DataFrame([df])
         elif type(df) is list:
-            df = pd.DataFrame(df)
+            df = DataFrame(df)
 
         catalog = self.settings['catalog']
         schema = self.settings['schema']
