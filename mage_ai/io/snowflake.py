@@ -7,7 +7,6 @@ from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
 from typing import Dict, List, Union
-import pandas as pd
 
 
 DEFAULT_LOGIN_TIMEOUT = 20
