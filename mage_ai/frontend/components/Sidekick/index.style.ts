@@ -12,7 +12,6 @@ export const TABLE_COLUMN_HEADER_HEIGHT = COLUMN_HEADER_CHART_HEIGHT + (UNIT * 3
 export const SidekickContainerStyle = styled.div<{
   fullWidth: boolean;
   heightOffset: number;
-  widthOffset: number;
 }>`
   ${ScrollbarStyledCss}
 
