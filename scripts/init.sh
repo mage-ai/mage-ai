@@ -6,4 +6,10 @@ PROJECT_NAME="$1"
 HOST='' \
 PORT='' \
 PROJECT='' \
-docker-compose run server python mage_ai/cli/main.py init $PROJECT_NAME
+docker_version=$(docker version --format '{{.Server.Version}}')
+if [[ "$docker_version" == 2*.* ]]; then
+  docker compose run server python mage_ai/cli/main.py init $PROJECT_NAME
+else
+  docker-compose run server python mage_ai/cli/main.py init $PROJECT_NAME
+fi
+
