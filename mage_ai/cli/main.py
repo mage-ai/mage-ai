@@ -21,14 +21,12 @@ app = typer.Typer(
 
 
 @app.command()
-def init(project_path: str = None):
+def init(project_path: str = typer.Argument(..., help='path of the Mage project to be created.')):
     """
     Initialize Mage project.
     """
     from mage_ai.data_preparation.repo_manager import init_repo
 
-    if project_path is None:
-        project_path = typer.Argument(..., help='path of the Mage project to be created.')
     repo_path = os.path.join(os.getcwd(), project_path)
     init_repo(repo_path)
     print(f'Initialized Mage project at {repo_path}')
@@ -78,8 +76,10 @@ def run(
     runtime_vars: Union[List[str], None] = typer.Option(
         None, help='specify runtime variables. These will overwrite the pipeline global variables.'
     ),
-    skip_sensors: bool = None,
-    template_runtime_configuration: Union[str, None] = None,
+    skip_sensors: bool = typer.Option(False, help='specify if the sensors should be skipped.'),
+    template_runtime_configuration: Union[str, None] = typer.Option(
+        None, help='runtime configuration of data integration block runs.'
+    ),
 ):
     """
     Run pipeline.
@@ -90,14 +90,6 @@ def run(
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection
     from mage_ai.shared.hash import merge_dict
-
-    if skip_sensors is None:
-        skip_sensors = typer.Option(False, help='specify if the sensors should be skipped.')
-
-    if template_runtime_configuration is not None:
-        template_runtime_configuration = typer.Option(
-            None, help='runtime configuration of data integration block runs.'
-        )
 
     runtime_variables = dict()
     if runtime_vars is not None:
@@ -144,16 +136,10 @@ def run(
 
 @app.command()
 def clean_cached_variables(
-    project_path: str = None,
-    pipeline_uuid: str = None,
+    project_path: str = typer.Argument(..., help='path of the Mage project to clean variables.'),
+    pipeline_uuid: str = typer.Option(None, help='uuid of the pipeline to clean.'),
 ):
     from mage_ai.data_preparation.repo_manager import set_repo_path
-
-    if project_path is None:
-        project_path = typer.Argument(..., help='path of the Mage project to clean variables.')
-
-    if pipeline_uuid is None:
-        pipeline_uuid = typer.Option(None, help='uuid of the pipeline to clean.')
 
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
@@ -165,17 +151,14 @@ def clean_cached_variables(
 
 @app.command()
 def create_spark_cluster(
-    project_path: str = None,
+    project_path: str = typer.Argument(
+        ..., help='path of the Mage project that contains the EMR config.'
+    ),
 ):
     """
     Create EMR cluster for Mage project.
     """
     from mage_ai.services.aws.emr.launcher import create_cluster
-
-    if project_path is None:
-        project_path = typer.Argument(
-            ..., help='path of the Mage project that contains the EMR config.'
-        )
 
     project_path = os.path.abspath(project_path)
     create_cluster(project_path)

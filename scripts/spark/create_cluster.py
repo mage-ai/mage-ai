@@ -1,9 +1,9 @@
-from mage_ai.services.aws.emr.launcher import create_cluster
 import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
+from mage_ai.services.aws.emr.launcher import create_cluster  # noqa: <Error>, isort: skip
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
