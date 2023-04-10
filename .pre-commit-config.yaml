@@ -46,4 +46,4 @@ repos:
         exclude: scala|doc/|tests/
         additional_dependencies:
           # Finding likely bugs and design problems in your program.
-          - flake8-bugbear  
+          - flake8-bugbear
