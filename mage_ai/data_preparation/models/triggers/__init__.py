@@ -51,6 +51,12 @@ class Trigger(BaseConfig):
     sla: int = None     # in seconds
     settings: Dict = field(default_factory=dict)
 
+    def __post_init__(self):
+        if self.schedule_type and type(self.schedule_type) is str:
+            self.schedule_type = ScheduleType(self.schedule_type)
+        if self.status and type(self.status) is str:
+            self.status = ScheduleStatus(self.status)
+
 
 def get_triggers_by_pipeline(pipeline_uuid: str) -> List[Trigger]:
     pipeline_path = os.path.join(get_repo_path(), PIPELINES_FOLDER, pipeline_uuid)

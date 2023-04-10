@@ -34,6 +34,7 @@ from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+import traceback
 import uuid
 
 
@@ -113,6 +114,7 @@ class PipelineSchedule(BaseModel):
                 self.pipeline_uuid == trigger_config.pipeline_uuid,
             ).one_or_none()
         except Exception:
+            traceback.print_exc()
             existing_trigger = None
 
         kwargs = dict(
