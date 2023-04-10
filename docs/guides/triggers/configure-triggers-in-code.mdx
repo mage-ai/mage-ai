@@ -16,7 +16,7 @@ Here are the steps to create and configure triggers via code:
         - name: test_trigger
           schedule_type: time
           start_time: 2023-01-01
-          status: ACTIVE
+          status: active
         - name: xxx
           ...
         - name: xxx
@@ -28,7 +28,7 @@ Here are the steps to create and configure triggers via code:
         1. `schedule_interval`: `@once`, `@hourly`, "@daily", `@weekly`, `@monthly`, or Cron syntax(`* * * * *`)
         1. `start_time`: The start time of the trigger (e.g. `2023-01-01`)
     1. Optional trigger fields
-        1. `status`: `ACTIVE` or `INACTIVE`
+        1. `status`: `active` or `inactive`
         1. `variables`: A dictionary of variables that's associated with the trigger
         1. `sla`: SLA in seconds
 1. Save the `triggers.yaml` file. The trigger configs will be synced to the triggers UI shortly.
@@ -42,12 +42,12 @@ triggers:
   schedule_type: time
   schedule_interval: "@daily"
   start_time: 2023-01-01
-  status: ACTIVE
+  status: active
 - name: test_example_trigger_2
   schedule_type: time
   schedule_interval: "@hourly"
   start_time: 2023-03-01
-  status: INACTIVE
+  status: inactive
 ```
 
 ## Modify triggers
@@ -59,7 +59,7 @@ in yaml file directly. The new trigger configs will be automatically synced to t
 
 ## Delete triggers
 
-If you don't want to use a trigger anymore, you can either update the trigger status to `INACTIVE` or
+If you don't want to use a trigger anymore, you can either update the trigger status to `inactive` or
 delete the trigger completely.
 
 To delete the trigger completely, you'll need to remove the trigger config from the yaml file first and
