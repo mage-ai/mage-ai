@@ -8,6 +8,7 @@ import yaml
 class IOConfigKeys(str, Enum):
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
+    CLICKHOUSE = 'ClickHouse'
     FILE = 'File'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'

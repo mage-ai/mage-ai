@@ -51,6 +51,9 @@ setuptools.setup(
             'google-cloud-bigquery~=3.0',
             'db-dtypes==1.0.5',
         ],
+        'clickhouse': [
+            'clickhouse-connect==0.5.20',
+        ],
         'dbt': [
             'dbt-bigquery==1.4.0',
             'dbt-core==1.4.0',

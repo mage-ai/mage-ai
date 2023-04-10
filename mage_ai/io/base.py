@@ -14,6 +14,7 @@ QUERY_ROW_LIMIT = 10_000_000
 class DataSource(str, Enum):
     API = 'api'
     BIGQUERY = 'bigquery'
+    CLICKHOUSE = 'clickhouse'
     FILE = 'file'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     KAFKA = 'kafka'
