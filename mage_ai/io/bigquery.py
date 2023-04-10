@@ -321,8 +321,7 @@ WHERE table_id = '{table_name}'
             if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
                     fetch_query_at_indexes[idx]:
                 result = result.to_dataframe()
-
-            results.append(result)
+                results.append(result)
 
         return results
 
