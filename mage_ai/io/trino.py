@@ -58,7 +58,7 @@ class Trino(BaseSQL):
         schema: str = None,
         verbose: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(
             verbose=verbose,
             catalog=catalog,

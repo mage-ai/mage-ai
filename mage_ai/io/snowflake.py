@@ -67,7 +67,7 @@ class Snowflake(BaseSQLConnection):
         query_variables: List[Dict] = None,
         fetch_query_at_indexes: List[bool] = None,
         **kwargs,
-    ):
+    ) -> List:
         results = []
 
         with self.conn.cursor() as cursor:
