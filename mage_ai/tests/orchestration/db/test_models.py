@@ -1,4 +1,7 @@
 from datetime import datetime
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleStatus,
+)
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
@@ -72,8 +75,8 @@ class PipelineScheduleTests(DBTestCase):
             pipeline_uuid='test_active_schedule_2',
             schedule_interval='@daily'
         )
-        pipeline_schedule2.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
-        pipeline_schedule3.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
+        pipeline_schedule2.update(status=ScheduleStatus.ACTIVE)
+        pipeline_schedule3.update(status=ScheduleStatus.ACTIVE)
         results1 = PipelineSchedule.active_schedules(pipeline_uuids=['test_active_schedule_1'])
         results2 = PipelineSchedule.active_schedules(pipeline_uuids=['test_active_schedule_2'])
         results3 = PipelineSchedule.active_schedules()
@@ -93,7 +96,7 @@ class PipelineScheduleTests(DBTestCase):
             pipeline_uuid='test_pipeline',
             schedule_interval='@daily'
         )
-        pipeline_schedule2.update(status=PipelineSchedule.ScheduleStatus.ACTIVE)
+        pipeline_schedule2.update(status=ScheduleStatus.ACTIVE)
         self.assertFalse(pipeline_schedule1.should_schedule())
         self.assertTrue(pipeline_schedule2.should_schedule())
 

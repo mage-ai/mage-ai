@@ -259,7 +259,8 @@
                 "guides/triggers/events/aws"
               ]
             },
-            "guides/trigger-pipeline-api"
+            "guides/trigger-pipeline-api",
+            "guides/triggers/configure-triggers-in-code"
           ]
         },
         {
