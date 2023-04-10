@@ -47,6 +47,7 @@ import { onSuccess } from '@api/utils/response';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type KernelStatusProps = {
+  children?: any;
   filePaths: string[];
   filesTouched: {
     [path: string]: boolean;
@@ -65,6 +66,7 @@ type KernelStatusProps = {
 };
 
 function KernelStatus({
+  children,
   filePaths: filePathsProp,
   filesTouched,
   isBusy,
@@ -383,13 +385,13 @@ function KernelStatus({
                 }
                 preventDefault
               >
-                {pipelineName}
+                {children}
               </Link>
             )}
 
             {!selectedFilePath && (
               <FlexContainer alignItems="center">
-                {pipelineName}
+                {children}
                 {isEditingPipeline && (
                   <>
                     <Spacing ml={1} />

@@ -23,6 +23,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
+import PipelineSettings from '../PipelineDetail/Settings';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Secrets from './GlobalVariables/Secrets';
@@ -89,6 +90,7 @@ export type SidekickProps = {
   insights: InsightType[][];
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
+  isPipelineUpdating?: boolean;
   globalVariables: PipelineVariableType[];
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
@@ -108,6 +110,7 @@ export type SidekickProps = {
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
+  updatePipelineMetadata: (name: string, type?: string) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
@@ -133,6 +136,7 @@ function Sidekick({
   insights,
   interruptKernel,
   isPipelineExecuting,
+  isPipelineUpdating,
   lastTerminalMessage,
   messages,
   metadata,
@@ -159,6 +163,7 @@ function Sidekick({
   setTextareaFocused,
   statistics,
   textareaFocused,
+  updatePipelineMetadata,
   updateWidget,
   widgets,
 }: SidekickProps) {
@@ -523,6 +528,14 @@ function Sidekick({
             setSelectedBlock={setSelectedBlock}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={textareaFocused}
+          />
+        )}
+
+        {ViewKeyEnum.SETTINGS === activeView && pipeline?.name && (
+          <PipelineSettings
+            isPipelineUpdating={isPipelineUpdating}
+            pipeline={pipeline}
+            updatePipelineMetadata={updatePipelineMetadata}
           />
         )}
       </SidekickContainerStyle>
