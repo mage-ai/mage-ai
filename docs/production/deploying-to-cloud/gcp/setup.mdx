@@ -213,7 +213,7 @@ variable "app_name" {
 **Region**
 
 In the file
-[./gcp/main.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/main.tf),
+[./gcp/variables.tf](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf),
 you can change the `default` value under `region`:
 
 ```js
@@ -472,7 +472,7 @@ can also be customized to your needs.
 
 ### Errors
 
-**403 Forbidden**
+#### 403 Forbidden
 
 If you get this error when trying to open the above IP address in your browser,
 open the security group named
@@ -486,6 +486,19 @@ If it isn’t, add a new rule with the following values:
 | Basic mode | [Enter your IP address](https://whatismyipaddress.com/) | Allow  | 100      |
 
 If you still get 403, check to see if you’re using `http://` and NOT `https://`.
+
+#### Container can’t start
+
+If Cloud Run is deployed but the service failed because the container could’t start, 
+it is usually caused by the Docker image not being built using the correct platform tag.
+
+Pull the Mage Docker image using this command:
+
+```
+docker pull --platform linux/amd64 mageai/mageai:latest
+```
+
+Once pulled, tag your image and push to GCP Artifact Registry again.
 
 ---
 

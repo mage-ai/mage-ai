@@ -16,7 +16,7 @@ REMOTE_NAME = 'mage-repo'
 class Git:
     def __init__(self, git_config: GitConfig):
         self.remote_repo_link = git_config.remote_repo_link
-        self.repo_path = git_config.repo_path
+        self.repo_path = git_config.repo_path or os.getcwd()
         os.makedirs(self.repo_path, exist_ok=True)
         self.git_config = git_config
         try:

@@ -14,7 +14,6 @@ from pandas import DataFrame
 from redshift_connector import connect
 from typing import Union
 import json
-import pandas as pd
 
 
 class Redshift(BaseSQL):
@@ -134,9 +133,9 @@ class Redshift(BaseSQL):
         # FROM experimentation.assignments_dev
 
         if type(df) is dict:
-            df = pd.DataFrame([df])
+            df = DataFrame([df])
         elif type(df) is list:
-            df = pd.DataFrame(df)
+            df = DataFrame(df)
 
         if schema and not schema_name:
             schema_name = schema

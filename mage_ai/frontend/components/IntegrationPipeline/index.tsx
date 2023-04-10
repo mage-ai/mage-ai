@@ -566,7 +566,7 @@ function IntegrationPipeline({
       catalog={catalog}
       isLoading={isLoadingFetchIntegrationSource}
       onActionCallback={(selectedStreams: {
-        [key: string]: boolean;
+        [key: string]: StreamType;
       }) => {
         const ids =
           Object.entries(selectedStreams).reduce((acc, [k, v]) => v ? acc.concat(k) : acc, []);

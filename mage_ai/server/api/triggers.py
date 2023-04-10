@@ -2,6 +2,7 @@ from datetime import datetime
 from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import ScheduleType
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import get_variables

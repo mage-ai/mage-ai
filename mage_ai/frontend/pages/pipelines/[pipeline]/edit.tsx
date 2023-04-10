@@ -47,7 +47,6 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
 import { Close } from '@oracle/icons';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
@@ -59,13 +58,19 @@ import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
   SpecialFileEnum,
 } from '@interfaces/FileType';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
+import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
+import {
+  buildNavigationItems as buildNavigationItemsSidekick,
+} from '@components/Sidekick/Navigation/constants';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
@@ -932,6 +937,22 @@ function PipelineDetailPage({
     },
   );
 
+  const [showDeleteConfirmation, hideDeleteConfirmation] = useModal((block: BlockType) => (
+    <PopupMenu
+      centerOnScreen
+      neutral
+      onClick={() => deleteBlockFile(block)}
+      onCancel={hideDeleteConfirmation}
+      subtitle={
+        "Deleting this block is dangerous. Your block may have downstream " +
+        "dependencies that depend on this block. You can delete this block anyway " +
+        "and remove it as a dependency from downstream blocks."
+      }
+      title="Your block has dependencies"
+      width={UNIT * 34}
+    />
+  ))
+
   const [deleteBlockFile] = useMutation(
     ({
       language,
@@ -953,12 +974,16 @@ function PipelineDetailPage({
             fetchPipeline();
             fetchFileTree();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            displayMessage: 'Error deleting block file. ' +
-              'Check that there are no downstream blocks, then try again.',
-            errors,
-            response,
-          }),
+          onErrorCallback: (response, errors) => {
+            console.log('response:', response);
+            console.log('errors:', errors);
+            showDeleteConfirmation();
+            // setErrors({
+            //   displayMessage: response.exception,
+            //   errors,
+            //   response,
+            // });
+          },
         },
       ),
     },
@@ -1910,6 +1935,7 @@ function PipelineDetailPage({
 
   const fileTreeRef = useRef(null);
   const before = useMemo(() => (
+
     <FileBrowser
       addNewBlock={(
         b: BlockRequestPayloadType,
@@ -1926,8 +1952,9 @@ function PipelineDetailPage({
         }
       }}
       blocks={blocks}
-      deleteBlockFile={deleteBlockFile}
+      // deleteBlockFile={deleteBlockFile}
       deleteWidget={deleteWidget}
+      fetchAutocompleteItems={fetchAutocompleteItems}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       files={files}
@@ -1947,8 +1974,8 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     blocks,
-    deleteBlockFile,
     deleteWidget,
+    fetchAutocompleteItems,
     fetchFileTree,
     fetchPipeline,
     filePathsFromUrl?.length,
@@ -2004,7 +2031,13 @@ function PipelineDetailPage({
             pipeline={pipeline}
           />
         )}
+        afterHeightOffset={HEADER_HEIGHT}
         afterHidden={afterHidden}
+        afterNavigationItems={buildNavigationItemsSidekick({
+          activeView: activeSidekickView,
+          pipelineUUID,
+          setActiveSidekickView,
+        })}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
             alignItems="center"
@@ -2052,6 +2085,8 @@ function PipelineDetailPage({
         )}
         before={before}
         beforeHeader={beforeHeader}
+        beforeHeightOffset={HEADER_HEIGHT}
+        beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
         errors={errors}
         headerOffset={selectedFilePaths?.length > 0 ? 36 : 0}
         mainContainerHeader={mainContainerHeaderMemo}

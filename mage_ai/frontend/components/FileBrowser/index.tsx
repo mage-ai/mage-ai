@@ -15,11 +15,15 @@ import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Folder, { FolderSharedProps } from './Folder';
 import NewFile from './NewFile';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import PopupMenu from '@oracle/components/PopupMenu';
 import Text from '@oracle/elements/Text';
 import UploadFiles from './UploadFiles';
 import api from '@api';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
+import {
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
+} from '@interfaces/FileType';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildAddBlockRequestPayload } from '../FileEditor/utils';
@@ -33,8 +37,9 @@ const MENU_WIDTH: number = UNIT * 20;
 type FileBrowserProps = {
   addNewBlock?: (b: BlockRequestPayloadType, cb: any) => void;
   blocks?: BlockType[];
-  deleteBlockFile?: (b: BlockType) => void;
+  // deleteBlockFile?: (b: BlockType) => void;
   deleteWidget?: (b: BlockType) => void;
+  fetchAutocompleteItems?: () => void;
   fetchFileTree?: () => void;
   fetchPipeline?: () => void;
   files?: FileType[];
@@ -58,8 +63,9 @@ export enum FileContextEnum {
 function FileBrowser({
   addNewBlock,
   blocks = [],
-  deleteBlockFile,
+  // deleteBlockFile,
   deleteWidget,
+  fetchAutocompleteItems,
   fetchFileTree,
   fetchPipeline,
   files,
@@ -93,6 +99,73 @@ function FileBrowser({
             errors,
             response,
           }),
+        },
+      ),
+    },
+  );
+
+  const [showDeleteConfirmation, hideDeleteConfirmation] = useModal(({
+    block,
+    exception,
+  }: {
+    block: BlockType;
+    exception: string;
+  }) => (
+    <PopupMenu
+      centerOnScreen
+      danger
+      onClick={
+        () => deleteBlockFile({ block, force: true })
+          .then(() => hideDeleteConfirmation())
+      }
+      onCancel={hideDeleteConfirmation}
+      subtitle={
+        "Deleting this block file is dangerous. This block may have dependencies " +
+        "in active pipelines. Press confirm to delete this block anyway " +
+        "and remove it as a dependency from downstream blocks."
+      }
+      title={`Delete ${block.uuid} anyway?`}
+      width={UNIT * 34}
+    />
+  ));
+
+  const [deleteBlockFile] = useMutation(
+    ({
+      block: {
+        language,
+        type,
+        uuid,
+      },
+      force = false,
+    }: {
+      block: BlockType;
+      force?: boolean;
+    }) => {
+      let path = `${type}/${uuid}`;
+      if (language && FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language]) {
+        path = `${path}.${FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE[language].toLowerCase()}`;
+      }
+
+      return api.blocks.useDelete(encodeURIComponent(path), { force })();
+    },
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchAutocompleteItems();
+            fetchPipeline();
+            fetchFileTree();
+          },
+          onErrorCallback: ({
+            error: {
+              exception,
+              message,
+            },
+          }) => {
+            if (message.includes('raise HasDownstreamDependencies')) {
+              showDeleteConfirmation({ block: selectedBlock, exception });
+            }
+          },
         },
       ),
     },
@@ -315,7 +388,7 @@ function FileBrowser({
             if (typeof window !== 'undefined'
               && window.confirm(`Are you sure you want to delete block ${selectedBlock.uuid}?`)
             ) {
-              deleteBlockFile(selectedBlock);
+              deleteBlockFile({ block: selectedBlock });
             }
           }
         },

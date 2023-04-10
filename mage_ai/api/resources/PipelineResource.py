@@ -2,6 +2,9 @@ from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
 from mage_ai.data_preparation.models.constants import PipelineStatus
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleStatus,
+)
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule, PipelineRun
@@ -208,8 +211,8 @@ class PipelineResource(BaseResource):
         def _update_callback(resource):
             if status:
                 if status in [
-                    PipelineSchedule.ScheduleStatus.ACTIVE.value,
-                    PipelineSchedule.ScheduleStatus.INACTIVE.value,
+                    ScheduleStatus.ACTIVE.value,
+                    ScheduleStatus.INACTIVE.value,
                 ]:
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:

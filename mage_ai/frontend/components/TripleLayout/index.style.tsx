@@ -88,13 +88,20 @@ const ASIDE_STYLE = css<{
   `}
 `;
 
-const ASIDE_INNER_STYLE = css`
+const ASIDE_INNER_STYLE = css<{
+  verticalOffset?: number;
+}>`
   ${ScrollbarStyledCss}
 
   height: 100%;
   overflow: auto;
   position: relative;
   z-index: 2;
+
+  ${props => props.verticalOffset && `
+    height: calc(100% - ${props.verticalOffset}px);
+    top: ${props.verticalOffset}px;
+  `}
 `;
 
 const ASIDE_DRAGGABLE_STYLE = css<{
@@ -168,7 +175,9 @@ export const BeforeStyle = styled.aside`
   left: 0;
 `;
 
-export const BeforeInnerStyle = styled.div<ScrollbarTrackType>`
+export const BeforeInnerStyle = styled.div<ScrollbarTrackType & {
+  verticalOffset?: number;
+}>`
   ${ASIDE_INNER_STYLE}
   overflow: hidden;
 
@@ -183,7 +192,9 @@ export const AfterStyle = styled.aside`
   right: 0;
 `;
 
-export const AfterInnerStyle = styled.div<ScrollbarTrackType>`
+export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
+  verticalOffset?: number;
+}>`
   ${ASIDE_INNER_STYLE}
 `;
 
@@ -234,4 +245,55 @@ export const MainContentInnerStyle = styled.div`
 
   height: 100%;
   overflow: auto;
+`;
+
+export const NavigationStyle = styled.div`
+  position: relative;
+`;
+
+export const NavigationInnerStyle = styled.div<{
+  aligned: 'left' | 'right';
+}>`
+  height: 100%;
+  position: fixed;
+
+  ${props => props.aligned === 'left' && `
+    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
+    left: 0;
+  `}
+
+  ${props => props.aligned === 'right' && `
+    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
+    right: 0;
+  `}
+`;
+
+
+export const NavigationContainerStyle = styled.div<{
+  aligned: 'left' | 'right';
+  fullWidth: boolean;
+  heightOffset: number;
+  widthOffset: number;
+}>`
+  ${ScrollbarStyledCss}
+
+  overflow: auto;
+  position: absolute;
+  width: fit-content;
+
+  ${props => `
+    height: calc(100vh - ${props.heightOffset}px);
+  `}
+
+  ${props => props.fullWidth && `
+    width: calc(100% - ${props.widthOffset || 0}px);
+  `}
+
+  ${props => props.widthOffset && props.aligned === 'left' && `
+    left: ${props.widthOffset}px;
+  `}
+
+  ${props => props.widthOffset && props.aligned === 'right' && `
+    right: ${props.widthOffset}px;
+  `}
 `;

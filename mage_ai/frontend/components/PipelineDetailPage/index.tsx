@@ -1,9 +1,5 @@
 import { useMemo } from 'react';
 
-import BackfillGradient from '@oracle/icons/custom/BackfillGradient';
-import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
-import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
-import ChartGradient from '@oracle/icons/custom/ChartGradient';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
@@ -11,20 +7,9 @@ import ErrorsType from '@interfaces/ErrorsType';
 import ErrorPopup from '@components/ErrorPopup';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
-
-import {
-  Backfill,
-  BlocksSeparated,
-  BlocksStacked,
-  Chart,
-  Schedule,
-  TodoList,
-} from '@oracle/icons';
 import { BannerStyle } from './index.style';
 import { BreadcrumbType } from '@components/shared/Header';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
@@ -34,7 +19,7 @@ import {
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
-import { isViewer } from '@utils/session';
+import { buildNavigationItems } from './utils';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -155,92 +140,6 @@ function PipelineDetailPage({
     pipelineUUID,
   ]);
 
-  const navigationItems = [
-    {
-      Icon: Schedule,
-      IconSelected: ScheduleGradient,
-      id: PageNameEnum.TRIGGERS,
-      isSelected: () => PageNameEnum.TRIGGERS === pageName,
-      label: () => 'Triggers',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/triggers`,
-        href: '/pipelines/[pipeline]/triggers',
-      },
-    },
-    {
-      Icon: BlocksStacked,
-      IconSelected: BlocksStackedGradient,
-      id: PageNameEnum.RUNS,
-      isSelected: () => PageNameEnum.RUNS === pageName,
-      label: () => 'Runs',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/runs`,
-        href: '/pipelines/[pipeline]/runs',
-      },
-    },
-    {
-      Icon: Backfill,
-      IconSelected: BackfillGradient,
-      id: PageNameEnum.BACKFILLS,
-      isSelected: () => PageNameEnum.BACKFILLS === pageName,
-      label: () => 'Backfills',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/backfills`,
-        href: '/pipelines/[pipeline]/backfills',
-      },
-    },
-    {
-      Icon: TodoList,
-      IconSelected: TodoListGradient,
-      id: PageNameEnum.PIPELINE_LOGS,
-      isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
-      label: () => 'Logs',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/logs`,
-        href: '/pipelines/[pipeline]/logs',
-      },
-    },
-    {
-      Icon: Chart,
-      IconSelected: ChartGradient,
-      id: PageNameEnum.MONITOR,
-      isSelected: () => PageNameEnum.MONITOR === pageName,
-      label: () => 'Monitor',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/monitors`,
-        href: '/pipelines/[pipeline]/monitors',
-      },
-    },
-  ];
-
-  if (PipelineTypeEnum.INTEGRATION === pipeline?.type) {
-    navigationItems.unshift({
-      Icon: BlocksSeparated,
-      IconSelected: BlocksSeparatedGradient,
-      id: PageNameEnum.SYNCS,
-      isSelected: () => PageNameEnum.SYNCS === pageName,
-      label: () => 'Syncs',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/syncs`,
-        href: '/pipelines/[pipeline]/syncs',
-      },
-    });
-  }
-
-  if (!isViewer()) {
-    // @ts-ignore
-    navigationItems.unshift({
-      Icon: null,
-      IconSelected: null,
-      id: PageNameEnum.EDIT,
-      label: () => 'Edit pipeline',
-      linkProps: {
-        as: `/pipelines/${pipelineUUID}/edit`,
-        href: '/pipelines/[pipeline]/edit',
-      },
-    });
-  }
-
   return (
     <>
       <Dashboard
@@ -250,7 +149,7 @@ function PipelineDetailPage({
         before={before}
         beforeWidth={beforeWidth}
         breadcrumbs={breadcrumbs}
-        navigationItems={navigationItems}
+        navigationItems={buildNavigationItems(pageName, pipeline)}
         subheaderChildren={typeof subheader !== 'undefined' && subheader}
         title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
         uuid={uuid}

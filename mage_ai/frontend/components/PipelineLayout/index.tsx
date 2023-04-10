@@ -23,6 +23,7 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { NavigationItem } from '@components/Dashboard/VerticalNavigation';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { capitalize } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
@@ -30,10 +31,14 @@ import { useWindowSize } from '@utils/sizes';
 type PipelineLayoutProps = {
   after?: any;
   afterHeader?: any;
+  afterHeightOffset?: number;
   afterHidden?: boolean;
+  afterNavigationItems?: NavigationItem[];
   afterSubheader?: any;
   before?: any;
   beforeHeader?: any;
+  beforeHeightOffset?: number;
+  beforeNavigationItems?: NavigationItem[];
   children: any;
   errors: any;
   headerOffset?: number;
@@ -50,10 +55,14 @@ type PipelineLayoutProps = {
 function PipelineLayout({
   after,
   afterHeader,
+  afterHeightOffset,
   afterHidden: afterHiddenProp,
+  afterNavigationItems,
   afterSubheader,
   before,
   beforeHeader,
+  beforeHeightOffset,
+  beforeNavigationItems,
   children,
   errors,
   headerOffset,
@@ -178,14 +187,18 @@ function PipelineLayout({
       <TripleLayout
         after={after}
         afterHeader={afterHeader}
+        afterHeightOffset={afterHeightOffset}
         afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
+        afterNavigationItems={afterNavigationItems}
         afterSubheader={afterSubheader}
         afterWidth={afterWidth}
         before={before}
         beforeHeader={beforeHeader}
+        beforeHeightOffset={beforeHeightOffset}
         beforeHidden={beforeHidden}
         beforeMousedownActive={beforeMousedownActive}
+        beforeNavigationItems={beforeNavigationItems}
         beforeWidth={beforeWidth}
         header={headerMemo}
         headerOffset={headerOffset}
