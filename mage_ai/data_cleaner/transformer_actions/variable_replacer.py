@@ -16,12 +16,12 @@ def interpolate(text, key, variable_data):
     if variable_data['type'] == VariableType.FEATURE:
         regex_replacement = variable_data[VariableType.FEATURE]['uuid']
     elif variable_data['type'] == VariableType.FEATURE_SET_VERSION:
-        regex_replacement = \
-            variable_data[VariableType.FEATURE_SET_VERSION][VariableType.FEATURE_SET]['uuid']
+        regex_replacement = variable_data[VariableType.FEATURE_SET_VERSION][
+            VariableType.FEATURE_SET
+        ]['uuid']
 
     regex_pattern = re.compile(
-        r'\%__BRACKETS_START__{}__BRACKETS_END__'
-        .format(key)
+        r'\%__BRACKETS_START__{}__BRACKETS_END__'.format(key)
         .replace('__BRACKETS_START__', r'\{')
         .replace('__BRACKETS_END__', r'\}')
     )

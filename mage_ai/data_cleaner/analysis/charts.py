@@ -114,11 +114,13 @@ def build_correlation_data(df):
                 if value is not None:
                     x.append(dict(label=col2))
                     y.append(dict(value=value))
-        charts[col1] = [dict(
-            type=CHART_TYPE_BAR_HORIZONTAL,
-            x=x,
-            y=y,
-        )]
+        charts[col1] = [
+            dict(
+                type=CHART_TYPE_BAR_HORIZONTAL,
+                x=x,
+                y=y,
+            )
+        ]
     return charts
 
 

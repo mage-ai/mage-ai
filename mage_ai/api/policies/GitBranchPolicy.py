@@ -8,37 +8,54 @@ class GitBranchPolicy(BasePolicy):
     pass
 
 
-GitBranchPolicy.allow_actions([
-    constants.DETAIL,
-    constants.LIST,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+GitBranchPolicy.allow_actions(
+    [
+        constants.DETAIL,
+        constants.LIST,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-GitBranchPolicy.allow_actions([
-    constants.CREATE,
-    constants.UPDATE,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+GitBranchPolicy.allow_actions(
+    [
+        constants.CREATE,
+        constants.UPDATE,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role(),
+)
 
-GitBranchPolicy.allow_read(GitBranchPresenter.default_attributes, scopes=[
-    OauthScope.CLIENT_PRIVATE
-], on_action=[
-    constants.CREATE,
-    constants.DETAIL,
-    constants.LIST,
-    constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+GitBranchPolicy.allow_read(
+    GitBranchPresenter.default_attributes,
+    scopes=[OauthScope.CLIENT_PRIVATE],
+    on_action=[
+        constants.CREATE,
+        constants.DETAIL,
+        constants.LIST,
+        constants.UPDATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
-    OauthScope.CLIENT_PRIVATE
-], on_action=[
-    constants.CREATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+GitBranchPolicy.allow_write(
+    GitBranchPresenter.default_attributes,
+    scopes=[OauthScope.CLIENT_PRIVATE],
+    on_action=[
+        constants.CREATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role(),
+)
 
-GitBranchPolicy.allow_write(GitBranchPresenter.default_attributes, scopes=[
-    OauthScope.CLIENT_PRIVATE
-], on_action=[
-    constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role())
+GitBranchPolicy.allow_write(
+    GitBranchPresenter.default_attributes,
+    scopes=[OauthScope.CLIENT_PRIVATE],
+    on_action=[
+        constants.UPDATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role(),
+)

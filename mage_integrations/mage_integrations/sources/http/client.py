@@ -102,8 +102,7 @@ def get_exception_for_status_code(status_code):
     """Map the input status_code with the corresponding Exception Class \
         using 'STATUS_CODE_EXCEPTION_MAPPING' dictionary."""
 
-    exception = STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get(
-                "raise_exception")
+    exception = STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get("raise_exception")
     # If exception is not mapped for any code then use Server4xxError and Server5xxError respectively
     if not exception:
         if status_code > 400 and status_code < 500:
@@ -127,9 +126,7 @@ def raise_for_error(response):
 
     msg = json_response.get(
         "message",
-        STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get(
-            "message", "Unknown Error"
-        ),
+        STATUS_CODE_EXCEPTION_MAPPING.get(status_code, {}).get("message", "Unknown Error"),
     )
     message = "HTTP-error-code: {}, Error: {}".format(status_code, msg)
 
@@ -137,11 +134,11 @@ def raise_for_error(response):
     raise exc(message) from None
 
 
-class Client():
+class Client:
     def __init__(self, config, logger=None, api_result_limit=100):
         self.config = config
         self.logger = logger if logger is not None else LOGGER
-        
+
         self.api_result_limit = api_result_limit
 
     def get_headers(self):
@@ -156,7 +153,7 @@ class Client():
     def make_request(self, url, method='get', params=None, body=None) -> Dict:
         if params is None:
             params = {}
-        
+
         config_request_timeout = self.config.get('request_timeout')
         if config_request_timeout and float(config_request_timeout):
             request_timeout = float(config_request_timeout)

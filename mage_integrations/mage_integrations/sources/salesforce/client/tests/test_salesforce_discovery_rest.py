@@ -30,7 +30,7 @@ class DiscoveryTest(SalesforceBaseTest):
         #      When bug is addressed fix the marked lines
         missing_streams = {'DataAssetUsageTrackingInfo', 'DataAssetSemanticGraphEdge'}
 
-        streams_to_test = self.expected_streams() - missing_streams # BUG_TDL-15748
+        streams_to_test = self.expected_streams() - missing_streams  # BUG_TDL-15748
         # streams_to_test_prime = self.expected_streams().difference(self.get_unsupported_by_bulk_api())
         # self.assertEqual(len(streams_to_test), len(streams_to_test_prime), msg="Expectations are invalid.") # BUG_TDL-15748
 
@@ -54,8 +54,11 @@ class DiscoveryTest(SalesforceBaseTest):
 
         for stream in streams_to_test:
             with self.subTest(stream=stream):
-                catalog = next(iter([catalog for catalog in found_catalogs
-                                     if catalog["stream_name"] == stream]))
+                catalog = next(
+                    iter(
+                        [catalog for catalog in found_catalogs if catalog["stream_name"] == stream]
+                    )
+                )
                 assert catalog  # based on previous tests this should always be found
                 # gather expectations
                 expected_replication_keys = self.expected_replication_keys()[stream]
@@ -68,20 +71,28 @@ class DiscoveryTest(SalesforceBaseTest):
                 metadata = schema_and_metadata["metadata"]
                 schema = schema_and_metadata["annotated-schema"]
                 stream_properties = [item for item in metadata if item.get("breadcrumb") == []]
-                actual_replication_keys = set(stream_properties[0].get(
-                    "metadata", {self.REPLICATION_KEYS: []}).get(self.REPLICATION_KEYS, [])
+                actual_replication_keys = set(
+                    stream_properties[0]
+                    .get("metadata", {self.REPLICATION_KEYS: []})
+                    .get(self.REPLICATION_KEYS, [])
                 )
-                actual_primary_keys = set(stream_properties[0].get(
-                    "metadata", {self.PRIMARY_KEYS: []}).get(self.PRIMARY_KEYS, [])
+                actual_primary_keys = set(
+                    stream_properties[0]
+                    .get("metadata", {self.PRIMARY_KEYS: []})
+                    .get(self.PRIMARY_KEYS, [])
                 )
-                actual_replication_method = stream_properties[0].get(
-                    "metadata", {self.REPLICATION_METHOD: None}).get(self.REPLICATION_METHOD)
-
+                actual_replication_method = (
+                    stream_properties[0]
+                    .get("metadata", {self.REPLICATION_METHOD: None})
+                    .get(self.REPLICATION_METHOD)
+                )
 
                 # verify there is only 1 top level breadcrumb
-                self.assertTrue(len(stream_properties) == 1,
-                                msg="There is NOT only one top level breadcrumb for {}".format(stream) + \
-                                "\nstream_properties | {}".format(stream_properties))
+                self.assertTrue(
+                    len(stream_properties) == 1,
+                    msg="There is NOT only one top level breadcrumb for {}".format(stream)
+                    + "\nstream_properties | {}".format(stream_properties),
+                )
 
                 # verify replication key(s)
                 self.assertSetEqual(expected_replication_keys, actual_replication_keys)
@@ -104,55 +115,98 @@ class DiscoveryTest(SalesforceBaseTest):
 
                 # verify that primary, replication and foreign keys
                 # are given the inclusion of automatic in annotated schema.
-                actual_automatic_fields = {key for key, value in schema["properties"].items()
-                                           if value.get("inclusion") == "automatic"}
+                actual_automatic_fields = {
+                    key
+                    for key, value in schema["properties"].items()
+                    if value.get("inclusion") == "automatic"
+                }
                 self.assertEqual(expected_automatic_fields, actual_automatic_fields)
 
                 # verify that primary, replication and foreign keys
                 # are given the inclusion of automatic in metadata.
-                actual_automatic_fields = {item.get("breadcrumb", ["properties", None])[1]
-                                           for item in metadata
-                                           if item.get("metadata").get("inclusion") == "automatic"}
-                self.assertEqual(expected_automatic_fields,
-                                 actual_automatic_fields,
-                                 msg="expected {} automatic fields but got {}".format(
-                                     expected_automatic_fields,
-                                     actual_automatic_fields))
+                actual_automatic_fields = {
+                    item.get("breadcrumb", ["properties", None])[1]
+                    for item in metadata
+                    if item.get("metadata").get("inclusion") == "automatic"
+                }
+                self.assertEqual(
+                    expected_automatic_fields,
+                    actual_automatic_fields,
+                    msg="expected {} automatic fields but got {}".format(
+                        expected_automatic_fields, actual_automatic_fields
+                    ),
+                )
 
                 # TODO |https://jira.talendforge.org/browse/TDL-17122
                 #      Add test case for unsupported json object fields
                 skip_available_streams = {
-                    'PermissionSetEventStore', # rest
-                    'CartDeliveryGroup', # bulk
-                    'WebCart', # bulk
+                    'PermissionSetEventStore',  # rest
+                    'CartDeliveryGroup',  # bulk
+                    'WebCart',  # bulk
                 }
 
                 # BUG_TDL-9816 | https://jira.talendforge.org/browse/TDL-9816
                 #                [tap-salesforce] discovered streams missing `inlcusion` values
                 failing_available_streams = {
-                    'StaticResource', 'Contract', 'ContentVersion', 'Scontrol',
-                    'MobileApplicationDetail', 'EntityDefinition', 'User', 'Contact',
-                    'Attachment', 'ContactPointAddress', 'MailmergeTemplate', 'Lead', 'Order',
-                    'AlternativePaymentMethod', 'CardPaymentMethod', 'ServiceContract',
-                    'ServiceTerritoryMember', 'ReportEvent', 'EmailCapture', 'ListViewEvent',
-                    'WorkOrderLineItem', 'LeadCleanInfo', 'ServiceTerritory', 'DigitalWallet',
-                    'ApiEvent', 'WorkOrder', 'ContactCleanInfo', 'ResourceAbsence', 'ReturnOrder',
-                    'LegalEntity', 'PaymentMethod', 'EventLogFile', 'ServiceAppointment',
-                    'DandBCompany', 'AccountCleanInfo', 'Organization', 'Document', 'Account',
+                    'StaticResource',
+                    'Contract',
+                    'ContentVersion',
+                    'Scontrol',
+                    'MobileApplicationDetail',
+                    'EntityDefinition',
+                    'User',
+                    'Contact',
+                    'Attachment',
+                    'ContactPointAddress',
+                    'MailmergeTemplate',
+                    'Lead',
+                    'Order',
+                    'AlternativePaymentMethod',
+                    'CardPaymentMethod',
+                    'ServiceContract',
+                    'ServiceTerritoryMember',
+                    'ReportEvent',
+                    'EmailCapture',
+                    'ListViewEvent',
+                    'WorkOrderLineItem',
+                    'LeadCleanInfo',
+                    'ServiceTerritory',
+                    'DigitalWallet',
+                    'ApiEvent',
+                    'WorkOrder',
+                    'ContactCleanInfo',
+                    'ResourceAbsence',
+                    'ReturnOrder',
+                    'LegalEntity',
+                    'PaymentMethod',
+                    'EventLogFile',
+                    'ServiceAppointment',
+                    'DandBCompany',
+                    'AccountCleanInfo',
+                    'Organization',
+                    'Document',
+                    'Account',
                 }
 
                 # verify that all other fields have inclusion of available
                 # This assumes there are no unsupported fields for SaaS sources
                 if stream in failing_available_streams.union(skip_available_streams):
-                    LOGGER.warning("Skipping 'metadata inclusion available' asssertion for %s", stream)
-                else:   # BUG_TDL-9816 comment to reproduce
+                    LOGGER.warning(
+                        "Skipping 'metadata inclusion available' asssertion for %s", stream
+                    )
+                else:  # BUG_TDL-9816 comment to reproduce
                     self.assertTrue(
-                        all({item.get("metadata").get("inclusion") == "available"
-                             for item in metadata
-                             if item.get("breadcrumb", []) != []
-                             and item.get("breadcrumb", ["properties", None])[1]
-                             not in actual_automatic_fields}),
-                        msg="Not all non key properties are set to available in metadata")
+                        all(
+                            {
+                                item.get("metadata").get("inclusion") == "available"
+                                for item in metadata
+                                if item.get("breadcrumb", []) != []
+                                and item.get("breadcrumb", ["properties", None])[1]
+                                not in actual_automatic_fields
+                            }
+                        ),
+                        msg="Not all non key properties are set to available in metadata",
+                    )
 
 
 class DiscoveryTestRest(DiscoveryTest):

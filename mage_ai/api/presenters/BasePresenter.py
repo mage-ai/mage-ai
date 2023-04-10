@@ -10,7 +10,7 @@ import importlib
 import inspect
 
 
-class BasePresenter():
+class BasePresenter:
     all_attributes_attr = {}
     all_formats_attr = {}
     default_attributes = []
@@ -103,22 +103,15 @@ class BasePresenter():
             if callable(value):
                 value = value(**kwargs)
             self.__validate_attribute_type(key, value)
-            if issubclass(
-                    value.__class__,
-                    list) or issubclass(
-                    value.__class__,
-                    UserList):
-                obj[key] = [
-                    self.__transform_value(
-                        key, v, **kwargs) for v in value]
+            if issubclass(value.__class__, list) or issubclass(value.__class__, UserList):
+                obj[key] = [self.__transform_value(key, v, **kwargs) for v in value]
             else:
                 obj[key] = self.__transform_value(key, value, **kwargs)
             return obj
 
         format_to_present = kwargs.get('format', None)
         if format_to_present and self.options.get('from_resource'):
-            from_resource_name = self.options['from_resource'].resource_name_singular(
-            )
+            from_resource_name = self.options['from_resource'].resource_name_singular()
             format_to_present = f'{from_resource_name}/{format_to_present}'
 
         return reduce(_build, self.__class__.formats(format_to_present), {})
@@ -128,8 +121,10 @@ class BasePresenter():
 
         if issubclass(value.__class__, BaseModel):
             resource_class_name = f'{value.__class__.__name__}Resource'
-            resource_class = getattr(importlib.import_module(
-                f'mage_ai.api.resources.{resource_class_name}'), resource_class_name, )
+            resource_class = getattr(
+                importlib.import_module(f'mage_ai.api.resources.{resource_class_name}'),
+                resource_class_name,
+            )
             value = resource_class(value, self.current_user, **kwargs)
 
         if isinstance(value, datetime):
@@ -172,4 +167,5 @@ class BasePresenter():
                 return val(*args, **kwargs)
             else:
                 return val
+
         return _missing()

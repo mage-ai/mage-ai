@@ -20,6 +20,7 @@ def dig(obj_arg, arr_or_string):
             return obj.get(key)
         else:
             return obj
+
     return reduce(_build, arr, obj_arg)
 
 
@@ -65,12 +66,13 @@ def extract(d, keys):
         if val is not None:
             obj[key] = val
         return obj
+
     return reduce(_build, keys, {})
 
 
 def extract_arrays(input_data):
     arr = []
-    for k, v in input_data.items():
+    for _k, v in input_data.items():
         if type(v) is list:
             arr.append(v)
     return arr
@@ -83,6 +85,7 @@ def group_by(func, arr):
             obj[val] = []
         obj[val].append(item)
         return obj
+
     return reduce(_build, arr, {})
 
 
@@ -105,4 +108,5 @@ def replace_dict_nan_value(d):
         if type(v) == float and math.isnan(v):
             return None
         return v
+
     return {k: _replace_nan_value(v) for k, v in d.items()}

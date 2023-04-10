@@ -39,19 +39,22 @@ def get_url(endpoint, **kwargs):
 
 @utils.ratelimit(1, 2)
 def request(url, params=None):
-    @backoff.on_exception(backoff.expo,
-                          (requests.exceptions.RequestException),
-                          max_tries=5,
-                          giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
-                          factor=2)
-
+    @backoff.on_exception(
+        backoff.expo,
+        (requests.exceptions.RequestException),
+        max_tries=5,
+        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500,
+        factor=2,
+    )
     def _request(url, params=None):
         params = params or {}
         headers = {}
         if 'user_agent' in CONFIG:
             headers['User-Agent'] = CONFIG['user_agent']
 
-        req = requests.Request('GET', url, params=params, auth=(CONFIG['api_key'], ""), headers=headers).prepare()
+        req = requests.Request(
+            'GET', url, params=params, auth=(CONFIG['api_key'], ""), headers=headers
+        ).prepare()
         logger.info("GET {}".format(req.url))
         resp = session.send(req)
 
@@ -124,25 +127,30 @@ def sync_tickets(tap_stream_id: str = None, stream: Dict = None):
         sync_tickets_by_filter(bookmark_property, "deleted", tap_stream_id)
         sync_tickets_by_filter(bookmark_property, "spam", tap_stream_id)
     else:
-        write_schema("tickets",
-                            utils.load_schema("tickets"),
-                            ["id"],
-                            bookmark_properties=[bookmark_property])
+        write_schema(
+            "tickets", utils.load_schema("tickets"), ["id"], bookmark_properties=[bookmark_property]
+        )
 
-        write_schema("conversations",
-                            utils.load_schema("conversations"),
-                            ["id"],
-                            bookmark_properties=[bookmark_property])
+        write_schema(
+            "conversations",
+            utils.load_schema("conversations"),
+            ["id"],
+            bookmark_properties=[bookmark_property],
+        )
 
-        write_schema("satisfaction_ratings",
-                            utils.load_schema("satisfaction_ratings"),
-                            ["id"],
-                            bookmark_properties=[bookmark_property])
+        write_schema(
+            "satisfaction_ratings",
+            utils.load_schema("satisfaction_ratings"),
+            ["id"],
+            bookmark_properties=[bookmark_property],
+        )
 
-        write_schema("time_entries",
-                            utils.load_schema("time_entries"),
-                            ["id"],
-                            bookmark_properties=[bookmark_property])
+        write_schema(
+            "time_entries",
+            utils.load_schema("time_entries"),
+            ["id"],
+            bookmark_properties=[bookmark_property],
+        )
 
         sync_tickets_by_filter(bookmark_property)
         sync_tickets_by_filter(bookmark_property, "deleted")
@@ -162,7 +170,7 @@ def sync_tickets_by_filter(bookmark_property, predefined_filter=None, tap_stream
         'updated_since': start,
         'order_by': bookmark_property,
         'order_type': "asc",
-        'include': "requester,company,stats"
+        'include': "requester,company,stats",
     }
 
     if predefined_filter and (not tap_stream_id or 'tickets' == tap_stream_id):
@@ -179,10 +187,14 @@ def sync_tickets_by_filter(bookmark_property, predefined_filter=None, tap_stream
             # get all sub-entities and save them
             logger.info("Ticket {}: Syncing conversations".format(row['id']))
             try:
-                for subrow in gen_request(get_url("sub_ticket", id=row['id'], entity="conversations")):
+                for subrow in gen_request(
+                    get_url("sub_ticket", id=row['id'], entity="conversations")
+                ):
                     subrow.pop("body", None)
                     if subrow[bookmark_property] >= start:
-                        singer.write_record("conversations", subrow, time_extracted=singer.utils.now())
+                        singer.write_record(
+                            "conversations", subrow, time_extracted=singer.utils.now()
+                        )
             except HTTPError as e:
                 if e.response.status_code == 403:
                     logger.info('Invalid ticket ID requested from Freshdesk {0}'.format(row['id']))
@@ -192,30 +204,44 @@ def sync_tickets_by_filter(bookmark_property, predefined_filter=None, tap_stream
         if not tap_stream_id or 'satisfaction_ratings' == tap_stream_id:
             try:
                 logger.info("Ticket {}: Syncing satisfaction ratings".format(row['id']))
-                for subrow in gen_request(get_url("sub_ticket", id=row['id'], entity="satisfaction_ratings")):
+                for subrow in gen_request(
+                    get_url("sub_ticket", id=row['id'], entity="satisfaction_ratings")
+                ):
                     subrow['ratings'] = transform_dict(subrow['ratings'], key_key="question")
                     if subrow[bookmark_property] >= start:
-                        singer.write_record("satisfaction_ratings", subrow, time_extracted=singer.utils.now())
+                        singer.write_record(
+                            "satisfaction_ratings", subrow, time_extracted=singer.utils.now()
+                        )
             except HTTPError as e:
                 if e.response.status_code == 403:
-                    logger.info("The Surveys feature is unavailable. Skipping the satisfaction_ratings stream.")
+                    logger.info(
+                        "The Surveys feature is unavailable. Skipping the satisfaction_ratings stream."
+                    )
                 else:
                     raise
 
         if not tap_stream_id or 'time_entries' == tap_stream_id:
             try:
                 logger.info("Ticket {}: Syncing time entries".format(row['id']))
-                for subrow in gen_request(get_url("sub_ticket", id=row['id'], entity="time_entries")):
+                for subrow in gen_request(
+                    get_url("sub_ticket", id=row['id'], entity="time_entries")
+                ):
                     if subrow[bookmark_property] >= start:
-                        singer.write_record("time_entries", subrow, time_extracted=singer.utils.now())
+                        singer.write_record(
+                            "time_entries", subrow, time_extracted=singer.utils.now()
+                        )
 
             except HTTPError as e:
                 if e.response.status_code == 403:
-                    logger.info("The Timesheets feature is unavailable. Skipping the time_entries stream.")
+                    logger.info(
+                        "The Timesheets feature is unavailable. Skipping the time_entries stream."
+                    )
                 elif e.response.status_code == 404:
                     # 404 is being returned for deleted tickets and spam
-                    logger.info("Could not retrieve time entries for ticket id {}. This may be caused by tickets "
-                                "marked as spam or deleted.".format(row['id']))
+                    logger.info(
+                        "Could not retrieve time entries for ticket id {}. This may be caused by tickets "
+                        "marked as spam or deleted.".format(row['id'])
+                    )
                 else:
                     raise
 
@@ -244,10 +270,9 @@ def sync_time_filtered(entity, stream: Dict = None):
             unique_constraints=stream.get('unique_constraints'),
         )
     else:
-        write_schema(entity,
-                    utils.load_schema(entity),
-                    ["id"],
-                    bookmark_properties=[bookmark_property])
+        write_schema(
+            entity, utils.load_schema(entity), ["id"], bookmark_properties=[bookmark_property]
+        )
 
     start = get_start(entity)
 
@@ -291,7 +316,10 @@ def do_sync(catalog: Dict = None):
     except HTTPError as e:
         logger.critical(
             "Error making request to Freshdesk API: GET %s: [%s - %s]",
-            e.request.url, e.response.status_code, e.response.content)
+            e.request.url,
+            e.response.status_code,
+            e.response.content,
+        )
         sys.exit(1)
 
     logger.info("Completed sync")

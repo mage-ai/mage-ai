@@ -1,9 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-from mage_integrations.sources.chargebee.state import (
-    get_last_record_value_for_table,
-    incorporate
-)
+from mage_integrations.sources.chargebee.state import get_last_record_value_for_table, incorporate
 from mage_integrations.sources.chargebee.streams.util import Util
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.messages import write_schema
@@ -37,7 +34,7 @@ def is_selected(stream_catalog):
     return inclusion == 'automatic'
 
 
-class BaseChargebeeStream():
+class BaseChargebeeStream:
     # GLOBAL PROPERTIES
     TABLE = None
     KEY_PROPERTIES = []
@@ -107,10 +104,7 @@ class BaseChargebeeStream():
             if self.catalog.metadata is not None:
                 metadata = singer.metadata.to_map(self.catalog.metadata)
 
-            return tx.transform(
-                record,
-                self.catalog.schema.to_dict(),
-                metadata)
+            return tx.transform(record, self.catalog.schema.to_dict(), metadata)
 
     def get_stream_data(self, data):
         entity = self.ENTITY
@@ -123,12 +117,16 @@ class BaseChargebeeStream():
         sync_interval_in_mins = 2
 
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
-        LOGGER.info('Attempting to get the most recent bookmark_date for entity {}.'.format(self.ENTITY))
+        LOGGER.info(
+            'Attempting to get the most recent bookmark_date for entity {}.'.format(self.ENTITY)
+        )
         bookmark_date = get_last_record_value_for_table(self.state, table, 'bookmark_date')
 
         # If there is no bookmark date, fall back to using the start date from the config file.
         if bookmark_date is None:
-            LOGGER.info('Could not locate bookmark_date from STATE file. Falling back to start_date from config.json instead.')
+            LOGGER.info(
+                'Could not locate bookmark_date from STATE file. Falling back to start_date from config.json instead.'
+            )
             bookmark_date = parse(self.config.get('start_date'))
         else:
             bookmark_date = parse(bookmark_date)
@@ -144,7 +142,7 @@ class BaseChargebeeStream():
         if self.ENTITY == 'event':
             params = {"occurred_at[between]": sync_window}
             bookmark_key = 'occurred_at'
-        elif self.ENTITY in ['promotional_credit','comment']:
+        elif self.ENTITY in ['promotional_credit', 'comment']:
             params = {"created_at[between]": sync_window}
             bookmark_key = 'created_at'
         else:
@@ -161,9 +159,8 @@ class BaseChargebeeStream():
             max_date = to_date
 
             response = self.client.make_request(
-                url=self.get_url(),
-                method=api_method,
-                params=params)
+                url=self.get_url(), method=api_method, params=params
+            )
 
             if 'api_error_code' in response.keys():
                 if response['api_error_code'] == 'configuration_incompatible':
@@ -175,7 +172,7 @@ class BaseChargebeeStream():
             # List of deleted "plans, addons and coupons" from the /events endpoint
             deleted_records = []
 
-            if self.config.get('include_deleted') not in ['false','False', False]:
+            if self.config.get('include_deleted') not in ['false', 'False', False]:
                 if self.ENTITY == 'event':
                     # Parse "event_type" from events records and collect deleted plan/addon/coupon from events
                     for record in records:
@@ -211,8 +208,7 @@ class BaseChargebeeStream():
             # this will make sure that bookmark does not go beyond (now - 2 minutes)
             # so, no data will be missed due to API latency
             max_date = min(max_date, to_date)
-            self.state = incorporate(
-                self.state, table, 'bookmark_date', max_date)
+            self.state = incorporate(self.state, table, 'bookmark_date', max_date)
 
             if not response.get('next_offset'):
                 LOGGER.info("Final offset reached. Ending sync.")
@@ -227,10 +223,8 @@ class BaseChargebeeStream():
 
     def load_schema_by_name(self, name):
         return singer.utils.load_json(
-            os.path.normpath(
-                os.path.join(
-                    self.get_class_path(),
-                    '../schemas/{}.json'.format(name))))
+            os.path.normpath(os.path.join(self.get_class_path(), '../schemas/{}.json'.format(name)))
+        )
 
     def get_schema(self):
         return self.load_schema_by_name(self.SCHEMA)

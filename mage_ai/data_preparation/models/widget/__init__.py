@@ -107,7 +107,7 @@ class Widget(Block):
                 df = dfs[0]
                 arr = df[self.group_by_columns[0]]
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr = variables[var_name_orig]
             if type(arr) is pd.Series:
                 values = arr[arr.notna()].tolist()
@@ -122,7 +122,7 @@ class Widget(Block):
                 df = dfs[0]
                 data = build_x_y(df, self.group_by_columns, self.metrics)
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     data.update(
                         {
                             var_name_orig: encode_values_in_list(
@@ -138,7 +138,7 @@ class Widget(Block):
                 df = dfs[0]
                 arr1 = df[self.group_by_columns[0]]
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr1 = variables[var_name_orig]
                     data_key = var_name_orig
             if type(arr1) is pd.Series:
@@ -164,7 +164,7 @@ class Widget(Block):
                 data[VARIABLE_NAME_X] = self.group_by_columns
                 data[VARIABLE_NAME_Y] = df[self.group_by_columns].to_numpy()
             else:
-                for var_name_orig, var_name in self.output_variable_names:
+                for var_name_orig, _var_name in self.output_variable_names:
                     arr = variables.get(var_name_orig, None)
 
                     if arr is not None:

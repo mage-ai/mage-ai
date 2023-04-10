@@ -19,10 +19,13 @@ class VariableManagerTest(DBTestCase):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data1 = {'k1': 'v1', 'k2': 'v2'}
-        data2 = pd.DataFrame([
-            ['test1', 1],
-            ['test2', 2],
-        ], columns=['col1', 'col2'])
+        data2 = pd.DataFrame(
+            [
+                ['test1', 1],
+                ['test2', 2],
+            ],
+            columns=['col1', 'col2'],
+        )
         data3 = dict(
             metadata=dict(
                 column_types=dict(
@@ -39,7 +42,7 @@ class VariableManagerTest(DBTestCase):
                 dict(
                     title='Remove outliers',
                 )
-            ]
+            ],
         )
         variable_manager.add_variable('test_pipeline_1', 'block1', 'var1', data1)
         variable_manager.add_variable('test_pipeline_1', 'block2', 'var2', data2)

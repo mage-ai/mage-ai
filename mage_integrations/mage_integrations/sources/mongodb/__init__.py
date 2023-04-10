@@ -72,15 +72,18 @@ class MongoDB(Source):
 
                 properties[column] = prop
 
-            schema = catalog.Schema.from_dict(dict(
-                properties=properties,
-                type='object',
-            ))
-            catalog_entries.append(self.build_catalog_entry(
-                stream_id,
-                schema,
-            ))
-
+            schema = catalog.Schema.from_dict(
+                dict(
+                    properties=properties,
+                    type='object',
+                )
+            )
+            catalog_entries.append(
+                self.build_catalog_entry(
+                    stream_id,
+                    schema,
+                )
+            )
 
         return Catalog(catalog_entries)
 
@@ -97,7 +100,9 @@ class MongoDB(Source):
             idx = find_index(lambda x: len(x['breadcrumb']) == 0, stream['metadata'])
 
             stream['metadata'][idx]['metadata']['database-name'] = database
-            stream['metadata'][idx]['metadata']['replication-key'] = self._get_bookmark_properties_for_stream(
+            stream['metadata'][idx]['metadata'][
+                'replication-key'
+            ] = self._get_bookmark_properties_for_stream(
                 streams_by_id[tap_stream_id],
             )
             stream['metadata'][idx]['metadata']['replication-method'] = stream['replication_method']
@@ -123,9 +128,11 @@ class MongoDB(Source):
         if query:
             state = query
         elif bookmarks:
-            state = dict(bookmarks={
-                stream.tap_stream_id: bookmarks,
-            })
+            state = dict(
+                bookmarks={
+                    stream.tap_stream_id: bookmarks,
+                }
+            )
 
         find_filter = build_find_filter(
             stream.to_dict(),
@@ -151,9 +158,11 @@ class MongoDB(Source):
         if query:
             state = query
         elif bookmarks:
-            state = dict(bookmarks={
-                stream.tap_stream_id: bookmarks,
-            })
+            state = dict(
+                bookmarks={
+                    stream.tap_stream_id: bookmarks,
+                }
+            )
 
         find_filter = build_find_filter(
             stream.to_dict(),

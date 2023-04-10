@@ -13,8 +13,10 @@ class GoogleSearchConsole(Connection):
         path_to_credentials_json_file: str = None,
     ):
         if not credentials_info and not path_to_credentials_json_file:
-            raise Exception('GoogleSearchConsole connection requires credentials_info '
-                            'or path_to_credentials_json_file.')
+            raise Exception(
+                'GoogleSearchConsole connection requires credentials_info '
+                'or path_to_credentials_json_file.'
+            )
 
         super().__init__()
         self.credentials_info = credentials_info
@@ -23,11 +25,11 @@ class GoogleSearchConsole(Connection):
 
     def connect(self):
         """Create a connection to the Google Search Console API and return service object.
-        
+
         Returns:
             service (object): Google Search Console service object.
         """
-        
+
         scope = ['https://www.googleapis.com/auth/webmasters']
         if self.credentials_info is None:
             credentials = service_account.Credentials.from_service_account_file(
@@ -39,11 +41,7 @@ class GoogleSearchConsole(Connection):
 
         if self.email:
             credentials = credentials.with_subject(self.email)
-        return build(
-            'webmasters',
-            'v3',
-            credentials=credentials
-        )
+        return build('webmasters', 'v3', credentials=credentials)
 
     def load(
         self,

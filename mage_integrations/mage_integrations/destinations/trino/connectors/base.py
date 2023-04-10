@@ -74,9 +74,11 @@ class TrinoConnector(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        results = self.build_connection().load(f"""
+        results = self.build_connection().load(
+            f"""
 DESCRIBE {schema_name}.{table_name}
-        """)
+        """
+        )
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
@@ -118,19 +120,25 @@ DESCRIBE {schema_name}.{table_name}
 
         if self._support_merge_rows() and unique_constraints and unique_conflict_method:
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
-            commands = [
-                drop_temp_table_command,
-            ] + self.build_create_table_commands(
-                schema=schema,
-                schema_name=schema_name,
-                stream=None,
-                table_name=f'temp_{table_name}',
-                database_name=database_name,
-                unique_constraints=unique_constraints,
-            ) + self.wrap_insert_commands([
-                f'INSERT INTO {full_table_name_temp} ({insert_columns})',
-                'VALUES {insert_values}',
-            ])
+            commands = (
+                [
+                    drop_temp_table_command,
+                ]
+                + self.build_create_table_commands(
+                    schema=schema,
+                    schema_name=schema_name,
+                    stream=None,
+                    table_name=f'temp_{table_name}',
+                    database_name=database_name,
+                    unique_constraints=unique_constraints,
+                )
+                + self.wrap_insert_commands(
+                    [
+                        f'INSERT INTO {full_table_name_temp} ({insert_columns})',
+                        'VALUES {insert_values}',
+                    ]
+                )
+            )
 
             unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
             columns_cleaned = [clean_column_name(col) for col in columns]
@@ -158,10 +166,12 @@ DESCRIBE {schema_name}.{table_name}
                 drop_temp_table_command,
             ]
         else:
-            commands = self.wrap_insert_commands([
-                f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
-                'VALUES {insert_values}',
-            ])
+            commands = self.wrap_insert_commands(
+                [
+                    f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
+                    'VALUES {insert_values}',
+                ]
+            )
 
         fixed_query_payload_size = sum([len(c) for c in commands])
         value_payload_size = 0

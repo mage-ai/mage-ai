@@ -9,33 +9,35 @@ from singer import Transformer
 
 LOGGER = singer.get_logger()
 
+
 def process_record(record):
-    """ Serializes Zenpy's internal classes into Python objects via ZendeskEncoder. """
+    """Serializes Zenpy's internal classes into Python objects via ZendeskEncoder."""
     rec_str = json.dumps(record, cls=ZendeskEncoder)
     rec_dict = json.loads(rec_str)
     return rec_dict
+
 
 def sync_stream(state, start_date, instance):
     stream = instance.stream
 
     # If we have a bookmark, use it; otherwise use start_date
-    if (instance.replication_method == 'INCREMENTAL' and
-            not state.get('bookmarks', {}).get(stream.tap_stream_id, {}).get(instance.replication_key)):
-        singer.write_bookmark(state,
-                              stream.tap_stream_id,
-                              instance.replication_key,
-                              start_date)
+    if instance.replication_method == 'INCREMENTAL' and not state.get('bookmarks', {}).get(
+        stream.tap_stream_id, {}
+    ).get(instance.replication_key):
+        singer.write_bookmark(state, stream.tap_stream_id, instance.replication_key, start_date)
 
     parent_stream = stream
     with metrics.record_counter(stream.tap_stream_id) as counter, Transformer() as transformer:
-        for (stream, record) in instance.sync(state):
+        for stream, record in instance.sync(state):
             # NB: Only count parent records in the case of sub-streams
             if stream.tap_stream_id == parent_stream.tap_stream_id:
                 counter.increment()
 
             rec = process_record(record)
             # SCHEMA_GEN: Comment out transform
-            rec = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
+            rec = transformer.transform(
+                rec, stream.schema.to_dict(), metadata.to_map(stream.metadata)
+            )
 
             singer.write_record(stream.tap_stream_id, rec)
             # NB: We will only write state at the end of a stream's sync:
@@ -47,8 +49,9 @@ def sync_stream(state, start_date, instance):
 
         return counter.value
 
+
 class ZendeskEncoder(json.JSONEncoder):
-    def default(self, obj): # pylint: disable=arguments-differ,method-hidden
+    def default(self, obj):  # pylint: disable=arguments-differ,method-hidden
         if isinstance(obj, BaseObject):
             obj_dict = obj.to_dict()
             for k, v in list(obj_dict.items()):

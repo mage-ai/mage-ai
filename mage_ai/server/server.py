@@ -133,6 +133,7 @@ class ApiStatusHandler(BaseHandler):
         else:
             try:
                 from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+
                 if WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
                     instance_type = ClusterType.K8S
             except ModuleNotFoundError:
@@ -149,9 +150,13 @@ class ApiStatusHandler(BaseHandler):
 
 class ApiProjectSettingsHandler(BaseHandler):
     def get(self):
-        self.write(dict(project_settings=[
-            dict(require_user_authentication=REQUIRE_USER_AUTHENTICATION),
-        ]))
+        self.write(
+            dict(
+                project_settings=[
+                    dict(require_user_authentication=REQUIRE_USER_AUTHENTICATION),
+                ]
+            )
+        )
 
 
 def make_app():
@@ -199,12 +204,10 @@ def make_app():
             r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)',
             ApiInstanceDetailHandler,
         ),
-
         # Not sure what is using this, perhaps the event triggering via Lambda?
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
-
         # Where is this used?
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
         (
@@ -219,21 +222,16 @@ def make_app():
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/outputs',
             ApiPipelineBlockOutputHandler,
         ),
-
         # Trigger pipeline via API
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
             ApiTriggerPipelineHandler,
         ),
-
         # Status
         (r'/api/status', ApiStatusHandler),
-
         # This is used to check scheduler status and manually fix it
         (r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler),
-
         (r'/api/project_settings', ApiProjectSettingsHandler),
-
         # API v1 routes
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\%2f\.]+)/(?P<child>\w+)/(?P<child_pk>[\w\%2f\.]+)',

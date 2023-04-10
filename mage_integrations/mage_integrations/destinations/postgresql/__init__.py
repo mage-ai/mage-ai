@@ -54,13 +54,15 @@ class PostgreSQL(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        results = self.build_connection().load(f"""
+        results = self.build_connection().load(
+            f"""
 SELECT
     column_name
     , data_type
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
-        """)
+        """
+        )
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
@@ -105,8 +107,9 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
 
         if unique_constraints and unique_conflict_method:
             unique_constraints = [clean_column_name(col) for col in unique_constraints]
-            columns_cleaned = [clean_column_name(col) for col in columns
-                               if col != INTERNAL_COLUMN_CREATED_AT]
+            columns_cleaned = [
+                clean_column_name(col) for col in columns if col != INTERNAL_COLUMN_CREATED_AT
+            ]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
@@ -122,10 +125,12 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
     def wrap_insert_commands(self, commands: List[str]) -> List[str]:
         commands_string = '\n'.join(commands)
         return [
-            '\n'.join([
-                f"WITH insert_rows_and_count AS ({commands_string} RETURNING 1)",
-                'SELECT COUNT(*) FROM insert_rows_and_count',
-            ]),
+            '\n'.join(
+                [
+                    f"WITH insert_rows_and_count AS ({commands_string} RETURNING 1)",
+                    'SELECT COUNT(*) FROM insert_rows_and_count',
+                ]
+            ),
         ]
 
     def column_type_mapping(self, schema: Dict) -> Dict:

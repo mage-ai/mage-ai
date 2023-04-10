@@ -27,7 +27,6 @@ class JobManagerTests(TestCase):
                         'read_namespaced_pod',
                         return_value=mock_pod_config,
                     ) as mock_read_namespaced_pod_method:
-
                         job_manager = JobManager(
                             job_name='test_job_name',
                             namespace='test_namespace',
@@ -139,7 +138,5 @@ class JobManagerTests(TestCase):
             grace_period_seconds=0,
         )
         mock_api_client.delete_namespaced_job.assert_called_once_with(
-            name='test_job_name',
-            namespace='test_namespace',
-            body=mock_delete_options
+            name='test_job_name', namespace='test_namespace', body=mock_delete_options
         )

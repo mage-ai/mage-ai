@@ -75,8 +75,7 @@ class PipelineSchedulerTests(DBTestCase):
             b.update(status=BlockRun.BlockRunStatus.COMPLETED)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_success_message'
+            scheduler.notification_sender, 'send_pipeline_run_success_message'
         ) as mock_send_message:
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
@@ -96,8 +95,7 @@ class PipelineSchedulerTests(DBTestCase):
                 b.update(status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_failure_message'
+            scheduler.notification_sender, 'send_pipeline_run_failure_message'
         ) as mock_send_message:
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
@@ -152,8 +150,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_failure_message'
+            scheduler.notification_sender, 'send_pipeline_run_failure_message'
         ) as mock_send_message:
             scheduler.on_block_failure('block1')
             mock_send_message.assert_called_once()
@@ -169,8 +166,7 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_failure_message'
+            scheduler.notification_sender, 'send_pipeline_run_failure_message'
         ) as mock_send_message:
             scheduler.on_block_failure('block1')
             mock_send_message.assert_not_called()
@@ -200,12 +196,8 @@ class PipelineSchedulerTests(DBTestCase):
                     mock_block_variables.return_value = ['values', 'metadata']
                     # only mock the metadata
                     mock_variable.return_value = [
-                        {
-                            'block_uuid': 'for_user_1'
-                        },
-                        {
-                            'block_uuid': 'for_user_2'
-                        }
+                        {'block_uuid': 'for_user_1'},
+                        {'block_uuid': 'for_user_2'},
                     ]
                     scheduler.on_block_complete_without_schedule('block1')
                     mock_schedule.assert_not_called()
@@ -250,12 +242,8 @@ class PipelineSchedulerTests(DBTestCase):
                     mock_block_variables.return_value = ['values', 'metadata']
                     # only mock the metadata
                     mock_variable.return_value = [
-                        {
-                            'block_uuid': 'for_user_1'
-                        },
-                        {
-                            'block_uuid': 'for_user_2'
-                        }
+                        {'block_uuid': 'for_user_1'},
+                        {'block_uuid': 'for_user_2'},
                     ]
                     scheduler.on_block_complete_without_schedule('block1')
                     mock_schedule.assert_not_called()
@@ -287,12 +275,8 @@ class PipelineSchedulerTests(DBTestCase):
                     mock_block_variables.return_value = ['values', 'metadata']
                     # only mock the metadata
                     mock_variable.return_value = [
-                        {
-                            'block_uuid': 'for_user_1'
-                        },
-                        {
-                            'block_uuid': 'for_user_2'
-                        }
+                        {'block_uuid': 'for_user_1'},
+                        {'block_uuid': 'for_user_2'},
                     ]
                     scheduler.on_block_complete_without_schedule('block1')
                     mock_schedule.assert_not_called()

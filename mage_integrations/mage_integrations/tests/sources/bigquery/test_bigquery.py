@@ -107,6 +107,7 @@ def build_sample_bigquery_rows():
         ),
     ]
 
+
 class BigQuerySourceTests(unittest.TestCase):
     maxDiff = None
 

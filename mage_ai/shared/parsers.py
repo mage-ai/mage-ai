@@ -18,6 +18,8 @@ INTS = (
 
 MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 
+_DEFAULT_DECODER = JSONDecoder()
+
 
 def encode_complex(obj):
     if hasattr(obj, 'isoformat') and 'method' in type(obj.isoformat).__name__:
@@ -46,13 +48,14 @@ def encode_complex(obj):
     return obj
 
 
-def extract_json_objects(text, decoder=JSONDecoder()):
+def extract_json_objects(text, decoder=None):
     """Find JSON objects in text, and yield the decoded JSON data
 
     Does not attempt to look for JSON arrays, text, or other JSON types outside
     of a parent JSON object.
 
     """
+    decoder = decoder or _DEFAULT_DECODER
     pos = 0
     while True:
         match = text.find('{', pos)

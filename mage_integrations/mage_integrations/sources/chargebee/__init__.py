@@ -23,12 +23,7 @@ class Chargebee(Source):
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         tap_stream_id = stream.tap_stream_id
-        stream_obj = STREAMS[tap_stream_id](
-            self.config,
-            self.state,
-            stream,
-            self.client
-        )
+        stream_obj = STREAMS[tap_stream_id](self.config, self.state, stream, self.client)
 
         return stream_obj.load_data()
 
@@ -45,15 +40,17 @@ class Chargebee(Source):
         site_name = self.config.get('site')
         self.logger.info("Site Name {}".format(site_name))
         configuration_url = 'https://{}.chargebee.com/api/v2/configurations'.format(site_name)
-        response = self.client.make_request(
-            url=configuration_url,
-            method='GET')
+        response = self.client.make_request(url=configuration_url, method='GET')
         site_configurations = response['configurations']
         self.logger.info(f'Configurations API response {response}')
         product_catalog_version = next(
-                                    iter(config['product_catalog_version'] for config in site_configurations
-                                         if config['domain'].lower() == site_name.lower()),
-                                    None)
+            iter(
+                config['product_catalog_version']
+                for config in site_configurations
+                if config['domain'].lower() == site_name.lower()
+            ),
+            None,
+        )
         if product_catalog_version == 'v2':
             available_streams = ITEM_MODEL_AVAILABLE_STREAMS
             self.config['item_model'] = True
@@ -67,8 +64,7 @@ class Chargebee(Source):
             raise RuntimeError('Incorrect Product Catalog version')
 
         return {
-            stream.TABLE: Schema.from_dict(
-                stream(self.config, self.state, None, None).get_schema())
+            stream.TABLE: Schema.from_dict(stream(self.config, self.state, None, None).get_schema())
             for stream in available_streams
         }
 

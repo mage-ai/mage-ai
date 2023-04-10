@@ -1,8 +1,8 @@
 from tap_tester import connections
 from base import TestLinkedinAdsBase
 
-class LinkedinAdsSyncTest(TestLinkedinAdsBase):
 
+class LinkedinAdsSyncTest(TestLinkedinAdsBase):
     @staticmethod
     def name():
         return "tap_tester_linkedin_ads_sync_test"
@@ -18,12 +18,15 @@ class LinkedinAdsSyncTest(TestLinkedinAdsBase):
 
         # removed "ad_analytics_by_campaign" and "ad_analytics_by_creative" as
         # it makes lots of api calls so sync canary test for these streams is covered in the start date test
-        expected_streams = ['accounts','video_ads']
-        test_catalogs = [catalog for catalog in found_catalogs
-                                      if catalog.get('stream_name') in expected_streams]
+        expected_streams = ['accounts', 'video_ads']
+        test_catalogs = [
+            catalog for catalog in found_catalogs if catalog.get('stream_name') in expected_streams
+        ]
 
-        self.perform_and_verify_table_and_field_selection(conn_id, test_catalogs, non_selected_properties=['reference_organization_id'])
-        
+        self.perform_and_verify_table_and_field_selection(
+            conn_id, test_catalogs, non_selected_properties=['reference_organization_id']
+        )
+
         record_count_by_stream = self.run_and_verify_sync(conn_id)
 
         # check if all streams have collected records

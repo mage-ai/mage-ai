@@ -9,9 +9,12 @@ import unittest
 
 
 if sys.version_info.major <= 3 and sys.version_info.minor <= 7:
-    class AsyncDBTestCase():
+
+    class AsyncDBTestCase:
         pass
+
 else:
+
     class AsyncDBTestCase(unittest.IsolatedAsyncioTestCase):
         def setUp(self):
             pass

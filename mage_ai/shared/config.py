@@ -8,7 +8,6 @@ import yaml
 
 @dataclass
 class BaseConfig:
-
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
         config_class_name = self.__name__

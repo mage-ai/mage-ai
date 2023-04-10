@@ -5,7 +5,9 @@ def fix_overwritten_partitions(client, bucket: str, key: str, version: int) -> N
     current = __get_logs(client, bucket, key, version)
 
     partition_values = [row['add']['partitionValues'] for row in current['add']]
-    removes_updated = [row for row in current['remove'] if row['remove']['partitionValues'] in partition_values]
+    removes_updated = [
+        row for row in current['remove'] if row['remove']['partitionValues'] in partition_values
+    ]
 
     final_rows = current['add'] + removes_updated + current['other']
 

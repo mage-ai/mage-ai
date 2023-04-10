@@ -23,6 +23,7 @@ class BaseSource(ABC):
         self.checkpoint = self.read_checkpoint()
         self.init_client()
 
+    @abstractmethod
     def init_client():
         pass
 

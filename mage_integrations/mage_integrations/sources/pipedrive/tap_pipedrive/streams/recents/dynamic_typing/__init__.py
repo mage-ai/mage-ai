@@ -14,39 +14,38 @@ class DynamicTypingRecentsStream(RecentsStream):
     fields_start = 0
     fields_limit = 100
 
-
     def get_schema(self):
         if not self.schema_cache:
             schema = self.load_schema()
 
             while self.fields_more_items_in_collection:
-
-                fields_params = {"limit" : self.fields_limit, "start" : self.fields_start} 
+                fields_params = {"limit": self.fields_limit, "start": self.fields_start}
 
                 try:
-                    fields_response = self.tap.execute_request(endpoint=self.fields_endpoint, params=fields_params)
+                    fields_response = self.tap.execute_request(
+                        endpoint=self.fields_endpoint, params=fields_params
+                    )
                 except (ConnectionError, RequestException) as e:
                     raise e
 
                 try:
-                    payload = fields_response.json() # Verifying response in execute_request
+                    payload = fields_response.json()  # Verifying response in execute_request
 
                     for property in payload['data']:
                         if property['key'] not in self.static_fields:
-                            logger.debug(property['key'], property['field_type'], property['mandatory_flag'])
+                            logger.debug(
+                                property['key'], property['field_type'], property['mandatory_flag']
+                            )
 
                             if property['key'] in schema['properties']:
-                                logger.warn('Dynamic property "{}" overrides with type {} existing entry in ' \
-                                            'static JSON schema of {} stream.'.format(
-                                                property['key'],
-                                                property['field_type'],
-                                                self.schema
-                                            )
+                                logger.warn(
+                                    'Dynamic property "{}" overrides with type {} existing entry in '
+                                    'static JSON schema of {} stream.'.format(
+                                        property['key'], property['field_type'], self.schema
+                                    )
                                 )
 
-                            property_content = {
-                                'type': []
-                            }
+                            property_content = {'type': []}
 
                             if property['field_type'] in ['int']:
                                 property_content['type'].append('integer')
@@ -54,7 +53,7 @@ class DynamicTypingRecentsStream(RecentsStream):
                             elif property['field_type'] in ['timestamp']:
                                 property_content['format'] = 'date-time'
 
-                            # allow all dynamic properties to be null since this 
+                            # allow all dynamic properties to be null since this
                             # happens in practice probably because a property could
                             # be marked mandatory for some amount of time and not
                             # mandatory for another amount of time
@@ -69,7 +68,9 @@ class DynamicTypingRecentsStream(RecentsStream):
                     if 'additional_data' in payload and 'pagination' in payload['additional_data']:
                         pagination = payload['additional_data']['pagination']
                         if 'more_items_in_collection' in pagination:
-                            self.fields_more_items_in_collection = pagination['more_items_in_collection']
+                            self.fields_more_items_in_collection = pagination[
+                                'more_items_in_collection'
+                            ]
 
                             if 'next_start' in pagination:
                                 self.fields_start = pagination['next_start']

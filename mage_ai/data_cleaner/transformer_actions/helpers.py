@@ -42,7 +42,6 @@ def extract_join_feature_set_version_id(payload):
         return None
     join_feature_set_version_id = payload['action_arguments'][0]
     if type(join_feature_set_version_id) == str and join_feature_set_version_id.startswith('%{'):
-
         join_feature_set_version_id = next(
             v['id']
             for v in payload['action_variables'].values()

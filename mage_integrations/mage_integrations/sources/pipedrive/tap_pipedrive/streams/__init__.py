@@ -15,8 +15,20 @@ from .dealflow import DealStageChangeStream
 from .deal_products import DealsProductsStream
 
 
-__all__ = ['CurrenciesStream', 'ActivityTypesStream', 'FiltersStream', 'StagesStream', 'PipelinesStream',
-           'RecentUsersStream', 'RecentFilesStream',
-           'RecentNotesStream', 'RecentActivitiesStream', 'RecentDealsStream', 'RecentOrganizationsStream',
-           'RecentPersonsStream', 'RecentProductsStream', 'DealStageChangeStream', 'DealsProductsStream'
-           ]
+__all__ = [
+    'CurrenciesStream',
+    'ActivityTypesStream',
+    'FiltersStream',
+    'StagesStream',
+    'PipelinesStream',
+    'RecentUsersStream',
+    'RecentFilesStream',
+    'RecentNotesStream',
+    'RecentActivitiesStream',
+    'RecentDealsStream',
+    'RecentOrganizationsStream',
+    'RecentPersonsStream',
+    'RecentProductsStream',
+    'DealStageChangeStream',
+    'DealsProductsStream',
+]

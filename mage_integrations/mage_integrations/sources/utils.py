@@ -36,8 +36,9 @@ def get_standard_metadata(
         if stream_id:
             mdata = write(mdata, (), 'schema-name', stream_id)
         for field_name in schema['properties'].keys():
-            if (key_properties and field_name in key_properties) or \
-               (valid_replication_keys and field_name in valid_replication_keys):
+            if (key_properties and field_name in key_properties) or (
+                valid_replication_keys and field_name in valid_replication_keys
+            ):
                 mdata = write(mdata, ('properties', field_name), 'inclusion', 'automatic')
             else:
                 mdata = write(mdata, ('properties', field_name), 'inclusion', 'available')
@@ -72,10 +73,7 @@ def update_catalog_dict(
 
         if len(breadcrumb) == 0:
             d['metadata'][METADATA_KEY_SELECTED] = select_stream
-        elif breadcrumb and \
-                metadata and \
-                len(breadcrumb) == 2 and \
-                breadcrumb[0] == 'properties':
+        elif breadcrumb and metadata and len(breadcrumb) == 2 and breadcrumb[0] == 'properties':
             column = breadcrumb[1]
 
             inclusion = metadata.get(METADATA_KEY_INCLUSION, INCLUSION_UNSUPPORTED)
@@ -117,10 +115,10 @@ def update_source_state_from_destination_state(
     absolute_path_to_destination_state: str,
 ) -> None:
     """
-        absolute_path_to_source_state:
-            must be path to JSON file
-        absolute_path_to_destination_state:
-            must be path to text-like file
+    absolute_path_to_source_state:
+        must be path to JSON file
+    absolute_path_to_destination_state:
+        must be path to text-like file
     """
     destination_state = None
     if os.path.isfile(absolute_path_to_destination_state):
@@ -156,10 +154,7 @@ def parse_args(required_config_keys):
     parser = argparse.ArgumentParser()
 
     # This can be included in the settings file or in the config_json
-    parser.add_argument(
-        '-c', '--config',
-        help='Config file',
-        required=False)
+    parser.add_argument('-c', '--config', help='Config file', required=False)
 
     parser.add_argument(
         '--config_json',
@@ -172,12 +167,14 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
-        '-s', '--state',
+        '-s',
+        '--state',
         help='State file',
     )
 
     parser.add_argument(
-        '-p', '--properties',
+        '-p',
+        '--properties',
         help='Property selections: DEPRECATED, Please use --catalog instead',
     )
 
@@ -194,7 +191,8 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
-        '-d', '--discover',
+        '-d',
+        '--discover',
         action='store_true',
         help='Do schema discovery',
     )
@@ -239,13 +237,13 @@ def parse_args(required_config_keys):
     parser.add_argument(
         '--test_connection',
         action='store_true',
-        help='Set this flag to True to only test the source connection with the provided config.'
+        help='Set this flag to True to only test the source connection with the provided config.',
     )
 
     parser.add_argument(
         '--load_sample_data',
         action='store_true',
-        help='Set this flag to True to load sample data from the provided config.'
+        help='Set this flag to True to load sample data from the provided config.',
     )
 
     args, _ = parser.parse_known_args()

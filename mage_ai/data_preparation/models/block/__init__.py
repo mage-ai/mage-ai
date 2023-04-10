@@ -110,8 +110,11 @@ async def run_blocks(
     while not blocks.empty():
         block = blocks.get()
 
-        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES or \
-                not run_sensors and block.type == BlockType.SENSOR:
+        if (
+            block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
+            or not run_sensors
+            and block.type == BlockType.SENSOR
+        ):
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
@@ -296,9 +299,8 @@ class Block:
 
     @property
     def executable(self):
-        return (
-            self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
-            and (self.pipeline is None or self.pipeline.type != PipelineType.STREAMING)
+        return self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES and (
+            self.pipeline is None or self.pipeline.type != PipelineType.STREAMING
         )
 
     @property
@@ -343,8 +345,9 @@ class Block:
         if self.configuration and self.configuration.get('data_provider_table'):
             return self.configuration['data_provider_table']
 
-        table_name = f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_'\
-                     f'{self.pipeline.version_name}'
+        table_name = (
+            f'{self.pipeline.uuid}_{clean_name_orig(self.uuid)}_' f'{self.pipeline.version_name}'
+        )
 
         env = (self.global_vars or dict()).get('env')
         if env == ENV_DEV:
@@ -375,6 +378,7 @@ class Block:
     @classmethod
     def after_create(self, block: 'Block', **kwargs):
         from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
+
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
@@ -400,7 +404,9 @@ class Block:
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
         from mage_ai.data_preparation.models.block.dbt import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
-            SourceBlock, DestinationBlock, TransformerBlock
+            SourceBlock,
+            DestinationBlock,
+            TransformerBlock,
         )
         from mage_ai.data_preparation.models.block.r import RBlock
         from mage_ai.data_preparation.models.block.sql import SQLBlock
@@ -524,11 +530,14 @@ class Block:
         pipeline=None,
         status=BlockStatus.NOT_EXECUTED,
     ):
-        block_class = self.block_class_from_type(
-            block_type,
-            language=language,
-            pipeline=pipeline,
-        ) or Block
+        block_class = (
+            self.block_class_from_type(
+                block_type,
+                language=language,
+                pipeline=pipeline,
+            )
+            or Block
+        )
         return block_class(
             name,
             uuid,
@@ -592,11 +601,7 @@ class Block:
         os.remove(self.file_path)
 
     def execute_with_callback(
-        self,
-        global_vars: Dict = None,
-        logger: Logger = None,
-        logging_tags: Dict = dict(),
-        **kwargs
+        self, global_vars: Dict = None, logger: Logger = None, logging_tags: Dict = dict(), **kwargs
     ):
         """
         This method will execute the block and run the callback functions if they exist
@@ -606,10 +611,7 @@ class Block:
         """
         try:
             output = self.execute_sync(
-                global_vars=global_vars,
-                logger=logger,
-                logging_tags=logging_tags,
-                **kwargs
+                global_vars=global_vars, logger=logger, logging_tags=logging_tags, **kwargs
             )
         except Exception as e:
             if self.callback_block:
@@ -657,8 +659,9 @@ class Block:
                 not_executed_upstream_blocks = list(
                     filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
                 )
-                all_upstream_is_dbt = all([BlockType.DBT == b.type
-                                           for b in not_executed_upstream_blocks])
+                all_upstream_is_dbt = all(
+                    [BlockType.DBT == b.type for b in not_executed_upstream_blocks]
+                )
                 if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
                     upstream_block_uuids = list(map(lambda b: b.uuid, not_executed_upstream_blocks))
                     raise Exception(
@@ -731,11 +734,14 @@ class Block:
             if logger is not None:
                 logger.exception(
                     f'Failed to execute block {self.uuid}',
-                    **merge_dict(logging_tags, dict(
-                        block_type=self.type,
-                        block_uuid=self.uuid,
-                        error=err,
-                    ))
+                    **merge_dict(
+                        logging_tags,
+                        dict(
+                            block_type=self.type,
+                            block_uuid=self.uuid,
+                            error=err,
+                        ),
+                    ),
                 )
             raise err
         finally:
@@ -771,7 +777,7 @@ class Block:
                     run_all_blocks=run_all_blocks,
                     test_execution=not run_sensors,
                     update_status=update_status,
-                )
+                ),
             )
         else:
             self.execute_sync(
@@ -1110,7 +1116,7 @@ class Block:
                 data = dict(
                     sample_data=dict(
                         columns=columns_to_display,
-                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
+                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data'],
                     ),
                     shape=[row_count, column_count],
                     type=DataType.TABLE,
@@ -1150,7 +1156,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 data = dict(
                     sample_data=dict(
                         columns=columns_to_display,
-                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data'],
                     ),
                     type=DataType.TABLE,
                     variable_uuid=v,
@@ -1228,7 +1234,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 data = dict(
                     sample_data=dict(
                         columns=columns_to_display,
-                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
+                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data'],
                     ),
                     shape=[row_count, column_count],
                     type=DataType.TABLE,
@@ -1268,7 +1274,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                 data = dict(
                     sample_data=dict(
                         columns=columns_to_display,
-                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data']
+                        rows=json.loads(df[columns_to_display].to_json(orient='split'))['data'],
                     ),
                     type=DataType.TABLE,
                     variable_uuid=v,
@@ -1283,8 +1289,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         for o in outputs:
             if o is None:
                 continue
-            if all(k in o for k in ['variable_uuid', 'text_data']) and \
-                    not is_output_variable(o['variable_uuid']):
+            if all(k in o for k in ['variable_uuid', 'text_data']) and not is_output_variable(
+                o['variable_uuid']
+            ):
                 variable_mapping[o['variable_uuid']] = o['text_data']
 
         self._outputs = outputs
@@ -1344,8 +1351,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     data['error'] = dict(
                         error='No such file or directory',
                         message='You may have moved it or changed its filename. '
-                        'Delete the current block to remove it from the pipeline or write code ' +
-                        f'and save the pipeline to create a new file at {file_path}.',
+                        'Delete the current block to remove it from the pipeline or write code '
+                        + f'and save the pipeline to create a new file at {file_path}.',
                     )
 
         return data
@@ -1373,8 +1380,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     data['error'] = dict(
                         error='No such file or directory',
                         message='You may have moved it or changed its filename. '
-                        'Delete the current block to remove it from the pipeline or write code ' +
-                        f'and save the pipeline to create a new file at {file_path}.',
+                        'Delete the current block to remove it from the pipeline or write code '
+                        + f'and save the pipeline to create a new file at {file_path}.',
                     )
 
         if include_block_metadata:
@@ -1495,10 +1502,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     ) -> None:
         self.dynamic_block_uuid = dynamic_block_uuid
 
-        if self.pipeline \
-            and PipelineType.INTEGRATION == self.pipeline.type \
-                and self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER]:
-
+        if (
+            self.pipeline
+            and PipelineType.INTEGRATION == self.pipeline.type
+            and self.type in [BlockType.DATA_LOADER, BlockType.DATA_EXPORTER]
+        ):
             return
 
         if build_block_output_stdout:
@@ -1548,11 +1556,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     stacktrace = traceback.format_exc()
 
                     if from_notebook:
-                        error_json = json.dumps(dict(
-                            error=str(err),
-                            message=error_message,
-                            stacktrace=stacktrace.split('\n'),
-                        ))
+                        error_json = json.dumps(
+                            dict(
+                                error=str(err),
+                                message=error_message,
+                                stacktrace=stacktrace.split('\n'),
+                            )
+                        )
                         print(f'[__internal_test__]{error_json}')
                     else:
                         print('==============================================================')
@@ -1563,9 +1573,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             message = f'{tests_passed}/{len(test_functions)} tests passed.'
             if from_notebook:
                 if len(test_functions) >= 1:
-                    success_json = json.dumps(dict(
-                        message=message,
-                    ))
+                    success_json = json.dumps(
+                        dict(
+                            message=message,
+                        )
+                    )
                     print(f'[__internal_test__]{success_json}')
             else:
                 print('--------------------------------------------------------------')
@@ -1610,6 +1622,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     data_for_analysis = data.reset_index(drop=True)
                 try:
                     from mage_ai.data_cleaner.data_cleaner import clean as clean_data
+
                     analysis = clean_data(
                         data_for_analysis,
                         df_original=data,
@@ -1642,8 +1655,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def __consolidate_variables(self, variable_mapping: Dict):
         # Consolidate print variables
         output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
-        print_variables = {k: v for k, v in variable_mapping.items()
-                           if is_valid_print_variable(k, v, self.uuid)}
+        print_variables = {
+            k: v for k, v in variable_mapping.items() if is_valid_print_variable(k, v, self.uuid)
+        }
 
         print_variables_keys = sorted(print_variables.keys(), key=lambda k: int(k.split('_')[-1]))
 
@@ -1701,8 +1715,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return variable_mapping
 
     def __enrich_global_vars(self, global_vars: Dict = None):
-        if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
-                is_spark_env()):
+        if (
+            self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS
+        ) or is_spark_env():
             global_vars = global_vars or dict()
             if not global_vars.get('spark'):
                 spark = self.__get_spark_session()
@@ -1715,8 +1730,10 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             return self.spark
         try:
             from pyspark.sql import SparkSession
+
             self.spark = SparkSession.builder.master(
-                os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
+                os.getenv('SPARK_MASTER_HOST', 'local')
+            ).getOrCreate()
         except Exception:
             self.spark = None
         self.spark_init = True
@@ -1773,8 +1790,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             dynamic_block_uuid,
         )
         for uuid, data in variables_data['variable_mapping'].items():
-            if spark is not None and self.pipeline.type == PipelineType.PYSPARK \
-                    and type(data) is pd.DataFrame:
+            if (
+                spark is not None
+                and self.pipeline.type == PipelineType.PYSPARK
+                and type(data) is pd.DataFrame
+            ):
                 data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
@@ -1885,12 +1905,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if len(output_variables) == 0:
             return []
 
-        variable_objects = [self.pipeline.variable_manager.get_variable_object(
-            self.pipeline.uuid,
-            self.uuid,
-            v,
-            partition=execution_partition,
-        ) for v in output_variables]
+        variable_objects = [
+            self.pipeline.variable_manager.get_variable_object(
+                self.pipeline.uuid,
+                self.uuid,
+                v,
+                partition=execution_partition,
+            )
+            for v in output_variables
+        ]
         if variable_type is not None:
             variable_objects = [v for v in variable_objects if v.variable_type == variable_type]
         return variable_objects
@@ -2031,7 +2054,7 @@ class CallbackBlock(Block):
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
-        **kwargs
+        **kwargs,
     ):
         pipeline_run = kwargs.get('pipeline_run')
         try:
@@ -2049,9 +2072,7 @@ class CallbackBlock(Block):
                     ),
                 )
                 fs = dict(on_success=[], on_failure=[])
-                globals = {
-                    k: self._block_decorator(v) for k, v in fs.items()
-                }
+                globals = {k: self._block_decorator(v) for k, v in fs.items()}
                 exec(self.content, globals)
 
                 callback_functions = fs[callback]

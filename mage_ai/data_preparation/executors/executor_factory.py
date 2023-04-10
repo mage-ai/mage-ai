@@ -21,11 +21,13 @@ class ExecutorFactory:
             from mage_ai.data_preparation.executors.pyspark_pipeline_executor import (
                 PySparkPipelineExecutor,
             )
+
             return PySparkPipelineExecutor(pipeline)
         elif pipeline.type == PipelineType.STREAMING:
             from mage_ai.data_preparation.executors.streaming_pipeline_executor import (
                 StreamingPipelineExecutor,
             )
+
             return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
             return PipelineExecutor(pipeline)
@@ -55,21 +57,25 @@ class ExecutorFactory:
             from mage_ai.data_preparation.executors.pyspark_block_executor import (
                 PySparkBlockExecutor,
             )
+
             return PySparkBlockExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.ECS:
             from mage_ai.data_preparation.executors.ecs_block_executor import (
                 EcsBlockExecutor,
             )
+
             return EcsBlockExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.GCP_CLOUD_RUN:
             from mage_ai.data_preparation.executors.gcp_cloud_run_block_executor import (
                 GcpCloudRunBlockExecutor,
             )
+
             return GcpCloudRunBlockExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.K8S:
             from mage_ai.data_preparation.executors.k8s_block_executor import (
                 K8sBlockExecutor,
             )
+
             return K8sBlockExecutor(**executor_kwargs)
         else:
             return BlockExecutor(**executor_kwargs)

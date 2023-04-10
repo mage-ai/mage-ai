@@ -8,6 +8,7 @@ import bson
 from bson import objectid, timestamp, datetime as bson_datetime
 import singer
 from singer import utils, metadata
+
 # from terminaltables import AsciiTable
 
 import pytz
@@ -20,17 +21,22 @@ TIMES = {}
 SCHEMA_COUNT = {}
 SCHEMA_TIMES = {}
 
+
 class InvalidProjectionException(Exception):
     """Raised if projection blacklists _id"""
+
 
 class UnsupportedReplicationKeyTypeException(Exception):
     """Raised if key type is unsupported"""
 
+
 class MongoAssertionException(Exception):
     """Raised if Mongo exhibits incorrect behavior"""
 
+
 class MongoInvalidDateTimeException(Exception):
     """Raised if we find an invalid date-time that we can't handle"""
+
 
 def calculate_destination_stream_name(stream):
     s_md = metadata.to_map(stream['metadata'])
@@ -39,11 +45,13 @@ def calculate_destination_stream_name(stream):
 
     return stream['stream']
 
+
 def whitelist_bookmark_keys(bookmark_key_set, tap_stream_id, state):
-    for bookmark_key in [non_whitelisted_bookmark_key
-                         for non_whitelisted_bookmark_key
-                         in state.get('bookmarks', {}).get(tap_stream_id, {}).keys()
-                         if non_whitelisted_bookmark_key not in bookmark_key_set]:
+    for bookmark_key in [
+        non_whitelisted_bookmark_key
+        for non_whitelisted_bookmark_key in state.get('bookmarks', {}).get(tap_stream_id, {}).keys()
+        if non_whitelisted_bookmark_key not in bookmark_key_set
+    ]:
         singer.clear_bookmark(state, tap_stream_id, bookmark_key)
 
 
@@ -54,6 +62,7 @@ def get_stream_version(tap_stream_id, state):
         stream_version = int(time.time() * 1000)
 
     return stream_version
+
 
 def class_to_string(bookmark_value, bookmark_type):
     if bookmark_type == 'datetime':
@@ -67,8 +76,9 @@ def class_to_string(bookmark_value, bookmark_type):
         return base64.b64encode(bookmark_value).decode('utf-8')
     if bookmark_type in ['int', 'Int64', 'float', 'ObjectId', 'str', 'UUID']:
         return str(bookmark_value)
-    raise UnsupportedReplicationKeyTypeException("{} is not a supported replication key type"
-                                                 .format(bookmark_type))
+    raise UnsupportedReplicationKeyTypeException(
+        "{} is not a supported replication key type".format(bookmark_type)
+    )
 
 
 # pylint: disable=too-many-return-statements
@@ -92,8 +102,10 @@ def string_to_class(str_value, type_value):
         return base64.b64decode(str_value.encode())
     if type_value == 'str':
         return str(str_value)
-    raise UnsupportedReplicationKeyTypeException("{} is not a supported replication key type"
-                                                 .format(type_value))
+    raise UnsupportedReplicationKeyTypeException(
+        "{} is not a supported replication key type".format(type_value)
+    )
+
 
 def safe_transform_datetime(value, path):
     timezone = tzlocal.get_localzone()
@@ -106,17 +118,20 @@ def safe_transform_datetime(value, path):
             # make sense to blow up on invalid Python datetimes (e.g.,
             # year=0). In this case we're formatting it as a string and
             # passing it along down the pipeline.
-            return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}.{:06d}Z".format(value.year,
-                                                                              value.month,
-                                                                              value.day,
-                                                                              value.hour,
-                                                                              value.minute,
-                                                                              value.second,
-                                                                              value.microsecond)
-        raise MongoInvalidDateTimeException("Found invalid datetime at [{}]: {}".format(
-            ".".join(map(str, path)),
-            value)) from ex
+            return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}.{:06d}Z".format(
+                value.year,
+                value.month,
+                value.day,
+                value.hour,
+                value.minute,
+                value.second,
+                value.microsecond,
+            )
+        raise MongoInvalidDateTimeException(
+            "Found invalid datetime at [{}]: {}".format(".".join(map(str, path)), value)
+        ) from ex
     return utils.strftime(utc_datetime)
+
 
 # pylint: disable=too-many-return-statements,too-many-branches
 def transform_value(value, path):
@@ -124,7 +139,7 @@ def transform_value(value, path):
         # pylint: disable=unnecessary-lambda
         return list(map(lambda v: transform_value(v[1], path + [v[0]]), enumerate(value)))
     if isinstance(value, dict):
-        return {k:transform_value(v, path + [k]) for k, v in value.items()}
+        return {k: transform_value(v, path + [k]) for k, v in value.items()}
     if isinstance(value, uuid.UUID):
         return str(value)
     if isinstance(value, objectid.ObjectId):
@@ -147,38 +162,38 @@ def transform_value(value, path):
         return value.to_decimal()
     if isinstance(value, bson.code.Code):
         if value.scope:
-            return {
-                'value': str(value),
-                'scope': str(value.scope)
-            }
+            return {'value': str(value), 'scope': str(value.scope)}
         return str(value)
     if isinstance(value, bson.regex.Regex):
-        return {
-            'pattern': value.pattern,
-            'flags': value.flags
-        }
+        return {'pattern': value.pattern, 'flags': value.flags}
     if isinstance(value, bson.dbref.DBRef):
-        return {
-            'id': str(value.id),
-            'collection': value.collection,
-            'database': value.database
-        }
+        return {'id': str(value.id), 'collection': value.collection, 'database': value.database}
 
     return value
+
 
 def row_to_singer_record(stream, row, version, time_extracted):
     # pylint: disable=unidiomatic-typecheck
     try:
-        row_to_persist = {k:transform_value(v, [k]) for k, v in row.items()
-                          if type(v) not in [bson.min_key.MinKey, bson.max_key.MaxKey]}
+        row_to_persist = {
+            k: transform_value(v, [k])
+            for k, v in row.items()
+            if type(v) not in [bson.min_key.MinKey, bson.max_key.MaxKey]
+        }
     except MongoInvalidDateTimeException as ex:
-        raise Exception("Error syncing collection {}, object ID {} - {}".format(stream["tap_stream_id"], row['_id'], ex)) from ex
+        raise Exception(
+            "Error syncing collection {}, object ID {} - {}".format(
+                stream["tap_stream_id"], row['_id'], ex
+            )
+        ) from ex
 
     return singer.RecordMessage(
         stream=calculate_destination_stream_name(stream),
         record=row_to_persist,
         version=version,
-        time_extracted=time_extracted)
+        time_extracted=time_extracted,
+    )
+
 
 def add_to_any_of(schema, value):
     changed = False
@@ -200,7 +215,9 @@ def add_to_any_of(schema, value):
         for field_schema_entry in schema:
             if field_schema_entry.get('format') == 'date-time':
                 has_date = True
-            if field_schema_entry.get('type') == 'number' and not field_schema_entry.get('multipleOf'):
+            if field_schema_entry.get('type') == 'number' and not field_schema_entry.get(
+                'multipleOf'
+            ):
                 field_schema_entry['multipleOf'] = decimal.Decimal('1e-34')
                 return True
             if field_schema_entry.get('type') == 'number' and field_schema_entry.get('multipleOf'):
@@ -223,7 +240,9 @@ def add_to_any_of(schema, value):
             if field_schema_entry.get('type') == 'number' and field_schema_entry.get('multipleOf'):
                 field_schema_entry.pop('multipleOf')
                 return True
-            if field_schema_entry.get('type') == 'number' and not field_schema_entry.get('multipleOf'):
+            if field_schema_entry.get('type') == 'number' and not field_schema_entry.get(
+                'multipleOf'
+            ):
                 has_float = True
 
         if not has_float:
@@ -275,18 +294,23 @@ def add_to_any_of(schema, value):
             schema.insert(-1, list_schema)
     return changed
 
+
 def row_to_schema(schema, row):
     changed = False
 
     for field, value in row.items():
-        if isinstance(value, (bson_datetime.datetime,
-                              timestamp.Timestamp,
-                              datetime.datetime,
-                              bson.decimal128.Decimal128,
-                              float,
-                              dict,
-                              list)):
-
+        if isinstance(
+            value,
+            (
+                bson_datetime.datetime,
+                timestamp.Timestamp,
+                datetime.datetime,
+                bson.decimal128.Decimal128,
+                float,
+                dict,
+                list,
+            ),
+        ):
             # get pointer to field's anyOf list
             if not schema.get('properties', {}).get(field):
                 schema['properties'][field] = {'anyOf': [{}]}
@@ -297,16 +321,21 @@ def row_to_schema(schema, row):
 
     return changed
 
+
 def get_sync_summary(catalog):
-    headers = [['database',
-                'collection',
-                'replication method',
-                'total records',
-                'write speed',
-                'total time',
-                'schemas written',
-                'schema build duration',
-                'percent building schemas']]
+    headers = [
+        [
+            'database',
+            'collection',
+            'replication method',
+            'total records',
+            'write speed',
+            'total time',
+            'schemas written',
+            'schema build duration',
+            'percent building schemas',
+        ]
+    ]
 
     rows = []
     for stream_id, stream_count in COUNTS.items():
@@ -326,11 +355,11 @@ def get_sync_summary(catalog):
             collection_name,
             replication_method,
             '{} records'.format(stream_count),
-            '{:.1f} records/second'.format(stream_count/stream_time),
+            '{:.1f} records/second'.format(stream_count / stream_time),
             '{:.5f} seconds'.format(stream_time),
             '{} schemas'.format(schemas_written),
             '{:.5f} seconds'.format(schema_duration),
-            '{:.2f}%'.format(100*schema_duration/stream_time)
+            '{:.2f}%'.format(100 * schema_duration / stream_time),
         ]
         rows.append(row)
 

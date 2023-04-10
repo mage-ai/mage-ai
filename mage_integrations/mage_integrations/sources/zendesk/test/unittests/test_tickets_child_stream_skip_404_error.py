@@ -6,9 +6,10 @@ from tap_zendesk import streams, http
 class MockClass:
     def is_selected(self):
         return True
-    
+
     def sync(self, ticket_id):
         raise http.ZendeskNotFoundError
+
 
 @patch("tap_zendesk.streams.LOGGER.warning")
 @patch('tap_zendesk.streams.Stream.update_bookmark')
@@ -21,10 +22,17 @@ class TestSkip404Error(unittest.TestCase):
     To raise the 404 error some of the method including _empty_buffer, LOGGER.warning, _buffer_record, update_bookmark,
     metrics.capture, get_objects, get_bookmark mocked.
     """
+
     @patch('tap_zendesk.streams.TicketAudits')
-    def test_ticket_audits_skip_404_error(self, mock_ticket_audits, mock_get_bookmark, mock_get_object, mock_metrics, 
-                                          mock_update_bookmark, mock_logger):
-       
+    def test_ticket_audits_skip_404_error(
+        self,
+        mock_ticket_audits,
+        mock_get_bookmark,
+        mock_get_object,
+        mock_metrics,
+        mock_update_bookmark,
+        mock_logger,
+    ):
         '''
         Test that ticket_audits stream skip the 404 error
         '''
@@ -36,14 +44,22 @@ class TestSkip404Error(unittest.TestCase):
             responses = list(tickets.sync(state={}))
         except AttributeError:
             pass
-        
-        # verify if the LOGGER.warning was called and verify the message
-        mock_logger.assert_called_with("Unable to retrieve audits for ticket (ID: i1), record not found")
-    
-    @patch('tap_zendesk.streams.TicketComments')
-    def test_ticket_comments_skip_404_error(self, mock_ticket_comments, mock_get_bookmark, mock_get_object, mock_metrics, 
-                                          mock_update_bookmark, mock_logger):
 
+        # verify if the LOGGER.warning was called and verify the message
+        mock_logger.assert_called_with(
+            "Unable to retrieve audits for ticket (ID: i1), record not found"
+        )
+
+    @patch('tap_zendesk.streams.TicketComments')
+    def test_ticket_comments_skip_404_error(
+        self,
+        mock_ticket_comments,
+        mock_get_bookmark,
+        mock_get_object,
+        mock_metrics,
+        mock_update_bookmark,
+        mock_logger,
+    ):
         '''
         Test that ticket_audits stream skip the 404 error
         '''
@@ -55,14 +71,22 @@ class TestSkip404Error(unittest.TestCase):
             responses = list(tickets.sync(state={}))
         except AttributeError:
             pass
-        
+
         # verify if the LOGGER.warning was called and verify the message
-        mock_logger.assert_called_with("Unable to retrieve comments for ticket (ID: i1), record not found")
-        
+        mock_logger.assert_called_with(
+            "Unable to retrieve comments for ticket (ID: i1), record not found"
+        )
+
     @patch('tap_zendesk.streams.TicketMetrics')
-    def test_ticket_metrics_skip_404_error(self, mock_ticket_metrics, mock_get_bookmark, mock_get_object, mock_metrics, 
-                                          mock_update_bookmark, mock_logger):
-       
+    def test_ticket_metrics_skip_404_error(
+        self,
+        mock_ticket_metrics,
+        mock_get_bookmark,
+        mock_get_object,
+        mock_metrics,
+        mock_update_bookmark,
+        mock_logger,
+    ):
         '''
         Test that ticket_audits stream skip the 404 error
         '''
@@ -75,8 +99,8 @@ class TestSkip404Error(unittest.TestCase):
             self.assertEqual(responses, 1)
         except AttributeError:
             pass
-        
-        # verify if the LOGGER.warning was called and verify the message
-        mock_logger.assert_called_with("Unable to retrieve metrics for ticket (ID: i1), record not found")
 
-            
+        # verify if the LOGGER.warning was called and verify the message
+        mock_logger.assert_called_with(
+            "Unable to retrieve metrics for ticket (ID: i1), record not found"
+        )

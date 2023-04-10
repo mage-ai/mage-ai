@@ -9,8 +9,8 @@ import time
 
 @dataclass
 class KinesisConfig(BaseConfig):
-    stream_name: str        # Kinesis stream name
-    partition_key: str      # The partition key to use for the data.
+    stream_name: str  # Kinesis stream name
+    partition_key: str  # The partition key to use for the data.
 
 
 class KinesisSink(BaseSink):
@@ -38,7 +38,8 @@ class KinesisSink(BaseSink):
             {
                 'Data': json.dumps(d).encode('utf-8'),
                 'PartitionKey': self.config.partition_key,
-            } for d in data
+            }
+            for d in data
         ]
         self.kinesis_client.put_records(
             Records=records,

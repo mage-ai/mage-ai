@@ -75,21 +75,26 @@ class Salesforce(Source):
         return discover_objects(self.client)
 
     def __sync_complete_callback(self, tap_stream_id: str, record_count: int) -> None:
-        self.logger.info(f'Load data for stream {tap_stream_id} completed.', tags=dict(
-            records=record_count,
-            stream=tap_stream_id,
-        ))
+        self.logger.info(
+            f'Load data for stream {tap_stream_id} completed.',
+            tags=dict(
+                records=record_count,
+                stream=tap_stream_id,
+            ),
+        )
 
     def __finally_clean_up(self):
         if self.client:
             if self.client.rest_requests_attempted > 0:
                 LOGGER.debug(
                     "This job used %s REST requests towards the Salesforce quota.",
-                    self.client.rest_requests_attempted)
+                    self.client.rest_requests_attempted,
+                )
             if self.client.jobs_completed > 0:
                 LOGGER.debug(
                     "Replication used %s Bulk API jobs towards the Salesforce quota.",
-                    self.client.jobs_completed)
+                    self.client.jobs_completed,
+                )
             if self.client.login_timer:
                 self.client.login_timer.cancel()
 

@@ -6,7 +6,6 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
 
 
 class RemoveColumnsWithSingleValue(BaseRule):
-
     # Check statistic [feature_uuid]/count_distinct
     def evaluate(self):
         columns_with_single_value = []

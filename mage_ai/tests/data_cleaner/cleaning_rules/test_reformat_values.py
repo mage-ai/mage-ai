@@ -73,7 +73,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
             dict(
                 title='Reformat values',
                 message='Format entries in these columns as fully uppercase to improve data '
-                        'quality.',
+                'quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['location'],
@@ -91,7 +91,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
             dict(
                 title='Reformat values',
                 message='Format entries in these columns as fully lowercase to improve data '
-                        'quality.',
+                'quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['company_name', 'name'],
@@ -254,7 +254,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
             dict(
                 title='Reformat values',
                 message='Format entries in these columns as datetime objects to improve data '
-                        'quality.',
+                'quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['date2', 'date5'],
@@ -308,7 +308,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
             dict(
                 title='Reformat values',
                 message='Format entries in these columns as fully lowercase to improve data '
-                        'quality.',
+                'quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['notdate'],
@@ -326,7 +326,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
             dict(
                 title='Reformat values',
                 message='Format entries in these columns as datetime objects to improve data '
-                        'quality.',
+                'quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['date2', 'mostlydate'],

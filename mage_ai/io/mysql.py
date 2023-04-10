@@ -63,11 +63,15 @@ class MySQL(BaseSQL):
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
             database_name = self.settings['database']
-            cur.execute('\n'.join([
-                'SELECT * FROM information_schema.tables ',
-                f'WHERE table_schema = \'{database_name}\' AND table_name = \'{table_name}\'',
-                'LIMIT 1',
-            ]))
+            cur.execute(
+                '\n'.join(
+                    [
+                        'SELECT * FROM information_schema.tables ',
+                        f'WHERE table_schema = \'{database_name}\' AND table_name = \'{table_name}\'',  # noqa: E501
+                        'LIMIT 1',
+                    ]
+                )
+            )
             return len(cur.fetchall()) >= 1
 
     def upload_dataframe(
@@ -82,7 +86,7 @@ class MySQL(BaseSQL):
     ) -> None:
         values_placeholder = ', '.join(["%s" for i in range(len(df.columns))])
         values = []
-        for i, row in df.iterrows():
+        for _i, row in df.iterrows():
             values.append(tuple(row))
 
         sql = f'INSERT INTO {full_table_name} VALUES ({values_placeholder})'

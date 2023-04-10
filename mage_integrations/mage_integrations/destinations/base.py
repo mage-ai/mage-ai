@@ -47,7 +47,7 @@ LOGGER = singer.get_logger()
 MAXIMUM_BATCH_BYTE_SIZE = 100 * 1024 * 1024  # 100 mb batches
 
 
-class Destination():
+class Destination:
     def __init__(
         self,
         argument_parser=None,
@@ -182,12 +182,17 @@ class Destination():
         tags: dict = {},
         **kwargs,
     ) -> None:
-        self.export_batch_data([dict(
-            record=record,
-            schema=schema,
-            stream=stream,
-            tags=tags,
-        )], stream)
+        self.export_batch_data(
+            [
+                dict(
+                    record=record,
+                    schema=schema,
+                    stream=stream,
+                    tags=tags,
+                )
+            ],
+            stream,
+        )
 
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         raise Exception('Subclasses must implement the export_batch_data method.')
@@ -216,10 +221,13 @@ class Destination():
         self.logger.info(f'{self.__class__.__name__} process record completed.', tags=tags)
 
     def process_record_data(self, record_data: List[Dict], stream: str) -> None:
-        batch_data = [dict(
-            record=self.__validate_and_prepare_record(**rd),
-            stream=stream,
-        ) for rd in record_data]
+        batch_data = [
+            dict(
+                record=self.__validate_and_prepare_record(**rd),
+                stream=stream,
+            )
+            for rd in record_data
+        ]
 
         tags = dict(
             records=len(batch_data),
@@ -271,13 +279,17 @@ class Destination():
         if STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY in self.streams_override_settings:
             static_columns_schema = {}
             for k in self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY].keys():
-                static_columns_schema[k] = dict(type=[
-                    COLUMN_TYPE_STRING,
-                ])
+                static_columns_schema[k] = dict(
+                    type=[
+                        COLUMN_TYPE_STRING,
+                    ]
+                )
             schema['properties'] = merge_dict(schema['properties'], static_columns_schema)
 
         if STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY in self.streams_override_settings:
-            self.partition_keys[stream] += self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY]
+            self.partition_keys[stream] += self.streams_override_settings[
+                STREAM_OVERRIDE_SETTINGS_PARTITION_KEYS_KEY
+            ]
 
         self.unique_conflict_methods[stream] = row.get(KEY_UNIQUE_CONFLICT_METHOD)
         self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
@@ -317,11 +329,14 @@ class Destination():
                 self._process(input_buffer)
         except Exception as err:
             message = f'{class_name} process failed with error {err}.'
-            self.logger.exception(message, tags=dict(
-                error=str(err),
-                errors=traceback.format_stack(),
-                message=traceback.format_exc(),
-            ))
+            self.logger.exception(
+                message,
+                tags=dict(
+                    error=str(err),
+                    errors=traceback.format_stack(),
+                    message=traceback.format_exc(),
+                ),
+            )
             raise Exception(message)
 
         self.after_process()
@@ -495,9 +510,11 @@ class Destination():
             for stream, state in stream_states.items():
                 bookmarks.update(state['row'][KEY_VALUE]['bookmarks'])
 
-            state_data = dict(row={
-                KEY_VALUE: dict(bookmarks=bookmarks),
-            })
+            state_data = dict(
+                row={
+                    KEY_VALUE: dict(bookmarks=bookmarks),
+                }
+            )
             self.process_state(**state_data)
             final_state_data = state_data
 
@@ -599,7 +616,9 @@ class Destination():
                     record_adjusted[k] = ast.literal_eval(v1)
 
         if STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY in self.streams_override_settings:
-            for k, v in self.streams_override_settings[STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY].items():
+            for k, v in self.streams_override_settings[
+                STREAM_OVERRIDE_SETTINGS_COLUMNS_KEY
+            ].items():
                 record_adjusted[k] = v
 
         return record_adjusted
@@ -638,8 +657,10 @@ class Destination():
                     valid = type(value) is list
 
                 if not valid:
-                    self.validators[stream].validate({
-                        col: value,
-                    })
+                    self.validators[stream].validate(
+                        {
+                            col: value,
+                        }
+                    )
 
         return record_adjusted

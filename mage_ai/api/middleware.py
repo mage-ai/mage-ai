@@ -34,16 +34,13 @@ class OAuthMiddleware(RequestHandler):
         if not api_key:
             if self.request.method == 'POST':
                 try:
-                    api_key = json.loads(
-                        self.request.body).get(URL_PARAMETER_API_KEY)
+                    api_key = json.loads(self.request.body).get(URL_PARAMETER_API_KEY)
                 except (JSONDecodeError, UnicodeDecodeError):
                     # UnicodeDecodeError happens when there is invalid characters in the
                     # file upload when creating a new feature set
-                    api_key = self.request.query_arguments.get(
-                        URL_PARAMETER_API_KEY)
+                    api_key = self.request.query_arguments.get(URL_PARAMETER_API_KEY)
             else:
-                api_key = self.request.query_arguments.get(
-                    URL_PARAMETER_API_KEY)
+                api_key = self.request.query_arguments.get(URL_PARAMETER_API_KEY)
 
         if api_key:
             if isinstance(api_key, list):
@@ -58,10 +55,8 @@ class OAuthMiddleware(RequestHandler):
                 tokens = token_from_header.split(',')
                 token_from_header = find(lambda x: 'bearer' in x.lower(), tokens)
                 if token_from_header:
-                    token_from_header = (
-                        token_from_header.
-                        replace('Bearer ', '').
-                        replace('bearer ', '')
+                    token_from_header = token_from_header.replace('Bearer ', '').replace(
+                        'bearer ', ''
                     )
                 else:
                     token_from_header = None
@@ -106,13 +101,10 @@ class OAuthMiddleware(RequestHandler):
                     if oauth_token:
                         if valid:
                             self.request.__setattr__('oauth_token', oauth_token)
-                            self.request.__setattr__(
-                                'current_user', oauth_token.user)
+                            self.request.__setattr__('current_user', oauth_token.user)
                         else:
-                            self.request.__setattr__(
-                                'error', ApiError.EXPIRED_OAUTH_TOKEN)
+                            self.request.__setattr__('error', ApiError.EXPIRED_OAUTH_TOKEN)
                     else:
-                        self.request.__setattr__(
-                            'error', ApiError.INVALID_OAUTH_TOKEN)
+                        self.request.__setattr__('error', ApiError.INVALID_OAUTH_TOKEN)
         else:
             self.request.__setattr__('error', ApiError.INVALID_API_KEY)

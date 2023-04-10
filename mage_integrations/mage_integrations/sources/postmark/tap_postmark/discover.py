@@ -17,7 +17,6 @@ def discover() -> Catalog:  # noqa: WPS210
 
     # Parse every schema
     for stream_id, schema in raw_schemas.items():
-
         stream_meta: dict = STREAMS[stream_id]
         # Create metadata
         mdata: list = metadata.get_standard_metadata(

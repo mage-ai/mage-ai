@@ -16,4 +16,6 @@ class VirtualBankAccountsStream(BaseChargebeeStream):
     SORT_BY = None
 
     def get_url(self):
-        return 'https://{}.chargebee.com/api/v2/virtual_bank_accounts'.format(self.config.get('site'))
+        return 'https://{}.chargebee.com/api/v2/virtual_bank_accounts'.format(
+            self.config.get('site')
+        )

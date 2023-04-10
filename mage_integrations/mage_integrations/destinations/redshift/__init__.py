@@ -63,13 +63,15 @@ class Redshift(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        results = self.build_connection().load(f"""
+        results = self.build_connection().load(
+            f"""
 SELECT
     column_name
     , data_type
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
-        """)
+        """
+        )
         current_columns = [r[0].lower() for r in results]
         schema_columns = schema['properties'].keys()
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
@@ -121,16 +123,17 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         commands_string = '\n'.join(commands)
         return [
             commands_string,
-            '\n'.join([
-                'WITH last_queryid_for_table AS (',
-                '    SELECT query, MAX(si.starttime) OVER () as last_q_stime, si.starttime as stime',
-                '    FROM stl_insert si, SVV_TABLE_INFO sti',
-                f'    WHERE sti.table_id=si.tbl AND sti."table"=\'{table_name}\'',
-                ')',
-                'SELECT SUM(rows) FROM stl_insert si, last_queryid_for_table lqt ',
-                'WHERE si.query=lqt.query AND lqt.last_q_stime=stime',
-            ]),
-
+            '\n'.join(
+                [
+                    'WITH last_queryid_for_table AS (',
+                    '    SELECT query, MAX(si.starttime) OVER () as last_q_stime, si.starttime as stime',
+                    '    FROM stl_insert si, SVV_TABLE_INFO sti',
+                    f'    WHERE sti.table_id=si.tbl AND sti."table"=\'{table_name}\'',
+                    ')',
+                    'SELECT SUM(rows) FROM stl_insert si, last_queryid_for_table lqt ',
+                    'WHERE si.query=lqt.query AND lqt.last_q_stime=stime',
+                ]
+            ),
         ]
 
     def column_type_mapping(self, schema: Dict) -> Dict:

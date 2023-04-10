@@ -48,11 +48,8 @@ class PipelineRunResource(DatabaseResource):
                 else:
                     order_by.append((parts[0], 'asc'))
 
-        results = (
-            PipelineRun.
-            query.
-            options(selectinload(PipelineRun.block_runs)).
-            options(selectinload(PipelineRun.pipeline_schedule))
+        results = PipelineRun.query.options(selectinload(PipelineRun.block_runs)).options(
+            selectinload(PipelineRun.pipeline_schedule)
         )
 
         if backfill_id is not None:
@@ -73,8 +70,9 @@ class PipelineRunResource(DatabaseResource):
                 arr.append(getattr(pr_col, asc_desc)())
             initial_results = results.order_by(*arr)
         else:
-            initial_results = \
-                results.order_by(PipelineRun.execution_date.desc(), PipelineRun.id.desc())
+            initial_results = results.order_by(
+                PipelineRun.execution_date.desc(), PipelineRun.id.desc()
+            )
 
         return initial_results
 
@@ -98,10 +96,11 @@ class PipelineRunResource(DatabaseResource):
         if pipeline_uuid:
             pipeline_uuid = pipeline_uuid[0]
 
-        if meta.get(META_KEY_LIMIT, None) is not None and \
-            total_results.count() >= 1 and \
-                (pipeline_uuid is not None or pipeline_schedule_id is not None):
-
+        if (
+            meta.get(META_KEY_LIMIT, None) is not None
+            and total_results.count() >= 1
+            and (pipeline_uuid is not None or pipeline_schedule_id is not None)
+        ):
             first_result = results[0]
             first_execution_date = first_result.execution_date
             additional_results = total_results.filter(
@@ -118,12 +117,15 @@ class PipelineRunResource(DatabaseResource):
                 PipelineRun.execution_date == last_execution_date,
             )
             filter_dates.append(last_result.execution_date)
-            results = list(
-                filter(
-                    lambda x: x.execution_date not in filter_dates,
-                    results,
-                ),
-            ) + additional_results.all()
+            results = (
+                list(
+                    filter(
+                        lambda x: x.execution_date not in filter_dates,
+                        results,
+                    ),
+                )
+                + additional_results.all()
+            )
 
         results_size = len(results)
         has_next = results_size > limit
@@ -184,19 +186,19 @@ class PipelineRunResource(DatabaseResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
-        if 'retry_blocks' == payload.get('pipeline_run_action') and \
-                PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:
+        if (
+            'retry_blocks' == payload.get('pipeline_run_action')
+            and PipelineRun.PipelineRunStatus.COMPLETED != self.model.status
+        ):
             self.model.refresh()
 
             pipeline = Pipeline.get(self.model.pipeline_uuid)
 
-            incomplete_block_runs = \
-                list(
-                    filter(
-                        lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
-                        self.model.block_runs
-                    )
+            incomplete_block_runs = list(
+                filter(
+                    lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED, self.model.block_runs
                 )
+            )
 
             # Update block run status to INITIAL
             BlockRun.batch_update_status(
@@ -204,8 +206,7 @@ class PipelineRunResource(DatabaseResource):
                 BlockRun.BlockRunStatus.INITIAL,
             )
 
-            from mage_ai.orchestration.execution_process_manager \
-                import execution_process_manager
+            from mage_ai.orchestration.execution_process_manager import execution_process_manager
 
             if PipelineType.STREAMING != pipeline.type:
                 if PipelineType.INTEGRATION == pipeline.type:

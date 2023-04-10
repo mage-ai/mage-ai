@@ -1,7 +1,10 @@
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.linkedin_ads.tap_linkedin_ads import do_discover
-from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.client import LinkedinClient, REQUEST_TIMEOUT
+from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.client import (
+    LinkedinClient,
+    REQUEST_TIMEOUT,
+)
 from mage_integrations.sources.linkedin_ads.tap_linkedin_ads.sync import sync as _sync
 from mage_integrations.utils.dictionary import ignore_keys
 from singer import catalog as catalog_singer
@@ -26,11 +29,13 @@ class LinkedinAds(Source):
                 stream_id = stream['tap_stream_id']
                 if not streams or stream_id in streams:
                     schema = catalog_singer.Schema.from_dict(stream['schema'])
-                    catalog_entries.append(self.build_catalog_entry(
-                        stream_id,
-                        schema,
-                        **ignore_keys(stream, ['schema']),
-                    ))
+                    catalog_entries.append(
+                        self.build_catalog_entry(
+                            stream_id,
+                            schema,
+                            **ignore_keys(stream, ['schema']),
+                        )
+                    )
 
         return Catalog(catalog_entries)
 

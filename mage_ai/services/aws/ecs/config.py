@@ -37,10 +37,13 @@ class EcsConfig(BaseConfig):
         task_config = ecs_client.describe_tasks(
             cluster=cluster,
             tasks=[task_arn],
-        )['tasks'][0]
+        )[
+            'tasks'
+        ][0]
 
-        eni_configs = [a for a in task_config['attachments']
-                       if a['type'] == 'ElasticNetworkInterface']
+        eni_configs = [
+            a for a in task_config['attachments'] if a['type'] == 'ElasticNetworkInterface'
+        ]
         subnets = []
         security_groups = []
         for c in eni_configs:

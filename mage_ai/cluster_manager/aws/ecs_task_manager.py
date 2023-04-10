@@ -50,27 +50,26 @@ class EcsTaskManager:
             tags = task['tags']
             name = find(lambda tag: tag.get('key') == 'name', tags)
 
-            tasks.append(dict(
-                ip=public_ip,
-                name=name.get('value') if name is not None else None,
-                status=task['lastStatus'],
-                task_arn=task['taskArn'],
-                type=task['launchType'],
-            ))
+            tasks.append(
+                dict(
+                    ip=public_ip,
+                    name=name.get('value') if name is not None else None,
+                    status=task['lastStatus'],
+                    task_arn=task['taskArn'],
+                    type=task['launchType'],
+                )
+            )
 
         running_instance_names = set(map(lambda x: x['name'], tasks))
 
         stopped_instance_names = [
-            name for name in list(self.instance_metadata.keys())
+            name
+            for name in list(self.instance_metadata.keys())
             if name not in running_instance_names
         ]
-        stopped_instances = \
-            list(
-                map(
-                    lambda name: {'name': name, 'status': 'STOPPED'},
-                    stopped_instance_names
-                )
-            )
+        stopped_instances = list(
+            map(lambda name: {'name': name, 'status': 'STOPPED'}, stopped_instance_names)
+        )
 
         return tasks + stopped_instances
 
@@ -103,10 +102,7 @@ class EcsTaskManager:
             ],
         )
 
-        self.instance_metadata = {
-            **self.instance_metadata,
-            name: dict()
-        }
+        self.instance_metadata = {**self.instance_metadata, name: dict()}
 
         return run_task(f'mage start {name}', ecs_config=ecs_config)
 
@@ -127,10 +123,12 @@ class EcsTaskManager:
         if task.get('lastStatus') != 'RUNNING':
             return None
 
-        attachment = \
-            find(lambda a: a['type'] == 'ElasticNetworkInterface', task.get('attachments', []))
-        network_interface = \
-            find(lambda d: d['name'] == 'networkInterfaceId', attachment.get('details', []))
+        attachment = find(
+            lambda a: a['type'] == 'ElasticNetworkInterface', task.get('attachments', [])
+        )
+        network_interface = find(
+            lambda d: d['name'] == 'networkInterfaceId', attachment.get('details', [])
+        )
         return network_interface.get('value', None)
 
     def __get_network_interfaces(self, tasks: List, ec2_client) -> Dict:

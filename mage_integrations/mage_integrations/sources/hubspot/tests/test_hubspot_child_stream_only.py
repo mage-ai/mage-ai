@@ -19,9 +19,7 @@ class FieldSelectionChildTest(HubspotBaseTest):
         return "tt_hubspot_child_streams"
 
     def get_properties(self):
-        return {
-            'start_date' : dt.strftime(dt.today()-timedelta(days=2), self.START_DATE_FORMAT)
-        }
+        return {'start_date': dt.strftime(dt.today() - timedelta(days=2), self.START_DATE_FORMAT)}
 
     def setUp(self):
         test_client = TestClient(start_date=self.get_properties()['start_date'])
@@ -29,8 +27,7 @@ class FieldSelectionChildTest(HubspotBaseTest):
         contact = test_client.create('contacts')
         company = test_client.create('companies')[0]
         contact_by_company = test_client.create_contacts_by_company(
-            company_ids=[company['companyId']],
-            contact_records=contact
+            company_ids=[company['companyId']], contact_records=contact
         )
 
     def test_run(self):
@@ -52,9 +49,7 @@ class FieldSelectionChildTest(HubspotBaseTest):
         for catalog_entry in catalog_entries:
             stream_schema = menagerie.get_annotated_schema(conn_id, catalog_entry['stream_id'])
             connections.select_catalog_and_fields_via_metadata(
-                conn_id,
-                catalog_entry,
-                stream_schema
+                conn_id, catalog_entry, stream_schema
             )
 
         # Run a sync job using orchestrator
@@ -64,10 +59,16 @@ class FieldSelectionChildTest(HubspotBaseTest):
         exit_status = menagerie.get_exit_status(conn_id, sync_job_name)
 
         # Verify that the tap error message shows you need to select the parent stream
-        self.assertRaises(AssertionError, menagerie.verify_sync_exit_status, self, exit_status, sync_job_name)
-        self.assertEqual(exit_status['tap_error_message'],
-                         ('Unable to extract contacts_by_company data. '
-                          'To receive contacts_by_company data, you also need to select companies.'))
+        self.assertRaises(
+            AssertionError, menagerie.verify_sync_exit_status, self, exit_status, sync_job_name
+        )
+        self.assertEqual(
+            exit_status['tap_error_message'],
+            (
+                'Unable to extract contacts_by_company data. '
+                'To receive contacts_by_company data, you also need to select companies.'
+            ),
+        )
 
         # Verify there is no discovery or target error
         self.assertEqual(exit_status['target_exit_status'], 0)
@@ -79,9 +80,7 @@ class FieldSelectionChildTest(HubspotBaseTest):
         for catalog_entry in catalog_entries:
             stream_schema = menagerie.get_annotated_schema(conn_id, catalog_entry['stream_id'])
             connections.select_catalog_and_fields_via_metadata(
-                conn_id,
-                catalog_entry,
-                stream_schema
+                conn_id, catalog_entry, stream_schema
             )
 
         # Run a sync job

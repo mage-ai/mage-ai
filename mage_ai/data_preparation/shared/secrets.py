@@ -1,8 +1,5 @@
 from cryptography.fernet import Fernet, InvalidToken
-from mage_ai.data_preparation.repo_manager import (
-    get_data_dir,
-    get_repo_path
-)
+from mage_ai.data_preparation.repo_manager import get_data_dir, get_repo_path
 from typing import List
 import os
 
@@ -11,8 +8,8 @@ DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
 def create_secret(name: str, value: str):
     from mage_ai.orchestration.db.models.secrets import Secret
-    secrets_dir = os.path.join(
-        get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
+
+    secrets_dir = os.path.join(get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
     key_file = os.path.join(secrets_dir, 'key')
 
     if os.path.exists(key_file):
@@ -39,8 +36,7 @@ def create_secret(name: str, value: str):
 
 
 def get_encryption_key() -> str:
-    secrets_dir = os.path.join(
-        get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
+    secrets_dir = os.path.join(get_data_dir(), DEFAULT_MAGE_SECRETS_DIR)
     key_file = os.path.join(secrets_dir, 'key')
 
     try:
@@ -54,6 +50,7 @@ def get_encryption_key() -> str:
 
 def get_valid_secrets() -> List:
     from mage_ai.orchestration.db.models.secrets import Secret
+
     key = get_encryption_key()
     if not key:
         return []
@@ -75,6 +72,7 @@ def get_valid_secrets() -> List:
 
 def get_secret_value(name: str) -> str:
     from mage_ai.orchestration.db.models.secrets import Secret
+
     fernet = Fernet(get_encryption_key())
 
     secret = None

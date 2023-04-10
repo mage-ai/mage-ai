@@ -14,21 +14,13 @@ from tap_outreach.sync import sync
 
 LOGGER = singer.get_logger()
 
-REQUIRED_CONFIG_KEYS = [
-    'start_date',
-    'client_id',
-    'client_secret',
-    'redirect_uri',
-    'refresh_token'
-]
+REQUIRED_CONFIG_KEYS = ['start_date', 'client_id', 'client_secret', 'redirect_uri', 'refresh_token']
 
 
 def check_auth(client):
     LOGGER.info('Testing authentication')
     try:
-        client.get(
-            path='stages',
-            endpoint='stages')
+        client.get(path='stages', endpoint='stages')
     except:
         raise Exception('Error testing Outreach authentication')
 
@@ -43,8 +35,10 @@ def main():
     else:
         with OutreachClient(parsed_args.config) as client:
             check_auth(client)
-            sync(client,
+            sync(
+                client,
                 parsed_args.config,
                 catalog,
                 parsed_args.state,
-                parsed_args.config['start_date'])
+                parsed_args.config['start_date'],
+            )

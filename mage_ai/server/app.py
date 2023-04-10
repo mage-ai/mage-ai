@@ -269,7 +269,9 @@ def pipelines():
             pipelines,
             default=encode_complex,
             ignore_nan=True,
-        ), status=200, mimetype='application/json'
+        ),
+        status=200,
+        mimetype='application/json',
     )
     return response
 
@@ -357,9 +359,11 @@ def update_pipeline(id):
 @rescue_errors
 def get_status():
     return app.response_class(
-        response=json.dumps(dict(
-            api_key_provided=api_key is not None,
-        )),
+        response=json.dumps(
+            dict(
+                api_key_provided=api_key is not None,
+            )
+        ),
         status=200,
         mimetype='application/json',
     )

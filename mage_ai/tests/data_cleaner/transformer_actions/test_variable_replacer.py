@@ -26,10 +26,14 @@ class VariableReplacerTests(TestCase):
         )
 
     def test_replace_true_false(self):
-        action_code = 'a == false and b == true or (a == true and b == false) and ' \
-            'a == False and b == True or a == "true" and b == "false" or ' \
+        action_code = (
+            'a == false and b == true or (a == true and b == false) and '
+            'a == False and b == True or a == "true" and b == "false" or '
             "a == 'false' and b == 'true' or a == 'True' and b == 'False'"
-        result = 'a == False and b == True or (a == True and b == False) and ' \
-            'a == False and b == True or a == "true" and b == "false" or ' \
+        )
+        result = (
+            'a == False and b == True or (a == True and b == False) and '
+            'a == False and b == True or a == "true" and b == "false" or '
             "a == 'false' and b == 'true' or a == 'True' and b == 'False'"
+        )
         self.assertEqual(replace_true_false(action_code), result)

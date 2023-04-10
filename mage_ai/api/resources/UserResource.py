@@ -31,30 +31,29 @@ class UserResource(DatabaseResource):
 
         if len(missing_values) >= 1:
             error.update(
-                {'message': 'Missing required values: {}.'.format(', '.join(missing_values))})
+                {'message': 'Missing required values: {}.'.format(', '.join(missing_values))}
+            )
             raise ApiError(error)
 
         if email:
             user = User.query.filter(User.email == email).first()
             if user:
-                error.update(
-                    {'message': f'Account with same email is already taken: {email}.'})
+                error.update({'message': f'Account with same email is already taken: {email}.'})
                 raise ApiError(error)
         if username:
             user = User.query.filter(User.username == username).first()
             if user:
                 error.update(
-                    {'message': f'Account with same username is already taken: {username}.'})
+                    {'message': f'Account with same username is already taken: {username}.'}
+                )
                 raise ApiError(error)
 
         if len(password) < 8:
-            error.update(
-                {'message': 'Password must be 8 characters or longer.'})
+            error.update({'message': 'Password must be 8 characters or longer.'})
             raise ApiError(error)
 
         if password != password_confirmation:
-            error.update(
-                {'message': 'Password and password confirmation do not match.'})
+            error.update({'message': 'Password and password confirmation do not match.'})
             raise ApiError(error)
 
         password_salt = generate_salt()
@@ -62,20 +61,26 @@ class UserResource(DatabaseResource):
         payload['password_hash'] = create_bcrypt_hash(password, password_salt)
         payload['password_salt'] = password_salt
 
-        resource = super().create(extract(payload, [
-            'avatar',
-            'email',
-            'first_name',
-            'last_name',
-            'password_hash',
-            'password_salt',
-            'roles',
-            'username',
-        ]), user, **kwargs)
+        resource = super().create(
+            extract(
+                payload,
+                [
+                    'avatar',
+                    'email',
+                    'first_name',
+                    'last_name',
+                    'password_hash',
+                    'password_salt',
+                    'roles',
+                    'username',
+                ],
+            ),
+            user,
+            **kwargs,
+        )
 
         if 'oauth_client' in kwargs:
-            oauth_token = generate_access_token(
-                resource.model, kwargs['oauth_client'])
+            oauth_token = generate_access_token(resource.model, kwargs['oauth_client'])
             resource.model_options['oauth_token'] = oauth_token
 
         return resource
@@ -95,29 +100,32 @@ class UserResource(DatabaseResource):
                     password_current,
                     self.password_hash,
                 ):
-                    error.update(
-                        {'message': 'Current password is incorrect.'})
+                    error.update({'message': 'Current password is incorrect.'})
                     raise ApiError(error)
 
             if len(password) < 8:
-                error.update(
-                    {'message': 'Password must be 8 characters or longer.'})
+                error.update({'message': 'Password must be 8 characters or longer.'})
                 raise ApiError(error)
 
             if password != password_confirmation:
-                error.update(
-                    {'message': 'Password and password confirmation do not match.'})
+                error.update({'message': 'Password and password confirmation do not match.'})
                 raise ApiError(error)
 
             password_salt = generate_salt()
             payload['password_hash'] = create_bcrypt_hash(password, password_salt)
             payload['password_salt'] = password_salt
 
-        return super().update(ignore_keys(payload, [
-            'password',
-            'password_confirmation',
-            'password_current',
-        ]), **kwargs)
+        return super().update(
+            ignore_keys(
+                payload,
+                [
+                    'password',
+                    'password_confirmation',
+                    'password_current',
+                ],
+            ),
+            **kwargs,
+        )
 
     @safe_db_query
     def token(self):

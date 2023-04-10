@@ -71,7 +71,7 @@ def create_block_runs_from_dynamic_block(
 
         block_runs_created_by_block_uuid = {}
         dynamic_child_block_runs = []
-        for idx, value in enumerate(values):
+        for idx, _value in enumerate(values):
             if idx < len(block_metadata):
                 metadata = block_metadata[idx].copy()
             else:
@@ -86,9 +86,12 @@ def create_block_runs_from_dynamic_block(
             block_run = create_block_run_from_dynamic_child(
                 downstream_block,
                 pipeline_run,
-                merge_dict(metadata, dict(
-                    dynamic_upstream_block_uuids=arr,
-                )),
+                merge_dict(
+                    metadata,
+                    dict(
+                        dynamic_upstream_block_uuids=arr,
+                    ),
+                ),
                 idx,
             )
             all_block_runs.append(block_run)
@@ -125,9 +128,12 @@ def create_block_runs_from_dynamic_block(
                 br = create_block_run_from_dynamic_child(
                     b,
                     pipeline_run,
-                    merge_dict(metadata, dict(
-                        dynamic_upstream_block_uuids=arr,
-                    )),
+                    merge_dict(
+                        metadata,
+                        dict(
+                            dynamic_upstream_block_uuids=arr,
+                        ),
+                    ),
                     idx,
                 )
                 all_block_runs.append(br)
@@ -163,28 +169,34 @@ def create_block_runs_from_dynamic_block(
                     else:
                         arr.append(upstream_block.uuid)
 
-                all_block_runs.append(pipeline_run.create_block_run(
-                    b.uuid,
-                    metrics=dict(dynamic_upstream_block_uuids=arr),
-                ))
+                all_block_runs.append(
+                    pipeline_run.create_block_run(
+                        b.uuid,
+                        metrics=dict(dynamic_upstream_block_uuids=arr),
+                    )
+                )
 
     return all_block_runs
 
 
 def get_all_ancestors(block) -> List:
     arr = get_leaf_nodes(block, 'upstream_blocks', include_all_nodes=True)
-    return list(filter(
-        lambda x: x.uuid != block.uuid,
-        arr,
-    ))
+    return list(
+        filter(
+            lambda x: x.uuid != block.uuid,
+            arr,
+        )
+    )
 
 
 def get_all_descendants(block) -> List:
     arr = get_leaf_nodes(block, 'downstream_blocks', include_all_nodes=True)
-    return list(filter(
-        lambda x: x.uuid != block.uuid,
-        arr,
-    ))
+    return list(
+        filter(
+            lambda x: x.uuid != block.uuid,
+            arr,
+        )
+    )
 
 
 def get_leaf_nodes(
@@ -277,8 +289,10 @@ def input_variables(
     Returns:
         Dict[str, List[str]]: Mapping from upstream block uuid to a list of variable names
     """
-    return {block_uuid: output_variables(pipeline, block_uuid, execution_partition)
-            for block_uuid in upstream_block_uuids}
+    return {
+        block_uuid: output_variables(pipeline, block_uuid, execution_partition)
+        for block_uuid in upstream_block_uuids
+    }
 
 
 def fetch_input_variables(
@@ -400,10 +414,11 @@ def fetch_input_variables(
                             final_value.append(val)
 
                     # output_0 is the metadata for dynamic blocks
-                    if dynamic_block_index is not None and \
-                            upstream_is_dynamic and \
-                            len(variables) >= 2:
-
+                    if (
+                        dynamic_block_index is not None
+                        and upstream_is_dynamic
+                        and len(variables) >= 2
+                    ):
                         var = variables[1]
                         variable_values = pipeline.variable_manager.get_variable(
                             pipeline.uuid,
@@ -425,9 +440,11 @@ def fetch_input_variables(
                     if upstream_is_dynamic and dynamic_block_index is not None:
                         final_value = final_value[dynamic_block_index]
 
-                    if type(final_value) is not pd.DataFrame and \
-                        type(final_value) is list and \
-                            len(final_value) == 1:
+                    if (
+                        type(final_value) is not pd.DataFrame
+                        and type(final_value) is list
+                        and len(final_value) == 1
+                    ):
                         final_value = final_value[0]
                 input_vars[idx] = final_value
 

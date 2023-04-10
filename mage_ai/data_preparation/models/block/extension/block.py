@@ -15,8 +15,8 @@ class ExtensionBlock(Block):
         def custom_code(extension_name: str, *args, **kwargs):
             if not extension_name or type(extension_name) is not str:
                 raise Exception(
-                    'No @extension decorator found with a valid extension name, ' +
-                    "must be in the following format: @extension('extension_name')",
+                    'No @extension decorator found with a valid extension name, '
+                    + "must be in the following format: @extension('extension_name')",
                 )
 
             if extension_name not in EXTENSION_UUIDS:
@@ -39,13 +39,13 @@ class ExtensionBlock(Block):
                             for result in validation_result.results:
                                 if result.get('success', False):
                                     print(
-                                        f'Expectations from extension {self.uuid} for ' +
-                                        f'block {uuid} succeeded.',
+                                        f'Expectations from extension {self.uuid} for '
+                                        + f'block {uuid} succeeded.',
                                     )
                                 else:
                                     raise Exception(
-                                        f'Expectations from extension {self.uuid} for ' +
-                                        f'block {uuid} failed:\n{result}\n',
+                                        f'Expectations from extension {self.uuid} for '
+                                        + f'block {uuid} failed:\n{result}\n',
                                     )
 
                             validation_results.append(validation_result)
@@ -53,6 +53,7 @@ class ExtensionBlock(Block):
                         return validation_results
 
                     return function(*args, **kwargs)
+
                 decorated_functions.append(func)
 
             return inner

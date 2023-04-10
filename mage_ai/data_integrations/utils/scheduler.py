@@ -34,9 +34,12 @@ def clear_source_output_files(
             logger.info(
                 f'Removing source output directory for stream {tap_stream_id} at '
                 f'{source_output_folder}.',
-                tags=merge_dict(tags, dict(
-                    source_output_folder=source_output_folder,
-                )),
+                tags=merge_dict(
+                    tags,
+                    dict(
+                        source_output_folder=source_output_folder,
+                    ),
+                ),
             )
             shutil.rmtree(source_output_folder)
 
@@ -101,10 +104,15 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
     data_loader_block = integration_pipeline.data_loader
     data_exporter_block = integration_pipeline.data_exporter
 
-    transformer_blocks = [b for b in executable_blocks if b.uuid not in [
-        data_loader_block.uuid,
-        data_exporter_block.uuid,
-    ]]
+    transformer_blocks = [
+        b
+        for b in executable_blocks
+        if b.uuid
+        not in [
+            data_loader_block.uuid,
+            data_exporter_block.uuid,
+        ]
+    ]
 
     is_sql_source = integration_pipeline.source_uuid in SQL_SOURCES_UUID
     record_counts_by_stream = {}
@@ -125,10 +133,13 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
         if is_sql_source:
             record_counts = record_counts_by_stream[tap_stream_id]['count']
         number_of_batches = math.ceil((record_counts or 1) / BATCH_FETCH_LIMIT)
-        tags2 = merge_dict(tags, dict(
-            number_of_batches=number_of_batches,
-            record_counts=record_counts,
-        ))
+        tags2 = merge_dict(
+            tags,
+            dict(
+                number_of_batches=number_of_batches,
+                record_counts=record_counts,
+            ),
+        )
 
         logger.info(
             f"Number of records for stream {tap_stream_id}: "
@@ -141,20 +152,27 @@ def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[Blo
         )
 
         for idx in range(number_of_batches):
-            arr += [
-                pipeline_run.create_block_run(
-                    f'{data_loader_block.uuid}:{tap_stream_id}:{idx}',
-                    commit=False,
-                ),
-            ] + [pipeline_run.create_block_run(
-                    f'{b.uuid}:{tap_stream_id}:{idx}',
-                    commit=False,
-                ) for b in transformer_blocks] + [
-                pipeline_run.create_block_run(
-                    f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}',
-                    commit=False,
-                ),
-            ]
+            arr += (
+                [
+                    pipeline_run.create_block_run(
+                        f'{data_loader_block.uuid}:{tap_stream_id}:{idx}',
+                        commit=False,
+                    ),
+                ]
+                + [
+                    pipeline_run.create_block_run(
+                        f'{b.uuid}:{tap_stream_id}:{idx}',
+                        commit=False,
+                    )
+                    for b in transformer_blocks
+                ]
+                + [
+                    pipeline_run.create_block_run(
+                        f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}',
+                        commit=False,
+                    ),
+                ]
+            )
             try:
                 db_connection.session.commit()
             except Exception as e:

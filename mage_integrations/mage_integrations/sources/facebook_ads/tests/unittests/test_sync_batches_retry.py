@@ -7,9 +7,9 @@ from singer import resolve_schema_references
 from singer.schema import Schema
 from singer.catalog import CatalogEntry
 
+
 # Mock object for the batch object to raise exception
 class MockBatch:
-
     def __init__(self, exception="NoException"):
         self.exception = exception
 
@@ -18,26 +18,28 @@ class MockBatch:
             raise AttributeError("'str' object has no attribute 'get'")
         elif self.exception == "FacebookRequestError":
             raise FacebookRequestError(
-                        message='',
-                        request_context={"":Mock()},
-                        http_status=500,
-                        http_headers=Mock(),
-                        body={}
-                    )
+                message='',
+                request_context={"": Mock()},
+                http_status=500,
+                http_headers=Mock(),
+                body={},
+            )
+
 
 class TestAdCreativeSyncBbatches(unittest.TestCase):
-
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
     def test_retries_on_attribute_error_sync_batches(self, mocked_schema, mocked_api):
-        """ 
-            AdCreative.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of ad creatives. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        AdCreative.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of ad creatives.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
         # Mock new_batch() function of API
         mocked_api.new_batch = Mock()
-        mocked_api.new_batch.return_value = MockBatch(exception="AttributeError") # Raise AttributeError exception
+        mocked_api.new_batch.return_value = MockBatch(
+            exception="AttributeError"
+        )  # Raise AttributeError exception
 
         # Initialize AdCreative and mock catalog_entry
         mock_catalog_entry = CatalogEntry(schema=Schema())
@@ -55,14 +57,16 @@ class TestAdCreativeSyncBbatches(unittest.TestCase):
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
     def test_retries_on_facebook_request_error_sync_batches(self, mocked_schema, mocked_api):
-        """ 
-            AdCreative.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of ad creatives. 
-            We mock this method to raise a `FacebookRequestError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        AdCreative.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of ad creatives.
+        We mock this method to raise a `FacebookRequestError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
         # Mock new_batch() function of API
         mocked_api.new_batch = Mock()
-        mocked_api.new_batch.return_value = MockBatch(exception="FacebookRequestError") # Raise FacebookRequestError exception
+        mocked_api.new_batch.return_value = MockBatch(
+            exception="FacebookRequestError"
+        )  # Raise FacebookRequestError exception
 
         # Initialize AdCreative and mock catalog_entry
         mock_catalog_entry = CatalogEntry(schema=Schema())
@@ -80,13 +84,13 @@ class TestAdCreativeSyncBbatches(unittest.TestCase):
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
     def test_no_error_on_sync_batches(self, mocked_schema, mocked_api):
-        """ 
-            AdCreative.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of ad creatives. 
-            We mock this method to simply pass the things and expect the tap to run without exception
+        """
+        AdCreative.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of ad creatives.
+        We mock this method to simply pass the things and expect the tap to run without exception
         """
         # Mock new_batch() function of API
         mocked_api.new_batch = Mock()
-        mocked_api.new_batch.return_value = MockBatch() # No exception
+        mocked_api.new_batch.return_value = MockBatch()  # No exception
 
         # Initialize AdCreative and mock catalog_entry
         mock_catalog_entry = CatalogEntry(schema=Schema())
@@ -102,18 +106,19 @@ class TestAdCreativeSyncBbatches(unittest.TestCase):
 
 
 class TestLeadsSyncBatches(unittest.TestCase):
-
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
     def test_retries_on_attribute_error_sync_batches(self, mocked_schema, mocked_api):
-        """ 
-            Leads.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of Leads. 
-            We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        Leads.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of Leads.
+        We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
         # Mock new_batch() function of API
         mocked_api.new_batch = Mock()
-        mocked_api.new_batch.return_value = MockBatch(exception="AttributeError") # Raise AttributeError exception
+        mocked_api.new_batch.return_value = MockBatch(
+            exception="AttributeError"
+        )  # Raise AttributeError exception
 
         # Initialize Leads and mock catalog_entry
         mock_catalog_entry = CatalogEntry(schema=Schema())
@@ -131,14 +136,16 @@ class TestLeadsSyncBatches(unittest.TestCase):
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
     def test_retries_on_facebook_request_error_sync_batches(self, mocked_schema, mocked_api):
-        """ 
-            Leads.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of Leads. 
-            We mock this method to raise a `FacebookRequestError` and expect the tap to retry this that function up to 5 times,
-            which is the current hard coded `max_tries` value.
+        """
+        Leads.sync_batches calls a `facebook_business` method,`api_batch.execute()`, to get a batch of Leads.
+        We mock this method to raise a `FacebookRequestError` and expect the tap to retry this that function up to 5 times,
+        which is the current hard coded `max_tries` value.
         """
         # Mock new_batch() function of API
         mocked_api.new_batch = Mock()
-        mocked_api.new_batch.return_value = MockBatch(exception="FacebookRequestError") # Raise FacebookRequestError exception
+        mocked_api.new_batch.return_value = MockBatch(
+            exception="FacebookRequestError"
+        )  # Raise FacebookRequestError exception
 
         # Initialize Leads and mock catalog_entry
         mock_catalog_entry = CatalogEntry(schema=Schema())

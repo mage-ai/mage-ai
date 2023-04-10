@@ -1,12 +1,15 @@
 import singer
 from tap_pipedrive.stream import PipedriveIterStream
 
+
 class DealStageChangeStream(PipedriveIterStream):
     base_endpoint = 'deals'
     id_endpoint = 'deals/{}/flow'
     schema = 'dealflow'
     state_field = 'log_time'
-    key_properties = ['id', ]
+    key_properties = [
+        'id',
+    ]
     replication_method = 'INCREMENTAL'
 
     def get_name(self):

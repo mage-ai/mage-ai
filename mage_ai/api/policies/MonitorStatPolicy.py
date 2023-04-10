@@ -8,23 +8,36 @@ class MonitorStatPolicy(BasePolicy):
     pass
 
 
-MonitorStatPolicy.allow_actions([
-    constants.DETAIL,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+MonitorStatPolicy.allow_actions(
+    [
+        constants.DETAIL,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-MonitorStatPolicy.allow_read([] + MonitorStatPresenter.default_attributes, scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.DETAIL,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+MonitorStatPolicy.allow_read(
+    [] + MonitorStatPresenter.default_attributes,
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-MonitorStatPolicy.allow_query([
-    'end_time',
-    'pipeline_schedule_id',
-    'pipeline_uuid',
-    'start_time',
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+MonitorStatPolicy.allow_query(
+    [
+        'end_time',
+        'pipeline_schedule_id',
+        'pipeline_uuid',
+        'start_time',
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)

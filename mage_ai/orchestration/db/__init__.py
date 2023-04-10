@@ -3,7 +3,7 @@ from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
     DB_NAME,
     DB_PASS,
-    DB_USER
+    DB_USER,
 )
 from mage_ai.shared.environments import is_dev, is_test
 from sqlalchemy import create_engine
@@ -83,6 +83,7 @@ def safe_db_query(func):
                 if retry_count >= DB_RETRY_COUNT:
                     raise e
                 retry_count += 1
+
     return func_with_rollback
 
 

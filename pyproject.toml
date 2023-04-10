@@ -1,3 +1,23 @@
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 100
+target-version = ['py36', 'py37', 'py38', 'py39', 'py310']
+skip-string-normalization = true
+include = '\.pyi?$'
+extend-exclude = '''
+(
+  ^/mage_ai/data_preparation/templates
+  /(
+      \.eggs
+    | \.git
+    | \.mypy_cache
+    | \.tox
+    | _build
+    | build
+    | dist
+  )/
+)
+'''

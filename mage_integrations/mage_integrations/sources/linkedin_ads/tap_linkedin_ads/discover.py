@@ -2,6 +2,7 @@ from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from singer.catalog import Schema
 from tap_linkedin_ads.schema import get_schemas, STREAMS
 
+
 def discover():
     schemas, field_metadata = get_schemas()
     catalog = Catalog([])

@@ -5,8 +5,8 @@ from tap_tester import runner, connections, menagerie
 
 from base import FacebookBaseTest
 
-class FacebookInvalidAttributionWindowInt(FacebookBaseTest):
 
+class FacebookInvalidAttributionWindowInt(FacebookBaseTest):
     @staticmethod
     def name():
         return "tt_facebook_invalid_window_int"
@@ -19,8 +19,8 @@ class FacebookInvalidAttributionWindowInt(FacebookBaseTest):
         """Configuration properties required for the tap."""
         return_value = {
             'account_id': os.getenv('TAP_FACEBOOK_ACCOUNT_ID'),
-            'start_date' : '2019-07-24T00:00:00Z',
-            'end_date' : '2019-07-26T00:00:00Z',
+            'start_date': '2019-07-24T00:00:00Z',
+            'end_date': '2019-07-26T00:00:00Z',
             'insights_buffer_days': self.ATTRIBUTION_WINDOW,
         }
         if original:
@@ -30,7 +30,7 @@ class FacebookInvalidAttributionWindowInt(FacebookBaseTest):
         return return_value
 
     def test_run(self):
-        self.ATTRIBUTION_WINDOW = '10' # set attribution window other than 1, 7 or 28
+        self.ATTRIBUTION_WINDOW = '10'  # set attribution window other than 1, 7 or 28
         self.run_test()
 
     def run_test(self):
@@ -52,11 +52,10 @@ class FacebookInvalidAttributionWindowInt(FacebookBaseTest):
 
 
 class FacebookInvalidAttributionWindowStr(FacebookInvalidAttributionWindowInt):
-
     @staticmethod
     def name():
         return "tt_facebook_invalid_window_str"
-    
+
     @unittest.skip("BUG: TDL-18569")
     def test_run(self):
         self.ATTRIBUTION_WINDOW = 'something'

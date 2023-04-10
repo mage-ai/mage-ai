@@ -18,11 +18,13 @@ class Outreach(Source):
             stream_id = stream['tap_stream_id']
             if not streams or stream_id in streams:
                 schema = catalog_singer.Schema.from_dict(stream['schema'])
-                catalog_entries.append(self.build_catalog_entry(
-                    stream_id,
-                    schema,
-                    **ignore_keys(stream, ['schema']),
-                ))
+                catalog_entries.append(
+                    self.build_catalog_entry(
+                        stream_id,
+                        schema,
+                        **ignore_keys(stream, ['schema']),
+                    )
+                )
 
         return Catalog(catalog_entries)
 

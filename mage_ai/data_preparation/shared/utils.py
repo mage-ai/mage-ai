@@ -10,9 +10,8 @@ def get_template_vars() -> Dict[str, Callable]:
     )
 
     try:
-        from mage_ai.services.aws.secrets_manager.secrets_manager import (
-            get_secret
-        )
+        from mage_ai.services.aws.secrets_manager.secrets_manager import get_secret
+
         kwargs['aws_secret_var'] = get_secret
     except ModuleNotFoundError:
         pass

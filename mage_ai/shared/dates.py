@@ -25,8 +25,7 @@ def n_days_ago(n: int) -> str:
 def str_to_timedelta(period_str: str):
     unit = period_str[-1]
     if unit not in ['d', 'h', 'w']:
-        raise Exception(
-            'Please provide a valid period unit ("d", "h", or "w")')
+        raise Exception('Please provide a valid period unit ("d", "h", or "w")')
     if unit == 'd':
         return datetime.timedelta(days=int(period_str[:-1]))
     elif unit == 'h':

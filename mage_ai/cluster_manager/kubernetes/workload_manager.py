@@ -8,13 +8,13 @@ from mage_ai.cluster_manager.constants import (
     KUBE_SERVICE_TYPE,
     LOAD_BALANCER_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
-    SERVICE_ACCOUNT_SECRETS_NAME
+    SERVICE_ACCOUNT_SECRETS_NAME,
 )
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
     DB_NAME,
     DB_PASS,
-    DB_USER
+    DB_USER,
 )
 from typing import Dict, List
 
@@ -56,12 +56,14 @@ class WorkloadManager:
                     continue
                 ip_address = service.status.load_balancer.ingress[0].ip
                 conditions = service.status.conditions or list()
-                services_list.append(dict(
-                    ip=ip_address,
-                    name=labels.get('app'),
-                    status='RUNNING' if len(conditions) == 0 else conditions[0].status,
-                    type='kubernetes',
-                ))
+                services_list.append(
+                    dict(
+                        ip=ip_address,
+                        name=labels.get('app'),
+                        status='RUNNING' if len(conditions) == 0 else conditions[0].status,
+                        type='kubernetes',
+                    )
+                )
             except Exception:
                 pass
 
@@ -85,18 +87,8 @@ class WorkloadManager:
                 'name': f'{deployment_name}-container',
                 'image': 'mageai/mageai:latest',
                 'command': ['mage', 'start', deployment_name],
-                'ports': [
-                    {
-                        'containerPort': 6789,
-                        'name': 'web'
-                    }
-                ],
-                'volumeMounts': [
-                    {
-                        'name': 'mage-data',
-                        'mountPath': '/home/src'
-                    }
-                ],
+                'ports': [{'containerPort': 6789, 'name': 'web'}],
+                'volumeMounts': [{'name': 'mage-data', 'mountPath': '/home/src'}],
                 **container_config,
             }
         ]
@@ -115,32 +107,23 @@ class WorkloadManager:
                         '/cloud_sql_proxy',
                         '-log_debug_stdout',
                         f'-instances={os.getenv(CLOUD_SQL_CONNECTION_NAME)}=tcp:5432',
-                        f'-credential_file=/secrets/{credential_file_path}'
+                        f'-credential_file=/secrets/{credential_file_path}',
                     ],
-                    'securityContext': {
-                        'runAsNonRoot': True
-                    },
-                    'resources': {
-                        'requests': {
-                            'memory': '2Gi',
-                            'cpu': '1'
-                        }
-                    },
+                    'securityContext': {'runAsNonRoot': True},
+                    'resources': {'requests': {'memory': '2Gi', 'cpu': '1'}},
                     'volumeMounts': [
                         {
                             'name': 'service-account-volume',
                             'mountPath': '/secrets/',
-                            'readOnly': True
+                            'readOnly': True,
                         }
-                    ]
+                    ],
                 }
             )
             volumes.append(
                 {
                     'name': 'service-account-volume',
-                    'secret': {
-                        'secretName': os.getenv(SERVICE_ACCOUNT_SECRETS_NAME)
-                    }
+                    'secret': {'secretName': os.getenv(SERVICE_ACCOUNT_SECRETS_NAME)},
                 }
             )
 
@@ -151,52 +134,31 @@ class WorkloadManager:
         stateful_set = {
             'apiVersion': 'apps/v1',
             'kind': 'StatefulSet',
-            'metadata': {
-                'name': deployment_name,
-                'labels': {
-                    'app': deployment_name
-                }
-            },
+            'metadata': {'name': deployment_name, 'labels': {'app': deployment_name}},
             'spec': {
-                'selector': {
-                    'matchLabels': {
-                        'app': deployment_name
-                    }
-                },
+                'selector': {'matchLabels': {'app': deployment_name}},
                 'replicas': 1,
                 'minReadySeconds': 10,
                 'template': {
-                    'metadata': {
-                        'labels': {
-                            'app': deployment_name
-                        }
-                    },
+                    'metadata': {'labels': {'app': deployment_name}},
                     'spec': {
                         'terminationGracePeriodSeconds': 10,
                         'containers': containers,
                         'volumes': volumes,
-                        **stateful_set_template_spec
-                    }
+                        **stateful_set_template_spec,
+                    },
                 },
                 'volumeClaimTemplates': [
                     {
-                        'metadata': {
-                            'name': 'mage-data'
-                        },
+                        'metadata': {'name': 'mage-data'},
                         'spec': {
-                            'accessModes': [
-                                'ReadWriteOnce'
-                            ],
+                            'accessModes': ['ReadWriteOnce'],
                             'storageClassName': storage_class_name,
-                            'resources': {
-                                'requests': {
-                                    'storage': '1Gi'
-                                }
-                            }
-                        }
+                            'resources': {'requests': {'storage': '1Gi'}},
+                        },
                     }
-                ]
-            }
+                ],
+            },
         }
 
         self.apps_client.create_namespaced_stateful_set(self.namespace, stateful_set)
@@ -205,8 +167,7 @@ class WorkloadManager:
 
         annotations = {}
         if os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG):
-            annotations[GCP_BACKEND_CONFIG_ANNOTATION] = \
-                os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG)
+            annotations[GCP_BACKEND_CONFIG_ANNOTATION] = os.getenv(KUBE_SERVICE_GCP_BACKEND_CONFIG)
 
         service = {
             'apiVersion': 'v1',
@@ -217,7 +178,7 @@ class WorkloadManager:
                     'app': deployment_name,
                     'dev-instance': '1',
                 },
-                'annotations': annotations
+                'annotations': annotations,
             },
             'spec': {
                 'ports': [
@@ -227,11 +188,9 @@ class WorkloadManager:
                         'targetPort': 6789,
                     }
                 ],
-                'selector': {
-                    'app': deployment_name
-                },
-                'type': os.getenv(KUBE_SERVICE_TYPE, LOAD_BALANCER_SERVICE_TYPE)
-            }
+                'selector': {'app': deployment_name},
+                'type': os.getenv(KUBE_SERVICE_TYPE, LOAD_BALANCER_SERVICE_TYPE),
+            },
         }
 
         self.core_client.create_namespaced_service(self.namespace, service)
@@ -247,44 +206,31 @@ class WorkloadManager:
                     'valueFrom': {
                         'secretKeyRef': {
                             'name': connection_url_secrets_name,
-                            'key': 'connection_url'
+                            'key': 'connection_url',
                         }
-                    }
+                    },
                 }
             )
 
         # For connecting to CloudSQL PostgreSQL database.
         db_secrets_name = os.getenv(DB_SECRETS_NAME)
         if db_secrets_name:
-            env_vars.extend([
-                {
-                    'name': DB_USER,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'username'
-                        }
-                    }
-                },
-                {
-                    'name': DB_PASS,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'password'
-                        }
-                    }
-                },
-                {
-                    'name': DB_NAME,
-                    'valueFrom': {
-                        'secretKeyRef': {
-                            'name': db_secrets_name,
-                            'key': 'database'
-                        }
-                    }
-                }
-            ])
+            env_vars.extend(
+                [
+                    {
+                        'name': DB_USER,
+                        'valueFrom': {'secretKeyRef': {'name': db_secrets_name, 'key': 'username'}},
+                    },
+                    {
+                        'name': DB_PASS,
+                        'valueFrom': {'secretKeyRef': {'name': db_secrets_name, 'key': 'password'}},
+                    },
+                    {
+                        'name': DB_NAME,
+                        'valueFrom': {'secretKeyRef': {'name': db_secrets_name, 'key': 'database'}},
+                    },
+                ]
+            )
 
         if container_config and 'env' in container_config:
             env_vars += container_config['env']

@@ -44,15 +44,21 @@ def convert_to_block(block, content):
 
     converted_imports = '\n'.join(sorted(block_template_imports + content_imports)).strip()
 
-    decorator_function_parts = '\n'.join(
-        block_template_content_parts[decorator_index:decorator_index + decorator_index_end],
-    ).strip().split('\n')
+    decorator_function_parts = (
+        '\n'.join(
+            block_template_content_parts[decorator_index : decorator_index + decorator_index_end],
+        )
+        .strip()
+        .split('\n')
+    )
 
     content_parts = content.split('\n')
     content_to_display = []
     for i, line in enumerate(content_parts):
-        if len(content_parts) - 1 == i and \
-                block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+        if len(content_parts) - 1 == i and block.type in [
+            BlockType.DATA_LOADER,
+            BlockType.TRANSFORMER,
+        ]:
             content_to_display.append(f'    return {line}')
         else:
             content_to_display.append(f'    {line}')
@@ -63,7 +69,7 @@ def convert_to_block(block, content):
     else:
         part_3 = '\n'.join(decorator_function_parts[:-2]).strip()
         part_5 = '\n'.join(
-            block_template_content_parts[decorator_index + decorator_index_end:]
+            block_template_content_parts[decorator_index + decorator_index_end :]
         ).strip()
 
     return """{}

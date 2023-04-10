@@ -72,9 +72,7 @@ class KafkaSink(BaseSink):
             kwargs['sasl_plain_username'] = self.config.sasl_config.username
             kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
-        self.producer = KafkaProducer(
-            **kwargs
-        )
+        self.producer = KafkaProducer(**kwargs)
         self._print('Finish initializing producer.')
 
     def write(self, data: Dict):

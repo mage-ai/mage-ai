@@ -8,7 +8,7 @@ from mage_ai.cluster_manager.constants import (
     GCP_PROJECT_ID,
     GCP_REGION,
     KUBE_NAMESPACE,
-    KUBE_STORAGE_CLASS_NAME
+    KUBE_STORAGE_CLASS_NAME,
 )
 from mage_ai.server.logger import Logger
 import os
@@ -39,18 +39,18 @@ class ApiInstancesHandler(BaseHandler):
                 instances = list()
         elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager import CloudRunServiceManager
+
             project_id = os.getenv(GCP_PROJECT_ID)
             path_to_credentials = os.getenv(GCP_PATH_TO_KEYFILE)
             region = os.getenv(GCP_REGION)
             cloud_run_service_manager = CloudRunServiceManager(
-                project_id,
-                path_to_credentials,
-                region=region
+                project_id, path_to_credentials, region=region
             )
 
             instances = cloud_run_service_manager.list_services()
         elif cluster_type == ClusterType.K8S:
             from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+
             namespace = os.getenv(KUBE_NAMESPACE)
             workload_manager = WorkloadManager(namespace)
 
@@ -62,6 +62,7 @@ class ApiInstancesHandler(BaseHandler):
         try:
             if cluster_type == ClusterType.ECS:
                 from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 cluster_name = instance_payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
@@ -82,26 +83,27 @@ class ApiInstancesHandler(BaseHandler):
                     container_name,
                 )
 
-                self.write(dict(
-                    instance=instance,
-                    success=True,
-                ))
+                self.write(
+                    dict(
+                        instance=instance,
+                        success=True,
+                    )
+                )
             elif cluster_type == ClusterType.CLOUD_RUN:
-                from mage_ai.cluster_manager.gcp.cloud_run_service_manager \
-                    import CloudRunServiceManager
+                from mage_ai.cluster_manager.gcp.cloud_run_service_manager import (
+                    CloudRunServiceManager,
+                )
+
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 project_id = instance_payload.get('project_id', os.getenv(GCP_PROJECT_ID))
                 path_to_credentials = instance_payload.get(
-                    'path_to_credentials',
-                    os.getenv('path_to_keyfile')
+                    'path_to_credentials', os.getenv('path_to_keyfile')
                 )
                 region = instance_payload.get('region', os.getenv('GCP_REGION'))
 
                 cloud_run_service_manager = CloudRunServiceManager(
-                    project_id,
-                    path_to_credentials,
-                    region=region
+                    project_id, path_to_credentials, region=region
                 )
 
                 cloud_run_service_manager.create_service(name)
@@ -109,12 +111,12 @@ class ApiInstancesHandler(BaseHandler):
                 self.write(dict(success=True))
             elif cluster_type == ClusterType.K8S:
                 from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+
                 instance_payload = self.get_payload().get('instance')
                 name = instance_payload.get('name')
                 namespace = instance_payload.get('namespace', os.getenv(KUBE_NAMESPACE))
                 storage_class_name = instance_payload.get(
-                    'storage_class_name',
-                    os.getenv(KUBE_STORAGE_CLASS_NAME)
+                    'storage_class_name', os.getenv(KUBE_STORAGE_CLASS_NAME)
                 )
                 service_account_name = instance_payload.get('service_account_name')
                 container_config_yaml = instance_payload.get('container_config')
@@ -138,6 +140,7 @@ class ApiInstanceDetailHandler(BaseHandler):
     def put(self, cluster_type, instance_name):
         if cluster_type == 'ecs':
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+
             instance_payload = self.get_payload().get('instance')
             task_arn = instance_payload.get('task_arn')
             cluster_name = instance_payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
@@ -160,20 +163,21 @@ class ApiInstanceDetailHandler(BaseHandler):
                     container_name,
                 )
 
-        self.write(dict(
-            instance=instance,
-            success=True,
-        ))
+        self.write(
+            dict(
+                instance=instance,
+                success=True,
+            )
+        )
 
     def delete(self, cluster_type, instance_name):
         if cluster_type == 'ecs':
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+
             task_arn = self.get_argument('task_arn', None)
             cluster_name = self.get_argument('cluster_name', os.getenv(ECS_CLUSTER_NAME))
 
             ecs_instance_manager = EcsTaskManager(cluster_name)
             ecs_instance_manager.delete_task(instance_name, task_arn)
 
-        self.write(dict(
-            success=True
-        ))
+        self.write(dict(success=True))

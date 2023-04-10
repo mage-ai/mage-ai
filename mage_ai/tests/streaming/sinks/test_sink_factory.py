@@ -16,9 +16,11 @@ class SinkFactoryTests(TestCase):
 
     def test_get_source_other(self):
         with self.assertRaises(Exception) as context:
-            SinkFactory.get_sink(dict(
-                connector_type='random',
-            ))
+            SinkFactory.get_sink(
+                dict(
+                    connector_type='random',
+                )
+            )
         self.assertTrue(
             'Ingesting data to random is not supported in streaming pipelines yet.'
             in str(context.exception),

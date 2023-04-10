@@ -38,17 +38,15 @@ def get_schemas():
                 schema=schema,
                 key_properties=stream_object.key_properties,
                 valid_replication_keys=stream_object.valid_replication_keys,
-                replication_method=stream_object.replication_method
+                replication_method=stream_object.replication_method,
             )
 
             mdata = metadata.to_map(mdata)
 
             if stream_object.replication_key:
                 mdata = metadata.write(
-                    mdata,
-                    ('properties', stream_object.replication_key),
-                    'inclusion',
-                    'automatic')
+                    mdata, ('properties', stream_object.replication_key), 'inclusion', 'automatic'
+                )
 
             mdata = metadata.to_list(mdata)
 

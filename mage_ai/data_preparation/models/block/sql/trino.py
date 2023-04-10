@@ -21,19 +21,24 @@ def create_upstream_block_tables(
         parse_attributes,
         source_table_name_for_block,
     )
+
     configuration = configuration if configuration else block.configuration
 
-    for idx, upstream_block in enumerate(block.upstream_blocks):
-        if should_cache_data_from_upstream(block, upstream_block, [
-            'data_provider',
-        ], [
-            ConfigKey.TRINO_CATALOG,
-            ConfigKey.TRINO_SCHEMA,
-            ConfigKey.TRINO_HOST,
-            ConfigKey.TRINO_PORT,
-        ]):
-            if BlockType.DBT == upstream_block.type \
-                    and not cache_upstream_dbt_models:
+    for _idx, upstream_block in enumerate(block.upstream_blocks):
+        if should_cache_data_from_upstream(
+            block,
+            upstream_block,
+            [
+                'data_provider',
+            ],
+            [
+                ConfigKey.TRINO_CATALOG,
+                ConfigKey.TRINO_SCHEMA,
+                ConfigKey.TRINO_HOST,
+                ConfigKey.TRINO_PORT,
+            ],
+        ):
+            if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
             table_name = upstream_block.table_name
@@ -58,19 +63,19 @@ def create_upstream_block_tables(
             schema_name = configuration.get('data_provider_schema')
             catalog_name = configuration.get('data_provider_database')
 
-            if BlockType.DBT == block.type \
-                    and BlockType.DBT != upstream_block.type:
+            if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 attributes_dict = parse_attributes(block)
                 schema_name = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
             full_table_name = table_name
             if schema_name:
-                full_table_name = \
-                    f'{catalog_name}.{schema_name}.{full_table_name}'
+                full_table_name = f'{catalog_name}.{schema_name}.{full_table_name}'
 
-            print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
-                  f'to {full_table_name}.')
+            print(
+                f'\n\nExporting data from upstream block {upstream_block.uuid} '
+                f'to {full_table_name}.'
+            )
 
             loader.export(
                 df,

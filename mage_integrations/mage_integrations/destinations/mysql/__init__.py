@@ -84,17 +84,20 @@ class MySQL(Destination):
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        results = self.build_connection().load(f"""
+        results = self.build_connection().load(
+            f"""
 SELECT
     column_name
     , column_type
 FROM information_schema.columns
 WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
-        """)
+        """
+        )
         current_columns = [r[0].lower() if self.use_lowercase else r[0] for r in results]
         schema_columns = schema['properties'].keys()
-        new_columns = [c for c in schema_columns
-                       if self.clean_column_name(c) not in current_columns]
+        new_columns = [
+            c for c in schema_columns if self.clean_column_name(c) not in current_columns
+        ]
 
         if not new_columns:
             return []
@@ -133,7 +136,8 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
             columns=columns,
             records=records,
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
-            if COLUMN_TYPE_OBJECT == y['type'] else x,
+            if COLUMN_TYPE_OBJECT == y['type']
+            else x,
         )
         insert_columns = ', '.join([self.clean_column_name(col) for col in insert_columns])
         insert_values = ', '.join(insert_values)
@@ -144,8 +148,11 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
         if unique_constraints and unique_conflict_method:
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                 columns_cleaned = [self.clean_column_name(col) for col in columns]
-                update_command = [f'{col} = new.{col}' for col in columns_cleaned
-                                  if col != INTERNAL_COLUMN_CREATED_AT]
+                update_command = [
+                    f'{col} = new.{col}'
+                    for col in columns_cleaned
+                    if col != INTERNAL_COLUMN_CREATED_AT
+                ]
                 commands_after += [
                     'AS new',
                     f"ON DUPLICATE KEY UPDATE {', '.join(update_command)}",
@@ -175,11 +182,15 @@ WHERE table_name = '{table_name}' AND table_schema = '{database_name}'
         database_name: str = None,
     ) -> bool:
         connection = self.build_connection()
-        data = connection.load('\n'.join([
-            'SELECT * FROM information_schema.tables ',
-            f'WHERE table_schema = \'{database_name}\' AND table_name = \'{table_name}\'',
-            'LIMIT 1',
-        ]))
+        data = connection.load(
+            '\n'.join(
+                [
+                    'SELECT * FROM information_schema.tables ',
+                    f'WHERE table_schema = \'{database_name}\' AND table_name = \'{table_name}\'',
+                    'LIMIT 1',
+                ]
+            )
+        )
 
         return len(data) >= 1
 

@@ -12,14 +12,7 @@ class JobManager:
     def __init__(self):
         self.queue = QueueFactory.get_queue()
 
-    def add_job(
-        self,
-        job_type: JobType,
-        uid: Union[str, int],
-        target: Callable,
-        *args,
-        **kwargs
-    ):
+    def add_job(self, job_type: JobType, uid: Union[str, int], target: Callable, *args, **kwargs):
         job_id = self.__job_id(job_type, uid)
 
         self.queue.enqueue(job_id, target, *args, **kwargs)

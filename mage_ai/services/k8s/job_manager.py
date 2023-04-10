@@ -8,7 +8,7 @@ import os
 import time
 
 
-class JobManager():
+class JobManager:
     def __init__(
         self,
         job_name: str = 'mage-job',
@@ -56,11 +56,9 @@ class JobManager():
         job_completed = False
         while not job_completed:
             api_response = self.batch_api_client.read_namespaced_job_status(
-                name=self.job_name,
-                namespace=self.namespace
+                name=self.job_name, namespace=self.namespace
             )
-            if api_response.status.succeeded is not None or \
-                    api_response.status.failed is not None:
+            if api_response.status.succeeded is not None or api_response.status.failed is not None:
                 job_completed = True
             time.sleep(5)
             # self._print(f'Job {self.job_name} status={api_response.status}')
@@ -97,7 +95,8 @@ class JobManager():
             api_version=self.api_version,
             kind='Job',
             metadata=client.V1ObjectMeta(name=self.job_name),
-            spec=spec)
+            spec=spec,
+        )
 
         return job
 
@@ -112,9 +111,8 @@ class JobManager():
         api_response = self.batch_api_client.delete_namespaced_job(
             name=self.job_name,
             namespace=self.namespace,
-            body=client.V1DeleteOptions(
-                propagation_policy='Foreground',
-                grace_period_seconds=0))
+            body=client.V1DeleteOptions(propagation_policy='Foreground', grace_period_seconds=0),
+        )
         self._print("Job deleted. status='%s'" % str(api_response.status))
 
     def _print(self, message, **kwargs):

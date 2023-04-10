@@ -1,4 +1,4 @@
-class RawDeltaTable():
+class RawDeltaTable:
     def __init__(self, raw_delta_table):
         self._table = raw_delta_table
         self.schema = self._table.schema

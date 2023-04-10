@@ -21,9 +21,7 @@ app = typer.Typer(
 
 
 @app.command()
-def init(
-    project_path: str = typer.Argument(..., help='path of the Mage project to be created.')
-):
+def init(project_path: str = typer.Argument(..., help='path of the Mage project to be created.')):
     """
     Initialize Mage project.
     """
@@ -67,36 +65,18 @@ def run(
     project_path: str = typer.Argument(
         ..., help='path of the Mage project that contains the pipeline.'
     ),
-    pipeline_uuid: str = typer.Argument(
-        ..., help='uuid of the pipeline to be run.'
-    ),
-    test: bool = typer.Option(
-        False, help='specify if tests should be run.'
-    ),
-    block_uuid: Union[str, None] = typer.Option(
-        None, help='uuid of the block to be run.'
-    ),
-    execution_partition: Union[str, None] = typer.Option(
-        None, help=''
-    ),
-    executor_type: Union[str, None] = typer.Option(
-        None, help=''
-    ),
-    callback_url: Union[str, None] = typer.Option(
-        None, help=''
-    ),
-    block_run_id: Union[int, None] = typer.Option(
-        None, help=''
-    ),
-    pipeline_run_id: Union[int, None] = typer.Option(
-        None, help=''
-    ),
+    pipeline_uuid: str = typer.Argument(..., help='uuid of the pipeline to be run.'),
+    test: bool = typer.Option(False, help='specify if tests should be run.'),
+    block_uuid: Union[str, None] = typer.Option(None, help='uuid of the block to be run.'),
+    execution_partition: Union[str, None] = typer.Option(None, help=''),
+    executor_type: Union[str, None] = typer.Option(None, help=''),
+    callback_url: Union[str, None] = typer.Option(None, help=''),
+    block_run_id: Union[int, None] = typer.Option(None, help=''),
+    pipeline_run_id: Union[int, None] = typer.Option(None, help=''),
     runtime_vars: Union[List[str], None] = typer.Option(
         None, help='specify runtime variables. These will overwrite the pipeline global variables.'
     ),
-    skip_sensors: bool = typer.Option(
-        False, help='specify if the sensors should be skipped.'
-    ),
+    skip_sensors: bool = typer.Option(False, help='specify if the sensors should be skipped.'),
     template_runtime_configuration: Union[str, None] = typer.Option(
         None, help='runtime configuration of data integration block runs.'
     ),
@@ -156,12 +136,8 @@ def run(
 
 @app.command()
 def clean_cached_variables(
-    project_path: str = typer.Argument(
-        ..., help='path of the Mage project to clean variables.'
-    ),
-    pipeline_uuid: str = typer.Option(
-        None, help='uuid of the pipeline to clean.'
-    ),
+    project_path: str = typer.Argument(..., help='path of the Mage project to clean variables.'),
+    pipeline_uuid: str = typer.Option(None, help='uuid of the pipeline to clean.'),
 ):
     from mage_ai.data_preparation.repo_manager import set_repo_path
 

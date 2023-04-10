@@ -44,6 +44,7 @@ SAMPLE_SCHEMA_ROW = {
 }
 SAMPLE_STREAM_NAME = 'demo_users'
 
+
 def build_test_destination():
     destination = Destination(
         config=dict(database='demo_db'),
@@ -60,6 +61,7 @@ def build_test_destination():
     destination.versions = {}
 
     return destination
+
 
 class BaseDestinationTests(unittest.TestCase):
     def test_templates(self):
@@ -162,17 +164,13 @@ class BaseDestinationTests(unittest.TestCase):
     def test_process_state(self):
         destination = build_test_destination()
         with patch.object(destination, '_emit_state') as mock_emit_state:
-            destination.process_state(
-                row=dict(value='test')
-            )
+            destination.process_state(row=dict(value='test'))
             mock_emit_state.assert_called_once_with('test')
 
     def test_process_no_state(self):
         destination = build_test_destination()
         with self.assertRaises(Exception):
-            destination.process_state(
-                row=SAMPLE_RECORD_ROW
-            )
+            destination.process_state(row=SAMPLE_RECORD_ROW)
 
     def test_process_test_connection(self):
         destination = build_test_destination()

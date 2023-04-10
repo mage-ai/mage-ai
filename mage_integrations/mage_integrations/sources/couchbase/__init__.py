@@ -1,7 +1,5 @@
 from enum import Enum
-from mage_integrations.connections.couchbase import (
-    Couchbase as CouchbaseConnection
-)
+from mage_integrations.connections.couchbase import Couchbase as CouchbaseConnection
 from mage_integrations.sources.base import main
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.constants import (
@@ -32,7 +30,7 @@ class Couchbase(Source):
             scope=self.config['scope'],
             connection_string=self.config['connection_string'],
             password=self.config['password'],
-            username=self.config['username']
+            username=self.config['username'],
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:
@@ -42,24 +40,23 @@ class Couchbase(Source):
         catalog_entries = []
         for stream_id in collection_names:
             properties = dict()
-            
+
             infer_query = f"""
 INFER `{stream_id}`
 WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}}
             """
 
             infer_result = connection.load(infer_query)[0]
-            
+
             def get_infer_result_doc_count(result):
                 props = result.get('properties', {})
                 doc_count = props.get('#docs', 0)
                 if type(doc_count) is list:
                     doc_count = sum(doc_count)
                 return doc_count
-            
+
             strategy = self.config.get('strategy')
-            if strategy == SchemaStrategy.INFER or \
-                    (strategy is None and len(infer_result) == 1):
+            if strategy == SchemaStrategy.INFER or (strategy is None and len(infer_result) == 1):
                 result = max(infer_result, key=get_infer_result_doc_count)
                 try:
                     props = result.get('properties', {})
@@ -75,20 +72,17 @@ WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}
                 except Exception:
                     pass
             else:
-                properties[DEFAULT_COLUMN_NAME] = \
-                    dict(
-                        type=[COLUMN_TYPE_NULL, COLUMN_TYPE_OBJECT],
-                        additionalProperties=True
-                    )
+                properties[DEFAULT_COLUMN_NAME] = dict(
+                    type=[COLUMN_TYPE_NULL, COLUMN_TYPE_OBJECT], additionalProperties=True
+                )
 
-            schema = catalog.Schema.from_dict(dict(
-                properties=properties,
-                type='object',
-            ))
-            catalog_entries.append(self.build_catalog_entry(
-                stream_id,
-                schema
-            ))
+            schema = catalog.Schema.from_dict(
+                dict(
+                    properties=properties,
+                    type='object',
+                )
+            )
+            catalog_entries.append(self.build_catalog_entry(stream_id, schema))
 
         return Catalog(catalog_entries)
 
@@ -96,7 +90,7 @@ WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}
         column_type = dtype
         if dtype == 'missing':
             column_type = COLUMN_TYPE_STRING
-        
+
         return column_type
 
     def _build_comparison_statement(

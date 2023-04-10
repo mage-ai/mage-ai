@@ -49,37 +49,35 @@ class OutreachClient(object):
                 'client_secret': self.__client_secret,
                 'redirect_uri': self.__redirect_uri,
                 'refresh_token': self.__refresh_token,
-                'grant_type': 'refresh_token'
-            })
+                'grant_type': 'refresh_token',
+            },
+        )
 
         self.__access_token = data['access_token']
 
-        self.__expires_at = datetime.utcnow() + \
-            timedelta(seconds=data['expires_in'] -
-                      10)  # pad by 10 seconds for clock drift
+        self.__expires_at = datetime.utcnow() + timedelta(
+            seconds=data['expires_in'] - 10
+        )  # pad by 10 seconds for clock drift
 
     def sleep_for_reset_period(self, response):
         if response.headers.get('x-ratelimit-reset'):
-            reset = datetime.fromtimestamp(
-                int(response.headers['x-ratelimit-reset']))
+            reset = datetime.fromtimestamp(int(response.headers['x-ratelimit-reset']))
             sleep_time = (reset - datetime.now()).total_seconds() + 10
         else:
             self.logger.info('Key x-ratelimit-reset is not in response header.')
             sleep_time = 30
         self.logger.info(
-            'Sleeping for {:.2f} seconds for next rate limit window'.format(sleep_time))
+            'Sleeping for {:.2f} seconds for next rate limit window'.format(sleep_time)
+        )
         time.sleep(sleep_time)
 
-    @backoff.on_exception(backoff.expo,
-                          (Server5xxError, RateLimitError, ConnectionError),
-                          max_tries=5,
-                          factor=3)
+    @backoff.on_exception(
+        backoff.expo, (Server5xxError, RateLimitError, ConnectionError), max_tries=5, factor=3
+    )
     # Rate Limit: https://api.outreach.io/api/v2/docs#rate-limiting
     @utils.ratelimit(10000, 3600)
     def request(self, method, path=None, url=None, skip_quota=False, **kwargs):
-        if url is None and \
-            (self.__access_token is None or
-             self.__expires_at <= datetime.utcnow()):
+        if url is None and (self.__access_token is None or self.__expires_at <= datetime.utcnow()):
             self.refresh()
 
         if url is None and path:
@@ -94,8 +92,7 @@ class OutreachClient(object):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
 
-        kwargs['headers']['Authorization'] = 'Bearer {}'.format(
-            self.__access_token)
+        kwargs['headers']['Authorization'] = 'Bearer {}'.format(self.__access_token)
 
         if self.__user_agent:
             kwargs['headers']['User-Agent'] = self.__user_agent
@@ -116,11 +113,11 @@ class OutreachClient(object):
 
         if not skip_quota and self.__quota_limit:
             # quota_limit > (1 - (X-RateLimit-Remaining / X-RateLimit-Limit))
-            quota_used = 1 - int(response.headers['x-ratelimit-remaining']) / \
-                int(response.headers['x-ratelimit-remaining'])
+            quota_used = 1 - int(response.headers['x-ratelimit-remaining']) / int(
+                response.headers['x-ratelimit-remaining']
+            )
             if quota_used > float(self.__quota_limit):
-                self.logger.info(
-                    'Quota used: {:.2f} / {}'.format(quota_used, self.__quota_limit))
+                self.logger.info('Quota used: {:.2f} / {}'.format(quota_used, self.__quota_limit))
                 self.sleep_for_reset_period(response)
 
         return response.json()

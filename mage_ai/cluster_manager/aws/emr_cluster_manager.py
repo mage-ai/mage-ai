@@ -26,12 +26,15 @@ class EmrClusterManager(ClusterManager):
                 cluster_tags,
             ):
                 valid_clusters.append(c)
-        return [dict(
-            id=c['Id'],
-            name=c['Name'],
-            status=c['Status']['State'],
-            is_active=c['Id'] == self.active_cluster_id,
-        ) for c in valid_clusters]
+        return [
+            dict(
+                id=c['Id'],
+                name=c['Name'],
+                status=c['Status']['State'],
+                is_active=c['Id'] == self.active_cluster_id,
+            )
+            for c in valid_clusters
+        ]
 
     def create_cluster(self):
         return create_cluster(
@@ -63,7 +66,7 @@ class EmrClusterManager(ClusterManager):
             fcontent = f.read()
 
         config = json.loads(fcontent)
-        for k, v in config.items():
+        for _k, v in config.items():
             if type(v) is dict and 'url' in v:
                 v['url'] = f'http://{emr_dns}:8998'
 

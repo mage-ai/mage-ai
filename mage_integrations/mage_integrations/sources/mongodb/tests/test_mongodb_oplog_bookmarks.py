@@ -1,6 +1,6 @@
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 import os
 import datetime
 import unittest
@@ -17,7 +17,11 @@ from bson import ObjectId
 import singer
 from functools import reduce
 from singer import utils, metadata
-from mongodb_common import drop_all_collections, get_test_connection, ensure_environment_variables_set
+from mongodb_common import (
+    drop_all_collections,
+    get_test_connection,
+    ensure_environment_variables_set,
+)
 import decimal
 
 
@@ -27,15 +31,16 @@ RECORD_COUNT = {}
 def random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
 
+
 def generate_simple_coll_docs(num_docs):
     docs = []
     for int_value in range(num_docs):
         docs.append({"int_field": int_value, "string_field": random_string_generator()})
     return docs
 
+
 class MongoDBOplogBookmarks(unittest.TestCase):
     def setUp(self):
-
         ensure_environment_variables_set()
 
         with get_test_connection() as client:
@@ -46,7 +51,6 @@ class MongoDBOplogBookmarks(unittest.TestCase):
 
             # simple_coll_2 has 100 documents
             client["simple_db"]["simple_coll_2"].insert_many(generate_simple_coll_docs(100))
-
 
     def expected_check_streams(self):
         return {
@@ -64,9 +68,7 @@ class MongoDBOplogBookmarks(unittest.TestCase):
         return {
             'simple_coll_1': 50,
             'simple_coll_2': 100,
-
         }
-
 
     def expected_sync_streams(self):
         return {
@@ -88,15 +90,13 @@ class MongoDBOplogBookmarks(unittest.TestCase):
 
     def get_properties(self):
         return {
-            'host' : os.getenv('TAP_MONGODB_HOST'),
-            'port' : os.getenv('TAP_MONGODB_PORT'),
-            'user' : os.getenv('TAP_MONGODB_USER'),
-            'database' : os.getenv('TAP_MONGODB_DBNAME')
+            'host': os.getenv('TAP_MONGODB_HOST'),
+            'port': os.getenv('TAP_MONGODB_PORT'),
+            'user': os.getenv('TAP_MONGODB_USER'),
+            'database': os.getenv('TAP_MONGODB_DBNAME'),
         }
 
-
     def test_run(self):
-
         conn_id = connections.ensure_connection(self)
 
         #  -------------------------------
@@ -114,33 +114,38 @@ class MongoDBOplogBookmarks(unittest.TestCase):
         found_catalogs = menagerie.get_catalogs(conn_id)
 
         # assert we find the correct streams
-        self.assertEqual(self.expected_check_streams(),
-                         {c['tap_stream_id'] for c in found_catalogs})
+        self.assertEqual(
+            self.expected_check_streams(), {c['tap_stream_id'] for c in found_catalogs}
+        )
 
         for tap_stream_id in self.expected_check_streams():
             found_stream = [c for c in found_catalogs if c['tap_stream_id'] == tap_stream_id][0]
 
             # assert that the pks are correct
-            self.assertEqual(self.expected_pks()[found_stream['stream_name']],
-                             set(found_stream.get('metadata', {}).get('table-key-properties')))
+            self.assertEqual(
+                self.expected_pks()[found_stream['stream_name']],
+                set(found_stream.get('metadata', {}).get('table-key-properties')),
+            )
 
             # assert that the row counts are correct
-            self.assertEqual(self.expected_row_counts()[found_stream['stream_name']],
-                             found_stream.get('metadata', {}).get('row-count'))
+            self.assertEqual(
+                self.expected_row_counts()[found_stream['stream_name']],
+                found_stream.get('metadata', {}).get('row-count'),
+            )
 
         #  -----------------------------------
         # ----------- Initial Full Table ---------
         #  -----------------------------------
         # Select simple_coll_1 and add replication method metadata
-        additional_md = [{ "breadcrumb" : [],
-                           "metadata" : {'replication-method' : 'LOG_BASED'}}]
+        additional_md = [{"breadcrumb": [], "metadata": {'replication-method': 'LOG_BASED'}}]
         for stream_catalog in found_catalogs:
             if stream_catalog['tap_stream_id'] == 'simple_db-simple_coll_1':
-                annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
-                selected_metadata = connections.select_catalog_and_fields_via_metadata(conn_id,
-                                                                                       stream_catalog,
-                                                                                       annotated_schema,
-                                                                                       additional_md)
+                annotated_schema = menagerie.get_annotated_schema(
+                    conn_id, stream_catalog['stream_id']
+                )
+                selected_metadata = connections.select_catalog_and_fields_via_metadata(
+                    conn_id, stream_catalog, annotated_schema, additional_md
+                )
 
         # Run sync
         sync_job_name = runner.run_sync_mode(self, conn_id)
@@ -148,20 +153,19 @@ class MongoDBOplogBookmarks(unittest.TestCase):
         exit_status = menagerie.get_exit_status(conn_id, sync_job_name)
         menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
 
-
         # verify the persisted schema was correct
         records_by_stream = runner.get_records_from_target_output()
 
         # assert that each of the streams that we synced are the ones that we expect to see
-        record_count_by_stream = runner.examine_target_output_file(self,
-                                                                   conn_id,
-                                                                   self.expected_sync_streams(),
-                                                                   self.expected_pks())
+        record_count_by_stream = runner.examine_target_output_file(
+            self, conn_id, self.expected_sync_streams(), self.expected_pks()
+        )
 
         # Verify that the full table was synced
         tap_stream_id = 'simple_db-simple_coll_1'
-        self.assertGreaterEqual(record_count_by_stream['simple_coll_1'],
-                                self.expected_row_counts()['simple_coll_1'])
+        self.assertGreaterEqual(
+            record_count_by_stream['simple_coll_1'], self.expected_row_counts()['simple_coll_1']
+        )
 
         # Verify that we have 'initial_full_table_complete' bookmark
         state = menagerie.get_state(conn_id)
@@ -176,13 +180,12 @@ class MongoDBOplogBookmarks(unittest.TestCase):
         self.assertIsNotNone(state['bookmarks'][tap_stream_id]['oplog_ts_time'])
         self.assertIsNotNone(state['bookmarks'][tap_stream_id]['oplog_ts_inc'])
 
-
-
         # Insert records to coll_1 to get the bookmark to be a ts on coll_1
         with get_test_connection() as client:
-            client["simple_db"]["simple_coll_1"].insert_one({"int_field": 101, "string_field": random_string_generator()})
+            client["simple_db"]["simple_coll_1"].insert_one(
+                {"int_field": 101, "string_field": random_string_generator()}
+            )
         sync_job_name = runner.run_sync_mode(self, conn_id)
-
 
         changed_ids = set()
         with get_test_connection() as client:
@@ -194,15 +197,23 @@ class MongoDBOplogBookmarks(unittest.TestCase):
             client["simple_db"]["simple_coll_2"].delete_one({'int_field': 1})
 
             changed_ids.add(client['simple_db']['simple_coll_2'].find({'int_field': 98})[0]['_id'])
-            client["simple_db"]["simple_coll_2"].update_one({'int_field': 98},{'$set': {'int_field': -1}})
+            client["simple_db"]["simple_coll_2"].update_one(
+                {'int_field': 98}, {'$set': {'int_field': -1}}
+            )
 
             changed_ids.add(client['simple_db']['simple_coll_2'].find({'int_field': 99})[0]['_id'])
-            client["simple_db"]["simple_coll_2"].update_one({'int_field': 99},{'$set': {'int_field': -1}})
+            client["simple_db"]["simple_coll_2"].update_one(
+                {'int_field': 99}, {'$set': {'int_field': -1}}
+            )
 
-            client["simple_db"]["simple_coll_2"].insert_one({"int_field": 100, "string_field": random_string_generator()})
+            client["simple_db"]["simple_coll_2"].insert_one(
+                {"int_field": 100, "string_field": random_string_generator()}
+            )
             changed_ids.add(client['simple_db']['simple_coll_2'].find({'int_field': 100})[0]['_id'])
 
-            client["simple_db"]["simple_coll_2"].insert_one({"int_field": 101, "string_field": random_string_generator()})
+            client["simple_db"]["simple_coll_2"].insert_one(
+                {"int_field": 101, "string_field": random_string_generator()}
+            )
             changed_ids.add(client['simple_db']['simple_coll_2'].find({'int_field': 101})[0]['_id'])
 
         #  -----------------------------------
@@ -218,16 +229,17 @@ class MongoDBOplogBookmarks(unittest.TestCase):
         # verify the persisted schema was correct
         messages_by_stream = runner.get_records_from_target_output()
         records_by_stream = {
-            'simple_coll_1': [x
-                              for x in messages_by_stream['simple_coll_1']['messages']
-                              if x.get('action') == 'upsert']
+            'simple_coll_1': [
+                x
+                for x in messages_by_stream['simple_coll_1']['messages']
+                if x.get('action') == 'upsert'
+            ]
         }
 
         # assert that each of the streams that we synced are the ones that we expect to see
-        record_count_by_stream = runner.examine_target_output_file(self,
-                                                                   conn_id,
-                                                                   self.expected_sync_streams(),
-                                                                   self.expected_pks())
+        record_count_by_stream = runner.examine_target_output_file(
+            self, conn_id, self.expected_sync_streams(), self.expected_pks()
+        )
 
         # 1 record due to fencepost querying on oplog ts
         self.assertEqual(1, record_count_by_stream['simple_coll_1'])
@@ -240,6 +252,8 @@ class MongoDBOplogBookmarks(unittest.TestCase):
 
         self.assertEqual(
             (latest_oplog_ts.time, latest_oplog_ts.inc),
-            (final_state['bookmarks']['simple_db-simple_coll_1']['oplog_ts_time'],
-             final_state['bookmarks']['simple_db-simple_coll_1']['oplog_ts_inc'])
+            (
+                final_state['bookmarks']['simple_db-simple_coll_1']['oplog_ts_time'],
+                final_state['bookmarks']['simple_db-simple_coll_1']['oplog_ts_inc'],
+            ),
         )

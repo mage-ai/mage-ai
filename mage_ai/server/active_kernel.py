@@ -6,7 +6,7 @@ from mage_ai.server.logger import Logger
 logger = Logger().new_server_logger(__name__)
 
 
-class ActiveKernel():
+class ActiveKernel:
     def __init__(self):
         self.kernel = kernel_managers[DEFAULT_KERNEL_NAME]
         self.kernel_client = self.kernel.client()
@@ -33,6 +33,7 @@ def switch_active_kernel(kernel_name: KernelName) -> None:
         active_kernel.kernel_client = new_kernel.client()
         if kernel_name == KernelName.PYSPARK:
             from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
+
             emr_cluster_manager.set_active_cluster(auto_selection=True)
     except NoSuchKernel as e:
         if kernel_name == KernelName.PYSPARK:

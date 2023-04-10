@@ -21,12 +21,10 @@ class PipelineScheduleResource(DatabaseResource):
 
         if pipeline:
             return (
-                PipelineSchedule.
-                query.
-                options(selectinload(PipelineSchedule.event_matchers)).
-                options(selectinload(PipelineSchedule.pipeline_runs)).
-                filter(PipelineSchedule.pipeline_uuid == pipeline.uuid).
-                order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
+                PipelineSchedule.query.options(selectinload(PipelineSchedule.event_matchers))
+                .options(selectinload(PipelineSchedule.pipeline_runs))
+                .filter(PipelineSchedule.pipeline_uuid == pipeline.uuid)
+                .order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
             )
 
         query = PipelineSchedule.query
@@ -68,19 +66,17 @@ class PipelineScheduleResource(DatabaseResource):
                 )
 
             ems = (
-                EventMatcher.
-                query.
-                join(
+                EventMatcher.query.join(
                     pipeline_schedule_event_matcher_association_table,
-                    EventMatcher.id ==
-                    pipeline_schedule_event_matcher_association_table.c.event_matcher_id
-                ).
-                join(
+                    EventMatcher.id
+                    == pipeline_schedule_event_matcher_association_table.c.event_matcher_id,
+                )
+                .join(
                     PipelineSchedule,
-                    PipelineSchedule.id ==
-                    pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id
-                ).
-                filter(
+                    PipelineSchedule.id
+                    == pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id,
+                )
+                .filter(
                     PipelineSchedule.id == int(self.id),
                     EventMatcher.id.not_in([em.id for em in event_matchers]),
                 )

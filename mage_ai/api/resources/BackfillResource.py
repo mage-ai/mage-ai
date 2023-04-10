@@ -38,10 +38,14 @@ class BackfillResource(DatabaseResource):
     def create(self, payload, user, **kwargs):
         pipeline_uuid = kwargs['parent_model'].uuid
 
-        return super().create(merge_dict(
-            extract(payload, ALLOWED_PAYLOAD_KEYS),
-            dict(pipeline_uuid=pipeline_uuid),
-        ), user, **kwargs)
+        return super().create(
+            merge_dict(
+                extract(payload, ALLOWED_PAYLOAD_KEYS),
+                dict(pipeline_uuid=pipeline_uuid),
+            ),
+            user,
+            **kwargs,
+        )
 
     @safe_db_query
     def update(self, payload, **kwargs):
@@ -50,10 +54,12 @@ class BackfillResource(DatabaseResource):
         if 'status' in payload and payload['status'] != self.status:
             if Backfill.Status.INITIAL == payload['status']:
                 pipeline_runs += start_backfill(self.model)
-                return super().update(dict(
-                    started_at=datetime.now(),
-                    status=payload['status'],
-                ))
+                return super().update(
+                    dict(
+                        started_at=datetime.now(),
+                        status=payload['status'],
+                    )
+                )
             elif Backfill.Status.CANCELLED == payload['status']:
                 cancel_backfill(self.model)
                 return super().update(dict(status=payload['status']))

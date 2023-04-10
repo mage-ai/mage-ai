@@ -63,8 +63,9 @@ class LoggerManager:
             self.logger.addHandler(handler)
         else:
             if self.logging_config.destination_config:
-                stream_handler = \
-                    find(lambda hr: hr.__class__ == logging.StreamHandler, self.logger.handlers)
+                stream_handler = find(
+                    lambda hr: hr.__class__ == logging.StreamHandler, self.logger.handlers
+                )
                 if stream_handler:
                     self.stream = stream_handler.stream
 

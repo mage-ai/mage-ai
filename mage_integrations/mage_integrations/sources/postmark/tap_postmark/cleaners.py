@@ -82,7 +82,6 @@ def clean_row(row: dict, mapping: dict) -> dict:
 
     # For every key and value in the mapping
     for key, key_mapping in mapping.items():
-
         # Retrieve the new mapping or use the original
         new_mapping: str = key_mapping.get('map') or key
 
@@ -242,9 +241,7 @@ def clean_postmark_stats_outbound_clients(
     # For every day
     for record in days:
         # Create a new record
-        new_record = {
-            'date': record.get('Date')
-        }
+        new_record = {'date': record.get('Date')}
         record.pop('Date')
 
         # For every client and count
@@ -320,11 +317,13 @@ def flatten(d, parent_key='', sep='_'):
 
 
 # Collect all cleaners
-CLEANERS: MappingProxyType = MappingProxyType({
-    'postmark_stats_outbound_bounces': clean_postmark_stats_outbound_bounces,
-    'postmark_stats_outbound_overview': clean_postmark_stats_outbound_overview,
-    'postmark_stats_outbound_platform': clean_postmark_stats_outbound_platform,
-    'postmark_stats_outbound_clients': clean_postmark_stats_outbound_clients,
-    'postmark_messages_outbound': clean_postmark_messages_outbound,
-    'postmark_messages_opens': clean_postmark_messages_opens,
-})
+CLEANERS: MappingProxyType = MappingProxyType(
+    {
+        'postmark_stats_outbound_bounces': clean_postmark_stats_outbound_bounces,
+        'postmark_stats_outbound_overview': clean_postmark_stats_outbound_overview,
+        'postmark_stats_outbound_platform': clean_postmark_stats_outbound_platform,
+        'postmark_stats_outbound_clients': clean_postmark_stats_outbound_clients,
+        'postmark_messages_outbound': clean_postmark_messages_outbound,
+        'postmark_messages_opens': clean_postmark_messages_opens,
+    }
+)

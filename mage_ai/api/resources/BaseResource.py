@@ -21,8 +21,7 @@ class BaseResource(Resource):
     def policy_class(self):
         model_name = self.__name__.replace('Resource', '')
         return getattr(
-            importlib.import_module(
-                'mage_ai.api.policies.{}Policy'.format(model_name)),
+            importlib.import_module('mage_ai.api.policies.{}Policy'.format(model_name)),
             '{}Policy'.format(model_name),
         )
 
@@ -30,8 +29,7 @@ class BaseResource(Resource):
     def presenter_class(self):
         model_name = self.__name__.replace('Resource', '')
         return getattr(
-            importlib.import_module(
-                'mage_ai.api.presenters.{}Presenter'.format(model_name)),
+            importlib.import_module('mage_ai.api.presenters.{}Presenter'.format(model_name)),
             '{}Presenter'.format(model_name),
         )
 
@@ -59,15 +57,11 @@ class BaseResource(Resource):
 
     @classmethod
     def register_collective_loader_find(self, resource_class, **kwargs):
-        attribute = kwargs.get('attribute',
-                               resource_class.resource_name_singular())
+        attribute = kwargs.get('attribute', resource_class.resource_name_singular())
         self.register_collective_loader(
             attribute,
-            load=collective_loaders.build_load(
-                resource_class,
-                attribute=attribute),
-            select=collective_loaders.build_select_find(
-                '{}_id'.format(attribute)),
+            load=collective_loaders.build_load(resource_class, attribute=attribute),
+            select=collective_loaders.build_select_find('{}_id'.format(attribute)),
         )
 
     @classmethod
@@ -76,12 +70,11 @@ class BaseResource(Resource):
         self.register_collective_loader(
             attribute,
             load=collective_loaders.build_load_select(
-                self,
-                resource_class,
-                attribute=self.resource_name_singular()),
+                self, resource_class, attribute=self.resource_name_singular()
+            ),
             select=collective_loaders.build_select_filter(
-                '{}_id'.format(
-                    self.resource_name_singular())),
+                '{}_id'.format(self.resource_name_singular())
+            ),
         )
 
     @classmethod
@@ -103,29 +96,30 @@ class BaseResource(Resource):
 
     @classmethod
     def build_result_set(self, arr, user, **kwargs):
-        return ResultSet([mod if issubclass(mod.__class__, BaseResource) else self(
-            mod, user, **kwargs) for mod in arr], )
+        return ResultSet(
+            [
+                mod if issubclass(mod.__class__, BaseResource) else self(mod, user, **kwargs)
+                for mod in arr
+            ],
+        )
 
     @classmethod
     def collection(self, query, meta, user, **kwargs):
         """
         Subclasses override this method
         """
-        pass
 
     @classmethod
     def create(self, payload, user, **kwargs):
         """
         Subclasses override this method
         """
-        pass
 
     @classmethod
     def member(self, pk, user, **kwargs):
         """
         Subclasses override this method
         """
-        pass
 
     @classmethod
     def before_create(self, payload, user, **kwargs):
@@ -138,9 +132,16 @@ class BaseResource(Resource):
         before_create = self.before_create(payload, user, **kwargs)
 
         try:
-            res = self.create(payload, user, **merge_dict(kwargs, {
-                'before_create': before_create,
-            }))
+            res = self.create(
+                payload,
+                user,
+                **merge_dict(
+                    kwargs,
+                    {
+                        'before_create': before_create,
+                    },
+                ),
+            )
             if res and inspect.isawaitable(res):
                 res = await res
 
@@ -182,9 +183,7 @@ class BaseResource(Resource):
 
     @classmethod
     def resource_name_singular(self):
-        return inflection.underscore(
-            self.__name__.replace(
-                'Resource', '')).lower()
+        return inflection.underscore(self.__name__.replace('Resource', '')).lower()
 
     @classmethod
     async def get_model(self, pk):
@@ -195,7 +194,6 @@ class BaseResource(Resource):
         """
         Subclasses override this method
         """
-        pass
 
     def parent_model(self):
         return self.model_options.get('parent_model')
@@ -249,7 +247,6 @@ class BaseResource(Resource):
         """
         Subclasses override this method
         """
-        pass
 
     def collective_load_for_attribute(self, key):
         k_name = self.__class__.__name__
@@ -260,11 +257,7 @@ class BaseResource(Resource):
         loader = self.__class__.collective_loader().get(key, None)
         if not loaded and loader:
             loaded = loader['load'](self)
-            if loaded and not isinstance(
-                    loaded,
-                    ResultSet) and not isinstance(
-                    loaded,
-                    dict):
+            if loaded and not isinstance(loaded, ResultSet) and not isinstance(loaded, dict):
                 loaded = ResultSet(loaded)
             if not self.result_set().context.data.get(k_name):
                 self.result_set().context.data[k_name] = {}
@@ -294,4 +287,5 @@ class BaseResource(Resource):
             #     return val
 
             return val
+
         return _missing()

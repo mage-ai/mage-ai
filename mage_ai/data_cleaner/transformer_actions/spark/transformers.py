@@ -21,26 +21,38 @@ def __create_new_struct_fields(feature_set, transformer_action):
 
     for output_feature in transformer_action.get('outputs', []):
         if output_feature['uuid'] not in feature_set.schema.fieldNames():
-            new_fields.append(StructField(
-                output_feature['uuid'],
-                COLUMN_TYPE_MAPPING[output_feature['column_type']](),
-                True,
-            ))
+            new_fields.append(
+                StructField(
+                    output_feature['uuid'],
+                    COLUMN_TYPE_MAPPING[output_feature['column_type']](),
+                    True,
+                )
+            )
     return new_fields
 
 
 def transform_add_distance_between(feature_set, transformer_action, sort_options={}):
     from pyspark.sql.functions import col, radians, asin, sin, sqrt, cos
+
     lat1, lng1, lat2, lng2 = transformer_action['action_arguments']
     output_col = transformer_action['outputs'][0]['uuid']
-    return feature_set.withColumn('dlng', radians(col(lng2)) - radians(col(lng1))) \
-        .withColumn('dlat', radians(col(lat2)) - radians(col(lat1))) \
-        .withColumn(output_col, asin(sqrt(
-                                         sin(col('dlat') / 2) ** 2 + cos(radians(col(lat1)))
-                                         * cos(radians(col(lat2))) * sin(col('dlng') / 2) ** 2
-                                        )
-                                     ) * 2 * 3963 * 5280) \
+    return (
+        feature_set.withColumn('dlng', radians(col(lng2)) - radians(col(lng1)))
+        .withColumn('dlat', radians(col(lat2)) - radians(col(lat1)))
+        .withColumn(
+            output_col,
+            asin(
+                sqrt(
+                    sin(col('dlat') / 2) ** 2
+                    + cos(radians(col(lat1))) * cos(radians(col(lat2))) * sin(col('dlng') / 2) ** 2
+                )
+            )
+            * 2
+            * 3963
+            * 5280,
+        )
         .drop('dlng', 'dlat')
+    )
 
 
 def transform_agg(feature_set, transformer_action, agg_func, use_string_col_name=False):
@@ -49,25 +61,23 @@ def transform_agg(feature_set, transformer_action, agg_func, use_string_col_name
     if not use_string_col_name:
         agg_col = F.col(agg_col)
     if 'groupby_columns' in action_options and action_options['groupby_columns'] is not None:
-        df_agg = (
-            feature_set
-            .groupBy(action_options['groupby_columns'])
-            .agg(*[
-                agg_func(agg_col)
-                .alias(transformer_action['outputs'][0]['uuid']),
-            ])
+        df_agg = feature_set.groupBy(action_options['groupby_columns']).agg(
+            *[
+                agg_func(agg_col).alias(transformer_action['outputs'][0]['uuid']),
+            ]
         )
 
         return feature_set.join(
-                    df_agg,
-                    action_options['groupby_columns'],
-                    how='left',
-                )
+            df_agg,
+            action_options['groupby_columns'],
+            how='left',
+        )
     else:
-        agg_value = feature_set.agg(*[
-            agg_func(agg_col)
-            .alias(transformer_action['outputs'][0]['uuid']),
-        ])
+        agg_value = feature_set.agg(
+            *[
+                agg_func(agg_col).alias(transformer_action['outputs'][0]['uuid']),
+            ]
+        )
         return feature_set.crossJoin(agg_value)
 
 
@@ -101,9 +111,9 @@ def transform_drop_duplicate(feature_set, transformer_action, sort_options={}):
         rnum_col = 'rnum'
 
         window = Window.partitionBy(unique_by_columns)
-        window = window.orderBy(*[
-            F.col(col).asc() if sort_ascending else F.col(col).desc() for col in sort_columns
-        ])
+        window = window.orderBy(
+            *[F.col(col).asc() if sort_ascending else F.col(col).desc() for col in sort_columns]
+        )
         row_number = F.row_number().over(window)
 
         feature_set = feature_set.withColumn(rnum_col, row_number)
@@ -179,6 +189,7 @@ def transform_max(feature_set, transformer_action, sort_options={}):
 def transform_median(feature_set, transformer_action, sort_options={}):
     def __cal_median(col):
         return F.expr(f'percentile_approx({col}, 0.5)')
+
     return transform_agg(feature_set, transformer_action, __cal_median, use_string_col_name=True)
 
 
@@ -210,15 +221,19 @@ def transform_sum(feature_set, transformer_action, sort_options={}):
 def transform_with_partitions(feature_set, transformer_action, sort_options={}):
     window = Window.partitionBy(ROW_NUMBER_LIT_COLUMN).orderBy(ROW_NUMBER_LIT_COLUMN)
 
-    fs = feature_set.withColumn(
-        ROW_NUMBER_LIT_COLUMN,
-        F.lit('a'),
-    ).withColumn(
-        ROW_NUMBER_COLUMN,
-        F.row_number().over(window),
-    ).withColumn(
-        GROUP_MOD_COLUMN,
-        expr(f'mod({ROW_NUMBER_COLUMN}, 1000)'),
+    fs = (
+        feature_set.withColumn(
+            ROW_NUMBER_LIT_COLUMN,
+            F.lit('a'),
+        )
+        .withColumn(
+            ROW_NUMBER_COLUMN,
+            F.row_number().over(window),
+        )
+        .withColumn(
+            GROUP_MOD_COLUMN,
+            expr(f'mod({ROW_NUMBER_COLUMN}, 1000)'),
+        )
     )
 
     new_fields = __create_new_struct_fields(feature_set, transformer_action)
@@ -226,6 +241,7 @@ def transform_with_partitions(feature_set, transformer_action, sort_options={}):
 
     def execute_transform(df):
         from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+
         df = BaseAction(transformer_action).execute(df)
 
         return df

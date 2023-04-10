@@ -37,6 +37,7 @@ class CustomLabelEncoder(BaseEstimator):
             if v is None:
                 return missing_value
             return v
+
         if unknown_found:
             # TODO(christhetree): why are these multiplied by 2?
             if np.issubdtype(X.dtype, np.floating):

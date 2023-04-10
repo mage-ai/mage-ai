@@ -1,6 +1,5 @@
 from collections import OrderedDict
-from mage_integrations.connections.google_sheets import \
-    GoogleSheets as GoogleSheetsConnection
+from mage_integrations.connections.google_sheets import GoogleSheets as GoogleSheetsConnection
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
@@ -40,7 +39,9 @@ class GoogleSheets(Source):
         # Loop through each worksheet in spreadsheet
         for sheet in sheets:
             # GET sheet_json_schema for each worksheet
-            sheet_json_schema, columns = self.__get_sheet_metadata(sheet, self.config['spreadsheet_id'])
+            sheet_json_schema, columns = self.__get_sheet_metadata(
+                sheet, self.config['spreadsheet_id']
+            )
 
             # SKIP empty sheets (where sheet_json_schema and columns are None)
             if sheet_json_schema and columns:
@@ -224,20 +225,14 @@ class GoogleSheets(Source):
             'type': 'object',
             'additionalProperties': False,
             'properties': {
-                '__google_spreadsheet_id': {
-                    'type': ['null', 'string']
-                },
-                '__google_sheet_id': {
-                    'type': ['null', 'integer']
-                },
-                '__google_sheet_row': {
-                    'type': ['null', 'integer']
-                }
-            }
+                '__google_spreadsheet_id': {'type': ['null', 'string']},
+                '__google_sheet_id': {'type': ['null', 'integer']},
+                '__google_sheet_row': {'type': ['null', 'integer']},
+            },
         }
 
         # used for checking uniqueness
-        header_list = [] 
+        header_list = []
         columns = []
         prior_header = None
         i = 0
@@ -245,7 +240,9 @@ class GoogleSheets(Source):
 
         # if no headers are present, log the message that sheet is skipped
         if not headers:
-            LOGGER.warning('SKIPPING THE SHEET AS HEADERS ROW IS EMPTY. SHEET: {}'.format(sheet_title))
+            LOGGER.warning(
+                'SKIPPING THE SHEET AS HEADERS ROW IS EMPTY. SHEET: {}'.format(sheet_title)
+            )
 
         # Read column headers until end or 2 consecutive skipped headers
         for header in headers:
@@ -259,16 +256,22 @@ class GoogleSheets(Source):
                 skipped = 0
                 column_name = '{}'.format(header_value)
                 if column_name in header_list:
-                    raise Exception('DUPLICATE HEADER ERROR: SHEET: {}, COL: {}, CELL: {}1'.format(
-                        sheet_title, column_name, column_letter))
+                    raise Exception(
+                        'DUPLICATE HEADER ERROR: SHEET: {}, COL: {}, CELL: {}1'.format(
+                            sheet_title, column_name, column_letter
+                        )
+                    )
                 header_list.append(column_name)
 
                 first_value = None
                 try:
                     first_value = first_values[i]
                 except IndexError as err:
-                    LOGGER.info('NO VALUE IN 2ND ROW FOR HEADER. SHEET: {}, COL: {}, CELL: {}2. {}'.format(
-                        sheet_title, column_name, column_letter, err))
+                    LOGGER.info(
+                        'NO VALUE IN 2ND ROW FOR HEADER. SHEET: {}, COL: {}, CELL: {}2. {}'.format(
+                            sheet_title, column_name, column_letter, err
+                        )
+                    )
                     first_value = {}
                     first_values.append(first_value)
                     pass
@@ -276,23 +279,30 @@ class GoogleSheets(Source):
                 column_effective_value = first_value.get('effectiveValue', {})
 
                 if column_effective_value == {}:
-                    if ("numberFormat" in first_value.get('effectiveFormat', {})):
+                    if "numberFormat" in first_value.get('effectiveFormat', {}):
                         column_effective_value_type = "numberValue"
                     else:
                         column_effective_value_type = 'stringValue'
-                        LOGGER.info('WARNING: NO VALUE IN 2ND ROW FOR HEADER. SHEET: {}, COL: {}, CELL: {}2.'.format(
-                            sheet_title, column_name, column_letter))
+                        LOGGER.info(
+                            'WARNING: NO VALUE IN 2ND ROW FOR HEADER. SHEET: {}, COL: {}, CELL: {}2.'.format(
+                                sheet_title, column_name, column_letter
+                            )
+                        )
                         LOGGER.info('   Setting column datatype to STRING')
                 else:
                     for key, val in column_effective_value.items():
                         if key in ('numberValue', 'stringValue', 'boolValue'):
                             column_effective_value_type = key
                         elif key in ('errorType', 'formulaType'):
-                            raise Exception('DATA TYPE ERROR 2ND ROW VALUE: SHEET: {}, COL: {}, CELL: {}2, TYPE: {}'.format(
-                                sheet_title, column_name, column_letter, key))
+                            raise Exception(
+                                'DATA TYPE ERROR 2ND ROW VALUE: SHEET: {}, COL: {}, CELL: {}2, TYPE: {}'.format(
+                                    sheet_title, column_name, column_letter, key
+                                )
+                            )
 
-                column_number_format = first_values[i].get('effectiveFormat', {}).get(
-                    'numberFormat', {})
+                column_number_format = (
+                    first_values[i].get('effectiveFormat', {}).get('numberFormat', {})
+                )
                 column_number_format_type = column_number_format.get('type')
 
                 # Determine datatype for sheet_json_schema
@@ -314,22 +324,13 @@ class GoogleSheets(Source):
                     column_gs_type = 'boolValue'
                 elif column_effective_value_type == 'numberValue':
                     if column_number_format_type == 'DATE_TIME':
-                        col_properties = {
-                            'type': ['null', 'string'],
-                            'format': 'date-time'
-                        }
+                        col_properties = {'type': ['null', 'string'], 'format': 'date-time'}
                         column_gs_type = 'numberType.DATE_TIME'
                     elif column_number_format_type == 'DATE':
-                        col_properties = {
-                            'type': ['null', 'string'],
-                            'format': 'date'
-                        }
+                        col_properties = {'type': ['null', 'string'], 'format': 'date'}
                         column_gs_type = 'numberType.DATE'
                     elif column_number_format_type == 'TIME':
-                        col_properties = {
-                            'type': ['null', 'string'],
-                            'format': 'time'
-                        }
+                        col_properties = {'type': ['null', 'string'], 'format': 'time'}
                         column_gs_type = 'numberType.TIME'
                     elif column_number_format_type == 'TEXT':
                         col_properties = {'type': ['null', 'string']}
@@ -342,7 +343,7 @@ class GoogleSheets(Source):
                         # Number w/ singer.decimal must be listed last, otherwise errors occur.
                         col_properties = {
                             'type': ['null', 'string', 'integer'],
-                            'format': 'singer.decimal'
+                            'format': 'singer.decimal',
                         }
                         column_gs_type = 'numberType'
                 # Catch-all to deal with other types and set to string
@@ -383,13 +384,16 @@ class GoogleSheets(Source):
                 # added a new boolean key `prior_column_skipped` to check if the column is
                 # one of the two columns with consecutive headers as due to consecutive empty headers
                 # both the columns should not be included in the schema as well as the metadata
-                columns[prior_index-1]['prior_column_skipped'] = True
-                LOGGER.info('TWO CONSECUTIVE SKIPPED COLUMNS. STOPPING SCAN AT: SHEET: {}, COL: {}, CELL {}1'.format(
-                    sheet_title, column_name, column_letter))
+                columns[prior_index - 1]['prior_column_skipped'] = True
+                LOGGER.info(
+                    'TWO CONSECUTIVE SKIPPED COLUMNS. STOPPING SCAN AT: SHEET: {}, COL: {}, CELL {}1'.format(
+                        sheet_title, column_name, column_letter
+                    )
+                )
                 break
 
             else:
-                # skipped < 2 prepare `columns` dictionary with index, letter, column name, column type and 
+                # skipped < 2 prepare `columns` dictionary with index, letter, column name, column type and
                 # if the column is to be skipped or not for each column in the list
                 column = {}
                 column = {
@@ -397,15 +401,22 @@ class GoogleSheets(Source):
                     'columnLetter': column_letter,
                     'columnName': column_name,
                     'columnType': column_gs_type,
-                    'columnSkipped': column_is_skipped
+                    'columnSkipped': column_is_skipped,
                 }
                 columns.append(column)
 
-                if column_gs_type in {'numberType.DATE_TIME', 'numberType.DATE', 'numberType.TIME', 'numberType'}:
+                if column_gs_type in {
+                    'numberType.DATE_TIME',
+                    'numberType.DATE',
+                    'numberType.TIME',
+                    'numberType',
+                }:
                     col_properties = {
                         'anyOf': [
                             col_properties,
-                            {'type': ['null', 'string']} # all the date, time has string types in schema
+                            {
+                                'type': ['null', 'string']
+                            },  # all the date, time has string types in schema
                         ]
                     }
                 # add the column properties in the `properties` in json schema for the respective column name

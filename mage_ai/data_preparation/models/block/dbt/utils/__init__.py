@@ -131,7 +131,7 @@ def add_blocks_upstream_from_refs(
 
     current_upstream_blocks = []
     added_blocks = []
-    for idx, ref in enumerate(extract_refs(block.content)):
+    for _idx, ref in enumerate(extract_refs(block.content)):
         if ref not in files_by_name:
             print(f'WARNING: dbt model {ref} cannot be found.')
             continue
@@ -202,8 +202,10 @@ def load_sources(block) -> Dict:
                 source_name = source_data['name']
                 for table_data in source_data['tables']:
                     table_name = table_data['name']
-                    print(f'Adding source {source_name} and table {table_name} '
-                          f'to {sources_full_path}.')
+                    print(
+                        f'Adding source {source_name} and table {table_name} '
+                        f'to {sources_full_path}.'
+                    )
                     settings = add_table_to_source(block, settings, source_name, table_name)
 
             with open(sources_full_path_legacy, 'w') as f:
@@ -367,7 +369,6 @@ def load_profile(
     profiles_full_path: str,
     profile_target: str = None,
 ) -> Dict:
-
     profile = load_profiles(project_name, profiles_full_path)
     outputs = profile.get('outputs', {})
     target = profile.get('target', None)
@@ -400,13 +401,15 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         schema = profile.get('schema')
         user = profile.get('user')
 
-        config_file_loader = ConfigFileLoader(config=dict(
-            POSTGRES_DBNAME=database,
-            POSTGRES_HOST=host,
-            POSTGRES_PASSWORD=password,
-            POSTGRES_PORT=port,
-            POSTGRES_USER=user,
-        ))
+        config_file_loader = ConfigFileLoader(
+            config=dict(
+                POSTGRES_DBNAME=database,
+                POSTGRES_HOST=host,
+                POSTGRES_PASSWORD=password,
+                POSTGRES_PORT=port,
+                POSTGRES_USER=user,
+            )
+        )
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=database,
@@ -418,9 +421,11 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         database = profile.get('project')
         schema = profile.get('dataset')
 
-        config_file_loader = ConfigFileLoader(config=dict(
-            GOOGLE_SERVICE_ACC_KEY_FILEPATH=keyfile,
-        ))
+        config_file_loader = ConfigFileLoader(
+            config=dict(
+                GOOGLE_SERVICE_ACC_KEY_FILEPATH=keyfile,
+            )
+        )
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=database,
@@ -428,14 +433,16 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             export_write_policy=ExportWritePolicy.REPLACE,
         )
     elif DataSource.MSSQL == profile_type:
-        config_file_loader = ConfigFileLoader(config=dict(
-            MSSQL_DATABASE=profile.get('database'),
-            MSSQL_DRIVER=profile.get('driver'),
-            MSSQL_HOST=profile.get('server'),
-            MSSQL_PASSWORD=profile.get('password'),
-            MSSQL_PORT=profile.get('port'),
-            MSSQL_USER=profile.get('user'),
-        ))
+        config_file_loader = ConfigFileLoader(
+            config=dict(
+                MSSQL_DATABASE=profile.get('database'),
+                MSSQL_DRIVER=profile.get('driver'),
+                MSSQL_HOST=profile.get('server'),
+                MSSQL_PASSWORD=profile.get('password'),
+                MSSQL_PORT=profile.get('port'),
+                MSSQL_USER=profile.get('user'),
+            )
+        )
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=profile.get('database'),
@@ -449,14 +456,16 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         ssl_disabled = profile.get('ssl_disabled')
         username = profile.get('username')
 
-        config_file_loader = ConfigFileLoader(config=dict(
-            MYSQL_CONNECTION_METHOD='ssh_tunnel' if not ssl_disabled else None,
-            MYSQL_DATABASE=schema,
-            MYSQL_HOST=host,
-            MYSQL_PASSWORD=password,
-            MYSQL_PORT=port,
-            MYSQL_USER=username,
-        ))
+        config_file_loader = ConfigFileLoader(
+            config=dict(
+                MYSQL_CONNECTION_METHOD='ssh_tunnel' if not ssl_disabled else None,
+                MYSQL_DATABASE=schema,
+                MYSQL_HOST=host,
+                MYSQL_PASSWORD=password,
+                MYSQL_PORT=port,
+                MYSQL_USER=username,
+            )
+        )
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=schema,
@@ -470,13 +479,15 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         schema = profile.get('schema')
         user = profile.get('user')
 
-        config_file_loader = ConfigFileLoader(config=dict(
-            REDSHIFT_DBNAME=database,
-            REDSHIFT_HOST=host,
-            REDSHIFT_PORT=port,
-            REDSHIFT_TEMP_CRED_PASSWORD=password,
-            REDSHIFT_TEMP_CRED_USER=user,
-        ))
+        config_file_loader = ConfigFileLoader(
+            config=dict(
+                REDSHIFT_DBNAME=database,
+                REDSHIFT_HOST=host,
+                REDSHIFT_PORT=port,
+                REDSHIFT_TEMP_CRED_PASSWORD=password,
+                REDSHIFT_TEMP_CRED_USER=user,
+            )
+        )
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=database,
@@ -511,14 +522,16 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
     elif DataSource.TRINO == profile_type:
         catalog = profile.get('catalog')
         schema = profile.get('schema')
-        config_file_loader = ConfigFileLoader(config=dict(
-            TRINO_CATALOG=profile.get('catalog'),
-            TRINO_HOST=profile.get('host'),
-            TRINO_USER=profile.get('user'),
-            TRINO_PASSWORD=profile.get('password'),
-            TRINO_PORT=profile.get('port'),
-            TRINO_SCHEMA=profile.get('schema'),
-        ))
+        config_file_loader = ConfigFileLoader(
+            config=dict(
+                TRINO_CATALOG=profile.get('catalog'),
+                TRINO_HOST=profile.get('host'),
+                TRINO_USER=profile.get('user'),
+                TRINO_PASSWORD=profile.get('password'),
+                TRINO_PORT=profile.get('port'),
+                TRINO_SCHEMA=profile.get('schema'),
+            )
+        )
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=catalog,
@@ -530,9 +543,11 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         attr = parse_attributes(block)
         profiles_full_path = attr['profiles_full_path']
 
-        msg = f'No configuration matching profile type {profile_type}. ' \
-            f'Change your target in {profiles_full_path} ' \
+        msg = (
+            f'No configuration matching profile type {profile_type}. '
+            f'Change your target in {profiles_full_path} '
             'or add dbt_profile_target to your global variables.'
+        )
         raise Exception(msg)
 
     return config_file_loader, configuration
@@ -574,10 +589,13 @@ def create_upstream_tables(
 
     data_provider = configuration.get('data_provider')
 
-    kwargs_shared = merge_dict(dict(
-        configuration=configuration,
-        cache_upstream_dbt_models=cache_upstream_dbt_models,
-    ), kwargs)
+    kwargs_shared = merge_dict(
+        dict(
+            configuration=configuration,
+            cache_upstream_dbt_models=cache_upstream_dbt_models,
+        ),
+        kwargs,
+    )
 
     upstream_blocks_init = block.upstream_blocks
     upstream_blocks = upstream_blocks_from_sources(block)
@@ -677,7 +695,7 @@ def interpolate_input(
 
         return f'{__quoted(schema)}.{__quoted(tn)}'
 
-    for idx, upstream_block in enumerate(block.upstream_blocks):
+    for _idx, upstream_block in enumerate(block.upstream_blocks):
         if BlockType.DBT != upstream_block.type:
             continue
 
@@ -864,13 +882,15 @@ def build_command_line_arguments(
 
     variables_json = {}
     for k, v in variables.items():
-        if type(v) is str or \
-                type(v) is int or \
-                type(v) is bool or \
-                type(v) is float or \
-                type(v) is dict or \
-                type(v) is list or \
-                type(v) is datetime:
+        if (
+            type(v) is str
+            or type(v) is int
+            or type(v) is bool
+            or type(v) is float
+            or type(v) is dict
+            or type(v) is list
+            or type(v) is datetime
+        ):
             variables_json[k] = v
 
     args = [
@@ -921,8 +941,9 @@ def build_command_line_arguments(
         profiles_dir,
     ]
 
-    dbt_profile_target = block.configuration.get('dbt_profile_target') \
-        or variables.get('dbt_profile_target')
+    dbt_profile_target = block.configuration.get('dbt_profile_target') or variables.get(
+        'dbt_profile_target'
+    )
 
     if dbt_profile_target:
         dbt_profile_target = Template(dbt_profile_target).render(
@@ -934,10 +955,14 @@ def build_command_line_arguments(
             dbt_profile_target,
         ]
 
-    return dbt_command, args, dict(
-        profile_target=dbt_profile_target,
-        profiles_dir=profiles_dir,
-        project_full_path=project_full_path,
+    return (
+        dbt_command,
+        args,
+        dict(
+            profile_target=dbt_profile_target,
+            profiles_dir=profiles_dir,
+            project_full_path=project_full_path,
+        ),
     )
 
 
@@ -957,16 +982,21 @@ def run_dbt_tests(
 
     dbt_command, args, _ = build_command_line_arguments(block, global_vars, run_tests=True)
 
-    proc1 = subprocess.run([
-        'dbt',
-        dbt_command,
-    ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE)
+    proc1 = subprocess.run(
+        [
+            'dbt',
+            dbt_command,
+        ]
+        + args,
+        preexec_fn=os.setsid,
+        stdout=subprocess.PIPE,
+    )
 
     number_of_errors = 0
 
     with redirect_stdout(stdout):
         lines = proc1.stdout.decode().split('\n')
-        for idx, line in enumerate(lines):
+        for _idx, line in enumerate(lines):
             print(line)
 
             match = re.search('ERROR=([0-9]+)', line)
@@ -1031,8 +1061,8 @@ def fetch_model_data(
 
     if not schema:
         raise print(
-            f'WARNING: Cannot fetch data from model {model_name}, ' +
-            f'no schema found in profile target {profile_target}.',
+            f'WARNING: Cannot fetch data from model {model_name}, '
+            + f'no schema found in profile target {profile_target}.',
         )
 
     # Check dbt_profiles for schema to append

@@ -1,4 +1,4 @@
-class OauthScope():
+class OauthScope:
     SCOPE_DELIMITER = ','
 
     CLIENT_ALL = 'all'

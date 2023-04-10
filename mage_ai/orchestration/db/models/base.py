@@ -110,10 +110,8 @@ class BaseModel(Base):
             elif hasattr(value, 'to_dict'):
                 return value.to_dict()
             return value
-        obj_dict = {
-            c.name: __format_value(getattr(self, c.name))
-            for c in self.__table__.columns
-        }
+
+        obj_dict = {c.name: __format_value(getattr(self, c.name)) for c in self.__table__.columns}
         if include_attributes is not None and len(include_attributes) > 0:
             for attr in include_attributes:
                 if hasattr(self, attr):

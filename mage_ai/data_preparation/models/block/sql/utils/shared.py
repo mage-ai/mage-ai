@@ -39,8 +39,9 @@ def should_cache_data_from_upstream(
     loader1 = ConfigFileLoader(config_path, data_provider1)
     loader2 = ConfigFileLoader(config_path, data_provider2)
 
-    return not all([config1.get(k) == config2.get(k) for k in config_keys]) \
-        or not all([loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys])
+    return not all([config1.get(k) == config2.get(k) for k in config_keys]) or not all(
+        [loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys]
+    )
 
 
 def interpolate_input(block, query, replace_func=None):
@@ -83,11 +84,12 @@ def interpolate_input(block, query, replace_func=None):
         replace_with = __replace_func(database, schema, upstream_block.table_name)
 
         upstream_block_content = upstream_block.content
-        if is_sql and \
-                use_raw_sql and \
-                is_same_data_providers and not \
-                has_create_or_insert_statement(upstream_block_content):
-
+        if (
+            is_sql
+            and use_raw_sql
+            and is_same_data_providers
+            and not has_create_or_insert_statement(upstream_block_content)
+        ):
             upstream_query = interpolate_input(upstream_block, upstream_block_content)
             replace_with = f"""(
     {upstream_query}
@@ -125,12 +127,18 @@ def create_upstream_block_tables(
         parse_attributes,
         source_table_name_for_block,
     )
+
     configuration = configuration if configuration else block.configuration
 
-    for idx, upstream_block in enumerate(block.upstream_blocks):
-        if should_cache_data_from_upstream(block, upstream_block, [
-            'data_provider',
-        ], cache_keys):
+    for _idx, upstream_block in enumerate(block.upstream_blocks):
+        if should_cache_data_from_upstream(
+            block,
+            upstream_block,
+            [
+                'data_provider',
+            ],
+            cache_keys,
+        ):
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
@@ -168,8 +176,10 @@ def create_upstream_block_tables(
             if schema_name:
                 full_table_name = f'{schema_name}.{full_table_name}'
 
-            print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
-                  f'to {full_table_name}.')
+            print(
+                f'\n\nExporting data from upstream block {upstream_block.uuid} '
+                f'to {full_table_name}.'
+            )
 
             loader.export(
                 df,
@@ -205,7 +215,7 @@ def extract_and_replace_text_between_strings(
 
     extracted_text = text[start_idx:end_idx]
 
-    new_text = text[0:max(start_idx - 1, 0)] + replace_string + text[end_idx + 1:]
+    new_text = text[0 : max(start_idx - 1, 0)] + replace_string + text[end_idx + 1 :]
 
     return extracted_text, new_text
 
@@ -224,7 +234,7 @@ def extract_create_statement_table_name(text: str) -> str:
     if not statement_partial:
         return None
 
-    parts = statement_partial[:len(statement_partial) - 1].strip().split(' ')
+    parts = statement_partial[: len(statement_partial) - 1].strip().split(' ')
     return parts[-1]
 
 

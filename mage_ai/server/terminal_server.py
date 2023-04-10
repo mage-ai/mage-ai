@@ -42,9 +42,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
             ).first()
             if oauth_client:
                 oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                valid = valid and \
-                    oauth_token and \
-                    oauth_token.user
+                valid = valid and oauth_token and oauth_token.user
                 if valid:
                     user = oauth_token.user
 
@@ -75,5 +73,6 @@ class TerminalWebsocketServer(terminado.TermSocket):
         # Turn enable-bracketed-paste off since it can mess up the output.
         if self.term_command == 'bash':
             terminal.ptyproc.write(
-                "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r")
+                "bind 'set enable-bracketed-paste off' # Mage terminal settings command\r"
+            )
         terminal.read_buffer.clear()

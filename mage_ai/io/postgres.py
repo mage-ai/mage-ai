@@ -13,19 +13,22 @@ import pandas as pd
 import simplejson
 
 
-JSON_SERIALIZABLE_TYPES = frozenset([
-    PandasTypes.DATE,
-    PandasTypes.DATETIME,
-    PandasTypes.DATETIME64,
-    PandasTypes.OBJECT,
-    PandasTypes.TIME,
-])
+JSON_SERIALIZABLE_TYPES = frozenset(
+    [
+        PandasTypes.DATE,
+        PandasTypes.DATETIME,
+        PandasTypes.DATETIME64,
+        PandasTypes.OBJECT,
+        PandasTypes.TIME,
+    ]
+)
 
 
 class Postgres(BaseSQL):
     """
     Handles data transfer between a PostgreSQL database and the Mage app.
     """
+
     def __init__(
         self,
         dbname: str,
@@ -261,14 +264,16 @@ class Postgres(BaseSQL):
             df_col_dropna = df_[col].dropna()
             if df_col_dropna.count() == 0:
                 continue
-            if dtypes[col] in JSON_SERIALIZABLE_TYPES \
-                    or (df_[col].dtype == PandasTypes.OBJECT and
-                        type(df_col_dropna.iloc[0]) != str):
-                df_[col] = df_[col].apply(lambda x: simplejson.dumps(
-                    x,
-                    default=encode_complex,
-                    ignore_nan=True,
-                ))
+            if dtypes[col] in JSON_SERIALIZABLE_TYPES or (
+                df_[col].dtype == PandasTypes.OBJECT and type(df_col_dropna.iloc[0]) != str
+            ):
+                df_[col] = df_[col].apply(
+                    lambda x: simplejson.dumps(
+                        x,
+                        default=encode_complex,
+                        ignore_nan=True,
+                    )
+                )
                 if '[]' in db_dtypes[col]:
                     df_[col] = df_[col].apply(lambda x: clean_array_value(x))
 
@@ -282,19 +287,21 @@ class Postgres(BaseSQL):
                 value = str(t)
             values.append(value.replace('None', 'NULL'))
         values_string = ', '.join(values)
-        insert_columns = ', '.join([f'"{col}"'for col in columns])
+        insert_columns = ', '.join([f'"{col}"' for col in columns])
 
         commands = [
             f'INSERT INTO {full_table_name} ({insert_columns})',
             f'VALUES {values_string}',
         ]
         if unique_constraints and unique_conflict_method:
-            unique_constraints = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
-                 for col in unique_constraints]
-            columns_cleaned = \
-                [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
-                 for col in columns]
+            unique_constraints = [
+                f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                for col in unique_constraints
+            ]
+            columns_cleaned = [
+                f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
+                for col in columns
+            ]
 
             commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
@@ -304,6 +311,4 @@ class Postgres(BaseSQL):
                 )
             else:
                 commands.append('DO NOTHING')
-        cursor.execute(
-            '\n'.join(commands)
-        )
+        cursor.execute('\n'.join(commands))

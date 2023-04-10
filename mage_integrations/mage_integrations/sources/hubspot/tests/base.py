@@ -3,15 +3,14 @@ import unittest
 from datetime import datetime as dt
 from datetime import timedelta
 
-import tap_tester.menagerie   as menagerie
+import tap_tester.menagerie as menagerie
 import tap_tester.connections as connections
-import tap_tester.runner      as runner
+import tap_tester.runner as runner
 from tap_tester.base_case import BaseCase
 from tap_tester import LOGGER
 
 
 class HubspotBaseTest(BaseCase):
-
     REPLICATION_KEYS = "valid-replication-keys"
     PRIMARY_KEYS = "table-key-properties"
     FOREIGN_KEYS = "table-foreign-key-properties"
@@ -19,7 +18,7 @@ class HubspotBaseTest(BaseCase):
     INCREMENTAL = "INCREMENTAL"
     FULL = "FULL_TABLE"
 
-    START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z" # %H:%M:%SZ
+    START_DATE_FORMAT = "%Y-%m-%dT00:00:00Z"  # %H:%M:%SZ
     BASIC_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
     EXPECTED_PAGE_SIZE = "expected-page-size"
@@ -31,12 +30,16 @@ class HubspotBaseTest(BaseCase):
     #######################################
 
     def setUp(self):
-        missing_envs = [x for x in [
-            'TAP_HUBSPOT_REDIRECT_URI',
-            'TAP_HUBSPOT_CLIENT_ID',
-            'TAP_HUBSPOT_CLIENT_SECRET',
-            'TAP_HUBSPOT_REFRESH_TOKEN'
-        ] if os.getenv(x) is None]
+        missing_envs = [
+            x
+            for x in [
+                'TAP_HUBSPOT_REDIRECT_URI',
+                'TAP_HUBSPOT_CLIENT_ID',
+                'TAP_HUBSPOT_CLIENT_SECRET',
+                'TAP_HUBSPOT_REFRESH_TOKEN',
+            ]
+            if os.getenv(x) is None
+        ]
         if missing_envs:
             raise Exception("Missing environment variables: {}".format(missing_envs))
 
@@ -52,52 +55,54 @@ class HubspotBaseTest(BaseCase):
         start_date = dt.today() - timedelta(days=1)
         start_date_with_fmt = dt.strftime(start_date, self.START_DATE_FORMAT)
 
-        return {'start_date' : start_date_with_fmt}
+        return {'start_date': start_date_with_fmt}
 
     def get_credentials(self):
-        return {'refresh_token': os.getenv('TAP_HUBSPOT_REFRESH_TOKEN'),
-                'client_secret': os.getenv('TAP_HUBSPOT_CLIENT_SECRET'),
-                'redirect_uri':  os.getenv('TAP_HUBSPOT_REDIRECT_URI'),
-                'client_id':     os.getenv('TAP_HUBSPOT_CLIENT_ID')}
+        return {
+            'refresh_token': os.getenv('TAP_HUBSPOT_REFRESH_TOKEN'),
+            'client_secret': os.getenv('TAP_HUBSPOT_CLIENT_SECRET'),
+            'redirect_uri': os.getenv('TAP_HUBSPOT_REDIRECT_URI'),
+            'client_id': os.getenv('TAP_HUBSPOT_CLIENT_ID'),
+        }
 
     def expected_check_streams(self):
         return set(self.expected_metadata().keys())
 
     def expected_metadata(self):  # DOCS_BUG https://stitchdata.atlassian.net/browse/DOC-1523)
         """The expected streams and metadata about the streams"""
-        return  {
+        return {
             "campaigns": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.FULL,
-                self.OBEYS_START_DATE: False
+                self.OBEYS_START_DATE: False,
             },
             "companies": {
                 self.PRIMARY_KEYS: {"companyId"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"property_hs_lastmodifieddate"},
                 self.EXPECTED_PAGE_SIZE: 250,
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "contact_lists": {
                 self.PRIMARY_KEYS: {"listId"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updatedAt"},
                 self.EXPECTED_PAGE_SIZE: 250,
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "contacts": {
                 self.PRIMARY_KEYS: {"vid"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"versionTimestamp"},
                 self.EXPECTED_PAGE_SIZE: 100,
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "contacts_by_company": {
                 self.PRIMARY_KEYS: {"company-id", "contact-id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.EXPECTED_PAGE_SIZE: 100,
                 self.OBEYS_START_DATE: True,
-                self.PARENT_STREAM: 'companies'
+                self.PARENT_STREAM: 'companies',
             },
             "deal_pipelines": {
                 self.PRIMARY_KEYS: {"pipelineId"},
@@ -108,47 +113,47 @@ class HubspotBaseTest(BaseCase):
                 self.PRIMARY_KEYS: {"dealId"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"property_hs_lastmodifieddate"},
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "email_events": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"startTimestamp"},
                 self.EXPECTED_PAGE_SIZE: 1000,
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "engagements": {
                 self.PRIMARY_KEYS: {"engagement_id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"lastUpdated"},
                 self.EXPECTED_PAGE_SIZE: 250,
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "forms": {
                 self.PRIMARY_KEYS: {"guid"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updatedAt"},
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "owners": {
                 self.PRIMARY_KEYS: {"ownerId"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updatedAt"},
-                self.OBEYS_START_DATE: True  # TODO is this a BUG?
+                self.OBEYS_START_DATE: True,  # TODO is this a BUG?
             },
             "subscription_changes": {
                 self.PRIMARY_KEYS: {"timestamp", "portalId", "recipient"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"startTimestamp"},
                 self.EXPECTED_PAGE_SIZE: 1000,
-                self.OBEYS_START_DATE: True
+                self.OBEYS_START_DATE: True,
             },
             "workflows": {
                 self.PRIMARY_KEYS: {"id"},
                 self.REPLICATION_METHOD: self.INCREMENTAL,
                 self.REPLICATION_KEYS: {"updatedAt"},
-                self.OBEYS_START_DATE: True
-            }
+                self.OBEYS_START_DATE: True,
+            },
         }
 
     #############################
@@ -160,10 +165,10 @@ class HubspotBaseTest(BaseCase):
         return a dictionary with key of table name
         and value as a set of primary key fields
         """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
-
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_fields(self):
         """
@@ -172,15 +177,17 @@ class HubspotBaseTest(BaseCase):
         pks = self.expected_primary_keys()
         rks = self.expected_replication_keys()
 
-        return {stream: rks.get(stream, set()) | pks.get(stream, set())
-                for stream in self.expected_streams()}
-
+        return {
+            stream: rks.get(stream, set()) | pks.get(stream, set())
+            for stream in self.expected_streams()
+        }
 
     def expected_replication_method(self):
         """return a dictionary with key of table name and value of replication method"""
-        return {table: properties.get(self.REPLICATION_METHOD, None)
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_METHOD, None)
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_streams(self):
         """A set of expected stream names"""
@@ -191,24 +198,26 @@ class HubspotBaseTest(BaseCase):
         return a dictionary with key of table name
         and value as a set of replication key fields
         """
-        return {table: properties.get(self.REPLICATION_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.REPLICATION_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_page_limits(self):
-        return {table: properties.get(self.EXPECTED_PAGE_SIZE, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.EXPECTED_PAGE_SIZE, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_primary_keys(self):
-
         """
         return a dictionary with key of table name
         and value as a set of primary key fields
         """
-        return {table: properties.get(self.PRIMARY_KEYS, set())
-                for table, properties
-                in self.expected_metadata().items()}
+        return {
+            table: properties.get(self.PRIMARY_KEYS, set())
+            for table, properties in self.expected_metadata().items()
+        }
 
     def expected_automatic_fields(self):
         auto_fields = {}
@@ -248,11 +257,16 @@ class HubspotBaseTest(BaseCase):
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
         found_catalogs = menagerie.get_catalogs(conn_id)
-        self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
+        self.assertGreater(
+            len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id)
+        )
 
         found_catalog_names = set(map(lambda c: c['tap_stream_id'], found_catalogs))
-        self.assertSetEqual(self.expected_check_streams(), found_catalog_names,
-                            msg="discovered schemas do not match")
+        self.assertSetEqual(
+            self.expected_check_streams(),
+            found_catalog_names,
+            msg="discovered schemas do not match",
+        )
         LOGGER.info("discovered schemas are OK")
 
         return found_catalogs
@@ -271,21 +285,20 @@ class HubspotBaseTest(BaseCase):
         menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
 
         # Verify actual rows were synced
-        sync_record_count = runner.examine_target_output_file(self,
-                                                              conn_id,
-                                                              self.expected_streams(),
-                                                              self.expected_primary_keys())
+        sync_record_count = runner.examine_target_output_file(
+            self, conn_id, self.expected_streams(), self.expected_primary_keys()
+        )
         total_row_count = sum(sync_record_count.values())
-        self.assertGreater(total_row_count, 0,
-                           msg="failed to replicate any data: {}".format(sync_record_count))
+        self.assertGreater(
+            total_row_count, 0, msg="failed to replicate any data: {}".format(sync_record_count)
+        )
         LOGGER.info("total replicated row count: %s", total_row_count)
 
         return sync_record_count
 
-    def perform_and_verify_table_and_field_selection(self,
-                                                     conn_id,
-                                                     test_catalogs,
-                                                     select_all_fields=True):
+    def perform_and_verify_table_and_field_selection(
+        self, conn_id, test_catalogs, select_all_fields=True
+    ):
         """
         Perform table and field selection based off of the streams to select
         set and field selection parameters.
@@ -311,19 +324,27 @@ class HubspotBaseTest(BaseCase):
             LOGGER.info("Validating selection on %s: %s", cat['stream_name'], selected)
             if cat['stream_name'] not in expected_selected:
                 self.assertFalse(selected, msg="Stream selected, but not testable.")
-                continue # Skip remaining assertions if we aren't selecting this stream
+                continue  # Skip remaining assertions if we aren't selecting this stream
             self.assertTrue(selected, msg="Stream not selected.")
 
             if select_all_fields:
                 # Verify all fields within each selected stream are selected
-                for field, field_props in catalog_entry.get('annotated-schema').get('properties').items():
+                for field, field_props in (
+                    catalog_entry.get('annotated-schema').get('properties').items()
+                ):
                     field_selected = field_props.get('selected')
-                    LOGGER.info("\tValidating selection on %s.%s: %s",
-                                cat['stream_name'], field, field_selected)
+                    LOGGER.info(
+                        "\tValidating selection on %s.%s: %s",
+                        cat['stream_name'],
+                        field,
+                        field_selected,
+                    )
                     self.assertTrue(field_selected, msg="Field not selected.")
             else:
                 # Verify only automatic fields are selected
-                expected_automatic_fields = self.expected_automatic_fields().get(cat['tap_stream_id'])
+                expected_automatic_fields = self.expected_automatic_fields().get(
+                    cat['tap_stream_id']
+                )
                 selected_fields = self.get_selected_fields_from_metadata(catalog_entry['metadata'])
                 self.assertEqual(expected_automatic_fields, selected_fields)
 
@@ -332,8 +353,10 @@ class HubspotBaseTest(BaseCase):
         selected_fields = set()
         for field in metadata:
             is_field_metadata = len(field['breadcrumb']) > 1
-            inclusion_automatic_or_selected = (field['metadata'].get('inclusion') == 'automatic'
-                                               or field['metadata'].get('selected') is True)
+            inclusion_automatic_or_selected = (
+                field['metadata'].get('inclusion') == 'automatic'
+                or field['metadata'].get('selected') is True
+            )
             if is_field_metadata and inclusion_automatic_or_selected:
                 selected_fields.add(field['breadcrumb'][1])
         return selected_fields
@@ -347,11 +370,13 @@ class HubspotBaseTest(BaseCase):
             non_selected_properties = []
             if not select_all_fields:
                 # get a list of all properties so that none are selected
-                non_selected_properties = schema.get('annotated-schema', {}).get(
-                    'properties', {}).keys()
+                non_selected_properties = (
+                    schema.get('annotated-schema', {}).get('properties', {}).keys()
+                )
 
             connections.select_catalog_and_fields_via_metadata(
-                conn_id, catalog, schema, [], non_selected_properties)
+                conn_id, catalog, schema, [], non_selected_properties
+            )
 
     def timedelta_formatted(self, dtime, days=0, str_format="%Y-%m-%dT00:00:00Z"):
         date_stripped = dt.strptime(dtime, str_format)

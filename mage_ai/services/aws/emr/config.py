@@ -20,10 +20,7 @@ class EmrConfig(BaseConfig):
     slave_instance_type: str = DEFAULT_INSTANCE_TYPE
 
     def get_instances_config(
-        self,
-        cluster_count: int,
-        idle_timeout: int = 0,
-        keep_alive: bool = False
+        self, cluster_count: int, idle_timeout: int = 0, keep_alive: bool = False
     ) -> Dict:
         market = 'ON_DEMAND'
         instances_config = {

@@ -32,18 +32,22 @@ def build_create_table_command(
     if_not_exists: bool = False,
 ) -> str:
     columns_and_types = [
-        f"{column_identifier}{clean_column_name(col)}{column_identifier}" +
-        f" {column_type_mapping[col]['type_converted']}"
+        f"{column_identifier}{clean_column_name(col)}{column_identifier}"
+        + f" {column_type_mapping[col]['type_converted']}"
         for col in columns
     ]
 
     if unique_constraints:
         unique_constraints_clean = [clean_column_name(col) for col in unique_constraints]
-        unique_constraints_escaped = [f'{column_identifier}{col}{column_identifier}'
-                                      for col in unique_constraints_clean]
-        index_name = '_'.join([
-            clean_column_name(full_table_name),
-        ] + unique_constraints_clean)
+        unique_constraints_escaped = [
+            f'{column_identifier}{col}{column_identifier}' for col in unique_constraints_clean
+        ]
+        index_name = '_'.join(
+            [
+                clean_column_name(full_table_name),
+            ]
+            + unique_constraints_clean
+        )
         index_name = f'unique{index_name}'[:64]
         columns_and_types.append(
             f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints_escaped)})",
@@ -57,9 +61,11 @@ def build_create_table_command(
         table_properties = f"WITH (location = '{location}')"
     else:
         table_properties = ''
-    return f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE"\
-           f"{if_not_exists_command} {full_table_name} ({', '.join(columns_and_types)})"\
-           f"{table_properties}"
+    return (
+        f"CREATE {'TEMP ' if create_temporary_table else ''}TABLE"
+        f"{if_not_exists_command} {full_table_name} ({', '.join(columns_and_types)})"
+        f"{table_properties}"
+    )
 
 
 def build_alter_table_command(
@@ -72,9 +78,9 @@ def build_alter_table_command(
         return None
 
     columns_and_types = [
-        f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}" +
-        f" {column_type_mapping[col]['type_converted']}" for col
-        in columns
+        f"ADD COLUMN {column_identifier}{clean_column_name(col)}{column_identifier}"
+        + f" {column_type_mapping[col]['type_converted']}"
+        for col in columns
     ]
     # TODO: support add new unique constraints
     return f"ALTER TABLE {full_table_name} {', '.join(columns_and_types)}"
@@ -249,7 +255,10 @@ def build_insert_command(
                     else:
                         value_final = [str(s).replace("'", "''") for s in v]
                         value_final = f"'{{{', '.join(value_final)}}}'"
-                elif COLUMN_FORMAT_DATETIME == column_settings.get('format') and convert_datetime_func:
+                elif (
+                    COLUMN_FORMAT_DATETIME == column_settings.get('format')
+                    and convert_datetime_func
+                ):
                     value_final = convert_datetime_func(v, column_type_dict)
                 else:
                     if type(v) is dict or type(v) is list:
@@ -261,7 +270,9 @@ def build_insert_command(
                         value_final = string_parse_func(value_final, column_type_dict)
 
                     if convert_column_types:
-                        value_final = convert_column_to_type_func(value_final, column_type_converted)
+                        value_final = convert_column_to_type_func(
+                            value_final, column_type_converted
+                        )
 
             vals.append(value_final)
         if stringify_values:

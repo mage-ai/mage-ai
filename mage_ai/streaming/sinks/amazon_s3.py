@@ -40,13 +40,16 @@ class AmazonS3Sink(BaseSink):
         self._print(f'Batch ingest {len(data)} records, time={time.time()}. Sample: {data[0]}')
         self.write_buffer(data)
 
-        if self.config.buffer_size_mb and \
-                sys.getsizeof(self.buffer) >= self.config.buffer_size_mb * 1_000_000:
+        if (
+            self.config.buffer_size_mb
+            and sys.getsizeof(self.buffer) >= self.config.buffer_size_mb * 1_000_000
+        ):
             self.upload_data_to_s3()
             return
 
-        if self.config.buffer_timeout_seconds and \
-                self.has_buffer_timed_out(self.config.buffer_timeout_seconds):
+        if self.config.buffer_timeout_seconds and self.has_buffer_timed_out(
+            self.config.buffer_timeout_seconds
+        ):
             self.upload_data_to_s3()
             return
 

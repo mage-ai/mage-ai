@@ -10,6 +10,7 @@ class EventRuleResource(GenericResource):
 
         if 'aws' == pk:
             from mage_ai.services.aws.events.events import get_all_event_rules
+
             rules = get_all_event_rules()
 
         return self(dict(rules=rules), user, **kwargs)

@@ -54,23 +54,29 @@ class Connection(BaseConnection):
                 if description:
                     data.append(cursor.fetchall())
             except Exception as err:
-                self.logger.error(f'Error while executing query: {str(err)}. '
-                                  f'Query string: {query_string}')
+                self.logger.error(
+                    f'Error while executing query: {str(err)}. ' f'Query string: {query_string}'
+                )
                 raise err
 
             now2 = datetime.utcnow().timestamp()
-            self.logger.info(f'{message} completed.', tags=dict(
-                time=now2 - now1,
-            ))
+            self.logger.info(
+                f'{message} completed.',
+                tags=dict(
+                    time=now2 - now1,
+                ),
+            )
 
         return data
 
     def load(self, query_string: str) -> List[List[tuple]]:
         tags = merge_dict(self.build_tags(), dict(query=query_string))
         self.info('Load started.', tags=tags)
-        data = self.execute([
-            query_string,
-        ])
+        data = self.execute(
+            [
+                query_string,
+            ]
+        )
         self.info('Load completed.', tags=merge_dict(tags, dict(count=len(data))))
 
         return data[0]

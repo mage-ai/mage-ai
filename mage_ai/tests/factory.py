@@ -50,10 +50,8 @@ def create_pipeline_with_dynamic_blocks(name: str, repo_path: str):
         language='python',
         configuration=dict(dynamic=True),
     )
-    block2 = Block.create(
-        'block2', 'transformer', repo_path, language='python')
-    block3 = Block.create(
-        'block3', 'data_exporter', repo_path, language='python')
+    block2 = Block.create('block2', 'transformer', repo_path, language='python')
+    block3 = Block.create('block3', 'data_exporter', repo_path, language='python')
     pipeline.add_block(block1)
     pipeline.add_block(block2, upstream_block_uuids=['block1'])
     pipeline.add_block(block3, upstream_block_uuids=['block2'])
@@ -94,10 +92,13 @@ def create_user(
     password = password or faker.password()
     password_salt = generate_salt()
     password_hash = create_bcrypt_hash(password, password_salt)
-    payload = merge_dict(dict(
-        email=faker.email(),
-        username=faker.name(),
-    ), kwargs)
+    payload = merge_dict(
+        dict(
+            email=faker.email(),
+            username=faker.name(),
+        ),
+        kwargs,
+    )
 
     if as_dict:
         payload.update(password=password)

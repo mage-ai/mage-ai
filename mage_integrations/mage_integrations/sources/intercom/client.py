@@ -91,11 +91,11 @@ ERROR_CODE_EXCEPTION_MAPPING = {
     415: IntercomUnsupportedMediaTypeError,
     422: IntercomUnprocessableEntityError,
     423: IntercomScrollExistsError,
-    500: IntercomInternalServiceError}
+    500: IntercomInternalServiceError,
+}
 
 
 def get_exception_for_error_code(error_code, intercom_error_code):
-
     if intercom_error_code == 'scroll_exists':
         error_code = 423
     return ERROR_CODE_EXCEPTION_MAPPING.get(error_code, IntercomError)
@@ -121,12 +121,15 @@ def raise_for_error(response):
                 for err in response_json['errors']:
                     error_message = err.get('message')
                     error_code = err.get('code')
-                    ex = get_exception_for_error_code(error_code=status_code, intercom_error_code=error_code)
+                    ex = get_exception_for_error_code(
+                        error_code=status_code, intercom_error_code=error_code
+                    )
                     if status_code == 401 and 'access_token' in error_code:
                         LOGGER.error(
                             "Your API access_token is expired/invalid as per Intercom’s "
                             "security policy. \n Please re-authenticate your connection to "
-                            "generate a new access_token and resume extraction.")
+                            "generate a new access_token and resume extraction."
+                        )
                     message = '{}: {}\n{}'.format(error_code, error_message, message)
                 raise ex('{}'.format(message)) from error
             raise IntercomError(error) from error
@@ -135,10 +138,9 @@ def raise_for_error(response):
 
 
 class IntercomClient(object):
-    def __init__(self,
-                 access_token,
-                 config_request_timeout, # request_timeout parameter
-                 user_agent=None):
+    def __init__(
+        self, access_token, config_request_timeout, user_agent=None  # request_timeout parameter
+    ):
         self.__access_token = access_token
         self.__user_agent = user_agent
         # Rate limit initial values, reset by check_access_token headers
@@ -176,8 +178,9 @@ class IntercomClient(object):
         response = self.__session.get(
             # Simple endpoint that returns 1 Account record (to check API/access_token access):
             url='{}/{}'.format(self.base_url, 'tags'),
-            timeout=self.__request_timeout, # Pass request timeout
-            headers=headers)
+            timeout=self.__request_timeout,  # Pass request timeout
+            headers=headers,
+        )
         if response.status_code != 200:
             LOGGER.error('Error status_code = {}'.format(response.status_code))
             raise_for_error(response)
@@ -197,12 +200,14 @@ class IntercomClient(object):
         if not url and path:
             url = '{}/{}'.format(self.base_url, path)
 
-        LOGGER.info("URL: {} {}, Params: {}, JSON Body: {}".format(
-            method,
-            url,
-            kwargs.get("params"),
-            kwargs.get("json"),
-        ))
+        LOGGER.info(
+            "URL: {} {}, Params: {}, JSON Body: {}".format(
+                method,
+                url,
+                kwargs.get("params"),
+                kwargs.get("json"),
+            )
+        )
 
         if 'endpoint' in kwargs:
             endpoint = kwargs['endpoint']
@@ -241,6 +246,6 @@ class IntercomClient(object):
         return self.request('POST', path=path, **kwargs)
 
     def perform(self, method, path, **kwargs):
-        if method=='POST':
+        if method == 'POST':
             return self.post(path, **kwargs)
         return self.get(path, **kwargs)

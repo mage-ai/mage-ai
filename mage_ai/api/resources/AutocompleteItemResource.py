@@ -42,10 +42,15 @@ class AutocompleteItemResource(GenericResource):
             ),
         ]:
             for filename, d in mapping.items():
-                collection.append(merge_dict(d, dict(
-                    group=file_group,
-                    id=filename,
-                )))
+                collection.append(
+                    merge_dict(
+                        d,
+                        dict(
+                            group=file_group,
+                            id=filename,
+                        ),
+                    )
+                )
 
         return self.build_result_set(
             collection,

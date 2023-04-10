@@ -17,4 +17,9 @@ class UserPresenter(BasePresenter):
 
 
 UserPresenter.register_format(
-    constants.CREATE, UserPresenter.default_attributes + ['token', ])
+    constants.CREATE,
+    UserPresenter.default_attributes
+    + [
+        'token',
+    ],
+)

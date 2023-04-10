@@ -72,8 +72,10 @@ class KinesisSource(BaseSource):
                     shard_iterators[shard_id] = response['NextShardIterator']
                     records = response['Records']
                     if records:
-                        self._print(f'Got {len(records)} records from shard {shard_id}. '
-                                    f'Sample: {records[0]}')
+                        self._print(
+                            f'Got {len(records)} records from shard {shard_id}. '
+                            f'Sample: {records[0]}'
+                        )
                         handler([json.loads(r['Data'].decode('utf-8')) for r in records])
                         max_seq_number = max(r['SequenceNumber'] for r in records)
                         self.update_checkpoint(shard_id, max_seq_number)

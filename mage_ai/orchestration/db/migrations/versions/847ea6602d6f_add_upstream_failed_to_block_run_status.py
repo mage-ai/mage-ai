@@ -6,7 +6,6 @@ Create Date: 2023-03-01 11:17:44.684404
 
 """
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
@@ -30,10 +29,14 @@ def downgrade() -> None:
     bind = op.get_bind()
     if bind.engine.name == 'postgresql':
         op.execute("ALTER TYPE blockrunstatus RENAME TO blockrunstatus_old")
-        op.execute("CREATE TYPE blockrunstatus AS ENUM('INITIAL', 'QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED')")
-        op.execute((
-            "ALTER TABLE block_run ALTER COLUMN status TYPE blockrunstatus USING "
-            "status::text::blockrunstatus"
-        ))
+        op.execute(
+            "CREATE TYPE blockrunstatus AS ENUM('INITIAL', 'QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED')"  # noqa: E501
+        )
+        op.execute(
+            (
+                "ALTER TABLE block_run ALTER COLUMN status TYPE blockrunstatus USING "
+                "status::text::blockrunstatus"
+            )
+        )
         op.execute("DROP TYPE blockrunstatus_old")
     # ### end Alembic commands ###

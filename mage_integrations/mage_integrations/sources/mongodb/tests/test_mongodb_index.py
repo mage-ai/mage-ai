@@ -1,6 +1,6 @@
 import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
+import tap_tester.menagerie as menagerie
+import tap_tester.runner as runner
 import os
 import datetime
 import unittest
@@ -16,7 +16,11 @@ import bson
 from bson import ObjectId
 from functools import reduce
 from pymongo import ASCENDING
-from mongodb_common import drop_all_collections, get_test_connection, ensure_environment_variables_set
+from mongodb_common import (
+    drop_all_collections,
+    get_test_connection,
+    ensure_environment_variables_set,
+)
 import decimal
 
 
@@ -26,6 +30,7 @@ RECORD_COUNT = {}
 def random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
 
+
 def generate_simple_coll_docs(num_docs):
     docs = []
     populated_string_fields = {f"string_field_{i}": random_string_generator() for i in range(1, 64)}
@@ -33,9 +38,9 @@ def generate_simple_coll_docs(num_docs):
         docs.append({"int_field": int_value, **populated_string_fields})
     return docs
 
+
 class MongoDBOplog(unittest.TestCase):
     def setUp(self):
-
         ensure_environment_variables_set()
 
         with get_test_connection() as client:
@@ -92,10 +97,7 @@ class MongoDBOplog(unittest.TestCase):
         }
 
     def expected_sync_streams(self):
-        return {
-            'simple_coll_1',
-            'simple_coll_2'
-        }
+        return {'simple_coll_1', 'simple_coll_2'}
 
     def name(self):
         return "tap_tester_mongodb_index"
@@ -110,19 +112,18 @@ class MongoDBOplog(unittest.TestCase):
         return {'password': os.getenv('TAP_MONGODB_PASSWORD')}
 
     def get_properties(self):
-        return {'host' : os.getenv('TAP_MONGODB_HOST'),
-                'port' : os.getenv('TAP_MONGODB_PORT'),
-                'user' : os.getenv('TAP_MONGODB_USER'),
-                'database' : os.getenv('TAP_MONGODB_DBNAME')
+        return {
+            'host': os.getenv('TAP_MONGODB_HOST'),
+            'port': os.getenv('TAP_MONGODB_PORT'),
+            'user': os.getenv('TAP_MONGODB_USER'),
+            'database': os.getenv('TAP_MONGODB_DBNAME'),
         }
 
     def expected_string_fields(self):
         # Max index count = 64.  63 strings + '_id'
         return {f"string_field_{i}" for i in range(1, 64)}
 
-
     def test_run(self):
-
         conn_id = connections.ensure_connection(self)
 
         #  -----------------------------------
@@ -140,19 +141,24 @@ class MongoDBOplog(unittest.TestCase):
         found_catalogs = menagerie.get_catalogs(conn_id)
 
         # assert we find the correct streams
-        self.assertEqual(self.expected_check_streams(),
-                         {c['tap_stream_id'] for c in found_catalogs})
+        self.assertEqual(
+            self.expected_check_streams(), {c['tap_stream_id'] for c in found_catalogs}
+        )
 
         for tap_stream_id in self.expected_check_streams():
             found_stream = [c for c in found_catalogs if c['tap_stream_id'] == tap_stream_id][0]
 
             # assert that the pks are correct
-            self.assertEqual(self.expected_pks()[found_stream['stream_name']],
-                             set(found_stream.get('metadata', {}).get('table-key-properties')))
+            self.assertEqual(
+                self.expected_pks()[found_stream['stream_name']],
+                set(found_stream.get('metadata', {}).get('table-key-properties')),
+            )
 
             # assert that the row counts are correct
-            self.assertEqual(self.expected_row_counts()[found_stream['stream_name']],
-                             found_stream.get('metadata', {}).get('row-count'))
+            self.assertEqual(
+                self.expected_row_counts()[found_stream['stream_name']],
+                found_stream.get('metadata', {}).get('row-count'),
+            )
 
         # no plans for tap to support compound index, may not appear in valid-replication-keys list
         discovered_replication_keys = found_catalogs[0]['metadata']['valid-replication-keys']

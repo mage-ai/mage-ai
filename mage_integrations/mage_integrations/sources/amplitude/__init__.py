@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 from mage_integrations.connections.amplitude import Amplitude as AmplitudeConnection
-from mage_integrations.sources.amplitude.constants import TABLE_KEY_PROPERTIES, VALID_REPLICATION_KEYS
+from mage_integrations.sources.amplitude.constants import (
+    TABLE_KEY_PROPERTIES,
+    VALID_REPLICATION_KEYS,
+)
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.sources.query import (
@@ -54,7 +57,7 @@ class Amplitude(Source):
                 results,
             )
             if index >= 0:
-                results = results[index + 1:]
+                results = results[index + 1 :]
 
         yield list(results)
 

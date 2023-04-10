@@ -14,6 +14,7 @@ class PipelineExecution:
     it will be run in a seperate process, and the user can choose to cancel
     the execution.
     """
+
     def __init__(self):
         self.current_pipeline_process: multiprocessing.Process = None
         self.current_message_task = None

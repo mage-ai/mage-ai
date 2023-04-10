@@ -75,16 +75,15 @@ class BigQuery(Destination):
         else:
             full_table_name = f'{schema_name}.{table_name}'
 
-        create_table_command = \
-            build_create_table_command(
-                column_type_mapping=type_mapping,
-                columns=schema['properties'].keys(),
-                full_table_name=full_table_name,
-                # BigQuery doesn't support unique constraints
-                unique_constraints=None,
-                create_temporary_table=create_temporary_table,
-                column_identifier='`',
-            )
+        create_table_command = build_create_table_command(
+            column_type_mapping=type_mapping,
+            columns=schema['properties'].keys(),
+            full_table_name=full_table_name,
+            # BigQuery doesn't support unique constraints
+            unique_constraints=None,
+            create_temporary_table=create_temporary_table,
+            column_identifier='`',
+        )
 
         stream_partition_keys = self.partition_keys.get(stream, [])
         if len(stream_partition_keys) > 0 and not create_temporary_table:
@@ -108,20 +107,25 @@ PARTITION BY
         database_name: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
-        results = self.build_connection().load(f"""
+        results = self.build_connection().load(
+            f"""
 SELECT
     column_name
     , data_type
 FROM {schema_name}.INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '{table_name}'
-        """)
+        """
+        )
 
         schema_columns = schema['properties'].keys()
 
         current_mapping = reduce(
-            lambda obj, tup: merge_dict(obj, {
-                clean_column_name(tup[0]): tup[1],
-            }),
+            lambda obj, tup: merge_dict(
+                obj,
+                {
+                    clean_column_name(tup[0]): tup[1],
+                },
+            ),
             results,
             {},
         )
@@ -155,19 +159,25 @@ WHERE TABLE_NAME = '{table_name}'
             cmds = []
             for col, new_col_type in new_column_types.items():
                 cmds.append(f'ALTER COLUMN {col} SET DATA TYPE {new_col_type}')
-            alter_table_commands.append('\n'.join([
-                f'ALTER TABLE {full_table_name}',
-                ', '.join(cmds),
-            ]))
+            alter_table_commands.append(
+                '\n'.join(
+                    [
+                        f'ALTER TABLE {full_table_name}',
+                        ', '.join(cmds),
+                    ]
+                )
+            )
 
         new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
         if new_columns:
-            alter_table_commands.append(build_alter_table_command(
-                column_type_mapping=new_mapping,
-                columns=new_columns,
-                full_table_name=full_table_name,
-                column_identifier='`',
-            ))
+            alter_table_commands.append(
+                build_alter_table_command(
+                    column_type_mapping=new_mapping,
+                    columns=new_columns,
+                    full_table_name=full_table_name,
+                    column_identifier='`',
+                )
+            )
 
         return alter_table_commands
 
@@ -177,11 +187,15 @@ WHERE TABLE_NAME = '{table_name}'
         table_name: str,
         database_name: str = None,
     ) -> bool:
-        data = self.build_connection().execute([f"""
+        data = self.build_connection().execute(
+            [
+                f"""
 SELECT 1
 FROM `{database_name}.{schema_name}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
-"""])
+"""
+            ]
+        )
         return len(data[0]) >= 1
 
     def calculate_records_inserted_and_updated(
@@ -321,7 +335,9 @@ WHERE table_id = '{table_name}'
             session_id = job.session_info.session_id
             job.result()
 
-            session_id_property = bigquery.query.ConnectionProperty(key='session_id', value=session_id)
+            session_id_property = bigquery.query.ConnectionProperty(
+                key='session_id', value=session_id
+            )
             query_job_config = dict(
                 create_session=False,
                 connection_properties=[session_id_property],
@@ -333,7 +349,9 @@ WHERE table_id = '{table_name}'
             )
             job.result()
 
-            results, jobs = self.__insert(client, record_data, stream, query_job_config=query_job_config)
+            results, jobs = self.__insert(
+                client, record_data, stream, query_job_config=query_job_config
+            )
 
             job = client.query(
                 'COMMIT TRANSACTION',
@@ -352,9 +370,12 @@ WHERE table_id = '{table_name}'
             table_name = self.config.get('table')
 
             if self.attempted_create_table:
-                connection.execute([
-                    f'DROP TABLE {database_name}.{schema_name}.{table_name}',
-                ], commit=True)
+                connection.execute(
+                    [
+                        f'DROP TABLE {database_name}.{schema_name}.{table_name}',
+                    ],
+                    commit=True,
+                )
                 self.process_state(
                     row={
                         KEY_VALUE: dict(bookmarks={}),
@@ -526,12 +547,13 @@ WHERE table_id = '{table_name}'
             row_values = []
             row_idx = -1
 
-            while query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * MAX_QUERY_BUFFER) and \
-                    len(query_parameters) < (MAX_QUERY_PARAMETERS * MAX_QUERY_BUFFER) and \
-                    query_size < (MAX_QUERY_STRING_SIZE * MAX_QUERY_BUFFER) and \
-                    row_idx + 1 < len(insert_values) and \
-                    len(row_values) < max_subquery_count:
-
+            while (
+                query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * MAX_QUERY_BUFFER)
+                and len(query_parameters) < (MAX_QUERY_PARAMETERS * MAX_QUERY_BUFFER)
+                and query_size < (MAX_QUERY_STRING_SIZE * MAX_QUERY_BUFFER)
+                and row_idx + 1 < len(insert_values)
+                and len(row_values) < max_subquery_count
+            ):
                 row_idx += 1
 
                 values_for_row = insert_values[row_idx]
@@ -560,7 +582,7 @@ WHERE table_id = '{table_name}'
                         arr.append(f'@{variable_name}')
 
                         query_payload_size += sys.getsizeof(value)
-                
+
                 row_value = f'({",".join(arr)})'
                 query_size += len(row_value)
                 row_values.append(row_value)
@@ -576,23 +598,36 @@ WHERE table_id = '{table_name}'
             if row_idx + 1 >= len(insert_values):
                 insert_values = []
             else:
-                insert_values = insert_values[(row_idx + 1):]
+                insert_values = insert_values[(row_idx + 1) :]
 
-            tags2 = merge_dict(tags, dict(
-                batch_size=len(row_values),
-                records_remaining=len(insert_values),
-            ))
+            tags2 = merge_dict(
+                tags,
+                dict(
+                    batch_size=len(row_values),
+                    records_remaining=len(insert_values),
+                ),
+            )
 
             # Documentation https://cloud.google.com/bigquery/quotas
-            self.logger.info(f'Unresolved Standard SQL query length: {sys.getsizeof(query) / 1000} kbs.', tags=tags2)
-            self.logger.info(f'Number of Standard SQL query parameters: {len(query_parameters)}.', tags=tags2)
+            self.logger.info(
+                f'Unresolved Standard SQL query length: {sys.getsizeof(query) / 1000} kbs.',
+                tags=tags2,
+            )
+            self.logger.info(
+                f'Number of Standard SQL query parameters: {len(query_parameters)}.', tags=tags2
+            )
             self.logger.info(f'Request payload size: {query_payload_size / 1000} kbs.', tags=tags2)
 
             job = client.query(
                 query,
-                job_config=bigquery.QueryJobConfig(**merge_dict(query_job_config, dict(
-                    query_parameters=query_parameters,
-                ))),
+                job_config=bigquery.QueryJobConfig(
+                    **merge_dict(
+                        query_job_config,
+                        dict(
+                            query_parameters=query_parameters,
+                        ),
+                    )
+                ),
             )
 
             jobs.append(job)

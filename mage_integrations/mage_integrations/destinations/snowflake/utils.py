@@ -16,9 +16,9 @@ def build_alter_table_command(
         return None
 
     columns_and_types = [
-        f"{column_identifier}{clean_column_name(col)}{column_identifier}" +
-        f" {column_type_mapping[col]['type_converted']}" for col
-        in columns
+        f"{column_identifier}{clean_column_name(col)}{column_identifier}"
+        + f" {column_type_mapping[col]['type_converted']}"
+        for col in columns
     ]
     # TODO: support add new unique constraints
     return f"ALTER TABLE {full_table_name} ADD {', '.join(columns_and_types)}"
@@ -27,8 +27,10 @@ def build_alter_table_command(
 def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> str:
     if COLUMN_TYPE_OBJECT == column_type:
         return 'VARIANT'
-    elif COLUMN_TYPE_ARRAY == column_settings.get('type_converted') or \
-            COLUMN_TYPE_ARRAY == column_type:
+    elif (
+        COLUMN_TYPE_ARRAY == column_settings.get('type_converted')
+        or COLUMN_TYPE_ARRAY == column_type
+    ):
         return 'ARRAY'
 
     return convert_column_type_og(column_type, column_settings)

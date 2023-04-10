@@ -61,7 +61,8 @@ class PipelinePresenter(BasePresenter):
 
 PipelinePresenter.register_format(
     constants.LIST,
-    PipelinePresenter.default_attributes + [
+    PipelinePresenter.default_attributes
+    + [
         'schedules',
     ],
 )

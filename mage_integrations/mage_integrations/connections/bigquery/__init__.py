@@ -15,8 +15,9 @@ class BigQuery(Connection):
         **kwargs,
     ):
         if not credentials_info and not path_to_credentials_json_file:
-            raise Exception('BigQuery connection requires credentials_info '
-                            'or path_to_credentials_json_file.')
+            raise Exception(
+                'BigQuery connection requires credentials_info ' 'or path_to_credentials_json_file.'
+            )
         super().__init__(**kwargs)
         self.credentials_info = credentials_info
         self.path_to_credentials_json_file = path_to_credentials_json_file

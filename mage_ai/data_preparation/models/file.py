@@ -6,16 +6,18 @@ import aiofiles
 import os
 
 FILE_VERSIONS_DIR = '.file_versions'
-BLACKLISTED_DIRS = frozenset([
-    'venv',
-    'env',
-    '.git',
-    '.logs',
-    '.variables',
-    '.DS_Store',
-    '__pycache__',
-    FILE_VERSIONS_DIR,
-])
+BLACKLISTED_DIRS = frozenset(
+    [
+        'venv',
+        'env',
+        '.git',
+        '.logs',
+        '.variables',
+        '.DS_Store',
+        '__pycache__',
+        FILE_VERSIONS_DIR,
+    ]
+)
 INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 MAX_DEPTH = 30
 MAX_NUMBER_OF_FILE_VERSIONS = int(os.getenv('MAX_NUMBER_OF_FILE_VERSIONS', 100) or 100)
@@ -167,8 +169,9 @@ class File:
             number_of_file_versions = len(file_versions)
 
             if number_of_file_versions >= MAX_NUMBER_OF_FILE_VERSIONS:
-                number_of_file_versions_to_delete = 1 + \
-                    (number_of_file_versions - MAX_NUMBER_OF_FILE_VERSIONS)
+                number_of_file_versions_to_delete = 1 + (
+                    number_of_file_versions - MAX_NUMBER_OF_FILE_VERSIONS
+                )
                 for fn in sorted(file_versions)[:number_of_file_versions_to_delete]:
                     fn_path = os.path.join(file_path_versions_dir, fn)
                     os.remove(fn_path)
@@ -195,7 +198,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ) -> None:
-        for file_path, write_type, content in self.write_preprocess(
+        preprocessed_files = self.write_preprocess(
             repo_path,
             dir_path,
             filename,
@@ -203,7 +206,8 @@ class File:
             create_directories_if_not_exist=create_directories_if_not_exist,
             file_version_only=file_version_only,
             overwrite=overwrite,
-        ):
+        )
+        for file_path, write_type, content in preprocessed_files:
             with open(file_path, write_type) as f:
                 if content:
                     f.write(content)
@@ -220,7 +224,7 @@ class File:
         file_version_only: bool = False,
         overwrite: bool = True,
     ) -> None:
-        for file_path, write_type, content in self.write_preprocess(
+        preprocessed_files = self.write_preprocess(
             repo_path,
             dir_path,
             filename,
@@ -228,7 +232,8 @@ class File:
             create_directories_if_not_exist=create_directories_if_not_exist,
             file_version_only=file_version_only,
             overwrite=overwrite,
-        ):
+        )
+        for file_path, write_type, content in preprocessed_files:
             async with aiofiles.open(file_path, mode=write_type) as fp:
                 await fp.write(content)
 
@@ -271,11 +276,14 @@ class File:
             os.path.join(self.repo_path, ''),
             '',
         )
-        return [File(
-            v,
-            file_path_versions_dir_without_repo,
-            self.repo_path,
-        ) for v in sorted(file_versions, reverse=True)]
+        return [
+            File(
+                v,
+                file_path_versions_dir_without_repo,
+                self.repo_path,
+            )
+            for v in sorted(file_versions, reverse=True)
+        ]
 
     def update_content(self, content: str):
         self.write(

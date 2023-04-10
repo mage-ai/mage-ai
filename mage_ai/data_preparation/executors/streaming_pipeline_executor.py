@@ -32,15 +32,19 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 if len(b.upstream_blocks or []) > 0:
                     raise Exception(f'Data loader {b.uuid} can\'t have upstream blocks.')
                 if len(b.downstream_blocks or []) != 1:
-                    raise Exception(f'Data loader {b.uuid} must have one transformer or data'
-                                    ' exporter as the downstream block.')
+                    raise Exception(
+                        f'Data loader {b.uuid} must have one transformer or data'
+                        ' exporter as the downstream block.'
+                    )
                 source_blocks.append(b)
             if b.type == BlockType.DATA_EXPORTER:
                 if len(b.downstream_blocks or []) > 0:
                     raise Exception(f'Data expoter {b.uuid} can\'t have downstream blocks.')
                 if len(b.upstream_blocks or []) != 1:
-                    raise Exception(f'Data loader {b.uuid} must have a transformer or data'
-                                    ' exporter as the upstream block.')
+                    raise Exception(
+                        f'Data loader {b.uuid} must have a transformer or data'
+                        ' exporter as the upstream block.'
+                    )
                 sink_blocks.append(b)
             if b.type == BlockType.TRANSFORMER:
                 if len(b.downstream_blocks or []) != 1:
@@ -91,15 +95,16 @@ class StreamingPipelineExecutor(PipelineExecutor):
         except Exception as e:
             if not build_block_output_stdout:
                 self.logger.exception(
-                        f'Failed to execute streaming pipeline {self.pipeline.uuid}',
-                        **merge_dict(dict(error=e), tags),
-                    )
+                    f'Failed to execute streaming pipeline {self.pipeline.uuid}',
+                    **merge_dict(dict(error=e), tags),
+                )
             raise e
 
     def __execute_in_python(self, build_block_output_stdout: Callable[..., object] = None):
         from mage_ai.streaming.sources.base import SourceConsumeMethod
         from mage_ai.streaming.sources.source_factory import SourceFactory
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
+
         source_config = yaml.safe_load(self.source_block.content)
         sink_config = yaml.safe_load(self.sink_block.content)
         source = SourceFactory.get_source(
@@ -155,4 +160,3 @@ class StreamingPipelineExecutor(PipelineExecutor):
         """
         TODO: Implement this method
         """
-        pass

@@ -350,7 +350,9 @@ def __groupby_agg(df, action, agg_method):
     if action_code is not None and action_code != '':
         df_filtered = query_with_action_code(df_filtered, action_code, {'original_df': df_filtered})
     action_options = action['action_options']
-    df_agg = df_filtered.groupby(action_options['groupby_columns'],)[
+    df_agg = df_filtered.groupby(
+        action_options['groupby_columns'],
+    )[
         action['action_arguments']
     ].agg(agg_method)
     return df.merge(

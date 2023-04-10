@@ -22,6 +22,7 @@ def build_sample_mysql_rows():
         ('demo_users', '0', '', 'power_level', 'float', 'YES'),
     ]
 
+
 class MySQLSourceTests(unittest.TestCase):
     maxDiff = None
 

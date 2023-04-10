@@ -26,24 +26,24 @@ class OpenSearchSink(BaseSink):
             session = boto3.Session()
             credentials = session.get_credentials()
             awsauth = AWS4Auth(
-              credentials.access_key,
-              credentials.secret_key,
-              session.region_name,
-              'es',
-              session_token=credentials.token,
+                credentials.access_key,
+                credentials.secret_key,
+                session.region_name,
+                'es',
+                session_token=credentials.token,
             )
             http_auth = awsauth
         else:
             http_auth = self.config.http_auth
 
         self.client = OpenSearch(
-                hosts=[self.config.host],
-                http_auth=http_auth,
-                use_ssl=True,
-                verify_certs=self.config.verify_certs,
-                ssl_assert_hostname=False,
-                ssl_show_warn=False,
-                connection_class=RequestsHttpConnection,
+            hosts=[self.config.host],
+            http_auth=http_auth,
+            use_ssl=True,
+            verify_certs=self.config.verify_certs,
+            ssl_assert_hostname=False,
+            ssl_show_warn=False,
+            connection_class=RequestsHttpConnection,
         )
 
     def test_connection(self):
@@ -51,11 +51,7 @@ class OpenSearchSink(BaseSink):
 
     def write(self, data: Dict):
         self._print(f'[Opensearch] Ingest data {data}, time={time.time()}')
-        self.client.index(
-            index=self.config.index_name,
-            body=data,
-            refresh=True
-        )
+        self.client.index(index=self.config.index_name, body=data, refresh=True)
 
     def batch_write(self, data: List[Dict]):
         self._print(f'[Opensearch] Batch ingest data {data}, time={time.time()}')

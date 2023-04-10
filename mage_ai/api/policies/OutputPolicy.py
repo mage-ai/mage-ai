@@ -8,14 +8,23 @@ class OutputPolicy(BasePolicy):
     pass
 
 
-OutputPolicy.allow_actions([
-    constants.LIST,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+OutputPolicy.allow_actions(
+    [
+        constants.LIST,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-OutputPolicy.allow_read(OutputPresenter.default_attributes + [], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.LIST,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+OutputPolicy.allow_read(
+    OutputPresenter.default_attributes + [],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)

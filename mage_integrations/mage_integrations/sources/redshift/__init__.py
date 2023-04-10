@@ -66,10 +66,12 @@ WHERE schemaname = '{schema}'
             table_names = ', '.join([f"'{n}'" for n in streams])
             query = f'{query}\nAND tablename IN ({table_names})'
 
-        rows = self.build_connection().execute([
-            f'SET search_path TO {schema}',
-            query,
-        ])
+        rows = self.build_connection().execute(
+            [
+                f'SET search_path TO {schema}',
+                query,
+            ]
+        )
         groups = group_by(lambda t: t[1], rows[len(rows) - 1])
 
         streams = []
@@ -112,10 +114,12 @@ WHERE schemaname = '{schema}'
                     type=column_types,
                 )
 
-            schema = Schema.from_dict(dict(
-                properties=properties,
-                type='object',
-            ))
+            schema = Schema.from_dict(
+                dict(
+                    properties=properties,
+                    type='object',
+                )
+            )
             metadata = get_standard_metadata(
                 key_properties=unique_constraints,
                 replication_method=REPLICATION_METHOD_FULL_TABLE,

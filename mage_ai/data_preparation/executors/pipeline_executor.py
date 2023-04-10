@@ -26,13 +26,15 @@ class PipelineExecutor:
         update_status: bool = False,
         **kwargs,
     ) -> None:
-        asyncio.run(self.pipeline.execute(
-            analyze_outputs=analyze_outputs,
-            global_vars=global_vars,
-            run_sensors=run_sensors,
-            run_tests=run_tests,
-            update_status=update_status,
-        ))
+        asyncio.run(
+            self.pipeline.execute(
+                analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
+                run_sensors=run_sensors,
+                run_tests=run_tests,
+                update_status=update_status,
+            )
+        )
         self.logger_manager.output_logs_to_destination()
 
     def _build_tags(self, **kwargs):

@@ -3,8 +3,8 @@ import re
 
 from base import FreshdeskBaseTest
 
-class PaginationTest(FreshdeskBaseTest):
 
+class PaginationTest(FreshdeskBaseTest):
     def name(self):
         return "tap_freshdesk_pagination_test"
 
@@ -12,7 +12,6 @@ class PaginationTest(FreshdeskBaseTest):
         print("Pagination Test for tap-freshdesk")
 
     def test_run(self):
-
         # instantiate connection
         conn_id = connections.ensure_connection(self)
 
@@ -30,7 +29,6 @@ class PaginationTest(FreshdeskBaseTest):
         # Test by stream
         for stream in streams_to_test:
             with self.subTest(stream=stream):
-
                 record_count = sync_record_count.get(stream, 0)
 
                 sync_messages = sync_records.get(stream, {'messages': []}).get('messages')
@@ -45,14 +43,22 @@ class PaginationTest(FreshdeskBaseTest):
 
                 stream_page_size = self.expected_page_limits()[stream]
                 self.assertLess(stream_page_size, record_count)
-                print("stream_page_size: {} < record_count {} for stream: {}".format(stream_page_size, record_count, stream))
+                print(
+                    "stream_page_size: {} < record_count {} for stream: {}".format(
+                        stream_page_size, record_count, stream
+                    )
+                )
 
                 # Verify there are no duplicates accross pages
-                records_pks_set = {tuple([message.get('data').get(primary_key)
-                                          for primary_key in primary_keys])
-                                   for message in sync_messages}
-                records_pks_list = [tuple([message.get('data').get(primary_key)
-                                           for primary_key in primary_keys])
-                                    for message in sync_messages]
+                records_pks_set = {
+                    tuple([message.get('data').get(primary_key) for primary_key in primary_keys])
+                    for message in sync_messages
+                }
+                records_pks_list = [
+                    tuple([message.get('data').get(primary_key) for primary_key in primary_keys])
+                    for message in sync_messages
+                ]
 
-                self.assertCountEqual(records_pks_set, records_pks_list, msg=f"We have duplicate records for {stream}")
+                self.assertCountEqual(
+                    records_pks_set, records_pks_list, msg=f"We have duplicate records for {stream}"
+                )

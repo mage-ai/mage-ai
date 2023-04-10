@@ -5,6 +5,7 @@ from jsonschema import validate
 
 import tap_mongodb.sync_strategies.common as common
 
+
 class TestRowToSchemaMessage(unittest.TestCase):
     # def test_one(self):
     #     row = {"a_str": "hello"}
@@ -26,10 +27,7 @@ class TestRowToSchemaMessage(unittest.TestCase):
         row = {
             "a_str": "hello",
             "a_list": ["foo", "bar", 1, 2, {"name": "nick"}],
-            "an_object": {
-                "a_nested_str": "baz",
-                "a_nested_list": [1, 2, "hi"]
-            }
+            "an_object": {"a_nested_str": "baz", "a_nested_list": [1, 2, "hi"]},
         }
 
         schema = {"type": "object", "properties": {}}
@@ -42,8 +40,7 @@ class TestRowToSchemaMessage(unittest.TestCase):
         self.assertFalse(changed)
 
         # a different looking row makes the schema change
-        row = {"a_str": "hello",
-               "a_date": bson.timestamp.Timestamp(1565897157, 1)}
+        row = {"a_str": "hello", "a_date": bson.timestamp.Timestamp(1565897157, 1)}
         changed = common.row_to_schema(schema, row)
         self.assertTrue(changed)
 
@@ -51,24 +48,17 @@ class TestRowToSchemaMessage(unittest.TestCase):
         changed = common.row_to_schema(schema, row)
         self.assertFalse(changed)
 
-
     def test_simple_date(self):
         row = {"a_date": bson.timestamp.Timestamp(1565897157, 1)}
         schema = {"type": "object", "properties": {}}
         changed = common.row_to_schema(schema, row)
 
-        expected = {"type": "object",
-                    "properties": {
-                        "a_date": {
-                            "anyOf": [{"type": "string",
-                                       "format": "date-time"},
-                                      {}]
-                        }
-                    }
+        expected = {
+            "type": "object",
+            "properties": {"a_date": {"anyOf": [{"type": "string", "format": "date-time"}, {}]}},
         }
         self.assertTrue(changed)
         self.assertEqual(expected, schema)
-
 
     def test_simple_decimal(self):
         row = {"a_decimal": bson.Decimal128(decimal.Decimal('1.34'))}
@@ -79,15 +69,12 @@ class TestRowToSchemaMessage(unittest.TestCase):
             "type": "object",
             "properties": {
                 "a_decimal": {
-                    "anyOf": [{"type": "number",
-                               "multipleOf": decimal.Decimal('1e-34')},
-                              {}]
+                    "anyOf": [{"type": "number", "multipleOf": decimal.Decimal('1e-34')}, {}]
                 }
-            }
+            },
         }
         self.assertTrue(changed)
         self.assertEqual(expected, schema)
-
 
     def test_simple_float(self):
         row = {"a_float": 1.34}
@@ -96,16 +83,10 @@ class TestRowToSchemaMessage(unittest.TestCase):
 
         expected = {
             "type": "object",
-            "properties": {
-                "a_float": {
-                    "anyOf": [{"type": "number"},
-                              {}]
-                }
-            }
+            "properties": {"a_float": {"anyOf": [{"type": "number"}, {}]}},
         }
         self.assertTrue(changed)
         self.assertEqual(expected, schema)
-
 
     def test_decimal_then_float(self):
         decimal_row = {"a_field": bson.Decimal128(decimal.Decimal('1.34'))}
@@ -118,19 +99,13 @@ class TestRowToSchemaMessage(unittest.TestCase):
 
         expected = {
             "type": "object",
-            "properties": {
-                "a_field": {
-                    "anyOf": [{"type": "number"},
-                              {}]
-                }
-            }
+            "properties": {"a_field": {"anyOf": [{"type": "number"}, {}]}},
         }
 
         self.assertTrue(changed_decimal)
         self.assertTrue(changed_float)
 
         self.assertEqual(expected, schema)
-
 
     def test_float_then_decimal(self):
         float_row = {"a_field": 1.34}
@@ -145,11 +120,9 @@ class TestRowToSchemaMessage(unittest.TestCase):
             "type": "object",
             "properties": {
                 "a_field": {
-                    "anyOf": [{"type": "number",
-                               "multipleOf": decimal.Decimal('1e-34')},
-                              {}]
+                    "anyOf": [{"type": "number", "multipleOf": decimal.Decimal('1e-34')}, {}]
                 }
-            }
+            },
         }
 
         self.assertTrue(changed_float)
@@ -167,18 +140,12 @@ class TestRowToSchemaMessage(unittest.TestCase):
 
         expected = {
             "type": "object",
-            "properties": {
-                "a_field": {
-                    "anyOf": [{"type": "number"},
-                              {}]
-                }
-            }
+            "properties": {"a_field": {"anyOf": [{"type": "number"}, {}]}},
         }
 
         self.assertTrue(changed_float)
         self.assertFalse(changed_float_2)
         self.assertEqual(expected, schema)
-
 
     def test_decimal_then_decimal(self):
         decimal_row = {"a_field": bson.Decimal128(decimal.Decimal('1.34'))}
@@ -193,11 +160,9 @@ class TestRowToSchemaMessage(unittest.TestCase):
             "type": "object",
             "properties": {
                 "a_field": {
-                    "anyOf": [{"type": "number",
-                              "multipleOf": decimal.Decimal('1e-34')},
-                              {}]
+                    "anyOf": [{"type": "number", "multipleOf": decimal.Decimal('1e-34')}, {}]
                 }
-            }
+            },
         }
 
         self.assertTrue(changed_decimal)
@@ -218,19 +183,16 @@ class TestRowToSchemaMessage(unittest.TestCase):
             "properties": {
                 "a_field": {
                     "anyOf": [
-                        {"type": "string",
-                         "format": "date-time"},
-                        {"type": "number",
-                         "multipleOf": decimal.Decimal('1e-34')},
-                        {}
+                        {"type": "string", "format": "date-time"},
+                        {"type": "number", "multipleOf": decimal.Decimal('1e-34')},
+                        {},
                     ]
                 }
-            }
+            },
         }
         self.assertTrue(changed_date)
         self.assertTrue(changed_decimal)
         self.assertEqual(expected, schema)
-
 
     def test_nested_data(self):
         date_row = {"foo": {"a_field": bson.timestamp.Timestamp(1565897157, 1)}}
@@ -247,18 +209,14 @@ class TestRowToSchemaMessage(unittest.TestCase):
                             "type": "object",
                             "properties": {
                                 "a_field": {
-                                    "anyOf": [
-                                        {"type": "string",
-                                         "format": "date-time"},
-                                        {}
-                                    ]
+                                    "anyOf": [{"type": "string", "format": "date-time"}, {}]
                                 }
-                            }
+                            },
                         },
-                        {}
+                        {},
                     ]
                 }
-            }
+            },
         }
         self.assertTrue(changed)
         self.assertEqual(expected, schema)
@@ -276,26 +234,19 @@ class TestRowToSchemaMessage(unittest.TestCase):
             "properties": {
                 "foo": {
                     "anyOf": [
-                        {
-                            "type": "string",
-                            "format": "date-time"
-                        },
+                        {"type": "string", "format": "date-time"},
                         {
                             "type": "object",
                             "properties": {
                                 "a_field": {
-                                    "anyOf": [
-                                        {"type": "string",
-                                         "format": "date-time"},
-                                        {}
-                                    ]
+                                    "anyOf": [{"type": "string", "format": "date-time"}, {}]
                                 }
-                            }
+                            },
                         },
-                        {}
+                        {},
                     ]
                 }
-            }
+            },
         }
         self.assertTrue(changed_date)
         self.assertTrue(changed_nested)
@@ -305,7 +256,7 @@ class TestRowToSchemaMessage(unittest.TestCase):
         row = {
             "foo": [
                 bson.timestamp.Timestamp(1565897157, 1),
-                bson.Decimal128(decimal.Decimal('1.34'))
+                bson.Decimal128(decimal.Decimal('1.34')),
             ]
         }
         schema = {"type": "object", "properties": {}}
@@ -320,22 +271,16 @@ class TestRowToSchemaMessage(unittest.TestCase):
                             "type": "array",
                             "items": {
                                 "anyOf": [
-                                    {
-                                        "type": "string",
-                                        "format": "date-time"
-                                    },
-                                    {
-                                        "type": "number",
-                                        "multipleOf": decimal.Decimal('1e-34')
-                                    },
-                                    {}
+                                    {"type": "string", "format": "date-time"},
+                                    {"type": "number", "multipleOf": decimal.Decimal('1e-34')},
+                                    {},
                                 ]
-                            }
+                            },
                         },
-                        {}
+                        {},
                     ]
                 }
-            }
+            },
         }
         self.assertTrue(changed)
         self.assertEqual(expected, schema)
@@ -343,26 +288,14 @@ class TestRowToSchemaMessage(unittest.TestCase):
     def test_array_nested(self):
         row = {
             "foo": [
-                [
-                    bson.timestamp.Timestamp(1565897157, 1),
-                    bson.Decimal128(decimal.Decimal('1.34'))
-                ],
+                [bson.timestamp.Timestamp(1565897157, 1), bson.Decimal128(decimal.Decimal('1.34'))],
                 {
                     "bar": bson.timestamp.Timestamp(1565897157, 1),
-                    "bat": bson.Decimal128(decimal.Decimal('1.34'))
-                }
+                    "bat": bson.Decimal128(decimal.Decimal('1.34')),
+                },
             ]
         }
-        row_2 = {
-            "bar": "1",
-            "foo": [
-                ["bob", "roger"],
-                {
-                    "bar": "bob",
-                    "bat": "roger"
-                }
-            ]
-        }
+        row_2 = {"bar": "1", "foo": [["bob", "roger"], {"bar": "bob", "bat": "roger"}]}
         schema = {"type": "object", "properties": {}}
         changed = common.row_to_schema(schema, row)
         changed_2 = common.row_to_schema(schema, row_2)
@@ -380,55 +313,51 @@ class TestRowToSchemaMessage(unittest.TestCase):
                                         "type": "array",
                                         "items": {
                                             "anyOf": [
-                                                {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
+                                                {"type": "string", "format": "date-time"},
                                                 {
                                                     "type": "number",
-                                                    "multipleOf": decimal.Decimal('1e-34')
+                                                    "multipleOf": decimal.Decimal('1e-34'),
                                                 },
-                                                {}
+                                                {},
                                             ]
-                                        }
+                                        },
                                     },
                                     {
                                         "type": "object",
                                         "properties": {
                                             "bar": {
                                                 "anyOf": [
-                                                    {
-                                                        "type": "string",
-                                                        "format": "date-time"
-                                                    },
-                                                    {}
+                                                    {"type": "string", "format": "date-time"},
+                                                    {},
                                                 ]
                                             },
                                             "bat": {
                                                 "anyOf": [
                                                     {
                                                         "type": "number",
-                                                        "multipleOf": decimal.Decimal('1e-34')
+                                                        "multipleOf": decimal.Decimal('1e-34'),
                                                     },
-                                                    {}
+                                                    {},
                                                 ]
-                                            }
-                                        }
+                                            },
+                                        },
                                     },
-                                    {}
+                                    {},
                                 ]
-                            }
+                            },
                         },
-                        {}
+                        {},
                     ]
                 }
-            }
+            },
         }
-        singer_row = {k:common.transform_value(v, [k]) for k, v in row_2.items()
-                      if type(v) not in [bson.min_key.MinKey, bson.max_key.MaxKey]}
+        singer_row = {
+            k: common.transform_value(v, [k])
+            for k, v in row_2.items()
+            if type(v) not in [bson.min_key.MinKey, bson.max_key.MaxKey]
+        }
 
-
-        decimal.getcontext().prec=100000
+        decimal.getcontext().prec = 100000
         validate(instance=singer_row, schema=schema)
 
         self.assertTrue(changed)

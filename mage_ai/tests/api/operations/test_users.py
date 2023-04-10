@@ -8,20 +8,27 @@ class UserOperationTests(BaseApiTestCase):
 
     async def test_execute_create(self):
         email = self.faker.email()
-        response = await self.base_test_execute_create(dict(
-            email=email,
-            password='water_lightning',
-            password_confirmation='water_lightning',
-        ))
+        response = await self.base_test_execute_create(
+            dict(
+                email=email,
+                password='water_lightning',
+                password_confirmation='water_lightning',
+            )
+        )
         self.assertEqual(User.query.get(response['user']['id']).email, email)
 
     async def test_execute_create_unauthorized(self):
         async def _func():
-            await self.base_test_execute_create(dict(
-                email=self.faker.email(),
-                password='water_lightning',
-                password_confirmation='water_lightning',
-            ), user=create_user(), after_create_count=3, before_create_count=2)
+            await self.base_test_execute_create(
+                dict(
+                    email=self.faker.email(),
+                    password='water_lightning',
+                    password_confirmation='water_lightning',
+                ),
+                user=create_user(),
+                after_create_count=3,
+                before_create_count=2,
+            )
 
         await self.assertRaisesAsync(Exception, _func)
 
@@ -40,19 +47,26 @@ class UserOperationTests(BaseApiTestCase):
 
     async def test_execute_detail(self):
         user = create_user()
-        await self.base_test_execute_detail(user.id, dict(
-            email=user.email,
-            username=user.username,
-        ))
+        await self.base_test_execute_detail(
+            user.id,
+            dict(
+                email=user.email,
+                username=user.username,
+            ),
+        )
 
     async def test_execute_detail_unauthorized(self):
         user = create_user()
 
         async def _func():
-            await self.base_test_execute_detail(user.id, dict(
-                email=user.email,
-                username=user.username,
-            ), user=create_user())
+            await self.base_test_execute_detail(
+                user.id,
+                dict(
+                    email=user.email,
+                    username=user.username,
+                ),
+                user=create_user(),
+            )
 
         await self.assertRaisesAsync(Exception, _func)
 

@@ -6,7 +6,6 @@ Create Date: 2023-01-31 22:04:43.403008
 
 """
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
@@ -22,7 +21,9 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix_oauth2_access_token_token'), ['token'], unique=True)
 
     with op.batch_alter_table('oauth2_application', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_oauth2_application_client_id'), ['client_id'], unique=True)
+        batch_op.create_index(
+            batch_op.f('ix_oauth2_application_client_id'), ['client_id'], unique=True
+        )
 
     with op.batch_alter_table('user', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_user_email'), ['email'], unique=True)

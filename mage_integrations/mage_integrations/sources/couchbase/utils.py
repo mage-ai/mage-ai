@@ -19,25 +19,17 @@ def build_comparison_statement(
 ):
     column_properties = properties.get(col)
     if not column_properties:
-        raise Exception(
-            f'There are no properties in the schema for column {col}.')
+        raise Exception(f'There are no properties in the schema for column {col}.')
 
-    column_type = find(
-        lambda x: COLUMN_TYPE_NULL != x,
-        column_properties['type']
-    )
+    column_type = find(lambda x: COLUMN_TYPE_NULL != x, column_properties['type'])
     column_format = column_properties.get('format')
 
     convert_func = column_func(column_type)
 
-    if column_format == COLUMN_FORMAT_DATETIME \
-            and convert_datetime_func is not None:
+    if column_format == COLUMN_FORMAT_DATETIME and convert_datetime_func is not None:
         val = convert_datetime_func(val)
 
-    return (
-        f"{column_cleaned if column_cleaned else col} "
-        f"{operator} {convert_func}('{val}')"
-    )
+    return f"{column_cleaned if column_cleaned else col} " f"{operator} {convert_func}('{val}')"
 
 
 def column_func(column_type: str) -> str:

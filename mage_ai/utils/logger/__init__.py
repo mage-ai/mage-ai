@@ -13,7 +13,7 @@ import sys
 import uuid
 
 
-class Logger():
+class Logger:
     def __init__(
         self,
         caller: Any = None,

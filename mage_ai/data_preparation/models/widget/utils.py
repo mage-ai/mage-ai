@@ -72,7 +72,9 @@ def calculate_metric_for_series(series, aggregation):
             series.value_counts().items(),
             key=lambda t: t[1],
             reverse=True,
-        )[0][0]
+        )[
+            0
+        ][0]
     elif AggregationFunction.SUM == aggregation:
         value = sum(series)
 
@@ -102,7 +104,7 @@ def build_x_y(df, group_by_columns, metrics):
     ).values
 
     y_values = []
-    for idx, metric in enumerate(metrics):
+    for _idx, metric in enumerate(metrics):
         y_values.append([g[build_metric_name(metric)] for g in metrics_per_group])
 
     data[VARIABLE_NAME_Y] = y_values

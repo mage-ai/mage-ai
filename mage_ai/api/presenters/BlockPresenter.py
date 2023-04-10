@@ -57,22 +57,27 @@ class BlockPresenter(BasePresenter):
                     read_only=True,
                 )
                 query_string = compiled_query_string(self.model)
-                data['metadata'] = dict(dbt=dict(
-                    lineage=[b.to_dict() for b in upstream_blocks],
-                    sql=query_string,
-                ))
+                data['metadata'] = dict(
+                    dbt=dict(
+                        lineage=[b.to_dict() for b in upstream_blocks],
+                        sql=query_string,
+                    )
+                )
 
             return data
 
         return self.model.to_dict()
 
 
-BlockPresenter.register_formats([
-    constants.CREATE,
-    constants.UPDATE,
-], [
-    'content',
-])
+BlockPresenter.register_formats(
+    [
+        constants.CREATE,
+        constants.UPDATE,
+    ],
+    [
+        'content',
+    ],
+)
 
 BlockPresenter.register_format(
     constants.DETAIL,

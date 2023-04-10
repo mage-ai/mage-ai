@@ -47,11 +47,15 @@ class IntegrationSourceResource(GenericResource):
             streams = list(streams_updated)
             success = True
 
-        return self(dict(
-            error_message=error_message,
-            streams=streams,
-            success=success,
-        ), user, **kwargs)
+        return self(
+            dict(
+                error_message=error_message,
+                streams=streams,
+                success=success,
+            ),
+            user,
+            **kwargs,
+        )
 
     @classmethod
     @safe_db_query

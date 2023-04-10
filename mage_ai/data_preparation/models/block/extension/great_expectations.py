@@ -5,7 +5,7 @@ import great_expectations as gx
 import pandas as pd
 
 
-class GreatExpectations():
+class GreatExpectations:
     def __init__(self, block):
         self.block = block
 

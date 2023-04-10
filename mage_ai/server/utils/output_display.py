@@ -46,7 +46,6 @@ def find_index_of_last_expression_lines(code_lines: List[str]) -> int:
         or paranthesis_close > paranthesis_open
         or square_brackets_close > square_brackets_open
     ):
-
         starting_index -= 1
 
         brackets_close += code_lines[starting_index].count('}')
@@ -79,7 +78,7 @@ def get_content_inside_triple_quotes(parts):
         if re.search(r'[\w]+[ ]*=[ ]*[f]*"""', first_line):
             variable = first_line.split('=')[0].strip()
 
-        return '\n'.join(parts[start_index + 1:-1]).replace('\"', '\\"'), variable
+        return '\n'.join(parts[start_index + 1 : -1]).replace('\"', '\\"'), variable
 
     return None, None
 
@@ -331,10 +330,11 @@ def get_block_output_process_code(
     block_uuid: str,
     block_type: BlockType = None,
     kernel_name: str = None,
-
 ):
-    if kernel_name != KernelName.PYSPARK or \
-            block_type not in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+    if kernel_name != KernelName.PYSPARK or block_type not in [
+        BlockType.DATA_LOADER,
+        BlockType.TRANSFORMER,
+    ]:
         return None
     return f"""%%local
 from mage_ai.data_preparation.models.constants import BlockStatus

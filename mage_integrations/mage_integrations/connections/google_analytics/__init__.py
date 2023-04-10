@@ -27,8 +27,10 @@ class GoogleAnalytics(Connection):
         path_to_credentials_json_file: str = None,
     ):
         if not credentials_info and not path_to_credentials_json_file:
-            raise Exception('GoogleAnalytics connection requires credentials_info '
-                            'or path_to_credentials_json_file.')
+            raise Exception(
+                'GoogleAnalytics connection requires credentials_info '
+                'or path_to_credentials_json_file.'
+            )
 
         super().__init__()
         self.credentials_info = credentials_info
@@ -93,9 +95,12 @@ class GoogleAnalytics(Connection):
             response = client.run_report(request)
             data = parse_response(request, response)
         except Exception as err:
-            self.exception(f'Loading err: {err}.', tags=dict(
-                error=err,
-            ))
+            self.exception(
+                f'Loading err: {err}.',
+                tags=dict(
+                    error=err,
+                ),
+            )
 
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = ''
 

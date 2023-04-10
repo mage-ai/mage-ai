@@ -7,7 +7,7 @@ import pytz
 import singer
 
 
-class BasePaystackStream():
+class BasePaystackStream:
     # GLOBAL PROPERTIES
     TABLE = None
     KEY_PROPERTIES = []
@@ -38,20 +38,13 @@ class BasePaystackStream():
             if self.catalog.metadata is not None:
                 metadata = singer.metadata.to_map(self.catalog.metadata)
 
-            return tx.transform(
-                record,
-                self.catalog.schema.to_dict(),
-                metadata
-            )
+            return tx.transform(record, self.catalog.schema.to_dict(), metadata)
 
     def get_stream_data(self, data):
         return [self.transform_record(item) for item in data]
 
     def load_data(
-        self,
-        bookmarks: Dict = None,
-        bookmark_properties: List = None,
-        to_date: str = None
+        self, bookmarks: Dict = None, bookmark_properties: List = None, to_date: str = None
     ):
         table = self.TABLE
         api_method = self.API_METHOD
@@ -61,7 +54,8 @@ class BasePaystackStream():
 
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
         self.logger.info(
-            f'Attempting to get the most recent bookmark_date for entity {self.ENTITY}.')
+            f'Attempting to get the most recent bookmark_date for entity {self.ENTITY}.'
+        )
         if bookmarks and bookmark_properties:
             bookmark_date = bookmarks.get(bookmark_properties[0])
 
@@ -91,9 +85,7 @@ class BasePaystackStream():
             max_date = to_date
 
             response = self.client.make_request(
-                url=self.get_url(),
-                method=api_method,
-                params=params
+                url=self.get_url(), method=api_method, params=params
             )
 
             meta = response.get('meta', dict())

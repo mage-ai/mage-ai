@@ -16,10 +16,14 @@ class ClusterResource(GenericResource):
 
             clusters = emr_cluster_manager.list_clusters()
 
-        return self(dict(
-            clusters=clusters,
-            type=pk,
-        ), user, **kwargs)
+        return self(
+            dict(
+                clusters=clusters,
+                type=pk,
+            ),
+            user,
+            **kwargs,
+        )
 
     @safe_db_query
     def update(self, payload, **kwargs):

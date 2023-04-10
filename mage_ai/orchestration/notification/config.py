@@ -32,8 +32,10 @@ class NotificationConfig(BaseConfig):
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):
         notification_config = super().load(config_path=config_path, config=config)
-        if notification_config.slack_config is not None and \
-                type(notification_config.slack_config) is dict:
+        if (
+            notification_config.slack_config is not None
+            and type(notification_config.slack_config) is dict
+        ):
             try:
                 notification_config.slack_config = SlackConfig.load(
                     config=notification_config.slack_config,
@@ -41,8 +43,10 @@ class NotificationConfig(BaseConfig):
             except Exception:
                 traceback.print_exc()
                 notification_config.slack_config = None
-        if notification_config.teams_config is not None and \
-                type(notification_config.teams_config) is dict:
+        if (
+            notification_config.teams_config is not None
+            and type(notification_config.teams_config) is dict
+        ):
             try:
                 notification_config.teams_config = TeamsConfig.load(
                     config=notification_config.teams_config,
@@ -50,8 +54,10 @@ class NotificationConfig(BaseConfig):
             except Exception:
                 traceback.print_exc()
                 notification_config.teams_config = None
-        if notification_config.google_chat_config is not None and \
-                type(notification_config.google_chat_config) is dict:
+        if (
+            notification_config.google_chat_config is not None
+            and type(notification_config.google_chat_config) is dict
+        ):
             try:
                 notification_config.google_chat_config = GoogleChatConfig.load(
                     config=notification_config.google_chat_config,
@@ -59,8 +65,10 @@ class NotificationConfig(BaseConfig):
             except Exception:
                 traceback.print_exc()
                 notification_config.google_chat_config = None
-        if notification_config.email_config is not None and \
-                type(notification_config.email_config) is dict:
+        if (
+            notification_config.email_config is not None
+            and type(notification_config.email_config) is dict
+        ):
             try:
                 notification_config.email_config = EmailConfig.load(
                     config=notification_config.email_config,

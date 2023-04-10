@@ -28,13 +28,17 @@ def get_collection(key: str, available_options: List[Dict]):
             try:
                 absolute_file_path = '/'.join(module.__file__.split('/')[:-2])
                 absolute_file_path = f'{absolute_file_path}/{uuid}/__init__.py'
-                proc = subprocess.run([
-                    PYTHON_COMMAND,
-                    absolute_file_path,
-                    '--config_json',
-                    json.dumps({}),
-                    '--show_templates',
-                ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                proc = subprocess.run(
+                    [
+                        PYTHON_COMMAND,
+                        absolute_file_path,
+                        '--config_json',
+                        json.dumps({}),
+                        '--show_templates',
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
                 for line in proc.stdout.decode().split('\n'):
                     try:
                         d['templates'] = json.loads(line)

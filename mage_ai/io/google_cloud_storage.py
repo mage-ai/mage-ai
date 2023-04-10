@@ -130,9 +130,7 @@ class GoogleCloudStorage(BaseFile):
             buffer.seek(0)
             blob.upload_from_string(buffer.read())
 
-    def exists(
-        self, bucket_name: str, prefix: str
-    ) -> bool:
+    def exists(self, bucket_name: str, prefix: str) -> bool:
         """
         Checks if content exists at a certain path in a Google Cloud Storage bucket.
         """

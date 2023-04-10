@@ -52,10 +52,12 @@ class Variable:
         block_uuid: str,
         partition: str = None,
         spark=None,
-        storage: BaseStorage = LocalStorage(),
-        variable_type: VariableType = None
+        storage: BaseStorage = None,
+        variable_type: VariableType = None,
     ) -> None:
         self.uuid = uuid
+        if storage is None:
+            storage = LocalStorage()
         self.storage = storage
         # if not self.storage.path_exists(pipeline_path):
         #     raise Exception(f'Pipeline path {pipeline_path} does not exist.')
@@ -92,13 +94,15 @@ class Variable:
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
-        elif ((self.variable_type == VariableType.DATAFRAME or self.variable_type is None)
-                and os.path.exists(
-                os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
+        elif (
+            self.variable_type == VariableType.DATAFRAME or self.variable_type is None
+        ) and os.path.exists(os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh')):
             self.variable_type = VariableType.GEO_DATAFRAME
-        elif self.variable_type is None and \
-                len(self.storage.listdir(self.variable_path, suffix='.csv')) > 0 and \
-                spark is not None:
+        elif (
+            self.variable_type is None
+            and len(self.storage.listdir(self.variable_path, suffix='.csv')) > 0
+            and spark is not None
+        ):
             self.variable_type = VariableType.SPARK_DATAFRAME
 
     def convert_parquet_to_csv(self):
@@ -373,8 +377,7 @@ class Variable:
         if spark is None:
             return None
         df = (
-            spark.read
-            .format('csv')
+            spark.read.format('csv')
             .option('header', 'true')
             .option('inferSchema', 'true')
             .option('delimiter', ',')
@@ -436,8 +439,7 @@ class Variable:
 
         try:
             df_sample_output = df_output_serialized.iloc[
-                :DATAFRAME_SAMPLE_COUNT,
-                :DATAFRAME_SAMPLE_MAX_COLUMNS
+                :DATAFRAME_SAMPLE_COUNT, :DATAFRAME_SAMPLE_MAX_COLUMNS
             ]
 
             self.storage.write_parquet(
@@ -448,12 +450,7 @@ class Variable:
             print(f'Sample output error: {err}.')
 
     def __write_spark_parquet(self, data) -> None:
-        (
-            data.write
-            .option('header', 'True')
-            .mode('overwrite')
-            .csv(self.variable_path)
-        )
+        (data.write.option('header', 'True').mode('overwrite').csv(self.variable_path))
 
     def __read_dataframe_analysis(
         self,
@@ -493,7 +490,8 @@ class Variable:
             if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
                 continue
             result[k] = await self.storage.read_json_file_async(
-                os.path.join(self.variable_path, f'{k}.json'))
+                os.path.join(self.variable_path, f'{k}.json')
+            )
         return result
 
     def __write_dataframe_analysis(self, data: Dict[str, Dict]) -> None:

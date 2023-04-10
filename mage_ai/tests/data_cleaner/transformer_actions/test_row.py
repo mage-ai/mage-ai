@@ -466,7 +466,7 @@ class RowTests(TestCase):
         action2 = dict(action_code='"bra  23423  nd" contains brand and "invVe nTory" != null')
         action3 = dict(
             action_code='("bra  23423  nd" != null and "Val ue" > 60) or ("dis>>> ??cou nted" '
-                        '== null)'
+            '== null)'
         )
         action4 = dict(
             action_code='("dis>>> ??cou nted" == True and "invVe nTory" > 15)'
@@ -474,7 +474,7 @@ class RowTests(TestCase):
         )
         action5 = dict(
             action_code='("bra  23423  nd" not contains company and "Val ue" == 75 and "invVe '
-                        'nTory" <= 80) or ("dis>>> ??cou nted" != null)'
+            'nTory" <= 80) or ("dis>>> ??cou nted" != null)'
         )
         df_expected = pd.DataFrame(
             [
@@ -548,11 +548,11 @@ class RowTests(TestCase):
         )
         action = dict(
             action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e '
-                        'e  e e e" > " kas22d fe ($)"'
+            'e  e e e" > " kas22d fe ($)"'
         )
         action2 = dict(
             action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e '
-                        'e  e e e" <= " kas22d fe ($)"'
+            'e  e e e" <= " kas22d fe ($)"'
         )
         df_expected = pd.DataFrame(
             [

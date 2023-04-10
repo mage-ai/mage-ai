@@ -1,6 +1,7 @@
 from google.analytics.data_v1beta.types.data import MetricType
-from mage_integrations.connections.google_analytics import \
-    GoogleAnalytics as GoogleAnalyticsConnection
+from mage_integrations.connections.google_analytics import (
+    GoogleAnalytics as GoogleAnalyticsConnection,
+)
 from mage_integrations.connections.google_analytics.constants import DIMENSIONS, METRICS
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
@@ -66,10 +67,12 @@ class GoogleAnalytics(Source):
                 type=column_types,
             )
 
-        schema = Schema.from_dict(dict(
-            properties=properties,
-            type='object',
-        ))
+        schema = Schema.from_dict(
+            dict(
+                properties=properties,
+                type='object',
+            )
+        )
         metadata = get_standard_metadata(
             key_properties=unique_constraints,
             replication_method=REPLICATION_METHOD_FULL_TABLE,

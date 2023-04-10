@@ -1,4 +1,4 @@
-class AssociatedUserPresenter():
+class AssociatedUserPresenter:
     def user(self, **kwargs):
         user = self.resource.user
         if user:

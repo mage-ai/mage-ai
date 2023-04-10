@@ -16,13 +16,13 @@ from mage_ai.orchestration.db.models.secrets import Secret
 
 
 def get_ssh_public_key_secret_name(user: User = None) -> str:
-    return f'{GIT_SSH_PUBLIC_KEY_SECRET_NAME}_{user.id}' if user \
-        else GIT_SSH_PUBLIC_KEY_SECRET_NAME
+    return f'{GIT_SSH_PUBLIC_KEY_SECRET_NAME}_{user.id}' if user else GIT_SSH_PUBLIC_KEY_SECRET_NAME
 
 
 def get_ssh_private_key_secret_name(user: User = None) -> str:
-    return f'{GIT_SSH_PRIVATE_KEY_SECRET_NAME}_{user.id}' if user \
-        else GIT_SSH_PRIVATE_KEY_SECRET_NAME
+    return (
+        f'{GIT_SSH_PRIVATE_KEY_SECRET_NAME}_{user.id}' if user else GIT_SSH_PRIVATE_KEY_SECRET_NAME
+    )
 
 
 class SyncResource(GenericResource):
@@ -47,16 +47,14 @@ class SyncResource(GenericResource):
 
         if ssh_public_key:
             secret_name = get_ssh_public_key_secret_name(user=user)
-            secret = Secret.query.filter(
-                Secret.name == secret_name).one_or_none()
+            secret = Secret.query.filter(Secret.name == secret_name).one_or_none()
             if secret:
                 secret.delete()
             create_secret(secret_name, ssh_public_key)
             payload['ssh_public_key_secret_name'] = secret_name
         if ssh_private_key:
             secret_name = get_ssh_private_key_secret_name(user=user)
-            secret = Secret.query.filter(
-                Secret.name == secret_name).one_or_none()
+            secret = Secret.query.filter(Secret.name == secret_name).one_or_none()
             if secret:
                 secret.delete()
             create_secret(secret_name, ssh_private_key)

@@ -40,9 +40,11 @@ class GitBranchResource(GenericResource):
             message = payload.get('message')
             if not message:
                 error = ApiError.RESOURCE_ERROR
-                error.update({
-                    'message': 'Message is empty, please add a message for your commit.',
-                })
+                error.update(
+                    {
+                        'message': 'Message is empty, please add a message for your commit.',
+                    }
+                )
                 raise ApiError(error)
             git_manager.commit(message)
         elif action_type == 'push':

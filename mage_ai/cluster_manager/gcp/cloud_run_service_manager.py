@@ -32,14 +32,12 @@ class CloudRunServiceManager:
 
     def list_services(self) -> Any:
         response = self.services_client.list_services(
-            run_v2.ListServicesRequest(
-                parent=f'projects/{self.project_id}/locations/{self.region}'
-            )
+            run_v2.ListServicesRequest(parent=f'projects/{self.project_id}/locations/{self.region}')
         )
 
-        forwarding_rules = self.compute_service.globalForwardingRules().list(
-            project=self.project_id
-        ).execute()
+        forwarding_rules = (
+            self.compute_service.globalForwardingRules().list(project=self.project_id).execute()
+        )
 
         ip_map = dict()
         for rule in forwarding_rules.get('items', []):
@@ -51,12 +49,14 @@ class CloudRunServiceManager:
         services = []
         for service in response:
             name = service.name.split('/')[-1]
-            services.append(dict(
-                ip=ip_map.get(name),
-                name=name,
-                status='RUNNING',
-                type='run service',
-            ))
+            services.append(
+                dict(
+                    ip=ip_map.get(name),
+                    name=name,
+                    status='RUNNING',
+                    type='run service',
+                )
+            )
 
         return services
 
@@ -64,21 +64,14 @@ class CloudRunServiceManager:
         resource_prefix = f'projects/{self.project_id}/locations/{self.region}'
         existing_service_name = os.getenv('GCP_SERVICE_NAME')
         existing_service = self.services_client.get_service(
-            run_v2.GetServiceRequest(
-                name=f'{resource_prefix}/services/{existing_service_name}'
-            )
+            run_v2.GetServiceRequest(name=f'{resource_prefix}/services/{existing_service_name}')
         )
         existing_service.name = None
         existing_service.template.revision = None
         existing_service.template.containers[0].command = None
 
         env_vars = existing_service.template.containers[0].env
-        env_vars.append(
-            run_v2.types.EnvVar(
-                name='USER_CODE_PATH',
-                value=service_id
-            )
-        )
+        env_vars.append(run_v2.types.EnvVar(name='USER_CODE_PATH', value=service_id))
         existing_service.template.containers[0].env = env_vars
 
         service_request = run_v2.CreateServiceRequest(
@@ -106,16 +99,12 @@ class CloudRunServiceManager:
         neg_obj = {
             'name': f'{service_id}-neg',
             'networkEndpointType': 'SERVERLESS',
-            'cloudRun': {
-                'service': service_id
-            }
+            'cloudRun': {'service': service_id},
         }
 
         neg_service = self.compute_service.regionNetworkEndpointGroups()
         neg_response = neg_service.insert(
-            project=self.project_id,
-            region=self.region,
-            body=neg_obj
+            project=self.project_id, region=self.region, body=neg_obj
         ).execute()
         print('Network endpoint group created!')
         group_url = neg_response.get('targetLink')
@@ -135,16 +124,12 @@ class CloudRunServiceManager:
                 'oauth2ClientId': '',
                 'oauth2ClientSecret': '',
             },
-            'logConfig': {
-                'enable': True,
-                'sampleRate': None
-            }
+            'logConfig': {'enable': True, 'sampleRate': None},
         }
 
         backends_service = self.compute_service.backendServices()
         backends_response = backends_service.insert(
-            project=self.project_id,
-            body=backend_body
+            project=self.project_id, body=backend_body
         ).execute()
         print('Backend service created!')
         backend_service_url = backends_response.get('targetLink')
@@ -155,10 +140,11 @@ class CloudRunServiceManager:
         addresses_service = self.compute_service.globalAddresses()
         addresses_service.insert(project=self.project_id, body={'name': address_name}).execute()
 
-        ip_address = addresses_service.get(
-            project=self.project_id,
-            address=address_name
-        ).execute().get('address')
+        ip_address = (
+            addresses_service.get(project=self.project_id, address=address_name)
+            .execute()
+            .get('address')
+        )
         print('External IP address created!')
 
         # Create url map
@@ -169,11 +155,7 @@ class CloudRunServiceManager:
         }
         url_maps_service = self.compute_service.urlMaps()
         url_maps_response = self.__try_creating_resource(
-            url_maps_service.insert(
-                project=self.project_id,
-                body=url_map_body
-            ),
-            'Url map'
+            url_maps_service.insert(project=self.project_id, body=url_map_body), 'Url map'
         )
 
         url_map_link = url_maps_response.get('targetLink')
@@ -186,11 +168,8 @@ class CloudRunServiceManager:
         }
         http_proxy_service = self.compute_service.targetHttpProxies()
         http_proxy_response = self.__try_creating_resource(
-            http_proxy_service.insert(
-                project=self.project_id,
-                body=http_proxy_body
-            ),
-            'Target http proxy'
+            http_proxy_service.insert(project=self.project_id, body=http_proxy_body),
+            'Target http proxy',
         )
         http_proxy_link = http_proxy_response.get('targetLink')
 
@@ -202,16 +181,13 @@ class CloudRunServiceManager:
             'IPProtocol': 'TCP',
             'portRange': '80-80',
             'target': http_proxy_link,
-            'loadBalancingScheme': 'EXTERNAL'
+            'loadBalancingScheme': 'EXTERNAL',
         }
 
         forwarding_rules_service = self.compute_service.globalForwardingRules()
         self.__try_creating_resource(
-            forwarding_rules_service.insert(
-                project=self.project_id,
-                body=forwarding_rules_body
-            ),
-            'Forwarding rule'
+            forwarding_rules_service.insert(project=self.project_id, body=forwarding_rules_body),
+            'Forwarding rule',
         )
 
     def __try_creating_resource(self, request, resource: str):

@@ -95,15 +95,14 @@ class KafkaSource(BaseSource):
             consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
             consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
-        self.consumer = KafkaConsumer(
-            self.config.topic,
-            **consumer_kwargs
-        )
+        self.consumer = KafkaConsumer(self.config.topic, **consumer_kwargs)
         self._print('Finish initializing consumer.')
 
         self.schema_class = None
-        if self.config.serde_config is not None and \
-                self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF:
+        if (
+            self.config.serde_config is not None
+            and self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF
+        ):
             schema_classpath = self.config.serde_config.schema_classpath
             if schema_classpath is None:
                 return
@@ -146,7 +145,7 @@ class KafkaSource(BaseSource):
 
             message_values = []
             msg_printed = False
-            for tp, messages in msg_pack.items():
+            for _tp, messages in msg_pack.items():
                 for message in messages:
                     if not msg_printed:
                         self.__print_message(message)
@@ -159,19 +158,26 @@ class KafkaSource(BaseSource):
         return True
 
     def __deserialize_message(self, message):
-        if self.config.serde_config is not None and \
-                self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF and \
-                self.schema_class is not None:
+        if (
+            self.config.serde_config is not None
+            and self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF
+            and self.schema_class is not None
+        ):
             from google.protobuf.json_format import MessageToDict
+
             obj = self.schema_class()
             obj.ParseFromString(message)
             return MessageToDict(obj)
-        elif self.config.serde_config is not None and \
-                self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
+        elif (
+            self.config.serde_config is not None
+            and self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE
+        ):
             return message
         else:
             return json.loads(message.decode('utf-8'))
 
     def __print_message(self, message):
-        self._print(f'Receive message {message.partition}:{message.offset}: '
-                    f'v={message.value}, time={time.time()}')
+        self._print(
+            f'Receive message {message.partition}:{message.offset}: '
+            f'v={message.value}, time={time.time()}'
+        )

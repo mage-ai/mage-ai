@@ -14,8 +14,6 @@ class BadConversionError(Exception):
     Unable to convert Python-based data type to SQL equivalent.
     """
 
-    pass
-
 
 class PandasTypes(str, Enum):
     """
@@ -127,11 +125,13 @@ def gen_table_creation_query(
 
     if unique_constraints:
         unique_constraints_clean = [clean_name(col) for col in unique_constraints]
-        unique_constraints_escaped = [f'"{col}"'
-                                      for col in unique_constraints_clean]
-        index_name = '_'.join([
-            clean_name(full_table_name),
-        ] + unique_constraints_clean)
+        unique_constraints_escaped = [f'"{col}"' for col in unique_constraints_clean]
+        index_name = '_'.join(
+            [
+                clean_name(full_table_name),
+            ]
+            + unique_constraints_clean
+        )
         index_name = f'unique{index_name}'[:64]
         query.append(
             f"CONSTRAINT {index_name} UNIQUE ({', '.join(unique_constraints_escaped)})",

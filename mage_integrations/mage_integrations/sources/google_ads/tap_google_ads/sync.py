@@ -20,6 +20,7 @@ def get_currently_syncing(state):
 def sort_customers(customers):
     return sorted(customers, key=lambda x: x["customerId"])
 
+
 def sort_selected_streams(sort_list):
     return sorted(sort_list, key=lambda x: x["tap_stream_id"])
 
@@ -53,6 +54,7 @@ def shuffle(shuffle_list, shuffle_key, current_value, sort_function):
 
     return top_half + bottom_half
 
+
 def get_query_limit(config):
     """
     This function will get the query_limit from config,
@@ -64,11 +66,16 @@ def get_query_limit(config):
         if int(float(query_limit)) > 0:
             return int(float(query_limit))
         else:
-            LOGGER.warning(f"The entered query limit is invalid; it will be set to the default query limit of {DEFAULT_QUERY_LIMIT}")
+            LOGGER.warning(
+                f"The entered query limit is invalid; it will be set to the default query limit of {DEFAULT_QUERY_LIMIT}"
+            )
             return DEFAULT_QUERY_LIMIT
     except Exception:
-        LOGGER.warning(f"The entered query limit is invalid; it will be set to the default query limit of {DEFAULT_QUERY_LIMIT}")
+        LOGGER.warning(
+            f"The entered query limit is invalid; it will be set to the default query limit of {DEFAULT_QUERY_LIMIT}"
+        )
         return DEFAULT_QUERY_LIMIT
+
 
 def do_sync(config, catalog, resource_schema, state):
     # QA ADDED WORKAROUND [START]
@@ -95,18 +102,12 @@ def do_sync(config, catalog, resource_schema, state):
 
     if resuming_stream:
         selected_streams = shuffle(
-            selected_streams,
-            "tap_stream_id",
-            resuming_stream,
-            sort_function=sort_selected_streams
+            selected_streams, "tap_stream_id", resuming_stream, sort_function=sort_selected_streams
         )
 
     if resuming_customer:
         customers = shuffle(
-            customers,
-            "customerId",
-            resuming_customer,
-            sort_function=sort_customers
+            customers, "customerId", resuming_customer, sort_function=sort_customers
         )
 
     for catalog_entry in selected_streams:
@@ -126,7 +127,9 @@ def do_sync(config, catalog, resource_schema, state):
             else:
                 stream_obj = report_streams[stream_name]
 
-            stream_obj.sync(sdk_client, customer, catalog_entry, config, state, query_limit=query_limit)
+            stream_obj.sync(
+                sdk_client, customer, catalog_entry, config, state, query_limit=query_limit
+            )
 
     state.pop("currently_syncing", None)
     singer.write_state(state)

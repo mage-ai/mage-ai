@@ -28,10 +28,7 @@ class SecretResource(DatabaseResource):
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
         secrets = get_valid_secrets()
-        return list(filter(
-            lambda s: self._filter_secrets(s, user),
-            secrets
-        ))
+        return list(filter(lambda s: self._filter_secrets(s, user), secrets))
 
     @classmethod
     @safe_db_query
@@ -56,6 +53,8 @@ class SecretResource(DatabaseResource):
             preferences.ssh_private_key_secret_name,
             preferences.ssh_public_key_secret_name,
         ]
-        return not secret.name.startswith(GIT_SSH_PRIVATE_KEY_SECRET_NAME) \
-            and not secret.name.startswith(GIT_SSH_PUBLIC_KEY_SECRET_NAME) \
+        return (
+            not secret.name.startswith(GIT_SSH_PRIVATE_KEY_SECRET_NAME)
+            and not secret.name.startswith(GIT_SSH_PUBLIC_KEY_SECRET_NAME)
             or secret.name in whitelist_secrets
+        )

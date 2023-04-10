@@ -8,14 +8,23 @@ class DataProviderPolicy(BasePolicy):
     pass
 
 
-DataProviderPolicy.allow_actions([
-    constants.LIST,
-], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+DataProviderPolicy.allow_actions(
+    [
+        constants.LIST,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
 
-DataProviderPolicy.allow_read(DataProviderPresenter.default_attributes + [], scopes=[
-    OauthScope.CLIENT_PRIVATE,
-], on_action=[
-    constants.LIST,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+DataProviderPolicy.allow_read(
+    DataProviderPresenter.default_attributes + [],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)

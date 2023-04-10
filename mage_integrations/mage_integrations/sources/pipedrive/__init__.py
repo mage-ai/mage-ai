@@ -8,8 +8,7 @@ from typing import List
 
 class Pipedrive(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
-        pipedrive_tap = PipedriveTap(self.config,
-                                     self.state)
+        pipedrive_tap = PipedriveTap(self.config, self.state)
 
         catalog = pipedrive_tap.do_discover().to_dict()
 
@@ -19,18 +18,18 @@ class Pipedrive(Source):
 
             if not streams or stream_id in streams:
                 schema = catalog_singer.Schema.from_dict(stream['schema'])
-                catalog_entries.append(self.build_catalog_entry(
-                    stream_id,
-                    schema,
-                    **ignore_keys(stream, ['schema']),
-                ))
+                catalog_entries.append(
+                    self.build_catalog_entry(
+                        stream_id,
+                        schema,
+                        **ignore_keys(stream, ['schema']),
+                    )
+                )
 
         return Catalog(catalog_entries)
 
     def sync(self, catalog) -> None:
-
-        pipedrive_tap = PipedriveTap(self.config,
-                                     self.state)
+        pipedrive_tap = PipedriveTap(self.config, self.state)
         pipedrive_tap.do_sync(catalog)
 
     def test_connection(self):

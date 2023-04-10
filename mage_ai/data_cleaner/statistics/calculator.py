@@ -94,7 +94,7 @@ class StatisticsCalculator:
                 df = clean_dataframe(df, self.column_types, dropna=False)
             data = dict(
                 original_row_count=len((df if df_original is None else df_original).index),
-                count=len(df.index)
+                count=len(df.index),
             )
 
             arr_args_1 = ([df[col] for col in df.columns],)

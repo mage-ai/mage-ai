@@ -11,17 +11,23 @@ import bson
 import decimal
 
 from tap_tester import connections, menagerie, runner
-from mongodb_common import drop_all_collections, get_test_connection, ensure_environment_variables_set
+from mongodb_common import (
+    drop_all_collections,
+    get_test_connection,
+    ensure_environment_variables_set,
+)
 
 
 def random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
+
 
 def generate_simple_coll_docs(num_docs):
     docs = []
     for int_value in range(num_docs):
         docs.append({"int_field": int_value, "string_field": random_string_generator()})
     return docs
+
 
 class MongoDBDiscovery(unittest.TestCase):
     AUTOMATIC = "automatic"
@@ -34,7 +40,6 @@ class MongoDBDiscovery(unittest.TestCase):
     LOG_BASED = "LOG_BASED"
 
     def setUp(self):
-
         ensure_environment_variables_set()
 
         with get_test_connection() as client:
@@ -51,7 +56,11 @@ class MongoDBDiscovery(unittest.TestCase):
             client["admin"]["admin_coll_1"].insert_many(generate_simple_coll_docs(50))
 
             # create view on simple_coll_1
-            client["simple_db"].command(bson.son.SON([("create", "simple_view_1"), ("viewOn", "simple_coll_1"), ("pipeline", [])]))
+            client["simple_db"].command(
+                bson.son.SON(
+                    [("create", "simple_view_1"), ("viewOn", "simple_coll_1"), ("pipeline", [])]
+                )
+            )
 
             # collections with same names as others in different dbs
             client["simple_db_2"]["simple_coll_1"].insert_many(generate_simple_coll_docs(50))
@@ -68,37 +77,43 @@ class MongoDBDiscovery(unittest.TestCase):
             datatype_doc = {
                 "double_field": 4.3,
                 "string_field": "a sample string",
-                "object_field" : {
+                "object_field": {
                     "obj_field_1_key": "obj_field_1_val",
-                    "obj_field_2_key": "obj_field_2_val"
+                    "obj_field_2_key": "obj_field_2_val",
                 },
-                "array_field" : [
-                    "array_item_1",
-                    "array_item_2",
-                    "array_item_3"
-                ],
-                "binary_data_field" : b"a binary string",
+                "array_field": ["array_item_1", "array_item_2", "array_item_3"],
+                "binary_data_field": b"a binary string",
                 "object_id_field": bson.objectid.ObjectId(b'123456789123'),
-                "boolean_field" : True,
-                "date_field" : datetime.datetime.now(),
+                "boolean_field": True,
+                "date_field": datetime.datetime.now(),
                 "null_field": None,
-                "regex_field" : regex,
-                "32_bit_integer_field" : 32,
-                "timestamp_field" : bson.timestamp.Timestamp(int(time.time()), 1),
-                "64_bit_integer_field" : 34359738368,
-                "decimal_field" : bson.Decimal128(decimal.Decimal('1.34')),
-                "javaScript_field" : bson.code.Code("var x, y, z;"),
-                "javaScript_with_scope_field" : bson.code.Code("function incrementX() { x++; }", scope={"x": 1}),
-                "min_key_field" : bson.min_key.MinKey,
-                "max_key_field" : bson.max_key.MaxKey
+                "regex_field": regex,
+                "32_bit_integer_field": 32,
+                "timestamp_field": bson.timestamp.Timestamp(int(time.time()), 1),
+                "64_bit_integer_field": 34359738368,
+                "decimal_field": bson.Decimal128(decimal.Decimal('1.34')),
+                "javaScript_field": bson.code.Code("var x, y, z;"),
+                "javaScript_with_scope_field": bson.code.Code(
+                    "function incrementX() { x++; }", scope={"x": 1}
+                ),
+                "min_key_field": bson.min_key.MinKey,
+                "max_key_field": bson.max_key.MaxKey,
             }
             client["datatype_db"]["datatype_coll_1"].insert_one(datatype_doc)
 
             client["datatype_db"]["datatype_coll_2"].insert_one(datatype_doc)
-            client["datatype_db"]["datatype_coll_2"].create_index([("date_field", pymongo.ASCENDING)])
-            client["datatype_db"]["datatype_coll_2"].create_index([("timestamp_field", pymongo.ASCENDING)])
-            client["datatype_db"]["datatype_coll_2"].create_index([("32_bit_integer_field", pymongo.ASCENDING)])
-            client["datatype_db"]["datatype_coll_2"].create_index([("64_bit_integer_field", pymongo.ASCENDING)])
+            client["datatype_db"]["datatype_coll_2"].create_index(
+                [("date_field", pymongo.ASCENDING)]
+            )
+            client["datatype_db"]["datatype_coll_2"].create_index(
+                [("timestamp_field", pymongo.ASCENDING)]
+            )
+            client["datatype_db"]["datatype_coll_2"].create_index(
+                [("32_bit_integer_field", pymongo.ASCENDING)]
+            )
+            client["datatype_db"]["datatype_coll_2"].create_index(
+                [("64_bit_integer_field", pymongo.ASCENDING)]
+            )
 
     def expected_check_streams(self):
         return {
@@ -111,15 +126,13 @@ class MongoDBDiscovery(unittest.TestCase):
             'datatype_db-datatype_coll_1',
             'datatype_db-datatype_coll_2',
             'special_db-hebrew_ישראל',
-            'special_db-hello!world?'
+            'special_db-hello!world?',
         }
 
     def expected_primary_keys(self):
         """Defaults to '_id' in discovery, standard ObjectId(), any value can be provided (TODO where?)"""
-        return {
-            stream: {'_id'}
-            for stream in self.expected_check_streams()
-        }
+        return {stream: {'_id'} for stream in self.expected_check_streams()}
+
     def expected_replication_keys(self):
         return {
             'simple_db-simple_coll_1': {'_id'},
@@ -153,7 +166,7 @@ class MongoDBDiscovery(unittest.TestCase):
             'datatype_db-datatype_coll_1': 1,
             'datatype_db-datatype_coll_2': 1,
             'special_db-hebrew_ישראל': 50,
-            'special_db-hello!world?': 50
+            'special_db-hello!world?': 50,
         }
 
     def expected_table_names(self):
@@ -165,7 +178,7 @@ class MongoDBDiscovery(unittest.TestCase):
             'datatype_coll_1',
             'datatype_coll_2',
             'hebrew_ישראל',
-            'hello!world?'
+            'hello!world?',
         }
 
     def name(self):
@@ -181,10 +194,11 @@ class MongoDBDiscovery(unittest.TestCase):
         return {'password': os.getenv('TAP_MONGODB_PASSWORD')}
 
     def get_properties(self):
-        return {'host' : os.getenv('TAP_MONGODB_HOST'),
-                'port' : os.getenv('TAP_MONGODB_PORT'),
-                'user' : os.getenv('TAP_MONGODB_USER'),
-                'database' : os.getenv('TAP_MONGODB_DBNAME')
+        return {
+            'host': os.getenv('TAP_MONGODB_HOST'),
+            'port': os.getenv('TAP_MONGODB_PORT'),
+            'user': os.getenv('TAP_MONGODB_USER'),
+            'database': os.getenv('TAP_MONGODB_DBNAME'),
         }
 
     def test_run(self):
@@ -213,21 +227,27 @@ class MongoDBDiscovery(unittest.TestCase):
         # Stream level assertions
         for stream in self.expected_check_streams():
             with self.subTest(stream=stream):
-
                 # gathering expectations
                 expected_primary_keys = self.expected_primary_keys()[stream]
                 expected_replication_keys = self.expected_replication_keys()[stream]
                 expected_row_count = self.expected_row_counts()[stream]
 
                 # collecting actual values...
-                stream_catalog = [catalog for catalog in stream_catalogs
-                                  if catalog["tap_stream_id"] == stream][0]
-                schema_and_metadata = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
+                stream_catalog = [
+                    catalog for catalog in stream_catalogs if catalog["tap_stream_id"] == stream
+                ][0]
+                schema_and_metadata = menagerie.get_annotated_schema(
+                    conn_id, stream_catalog['stream_id']
+                )
                 stream_metadata = schema_and_metadata["metadata"]
-                empty_breadcrumb_metadata = [item for item in stream_metadata if item.get("breadcrumb") == []]
+                empty_breadcrumb_metadata = [
+                    item for item in stream_metadata if item.get("breadcrumb") == []
+                ]
                 stream_properties = empty_breadcrumb_metadata[0]['metadata']
                 actual_primary_keys = set(stream_properties.get(self.PRIMARY_KEYS, []))
-                actual_replication_keys = set(stream_properties.get(self.VALID_REPLICATION_KEYS, []))
+                actual_replication_keys = set(
+                    stream_properties.get(self.VALID_REPLICATION_KEYS, [])
+                )
                 actual_replication_method = stream_properties.get(self.FORCED_REPLICATION_METHOD)
                 actual_stream_inclusion = stream_properties.get('inclusion')
                 actual_field_inclusions = set(
@@ -237,7 +257,8 @@ class MongoDBDiscovery(unittest.TestCase):
                 )
                 actual_fields_to_datatypes = {
                     item['breadcrumb'][1]: item['metadata'].get('sql-datatype')
-                    for item in stream_metadata if item.get('breadcrumb') != []
+                    for item in stream_metadata
+                    if item.get('breadcrumb') != []
                 }
 
                 # Verify there is only 1 top level breadcrumb in metadata
