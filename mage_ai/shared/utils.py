@@ -99,18 +99,6 @@ def convert_python_type_to_trino_type(python_type):
     return 'VARCHAR'
 
 
-def convert_python_type_to_clickhouse_type(python_type):
-    if python_type is int:
-        return 'INT64'
-    elif python_type is float:
-        return 'FLOAT64'
-    elif python_type is bool:
-        return 'BOOLEAN'
-    elif python_type is datetime:
-        return 'DATETIME'
-    return 'STRING'
-
-
 def is_port_in_use(port: int) -> bool:
     print(f'Checking port {port}...')
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

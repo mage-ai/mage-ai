@@ -1,17 +1,11 @@
-from io import StringIO
 from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import (
     clean_df_for_export,
     infer_dtypes,
 )
-from mage_ai.shared.utils import (
-    clean_name,
-    convert_pandas_dtype_to_python_type,
-    convert_python_type_to_clickhouse_type,
-)
-from pandas import DataFrame, Series
-from typing import Dict, IO, List, Mapping, Union
+from pandas import DataFrame
+from typing import Dict, List, Union
 import clickhouse_connect
 
 
@@ -152,6 +146,7 @@ class ClickHouse(BaseSQLDatabase):
         table_name: str,
         database: str = 'default',
         if_exists: str = 'append',
+        index: bool = False,
         query_string: Union[str, None] = None,
         create_table_statement: Union[str, None] = None,
         verbose: bool = True,
@@ -180,6 +175,13 @@ class ClickHouse(BaseSQLDatabase):
             df = DataFrame([df])
         elif type(df) is list:
             df = DataFrame(df)
+
+        if not query_string:
+            if index:
+                df = df.reset_index()
+
+            dtypes = infer_dtypes(df)
+            df = clean_df_for_export(df, self.clean, dtypes)
 
         def __process(database: Union[str, None]):
 
