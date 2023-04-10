@@ -12,3 +12,4 @@ if [[ "$docker_version" == 2*.* ]]; then
 else
   docker-compose run server python mage_ai/cli/main.py init $PROJECT_NAME
 fi
+
