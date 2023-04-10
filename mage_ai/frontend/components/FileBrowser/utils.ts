@@ -108,12 +108,12 @@ export function getBlockFromFile(
   const extensionRegex = new RegExp(`${extensions}$`);
   if (BLOCK_TYPES.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {
     const parts = fileName.split('.');
-    const extension = parts[1];
+    const extension = parts[parts.length - 1];
 
     return {
       language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[extension],
       type: blockType,
-      uuid: parts[0],
+      uuid: parts.slice(0, -1).join('.'),
     };
   }
 }
