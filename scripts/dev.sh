@@ -99,11 +99,4 @@ HOST=$HOST \
 PORT=$PORT \
 PROJECT=$PROJECT_NAME \
 MANAGE_INSTANCE=$MANAGE_INSTANCE \
-docker_version=$(docker version --format '{{.Server.Version}}')
-if [[ "$docker_version" == 2*.* ]]; then
-  docker compose -f docker-compose.yml up
-else
-  docker-compose -f docker-compose.yml up
-fi
-
-
+docker-compose -f docker-compose.yml up
