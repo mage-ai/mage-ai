@@ -18,26 +18,17 @@ BLOCK_FAILURE_STATUSES = [
 
 def check_status(
     pipeline_uuid: str,
-    execution_date: datetime = None,
+    execution_date: datetime,
     block_uuid: str = None,
 ) -> bool:
     __validate_pipeline_and_block(pipeline_uuid, block_uuid)
 
-    pipeline_run_query = (
+    pipeline_run = (
         PipelineRun
         .query
         .join(PipelineRun.pipeline_schedule)
         .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
-    )
-
-    if execution_date is not None:
-        pipeline_run_query = (
-            pipeline_run_query
-            .filter(PipelineRun.execution_date >= execution_date - timedelta(days=1))
-        )
-
-    pipeline_run = (
-        pipeline_run_query
+        .filter(PipelineRun.execution_date >= execution_date - timedelta(days=1))
         .order_by(PipelineRun.execution_date.desc())
         .first()
     )
