@@ -287,13 +287,12 @@ function CodeBlock({
     callback_content: callbackContentOrig,
     has_callback: hasCallback,
   } = block;
-  const [callbackContent, setCallbackContent] = useState(callbackContentOrig);
+  const [callbackContent, setCallbackContent] = useState(null);
   useEffect(() => {
     if (callbackContentOrig !== callbackContent) {
       setCallbackContent(callbackContentOrig);
     }
   }, [
-    callbackContent,
     callbackContentOrig,
   ]);
 
