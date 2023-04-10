@@ -20,6 +20,8 @@ INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 MAX_DEPTH = 30
 MAX_NUMBER_OF_FILE_VERSIONS = int(os.getenv('MAX_NUMBER_OF_FILE_VERSIONS', 100) or 100)
 
+PIPELINES_FOLDER_PREFIX = 'pipelines/'
+
 
 class File:
     def __init__(
@@ -122,6 +124,14 @@ class File:
         )
 
     @classmethod
+    def validate_content(self, dir_path, filename, content):
+        if dir_path.startswith(PIPELINES_FOLDER_PREFIX) and filename == 'triggers.yaml':
+            from mage_ai.data_preparation.models.triggers import load_trigger_configs
+
+            pipeline_uuid = dir_path[len(PIPELINES_FOLDER_PREFIX):]
+            load_trigger_configs(content, pipeline_uuid=pipeline_uuid, raise_exception=True)
+
+    @classmethod
     def write_preprocess(
         self,
         repo_path: str,
@@ -197,6 +207,7 @@ class File:
             with open(file_path, write_type) as f:
                 if content:
                     f.write(content)
+        self.validate_content(dir_path, filename, content)
 
     @classmethod
     async def write_async(
