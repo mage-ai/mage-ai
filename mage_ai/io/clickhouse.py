@@ -19,7 +19,7 @@ class ClickHouse(BaseSQLDatabase):
         """
         Initializes settings for connecting to a ClickHouse warehouse.
 
-        To authenticate (and authorize) access to a ClickHouse warehouse, 
+        To authenticate (and authorize) access to a ClickHouse warehouse,
         credentials, i.e., username and password, must be provided.
 
         All keyword arguments will be passed to the ClickHouse client.
@@ -158,7 +158,7 @@ class ClickHouse(BaseSQLDatabase):
 
         Args:
             df (DataFrame): Data frame to export
-            table_name (str): Name of the table to export data to (excluding database). 
+            table_name (str): Name of the table to export data to (excluding database).
             If this table exists, the table schema must match the data frame schema.
             If this table doesn't exist, query_string must be specified to create the new table.
             database (str): Name of the database in which the table is located.
@@ -202,15 +202,15 @@ EXISTS TABLE {database}.{table_name}
                     should_create_table = True
 
             if query_string:
-                    self.client.command(f'USE DATABASE {database}')
+                self.client.command(f'USE DATABASE {database}')
 
-                    if should_create_table:
-                        self.client.command(f"""
+                if should_create_table:
+                    self.client.command(f"""
 CREATE TABLE IF NOT EXISTS {database}.{table_name} AS
 {query_string}
 """)
-                    else:
-                        self.client.command(f"""
+                else:
+                    self.client.command(f"""
 INSERT INTO {database}.{table_name}
 {query_string}
 """)
