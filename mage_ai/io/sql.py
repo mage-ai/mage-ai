@@ -9,7 +9,6 @@ from mage_ai.io.export_utils import (
 )
 from pandas import DataFrame, read_sql, Series
 from typing import Any, Dict, IO, List, Mapping, Union
-import pandas as pd
 
 
 class BaseSQL(BaseSQLConnection):
@@ -215,9 +214,9 @@ class BaseSQL(BaseSQLConnection):
         """
 
         if type(df) is dict:
-            df = pd.DataFrame([df])
+            df = DataFrame([df])
         elif type(df) is list:
-            df = pd.DataFrame(df)
+            df = DataFrame(df)
 
         if schema_name:
             full_table_name = f'{schema_name}.{table_name}'
