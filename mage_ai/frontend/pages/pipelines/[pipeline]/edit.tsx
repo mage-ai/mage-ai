@@ -1940,6 +1940,7 @@ function PipelineDetailPage({
           executePipeline={executePipeline}
           interruptKernel={interruptKernel}
           isPipelineExecuting={isPipelineExecuting}
+          pipeline={pipeline}
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
           setActiveSidekickView={setActiveSidekickView}
@@ -1954,6 +1955,7 @@ function PipelineDetailPage({
     interruptKernel,
     isPipelineExecuting,
     page,
+    pipeline,
     restartKernel,
     savePipelineContent,
     setActiveSidekickView,

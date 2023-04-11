@@ -4,6 +4,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
+import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
@@ -32,6 +33,7 @@ type FileHeaderMenuProps = {
   executePipeline: () => void;
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
+  pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
   setActiveSidekickView: (
@@ -49,6 +51,7 @@ function FileHeaderMenu({
   executePipeline,
   interruptKernel,
   isPipelineExecuting,
+  pipeline,
   restartKernel,
   savePipelineContent,
   setActiveSidekickView,
@@ -166,10 +169,13 @@ function FileHeaderMenu({
   const editItems = useMemo(() => [
     {
       label: () => 'Pipeline settings',
-      onClick: () => setActiveSidekickView(ViewKeyEnum.SETTINGS),
+      linkProps: {
+        as: `/pipelines/${pipeline?.uuid}/settings`,
+        href: '/pipelines/[pipeline]/settings',
+      },
       uuid: 'Pipeline settings',
     },
-  ], [setActiveSidekickView]);
+  ], [pipeline]);
 
   const uuidKeyboard = 'FileHeaderMenu/index';
   const {

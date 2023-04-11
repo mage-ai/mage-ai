@@ -23,7 +23,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
-import PipelineSettings from '../PipelineDetail/Settings';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Secrets from './GlobalVariables/Secrets';
@@ -538,14 +537,6 @@ function Sidekick({
             setSelectedBlock={setSelectedBlock}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={textareaFocused}
-          />
-        )}
-
-        {ViewKeyEnum.SETTINGS === activeView && pipeline?.name && (
-          <PipelineSettings
-            isPipelineUpdating={isPipelineUpdating}
-            pipeline={pipeline}
-            updatePipelineMetadata={updatePipelineMetadata}
           />
         )}
       </SidekickContainerStyle>

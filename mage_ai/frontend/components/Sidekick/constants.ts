@@ -74,10 +74,10 @@ export const SIDEKICK_VIEWS: {
     key: ViewKeyEnum.TERMINAL,
     label: 'Terminal',
   },
-  {
-    key: ViewKeyEnum.SETTINGS,
-    label: 'Settings',
-  },
+  // {
+  //   key: ViewKeyEnum.SETTINGS,
+  //   label: 'Settings',
+  // },
   // { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   // { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
 ];
