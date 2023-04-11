@@ -105,10 +105,12 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
       },
     });
 
+    // @ts-ignore
     navigationItems.push({
       Icon: Settings,
-      IconSelected: Settings,
+      IconSelected: null,
       id: PageNameEnum.SETTINGS,
+      isSelected: () => PageNameEnum.SETTINGS === pageName,
       label: () => 'Pipeline settings',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/settings`,

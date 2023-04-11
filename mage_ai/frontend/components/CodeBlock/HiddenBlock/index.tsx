@@ -49,6 +49,7 @@ function HiddenBlock({
 
   const {
     borderColorShareProps,
+    // @ts-ignore
   } = useMemo(() => buildBorderProps({
     block,
     dynamic,

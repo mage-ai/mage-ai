@@ -85,6 +85,7 @@ function PipelineSettings({
           <Button
             disabled={newPipelineName === pipeline?.name}
             loading={isPipelineUpdating}
+            // @ts-ignore
             onClick={() => updatePipeline({
               name: newPipelineName,
             })}

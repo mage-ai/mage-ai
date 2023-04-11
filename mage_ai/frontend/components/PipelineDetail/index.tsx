@@ -407,6 +407,7 @@ function PipelineDetail({
             <HiddenBlock
               block={block}
               blocks={blocks}
+              // @ts-ignore
               onClick={() => setHiddenBlocks(prev => ({
                 ...prev,
                 [uuid]: !isHidden,

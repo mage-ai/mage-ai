@@ -60,6 +60,7 @@ function PipelineSettings({
         <Settings
           isPipelineUpdating={isPipelineUpdating}
           pipeline={pipeline}
+          // @ts-ignore
           updatePipeline={(data: PipelineType) => updatePipeline({
             pipeline: data,
           })}

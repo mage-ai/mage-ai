@@ -331,6 +331,7 @@ function Sidekick({
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
                 height={heightWindow - heightOffset - finalOutputHeight}
+                // @ts-ignore
                 onClickNode={({ block: { uuid } }) => setHiddenBlocks(prev => ({
                   ...prev,
                   [uuid]: !prev?.[uuid],

@@ -26,7 +26,7 @@ type BlocksInPipelineProps = {
     [uuid: string]: BlockType;
   };
   pipeline: PipelineType;
-  setHiddenBlocks: ((opts: {
+  setHiddenBlocks: ((opts?: {
     [uuid: string]: BlockType;
   }) => {
     [uuid: string]: BlockType;
@@ -100,6 +100,7 @@ function BlocksInPipeline({
             <Checkbox
               checked={allBlocksVisible}
               label="Show all"
+              // @ts-ignore
               onClick={() => setHiddenBlocks(() => ({}))}
             />
           </Flex>
@@ -107,6 +108,7 @@ function BlocksInPipeline({
             <Checkbox
               checked={allBlocksHidden}
               label="Hide all"
+              // @ts-ignore
               onClick={() => setHiddenBlocks(() => blocks.reduce((acc, { uuid }) => ({
                 ...acc,
                 [uuid]: true,
@@ -134,8 +136,8 @@ function BlocksInPipeline({
             key={uuid}
             noHoverUnderline
             noOutline
-            // @ts-ignore
             onClick={() => {
+              // @ts-ignore
               setHiddenBlocks(prev => ({
                 ...prev,
                 [uuid]: visible,

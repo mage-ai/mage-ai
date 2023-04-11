@@ -1752,6 +1752,7 @@ function PipelineDetailPage({
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
+      // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
@@ -1847,6 +1848,7 @@ function PipelineDetailPage({
       fetchSampleData={fetchSampleData}
       files={files}
       globalVariables={globalVariables}
+      // @ts-ignore
       hiddenBlocks={hiddenBlocks}
       interruptKernel={interruptKernel}
       isPipelineUpdating={isPipelineUpdating}
@@ -1868,6 +1870,7 @@ function PipelineDetailPage({
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
+      // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
       setIntegrationStreams={setIntegrationStreams}
       setMessages={setMessages}
@@ -2096,8 +2099,10 @@ function PipelineDetailPage({
   const blocksInPipeline = useMemo(() => (
     <BlocksInPipeline
       blockRefs={blockRefs}
+      // @ts-ignore
       hiddenBlocks={hiddenBlocks}
       pipeline={pipeline}
+      // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
     />
   ), [
