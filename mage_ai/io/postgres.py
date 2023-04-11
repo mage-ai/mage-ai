@@ -249,10 +249,34 @@ class Postgres(BaseSQL):
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> None:
-        columns = df.columns
+        def clean_array_value(val):
+            if val is None or type(val) is not str or len(val) < 2:
+                return val
+            if val[0] == '[' and val[-1] == ']':
+                return '{' + val[1:-1] + '}'
+            return val
+
+        df_ = df.copy()
+        columns = df_.columns
+
+        for col in columns:
+            df_col_dropna = df_[col].dropna()
+            if df_col_dropna.count() == 0:
+                continue
+            if dtypes[col] in JSON_SERIALIZABLE_TYPES \
+                    or (df_[col].dtype == PandasTypes.OBJECT and
+                        type(df_col_dropna.iloc[0]) != str):
+                df_[col] = df_[col].apply(lambda x: simplejson.dumps(
+                    x,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ))
+                if '[]' in db_dtypes[col]:
+                    df_[col] = df_[col].apply(lambda x: clean_array_value(x))
+
         values_placeholder = ', '.join(["%s" for i in range(len(columns))])
         values = []
-        for i, row in df.iterrows():
+        for i, row in df_.iterrows():
             values.append(tuple(row))
 
         insert_columns = ', '.join([f'"{col}"'for col in columns])
