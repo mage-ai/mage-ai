@@ -30,4 +30,4 @@ class EcsBlockExecutor(BlockExecutor):
             callback_url = f'http://{ip}:6789/api/block_runs/{block_run_id}'
             options.append(f'--callback-url {callback_url}')
         options_str = ' '.join(options)
-        ecs.run_task(f'{cmd} {options_str}', ecs_config=self.pipeline.repo_config.ecs_config)
+        ecs.run_task(f'{cmd} {options_str}', ecs_config=self.executor_config)

@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.api.integration_sources import get_collection
+import traceback
 
 
 class IntegrationSourceResource(GenericResource):
@@ -35,6 +36,7 @@ class IntegrationSourceResource(GenericResource):
                 pipeline.test_connection(BlockType.DATA_LOADER, config=config)
                 success = True
             except Exception as e:
+                traceback.print_exc()
                 error_message = str(e)
         elif 'sample_data' == action_type:
             pipeline_uuid = payload['pipeline_uuid']
