@@ -1,5 +1,6 @@
 import React, { createRef, useEffect, useRef, useState } from 'react';
 import NextLink from 'next/link';
+import { useRouter } from 'next/router';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -87,6 +88,8 @@ function FlyoutMenu({
   const menuRefs = useRef({});
   const keyTextGroupRef = useRef(null);
 
+  const router = useRouter();
+
   const {
     registerOnKeyDown,
     unregisterOnKeyDown,
@@ -124,7 +127,14 @@ function FlyoutMenu({
           setHighlightedIndices([currentIndex - 1]);
         }
       } else if (keyMapping[KEY_CODE_ENTER] && typeof currentIndex !== 'undefined') {
-        items[currentIndex]?.onClick?.();
+        const item = items[currentIndex];
+        if (item) {
+          if (item?.onClick) {
+            item?.onClick?.();
+          } else if (item?.linkProps) {
+            router.push(item?.linkProps?.href, item?.linkProps?.as);
+          }
+        }
         onClickCallback?.();
       } else {
         items?.forEach(({ keyboardShortcutValidation }) => {

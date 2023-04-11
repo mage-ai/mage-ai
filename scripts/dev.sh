@@ -95,8 +95,18 @@ export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
 export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 
-HOST=$HOST \
-PORT=$PORT \
-PROJECT=$PROJECT_NAME \
-MANAGE_INSTANCE=$MANAGE_INSTANCE \
-docker-compose -f docker-compose.yml up
+docker_version=$(docker version --format '{{.Server.Version}}')
+
+if [[ "$docker_version" == 2*.* ]]; then
+  HOST=$HOST \
+  PORT=$PORT \
+  PROJECT=$PROJECT_NAME \
+  MANAGE_INSTANCE=$MANAGE_INSTANCE \
+  docker compose -f docker-compose.yml up
+else
+  HOST=$HOST \
+  PORT=$PORT \
+  PROJECT=$PROJECT_NAME \
+  MANAGE_INSTANCE=$MANAGE_INSTANCE \
+  docker-compose -f docker-compose.yml up
+fi

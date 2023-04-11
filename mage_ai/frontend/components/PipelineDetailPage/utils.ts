@@ -11,6 +11,7 @@ import {
   BlocksStacked,
   Chart,
   Schedule,
+  Settings,
   TodoList,
 } from '@oracle/icons';
 import { PageNameEnum } from './constants';
@@ -101,6 +102,19 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
       linkProps: {
         as: `/pipelines/${pipelineUUID}/edit`,
         href: '/pipelines/[pipeline]/edit',
+      },
+    });
+
+    // @ts-ignore
+    navigationItems.push({
+      Icon: Settings,
+      IconSelected: null,
+      id: PageNameEnum.SETTINGS,
+      isSelected: () => PageNameEnum.SETTINGS === pageName,
+      label: () => 'Pipeline settings',
+      linkProps: {
+        as: `/pipelines/${pipelineUUID}/settings`,
+        href: '/pipelines/[pipeline]/settings',
       },
     });
   }

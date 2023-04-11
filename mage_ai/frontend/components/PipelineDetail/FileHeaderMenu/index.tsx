@@ -4,6 +4,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
+import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
@@ -19,11 +20,12 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { LinkStyle } from './index.style';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isMac } from '@utils/os';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
-const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
+const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
 
 type FileHeaderMenuProps = {
   cancelPipeline: () => void;
@@ -31,8 +33,13 @@ type FileHeaderMenuProps = {
   executePipeline: () => void;
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
+  pipeline: PipelineType;
   restartKernel: () => void;
   savePipelineContent: () => void;
+  setActiveSidekickView: (
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => void;
   setMessages: (message: {
     [uuid: string]: KernelOutputType[];
   }) => void;
@@ -44,13 +51,16 @@ function FileHeaderMenu({
   executePipeline,
   interruptKernel,
   isPipelineExecuting,
+  pipeline,
   restartKernel,
   savePipelineContent,
+  setActiveSidekickView,
   setMessages,
 }: FileHeaderMenuProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(null);
   const refFile = useRef(null);
   const refRun = useRef(null);
+  const refEdit = useRef(null);
 
   const fileItems = [
     {
@@ -75,11 +85,11 @@ function FileHeaderMenu({
       uuid: 'new_streaming_pipeline',
     },
     {
-      label: () => 'Save pipeline',
       keyTextGroups: [[
         isMac() ? KEY_SYMBOL_META : KEY_SYMBOL_CONTROL,
         KEY_SYMBOL_S,
       ]],
+      label: () => 'Save pipeline',
       onClick: () => savePipelineContent(),
       uuid: 'save_pipeline',
     },
@@ -155,6 +165,17 @@ function FileHeaderMenu({
     restartKernel,
     setMessages,
   ]);
+
+  const editItems = useMemo(() => [
+    {
+      label: () => 'Pipeline settings',
+      linkProps: {
+        as: `/pipelines/${pipeline?.uuid}/settings`,
+        href: '/pipelines/[pipeline]/settings',
+      },
+      uuid: 'Pipeline settings',
+    },
+  ], [pipeline]);
 
   const uuidKeyboard = 'FileHeaderMenu/index';
   const {
@@ -232,6 +253,27 @@ function FileHeaderMenu({
             open={highlightedIndex === 1}
             parentRef={refRun}
             uuid="FileHeaderMenu/run_items"
+          />
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <LinkStyle
+            highlighted={highlightedIndex === 2}
+            onClick={() => setHighlightedIndex(val => val === 2 ? null : 2)}
+            onMouseEnter={() => setHighlightedIndex(val => val !== null ? 2 : null)}
+            ref={refEdit}
+          >
+            <Text>
+              Edit
+            </Text>
+          </LinkStyle>
+
+          <FlyoutMenu
+            items={editItems}
+            onClickCallback={() => setHighlightedIndex(null)}
+            open={highlightedIndex === 2}
+            parentRef={refEdit}
+            uuid="FileHeaderMenu/edit_items"
           />
         </div>
       </FlexContainer>

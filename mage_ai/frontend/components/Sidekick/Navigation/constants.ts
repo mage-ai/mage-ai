@@ -4,7 +4,7 @@ import {
   SIDEKICK_VIEWS,
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
-} from '@components/Sidekick/constants';
+} from '../constants';
 
 export function buildNavigationItems({
   activeView,

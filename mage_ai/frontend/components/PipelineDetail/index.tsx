@@ -21,6 +21,7 @@ import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
 import FileType, { FileExtensionEnum } from '@interfaces/FileType';
+import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
@@ -88,6 +89,9 @@ type PipelineDetailProps = {
   fetchSampleData: () => void;
   files: FileType[];
   globalVariables: PipelineVariableType[];
+  hiddenBlocks: {
+    [uuid: string]: BlockType;
+  };
   interruptKernel: () => void;
   isPipelineUpdating: boolean;
   kernel: KernelType;
@@ -118,6 +122,11 @@ type PipelineDetailProps = {
   setAnyInputFocused: (value: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   setIntegrationStreams: (streams: string[]) => void;
+  setHiddenBlocks: ((opts: {
+    [uuid: string]: BlockType;
+  }) => {
+    [uuid: string]: BlockType;
+  });
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
@@ -146,6 +155,7 @@ function PipelineDetail({
   fetchSampleData,
   files,
   globalVariables,
+  hiddenBlocks,
   interruptKernel,
   isPipelineUpdating,
   kernel,
@@ -167,6 +177,7 @@ function PipelineDetail({
   setEditingBlock,
   setErrors,
   setIntegrationStreams,
+  setHiddenBlocks,
   setMessages,
   setOutputBlocks,
   setPipelineContentTouched,
@@ -362,10 +373,13 @@ function PipelineDetail({
     setDbtModelName('');
   }, []);
 
-  const codeBlocks = useMemo(
-    () => blocks
-    .filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type)
-    .map((block: BlockType, idx: number) => {
+  const codeBlocks = useMemo(() => {
+    const arr = [];
+
+    const blocksFiltered =
+      blocks.filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type);
+
+    blocksFiltered.forEach((block: BlockType, idx: number) => {
       const {
         type,
         uuid,
@@ -382,64 +396,90 @@ function PipelineDetail({
       const path = `${type}s/${uuid}.py`;
       blockRefs.current[path] = createRef();
 
-      return (
-        <CodeBlock
-          addNewBlock={(b: BlockRequestPayloadType) => {
-            setTextareaFocused(true);
+      let el;
+      const isHidden = !!hiddenBlocks?.[uuid];
+      const noDivider = idx === numberOfBlocks - 1 || isIntegration;
+      const currentBlockRef = blockRefs.current[path];
 
-            return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
-          }}
-          addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
-          addWidget={addWidget}
-          allowCodeBlockShortcuts={allowCodeBlockShortcuts}
-          autocompleteItems={autocompleteItems}
-          block={block}
-          blockIdx={idx}
-          blockRefs={blockRefs}
-          blocks={blocks}
-          dataProviders={dataProviders}
-          defaultValue={block.content}
-          deleteBlock={(b: BlockType) => {
-            deleteBlock(b);
-            setAnyInputFocused(false);
-          }}
-          disableShortcuts={disableShortcuts}
-          executionState={executionState}
-          fetchFileTree={fetchFileTree}
-          fetchPipeline={fetchPipeline}
-          hideRunButton={isStreaming}
-          interruptKernel={interruptKernel}
-          key={uuid}
-          mainContainerRef={mainContainerRef}
-          mainContainerWidth={mainContainerWidth}
-          messages={messages[uuid]}
-          noDivider={idx === numberOfBlocks - 1 || isIntegration}
-          onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
-          onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
-          onClickAddSingleDBTModel={onClickAddSingleDBTModel}
-          openSidekickView={openSidekickView}
-          pipeline={pipeline}
-          ref={blockRefs.current[path]}
-          runBlock={runBlock}
-          runningBlocks={runningBlocks}
-          savePipelineContent={savePipelineContent}
-          selected={selected}
-          setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-          setAnyInputFocused={setAnyInputFocused}
-          setCreatingNewDBTModel={setCreatingNewDBTModel}
-          setEditingBlock={setEditingBlock}
-          setErrors={setErrors}
-          setOutputBlocks={setOutputBlocks}
-          setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
-          setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-          setSelectedOutputBlock={setSelectedOutputBlock}
-          setTextareaFocused={setTextareaFocused}
-          textareaFocused={selected && textareaFocused}
-          widgets={widgets}
-        />
-      );
-    },
-  ),
+      if (isHidden) {
+        el = (
+          <Spacing key={uuid} mb={noDivider ? 0 : 1}>
+            <HiddenBlock
+              block={block}
+              blocks={blocks}
+              // @ts-ignore
+              onClick={() => setHiddenBlocks(prev => ({
+                ...prev,
+                [uuid]: !isHidden,
+              }))}
+              ref={currentBlockRef}
+            />
+          </Spacing>
+        );
+      } else {
+        el = (
+          <CodeBlock
+            addNewBlock={(b: BlockRequestPayloadType) => {
+              setTextareaFocused(true);
+
+              return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+            }}
+            addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
+            addWidget={addWidget}
+            allowCodeBlockShortcuts={allowCodeBlockShortcuts}
+            autocompleteItems={autocompleteItems}
+            block={block}
+            blockIdx={idx}
+            blockRefs={blockRefs}
+            blocks={blocks}
+            dataProviders={dataProviders}
+            defaultValue={block.content}
+            deleteBlock={(b: BlockType) => {
+              deleteBlock(b);
+              setAnyInputFocused(false);
+            }}
+            disableShortcuts={disableShortcuts}
+            executionState={executionState}
+            fetchFileTree={fetchFileTree}
+            fetchPipeline={fetchPipeline}
+            hideRunButton={isStreaming}
+            interruptKernel={interruptKernel}
+            key={uuid}
+            mainContainerRef={mainContainerRef}
+            mainContainerWidth={mainContainerWidth}
+            messages={messages[uuid]}
+            noDivider={noDivider}
+            onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
+            onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
+            onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+            openSidekickView={openSidekickView}
+            pipeline={pipeline}
+            ref={currentBlockRef}
+            runBlock={runBlock}
+            runningBlocks={runningBlocks}
+            savePipelineContent={savePipelineContent}
+            selected={selected}
+            setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+            setAnyInputFocused={setAnyInputFocused}
+            setCreatingNewDBTModel={setCreatingNewDBTModel}
+            setEditingBlock={setEditingBlock}
+            setErrors={setErrors}
+            setOutputBlocks={setOutputBlocks}
+            setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
+            setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+            setSelectedOutputBlock={setSelectedOutputBlock}
+            setTextareaFocused={setTextareaFocused}
+            textareaFocused={selected && textareaFocused}
+            widgets={widgets}
+          />
+        );
+      }
+
+      arr.push(el);
+    });
+
+    return arr;
+  },
   [
     addNewBlockAtIndex,
     addNewBlockMenuOpenIdx,
@@ -453,6 +493,7 @@ function PipelineDetail({
     disableShortcuts,
     fetchFileTree,
     fetchPipeline,
+    hiddenBlocks,
     interruptKernel,
     isIntegration,
     isStreaming,
@@ -474,6 +515,7 @@ function PipelineDetail({
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
+    setHiddenBlocks,
     setOutputBlocks,
     setRecsWindowOpenBlockIdx,
     setSelectedBlock,

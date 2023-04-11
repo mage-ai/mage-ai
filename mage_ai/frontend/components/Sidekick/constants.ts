@@ -6,6 +6,7 @@ import {
   NavGraph,
   NavReport,
   NavTree,
+  Settings,
   Terminal,
 } from '@oracle/icons';
 import { indexBy } from '@utils/array';
@@ -21,6 +22,7 @@ export enum ViewKeyEnum {
   GRAPHS = 'graphs',
   REPORTS = 'reports',
   SECRETS = 'secrets',
+  SETTINGS = 'settings',
   TERMINAL = 'terminal',
   TREE = 'tree',
   VARIABLES = 'variables',
@@ -72,6 +74,10 @@ export const SIDEKICK_VIEWS: {
     key: ViewKeyEnum.TERMINAL,
     label: 'Terminal',
   },
+  // {
+  //   key: ViewKeyEnum.SETTINGS,
+  //   label: 'Settings',
+  // },
   // { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   // { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
 ];
@@ -85,6 +91,7 @@ export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.GRAPHS]: NavGraph,
   [ViewKeyEnum.REPORTS]: NavReport,
   [ViewKeyEnum.SECRETS]: Code,
+  [ViewKeyEnum.SETTINGS]: Settings,
   [ViewKeyEnum.TERMINAL]: Terminal,
   [ViewKeyEnum.TREE]: NavTree,
   [ViewKeyEnum.VARIABLES]: Alphabet,

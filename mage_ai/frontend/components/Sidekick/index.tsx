@@ -89,6 +89,7 @@ export type SidekickProps = {
   insights: InsightType[][];
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
+  isPipelineUpdating?: boolean;
   globalVariables: PipelineVariableType[];
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
@@ -106,8 +107,14 @@ export type SidekickProps = {
   ) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
+  setHiddenBlocks: ((opts: {
+    [uuid: string]: BlockType;
+  }) => {
+    [uuid: string]: BlockType;
+  });
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
+  updatePipelineMetadata: (name: string, type?: string) => void;
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
 
 function Sidekick({
@@ -133,6 +140,7 @@ function Sidekick({
   insights,
   interruptKernel,
   isPipelineExecuting,
+  isPipelineUpdating,
   lastTerminalMessage,
   messages,
   metadata,
@@ -155,10 +163,12 @@ function Sidekick({
   setDisableShortcuts,
   setEditingBlock,
   setErrors,
+  setHiddenBlocks,
   setSelectedBlock,
   setTextareaFocused,
   statistics,
   textareaFocused,
+  updatePipelineMetadata,
   updateWidget,
   widgets,
 }: SidekickProps) {
@@ -321,6 +331,11 @@ function Sidekick({
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
                 height={heightWindow - heightOffset - finalOutputHeight}
+                // @ts-ignore
+                onClickNode={({ block: { uuid } }) => setHiddenBlocks(prev => ({
+                  ...prev,
+                  [uuid]: !prev?.[uuid],
+                }))}
                 pipeline={pipeline}
                 runningBlocks={runningBlocks}
                 selectedBlock={selectedBlock}

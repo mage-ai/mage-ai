@@ -107,7 +107,7 @@ import {
 } from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
-import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
+import { buildBorderProps, buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
@@ -509,45 +509,16 @@ function CodeBlock({
   const {
     borderColorShareProps,
     tags,
-  } = useMemo(() => {
-    const arr = [];
-
-    if (dynamic) {
-      arr.push({
-        title: 'Dynamic',
-        description: 'This block will create N blocks for each of its downstream blocks.',
-      });
-    }
-
-    const dynamicChildBlock = dynamicUpstreamBlock && !reduceOutputUpstreamBlock;
-    if (dynamicChildBlock) {
-      arr.push({
-        title: 'Dynamic child',
-        description: 'This block is dynamically created by its upstream parent block that is dynamic.',
-      });
-
-      if (reduceOutput) {
-        arr.push({
-          title: 'Reduce output',
-          description: 'Reduce output from all dynamically created blocks into a single array output.',
-        });
-      }
-    }
-
-    return {
-      borderColorShareProps: {
-        blockColor: block?.color,
-        blockType: block?.type,
-        dynamicBlock: dynamic,
-        dynamicChildBlock,
-        hasError,
-        selected,
-      },
-      tags: arr,
-    };
-  }, [
-    block?.color,
-    block?.type,
+  } = useMemo(() => buildBorderProps({
+    block,
+    dynamic,
+    dynamicUpstreamBlock,
+    hasError,
+    reduceOutput,
+    reduceOutputUpstreamBlock,
+    selected,
+  }), [
+    block,
     dynamic,
     dynamicUpstreamBlock,
     hasError,
@@ -953,7 +924,7 @@ function CodeBlock({
           >
             <Flex alignItems="center" flex={1}>
               <FlexContainer alignItems="center">
-                <Badge>
+                <Badge monospace>
                   {ABBREV_BLOCK_LANGUAGE_MAPPING[block.language]}
                 </Badge>
 
@@ -1001,8 +972,6 @@ function CodeBlock({
                     </Button>
                   </>
                 )}
-
-                <Spacing mr={1} />
               </FlexContainer>
 
               <Spacing mr={PADDING_UNITS} />
