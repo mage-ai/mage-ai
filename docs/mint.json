@@ -496,6 +496,8 @@
     }
   },
   "api": {
-    "hidePlayground": true
+    "playground": {
+       "mode": "hide"
+    }
   }
 }
