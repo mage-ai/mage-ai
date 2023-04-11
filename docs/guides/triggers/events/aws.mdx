@@ -64,6 +64,40 @@ export AIRBNB_AWS_ACCESS_KEY_ID=...
 export AIRBNB_AWS_SECRET_ACCESS_KEY=...
 ```
 
+## Set up Lambda Function
+
+For event trigger, Mage uses a Lambda Function to relay the event from CloudWatch to Mage.
+
+If you deploy Mage to AWS with [terraform scripts](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/aws),
+you can uncomment the code in the following places and run `terraform apply` to create the Lambda Function:
+* https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/lambda.tf#L1-L23
+* https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/iam.tf#L29-L73
+* https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/main.tf#L46-L47
+* Add the `LAMBDA_FUNCTION_ARN` and `LAMBDA_FUNCTION_NAME` environment variables to https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/env_vars.json
+  ```yaml
+  {
+      "name": "LAMBDA_FUNCTION_ARN",
+      "value": "${lambda_func_arn}"
+  },
+  {
+      "name": "LAMBDA_FUNCTION_NAME",
+      "value": "${lambda_func_name}"
+  },
+  ```
+
+If you don't use the terraform script to deploy Mage, you can set up the Lambda Function with the following steps:
+1. Create a Lambda Function.
+    1. Select `Python 3.9` as Runtime.
+    1. Use the same VPC and subnets of your Mage service. 
+    1. Create a security group. Edit your security group of the Mage instance to allow traffic from the Lambda Function's security group.
+1. Set the environment variable `MAGE_API_HOST` in the Lambda Function. 
+1. Copy the code from the [event_handler.py](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/python/event_handler.py) to
+   your Lamdba Function.
+1. Test the connection by the executing Lambda Function with a test event json.
+1. Add environment variables `LAMBDA_FUNCTION_ARN` and `LAMBDA_FUNCTION_NAME` to your Mage service.
+
+
+
 ## Create an event trigger
 
 1. Follow these [instructions](/design/data-pipeline-management#create-trigger)
