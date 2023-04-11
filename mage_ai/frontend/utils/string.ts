@@ -296,6 +296,12 @@ export function cleanName(name: string): string {
 
 export function removeExtensionFromFilename(filename: string): string {
   const parts = filename.split('/');
-  const fn = parts[parts.length - 1].split('.')[0];
+  const fileParts = parts[parts.length - 1].split('.');
+  let fn;
+  if (fileParts.length === 1) {
+    fn = fileParts[0];
+  } else {
+    fn = fileParts.slice(0, -1).join('.');
+  }
   return parts.slice(0, parts.length - 1).concat(fn).join('/');
 }

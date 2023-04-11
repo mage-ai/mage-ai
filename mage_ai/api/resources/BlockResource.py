@@ -74,8 +74,8 @@ class BlockResource(GenericResource):
         parts2 = block_uuid_with_extension.split('.')
         language = None
         if len(parts2) >= 2:
-            block_uuid = parts2[0]
-            language = FILE_EXTENSION_TO_BLOCK_LANGUAGE[parts2[1]]
+            block_uuid = '.'.join(parts2[:-1])
+            language = FILE_EXTENSION_TO_BLOCK_LANGUAGE[parts2[-1]]
         else:
             block_uuid = block_uuid_with_extension
 
@@ -88,7 +88,7 @@ class BlockResource(GenericResource):
                 language=language,
             )
         else:
-            block = Block(block_uuid, block_uuid, block_type, language=language)
+            block = Block.get_block(block_uuid, block_uuid, block_type, language=language)
 
         if not block.exists():
             error.update(ApiError.RESOURCE_NOT_FOUND)
