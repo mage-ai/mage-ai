@@ -1845,6 +1845,7 @@ function PipelineDetailPage({
       fetchSampleData={fetchSampleData}
       files={files}
       globalVariables={globalVariables}
+      hiddenBlocks={hiddenBlocks}
       interruptKernel={interruptKernel}
       isPipelineUpdating={isPipelineUpdating}
       kernel={kernel}
@@ -1865,6 +1866,7 @@ function PipelineDetailPage({
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
+      setHiddenBlocks={setHiddenBlocks}
       setIntegrationStreams={setIntegrationStreams}
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
@@ -1895,6 +1897,7 @@ function PipelineDetailPage({
     fetchSampleData,
     files,
     globalVariables,
+    hiddenBlocks,
     interruptKernel,
     isPipelineUpdating,
     kernel,
@@ -1915,6 +1918,7 @@ function PipelineDetailPage({
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
+    setHiddenBlocks,
     setMessages,
     setPipelineContentTouched,
     setRunningBlocks,

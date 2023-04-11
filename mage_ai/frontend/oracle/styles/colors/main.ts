@@ -24,6 +24,7 @@ export const NAVY = '#0F4CFF';
 export const PEACH = '#B98D95';
 export const PINK = '#FF4FF8';
 export const PINK_LIGHT = '#FFB9FC';
+export const PINK_TRANSPARENT = 'rgb(255, 79, 248, 0.5)';
 export const PURPLE = '#6B50D7';
 export const PURPLE_TRANSPARENT = 'rgba(125, 85, 236, 0.5)';
 export const PURPLE_ALT = 'rgba(247, 244, 254, 0.06)';

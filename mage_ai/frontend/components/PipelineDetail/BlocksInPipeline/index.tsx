@@ -4,6 +4,7 @@ import { ThemeContext } from 'styled-components';
 import BlockType from '@interfaces/BlockType';
 import Checkbox from '@oracle/elements/Checkbox';
 import Circle from '@oracle/elements/Circle';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -18,9 +19,11 @@ type BlocksInPipelineProps = {
     [uuid: string]: BlockType;
   };
   pipeline: PipelineType;
-  setHiddenBlocks: (opts: {
+  setHiddenBlocks: ((opts: {
     [uuid: string]: BlockType;
-  }) => void;
+  }) => {
+    [uuid: string]: BlockType;
+  });
 };
 
 function BlocksInPipeline({
@@ -42,7 +45,7 @@ function BlocksInPipeline({
       const { uuid } = b;
 
       if (!!hiddenBlocks?.[uuid]) {
-        h.push(b)
+        h.push(b);
       } else {
         v.push(b);
       }
@@ -51,13 +54,19 @@ function BlocksInPipeline({
     return {
       blocksHidden: h,
       blocksVisible: v,
-    }
+    };
   }, [
     blocks,
     hiddenBlocks,
   ]);
-  const allBlocksHidden = useMemo(() => blocksVisible.length === 0, [blocksVisible]);
-  const allBlocksVisible = useMemo(() => blocksHidden.length === 0, [blocksHidden]);
+  const allBlocksHidden = useMemo(() => blocks?.length >= 1 && blocksVisible.length === 0, [
+    blocks,
+    blocksVisible,
+  ]);
+  const allBlocksVisible = useMemo(() => blocks?.length >= 1 && blocksHidden.length === 0, [
+    blocks,
+    blocksHidden,
+  ]);
 
   return (
     <>
@@ -70,16 +79,23 @@ function BlocksInPipeline({
             <Checkbox
               checked={allBlocksVisible}
               label="Show all"
+              onClick={() => setHiddenBlocks(() => ({}))}
             />
           </Flex>
           <Flex flex={1} justifyContent="center">
             <Checkbox
               checked={allBlocksHidden}
               label="Hide all"
+              onClick={() => setHiddenBlocks(() => blocks.reduce((acc, { uuid }) => ({
+                ...acc,
+                [uuid]: true,
+              }), {}))}
             />
           </Flex>
         </FlexContainer>
       </Spacing>
+
+      <Divider medium />
 
       {blocks?.map((block) => {
         const {
@@ -104,7 +120,7 @@ function BlocksInPipeline({
             }))}
             preventDefault
           >
-            <Spacing mb={1} px={1}>
+            <Spacing mt={1} px={1}>
               <FlexContainer
                 alignItems="center"
               >
@@ -123,7 +139,7 @@ function BlocksInPipeline({
 
                   <Spacing mr={1} />
 
-                  <Text>
+                  <Text default monospace noWrapping small>
                     {uuid}
                   </Text>
                 </Flex>

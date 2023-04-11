@@ -270,3 +270,49 @@ export const getMoreActionsItems = (
 
   return items;
 };
+
+export function buildBorderProps({
+  block,
+  dynamic,
+  dynamicUpstreamBlock,
+  hasError,
+  reduceOutput,
+  reduceOutputUpstreamBlock,
+  selected,
+}) {
+  const arr = [];
+
+  if (dynamic) {
+    arr.push({
+      title: 'Dynamic',
+      description: 'This block will create N blocks for each of its downstream blocks.',
+    });
+  }
+
+  const dynamicChildBlock = dynamicUpstreamBlock && !reduceOutputUpstreamBlock;
+  if (dynamicChildBlock) {
+    arr.push({
+      title: 'Dynamic child',
+      description: 'This block is dynamically created by its upstream parent block that is dynamic.',
+    });
+
+    if (reduceOutput) {
+      arr.push({
+        title: 'Reduce output',
+        description: 'Reduce output from all dynamically created blocks into a single array output.',
+      });
+    }
+  }
+
+  return {
+    borderColorShareProps: {
+      blockColor: block?.color,
+      blockType: block?.type,
+      dynamicBlock: dynamic,
+      dynamicChildBlock,
+      hasError,
+      selected,
+    },
+    tags: arr,
+  };
+}

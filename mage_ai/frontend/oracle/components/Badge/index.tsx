@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
-import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { FONT_FAMILY_REGULAR, MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 
@@ -11,6 +11,7 @@ export type BadgeProps = {
   children?: any;
   cyan?: boolean;
   disabled?: boolean;
+  monospace?: boolean;
   noVerticalPadding?: boolean;
   quantifier?: boolean;
   regular?: boolean;
@@ -60,6 +61,11 @@ const BadgeStyle = styled.p<BadgeProps>`
     border-radius: 34px;
     line-height: 10px;
     padding: 4px 6px;
+  `}
+
+  ${props => props.monospace && `
+    font-family: ${MONO_FONT_FAMILY_REGULAR};
+    word-break: break-all;
   `}
 `;
 
