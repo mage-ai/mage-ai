@@ -107,13 +107,13 @@ export function getBlockFromFile(
   ].join('|');
   const extensionRegex = new RegExp(`${extensions}$`);
   if (BLOCK_TYPES.concat(BlockTypeEnum.DBT).includes(blockType) && fileName.match(extensionRegex)) {
-    const parts = fileName.split('.');
-    const extension = parts[1];
+    const idx = fileName.lastIndexOf('.');
+    const extension = fileName.slice(idx + 1);
 
     return {
       language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[extension],
       type: blockType,
-      uuid: parts[0],
+      uuid: fileName.slice(0, idx),
     };
   }
 }

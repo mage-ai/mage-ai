@@ -110,5 +110,3 @@ else
   MANAGE_INSTANCE=$MANAGE_INSTANCE \
   docker-compose -f docker-compose.yml up
 fi
-
-
