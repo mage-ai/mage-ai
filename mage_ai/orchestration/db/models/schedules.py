@@ -34,6 +34,7 @@ from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+import pytz
 import traceback
 import uuid
 
@@ -178,7 +179,10 @@ class PipelineSchedule(BaseModel):
             if current_execution_date is None:
                 return False
             if not find(
-                lambda x: compare(x.execution_date, current_execution_date) == 0,
+                lambda x: compare(
+                    x.execution_date.replace(tzinfo=pytz.UTC),
+                    current_execution_date,
+                ) == 0,
                 self.pipeline_runs
             ):
                 return True
