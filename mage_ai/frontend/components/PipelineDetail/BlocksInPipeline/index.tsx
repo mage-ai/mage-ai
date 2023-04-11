@@ -1,4 +1,8 @@
-import { useMemo, useContext } from 'react';
+import {
+  useCallback,
+  useContext,
+  useMemo,
+} from 'react';
 import { ThemeContext } from 'styled-components';
 
 import BlockType from '@interfaces/BlockType';
@@ -15,6 +19,9 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 type BlocksInPipelineProps = {
+  blockRefs?: {
+    [current: string]: any;
+  };
   hiddenBlocks: {
     [uuid: string]: BlockType;
   };
@@ -27,6 +34,7 @@ type BlocksInPipelineProps = {
 };
 
 function BlocksInPipeline({
+  blockRefs,
   hiddenBlocks,
   pipeline,
   setHiddenBlocks,
@@ -66,6 +74,19 @@ function BlocksInPipeline({
   const allBlocksVisible = useMemo(() => blocks?.length >= 1 && blocksHidden.length === 0, [
     blocks,
     blocksHidden,
+  ]);
+
+  const onClickRow = useCallback((block: BlockType) => {
+    const {
+      type,
+      uuid,
+    } = block;
+    if (blockRefs?.current) {
+      const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
+      blockRef?.current?.scrollIntoView();
+    }
+  }, [
+    blockRefs,
   ]);
 
   return (
@@ -114,10 +135,16 @@ function BlocksInPipeline({
             noHoverUnderline
             noOutline
             // @ts-ignore
-            onClick={() => setHiddenBlocks(prev => ({
-              ...prev,
-              [uuid]: visible,
-            }))}
+            onClick={() => {
+              setHiddenBlocks(prev => ({
+                ...prev,
+                [uuid]: visible,
+              }));
+
+              if (!visible) {
+                setTimeout(() => onClickRow(block), 1);
+              }
+            }}
             preventDefault
           >
             <Spacing mt={1} px={1}>

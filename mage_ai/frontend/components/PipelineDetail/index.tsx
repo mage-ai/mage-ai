@@ -399,6 +399,7 @@ function PipelineDetail({
       let el;
       const isHidden = !!hiddenBlocks?.[uuid];
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
+      const currentBlockRef = blockRefs.current[path];
 
       if (isHidden) {
         el = (
@@ -410,6 +411,7 @@ function PipelineDetail({
                 ...prev,
                 [uuid]: !isHidden,
               }))}
+              ref={currentBlockRef}
             />
           </Spacing>
         );
@@ -451,7 +453,7 @@ function PipelineDetail({
             onClickAddSingleDBTModel={onClickAddSingleDBTModel}
             openSidekickView={openSidekickView}
             pipeline={pipeline}
-            ref={blockRefs.current[path]}
+            ref={currentBlockRef}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}

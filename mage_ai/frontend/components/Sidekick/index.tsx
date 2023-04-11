@@ -108,6 +108,11 @@ export type SidekickProps = {
   ) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
+  setHiddenBlocks: ((opts: {
+    [uuid: string]: BlockType;
+  }) => {
+    [uuid: string]: BlockType;
+  });
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
   updatePipelineMetadata: (name: string, type?: string) => void;
@@ -159,6 +164,7 @@ function Sidekick({
   setDisableShortcuts,
   setEditingBlock,
   setErrors,
+  setHiddenBlocks,
   setSelectedBlock,
   setTextareaFocused,
   statistics,
@@ -326,6 +332,10 @@ function Sidekick({
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
                 height={heightWindow - heightOffset - finalOutputHeight}
+                onClickNode={({ block: { uuid } }) => setHiddenBlocks(prev => ({
+                  ...prev,
+                  [uuid]: !prev?.[uuid],
+                }))}
                 pipeline={pipeline}
                 runningBlocks={runningBlocks}
                 selectedBlock={selectedBlock}

@@ -1752,6 +1752,7 @@ function PipelineDetailPage({
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
+      setHiddenBlocks={setHiddenBlocks}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}
@@ -1802,6 +1803,7 @@ function PipelineDetailPage({
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
+    setHiddenBlocks,
     setTextareaFocused,
     showAddBlockModal,
     statistics,
@@ -2091,11 +2093,13 @@ function PipelineDetailPage({
 
   const blocksInPipeline = useMemo(() => (
     <BlocksInPipeline
+      blockRefs={blockRefs}
       hiddenBlocks={hiddenBlocks}
       pipeline={pipeline}
       setHiddenBlocks={setHiddenBlocks}
     />
   ), [
+    blockRefs,
     hiddenBlocks,
     pipeline,
     setHiddenBlocks,

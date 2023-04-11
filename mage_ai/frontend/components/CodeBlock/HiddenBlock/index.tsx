@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { ThemeContext } from 'styled-components';
 
 import Badge from '@oracle/components/Badge';
@@ -33,7 +33,7 @@ function HiddenBlock({
   block,
   blocks,
   onClick,
-}: HiddenBlockProps) {
+}: HiddenBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
   const color = getColorsForBlockType(
     block.type,
@@ -68,6 +68,7 @@ function HiddenBlock({
   return (
     <HiddenBlockContainerStyle
       {...borderColorShareProps}
+      ref={ref}
     >
       <Link
         noHoverUnderline
@@ -136,4 +137,4 @@ function HiddenBlock({
   );
 }
 
-export default HiddenBlock;
+export default React.forwardRef(HiddenBlock);
