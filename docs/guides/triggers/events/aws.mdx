@@ -74,7 +74,7 @@ you can uncomment the code in the following places and run `terraform apply` to 
 * https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/iam.tf#L29-L73
 * https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/main.tf#L46-L47
 * Add the `LAMBDA_FUNCTION_ARN` and `LAMBDA_FUNCTION_NAME` environment variables to https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/env_vars.json
-  ```yaml
+  ```json
   {
       "name": "LAMBDA_FUNCTION_ARN",
       "value": "${lambda_func_arn}"
