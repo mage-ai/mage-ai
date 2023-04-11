@@ -8,7 +8,7 @@
     action = build_transformer_action(
         df,
         action_type=ActionType.DROP_DUPLICATE,
-        arguments=df.columns,  # Specify columns to use when comparing duplicates
+        arguments=df.columns,  # Specify column namess to use when comparing duplicates
         axis=Axis.ROW,
         options={'keep': 'first'},  # Specify whether to keep 'first' or 'last' duplicate
     )
