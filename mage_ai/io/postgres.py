@@ -13,15 +13,6 @@ import pandas as pd
 import simplejson
 
 
-JSON_SERIALIZABLE_TYPES = frozenset([
-    PandasTypes.DATE,
-    PandasTypes.DATETIME,
-    PandasTypes.DATETIME64,
-    PandasTypes.OBJECT,
-    PandasTypes.TIME,
-])
-
-
 class Postgres(BaseSQL):
     """
     Handles data transfer between a PostgreSQL database and the Mage app.
@@ -175,13 +166,16 @@ class Postgres(BaseSQL):
                 if type(value) is list:
                     if len(value) >= 1:
                         item = value[0]
-                        item_series = pd.Series(data=item)
-                        item_dtype = item_series.dtype
-                        if PandasTypes.OBJECT != item_dtype:
-                            item_type = self.get_type(item_series, item_dtype)
-                            column_type = f'{item_type}[]'
+                        if type(item) is dict:
+                            column_type = 'JSONB'
                         else:
-                            column_type = 'text[]'
+                            item_series = pd.Series(data=item)
+                            item_dtype = item_series.dtype
+                            if PandasTypes.OBJECT != item_dtype:
+                                item_type = self.get_type(item_series, item_dtype)
+                                column_type = f'{item_type}[]'
+                            else:
+                                column_type = 'text[]'
                     else:
                         column_type = 'text[]'
 
@@ -256,6 +250,21 @@ class Postgres(BaseSQL):
                 return '{' + val[1:-1] + '}'
             return val
 
+        def serialize_obj(val):
+            if type(val) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            elif type(val) is list and len(val) >= 1 and type(val[0]) is dict:
+                return simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            return val
+
         df_ = df.copy()
         columns = df_.columns
 
@@ -263,16 +272,11 @@ class Postgres(BaseSQL):
             df_col_dropna = df_[col].dropna()
             if df_col_dropna.count() == 0:
                 continue
-            if dtypes[col] in JSON_SERIALIZABLE_TYPES \
+            if dtypes[col] == PandasTypes.OBJECT \
                     or (df_[col].dtype == PandasTypes.OBJECT and
                         type(df_col_dropna.iloc[0]) != str):
-                df_[col] = df_[col].apply(lambda x: simplejson.dumps(
-                    x,
-                    default=encode_complex,
-                    ignore_nan=True,
-                ))
-                if '[]' in db_dtypes[col]:
-                    df_[col] = df_[col].apply(lambda x: clean_array_value(x))
+                df_[col] = df_[col].apply(lambda x: serialize_obj(x))
+        df_.replace({np.NaN: None}, inplace=True)
 
         values_placeholder = ', '.join(["%s" for i in range(len(columns))])
         values = []
