@@ -193,7 +193,7 @@ class ClickHouse(BaseSQLDatabase):
 
             df_existing = self.client.query_df(f"""
 EXISTS TABLE {database}.{table_name}
-""").to_dataframe()
+""")
 
             table_exists = not df_existing.empty
             should_create_table = not table_exists
@@ -208,7 +208,7 @@ EXISTS TABLE {database}.{table_name}
                     should_create_table = True
 
             if query_string:
-                self.client.command(f'USE DATABASE {database}')
+                self.client.command(f'USE {database}')
 
                 if should_create_table:
                     self.client.command(f"""

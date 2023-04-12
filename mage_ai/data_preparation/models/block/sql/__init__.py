@@ -144,11 +144,9 @@ def execute_sql_code(
         else:
             loader.export(
                 None,
-                None,
+                table_name=table_name,
                 database=database,
-                if_exists=export_write_policy,
                 query_string=query_string,
-                verbose=BlockType.DATA_EXPORTER == block.type,
                 **kwargs_shared,
             )
 
