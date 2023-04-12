@@ -217,13 +217,18 @@ class DBTBlock(Block):
                     print(f'WARNING: no run results found at {run_results_file_path}.')
 
             if is_sql and dbt_command in ['build', 'run']:
+                limit = 1000
+                if self.downstream_blocks and len(self.downstream_blocks) >= 1:
+                    limit = None
+
                 df = fetch_model_data(
                     self,
                     dbt_profile_target,
-                    limit=1000,
+                    limit=limit,
                 )
+
                 self.store_variables(
-                    dict(df=df),
+                    dict(output_0=df),
                     execution_partition=execution_partition,
                     override_outputs=True,
                 )
