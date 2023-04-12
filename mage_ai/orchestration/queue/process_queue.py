@@ -2,10 +2,16 @@ from enum import Enum
 from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
+from mage_ai.settings import (
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+)
 from multiprocessing import Manager
+from sentry_sdk import capture_exception
 from typing import Callable
 import multiprocessing as mp
 import os
+import sentry_sdk
 import signal
 import time
 
@@ -77,6 +83,12 @@ class Worker(mp.Process):
         super().__init__()
         self.queue = queue
         self.job_dict = job_dict
+        self.dsn = SENTRY_DSN
+        if self.dsn:
+            sentry_sdk.init(
+                self.dsn,
+                traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+            )
 
     def run(self):
         if not self.queue.empty():
@@ -89,6 +101,10 @@ class Worker(mp.Process):
             self.job_dict[job_id] = self.pid
             try:
                 start_session_and_run(args[1], *args[2], **args[3])
+            except Exception as e:
+                if self.dsn:
+                    capture_exception(e)
+                raise
             finally:
                 self.job_dict[job_id] = JobStatus.COMPLETED
 
