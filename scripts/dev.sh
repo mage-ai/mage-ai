@@ -96,7 +96,6 @@ export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
 export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
 
 docker_version=$(docker version --format '{{.Server.Version}}')
-
 if [[ "$docker_version" == 2*.* ]]; then
   HOST=$HOST \
   PORT=$PORT \
