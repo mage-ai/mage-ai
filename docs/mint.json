@@ -212,7 +212,8 @@
           "group": "Testing",
           "pages": [
             "guides/data-validation",
-            "development/testing/great-expectations"
+            "development/testing/great-expectations",
+            "development/testing/unit-tests"
           ]
         },
         {
