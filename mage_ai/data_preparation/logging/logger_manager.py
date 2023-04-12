@@ -1,4 +1,5 @@
 from datetime import datetime
+from glob import glob
 from mage_ai.data_preparation.logging import LoggingConfig
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
@@ -20,6 +21,7 @@ class LoggerManager:
         block_uuid: str = None,
         partition: str = None,
         repo_config: RepoConfig = None,
+        create_dir: bool = True,
     ):
         self.repo_path = repo_path
         self.logs_dir = logs_dir
@@ -52,7 +54,7 @@ class LoggerManager:
             if self.logging_config.destination_config:
                 handler = self.create_stream_handler()
             else:
-                log_filepath = self.get_log_filepath(create_dir=True)
+                log_filepath = self.get_log_filepath(create_dir=create_dir)
                 handler = logging.handlers.RotatingFileHandler(
                     log_filepath,
                     backupCount=10,
@@ -95,6 +97,17 @@ class LoggerManager:
             current_hour if include_date_hour_subpath else '',
         )
 
+    def get_log_filename(self):
+        filename = 'pipeline.log'
+        if self.block_uuid is not None:
+            filename = f'{self.block_uuid}.log'
+
+        return filename
+
+    def get_log_filepaths(self):
+        logs_dir = self.get_log_filepath_prefix()
+        return glob(f'{logs_dir}/**/{self.get_log_filename()}', recursive=True)
+
     def get_log_filepath(self, create_dir: bool = False):
         if self.pipeline_uuid is None:
             raise Exception('Please specify a pipeline uuid in your logger.')
@@ -103,13 +116,23 @@ class LoggerManager:
             include_date_hour_subpath=True if create_dir else False,
         )
 
+        log_filepath = os.path.join(prefix, self.get_log_filename())
         if create_dir:
             self.create_log_filepath_dir(prefix)
-
-        if self.block_uuid is None:
-            log_filepath = os.path.join(prefix, 'pipeline.log')
         else:
-            log_filepath = os.path.join(prefix, f'{self.block_uuid}.log')
+            log_filepaths_without_prefix = [filepath[len(prefix):].split('/')
+                                            for filepath in self.get_log_filepaths()]
+            sorted_log_filepaths = sorted(
+                log_filepaths_without_prefix,
+                key=lambda path_parts: (
+                    (int(path_parts[0]), int(path_parts[1]))
+                    if len(path_parts) > 2 else (0, 0)
+                ),
+                reverse=True,
+            )
+            if sorted_log_filepaths:
+                log_filepath = os.path.join(prefix, '/'.join(sorted_log_filepaths[0]))
+
         return log_filepath
 
     def get_logs(self):
@@ -117,5 +140,6 @@ class LoggerManager:
         return file.to_dict(include_content=True)
 
     async def get_logs_async(self):
-        file = File.from_path(self.get_log_filepath())
-        return await file.to_dict_async(include_content=True)
+        log_file_paths = self.get_log_filepaths()
+        log_files = File.from_paths(log_file_paths)
+        return [await file.to_dict_async(include_content=True) for file in log_files]

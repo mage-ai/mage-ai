@@ -2,6 +2,7 @@ from datetime import datetime
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
@@ -11,7 +12,7 @@ import json
 import re
 import time
 
-MAX_LOG_FILES = 20
+MAX_LOG_FILES = 120
 TIMESTAMP_REGEX = re.compile(r'([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (.+)')
 
 
@@ -64,6 +65,16 @@ def initialize_logs(log) -> List[Dict]:
         **log,
         'content': content2,
     }), arr))
+
+
+def remove_date_hour_subpath(path) -> str:
+    parts = path.split('/')
+    final_path = '/'.join(parts)
+    if parts[-4] != LOGS_DIR:
+        parts_without_date_hour_subpath = parts[:-3] + parts[-1:]
+        final_path = '/'.join(parts_without_date_hour_subpath)
+
+    return final_path
 
 
 class LogResource(GenericResource):
@@ -209,7 +220,8 @@ class LogResource(GenericResource):
                 model.pipeline_schedule_id = row.pipeline_schedule_id
                 model.pipeline_uuid = row.pipeline_uuid
                 logs = await model.logs_async()
-                logs_parsed = initialize_logs(logs)
+                logs_parsed_list = [initialize_logs(log) for log in logs]
+                logs_parsed = [logs for sublist in logs_parsed_list for logs in sublist]
                 if unix_start_timestamp:
                     logs_parsed = [
                         log for log in logs_parsed
@@ -220,10 +232,13 @@ class LogResource(GenericResource):
                         log for log in logs_parsed
                         if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
                     ]
-                pipeline_log_file_path = logs.get('path')
-                if pipeline_log_file_path not in processed_pipeline_run_log_files:
+                pipeline_log_file_path = \
+                    remove_date_hour_subpath(logs[0].get('path')) if logs else None
+                if pipeline_log_file_path and \
+                        pipeline_log_file_path not in processed_pipeline_run_log_files:
                     pipeline_run_logs.append(logs_parsed)
                     processed_pipeline_run_log_files.add(pipeline_log_file_path)
+
                 if len(pipeline_run_logs) >= MAX_LOG_FILES:
                     break
 
@@ -298,8 +313,8 @@ class LogResource(GenericResource):
             model2.pipeline_run = model
 
             logs = await model2.logs_async()
-            logs_parsed = initialize_logs(logs)
-            block_log_file_path = logs.get('path')
+            logs_parsed_lists = [initialize_logs(log) for log in logs]
+            logs_parsed = [logs for sublist in logs_parsed_lists for logs in sublist]
             if unix_start_timestamp:
                 logs_parsed = [
                     log for log in logs_parsed
@@ -310,7 +325,9 @@ class LogResource(GenericResource):
                     log for log in logs_parsed
                     if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
                 ]
-            if block_log_file_path not in processed_block_run_log_files:
+            block_log_file_path = \
+                remove_date_hour_subpath(logs[0].get('path')) if logs else None
+            if block_log_file_path and block_log_file_path not in processed_block_run_log_files:
                 block_run_logs.append(logs_parsed)
                 processed_block_run_log_files.add(block_log_file_path)
 

@@ -237,6 +237,7 @@ class PipelineRun(BaseModel):
     @property
     def logs(self):
         return LoggerManagerFactory.get_logger_manager(
+            create_dir=False,
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
             repo_config=self.pipeline.repo_config,
@@ -244,6 +245,7 @@ class PipelineRun(BaseModel):
 
     async def logs_async(self):
         return await LoggerManagerFactory.get_logger_manager(
+            create_dir=False,
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
             repo_config=self.pipeline.repo_config,
@@ -369,6 +371,7 @@ class BlockRun(BaseModel):
     def logs(self):
         pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
         return LoggerManagerFactory.get_logger_manager(
+            create_dir=False,
             pipeline_uuid=pipeline.uuid,
             block_uuid=clean_name(self.block_uuid),
             partition=self.pipeline_run.execution_partition,
@@ -378,6 +381,7 @@ class BlockRun(BaseModel):
     async def logs_async(self):
         pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid)
         return await LoggerManagerFactory.get_logger_manager(
+            create_dir=False,
             pipeline_uuid=pipeline.uuid,
             block_uuid=clean_name(self.block_uuid),
             partition=self.pipeline_run.execution_partition,
