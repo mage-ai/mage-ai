@@ -219,7 +219,10 @@ class LogResource(GenericResource):
                 model.execution_date = row.execution_date
                 model.pipeline_schedule_id = row.pipeline_schedule_id
                 model.pipeline_uuid = row.pipeline_uuid
-                logs = await model.logs_async()
+                logs = await model.logs_async(
+                    start_timestamp=start_timestamp,
+                    end_timestamp=end_timestamp,
+                )
                 logs_parsed_list = [initialize_logs(log) for log in logs]
                 logs_parsed = [logs for sublist in logs_parsed_list for logs in sublist]
                 if unix_start_timestamp:
@@ -312,7 +315,10 @@ class LogResource(GenericResource):
             model2.block_uuid = row.block_uuid
             model2.pipeline_run = model
 
-            logs = await model2.logs_async()
+            logs = await model2.logs_async(
+                    start_timestamp=start_timestamp,
+                    end_timestamp=end_timestamp,
+                )
             logs_parsed_lists = [initialize_logs(log) for log in logs]
             logs_parsed = [logs for sublist in logs_parsed_lists for logs in sublist]
             if unix_start_timestamp:

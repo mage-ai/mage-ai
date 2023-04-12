@@ -104,9 +104,85 @@ class LoggerManager:
 
         return filename
 
-    def get_log_filepaths(self):
+    def traverse_logs_dir(
+        self,
+        dir: str,
+        filename: str,
+        depth: int = 1,
+        start_timestamp: datetime = None,
+        end_timestamp: datetime = None
+    ):
+        start_date = None
+        start_hour = None
+        end_date = None
+        end_hour = None
+        if start_timestamp:
+            start_date = start_timestamp.strftime('%Y%m%d')
+            start_hour = start_timestamp.strftime('%H')
+        if end_timestamp:
+            end_date = end_timestamp.strftime('%Y%m%d')
+            end_hour = end_timestamp.strftime('%H')
+
+        subfolders_in_range, files_in_range = [], []
+        for f in os.scandir(dir):
+            if f.is_dir():
+                folder_timestamp = int(f.path.split('/')[-1])
+                write_date = int(f.path.split('/')[-2]) if depth == 2 else None
+                if start_timestamp is None and end_timestamp is None:
+                    subfolders_in_range.append(f.path)
+                elif start_timestamp is not None and end_timestamp is not None:
+                    if (depth == 1 and folder_timestamp >= int(start_date) and
+                            folder_timestamp <= int(end_date)) or \
+                        (depth == 2 and write_date != int(start_date) and
+                            write_date != int(end_date)) or \
+                        (depth == 2 and write_date == int(start_date) and
+                            write_date == int(end_date) and
+                            folder_timestamp >= int(start_hour) and
+                            folder_timestamp <= int(end_hour)) or \
+                        (depth == 2 and write_date == int(start_date) and
+                            write_date != int(end_date) and
+                            folder_timestamp >= int(start_hour)) or \
+                        (depth == 2 and write_date != int(start_date) and
+                            write_date == int(end_date) and
+                            folder_timestamp <= int(end_hour)):
+                        subfolders_in_range.append(f.path)
+                elif start_timestamp is not None and end_timestamp is None:
+                    if (depth == 1 and folder_timestamp >= int(start_date)) or \
+                        (depth == 2 and write_date != int(start_date)) or \
+                        (depth == 2 and write_date == int(start_date) and
+                            folder_timestamp >= int(start_hour)):
+                        subfolders_in_range.append(f.path)
+                elif start_timestamp is None and end_timestamp is not None:
+                    if (depth == 1 and folder_timestamp <= int(end_date)) or \
+                        (depth == 2 and write_date != int(end_date)) or \
+                        (depth == 2 and write_date == int(end_date) and
+                            folder_timestamp <= int(end_hour)):
+                        subfolders_in_range.append(f.path)
+            elif f.is_file() and f.path.split('/')[-1] == filename:
+                files_in_range.append(f.path)
+
+        for dir in list(subfolders_in_range):
+            sf, f = self.traverse_logs_dir(
+                dir,
+                filename,
+                depth=depth + 1,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
+            subfolders_in_range.extend(sf)
+            files_in_range.extend(f)
+
+        return subfolders_in_range, files_in_range
+
+    def get_log_filepaths(self, **kwargs):
         logs_dir = self.get_log_filepath_prefix()
-        return glob(f'{logs_dir}/**/{self.get_log_filename()}', recursive=True)
+        subfolders, filepaths = self.traverse_logs_dir(
+            logs_dir,
+            self.get_log_filename(),
+            **kwargs,
+        )
+
+        return filepaths
 
     def get_log_filepath(self, create_dir: bool = False):
         if self.pipeline_uuid is None:
@@ -139,7 +215,7 @@ class LoggerManager:
         file = File.from_path(self.get_log_filepath())
         return file.to_dict(include_content=True)
 
-    async def get_logs_async(self):
-        log_file_paths = self.get_log_filepaths()
+    async def get_logs_async(self, **kwargs):
+        log_file_paths = self.get_log_filepaths(**kwargs)
         log_files = File.from_paths(log_file_paths)
         return [await file.to_dict_async(include_content=True) for file in log_files]

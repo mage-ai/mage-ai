@@ -243,13 +243,13 @@ class PipelineRun(BaseModel):
             repo_config=self.pipeline.repo_config,
         ).get_logs()
 
-    async def logs_async(self):
+    async def logs_async(self, **kwargs):
         return await LoggerManagerFactory.get_logger_manager(
             create_dir=False,
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
             repo_config=self.pipeline.repo_config,
-        ).get_logs_async()
+        ).get_logs_async(**kwargs)
 
     @property
     def pipeline_schedule_name(self):
@@ -378,7 +378,7 @@ class BlockRun(BaseModel):
             repo_config=pipeline.repo_config,
         ).get_logs()
 
-    async def logs_async(self):
+    async def logs_async(self, **kwargs):
         pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid)
         return await LoggerManagerFactory.get_logger_manager(
             create_dir=False,
@@ -386,7 +386,7 @@ class BlockRun(BaseModel):
             block_uuid=clean_name(self.block_uuid),
             partition=self.pipeline_run.execution_partition,
             repo_config=pipeline.repo_config,
-        ).get_logs_async()
+        ).get_logs_async(**kwargs)
 
     @classmethod
     @safe_db_query
