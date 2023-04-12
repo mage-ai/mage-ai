@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.shared.parsers import encode_complex
 from typing import Dict, List
@@ -73,7 +74,9 @@ class LocalStorage(BaseStorage):
         return pd.read_parquet(file_path, engine='pyarrow')
 
     def write_csv(self, df: pd.DataFrame, file_path: str) -> None:
+        File.create_parent_directories(file_path)
         df.to_csv(file_path, index=False)
 
     def write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
+        File.create_parent_directories(file_path)
         df.to_parquet(file_path)

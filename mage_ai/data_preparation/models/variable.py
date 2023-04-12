@@ -240,7 +240,10 @@ class Variable:
         for k in DATAFRAME_ANALYSIS_KEYS:
             file_path = os.path.join(self.variable_path, f'{k}.json')
             if self.storage.path_exists(file_path):
-                self.storage.remove(file_path)
+                try:
+                    self.storage.remove(file_path)
+                except FileNotFoundError as err:
+                    print(f'Error deleting file {file_path}: {err}')
 
     def __delete_json(self) -> None:
         old_file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')

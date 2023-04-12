@@ -1948,7 +1948,21 @@ function PipelineDetailPage({
           savePipelineContent={savePipelineContent}
           setActiveSidekickView={setActiveSidekickView}
           setMessages={setMessages}
-        />
+        >
+          {selectedFilePath && (
+            <Spacing ml={1}>
+              <FlexContainer alignItems="center" fullHeight>
+                <Button
+                  compact
+                  onClick={() => setSelectedFilePath(null)}
+                  small
+                >
+                  View pipeline
+                </Button>
+              </FlexContainer>
+            </Spacing>
+          )}
+        </FileHeaderMenu>
       );
     }
   }, [
@@ -1961,8 +1975,10 @@ function PipelineDetailPage({
     pipeline,
     restartKernel,
     savePipelineContent,
+    selectedFilePath,
     setActiveSidekickView,
     setMessages,
+    setSelectedFilePath,
   ]);
 
   const mainContainerHeaderMemo = useMemo(() => {
