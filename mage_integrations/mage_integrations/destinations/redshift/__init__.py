@@ -121,8 +121,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         # MERGE command is in preview: https://docs.amazonaws.cn/en_us/redshift/latest/dg/r_MERGE.html
 
         if unique_constraints and UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
-            full_table_name_temp = self.full_table_name_temp(schema_name, table_name, prefix='temp_')
-            full_table_name_old = self.full_table_name_temp(schema_name, table_name, prefix='old_')
+            full_table_name_temp = self.full_table_name(schema_name, table_name, prefix='temp_')
+            full_table_name_old = self.full_table_name(schema_name, table_name, prefix='old_')
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             drop_old_table_command = f'DROP TABLE IF EXISTS {full_table_name_old}'
             unique_constraints_clean = [
@@ -132,18 +132,19 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             commands = commands + [
                 drop_temp_table_command,
                 drop_old_table_command,
-            ] + ['\n'.join(
-                f'CREATE TABLE {full_table_name_temp} AS'
-                f'SELECT {insert_columns} FROM ('
-                f'  SELECT *,'
-                f'      ROW_NUMBER() OVER ('
-                f'          PARTITION BY {unique_constraints_clean} ORDER BY _mage_created_at DESC'
-                f'      ) as row_num'
-                f'  FROM {full_table_name})'
-                f'WHERE row_num = 1'
-            )] + [
-                f'ALTER TABLE {full_table_name} rename to {full_table_name_old}',
-                f'ALTER TABLE {full_table_name_temp} rename to {full_table_name}',
+            ] + ['\n'.join([
+                    f'CREATE TABLE {full_table_name_temp} AS '
+                    f'SELECT {insert_columns} FROM ('
+                    f'  SELECT *,'
+                    f'      ROW_NUMBER() OVER ('
+                    f'          PARTITION BY {", ".join(unique_constraints_clean)} ORDER BY _mage_created_at DESC'
+                    f'      ) as row_num'
+                    f'  FROM {full_table_name})'
+                    f'WHERE row_num = 1'
+                ])
+            ] + [
+                f'ALTER TABLE {full_table_name} rename to old_{table_name}',
+                f'ALTER TABLE {full_table_name_temp} rename to {table_name}',
                 drop_temp_table_command,
                 drop_old_table_command,
             ]
