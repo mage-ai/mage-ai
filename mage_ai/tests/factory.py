@@ -1,6 +1,7 @@
 from datetime import datetime
 from faker import Faker
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.oauth import User
@@ -8,7 +9,6 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
 from mage_ai.shared.hash import merge_dict
 from typing import Dict, Union
 
@@ -83,8 +83,14 @@ def create_pipeline_run_with_schedule(
         pipeline_uuid=pipeline_uuid,
         pipeline_schedule_id=pipeline_schedule_id,
     )
-    # Create pipeline schedule to create logs directory
-    pipeline_scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+    pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
+    # Create logger manager to create logs directory
+    LoggerManagerFactory.get_logger_manager(
+        pipeline_uuid=pipeline.uuid,
+        partition=pipeline_run.execution_partition,
+        repo_config=pipeline.repo_config,
+    )
+
     return pipeline_run
 
 
