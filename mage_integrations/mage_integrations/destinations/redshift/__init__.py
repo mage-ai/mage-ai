@@ -1,6 +1,7 @@
 from mage_integrations.connections.redshift import Redshift as RedshiftConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.redshift.utils import convert_column_type, convert_array
 from mage_integrations.destinations.sql.base import Destination, main
@@ -96,6 +97,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> List[str]:
+        full_table_name = self.full_table_name(schema_name, table_name)
+
         columns = list(schema['properties'].keys())
         insert_columns, insert_values = build_insert_command(
             column_type_mapping=self.column_type_mapping(schema),
@@ -108,19 +111,45 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         insert_values = ', '.join(insert_values)
 
         commands = [
-            f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
-            f'VALUES {insert_values}',
+            '\n'.join([
+                f'INSERT INTO {full_table_name} ({insert_columns})',
+                f'VALUES {insert_values}',
+            ]),
         ]
 
         # TODO: handle conflicts
         # MERGE command is in preview: https://docs.amazonaws.cn/en_us/redshift/latest/dg/r_MERGE.html
 
-        return self.wrap_insert_commands(commands, table_name)
+        if unique_constraints and UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+            full_table_name_temp = self.full_table_name(schema_name, table_name, prefix='temp_')
+            full_table_name_old = self.full_table_name(schema_name, table_name, prefix='old_')
+            drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
+            drop_old_table_command = f'DROP TABLE IF EXISTS {full_table_name_old}'
+            unique_constraints_clean = [
+                f'{clean_column_name(col)}'
+                for col in unique_constraints
+            ]
+            commands = commands + [
+                drop_temp_table_command,
+                drop_old_table_command,
+            ] + ['\n'.join([
+                    f'CREATE TABLE {full_table_name_temp} AS '
+                    f'SELECT {insert_columns} FROM ('
+                    f'  SELECT *,'
+                    f'      ROW_NUMBER() OVER ('
+                    f'          PARTITION BY {", ".join(unique_constraints_clean)} ORDER BY _mage_created_at DESC'
+                    f'      ) as row_num'
+                    f'  FROM {full_table_name})'
+                    f'WHERE row_num = 1'
+                ])
+            ] + [
+                f'ALTER TABLE {full_table_name} rename to old_{table_name}',
+                f'ALTER TABLE {full_table_name_temp} rename to {table_name}',
+                drop_temp_table_command,
+                drop_old_table_command,
+            ]
 
-    def wrap_insert_commands(self, commands: List[str], table_name: str) -> List[str]:
-        commands_string = '\n'.join(commands)
-        return [
-            commands_string,
+        commands.append(
             '\n'.join([
                 'WITH last_queryid_for_table AS (',
                 '    SELECT query, MAX(si.starttime) OVER () as last_q_stime, si.starttime as stime',
@@ -129,9 +158,12 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 ')',
                 'SELECT SUM(rows) FROM stl_insert si, last_queryid_for_table lqt ',
                 'WHERE si.query=lqt.query AND lqt.last_q_stime=stime',
-            ]),
+            ])
+        )
+        return commands
 
-        ]
+    def full_table_name(self, schema_name: str, table_name: str, prefix: str = '') -> str:
+        return f'{schema_name}.{prefix}{table_name}'
 
     def column_type_mapping(self, schema: Dict) -> Dict:
         return column_type_mapping_orig(
