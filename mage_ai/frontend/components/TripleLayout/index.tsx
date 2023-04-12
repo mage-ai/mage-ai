@@ -297,7 +297,7 @@ function TripleLayout({
       <AfterInnerStyle
         noScrollbarTrackBackground
         ref={refAfterInner}
-        verticalOffset={afterHeightOffset}
+        verticalOffset={afterHeader ? afterHeightOffset : null}
       >
         {!afterHidden && after}
       </AfterInnerStyle>
@@ -305,6 +305,7 @@ function TripleLayout({
   ), [
     after,
     afterHeader,
+    afterHeightOffset,
     afterHidden,
     afterSubheader,
     afterWidthFinal,
