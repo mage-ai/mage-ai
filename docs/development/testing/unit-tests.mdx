@@ -1,0 +1,33 @@
+---
+title: "Unit tests"
+description: "Write unit tests to test pipeline code."
+---
+
+## Create unit tests and run tests in CI/CD pipeline
+
+You can create a `tests` folder in your project folder and put unit tests in this folder.
+
+In your CI/CD pipeline, you can `cd` into the project's folder and run the following command
+to run unit tests.
+```bash
+python3 -m unittest discover -s tests --failfast
+```
+
+## Example unit tests
+
+End-to-end test for a pipeline:
+
+```python
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.tests.base_test import TestCase
+
+
+class ExamplePipelineTest(TestCase):
+    def test_pipeline_execution(self):
+        pipeline = Pipeline.get('example_pipeline')
+        pipeline.execute_sync()
+```
+
+## Test environment
+When running unit tests, the `env` variable's value in the method's `kwargs` is `test`.
+You can leverage this variable to change the code logic or config used in the unit tests.

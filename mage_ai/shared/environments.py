@@ -1,3 +1,9 @@
+from mage_ai.shared.constants import (
+    ENV_DEV,
+    ENV_PROD,
+    ENV_STAGING,
+    ENV_TEST,
+)
 import os
 import sys
 
@@ -15,8 +21,19 @@ def is_test():
 
 
 def is_production():
-    return os.getenv('ENV', None) == 'production' or any('unittest' in v for v in sys.argv)
+    return os.getenv('ENV', None) == 'production'
 
 
 def is_staging():
     return os.getenv('ENV', None) == 'staging'
+
+
+def get_env():
+    if is_test():
+        return ENV_TEST
+    elif is_production():
+        return ENV_PROD
+    elif is_staging():
+        return ENV_STAGING
+    else:
+        return ENV_DEV
