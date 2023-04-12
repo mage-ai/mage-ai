@@ -1,5 +1,4 @@
 from datetime import datetime
-from glob import glob
 from mage_ai.data_preparation.logging import LoggingConfig
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.file import File
@@ -212,8 +211,9 @@ class LoggerManager:
         return log_filepath
 
     def get_logs(self):
-        file = File.from_path(self.get_log_filepath())
-        return file.to_dict(include_content=True)
+        log_file_paths = self.get_log_filepaths()
+        log_files = File.from_paths(log_file_paths)
+        return [file.to_dict(include_content=True) for file in log_files]
 
     async def get_logs_async(self, **kwargs):
         log_file_paths = self.get_log_filepaths(**kwargs)

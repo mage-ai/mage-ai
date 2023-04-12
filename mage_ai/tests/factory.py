@@ -8,6 +8,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineRun,
     PipelineSchedule,
 )
+from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
 from mage_ai.shared.hash import merge_dict
 from typing import Dict, Union
 
@@ -82,6 +83,8 @@ def create_pipeline_run_with_schedule(
         pipeline_uuid=pipeline_uuid,
         pipeline_schedule_id=pipeline_schedule_id,
     )
+    # Create pipeline schedule to create logs directory
+    pipeline_scheduler = PipelineScheduler(pipeline_run=pipeline_run)
     return pipeline_run
 
 

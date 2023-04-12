@@ -45,12 +45,13 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
 
         block_runs = block_runs_by_stream.get(stream, [])
         for br in block_runs:
-            logs_arr = br.logs['content'].split('\n')
+            br_logs_list = [log['content'].split('\n') for log in br.logs]
+            br_logs = [logs for sublist in br_logs_list for logs in sublist]
 
             if f'{pipeline.data_loader.uuid}:{stream}' in br.block_uuid:
-                sources.append(logs_arr)
+                sources.append(br_logs)
             elif f'{pipeline.data_exporter.uuid}:{stream}' in br.block_uuid:
-                destinations.append(logs_arr)
+                destinations.append(br_logs)
 
         block_runs_by_stream[stream] = dict(
             destinations=destinations,
@@ -80,7 +81,8 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
     ])
 
     pipeline_logs_by_stream = {}
-    pipeline_logs = pipeline_run.logs['content'].split('\n')
+    pipeline_logs_list = [log['content'].split('\n') for log in pipeline_run.logs]
+    pipeline_logs = [logs for sublist in pipeline_logs_list for logs in sublist]
     for pipeline_log in pipeline_logs:
         tags = parse_line(pipeline_log)
         stream = tags.get('stream')
