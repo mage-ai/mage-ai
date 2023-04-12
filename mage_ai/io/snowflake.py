@@ -7,7 +7,6 @@ from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
 from typing import Dict, List, Union
-import pandas as pd
 
 
 DEFAULT_LOGIN_TIMEOUT = 20
@@ -94,7 +93,7 @@ class Snowflake(BaseSQLConnection):
                     elif len(rows) >= 1 and len(rows[0]) >= 1:
                         columns = [f'col_{i}' for i in range(len(rows[0]))]
 
-                    result = pd.DataFrame(rows, columns=columns)
+                    result = DataFrame(rows, columns=columns)
                 else:
                     result = cursor.execute(query, **variables)
 
@@ -180,7 +179,7 @@ class Snowflake(BaseSQLConnection):
                 if not columns and len(results) >= 1:
                     columns = [f'col{i}' for i in range(len(results[0]))]
 
-                return pd.DataFrame(results, columns=columns)
+                return DataFrame(results, columns=columns)
 
     def export(
         self,
@@ -211,9 +210,9 @@ class Snowflake(BaseSQLConnection):
         """
 
         if type(df) is dict:
-            df = pd.DataFrame([df])
+            df = DataFrame([df])
         elif type(df) is list:
-            df = pd.DataFrame(df)
+            df = DataFrame(df)
 
         def __process():
             with self._ctx.cursor() as cur:

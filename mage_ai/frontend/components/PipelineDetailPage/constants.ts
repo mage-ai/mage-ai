@@ -6,6 +6,7 @@ export enum PageNameEnum {
   PIPELINE_LOGS = 'pipeline_logs',
   PIPELINE_RUNS = 'pipeline_runs',
   RUNS = 'runs',
+  SETTINGS = 'settings',
   SYNCS = 'syncs',
   TRIGGERS = 'triggers',
 }

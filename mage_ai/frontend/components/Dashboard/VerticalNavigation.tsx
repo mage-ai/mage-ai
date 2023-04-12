@@ -162,7 +162,10 @@ function VerticalNavigation({
               >
                 <NavigationItemStyle primary={!IconToUse}>
                   {IconToUse
-                    ? <IconToUse muted={!selected} size={ICON_SIZE} />
+                    ? <IconToUse
+                      muted={!selected}
+                      size={ICON_SIZE}
+                    />
                     : <Text>Edit</Text>
                   }
                 </NavigationItemStyle>

@@ -49,7 +49,25 @@ blocks:
 ```
 By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
 
-Customizing compute resource for Kubernetes executor is coming soon.
+To customize the compute resource for Kubernetes executor, you can add the `executor_config` at block level.
+
+Example config:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: k8s
+  executor_config:
+    resource_limits:
+      cpu: 1000m
+      memory: 2048Mi
+    resource_requests:
+      cpu: 500m
+      memory: 1024Mi
+```
 
 
 ### AWS ECS executor

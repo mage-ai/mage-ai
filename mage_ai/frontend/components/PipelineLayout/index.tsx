@@ -148,7 +148,7 @@ function PipelineLayout({
         {
           // gradientColor: PAGE_NAME_EDIT === page ? null : PURPLE_BLUE,
           bold: PAGE_NAME_EDIT !== page,
-          label: () => pipeline?.name,
+          label: () => pipeline?.uuid,
           linkProps: {
             as: `/pipelines/${pipeline?.uuid}`,
             href: '/pipelines/[pipeline]',

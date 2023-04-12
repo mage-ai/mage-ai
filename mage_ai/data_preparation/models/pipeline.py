@@ -387,6 +387,8 @@ class Pipeline:
         self.load_config(self.get_config_from_yaml(), catalog=catalog)
 
     def load_config(self, config, catalog=None):
+        if not config:
+            raise Exception(f'Invalid pipeline config: {config}')
         if catalog is None:
             self.data_integration = config.get('data_integration')
         else:

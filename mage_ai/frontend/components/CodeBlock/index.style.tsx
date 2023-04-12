@@ -107,6 +107,22 @@ export const ContainerStyle = styled.div`
   position: relative;
 `;
 
+export const HiddenBlockContainerStyle = styled.div<BorderColorShareProps>`
+  ${BORDER_COLOR_SHARED_STYLES}
+
+  border-radius: ${BORDER_RADIUS}px;
+  border-style: ${BORDER_STYLE};
+  border-width: ${BORDER_WIDTH_THICK}px;
+
+  ${props => `
+    background-color: ${(props.theme || dark).background.content};
+
+    &:hover {
+      border-color: ${getColorsForBlockType(props.blockType, props).accent};
+    }
+  `}
+`;
+
 export const BlockHeaderStyle = styled.div<{
   zIndex: number;
 } & BorderColorShareProps>`

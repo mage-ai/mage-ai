@@ -17,7 +17,9 @@ import BlockType, {
   BlockTypeEnum,
   SampleDataType,
 } from '@interfaces/BlockType';
+import BlocksInPipeline from '@components/PipelineDetail/BlocksInPipeline';
 import Button from '@oracle/elements/Button';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import ConfigureBlock from '@components/PipelineDetail/ConfigureBlock';
 import DataProviderType from '@interfaces/DataProviderType';
 import FileBrowser from '@components/FileBrowser';
@@ -48,11 +50,22 @@ import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { Close } from '@oracle/icons';
+import {
+  EDIT_BEFORE_TABS,
+  EDIT_BEFORE_TAB_ALL_FILES,
+  EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
+  PAGE_NAME_EDIT,
+} from '@components/PipelineDetail/constants';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
-import { LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS } from '@storage/constants';
+import {
+  LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
+  LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
+  LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS,
+} from '@storage/constants';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   get,
+  set,
 } from '@storage/localStorage';
 import {
   FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
@@ -64,7 +77,6 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
@@ -83,6 +95,7 @@ import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
+import { isJsonString } from '@utils/string';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
@@ -105,7 +118,10 @@ function PipelineDetailPage({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const [afterHidden, setAfterHidden] = useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
+  const pipelineUUID = pipelineProp.uuid;
+
+  const [afterHidden, setAfterHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
@@ -118,6 +134,49 @@ function PipelineDetailPage({
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
+
+  const localStorageTabSelectedKey =
+    `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
+  const selectedTabUUIDInit = get(localStorageTabSelectedKey);
+  const [selectedTab, setSelectedTabState] = useState(
+    find(EDIT_BEFORE_TABS, ({ uuid }) => uuid === selectedTabUUIDInit)
+      || EDIT_BEFORE_TABS[0],
+  );
+  const setSelectedTab = useCallback((tab: TabType) => {
+    setSelectedTabState(tab);
+    set(localStorageTabSelectedKey, tab?.uuid);
+  }, [
+    localStorageTabSelectedKey,
+    setSelectedTabState,
+  ]);
+
+  const localStorageHiddenBlocksKey =
+    `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_HIDDEN_BLOCKS}_${pipelineUUID}`;
+  const [hiddenBlocks, setHiddenBlocksState] = useState<{
+    [uuid: string]: boolean;
+  }>({});
+  const setHiddenBlocks = useCallback((callback) => {
+    setHiddenBlocksState((prev) => {
+      const data = callback(prev);
+      set(localStorageHiddenBlocksKey, JSON.stringify(data));
+
+      return data;
+    });
+  }, [
+    localStorageHiddenBlocksKey,
+    setHiddenBlocksState,
+  ]);
+
+  useEffect(() => {
+    const hiddenBlocksInitString = get(localStorageHiddenBlocksKey);
+    if (hiddenBlocksInitString && isJsonString(hiddenBlocksInitString)) {
+      setHiddenBlocksState(JSON.parse(hiddenBlocksInitString));
+    }
+  }, [
+    localStorageHiddenBlocksKey,
+    setHiddenBlocksState,
+  ]);
+
   const mainContainerRef = useRef(null);
 
   // Kernels
@@ -140,7 +199,6 @@ function PipelineDetailPage({
     ) || kernels?.[0];
 
   // Pipeline
-  const pipelineUUID = pipelineProp.uuid;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
   const {
     data,
@@ -1671,6 +1729,7 @@ function PipelineDetailPage({
       insights={insights}
       interruptKernel={interruptKernel}
       isPipelineExecuting={isPipelineExecuting}
+      isPipelineUpdating={isPipelineUpdating}
       lastTerminalMessage={lastTerminalMessage}
       messages={messages}
       metadata={metadata}
@@ -1693,10 +1752,13 @@ function PipelineDetailPage({
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
+      // @ts-ignore
+      setHiddenBlocks={setHiddenBlocks}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}
       textareaFocused={textareaFocused}
+      updatePipelineMetadata={updatePipelineMetadata}
       updateWidget={updateWidget}
       widgets={widgets}
     />
@@ -1721,6 +1783,7 @@ function PipelineDetailPage({
     insights,
     interruptKernel,
     isPipelineExecuting,
+    isPipelineUpdating,
     lastTerminalMessage,
     messages,
     metadata,
@@ -1741,10 +1804,12 @@ function PipelineDetailPage({
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
+    setHiddenBlocks,
     setTextareaFocused,
     showAddBlockModal,
     statistics,
     textareaFocused,
+    updatePipelineMetadata,
     updateWidget,
     widgets,
   ]);
@@ -1783,6 +1848,8 @@ function PipelineDetailPage({
       fetchSampleData={fetchSampleData}
       files={files}
       globalVariables={globalVariables}
+      // @ts-ignore
+      hiddenBlocks={hiddenBlocks}
       interruptKernel={interruptKernel}
       isPipelineUpdating={isPipelineUpdating}
       kernel={kernel}
@@ -1803,6 +1870,8 @@ function PipelineDetailPage({
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
+      // @ts-ignore
+      setHiddenBlocks={setHiddenBlocks}
       setIntegrationStreams={setIntegrationStreams}
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
@@ -1833,6 +1902,7 @@ function PipelineDetailPage({
     fetchSampleData,
     files,
     globalVariables,
+    hiddenBlocks,
     interruptKernel,
     isPipelineUpdating,
     kernel,
@@ -1853,6 +1923,7 @@ function PipelineDetailPage({
     setAnyInputFocused,
     setEditingBlock,
     setErrors,
+    setHiddenBlocks,
     setMessages,
     setPipelineContentTouched,
     setRunningBlocks,
@@ -1861,6 +1932,37 @@ function PipelineDetailPage({
     showAddBlockModal,
     textareaFocused,
     widgets,
+  ]);
+
+  const beforeHeader = useMemo(() => {
+    if (page === PAGE_NAME_EDIT) {
+      return (
+        <FileHeaderMenu
+          cancelPipeline={cancelPipeline}
+          createPipeline={createPipeline}
+          executePipeline={executePipeline}
+          interruptKernel={interruptKernel}
+          isPipelineExecuting={isPipelineExecuting}
+          pipeline={pipeline}
+          restartKernel={restartKernel}
+          savePipelineContent={savePipelineContent}
+          setActiveSidekickView={setActiveSidekickView}
+          setMessages={setMessages}
+        />
+      );
+    }
+  }, [
+    cancelPipeline,
+    createPipeline,
+    executePipeline,
+    interruptKernel,
+    isPipelineExecuting,
+    page,
+    pipeline,
+    restartKernel,
+    savePipelineContent,
+    setActiveSidekickView,
+    setMessages,
   ]);
 
   const mainContainerHeaderMemo = useMemo(() => {
@@ -1881,7 +1983,9 @@ function PipelineDetailPage({
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
             updatePipelineMetadata={updatePipelineMetadata}
-          />
+          >
+            {beforeHeader}
+          </KernelStatus>
           {selectedFilePaths?.length > 0 &&
             <FileTabs
               filePaths={selectedFilePaths}
@@ -1894,6 +1998,7 @@ function PipelineDetailPage({
       );
     }
   }, [
+    beforeHeader,
     filesTouched,
     isPipelineUpdating,
     kernel,
@@ -1935,7 +2040,6 @@ function PipelineDetailPage({
 
   const fileTreeRef = useRef(null);
   const before = useMemo(() => (
-
     <FileBrowser
       addNewBlock={(
         b: BlockRequestPayloadType,
@@ -1992,31 +2096,51 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  const beforeHeader = useMemo(() => {
-    if (page === PAGE_NAME_EDIT) {
-      return (
-        <FileHeaderMenu
-          cancelPipeline={cancelPipeline}
-          createPipeline={createPipeline}
-          executePipeline={executePipeline}
-          interruptKernel={interruptKernel}
-          isPipelineExecuting={isPipelineExecuting}
-          restartKernel={restartKernel}
-          savePipelineContent={savePipelineContent}
-          setMessages={setMessages}
-        />
-      );
+  const blocksInPipeline = useMemo(() => (
+    <BlocksInPipeline
+      blockRefs={blockRefs}
+      // @ts-ignore
+      hiddenBlocks={hiddenBlocks}
+      pipeline={pipeline}
+      // @ts-ignore
+      setHiddenBlocks={setHiddenBlocks}
+    />
+  ), [
+    blockRefs,
+    hiddenBlocks,
+    pipeline,
+    setHiddenBlocks,
+  ]);
+
+  const beforeToShow = useMemo(() => {
+    if (EDIT_BEFORE_TAB_ALL_FILES.uuid === selectedTab?.uuid) {
+      return before;
+    } else if (EDIT_BEFORE_TAB_FILES_IN_PIPELINE.uuid === selectedTab?.uuid) {
+      return blocksInPipeline;
     }
+
+    return null;
   }, [
-    cancelPipeline,
-    createPipeline,
-    executePipeline,
-    interruptKernel,
-    isPipelineExecuting,
-    page,
-    restartKernel,
-    savePipelineContent,
-    setMessages,
+    before,
+    blocksInPipeline,
+    selectedTab,
+  ]);
+
+  const buttonTabs = useMemo(() => (
+    <Spacing px={1}>
+      <ButtonTabs
+        noPadding
+        onClickTab={(tab: TabType) => {
+          setSelectedTab(tab);
+        }}
+        selectedTabUUID={selectedTab?.uuid}
+        small
+        tabs={EDIT_BEFORE_TABS}
+      />
+    </Spacing>
+  ), [
+    setSelectedTab,
+    selectedTab,
   ]);
 
   return (
@@ -2083,8 +2207,8 @@ function PipelineDetailPage({
             {isIntegration && integrationOutputsMemo}
           </FlexContainer>
         )}
-        before={before}
-        beforeHeader={beforeHeader}
+        before={beforeToShow}
+        beforeHeader={buttonTabs}
         beforeHeightOffset={HEADER_HEIGHT}
         beforeNavigationItems={buildNavigationItems(PageNameEnum.EDIT, pipeline)}
         errors={errors}

@@ -27,6 +27,7 @@ COPY mage_integrations mage_integrations
 RUN ${PIP} install mage_integrations/
 RUN ${PIP} install "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql"
 RUN ${PIP} install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+RUN ${PIP} install "git+https://github.com/mage-ai/google-ads-python.git#egg=google-ads"
 RUN ${PIP} install -r requirements.txt
 
 COPY ./mage_ai /home/src/mage_ai

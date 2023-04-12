@@ -24,6 +24,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { BLUE_TRANSPARENT } from '@oracle/styles/colors/main';
 import { Branch } from '@oracle/icons';
+import { ChevronRight } from '@oracle/icons';
 import {
   HeaderStyle,
   LOGO_HEIGHT,
@@ -122,16 +123,12 @@ function Header({
 
       if (showDivider) {
         arr.push(
-          <Text
-            inline
+          <Spacing
             key={`divider-${title}`}
-            monospace
-            muted
+            mx={1}
           >
-            &nbsp;
-            /
-            &nbsp;
-          </Text>
+            <ChevronRight muted />
+          </Spacing>,
         );
       }
 

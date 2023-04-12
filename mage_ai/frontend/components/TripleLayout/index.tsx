@@ -378,7 +378,7 @@ function TripleLayout({
       <BeforeInnerStyle
         noScrollbarTrackBackground
         ref={refBeforeInner}
-        verticalOffset={beforeHeightOffset}
+        verticalOffset={beforeHeader ? beforeHeightOffset : null}
       >
         {!beforeHidden && before}
       </BeforeInnerStyle>

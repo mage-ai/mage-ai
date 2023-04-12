@@ -1,4 +1,5 @@
 from kubernetes import client, config
+from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.constants import (
     DEFAULT_NAMESPACE,
     KUBE_POD_NAME_ENV_VAR,
@@ -47,8 +48,17 @@ class JobManager():
 
         return False
 
-    def run_job(self, command):
-        job = self.create_job_object(command)
+    def run_job(
+        self,
+        command: str,
+        k8s_config=None,
+    ):
+        if type(k8s_config) is dict:
+            k8s_config = K8sExecutorConfig.load(config=k8s_config)
+        job = self.create_job_object(
+            command,
+            k8s_config=k8s_config,
+        )
 
         self.create_job(job)
 
@@ -70,16 +80,34 @@ class JobManager():
         if api_response.status.succeeded is None:
             raise Exception(f'Failed to execute k8s job {self.job_name}')
 
-    def create_job_object(self, command):
+    def create_job_object(
+        self,
+        command: str,
+        k8s_config: K8sExecutorConfig = None,
+    ):
         # Configureate Pod template container
         mage_server_container_spec = self.pod_config.spec.containers[0]
-        container = client.V1Container(
+
+        container_kwargs = dict(
             name='mage-job-container',
             image=mage_server_container_spec.image,
             image_pull_policy='IfNotPresent',
             command=command.split(' ') if isinstance(command, str) else command,
             env=mage_server_container_spec.env,
             volume_mounts=mage_server_container_spec.volume_mounts,
+        )
+        if k8s_config and (k8s_config.resource_limits or k8s_config.resource_requests):
+            resource_kwargs = dict()
+            if k8s_config.resource_limits:
+                resource_kwargs['limits'] = k8s_config.resource_limits.to_dict()
+            if k8s_config.resource_requests:
+                resource_kwargs['requests'] = k8s_config.resource_requests.to_dict()
+            container_kwargs['resources'] = client.V1ResourceRequirements(
+                **resource_kwargs,
+            )
+
+        container = client.V1Container(
+            **container_kwargs,
         )
         # Create and configurate a spec section
         template = client.V1PodTemplateSpec(

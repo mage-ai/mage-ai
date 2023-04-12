@@ -119,6 +119,9 @@ export type DependencyGraphProps = {
   height: number;
   heightOffset?: number;
   noStatus?: boolean;
+  onClickNode?: (opts: {
+    block?: BlockType;
+  }) => void;
   pannable?: boolean;
   pipeline: PipelineType;
   runningBlocks?: BlockType[];
@@ -142,6 +145,7 @@ function DependencyGraph({
   height,
   heightOffset = UNIT * 10,
   noStatus,
+  onClickNode,
   pannable = true,
   pipeline,
   runningBlocks = [],
@@ -615,7 +619,16 @@ function DependencyGraph({
                     if (blockEditing) {
                       onClickWhenEditingUpstreamBlocks(block);
                     } else {
-                      onClick(block);
+                      onClickNode?.({
+                        block,
+                      });
+
+                      // This is required because if the block is hidden, it needs to be un-hidden
+                      // before scrolling to it or else the scrollIntoView won’t scroll to the top
+                      // of the block.
+                      setTimeout(() => {
+                        onClick(block);
+                      }, 1);
                     }
                   }
                 }}
