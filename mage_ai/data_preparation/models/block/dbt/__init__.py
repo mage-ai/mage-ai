@@ -10,7 +10,7 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     run_dbt_tests,
     update_model_settings,
 )
-from mage_ai.data_preparation.models.constants import BlockLanguage
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.hash import merge_dict
 from typing import Any, Dict, List
@@ -218,7 +218,9 @@ class DBTBlock(Block):
 
             if is_sql and dbt_command in ['build', 'run']:
                 limit = 1000
-                if self.downstream_blocks and len(self.downstream_blocks) >= 1:
+                if self.downstream_blocks and \
+                        len(self.downstream_blocks) >= 1 and \
+                        not all([BlockType.DBT == block.type for block in self.downstream_blocks]):
                     limit = None
 
                 df = fetch_model_data(

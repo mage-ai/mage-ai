@@ -1025,7 +1025,7 @@ def fetch_model_data(
     # snowflake: schema
     # trino: schema
     profile = get_profile(block, profile_target)
-    schema = profile.get('schema')
+    schema = profile.get('schema') or profile.get('+schema')
     if not schema and 'dataset' in profile:
         schema = profile['dataset']
 
@@ -1037,8 +1037,13 @@ def fetch_model_data(
 
     # Check dbt_profiles for schema to append
     model_configurations = get_model_configurations_from_dbt_project_settings(block)
-    if model_configurations and model_configurations.get('schema'):
-        schema = f"{schema}_{model_configurations['schema']}"
+    model_configuration_schema = None
+    if model_configurations:
+        model_configuration_schema = model_configurations.get('schema') or \
+            model_configurations.get('+schema')
+
+    if model_configuration_schema:
+        schema = f"{schema}_{model_configuration_schema}"
 
     query_string = f'SELECT * FROM {schema}.{model_name}'
 
