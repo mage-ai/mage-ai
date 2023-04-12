@@ -13,8 +13,6 @@ class ClickHouse(BaseSQLDatabase):
     """
     Handles data transfer betwee a ClickHouse data warehouse and the Mage app.
     """
-    QUERY_MAX_LENGTH = 256_000
-
     def __init__(self, **kwargs) -> None:
         """
         Initializes settings for connecting to a ClickHouse warehouse.
@@ -27,11 +25,11 @@ class ClickHouse(BaseSQLDatabase):
         if kwargs.get('verbose') is not None:
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
-        with self.printer.print_msg('Connecting to ClickHouse warehouse'):
+        with self.printer.print_msg('Connecting to ClickHouse'):
             self.client = clickhouse_connect.get_client(**kwargs)
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'ClickHouse':
+    def with_config(cls, config: BaseConfigLoader) -> 'ClickHouse':
         """
         Initializes ClickHouse client from configuration loader
 
@@ -40,9 +38,17 @@ class ClickHouse(BaseSQLDatabase):
         """
         if ConfigKey.CLICKHOUSE_HOST not in config:
             raise ValueError(
-                'No valid configuration settings found for ClickHouse. You must specify host.'
+                'No valid configuration settings found for ClickHouse. '
+                'You must specify host.'
             )
-        return cls(**kwargs)
+        return cls(
+            database=config[ConfigKey.CLICKHOUSE_DATABASE],
+            host=config[ConfigKey.CLICKHOUSE_HOST],
+            interface=config[ConfigKey.CLICKHOUSE_INTERFACE],
+            password=config[ConfigKey.CLICKHOUSE_PASSWORD],
+            port=config[ConfigKey.CLICKHOUSE_PORT],
+            username=config[ConfigKey.CLICKHOUSE_USERNAME],
+        )
 
     def execute(self, command_string: str, **kwargs) -> None:
         """

@@ -263,6 +263,7 @@ class VerboseConfigKey(str, Enum):
 
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
+    CLICKHOUSE = 'ClickHouse'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
@@ -303,6 +304,18 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.REDSHIFT,
             'user',
         ),
+        ConfigKey.CLICKHOUSE_DATABASE: (
+            VerboseConfigKey.CLICKHOUSE, 'database'),
+        ConfigKey.CLICKHOUSE_HOST: (
+            VerboseConfigKey.CLICKHOUSE, 'host'),
+        ConfigKey.CLICKHOUSE_INTERFACE: (
+            VerboseConfigKey.CLICKHOUSE, 'interface'),
+        ConfigKey.CLICKHOUSE_PASSWORD: (
+            VerboseConfigKey.CLICKHOUSE, 'password'),
+        ConfigKey.CLICKHOUSE_PORT: (
+            VerboseConfigKey.CLICKHOUSE, 'port'),
+        ConfigKey.CLICKHOUSE_USERNAME: (
+            VerboseConfigKey.CLICKHOUSE, 'username'),
         ConfigKey.POSTGRES_DBNAME: (VerboseConfigKey.POSTGRES, 'database'),
         ConfigKey.POSTGRES_HOST: (VerboseConfigKey.POSTGRES, 'host'),
         ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),
