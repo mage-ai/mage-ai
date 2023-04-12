@@ -30,6 +30,7 @@ const NUMBER_OF_TOP_MENU_ITEMS: number = 3;
 type FileHeaderMenuProps = {
   cancelPipeline: () => void;
   createPipeline: (data: any) => void;
+  children?: any;
   executePipeline: () => void;
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
@@ -47,6 +48,7 @@ type FileHeaderMenuProps = {
 
 function FileHeaderMenu({
   cancelPipeline,
+  children,
   createPipeline,
   executePipeline,
   interruptKernel,
@@ -276,6 +278,8 @@ function FileHeaderMenu({
             uuid="FileHeaderMenu/edit_items"
           />
         </div>
+
+        {children}
       </FlexContainer>
     </ClickOutside>
   );

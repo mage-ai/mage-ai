@@ -332,10 +332,18 @@ function Sidekick({
                 fetchPipeline={fetchPipeline}
                 height={heightWindow - heightOffset - finalOutputHeight}
                 // @ts-ignore
-                onClickNode={({ block: { uuid } }) => setHiddenBlocks(prev => ({
-                  ...prev,
-                  [uuid]: !prev?.[uuid],
-                }))}
+                onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
+                  const hidden = !!prev?.[uuid];
+
+                  if (!hidden) {
+                    return prev;
+                  }
+
+                  return {
+                    ...prev,
+                    [uuid]: !hidden,
+                  };
+                })}
                 pipeline={pipeline}
                 runningBlocks={runningBlocks}
                 selectedBlock={selectedBlock}
