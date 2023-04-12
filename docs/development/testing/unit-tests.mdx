@@ -13,9 +13,9 @@ to run unit tests.
 python3 -m unittest discover -s tests --failfast
 ```
 
-## Example unit tests:
+## Example unit tests
 
-End-to-end test for a pipeline.
+End-to-end test for a pipeline:
 
 ```python
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -27,3 +27,7 @@ class ExamplePipelineTest(TestCase):
         pipeline = Pipeline.get('example_pipeline')
         pipeline.execute_sync()
 ```
+
+## Test environment
+When running unit tests, the `env` variable's value in the method's `kwargs` is `test`.
+You can leverage this variable to change the code logic or config used in the unit tests.

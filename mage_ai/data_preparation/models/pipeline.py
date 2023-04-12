@@ -16,7 +16,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path, get_data_dir
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query

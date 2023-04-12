@@ -38,7 +38,8 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.stream import StreamToLogger
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.shared.constants import ENV_DEV
+from mage_ai.shared.constants import ENV_DEV, ENV_TEST
+from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
@@ -349,6 +350,8 @@ class Block:
         env = (self.global_vars or dict()).get('env')
         if env == ENV_DEV:
             table_name = f'dev_{table_name}'
+        elif env == ENV_TEST:
+            table_name = f'test_{table_name}'
 
         return table_name
 
@@ -1701,13 +1704,15 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         return variable_mapping
 
     def __enrich_global_vars(self, global_vars: Dict = None):
+        global_vars = global_vars or dict()
         if ((self.pipeline is not None and self.pipeline.type == PipelineType.DATABRICKS) or
                 is_spark_env()):
-            global_vars = global_vars or dict()
             if not global_vars.get('spark'):
                 spark = self.__get_spark_session()
                 if spark is not None:
                     global_vars['spark'] = spark
+        if 'env' not in global_vars:
+            global_vars['env'] = get_env()
         return global_vars
 
     def __get_spark_session(self):
