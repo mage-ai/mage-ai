@@ -19,6 +19,9 @@ if [ -f "$REQUIREMENTS_FILE" ]; then
     pip3 install -r $REQUIREMENTS_FILE
 fi
 
+ulimit -Hn 16384
+ulimit -Sn 8192
+
 if [ "$#" -gt 0 ]; then
     echo "Execute command: ${@}"
     "$@"
