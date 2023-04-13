@@ -14,7 +14,8 @@ Make sure this value is the same in mage_ai/frontend/api/constants.ts
 OAUTH2_APPLICATION_CLIENT_ID = 'zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2'
 DISABLE_NOTEBOOK_EDIT_ACCESS = os.getenv('DISABLE_NOTEBOOK_EDIT_ACCESS', False)
 
-REQUIRE_USER_AUTHENTICATION = os.getenv('REQUIRE_USER_AUTHENTICATION', False)
+REQUIRE_USER_AUTHENTICATION = \
+    os.getenv('REQUIRE_USER_AUTHENTICATION', 'False').lower() in ('true', '1', 't')
 AUTHENTICATION_MODE = os.getenv('AUTHENTICATION_MODE', 'LOCAL')
 LDAP_SERVER = os.getenv('LDAP_SERVER', 'ldaps://127.0.0.1:1636')
 LDAP_BIND_DN = os.getenv('LDAP_BIND_DN', 'cd=admin,dc=example,dc=org')
