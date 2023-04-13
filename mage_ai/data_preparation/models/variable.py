@@ -97,7 +97,7 @@ class Variable:
                 os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
             self.variable_type = VariableType.GEO_DATAFRAME
         elif self.variable_type is None and \
-                len(self.storage.listdir(self.variable_path, suffix='.csv')) > 0 and \
+                len(self.storage.listdir(self.variable_path, suffix='.parquet')) > 0 and \
                 spark is not None:
             self.variable_type = VariableType.SPARK_DATAFRAME
 
@@ -377,7 +377,7 @@ class Variable:
             return None
         df = (
             spark.read
-            .format('csv')
+            .format('parquet')
             .option('header', 'true')
             .option('inferSchema', 'true')
             .option('delimiter', ',')
@@ -455,7 +455,7 @@ class Variable:
             data.write
             .option('header', 'True')
             .mode('overwrite')
-            .csv(self.variable_path)
+            .parquet(self.variable_path)
         )
 
     def __read_dataframe_analysis(
