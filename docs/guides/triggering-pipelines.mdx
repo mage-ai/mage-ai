@@ -56,7 +56,9 @@ editing a trigger. You can optionally include runtime variables in your request
 payload.
 
 #### Additional trigger settings
-
+* Overwrite global variables
+  * You can override the global variables that are defined in the pipeline to differentiate the variables used in different triggers.
+  * The `Overridde global variables` option won't show if you don't have any global variables defined in the pipeline.
 * (Schedule triggers only) Skip run if previous run still in progress
   * Enabling this setting will tell the scheduler to not initialize the current run if any
     previous run for this trigger is still in progress.
