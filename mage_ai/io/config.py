@@ -113,7 +113,7 @@ class BaseConfigLoader(ABC):
 
 
 class AWSSecretLoader(BaseConfigLoader):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         import boto3
 
         self.client = boto3.client('secretsmanager', **kwargs)

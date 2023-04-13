@@ -111,7 +111,7 @@ class BaseSQL(BaseSQLConnection):
         query_variables: List[Dict] = None,
         commit: bool = False,
         fetch_query_at_indexes: List[bool] = None,
-    ):
+    ) -> List:
         results = []
 
         with self.conn.cursor() as cursor:

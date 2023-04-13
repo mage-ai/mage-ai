@@ -19,7 +19,7 @@ class MSSQL(BaseSQL):
         schema: str = None,
         port: int = 1433,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(
             database=database,
             server=host,
