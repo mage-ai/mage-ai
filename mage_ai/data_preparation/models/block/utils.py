@@ -142,9 +142,26 @@ def create_block_runs_from_dynamic_block(
 
                 skip_creating_downstream = False
                 ancestors_uuids = [a.uuid for a in ancestors]
+
                 for dynamic_ancestor in unique_dynamic_ancestors:
                     if skip_creating_downstream:
-                        continue
+                        break
+
+                    """
+                    If any dynamic ancestors doesn't have reduce block as the descendants, skip
+                    creating this downstream block.
+                    """
+                    dynamic_ancestor_descendants = get_all_descendants(dynamic_ancestor)
+
+                    dynamic_ancestor_has_reduce_block = False
+                    for d in dynamic_ancestor_descendants:
+                        if d.uuid in ancestors_uuids:
+                            if should_reduce_output(d):
+                                dynamic_ancestor_has_reduce_block = True
+                                break
+                    if not dynamic_ancestor_has_reduce_block:
+                        skip_creating_downstream = True
+                        break
 
                     down_uuids = [down.uuid for down in dynamic_ancestor.downstream_blocks]
                     down_uuids_as_ancestors = [i for i in down_uuids if i in ancestors_uuids]
@@ -153,6 +170,18 @@ def create_block_runs_from_dynamic_block(
                 # Only create downstream block runs if it doesn’t have dynamically created upstream
                 # blocks (aka dynamic child) that were created by a 2nd ancestor that is a dynamic
                 # block
+                if skip_creating_downstream:
+                    continue
+
+                for upstream_block in b.upstream_blocks:
+                    if should_reduce_output(upstream_block) and \
+                            upstream_block.uuid != downstream_block.uuid:
+                        skip_creating_downstream = True
+                        break
+                """
+                If an upstream block needs to be reduced but it's not the same with the current
+                block that's being reduced, skip the downstream block creation.
+                """
                 if skip_creating_downstream:
                     continue
 
@@ -166,6 +195,7 @@ def create_block_runs_from_dynamic_block(
                 all_block_runs.append(pipeline_run.create_block_run(
                     b.uuid,
                     metrics=dict(dynamic_upstream_block_uuids=arr),
+                    skip_if_exists=True,
                 ))
 
     return all_block_runs
