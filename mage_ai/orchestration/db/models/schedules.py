@@ -299,7 +299,20 @@ class PipelineRun(BaseModel):
             PipelineRun.passed_sla.is_(False),
         ).all()
 
-    def create_block_run(self, block_uuid: str, **kwargs) -> 'BlockRun':
+    @safe_db_query
+    def create_block_run(
+        self,
+        block_uuid: str,
+        skip_if_exists: bool = False,
+        **kwargs,
+    ) -> 'BlockRun':
+        if skip_if_exists:
+            br = BlockRun.get(
+                pipeline_run_id=self.id,
+                block_uuid=block_uuid,
+            )
+            if br is not None:
+                return br
         return BlockRun.create(
             block_uuid=block_uuid,
             pipeline_run_id=self.id,
@@ -380,6 +393,7 @@ class BlockRun(BaseModel):
         db_connection.session.commit()
 
     @classmethod
+    @safe_db_query
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':
         block_runs = self.query.filter(
             BlockRun.pipeline_run_id == pipeline_run_id,
