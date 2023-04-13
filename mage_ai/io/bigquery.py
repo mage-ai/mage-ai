@@ -318,14 +318,11 @@ WHERE table_id = '{table_name}'
             query = self._clean_query(query)
             result = self.client.query(query, **variables)
 
-            if fetch_query_at_indexes:
-                # Only fetch query results if specified
-                if idx < len(fetch_query_at_indexes) and \
-                        fetch_query_at_indexes[idx]:
-                    result = result.to_dataframe()
-                    results.append(result)
-            else:
-                results.append(result)
+            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
+                    fetch_query_at_indexes[idx]:
+                result = result.to_dataframe()
+
+            results.append(result)
 
         return results
 
