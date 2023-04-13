@@ -48,7 +48,6 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
     DataSourceTypeEnum.MYSQL,
     DataSourceTypeEnum.POSTGRES,
-    DataSourceTypeEnum.RABBITMQ,
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.S3,
     DataSourceTypeEnum.SNOWFLAKE,
