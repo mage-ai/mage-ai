@@ -14,7 +14,11 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
 )
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.base import DataSource, ExportWritePolicy
+from mage_ai.io.base import (
+    DataSource,
+    ExportWritePolicy,
+    QUERY_ROW_LIMIT,
+)
 from mage_ai.io.config import ConfigFileLoader
 from os import path
 from time import sleep
@@ -37,6 +41,7 @@ def execute_sql_code(
     global_vars: Dict = None,
     config_file_loader: Any = None,
     configuration: Dict = None,
+    test_execution: bool = False,
 ) -> List[Any]:
     configuration = configuration if configuration else block.configuration
     use_raw_sql = configuration.get('use_raw_sql')
@@ -65,6 +70,12 @@ def execute_sql_code(
         index=False,
         verbose=BlockType.DATA_EXPORTER == block.type,
     )
+
+    limit = int(configuration.get('limit') or QUERY_ROW_LIMIT)
+    if test_execution:
+        limit = min(limit, QUERY_ROW_LIMIT)
+    else:
+        limit = QUERY_ROW_LIMIT
 
     if DataSource.BIGQUERY.value == data_provider:
         from mage_ai.io.bigquery import BigQuery
@@ -111,6 +122,7 @@ def execute_sql_code(
                     try:
                         result = loader.load(
                             f'SELECT * FROM {database}.{schema}.{table_name}',
+                            limit=limit,
                             verbose=False,
                         )
                         return [result]
@@ -155,6 +167,7 @@ def execute_sql_code(
                     return [
                         loader.load(
                             f'SELECT * FROM {table_name}',
+                            limit=limit,
                             verbose=False,
                         ),
                     ]
@@ -193,6 +206,7 @@ def execute_sql_code(
                     return [
                         loader.load(
                             f'SELECT * FROM {table_name}',
+                            limit=limit,
                             verbose=False,
                         ),
                     ]
@@ -231,6 +245,7 @@ def execute_sql_code(
                     return [
                         loader.load(
                             f'SELECT * FROM {schema}.{table_name}',
+                            limit=limit,
                             verbose=False,
                         ),
                     ]
@@ -269,6 +284,7 @@ def execute_sql_code(
                     return [
                             loader.load(
                                 f'SELECT * FROM {schema}.{table_name}',
+                                limit=limit,
                                 verbose=False,
                             ),
                         ]
@@ -316,6 +332,7 @@ def execute_sql_code(
                             database=database,
                             schema=schema,
                             table_name=table_name,
+                            limit=limit,
                             verbose=False,
                         ),
                     ]
@@ -359,6 +376,7 @@ def execute_sql_code(
                             database=database,
                             schema=schema,
                             table_name=table_name,
+                            limit=limit,
                             verbose=False,
                         ),
                     ]
@@ -449,9 +467,11 @@ class SQLBlock(Block):
         global_vars=None,
         **kwargs,
     ) -> List:
+        test_execution = kwargs.get('test_execution')
         return execute_sql_code(
             self,
             custom_code or self.content,
             execution_partition=execution_partition,
             global_vars=global_vars,
+            test_execution=test_execution,
         )

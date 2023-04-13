@@ -380,7 +380,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     global_vars,
-                    analyze_outputs=False,
                     block_type=block_type,
                     extension_uuid=extension_uuid,
                     kernel_name=kernel_name,

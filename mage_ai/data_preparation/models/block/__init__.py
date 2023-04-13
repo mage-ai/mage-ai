@@ -655,6 +655,7 @@ class Block:
         dynamic_block_uuid: str = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        **kwargs,
     ) -> Dict:
         try:
             if not run_all_blocks:
@@ -685,6 +686,7 @@ class Block:
                 dynamic_block_index=dynamic_block_index,
                 dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
                 run_settings=run_settings,
+                **kwargs,
             )
             block_output = self.post_process_output(output)
             variable_mapping = dict()
@@ -867,6 +869,7 @@ class Block:
         dynamic_block_index: int = None,
         dynamic_upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        **kwargs,
     ) -> Dict:
         # Add pipeline uuid and block uuid to global_vars
         global_vars = merge_dict(
@@ -922,6 +925,7 @@ class Block:
                 runtime_arguments=runtime_arguments,
                 upstream_block_uuids=upstream_block_uuids,
                 run_settings=run_settings,
+                **kwargs,
             )
 
         output_message = dict(output=outputs)
@@ -942,6 +946,7 @@ class Block:
         runtime_arguments: Dict = None,
         upstream_block_uuids: List[str] = None,
         run_settings: Dict = None,
+        **kwargs,
     ) -> List:
         decorated_functions = []
         test_functions = []
