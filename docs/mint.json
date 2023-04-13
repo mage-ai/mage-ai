@@ -230,7 +230,6 @@
             "development/versioning/file-versions"
           ]
         },
-        "development/text-editor",
         "development/environment-variables",
         {
           "group": "Team management",
