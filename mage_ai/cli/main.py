@@ -1,10 +1,15 @@
 from click import Context
 from mage_ai.cli.utils import parse_runtime_variables
+from mage_ai.settings import (
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+)
 from rich import print
 from typer.core import TyperGroup
 from typing import List, Union
 import json
 import os
+import sentry_sdk
 import sys
 import typer
 
@@ -18,6 +23,13 @@ class OrderCommands(TyperGroup):
 app = typer.Typer(
     cls=OrderCommands,
 )
+
+sentry_dsn = SENTRY_DSN
+if sentry_dsn:
+    sentry_sdk.init(
+        sentry_dsn,
+        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+    )
 
 
 @app.command()
