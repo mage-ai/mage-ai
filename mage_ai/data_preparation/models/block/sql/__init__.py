@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
+    clickhouse,
     mssql,
     mysql,
     postgres,
@@ -117,6 +118,47 @@ def execute_sql_code(
                     except Exception as err:
                         if '404' not in str(err):
                             raise err
+    elif DataSource.CLICKHOUSE.value == data_provider:
+        from mage_ai.io.clickhouse import ClickHouse
+
+        loader = ClickHouse.with_config(config_file_loader)
+        clickhouse.create_upstream_block_tables(
+            loader,
+            block,
+            configuration=configuration,
+            execution_partition=execution_partition,
+        )
+
+        query_string = clickhouse.interpolate_input_data(block, query)
+        query_string = interpolate_vars(
+            query_string, global_vars=global_vars)
+
+        database = database or 'default'
+
+        if use_raw_sql:
+            return execute_raw_sql(
+                loader,
+                block,
+                query_string,
+                configuration=configuration,
+                should_query=should_query,
+            )
+        else:
+            loader.export(
+                None,
+                table_name=table_name,
+                database=database,
+                query_string=query_string,
+                **kwargs_shared,
+            )
+
+            if should_query:
+                return [
+                    loader.load(
+                        f'SELECT * FROM {database}.{table_name}',
+                        verbose=False,
+                    ),
+                ]
     elif DataSource.MSSQL.value == data_provider:
         from mage_ai.io.mssql import MSSQL
 

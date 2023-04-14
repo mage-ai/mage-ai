@@ -22,6 +22,12 @@ class ConfigKey(str, Enum):
     AZURE_CLIENT_SECRET = 'AZURE_CLIENT_SECRET'
     AZURE_STORAGE_ACCOUNT_NAME = 'AZURE_STORAGE_ACCOUNT_NAME'
     AZURE_TENANT_ID = 'AZURE_TENANT_ID'
+    CLICKHOUSE_DATABASE = 'CLICKHOUSE_DATABASE'
+    CLICKHOUSE_HOST = 'CLICKHOUSE_HOST'
+    CLICKHOUSE_INTERFACE = 'CLICKHOUSE_INTERFACE'
+    CLICKHOUSE_PASSWORD = 'CLICKHOUSE_PASSWORD'
+    CLICKHOUSE_PORT = 'CLICKHOUSE_PORT'
+    CLICKHOUSE_USERNAME = 'CLICKHOUSE_USERNAME'
     GOOGLE_SERVICE_ACC_KEY = 'GOOGLE_SERVICE_ACC_KEY'
     GOOGLE_SERVICE_ACC_KEY_FILEPATH = 'GOOGLE_SERVICE_ACC_KEY_FILEPATH'
     MSSQL_DATABASE = 'MSSQL_DATABASE'
@@ -257,6 +263,7 @@ class VerboseConfigKey(str, Enum):
 
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
+    CLICKHOUSE = 'ClickHouse'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
@@ -297,6 +304,18 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.REDSHIFT,
             'user',
         ),
+        ConfigKey.CLICKHOUSE_DATABASE: (
+            VerboseConfigKey.CLICKHOUSE, 'database'),
+        ConfigKey.CLICKHOUSE_HOST: (
+            VerboseConfigKey.CLICKHOUSE, 'host'),
+        ConfigKey.CLICKHOUSE_INTERFACE: (
+            VerboseConfigKey.CLICKHOUSE, 'interface'),
+        ConfigKey.CLICKHOUSE_PASSWORD: (
+            VerboseConfigKey.CLICKHOUSE, 'password'),
+        ConfigKey.CLICKHOUSE_PORT: (
+            VerboseConfigKey.CLICKHOUSE, 'port'),
+        ConfigKey.CLICKHOUSE_USERNAME: (
+            VerboseConfigKey.CLICKHOUSE, 'username'),
         ConfigKey.POSTGRES_DBNAME: (VerboseConfigKey.POSTGRES, 'database'),
         ConfigKey.POSTGRES_HOST: (VerboseConfigKey.POSTGRES, 'host'),
         ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),

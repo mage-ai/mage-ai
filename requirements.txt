@@ -41,6 +41,7 @@ typer[all]==0.7.0
 aws-secretsmanager-caching==1.1.1.5
 boto3==1.26.60
 botocore==1.29.60
+clickhouse-connect==0.5.20
 db-dtypes==1.0.5
 google-api-python-client==2.70.0
 google-cloud-bigquery~=3.0
