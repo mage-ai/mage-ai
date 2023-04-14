@@ -50,6 +50,7 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
+import { getTimeInUTCString } from '@components/Triggers/utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
@@ -283,7 +284,7 @@ function BackfillDetail({
             key="backfill_start_date"
             monospace
           >
-            {startDatetime}
+            {getTimeInUTCString(startDatetime)}
           </Text>,
         ],
         [
@@ -301,7 +302,7 @@ function BackfillDetail({
             key="backfill_end_date"
             monospace
           >
-            {endDatetime}
+            {getTimeInUTCString(endDatetime)}
           </Text>,
         ],
         [

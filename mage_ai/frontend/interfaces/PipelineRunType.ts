@@ -78,6 +78,12 @@ interface PipelineRunMetricsType {
   source: string;
 }
 
+export type PipelineRunDateType = {
+  ds: string;
+  execution_date: string;
+  hr: string;
+};
+
 export default interface PipelineRunType {
   block_runs?: BlockRunType[];
   block_runs_count?: number;

@@ -80,8 +80,11 @@ export function utcDateFromDateAndTime(
   date: Date,
   hour: string,
   minute: string,
+  second?: string,
 ): string {
-  return `${date.toISOString().split('T')[0]} ${hour}:${minute}`;
+  const utcDateNoSeconds = `${date.toISOString().split('T')[0]} ${hour}:${minute}`;
+
+  return second ? `${utcDateNoSeconds}:${second}` : utcDateNoSeconds;
 }
 
 export function getDatePartsFromUnixTimestamp(
