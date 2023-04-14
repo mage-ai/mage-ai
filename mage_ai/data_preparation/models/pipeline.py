@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
 from mage_ai.data_preparation.models.block.errors import (
@@ -10,6 +11,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     DATA_INTEGRATION_CATALOG_FILE,
     ExecutorType,
+    LOGS_DIR,
     PipelineType,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
@@ -1217,6 +1219,54 @@ class Pipeline:
             repo_path=self.repo_path,
             file_version_only=True,
         )
+
+    def get_grouped_log_filepaths(
+        self,
+        start_dir=None,
+        start_timestamp=None,
+        end_timestamp=None,
+        write_date_depth=3,
+    ) -> Dict:
+        logger_manager = LoggerManagerFactory.get_logger_manager(
+            create_dir=False,
+            pipeline_uuid=self.uuid,
+            repo_config=self.repo_config,
+        )
+        root_logs_dir = os.path.join(
+            self.repo_config.variables_dir,
+            PIPELINES_FOLDER,
+            logger_manager.pipeline_uuid,
+            LOGS_DIR,
+        )
+
+        subfolders, filepaths = logger_manager.traverse_logs_dir(
+            start_dir or root_logs_dir,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            file_ends_with='.log',
+            write_date_depth=write_date_depth,
+        )
+        grouped_filepaths = group_by(
+            lambda p: ''.join(p.split('/')[-3:-1]) if p.split('/')[-4] != '.logs' else '0',
+            filepaths,
+        )
+        sorted_filepaths = sorted(
+            grouped_filepaths.items(),
+            key=lambda grouping: int(grouping[0]),
+            reverse=True,
+        )
+
+        return dict(
+            count=len(sorted_filepaths),
+            filepath_groupings=sorted_filepaths,
+        )
+
+    async def logs_async(self, **kwargs):
+        return await LoggerManagerFactory.get_logger_manager(
+            create_dir=False,
+            pipeline_uuid=self.uuid,
+            repo_config=self.repo_config,
+        ).get_logs_async(**kwargs)
 
     def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
         """

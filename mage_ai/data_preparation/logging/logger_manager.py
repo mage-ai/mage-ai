@@ -1,6 +1,6 @@
 from datetime import datetime
 from mage_ai.data_preparation.logging import LoggingConfig
-from mage_ai.data_preparation.models.constants import LOGS_DIR
+from mage_ai.data_preparation.models.constants import LOGS_DIR, PIPELINES_FOLDER
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config
 from mage_ai.shared.array import find
@@ -88,7 +88,7 @@ class LoggerManager:
 
         return os.path.join(
             logs_dir,
-            'pipelines',
+            PIPELINES_FOLDER,
             self.pipeline_uuid,
             LOGS_DIR,
             self.partition or '',
@@ -106,11 +106,15 @@ class LoggerManager:
     def traverse_logs_dir(
         self,
         dir: str,
-        filename: str,
+        filename: str = None,
         depth: int = 1,
         start_timestamp: datetime = None,
-        end_timestamp: datetime = None
+        end_timestamp: datetime = None,
+        file_ends_with: str = None,
+        write_date_depth: int = 1,
     ):
+        date_depth = write_date_depth
+        hour_depth = date_depth + 1
         start_date = None
         start_hour = None
         end_date = None
@@ -125,48 +129,60 @@ class LoggerManager:
         subfolders_in_range, files_in_range = [], []
         for f in os.scandir(dir):
             if f.is_dir():
-                folder_timestamp = int(f.path.split('/')[-1])
-                write_date = int(f.path.split('/')[-2]) if depth == 2 else None
-                if start_timestamp is None and end_timestamp is None:
+                folder_timestamp = int(f.path.split('/')[-1]) if depth >= date_depth else None
+                write_date = int(f.path.split('/')[-2]) if depth == hour_depth else None
+                if (start_timestamp is None and end_timestamp is None) or \
+                        (depth != date_depth and depth != hour_depth):
                     subfolders_in_range.append(f.path)
                 elif start_timestamp is not None and end_timestamp is not None:
-                    if (depth == 1 and folder_timestamp >= int(start_date) and
+                    if (depth == date_depth and folder_timestamp and
+                            folder_timestamp >= int(start_date) and
                             folder_timestamp <= int(end_date)) or \
-                        (depth == 2 and write_date != int(start_date) and
+                        (depth == hour_depth and write_date != int(start_date) and
                             write_date != int(end_date)) or \
-                        (depth == 2 and write_date == int(start_date) and
-                            write_date == int(end_date) and
+                        (depth == hour_depth and write_date == int(start_date) and
+                            write_date == int(end_date) and folder_timestamp and
                             folder_timestamp >= int(start_hour) and
                             folder_timestamp <= int(end_hour)) or \
-                        (depth == 2 and write_date == int(start_date) and
-                            write_date != int(end_date) and
+                        (depth == hour_depth and write_date == int(start_date) and
+                            write_date != int(end_date) and folder_timestamp and
                             folder_timestamp >= int(start_hour)) or \
-                        (depth == 2 and write_date != int(start_date) and
-                            write_date == int(end_date) and
+                        (depth == hour_depth and write_date != int(start_date) and
+                            write_date == int(end_date) and folder_timestamp and
                             folder_timestamp <= int(end_hour)):
                         subfolders_in_range.append(f.path)
                 elif start_timestamp is not None and end_timestamp is None:
-                    if (depth == 1 and folder_timestamp >= int(start_date)) or \
-                        (depth == 2 and write_date != int(start_date)) or \
-                        (depth == 2 and write_date == int(start_date) and
-                            folder_timestamp >= int(start_hour)):
+                    if (depth == date_depth and folder_timestamp
+                            and folder_timestamp >= int(start_date)) or \
+                        (depth == hour_depth and write_date != int(start_date)) or \
+                        (depth == hour_depth and write_date == int(start_date) and
+                            folder_timestamp and folder_timestamp >= int(start_hour)):
                         subfolders_in_range.append(f.path)
                 elif start_timestamp is None and end_timestamp is not None:
-                    if (depth == 1 and folder_timestamp <= int(end_date)) or \
-                        (depth == 2 and write_date != int(end_date)) or \
-                        (depth == 2 and write_date == int(end_date) and
-                            folder_timestamp <= int(end_hour)):
+                    if (depth == date_depth and folder_timestamp and
+                            folder_timestamp <= int(end_date)) or \
+                        (depth == hour_depth and write_date != int(end_date)) or \
+                        (depth == hour_depth and write_date == int(end_date) and
+                            folder_timestamp and folder_timestamp <= int(end_hour)):
                         subfolders_in_range.append(f.path)
-            elif f.is_file() and f.path.split('/')[-1] == filename:
+            elif f.is_file() and (
+                (filename is not None and f.path.split('/')[-1] == filename) or
+                (filename is None and (
+                    file_ends_with is None or
+                    (file_ends_with is not None and f.path.endswith(file_ends_with))
+                ))
+            ):
                 files_in_range.append(f.path)
 
         for dir in list(subfolders_in_range):
             sf, f = self.traverse_logs_dir(
                 dir,
-                filename,
+                filename=filename,
                 depth=depth + 1,
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
+                file_ends_with=file_ends_with,
+                write_date_depth=write_date_depth,
             )
             subfolders_in_range.extend(sf)
             files_in_range.extend(f)
@@ -177,7 +193,8 @@ class LoggerManager:
         logs_dir = self.get_log_filepath_prefix()
         subfolders, filepaths = self.traverse_logs_dir(
             logs_dir,
-            self.get_log_filename(),
+            filename=self.get_log_filename(),
+            write_date_depth=3 if self.partition is None else 1,
             **kwargs,
         )
 
@@ -200,8 +217,8 @@ class LoggerManager:
             sorted_log_filepaths = sorted(
                 log_filepaths_without_prefix,
                 key=lambda path_parts: (
-                    (int(path_parts[0]), int(path_parts[1]))
-                    if len(path_parts) > 2 else (0, 0)
+                    (int(path_parts[-3]), int(path_parts[-2]))
+                    if len(path_parts) > 2 and 'T' not in path_parts[-2] else (0, 0)
                 ),
                 reverse=True,
             )
@@ -215,7 +232,7 @@ class LoggerManager:
         log_files = File.from_paths(log_file_paths)
         return [file.to_dict(include_content=True) for file in log_files]
 
-    async def get_logs_async(self, **kwargs):
-        log_file_paths = self.get_log_filepaths(**kwargs)
+    async def get_logs_async(self, filepaths=[], **kwargs):
+        log_file_paths = filepaths or self.get_log_filepaths(**kwargs)
         log_files = File.from_paths(log_file_paths)
         return [await file.to_dict_async(include_content=True) for file in log_files]

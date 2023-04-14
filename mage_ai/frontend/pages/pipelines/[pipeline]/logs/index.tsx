@@ -34,9 +34,10 @@ import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
 import {
   LIMIT_PARAM,
-  OFFSET_PARAM,
-  LOG_FILE_COUNT_INTERVAL,
+  LOG_OFFSET_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
+  LOG_STREAM_OFFSET_INTERVAL,
+  OFFSET_PARAM,
 } from '@components/Logs/Toolbar/constants';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
@@ -85,7 +86,9 @@ function PipelineLogsPage({
     dataPipeline,
     pipelineUUID,
   ]);
-  const isIntegrationPipeline = pipeline?.type === PipelineTypeEnum.INTEGRATION;
+  const isIntegrationPipeline = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+  const isStreamingPipeline = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
+  const logOffsetInterval = isStreamingPipeline ? LOG_STREAM_OFFSET_INTERVAL : LOG_OFFSET_INTERVAL;
 
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => {
@@ -139,35 +142,27 @@ function PipelineLogsPage({
   const {
     blockRunLogs,
     pipelineRunLogs,
-    totalBlockRunLogCount,
-    totalPipelineRunLogCount,
   } = useMemo(() => {
     if (dataLogs?.logs?.[0]) {
       const {
         block_run_logs: brLogs,
         pipeline_run_logs: prLogs,
-        total_block_run_log_count: brLogCount,
-        total_pipeline_run_log_count: prLogCount,
       } = dataLogs.logs?.[0] || {};
 
       return {
         blockRunLogs: brLogs.flat(),
         pipelineRunLogs: prLogs.flat(),
-        totalBlockRunLogCount: brLogCount,
-        totalPipelineRunLogCount: prLogCount,
       };
     }
 
     return {
       blockRunLogs: [],
       pipelineRunLogs: [],
-      totalBlockRunLogCount: 0,
-      totalPipelineRunLogCount: 0,
     };
   }, [
     dataLogs,
   ]);
-  const allPastLogsLoaded = +q?._limit >= totalBlockRunLogCount && +q?._limit >= totalPipelineRunLogCount;
+  const allPastLogsLoaded = !dataLogs?.metadata?.next;
   const logsAll: LogType[] = useMemo(() => sortByKey(
       blockRunLogs.concat(pipelineRunLogs),
       ({ data }) => data?.timestamp || 0,
@@ -215,16 +210,28 @@ function PipelineLogsPage({
     ]);
   const filteredLogCount = logsFiltered.length;
 
+  const { _limit, _offset } = q;
   const qPrev = usePrevious(q);
   useEffect(() => {
     if (onlyLoadPastDayLogs) {
       goToWithQuery({
-        [LIMIT_PARAM]: LOG_FILE_COUNT_INTERVAL,
+        [LIMIT_PARAM]: logOffsetInterval,
         [OFFSET_PARAM]: 0,
         start_timestamp: dayAgoTimestamp,
       });
+    } else if (isStreamingPipeline && !_limit) {
+      goToWithQuery({
+        [LIMIT_PARAM]: logOffsetInterval,
+        [OFFSET_PARAM]: 0,
+      });
     }
-  }, [onlyLoadPastDayLogs]);
+  }, [
+    _limit,
+    dayAgoTimestamp,
+    isStreamingPipeline,
+    logOffsetInterval,
+    onlyLoadPastDayLogs,
+  ]);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
       setQuery(q);
@@ -257,18 +264,17 @@ function PipelineLogsPage({
     isLoading,
   ]);
 
-  const { _limit, _offset } = q;
   const limit = +(_limit || 0);
   const offset = +(_offset || 0);
-  const greaterLogCount = Math.max(totalBlockRunLogCount, totalPipelineRunLogCount);
+  const logGroupingCount = dataLogs?.metadata?.count || 1;
   const loadPastLogInterval = useCallback(() => {
     let newLimit = limit;
     let newOffset = offset;
-    if (totalBlockRunLogCount > limit || totalPipelineRunLogCount > limit) {
-      newLimit = Math.min(greaterLogCount, (limit + LOG_FILE_COUNT_INTERVAL));
+    if (!allPastLogsLoaded) {
+      newLimit = Math.min(logGroupingCount, (limit + logOffsetInterval));
       newOffset = Math.min(
-        (offset + LOG_FILE_COUNT_INTERVAL),
-        greaterLogCount - (greaterLogCount % LOG_FILE_COUNT_INTERVAL),
+        (offset + logOffsetInterval),
+        logGroupingCount - (logGroupingCount % logOffsetInterval),
       );
       goToWithQuery({
         ...q,
@@ -276,23 +282,36 @@ function PipelineLogsPage({
         [OFFSET_PARAM]: newOffset,
       });
     }
-  }, [greaterLogCount, limit, offset, q, totalBlockRunLogCount, totalPipelineRunLogCount]);
+  }, [
+    allPastLogsLoaded,
+    logGroupingCount,
+    limit,
+    logOffsetInterval,
+    offset,
+    q,
+  ]);
   const loadNewerLogInterval = useCallback(() => {
     let newLimit = limit;
     let newOffset = offset;
-    if (limit >= LOG_FILE_COUNT_INTERVAL) {
-      newLimit = Math.max(LOG_FILE_COUNT_INTERVAL, (limit - LOG_FILE_COUNT_INTERVAL));
-      if (limit >= greaterLogCount && (greaterLogCount % LOG_FILE_COUNT_INTERVAL !== 0)) {
-        newLimit = greaterLogCount - (greaterLogCount % LOG_FILE_COUNT_INTERVAL);
+    if (limit >= logOffsetInterval) {
+      newLimit = Math.max(logOffsetInterval, (limit - logOffsetInterval));
+      if (limit >= logGroupingCount && (logGroupingCount % logOffsetInterval !== 0)) {
+        newLimit = logGroupingCount - (logGroupingCount % logOffsetInterval);
       }
-      newOffset = Math.max(0, (offset - LOG_FILE_COUNT_INTERVAL));
+      newOffset = Math.max(0, (offset - logOffsetInterval));
       goToWithQuery({
         ...q,
         [LIMIT_PARAM]: newLimit,
         [OFFSET_PARAM]: newOffset,
       });
     }
-  }, [greaterLogCount, limit, offset, q]);
+  }, [
+    logGroupingCount,
+    limit,
+    logOffsetInterval,
+    offset,
+    q,
+  ]);
 
   return (
     <PipelineDetailPage
@@ -329,11 +348,12 @@ function PipelineLogsPage({
         <Text>
           {!isLoading && (
             <>
-              {numberWithCommas(filteredLogCount)} logs found
+              {numberWithCommas(filteredLogCount)} logs displayed
               <LogToolbar
                 allPastLogsLoaded={allPastLogsLoaded}
                 loadNewerLogInterval={loadNewerLogInterval}
                 loadPastLogInterval={loadPastLogInterval}
+                logOffsetInterval={logOffsetInterval}
                 selectedRange={selectedRange}
                 setSelectedRange={setSelectedRange}
               />
@@ -404,7 +424,7 @@ function PipelineLogsPage({
             let streamID;
             let index;
             const parts = blockUUID.split(':');
-            if (PipelineTypeEnum.INTEGRATION === pipeline.type) {
+            if (isIntegrationPipeline) {
               blockUUID = parts[0];
               streamID = parts[1];
               index = parts[2];
@@ -505,11 +525,11 @@ function PipelineLogsPage({
           inline
           onClick={() => {
             setScrollToBottom(true);
-            if (q?._offset === '0' && q?._limit === String(LOG_FILE_COUNT_INTERVAL)) {
+            if (q?._offset === '0' && q?._limit === String(logOffsetInterval)) {
               fetchLogs(null);
             } else {
               goToWithQuery({
-                _limit: LOG_FILE_COUNT_INTERVAL,
+                _limit: logOffsetInterval,
                 _offset: 0,
               });
             }

@@ -2,13 +2,15 @@ from datetime import datetime
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.models.constants import LOGS_DIR
+from mage_ai.data_preparation.models.constants import LOGS_DIR, PIPELINES_FOLDER
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
+from mage_ai.shared.array import flatten
 from sqlalchemy.orm import aliased
 from typing import Dict, List
 import json
+import os
 import re
 import time
 
@@ -77,6 +79,50 @@ def remove_date_hour_subpath(path) -> str:
     return final_path
 
 
+def get_log_filepaths(
+    meta: Dict,
+    log_filepath_groupings: List[tuple],
+    groupings_count: int,
+) -> Dict:
+    log_filepaths_batch = log_filepath_groupings
+    has_next = False
+    if meta.get(META_KEY_LIMIT, None) is not None:
+        limit = int(meta[META_KEY_LIMIT])
+        log_filepaths_batch = log_filepath_groupings[:limit]
+        has_next = groupings_count > limit
+        if meta.get(META_KEY_OFFSET, None) is not None:
+            offset = int(meta[META_KEY_OFFSET])
+            log_filepaths_batch = log_filepath_groupings[offset:limit]
+
+    log_filepaths = flatten([tuple[1] for tuple in log_filepaths_batch])
+
+    return dict(
+        filepaths=log_filepaths,
+        has_next=has_next,
+    )
+
+
+def process_logs(
+    logs: List[Dict],
+    unix_start_timestamp: int = None,
+    unix_end_timestamp: int = None,
+) -> List[Dict]:
+    logs_parsed_list = [initialize_logs(log) for log in logs]
+    logs_parsed = flatten(logs_parsed_list)
+    if unix_start_timestamp:
+        logs_parsed = [
+            log for log in logs_parsed
+            if log.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
+        ]
+    if unix_end_timestamp:
+        logs_parsed = [
+            log for log in logs_parsed
+            if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
+        ]
+
+    return logs_parsed
+
+
 class LogResource(GenericResource):
     @classmethod
     @safe_db_query
@@ -84,20 +130,31 @@ class LogResource(GenericResource):
         parent_model = kwargs['parent_model']
 
         arr = []
+        next = False
+        count = 0
         if type(parent_model) is BlockRun:
             arr = parent_model.logs
         elif issubclass(parent_model.__class__, Pipeline):
-            arr = await self.__pipeline_logs(parent_model, query, meta)
+            logs_dict = await self.__pipeline_logs(parent_model, query, meta)
+            arr = logs_dict['arr']
+            next = logs_dict['next']
+            count = logs_dict['count']
 
-        return self.build_result_set(
+        result_set = self.build_result_set(
             arr,
             user,
             **kwargs,
         )
+        result_set.metadata = {
+            'count': count,
+            'next': next,
+        }
+
+        return result_set
 
     @classmethod
     @safe_db_query
-    async def __pipeline_logs(self, pipeline: Pipeline, query_arg, meta) -> List[Dict]:
+    async def __pipeline_logs(self, pipeline: Pipeline, query_arg, meta) -> Dict:
         pipeline_uuid = pipeline.uuid
 
         start_timestamp = query_arg.get('start_timestamp', [None])
@@ -168,7 +225,6 @@ class LogResource(GenericResource):
             a.pipeline_uuid,
         ]
 
-        total_pipeline_run_log_count = 0
         pipeline_run_logs = []
 
         @safe_db_query
@@ -193,57 +249,71 @@ class LogResource(GenericResource):
                     filter(a.id.in_(pipeline_run_ids))
                 )
 
-            total_pipeline_run_log_count = query.count()
-            if meta.get(META_KEY_LIMIT, None) is not None:
-                rows_list = query.all()
-                limit = int(meta[META_KEY_LIMIT])
-                rows = rows_list[:limit]
-                if meta.get(META_KEY_OFFSET, None) is not None:
-                    offset = int(meta[META_KEY_OFFSET])
-                    rows = rows_list[offset:limit]
-            else:
-                rows = query.all()
+            rows = query.all()
+
             return dict(
-                total_pipeline_run_log_count=total_pipeline_run_log_count,
                 rows=rows,
             )
 
+        has_next = False
+        groupings_count = 0
+
         if not len(block_uuids) and not len(block_run_ids):
-            pipeline_run_results = get_pipeline_runs()
-            total_pipeline_run_log_count = pipeline_run_results['total_pipeline_run_log_count']
-            pipeline_run_rows = pipeline_run_results['rows']
-
-            processed_pipeline_run_log_files = set()
-            for row in pipeline_run_rows:
-                model = PipelineRun()
-                model.execution_date = row.execution_date
-                model.pipeline_schedule_id = row.pipeline_schedule_id
-                model.pipeline_uuid = row.pipeline_uuid
-                logs = await model.logs_async(
-                    start_timestamp=start_timestamp,
-                    end_timestamp=end_timestamp,
+            start_dir = None
+            write_date_depth = 3
+            if not pipeline_schedule_ids and not pipeline_run_ids:
+                # Fetch all of pipeline's logs
+                pass
+            elif pipeline_schedule_ids:
+                # Fetch logs for trigger
+                pipeline_schedule_id = pipeline_schedule_ids[0]
+                start_dir = os.path.join(
+                    pipeline.repo_config.variables_dir,
+                    PIPELINES_FOLDER,
+                    pipeline.uuid,
+                    LOGS_DIR,
+                    pipeline_schedule_id,
                 )
-                logs_parsed_list = [initialize_logs(log) for log in logs]
-                logs_parsed = [logs for sublist in logs_parsed_list for logs in sublist]
-                if unix_start_timestamp:
-                    logs_parsed = [
-                        log for log in logs_parsed
-                        if log.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
-                    ]
-                if unix_end_timestamp:
-                    logs_parsed = [
-                        log for log in logs_parsed
-                        if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
-                    ]
-                pipeline_log_file_path = \
-                    remove_date_hour_subpath(logs[0].get('path')) if logs else None
-                if pipeline_log_file_path and \
-                        pipeline_log_file_path not in processed_pipeline_run_log_files:
-                    pipeline_run_logs.append(logs_parsed)
-                    processed_pipeline_run_log_files.add(pipeline_log_file_path)
+                write_date_depth = 2
+            elif pipeline_run_ids:
+                # Fetch logs for pipeline run
+                pipeline_run_results = get_pipeline_runs()
+                pipeline_run_rows = pipeline_run_results['rows']
+                pipeline_run = pipeline_run_rows[0]
+                execution_date = pipeline_run.execution_date.strftime(format='%Y%m%dT%H%M%S')
+                pipeline_schedule_id = str(pipeline_run.pipeline_schedule_id)
+                start_dir = os.path.join(
+                    pipeline.repo_config.variables_dir,
+                    PIPELINES_FOLDER,
+                    pipeline.uuid,
+                    LOGS_DIR,
+                    pipeline_schedule_id,
+                    execution_date,
+                )
+                write_date_depth = 1
 
-                if len(pipeline_run_logs) >= MAX_LOG_FILES:
-                    break
+            grouped_log_filepaths = pipeline.get_grouped_log_filepaths(
+                start_dir=start_dir,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+                write_date_depth=write_date_depth,
+            )
+            groupings_count = grouped_log_filepaths['count']
+            log_filepath_groupings = grouped_log_filepaths['filepath_groupings']
+            print('========log_filepath_groupings', log_filepath_groupings)
+            log_filepaths = get_log_filepaths(
+                meta,
+                log_filepath_groupings,
+                groupings_count,
+            )
+            logs = await pipeline.logs_async(filepaths=log_filepaths['filepaths'])
+            has_next = log_filepaths['has_next']
+            logs_parsed = process_logs(
+                logs,
+                unix_start_timestamp=unix_start_timestamp,
+                unix_end_timestamp=unix_end_timestamp,
+            )
+            pipeline_run_logs.append(logs_parsed)
 
         @safe_db_query
         def get_block_runs():
@@ -282,69 +352,58 @@ class LogResource(GenericResource):
                     filter(a.id.in_(pipeline_run_ids))
                 )
 
-            if meta.get(META_KEY_LIMIT, None) is not None:
-                rows_list = query.all()
-                limit = int(meta[META_KEY_LIMIT])
-                rows = rows_list[:limit]
-                if meta.get(META_KEY_OFFSET, None) is not None:
-                    offset = int(meta[META_KEY_OFFSET])
-                    rows = rows_list[offset:limit]
-            else:
-                rows = query.all()
+            rows = query.all()
 
-            total_block_run_log_count = query.count()
             return dict(
-                total_block_run_log_count=total_block_run_log_count,
                 rows=rows,
             )
 
         block_run_results = get_block_runs()
-        total_block_run_log_count = block_run_results['total_block_run_log_count']
         rows = block_run_results['rows']
 
         block_run_logs = []
 
-        processed_block_run_log_files = set()
-        for row in rows:
-            model = PipelineRun()
-            model.execution_date = row.execution_date
-            model.pipeline_schedule_id = row.pipeline_schedule_id
-            model.pipeline_uuid = row.pipeline_uuid
+        if len(block_uuids) or len(block_run_ids):
+            processed_block_run_log_files = set()
+            for row in rows:
+                model = PipelineRun()
+                model.execution_date = row.execution_date
+                model.pipeline_schedule_id = row.pipeline_schedule_id
+                model.pipeline_uuid = row.pipeline_uuid
 
-            model2 = BlockRun()
-            model2.block_uuid = row.block_uuid
-            model2.pipeline_run = model
+                model2 = BlockRun()
+                model2.block_uuid = row.block_uuid
+                model2.pipeline_run = model
 
-            logs = await model2.logs_async(
-                    start_timestamp=start_timestamp,
-                    end_timestamp=end_timestamp,
-                )
-            logs_parsed_lists = [initialize_logs(log) for log in logs]
-            logs_parsed = [logs for sublist in logs_parsed_lists for logs in sublist]
-            if unix_start_timestamp:
-                logs_parsed = [
-                    log for log in logs_parsed
-                    if log.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
-                ]
-            if unix_end_timestamp:
-                logs_parsed = [
-                    log for log in logs_parsed
-                    if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
-                ]
-            block_log_file_path = \
-                remove_date_hour_subpath(logs[0].get('path')) if logs else None
-            if block_log_file_path and block_log_file_path not in processed_block_run_log_files:
-                block_run_logs.append(logs_parsed)
-                processed_block_run_log_files.add(block_log_file_path)
+                logs = await model2.logs_async(
+                        start_timestamp=start_timestamp,
+                        end_timestamp=end_timestamp,
+                    )
+                logs_parsed_list = [initialize_logs(log) for log in logs]
+                logs_parsed = flatten(logs_parsed_list)
+                if unix_start_timestamp:
+                    logs_parsed = [
+                        log for log in logs_parsed
+                        if log.get('data', {}).get('timestamp', 0) >= unix_start_timestamp
+                    ]
+                if unix_end_timestamp:
+                    logs_parsed = [
+                        log for log in logs_parsed
+                        if log.get('data', {}).get('timestamp', time.time()) <= unix_end_timestamp
+                    ]
+                block_log_file_path = \
+                    remove_date_hour_subpath(logs[0].get('path')) if logs else None
+                if block_log_file_path and block_log_file_path not in processed_block_run_log_files:
+                    block_run_logs.append(logs_parsed)
+                    processed_block_run_log_files.add(block_log_file_path)
 
-            if len(block_run_logs) >= MAX_LOG_FILES:
-                break
-
-        return [
-            dict(
-                block_run_logs=block_run_logs,
-                pipeline_run_logs=pipeline_run_logs,
-                total_block_run_log_count=total_block_run_log_count,
-                total_pipeline_run_log_count=total_pipeline_run_log_count,
-            ),
-        ]
+        return dict(
+            arr=[
+                dict(
+                    block_run_logs=block_run_logs,
+                    pipeline_run_logs=pipeline_run_logs,
+                ),
+            ],
+            count=groupings_count,
+            next=has_next,
+        )

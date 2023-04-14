@@ -14,7 +14,6 @@ import { LogRangeEnum } from '@interfaces/LogType';
 import {
   LIMIT_PARAM,
   OFFSET_PARAM,
-  LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
   SPECIFIC_LOG_RANGES,
 } from './constants';
@@ -42,19 +41,16 @@ type LogToolbarProps = {
   allPastLogsLoaded: boolean;
   loadNewerLogInterval: () => void;
   loadPastLogInterval: () => void;
+  logOffsetInterval: number;
   selectedRange: LogRangeEnum;
   setSelectedRange: (range: LogRangeEnum) => void;
-};
-
-const SHARED_LOG_QUERY_PARAMS = {
-  [LIMIT_PARAM]: LOG_FILE_COUNT_INTERVAL,
-  [OFFSET_PARAM]: 0,
 };
 
 function LogToolbar({
   allPastLogsLoaded,
   loadNewerLogInterval,
   loadPastLogInterval,
+  logOffsetInterval,
   selectedRange,
   setSelectedRange,
 }: LogToolbarProps) {
@@ -66,6 +62,11 @@ function LogToolbar({
     hour: padTime(String(new Date().getUTCHours())),
     minute: padTime(String(new Date().getUTCMinutes())),
   });
+
+  const SHARED_LOG_QUERY_PARAMS = {
+    [LIMIT_PARAM]: logOffsetInterval,
+    [OFFSET_PARAM]: 0,
+  };
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -110,6 +111,7 @@ function LogToolbar({
   }, [
     q,
     qPrev,
+    setSelectedRange,
   ]);
 
   return (
@@ -131,7 +133,7 @@ function LogToolbar({
 
         <KeyboardShortcutButton
           blackBorder
-          disabled={q?._offset <= 0}
+          disabled={q?._offset <= 0 || !q?._offset}
           inline
           onClick={loadNewerLogInterval}
           paddingBottom={UNIT * 0.75}
