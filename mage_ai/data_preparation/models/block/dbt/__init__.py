@@ -57,12 +57,12 @@ class DBTBlock(Block):
                 targets=targets,
             )
         else:
-            dbt_dir = f'{get_repo_path()}/dbt'
+            dbt_dir = os.path.join(get_repo_path(), 'dbt')
             project_names = [
-                name for name in os.listdir(dbt_dir) if os.path.isdir(f'{dbt_dir}/{name}')
+                name for name in os.listdir(dbt_dir) if os.path.isdir(os.path.join(dbt_dir, name))
             ]
             for project_name in project_names:
-                profiles_full_path = f'{dbt_dir}/{project_name}/profiles.yml'
+                profiles_full_path = os.path.join(dbt_dir, project_name, 'profiles.yml')
                 targets = []
                 profiles = await load_profiles_async(project_name, profiles_full_path)
                 outputs = profiles.get('outputs')
@@ -131,7 +131,7 @@ class DBTBlock(Block):
         profiles_full_path = attributes_dict['profiles_full_path']
         profile = load_profiles_file(profiles_full_path)
 
-        temp_profile_full_path = f'{profiles_dir}/profiles.yml'
+        temp_profile_full_path = os.path.join(profiles_dir, 'profiles.yml')
         os.makedirs(os.path.dirname(temp_profile_full_path), exist_ok=True)
 
         with open(temp_profile_full_path, 'w') as f:
@@ -203,7 +203,7 @@ class DBTBlock(Block):
                 raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
         if not test_execution:
-            run_results_file_path = f'{project_full_path}/target/run_results.json'
+            run_results_file_path = os.path.join(project_full_path, 'target', 'run_results.json')
             with open(run_results_file_path, 'r') as f:
                 try:
                     run_results = json.load(f)
