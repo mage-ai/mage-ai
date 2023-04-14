@@ -1,15 +1,10 @@
 from click import Context
 from mage_ai.cli.utils import parse_runtime_variables
-from mage_ai.settings import (
-    SENTRY_DSN,
-    SENTRY_TRACES_SAMPLE_RATE,
-)
 from rich import print
 from typer.core import TyperGroup
 from typing import List, Union
 import json
 import os
-import sentry_sdk
 import sys
 import typer
 
@@ -23,13 +18,6 @@ class OrderCommands(TyperGroup):
 app = typer.Typer(
     cls=OrderCommands,
 )
-
-sentry_dsn = SENTRY_DSN
-if sentry_dsn:
-    sentry_sdk.init(
-        sentry_dsn,
-        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
-    )
 
 
 @app.command()
@@ -121,7 +109,19 @@ def run(
     from mage_ai.data_preparation.repo_manager import set_repo_path
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection
+    import sentry_sdk
+    from mage_ai.settings import (
+        SENTRY_DSN,
+        SENTRY_TRACES_SAMPLE_RATE,
+    )
     from mage_ai.shared.hash import merge_dict
+
+    sentry_dsn = SENTRY_DSN
+    if sentry_dsn:
+        sentry_sdk.init(
+            sentry_dsn,
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        )
 
     runtime_variables = dict()
     if runtime_vars is not None:
