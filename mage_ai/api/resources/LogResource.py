@@ -14,7 +14,6 @@ import os
 import re
 import time
 
-MAX_LOG_FILES = 120
 TIMESTAMP_REGEX = re.compile(r'([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (.+)')
 
 
