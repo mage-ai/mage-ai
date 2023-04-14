@@ -147,7 +147,6 @@ class Snowflake(BaseSQLConnection):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-
         print_message = 'Loading data'
         if verbose:
             print_message += ' with query'

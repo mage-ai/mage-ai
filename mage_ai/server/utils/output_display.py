@@ -218,7 +218,6 @@ def add_execution_code(
     block_uuid: str,
     code: str,
     global_vars,
-    analyze_outputs: bool = False,
     block_type: BlockType = None,
     extension_uuid: str = None,
     kernel_name: str = None,
@@ -303,10 +302,9 @@ def execute_custom_code():
     block_output = block.execute_with_callback(
         custom_code=code,
         global_vars=global_vars,
-        analyze_outputs={analyze_outputs},
         run_settings=json.loads('{run_settings_json}'),
-        update_status={update_status},
         test_execution=True,
+        update_status={update_status},
     )
     if {run_tests}:
         block.run_tests(

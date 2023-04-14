@@ -121,6 +121,8 @@ import { selectKeys } from '@utils/hash';
 import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
 
+const DEFAULT_SQL_CONFIG_KEY_LIMIT = 1000;
+
 type CodeBlockProps = {
   addNewBlock?: (block: BlockType) => Promise<any>;
   addNewBlockMenuOpenIdx?: number;
@@ -901,11 +903,51 @@ function CodeBlock({
     savePipelineContent,
   ]);
 
+  useEffect(() => {
+    if (!isDBT && isSQLBlock && !dataProviderConfig[CONFIG_KEY_LIMIT]) {
+      updateDataProviderConfig({
+        [CONFIG_KEY_LIMIT]: DEFAULT_SQL_CONFIG_KEY_LIMIT,
+      });
+    }
+  }, [isDBT, isSQLBlock])
+
   const requiresDatabaseName = (DataSourceTypeEnum.BIGQUERY === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
     || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
   );
 
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
+
+  const limitInputEl = useMemo(() => (
+    <TextInput
+      compact
+      monospace
+      onBlur={() => setTimeout(() => {
+        setAnyInputFocused(false);
+      }, 300)}
+      onChange={(e) => {
+        // @ts-ignore
+        setAnyInputFocused(true);
+        updateDataProviderConfig({
+          [CONFIG_KEY_LIMIT]: e.target.value,
+        });
+        e.preventDefault();
+      }}
+      onClick={pauseEvent}
+      onFocus={() => {
+        setAnyInputFocused(true);
+      }}
+      small
+      type="number"
+      value={dataProviderConfig[CONFIG_KEY_LIMIT] || ''}
+      width={UNIT * 11}
+    />
+  ), [
+    dataProviderConfig,
+    pauseEvent,
+    setAnyInputFocused,
+    setTimeout,
+    updateDataProviderConfig,
+  ])
 
   return (
     <div ref={ref} style={{
@@ -1321,11 +1363,13 @@ function CodeBlock({
                         block
                         description={
                           <Text default inline>
-                            Limit the number of results that are returned when running this block in
-                            the notebook.
+                            Limit the number of results that are returned
                             <br />
-                            This limit won’t affect the number of results returned when running the
-                            pipeline end-to-end.
+                            when running this block in the notebook.
+                            <br />
+                            This limit won’t affect the number of results
+                            <br />
+                            returned when running the pipeline end-to-end.
                           </Text>
                         }
                         size={null}
@@ -1340,30 +1384,7 @@ function CodeBlock({
                           <span>&nbsp;</span>
                         </FlexContainer>
                       </Tooltip>
-
-                      <TextInput
-                        compact
-                        monospace
-                        onBlur={() => setTimeout(() => {
-                          setAnyInputFocused(false);
-                        }, 300)}
-                        onChange={(e) => {
-                          // @ts-ignore
-                          updateDataProviderConfig({
-                            [CONFIG_KEY_LIMIT]: e.target.value,
-                          });
-                          e.preventDefault();
-                        }}
-                        onClick={pauseEvent}
-                        onFocus={() => {
-                          setAnyInputFocused(true);
-                        }}
-                        small
-                        type="number"
-                        value={dataProviderConfig[CONFIG_KEY_LIMIT] || ''}
-                        width={UNIT * 10}
-                      />
-
+                      {limitInputEl}
                       <Spacing mr={5} />
                     </FlexContainer>
                   )}
@@ -1414,8 +1435,12 @@ function CodeBlock({
               && BlockTypeEnum.DBT !== block.type
               && (
               <CodeHelperStyle>
-                <FlexContainer justifyContent="space-between">
-                  <FlexContainer>
+                <FlexContainer
+                  flexWrap="wrap"
+                  justifyContent="space-between"
+                  style={{marginTop: '-8px'}}
+                >
+                  <FlexContainer style={{marginTop: '8px'}}>
                     <Select
                       compact
                       label="Connection"
@@ -1626,9 +1651,36 @@ function CodeBlock({
                   </FlexContainer>
 
                   {!dataProviderConfig[CONFIG_KEY_USE_RAW_SQL] && (
-                    <FlexContainer alignItems="center">
+                    <FlexContainer alignItems="center" style={{marginTop: '8px'}}>
                       <Tooltip
-                        appearBefore
+                        block
+                        description={
+                          <Text default inline>
+                            Limit the number of results that are returned
+                            <br />
+                            when running this block in the notebook.
+                            <br />
+                            This limit won’t affect the number of results
+                            <br />
+                            returned when running the pipeline end-to-end.
+                          </Text>
+                        }
+                        size={null}
+                        widthFitContent
+                      >
+                        <FlexContainer alignItems="center">
+                          <Info muted />
+                          <span>&nbsp;</span>
+                          <Text monospace muted small>
+                            Limit
+                          </Text>
+                          <span>&nbsp;</span>
+                        </FlexContainer>
+                      </Tooltip>
+                      {limitInputEl}
+                      <Spacing mr={1} />
+                      <Tooltip
+                        autoWidth
                         block
                         description={
                           <Text default inline>
@@ -1652,27 +1704,27 @@ function CodeBlock({
                             Write policy:
                           </Text>
                           <span>&nbsp;</span>
+
+                          <Select
+                            compact
+                            label="strategy"
+                            // @ts-ignore
+                            onChange={e => updateDataProviderConfig({
+                              [CONFIG_KEY_EXPORT_WRITE_POLICY]: e.target.value,
+                            })}
+                            onClick={pauseEvent}
+                            small
+                            value={dataProviderConfig[CONFIG_KEY_EXPORT_WRITE_POLICY]}
+                          >
+                            <option value="" />
+                            {EXPORT_WRITE_POLICIES?.map(value => (
+                              <option key={value} value={value}>
+                                {capitalize(value)}
+                              </option>
+                            ))}
+                          </Select>
                         </FlexContainer>
                       </Tooltip>
-
-                      <Select
-                        compact
-                        label="strategy"
-                        // @ts-ignore
-                        onChange={e => updateDataProviderConfig({
-                          [CONFIG_KEY_EXPORT_WRITE_POLICY]: e.target.value,
-                        })}
-                        onClick={pauseEvent}
-                        small
-                        value={dataProviderConfig[CONFIG_KEY_EXPORT_WRITE_POLICY]}
-                      >
-                        <option value="" />
-                        {EXPORT_WRITE_POLICIES?.map(value => (
-                          <option key={value} value={value}>
-                            {capitalize(value)}
-                          </option>
-                        ))}
-                      </Select>
 
                       <Spacing mr={5} />
                     </FlexContainer>
