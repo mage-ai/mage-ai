@@ -5,6 +5,9 @@ LOGGER = singer.get_logger()
 
 
 def get_last_record_value_for_table(state, table, field):
+    if state is None:
+        return None
+
     last_value = state.get('bookmarks', {}) \
                       .get(table, {}) \
                       .get(field)
