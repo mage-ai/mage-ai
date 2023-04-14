@@ -165,8 +165,9 @@ function LogToolbar({
           }}
           paddingRight={UNIT * 4}
           placeholder="Select time range"
-          value={selectedRange}
+          value={selectedRange === null ? '' : selectedRange}
         >
+          <option value="" />
           {Object.values(LogRangeEnum).map(range => (
             <option key={range} value={range}>
               {range}
