@@ -50,7 +50,14 @@ export function getTimeInUTC(dateTime: string) {
 }
 
 export function getTimeInUTCString(dateTime: string) {
-  return getTimeInUTC(dateTime).toISOString().split('.')[0]
+  if (typeof dateTime !== 'string') {
+    return dateTime;
+  }
+  const formattedDate = dateTime.split('+')[0];
+
+  return getTimeInUTC(formattedDate)
+    .toISOString()
+    .split('.')[0];
 }
 
 export enum TimeUnitEnum {

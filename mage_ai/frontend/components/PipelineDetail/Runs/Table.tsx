@@ -9,7 +9,10 @@ import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
-import PipelineRunType, { RunStatus, RUN_STATUS_TO_LABEL } from '@interfaces/PipelineRunType';
+import PipelineRunType, {
+  RunStatus,
+  RUN_STATUS_TO_LABEL,
+} from '@interfaces/PipelineRunType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table, { ColumnType } from '@components/shared/Table';
@@ -23,7 +26,7 @@ import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { dateFormatLong } from '@utils/date';
-import { getTimeInUTC } from '@components/Triggers/utils';
+import { getTimeInUTCString } from '@components/Triggers/utils';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 
@@ -380,7 +383,7 @@ function PipelineRunsTable({
                     </Link>
                   </NextLink>,
                   <Text key="row_completed" monospace muted>
-                    {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
+                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
                   </Text>,
                   <Button
                     default
@@ -414,7 +417,7 @@ function PipelineRunsTable({
                     {pipelineUUID}
                   </Text>,
                   <Text default key="row_date" monospace>
-                    {(executionDate && getTimeInUTC(executionDate).toISOString().split('.')[0]) || '-'}
+                    {(executionDate && getTimeInUTCString(executionDate)) || '-'}
                   </Text>,
                   <NextLink
                     as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
@@ -441,7 +444,7 @@ function PipelineRunsTable({
                     </Link>
                   </NextLink>,
                   <Text default key="row_completed" monospace>
-                    {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
+                    {(completedAt && getTimeInUTCString(completedAt)) || '-'}
                   </Text>,
                   <Button
                     default
