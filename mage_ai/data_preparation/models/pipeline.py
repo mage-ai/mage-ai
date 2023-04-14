@@ -1252,7 +1252,7 @@ class Pipeline:
         )
         sorted_filepaths = sorted(
             grouped_filepaths.items(),
-            key=lambda grouping: int(grouping[0]),
+            key=lambda grouping: int(grouping[0]) if grouping[0].isdigit() else 0,
             reverse=True,
         )
 
