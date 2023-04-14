@@ -300,7 +300,6 @@ class LogResource(GenericResource):
             )
             groupings_count = grouped_log_filepaths['count']
             log_filepath_groupings = grouped_log_filepaths['filepath_groupings']
-            print('========log_filepath_groupings', log_filepath_groupings)
             log_filepaths = get_log_filepaths(
                 meta,
                 log_filepath_groupings,
