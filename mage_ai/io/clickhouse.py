@@ -202,10 +202,12 @@ EXISTS TABLE {database}.{table_name}
             if table_exists:
                 if ExportWritePolicy.FAIL == if_exists:
                     raise ValueError(
-                        f'Table \'{table_name}\' already exists in database {database}.',
+                        f'Table \'{table_name}\' already'
+                        ' exists in database {database}.',
                     )
                 elif ExportWritePolicy.REPLACE == if_exists:
-                    self.client.command(f'DROP TABLE IF EXISTS {database}.{table_name}')
+                    self.client.command(
+                        f'DROP TABLE IF EXISTS {database}.{table_name}')
                     should_create_table = True
 
             if query_string:
@@ -228,7 +230,8 @@ INSERT INTO {database}.{table_name}
                 self.client.insert_df(f'{database}.{table_name}', df)
 
         if verbose:
-            with self.printer.print_msg(f'Exporting data to table \'{table_name}\''):
+            with self.printer.print_msg(
+                    f'Exporting data to table \'{database}.{table_name}\''):
                 __process(database=database)
         else:
             __process(database=database)

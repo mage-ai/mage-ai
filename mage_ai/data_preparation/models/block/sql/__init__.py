@@ -133,6 +133,8 @@ def execute_sql_code(
         query_string = interpolate_vars(
             query_string, global_vars=global_vars)
 
+        database = database or 'default'
+
         if use_raw_sql:
             return execute_raw_sql(
                 loader,
@@ -145,7 +147,7 @@ def execute_sql_code(
             loader.export(
                 None,
                 table_name=table_name,
-                database=database or 'default',
+                database=database,
                 query_string=query_string,
                 **kwargs_shared,
             )
@@ -153,7 +155,7 @@ def execute_sql_code(
             if should_query:
                 return [
                     loader.load(
-                        f'SELECT * FROM {table_name}',
+                        f'SELECT * FROM {database}.{table_name}',
                         verbose=False,
                     ),
                 ]
