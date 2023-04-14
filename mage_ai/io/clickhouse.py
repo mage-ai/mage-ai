@@ -195,7 +195,7 @@ class ClickHouse(BaseSQLDatabase):
 EXISTS TABLE {database}.{table_name}
 """)
 
-            table_exists = not df_existing.empty
+            table_exists = not df_existing.empty and df_existing.iloc[0, 0] == 1
             should_create_table = not table_exists
 
             if table_exists:
@@ -204,7 +204,7 @@ EXISTS TABLE {database}.{table_name}
                         f'Table \'{table_name}\' already exists in database {database}.',
                     )
                 elif ExportWritePolicy.REPLACE == if_exists:
-                    self.client.command(f'DROP TABLE {database}.{table_name}')
+                    self.client.command(f'DROP TABLE IF EXISTS {database}.{table_name}')
                     should_create_table = True
 
             if query_string:
@@ -212,7 +212,7 @@ EXISTS TABLE {database}.{table_name}
 
                 if should_create_table:
                     self.client.command(f"""
-CREATE TABLE IF NOT EXISTS {database}.{table_name} AS
+CREATE TABLE IF NOT EXISTS {database}.{table_name} ENGINE = Memory AS
 {query_string}
 """)
                 else:

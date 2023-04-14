@@ -145,7 +145,7 @@ def execute_sql_code(
             loader.export(
                 None,
                 table_name=table_name,
-                database=database,
+                database=database or 'default',
                 query_string=query_string,
                 **kwargs_shared,
             )
