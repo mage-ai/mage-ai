@@ -2,7 +2,12 @@ from enum import Enum
 from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.server.logger import Logger
+from mage_ai.settings import (
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+)
 import multiprocessing
+import sentry_sdk
 import traceback
 
 
@@ -13,6 +18,13 @@ logger = Logger().new_server_logger(__name__)
 
 def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
+
+    sentry_dsn = SENTRY_DSN
+    if sentry_dsn:
+        sentry_sdk.init(
+            sentry_dsn,
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        )
 
     database_manager.run_migrations()
     try:

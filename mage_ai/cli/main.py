@@ -24,13 +24,6 @@ app = typer.Typer(
     cls=OrderCommands,
 )
 
-sentry_dsn = SENTRY_DSN
-if sentry_dsn:
-    sentry_sdk.init(
-        sentry_dsn,
-        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
-    )
-
 
 @app.command()
 def init(
@@ -201,4 +194,10 @@ def create_spark_cluster(
 
 
 if __name__ == '__main__':
+    sentry_dsn = SENTRY_DSN
+    if sentry_dsn:
+        sentry_sdk.init(
+            sentry_dsn,
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        )
     app()
