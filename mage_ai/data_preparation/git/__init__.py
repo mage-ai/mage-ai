@@ -5,7 +5,6 @@ from mage_ai.orchestration.db.models.oauth import User
 from urllib.parse import urlparse
 import asyncio
 import base64
-import git
 import os
 import subprocess
 
@@ -15,6 +14,7 @@ REMOTE_NAME = 'mage-repo'
 
 class Git:
     def __init__(self, git_config: GitConfig):
+        import git
         self.remote_repo_link = git_config.remote_repo_link
         self.repo_path = git_config.repo_path or os.getcwd()
         os.makedirs(self.repo_path, exist_ok=True)
