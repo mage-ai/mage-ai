@@ -99,9 +99,10 @@ class ClickHouse(BaseSQLDatabase):
             if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
                     fetch_query_at_indexes[idx]:
                 result = self.client.query_df(query, parameters=parameters)
-                results.append(result)
             else:
-                self.client.command(query, parameters=parameters)
+                result = self.client.command(query, parameters=parameters)
+
+            results.append(result)
 
         return results
 
