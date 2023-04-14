@@ -111,8 +111,12 @@ class LoggerManager:
         start_timestamp: datetime = None,
         end_timestamp: datetime = None,
         file_ends_with: str = None,
-        write_date_depth: int = 1,
+        write_date_depth: int = 1,  # Depth of folder with format YYYYMMDD
     ):
+        """
+        Depending on which parent directory we start traversing from,
+        the write date YYYYMMDD folder will start at a certain depth.
+        """
         date_depth = write_date_depth
         hour_depth = date_depth + 1
         start_date = None
@@ -131,6 +135,10 @@ class LoggerManager:
             if f.is_dir():
                 folder_timestamp = int(f.path.split('/')[-1]) if depth >= date_depth else None
                 write_date = int(f.path.split('/')[-2]) if depth == hour_depth else None
+                """
+                Compare YYYYMMDD and HH folder write dates/times with start/end
+                timestamps to see if we can skip checking certain folders.
+                """
                 if (start_timestamp is None and end_timestamp is None) or \
                         (depth != date_depth and depth != hour_depth):
                     subfolders_in_range.append(f.path)

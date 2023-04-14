@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.orchestration.db.models.schedules import PipelineRun, BlockRun
+from mage_ai.shared.array import flatten
 from sqlalchemy import or_
 from typing import Dict, List, Tuple
 import json
@@ -82,7 +83,7 @@ def calculate_metrics(pipeline_run: PipelineRun) -> Dict:
 
     pipeline_logs_by_stream = {}
     pipeline_logs_list = [log['content'].split('\n') for log in pipeline_run.logs]
-    pipeline_logs = [logs for sublist in pipeline_logs_list for logs in sublist]
+    pipeline_logs = flatten(pipeline_logs_list)
     for pipeline_log in pipeline_logs:
         tags = parse_line(pipeline_log)
         stream = tags.get('stream')
