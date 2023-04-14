@@ -917,7 +917,7 @@ function CodeBlock({
 
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
 
-  const limitConfigEl = useMemo(() => (
+  const limitInputEl = useMemo(() => (
     <TextInput
       compact
       monospace
@@ -926,6 +926,7 @@ function CodeBlock({
       }, 300)}
       onChange={(e) => {
         // @ts-ignore
+        setAnyInputFocused(true);
         updateDataProviderConfig({
           [CONFIG_KEY_LIMIT]: e.target.value,
         });
@@ -938,7 +939,7 @@ function CodeBlock({
       small
       type="number"
       value={dataProviderConfig[CONFIG_KEY_LIMIT] || ''}
-      width={UNIT * 10}
+      width={UNIT * 11}
     />
   ), [
     dataProviderConfig,
@@ -1383,7 +1384,7 @@ function CodeBlock({
                           <span>&nbsp;</span>
                         </FlexContainer>
                       </Tooltip>
-                      {limitConfigEl}
+                      {limitInputEl}
                       <Spacing mr={5} />
                     </FlexContainer>
                   )}
@@ -1676,7 +1677,7 @@ function CodeBlock({
                           <span>&nbsp;</span>
                         </FlexContainer>
                       </Tooltip>
-                      {limitConfigEl}
+                      {limitInputEl}
                       <Spacing mr={1} />
                       <Tooltip
                         autoWidth

@@ -315,7 +315,7 @@ function PipelineDetail({
           }
         }
 
-        if (keyHistory[0] === KEY_CODE_NUMBER_0 && keyHistory[1] === KEY_CODE_NUMBER_0) {
+        if (!anyInputFocused && keyHistory[0] === KEY_CODE_NUMBER_0 && keyHistory[1] === KEY_CODE_NUMBER_0) {
           restartKernel();
         }
       }
