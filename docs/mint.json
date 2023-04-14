@@ -299,6 +299,7 @@
         {
           "group": "Deployment",
           "pages": [
+            "production/deploying-to-cloud/architecture",
             "production/deploying-to-cloud/using-terraform",
             "production/deploying-to-cloud/using-helm",
             {
