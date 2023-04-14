@@ -40,8 +40,9 @@ def parse_attributes(block) -> Dict:
     configuration = block.configuration
 
     file_path = configuration['file_path']
-    project_name = file_path.split('/')[0]
-    filename = file_path.split('/')[-1]
+    path_parts = file_path.split(os.sep)
+    project_name = path_parts[0]
+    filename = path_parts[-1]
     model_name = None
     file_extension = None
 
@@ -50,19 +51,19 @@ def parse_attributes(block) -> Dict:
         model_name = '.'.join(parts[:-1])
         file_extension = parts[-1]
 
-    full_path = f'{get_repo_path()}/dbt/{file_path}'
+    full_path = os.path.join(get_repo_path(), 'dbt', file_path)
 
-    project_full_path = f'{get_repo_path()}/dbt/{project_name}'
+    project_full_path = os.path.join(get_repo_path(), 'dbt', project_name)
 
-    models_folder_path = f'{project_full_path}/models'
-    sources_full_path = f'{models_folder_path}/mage_sources.yml'
+    models_folder_path = os.path.join(project_full_path, 'models')
+    sources_full_path = os.path.join(models_folder_path, 'mage_sources.yml')
     sources_full_path_legacy = re.sub(filename, 'mage_sources.yml', full_path)
 
-    profiles_full_path = f'{project_full_path}/profiles.yml'
+    profiles_full_path = os.path.join(project_full_path, 'profiles.yml')
     profile_target = configuration.get('dbt_profile_target')
     profile = load_profile(project_name, profiles_full_path, profile_target)
 
-    dbt_project_full_path = f'{project_full_path}/dbt_project.yml'
+    dbt_project_full_path = os.path.join(project_full_path, 'dbt_project.yml')
 
     source_name = f'mage_{project_name}'
     if profile:
@@ -120,8 +121,8 @@ def add_blocks_upstream_from_refs(
 
     files_by_name = {}
     for file_path_orig in files_in_path(models_folder_path):
-        file_path = re.sub(f'{models_folder_path}/', '', file_path_orig)
-        filename = file_path.split('/')[-1]
+        file_path = re.sub(f'{models_folder_path}{os.sep}', '', file_path_orig)
+        filename = file_path.split(os.sep)[-1]
         parts = filename.split('.')
         if len(parts) >= 2:
             fn = '.'.join(parts[:-1])
@@ -136,12 +137,12 @@ def add_blocks_upstream_from_refs(
             print(f'WARNING: dbt model {ref} cannot be found.')
             continue
 
-        fp = re.sub(f'{get_repo_path()}/dbt/', '', files_by_name[ref])
+        fp = re.sub(f"{os.path.join(get_repo_path(), 'dbt')}{os.sep}", '', files_by_name[ref])
         configuration = dict(file_path=fp)
         uuid = remove_extension_from_filename(fp)
 
         if read_only:
-            uuid_clean = clean_name(uuid, allow_characters=['/'])
+            uuid_clean = clean_name(uuid, allow_characters=[os.sep])
             new_block = block.__class__(uuid_clean, uuid_clean, block.type)
             new_block.configuration = configuration
             new_block.language = block.language
@@ -759,7 +760,7 @@ def compiled_query_string(block: Block) -> str:
     project_full_path = attr['project_full_path']
     file_path = attr['file_path']
 
-    file = f'{project_full_path}/target/compiled/{file_path}'
+    file = os.path.join(project_full_path, 'target', 'compiled', file_path)
 
     if not os.path.exists(file):
         return None
@@ -888,15 +889,15 @@ def build_command_line_arguments(
         file_path = attr['file_path']
         project_full_path = attr['project_full_path']
         full_path = attr['full_path']
-        path_to_model = re.sub(f'{project_full_path}/', '', full_path)
+        path_to_model = re.sub(f'{project_full_path}{os.sep}', '', full_path)
 
         if test_execution:
             dbt_command = 'compile'
 
-            with open(f'{project_full_path}/dbt_project.yml') as f:
+            with open(os.path.join(project_full_path, 'dbt_project.yml')) as f:
                 dbt_project = yaml.safe_load(f)
                 target_path = dbt_project['target-path']
-                path = f'{project_full_path}/{target_path}/compiled/{file_path}'
+                path = os.path.join(project_full_path, target_path, 'compiled', file_path)
                 if os.path.exists(path):
                     os.remove(path)
 
@@ -909,10 +910,10 @@ def build_command_line_arguments(
             variables=variables,
             **get_template_vars(),
         )
-        project_full_path = f'{get_repo_path()}/dbt/{project_name}'
+        project_full_path = os.path.join(get_repo_path(), 'dbt', project_name)
         args += block.content.split(' ')
 
-    profiles_dir = f'{project_full_path}/.mage_temp_profiles'
+    profiles_dir = os.path.join(project_full_path, '.mage_temp_profiles')
 
     args += [
         '--project-dir',
@@ -1001,7 +1002,7 @@ def get_model_configurations_from_dbt_project_settings(block: 'Block') -> Dict:
 
     models_folder_path = attributes_dict['models_folder_path']
     full_path = attributes_dict['full_path']
-    parts = full_path.replace(models_folder_path, '').split('/')
+    parts = full_path.replace(models_folder_path, '').split(os.sep)
     parts = list(filter(lambda x: x, parts))
     if len(parts) >= 2:
         models_subfolder = parts[0]

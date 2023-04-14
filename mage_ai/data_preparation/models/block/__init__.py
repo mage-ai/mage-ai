@@ -332,7 +332,8 @@ class Block:
 
         return os.path.join(
             repo_path or os.getcwd(),
-            f'{block_directory}/{self.uuid}.{file_extension}',
+            block_directory,
+            f'{self.uuid}.{file_extension}',
         )
 
     @property
@@ -1943,8 +1944,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if os.path.exists(new_file_path):
             raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
 
-        file_path_parts = new_file_path.split('/')
-        parent_dir = '/'.join(file_path_parts[:-1])
+        file_path_parts = new_file_path.split(os.sep)
+        parent_dir = os.path.join(*file_path_parts[:-1])
         os.makedirs(parent_dir, exist_ok=True)
 
         os.rename(old_file_path, new_file_path)
@@ -1967,7 +1968,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         new_file_path = self.file_path
         if os.path.exists(new_file_path):
             raise Exception(
-                f'Block {self.type}/{self.uuid} already exists.'
+                f'Block {self.type}{os.sep}{self.uuid} already exists.'
                 ' Please rename it before changing the type.'
             )
         os.rename(old_file_path, new_file_path)
