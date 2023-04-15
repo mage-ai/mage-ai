@@ -163,8 +163,10 @@ def create_block_runs_from_dynamic_block(
                         skip_creating_downstream = True
                         break
 
-                    down_uuids = [down.uuid for down in dynamic_ancestor.downstream_blocks]
-                    down_uuids_as_ancestors = [i for i in down_uuids if i in ancestors_uuids]
+                    down_uuids_as_ancestors = []
+                    for down in dynamic_ancestor.downstream_blocks:
+                        if down.uuid in ancestors_uuids and not should_reduce_output(down):
+                            down_uuids_as_ancestors.append(down.uuid)
                     skip_creating_downstream = len(down_uuids_as_ancestors) >= 2
 
                 # Only create downstream block runs if it doesn’t have dynamically created upstream
