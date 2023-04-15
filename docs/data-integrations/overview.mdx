@@ -10,13 +10,21 @@ description: "Data integration is synchronizing data from an external system to 
 
 ---
 
-**Syncing external data → internal systems**
+## Requirements
+
+<Warning>
+Data integrations is only supported when running Mage using [Docker](/getting-started/setup#using-docker).
+</Warning>
+
+## Use cases
+
+### Syncing external data → internal systems
 
 If you have data in 3rd party systems (e.g other SaaS tools) and you want that
 data available in your database, data warehouse, or data lake, you can use Mage
 to sync data between those systems.
 
-<b>Syncing internal data → external systems (reverse)</b>
+### Syncing internal data → external systems (reverse)
 
 Your internal database or data warehouse may contain application data generated
 by your users or customers. This data can be valuable if used in conjunction
