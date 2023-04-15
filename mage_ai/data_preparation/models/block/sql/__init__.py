@@ -20,7 +20,7 @@ from mage_ai.io.base import (
     ExportWritePolicy,
     QUERY_ROW_LIMIT,
 )
-from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.config import ConfigFileLoader, ConfigKey
 from os import path
 from time import sleep
 from typing import Any, Dict, List
@@ -411,11 +411,11 @@ def execute_sql_code(
                 )
 
                 if should_query:
+                    catalog = config_file_loader[ConfigKey.TRINO_CATALOG]
+
                     return [
                         loader.load(
-                            f'SELECT * FROM "{schema}"."{table_name}"',
-                            schema=schema,
-                            table_name=table_name,
+                            f'SELECT * FROM "{catalog}"."{schema}"."{table_name}"',
                             limit=limit,
                             verbose=False,
                         ),
