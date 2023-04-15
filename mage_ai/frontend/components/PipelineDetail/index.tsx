@@ -399,10 +399,12 @@ function PipelineDetail({
     return savePipelineContent({
       pipeline: {
         blocks: arr,
+        uuid: pipeline?.uuid,
       },
     });
   }, [
     blocks,
+    pipeline,
     savePipelineContent,
   ]);
 

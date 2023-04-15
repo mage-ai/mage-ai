@@ -584,6 +584,7 @@ function PipelineDetailPage({
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
     pipeline?: PipelineType | {
+      blocks?: BlockType[];
       extensions?: PipelineExtensionsType;
       name: string;
       type: string;
@@ -594,6 +595,7 @@ function PipelineDetailPage({
     const {
       block: blockOverride,
       pipeline: pipelineOverride = {
+        blocks: [],
         extensions: {},
       },
     } = payload || {};
