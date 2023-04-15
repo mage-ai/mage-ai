@@ -72,8 +72,8 @@ class Trino(BaseSQL):
 
     @classmethod
     def with_config(cls, config: BaseConfigLoader) -> 'Trino':
-        if config.version >= '0.1.2':
-            settings = config.get('trino') or {}
+        if config.get('trino'):
+            settings = config['trino']
 
             return cls(
                 catalog=settings.get('catalog'),
@@ -122,6 +122,7 @@ class Trino(BaseSQL):
                 schema=self.settings.get('schema'),
                 session_properties=self.settings.get('session_properties'),
                 source=self.settings.get('source'),
+                user=self.settings.get('user'),
                 verify=self.settings.get('verify'),
             )
 
