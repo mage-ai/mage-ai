@@ -1,3 +1,4 @@
+import * as path from 'path';
 import BlockType, {
   BlockColorEnum,
   BlockRequestPayloadType,
@@ -27,7 +28,7 @@ export const getBlockUUID = (path: string[]) => {
   const blockTypeFolder = path[0];
 
   if (blockTypeFolder === BlockTypeEnum.DBT) {
-    return path.slice(1).join('/');
+    return path.slice(1).join(path.sep);
   }
 
   return getBlockFilename(path).split('.')[0];
@@ -54,16 +55,16 @@ export function buildAddBlockRequestPayload(
   // data_loaders/foo.py
   // data_loaders/team/foo.py
   // data_loaders/team/growth/foo.py
-  const parts = file.path.replace(repoPath, '').split('/');
-  const isDBT = file.path.split('/')[0] === BlockTypeEnum.DBT;
+  const parts = file.path.replace(repoPath, '').split(path.sep);
+  const isDBT = file.path.split(path.sep)[0] === BlockTypeEnum.DBT;
 
   let blockUUID = getBlockUUID(parts);
   if (parts.length >= 3 && !isDBT) {
-    const nestedFolders = parts.slice(1, parts.length - 1).join('/');
+    const nestedFolders = parts.slice(1, parts.length - 1).join(path.sep);
     blockUUID = `${nestedFolders}/${blockUUID}`;
   }
 
-  const blockType = getBlockType(file.path.split('/'));
+  const blockType = getBlockType(file.path.split(path.sep));
   const blockReqPayload: BlockRequestPayloadType = {
     configuration: {
       file_path: isDBT ? blockUUID : null,

@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 
@@ -33,7 +34,7 @@ function FileUploader({
           body?.dir_path,
           body?.file?.name,
         ];
-        const fileFullPath = parts.filter(s => s?.length >= 1).join('/');
+        const fileFullPath = parts.filter(s => s?.length >= 1).join(path.sep);
         // @ts-ignore
         setFileUploadProgress?.(prev => ({
           ...prev,
@@ -47,18 +48,18 @@ function FileUploader({
     files.forEach((file: UploadFileType) => {
       const { name, path } = file;
       const parts = [directoryPath];
-      const pathClean = path.split('/').filter(p => p && p !== name).join('/');
+      const pathClean = path.split(path.sep).filter(p => p && p !== name).join(path.sep);
       if (pathClean) {
         parts.push(pathClean);
       }
 
       const parts2 = [];
-      const dirPath = parts.join('/');
+      const dirPath = parts.join(path.sep);
       if (dirPath?.length >= 1) {
         parts.push(dirPath);
       }
       parts2.push(name);
-      const fileFullPath = parts2.join('/');
+      const fileFullPath = parts2.join(path.sep);
 
       // @ts-ignore
       createFile({

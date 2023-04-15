@@ -180,8 +180,8 @@ function Folder({
     />
   )), [
     allowSelectingFolders,
-    containerRef,
     children,
+    containerRef,
     disableContextMenu,
     file,
     isFileDisabled,
@@ -194,6 +194,9 @@ function Folder({
     pipelineBlockUuids,
     selectFile,
     setContextItem,
+    setCoordinates,
+    setDraggingFile,
+    setSelectedFile,
     theme,
     timeout,
     uncollapsed,
