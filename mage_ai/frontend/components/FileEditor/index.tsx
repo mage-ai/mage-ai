@@ -1,3 +1,4 @@
+import * as path from 'path';
 import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
@@ -138,7 +139,7 @@ function FileEditor({
         content: value,
       },
     }).then(() => {
-      const fileName = decodeURIComponent(filePath).split('/').pop();
+      const fileName = decodeURIComponent(filePath).split(path.sep).pop();
       if (fileName === SpecialFileEnum.METADATA_YAML) {
         fetchVariables();
       }
@@ -223,7 +224,7 @@ function FileEditor({
         && getNonPythonBlockFromFile(file, file?.path)
       )
     )
-    && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD
+    && getBlockType(file.path.split(path.sep)) !== BlockTypeEnum.SCRATCHPAD
     && getBlockFromFile(file)
     && (
     <Button

@@ -8,3 +8,5 @@ export const TABS_DBT = [
   TAB_DBT_SQL_UUID,
   TAB_DBT_LINEAGE_UUID,
 ];
+
+export const DRAG_AND_DROP_TYPE = 'CodeBlock_HiddenBlock';

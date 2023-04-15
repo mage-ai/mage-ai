@@ -20,7 +20,7 @@ INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 MAX_DEPTH = 30
 MAX_NUMBER_OF_FILE_VERSIONS = int(os.getenv('MAX_NUMBER_OF_FILE_VERSIONS', 100) or 100)
 
-PIPELINES_FOLDER_PREFIX = 'pipelines/'
+PIPELINES_FOLDER_PREFIX = f'pipelines{os.sep}'
 
 
 class File:
@@ -118,8 +118,9 @@ class File:
         filename: str,
     ) -> Tuple[str, str]:
         return os.path.join(
-            f'{repo_path}/{FILE_VERSIONS_DIR}',
-            dir_path.replace(repo_path, f'{repo_path}/{FILE_VERSIONS_DIR}'),
+            repo_path,
+            FILE_VERSIONS_DIR,
+            dir_path.replace(repo_path, os.path.join(repo_path, FILE_VERSIONS_DIR)),
             filename,
         )
 
