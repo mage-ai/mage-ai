@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as osPath from 'path';
 import { useMemo, useState } from 'react';
 
 import BlockType, { BlockLanguageEnum } from '@interfaces/BlockType';
@@ -133,7 +133,7 @@ function FileSelectorPopup({
               muted={!selectedFilePath}
             >
               {selectedFilePath
-                ? `dbt${path.sep}${selectedFilePath}`
+                ? `dbt${osPath.sep}${selectedFilePath}`
                 : 'Choose folder below'
               }
             </Text>

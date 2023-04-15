@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as osPath from 'path';
 
 import adjectives from './samples/adjectives';
 import letters from './samples/letters';
@@ -297,7 +297,7 @@ export function cleanName(name: string): string {
 }
 
 export function removeExtensionFromFilename(filename: string): string {
-  const parts = filename.split(path.sep);
+  const parts = filename.split(osPath.sep);
   const fileParts = parts[parts.length - 1].split('.');
   let fn;
   if (fileParts.length === 1) {
@@ -305,5 +305,5 @@ export function removeExtensionFromFilename(filename: string): string {
   } else {
     fn = fileParts.slice(0, -1).join('.');
   }
-  return parts.slice(0, parts.length - 1).concat(fn).join(path.sep);
+  return parts.slice(0, parts.length - 1).concat(fn).join(osPath.sep);
 }

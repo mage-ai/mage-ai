@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as osPath from 'path';
 import BlockType from '@interfaces/BlockType';
 
 export function getModelName(block: BlockType, opts?: { fullPath: boolean }): string {
@@ -8,7 +8,7 @@ export function getModelName(block: BlockType, opts?: { fullPath: boolean }): st
   if (fullPath) {
     return block?.uuid;
   } else if (filePath) {
-    const parts = filePath.split(path.sep);
+    const parts = filePath.split(osPath.sep);
     const fullName = parts[parts.length - 1];
     const nameWithoutExtension = fullName.split('.');
     nameWithoutExtension.pop();

@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as osPath from 'path';
 import AutocompleteItemType, { GroupEnum } from '@interfaces/AutocompleteItemType';
 import { getTextBeforeCurrentWord } from './utils';
 
@@ -29,13 +29,13 @@ export default function(
       if (moduleName.match(/__init__.py/)) {
         moduleName = moduleName.replace(/\/__init__.py/, '');
       }
-      moduleName = moduleName.split('.py')[0].replaceAll(path.sep, '.');
+      moduleName = moduleName.split('.py')[0].replaceAll(osPath.sep, '.');
 
       mapping[moduleName] = autocompleteItem;
     }
 
     // import/from for all files
-    const parts = id.replace('.py', '').replace('/__init__', '').split(path.sep);
+    const parts = id.replace('.py', '').replace('/__init__', '').split(osPath.sep);
     if (parts.length === 1) {
       allImportExamples.add(`import ${parts[0]}`);
     } else if (parts.length >= 2) {
@@ -84,7 +84,7 @@ export default function(
     });
 
     files.forEach((fileName: string) => {
-      const p = fileName.split(path.sep);
+      const p = fileName.split(osPath.sep);
       const childModuleName = p[p.length - 1].split('.py')[0];
 
       items.push({

@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as osPath from 'path';
 import { useGlobalState } from '@storage/state';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
@@ -80,9 +80,9 @@ function FileVersions({
             let key = `FileEditor/${fileContentPath}`;
 
             if (fileContentPath) {
-              const parts = fileContentPath.split(path.sep);
+              const parts = fileContentPath.split(osPath.sep);
               if ('pipelines' === parts[0]) {
-                const pipelineUUID = parts.slice(1, parts.length - 1).join(path.sep);
+                const pipelineUUID = parts.slice(1, parts.length - 1).join(osPath.sep);
                 key = `PipelineDetail/${pipelineUUID}`;
               }
             }

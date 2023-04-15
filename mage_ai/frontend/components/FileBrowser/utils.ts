@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as osPath from 'path';
 
 import BlockType, {
   BlockTypeEnum,
@@ -29,14 +29,14 @@ export function getFullPath(
     if (currentPath?.length >= 1) {
       parts.push(currentPath);
     }
-    return getFullPath(file.parent, parts.join(path.sep));
+    return getFullPath(file.parent, parts.join(osPath.sep));
   }
 
   return currentPath;
 }
 
 export function removeRootFromFilePath(filePath: string): string {
-  return filePath?.split(path.sep).slice(1).join(path.sep);
+  return filePath?.split(osPath.sep).slice(1).join(osPath.sep);
 }
 
 export function getFullPathWithoutRootFolder(
@@ -55,7 +55,7 @@ export function getBlockFromFile(
 ) {
   // parts example:
   // ['default_repo', 'data_loaders', 'team', 'foo.py']
-  let parts = getFullPath(file, currentPathInit).split(path.sep);
+  let parts = getFullPath(file, currentPathInit).split(osPath.sep);
 
   if (!parts) {
     return null;
@@ -64,7 +64,7 @@ export function getBlockFromFile(
   let blockType;
   // This happens when you open a file from the file browser and edit it on the notebook UI
   if (parts.length === 1) {
-    parts = file?.path?.split(path.sep);
+    parts = file?.path?.split(osPath.sep);
     if (parts) {
       if (parts[0] === BlockTypeEnum.CUSTOM) {
         blockType = parts[0];
@@ -94,7 +94,7 @@ export function getBlockFromFile(
   if (parts.length >= 3) {
     // ['default_repo', 'data_loaders', 'team', 'foo.py'] becomes
     // team/foo.py
-    fileName = parts.slice(2, parts.length).join(path.sep);
+    fileName = parts.slice(2, parts.length).join(osPath.sep);
   } else {
     fileName = parts[parts.length - 1];
   }
@@ -124,7 +124,7 @@ export function getNonPythonBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
 ): BlockType {
-  const parts = getFullPath(file, currentPathInit).split(path.sep);
+  const parts = getFullPath(file, currentPathInit).split(osPath.sep);
   if (!parts[1]) {
     return;
   }

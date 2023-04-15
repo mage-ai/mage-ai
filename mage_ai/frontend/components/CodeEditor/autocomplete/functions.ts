@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as osPath from 'path';
 import {
   extractAllImportNames,
   extractAllImports,
@@ -21,7 +21,7 @@ function getAutocompleteItemWithModuleParts(modulePartsInit: string[], autocompl
       return autocompleteItem;
     }
 
-    const idToTry = moduleParts.slice(0, count - idx).join(path.sep);
+    const idToTry = moduleParts.slice(0, count - idx).join(osPath.sep);
     autocompleteItem = autocompleteItemsById[`${idToTry}.py`];
   });
 
