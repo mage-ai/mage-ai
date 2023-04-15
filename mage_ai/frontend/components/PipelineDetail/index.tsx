@@ -7,6 +7,8 @@ import React, {
   useState,
 } from 'react';
 import { CSSTransition } from 'react-transition-group';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
@@ -64,6 +66,7 @@ import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/A
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -374,6 +377,37 @@ function PipelineDetail({
     setDbtModelName('');
   }, []);
 
+  const onDrop = useCallback((block: BlockType, blockDropped: BlockType) => {
+    let blockIndex;
+    let blockDroppedIndex;
+
+    blocks.forEach(({ uuid }, idx: number) => {
+      if (blockIndex >= 0 && blockDroppedIndex >= 0) {
+        return;
+      }
+
+      if (uuid === block.uuid) {
+        blockIndex = idx;
+      } else if (uuid === blockDropped.uuid) {
+        blockDroppedIndex = idx;
+      }
+    });
+
+    let arr = removeAtIndex(blocks, blockDroppedIndex);
+    arr = pushAtIndex(blockDropped, Math.max(blockIndex, 0), arr);
+
+    return savePipelineContent({
+      pipeline: {
+        blocks: arr,
+        uuid: pipeline?.uuid,
+      },
+    });
+  }, [
+    blocks,
+    pipeline,
+    savePipelineContent,
+  ]);
+
   const codeBlocks = useMemo(() => {
     const arr = [];
 
@@ -404,18 +438,18 @@ function PipelineDetail({
 
       if (isHidden) {
         el = (
-          <Spacing key={uuid} mb={noDivider ? 0 : 1}>
-            <HiddenBlock
-              block={block}
-              blocks={blocks}
-              // @ts-ignore
-              onClick={() => setHiddenBlocks(prev => ({
-                ...prev,
-                [uuid]: !isHidden,
-              }))}
-              ref={currentBlockRef}
-            />
-          </Spacing>
+          <HiddenBlock
+            block={block}
+            blocks={blocks}
+            key={uuid}
+            // @ts-ignore
+            onClick={() => setHiddenBlocks(prev => ({
+              ...prev,
+              [uuid]: !isHidden,
+            }))}
+            onDrop={onDrop}
+            ref={currentBlockRef}
+          />
         );
       } else {
         el = (
@@ -453,6 +487,7 @@ function PipelineDetail({
             onCallbackChange={(value: string) => onChangeCallbackBlock(type, uuid, value)}
             onChange={(value: string) => onChangeCodeBlock(type, uuid, value)}
             onClickAddSingleDBTModel={onClickAddSingleDBTModel}
+            onDrop={onDrop}
             openSidekickView={openSidekickView}
             pipeline={pipeline}
             ref={currentBlockRef}
@@ -505,6 +540,7 @@ function PipelineDetail({
     onChangeCallbackBlock,
     onChangeCodeBlock,
     onClickAddSingleDBTModel,
+    onDrop,
     openSidekickView,
     pipeline,
     runBlock,
@@ -639,7 +675,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
   ]);
 
   return (
-    <>
+    <DndProvider backend={HTML5Backend}>
       <PipelineContainerStyle>
         {visibleOverlay && (
           <CSSTransition
@@ -714,7 +750,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
           </ClickOutside>
         )}
       </Spacing>
-    </>
+    </DndProvider>
   );
 }
 
