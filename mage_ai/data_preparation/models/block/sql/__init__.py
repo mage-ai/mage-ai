@@ -403,9 +403,8 @@ def execute_sql_code(
             else:
                 loader.export(
                     None,
-                    table_name,
-                    database,
                     schema,
+                    table_name,
                     if_exists=export_write_policy,
                     query_string=query_string,
                     verbose=BlockType.DATA_EXPORTER == block.type,
@@ -414,8 +413,7 @@ def execute_sql_code(
                 if should_query:
                     return [
                         loader.load(
-                            f'SELECT * FROM "{database}"."{schema}"."{table_name}"',
-                            database=database,
+                            f'SELECT * FROM "{schema}"."{table_name}"',
                             schema=schema,
                             table_name=table_name,
                             limit=limit,

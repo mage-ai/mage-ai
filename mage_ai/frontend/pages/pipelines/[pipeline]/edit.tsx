@@ -594,8 +594,8 @@ function PipelineDetailPage({
   }) => {
     const {
       block: blockOverride,
+      // @ts-ignore
       pipeline: pipelineOverride = {
-        blocks: [],
         extensions: {},
       },
     } = payload || {};

@@ -12,10 +12,12 @@ export const EXPORT_WRITE_POLICIES = [
 
 export enum DataProviderEnum {
   BIGQUERY = 'bigquery',
+  CLICKHOUSE = 'clickhouse',
   MYSQL = 'mysql',
   POSTGRES = 'postgres',
   REDSHIFT = 'redshift',
   SNOWFLAKE = 'snowflake',
+  TRINO = 'trino',
 }
 
 export default interface DataProviderType {

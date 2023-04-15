@@ -52,3 +52,9 @@ default:
   SNOWFLAKE_DEFAULT_DB: optional_default_database
   SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
   SNOWFLAKE_ROLE: role
+  TRINO_CATALOG: catalog
+  TRINO_HOST: '127.0.0.1'
+  TRINO_PASSWORD: pasword
+  TRINO_PORT: 8080
+  TRINO_SCHEMA: schema
+  TRINO_USER: user
