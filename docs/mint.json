@@ -168,7 +168,13 @@
               ]
             },
             "guides/blocks/callbacks",
-            "guides/sql-blocks",
+            {
+              "group": "SQL",
+              "pages": [
+                "guides/sql-blocks",
+                "development/blocks/sql/trino"
+              ]
+            },
             "guides/r-blocks",
             "guides/blocks/dynamic-blocks",
             "guides/blocks/custom-blocks"
