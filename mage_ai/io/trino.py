@@ -72,6 +72,23 @@ class Trino(BaseSQL):
 
     @classmethod
     def with_config(cls, config: BaseConfigLoader) -> 'Trino':
+        if config.get('trino'):
+            settings = config['trino']
+
+            return cls(
+                catalog=settings.get('catalog'),
+                host=settings.get('host'),
+                http_headers=settings.get('http_headers'),
+                http_scheme=settings.get('http_scheme'),
+                password=settings.get('password'),
+                port=settings.get('port'),
+                schema=settings.get('schema'),
+                session_properties=settings.get('session_properties'),
+                source=settings.get('source'),
+                user=settings.get('user'),
+                verify=settings.get('verify'),
+            )
+
         return cls(
             catalog=config[ConfigKey.TRINO_CATALOG],
             host=config[ConfigKey.TRINO_HOST],
@@ -97,18 +114,24 @@ class Trino(BaseSQL):
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to Trino database'):
             connect_kwargs = dict(
-                catalog=self.settings['catalog'],
-                host=self.settings['host'],
-                port=self.settings['port'],
-                schema=self.settings['schema'],
-                user=self.settings['user'],
+                catalog=self.settings.get('catalog'),
+                host=self.settings.get('host'),
+                http_headers=self.settings.get('http_headers'),
+                http_scheme=self.settings.get('http_scheme'),
+                port=self.settings.get('port'),
+                schema=self.settings.get('schema'),
+                session_properties=self.settings.get('session_properties'),
+                source=self.settings.get('source'),
+                user=self.settings.get('user'),
+                verify=self.settings.get('verify'),
             )
 
             if self.settings.get('password'):
                 connect_kwargs['auth'] = \
                     BasicAuthentication(
                         self.settings['user'], self.settings['password'])
-                connect_kwargs['http_scheme'] = 'https'
+                if 'http_scheme' not in connect_kwargs:
+                    connect_kwargs['http_scheme'] = 'https'
             self._ctx = ConnectionWrapper(**connect_kwargs)
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
