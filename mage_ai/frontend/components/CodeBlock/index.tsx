@@ -1592,7 +1592,11 @@ function CodeBlock({
 
                           <Spacing mr={1} />
 
-                          {dataProviderConfig[CONFIG_KEY_DATA_PROVIDER] !== DataProviderEnum.MYSQL &&
+                          {![
+                            DataProviderEnum.CLICKHOUSE,
+                            DataProviderEnum.MYSQL,
+                            // @ts-ignore
+                          ].includes(dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]) &&
                             <>
                               <Tooltip
                                 block

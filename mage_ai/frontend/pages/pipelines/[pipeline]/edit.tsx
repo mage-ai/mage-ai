@@ -594,8 +594,8 @@ function PipelineDetailPage({
   }) => {
     const {
       block: blockOverride,
+      // @ts-ignore
       pipeline: pipelineOverride = {
-        blocks: [],
         extensions: {},
       },
     } = payload || {};
@@ -720,6 +720,7 @@ function PipelineDetailPage({
     });
 
     const blocksToSave =
+      // @ts-ignore
       (pipelineOverride?.blocks || blocks).map(({ uuid }) => blocksByUUID[uuid]);
 
     // @ts-ignore
