@@ -7,6 +7,7 @@ from mage_ai.shared.array import find
 import io
 import logging
 import os
+import re
 
 MAX_LOG_FILE_SIZE = 5 * 1024 * 1024
 
@@ -110,7 +111,6 @@ class LoggerManager:
         depth: int = 1,
         start_timestamp: datetime = None,
         end_timestamp: datetime = None,
-        file_ends_with: str = None,
         write_date_depth: int = 1,  # Depth of folder with format YYYYMMDD
     ):
         """
@@ -173,14 +173,14 @@ class LoggerManager:
                         (depth == hour_depth and write_date == int(end_date) and
                             folder_timestamp and folder_timestamp <= int(end_hour)):
                         subfolders_in_range.append(f.path)
-            elif f.is_file() and (
-                (filename is not None and f.path.split('/')[-1] == filename) or
-                (filename is None and (
-                    file_ends_with is None or
-                    (file_ends_with is not None and f.path.endswith(file_ends_with))
-                ))
-            ):
-                files_in_range.append(f.path)
+            elif f.is_file():
+                fileExtensionRegEx = re.compile(r'^.+\.log(\.[0-9]+)?$')
+                if (filename is not None and f.path.split('/')[-1] == filename) or (
+                    filename is None and (
+                        f.path.endswith('.log') or re.match(fileExtensionRegEx, f.path)
+                    )
+                ):
+                    files_in_range.append(f.path)
 
         for dir in list(subfolders_in_range):
             sf, f = self.traverse_logs_dir(
@@ -189,7 +189,6 @@ class LoggerManager:
                 depth=depth + 1,
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
-                file_ends_with=file_ends_with,
                 write_date_depth=write_date_depth,
             )
             subfolders_in_range.extend(sf)

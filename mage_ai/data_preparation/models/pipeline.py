@@ -1243,7 +1243,6 @@ class Pipeline:
             start_dir or root_logs_dir,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
-            file_ends_with='.log',
             write_date_depth=write_date_depth,
         )
         grouped_filepaths = group_by(
