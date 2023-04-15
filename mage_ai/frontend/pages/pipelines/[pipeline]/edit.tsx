@@ -720,6 +720,7 @@ function PipelineDetailPage({
     });
 
     const blocksToSave =
+      // @ts-ignore
       (pipelineOverride?.blocks || blocks).map(({ uuid }) => blocksByUUID[uuid]);
 
     // @ts-ignore

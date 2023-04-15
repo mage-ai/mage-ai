@@ -1595,6 +1595,7 @@ function CodeBlock({
                           {![
                             DataProviderEnum.CLICKHOUSE,
                             DataProviderEnum.MYSQL,
+                            // @ts-ignore
                           ].includes(dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]) &&
                             <>
                               <Tooltip
