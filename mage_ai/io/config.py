@@ -349,6 +349,8 @@ class ConfigFileLoader(BaseConfigLoader):
             profile (str, optional): Profile to load configuration settings from. Defaults to
                                         'default'.
         """
+        self.version = None
+
         if config:
             self.config = config
         else:
@@ -360,7 +362,9 @@ class ConfigFileLoader(BaseConfigLoader):
                 config_file = Template(fin.read()).render(
                     **get_template_vars(),
                 )
-                self.config = yaml.full_load(config_file)[profile]
+                config = yaml.full_load(config_file)
+                self.config = config[profile]
+                self.version = config.get('version')
 
         self.use_verbose_format = any(
             source in self.config.keys() for source in VerboseConfigKey)
