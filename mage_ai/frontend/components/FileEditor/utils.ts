@@ -24,11 +24,11 @@ export const getBlockType = (path: string[]): BlockTypeEnum => {
   return path[0].slice(0, -1) as BlockTypeEnum;
 };
 
-export const getBlockUUID = (path: string[]) => {
-  const blockTypeFolder = path[0];
+export const getBlockUUID = (pathParts: string[]) => {
+  const blockTypeFolder = pathParts[0];
 
   if (blockTypeFolder === BlockTypeEnum.DBT) {
-    return path.slice(1).join(path.sep);
+    return pathParts.slice(1).join(path.sep);
   }
 
   return getBlockFilename(path).split('.')[0];

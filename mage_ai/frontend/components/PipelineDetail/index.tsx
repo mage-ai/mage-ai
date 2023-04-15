@@ -1,3 +1,4 @@
+import * as path from 'path';
 import React, {
   createRef,
   useCallback,
@@ -676,9 +677,11 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
               files={files}
               onClose={closeAddDBTModelPopup}
               onOpenFile={(filePath: string) => {
-                const finalFilePath = creatingNewDBTModel
-                  ? `${filePath}/${addUnderscores(dbtModelName || randomNameGenerator())}.${FileExtensionEnum.SQL}`
-                  : filePath;
+                let finalFilePath = filePath;
+                if (creatingNewDBTModel) {
+                  const blockName = addUnderscores(dbtModelName || randomNameGenerator());
+                  finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
+                }
 
                 const newBlock: BlockRequestPayloadType = {
                   configuration: {
