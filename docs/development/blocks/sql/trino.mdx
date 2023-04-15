@@ -16,12 +16,21 @@ Open the file named `io_config.yaml` at the root of your Mage project and enter 
 ```yaml
 version: 0.1.1
 default:
-  TRINO_CATALOG: postgresql # Change this to the catalog of your choice
-  TRINO_HOST: 127.0.0.1
-  TRINO_PORT: 8080
-  TRINO_SCHEMA: core_data
-  TRINO_USER: admin
-  TRINO_PASSWORD: mage1337  # Optional
+  trino:
+    catalog: postgresql                       # Change this to the catalog of your choice
+    host: 127.0.0.1
+    http_headers:
+      X-Something: 'mage=power'
+    http_scheme: http
+    password: mage1337                        # Optional
+    port: 8080
+    schema: core_data
+    session_properties:                       # Optional
+      acc01.optimize_locality_enabled: false
+      optimize_hash_generation: true
+    source: trino-cli                         # Optional
+    user: admin
+    verify: /path/to/your/ca.crt              # Optional
 ```
 
 <Note>Change the values according to your Trino settings.</Note>
