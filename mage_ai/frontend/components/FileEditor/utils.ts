@@ -11,17 +11,17 @@ import FileType, {
 import { find } from '@utils/array';
 import { removeExtensionFromFilename } from '@utils/string';
 
-export const getBlockFilename = (path: string[]) => path.at(-1);
+export const getBlockFilename = (pathParts: string[]) => pathParts.at(-1);
 
-export const getBlockType = (path: string[]): BlockTypeEnum => {
-  const blockTypeFolder = path[0];
+export const getBlockType = (pathParts: string[]): BlockTypeEnum => {
+  const blockTypeFolder = pathParts[0];
 
   if (blockTypeFolder === BlockTypeEnum.DBT
     || blockTypeFolder === BlockTypeEnum.CUSTOM) {
     return blockTypeFolder;
   }
 
-  return path[0].slice(0, -1) as BlockTypeEnum;
+  return pathParts[0].slice(0, -1) as BlockTypeEnum;
 };
 
 export const getBlockUUID = (pathParts: string[]) => {
@@ -31,7 +31,7 @@ export const getBlockUUID = (pathParts: string[]) => {
     return pathParts.slice(1).join(path.sep);
   }
 
-  return getBlockFilename(path).split('.')[0];
+  return getBlockFilename(pathParts).split('.')[0];
 };
 
 export function buildFileExtensionRegExp() {
