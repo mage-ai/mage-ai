@@ -608,7 +608,7 @@ function PipelineDetailPage({
     setPipelineLastSavedState(utcNowDateObj);
 
     const blocksByExtensions = {};
-    const blocksToSave = [];
+    const blocksByUUID = {};
 
     blocks.forEach((block: BlockType) => {
       const {
@@ -685,12 +685,14 @@ function PipelineDetailPage({
       }
 
       if (contentOnly) {
-        return blocksToSave.push({
+        blocksByUUID[blockPayload.uuid] = {
           callback_content: blockPayload.callback_content,
           content: blockPayload.content,
           outputs: blockPayload.outputs,
           uuid: blockPayload.uuid,
-        });
+        };
+
+        return;
       }
 
       if ([BlockTypeEnum.EXTENSION].includes(type)) {
@@ -699,7 +701,7 @@ function PipelineDetailPage({
         }
         blocksByExtensions[extensionUUID].push(blockPayload);
       } else {
-        blocksToSave.push(blockPayload);
+        blocksByUUID[blockPayload.uuid] = blockPayload;
       }
     });
 
@@ -714,6 +716,9 @@ function PipelineDetailPage({
       // @ts-ignore
       extensionsToSave[extensionUUID]['blocks'] = arr;
     });
+
+    const blocksToSave =
+      (pipelineOverride?.blocks || blocks).map(({ uuid }) => blocksByUUID[uuid]);
 
     // @ts-ignore
     return updatePipeline({

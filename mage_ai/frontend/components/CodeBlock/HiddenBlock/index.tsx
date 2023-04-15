@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import { ThemeContext } from 'styled-components';
+import { useDrag, useDrop } from 'react-dnd';
 
 import Badge from '@oracle/components/Badge';
 import BlockType, {
@@ -14,6 +15,7 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import { DRAG_AND_DROP_TYPE } from '../constants';
 import { FileFill, PreviewOpen } from '@oracle/icons';
 import {
   HiddenBlockContainerStyle,
@@ -27,17 +29,39 @@ type HiddenBlockProps = {
   block: BlockType;
   blocks: BlockType[];
   onClick: () => void;
+  onDrop?: (block: BlockType, blockDropped: BlockType) => void;
 };
 
 function HiddenBlock({
   block,
   blocks,
   onClick,
+  onDrop,
 }: HiddenBlockProps, ref) {
+  const {
+    type,
+  } = block;
+
+  const [collected, drag, dragPreview] = useDrag(() => ({
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+    item: block,
+    type: DRAG_AND_DROP_TYPE,
+  }), [block]);
+  const [, drop] = useDrop(() => ({
+    accept: DRAG_AND_DROP_TYPE,
+    drop: (item: BlockType) => onDrop?.(block, item),
+  }), [block]);
+
   const themeContext = useContext(ThemeContext);
+
   const color = getColorsForBlockType(
-    block.type,
-    { blockColor: block.color, theme: themeContext },
+    type,
+    {
+      blockColor: block.color,
+      theme: themeContext,
+    },
   ).accent;
 
   const {
@@ -67,74 +91,80 @@ function HiddenBlock({
   const isDBT = useMemo(() => BlockTypeEnum.DBT === block?.type, [block]);
 
   return (
-    <HiddenBlockContainerStyle
-      {...borderColorShareProps}
-      ref={ref}
-    >
-      <Link
-        noHoverUnderline
-        noOutline
-        onClick={() => onClick()}
-        preventDefault
+    <Spacing pb={1} ref={drop}>
+      <HiddenBlockContainerStyle
+        {...{
+          ...borderColorShareProps,
+          ...collected,
+        }}
+        ref={drag}
       >
-        <Spacing p={1}>
-          <FlexContainer
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Flex alignItems="center" flex={1}>
-              <FlexContainer alignItems="center">
-                <Badge monospace>
-                  {ABBREV_BLOCK_LANGUAGE_MAPPING[block.language]}
-                </Badge>
-
-                <Spacing mr={1} />
-
-                <Circle
-                  color={color}
-                  size={UNIT * 1.5}
-                  square
-                />
-
-                <Spacing mr={1} />
-
-                <Text
-                  color={color}
-                  monospace
-                >
-                  {(
-                    isDBT
-                      ? BlockTypeEnum.DBT
-                      : BLOCK_TYPE_NAME_MAPPING[block.type]
-                  )?.toUpperCase()}
-                </Text>
-              </FlexContainer>
-
-              <Spacing mr={PADDING_UNITS} />
-
-              <FileFill size={UNIT * 1.5} />
-
-              <Spacing mr={1} />
-
-              <Text monospace muted>
-                {block?.uuid}
-              </Text>
-            </Flex>
-
-            <Tooltip
-              appearAbove
-              appearBefore
-              block
-              label={`Show ${block?.uuid} block`}
-              size={UNIT * 2}
-              widthFitContent
+        <Link
+          noHoverUnderline
+          noOutline
+          onClick={() => onClick()}
+          preventDefault
+          ref={ref}
+        >
+          <Spacing p={1}>
+            <FlexContainer
+              alignItems="center"
+              justifyContent="space-between"
             >
-              <PreviewOpen muted size={UNIT * 2} />
-            </Tooltip>
-          </FlexContainer>
-        </Spacing>
-      </Link>
-    </HiddenBlockContainerStyle>
+              <Flex alignItems="center" flex={1}>
+                <FlexContainer alignItems="center">
+                  <Badge monospace>
+                    {ABBREV_BLOCK_LANGUAGE_MAPPING[block.language]}
+                  </Badge>
+
+                  <Spacing mr={1} />
+
+                  <Circle
+                    color={color}
+                    size={UNIT * 1.5}
+                    square
+                  />
+
+                  <Spacing mr={1} />
+
+                  <Text
+                    color={color}
+                    monospace
+                  >
+                    {(
+                      isDBT
+                        ? BlockTypeEnum.DBT
+                        : BLOCK_TYPE_NAME_MAPPING[block.type]
+                    )?.toUpperCase()}
+                  </Text>
+                </FlexContainer>
+
+                <Spacing mr={PADDING_UNITS} />
+
+                <FileFill size={UNIT * 1.5} />
+
+                <Spacing mr={1} />
+
+                <Text monospace muted>
+                  {block?.uuid}
+                </Text>
+              </Flex>
+
+              <Tooltip
+                appearAbove
+                appearBefore
+                block
+                label={`Show ${block?.uuid} block`}
+                size={UNIT * 2}
+                widthFitContent
+              >
+                <PreviewOpen muted size={UNIT * 2} />
+              </Tooltip>
+            </FlexContainer>
+          </Spacing>
+        </Link>
+      </HiddenBlockContainerStyle>
+    </Spacing>
   );
 }
 

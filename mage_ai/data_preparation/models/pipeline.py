@@ -21,7 +21,7 @@ from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import extract, ignore_keys, merge_dict
+from mage_ai.shared.hash import extract, index_by, ignore_keys, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
@@ -674,6 +674,11 @@ class Pipeline:
                 )
             should_save = True
 
+        blocks = data.get('blocks', [])
+
+        if blocks:
+            should_save = self.__update_block_order(blocks)
+
         if should_save:
             self.save()
 
@@ -682,8 +687,8 @@ class Pipeline:
 
             arr = []
 
-            if 'blocks' in data:
-                arr.append(('blocks', data['blocks'], self.blocks_by_uuid))
+            if blocks:
+                arr.append(('blocks', blocks, self.blocks_by_uuid))
             if 'widgets' in data:
                 arr.append(('widgets', data['widgets'], self.widgets_by_uuid))
 
@@ -777,6 +782,33 @@ class Pipeline:
 
                 if should_save_async:
                     await self.save_async(widget=widget)
+
+    def __update_block_order(self, blocks: List[Dict]) -> bool:
+        uuids_new = [b['uuid'] for b in blocks]
+        uuids_old = [b['uuid'] for b in self.block_configs]
+
+        min_length = min(len(uuids_new), len(uuids_old))
+
+        # If there are no blocks or the order has changed
+        if min_length == 0 or uuids_new[:min_length] == uuids_old[:min_length]:
+            return False
+
+        block_configs_by_uuids = index_by(lambda x: x['uuid'], self.block_configs)
+
+        block_configs = []
+        blocks_by_uuid = {}
+
+        for block_uuid in uuids_new:
+            if block_uuid in block_configs_by_uuids:
+                block_configs.append(block_configs_by_uuids[block_uuid])
+
+            if block_uuid in self.blocks_by_uuid:
+                blocks_by_uuid[block_uuid] = self.blocks_by_uuid[block_uuid]
+
+        self.block_configs = block_configs
+        self.blocks_by_uuid = blocks_by_uuid
+
+        return True
 
     def __add_block_to_mapping(
         self,
