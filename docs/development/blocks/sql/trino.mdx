@@ -1,0 +1,57 @@
+---
+title: "Trino SQL blocks"
+sidebarTitle: "Trino"
+description: "Execute SQL commands in Trino."
+---
+
+<img
+  alt="Trino"
+  src="https://dbdb.io/media/logos/trino.png"
+/>
+
+## Credentials
+
+Open the file named `io_config.yaml` at the root of your Mage project and enter the following:
+
+```yaml
+version: 0.1.1
+default:
+  TRINO_CATALOG: postgresql # Change this to the catalog of your choice
+  TRINO_HOST: 127.0.0.1
+  TRINO_PORT: 8080
+  TRINO_SCHEMA: core_data
+  TRINO_USER: admin
+  TRINO_PASSWORD: mage1337  # Optional
+```
+
+<Note>Change the values according to your Trino settings.</Note>
+
+## How to use
+
+1. Trino must be running on a remote server or on your local workstation.
+Read these [instructions](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/trino/README.md#run-trino-locally)
+to run Trino locally.
+
+1. Create a new pipeline or edit an existing pipeline.
+
+1. Add a data loader or transformer SQL block.
+
+1. In the block’s header, click the dropdown menu labeled <b>Connection</b> and select the option
+labeled <b>Trino</b>.
+
+1. In the block’s header, click the dropdown menu labeled <b>Profile</b> and select the option
+labeled <b>default</b>.
+
+    <Note>
+        If the name of your profile in the `io_config.yaml` file is different,
+        then select the profile name that matches your settings.
+    </Note>
+
+1. You can optionally check the box labeled <b>Use raw SQL</b>.
+If you do, read more about [how to use SQL blocks with raw SQL](/guides/sql-blocks#using-raw-sql).
+
+1. Write your SQL statements in the SQL block.
+
+1. Once you’re finished writing your SQL statements,
+click the play button in the top right corner of the block to execute the SQL block and preview
+the results.
