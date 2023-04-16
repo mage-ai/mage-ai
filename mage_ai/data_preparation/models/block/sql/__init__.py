@@ -347,18 +347,23 @@ def execute_sql_code(
         from mage_ai.io.snowflake import Snowflake
 
         table_name = table_name.upper() if table_name else table_name
-        database = database.upper() if database else database
-        schema = schema.upper() if schema else schema
 
         with Snowflake.with_config(config_file_loader, database=database, schema=schema) as loader:
+            database = database or loader.default_database()
+            database = database.upper() if database else database
+
+            schema = schema or loader.default_schema()
+            schema = schema.upper() if schema else schema
+
             snowflake.create_upstream_block_tables(
                 loader,
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
-            query_string = snowflake.interpolate_input_data(block, query)
+            query_string = snowflake.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:

@@ -25,8 +25,9 @@ def create_upstream_block_tables(
     configuration = configuration if configuration else block.configuration
     database = configuration.get('data_provider_database') or loader.default_database()
 
+    mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
-        if upstream_block.uuid not in blocks_in_query(block, query):
+        if upstream_block.uuid not in mapping:
             continue
 
         if should_cache_data_from_upstream(block, upstream_block, [
