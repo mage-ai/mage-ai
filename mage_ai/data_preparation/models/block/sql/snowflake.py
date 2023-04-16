@@ -29,7 +29,7 @@ def create_upstream_block_tables(
 
     mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
-        if upstream_block.uuid not in mapping:
+        if query and upstream_block.uuid not in mapping:
             continue
 
         if should_cache_data_from_upstream(block, upstream_block, [
