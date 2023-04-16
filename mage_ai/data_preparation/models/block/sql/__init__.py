@@ -20,7 +20,7 @@ from mage_ai.io.base import (
     ExportWritePolicy,
     QUERY_ROW_LIMIT,
 )
-from mage_ai.io.config import ConfigFileLoader, ConfigKey
+from mage_ai.io.config import ConfigFileLoader
 from os import path
 from time import sleep
 from typing import Any, Dict, List

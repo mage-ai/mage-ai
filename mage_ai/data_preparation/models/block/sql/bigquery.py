@@ -6,8 +6,8 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
     should_cache_data_from_upstream,
 )
 from mage_ai.io.config import ConfigKey
+from pandas import DataFrame
 from typing import Dict
-import pandas as pd
 
 
 def create_upstream_block_tables(

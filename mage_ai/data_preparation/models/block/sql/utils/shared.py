@@ -59,12 +59,12 @@ def should_cache_data_from_upstream(
     loader2 = ConfigFileLoader(config_path, data_provider2)
 
     return not all([
-        config1.get(k) and \
-            config2.get(k) and \
-            config1.get(k) == config2.get(k) for k in config_keys
+        config1.get(k) and
+        config2.get(k) and
+        config1.get(k) == config2.get(k) for k in config_keys
     ]) or not all([
-        loader1.config.get(k) and \
-        queryloader2.config.get(k) and \
+        loader1.config.get(k) and
+        loader2.config.get(k) and
         loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys
     ])
 
