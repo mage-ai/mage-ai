@@ -24,14 +24,17 @@ def create_upstream_block_tables(
     configuration = configuration if configuration else block.configuration
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
-        if should_cache_data_from_upstream(block, upstream_block, [
+        should_cache = should_cache_data_from_upstream(block, upstream_block, [
             'data_provider',
         ], [
             ConfigKey.TRINO_CATALOG,
-            ConfigKey.TRINO_SCHEMA,
             ConfigKey.TRINO_HOST,
             ConfigKey.TRINO_PORT,
-        ]):
+            ConfigKey.TRINO_SCHEMA,
+            'trino',
+        ])
+
+        if should_cache:
             if BlockType.DBT == upstream_block.type \
                     and not cache_upstream_dbt_models:
                 continue
@@ -55,27 +58,29 @@ def create_upstream_block_tables(
             elif not df:
                 continue
 
-            schema_name = configuration.get('data_provider_schema')
-            catalog_name = configuration.get('data_provider_database')
+            catalog = configuration.get('data_provider_database')
+            if not catalog:
+                catalog = loader.settings['catalog']
+
+            schema = configuration.get('data_provider_schema')
+            if not schema:
+                schema = loader.settings.get('schema')
 
             if BlockType.DBT == block.type \
                     and BlockType.DBT != upstream_block.type:
                 attributes_dict = parse_attributes(block)
-                schema_name = attributes_dict['source_name']
+                schema = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
-            full_table_name = table_name
-            if schema_name:
-                full_table_name = \
-                    f'{catalog_name}.{schema_name}.{full_table_name}'
+            full_table_name = '.'.join(list(filter(lambda x: x, [catalog, schema, table_name])))
 
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
                   f'to {full_table_name}.')
 
             loader.export(
                 df,
-                table_name=table_name,
-                schema_name=schema_name,
+                schema,
+                table_name,
                 cascade_on_drop=cascade_on_drop,
                 drop_table_on_replace=True,
                 if_exists='replace',
@@ -84,9 +89,10 @@ def create_upstream_block_tables(
             )
 
 
-def interpolate_input_data(block, query):
+def interpolate_input_data(block, query, loader):
     return interpolate_input(
         block,
         query,
-        lambda db, schema, tn: f'{db}.{schema}.{tn}',
+        get_database=lambda opts: loader.settings['catalog'],
+        get_schema=lambda opts: loader.settings.get('schema'),
     )

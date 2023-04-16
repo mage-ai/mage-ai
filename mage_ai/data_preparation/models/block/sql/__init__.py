@@ -82,14 +82,17 @@ def execute_sql_code(
         from mage_ai.io.bigquery import BigQuery
 
         loader = BigQuery.with_config(config_file_loader)
+        database = database or loader.client.project
+
         bigquery.create_upstream_block_tables(
             loader,
             block,
             configuration=configuration,
             execution_partition=execution_partition,
+            query=query,
         )
 
-        query_string = bigquery.interpolate_input_data(block, query)
+        query_string = bigquery.interpolate_input_data(block, query, loader)
         query_string = interpolate_vars(query_string, global_vars=global_vars)
 
         if use_raw_sql:
@@ -382,6 +385,8 @@ def execute_sql_code(
         from mage_ai.io.trino import Trino
 
         with Trino.with_config(config_file_loader) as loader:
+            catalog = loader.settings.get('catalog')
+
             trino.create_upstream_block_tables(
                 loader,
                 block,
@@ -389,7 +394,7 @@ def execute_sql_code(
                 execution_partition=execution_partition,
             )
 
-            query_string = trino.interpolate_input_data(block, query)
+            query_string = trino.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -411,8 +416,6 @@ def execute_sql_code(
                 )
 
                 if should_query:
-                    catalog = config_file_loader[ConfigKey.TRINO_CATALOG]
-
                     return [
                         loader.load(
                             f'SELECT * FROM "{catalog}"."{schema}"."{table_name}"',

@@ -146,8 +146,6 @@ class Trino(BaseSQL):
         self,
         cursor: Cursor,
         df: DataFrame,
-        db_dtypes: List[str],
-        dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
         **kwargs,

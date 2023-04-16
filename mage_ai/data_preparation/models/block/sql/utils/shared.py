@@ -5,8 +5,27 @@ from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
 from os import path
 from pandas import DataFrame
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 import re
+
+
+def build_variable_pattern(variable_name: str):
+    return r'{}[ ]*{}[ ]*{}'.format(r'\{\{', variable_name, r'\}\}')
+
+
+def blocks_in_query(block, query: str) -> Dict:
+    blocks = {}
+
+    if not query:
+        return blocks
+
+    for idx, upstream_block in enumerate(block.upstream_blocks):
+        pattern = build_variable_pattern(f'df_{idx + 1}')
+
+        if re.findall(pattern, query):
+            blocks[upstream_block.uuid] = upstream_block
+
+    return blocks
 
 
 def should_cache_data_from_upstream(
@@ -30,8 +49,8 @@ def should_cache_data_from_upstream(
     data_provider1 = config1.get('data_provider_profile')
     data_provider2 = config2.get('data_provider_profile')
 
-    if config1.get('use_raw_sql'):
-        return False
+    # if config1.get('use_raw_sql'):
+    #     return False
 
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
         return True
@@ -43,7 +62,13 @@ def should_cache_data_from_upstream(
         or not all([loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys])
 
 
-def interpolate_input(block, query, replace_func=None):
+def interpolate_input(
+    block,
+    query: str,
+    replace_func: Callable = None,
+    get_database: Callable = None,
+    get_schema: Callable = None,
+) -> str:
     def __replace_func(db, schema, tn):
         if replace_func:
             return replace_func(db, schema, tn)
@@ -74,12 +99,16 @@ def interpolate_input(block, query, replace_func=None):
                     f'({data_provider1}). Please disable using raw SQL and try again.',
                 )
 
-        if is_same_data_providers:
-            database = configuration.get('data_provider_database', '')
-            schema = configuration.get('data_provider_schema', '')
-        else:
-            database = block.configuration.get('data_provider_database', '')
-            schema = block.configuration.get('data_provider_schema', '')
+        config_to_use = configuration if is_same_data_providers else block.configuration
+        database = config_to_use.get('data_provider_database')
+        schema = config_to_use.get('data_provider_schema')
+
+        if not database and get_database:
+            database = get_database(dict(configuration=configuration))
+
+        if not schema and get_schema:
+            schema = get_schema(dict(configuration=configuration))
+
         replace_with = __replace_func(database, schema, upstream_block.table_name)
 
         upstream_block_content = upstream_block.content
@@ -94,7 +123,7 @@ def interpolate_input(block, query, replace_func=None):
 ) AS {upstream_block.table_name}"""
 
         query = re.sub(
-            '{}[ ]*df_{}[ ]*{}'.format(r'\{\{', idx + 1, r'\}\}'),
+            build_variable_pattern(f'df_{idx + 1}'),
             replace_with,
             query,
         )
