@@ -33,9 +33,11 @@ default:
   MYSQL_PORT: 3306
   MYSQL_USER: root
   POSTGRES_DBNAME: postgres
+  POSTGRES_SCHEMA: public # Optional
   POSTGRES_USER: username
   POSTGRES_PASSWORD: password
   POSTGRES_HOST: hostname
+  REDSHIFT_SCHEMA: public # Optional
   POSTGRES_PORT: 5432
   REDSHIFT_DBNAME: redshift_db_name
   REDSHIFT_HOST: redshift_cluster_id.identifier.region.redshift.amazonaws.com
@@ -52,9 +54,18 @@ default:
   SNOWFLAKE_DEFAULT_DB: optional_default_database
   SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
   SNOWFLAKE_ROLE: role
-  TRINO_CATALOG: catalog
-  TRINO_HOST: '127.0.0.1'
-  TRINO_PASSWORD: pasword
-  TRINO_PORT: 8080
-  TRINO_SCHEMA: schema
-  TRINO_USER: user
+  trino:
+    catalog: postgresql                       # Change this to the catalog of your choice
+    host: 127.0.0.1
+    http_headers:
+      X-Something: 'mage=power'
+    http_scheme: http
+    password: mage1337                        # Optional
+    port: 8080
+    schema: core_data
+    session_properties:                       # Optional
+      acc01.optimize_locality_enabled: false
+      optimize_hash_generation: true
+    source: trino-cli                         # Optional
+    user: admin
+    verify: /path/to/your/ca.crt              # Optional

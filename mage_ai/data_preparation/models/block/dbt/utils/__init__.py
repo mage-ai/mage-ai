@@ -33,6 +33,7 @@ import re
 import simplejson
 import subprocess
 import sys
+import uuid
 import yaml
 
 
@@ -406,6 +407,7 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             POSTGRES_HOST=host,
             POSTGRES_PASSWORD=password,
             POSTGRES_PORT=port,
+            POSTGRES_SCHEMA=schema,
             POSTGRES_USER=user,
         ))
         configuration = dict(
@@ -475,6 +477,7 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             REDSHIFT_DBNAME=database,
             REDSHIFT_HOST=host,
             REDSHIFT_PORT=port,
+            REDSHIFT_SCHEMA=schema,
             REDSHIFT_TEMP_CRED_PASSWORD=password,
             REDSHIFT_TEMP_CRED_USER=user,
         ))
@@ -510,15 +513,16 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             export_write_policy=ExportWritePolicy.REPLACE,
         )
     elif DataSource.TRINO == profile_type:
-        catalog = profile.get('catalog')
+        catalog = profile.get('database')
         schema = profile.get('schema')
+
         config_file_loader = ConfigFileLoader(config=dict(
-            TRINO_CATALOG=profile.get('catalog'),
+            TRINO_CATALOG=catalog,
             TRINO_HOST=profile.get('host'),
-            TRINO_USER=profile.get('user'),
             TRINO_PASSWORD=profile.get('password'),
             TRINO_PORT=profile.get('port'),
-            TRINO_SCHEMA=profile.get('schema'),
+            TRINO_SCHEMA=schema,
+            TRINO_USER=profile.get('user'),
         ))
         configuration = dict(
             data_provider=profile_type,
@@ -913,7 +917,7 @@ def build_command_line_arguments(
         project_full_path = os.path.join(get_repo_path(), 'dbt', project_name)
         args += block.content.split(' ')
 
-    profiles_dir = os.path.join(project_full_path, '.mage_temp_profiles')
+    profiles_dir = os.path.join(project_full_path, '.mage_temp_profiles', str(uuid.uuid4()))
 
     args += [
         '--project-dir',

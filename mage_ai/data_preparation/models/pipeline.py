@@ -677,7 +677,8 @@ class Pipeline:
         blocks = data.get('blocks', [])
 
         if blocks:
-            if not should_save and self.__update_block_order(blocks):
+            should_reorder = self.__update_block_order(blocks)
+            if should_reorder and not should_save:
                 should_save = True
 
         if should_save:

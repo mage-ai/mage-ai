@@ -41,6 +41,12 @@ class Snowflake(BaseSQLConnection):
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True), **kwargs)
 
+    def default_database(self) -> str:
+        return self.settings.get('database')
+
+    def default_schema(self) -> str:
+        return self.settings.get('schema')
+
     def open(self) -> None:
         """
         Opens a connection to Snowflake.

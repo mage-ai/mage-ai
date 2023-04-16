@@ -13,6 +13,7 @@ def create_upstream_block_tables(
     configuration: Dict = None,
     execution_partition: str = None,
     cache_upstream_dbt_models: bool = False,
+    query: str = None,
 ):
     create_upstream_block_tables_orig(
         loader,
@@ -26,12 +27,17 @@ def create_upstream_block_tables(
             ConfigKey.REDSHIFT_DBNAME,
             ConfigKey.REDSHIFT_HOST,
             ConfigKey.REDSHIFT_PORT,
+            ConfigKey.REDSHIFT_SCHEMA,
         ],
+        query=query,
+        schema_name=loader.default_schema(),
     )
 
 
-def interpolate_input_data(block, query):
+def interpolate_input_data(block, query, loader):
     return interpolate_input(
         block,
         query,
+        get_database=lambda opts: loader.default_database(),
+        get_schema=lambda opts: loader.default_schema(),
     )

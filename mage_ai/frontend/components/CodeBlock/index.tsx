@@ -1801,11 +1801,18 @@ function CodeBlock({
                 && (
                 <CodeHelperStyle>
                   <Spacing mr={5}>
-                    <Text small>
+                    <Text muted small>
                       {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
-                      {isSQLBlock && 'The interpolated tables below are available in queries from upstream blocks. \
-                        For example, you can use the query "SELECT * FROM {{ df_1 }}" to insert all the rows from an \
-                        upstream block into the designated database table.'}
+                      {isSQLBlock && (
+                        <>
+                          The interpolated tables below are available in queries from upstream blocks.
+                          <br />
+                          For example, you can use the query <Text inline monospace small>
+                            {'SELECT * FROM {{ df_1 }}'}
+                          </Text> to insert all the rows from an upstream block
+                          into the designated database table.
+                        </>
+                      )}
                     </Text>
                   </Spacing>
 

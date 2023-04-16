@@ -98,6 +98,12 @@ class Trino(BaseSQL):
             schema=config[ConfigKey.TRINO_SCHEMA],
         )
 
+    def default_database(self) -> str:
+        return self.settings.get('catalog')
+
+    def default_schema(self) -> str:
+        return self.settings.get('schema')
+
     def build_create_table_command(
         self,
         dtypes: Mapping[str, str],
@@ -109,7 +115,12 @@ class Trino(BaseSQL):
         for cname in dtypes:
             query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
 
-        return f'CREATE TABLE {table_name} (' + ','.join(query) + ')'
+        full_table_name = '.'.join(list(filter(lambda x: x, [
+            schema_name,
+            table_name,
+        ])))
+
+        return f'CREATE TABLE {full_table_name} (' + ','.join(query) + ')'
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to Trino database'):
@@ -136,7 +147,7 @@ class Trino(BaseSQL):
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
-            catalog = self.settings['catalog']
+            catalog = self.default_database()
             cur.execute('\n'.join([
                 f'SHOW TABLES FROM {catalog}.{schema_name} LIKE \'{table_name}\''
             ]))
@@ -146,8 +157,6 @@ class Trino(BaseSQL):
         self,
         cursor: Cursor,
         df: DataFrame,
-        db_dtypes: List[str],
-        dtypes: List[str],
         full_table_name: str,
         buffer: Union[IO, None] = None,
         **kwargs,
@@ -217,9 +226,8 @@ class Trino(BaseSQL):
         elif type(df) is list:
             df = DataFrame(df)
 
-        catalog = self.settings['catalog']
-        schema = self.settings['schema']
-        full_table_name = f'{catalog}.{schema}.{table_name}'
+        catalog = self.default_database()
+        full_table_name = f'{catalog}.{schema_name}.{table_name}'
 
         if not query_string:
             if index:
@@ -230,11 +238,11 @@ class Trino(BaseSQL):
 
         def __process():
             buffer = StringIO()
-            table_exists = self.table_exists(schema, table_name)
+            table_exists = self.table_exists(schema_name, table_name)
 
             with self.conn.cursor() as cur:
-                if schema:
-                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}')
+                if schema_name:
+                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {catalog}.{schema_name}')
 
                 should_create_table = not table_exists
 

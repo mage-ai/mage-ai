@@ -5,8 +5,27 @@ from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
 from os import path
 from pandas import DataFrame
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 import re
+
+
+def build_variable_pattern(variable_name: str):
+    return r'{}[ ]*{}[ ]*{}'.format(r'\{\{', variable_name, r'\}\}')
+
+
+def blocks_in_query(block, query: str) -> Dict:
+    blocks = {}
+
+    if not query:
+        return blocks
+
+    for idx, upstream_block in enumerate(block.upstream_blocks):
+        pattern = build_variable_pattern(f'df_{idx + 1}')
+
+        if re.findall(pattern, query):
+            blocks[upstream_block.uuid] = upstream_block
+
+    return blocks
 
 
 def should_cache_data_from_upstream(
@@ -30,8 +49,8 @@ def should_cache_data_from_upstream(
     data_provider1 = config1.get('data_provider_profile')
     data_provider2 = config2.get('data_provider_profile')
 
-    if config1.get('use_raw_sql'):
-        return False
+    # if config1.get('use_raw_sql'):
+    #     return False
 
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
         return True
@@ -39,11 +58,24 @@ def should_cache_data_from_upstream(
     loader1 = ConfigFileLoader(config_path, data_provider1)
     loader2 = ConfigFileLoader(config_path, data_provider2)
 
-    return not all([config1.get(k) == config2.get(k) for k in config_keys]) \
-        or not all([loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys])
+    return not all([
+        config1.get(k) and
+        config2.get(k) and
+        config1.get(k) == config2.get(k) for k in config_keys
+    ]) or not all([
+        loader1.config.get(k) and
+        loader2.config.get(k) and
+        loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys
+    ])
 
 
-def interpolate_input(block, query, replace_func=None):
+def interpolate_input(
+    block,
+    query: str,
+    replace_func: Callable = None,
+    get_database: Callable = None,
+    get_schema: Callable = None,
+) -> str:
     def __replace_func(db, schema, tn):
         if replace_func:
             return replace_func(db, schema, tn)
@@ -74,12 +106,16 @@ def interpolate_input(block, query, replace_func=None):
                     f'({data_provider1}). Please disable using raw SQL and try again.',
                 )
 
-        if is_same_data_providers:
-            database = configuration.get('data_provider_database', '')
-            schema = configuration.get('data_provider_schema', '')
-        else:
-            database = block.configuration.get('data_provider_database', '')
-            schema = block.configuration.get('data_provider_schema', '')
+        config_to_use = configuration if is_same_data_providers else block.configuration
+        database = config_to_use.get('data_provider_database')
+        schema = config_to_use.get('data_provider_schema')
+
+        if not database and get_database:
+            database = get_database(dict(configuration=configuration))
+
+        if not schema and get_schema:
+            schema = get_schema(dict(configuration=configuration))
+
         replace_with = __replace_func(database, schema, upstream_block.table_name)
 
         upstream_block_content = upstream_block.content
@@ -94,7 +130,7 @@ def interpolate_input(block, query, replace_func=None):
 ) AS {upstream_block.table_name}"""
 
         query = re.sub(
-            '{}[ ]*df_{}[ ]*{}'.format(r'\{\{', idx + 1, r'\}\}'),
+            build_variable_pattern(f'df_{idx + 1}'),
             replace_with,
             query,
         )
@@ -120,6 +156,8 @@ def create_upstream_block_tables(
     cache_upstream_dbt_models: bool = False,
     cache_keys: List[str] = [],
     no_schema: bool = False,
+    query: str = None,
+    schema_name: str = None,
 ):
     from mage_ai.data_preparation.models.block.dbt.utils import (
         parse_attributes,
@@ -127,7 +165,11 @@ def create_upstream_block_tables(
     )
     configuration = configuration if configuration else block.configuration
 
+    mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
+        if query and upstream_block.uuid not in mapping:
+            continue
+
         if should_cache_data_from_upstream(block, upstream_block, [
             'data_provider',
         ], cache_keys):
@@ -143,30 +185,35 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
+            no_data = False
             if type(df) is DataFrame:
                 if len(df.index) == 0:
-                    continue
+                    no_data = True
             elif type(df) is dict and len(df) == 0:
-                continue
+                no_data = True
             elif type(df) is list and len(df) == 0:
-                continue
+                no_data = True
             elif not df:
+                no_data = True
+
+            if no_data:
+                print(f'\n\nNo data in upstream block {upstream_block.uuid}.')
                 continue
 
-            if no_schema:
-                schema_name = None
-            else:
-                schema_name = configuration.get('data_provider_schema')
+            schema = None
+            if not no_schema:
+                schema = configuration.get('data_provider_schema') or schema_name
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 if not no_schema:
                     attributes_dict = parse_attributes(block)
-                    schema_name = attributes_dict['source_name']
+                    schema = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
-            full_table_name = table_name
-            if schema_name:
-                full_table_name = f'{schema_name}.{full_table_name}'
+            full_table_name = '.'.join(list(filter(lambda x: x, [
+                schema,
+                table_name,
+            ])))
 
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
                   f'to {full_table_name}.')
@@ -174,7 +221,7 @@ def create_upstream_block_tables(
             loader.export(
                 df,
                 table_name=table_name,
-                schema_name=schema_name,
+                schema_name=schema,
                 cascade_on_drop=cascade_on_drop,
                 drop_table_on_replace=True,
                 if_exists='replace',

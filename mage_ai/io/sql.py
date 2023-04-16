@@ -9,6 +9,7 @@ from mage_ai.io.export_utils import (
 )
 from pandas import DataFrame, read_sql, Series
 from typing import Any, Dict, IO, List, Mapping, Union
+import warnings
 
 
 class BaseSQL(BaseSQLConnection):
@@ -61,6 +62,12 @@ class BaseSQL(BaseSQLConnection):
             table_name,
             query_string,
         )
+
+    def default_database(self) -> str:
+        return None
+
+    def default_schema(self) -> str:
+        return None
 
     def open(self) -> None:
         """
@@ -176,6 +183,8 @@ class BaseSQL(BaseSQLConnection):
         query_string = self._clean_query(query_string)
 
         with self.printer.print_msg(print_message):
+            warnings.filterwarnings('ignore', category=UserWarning)
+
             return read_sql(
                 self._enforce_limit(query_string, limit),
                 self.conn,

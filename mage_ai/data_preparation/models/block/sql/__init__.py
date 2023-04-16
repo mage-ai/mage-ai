@@ -20,7 +20,7 @@ from mage_ai.io.base import (
     ExportWritePolicy,
     QUERY_ROW_LIMIT,
 )
-from mage_ai.io.config import ConfigFileLoader, ConfigKey
+from mage_ai.io.config import ConfigFileLoader
 from os import path
 from time import sleep
 from typing import Any, Dict, List
@@ -82,14 +82,17 @@ def execute_sql_code(
         from mage_ai.io.bigquery import BigQuery
 
         loader = BigQuery.with_config(config_file_loader)
+        database = database or loader.default_database()
+
         bigquery.create_upstream_block_tables(
             loader,
             block,
             configuration=configuration,
             execution_partition=execution_partition,
+            query=query,
         )
 
-        query_string = bigquery.interpolate_input_data(block, query)
+        query_string = bigquery.interpolate_input_data(block, query, loader)
         query_string = interpolate_vars(query_string, global_vars=global_vars)
 
         if use_raw_sql:
@@ -139,6 +142,7 @@ def execute_sql_code(
             block,
             configuration=configuration,
             execution_partition=execution_partition,
+            query=query,
         )
 
         query_string = clickhouse.interpolate_input_data(block, query)
@@ -180,6 +184,7 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
             query_string = mssql.interpolate_input_data(block, query)
@@ -222,6 +227,7 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
             query_string = mysql.interpolate_input_data(block, query)
@@ -261,10 +267,13 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
-            query_string = postgres.interpolate_input_data(block, query)
+            query_string = postgres.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
+
+            schema = schema or loader.default_schema()
 
             if use_raw_sql:
                 return execute_raw_sql(
@@ -300,9 +309,13 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
-            query_string = redshift.interpolate_input_data(block, query)
+            database = database or loader.default_database()
+            schema = schema or loader.default_schema()
+
+            query_string = redshift.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -334,18 +347,23 @@ def execute_sql_code(
         from mage_ai.io.snowflake import Snowflake
 
         table_name = table_name.upper() if table_name else table_name
-        database = database.upper() if database else database
-        schema = schema.upper() if schema else schema
 
         with Snowflake.with_config(config_file_loader, database=database, schema=schema) as loader:
+            database = database or loader.default_database()
+            database = database.upper() if database else database
+
+            schema = schema or loader.default_schema()
+            schema = schema.upper() if schema else schema
+
             snowflake.create_upstream_block_tables(
                 loader,
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
-            query_string = snowflake.interpolate_input_data(block, query)
+            query_string = snowflake.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -382,14 +400,18 @@ def execute_sql_code(
         from mage_ai.io.trino import Trino
 
         with Trino.with_config(config_file_loader) as loader:
+            database = database or loader.default_database()
+            schema = schema or loader.default_schema()
+
             trino.create_upstream_block_tables(
                 loader,
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
-            query_string = trino.interpolate_input_data(block, query)
+            query_string = trino.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
@@ -405,17 +427,23 @@ def execute_sql_code(
                     None,
                     schema,
                     table_name,
+                    drop_table_on_replace=True,
                     if_exists=export_write_policy,
                     query_string=query_string,
                     verbose=BlockType.DATA_EXPORTER == block.type,
                 )
 
                 if should_query:
-                    catalog = config_file_loader[ConfigKey.TRINO_CATALOG]
+                    names = list(filter(lambda x: x, [
+                        database,
+                        schema,
+                        table_name,
+                    ]))
+                    full_table_name = '.'.join([f'"{n}"' for n in names])
 
                     return [
                         loader.load(
-                            f'SELECT * FROM "{catalog}"."{schema}"."{table_name}"',
+                            f'SELECT * FROM {full_table_name}',
                             limit=limit,
                             verbose=False,
                         ),

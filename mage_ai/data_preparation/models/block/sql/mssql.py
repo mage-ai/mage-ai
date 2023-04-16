@@ -13,6 +13,7 @@ def create_upstream_block_tables(
     configuration: Dict = None,
     execution_partition: str = None,
     cache_upstream_dbt_models: bool = False,
+    query: str = None,
 ):
     create_upstream_block_tables_orig(
         loader,
@@ -28,6 +29,7 @@ def create_upstream_block_tables(
             ConfigKey.MSSQL_PORT,
         ],
         no_schema=True,
+        query=query,
     )
 
 

@@ -1,12 +1,13 @@
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    blocks_in_query,
     interpolate_input,
     should_cache_data_from_upstream,
 )
 from mage_ai.io.config import ConfigKey
+from pandas import DataFrame
 from typing import Dict
-import pandas as pd
 
 
 def create_upstream_block_tables(
@@ -15,6 +16,7 @@ def create_upstream_block_tables(
     configuration: Dict = None,
     execution_partition: str = None,
     cache_upstream_dbt_models: bool = False,
+    query: str = None,
 ):
     from mage_ai.data_preparation.models.block.dbt.utils import (
         parse_attributes,
@@ -22,7 +24,14 @@ def create_upstream_block_tables(
     )
     configuration = configuration if configuration else block.configuration
 
+    database = (configuration.get('data_provider_database') or loader.default_database()).upper()
+    schema_name = (configuration.get('data_provider_schema') or loader.default_schema()).upper()
+
+    mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
+        if query and upstream_block.uuid not in mapping:
+            continue
+
         if should_cache_data_from_upstream(block, upstream_block, [
             'data_provider',
         ], [
@@ -40,18 +49,21 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
-            if type(df) is pd.DataFrame:
+            no_data = False
+            if type(df) is DataFrame:
                 if len(df.index) == 0:
-                    continue
+                    no_data = True
             elif type(df) is dict and len(df) == 0:
-                continue
+                no_data = True
             elif type(df) is list and len(df) == 0:
-                continue
+                no_data = True
             elif not df:
+                no_data = True
+
+            if no_data:
+                print(f'\n\nNo data in upstream block {upstream_block.uuid}.')
                 continue
 
-            database = configuration.get('data_provider_database').upper()
-            schema_name = configuration.get('data_provider_schema').upper()
             table_name = upstream_block.table_name.upper()
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
@@ -65,13 +77,15 @@ def create_upstream_block_tables(
                 database,
                 schema_name,
                 if_exists='replace',
-                verbose=False
+                verbose=True,
             )
 
 
-def interpolate_input_data(block, query):
+def interpolate_input_data(block, query, loader):
     return interpolate_input(
         block,
         query,
         lambda db, schema, tn: f'"{db.upper()}"."{schema.upper()}"."{tn.upper()}"',
+        get_database=lambda opts: loader.default_database(),
+        get_schema=lambda opts: loader.default_schema(),
     )
