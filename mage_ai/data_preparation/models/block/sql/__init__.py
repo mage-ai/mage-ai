@@ -400,13 +400,15 @@ def execute_sql_code(
         from mage_ai.io.trino import Trino
 
         with Trino.with_config(config_file_loader) as loader:
-            catalog = loader.settings.get('catalog')
+            database = database or loader.default_database()
+            schema = schema or loader.default_schema()
 
             trino.create_upstream_block_tables(
                 loader,
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
             query_string = trino.interpolate_input_data(block, query, loader)
@@ -425,15 +427,23 @@ def execute_sql_code(
                     None,
                     schema,
                     table_name,
+                    drop_table_on_replace=True,
                     if_exists=export_write_policy,
                     query_string=query_string,
                     verbose=BlockType.DATA_EXPORTER == block.type,
                 )
 
                 if should_query:
+                    names = list(filter(lambda x: x, [
+                        database,
+                        schema,
+                        table_name,
+                    ]))
+                    full_table_name = '.'.join([f'"{n}"' for n in names])
+
                     return [
                         loader.load(
-                            f'SELECT * FROM "{catalog}"."{schema}"."{table_name}"',
+                            f'SELECT * FROM {full_table_name}',
                             limit=limit,
                             verbose=False,
                         ),

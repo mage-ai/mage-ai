@@ -58,8 +58,15 @@ def should_cache_data_from_upstream(
     loader1 = ConfigFileLoader(config_path, data_provider1)
     loader2 = ConfigFileLoader(config_path, data_provider2)
 
-    return not all([config1.get(k) == config2.get(k) for k in config_keys]) \
-        or not all([loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys])
+    return not all([
+        config1.get(k) and \
+            config2.get(k) and \
+            config1.get(k) == config2.get(k) for k in config_keys
+    ]) or not all([
+        loader1.config.get(k) and \
+        queryloader2.config.get(k) and \
+        loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys
+    ])
 
 
 def interpolate_input(
@@ -178,14 +185,19 @@ def create_upstream_block_tables(
                 partition=execution_partition,
             )
 
+            no_data = False
             if type(df) is DataFrame:
                 if len(df.index) == 0:
-                    continue
+                    no_data = True
             elif type(df) is dict and len(df) == 0:
-                continue
+                no_data = True
             elif type(df) is list and len(df) == 0:
-                continue
+                no_data = True
             elif not df:
+                no_data = True
+
+            if no_data:
+                print(f'\n\nNo data in upstream block {upstream_block.uuid}.')
                 continue
 
             schema = None
