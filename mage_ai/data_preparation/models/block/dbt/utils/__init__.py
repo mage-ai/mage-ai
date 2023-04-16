@@ -33,6 +33,7 @@ import re
 import simplejson
 import subprocess
 import sys
+import uuid
 import yaml
 
 
@@ -916,7 +917,7 @@ def build_command_line_arguments(
         project_full_path = os.path.join(get_repo_path(), 'dbt', project_name)
         args += block.content.split(' ')
 
-    profiles_dir = os.path.join(project_full_path, '.mage_temp_profiles')
+    profiles_dir = os.path.join(project_full_path, '.mage_temp_profiles', str(uuid.uuid4()))
 
     args += [
         '--project-dir',
