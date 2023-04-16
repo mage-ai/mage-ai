@@ -24,6 +24,7 @@ class Postgres(BaseSQL):
         password: str,
         host: str,
         port: Union[str, None] = None,
+        schema: str = None,
         connection_method: str = 'direct',
         ssh_host: Union[str, None] = None,
         ssh_port: Union[str, None] = None,
@@ -52,6 +53,7 @@ class Postgres(BaseSQL):
             password=password,
             host=host,
             port=port,
+            schema=schema,
             connection_method=connection_method,
             ssh_host=ssh_host,
             ssh_port=ssh_port,
@@ -69,6 +71,7 @@ class Postgres(BaseSQL):
             password=config[ConfigKey.POSTGRES_PASSWORD],
             host=config[ConfigKey.POSTGRES_HOST],
             port=config[ConfigKey.POSTGRES_PORT],
+            schema=config[ConfigKey.POSTGRES_SCHEMA],
             connection_method=config[ConfigKey.POSTGRES_CONNECTION_METHOD],
             ssh_host=config[ConfigKey.POSTGRES_SSH_HOST],
             ssh_port=config[ConfigKey.POSTGRES_SSH_PORT],
@@ -76,6 +79,12 @@ class Postgres(BaseSQL):
             ssh_password=config[ConfigKey.POSTGRES_SSH_PASSWORD],
             ssh_pkey=config[ConfigKey.POSTGRES_SSH_PKEY],
         )
+
+    def default_database(self) -> str:
+        return self.settings['dbname']
+
+    def default_schema(self) -> str:
+        return self.settings.get('schema')
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to PostgreSQL database'):

@@ -82,7 +82,7 @@ def execute_sql_code(
         from mage_ai.io.bigquery import BigQuery
 
         loader = BigQuery.with_config(config_file_loader)
-        database = database or loader.client.project
+        database = database or loader.default_database()
 
         bigquery.create_upstream_block_tables(
             loader,
@@ -142,6 +142,7 @@ def execute_sql_code(
             block,
             configuration=configuration,
             execution_partition=execution_partition,
+            query=query,
         )
 
         query_string = clickhouse.interpolate_input_data(block, query)
@@ -183,6 +184,7 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
             query_string = mssql.interpolate_input_data(block, query)
@@ -225,6 +227,7 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
             query_string = mysql.interpolate_input_data(block, query)
@@ -264,10 +267,13 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
-            query_string = postgres.interpolate_input_data(block, query)
+            query_string = postgres.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
+
+            schema = schema or loader.default_schema()
 
             if use_raw_sql:
                 return execute_raw_sql(
@@ -303,9 +309,13 @@ def execute_sql_code(
                 block,
                 configuration=configuration,
                 execution_partition=execution_partition,
+                query=query,
             )
 
-            query_string = redshift.interpolate_input_data(block, query)
+            database = database or loader.default_database()
+            schema = schema or loader.default_schema()
+
+            query_string = redshift.interpolate_input_data(block, query, loader)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:

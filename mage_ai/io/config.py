@@ -48,6 +48,7 @@ class ConfigKey(str, Enum):
     POSTGRES_HOST = 'POSTGRES_HOST'
     POSTGRES_PASSWORD = 'POSTGRES_PASSWORD'
     POSTGRES_PORT = 'POSTGRES_PORT'
+    POSTGRES_SCHEMA = 'POSTGRES_SCHEMA'
     POSTGRES_SSH_HOST = 'POSTGRES_SSH_HOST'
     POSTGRES_SSH_PASSWORD = 'POSTGRES_SSH_PASSWORD'
     POSTGRES_SSH_PKEY = 'POSTGRES_SSH_PKEY'
@@ -60,6 +61,7 @@ class ConfigKey(str, Enum):
     REDSHIFT_HOST = 'REDSHIFT_HOST'
     REDSHIFT_IAM_PROFILE = 'REDSHIFT_IAM_PROFILE'
     REDSHIFT_PORT = 'REDSHIFT_PORT'
+    REDSHIFT_SCHEMA = 'REDSHIFT_SCHEMA'
     REDSHIFT_TEMP_CRED_PASSWORD = 'REDSHIFT_TEMP_CRED_PASSWORD'
     REDSHIFT_TEMP_CRED_USER = 'REDSHIFT_TEMP_CRED_USER'
     SNOWFLAKE_ACCOUNT = 'SNOWFLAKE_ACCOUNT'
@@ -294,6 +296,7 @@ class ConfigFileLoader(BaseConfigLoader):
             'profile',
         ),
         ConfigKey.REDSHIFT_PORT: (VerboseConfigKey.AWS, VerboseConfigKey.REDSHIFT, 'port'),
+        ConfigKey.REDSHIFT_SCHEMA: (VerboseConfigKey.AWS, VerboseConfigKey.REDSHIFT, 'schema'),
         ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD: (
             VerboseConfigKey.AWS,
             VerboseConfigKey.REDSHIFT,
@@ -320,6 +323,7 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.POSTGRES_HOST: (VerboseConfigKey.POSTGRES, 'host'),
         ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),
         ConfigKey.POSTGRES_PORT: (VerboseConfigKey.POSTGRES, 'port'),
+        ConfigKey.POSTGRES_SCHEMA: (VerboseConfigKey.POSTGRES, 'schema'),
         ConfigKey.POSTGRES_USER: (VerboseConfigKey.POSTGRES, 'user'),
         ConfigKey.SNOWFLAKE_ACCOUNT: (VerboseConfigKey.SNOWFLAKE, 'account'),
         ConfigKey.SNOWFLAKE_DEFAULT_DB: (VerboseConfigKey.SNOWFLAKE, 'database'),

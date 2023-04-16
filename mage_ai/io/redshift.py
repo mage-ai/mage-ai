@@ -14,6 +14,7 @@ from pandas import DataFrame
 from redshift_connector import connect
 from typing import Union
 import json
+import warnings
 
 
 class Redshift(BaseSQL):
@@ -34,7 +35,25 @@ class Redshift(BaseSQL):
         Opens a connection to the Redshift cluster.
         """
         with self.printer.print_msg('Connecting to Redshift cluster'):
-            self._ctx = connect(**self.settings)
+            connect_options = {}
+            for key in [
+                'access_key_id',
+                'cluster_identifier',
+                'database',
+                'db_user',
+                'host',
+                'iam',
+                'password',
+                'port',
+                'profile',
+                'region',
+                'secret_access_key',
+                'user',
+            ]:
+                if self.settings.get(key):
+                    connect_options[key] = self.settings[key]
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            self._ctx = connect(**connect_options)
 
     def execute(self, query_string: str, **kwargs) -> None:
         """
@@ -281,6 +300,10 @@ class Redshift(BaseSQL):
         kwargs['access_key_id'] = config[ConfigKey.AWS_ACCESS_KEY_ID]
         kwargs['secret_access_key'] = config[ConfigKey.AWS_SECRET_ACCESS_KEY]
         kwargs['region'] = config[ConfigKey.AWS_REGION]
+
+        if ConfigKey.REDSHIFT_SCHEMA in config:
+            kwargs['schema'] = config[ConfigKey.REDSHIFT_SCHEMA]
+
         return cls(**kwargs)
 
     @classmethod
@@ -338,6 +361,12 @@ class Redshift(BaseSQL):
             iam=True,
             **kwargs,
         )
+
+    def default_database(self) -> str:
+        return self.settings['database']
+
+    def default_schema(self) -> str:
+        return self.settings.get('schema')
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:

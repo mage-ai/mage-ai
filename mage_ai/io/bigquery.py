@@ -56,6 +56,9 @@ class BigQuery(BaseSQLDatabase):
         with self.printer.print_msg('Connecting to BigQuery warehouse'):
             self.client = Client(credentials=credentials, **kwargs)
 
+    def default_database(self) -> str:
+        return self.client.project
+
     def get_column_types(self, schema: str, table_name: str) -> Dict:
         results = self.client.query(f"""
 SELECT

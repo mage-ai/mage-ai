@@ -23,7 +23,7 @@ def create_upstream_block_tables(
         source_table_name_for_block,
     )
     configuration = configuration if configuration else block.configuration
-    database = configuration.get('data_provider_database') or loader.client.project
+    database = configuration.get('data_provider_database') or loader.default_database()
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
         if upstream_block.uuid not in blocks_in_query(block, query):
@@ -81,5 +81,5 @@ def interpolate_input_data(block, query, loader):
     return interpolate_input(
         block,
         query,
-        get_database=lambda opts: loader.client.project,
+        get_database=lambda opts: loader.default_database(),
     )

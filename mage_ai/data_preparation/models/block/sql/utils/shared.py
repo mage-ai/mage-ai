@@ -149,6 +149,8 @@ def create_upstream_block_tables(
     cache_upstream_dbt_models: bool = False,
     cache_keys: List[str] = [],
     no_schema: bool = False,
+    query: str = None,
+    schema_name: str = None,
 ):
     from mage_ai.data_preparation.models.block.dbt.utils import (
         parse_attributes,
@@ -156,7 +158,11 @@ def create_upstream_block_tables(
     )
     configuration = configuration if configuration else block.configuration
 
+    mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
+        if upstream_block.uuid not in mapping:
+            continue
+
         if should_cache_data_from_upstream(block, upstream_block, [
             'data_provider',
         ], cache_keys):
@@ -182,20 +188,20 @@ def create_upstream_block_tables(
             elif not df:
                 continue
 
-            if no_schema:
-                schema_name = None
-            else:
-                schema_name = configuration.get('data_provider_schema')
+            schema = None
+            if not no_schema:
+                schema = configuration.get('data_provider_schema') or schema_name
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 if not no_schema:
                     attributes_dict = parse_attributes(block)
-                    schema_name = attributes_dict['source_name']
+                    schema = attributes_dict['source_name']
                 table_name = source_table_name_for_block(upstream_block)
 
-            full_table_name = table_name
-            if schema_name:
-                full_table_name = f'{schema_name}.{full_table_name}'
+            full_table_name = '.'.join(list(filter(lambda x: x, [
+                schema,
+                table_name,
+            ])))
 
             print(f'\n\nExporting data from upstream block {upstream_block.uuid} '
                   f'to {full_table_name}.')
@@ -203,7 +209,7 @@ def create_upstream_block_tables(
             loader.export(
                 df,
                 table_name=table_name,
-                schema_name=schema_name,
+                schema_name=schema,
                 cascade_on_drop=cascade_on_drop,
                 drop_table_on_replace=True,
                 if_exists='replace',
