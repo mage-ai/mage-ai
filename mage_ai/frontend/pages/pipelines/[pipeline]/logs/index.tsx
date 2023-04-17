@@ -14,6 +14,7 @@ import {
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -69,6 +70,7 @@ function PipelineLogsPage({
   const pipelineUUID = pipelineProp.uuid;
 
   const [query, setQuery] = useState<FilterQueryType>(null);
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
   const [scrollToBottom, setScrollToBottom] = useState(false);
@@ -138,6 +140,13 @@ function PipelineLogsPage({
     ),
     { refreshInterval: 5000 },
   );
+
+  useEffect(() => {
+    if (dataLogs?.hasOwnProperty('error')) {
+      setErrors({ response: dataLogs });
+    }
+  }, [dataLogs]);
+
   const isLoading = !dataLogs;
   const {
     blockRunLogs,
@@ -338,8 +347,10 @@ function PipelineLogsPage({
           label: () => 'Logs',
         },
       ]}
+      errors={errors}
       pageName={PageNameEnum.PIPELINE_LOGS}
       pipeline={pipeline}
+      setErrors={setErrors}
       subheader={null}
       title={({ name }) => `${name} logs`}
       uuid="pipeline/logs"

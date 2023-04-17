@@ -15,6 +15,6 @@ export type ErrorType = {
 };
 
 export default interface ErrorsType {
-  errors: ErrorType;
+  errors?: ErrorType;
   response: ErrorResponseType;
 }

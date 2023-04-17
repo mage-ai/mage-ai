@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
     is_dynamic_block,
 )
+from mage_ai.data_preparation.models.constants import LOGS_DIR, PIPELINES_FOLDER
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -34,6 +35,7 @@ from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+import os
 import pytz
 import traceback
 import uuid
@@ -90,6 +92,19 @@ class PipelineSchedule(BaseModel):
         if len(self.pipeline_runs) == 0:
             return None
         return sorted(self.pipeline_runs, key=lambda x: x.created_at)[-1].status
+
+    @property
+    def pipeline(self) -> 'Pipeline':
+        return Pipeline.get(self.pipeline_uuid)
+
+    @property
+    def log_dir_path(self) -> str:
+        return LoggerManagerFactory.get_logger_manager(
+            create_dir=False,
+            pipeline_uuid=self.pipeline_uuid,
+            partition=self.id,
+            repo_config=self.pipeline.repo_config,
+        ).get_log_filepath_prefix()
 
     @classmethod
     @safe_db_query
@@ -229,6 +244,16 @@ class PipelineRun(BaseModel):
                         str(self.pipeline_schedule_id),
                         self.execution_date.strftime(format='%Y%m%dT%H%M%S'),
                     ])
+
+    @property
+    def log_dir_path(self) -> str:
+        return os.path.join(
+            self.pipeline.repo_config.variables_dir,
+            PIPELINES_FOLDER,
+            self.pipeline_uuid,
+            LOGS_DIR,
+            self.execution_partition,
+        )
 
     @property
     def pipeline(self) -> 'Pipeline':

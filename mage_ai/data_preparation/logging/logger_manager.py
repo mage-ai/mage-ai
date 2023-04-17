@@ -106,7 +106,7 @@ class LoggerManager:
 
     def traverse_logs_dir(
         self,
-        dir: str,
+        log_dir: str,
         filename: str = None,
         depth: int = 1,
         start_timestamp: datetime = None,
@@ -131,7 +131,7 @@ class LoggerManager:
             end_hour = end_timestamp.strftime('%H')
 
         subfolders_in_range, files_in_range = [], []
-        for f in os.scandir(dir):
+        for f in os.scandir(log_dir):
             if f.is_dir():
                 folder_timestamp = int(f.path.split('/')[-1]) if depth >= date_depth else None
                 write_date = int(f.path.split('/')[-2]) if depth == hour_depth else None
@@ -182,9 +182,9 @@ class LoggerManager:
                 ):
                     files_in_range.append(f.path)
 
-        for dir in list(subfolders_in_range):
+        for log_dir in list(subfolders_in_range):
             sf, f = self.traverse_logs_dir(
-                dir,
+                log_dir,
                 filename=filename,
                 depth=depth + 1,
                 start_timestamp=start_timestamp,
@@ -198,10 +198,15 @@ class LoggerManager:
 
     def get_log_filepaths(self, **kwargs):
         logs_dir = self.get_log_filepath_prefix()
+        """
+        Depending on the parent directory where we start traversing down the file tree,
+        we need to update the depth of the log write date (the YYYYMMDD folder) so we know
+        when to compare the write dates with the time ranger filters.
+        """
         subfolders, filepaths = self.traverse_logs_dir(
             logs_dir,
             filename=self.get_log_filename(),
-            write_date_depth=3 if self.partition is None else 1,
+            write_date_depth=(3 - len(self.partition.split('/'))) if self.partition is not None else 3,
             **kwargs,
         )
 

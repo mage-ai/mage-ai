@@ -220,7 +220,6 @@ class LogResource(GenericResource):
         columns = [
             a.execution_date,
             a.pipeline_schedule_id,
-            a.pipeline_schedule_id,
             a.pipeline_uuid,
         ]
 
@@ -258,54 +257,56 @@ class LogResource(GenericResource):
         groupings_count = 0
 
         if not len(block_uuids) and not len(block_run_ids):
-            start_dir = None
+            start_dirs = [None]
             write_date_depth = 3
             if not pipeline_schedule_ids and not pipeline_run_ids:
                 # Fetch all of pipeline's logs
                 pass
-            elif pipeline_schedule_ids:
-                # Fetch logs for trigger
-                pipeline_schedule_id = pipeline_schedule_ids[0]
-                start_dir = os.path.join(
-                    pipeline.repo_config.variables_dir,
-                    PIPELINES_FOLDER,
-                    pipeline.uuid,
-                    LOGS_DIR,
-                    pipeline_schedule_id,
-                )
-                write_date_depth = 2
             elif pipeline_run_ids:
-                # Fetch logs for pipeline run
+                # Fetch logs for pipeline runs
                 pipeline_run_results = get_pipeline_runs()
                 pipeline_run_rows = pipeline_run_results['rows']
-                pipeline_run = pipeline_run_rows[0]
-                execution_date = pipeline_run.execution_date.strftime(format='%Y%m%dT%H%M%S')
-                pipeline_schedule_id = str(pipeline_run.pipeline_schedule_id)
-                start_dir = os.path.join(
-                    pipeline.repo_config.variables_dir,
-                    PIPELINES_FOLDER,
-                    pipeline.uuid,
-                    LOGS_DIR,
-                    pipeline_schedule_id,
-                    execution_date,
-                )
+                start_dirs = []
+                for row in pipeline_run_rows:
+                    pipeline_run = PipelineRun()
+                    pipeline_run.execution_date = row.execution_date
+                    pipeline_run.pipeline_schedule_id = row.pipeline_schedule_id
+                    pipeline_run.pipeline_uuid = row.pipeline_uuid
+                    start_dirs.append(pipeline_run.log_dir_path)
                 write_date_depth = 1
+            elif pipeline_schedule_ids:
+                # Fetch logs for triggers
+                start_dirs = []
+                for id in pipeline_schedule_ids:
+                    pipeline_schedule = PipelineSchedule()
+                    pipeline_schedule.id = id
+                    pipeline_schedule.pipeline_uuid = pipeline_uuid
+                    start_dir = pipeline_schedule.log_dir_path
+                    start_dirs.append(start_dir)
+                write_date_depth = 2
 
-            grouped_log_filepaths = pipeline.get_grouped_log_filepaths(
-                start_dir=start_dir,
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-                write_date_depth=write_date_depth,
-            )
-            groupings_count = grouped_log_filepaths['count']
-            log_filepath_groupings = grouped_log_filepaths['filepath_groupings']
-            log_filepaths = get_log_filepaths(
-                meta,
-                log_filepath_groupings,
-                groupings_count,
-            )
-            logs = await pipeline.logs_async(filepaths=log_filepaths['filepaths'])
-            has_next = log_filepaths['has_next']
+            log_filepath_groupings = []
+            for start_dir in start_dirs:
+                grouped_log_filepaths = pipeline.get_grouped_log_filepaths(
+                    start_dir=start_dir,
+                    start_timestamp=start_timestamp,
+                    end_timestamp=end_timestamp,
+                    write_date_depth=write_date_depth,
+                )
+                groupings_count += grouped_log_filepaths['count']
+                log_filepath_groupings.extend(grouped_log_filepaths['filepath_groupings'])
+
+            if not log_filepath_groupings:
+                logs = []
+            else:
+                log_filepaths = get_log_filepaths(
+                    meta,
+                    log_filepath_groupings,
+                    groupings_count,
+                )
+                logs = await pipeline.logs_async(filepaths=log_filepaths['filepaths'])
+                has_next = log_filepaths['has_next']
+
             logs_parsed = process_logs(
                 logs,
                 unix_start_timestamp=unix_start_timestamp,
