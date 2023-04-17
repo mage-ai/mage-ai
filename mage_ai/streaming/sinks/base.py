@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Dict, List
 import json
+import os
 import traceback
 
 
@@ -18,7 +19,7 @@ class BaseSink(ABC):
         self.buffer_start_time = None
         self.init_client()
 
-    def init_client():
+    def init_client(self):
         pass
 
     @abstractmethod
@@ -46,7 +47,7 @@ class BaseSink(ABC):
 
     def read_buffer(self):
         buffer = []
-        if not self.buffer_path:
+        if not self.buffer_path or not os.path.exists(self.buffer_path):
             return buffer
         try:
             with open(self.buffer_path) as fp:

@@ -1,25 +1,19 @@
 from dataclasses import dataclass
 from kafka import KafkaConsumer
 from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
+from mage_ai.streaming.sources.shared import SerializationMethod, SerDeConfig
 from enum import Enum
 from typing import Callable, Dict
 import importlib
 import json
 import time
 
-DEFAULT_BATCH_SIZE = 100
-
 
 class SecurityProtocol(str, Enum):
     SASL_SSL = 'SASL_SSL'
     SSL = 'SSL'
-
-
-class SerializationMethod(str, Enum):
-    JSON = 'JSON'
-    PROTOBUF = 'PROTOBUF'
-    RAW_VALUE = 'RAW_VALUE'
 
 
 @dataclass
@@ -36,12 +30,6 @@ class SSLConfig:
     keyfile: str = None
     password: str = None
     check_hostname: bool = False
-
-
-@dataclass
-class SerDeConfig:
-    serialization_method: SerializationMethod
-    schema_classpath: str = None
 
 
 @dataclass

@@ -199,6 +199,7 @@
             {
               "group": "Sources",
               "pages": [
+                "guides/streaming/sources/amazon-sqs",
                 "guides/streaming/sources/azure-event-hub",
                 "guides/streaming/sources/kafka",
                 "guides/streaming/sources/kinesis"
@@ -208,6 +209,7 @@
               "group": "Destinations",
               "pages": [
                 "guides/streaming/destinations/amazon-s3",
+                "guides/streaming/destinations/dummy",
                 "guides/streaming/destinations/kafka",
                 "guides/streaming/destinations/kinesis",
                 "guides/streaming/destinations/opensearch",
