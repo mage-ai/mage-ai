@@ -77,9 +77,14 @@ class BlockExecutor:
                     **kwargs,
                 )
             except Exception as e:
-                self.logger.exception('Failed to execute block.', **merge_dict(tags, dict(
-                    error=e,
-                )))
+                self.logger.exception(
+                    f'Failed to execute block {self.block.uuid}',
+                    **merge_dict(tags, dict(
+                        block_type=self.block.type,
+                        block_uuid=self.block.uuid,
+                        error=e
+                    )),
+                )
                 if on_failure is not None:
                     on_failure(
                         self.block_uuid,
@@ -97,13 +102,21 @@ class BlockExecutor:
                         tags=tags,
                     )
                 if self.block.callback_block:
-                    self.block.callback_block.execute_callback(
-                        'on_failure',
-                        global_vars=global_vars,
-                        logger=self.logger,
-                        logging_tags=tags,
-                        pipeline_run=pipeline_run,
-                    )
+                    try:
+                        self.block.callback_block.execute_callback(
+                            'on_failure',
+                            global_vars=global_vars,
+                            logger=self.logger,
+                            logging_tags=tags,
+                            pipeline_run=pipeline_run,
+                        )
+                    except Exception as callback_err:
+                        self.logger.exception(
+                            f'Failed to execute callback block for {self.block.uuid}',
+                            **merge_dict(tags, dict(
+                                error=callback_err,
+                            )),
+                        )
                 raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
