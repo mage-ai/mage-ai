@@ -146,25 +146,29 @@
               "pages": [
                 "design/data-loading",
                 "guides/load-data-s3",
-                "guides/io_config"
+                "guides/io_config",
+                "development/blocks/data_loaders/templates"
               ]
             },
             {
               "group": "Transformer",
               "pages": [
-                "guides/transformer-blocks"
+                "guides/transformer-blocks",
+                "development/blocks/transformers/templates"
               ]
             },
             {
               "group": "Data exporter",
               "pages": [
-                "guides/export-data-s3"
+                "guides/export-data-s3",
+                "development/blocks/data_exporters/templates"
               ]
             },
             {
               "group": "Sensors",
               "pages": [
-                "guides/sensors"
+                "guides/sensors",
+                "development/blocks/sensors/templates"
               ]
             },
             "guides/blocks/callbacks",

@@ -109,7 +109,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
   --env AWS_SECRET_ACCESS_KEY=your_secret_access_key \
   --env AWS_REGION=your_region \
   --network kafka-docker_default \
-  /app/run_app.sh mageai/mageai mage start default_repo
+  mageai/mageai /app/run_app.sh  mage start default_repo
 ```
 
 <Note>
