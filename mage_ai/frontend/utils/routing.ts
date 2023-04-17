@@ -7,8 +7,9 @@ import {
 import { remove } from '@utils/array';
 
 type GoToWithQueryProps = {
-  replaceParams?: boolean;
+  preserveParams?: string[];
   pushHistory?: boolean;
+  replaceParams?: boolean;
 };
 
 export const LIMIT_PARAM = '_limit';
