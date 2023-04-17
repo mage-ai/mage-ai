@@ -151,6 +151,7 @@ class Git:
     @_remote_command
     def pull(self) -> None:
         self.origin.pull(self.current_branch)
+        self.__pip_install()
 
     def status(self) -> str:
         return self.repo.git.status()
@@ -175,3 +176,7 @@ class Git:
         if self.git_config.email:
             self.repo.config_writer().set_value(
                 'user', 'email', self.git_config.email).release()
+
+    def __pip_install(self) -> None:
+        pip = self.repo.git.pip
+        pip('install', '-r', 'requirements.txt')
