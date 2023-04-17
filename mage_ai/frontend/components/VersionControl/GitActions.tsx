@@ -150,8 +150,6 @@ function GitActions({
     ],
   );
 
-  console.log('error:', error);
-
   return (
     <div style={{
       width: '600px',
