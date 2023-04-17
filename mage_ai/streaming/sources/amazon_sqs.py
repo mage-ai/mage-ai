@@ -61,7 +61,8 @@ class AmazonSqsSource(BaseSource):
                     parsed_messages.append(self.__deserialize_message(msg.body))
                     msg.delete()
                 if len(parsed_messages) > 0:
-                    self._print(f'Received {len(parsed_messages)} message. Sample: {parsed_messages[0]}.')
+                    self._print(f'Received {len(parsed_messages)} message. '
+                                f'Sample: {parsed_messages[0]}.')
                     handler(parsed_messages)
         except Exception:
             self._print(f'Couldn\'t receive messages from queue {self.config.queue_name}.')
