@@ -372,7 +372,8 @@
           "group": "Monitoring",
           "pages": [
             "production/observability/monitoring",
-            "production/observability/datadog"
+            "production/observability/datadog",
+            "production/observability/sentry"
           ]
         },
         {

@@ -1,0 +1,19 @@
+---
+title: "Monitoring with Sentry"
+sidebarTitle: "Sentry"
+---
+
+## Provide your Sentry credentials
+
+You will need to add the following environment variables in order to use
+Sentry in mage:
+* SENTRY_DSN: sentry dsn url
+* SENTRY_TRACES_SAMPLE_RATE: (optional) value between 0 and 1
+
+## Using Sentry in Mage
+
+Once you set the `SENTRY_DSN` environment variable, the Sentry integration will be
+enabled the next time you start the Mage server. All uncaught errors from the trigger runs
+and the Mage scheduler will be caught and sent to Sentry. Additionally, if you
+run your pipelines using the `mage run` CLI command, the errors from the run will
+be sent to Sentry as well.
