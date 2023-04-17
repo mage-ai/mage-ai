@@ -6,10 +6,10 @@ GROUP_DELTA_LAKE = 'Delta Lake'
 TEMPLATES = [
     dict(
         block_type=BlockType.DATA_LOADER,
-        description='Load a Delta Table from AWS S3.',
+        description='Load a Delta Table from Amazon S3.',
         groups=[GROUP_DELTA_LAKE],
         language=BlockLanguage.PYTHON,
-        name='AWS S3',
+        name='Amazon S3',
         path='data_loaders/deltalake/s3.py',
     ),
     dict(
@@ -30,10 +30,10 @@ TEMPLATES = [
     ),
     dict(
         block_type=BlockType.DATA_EXPORTER,
-        description='Export data to a Delta Table in AWS S3.',
+        description='Export data to a Delta Table in Amazon S3.',
         groups=[GROUP_DELTA_LAKE],
         language=BlockLanguage.PYTHON,
-        name='AWS S3',
+        name='Amazon S3',
         path='data_exporters/deltalake/s3.py',
     ),
     dict(
