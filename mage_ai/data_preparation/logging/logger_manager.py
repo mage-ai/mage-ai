@@ -133,8 +133,13 @@ class LoggerManager:
         subfolders_in_range, files_in_range = [], []
         for f in os.scandir(log_dir):
             if f.is_dir():
-                folder_timestamp = int(f.path.split('/')[-1]) if depth >= date_depth else None
-                write_date = int(f.path.split('/')[-2]) if depth == hour_depth else None
+                folder_timestamp = int(os.path.basename(os.path.normpath(f.path))) \
+                    if depth >= date_depth else None
+                write_date = int(
+                        os.path.basename(
+                            os.path.split(os.path.normpath(f.path))[0],
+                        )
+                    ) if depth == hour_depth else None
                 """
                 Compare YYYYMMDD and HH folder write dates/times with start/end
                 timestamps to see if we can skip checking certain folders.
@@ -224,7 +229,7 @@ class LoggerManager:
         if create_dir:
             self.create_log_filepath_dir(prefix)
         else:
-            log_filepaths_without_prefix = [filepath[len(prefix):].split('/')
+            log_filepaths_without_prefix = [os.path.relpath(filepath, prefix).split('/')
                                             for filepath in self.get_log_filepaths()]
             sorted_log_filepaths = sorted(
                 log_filepaths_without_prefix,
@@ -234,8 +239,12 @@ class LoggerManager:
                 ),
                 reverse=True,
             )
+
             if sorted_log_filepaths:
-                log_filepath = os.path.join(prefix, '/'.join(sorted_log_filepaths[0]))
+                log_filepath = os.path.join(
+                    prefix,
+                    os.path.join(*sorted_log_filepaths[0]),
+                )
 
         return log_filepath
 

@@ -144,6 +144,8 @@ function PipelineLogsPage({
   useEffect(() => {
     if (dataLogs?.hasOwnProperty('error')) {
       setErrors({ response: dataLogs });
+    } else {
+      setErrors(null);
     }
   }, [dataLogs]);
 
