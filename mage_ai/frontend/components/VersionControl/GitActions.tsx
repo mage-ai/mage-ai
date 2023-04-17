@@ -150,9 +150,11 @@ function GitActions({
     ],
   );
 
+  console.log('error:', error);
+
   return (
     <div style={{
-      width: '400px',
+      width: '600px',
     }}>
       <Panel>
         <Spacing p={2}>
@@ -348,7 +350,7 @@ function GitActions({
                       </Text>
                     )}
                     {error && (
-                      <Text danger>
+                      <Text preWrap danger>
                         {error}
                       </Text>
                     )}
