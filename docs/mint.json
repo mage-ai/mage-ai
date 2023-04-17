@@ -15,6 +15,10 @@
       "dark": "#121212"
     }
   },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
   "metadata": {
     "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
     "twitter:site": "@mage_ai"
