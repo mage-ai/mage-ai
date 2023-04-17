@@ -734,15 +734,6 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
-            if logger is not None:
-                logger.exception(
-                    f'Failed to execute block {self.uuid}',
-                    **merge_dict(logging_tags, dict(
-                        block_type=self.type,
-                        block_uuid=self.uuid,
-                        error=err,
-                    ))
-                )
             raise err
         finally:
             if update_status:
@@ -2045,33 +2036,30 @@ class CallbackBlock(Block):
         **kwargs
     ):
         pipeline_run = kwargs.get('pipeline_run')
-        try:
-            if logger is not None:
-                stdout = StreamToLogger(logger, logging_tags=logging_tags)
-            else:
-                stdout = sys.stdout
-            with redirect_stdout(stdout):
-                global_vars = merge_dict(
-                    global_vars or dict(),
-                    dict(
-                        pipeline_uuid=self.pipeline.uuid,
-                        block_uuid=self.uuid,
-                        pipeline_run=pipeline_run,
-                    ),
-                )
-                fs = dict(on_success=[], on_failure=[])
-                globals = {
-                    k: self._block_decorator(v) for k, v in fs.items()
-                }
-                exec(self.content, globals)
+        if logger is not None:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
+        else:
+            stdout = sys.stdout
+        with redirect_stdout(stdout):
+            global_vars = merge_dict(
+                global_vars or dict(),
+                dict(
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=self.uuid,
+                    pipeline_run=pipeline_run,
+                ),
+            )
+            fs = dict(on_success=[], on_failure=[])
+            globals = {
+                k: self._block_decorator(v) for k, v in fs.items()
+            }
+            exec(self.content, globals)
 
-                callback_functions = fs[callback]
+            callback_functions = fs[callback]
 
-                if callback_functions:
-                    callback = callback_functions[0]
-                    callback(**global_vars)
-        except Exception:
-            pass
+            if callback_functions:
+                callback = callback_functions[0]
+                callback(**global_vars)
 
     def update_content(self, content, widget=False):
         if not self.file.exists():
