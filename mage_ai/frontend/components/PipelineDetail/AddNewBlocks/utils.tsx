@@ -1,3 +1,4 @@
+import BlockTemplateType from '@interfaces/BlockTemplateType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import {
@@ -98,11 +99,117 @@ export const getNonPythonMenuItems = (
   },
 ]);
 
+export function groupBlockTemplates(
+  blockTemplates: BlockTemplateType[],
+  addNewBlock,
+) {
+  const mapping = {};
+
+  blockTemplates?.forEach(({
+    block_type: blockType,
+    description,
+    groups,
+    language,
+    name,
+    path,
+  }) => {
+    if (!mapping[blockType]) {
+      mapping[blockType] = {};
+    }
+
+    if (!mapping[blockType][language]) {
+      mapping[blockType][language] = {
+        items: [],
+        label: () => language,
+        uuid: `${blockType}/${language}`,
+      };
+    }
+
+    const newItem = {
+      label: () => name,
+      onClick: () =>addNewBlock({
+        config: {
+          template_path: path,
+        },
+        language,
+        type: blockType,
+      }),
+      tooltip: () => description,
+      uuid: path,
+    };
+
+    if (groups?.length >= 1) {
+      const obj = {
+        ...mapping[blockType][language],
+      };
+
+      const groupIndexes = [null];
+      const arr = [obj];
+
+      groups.forEach((group: string, idx1: number) => {
+        const uuid = `${blockType}/${language}/${groups.slice(0, idx1 + 1).join('/')}`;
+        const o = arr[idx1];
+
+        const itemGroupIndex = o.items.findIndex(({ uuid: uuid2 }) => uuid === uuid2);
+        let itemGroup = itemGroupIndex >= 0 ? o.items[itemGroupIndex] : null;
+        if (!itemGroup) {
+          itemGroup = {
+            items: [],
+            label: () => group,
+            uuid,
+          };
+        }
+
+        groupIndexes.push(itemGroupIndex);
+        arr.push(itemGroup);
+      });
+
+      groupIndexes.push(-1);
+      arr.push(newItem);
+
+      const arrLength = arr.length;
+
+      mapping[blockType][language] = arr.reduce((acc, item, idx: number) => {
+        const idxReverse = arrLength - idx;
+
+        const parent = arr[idxReverse - 2];
+        const child = arr[idxReverse - 1];
+        const childIdx = groupIndexes[idxReverse - 1];
+
+        if (parent) {
+          if (childIdx >= 0) {
+            parent.items[childIdx] = child;
+          } else {
+            parent.items.push(child);
+          }
+
+          return parent;
+        }
+
+        return child;
+      }, {});
+    } else {
+      mapping[blockType][language].items.push(newItem);
+    }
+  });
+
+  return mapping;
+}
+
 export const getdataSourceMenuItems = (
   addNewBlock: (block: BlockRequestPayloadType) => void,
   blockType: BlockTypeEnum,
   pipelineType?: PipelineTypeEnum,
+  opts?: {
+    blockTemplatesByBlockType?: {
+      [blockType: string]: {
+        [language: string]: FlyoutMenuItemType;
+      }
+    };
+  },
 ) => {
+  const blockTemplatesByBlockType = opts?.blockTemplatesByBlockType;
+
   const dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
       (blockType: BlockTypeEnum) => ([
         blockType,
@@ -117,11 +224,15 @@ export const getdataSourceMenuItems = (
     || (blockType === BlockTypeEnum.SENSOR)) {
     return dataSourceMenuItemsMapping[blockType];
   } else {
+    const additionalTemplates =
+      blockTemplatesByBlockType?.[blockType]?.[BlockLanguageEnum.PYTHON]?.items || [];
+
     return [
       {
-        items: dataSourceMenuItemsMapping[blockType],
+        // @ts-ignore
+        items: dataSourceMenuItemsMapping[blockType].concat(additionalTemplates),
         label: () => 'Python',
-        uuid: `${blockType}/python`,
+        uuid: `${blockType}/${BlockLanguageEnum.PYTHON}`,
       },
       ...getNonPythonMenuItems(addNewBlock, blockType),
     ];

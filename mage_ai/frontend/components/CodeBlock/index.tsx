@@ -13,6 +13,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import Badge from '@oracle/components/Badge';
+import BlockTemplateType from '@interfaces/BlockTemplateType';
 import BlockType, {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
   BLOCK_TYPES_WITH_NO_PARENTS,
@@ -131,8 +132,9 @@ type CodeBlockProps = {
   allowCodeBlockShortcuts?: boolean;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
-  blockRefs: any;
   blockIdx: number;
+  blockRefs: any;
+  blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
   dataProviders?: DataProviderType[];
   defaultValue?: string;
@@ -186,6 +188,7 @@ function CodeBlock({
   block,
   blockIdx,
   blockRefs,
+  blockTemplates,
   blocks,
   dataProviders,
   defaultValue = '',
@@ -1985,6 +1988,7 @@ function CodeBlock({
                     });
                   }}
                   blockIdx={blockIdx}
+                  blockTemplates={blockTemplates}
                   compact
                   hideCustom={isStreamingPipeline}
                   hideDbt={isStreamingPipeline}

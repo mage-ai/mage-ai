@@ -1,7 +1,10 @@
+{% block imports %}
 if 'data_exporter' not in globals():
     from mage_ai.data_preparation.decorators import data_exporter
+{% endblock %}
 
 
+{% block content %}
 @data_exporter
 def export_data(*args, **kwargs):
     """
@@ -16,3 +19,4 @@ def export_data(*args, **kwargs):
     """
     # Specify your data exporting logic here
 {{ code }}
+{% endblock %}
