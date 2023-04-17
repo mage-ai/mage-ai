@@ -75,6 +75,10 @@ class Git:
                 " and your repository host is added as a known host. More information here:"
                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
 
+    def _run_command(self, command: str) -> None:
+        proc = subprocess.Popen(args=command, shell=True)
+        proc.wait()
+
     def _remote_command(func):
         '''
         Decorator method for commands that need to connect to the remote repo. This decorator
@@ -119,16 +123,15 @@ class Git:
             with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
                 try:
                     asyncio.run(self.check_connection())
-                except TimeoutError as e:
+                except TimeoutError as te:
                     url = f'ssh://{self.git_config.remote_repo_link}'
                     hostname = urlparse(url).hostname
                     if hostname:
                         cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'  # noqa: E501
-                        proc = subprocess.Popen(args=cmd, shell=True)
-                        proc.wait()
+                        self._run_command(cmd)
                         asyncio.run(self.check_connection())
                     else:
-                        raise e
+                        raise te
                 func(self, *args, **kwargs)
 
         return wrapper
@@ -183,5 +186,4 @@ class Git:
 
         if os.path.exists(requirements_file):
             cmd = f'pip3 install -r {requirements_file}'
-            proc = subprocess.Popen(args=cmd, shell=True)
-            proc.wait()
+            self._run_command(cmd)
