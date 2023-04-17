@@ -1,4 +1,4 @@
-import { BlockTypeEnum } from '../BlockType';
+import { BlockTypeEnum } from './BlockType';
 
 export default interface BlockType {
   block_type: BlockTypeEnum;

@@ -229,6 +229,7 @@ export const getdataSourceMenuItems = (
 
     return [
       {
+        // @ts-ignore
         items: dataSourceMenuItemsMapping[blockType].concat(additionalTemplates),
         label: () => 'Python',
         uuid: `${blockType}/${BlockLanguageEnum.PYTHON}`,
