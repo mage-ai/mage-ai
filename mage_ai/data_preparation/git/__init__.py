@@ -75,7 +75,7 @@ class Git:
                 " and your repository host is added as a known host. More information here:"
                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
 
-    def _remote_command(func) -> None:
+    def _remote_command(func):
         '''
         Decorator method for commands that need to connect to the remote repo. This decorator
         will configure and test SSH settings before executing the Git command.
