@@ -275,6 +275,10 @@ function PipelineDetailPage({
       goToWithQuery({
         [VIEW_QUERY_PARAM]: newView,
       }, {
+        preserveParams: [
+          'file_path',
+          'file_paths[]',
+        ],
         pushHistory,
         replaceParams: true,
       });
@@ -2186,6 +2190,7 @@ function PipelineDetailPage({
           pipelineUUID,
           setActiveSidekickView,
         })}
+        afterOverflow={ViewKeyEnum.DATA === activeSidekickView ? 'hidden' : null}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
             alignItems="center"

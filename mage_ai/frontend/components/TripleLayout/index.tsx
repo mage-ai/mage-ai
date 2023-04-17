@@ -17,6 +17,7 @@ import {
   AFTER_MIN_WIDTH,
   ALL_HEADERS_HEIGHT,
   ASIDE_HEADER_HEIGHT,
+  ASIDE_SUBHEADER_HEIGHT,
   AfterInnerStyle,
   AfterStyle,
   AsideHeaderStyle,
@@ -59,6 +60,7 @@ type TripleLayoutProps = {
   afterHidden: boolean;
   afterMousedownActive: boolean;
   afterNavigationItems?: NavigationItem[];
+  afterOverflow?: 'hidden';
   afterSubheader?: any;
   afterWidth?: number;
   before?: any;
@@ -91,6 +93,7 @@ function TripleLayout({
   afterHidden,
   afterMousedownActive,
   afterNavigationItems,
+  afterOverflow,
   afterSubheader,
   afterWidth = 0,
   before,
@@ -284,7 +287,9 @@ function TripleLayout({
           {!afterHidden && afterSubheader && (
             <AsideSubheaderStyle
               style={{
-                width: afterWidthFinal,
+                width: hasAfterNavigationItems
+                  ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 1)
+                  : afterWidthFinal,
               }}
               visible={afterHidden}
             >
@@ -296,8 +301,14 @@ function TripleLayout({
 
       <AfterInnerStyle
         noScrollbarTrackBackground
+        overflow={afterOverflow}
         ref={refAfterInner}
-        verticalOffset={afterHeader ? afterHeightOffset : null}
+        verticalOffset={afterHeader
+          ? afterSubheader
+            ? ASIDE_HEADER_HEIGHT + afterHeightOffset
+            : afterHeightOffset
+          : null
+        }
       >
         {!afterHidden && after}
       </AfterInnerStyle>
