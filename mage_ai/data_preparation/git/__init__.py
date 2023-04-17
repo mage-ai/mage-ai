@@ -142,6 +142,7 @@ class Git:
         if branch is None:
             branch = self.current_branch
         self.repo.git.reset('--hard', f'{self.origin.name}/{branch}')
+        self.__pip_install()
 
     @_remote_command
     def push(self) -> None:
