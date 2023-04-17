@@ -9,7 +9,15 @@ description: "Transform DBT with Mage."
 1. [Overview](#overview)
 2. [Features](#features)
 3. [Tutorials](#tutorials)
-4. [Guides](#guides)
+
+---
+
+## Setup
+
+<Warning>
+  dbt integration is currently only supported when using Mage in
+  [Docker](/getting-started/setup#using-docker).
+</Warning>
 
 ---
 
@@ -24,12 +32,6 @@ Build, run, and manage your DBT models with Mage.
 | Analytics engineers| With Mage and DBT combined, you can expand build and run complex data pipelines.                                                                                               |
 | Data engineers      | Simplify your data infrastructure and reduce the amount of redundant tools in your “modern” data stack. Replace DBT cloud and Airflow with Mage’s native integration with DBT. |
 
-### Prerequisites
-
-To use the DBT integration, you must run Mage using
-[Docker](/getting-started/setup#using-docker).
-
----
 
 ## Features
 
@@ -44,7 +46,6 @@ To use the DBT integration, you must run Mage using
 | Automatically run DBT tests every time a pipeline runs            | Write checks using DBT tests, then Mage will run them and fail the pipeline if the test results produce any failures. |
 | Observability built-in                                            | Monitor your DBT pipelines and get alerted when things break.                                                         |
 
----
 
 ## Tutorials
 
