@@ -1,8 +1,8 @@
 from mage_ai.data_preparation.models.block import (
     Block,
-    CallbackBlock,
     SensorBlock,
 )
+from mage_ai.data_preparation.models.block.callback import CallbackBlock
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.extension.block import ExtensionBlock
 from mage_ai.data_preparation.models.constants import BlockType

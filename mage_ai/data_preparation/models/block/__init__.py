@@ -277,8 +277,12 @@ class Block:
 
     @property
     def callback_block(self):
+        from mage_ai.data_preparation.models.block.callback import (
+            callback_block_name,
+            CallbackBlock
+        )
         if self.has_callback:
-            callback_block_uuid = f'{clean_name_orig(self.uuid)}_callback'
+            callback_block_uuid = callback_block_name(self.uuid)
             return CallbackBlock(
                 callback_block_uuid,
                 callback_block_uuid,
@@ -1411,6 +1415,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.executor_type = data['executor_type']
             self.__update_pipeline_block()
         if 'has_callback' in data and data['has_callback'] != self.has_callback:
+            from mage_ai.data_preparation.models.block.callback import CallbackBlock
             self.has_callback = data['has_callback']
             if self.has_callback:
                 CallbackBlock.create(self.uuid)
@@ -2024,67 +2029,3 @@ class SensorBlock(Block):
                 print('Sensor sleeping for 1 minute...')
                 time.sleep(60)
             return []
-
-
-class CallbackBlock(Block):
-    @classmethod
-    def create(cls, orig_block_name):
-        return Block.create(
-            f'{clean_name_orig(orig_block_name)}_callback',
-            BlockType.CALLBACK,
-            get_repo_path(),
-            language=BlockLanguage.PYTHON,
-        )
-
-    def execute_callback(
-        self,
-        callback: str,
-        global_vars: Dict = None,
-        logger: Logger = None,
-        logging_tags: Dict = None,
-        **kwargs
-    ):
-        pipeline_run = kwargs.get('pipeline_run')
-        try:
-            if logger is not None:
-                stdout = StreamToLogger(logger, logging_tags=logging_tags)
-            else:
-                stdout = sys.stdout
-            with redirect_stdout(stdout):
-                global_vars = merge_dict(
-                    global_vars or dict(),
-                    dict(
-                        pipeline_uuid=self.pipeline.uuid,
-                        block_uuid=self.uuid,
-                        pipeline_run=pipeline_run,
-                    ),
-                )
-                fs = dict(on_success=[], on_failure=[])
-                globals = {
-                    k: self._block_decorator(v) for k, v in fs.items()
-                }
-                exec(self.content, globals)
-
-                callback_functions = fs[callback]
-
-                if callback_functions:
-                    callback = callback_functions[0]
-                    callback(**global_vars)
-        except Exception:
-            pass
-
-    def update_content(self, content, widget=False):
-        if not self.file.exists():
-            raise Exception(f'File for block {self.uuid} does not exist at {self.file.file_path}.')
-
-        if content != self.content:
-            self._content = content
-            self.file.update_content(content)
-        return self
-
-    async def update_content_async(self, content, widget=False):
-        block_content = await self.content_async()
-        if content != block_content:
-            self._content = content
-            await self.file.update_content_async(content)
-        return self
