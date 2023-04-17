@@ -164,10 +164,10 @@ class Git:
     def change_branch(self, branch) -> None:
         if branch in self.repo.heads:
             current = self.repo.heads[branch]
-            current.checkout()
         else:
             current = self.repo.create_head(branch)
-            current.checkout()
+
+        current.checkout()
 
     def __set_git_config(self) -> None:
         if self.git_config.username:
@@ -178,6 +178,10 @@ class Git:
                 'user', 'email', self.git_config.email).release()
 
     def __pip_install(self) -> None:
-        cmd = f'pip3 install -r {self.repo.working_dir}/requirements.txt'
-        proc = subprocess.Popen(args=cmd, shell=True)
-        proc.wait()
+        requirements_file = os.path.join(
+            self.repo.working_dir, 'requirements.txt')
+
+        if os.path.exists(requirements_file):
+            cmd = f'pip3 install -r {requirements_file}'
+            proc = subprocess.Popen(args=cmd, shell=True)
+            proc.wait()
