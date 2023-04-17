@@ -58,7 +58,7 @@ def parse_attributes(block) -> Dict:
 
     models_folder_path = os.path.join(project_full_path, 'models')
     sources_full_path = os.path.join(models_folder_path, 'mage_sources.yml')
-    sources_full_path_legacy = re.sub(filename, 'mage_sources.yml', full_path)
+    sources_full_path_legacy = full_path.replace(filename, 'mage_sources.yml')
 
     profiles_full_path = os.path.join(project_full_path, 'profiles.yml')
     profile_target = configuration.get('dbt_profile_target')
@@ -122,7 +122,7 @@ def add_blocks_upstream_from_refs(
 
     files_by_name = {}
     for file_path_orig in files_in_path(models_folder_path):
-        file_path = re.sub(f'{models_folder_path}{os.sep}', '', file_path_orig)
+        file_path = file_path_orig.replace(f'{models_folder_path}{os.sep}', '')
         filename = file_path.split(os.sep)[-1]
         parts = filename.split('.')
         if len(parts) >= 2:
@@ -138,7 +138,7 @@ def add_blocks_upstream_from_refs(
             print(f'WARNING: dbt model {ref} cannot be found.')
             continue
 
-        fp = re.sub(f"{os.path.join(get_repo_path(), 'dbt')}{os.sep}", '', files_by_name[ref])
+        fp = files_by_name[ref].replace(f"{os.path.join(get_repo_path(), 'dbt')}{os.sep}", '')
         configuration = dict(file_path=fp)
         uuid = remove_extension_from_filename(fp)
 
@@ -702,10 +702,9 @@ def interpolate_input(
         schema = configuration.get('data_provider_schema')
         table_name = upstream_block.table_name
 
-        query = re.sub(
+        query = query.replace(
             matcher1,
             __replace_func(database, schema, table_name),
-            query,
         )
 
     return query
@@ -893,7 +892,7 @@ def build_command_line_arguments(
         file_path = attr['file_path']
         project_full_path = attr['project_full_path']
         full_path = attr['full_path']
-        path_to_model = re.sub(f'{project_full_path}{os.sep}', '', full_path)
+        path_to_model = full_path.replace(f'{project_full_path}{os.sep}', '')
 
         if test_execution:
             dbt_command = 'compile'
@@ -965,7 +964,7 @@ def run_dbt_tests(
     proc1 = subprocess.run([
         'dbt',
         dbt_command,
-    ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE)
+    ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE)  # os.setsid doesn't work on Windows
 
     number_of_errors = 0
 

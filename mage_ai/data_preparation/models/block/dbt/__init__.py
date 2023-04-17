@@ -174,7 +174,7 @@ class DBTBlock(Block):
         if is_sql and test_execution:
             subprocess.run(
                 cmds,
-                preexec_fn=os.setsid,
+                preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                 stdout=stdout,
             )
             df = query_from_compiled_sql(
@@ -192,7 +192,7 @@ class DBTBlock(Block):
             proc = subprocess.Popen(
                 cmds,
                 bufsize=1,
-                preexec_fn=os.setsid,
+                preexec_fn=os.setsid,  # os.setsid doesn't work on Windows
                 stdout=stdout,
                 universal_newlines=True,
             )
