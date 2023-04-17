@@ -64,8 +64,12 @@ class Git:
             await asyncio.sleep(0.5)
 
         if return_code is not None and return_code != 0:
-            raise Exception(
-                "Error connecting to remote, make sure your SSH key is set up properly.")
+            _, err = proc.communicate()
+            message = (
+                err.decode('UTF-8') if err
+                else 'Error connecting to remote, make sure your SSH key is set up properly.'
+            )
+            raise Exception(message)
 
         if return_code is None:
             proc.kill()
