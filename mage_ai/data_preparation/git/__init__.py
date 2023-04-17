@@ -178,5 +178,6 @@ class Git:
                 'user', 'email', self.git_config.email).release()
 
     def __pip_install(self) -> None:
-        pip = self.repo.git.pip
-        pip('install', '-r', 'requirements.txt')
+        cmd = f'pip3 install -r {self.repo.working_dir}/requirements.txt'
+        proc = subprocess.Popen(args=cmd, shell=True)
+        proc.wait()
