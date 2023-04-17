@@ -138,7 +138,7 @@ def add_blocks_upstream_from_refs(
             print(f'WARNING: dbt model {ref} cannot be found.')
             continue
 
-        fp =  files_by_name[ref].replace(f"{os.path.join(get_repo_path(), 'dbt')}{os.sep}", '')
+        fp = files_by_name[ref].replace(f"{os.path.join(get_repo_path(), 'dbt')}{os.sep}", '')
         configuration = dict(file_path=fp)
         uuid = remove_extension_from_filename(fp)
 
@@ -964,7 +964,7 @@ def run_dbt_tests(
     proc1 = subprocess.run([
         'dbt',
         dbt_command,
-    ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE) # os.setsid doesn't work on Windows
+    ] + args, preexec_fn=os.setsid, stdout=subprocess.PIPE)  # os.setsid doesn't work on Windows
 
     number_of_errors = 0
 
