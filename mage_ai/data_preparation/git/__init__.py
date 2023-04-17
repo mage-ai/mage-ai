@@ -65,9 +65,8 @@ class Git:
 
         if return_code is not None and return_code != 0:
             _, err = proc.communicate()
-            message = err.decode(
-                'UTF-8'
-                if err
+            message = (
+                err.decode('UTF-8') if err
                 else 'Error connecting to remote, make sure your SSH key is set up properly.'
             )
             raise Exception(message)
