@@ -9,6 +9,7 @@ import {
 export function buildNavigationItems({
   activeView,
   pipelineUUID,
+  setActiveSidekickView,
 }: {
   activeView: ViewKeyEnum;
   pipelineUUID: string;
@@ -25,9 +26,6 @@ export function buildNavigationItems({
     id: key,
     isSelected: () => activeView === key,
     label: () => label,
-    linkProps: {
-      as: `/pipelines/${pipelineUUID}/edit?${VIEW_QUERY_PARAM}=${key}`,
-      href: '/pipelines/[pipeline]/edit',
-    },
+    onClick: () => setActiveSidekickView(key, true),
   }));
 }

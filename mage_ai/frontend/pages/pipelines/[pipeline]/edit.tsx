@@ -275,6 +275,10 @@ function PipelineDetailPage({
       goToWithQuery({
         [VIEW_QUERY_PARAM]: newView,
       }, {
+        preserveParams: [
+          'file_path',
+          'file_paths[]',
+        ],
         pushHistory,
         replaceParams: true,
       });
