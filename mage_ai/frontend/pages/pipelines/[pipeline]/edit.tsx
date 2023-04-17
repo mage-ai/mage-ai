@@ -2186,6 +2186,7 @@ function PipelineDetailPage({
           pipelineUUID,
           setActiveSidekickView,
         })}
+        afterOverflow={ViewKeyEnum.DATA === activeSidekickView ? 'hidden' : null}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
             alignItems="center"
