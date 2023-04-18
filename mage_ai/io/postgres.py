@@ -171,7 +171,11 @@ class Postgres(BaseSQL):
             if len(values) >= 1:
                 column_type = 'JSONB'
 
-                value = values[0]
+                values_not_empty_list = [v for v in values if type(v) is not list or v]
+                if not values_not_empty_list:
+                    # All values are empty list
+                    return column_type
+                value = values_not_empty_list[0]
                 if type(value) is list:
                     if len(value) >= 1:
                         item = value[0]
