@@ -232,13 +232,15 @@ class LoggerManager:
         logs_dir = self.get_log_filepath_prefix()
         """
         Depending on the parent directory where we start traversing down the file tree,
-        we need to update the depth of the log write date (the YYYYMMDD folder) so we know
-        when to compare the write dates with the time ranger filters.
+        we need to update the depth of the log write date (i.e. the write_date_depth or
+        the YYYYMMDD folder) so we know when to compare the write dates with the time
+        range filters.
         """
+        write_date_depth = (3 - len(self.partition.split('/'))) if self.partition is not None else 3
         subfolders, filepaths = self.traverse_logs_dir(
             logs_dir,
             filename=self.get_log_filename(),
-            write_date_depth=(3 - len(self.partition.split('/'))) if self.partition is not None else 3,
+            write_date_depth=write_date_depth,
             **kwargs,
         )
 

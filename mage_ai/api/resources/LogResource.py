@@ -2,7 +2,7 @@ from datetime import datetime
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.data_preparation.models.constants import LOGS_DIR, PIPELINES_FOLDER
+from mage_ai.data_preparation.models.constants import LOGS_DIR
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
@@ -10,7 +10,6 @@ from mage_ai.shared.array import flatten
 from sqlalchemy.orm import aliased
 from typing import Dict, List
 import json
-import os
 import re
 import time
 
