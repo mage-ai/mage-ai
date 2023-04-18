@@ -141,8 +141,8 @@ class LoggerManager:
         traversing from the [pipeline_run_execution_date] folder, the
         write_date_depth will be 1.
         """
-        date_depth = write_date_depth
-        hour_depth = date_depth + 1
+        date_depth = write_date_depth   # Depth of YYYYMMDD folder
+        hour_depth = date_depth + 1     # Depth of HH folder
         start_date = None
         start_hour = None
         end_date = None
@@ -157,6 +157,7 @@ class LoggerManager:
         subfolders_in_range, files_in_range = [], []
         for f in os.scandir(log_dir):
             if f.is_dir():
+                # folder_timestamp is the write date or write hour depending on which depth it is
                 folder_timestamp = int(os.path.basename(os.path.normpath(f.path))) \
                     if depth >= date_depth else None
                 write_date = int(
@@ -165,41 +166,43 @@ class LoggerManager:
                         )
                     ) if depth == hour_depth else None
                 """
-                Compare YYYYMMDD and HH folder write dates/times with start/end
-                timestamps to see if we can skip checking certain folders.
+                Compare YYYYMMDD and HH folder write dates/hours with start/end
+                timestamps to see if we can skip scanning certain folders.
                 """
+                is_date_depth = depth == date_depth
+                is_hour_depth = depth == hour_depth
                 if (start_timestamp is None and end_timestamp is None) or \
                         (depth != date_depth and depth != hour_depth):
                     subfolders_in_range.append(f.path)
                 elif start_timestamp is not None and end_timestamp is not None:
-                    if (depth == date_depth and folder_timestamp and
+                    if (is_date_depth and folder_timestamp and
                             folder_timestamp >= int(start_date) and
                             folder_timestamp <= int(end_date)) or \
-                        (depth == hour_depth and write_date != int(start_date) and
+                        (is_hour_depth and write_date != int(start_date) and
                             write_date != int(end_date)) or \
-                        (depth == hour_depth and write_date == int(start_date) and
+                        (is_hour_depth and write_date == int(start_date) and
                             write_date == int(end_date) and folder_timestamp and
                             folder_timestamp >= int(start_hour) and
                             folder_timestamp <= int(end_hour)) or \
-                        (depth == hour_depth and write_date == int(start_date) and
+                        (is_hour_depth and write_date == int(start_date) and
                             write_date != int(end_date) and folder_timestamp and
                             folder_timestamp >= int(start_hour)) or \
-                        (depth == hour_depth and write_date != int(start_date) and
+                        (is_hour_depth and write_date != int(start_date) and
                             write_date == int(end_date) and folder_timestamp and
                             folder_timestamp <= int(end_hour)):
                         subfolders_in_range.append(f.path)
                 elif start_timestamp is not None and end_timestamp is None:
-                    if (depth == date_depth and folder_timestamp
+                    if (is_date_depth and folder_timestamp
                             and folder_timestamp >= int(start_date)) or \
-                        (depth == hour_depth and write_date != int(start_date)) or \
-                        (depth == hour_depth and write_date == int(start_date) and
+                        (is_hour_depth and write_date != int(start_date)) or \
+                        (is_hour_depth and write_date == int(start_date) and
                             folder_timestamp and folder_timestamp >= int(start_hour)):
                         subfolders_in_range.append(f.path)
                 elif start_timestamp is None and end_timestamp is not None:
-                    if (depth == date_depth and folder_timestamp and
+                    if (is_date_depth and folder_timestamp and
                             folder_timestamp <= int(end_date)) or \
-                        (depth == hour_depth and write_date != int(end_date)) or \
-                        (depth == hour_depth and write_date == int(end_date) and
+                        (is_hour_depth and write_date != int(end_date)) or \
+                        (is_hour_depth and write_date == int(end_date) and
                             folder_timestamp and folder_timestamp <= int(end_hour)):
                         subfolders_in_range.append(f.path)
             elif f.is_file():
