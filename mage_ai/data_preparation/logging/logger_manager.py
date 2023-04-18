@@ -108,14 +108,38 @@ class LoggerManager:
         self,
         log_dir: str,
         filename: str = None,
-        depth: int = 1,
+        depth: int = 1,             # Current traversal folder depth
         start_timestamp: datetime = None,
         end_timestamp: datetime = None,
         write_date_depth: int = 1,  # Depth of folder with format YYYYMMDD
     ):
         """
-        Depending on which parent directory we start traversing from,
-        the write date YYYYMMDD folder will start at a certain depth.
+        Log directory structure:
+        - [project_name] (e.g. default_repo)
+          → pipelines
+              → [pipeline_uuid]
+                  → .logs
+                    → [pipeline_schedule_id]
+                      → [pipeline_run_execution_date]
+                        → [YYYYMMDD] (write date, i.e. date log was written)
+                          → [HH] (write hour, i.e. hour log was written)
+                            → pipeline.log (log file)
+                            → [block_uuid].log (log file)
+
+        We recursively scan through all the folders and subfolders to find the
+        relevant log files. The "depth" argument is the current traversal level.
+        We start at a depth of 1 and increase that depth by 1 for every child
+        subfolder we scan through. If the .logs folder is the starting parent
+        directory (i.e. the log_dir argument), we would be scanning the
+        [pipeline_schedule_id] folders at depth of 1, the [pipeline_run_execution_date]
+        folders at depth of 2, the [YYYYMMDD] folders at depth of 3, etc.
+
+        Depending on which parent directory we start traversing from, the
+        write date (YYYYMMDD) folder will start at a certain depth (the
+        write_date_depth). If we start traversing from the .logs folder, the
+        write_date_depth will be 3 because it is 3 levels down. If we start
+        traversing from the [pipeline_run_execution_date] folder, the
+        write_date_depth will be 1.
         """
         date_depth = write_date_depth
         hour_depth = date_depth + 1
@@ -231,6 +255,18 @@ class LoggerManager:
         else:
             log_filepaths_without_prefix = [os.path.relpath(filepath, prefix).split('/')
                                             for filepath in self.get_log_filepaths()]
+
+            """
+            Example path_parts: ['338', '20230407T181049', '20230401', '18', 'pipeline.log']
+
+            The code below sorts the log files in reverse chronological order using the
+            log write date (e.g. '20230401' or path_parts[-3]) and log write hour (e.g. '18'
+            or path_parts[-2]).
+
+            If the write date and hour is not available (e.g. path_parts of
+            ["338", "20230407T190020", "pipeline.log"]) due to legacy logs not
+            keeping track of it, those log files will be sorted last.
+            """
             sorted_log_filepaths = sorted(
                 log_filepaths_without_prefix,
                 key=lambda path_parts: (
