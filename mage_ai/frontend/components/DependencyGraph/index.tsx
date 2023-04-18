@@ -328,8 +328,10 @@ function DependencyGraph({
     const {
       dynamic,
       dynamicUpstreamBlock,
+      dynamicUpstreamBlocks,
       reduceOutput,
       reduceOutputUpstreamBlock,
+      reduceOutputUpstreamBlocks,
     } = dynamicUpstreamBlocksData?.[block.uuid] || {};
 
     if (!displayText) {
@@ -337,8 +339,20 @@ function DependencyGraph({
 
       if (dynamic) {
         displayText = `[dynamic] ${displayText}`;
-      } else if (dynamicUpstreamBlock && !reduceOutputUpstreamBlock) {
+      } else if (dynamicUpstreamBlock
+        && (
+          (
+            dynamicUpstreamBlocks?.length > reduceOutputUpstreamBlocks?.length
+          ) || (
+            !reduceOutputUpstreamBlock
+          )
+        )
+      ) {
         displayText = `[dynamic child] ${displayText}`;
+      }
+
+      if (reduceOutput) {
+        displayText = `${displayText} [reduce]`;
       }
     }
 

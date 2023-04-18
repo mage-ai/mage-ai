@@ -328,6 +328,9 @@ class PipelineScheduler:
                 'dynamic_upstream_block_uuids',
             )
 
+            print('OMGGGGGGGGGGGGGGGGGGGG', block_run.block_uuid, dynamic_upstream_block_uuids)
+            print(completed_block_uuids)
+
             if dynamic_upstream_block_uuids:
                 if self.allow_blocks_to_fail:
                     completed = all(uuid in finished_block_uuids
@@ -392,6 +395,8 @@ class PipelineScheduler:
             self.executable_block_runs if block_runs is None else block_runs
         block_runs_to_schedule = \
             self.__fetch_crashed_block_runs() + block_runs_to_schedule
+
+        print('WTFFFFFFFFFFFFFFFFFFFF', self.initial_block_runs)
 
         for b in block_runs_to_schedule:
             tags = dict(

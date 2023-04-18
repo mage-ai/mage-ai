@@ -83,6 +83,9 @@ def create_block_runs_from_dynamic_block(
                     arr.append(block_uuid)
                 else:
                     arr.append(upstream_block.uuid)
+
+            print('WTFFFFFFFFFFFFFFFFFF1', block.uuid, arr)
+
             block_run = create_block_run_from_dynamic_child(
                 downstream_block,
                 pipeline_run,
@@ -106,14 +109,24 @@ def create_block_runs_from_dynamic_block(
 
                 arr = []
                 for upstream_block in b.upstream_blocks:
+                    print('OMGGGGGGGGGGGGGGGGGGGGG1', downstream_block.uuid, b.uuid, upstream_block.uuid)
                     ancestors = get_all_ancestors(upstream_block)
                     # If the upstream block has the current dynamic child as an ancestor,
                     # then have this block depend on a block UUID with the dynamic UUID suffix;
                     # e.g. block_uuid:index
+                    print(downstream_block.uuid, [a.uuid for a in ancestors])
+                    print(
+                        dynamic_block_uuid(upstream_block.uuid, metadata, idx),
+                        block_run.block_uuid,
+                        upstream_block.uuid,
+                    )
                     if downstream_block.uuid in [a.uuid for a in ancestors]:
                         arr.append(dynamic_block_uuid(upstream_block.uuid, metadata, idx))
                     elif downstream_block.uuid == upstream_block.uuid:
                         arr.append(block_run.block_uuid)
+                    elif is_dynamic_block(upstream_block):
+                        # Needs to know that the ancestors are dynamic or dynamic child without reduce
+                        arr.append(dynamic_block_uuid(upstream_block.uuid, metadata, idx))
                     else:
                         arr.append(upstream_block.uuid)
 
@@ -121,6 +134,8 @@ def create_block_runs_from_dynamic_block(
                 if b_uuid in block_runs_created_by_block_uuid:
                     continue
                 block_runs_created_by_block_uuid[b_uuid] = True
+
+                print('WTFFFFFFFFFFFFFFFFFF2', block.uuid, arr)
 
                 br = create_block_run_from_dynamic_child(
                     b,
@@ -193,6 +208,8 @@ def create_block_runs_from_dynamic_block(
                         arr += [b.block_uuid for b in dynamic_child_block_runs]
                     else:
                         arr.append(upstream_block.uuid)
+
+                print('WTFFFFFFFFFFFFFFFFFF3', block.uuid, arr)
 
                 all_block_runs.append(pipeline_run.create_block_run(
                     b.uuid,
