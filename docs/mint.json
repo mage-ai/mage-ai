@@ -399,6 +399,7 @@
           "group": "Data",
           "pages": [
             "integrations/databases/BigQuery",
+            "integrations/databases/ClickHouse",
             "integrations/databases/MySQL",
             "integrations/databases/PostgreSQL",
             "integrations/databases/Redshift",
