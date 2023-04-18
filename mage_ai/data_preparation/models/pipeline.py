@@ -1239,6 +1239,12 @@ class Pipeline:
             LOGS_DIR,
         )
 
+        if start_dir is not None and not os.path.exists(start_dir):
+            return dict(
+                count=0,
+                filepath_groupings=[],
+            )
+
         subfolders, filepaths = logger_manager.traverse_logs_dir(
             start_dir or root_logs_dir,
             start_timestamp=start_timestamp,

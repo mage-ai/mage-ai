@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from mage_ai.data_preparation.logging import LoggingConfig
 from mage_ai.data_preparation.models.constants import LOGS_DIR, PIPELINES_FOLDER
 from mage_ai.data_preparation.models.file import File
@@ -51,19 +51,36 @@ class LoggerManager:
         )
         self.stream = None
         if not self.logger.handlers:
-            if self.logging_config.destination_config:
-                handler = self.create_stream_handler()
-            else:
-                log_filepath = self.get_log_filepath(create_dir=create_dir)
-                handler = logging.handlers.RotatingFileHandler(
-                    log_filepath,
-                    backupCount=10,
-                    maxBytes=MAX_LOG_FILE_SIZE,
-                )
+            try:
+                if self.logging_config.destination_config:
+                    handler = self.create_stream_handler()
+                else:
+                    log_filepath = self.get_log_filepath(create_dir=create_dir)
+                    handler = logging.handlers.RotatingFileHandler(
+                        log_filepath,
+                        backupCount=10,
+                        maxBytes=MAX_LOG_FILE_SIZE,
+                    )
+                    # TODO: Use TimedRotatingFileHandler for streaming pipelines
+                    # handler = logging.handlers.TimedRotatingFileHandler(
+                    #     log_filepath,
+                    #     backupCount=10,
+                    #     interval=1,
+                    #     when='M',
+                    #     utc=True,
+                    # )
+                    # handler.namer = self.handler_namer
+                    # handler.rolloverAt = datetime.now().replace(
+                    #     microsecond=0,
+                    #     second=0,
+                    #     minute=0,
+                    # ).timestamp() + 3600
 
-            handler.setLevel(self.log_level)
-            handler.setFormatter(self.formatter)
-            self.logger.addHandler(handler)
+                handler.setLevel(self.log_level)
+                handler.setFormatter(self.formatter)
+                self.logger.addHandler(handler)
+            except FileNotFoundError:
+                pass
         else:
             if self.logging_config.destination_config:
                 stream_handler = \
@@ -75,6 +92,9 @@ class LoggerManager:
         self.stream = io.StringIO()
         return logging.StreamHandler(self.stream)
 
+    def handler_namer(self, default_name):
+        return self.get_log_filepath(create_dir=True, subtract_hour=True)
+
     def output_logs_to_destination(self):
         pass
 
@@ -82,10 +102,12 @@ class LoggerManager:
         if not os.path.exists(path):
             os.makedirs(path)
 
-    def get_log_filepath_prefix(self, include_date_hour_subpath=False):
+    def get_log_filepath_prefix(self, include_date_hour_subpath=False, subtract_hour=False):
         logs_dir = self.logs_dir or self.repo_config.variables_dir
-        current_date = datetime.utcnow().strftime('%Y%m%d')
-        current_hour = datetime.utcnow().strftime('%H')
+        now_date = datetime.utcnow() \
+            if not subtract_hour else datetime.utcnow() - timedelta(hours=1)
+        current_date = now_date.strftime('%Y%m%d')
+        current_hour = now_date.strftime('%H')
 
         return os.path.join(
             logs_dir,
@@ -233,6 +255,9 @@ class LoggerManager:
 
     def get_log_filepaths(self, **kwargs):
         logs_dir = self.get_log_filepath_prefix()
+        if not os.path.exists(logs_dir):
+            return []
+
         """
         Depending on the parent directory where we start traversing down the file tree,
         we need to update the depth of the log write date (i.e. the write_date_depth or
@@ -249,12 +274,17 @@ class LoggerManager:
 
         return filepaths
 
-    def get_log_filepath(self, create_dir: bool = False):
+    def get_log_filepath(
+        self,
+        create_dir: bool = False,
+        subtract_hour: bool = False,
+    ):
         if self.pipeline_uuid is None:
             raise Exception('Please specify a pipeline uuid in your logger.')
 
         prefix = self.get_log_filepath_prefix(
-            include_date_hour_subpath=True if create_dir else False,
+            include_date_hour_subpath=create_dir,
+            subtract_hour=subtract_hour,
         )
 
         log_filepath = os.path.join(prefix, self.get_log_filename())
