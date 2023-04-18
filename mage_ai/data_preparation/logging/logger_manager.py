@@ -148,11 +148,11 @@ class LoggerManager:
         end_date = None
         end_hour = None
         if start_timestamp:
-            start_date = start_timestamp.strftime('%Y%m%d')
-            start_hour = start_timestamp.strftime('%H')
+            start_date = int(start_timestamp.strftime('%Y%m%d'))
+            start_hour = int(start_timestamp.strftime('%H'))
         if end_timestamp:
-            end_date = end_timestamp.strftime('%Y%m%d')
-            end_hour = end_timestamp.strftime('%H')
+            end_date = int(end_timestamp.strftime('%Y%m%d'))
+            end_hour = int(end_timestamp.strftime('%H'))
 
         subfolders_in_range, files_in_range = [], []
         for f in os.scandir(log_dir):
@@ -160,50 +160,53 @@ class LoggerManager:
                 # folder_timestamp is the write date or write hour depending on which depth it is
                 folder_timestamp = int(os.path.basename(os.path.normpath(f.path))) \
                     if depth >= date_depth else None
-                write_date = int(
-                        os.path.basename(
-                            os.path.split(os.path.normpath(f.path))[0],
-                        )
-                    ) if depth == hour_depth else None
                 """
                 Compare YYYYMMDD and HH folder write dates/hours with start/end
                 timestamps to see if we can skip scanning certain folders.
                 """
                 is_date_depth = depth == date_depth
                 is_hour_depth = depth == hour_depth
+                write_date = int(
+                    os.path.basename(
+                        os.path.split(os.path.normpath(f.path))[0],
+                    )
+                ) if is_hour_depth else None
+                is_start_date = write_date == start_date
+                is_end_date = write_date == end_date
+
                 if (start_timestamp is None and end_timestamp is None) or \
                         (depth != date_depth and depth != hour_depth):
                     subfolders_in_range.append(f.path)
                 elif start_timestamp is not None and end_timestamp is not None:
-                    if (is_date_depth and folder_timestamp and
-                            folder_timestamp >= int(start_date) and
-                            folder_timestamp <= int(end_date)) or \
-                        (is_hour_depth and write_date != int(start_date) and
-                            write_date != int(end_date)) or \
-                        (is_hour_depth and write_date == int(start_date) and
-                            write_date == int(end_date) and folder_timestamp and
-                            folder_timestamp >= int(start_hour) and
-                            folder_timestamp <= int(end_hour)) or \
-                        (is_hour_depth and write_date == int(start_date) and
-                            write_date != int(end_date) and folder_timestamp and
-                            folder_timestamp >= int(start_hour)) or \
-                        (is_hour_depth and write_date != int(start_date) and
-                            write_date == int(end_date) and folder_timestamp and
-                            folder_timestamp <= int(end_hour)):
+                    if (is_date_depth and folder_timestamp and start_date and end_date and
+                            folder_timestamp >= start_date and
+                            folder_timestamp <= end_date) or \
+                        (is_hour_depth and not is_start_date and
+                            not is_end_date) or \
+                        (is_hour_depth and is_start_date and
+                            is_end_date and folder_timestamp and start_hour and end_hour and
+                            folder_timestamp >= start_hour and
+                            folder_timestamp <= end_hour) or \
+                        (is_hour_depth and is_start_date and
+                            not is_end_date and folder_timestamp and start_hour and
+                            folder_timestamp >= start_hour) or \
+                        (is_hour_depth and not is_start_date and
+                            is_end_date and folder_timestamp and end_hour and
+                            folder_timestamp <= end_hour):
                         subfolders_in_range.append(f.path)
                 elif start_timestamp is not None and end_timestamp is None:
-                    if (is_date_depth and folder_timestamp
-                            and folder_timestamp >= int(start_date)) or \
-                        (is_hour_depth and write_date != int(start_date)) or \
-                        (is_hour_depth and write_date == int(start_date) and
-                            folder_timestamp and folder_timestamp >= int(start_hour)):
+                    if (is_date_depth and folder_timestamp and start_date
+                            and folder_timestamp >= start_date) or \
+                        (is_hour_depth and not is_start_date) or \
+                        (is_hour_depth and is_start_date and start_hour and
+                            folder_timestamp and folder_timestamp >= start_hour):
                         subfolders_in_range.append(f.path)
                 elif start_timestamp is None and end_timestamp is not None:
-                    if (is_date_depth and folder_timestamp and
-                            folder_timestamp <= int(end_date)) or \
-                        (is_hour_depth and write_date != int(end_date)) or \
-                        (is_hour_depth and write_date == int(end_date) and
-                            folder_timestamp and folder_timestamp <= int(end_hour)):
+                    if (is_date_depth and folder_timestamp and end_date and
+                            folder_timestamp <= end_date) or \
+                        (is_hour_depth and not is_end_date) or \
+                        (is_hour_depth and is_end_date and folder_timestamp and
+                            end_hour and folder_timestamp <= end_hour):
                         subfolders_in_range.append(f.path)
             elif f.is_file():
                 fileExtensionRegEx = re.compile(r'^.+\.log(\.[0-9]+)?$')
