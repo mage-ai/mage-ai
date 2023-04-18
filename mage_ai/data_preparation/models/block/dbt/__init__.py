@@ -127,8 +127,7 @@ class DBTBlock(Block):
         dbt_profile_target = command_line_dict['profile_target']
 
         # Create a temporary profiles file with variables and secrets interpolated
-        attributes_dict = parse_attributes(self)
-        profiles_full_path = attributes_dict['profiles_full_path']
+        profiles_full_path = os.path.join(project_full_path, 'profiles.yml')
         profile = load_profiles_file(profiles_full_path)
 
         temp_profile_full_path = os.path.join(profiles_dir, 'profiles.yml')
