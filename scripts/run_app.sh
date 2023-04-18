@@ -13,6 +13,11 @@ if [[ ! -z "${USER_CODE_PATH}" ]]; then
     PROJECT_PATH=$USER_CODE_PATH
 fi
 
+if [[ ! -z "${ULIMIT_NO_FILE}" ]]; then
+    echo "Setting ulimit -n  to $ULIMIT_NO_FILE"
+    ulimit -n $ULIMIT_NO_FILE
+fi
+
 REQUIREMENTS_FILE="${PROJECT_PATH}/requirements.txt"
 if [ -f "$REQUIREMENTS_FILE" ]; then
     echo "$REQUIREMENTS_FILE exists."
