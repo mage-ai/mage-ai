@@ -20,6 +20,7 @@ import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import api from '@api';
 import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
@@ -79,7 +80,10 @@ function PipelineRuns({
     pipeline_uuid?: string;
     status?: RunStatusEnum;
   }>(null);
-  const isPipelineRunsTab = TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid;
+  const isPipelineRunsTab = useMemo(
+    () => TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid,
+    [selectedTab?.uuid],
+  );
 
   const pipelineUUID = pipelineProp.uuid;
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
@@ -360,8 +364,17 @@ function PipelineRuns({
         </Spacing>
       </PageSectionHeader>
 
-      {isPipelineRunsTab && tablePipelineRuns}
-      {TAB_BLOCK_RUNS.uuid === selectedTab?.uuid && tableBlockRuns}
+      {(!dataPipelineRuns && !dataBlockRuns)
+        ?
+          <Spacing m={3}>
+            <Spinner inverted />
+          </Spacing>
+        :
+          <>
+            {isPipelineRunsTab && tablePipelineRuns}
+            {TAB_BLOCK_RUNS.uuid === selectedTab?.uuid && tableBlockRuns}
+          </>
+      }
     </PipelineDetailPage>
   );
 }
