@@ -263,13 +263,23 @@ def remove_comments(text: str) -> str:
 
 
 def extract_create_statement_table_name(text: str) -> str:
+    create_table_pattern = r'create table(?: if not exists)*'
+
     statement_partial, _ = extract_and_replace_text_between_strings(
         remove_comments(text),
-        r'create table(?: if not exists)*',
+        create_table_pattern,
         r'\(',
     )
     if not statement_partial:
         return None
+
+    match1 = re.match(create_table_pattern, statement_partial, re.IGNORECASE)
+    if match1:
+        idx_start, idx_end = match1.span()
+        new_statement = statement_partial[0:idx_start] + statement_partial[idx_end:]
+        match2 = re.search(r'[^\s]+', new_statement.strip())
+        if match2:
+            return match2.group(0)
 
     parts = statement_partial[:len(statement_partial) - 1].strip().split(' ')
     return parts[-1]
