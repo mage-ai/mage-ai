@@ -13,6 +13,7 @@ import json
 import re
 import time
 
+MAX_LOG_LINES = 10000
 TIMESTAMP_REGEX = re.compile(r'([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (.+)')
 
 
@@ -394,6 +395,13 @@ class LogResource(GenericResource):
                 if block_log_file_path and block_log_file_path not in processed_block_run_log_files:
                     block_run_logs.append(logs_parsed)
                     processed_block_run_log_files.add(block_log_file_path)
+
+        if pipeline_run_logs and len(pipeline_run_logs[0]) > MAX_LOG_LINES:
+            max_index = min(len(pipeline_run_logs[0]) - 1, MAX_LOG_LINES)
+            pipeline_run_logs[0] = pipeline_run_logs[0][:max_index]
+        if block_run_logs and len(block_run_logs[0]) > MAX_LOG_LINES:
+            max_index = min(len(block_run_logs[0]) - 1, MAX_LOG_LINES)
+            block_run_logs[0] = block_run_logs[0][:max_index]
 
         return dict(
             arr=[
