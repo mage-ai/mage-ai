@@ -101,22 +101,12 @@ class BlockExecutor:
                         callback_url=callback_url,
                         tags=tags,
                     )
-                if self.block.callback_block:
-                    try:
-                        self.block.callback_block.execute_callback(
-                            'on_failure',
-                            global_vars=global_vars,
-                            logger=self.logger,
-                            logging_tags=tags,
-                            pipeline_run=pipeline_run,
-                        )
-                    except Exception as callback_err:
-                        self.logger.exception(
-                            f'Failed to execute callback block for {self.block.uuid}',
-                            **merge_dict(tags, dict(
-                                error=callback_err,
-                            )),
-                        )
+                self._execute_callback(
+                    'on_failure',
+                    global_vars=global_vars,
+                    logging_tags=tags,
+                    pipeline_run=pipeline_run,
+                )
                 raise e
             self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
             if on_complete is not None:
@@ -128,14 +118,12 @@ class BlockExecutor:
                     callback_url=callback_url,
                     tags=tags
                 )
-            if self.block.callback_block:
-                self.block.callback_block.execute_callback(
-                    'on_success',
-                    global_vars=global_vars,
-                    logger=self.logger,
-                    logging_tags=tags,
-                    pipeline_run=pipeline_run,
-                )
+            self._execute_callback(
+                'on_success',
+                global_vars=global_vars,
+                logging_tags=tags,
+                pipeline_run=pipeline_run,
+            )
 
             return result
         finally:
@@ -190,6 +178,30 @@ class BlockExecutor:
             )
 
         return result
+
+    def _execute_callback(
+        self,
+        callback: str,
+        global_vars,
+        logging_tags,
+        pipeline_run,
+    ):
+        if self.block.callback_block:
+            try:
+                self.block.callback_block.execute_callback(
+                    callback,
+                    global_vars=global_vars,
+                    logger=self.logger,
+                    logging_tags=logging_tags,
+                    pipeline_run=pipeline_run,
+                )
+            except Exception as callback_err:
+                self.logger.exception(
+                    f'Failed to execute {callback} callback block for {self.block.uuid}',
+                    **merge_dict(logging_tags, dict(
+                        error=callback_err,
+                    )),
+                )
 
     def _run_commands(
         self,
