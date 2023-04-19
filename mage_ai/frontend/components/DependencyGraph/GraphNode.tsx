@@ -24,7 +24,7 @@ import { getRuntimeText } from './utils';
 type GraphNodeProps = {
   block: BlockType;
   bodyText?: string;
-  children: any;
+  children?: any;
   disabled?: boolean;
   hasFailed?: boolean;
   height?: number;

@@ -55,7 +55,9 @@ export function getAllAncestors(block: BlockType, blocks: BlockType[]): BlockTyp
 
 function getUpstreamDynamicAndReduceOuput(block: BlockType, blocks: BlockType[]): {
   dynamicUpstreamBlock?: BlockType;
+  dynamicUpstreamBlocks: BlockType[];
   reduceOutputUpstreamBlock?: BlockType;
+  reduceOutputUpstreamBlocks: BlockType[];
 } {
   const ancestors = getAllAncestors(block, blocks);
   const dynamicUpstreamBlocks = ancestors.filter(({

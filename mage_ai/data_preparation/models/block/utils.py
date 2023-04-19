@@ -27,6 +27,7 @@ def dynamic_block_uuid(
 
     return uuid
 
+
 def create_block_run_from_dynamic_child(
     block,
     pipeline_run,
@@ -306,7 +307,7 @@ def should_reduce_output(block) -> bool:
     return block.configuration and block.configuration.get('reduce_output', False)
 
 
-def is_dynamic_block_child(block: 'Block') -> bool:
+def is_dynamic_block_child(block) -> bool:
     dynamic_or_child = []
 
     for upstream_block in block.upstream_blocks:
