@@ -6,12 +6,13 @@ if 'data_exporter' not in globals():
 
 {% block content %}
 @data_exporter
-def export_data(*args, **kwargs):
+def export_data(data, *args, **kwargs):
     """
-    Exports data to some source
+    Exports data to some source.
 
     Args:
-        args: The input variables from upstream blocks
+        data: The output from the upstream parent block
+        args: The output from any additional upstream blocks (if applicable)
 
     Output (optional):
         Optionally return any object and it'll be logged and

@@ -278,7 +278,7 @@ if 'test' not in globals():
 
 
 @transformer
-def transform(*args, **kwargs):
+def transform(data, *args, **kwargs):
     \"\"\"
     Template code for a transformer block.
 
@@ -286,14 +286,15 @@ def transform(*args, **kwargs):
     There should be one parameter for each output variable from each parent block.
 
     Args:
-        args: The input variables from upstream blocks
+        data: The output from the upstream parent block
+        args: The output from any additional upstream blocks (if applicable)
 
     Returns:
         Anything (e.g. data frame, dictionary, array, int, str, etc.)
     \"\"\"
     # Specify your transformation logic here
 
-    return {}
+    return data
 
 
 @test
@@ -491,12 +492,13 @@ def test_output(output, *args) -> None:
 
 
 @data_exporter
-def export_data(*args, **kwargs):
+def export_data(data, *args, **kwargs):
     \"\"\"
-    Exports data to some source
+    Exports data to some source.
 
     Args:
-        args: The input variables from upstream blocks
+        data: The output from the upstream parent block
+        args: The output from any additional upstream blocks (if applicable)
 
     Output (optional):
         Optionally return any object and it'll be logged and
