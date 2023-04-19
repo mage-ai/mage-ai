@@ -439,15 +439,18 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
                 bold
                 inline
                 monospace
+                warning
               >
                 {BlockTypeEnum.SCRATCHPAD}
-              </Text> block.
+              </Text> block. They are for scratchpad blocks, specifically.
+              To get upstream block outputs inside of other blocks, use
+              the positional arguments.
             </Text>
           </Spacing>
 
           <Spacing mb={PADDING_UNITS}>
             <Text>
-              To load the variable, use the following syntax:
+              To load the variable in a scratchpad block, use the following syntax:
             </Text>
           </Spacing>
 
