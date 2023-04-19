@@ -1021,14 +1021,14 @@ function PipelineDetailPage({
       onClick={() => deleteBlockFile(block)}
       onCancel={hideDeleteConfirmation}
       subtitle={
-        "Deleting this block is dangerous. Your block may have downstream " +
-        "dependencies that depend on this block. You can delete this block anyway " +
-        "and remove it as a dependency from downstream blocks."
+        'Deleting this block is dangerous. Your block may have downstream ' +
+        'dependencies that depend on this block. You can delete this block anyway ' +
+        'and remove it as a dependency from downstream blocks.'
       }
       title="Your block has dependencies"
       width={UNIT * 34}
     />
-  ))
+  ));
 
   const [deleteBlockFile] = useMutation(
     ({
@@ -1898,6 +1898,7 @@ function PipelineDetailPage({
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
       setAnyInputFocused={setAnyInputFocused}
+      setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
       // @ts-ignore

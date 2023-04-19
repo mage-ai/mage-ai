@@ -126,6 +126,7 @@ type PipelineDetailProps = {
   }) => Promise<any>;
   selectedBlock: BlockType;
   setAnyInputFocused: (value: boolean) => void;
+  setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   setIntegrationStreams: (streams: string[]) => void;
   setHiddenBlocks: ((opts: {
@@ -180,6 +181,7 @@ function PipelineDetail({
   savePipelineContent,
   selectedBlock,
   setAnyInputFocused,
+  setDisableShortcuts,
   setEditingBlock,
   setErrors,
   setIntegrationStreams,
@@ -376,8 +378,10 @@ function PipelineDetail({
   const onClickAddSingleDBTModel = useCallback((blockIndex: number) => {
     setAddDBTModelVisible(true);
     setLastBlockIndex(blockIndex);
+    setDisableShortcuts(true);
   }, [
     setAddDBTModelVisible,
+    setDisableShortcuts,
     setLastBlockIndex,
   ]);
 
@@ -385,7 +389,8 @@ function PipelineDetail({
     setAddDBTModelVisible(false);
     setCreatingNewDBTModel(false);
     setDbtModelName('');
-  }, []);
+    setDisableShortcuts(false);
+  }, [setDisableShortcuts]);
 
   const onDrop = useCallback((block: BlockType, blockDropped: BlockType) => {
     let blockIndex;
