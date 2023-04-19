@@ -55,21 +55,25 @@ export function getAllAncestors(block: BlockType, blocks: BlockType[]): BlockTyp
 
 function getUpstreamDynamicAndReduceOuput(block: BlockType, blocks: BlockType[]): {
   dynamicUpstreamBlock?: BlockType;
+  dynamicUpstreamBlocks: BlockType[];
   reduceOutputUpstreamBlock?: BlockType;
+  reduceOutputUpstreamBlocks: BlockType[];
 } {
   const ancestors = getAllAncestors(block, blocks);
-  const dynamicUpstreamBlock = ancestors.find(({
+  const dynamicUpstreamBlocks = ancestors.filter(({
     configuration,
     uuid,
   }) => configuration?.dynamic && uuid !== block?.uuid);
-  const reduceOutputUpstreamBlock = ancestors.find(({
+  const reduceOutputUpstreamBlocks = ancestors.filter(({
     configuration,
     uuid,
   }) => configuration?.reduce_output && uuid !== block?.uuid);
 
   return {
-    dynamicUpstreamBlock,
-    reduceOutputUpstreamBlock,
+    dynamicUpstreamBlock: dynamicUpstreamBlocks[0],
+    dynamicUpstreamBlocks,
+    reduceOutputUpstreamBlock: reduceOutputUpstreamBlocks[0],
+    reduceOutputUpstreamBlocks,
   };
 }
 
@@ -83,7 +87,9 @@ export function useDynamicUpstreamBlocks(blocksToUse: BlockType[], blocks: Block
   return useMemo(() => blocksToUse.map((block: BlockType) => {
     const {
       dynamicUpstreamBlock,
+      dynamicUpstreamBlocks,
       reduceOutputUpstreamBlock,
+      reduceOutputUpstreamBlocks,
     } = getUpstreamDynamicAndReduceOuput(block, blocks);
 
     const {
@@ -96,10 +102,13 @@ export function useDynamicUpstreamBlocks(blocksToUse: BlockType[], blocks: Block
 
     return {
       block,
+      blocksToUse,
       dynamic: !!dynamic,
       dynamicUpstreamBlock,
+      dynamicUpstreamBlocks,
       reduceOutput: !!reduceOutput,
       reduceOutputUpstreamBlock,
+      reduceOutputUpstreamBlocks,
     };
   }), [
     blocks,
