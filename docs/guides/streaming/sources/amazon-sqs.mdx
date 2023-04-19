@@ -9,6 +9,7 @@ connector_type: amazon_sqs
 queue_name: test-queue
 batch_size: 10
 wait_time_seconds: 1
+message_deletion_method: AFTER_RECEIVED   # AFTER_RECEIVED or MANNUAL
 
 serde_config:
   serialization_method: JSON
@@ -33,3 +34,32 @@ environment variable.
 serde_config:
   serialization_method: RAW_VALUE
 ```
+
+## Message deletion method
+
+We support two ways to delete messages:
+1. Delete the message in the data loader automatically after deserializing the message body.
+    * Set `message_deletion_method: AFTER_RECEIVED` in the source config.
+    * The input of the transformer is the list of deserialized message body.
+1. Manually delete the message in transformer after processing the message.
+    * Set `message_deletion_method: MANNUAL` in the source config.
+    * The input of the transformer is the list of dictionary with the structure
+      ```python
+      {
+        'parsed_msg_body': {'k1': 'v1', ...},
+        'raw_message': sqs.Message(...)
+      }
+      ```
+
+      You can use the following example code to process the message and delete it after.
+      ```python
+      @transformer
+      def transform(messages: List[Dict], *args, **kwargs):
+          processed_msgs = []
+          for msg in messages:
+              processed_msg = msg['parsed_msg_body']
+              # Add your own logic to process the message
+              processed_msgs.append(processed_msg)
+              msg['raw_message'].delete()
+          return processed_msgs
+      ```

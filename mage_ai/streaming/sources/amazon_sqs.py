@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
@@ -10,12 +11,18 @@ import json
 DEFAULT_WAIT_TIME_SECONDS = 1
 
 
+class MessageDeletionMethod(str, Enum):
+    AFTER_RECEIVED = 'AFTER_RECEIVED'
+    MANNUAL = 'MANNUAL'
+
+
 @dataclass
 class AmazonSqsConfig(BaseConfig):
     queue_name: str
     batch_size: int = DEFAULT_BATCH_SIZE
     wait_time_seconds: int = DEFAULT_WAIT_TIME_SECONDS
     serde_config: SerDeConfig = None
+    message_deletion_method: MessageDeletionMethod = MessageDeletionMethod.AFTER_RECEIVED
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
@@ -58,8 +65,15 @@ class AmazonSqsSource(BaseSource):
                 )
                 parsed_messages = []
                 for msg in messages:
-                    parsed_messages.append(self.__deserialize_message(msg.body))
-                    msg.delete()
+                    parsed_msg_body = self.__deserialize_message(msg.body)
+                    if self.config.message_deletion_method == MessageDeletionMethod.AFTER_RECEIVED:
+                        parsed_messages.append(parsed_msg_body)
+                        msg.delete()
+                    else:
+                        parsed_messages.append(dict(
+                            parsed_msg_body=self.__deserialize_message(msg.body),
+                            raw_message=msg,
+                        ))
                 if len(parsed_messages) > 0:
                     self._print(f'Received {len(parsed_messages)} message. '
                                 f'Sample: {parsed_messages[0]}.')
