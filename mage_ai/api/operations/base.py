@@ -171,7 +171,7 @@ class BaseOperation():
     async def __delete_show_or_update(self):
         updated_options = await self.__updated_options()
         res = await self.__resource_class().process_member(
-            self.pk, self.user, **updated_options)
+            self.pk, self.user, action=self.action, **updated_options)
 
         policy = self.__policy_class()(res, self.user, **updated_options)
         policy.authorize_action(self.action)
