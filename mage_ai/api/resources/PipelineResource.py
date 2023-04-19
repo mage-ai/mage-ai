@@ -1,3 +1,4 @@
+from mage_ai.api.operations.constants import DELETE
 from mage_ai.api.resources.BaseResource import BaseResource
 from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
 from mage_ai.data_preparation.models.constants import PipelineStatus
@@ -134,7 +135,8 @@ class PipelineResource(BaseResource):
     async def member(self, pk, user, **kwargs):
         pipeline = await Pipeline.get_async(pk)
 
-        switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
+        if kwargs.get('api_operation_action', None) != DELETE:
+            switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
 
         return self(pipeline, user, **kwargs)
 
