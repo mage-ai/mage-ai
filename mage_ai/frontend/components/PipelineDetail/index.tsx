@@ -316,14 +316,6 @@ function PipelineDetail({
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             setTextareaFocused(true);
-          } else if (!anyInputFocused && onlyKeysPresent([KEY_CODE_A], keyMapping)) {
-            addNewBlockAtIndex({
-              type: BlockTypeEnum.SCRATCHPAD,
-            }, selectedBlockIndex, setSelectedBlock);
-          } else if (!anyInputFocused && onlyKeysPresent([KEY_CODE_B], keyMapping)) {
-            addNewBlockAtIndex({
-              type: BlockTypeEnum.SCRATCHPAD,
-            }, selectedBlockIndex + 1, setSelectedBlock);
           }
         } else if (selectedBlockPrevious) {
           if (keyMapping[KEY_CODE_ENTER]) {
