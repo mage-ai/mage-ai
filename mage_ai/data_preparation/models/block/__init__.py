@@ -14,9 +14,12 @@ from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     fetch_input_variables,
     input_variables,
+    is_dynamic_block,
+    is_dynamic_block_child,
     is_output_variable,
     is_valid_print_variable,
     output_variables,
+    should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
     BlockColor,
@@ -1353,6 +1356,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        inclide_block_tags: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
         sample_count: int = None,
@@ -1379,6 +1383,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_block_metadata:
             data['metadata'] = await self.metadata_async()
+
+        if inclide_block_tags:
+            data['tags'] = self.tags()
 
         return data
 
@@ -1896,6 +1903,26 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         if variable_type is not None:
             variable_objects = [v for v in variable_objects if v.variable_type == variable_type]
         return variable_objects
+
+    def tags(self) -> List[str]:
+        from mage_ai.data_preparation.models.block.constants import (
+            TAG_DYNAMIC,
+            TAG_DYNAMIC_CHILD,
+            TAG_REDUCE_OUTPUT,
+        )
+
+        arr = []
+
+        if is_dynamic_block(self):
+            arr.append(TAG_DYNAMIC)
+
+        if is_dynamic_block_child(self):
+            arr.append(TAG_DYNAMIC_CHILD)
+
+        if should_reduce_output(self):
+            arr.append(TAG_REDUCE_OUTPUT)
+
+        return arr
 
     def variable_object(
         self,

@@ -3,10 +3,11 @@ import BlockType, {
   BlockRequestPayloadType,
   BlockTypeEnum,
   CONVERTIBLE_BLOCK_TYPES,
+  TagEnum,
 } from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
-import { lowercase } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
 
 export const getUpstreamBlockUuids = (
   currentBlock: BlockType,
@@ -271,6 +272,36 @@ export const getMoreActionsItems = (
   return items;
 };
 
+export function buildTags({ tags }: BlockType): {
+  description?: string;
+  title: string;
+}[] {
+  const arr = [];
+
+  if (tags?.includes(TagEnum.DYNAMIC)) {
+    arr.push({
+      description: 'This block will create N blocks for each of its downstream blocks.',
+      title: capitalizeRemoveUnderscoreLower(TagEnum.DYNAMIC),
+    });
+  }
+
+  if (tags?.includes(TagEnum.DYNAMIC_CHILD)) {
+    arr.push({
+      description: 'This block is dynamically created by its upstream parent block that is dynamic.',
+      title: capitalizeRemoveUnderscoreLower(TagEnum.DYNAMIC_CHILD),
+    });
+  }
+
+  if (tags?.includes(TagEnum.REDUCE_OUTPUT)) {
+    arr.push({
+      description: 'Reduce output from all dynamically created blocks into a single array output.',
+      title: capitalizeRemoveUnderscoreLower(TagEnum.REDUCE_OUTPUT),
+    });
+  }
+
+  return arr;
+}
+
 export function buildBorderProps({
   block,
   dynamic,
@@ -280,29 +311,7 @@ export function buildBorderProps({
   reduceOutputUpstreamBlock,
   selected,
 }) {
-  const arr = [];
-
-  if (dynamic) {
-    arr.push({
-      title: 'Dynamic',
-      description: 'This block will create N blocks for each of its downstream blocks.',
-    });
-  }
-
   const dynamicChildBlock = dynamicUpstreamBlock && !reduceOutputUpstreamBlock;
-  if (dynamicChildBlock) {
-    arr.push({
-      title: 'Dynamic child',
-      description: 'This block is dynamically created by its upstream parent block that is dynamic.',
-    });
-
-    if (reduceOutput) {
-      arr.push({
-        title: 'Reduce output',
-        description: 'Reduce output from all dynamically created blocks into a single array output.',
-      });
-    }
-  }
 
   return {
     borderColorShareProps: {
@@ -313,6 +322,6 @@ export function buildBorderProps({
       hasError,
       selected,
     },
-    tags: arr,
+    tags: buildTags(block),
   };
 }
