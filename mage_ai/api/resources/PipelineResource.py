@@ -135,7 +135,7 @@ class PipelineResource(BaseResource):
     async def member(self, pk, user, **kwargs):
         pipeline = await Pipeline.get_async(pk)
 
-        if kwargs.get('action', None) != DELETE:
+        if kwargs.get('api_operation_action', None) != DELETE:
             switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
 
         return self(pipeline, user, **kwargs)
