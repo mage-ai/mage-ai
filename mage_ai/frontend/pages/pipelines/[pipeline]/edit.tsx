@@ -276,6 +276,7 @@ function PipelineDetailPage({
         [VIEW_QUERY_PARAM]: newView,
       }, {
         preserveParams: [
+          'block_uuid',
           'file_path',
           'file_paths[]',
         ],
@@ -284,6 +285,7 @@ function PipelineDetailPage({
       });
     }
   }, []);
+
   useEffect(() => {
     if (!activeSidekickView) {
       setActiveSidekickView(ViewKeyEnum.TREE, false);
@@ -1450,19 +1452,30 @@ function PipelineDetailPage({
 
   useEffect(() => {
     if (blockUUIDFromUrl && !selectedBlock) {
-      const block = blocks.find(({ uuid }) => blockUUIDFromUrl === uuid);
+      const block = blocks.find(({ uuid }) => blockUUIDFromUrl?.split(':')?.[0] === uuid);
       if (block) {
+        // ts-ignore
+        setHiddenBlocks(prev => ({
+          ...prev,
+          [block.uuid]: false,
+        }));
         onSelectBlockFile(block.uuid, block.type, null);
       }
     } else if (blocksPrevious?.length !== blocks?.length && selectedBlock) {
+      // ts-ignore
+      setHiddenBlocks(prev => ({
+        ...prev,
+        [selectedBlock.uuid]: false,
+      }));
       onSelectBlockFile(selectedBlock.uuid, selectedBlock.type, null);
     }
   }, [
     blockUUIDFromUrl,
-    blocksPrevious?.length,
     blocks,
+    blocksPrevious?.length,
     onSelectBlockFile,
     selectedBlock,
+    setHiddenBlocks,
   ]);
 
   const token = useMemo(() => new AuthToken(), []);
