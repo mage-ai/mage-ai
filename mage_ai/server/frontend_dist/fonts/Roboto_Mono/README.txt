@@ -46,11 +46,11 @@ Learn more about variable fonts
 In desktop apps
 
   https://theblog.adobe.com/can-variable-fonts-illustrator-cc
-  https://helpx.adobe.com/nz/photoshop/using/fonts.html#variable_fonts
+  https://helpx.adobe.com/nz/photoshop/usingfonts.html#variable_fonts
 
 Online
 
-  https://developers.google.com/fonts/docs/getting_started
+  https://developers.google.comfonts/docs/getting_started
   https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Fonts/Variable_Fonts_Guide
   https://developer.microsoft.com/en-us/microsoft-edge/testdrive/demos/variable-fonts
 
@@ -62,7 +62,7 @@ Installing fonts
 
 Android Apps
 
-  https://developers.google.com/fonts/docs/android
+  https://developers.google.comfonts/docs/android
   https://developer.android.com/guide/topics/ui/look-and-feel/downloadable-fonts
 
 License
