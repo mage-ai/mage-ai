@@ -118,7 +118,7 @@ function Secrets({
   ]);
 
   const SAMPLE_SECRET_VALUE = `
-    {{ mage_secret_var('<secret_name>') }}
+    "{{ mage_secret_var('<secret_name>') }}"
   `;
 
   const SECRET_IN_CODE = `
