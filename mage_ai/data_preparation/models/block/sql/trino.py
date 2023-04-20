@@ -98,14 +98,14 @@ def create_upstream_block_tables(
 
 
 def interpolate_input_data(block, query, loader, unique_table_name_suffix: str = None):
-    get_table = None
-    if unique_table_name_suffix:
-        get_table = lambda opts: f"{opts['table']}_{unique_table_name_suffix}"
+    def _get_table(opts):
+        table_name = opts['table']
+        return f'{table_name}_{unique_table_name_suffix}'
 
     return interpolate_input(
         block,
         query,
         get_database=lambda opts: loader.default_database(),
         get_schema=lambda opts: loader.default_schema(),
-        get_table=get_table,
+        get_table=_get_table if unique_table_name_suffix else None,
     )
