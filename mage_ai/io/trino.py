@@ -12,8 +12,10 @@ from mage_ai.shared.utils import (
     convert_python_type_to_trino_type,
 )
 from pandas import DataFrame, Series
+from time import sleep
 from trino.auth import BasicAuthentication
 from trino.dbapi import Connection, Cursor as CursorParent
+from trino.exceptions import TrinoExternalError
 from trino.transaction import IsolationLevel
 from typing import IO, List, Mapping, Union
 
@@ -121,6 +123,48 @@ class Trino(BaseSQL):
         ])))
 
         return f'CREATE TABLE {full_table_name} (' + ','.join(query) + ')'
+
+    def execute_queries(
+        self,
+        queries: List[str],
+        **kwargs
+    ) -> List:
+        data = None
+        tries = 0
+
+        while data is None and tries < 3:
+            if tries >= 1:
+                sleep(1)
+
+            try:
+                data = super().execute_queries(queries, **kwargs)
+            except TrinoExternalError as err:
+                print(err)
+
+            tries += 1
+
+        return data or []
+
+    def load(
+        self,
+        query_string: str,
+        **kwargs,
+    ) -> DataFrame:
+        data = None
+        tries = 0
+
+        while data is None and tries < 3:
+            if tries >= 1:
+                sleep(1)
+
+            try:
+                data = super().load(query_string, **kwargs)
+            except TrinoExternalError as err:
+                print(err)
+
+            tries += 1
+
+        return data
 
     def open(self) -> None:
         with self.printer.print_msg('Opening connection to Trino database'):
