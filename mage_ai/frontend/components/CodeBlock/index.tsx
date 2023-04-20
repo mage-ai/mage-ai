@@ -930,12 +930,7 @@ function CodeBlock({
         [CONFIG_KEY_LIMIT]: DEFAULT_SQL_CONFIG_KEY_LIMIT,
       });
     }
-  }, [
-    dataProviderConfig,
-    isDBT,
-    isSQLBlock,
-    updateDataProviderConfig,
-  ]);
+  }, []);
 
   const requiresDatabaseName = (DataSourceTypeEnum.BIGQUERY === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
     || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
