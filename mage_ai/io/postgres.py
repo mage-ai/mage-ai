@@ -32,6 +32,7 @@ class Postgres(BaseSQL):
         ssh_password: Union[str, None] = None,
         ssh_pkey: Union[str, None] = None,
         verbose=True,
+        connect_timeout: int = None,
         **kwargs,
     ) -> None:
         """
@@ -60,6 +61,7 @@ class Postgres(BaseSQL):
             ssh_username=ssh_username,
             ssh_password=ssh_password,
             ssh_pkey=ssh_pkey,
+            connect_timeout=connect_timeout,
             **kwargs,
         )
 
@@ -78,6 +80,7 @@ class Postgres(BaseSQL):
             ssh_username=config[ConfigKey.POSTGRES_SSH_USERNAME],
             ssh_password=config[ConfigKey.POSTGRES_SSH_PASSWORD],
             ssh_pkey=config[ConfigKey.POSTGRES_SSH_PKEY],
+            connect_timeout=config[ConfigKey.POSTGRES_CONNECT_TIMEOUT],
         )
 
     def default_database(self) -> str:
@@ -121,16 +124,22 @@ class Postgres(BaseSQL):
 
                 host = '127.0.0.1'
                 port = self.ssh_tunnel.local_bind_port
+
+            connect_opts = dict(
+                database=database,
+                host=host,
+                password=password,
+                port=port,
+                user=user,
+                keepalives=1,
+                keepalives_idle=300,
+            )
+
+            if self.settings.get('connect_timeout'):
+                connect_opts['connect_timeout'] = self.settings['connect_timeout']
+
             try:
-                self._ctx = connect(
-                    database=database,
-                    host=host,
-                    password=password,
-                    port=port,
-                    user=user,
-                    keepalives=1,
-                    keepalives_idle=300,
-                )
+                self._ctx = connect(**connect_opts)
             except Exception:
                 if self.ssh_tunnel is not None:
                     self.ssh_tunnel.stop()
