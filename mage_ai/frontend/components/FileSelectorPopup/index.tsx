@@ -119,6 +119,7 @@ function FileSelectorPopup({
               placeholder="Enter name"
               required
               stacked
+              suffixValue={`.${BlockLanguageEnum.SQL}`}
               value={!isEditingName && dbtModelName}
             />
           </InputRowStyle>

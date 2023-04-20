@@ -742,6 +742,7 @@ const InputWrapper = ({
         beforeIcon,
         compact,
         danger: hasError,
+        fullWidth,
         hasContent: !!content,
         isFocused: showLabel,
         label: (label === 0 ? '0' : label),

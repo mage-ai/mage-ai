@@ -18,7 +18,6 @@ import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelType from '@interfaces/KernelType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KeyboardText from '@oracle/elements/KeyboardText';
-import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
@@ -103,12 +102,12 @@ function KernelStatus({
   const clusters: ClusterType[] = useMemo(() => dataClusters?.cluster?.clusters || [], dataClusters);
   const selectedCluster = find(clusters, ({ is_active: isActive }) => isActive);
 
-  const [updateCluster, { isLoading: isLoadingUpdateCluster }] = useMutation(
+  const [updateCluster] = useMutation(
     api.clusters.useUpdate(selectedSparkClusterType),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: (response) => {
+          callback: () => {
             fetchClusters();
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -169,27 +168,6 @@ function KernelStatus({
       updatePipelineMetadata,
     ],
   );
-
-  const pipelineNameInput = useMemo(() => (
-    <LabelWithValueClicker
-      bold={false}
-      inputValue={newPipelineName}
-      notRequired
-      onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
-      onChange={(e) => {
-        setNewPipelineName(e.target.value);
-        e.preventDefault();
-      }}
-      onClick={() => setIsEditingPipeline(true)}
-      onFocus={() => setIsEditingPipeline(true)}
-      stacked
-      value={isEditingPipeline ? null : (pipeline?.uuid || '')}
-    />
-  ), [
-    isEditingPipeline,
-    newPipelineName,
-    pipeline,
-  ]);
 
   const kernelStatus = useMemo(() => (
     <div
@@ -319,7 +297,7 @@ function KernelStatus({
                   label: () => type,
                   onClick: () => updatePipelineMetadata(pipeline?.name, type),
                   uuid: type,
-                }))
+                })),
             ]}
             onClickCallback={() => setShowSelectKernel(false)}
             open={showSelectKernel}
@@ -342,24 +320,6 @@ function KernelStatus({
     showSelectKernel,
     themeContext,
     updateCluster,
-  ]);
-
-  const pipelineName = useMemo(() => (
-    <Flex alignItems="center">
-      <Text>
-        Pipeline:&nbsp;{selectedFilePath && pipeline?.uuid}
-      </Text>
-      {!selectedFilePath && pipelineNameInput}
-
-      <Spacing mr={3} />
-    </Flex>
-  ), [
-    alive,
-    isBusy,
-    pipeline,
-    pipelineNameInput,
-    selectedFilePath,
-    themeContext,
   ]);
 
   return (
