@@ -138,8 +138,6 @@ class Postgres(BaseSQL):
             if self.settings.get('connect_timeout'):
                 connect_opts['connect_timeout'] = self.settings['connect_timeout']
 
-            print(connect_opts)
-
             try:
                 self._ctx = connect(**connect_opts)
             except Exception:
