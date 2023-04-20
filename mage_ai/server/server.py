@@ -52,6 +52,7 @@ from mage_ai.settings import (
     LDAP_ADMIN_USERNAME,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
+    USE_UNIQUE_TERMINAL,
 )
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
@@ -160,7 +161,11 @@ def make_app():
         shell_command = 'bash'
         if os.name == 'nt':
             shell_command = 'cmd'
-    term_manager = terminado.NamedTermManager(shell_command=[shell_command])
+    term_klass = terminado.NamedTermManager
+    if USE_UNIQUE_TERMINAL:
+        term_klass = terminado.UniqueTermManager
+    term_manager = term_klass(shell_command=[shell_command])
+
     routes = [
         (r'/', MainPageHandler),
         (r'/pipelines', MainPageHandler),
