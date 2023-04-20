@@ -15,7 +15,7 @@ from pandas import DataFrame, Series
 from time import sleep
 from trino.auth import BasicAuthentication
 from trino.dbapi import Connection, Cursor as CursorParent
-from trino.exceptions import TrinoExternalError
+from trino.exceptions import TrinoUserError
 from trino.transaction import IsolationLevel
 from typing import IO, List, Mapping, Union
 
@@ -138,7 +138,7 @@ class Trino(BaseSQL):
 
             try:
                 data = super().execute_queries(queries, **kwargs)
-            except TrinoExternalError as err:
+            except TrinoUserError as err:
                 print(err)
 
             tries += 1
@@ -159,7 +159,7 @@ class Trino(BaseSQL):
 
             try:
                 data = super().load(query_string, **kwargs)
-            except TrinoExternalError as err:
+            except TrinoUserError as err:
                 print(err)
 
             tries += 1
