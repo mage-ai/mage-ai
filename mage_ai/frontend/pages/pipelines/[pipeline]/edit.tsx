@@ -1506,6 +1506,10 @@ function PipelineDetailPage({
           uuid,
         } = message;
 
+        if (!uuid) {
+          return;
+        }
+
         const block =
           blocks.find(({ type: type2, uuid: uuid2 }) => blockType === type2 && uuid === uuid2);
 
