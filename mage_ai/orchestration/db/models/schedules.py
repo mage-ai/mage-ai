@@ -73,6 +73,10 @@ class PipelineSchedule(BaseModel):
         return SettingsConfig.load(config=settings)
 
     @property
+    def pipeline(self) -> 'Pipeline':
+        return Pipeline.get(self.pipeline_uuid)
+
+    @property
     def pipeline_runs_count(self) -> int:
         return len(self.pipeline_runs)
 
@@ -169,7 +173,12 @@ class PipelineSchedule(BaseModel):
             return False
 
         if self.schedule_interval == '@once':
-            if len(self.pipeline_runs) == 0:
+            pipeline_run_count = len(self.pipeline_runs)
+            if pipeline_run_count == 0:
+                return True
+            executor_count = self.pipeline.executor_count
+            # Used by streaming pipeline to launch multiple executors
+            if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         else:
             """
