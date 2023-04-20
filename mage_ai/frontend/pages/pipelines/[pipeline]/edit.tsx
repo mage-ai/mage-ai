@@ -725,9 +725,14 @@ function PipelineDetailPage({
       extensionsToSave[extensionUUID]['blocks'] = arr;
     });
 
-    const blocksToSave =
-      // @ts-ignore
-      (pipelineOverride?.blocks || blocks).map(({ uuid }) => blocksByUUID[uuid]);
+    const blocksToSave = [];
+    // @ts-ignore
+    (pipelineOverride?.blocks || blocks).forEach(({ uuid }) => {
+      const b = blocksByUUID[uuid];
+      if (typeof b !== 'undefined') {
+        blocksToSave.push(b);
+      }
+    });
 
     // @ts-ignore
     return updatePipeline({
