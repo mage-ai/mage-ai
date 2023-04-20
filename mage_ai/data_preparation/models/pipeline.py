@@ -53,6 +53,7 @@ class Pipeline:
         self.type = PipelineType.PYTHON
         self.updated_at = datetime.datetime.now()
         self.widget_configs = []
+        self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
         if config is None:
             self.load_config_from_yaml()
         else:
@@ -89,6 +90,12 @@ class Pipeline:
     @property
     def dir_path(self):
         return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
+
+    @property
+    def executor_count(self):
+        if self.type == PipelineType.STREAMING:
+            return self._executor_count
+        return 1
 
     @property
     def variables_dir(self):
@@ -395,6 +402,10 @@ class Pipeline:
             self.data_integration = catalog
         self.name = config.get('name')
         self.description = config.get('description')
+        try:
+            self._executor_count = int(config.get('executor_count'))
+        except Exception:
+            pass
         self.updated_at = config.get('updated_at')
         self.type = config.get('type') or self.type
 
