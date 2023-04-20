@@ -1,7 +1,5 @@
 from inspect import isawaitable
-from jupyter_client.jsonutil import date_default
 from mage_ai.api.presenters.BasePresenter import BasePresenter
-import json
 
 
 class KernelPresenter(BasePresenter):
