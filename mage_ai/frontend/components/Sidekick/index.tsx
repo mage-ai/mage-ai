@@ -483,6 +483,7 @@ function Sidekick({
               savePipelineContent={savePipelineContent}
               selectedBlock={selectedBlock}
               setAnyInputFocused={setAnyInputFocused}
+              setErrors={setErrors}
               setSelectedBlock={setSelectedBlock}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={textareaFocused}
