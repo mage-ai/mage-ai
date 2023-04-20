@@ -2,6 +2,7 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
+from mage_ai.data_preparation.models.block.utils import clean_name
 from mage_ai.data_preparation.models.constants import BlockType, FILE_EXTENSION_TO_BLOCK_LANGUAGE
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
@@ -15,8 +16,28 @@ class BlockResource(GenericResource):
     def create(self, payload, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
+        content = payload.get('content')
+        name = payload.get('name')
+        uuid = clean_name(name)
+        """
+        New DBT models include "content" in its block create payload,
+        whereas creating blocks from existing DBT model files do not.
+        """
+        if payload.get('type') == BlockType.DBT and content:
+            dbt_block = DBTBlock(
+                name,
+                uuid,
+                BlockType.DBT,
+                configuration=payload.get('configuration'),
+                language=payload.get('language'),
+            )
+            if dbt_block.file_path and dbt_block.file.exists():
+                raise Exception('DBT model at that folder location already exists. \
+                    Please choose a different model name, or add a DBT model by \
+                    selecting single model from file.')
+
         block = Block.create(
-            payload.get('name') or payload.get('uuid'),
+            name or payload.get('uuid'),
             payload.get('type'),
             get_repo_path(),
             color=payload.get('color'),
@@ -29,7 +50,6 @@ class BlockResource(GenericResource):
             upstream_block_uuids=payload.get('upstream_blocks', []),
         )
 
-        content = payload.get('content')
         if content:
             if payload.get('converted_from'):
                 content = convert_to_block(block, content)
