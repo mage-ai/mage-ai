@@ -8,6 +8,7 @@ class PipelinePresenter(BasePresenter):
         'blocks',
         'data_integration',
         'description',
+        'executor_count',
         'name',
         'type',
         'updated_at',

@@ -490,6 +490,7 @@ class Pipeline:
         base = dict(
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
+            executor_count=self.executor_count,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
@@ -653,7 +654,7 @@ class Pipeline:
             self.uuid = new_uuid
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
-            self.save()
+            await self.save_async()
             self.__transfer_related_models(old_uuid, new_uuid)
 
         should_save = False
@@ -695,7 +696,7 @@ class Pipeline:
                 should_save = True
 
         if should_save:
-            self.save()
+            await self.save_async()
 
         if update_content:
             block_uuid_mapping = dict()
