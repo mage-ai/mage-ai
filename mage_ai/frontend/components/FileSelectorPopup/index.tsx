@@ -98,10 +98,10 @@ function FileSelectorPopup({
         <>
           <InputRowStyle>
             <LabelWithValueClicker
+              dynamicSizing
               inputValue={dbtModelName}
               label="Model name (cannot be changed):"
               labelColor={dark.accent.dbt}
-              minWidth={UNIT * 38}
               notRequired
               onBlur={() => {
                 setIsEditingName(false);
