@@ -75,6 +75,7 @@ def interpolate_input(
     replace_func: Callable = None,
     get_database: Callable = None,
     get_schema: Callable = None,
+    get_table: Callable = None,
 ) -> str:
     def __replace_func(db, schema, tn):
         if replace_func:
@@ -116,7 +117,14 @@ def interpolate_input(
         if not schema and get_schema:
             schema = get_schema(dict(configuration=configuration))
 
-        replace_with = __replace_func(database, schema, upstream_block.table_name)
+        table_name = upstream_block.table_name
+        if get_table:
+            table_name = get_table(dict(
+                configuration=configuration,
+                table=table_name,
+            ))
+
+        replace_with = __replace_func(database, schema, table_name)
 
         upstream_block_content = upstream_block.content
         if is_sql and \
@@ -127,7 +135,7 @@ def interpolate_input(
             upstream_query = interpolate_input(upstream_block, upstream_block_content)
             replace_with = f"""(
     {upstream_query}
-) AS {upstream_block.table_name}"""
+) AS {table_name}"""
 
         query = re.sub(
             build_variable_pattern(f'df_{idx + 1}'),

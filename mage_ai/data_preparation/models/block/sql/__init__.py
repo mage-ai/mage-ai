@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
@@ -399,6 +400,10 @@ def execute_sql_code(
     elif DataSource.TRINO.value == data_provider:
         from mage_ai.io.trino import Trino
 
+        unique_table_name_suffix = None
+        if (configuration or block.configuration).get('unique_upstream_table_name', False):
+            unique_table_name_suffix = str(int(datetime.utcnow().timestamp()))
+
         with Trino.with_config(config_file_loader) as loader:
             database = database or loader.default_database()
             schema = schema or loader.default_schema()
@@ -409,9 +414,15 @@ def execute_sql_code(
                 configuration=configuration,
                 execution_partition=execution_partition,
                 query=query,
+                unique_table_name_suffix=unique_table_name_suffix,
             )
 
-            query_string = trino.interpolate_input_data(block, query, loader)
+            query_string = trino.interpolate_input_data(
+                block,
+                query,
+                loader,
+                unique_table_name_suffix=unique_table_name_suffix,
+            )
             query_string = interpolate_vars(query_string, global_vars=global_vars)
 
             if use_raw_sql:
