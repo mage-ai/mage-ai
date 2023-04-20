@@ -9,14 +9,12 @@ const TextInputStyle = styled.input<TextInputProps>`
   ${SHARED_INPUT_STYLES}
 `;
 
-const TextInput = ({ ...props }: TextInputProps, ref) => {
-  return (
-    <InputWrapper
-      {...props}
-      input={<TextInputStyle {...props} />}
-      ref={ref}
-    />
-  );
-};
+const TextInput = ({ ...props }: TextInputProps, ref) => (
+  <InputWrapper
+    {...props}
+    input={<TextInputStyle {...props} />}
+    ref={ref}
+  />
+);
 
 export default React.forwardRef(TextInput);
