@@ -3,7 +3,11 @@ from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.utils import clean_name
-from mage_ai.data_preparation.models.constants import BlockType, FILE_EXTENSION_TO_BLOCK_LANGUAGE
+from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
+    BlockType,
+    FILE_EXTENSION_TO_BLOCK_LANGUAGE,
+)
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.orchestration.db import safe_db_query
@@ -18,18 +22,19 @@ class BlockResource(GenericResource):
 
         content = payload.get('content')
         name = payload.get('name')
+        language = payload.get('language')
         uuid = clean_name(name)
         """
         New DBT models include "content" in its block create payload,
         whereas creating blocks from existing DBT model files do not.
         """
-        if payload.get('type') == BlockType.DBT and content:
+        if payload.get('type') == BlockType.DBT and content and language == BlockLanguage.SQL:
             dbt_block = DBTBlock(
                 name,
                 uuid,
                 BlockType.DBT,
                 configuration=payload.get('configuration'),
-                language=payload.get('language'),
+                language=language,
             )
             if dbt_block.file_path and dbt_block.file.exists():
                 raise Exception('DBT model at that folder location already exists. \
@@ -44,7 +49,7 @@ class BlockResource(GenericResource):
             config=payload.get('config'),
             configuration=payload.get('configuration'),
             extension_uuid=payload.get('extension_uuid'),
-            language=payload.get('language'),
+            language=language,
             pipeline=pipeline,
             priority=payload.get('priority'),
             upstream_block_uuids=payload.get('upstream_blocks', []),
