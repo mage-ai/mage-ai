@@ -788,8 +788,8 @@ class Pipeline:
                     await self.save_async(widget=widget)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
-        uuids_new = [b['uuid'] for b in blocks]
-        uuids_old = [b['uuid'] for b in self.block_configs]
+        uuids_new = [b['uuid'] for b in blocks if b]
+        uuids_old = [b['uuid'] for b in self.block_configs if b]
 
         min_length = min(len(uuids_new), len(uuids_old))
 
