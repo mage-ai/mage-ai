@@ -31,6 +31,7 @@ use Kafka locally:
          - "2181:2181"
      kafka:
        build: .
+       container_name: docker_kafka
        ports:
          - "9092:9092"
        expose:
