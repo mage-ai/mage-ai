@@ -726,7 +726,11 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
               onOpenFile={(filePath: string) => {
                 let finalFilePath = filePath;
                 if (creatingNewDBTModel) {
-                  const blockName = addUnderscores(dbtModelName || randomNameGenerator());
+                  let blockName = addUnderscores(dbtModelName || randomNameGenerator());
+                  const sqlExtension = `.${FileExtensionEnum.SQL}`;
+                  if (blockName.endsWith(sqlExtension)) {
+                    blockName = blockName.slice(0, -4);
+                  }
                   finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
                 }
 
