@@ -32,6 +32,7 @@ default:
   MYSQL_PASSWORD: password
   MYSQL_PORT: 3306
   MYSQL_USER: root
+  POSTGRES_CONNECT_TIMEOUT: 10
   POSTGRES_DBNAME: postgres
   POSTGRES_SCHEMA: public # Optional
   POSTGRES_USER: username

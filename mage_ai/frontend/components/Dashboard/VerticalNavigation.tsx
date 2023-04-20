@@ -28,6 +28,7 @@ const ICON_SIZE = 3 * UNIT;
 export type NavigationItem = {
   Icon: any;
   IconSelected?: any;
+  disabled?: boolean;
   id: string;
   isSelected?: (pathname: string, item: NavigationItem) => boolean;
   label: () => string;
@@ -105,6 +106,7 @@ function VerticalNavigation({
       const {
         Icon,
         IconSelected,
+        disabled,
         id,
         isSelected,
         label,
@@ -134,6 +136,7 @@ function VerticalNavigation({
                 backgroundPanel
                 basic
                 borderWidth={2}
+                disabled={disabled}
                 linkProps={linkProps}
                 onClick={onClick}
                 paddingUnits={1}
@@ -152,6 +155,7 @@ function VerticalNavigation({
             {(!selected || (selected && !IconSelected)) && (
               <KeyboardShortcutButton
                 block
+                disabled={disabled}
                 linkProps={linkProps}
                 noHoverUnderline
                 noPadding
