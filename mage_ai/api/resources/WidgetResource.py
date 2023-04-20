@@ -78,5 +78,5 @@ class WidgetResource(GenericResource):
         self.model.update(payload)
         if payload.get('configuration'):
             self.model.configuration = payload['configuration']
-            self.parent_model.save()
+            self.parent_model().save()
         return self
