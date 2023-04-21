@@ -2,9 +2,9 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt.utils import (
     build_command_line_arguments,
     create_upstream_tables,
+    create_temporary_profile,
     fetch_model_data,
     load_profiles_async,
-    load_profiles_file,
     parse_attributes,
     query_from_compiled_sql,
     run_dbt_tests,
@@ -18,7 +18,6 @@ import json
 import os
 import shutil
 import subprocess
-import yaml
 
 
 class DBTBlock(Block):
@@ -122,19 +121,16 @@ class DBTBlock(Block):
             run_settings=run_settings,
             test_execution=test_execution,
         )
+
         project_full_path = command_line_dict['project_full_path']
         profiles_dir = command_line_dict['profiles_dir']
         dbt_profile_target = command_line_dict['profile_target']
 
         # Create a temporary profiles file with variables and secrets interpolated
-        profiles_full_path = os.path.join(project_full_path, 'profiles.yml')
-        profile = load_profiles_file(profiles_full_path)
-
-        temp_profile_full_path = os.path.join(profiles_dir, 'profiles.yml')
-        os.makedirs(os.path.dirname(temp_profile_full_path), exist_ok=True)
-
-        with open(temp_profile_full_path, 'w') as f:
-            yaml.safe_dump(profile, f)
+        _, temp_profile_full_path = create_temporary_profile(
+            project_full_path,
+            profiles_dir,
+        )
 
         is_sql = BlockLanguage.SQL == self.language
         if is_sql:
