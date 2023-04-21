@@ -2,6 +2,7 @@ from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.shared.logger import VerboseFunctionExec
 from typing import Any, List
 from urllib.parse import urlparse
 import asyncio
@@ -185,6 +186,14 @@ class Git:
         requirements_file = os.path.join(
             self.repo.working_dir, 'requirements.txt')
 
-        if os.path.exists(requirements_file):
-            cmd = f'pip3 install -r {requirements_file}'
-            self._run_command(cmd)
+        with VerboseFunctionExec(
+            f'Running "pip3 install -r {requirements_file}"',
+            verbose=True,
+        ):
+            try:
+                if os.path.exists(requirements_file):
+                    cmd = f'pip3 install -r {requirements_file}'
+                    self._run_command(cmd)
+            except Exception as e:
+                print(f'Skip installing {requirements_file} due to error: {e}')
+                pass
