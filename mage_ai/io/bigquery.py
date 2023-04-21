@@ -346,6 +346,10 @@ WHERE table_id = '{table_name}'
                 'No valid configuration settings found for Google BigQuery. You must specify '
                 'either your service account key or the filepath to your service account key.'
             )
+
+        if ConfigKey.GOOGLE_LOCATION in config:
+            kwargs['location'] = config[ConfigKey.GOOGLE_LOCATION]
+
         return cls(**kwargs)
 
     @classmethod
