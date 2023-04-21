@@ -177,9 +177,22 @@ You can install and run Mage using Docker (recommended), `pip`, or `conda`.
       /app/run_app.sh mage start demo_project
     ```
 
+    - If you want to run Mage locally on a different port, change the first port after `-p`
+    in the command above. For example, to change the port to `6790`, run:
+
+    ```bash
+    docker run -it -p 6790:6789 -v $(pwd):/home/src mageai/mageai \
+      /app/run_app.sh mage start demo_project
+    ```
+
     <sub>Want to use Spark or other integrations? Read more about [integrations](https://docs.mage.ai/data-integrations/overview).</sub>
 
 1. Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
+
+  - If you changed the Docker port for running Mage locally, go to the url
+  `http://127.0.0.1:[port]` (e.g. http://127.0.0.1:6790) in your browser to
+  view the pipelines dashboard.
+
 
 ### Using `pip` or `conda`
 
