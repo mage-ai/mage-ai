@@ -28,6 +28,7 @@ class ConfigKey(str, Enum):
     CLICKHOUSE_PASSWORD = 'CLICKHOUSE_PASSWORD'
     CLICKHOUSE_PORT = 'CLICKHOUSE_PORT'
     CLICKHOUSE_USERNAME = 'CLICKHOUSE_USERNAME'
+    GOOGLE_LOCATION = 'GOOGLE_LOCATION'
     GOOGLE_SERVICE_ACC_KEY = 'GOOGLE_SERVICE_ACC_KEY'
     GOOGLE_SERVICE_ACC_KEY_FILEPATH = 'GOOGLE_SERVICE_ACC_KEY_FILEPATH'
     MSSQL_DATABASE = 'MSSQL_DATABASE'
@@ -278,6 +279,7 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.AWS_REGION: (VerboseConfigKey.AWS, 'region'),
         ConfigKey.AWS_SECRET_ACCESS_KEY: (VerboseConfigKey.AWS, 'secret_access_key'),
         ConfigKey.AWS_SESSION_TOKEN: (VerboseConfigKey.AWS, 'session_token'),
+        ConfigKey.GOOGLE_LOCATION: (VerboseConfigKey.BIGQUERY, 'location'),
         ConfigKey.GOOGLE_SERVICE_ACC_KEY: (VerboseConfigKey.BIGQUERY, 'credentials_mapping'),
         ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH: (
             VerboseConfigKey.BIGQUERY,
