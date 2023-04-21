@@ -38,13 +38,14 @@ class GitBranchResource(GenericResource):
             self.model = dict(name=git_manager.current_branch, status=status)
         elif action_type == 'commit':
             message = payload.get('message')
+            files = payload.get('files', None)
             if not message:
                 error = ApiError.RESOURCE_ERROR
                 error.update({
                     'message': 'Message is empty, please add a message for your commit.',
                 })
                 raise ApiError(error)
-            git_manager.commit(message)
+            git_manager.commit(message, files)
         elif action_type == 'push':
             git_manager.push()
         elif action_type == 'pull':

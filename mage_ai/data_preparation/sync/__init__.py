@@ -14,7 +14,7 @@ class GitConfig(BaseConfig):
     email: str = ''
     branch: str = 'main'
     sync_on_pipeline_run: bool = False
-    ssh_private_key_secret_name: str = GIT_SSH_PRIVATE_KEY_SECRET_NAME
-    ssh_public_key_secret_name: str = GIT_SSH_PUBLIC_KEY_SECRET_NAME
+    ssh_private_key_secret_name: str = None
+    ssh_public_key_secret_name: str = None
     # This is not necessary anymore, but leaving it for backwards compatibility
     type: str = 'git'

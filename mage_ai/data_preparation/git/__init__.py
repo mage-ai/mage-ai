@@ -3,6 +3,7 @@ from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.orchestration.db.models.oauth import User
 from urllib.parse import urlparse
+from typing import List
 import asyncio
 import base64
 import os
@@ -158,9 +159,13 @@ class Git:
     def status(self) -> str:
         return self.repo.git.status()
 
-    def commit(self, message):
+    def commit(self, message, files: List[str] = None):
         if self.repo.index.diff(None) or self.repo.untracked_files:
-            self.repo.git.add('.')
+            if files:
+                for file in files:
+                    self.repo.git.add(file)
+            else:
+                self.repo.git.add('.')
             self.repo.index.commit(message)
 
     def change_branch(self, branch):
