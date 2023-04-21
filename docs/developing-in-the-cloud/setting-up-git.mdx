@@ -69,7 +69,9 @@ git config --global core.editor emacs
 
 ---
 
-## 4. Add SSH key to GitHub profiles settings
+## 4. Add SSH key to your profiles settings
+
+### GitHub
 
 1. Open your [GitHub profiles settings](https://github.com/settings/profile).
 2. On the left hand side, click the section called **SSH and GPG keys**.
@@ -83,14 +85,29 @@ git config --global core.editor emacs
    running the command `cat ~/.ssh/id_rsa.pub` in your terminal.
 7. Click the button labeled **Add SSH key**.
 
+
+### GitLab
+
+1. Open your [GitLab profile settings](https://gitlab.com/-/profile).
+2. On the left hand side, click the section called **SSH keys**.
+3. In the text area labeled **Key**, paste in the output text you copied after
+   running the command `cat ~/.ssh/id_rsa.pub` in your terminal.
+4. Enter in anything into the input field labeled **Title**. For example,
+   `mage-cloud-key`.
+5. Under the dropdown labeled **Usage type**, select the `Authentication`
+   option.
+6. Click the button labeled **Add key**.
+
 ---
 
-## 5. Add github.com to known hosts
+## 5. Add your host to known hosts
 
-1. In your terminal, run the following command to add github.com to known hosts:
+1. In your terminal, run the following command to add your host to known hosts:
    ```bash
    ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
    ```
+
+Change the host to `gitlab.com` if you are using GitLab.
 
 ---
 
