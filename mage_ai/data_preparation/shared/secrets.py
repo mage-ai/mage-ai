@@ -1,10 +1,8 @@
-from cryptography.fernet import Fernet, InvalidToken
-from mage_ai.data_preparation.repo_manager import (
-    get_data_dir,
-    get_repo_path
-)
-from typing import List
 import os
+from typing import List
+
+from cryptography.fernet import Fernet, InvalidToken
+from mage_ai.data_preparation.repo_manager import get_data_dir, get_repo_path
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
@@ -90,3 +88,15 @@ def get_secret_value(name: str, repo_name: str = None) -> str:
 
         if secret:
             return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
+
+def delete_secret(name: str) -> None:
+    from mage_ai.orchestration.db.models.secrets import Secret
+
+    secret = None
+    try:
+        secret = Secret.query.filter(Secret.name == name).one_or_none()
+    except Exception:
+        print(f'WARNING: Secret {name} does not exist')
+
+    if secret:
+        secret.delete()
