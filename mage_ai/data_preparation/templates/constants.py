@@ -2,6 +2,7 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.shared.hash import index_by
 
 GROUP_DELTA_LAKE = 'Delta Lake'
+GROUP_ORCHESTRATION = 'Orchestration'
 
 TEMPLATES = [
     dict(
@@ -51,6 +52,22 @@ TEMPLATES = [
         language=BlockLanguage.PYTHON,
         name='Google Cloud Storage',
         path='data_exporters/deltalake/gcs.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        description='Trigger another pipeline to run.',
+        groups=[GROUP_ORCHESTRATION],
+        language=BlockLanguage.PYTHON,
+        name='Trigger pipeline',
+        path='data_loaders/orchestration/triggers/default.jinja',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        description='Trigger another pipeline to run.',
+        groups=[GROUP_ORCHESTRATION],
+        language=BlockLanguage.PYTHON,
+        name='Trigger pipeline',
+        path='data_exporters/orchestration/triggers/default.jinja',
     ),
 ]
 

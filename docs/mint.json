@@ -276,6 +276,7 @@
               ]
             },
             "guides/trigger-pipeline-api",
+            "orchestration/triggers/trigger-pipeline",
             "guides/triggers/configure-triggers-in-code"
           ]
         },
