@@ -194,6 +194,7 @@ class Git:
                 if os.path.exists(requirements_file):
                     cmd = f'pip3 install -r {requirements_file}'
                     self._run_command(cmd)
-            except Exception as e:
-                print(f'Skip installing {requirements_file} due to error: {e}')
+                print(f'Installing {requirements_file} completed successfully.')
+            except Exception as err:
+                print(f'Skip installing {requirements_file} due to error: {err}')
                 pass
