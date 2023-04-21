@@ -5,7 +5,6 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
     create_temporary_profile,
     fetch_model_data,
     load_profiles_async,
-    load_profiles_file,
     parse_attributes,
     query_from_compiled_sql,
     run_dbt_tests,
@@ -19,7 +18,6 @@ import json
 import os
 import shutil
 import subprocess
-import yaml
 
 
 class DBTBlock(Block):

@@ -963,6 +963,7 @@ def create_temporary_profile(project_full_path: str, profiles_dir: str) -> Tuple
 
     return (profile, temp_profile_full_path)
 
+
 def run_dbt_tests(
     block,
     build_block_output_stdout: Callable[..., object] = None,
