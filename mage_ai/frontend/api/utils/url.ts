@@ -6,19 +6,14 @@ function getHostCore(
   defaultPort: string = '6789',
 ){
   let host = defaultHost;
-  if (windowDefined) {
+  if(windowDefined){
     host = window.location.hostname;
   }
-  if (windowDefined && !!window.location.port) {
-    if (host === defaultHost && window.location.port === '3000') {
-      host = `${host}:${defaultPort}`;
-    } else {
-      host = `${host}:${window.location.port}`;
-    }
-  } else {
+  if(host === defaultHost){
     host = `${host}:${defaultPort}`;
+  } else if (windowDefined && !!window.location.port){
+    host = `${host}:${window.location.port}`;
   }
-
   return host;
 }
 
@@ -28,9 +23,9 @@ function getProtocol(
   defaultHost: string = 'localhost',
 ){
   let protocol = 'http://';
-  if (host !== defaultHost) {
+  if(host !== defaultHost){
     protocol = 'https://';
-    if (windowDefined && !window.location.protocol?.match(/https/)) {
+    if(windowDefined && !window.location.protocol?.match(/https/)) {
       protocol = 'http://';
     }
   }
