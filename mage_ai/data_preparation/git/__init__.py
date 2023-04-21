@@ -1,4 +1,5 @@
 from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.orchestration.db.models.oauth import User
@@ -95,7 +96,10 @@ class Git:
                 )
                 if not os.path.exists(public_key_file):
                     try:
-                        public_key = get_secret_value(pubk_secret_name)
+                        public_key = get_secret_value(
+                            pubk_secret_name,
+                            repo_name=get_repo_path(),
+                        )
                         if public_key:
                             with open(public_key_file, 'w') as f:
                                 f.write(base64.b64decode(public_key).decode('utf-8'))
@@ -111,7 +115,10 @@ class Git:
                 )
                 if not os.path.exists(private_key_file):
                     try:
-                        private_key = get_secret_value(pk_secret_name)
+                        private_key = get_secret_value(
+                            pk_secret_name,
+                            repo_name=get_repo_path(),
+                        )
                         if private_key:
                             with open(private_key_file, 'w') as f:
                                 f.write(base64.b64decode(private_key).decode('utf-8'))
