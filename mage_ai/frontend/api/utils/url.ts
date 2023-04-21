@@ -15,6 +15,8 @@ function getHostCore(
     } else {
       host = `${host}:${window.location.port}`;
     }
+  } else {
+    host = `${host}:${defaultPort}`;
   }
 
   return host;
