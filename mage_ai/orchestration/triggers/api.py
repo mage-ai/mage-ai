@@ -5,7 +5,7 @@ from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db import db_connection
-from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
 from mage_ai.orchestration.pipeline_scheduler import get_variables
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
