@@ -104,9 +104,14 @@ def run(
     """
     Run pipeline.
     """
+    from mage_ai.data_preparation.repo_manager import set_repo_path
+
+    # Set repo_path before intializing the DB so that we can get correct db_connection_url
+    project_path = os.path.abspath(project_path)
+    set_repo_path(project_path)
+
     from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    from mage_ai.data_preparation.repo_manager import set_repo_path
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection
     import sentry_sdk
@@ -127,8 +132,6 @@ def run(
     if runtime_vars is not None:
         runtime_variables = parse_runtime_variables(runtime_vars)
 
-    project_path = os.path.abspath(project_path)
-    set_repo_path(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline.get(pipeline_uuid, repo_path=project_path)
 
