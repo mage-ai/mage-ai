@@ -16,5 +16,5 @@ class SinkType(str, Enum):
     DUMMY = 'dummy'
     KAFKA = 'kafka'
     KINESIS = 'kinesis'
-    OPENSEARCH = 'opensearch'
     MONGODB = 'mongodb'
+    OPENSEARCH = 'opensearch'

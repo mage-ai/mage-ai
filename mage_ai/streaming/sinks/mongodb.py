@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.sinks.base import BaseSink
+from pymongo import MongoClient
 from typing import Dict, List
 import time
-from pymongo import MongoClient
 
 
 @dataclass
@@ -28,6 +28,11 @@ class MongoDbSink(BaseSink):
     def batch_write(self, data: List[Dict]):
         if not data:
             return
-        docs = [{'_source': doc} for doc in data]
-        self.collection.insert_many(docs)
+        output_docs = []
+        for doc in data:
+            if type(doc) is dict:
+                output_docs.append(doc)
+            else:
+                output_docs.append({"data": doc})
+        self.collection.insert_many(output_docs)
         self._print(f'[MongoDB] Batch ingest {len(data)} records, time={time.time()}.')
