@@ -6,7 +6,6 @@ from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.logger import VerboseFunctionExec
 from typing import Any, List
 from urllib.parse import urlparse
-from typing import List
 import asyncio
 import base64
 import os
