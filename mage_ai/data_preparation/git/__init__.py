@@ -80,7 +80,7 @@ class Git:
         proc = subprocess.Popen(args=command, shell=True)
         proc.wait()
 
-    def _remote_command(func):
+    def _remote_command(func) -> None:
         '''
         Decorator method for commands that need to connect to the remote repo. This decorator
         will configure and test SSH settings before executing the Git command.
@@ -124,7 +124,7 @@ class Git:
             with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
                 try:
                     asyncio.run(self.check_connection())
-                except TimeoutError as te:
+                except TimeoutError as err:
                     url = f'ssh://{self.git_config.remote_repo_link}'
                     hostname = urlparse(url).hostname
                     if hostname:
@@ -132,7 +132,7 @@ class Git:
                         self._run_command(cmd)
                         asyncio.run(self.check_connection())
                     else:
-                        raise te
+                        raise err
                 func(self, *args, **kwargs)
 
         return wrapper
