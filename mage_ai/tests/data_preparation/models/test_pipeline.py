@@ -30,6 +30,7 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_count=1,
             name='test pipeline 2',
             uuid='test_pipeline_2',
             type='python',
@@ -156,6 +157,7 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_count=1,
             name='test pipeline 3',
             uuid='test_pipeline_3',
             type='python',
@@ -227,6 +229,7 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_count=1,
             name='test pipeline 4',
             uuid='test_pipeline_4',
             type='python',
@@ -319,6 +322,7 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_count=1,
             name='test pipeline 5',
             uuid='test_pipeline_5',
             type='python',
@@ -536,6 +540,7 @@ class PipelineTest(DBTestCase):
                 {
                     "data_integration": None,
                     "description": None,
+                    "executor_count": 1,
                     "extensions": {},
                     "name": "test_pipeline_9",
                     "type": "integration",

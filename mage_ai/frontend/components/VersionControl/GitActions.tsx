@@ -152,7 +152,7 @@ function GitActions({
 
   return (
     <div style={{
-      width: '400px',
+      width: '600px',
     }}>
       <Panel>
         <Spacing p={2}>
@@ -223,6 +223,7 @@ function GitActions({
                   <FlexContainer justifyContent="space-between">
                     <TextInput
                       compact
+                      fullWidth
                       label="Commit message"
                       monospace
                       onChange={e => setPayload({
@@ -231,6 +232,7 @@ function GitActions({
                       required
                       value={payload?.['message']}
                     />
+                    <Spacing mr={1} />
                     <Button
                       borderLess
                       onClick={() => {
@@ -246,6 +248,7 @@ function GitActions({
                     >
                       Commit
                     </Button>
+                    <Spacing mr={1} />
                     <Button
                       borderLess
                       onClick={() => {
@@ -267,6 +270,7 @@ function GitActions({
                 <FlexContainer justifyContent="space-between">
                   <TextInput
                     compact
+                    fullWidth
                     label="Branch name"
                     monospace
                     onChange={e => setPayload({
@@ -274,6 +278,7 @@ function GitActions({
                     })}
                     value={payload?.['name']}
                   />
+                  <Spacing mr={1} />
                   <Button
                     borderLess
                     onClick={() => {
@@ -284,7 +289,7 @@ function GitActions({
                     }}
                     primary
                   >
-                    Create Branch
+                    Create
                   </Button>
                 </FlexContainer>
               )}
@@ -348,7 +353,7 @@ function GitActions({
                       </Text>
                     )}
                     {error && (
-                      <Text danger>
+                      <Text preWrap danger>
                         {error}
                       </Text>
                     )}

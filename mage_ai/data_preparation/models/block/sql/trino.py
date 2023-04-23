@@ -18,6 +18,7 @@ def create_upstream_block_tables(
     execution_partition: str = None,
     cache_upstream_dbt_models: bool = False,
     query: str = None,
+    unique_table_name_suffix: str = None,
 ):
     from mage_ai.data_preparation.models.block.dbt.utils import (
         parse_attributes,
@@ -48,6 +49,8 @@ def create_upstream_block_tables(
                 continue
 
             table_name = upstream_block.table_name
+            if unique_table_name_suffix:
+                table_name = f'{table_name}_{unique_table_name_suffix}'
 
             df = get_variable(
                 upstream_block.pipeline.uuid,
@@ -94,10 +97,15 @@ def create_upstream_block_tables(
             )
 
 
-def interpolate_input_data(block, query, loader):
+def interpolate_input_data(block, query, loader, unique_table_name_suffix: str = None):
+    def _get_table(opts):
+        table_name = opts['table']
+        return f'{table_name}_{unique_table_name_suffix}'
+
     return interpolate_input(
         block,
         query,
         get_database=lambda opts: loader.default_database(),
         get_schema=lambda opts: loader.default_schema(),
+        get_table=_get_table if unique_table_name_suffix else None,
     )

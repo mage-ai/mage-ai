@@ -14,8 +14,8 @@ class K8sResourceConfig(BaseConfig):
 
 @dataclass
 class K8sExecutorConfig(BaseConfig):
-    resource_limits: K8sResourceConfig
-    resource_requests: K8sResourceConfig
+    resource_limits: K8sResourceConfig = None
+    resource_requests: K8sResourceConfig = None
 
     @classmethod
     def load(self, config_path: str = None, config: Dict = None):

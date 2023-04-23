@@ -97,6 +97,8 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
     navigationItems.unshift({
       Icon: null,
       IconSelected: null,
+      // @ts-ignore
+      disabled: !pipelineUUID,
       id: PageNameEnum.EDIT,
       label: () => 'Edit pipeline',
       linkProps: {

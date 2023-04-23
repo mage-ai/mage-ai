@@ -13,6 +13,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import Badge from '@oracle/components/Badge';
+import BlockTemplateType from '@interfaces/BlockTemplateType';
 import BlockType, {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
   BLOCK_TYPES_WITH_NO_PARENTS,
@@ -89,6 +90,7 @@ import {
   CONFIG_KEY_DBT_PROJECT_NAME,
   CONFIG_KEY_EXPORT_WRITE_POLICY,
   CONFIG_KEY_LIMIT,
+  CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME,
   CONFIG_KEY_USE_RAW_SQL,
 } from '@interfaces/ChartBlockType';
 import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
@@ -131,8 +133,9 @@ type CodeBlockProps = {
   allowCodeBlockShortcuts?: boolean;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
-  blockRefs: any;
   blockIdx: number;
+  blockRefs: any;
+  blockTemplates?: BlockTemplateType[];
   blocks: BlockType[];
   dataProviders?: DataProviderType[];
   defaultValue?: string;
@@ -186,6 +189,7 @@ function CodeBlock({
   block,
   blockIdx,
   blockRefs,
+  blockTemplates,
   blocks,
   dataProviders,
   defaultValue = '',
@@ -247,6 +251,7 @@ function CodeBlock({
     [CONFIG_KEY_EXPORT_WRITE_POLICY]: blockConfiguration[CONFIG_KEY_EXPORT_WRITE_POLICY]
       || ExportWritePolicyEnum.APPEND,
     [CONFIG_KEY_LIMIT]: blockConfiguration[CONFIG_KEY_LIMIT],
+    [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: blockConfiguration[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
     [CONFIG_KEY_USE_RAW_SQL]: !!blockConfiguration[CONFIG_KEY_USE_RAW_SQL],
   });
 
@@ -925,12 +930,7 @@ function CodeBlock({
         [CONFIG_KEY_LIMIT]: DEFAULT_SQL_CONFIG_KEY_LIMIT,
       });
     }
-  }, [
-    dataProviderConfig,
-    isDBT,
-    isSQLBlock,
-    updateDataProviderConfig,
-  ]);
+  }, []);
 
   const requiresDatabaseName = (DataSourceTypeEnum.BIGQUERY === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
     || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
@@ -1470,10 +1470,9 @@ function CodeBlock({
                 <CodeHelperStyle>
                   <FlexContainer
                     flexWrap="wrap"
-                    justifyContent="space-between"
-                    style={{marginTop: '-8px'}}
+                    style={{ marginTop: '-8px' }}
                   >
-                    <FlexContainer style={{marginTop: '8px'}}>
+                    <FlexContainer style={{ marginTop: '8px' }}>
                       <Select
                         compact
                         label="Connection"
@@ -1762,9 +1761,56 @@ function CodeBlock({
                             </Select>
                           </FlexContainer>
                         </Tooltip>
-
-                        <Spacing mr={5} />
                       </FlexContainer>
+                    )}
+
+                    {dataProviderConfig?.[CONFIG_KEY_DATA_PROVIDER] === DataProviderEnum.TRINO
+                      && block.upstream_blocks.length >= 1
+                      && (
+                      <>
+                        <Spacing mr={1} />
+
+                        <FlexContainer alignItems="center"  style={{ marginTop: '8px' }}>
+                          <Tooltip
+                            appearBefore
+                            block
+                            description={
+                              <Text default inline>
+                                If checked, upstream blocks that aren’t SQL blocks
+                                <br />
+                                will have their data exported into a table that is
+                                <br />
+                                uniquely named upon each block run. For example,
+                                <br />
+                                <Text default inline monospace>
+                                  [pipeline_uuid]_[block_uuid]_[unique_timestamp]
+                                </Text>.
+                              </Text>
+                            }
+                            size={null}
+                            widthFitContent
+                          >
+                            <FlexContainer alignItems="center">
+                              <Checkbox
+                                checked={dataProviderConfig[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]}
+                                label={
+                                  <Text muted small>
+                                    Unique upstream table names
+                                  </Text>
+                                }
+                                onClick={(e) => {
+                                  pauseEvent(e);
+                                  updateDataProviderConfig({
+                                    [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: !dataProviderConfig[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
+                                  });
+                                }}
+                              />
+                              <span>&nbsp;</span>
+                              <Info muted />
+                            </FlexContainer>
+                          </Tooltip>
+                        </FlexContainer>
+                      </>
                     )}
                   </FlexContainer>
                 </CodeHelperStyle>
@@ -1985,6 +2031,7 @@ function CodeBlock({
                     });
                   }}
                   blockIdx={blockIdx}
+                  blockTemplates={blockTemplates}
                   compact
                   hideCustom={isStreamingPipeline}
                   hideDbt={isStreamingPipeline}

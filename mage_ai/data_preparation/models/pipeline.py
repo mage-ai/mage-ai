@@ -53,6 +53,7 @@ class Pipeline:
         self.type = PipelineType.PYTHON
         self.updated_at = datetime.datetime.now()
         self.widget_configs = []
+        self._executor_count = 1  # Used by streaming pipeline to launch multiple executors
         if config is None:
             self.load_config_from_yaml()
         else:
@@ -89,6 +90,12 @@ class Pipeline:
     @property
     def dir_path(self):
         return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
+
+    @property
+    def executor_count(self):
+        if self.type == PipelineType.STREAMING:
+            return self._executor_count
+        return 1
 
     @property
     def variables_dir(self):
@@ -395,6 +402,10 @@ class Pipeline:
             self.data_integration = catalog
         self.name = config.get('name')
         self.description = config.get('description')
+        try:
+            self._executor_count = int(config.get('executor_count'))
+        except Exception:
+            pass
         self.updated_at = config.get('updated_at')
         self.type = config.get('type') or self.type
 
@@ -479,6 +490,7 @@ class Pipeline:
         base = dict(
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
+            executor_count=self.executor_count,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
@@ -549,6 +561,7 @@ class Pipeline:
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        inclide_block_tags: bool = False,
         include_content: bool = False,
         include_extensions: bool = False,
         include_outputs: bool = False,
@@ -557,6 +570,7 @@ class Pipeline:
         blocks_data = await asyncio.gather(
             *[b.to_dict_async(
                 include_block_metadata=include_block_metadata,
+                inclide_block_tags=inclide_block_tags,
                 include_content=include_content,
                 include_outputs=include_outputs,
                 sample_count=sample_count,
@@ -640,7 +654,7 @@ class Pipeline:
             self.uuid = new_uuid
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
-            self.save()
+            await self.save_async()
             self.__transfer_related_models(old_uuid, new_uuid)
 
         should_save = False
@@ -682,7 +696,7 @@ class Pipeline:
                 should_save = True
 
         if should_save:
-            self.save()
+            await self.save_async()
 
         if update_content:
             block_uuid_mapping = dict()
@@ -786,8 +800,8 @@ class Pipeline:
                     await self.save_async(widget=widget)
 
     def __update_block_order(self, blocks: List[Dict]) -> bool:
-        uuids_new = [b['uuid'] for b in blocks]
-        uuids_old = [b['uuid'] for b in self.block_configs]
+        uuids_new = [b['uuid'] for b in blocks if b]
+        uuids_old = [b['uuid'] for b in self.block_configs if b]
 
         min_length = min(len(uuids_new), len(uuids_old))
 

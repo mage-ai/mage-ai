@@ -14,7 +14,7 @@ def get_template_vars() -> Dict[str, Callable]:
             get_secret
         )
         kwargs['aws_secret_var'] = get_secret
-    except ModuleNotFoundError:
+    except ImportError:
         pass
 
     return kwargs

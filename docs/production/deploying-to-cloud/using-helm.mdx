@@ -44,7 +44,7 @@ Other options for starting a Kubernetes cluster locally:
 Follow the [guide](https://docs.mage.ai/production/deploying-to-cloud/aws/setup#deploy-to-eks-cluster) to set up the EKS cluster.
 
 ### Google Kubernetes Engine (GKE)
-WIP
+Follow the [guide](https://cloud.google.com/kubernetes-engine/docs/deploy-app-cluster#create_cluster) to create a GKE cluster.
 
 ---
 
@@ -74,7 +74,13 @@ You can customize the deployment by updating the `values.yaml` file.
 - Customize the mount volume
   - Local: Edit the `volumes` config in `values.yaml` to mount to your Mage project path
   - AWS EKS: WIP
-  - GKE: WIP
+  - GKE: Provision the [PersistentVolume](https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes#dynamic_provisioning) and edit the `volumes` config to 
+    ```
+    volumes:
+      - name: mage-fs
+        persistentVolumeClaim:
+            claimName: pvc-name
+    ```
 
 - Install the Helm charts with updated `values.yaml`
     ```bash

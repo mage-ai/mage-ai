@@ -133,7 +133,7 @@ export const AsideHeaderStyle = styled.div<{
   visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
-  height: ${ASIDE_HEADER_HEIGHT}px;
+  height: ${ASIDE_SUBHEADER_HEIGHT}px;
   position: fixed;
   top: ${ASIDE_HEADER_HEIGHT}px;
   z-index: 4;
@@ -157,6 +157,8 @@ export const AsideSubheaderStyle = styled.div<{
   border-bottom: 1px solid transparent;
   height: ${ASIDE_HEADER_HEIGHT}px;
   overflow-x: auto;
+  position: absolute;
+  top: ${ASIDE_HEADER_HEIGHT}px;
 
   ${hideScrollBar()}
 
@@ -193,9 +195,14 @@ export const AfterStyle = styled.aside`
 `;
 
 export const AfterInnerStyle = styled.div<ScrollbarTrackType & {
+  overflow?: string;
   verticalOffset?: number;
 }>`
   ${ASIDE_INNER_STYLE}
+
+  ${props => props.overflow && `
+    overflow: ${props.overflow};
+  `}
 `;
 
 export const DraggableStyle = styled.div<{

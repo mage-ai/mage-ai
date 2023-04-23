@@ -30,6 +30,7 @@ LDAP_ADMIN_USERNAME = os.getenv('LDAP_ADMIN_USERNAME', 'admin')
 SERVER_VERBOSITY = os.getenv('SERVER_VERBOSITY', 'info') or 'info'
 
 SHELL_COMMAND = os.getenv('SHELL_COMMAND', None)
+USE_UNIQUE_TERMINAL = os.getenv('USE_UNIQUE_TERMINAL', None)
 
 # sentry environment variables
 SENTRY_DSN = os.getenv('SENTRY_DSN', None)

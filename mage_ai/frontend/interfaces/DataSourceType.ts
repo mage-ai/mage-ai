@@ -1,10 +1,12 @@
 import { BlockTypeEnum } from './BlockType';
 
 export enum DataSourceTypeEnum {
+  AMAZON_SQS = 'amazon_sqs',
   API = 'api',
   AZURE_BLOB_STORAGE = 'azure_blob_storage',
   AZURE_EVENT_HUB = 'azure_event_hub',
   BIGQUERY = 'bigquery',
+  DUMMY = 'dummy',
   FILE = 'file',
   GENERIC = 'generic',
   GOOGLE_CLOUD_STORAGE = 'google_cloud_storage',
@@ -20,10 +22,12 @@ export enum DataSourceTypeEnum {
 }
 
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
+  [DataSourceTypeEnum.AMAZON_SQS]: 'Amazon SQS',
   [DataSourceTypeEnum.API]: 'API',
   [DataSourceTypeEnum.AZURE_BLOB_STORAGE]: 'Azure Blob Storage',
   [DataSourceTypeEnum.AZURE_EVENT_HUB]: 'Azure Event Hub',
   [DataSourceTypeEnum.BIGQUERY]: 'Google BigQuery',
+  [DataSourceTypeEnum.DUMMY]: 'Dummy',
   [DataSourceTypeEnum.FILE]: 'Local file',
   [DataSourceTypeEnum.GENERIC]: 'Generic (no template)',
   [DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE]: 'Google Cloud Storage',

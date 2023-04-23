@@ -85,6 +85,7 @@ BlockPolicy.allow_write([
     'name',
     'outputs',
     'status',
+    'tags',
     'tap_stream_id',
     'type',
     'upstream_blocks',

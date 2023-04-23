@@ -1,10 +1,12 @@
 from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.logger import VerboseFunctionExec
 from typing import Any, List
 from urllib.parse import urlparse
+from typing import List
 import asyncio
 import base64
 import os
@@ -66,8 +68,12 @@ class Git:
             await asyncio.sleep(0.5)
 
         if return_code is not None and return_code != 0:
-            raise Exception(
-                "Error connecting to remote, make sure your SSH key is set up properly.")
+            _, err = proc.communicate()
+            message = (
+                err.decode('UTF-8') if err
+                else 'Error connecting to remote, make sure your SSH key is set up properly.'
+            )
+            raise Exception(message)
 
         if return_code is None:
             proc.kill()
@@ -96,7 +102,10 @@ class Git:
                 )
                 if not os.path.exists(public_key_file):
                     try:
-                        public_key = get_secret_value(pubk_secret_name)
+                        public_key = get_secret_value(
+                            pubk_secret_name,
+                            repo_name=get_repo_path(),
+                        )
                         if public_key:
                             with open(public_key_file, 'w') as f:
                                 f.write(base64.b64decode(public_key).decode('utf-8'))
@@ -112,7 +121,10 @@ class Git:
                 )
                 if not os.path.exists(private_key_file):
                     try:
-                        private_key = get_secret_value(pk_secret_name)
+                        private_key = get_secret_value(
+                            pk_secret_name,
+                            repo_name=get_repo_path(),
+                        )
                         if private_key:
                             with open(private_key_file, 'w') as f:
                                 f.write(base64.b64decode(private_key).decode('utf-8'))
@@ -163,7 +175,11 @@ class Git:
 
     def commit(self, message, files: List[str] = None) -> None:
         if self.repo.index.diff(None) or self.repo.untracked_files:
-            self.repo.git.add('.')
+            if files:
+                for file in files:
+                    self.repo.git.add(file)
+            else:
+                self.repo.git.add('.')
             self.repo.index.commit(message)
 
     def change_branch(self, branch) -> None:

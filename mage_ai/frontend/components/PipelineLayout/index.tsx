@@ -34,6 +34,7 @@ type PipelineLayoutProps = {
   afterHeightOffset?: number;
   afterHidden?: boolean;
   afterNavigationItems?: NavigationItem[];
+  afterOverflow?: 'hidden';
   afterSubheader?: any;
   before?: any;
   beforeHeader?: any;
@@ -58,6 +59,7 @@ function PipelineLayout({
   afterHeightOffset,
   afterHidden: afterHiddenProp,
   afterNavigationItems,
+  afterOverflow,
   afterSubheader,
   before,
   beforeHeader,
@@ -191,6 +193,7 @@ function PipelineLayout({
         afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
         afterNavigationItems={afterNavigationItems}
+        afterOverflow={afterOverflow}
         afterSubheader={afterSubheader}
         afterWidth={afterWidth}
         before={before}

@@ -12,6 +12,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
+import BlockTemplateType from '@interfaces/BlockTemplateType';
 import BlockType, {
   BlockLanguageEnum,
   BlockRequestPayloadType,
@@ -31,6 +32,7 @@ import KernelType, { SetMessagesType } from '@interfaces/KernelType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
+import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
   ANIMATION_DURATION,
@@ -124,6 +126,7 @@ type PipelineDetailProps = {
   }) => Promise<any>;
   selectedBlock: BlockType;
   setAnyInputFocused: (value: boolean) => void;
+  setDisableShortcuts: (disableShortcuts: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   setIntegrationStreams: (streams: string[]) => void;
   setHiddenBlocks: ((opts: {
@@ -178,6 +181,7 @@ function PipelineDetail({
   savePipelineContent,
   selectedBlock,
   setAnyInputFocused,
+  setDisableShortcuts,
   setEditingBlock,
   setErrors,
   setIntegrationStreams,
@@ -221,6 +225,14 @@ function PipelineDetail({
 
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
+
+  const { data: dataBlockTemplates } = api.block_templates.list({}, {
+    revalidateOnFocus: false,
+  });
+  const blockTemplates: BlockTemplateType[] =
+    useMemo(() => dataBlockTemplates?.block_templates || [], [
+      dataBlockTemplates,
+    ]);
 
   const uuidKeyboard = 'PipelineDetail/index';
   const {
@@ -304,14 +316,6 @@ function PipelineDetail({
             }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             setTextareaFocused(true);
-          } else if (!anyInputFocused && onlyKeysPresent([KEY_CODE_A], keyMapping)) {
-            addNewBlockAtIndex({
-              type: BlockTypeEnum.SCRATCHPAD,
-            }, selectedBlockIndex, setSelectedBlock);
-          } else if (!anyInputFocused && onlyKeysPresent([KEY_CODE_B], keyMapping)) {
-            addNewBlockAtIndex({
-              type: BlockTypeEnum.SCRATCHPAD,
-            }, selectedBlockIndex + 1, setSelectedBlock);
           }
         } else if (selectedBlockPrevious) {
           if (keyMapping[KEY_CODE_ENTER]) {
@@ -366,8 +370,10 @@ function PipelineDetail({
   const onClickAddSingleDBTModel = useCallback((blockIndex: number) => {
     setAddDBTModelVisible(true);
     setLastBlockIndex(blockIndex);
+    setDisableShortcuts(true);
   }, [
     setAddDBTModelVisible,
+    setDisableShortcuts,
     setLastBlockIndex,
   ]);
 
@@ -375,7 +381,8 @@ function PipelineDetail({
     setAddDBTModelVisible(false);
     setCreatingNewDBTModel(false);
     setDbtModelName('');
-  }, []);
+    setDisableShortcuts(false);
+  }, [setDisableShortcuts]);
 
   const onDrop = useCallback((block: BlockType, blockDropped: BlockType) => {
     let blockIndex;
@@ -466,6 +473,7 @@ function PipelineDetail({
             block={block}
             blockIdx={idx}
             blockRefs={blockRefs}
+            blockTemplates={blockTemplates}
             blocks={blocks}
             dataProviders={dataProviders}
             defaultValue={block.content}
@@ -523,6 +531,7 @@ function PipelineDetail({
     allowCodeBlockShortcuts,
     autocompleteItems,
     blockRefs,
+    blockTemplates,
     blocks,
     dataProviders,
     deleteBlock,
@@ -649,6 +658,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         }, numberOfBlocks, setSelectedBlock);
         setTextareaFocused(true);
       }}
+      blockTemplates={blockTemplates}
       hideCustom={isIntegration || isStreaming}
       hideDataExporter={isIntegration}
       hideDataLoader={isIntegration}
@@ -663,6 +673,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     />
   ), [
     addNewBlockAtIndex,
+    blockTemplates,
     blocks,
     isIntegration,
     isStreaming,
@@ -715,7 +726,11 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
               onOpenFile={(filePath: string) => {
                 let finalFilePath = filePath;
                 if (creatingNewDBTModel) {
-                  const blockName = addUnderscores(dbtModelName || randomNameGenerator());
+                  let blockName = addUnderscores(dbtModelName || randomNameGenerator());
+                  const sqlExtension = `.${FileExtensionEnum.SQL}`;
+                  if (blockName.endsWith(sqlExtension)) {
+                    blockName = blockName.slice(0, -4);
+                  }
                   finalFilePath = `${filePath}${path.sep}${blockName}.${FileExtensionEnum.SQL}`;
                 }
 

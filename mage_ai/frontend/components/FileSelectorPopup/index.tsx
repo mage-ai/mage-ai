@@ -6,9 +6,7 @@ import Button from '@oracle/elements/Button';
 import FileBrowser from '@components/FileBrowser';
 import FileType from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { Close } from '@oracle/icons';
@@ -100,10 +98,10 @@ function FileSelectorPopup({
         <>
           <InputRowStyle>
             <LabelWithValueClicker
+              dynamicSizing
               inputValue={dbtModelName}
               label="Model name (cannot be changed):"
               labelColor={dark.accent.dbt}
-              minWidth={UNIT * 38}
               notRequired
               onBlur={() => {
                 setIsEditingName(false);
@@ -121,6 +119,7 @@ function FileSelectorPopup({
               placeholder="Enter name"
               required
               stacked
+              suffixValue={`.${BlockLanguageEnum.SQL}`}
               value={!isEditingName && dbtModelName}
             />
           </InputRowStyle>

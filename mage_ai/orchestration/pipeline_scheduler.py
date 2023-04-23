@@ -9,7 +9,11 @@ from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
     create_block_runs_from_dynamic_block,
+    dynamic_block_uuid,
+    dynamic_block_values_and_metadata,
     is_dynamic_block,
+    is_dynamic_block_child,
+    should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -751,10 +755,71 @@ def run_block(
     dynamic_block_index = block_run_data.get('dynamic_block_index', None)
     dynamic_upstream_block_uuids = block_run_data.get('dynamic_upstream_block_uuids', None)
 
+    execution_partition = pipeline_run.execution_partition
+
+    block_uuid = block_run.block_uuid
+
+    # If there are upstream blocks that were dynamically created, and if any of them are configured
+    # to reduce their output, we must update the dynamic_upstream_block_uuids to include all
+    # the upstream block’s dynamically created blocks by getting the upstream block’s
+    # dynamic parent block and collecting that parent’s output.
+    if dynamic_upstream_block_uuids:
+        dynamic_upstream_block_uuids_reduce = []
+        dynamic_upstream_block_uuids_no_reduce = []
+
+        for upstream_block_uuid in dynamic_upstream_block_uuids:
+            upstream_block = pipeline.get_block(upstream_block_uuid)
+
+            if not should_reduce_output(upstream_block):
+                dynamic_upstream_block_uuids_no_reduce.append(upstream_block_uuid)
+                continue
+
+            parts = upstream_block_uuid.split(':')
+            suffix = None
+            if len(parts) >= 3:
+                # A block can have a UUID such as: some_uuid:0 or some_uuid:0:1
+                suffix = ':'.join(parts[2:])
+
+            # We currently limit a block to only have 1 direct dynamic parent.
+            # We are looping over the upstream blocks just in case we support having
+            # multiple direct dynamic parents.
+            for block_grandparent in list(filter(
+                lambda x: is_dynamic_block(x),
+                upstream_block.upstream_blocks,
+            )):
+
+                block_grandparent_uuid = block_grandparent.uuid
+
+                if suffix and is_dynamic_block_child(block_grandparent):
+                    block_grandparent_uuid = f'{block_grandparent_uuid}:{suffix}'
+
+                values, block_metadata = dynamic_block_values_and_metadata(
+                    block_grandparent,
+                    execution_partition,
+                    block_grandparent_uuid,
+                )
+
+                for idx, value in enumerate(values):
+                    if idx < len(block_metadata):
+                        metadata = block_metadata[idx].copy()
+                    else:
+                        metadata = {}
+
+                    dynamic_upstream_block_uuids_reduce.append(
+                        dynamic_block_uuid(
+                            upstream_block.uuid,
+                            metadata,
+                            idx,
+                            upstream_block_uuid=block_grandparent_uuid,
+                        ))
+
+        dynamic_upstream_block_uuids = dynamic_upstream_block_uuids_reduce + \
+            dynamic_upstream_block_uuids_no_reduce
+
     return ExecutorFactory.get_block_executor(
         pipeline,
-        block_run.block_uuid,
-        execution_partition=pipeline_run.execution_partition,
+        block_uuid,
+        execution_partition=execution_partition,
     ).execute(
         analyze_outputs=False,
         block_run_id=block_run.id,

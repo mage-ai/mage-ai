@@ -13,6 +13,7 @@ Check out this [tutorial](/guides/streaming-pipeline#create-a-new-pipeline) to s
 
 
 ## Supported sources
+- [Amazon SQS](sources/amazon-sqs)
 - [Azure Event Hub](sources/azure-event-hub)
 - [Kafka](sources/kafka)
 - [Kinesis](sources/kinesis)
@@ -21,6 +22,7 @@ Check out this [tutorial](/guides/streaming-pipeline#create-a-new-pipeline) to s
 ## Supported sinks (destinations)
 
 - [Amazon S3](destinations/amazon-s3)
+- [Dummy](destinations/dummy)
 - [Kafka](destinations/kafka)
 - [Kinesis](destinations/kinesis)
 - [Opensearch](destinations/opensearch)
@@ -30,6 +32,23 @@ Check out this [tutorial](/guides/streaming-pipeline#create-a-new-pipeline) to s
 ## Test pipeline execution
 After finishing configuring the streaming pipeline, you can click the button `Execution pipeline` to test streaming pipeline execution.
 
+## Run pipeline in production
+Create the trigger in [triggers page](/design/data-pipeline-management#create-trigger) to run streaming pipelines in production.
+
+If you want to run multiple executors at the same time to scale the streaming pipeline execution, you can set the `executor_count` variable
+in the pipeline's metadata.yaml file. Here is an example:
+```yaml
+blocks:
+- ... 
+- ...
+data_integration: null
+description: null
+executor_count: 10
+name: test_streaming_pipeline
+type: streaming
+uuid: test_streaming_pipeline
+widgets: []
+```
 
 ## Contributing guide
 

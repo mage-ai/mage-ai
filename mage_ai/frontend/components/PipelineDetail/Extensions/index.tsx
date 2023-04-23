@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import ExtensionOptionType, { ExtensionTypeEnum } from '@interfaces/ExtensionOptionType';
 import Flex from '@oracle/components/Flex';
@@ -51,7 +53,7 @@ function Extensions({
   }, [router.asPath]);
 
   return (
-    <>
+    <DndProvider backend={HTML5Backend}>
       <Spacing p={PADDING_UNITS}>
         {!selectedExtensionUUID && (
           <Spacing mb={PADDING_UNITS}>
@@ -135,7 +137,7 @@ function Extensions({
           </Link>
         ))}
       </Spacing>
-    </>
+    </DndProvider>
   );
 }
 

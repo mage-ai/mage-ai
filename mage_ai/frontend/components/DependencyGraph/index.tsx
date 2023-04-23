@@ -14,6 +14,7 @@ import BlockType, {
   BlockTypeEnum,
   SetEditingBlockType,
   StatusTypeEnum,
+  TagEnum,
 } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
@@ -325,26 +326,12 @@ function DependencyGraph({
       displayText = getModelName(block, { fullPath: true });
     }
 
-    const {
-      dynamic,
-      dynamicUpstreamBlock,
-      reduceOutput,
-      reduceOutputUpstreamBlock,
-    } = dynamicUpstreamBlocksData?.[block.uuid] || {};
-
     if (!displayText) {
       displayText = block.uuid;
-
-      if (dynamic) {
-        displayText = `[dynamic] ${displayText}`;
-      } else if (dynamicUpstreamBlock && !reduceOutputUpstreamBlock) {
-        displayText = `[dynamic child] ${displayText}`;
-      }
     }
 
     return displayText;
   }, [
-    dynamicUpstreamBlocksData,
     pipeline,
   ]);
 
@@ -359,6 +346,7 @@ function DependencyGraph({
       const displayText = displayTextForBlock(block);
 
       const {
+        tags = [],
         type: blockType,
         upstream_blocks: upstreamBlocks = [],
         uuid,
@@ -404,11 +392,16 @@ function DependencyGraph({
         });
       });
 
+      let nodeHeight = 37;
+      if (tags?.length >= 1) {
+        nodeHeight += 26;
+      }
+
       nodesInner.push({
         data: {
           block,
         },
-        height: 37,
+        height: nodeHeight,
         id: uuid,
         ports,
         width: (displayText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
@@ -471,7 +464,7 @@ function DependencyGraph({
     }
     if (heightOffset) {
       v -= heightOffset;
-    };
+    }
 
     return Math.max(0, v);
   }, [
@@ -676,6 +669,7 @@ function DependencyGraph({
               >
               {(event) => {
                 const {
+                  height: nodeHeight,
                   node: {
                     data: {
                       block,
@@ -687,7 +681,7 @@ function DependencyGraph({
 
                 return (
                   <foreignObject
-                    height={event.height}
+                    height={nodeHeight}
                     style={{
                       // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
                       pointerEvents: 'none',
@@ -698,7 +692,9 @@ function DependencyGraph({
                   >
                     <GraphNode
                       block={block}
+                      bodyText={`${displayTextForBlock(block)}${blockEditing?.uuid === block.uuid ? ' (editing)' : ''}`}
                       disabled={blockEditing?.uuid === block.uuid}
+                      height={nodeHeight}
                       hideStatus={disabledProp}
                       key={block.uuid}
                       selected={blockEditing
@@ -706,9 +702,7 @@ function DependencyGraph({
                         : selectedBlock?.uuid === block.uuid
                       }
                       {...blockStatus}
-                    >
-                      {displayTextForBlock(block)}{blockEditing?.uuid === block.uuid && ' (editing)'}
-                    </GraphNode>
+                    />
                   </foreignObject>
                 );
               }}

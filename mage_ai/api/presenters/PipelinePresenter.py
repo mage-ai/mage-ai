@@ -8,6 +8,7 @@ class PipelinePresenter(BasePresenter):
         'blocks',
         'data_integration',
         'description',
+        'executor_count',
         'name',
         'type',
         'updated_at',
@@ -39,6 +40,7 @@ class PipelinePresenter(BasePresenter):
 
             return await self.model.to_dict_async(
                 include_block_metadata=include_block_metadata,
+                inclide_block_tags=True,
                 include_content=include_content,
                 include_extensions=include_extensions,
                 include_outputs=include_outputs,

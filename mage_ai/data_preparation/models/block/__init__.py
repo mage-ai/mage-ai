@@ -14,9 +14,12 @@ from mage_ai.data_preparation.models.block.utils import (
     clean_name,
     fetch_input_variables,
     input_variables,
+    is_dynamic_block,
+    is_dynamic_block_child,
     is_output_variable,
     is_valid_print_variable,
     output_variables,
+    should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
     BlockColor,
@@ -734,15 +737,6 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
-            if logger is not None:
-                logger.exception(
-                    f'Failed to execute block {self.uuid}',
-                    **merge_dict(logging_tags, dict(
-                        block_type=self.type,
-                        block_uuid=self.uuid,
-                        error=err,
-                    ))
-                )
             raise err
         finally:
             if update_status:
@@ -1362,6 +1356,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     async def to_dict_async(
         self,
         include_block_metadata: bool = False,
+        inclide_block_tags: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
         sample_count: int = None,
@@ -1388,6 +1383,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
 
         if include_block_metadata:
             data['metadata'] = await self.metadata_async()
+
+        if inclide_block_tags:
+            data['tags'] = self.tags()
 
         return data
 
@@ -1906,6 +1904,26 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             variable_objects = [v for v in variable_objects if v.variable_type == variable_type]
         return variable_objects
 
+    def tags(self) -> List[str]:
+        from mage_ai.data_preparation.models.block.constants import (
+            TAG_DYNAMIC,
+            TAG_DYNAMIC_CHILD,
+            TAG_REDUCE_OUTPUT,
+        )
+
+        arr = []
+
+        if is_dynamic_block(self):
+            arr.append(TAG_DYNAMIC)
+
+        if is_dynamic_block_child(self):
+            arr.append(TAG_DYNAMIC_CHILD)
+
+        if should_reduce_output(self):
+            arr.append(TAG_REDUCE_OUTPUT)
+
+        return arr
+
     def variable_object(
         self,
         variable_uuid: str,
@@ -2045,33 +2063,30 @@ class CallbackBlock(Block):
         **kwargs
     ):
         pipeline_run = kwargs.get('pipeline_run')
-        try:
-            if logger is not None:
-                stdout = StreamToLogger(logger, logging_tags=logging_tags)
-            else:
-                stdout = sys.stdout
-            with redirect_stdout(stdout):
-                global_vars = merge_dict(
-                    global_vars or dict(),
-                    dict(
-                        pipeline_uuid=self.pipeline.uuid,
-                        block_uuid=self.uuid,
-                        pipeline_run=pipeline_run,
-                    ),
-                )
-                fs = dict(on_success=[], on_failure=[])
-                globals = {
-                    k: self._block_decorator(v) for k, v in fs.items()
-                }
-                exec(self.content, globals)
+        if logger is not None:
+            stdout = StreamToLogger(logger, logging_tags=logging_tags)
+        else:
+            stdout = sys.stdout
+        with redirect_stdout(stdout):
+            global_vars = merge_dict(
+                global_vars or dict(),
+                dict(
+                    pipeline_uuid=self.pipeline.uuid,
+                    block_uuid=self.uuid,
+                    pipeline_run=pipeline_run,
+                ),
+            )
+            fs = dict(on_success=[], on_failure=[])
+            globals = {
+                k: self._block_decorator(v) for k, v in fs.items()
+            }
+            exec(self.content, globals)
 
-                callback_functions = fs[callback]
+            callback_functions = fs[callback]
 
-                if callback_functions:
-                    callback = callback_functions[0]
-                    callback(**global_vars)
-        except Exception:
-            pass
+            if callback_functions:
+                callback = callback_functions[0]
+                callback(**global_vars)
 
     def update_content(self, content, widget=False):
         if not self.file.exists():

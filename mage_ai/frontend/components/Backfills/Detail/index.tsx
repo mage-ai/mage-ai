@@ -24,6 +24,7 @@ import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -158,7 +159,6 @@ function BackfillDetail({
         />
         <Spacing p={2}>
           <Paginate
-            page={Number(page)}
             maxPages={9}
             onUpdate={(p) => {
               const newPage = Number(p);
@@ -167,10 +167,11 @@ function BackfillDetail({
                 page: newPage >= 0 ? newPage : 0,
               };
               router.push(
-                '/pipelines/[pipeline]/triggers/[...slug]',
-                `/pipelines/${pipelineUUID}/triggers/${modelID}?${queryString(updatedQuery)}`,
+                '/pipelines/[pipeline]/backfills/[...slug]',
+                `/pipelines/${pipelineUUID}/backfills/${modelID}?${queryString(updatedQuery)}`,
               );
             }}
+            page={Number(page)}
             totalPages={Math.ceil(totalRuns / LIMIT)}
           />
         </Spacing>
@@ -178,9 +179,14 @@ function BackfillDetail({
     );
   }, [
     fetchPipelineRuns,
-    pipeline,
+    modelID,
     pipelineRuns,
+    pipelineUUID,
+    q,
+    router,
     selectedRun,
+    showPreviewRuns,
+    totalRuns,
   ]);
 
   const [selectedTab, setSelectedTab] = useState(TABS[0]);
@@ -261,7 +267,7 @@ function BackfillDetail({
           success={BackfillStatusEnum.RUNNING === status || BackfillStatusEnum.COMPLETED === status}
         >
           {status || 'inactive'}
-        </Text>
+        </Text>,
       ],
     ];
 
@@ -373,9 +379,9 @@ function BackfillDetail({
     endDatetime,
     intervalType,
     intervalUnits,
-    isActive,
     startDatetime,
     status,
+    totalRunCount,
   ]);
 
   const modelVariables = useMemo(() => modelVariablesInit || {}, [modelVariablesInit]);
@@ -615,7 +621,12 @@ function BackfillDetail({
 
         <Divider light mt={PADDING_UNITS} short />
 
-        {tablePipelineRuns}
+        {!dataPipelineRuns
+          ?
+            <Spacing m={2}>
+              <Spinner inverted />
+            </Spacing>
+          : tablePipelineRuns}
       </PipelineDetailPage>
     </>
   );

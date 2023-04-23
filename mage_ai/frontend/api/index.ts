@@ -26,6 +26,7 @@ export const AUTOCOMPLETE_ITEMS = 'autocomplete_items';
 export const BACKFILLS: 'backfills' = 'backfills';
 export const BLOCKS: 'blocks' = 'blocks';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
+export const BLOCK_TEMPLATES = 'block_templates';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
@@ -71,6 +72,7 @@ const RESOURCES: any[][] = [
   [BACKFILLS],
   [BACKFILLS, PIPELINES],
   [BLOCK_RUNS],
+  [BLOCK_TEMPLATES],
   [BLOCKS],
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],

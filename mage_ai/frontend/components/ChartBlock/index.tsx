@@ -21,6 +21,7 @@ import Chip from '@oracle/components/Chip';
 import CodeEditor, { CodeEditorSharedProps } from '@components/CodeEditor';
 import CodeOutput from '@components/CodeBlock/CodeOutput';
 import Col from '@components/shared/Grid/Col';
+import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
@@ -42,6 +43,7 @@ import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
+
 import {
   AGGREGATE_FUNCTIONS,
   CHART_TYPES,
@@ -80,7 +82,7 @@ import {
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy, remove, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
-import { onError, onSuccess } from '@api/utils/response';
+import { onSuccess } from '@api/utils/response';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type ChartPropsShared = {
@@ -101,6 +103,7 @@ export type ChartPropsShared = {
   runningBlocks: BlockType[];
   savePipelineContent: () => Promise<any>;
   setAnyInputFocused: (value: boolean) => void;
+  setErrors: (errors: ErrorsType) => void;
   setSelectedBlock: (block: BlockType) => void;
   updateWidget: (block: BlockType) => void;
   width?: number;
@@ -130,6 +133,7 @@ function ChartBlock({
   savePipelineContent,
   selected,
   setAnyInputFocused,
+  setErrors,
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
@@ -173,11 +177,10 @@ function ChartBlock({
   const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
-  const messagesWithType = useMemo(() => {
-    return messages?.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
-  }, [
-    messages,
-  ]);
+  const messagesWithType = useMemo(() =>
+    messages?.filter((kernelOutput: KernelOutputType) => kernelOutput?.type),
+    [messages],
+  );
   const hasError = !!messagesWithType.find(({ error }) => error);
   const hasOutput = messagesWithType.length >= 1;
   const borderColorShareProps = useMemo(() => ({
@@ -278,8 +281,6 @@ function ChartBlock({
       },
     };
     updateWidget(widget);
-
-    const keys = Object.keys(data);
 
     if (runCount && autoRun) {
       saveAndRun(widget);
@@ -442,9 +443,8 @@ function ChartBlock({
       ? acc.concat(uuid)
       : acc
     , []);
-    const varsCount = vars?.length;
 
-    vars?.forEach((varName: string, idx: number) => {
+    vars?.forEach((varName: string) => {
       const varNameValue = configuration[varName];
       if (varNameValue) {
         const info = VARIABLE_INFO_BY_CHART_TYPE[chartType]?.[varName]?.();
@@ -476,7 +476,7 @@ function ChartBlock({
                 </Text>
               </>
             )}
-          </Spacing>
+          </Spacing>,
         );
       }
     });
@@ -527,8 +527,7 @@ function ChartBlock({
   }: {
     code?: ConfigurationOptionType[];
     noCode: ConfigurationOptionType[];
-  } = useMemo(() => Object.entries(configurationOptions || {}).reduce((acc, [key, arr]) => {
-    return {
+  } = useMemo(() => Object.entries(configurationOptions || {}).reduce((acc, [key, arr]) => ({
       ...acc,
       [key]: arr.map(({
         autoRun,
@@ -555,15 +554,6 @@ function ChartBlock({
           value: configuration?.[uuid] || '',
         };
 
-        // const blocks: BlockType[] = upstreamBlocks.reduce((acc, blockUUID) => {
-        //   const b = blocksMapping[blockUUID];
-
-        //   if (b) {
-        //     return acc.concat(b);
-        //   }
-
-        //   return acc;
-        // }, []);
         const blocks = dataBlock?.block ? [dataBlock.block] : [];
 
         const columns = blocks.reduce((acc, {
@@ -764,8 +754,7 @@ function ChartBlock({
           </Spacing>
         );
       }),
-    };
-  }, {
+    }), {
     noCode: [],
   }), [
     blocksMapping,
@@ -787,22 +776,12 @@ function ChartBlock({
             fetchPipeline();
             fetchFileTree();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
         },
       ),
-      onError: (response: any) => {
-        const {
-          messages,
-        } = onError(response);
-        // setErrorMessages(messages);
-      },
     },
   );
 
@@ -1005,8 +984,8 @@ function ChartBlock({
         <Spacing mt={1} />
 
         <FlexContainer
-          justifyContent="space-between"
           fullWidth
+          justifyContent="space-between"
         >
           <Flex
             flex={6}
@@ -1080,18 +1059,6 @@ function ChartBlock({
                   </Select>
                 </Spacing>
 
-                {/*<Spacing mb={1}>
-                  <TextInput
-                    label="Chart height (in pixels)"
-                    onChange={e => updateConfiguration({
-                      [VARIABLE_NAME_HEIGHT]: e.target.value,
-                    })}
-                    placeholder="Chart height"
-                    type="number"
-                    value={configuration?.[VARIABLE_NAME_HEIGHT] || CHART_HEIGHT_DEFAULT}
-                  />
-                </Spacing>*/}
-
                 {configurationOptionsEls}
               </FlexContainer>
             </ConfigurationOptionsStyle>
@@ -1104,13 +1071,6 @@ function ChartBlock({
           && (
           <>
             <Spacing my={1} px={1}>
-              {/*<FlexContainer>
-                {configurationOptionsElsForCode.map((el, idx: number) => (
-                  <Spacing key={`code-config-options-${idx}`} ml={idx >= 1 ? 1 : 0}>
-                    {el}
-                  </Spacing>
-                ))}
-              </FlexContainer>*/}
               <Text bold>
                 Custom chart code
               </Text>

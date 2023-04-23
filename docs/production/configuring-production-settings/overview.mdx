@@ -22,3 +22,12 @@ In production, you can set the environment variable in the corresponding Terrafo
 
 #### Postgres
 `export MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://user:password@host:port/dbname`
+
+
+### ulimit
+
+ulimit is a built-in Linux command that allows viewing or limiting system resource used in processes.
+
+If you get `OSError: [Errno 24] Too many open files` error when running in Mage in production,
+you can set the environment variable `ULIMIT_NO_FILE` to a larger number (e.g. 8192 or 16384) and restart
+Mage server to increase the maximum number of open files allowed in Mage processes.

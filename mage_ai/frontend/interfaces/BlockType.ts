@@ -5,6 +5,12 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
+export enum TagEnum {
+  DYNAMIC = 'dynamic',
+  DYNAMIC_CHILD = 'dynamic_child',
+  REDUCE_OUTPUT = 'reduce_output',
+}
+
 export enum BlockLanguageEnum {
   PYTHON = 'python',
   R = 'r',
@@ -175,6 +181,7 @@ export default interface BlockType {
   outputs?: OutputType[];
   priority?: number;
   status?: StatusTypeEnum;
+  tags?: TagEnum[];
   type?: BlockTypeEnum;
   upstream_blocks?: string[];
   uuid?: string;

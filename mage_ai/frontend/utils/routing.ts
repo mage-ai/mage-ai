@@ -7,8 +7,9 @@ import {
 import { remove } from '@utils/array';
 
 type GoToWithQueryProps = {
-  replaceParams?: boolean;
+  preserveParams?: string[];
   pushHistory?: boolean;
+  replaceParams?: boolean;
 };
 
 export const LIMIT_PARAM = '_limit';
@@ -17,10 +18,23 @@ const ITEMS_PER_PAGE = 20;
 
 export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
   const {
-    replaceParams,
+    preserveParams,
     pushHistory,
+    replaceParams,
   } = opts;
-  const currentQuery = replaceParams ? {} : queryFromUrl();
+
+  const q = queryFromUrl();
+
+  const replaceParamsWith = {};
+  if (preserveParams) {
+    preserveParams.forEach((key: string) => {
+      if (q[key]) {
+        replaceParamsWith[key] = q[key];
+      }
+    });
+  }
+
+  const currentQuery = replaceParams ? replaceParamsWith : q;
   let href;
 
   if (typeof window !== 'undefined') {

@@ -15,6 +15,10 @@
       "dark": "#121212"
     }
   },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
   "metadata": {
     "og:image": "https://media.graphassets.com/j4XVqcsxTG2x50kBJryE",
     "twitter:site": "@mage_ai"
@@ -146,25 +150,29 @@
               "pages": [
                 "design/data-loading",
                 "guides/load-data-s3",
-                "guides/io_config"
+                "guides/io_config",
+                "development/blocks/data_loaders/templates"
               ]
             },
             {
               "group": "Transformer",
               "pages": [
-                "guides/transformer-blocks"
+                "guides/transformer-blocks",
+                "development/blocks/transformers/templates"
               ]
             },
             {
               "group": "Data exporter",
               "pages": [
-                "guides/export-data-s3"
+                "guides/export-data-s3",
+                "development/blocks/data_exporters/templates"
               ]
             },
             {
               "group": "Sensors",
               "pages": [
-                "guides/sensors"
+                "guides/sensors",
+                "development/blocks/sensors/templates"
               ]
             },
             "guides/blocks/callbacks",
@@ -195,6 +203,7 @@
             {
               "group": "Sources",
               "pages": [
+                "guides/streaming/sources/amazon-sqs",
                 "guides/streaming/sources/azure-event-hub",
                 "guides/streaming/sources/kafka",
                 "guides/streaming/sources/kinesis"
@@ -204,6 +213,7 @@
               "group": "Destinations",
               "pages": [
                 "guides/streaming/destinations/amazon-s3",
+                "guides/streaming/destinations/dummy",
                 "guides/streaming/destinations/kafka",
                 "guides/streaming/destinations/kinesis",
                 "guides/streaming/destinations/opensearch",
@@ -266,6 +276,7 @@
               ]
             },
             "guides/trigger-pipeline-api",
+            "orchestration/triggers/trigger-pipeline",
             "guides/triggers/configure-triggers-in-code"
           ]
         },
@@ -366,7 +377,8 @@
           "group": "Monitoring",
           "pages": [
             "production/observability/monitoring",
-            "production/observability/datadog"
+            "production/observability/datadog",
+            "production/observability/sentry"
           ]
         },
         {
@@ -388,6 +400,7 @@
           "group": "Data",
           "pages": [
             "integrations/databases/BigQuery",
+            "integrations/databases/ClickHouse",
             "integrations/databases/MySQL",
             "integrations/databases/PostgreSQL",
             "integrations/databases/Redshift",

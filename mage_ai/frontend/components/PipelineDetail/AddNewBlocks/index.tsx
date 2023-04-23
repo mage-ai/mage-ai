@@ -1,5 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
+import BlockTemplateType from '@interfaces/BlockTemplateType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import DBTLogo from '@oracle/icons/custom/DBTLogo';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -30,11 +31,13 @@ import {
   createColorMenuItems,
   getdataSourceMenuItems,
   getNonPythonMenuItems,
+  groupBlockTemplates,
 } from './utils';
 
 type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
   blockIdx?: number;
+  blockTemplates?: BlockTemplateType[];
   compact?: boolean;
   hideDataExporter?: boolean;
   hideDataLoader?: boolean;
@@ -62,6 +65,7 @@ const SENSOR_BUTTON_INDEX = 6;
 function AddNewBlocks({
   addNewBlock,
   blockIdx,
+  blockTemplates,
   compact,
   hideCustom,
   hideDataExporter,
@@ -155,6 +159,40 @@ function AddNewBlocks({
 
   const isPySpark = PipelineTypeEnum.PYSPARK === pipelineType;
 
+  const blockTemplatesByBlockType = useMemo(() => groupBlockTemplates(
+    blockTemplates,
+    addNewBlock,
+  ), [
+    addNewBlock,
+    blockTemplates,
+  ]);
+
+  const dataLoaderItems = useMemo(() => getdataSourceMenuItems(
+    addNewBlock,
+    BlockTypeEnum.DATA_LOADER,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+    },
+  ), [
+    addNewBlock,
+    blockTemplatesByBlockType,
+    pipelineType,
+  ]);
+
+  const dataExporterItems = useMemo(() => getdataSourceMenuItems(
+    addNewBlock,
+    BlockTypeEnum.DATA_EXPORTER,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+    },
+  ), [
+    addNewBlock,
+    blockTemplatesByBlockType,
+    pipelineType,
+  ]);
+
   return (
     <FlexContainer flexWrap="wrap" inline>
       <ClickOutside
@@ -166,7 +204,7 @@ function AddNewBlocks({
             <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
-                items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType)}
+                items={dataLoaderItems}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
                 parentRef={dataLoaderButtonRef}
@@ -255,7 +293,7 @@ function AddNewBlocks({
             <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}>
               <FlyoutMenuWrapper
                 disableKeyboardShortcuts
-                items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType)}
+                items={dataExporterItems}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
                 parentRef={dataExporterButtonRef}
