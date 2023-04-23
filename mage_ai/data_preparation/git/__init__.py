@@ -161,7 +161,7 @@ class Git:
     def status(self) -> str:
         return self.repo.git.status()
 
-    def commit(self, message) -> None:
+    def commit(self, message, files: List[str] = None) -> None:
         if self.repo.index.diff(None) or self.repo.untracked_files:
             self.repo.git.add('.')
             self.repo.index.commit(message)
