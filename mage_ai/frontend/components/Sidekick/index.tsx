@@ -514,7 +514,6 @@ function Sidekick({
             }}
           >
             <Terminal
-              interruptKernel={interruptKernel}
               lastMessage={lastTerminalMessage}
               onFocus={() => setSelectedBlock(null)}
               sendMessage={sendTerminalMessage}

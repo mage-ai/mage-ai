@@ -35,7 +35,14 @@ class GitBranchResource(GenericResource):
         action_type = payload.get('action_type')
         if action_type == 'status':
             status = git_manager.status()
-            self.model = dict(name=git_manager.current_branch, status=status)
+            untracked_files = git_manager.untracked_files()
+            modified_files = git_manager.modified_files
+            self.model = dict(
+                name=git_manager.current_branch,
+                status=status,
+                untracked_files=untracked_files,
+                modified_files=modified_files,
+            )
         elif action_type == 'commit':
             message = payload.get('message')
             files = payload.get('files', None)
@@ -52,5 +59,7 @@ class GitBranchResource(GenericResource):
             git_manager.pull()
         elif action_type == 'reset':
             git_manager.reset()
+        elif action_type == 'clone':
+            git_manager.clone()
 
         return self

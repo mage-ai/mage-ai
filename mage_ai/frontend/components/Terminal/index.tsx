@@ -33,7 +33,6 @@ import { useKeyboardContext } from '@context/Keyboard';
 export const DEFAULT_TERMINAL_UUID = 'terminal';
 
 type TerminalProps = {
-  interruptKernel: () => void;
   lastMessage: WebSocketEventMap['message'] | null;
   onFocus?: () => void;
   sendMessage: (message: string, keep?: boolean) => void;
@@ -42,7 +41,6 @@ type TerminalProps = {
 };
 
 function Terminal({
-  interruptKernel,
   lastMessage,
   onFocus,
   sendMessage,
@@ -275,7 +273,6 @@ in the context menu that appears.
       commandHistory,
       commandIndex,
       focus,
-      interruptKernel,
       setCommand,
       setCommandHistory,
       setCommandIndex,

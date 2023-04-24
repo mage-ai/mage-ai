@@ -13,26 +13,6 @@ import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
 
 function TerminalPage() {
-  const [updateKernel] = useMutation(
-    api.kernels.useUpdate(PIPELINE_TYPE_TO_KERNEL_NAME[PipelineTypeEnum.PYTHON]),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          onErrorCallback: (response, errors) => {
-            console.log(response);
-            alert(errors);
-          },
-        },
-      ),
-    },
-  );
-  // @ts-ignore
-  const interruptKernel = useCallback(() => updateKernel({
-    kernel: {
-      action_type: 'interrupt',
-    },
-  }), [updateKernel]);
-
   const token = useMemo(() => new AuthToken(), []);
   const sharedWebsocketData = useMemo(() => ({
     api_key: OAUTH2_APPLICATION_CLIENT_ID,
@@ -55,7 +35,6 @@ function TerminalPage() {
       uuid="terminal/index"
     >
       <Terminal
-        interruptKernel={interruptKernel}
         lastMessage={lastMessage}
         sendMessage={sendMessage}
       />
