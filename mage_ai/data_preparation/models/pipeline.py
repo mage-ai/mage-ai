@@ -848,6 +848,39 @@ class Pipeline:
 
         return mapping
 
+    @safe_db_query
+    def retry_pipeline_run(
+        self,
+        pipeline_run,
+    ):
+        from mage_ai.orchestration.db.models.schedules import PipelineSchedule, PipelineRun
+        from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, get_variables
+        from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
+
+        is_integration = PipelineType.INTEGRATION == self.type
+        schedule = PipelineSchedule.get(pipeline_run['pipeline_schedule_id'])
+        execution_date = datetime.datetime.fromisoformat(pipeline_run['execution_date'])
+        pipeline_run = PipelineRun.create(
+            create_block_runs=False,
+            execution_date=execution_date,
+            pipeline_schedule_id=schedule.id,
+            pipeline_uuid=self.uuid,
+            variables=pipeline_run.get('variables', {}),
+        )
+        pipeline_scheduler = PipelineScheduler(pipeline_run)
+        if is_integration:
+            initialize_state_and_runs(
+                pipeline_run,
+                pipeline_scheduler.logger,
+                get_variables(pipeline_run),
+            )
+        else:
+            pipeline_run.create_block_runs()
+
+        pipeline_scheduler.start(should_schedule=False)
+
+        return pipeline_run
+
     def add_block(
         self,
         block: Block,

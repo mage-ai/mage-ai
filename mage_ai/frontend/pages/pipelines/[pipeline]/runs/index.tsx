@@ -74,6 +74,7 @@ function PipelineRuns({
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
+  const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
   const [query, setQuery] = useState<{
     offset?: number;
     pipeline_run_id?: number;
@@ -179,9 +180,13 @@ function PipelineRuns({
       isPipelineRunsTab,
     ],
   );
-  const hasRunningPipeline = pipelineRuns.some(({ status }) => (
+  const hasRunningPipeline = useMemo(() => pipelineRuns.some(({ status }) => (
     status === RunStatusEnum.INITIAL || status === RunStatusEnum.RUNNING
-  ));
+  )), [pipelineRuns]);
+  const selectedRunsArr = useMemo(() => (
+    Object.values(selectedRuns || {})
+      .filter((val) => val !== null)
+  ), [selectedRuns]);
 
   const [updatePipeline, { isLoading: isLoadingUpdatePipeline }]: any = useMutation(
     api.pipelines.useUpdate(pipelineUUID),
@@ -189,6 +194,7 @@ function PipelineRuns({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
+            setSelectedRuns({});
             fetchPipelineRuns();
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -241,6 +247,7 @@ function PipelineRuns({
   const tablePipelineRuns = useMemo(() => (
     <>
       <PipelineRunsTable
+        allowBulkSelect
         fetchPipelineRuns={fetchPipelineRuns}
         onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
           const run = pipelineRuns[rowIndex];
@@ -249,7 +256,9 @@ function PipelineRuns({
         })}
         pipelineRuns={pipelineRuns}
         selectedRun={selectedRun}
+        selectedRuns={selectedRuns}
         setErrors={setErrors}
+        setSelectedRuns={setSelectedRuns}
       />
       {paginationEl}
     </>
@@ -258,6 +267,7 @@ function PipelineRuns({
     paginationEl,
     pipelineRuns,
     selectedRun,
+    selectedRuns,
   ]);
 
   const tableBlockRuns = useMemo(() => (
@@ -319,6 +329,26 @@ function PipelineRuns({
                 </Button>
               </Spacing>
             }
+
+            {selectedRunsArr.length > 0 &&
+              <Spacing pl={2}>
+                <Button
+                  loading={isLoadingUpdatePipeline}
+                  onClick={() => {
+                    updatePipeline({
+                      pipeline: {
+                        pipeline_runs: selectedRunsArr,
+                        status: 'retry',
+                      },
+                    });
+                  }}
+                  primary
+                >
+                  Retry selected runs ({selectedRunsArr.length})
+                </Button>
+              </Spacing>
+            }
+
             <ButtonTabs
               onClickTab={({ uuid }) => {
                 setQuery(null);
@@ -327,6 +357,7 @@ function PipelineRuns({
               selectedTabUUID={selectedTab?.uuid}
               tabs={TABS}
             />
+
             {isPipelineRunsTab &&
               <Select
                 compact

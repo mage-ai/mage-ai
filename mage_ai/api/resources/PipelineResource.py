@@ -199,8 +199,11 @@ class PipelineResource(BaseResource):
             for pipeline_run in pipeline_runs:
                 PipelineScheduler(pipeline_run).stop()
 
-        status = payload.get('status')
+        def retry_pipeline_runs(pipeline_runs):
+            for run in pipeline_runs:
+                self.model.retry_pipeline_run(run)
 
+        status = payload.get('status')
         pipeline_uuid = self.model.uuid
 
         def _update_callback(resource):
@@ -212,6 +215,8 @@ class PipelineResource(BaseResource):
                     update_schedule_status(status, pipeline_uuid)
                 elif status == PipelineRun.PipelineRunStatus.CANCELLED.value:
                     cancel_pipeline_runs(status, pipeline_uuid)
+                elif status == 'retry' and payload.get('pipeline_runs'):
+                    retry_pipeline_runs(payload.get('pipeline_runs'))
 
         self.on_update_callback = _update_callback
 
