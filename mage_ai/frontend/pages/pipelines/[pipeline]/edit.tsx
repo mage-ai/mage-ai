@@ -1066,7 +1066,7 @@ function PipelineDetailPage({
     },
   );
 
-  const [updateKernel] = useMutation(
+  const [updateKernel]: any = useMutation(
     api.kernels.useUpdate(kernel?.id),
     {
       onSuccess: (response: any) => onSuccess(
@@ -1086,12 +1086,14 @@ function PipelineDetailPage({
       action_type: 'restart',
     },
   }), [updateKernel]);
-  // @ts-ignore
-  const interruptKernel = useCallback(() => updateKernel({
-    kernel: {
-      action_type: 'interrupt',
-    },
-  }), [updateKernel]);
+  const interruptKernel = useCallback(() => {
+    updateKernel({
+      kernel: {
+        action_type: 'interrupt',
+      },
+    });
+    setRunningBlocks([]);
+  }, [updateKernel]);
 
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
   const addNewBlockAtIndex = useCallback((
