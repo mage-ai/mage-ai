@@ -1505,10 +1505,11 @@ function PipelineDetailPage({
           block_type: blockType,
           execution_state: executionState,
           msg_type: msgType,
+          pipeline_uuid,
           uuid,
         } = message;
 
-        if (!uuid) {
+        if (!uuid && !pipeline_uuid) {
           return;
         }
 

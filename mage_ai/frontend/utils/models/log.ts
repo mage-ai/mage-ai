@@ -3,7 +3,7 @@ import moment from 'moment';
 import LogType, { LogDataType } from '@interfaces/LogType';
 import { isJsonString } from '@utils/string';
 
-const DATE_REGEX = /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}/;
+const DATE_REGEX = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/;
 const REGEX = /([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (.+)/;
 
 function initializeLog(log: LogType) {
@@ -34,13 +34,14 @@ export function initializeLogs(log: LogType) {
 
   let subparts = [];
   parts.forEach((part: string) => {
-    if (part.match(DATE_REGEX)) {
+    const partTrimmed = part.trim();
+    if (DATE_REGEX.test(part)) {
       if (subparts.length >= 1) {
         arr.push(subparts.join(' ').trim());
       }
       subparts = [part];
-    } else if (subparts.filter(s => s).length <= 1 && part) {
-      subparts.push(part.trim());
+    } else if (subparts.filter(s => s).length <= 1 && partTrimmed) {
+      subparts.push(partTrimmed);
     }
   });
   arr.push(subparts.join(' ').trim());
