@@ -3,8 +3,9 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.shared.logger import VerboseFunctionExec
+from typing import Any, List
 from urllib.parse import urlparse
-from typing import List
 import asyncio
 import base64
 import os
@@ -15,7 +16,7 @@ REMOTE_NAME = 'mage-repo'
 
 
 class Git:
-    def __init__(self, git_config: GitConfig):
+    def __init__(self, git_config: GitConfig) -> None:
         import git
         self.remote_repo_link = git_config.remote_repo_link
         self.repo_path = git_config.repo_path or os.getcwd()
@@ -41,20 +42,20 @@ class Git:
         self.__set_git_config()
 
     @classmethod
-    def get_manager(self, user: User = None):
+    def get_manager(self, user: User = None) -> 'Git':
         preferences = get_preferences(user=user)
         git_config = GitConfig.load(config=preferences.sync_config)
         return Git(git_config)
 
     @property
-    def current_branch(self):
+    def current_branch(self) -> Any:
         return self.repo.git.branch('--show-current')
 
     @property
-    def branches(self):
+    def branches(self) -> List:
         return [head.name for head in self.repo.heads]
 
-    async def check_connection(self):
+    async def check_connection(self) -> None:
         proc = self.repo.git.ls_remote(self.origin.name, as_process=True)
         ct = 0
         while ct < 20:
@@ -80,7 +81,11 @@ class Git:
                 " and your repository host is added as a known host. More information here:"
                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
 
-    def _remote_command(func):
+    def _run_command(self, command: str) -> None:
+        proc = subprocess.Popen(args=command, shell=True)
+        proc.wait()
+
+    def _remote_command(func) -> None:
         '''
         Decorator method for commands that need to connect to the remote repo. This decorator
         will configure and test SSH settings before executing the Git command.
@@ -130,29 +135,29 @@ class Git:
             with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
                 try:
                     asyncio.run(self.check_connection())
-                except TimeoutError as e:
+                except TimeoutError as err:
                     url = f'ssh://{self.git_config.remote_repo_link}'
                     hostname = urlparse(url).hostname
                     if hostname:
                         cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'  # noqa: E501
-                        proc = subprocess.Popen(args=cmd, shell=True)
-                        proc.wait()
+                        self._run_command(cmd)
                         asyncio.run(self.check_connection())
                     else:
-                        raise e
+                        raise err
                 func(self, *args, **kwargs)
 
         return wrapper
 
     @_remote_command
-    def reset(self, branch: str = None):
+    def reset(self, branch: str = None) -> None:
         self.origin.fetch()
         if branch is None:
             branch = self.current_branch
         self.repo.git.reset('--hard', f'{self.origin.name}/{branch}')
+        self.__pip_install()
 
     @_remote_command
-    def push(self):
+    def push(self) -> None:
         self.repo.git.push(
             '--set-upstream',
             self.origin.name,
@@ -160,13 +165,14 @@ class Git:
         )
 
     @_remote_command
-    def pull(self):
+    def pull(self) -> None:
         self.origin.pull(self.current_branch)
+        self.__pip_install()
 
     def status(self) -> str:
         return self.repo.git.status()
 
-    def commit(self, message, files: List[str] = None):
+    def commit(self, message, files: List[str] = None) -> None:
         if self.repo.index.diff(None) or self.repo.untracked_files:
             if files:
                 for file in files:
@@ -175,18 +181,35 @@ class Git:
                 self.repo.git.add('.')
             self.repo.index.commit(message)
 
-    def change_branch(self, branch):
+    def change_branch(self, branch) -> None:
         if branch in self.repo.heads:
             current = self.repo.heads[branch]
-            current.checkout()
         else:
             current = self.repo.create_head(branch)
-            current.checkout()
 
-    def __set_git_config(self):
+        current.checkout()
+
+    def __set_git_config(self) -> None:
         if self.git_config.username:
             self.repo.config_writer().set_value(
                 'user', 'name', self.git_config.username).release()
         if self.git_config.email:
             self.repo.config_writer().set_value(
                 'user', 'email', self.git_config.email).release()
+
+    def __pip_install(self) -> None:
+        requirements_file = os.path.join(
+            self.repo.working_dir, 'requirements.txt')
+
+        with VerboseFunctionExec(
+            f'Running "pip3 install -r {requirements_file}"',
+            verbose=True,
+        ):
+            try:
+                if os.path.exists(requirements_file):
+                    cmd = f'pip3 install -r {requirements_file}'
+                    self._run_command(cmd)
+                print(f'Installing {requirements_file} completed successfully.')
+            except Exception as err:
+                print(f'Skip installing {requirements_file} due to error: {err}')
+                pass
