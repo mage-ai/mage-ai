@@ -1,8 +1,10 @@
-import os
-from typing import List
-
 from cryptography.fernet import Fernet, InvalidToken
-from mage_ai.data_preparation.repo_manager import get_data_dir, get_repo_path
+from mage_ai.data_preparation.repo_manager import (
+    get_data_dir,
+    get_repo_path
+)
+from typing import List
+import os
 
 DEFAULT_MAGE_SECRETS_DIR = 'secrets'
 
