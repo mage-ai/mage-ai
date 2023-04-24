@@ -1080,12 +1080,15 @@ function PipelineDetailPage({
       ),
     },
   );
-  // @ts-ignore
-  const restartKernel = useCallback(() => updateKernel({
-    kernel: {
-      action_type: 'restart',
-    },
-  }), [updateKernel]);
+
+  const restartKernel = useCallback(() => {
+    updateKernel({
+      kernel: {
+        action_type: 'restart',
+      },
+    });
+    setRunningBlocks([]);
+  }, [updateKernel]);
   const interruptKernel = useCallback(() => {
     updateKernel({
       kernel: {
