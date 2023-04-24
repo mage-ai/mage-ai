@@ -1066,7 +1066,7 @@ function PipelineDetailPage({
     },
   );
 
-  const [updateKernel] = useMutation(
+  const [updateKernel]: any = useMutation(
     api.kernels.useUpdate(kernel?.id),
     {
       onSuccess: (response: any) => onSuccess(
@@ -1080,18 +1080,20 @@ function PipelineDetailPage({
       ),
     },
   );
-  // @ts-ignore
+
   const restartKernel = useCallback(() => updateKernel({
     kernel: {
       action_type: 'restart',
     },
   }), [updateKernel]);
-  // @ts-ignore
-  const interruptKernel = useCallback(() => updateKernel({
-    kernel: {
-      action_type: 'interrupt',
-    },
-  }), [updateKernel]);
+  const interruptKernel = useCallback(() => {
+    updateKernel({
+      kernel: {
+        action_type: 'interrupt',
+      },
+    });
+    setRunningBlocks([]);
+  }, [updateKernel]);
 
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
   const addNewBlockAtIndex = useCallback((
@@ -2033,6 +2035,7 @@ function PipelineDetailPage({
             savePipelineContent={savePipelineContent}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
+            setRunningBlocks={setRunningBlocks}
             updatePipelineMetadata={updatePipelineMetadata}
           >
             {beforeHeader}
@@ -2180,6 +2183,7 @@ function PipelineDetailPage({
   const buttonTabs = useMemo(() => (
     <Spacing px={1}>
       <ButtonTabs
+        allowScroll
         noPadding
         onClickTab={(tab: TabType) => {
           setSelectedTab(tab);

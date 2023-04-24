@@ -4,6 +4,7 @@ import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { TabsContainerStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -61,7 +62,14 @@ function ButtonTabs({
             </>
           )}
 
-          {displayText}
+          <Text
+            bold
+            default={!selected}
+            noWrapping={allowScroll}
+            small
+          >
+            {displayText}
+          </Text>
         </FlexContainer>
       );
 
@@ -117,6 +125,7 @@ function ButtonTabs({
 
     return arr;
   }, [
+    allowScroll,
     onClickTab,
     selectedTabUUID,
     small,

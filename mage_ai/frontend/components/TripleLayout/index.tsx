@@ -17,7 +17,6 @@ import {
   AFTER_MIN_WIDTH,
   ALL_HEADERS_HEIGHT,
   ASIDE_HEADER_HEIGHT,
-  ASIDE_SUBHEADER_HEIGHT,
   AfterInnerStyle,
   AfterStyle,
   AsideHeaderStyle,
@@ -318,6 +317,7 @@ function TripleLayout({
     afterHeader,
     afterHeightOffset,
     afterHidden,
+    afterOverflow,
     afterSubheader,
     afterWidthFinal,
     hasAfterNavigationItems,
@@ -334,6 +334,7 @@ function TripleLayout({
       {setBeforeHidden && (
         <AsideHeaderStyle
           style={{
+            overflow: hasBeforeNavigationItems ? 'auto' : 'hidden',
             width: hasBeforeNavigationItems
               ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 1)
               : beforeWidthFinal,
