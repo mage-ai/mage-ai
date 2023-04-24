@@ -10,10 +10,13 @@ const WIDTH = 46;
 type ToggleSwitchProps = {
   checked: boolean;
   disabled?: boolean;
+  monotone?: boolean;
   onCheck: Dispatch<SetStateAction<boolean>>;
 } & InputWrapperProps;
 
-const ToggleSwitchStyle = styled.label<InputWrapperProps>`
+const ToggleSwitchStyle = styled.label<
+  InputWrapperProps & {monotone?: boolean }
+>`
   ${SHARED_INPUT_STYLES}
 
   position: relative;
@@ -56,7 +59,7 @@ const ToggleSwitchStyle = styled.label<InputWrapperProps>`
   }
 
   ${(props) =>
-    !props.disabled && `
+    !props.disabled && !props.monotone && `
     & input[type="checkbox"]:checked + span {
       background-color: #6AA1E0;
     }

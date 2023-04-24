@@ -222,8 +222,7 @@ function Header({
       branch={branch}
       fetchBranch={fetchBranch}
     />
-  ), {
-  }, [branch, fetchBranch], {
+  ),{}, [branch, fetchBranch], {
     background: true,
     uuid: 'git_actions',
   });

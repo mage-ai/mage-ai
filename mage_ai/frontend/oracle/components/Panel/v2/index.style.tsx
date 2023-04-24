@@ -13,4 +13,8 @@ export const PanelStyle = styled.div<any>`
   ${props => props.fullWidth && `
     width: 100%;
   `}
+
+  ${props => props.fullHeight && `
+    height: 100%;
+  `}
 `;
