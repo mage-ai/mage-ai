@@ -15,13 +15,13 @@ You must enter the following credentials when configuring this source:
 | `consumer_secret` | [OAuth 1.0a](https://developer.twitter.com/en/docs/authentication/oauth-1-0a) credentials. | `YOUR_TWITTER_ADS_CONSUMER_SECRET` |
 | `access_token` | [OAuth 1.0a](https://developer.twitter.com/en/docs/authentication/oauth-1-0a) credentials. | `YOUR_TWITTER_ADS_ACCESS_TOKEN` |
 | `access_token_secret` | [OAuth 1.0a](https://developer.twitter.com/en/docs/authentication/oauth-1-0a) credentials. | `YOUR_TWITTER_ADS_ACCESS_TOKEN_SECRET` |
-| `account_ids` | Comma-delimited list of Twitter Ad Account IDs. | `magesupport` |
+| `account_ids` | Comma-delimited list of Twitter Ad Account IDs. | `id1, id2, id3` |
 | `attribution_window` | Number of days for latency look-back period to allow analytical reporting numbers to stabilize. | `14` |
 | `with_deleted` | `true` or `false`; specifies whether to include logically deleted records in the results. | `true` |
 | `country_codes` | Comma-delimited list of ISO 2-letter country codes for targeting and segmenttation. | `US, CA, MX, DE` |
 | `page_size` | An optional parameter to configure custom page_size. | `1000` |
 | `reports` | Object array of specified reports with name, entity, segment, and granularity. | `[{"name": "campaigns_genders_hourly_report", "enitity": "CAMPAIGN", "segment": "GENDER", "granularity": "HOUR"}]` |
-| `request_timeout` | To configure the read and connect timeout for twitter-ads client. Default is 300 seconds. | `request_timeout` |
+| `request_timeout` | To configure the read and connect timeout for twitter-ads client. Default is 300 seconds. | `300` |
 
 <br />
 
