@@ -1,0 +1,6 @@
+connector_type: google_cloud_pubsub
+project_id: project_id
+topic_id: topic_id
+subscription_id: subscription_id
+timeout: 5
+batch_size: 100
