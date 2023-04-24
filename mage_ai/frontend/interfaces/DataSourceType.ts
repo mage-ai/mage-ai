@@ -57,6 +57,7 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.BIGQUERY,
     DataSourceTypeEnum.DRUID,
     DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE,
+    DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
     DataSourceTypeEnum.MYSQL,
     DataSourceTypeEnum.POSTGRES,
     DataSourceTypeEnum.REDSHIFT,
