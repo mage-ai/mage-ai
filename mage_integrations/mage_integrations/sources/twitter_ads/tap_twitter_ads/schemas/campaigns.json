@@ -1,0 +1,69 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "reasons_not_servable": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "servable": {
+      "type": ["null", "boolean"]
+    },
+    "daily_budget_amount_local_micro": {
+      "type": ["null", "integer"]
+    },
+    "funding_instrument_id": {
+      "type": ["null", "string"]
+    },
+    "duration_in_days": {
+      "type": ["null", "integer"]
+    },
+    "standard_delivery": {
+      "type": ["null", "boolean"]
+    },
+    "total_budget_amount_local_micro": {
+      "type": ["null", "integer"]
+    },
+    "id": {
+      "type": ["null", "string"]
+    },
+    "entity_status": {
+      "type": ["null", "string"]
+    },
+    "frequency_cap": {
+      "type": ["null", "integer"]
+    },
+    "currency": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "deleted": {
+      "type": ["null", "boolean"]
+    },
+    "budget_optimization": {
+      "type": ["null", "string"]
+    }
+  }
+}

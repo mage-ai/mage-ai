@@ -1,0 +1,21 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "conversion_purchases": { 
+      "$ref": "web_conversion_obj.json" 
+    },
+    "conversion_signups": { 
+      "$ref": "web_conversion_obj.json" 
+    },
+    "conversion_site_visits": { 
+      "$ref": "web_conversion_obj.json" 
+    },
+    "conversion_site_downloads": { 
+      "$ref": "web_conversion_obj.json" 
+    },
+    "conversion_site_custom": { 
+      "$ref": "web_conversion_obj.json" 
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "__sdc_dimensions_hash_key": {
+      "type": ["null", "string"]
+    },
+    "start_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "dimensions": { 
+      "$ref": "dimensions.json" 
+    },
+    "web_conversions": { 
+      "$ref": "web_conversion.json" 
+    }
+  }
+}

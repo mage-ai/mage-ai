@@ -1,0 +1,36 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "video_total_views": {
+      "type": ["null", "integer"]
+    },
+    "video_views_25": {
+      "type": ["null", "integer"]
+    },
+    "video_views_50": {
+      "type": ["null", "integer"]
+    },
+    "video_views_75": {
+      "type": ["null", "integer"]
+    },
+    "video_views_100": {
+      "type": ["null", "integer"]
+    },
+    "video_cta_clicks": {
+      "type": ["null", "integer"]
+    },
+    "video_content_starts": {
+      "type": ["null", "integer"]
+    },
+    "video_mrc_views": {
+      "type": ["null", "integer"]
+    },
+    "video_3s100pct_views": {
+      "type": ["null", "integer"]
+    },
+    "video_6s_views": {
+      "type": ["null", "integer"]
+    }
+  }
+}

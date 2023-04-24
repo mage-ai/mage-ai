@@ -1,0 +1,12 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "media_views": {
+      "type": ["null", "integer"]
+    },
+    "media_engagements": {
+      "type": ["null", "integer"]
+    }
+  }
+}

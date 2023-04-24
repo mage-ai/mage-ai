@@ -27,6 +27,7 @@ snowflake-connector-python==2.9.0
 sshtunnel==0.4.0
 stripe==4.2.0
 trino==0.321.0
+twitter-ads==11.0.0
 tzlocal==4.2
 xmltodict==0.13.0
 zenpy==2.0.25

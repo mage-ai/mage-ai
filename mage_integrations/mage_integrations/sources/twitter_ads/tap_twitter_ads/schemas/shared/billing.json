@@ -1,0 +1,12 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "billed_engagements": {
+      "type": ["null", "integer"]
+    },
+    "billed_charge_local_micro": {
+      "type": ["null", "integer"]
+    }
+  }
+}

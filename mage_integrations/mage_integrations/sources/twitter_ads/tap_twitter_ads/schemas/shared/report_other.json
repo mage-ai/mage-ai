@@ -1,0 +1,38 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "__sdc_dimensions_hash_key": {
+      "type": ["null", "string"]
+    },
+    "start_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "dimensions": { 
+      "$ref": "dimensions.json" 
+    },
+    "engagement": { 
+      "$ref": "engagement_all.json" 
+    },
+    "billing": { 
+      "$ref": "billing.json" 
+    },
+    "video": { 
+      "$ref": "video.json" 
+    },
+    "media": { 
+      "$ref": "media.json" 
+    },
+    "web_conversion": { 
+      "$ref": "web_conversion.json" 
+    },
+    "mobile_conversion": { 
+      "$ref": "mobile_conversion.json" 
+    }
+  }
+}

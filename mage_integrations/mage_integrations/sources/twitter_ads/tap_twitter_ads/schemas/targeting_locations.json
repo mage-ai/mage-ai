@@ -1,0 +1,21 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": ["null", "string"]
+    },
+    "country_code": {
+      "type": ["null", "string"]
+    },
+    "location_type": {
+      "type": ["null", "string"]
+    },
+    "targeting_value": {
+      "type": ["null", "string"]
+    },
+    "targeting_type": {
+      "type": ["null", "string"]
+    }
+  }
+}
