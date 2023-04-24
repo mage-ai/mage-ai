@@ -86,7 +86,7 @@ def make_replication_key_automatic(mdata, schema, replication_keys):
     return metadata.to_list(mdata)
 
 
-def get_schemas(reports):
+def get_schemas(reports, logger=LOGGER):
     schemas = {}
     field_metadata = {}
 
@@ -95,6 +95,7 @@ def get_schemas(reports):
     # JSON schemas for each stream endpoint
     for stream_name, stream_metadata in STREAMS.items():
         schema_path = get_abs_path('schemas/{}.json'.format(stream_name))
+
         with open(schema_path) as file:
             schema = json.load(file)
 
@@ -108,7 +109,7 @@ def get_schemas(reports):
         # https://github.com/singer-io/singer-python/blob/master/singer/metadata.py#L25-L44
         mdata = metadata.get_standard_metadata(
             schema=schema,
-            key_properties= (hasattr(stream_metadata, 'key_properties') or None) and stream_metadata.key_properties,
+            key_properties=(hasattr(stream_metadata, 'key_properties') or None) and stream_metadata.key_properties,
             valid_replication_keys=(hasattr(stream_metadata, 'replication_keys') or None) and stream_metadata.replication_keys,
             replication_method=(hasattr(stream_metadata, 'replication_method') or None) and stream_metadata.replication_method
         )
@@ -159,7 +160,7 @@ def get_schemas(reports):
                 report_name, report_entity)
             running_error = '{}; {}'.format(running_error, err)
         if err:
-            LOGGER.error('ERROR: {}'.format(running_error))
+            logger.error('ERROR: {}'.format(running_error))
             raise RuntimeError(running_error)
 
         # Undocumented rule: CONVERSION_TAGS report segment ONLY allows WEB_CONVERSION metric group

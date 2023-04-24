@@ -19,9 +19,10 @@ class TwitterAds(Source):
             self.config.get('reports', {}),
             client,
             self.config.get('account_ids'),
+            logger=self.logger,
+            return_streams=True,
             selected_streams=streams
         )
-
         catalog_entries = []
         for stream in catalog['streams']:
             stream_id = stream['tap_stream_id']
@@ -33,7 +34,7 @@ class TwitterAds(Source):
 
     def sync(self, catalog: Catalog) -> None:
         client = build_client(self.config)
-        do_sync(client, catalog, self.state or {}, self.config)
+        do_sync(client, self.config, catalog, self.state or {}, logger=self.logger)
 
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
         value = STREAMS[stream_id].replication_key

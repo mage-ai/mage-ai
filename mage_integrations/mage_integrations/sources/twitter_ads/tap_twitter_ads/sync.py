@@ -6,7 +6,7 @@ LOGGER = singer.get_logger()
 
 
 # Sync - main function to loop through select streams to sync_endpoints and sync_reports
-def sync(client, config, catalog, state):
+def sync(client, config, catalog, state, logger=LOGGER):
     # Get config parameters
     account_list = config.get('account_ids').replace(' ', '').split(',')
     country_code_list = config.get('country_codes', 'US').replace(' ', '').split(',')
@@ -16,13 +16,13 @@ def sync(client, config, catalog, state):
     # Get selected_streams from catalog, based on state last_stream
     #   last_stream = Previous currently synced stream, if the load was interrupted
     last_stream = singer.get_currently_syncing(state)
-    LOGGER.info('Last/Currently Syncing Stream: {}'.format(last_stream))
+    logger.info('Last/Currently Syncing Stream: {}'.format(last_stream))
 
     # Get ALL selected streams from catalog
     selected_streams = []
     for stream in catalog.get_selected_streams(state):
         selected_streams.append(stream.stream)
-    LOGGER.info('Sync Selected Streams: {}'.format(selected_streams))
+    logger.info('Sync Selected Streams: {}'.format(selected_streams))
     if not selected_streams:
         return
 
@@ -45,8 +45,8 @@ def sync(client, config, catalog, state):
             # Append un-selected parent streams of selected children
             if parent_stream not in selected_streams:
                 parent_streams.append(parent_stream)
-    LOGGER.info('Sync Parent Streams: {}'.format(parent_streams))
-    LOGGER.info('Sync Child Streams: {}'.format(child_streams))
+    logger.info('Sync Parent Streams: {}'.format(parent_streams))
+    logger.info('Sync Child Streams: {}'.format(child_streams))
 
     # Get list of report streams to sync (from config and catalog)
     report_streams = []
@@ -54,11 +54,11 @@ def sync(client, config, catalog, state):
         report_name = report.get('name')
         if report_name in selected_streams:
             report_streams.append(report_name)
-    LOGGER.info('Sync Report Streams: {}'.format(report_streams))
+    logger.info('Sync Report Streams: {}'.format(report_streams))
 
     # ACCOUNT_ID OUTER LOOP
     for account_id in account_list:
-        LOGGER.info('Account ID: {} - START Syncing'.format(account_id))
+        logger.info('Account ID: {} - START Syncing'.format(account_id))
 
         # PARENT STREAM LOOP
         for stream_name in parent_streams:
@@ -66,14 +66,14 @@ def sync(client, config, catalog, state):
             endpoint_config = STREAMS[stream_name]
             stream_obj = STREAMS[stream_name]()
             
-            LOGGER.info('Stream: {} - START Syncing, Account ID: {}'.format(
+            logger.info('Stream: {} - START Syncing, Account ID: {}'.format(
                 stream_name, account_id))
 
             # Write schema and log selected fields for stream
             stream_obj.write_schema(catalog, stream_name)
 
             selected_fields = stream_obj.get_selected_fields(catalog, stream_name)
-            LOGGER.info('Stream: {} - selected_fields: {}'.format(stream_name, selected_fields))
+            logger.info('Stream: {} - selected_fields: {}'.format(stream_name, selected_fields))
 
             total_records = stream_obj.sync_endpoint(
                 client=client,
@@ -88,7 +88,7 @@ def sync(client, config, catalog, state):
                 selected_streams=selected_streams,
             )
 
-            LOGGER.info('Stream: {} - FINISHED Syncing, Account ID: {}, Total Records: {}'.format(
+            logger.info('Stream: {} - FINISHED Syncing, Account ID: {}, Total Records: {}'.format(
                 stream_name, account_id, total_records))
 
             update_currently_syncing(state, None)
@@ -110,7 +110,7 @@ def sync(client, config, catalog, state):
                 for country in country_cursor:
                     country_id = country['targeting_value']
                     country_ids.append(country_id)
-            LOGGER.info('Countries - Country Codes: {}, Country Targeting IDs: {}'.format(
+            logger.info('Countries - Country Codes: {}, Country Targeting IDs: {}'.format(
                 country_code_list, country_ids))
 
             # GET platform_ids (targeting_values)
@@ -124,7 +124,7 @@ def sync(client, config, catalog, state):
             for platform in platforms_cursor:
                 platform_id = platform['targeting_value']
                 platform_ids.append(platform_id)
-            LOGGER.info('Platforms - Platform Targeting IDs: {}'.format(platform_ids))
+            logger.info('Platforms - Platform Targeting IDs: {}'.format(platform_ids))
 
         # REPORT STREAMS LOOP
         for report in reports:
@@ -132,14 +132,14 @@ def sync(client, config, catalog, state):
             if report_name in report_streams:
                 update_currently_syncing(state, report_name)
 
-                LOGGER.info('Report: {} - START Syncing for Account ID: {}'.format(
+                logger.info('Report: {} - START Syncing for Account ID: {}'.format(
                     report_name, account_id))
 
                 # Write schema and log selected fields for stream
                 reports_obj.write_schema(catalog, report_name)
 
                 selected_fields = reports_obj.get_selected_fields(catalog, report_name)
-                LOGGER.info('Report: {} - selected_fields: {}'.format(
+                logger.info('Report: {} - selected_fields: {}'.format(
                     report_name, selected_fields))
 
                 total_records = reports_obj.sync_report(
@@ -156,9 +156,9 @@ def sync(client, config, catalog, state):
                 )
 
                 # pylint: disable=line-too-long
-                LOGGER.info('Report: {} - FINISHED Syncing for Account ID: {}, Total Records: {}'.format(
+                logger.info('Report: {} - FINISHED Syncing for Account ID: {}, Total Records: {}'.format(
                     report_name, account_id, total_records))
                 # pylint: enable=line-too-long
                 update_currently_syncing(state, None)
 
-        LOGGER.info('Account ID: {} - FINISHED Syncing'.format(account_id))
+        logger.info('Account ID: {} - FINISHED Syncing'.format(account_id))

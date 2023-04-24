@@ -23,7 +23,6 @@ from urllib.parse import urlparse
 from twitter_ads import API_VERSION
 from twitter_ads.cursor import Cursor
 from twitter_ads.http import Request
-from twitter_ads.error import Error
 from twitter_ads.utils import split_list
 from singer.utils import strptime_to_utc
 from datetime import datetime, timedelta

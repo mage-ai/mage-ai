@@ -1,9 +1,12 @@
 from singer.catalog import Catalog, CatalogEntry, Schema
 from .schema import get_schemas
+import singer
+
+LOGGER = singer.get_logger()
 
 
-def discover(reports):
-    schemas, field_metadata = get_schemas(reports)
+def discover(reports, logger=LOGGER):
+    schemas, field_metadata = get_schemas(reports, logger=logger)
     catalog = Catalog([])
 
     for stream_name, schema_dict in schemas.items():

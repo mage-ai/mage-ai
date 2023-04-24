@@ -58,12 +58,23 @@ def check_credentials(client, twitter_ads_client, account_ids):
         raise Exception(error_message) from None
 
 
-def do_discover(reports, client, account_ids, selected_streams: List = []):
-    LOGGER.info(f'Starting discover {account_ids}')
+def do_discover(
+    reports,
+    client,
+    account_ids,
+    logger=LOGGER,
+    return_streams: bool = False,
+    selected_streams: List = [],
+):
+    logger.info('Starting discover')
     # check_credentials(client, TwitterAds(), account_ids)    # validating credentials
     catalog = discover(reports)
-    json.dump(catalog.to_dict(), sys.stdout, indent=2)
-    LOGGER.info('Finished discover')
+    catalog_dict = catalog.to_dict()
+    logger.info('Finished discover')
+
+    if return_streams:
+        return catalog_dict
+    json.dump(catalog_dict, sys.stdout, indent=2)
 
 
 @singer.utils.handle_top_exception(LOGGER)
