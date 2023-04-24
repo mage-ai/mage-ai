@@ -1,86 +1,79 @@
+from google.api_core import retry
 from google.cloud import pubsub_v1
 from dataclasses import dataclass
 from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
 from typing import Callable, List
-import traceback
 
 
 @dataclass
 class GoogleCloudPubSubConfig(BaseConfig):
     project_id: str
-    topic: str
-    subscription: str
-
+    topic_id: str
+    subscription_id: str
+    timeout: int = 5
+    batch_size: int = DEFAULT_BATCH_SIZE
 
 class GoogleCloudPubSubSource(BaseSource):
     config_class = GoogleCloudPubSubConfig
 
     def init_client(self):
-        self.publisher_client = pubsub_v1.PublisherClient()
+        self.subscriber_client = pubsub_v1.SubscriberClient()
 
     def read(self, handler: Callable):
-        try:
-            def on_event(partition_context, event):
-                self._print(f'Received event from partition: {partition_context.partition_id}.')
-                self._print(f'Event: {event}')
+        self._print('Start consuming messages.')
 
-                handler(dict(data=event.body_as_str()))
+        def callback(message: pubsub_v1.subscriber.message.Message) -> None:
+            self._print(f"Received Google cloud pubsub_v1 message: {message}.")
+            handler(dict(data=message.data.decode()))
+            message.ack()
 
-            with self.consumer_client:
-                self.consumer_client.receive(
-                    on_event=on_event,
-                    on_partition_initialize=self.on_partition_initialize,
-                    on_partition_close=self.on_partition_close,
-                    on_error=self.on_error,
-                    starting_position='-1',  # '-1' is from the beginning of the partition.
-                )
-        except KeyboardInterrupt:
-            self._print('Stopped receiving.')
+        with self.subscriber_client:
+            subscription_path = self.subscriber_client.subscription_path(
+                self.config.project_id, self.config.subscription_id)
+            streaming_pull_future = self.subscriber_client.subscribe(
+                subscription_path, callback=callback)
+
+            try:
+                # When `timeout` is not set, result() will block indefinitely,
+                # unless an exception is encountered first.
+                self._print('Start receiving message with timeout: {self.config.timeout}')
+                streaming_pull_future.result(timeout=self.config.timeout)
+            except TimeoutError:
+                streaming_pull_future.cancel()  # Trigger the shutdown.
+                streaming_pull_future.result()  # Block until the shutdown is complete.
 
     def batch_read(self, handler: Callable):
-        try:
-            def on_event_batch(partition_context, event_batch: List):
-                if len(event_batch) == 0:
-                    return
-                self._print(f'Partition {partition_context.partition_id},'
-                            f'Received count: {len(event_batch)}')
-                self._print(f'Sample event: {event_batch[0]}')
-
-                # Handle events
-                try:
-                    handler([dict(data=e.body_as_str()) for e in event_batch])
-                except Exception as e:
-                    traceback.print_exc()
-                    raise e
-
-                partition_context.update_checkpoint()
-
-            with self.consumer_client:
-                self.consumer_client.receive_batch(
-                    on_event_batch=on_event_batch,
-                    max_batch_size=100,
-                    on_partition_initialize=self.on_partition_initialize,
-                    on_partition_close=self.on_partition_close,
-                    on_error=self.on_error,
-                    starting_position='-1',  # '-1' is from the beginning of the partition.
-                )
-        except KeyboardInterrupt:
-            self._print('Stopped receiving.')
-
-    def test_connection(self):
-        return True
-
-    def on_partition_initialize(self, partition_context):
-        self._print(f'Partition: {partition_context.partition_id} has been initialized.')
-
-    def on_partition_close(self, partition_context, reason):
-        self._print(f'Partition: {partition_context.partition_id} has been closed, '
-                    f'reason for closing: {reason}.')
-
-    def on_error(self, partition_context, error):
-        if partition_context:
-            self._print(f'An exception: {partition_context.partition_id} occurred during'
-                        f' receiving from Partition: {error}.')
+        self._print('Start consuming messages.')
+        if self.config.batch_size > 0:
+            batch_size = self.config.batch_size
         else:
-            self._print(f'An exception: {error} occurred during the load balance process.')
+            batch_size = DEFAULT_BATCH_SIZE
+
+        with self.subscriber_client:
+            subscription_path = self.subscriber_client.subscription_path(
+                self.config.project_id, self.config.subscription_id)
+            response = self.subscriber_client.pull(
+                request={"subscription": subscription_path, "max_messages": batch_size},
+                retry=retry.Retry(deadline=300),
+            )
+
+            if len(response.received_messages) == 0:
+                return
+
+            ack_ids = []
+            for received_message in response.received_messages:
+                self._print(f"Received: {received_message.message.data}.")
+                handler(dict(data=received_message.data.decode()))
+                ack_ids.append(received_message.ack_id)
+
+            # Acknowledges the received messages so they will not be sent again.
+            self.subscriber_client.acknowledge(
+                request={"subscription": subscription_path, "ack_ids": ack_ids}
+            )
+
+            self._print(
+                f"Received and acknowledged {len(response.received_messages)}"
+                f" messages from {subscription_path}."
+            )
