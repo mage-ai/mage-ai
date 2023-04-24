@@ -108,8 +108,14 @@ function KernelStatus({
     data: dataClusters,
     mutate: fetchClusters,
   } = api.clusters.detail(selectedSparkClusterType);
-  const clusters: ClusterType[] = useMemo(() => dataClusters?.cluster?.clusters || [], dataClusters);
-  const selectedCluster = find(clusters, ({ is_active: isActive }) => isActive);
+  const clusters: ClusterType[] = useMemo(
+    () => dataClusters?.cluster?.clusters || [],
+    [dataClusters],
+  );
+  const selectedCluster = useMemo(
+    () => find(clusters, ({ is_active: isActive }) => isActive),
+    [clusters],
+  );
 
   const [updateCluster] = useMutation(
     api.clusters.useUpdate(selectedSparkClusterType),
