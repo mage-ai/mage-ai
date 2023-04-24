@@ -1080,7 +1080,7 @@ function PipelineDetailPage({
       ),
     },
   );
-  // @ts-ignore
+
   const restartKernel = useCallback(() => updateKernel({
     kernel: {
       action_type: 'restart',
@@ -2035,6 +2035,7 @@ function PipelineDetailPage({
             savePipelineContent={savePipelineContent}
             selectedFilePath={selectedFilePath}
             setErrors={setErrors}
+            setRunningBlocks={setRunningBlocks}
             updatePipelineMetadata={updatePipelineMetadata}
           >
             {beforeHeader}

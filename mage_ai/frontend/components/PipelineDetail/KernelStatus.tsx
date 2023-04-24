@@ -8,6 +8,7 @@ import {
 import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 
+import BlockType from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
@@ -69,6 +70,7 @@ type KernelStatusProps = {
   savePipelineContent: () => void;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
+  setRunningBlocks: (blocks: BlockType[]) => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -86,6 +88,7 @@ function KernelStatus({
   savePipelineContent,
   selectedFilePath,
   setErrors,
+  setRunningBlocks,
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -226,11 +229,13 @@ function KernelStatus({
     const hide = get(LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING, 0);
     if (kernelPid !== kernelPidPrevious && isBusy && !hide) {
       showKernelWarning();
+      setRunningBlocks([]);
     }
   }, [
     isBusy,
     kernelPid,
     kernelPidPrevious,
+    setRunningBlocks,
   ]);
 
   const kernelStatus = useMemo(() => (
