@@ -1,0 +1,27 @@
+{
+  "start_date": "2019-01-01T00:00:00Z",
+  "consumer_key": "YOUR_TWITTER_ADS_CONSUMER_KEY",
+  "consumer_secret": "YOUR_TWITTER_ADS_CONSUMER_SECRET",
+  "access_token": "YOUR_TWITTER_ADS_ACCESS_TOKEN",
+  "access_token_secret": "YOUR_TWITTER_ADS_ACCESS_TOKEN_SECRET",
+  "account_ids": "id1, id2, id3",
+  "attribution_window": "14",
+  "with_deleted": "true",
+  "country_codes": "US, CA, MX, DE",
+  "page_size": 1000,
+  "reports": [
+    {
+      "name": "campaigns_genders_hourly_report",
+      "enitity": "CAMPAIGN",
+      "segment": "GENDER",
+      "granularity": "HOUR"
+    },
+    {
+      "name": "line_items_regions_daily_report",
+      "enitity": "LINE_ITEM",
+      "segment": "REGIONS",
+      "granularity": "DAY"
+    }
+  ],
+  "request_timeout": 300
+}

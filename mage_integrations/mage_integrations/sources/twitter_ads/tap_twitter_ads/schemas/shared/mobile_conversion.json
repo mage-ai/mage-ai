@@ -1,0 +1,60 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "mobile_conversion_spent_credits": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_installs": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_content_views": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_add_to_wishlists": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_checkouts_initiated": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_reservations": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_tutorials_completed": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_achievements_unlocked": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_searches": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_add_to_carts": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_payment_info_additions": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_shares": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_rates": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_logins": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_updates": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_levels_achieved": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_invites": { 
+      "$ref": "mobile_conversion_obj.json" 
+    },
+    "mobile_conversion_key_page_views": { 
+      "$ref": "mobile_conversion_obj.json" 
+    }
+  }
+}

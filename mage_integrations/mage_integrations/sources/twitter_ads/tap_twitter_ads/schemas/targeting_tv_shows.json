@@ -1,0 +1,37 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": ["null", "string"]
+    },
+    "targeting_value": {
+      "type": ["null", "string"]
+    },
+    "genre": {
+      "type": ["null", "string"]
+    },
+    "locales": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": ["null", "object"],
+            "additionalProperties": false,
+            "properties": {
+              "language": {
+                "type": ["null", "string"]
+              },
+              "country": {
+                "type": ["null", "string"]
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
