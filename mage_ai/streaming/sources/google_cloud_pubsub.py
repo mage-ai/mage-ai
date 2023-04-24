@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
-from typing import Callable, List
+from typing import Callable
 
 
 @dataclass
@@ -15,13 +15,14 @@ class GoogleCloudPubSubConfig(BaseConfig):
     timeout: int = 5
     batch_size: int = DEFAULT_BATCH_SIZE
 
+
 class GoogleCloudPubSubSource(BaseSource):
     config_class = GoogleCloudPubSubConfig
 
-    def init_client(self):
+    def init_client(self) -> None:
         self.subscriber_client = pubsub_v1.SubscriberClient()
 
-    def read(self, handler: Callable):
+    def read(self, handler: Callable) -> None:
         self._print('Start consuming messages.')
 
         def callback(message: pubsub_v1.subscriber.message.Message) -> None:
@@ -44,7 +45,7 @@ class GoogleCloudPubSubSource(BaseSource):
                 streaming_pull_future.cancel()  # Trigger the shutdown.
                 streaming_pull_future.result()  # Block until the shutdown is complete.
 
-    def batch_read(self, handler: Callable):
+    def batch_read(self, handler: Callable) -> None:
         self._print('Start consuming messages.')
         if self.config.batch_size > 0:
             batch_size = self.config.batch_size
