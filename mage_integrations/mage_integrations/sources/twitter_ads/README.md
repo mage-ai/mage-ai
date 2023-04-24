@@ -26,4 +26,4 @@ You must enter the following credentials when configuring this source:
 <br />
 
 ## Get access to the Twitter Ads API
-To use the Twitter Ads source, you'll need to get access to the Twitter Ads API first. Follow this guide: https://developer.twitter.com/en/docs/twitter-ads-api/making-authenticated-requests to get the access.
+To use the Twitter Ads source, you'll need to get access to the Twitter Ads API first. Follow [this guide](https://developer.twitter.com/en/docs/twitter-ads-api/getting-started) to get the access.
