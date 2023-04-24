@@ -81,6 +81,13 @@ You can customize the deployment by updating the `values.yaml` file.
         persistentVolumeClaim:
             claimName: pvc-name
     ```
+  - Azure: Provision the [PersistentVolume](https://learn.microsoft.com/en-us/azure/aks/concepts-storage#persistent-volume-claims) and edit the `volumes` config to
+    ```
+    volumes:
+      - name: mage-fs
+        persistentVolumeClaim:
+            claimName: pvc-name
+    ```
 
 - Install the Helm charts with updated `values.yaml`
     ```bash
