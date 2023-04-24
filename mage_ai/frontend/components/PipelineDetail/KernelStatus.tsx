@@ -91,7 +91,6 @@ function KernelStatus({
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
     alive,
-    name,
     usage,
   } = kernel || {};
   const [isEditingPipeline, setIsEditingPipeline] = useState(false);
@@ -190,35 +189,38 @@ function KernelStatus({
   const kernelMemory = useMemo(() => {
     if (usage?.kernel_memory) {
       const memory = usage.kernel_memory;
-      const k = 1024
-      const dm = 2
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+      const k = 1024;
+      const dm = 2;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
-      const i = Math.floor(Math.log(memory) / Math.log(k))
+      const i = Math.floor(Math.log(memory) / Math.log(k));
 
-      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     }
   }, [usage?.kernel_memory]);
 
   const [showKernelWarning, hideKernelWarning] = useModal(() => (
     <PopupMenu
-      centerOnScreen
       cancelText="Close"
+      centerOnScreen
       confirmText="Don't show again"
       neutral
+      onCancel={hideKernelWarning}
       onClick={() => {
         set(LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING, 1);
         hideKernelWarning();
       }}
-      onCancel={hideKernelWarning}
       subtitle={
-        "You may need to refresh your page to continue using the notebook. Unexpected " +
-        "kernel restarts may be caused by your kernel running out of memory."
+        'You may need to refresh your page to continue using the notebook. Unexpected ' +
+        'kernel restarts may be caused by your kernel running out of memory.'
       }
       title="The kernel has restarted"
       width={UNIT * 34}
     />
-  ));
+  ), {}, [], {
+    background: true,
+    uuid: 'restart_kernel_warning',
+  });
 
   useEffect(() => {
     const hide = get(LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING, 0);
