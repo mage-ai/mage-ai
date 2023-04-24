@@ -33,7 +33,7 @@ import {
 } from '@oracle/icons';
 import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { PipelineTypeEnum } from '@interfaces/PipelineType';
+import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ignoreKeys, isEqual } from '@utils/hash';
@@ -340,7 +340,7 @@ function PipelineRuns({
                     updatePipeline({
                       pipeline: {
                         pipeline_runs: selectedRunsArr,
-                        status: 'retry',
+                        status: PipelineStatusEnum.RETRY,
                       },
                     });
                   }}
