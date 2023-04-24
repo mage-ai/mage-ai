@@ -11,6 +11,7 @@ google-cloud-bigquery~=3.0
 httpx==0.23.1
 httpx[http2]
 mysql-connector-python==8.0.31
+netsuitesdk @ git+https://github.com/hotgluexyz/netsuite-sdk-py.git@2.7.5#egg=netsuitesdk
 pendulum==1.2.0
 psycopg2==2.9.3
 psycopg2-binary==2.9.3

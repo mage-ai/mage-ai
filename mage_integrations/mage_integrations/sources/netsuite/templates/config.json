@@ -1,0 +1,10 @@
+{
+  "ns_account":"netsuite_account_id",
+  "ns_consumer_key":"netsuite_consumer_key",
+  "ns_consumer_secret":"netsuite_consumer_secret",
+  "ns_token_key":"netsuite_token_key",
+  "ns_token_secret" :"netsuite_token_secret",
+  "select_fields_by_default": true,
+  "is_sandbox": true,
+  "start_date": "2019-09-02T00:00:00Z"
+}

@@ -31,6 +31,7 @@ SOURCES = sorted([
     dict(name='Intercom'),
     dict(name='LinkedIn Ads'),
     dict(name='Monday'),
+    dict(name='Netsuite'),
     dict(name='Outreach'),
     dict(name='Paystack'),
     dict(name='Pipedrive'),
