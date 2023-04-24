@@ -33,6 +33,7 @@ import {
 } from '@oracle/icons';
 import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ignoreKeys, isEqual } from '@utils/hash';
@@ -247,7 +248,7 @@ function PipelineRuns({
   const tablePipelineRuns = useMemo(() => (
     <>
       <PipelineRunsTable
-        allowBulkSelect
+        allowBulkSelect={pipeline?.type !== PipelineTypeEnum.STREAMING}
         fetchPipelineRuns={fetchPipelineRuns}
         onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
           const run = pipelineRuns[rowIndex];
