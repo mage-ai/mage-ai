@@ -72,16 +72,22 @@ You can customize the deployment by updating the `values.yaml` file.
     ```
     
 - Customize the mount volume
-  - Local: Edit the `volumes` config in `values.yaml` to mount to your Mage project path
-  - AWS EKS: WIP
-  - GKE: Provision the [PersistentVolume](https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes#dynamic_provisioning) and edit the `volumes` config to 
+  - **Local**: Edit the `volumes` config in `values.yaml` to mount to your Mage project path
+  - **AWS EKS**: Provision the Elastic File System and create the [PersistentVolumeClaim](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/kube/efs-pvc.yaml). Then edit the `volumes` config to 
     ```
     volumes:
       - name: mage-fs
         persistentVolumeClaim:
             claimName: pvc-name
     ```
-  - Azure: Provision the [PersistentVolume](https://learn.microsoft.com/en-us/azure/aks/concepts-storage#persistent-volume-claims) and edit the `volumes` config to
+  - **GKE**: Provision the [PersistentVolume](https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes#dynamic_provisioning) and edit the `volumes` config to 
+    ```
+    volumes:
+      - name: mage-fs
+        persistentVolumeClaim:
+            claimName: pvc-name
+    ```
+  - **Azure**: Provision the [PersistentVolume](https://learn.microsoft.com/en-us/azure/aks/concepts-storage#persistent-volume-claims) and edit the `volumes` config to
     ```
     volumes:
       - name: mage-fs
