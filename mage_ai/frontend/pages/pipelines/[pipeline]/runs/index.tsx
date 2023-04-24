@@ -266,6 +266,7 @@ function PipelineRuns({
   ), [
     fetchPipelineRuns,
     paginationEl,
+    pipeline?.type,
     pipelineRuns,
     selectedRun,
     selectedRuns,
