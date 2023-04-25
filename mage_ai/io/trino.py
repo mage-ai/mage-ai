@@ -192,6 +192,11 @@ class Trino(BaseSQL):
     def table_exists(self, schema_name: str, table_name: str) -> bool:
         with self.conn.cursor() as cur:
             catalog = self.default_database()
+
+            cur.execute(f'SHOW SCHEMAS FROM {catalog} LIKE \'{schema_name}\'')
+            if len(cur.fetchall()) == 0:
+                return False
+
             cur.execute('\n'.join([
                 f'SHOW TABLES FROM {catalog}.{schema_name} LIKE \'{table_name}\''
             ]))

@@ -1,4 +1,8 @@
 from jinja2 import Template
+from mage_ai.data_preparation.models.block.sql.constants import (
+    CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION,
+    CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME,
+)
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_variable
@@ -107,9 +111,13 @@ def interpolate_input(
                     f'({data_provider1}). Please disable using raw SQL and try again.',
                 )
 
+        database, schema, table_name = table_name_parts(block.configuration, upstream_block)
+
         config_to_use = configuration if is_same_data_providers else block.configuration
-        database = config_to_use.get('data_provider_database')
-        schema = config_to_use.get('data_provider_schema')
+        if not database:
+            database = config_to_use.get('data_provider_database')
+        if not schema:
+            schema = config_to_use.get('data_provider_schema')
 
         if not database and get_database:
             database = get_database(dict(configuration=configuration))
@@ -117,7 +125,9 @@ def interpolate_input(
         if not schema and get_schema:
             schema = get_schema(dict(configuration=configuration))
 
-        table_name = upstream_block.table_name
+        if not table_name:
+            table_name = upstream_block.table_name
+
         if get_table:
             table_name = get_table(dict(
                 configuration=configuration,
@@ -155,6 +165,41 @@ def interpolate_vars(query, global_vars=dict()):
     return Template(query).render(**global_vars)
 
 
+def table_name_parts(
+    configuration: Dict,
+    upstream_block,
+    no_schema: bool = False,
+) -> Tuple[str, str, str]:
+    database = None
+    schema = None
+    table = None
+
+    full_table_name = configuration.get(
+        CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION,
+        {},
+    ).get(
+        upstream_block.uuid,
+        {},
+    ).get(CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME)
+
+    if full_table_name:
+        parts = full_table_name.split('.')
+        if len(parts) == 3:
+            database, schema, table = parts
+        elif len(parts) == 2:
+            schema, table = parts
+        elif len(parts) == 1:
+            table = parts[0]
+
+    if not table:
+        table = upstream_block.table_name
+
+    if not schema and not no_schema:
+        schema = configuration.get('data_provider_schema')
+
+    return database, schema, table
+
+
 def create_upstream_block_tables(
     loader,
     block,
@@ -184,8 +229,6 @@ def create_upstream_block_tables(
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
 
-            table_name = upstream_block.table_name
-
             df = get_variable(
                 upstream_block.pipeline.uuid,
                 upstream_block.uuid,
@@ -208,9 +251,14 @@ def create_upstream_block_tables(
                 print(f'\n\nNo data in upstream block {upstream_block.uuid}.')
                 continue
 
-            schema = None
-            if not no_schema:
-                schema = configuration.get('data_provider_schema') or schema_name
+            _, schema, table_name = table_name_parts(
+                configuration,
+                upstream_block,
+                no_schema=no_schema,
+            )
+
+            if not schema and not no_schema:
+                schema = schema_name
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 if not no_schema:

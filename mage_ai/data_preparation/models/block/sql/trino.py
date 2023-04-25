@@ -2,6 +2,7 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
     blocks_in_query,
     interpolate_input,
     should_cache_data_from_upstream,
+    table_name_parts,
 )
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.variable_manager import get_variable
@@ -25,8 +26,8 @@ def create_upstream_block_tables(
         source_table_name_for_block,
     )
     configuration = configuration if configuration else block.configuration
-    database = configuration.get('data_provider_database') or loader.default_database()
-    schema = configuration.get('data_provider_schema') or loader.default_schema()
+    database_default = configuration.get('data_provider_database') or loader.default_database()
+    schema_default = configuration.get('data_provider_schema') or loader.default_schema()
 
     mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
@@ -47,10 +48,6 @@ def create_upstream_block_tables(
             if BlockType.DBT == upstream_block.type \
                     and not cache_upstream_dbt_models:
                 continue
-
-            table_name = upstream_block.table_name
-            if unique_table_name_suffix:
-                table_name = f'{table_name}_{unique_table_name_suffix}'
 
             df = get_variable(
                 upstream_block.pipeline.uuid,
@@ -73,6 +70,16 @@ def create_upstream_block_tables(
             if no_data:
                 print(f'\n\nNo data in upstream block {upstream_block.uuid}.')
                 continue
+
+            database_custom, schema_custom, table_name = table_name_parts(
+                configuration,
+                upstream_block,
+            )
+
+            database = database_custom or database_default
+            schema = schema_custom or schema_default
+            if unique_table_name_suffix:
+                table_name = f'{table_name}_{unique_table_name_suffix}'
 
             if BlockType.DBT == block.type \
                     and BlockType.DBT != upstream_block.type:
