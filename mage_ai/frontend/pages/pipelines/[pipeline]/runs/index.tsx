@@ -33,6 +33,7 @@ import {
 } from '@oracle/icons';
 import { OFFSET_PARAM, goToWithQuery } from '@utils/routing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { PipelineStatusEnum, PipelineTypeEnum } from '@interfaces/PipelineType';
 import { RunStatus as RunStatusEnum } from '@interfaces/BlockRunType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ignoreKeys, isEqual } from '@utils/hash';
@@ -58,7 +59,7 @@ const TABS = [
   TAB_BLOCK_RUNS,
 ];
 
-const LIMIT = 25;
+const LIMIT = 30;
 const MAX_PAGES = 9;
 
 type PipelineRunsProp = {
@@ -74,6 +75,7 @@ function PipelineRuns({
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
+  const [selectedRuns, setSelectedRuns] = useState<{ [keyof: string]: PipelineRunType }>({});
   const [query, setQuery] = useState<{
     offset?: number;
     pipeline_run_id?: number;
@@ -179,9 +181,13 @@ function PipelineRuns({
       isPipelineRunsTab,
     ],
   );
-  const hasRunningPipeline = pipelineRuns.some(({ status }) => (
+  const hasRunningPipeline = useMemo(() => pipelineRuns.some(({ status }) => (
     status === RunStatusEnum.INITIAL || status === RunStatusEnum.RUNNING
-  ));
+  )), [pipelineRuns]);
+  const selectedRunsArr = useMemo(() => (
+    Object.values(selectedRuns || {})
+      .filter((val) => val !== null)
+  ), [selectedRuns]);
 
   const [updatePipeline, { isLoading: isLoadingUpdatePipeline }]: any = useMutation(
     api.pipelines.useUpdate(pipelineUUID),
@@ -189,6 +195,7 @@ function PipelineRuns({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
+            setSelectedRuns({});
             fetchPipelineRuns();
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -241,6 +248,7 @@ function PipelineRuns({
   const tablePipelineRuns = useMemo(() => (
     <>
       <PipelineRunsTable
+        allowBulkSelect={pipeline?.type !== PipelineTypeEnum.STREAMING}
         fetchPipelineRuns={fetchPipelineRuns}
         onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
           const run = pipelineRuns[rowIndex];
@@ -249,15 +257,19 @@ function PipelineRuns({
         })}
         pipelineRuns={pipelineRuns}
         selectedRun={selectedRun}
+        selectedRuns={selectedRuns}
         setErrors={setErrors}
+        setSelectedRuns={setSelectedRuns}
       />
       {paginationEl}
     </>
   ), [
     fetchPipelineRuns,
     paginationEl,
+    pipeline?.type,
     pipelineRuns,
     selectedRun,
+    selectedRuns,
   ]);
 
   const tableBlockRuns = useMemo(() => (
@@ -319,6 +331,26 @@ function PipelineRuns({
                 </Button>
               </Spacing>
             }
+
+            {selectedRunsArr.length > 0 &&
+              <Spacing pl={2}>
+                <Button
+                  loading={isLoadingUpdatePipeline}
+                  onClick={() => {
+                    updatePipeline({
+                      pipeline: {
+                        pipeline_runs: selectedRunsArr,
+                        status: PipelineStatusEnum.RETRY,
+                      },
+                    });
+                  }}
+                  primary
+                >
+                  Retry selected runs ({selectedRunsArr.length})
+                </Button>
+              </Spacing>
+            }
+
             <ButtonTabs
               onClickTab={({ uuid }) => {
                 setQuery(null);
@@ -327,6 +359,7 @@ function PipelineRuns({
               selectedTabUUID={selectedTab?.uuid}
               tabs={TABS}
             />
+
             {isPipelineRunsTab &&
               <Select
                 compact

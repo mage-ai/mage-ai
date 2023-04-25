@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
     is_dynamic_block,
 )
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -307,6 +308,38 @@ class PipelineRun(BaseModel):
             ]),
             PipelineRun.passed_sla.is_(False),
         ).all()
+
+    @safe_db_query
+    def retry_pipeline_run(
+        self,
+        pipeline_run: dict,
+    ) -> 'PipelineRun':
+        from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, get_variables
+        from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
+
+        is_integration = PipelineType.INTEGRATION == self.pipeline.type
+        schedule = PipelineSchedule.get(pipeline_run['pipeline_schedule_id'])
+        execution_date = datetime.fromisoformat(pipeline_run['execution_date'])
+        pipeline_run = self.create(
+            create_block_runs=False,
+            execution_date=execution_date,
+            pipeline_schedule_id=schedule.id,
+            pipeline_uuid=self.pipeline_uuid,
+            variables=pipeline_run.get('variables', {}),
+        )
+        pipeline_scheduler = PipelineScheduler(pipeline_run)
+        if is_integration:
+            initialize_state_and_runs(
+                pipeline_run,
+                pipeline_scheduler.logger,
+                get_variables(pipeline_run),
+            )
+        else:
+            pipeline_run.create_block_runs()
+
+        pipeline_scheduler.start(should_schedule=False)
+
+        return pipeline_run
 
     @safe_db_query
     def create_block_run(

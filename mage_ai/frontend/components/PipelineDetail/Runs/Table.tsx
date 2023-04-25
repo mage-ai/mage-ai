@@ -1,9 +1,10 @@
 import NextLink from 'next/link';
 import Router from 'next/router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
@@ -25,8 +26,8 @@ import { PopupContainerStyle } from './Table.style';
 import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { dateFormatLong } from '@utils/date';
 import { getTimeInUTCString } from '@components/Triggers/utils';
+import { indexBy } from '@utils/array';
 import { isViewer } from '@utils/session';
 import { onSuccess } from '@api/utils/response';
 
@@ -90,13 +91,7 @@ function RetryButton({
     // @ts-ignore
     createPipelineRun({
       pipeline_run: {
-        execution_date: dateFormatLong(
-          new Date().toISOString(),
-          {
-            includeSeconds: true,
-            utcFormat: true,
-          },
-        ),
+        execution_date: pipelineRun?.execution_date,
         pipeline_schedule_id: pipelineRun?.pipeline_schedule_id,
         pipeline_uuid: pipelineRun?.pipeline_uuid,
         variables: pipelineRun?.variables,
@@ -224,22 +219,28 @@ function RetryButton({
 }
 
 type PipelineRunsTableProps = {
+  allowBulkSelect?: boolean;
   disableRowSelect?: boolean;
   emptyMessage?: string;
   fetchPipelineRuns: () => void;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
+  selectedRuns?: { [keyof: string]: PipelineRunType };
+  setSelectedRuns?: (selectedRuns: any) => void;
   setErrors?: (errors: ErrorsType) => void;
 };
 
 function PipelineRunsTable({
+  allowBulkSelect,
   disableRowSelect,
   emptyMessage = 'No runs available',
   fetchPipelineRuns,
   onClickRow,
   pipelineRuns,
   selectedRun,
+  selectedRuns,
+  setSelectedRuns,
   setErrors,
 }: PipelineRunsTableProps) {
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);
@@ -297,6 +298,32 @@ function PipelineRunsTable({
       uuid: 'Logs',
     },
   ];
+
+  const allRunsSelected =  useMemo(() =>
+    pipelineRuns.every(({ id }) => !!selectedRuns?.[id]),
+    [pipelineRuns, selectedRuns],
+  );
+  if (allowBulkSelect) {
+    columnFlex.unshift(null);
+    columns.unshift(
+      {
+        label: () => (
+          <Checkbox
+            checked={allRunsSelected}
+            onClick={() => {
+              const allRunsIndexed = indexBy(pipelineRuns || [], ({ id }) => id);
+              if (allRunsSelected) {
+                setSelectedRuns({});
+              } else {
+                setSelectedRuns(allRunsIndexed);
+              }
+            }}
+          />
+        ),
+        uuid: 'Selected',
+      },
+    );
+  }
 
   if (!disableRowSelect && onClickRow) {
     columnFlex.push(null);
@@ -459,6 +486,22 @@ function PipelineRunsTable({
                     <TodoList default size={2 * UNIT} />
                   </Button>,
                 ];
+              }
+
+              if (allowBulkSelect) {
+                const selected = !!selectedRuns?.[id];
+                arr.unshift(
+                  <Checkbox
+                    checked={selected}
+                    key={`selected-pipeline-run-${id}`}
+                    onClick={() => {
+                      setSelectedRuns(prev => ({
+                        ...prev,
+                        [id]: selected ? null : pipelineRun,
+                      }));
+                    }}
+                  />,
+                );
               }
 
               if (!disableRowSelect && onClickRow) {
