@@ -190,12 +190,15 @@ class Git:
         current.checkout()
 
     def __set_git_config(self) -> None:
+        config_writer = self.repo.config_writer()
         if self.git_config.username:
-            self.repo.config_writer().set_value(
+            config_writer.set_value(
                 'user', 'name', self.git_config.username).release()
         if self.git_config.email:
-            self.repo.config_writer().set_value(
+            config_writer.set_value(
                 'user', 'email', self.git_config.email).release()
+        config_writer.set_value(
+            'safe', 'directory', self.repo_path).release()
 
     def __pip_install(self) -> None:
         requirements_file = os.path.join(
