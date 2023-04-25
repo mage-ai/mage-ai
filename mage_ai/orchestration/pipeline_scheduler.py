@@ -29,7 +29,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
     BlockRun,
@@ -854,6 +854,52 @@ def run_pipeline(pipeline_run_id, variables, tags):
         global_vars=variables,
         tags=tags,
     )
+
+
+def start_scheduler(pipeline_run: PipelineRun) -> None:
+    from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, get_variables
+
+    pipeline_scheduler = PipelineScheduler(pipeline_run)
+    is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
+
+    if is_integration:
+        initialize_state_and_runs(
+            pipeline_run,
+            pipeline_scheduler.logger,
+            get_variables(pipeline_run),
+        )
+    else:
+        pipeline_run.create_block_runs()
+
+    pipeline_scheduler.start(should_schedule=False)
+
+
+@safe_db_query
+def retry_pipeline_run(
+    pipeline_run: Dict,
+) -> 'PipelineRun':
+    pipeline_uuid = pipeline_run['pipeline_uuid']
+    pipeline = Pipeline.get(pipeline_uuid, check_if_exists=True)
+    if pipeline is None or not pipeline.is_valid_pipeline(pipeline.dir_path):
+        raise Exception(f'Pipeline {pipeline_uuid} is not a valid pipeline.')
+
+    pipeline_schedule_id = pipeline_run['pipeline_schedule_id']
+    pipeline_run_model = PipelineRun(
+        id=pipeline_run['id'],
+        pipeline_schedule_id=pipeline_schedule_id,
+        pipeline_uuid=pipeline_uuid,
+    )
+    execution_date = datetime.fromisoformat(pipeline_run['execution_date'])
+    new_pipeline_run = pipeline_run_model.create(
+        create_block_runs=False,
+        execution_date=execution_date,
+        pipeline_schedule_id=pipeline_schedule_id,
+        pipeline_uuid=pipeline_run_model.pipeline_uuid,
+        variables=pipeline_run.get('variables', {}),
+    )
+    start_scheduler(new_pipeline_run)
+
+    return new_pipeline_run
 
 
 def stop_pipeline_run(

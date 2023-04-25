@@ -9,7 +9,7 @@ from mage_ai.data_preparation.models.triggers import (
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule, PipelineRun
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, retry_pipeline_run
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
 from mage_ai.shared.hash import group_by, ignore_keys
@@ -201,12 +201,7 @@ class PipelineResource(BaseResource):
 
         def retry_pipeline_runs(pipeline_runs):
             for run in pipeline_runs:
-                pipeline_run = PipelineRun(
-                    id=run['id'],
-                    pipeline_schedule_id=run['pipeline_schedule_id'],
-                    pipeline_uuid=run['pipeline_uuid']
-                )
-                pipeline_run.retry_pipeline_run(run)
+                retry_pipeline_run(run)
 
         status = payload.get('status')
         pipeline_uuid = self.model.uuid
