@@ -3,7 +3,6 @@ from dateutil.relativedelta import relativedelta
 from mage_ai.data_integrations.utils.scheduler import (
     clear_source_output_files,
     initialize_state_and_runs,
-    start_scheduler,
 )
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -855,6 +854,24 @@ def run_pipeline(pipeline_run_id, variables, tags):
         global_vars=variables,
         tags=tags,
     )
+
+
+def start_scheduler(pipeline_run: PipelineRun) -> None:
+    from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, get_variables
+
+    pipeline_scheduler = PipelineScheduler(pipeline_run)
+    is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
+
+    if is_integration:
+        initialize_state_and_runs(
+            pipeline_run,
+            pipeline_scheduler.logger,
+            get_variables(pipeline_run),
+        )
+    else:
+        pipeline_run.create_block_runs()
+
+    pipeline_scheduler.start(should_schedule=False)
 
 
 @safe_db_query

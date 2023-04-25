@@ -80,24 +80,6 @@ def initialize_state_and_runs(
         raise err
 
 
-def start_scheduler(pipeline_run: PipelineRun) -> None:
-    from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, get_variables
-
-    pipeline_scheduler = PipelineScheduler(pipeline_run)
-    is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
-
-    if is_integration:
-        initialize_state_and_runs(
-            pipeline_run,
-            pipeline_scheduler.logger,
-            get_variables(pipeline_run),
-        )
-    else:
-        pipeline_run.create_block_runs()
-
-    pipeline_scheduler.start(should_schedule=False)
-
-
 def create_block_runs(pipeline_run: PipelineRun, logger: DictLogger) -> List[BlockRun]:
     from mage_integrations.sources.constants import BATCH_FETCH_LIMIT
 
