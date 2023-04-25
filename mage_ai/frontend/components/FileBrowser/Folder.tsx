@@ -36,8 +36,8 @@ import {
   getFullPathWithoutRootFolder,
   getNonPythonBlockFromFile,
 } from './utils';
+import { range, sortByKey } from '@utils/array';
 import { singularize } from '@utils/string';
-import { sortByKey } from '@utils/array';
 
 const DEFAULT_NAME = 'default_repo';
 
@@ -204,6 +204,32 @@ function Folder({
     uuid,
   ]);
 
+  const lineEls = useMemo(() => {
+    const arr = [];
+
+    range(level).forEach((_, idx: number) => {
+      const width = INDENT_WIDTH - 1;
+
+      arr.push(
+        <div
+          key={`line-${uuid}-${idx}`}
+          style={{
+            borderLeft: `1px solid ${theme?.content?.disabled}`,
+            height: 22,
+            marginLeft: (width / 2) - 2,
+            paddingLeft: (width / 2) + 2,
+          }}
+        />,
+      );
+    });
+
+    return arr;
+  }, [
+    level,
+    theme,
+    uuid,
+  ]);
+
   return (
     <>
       {!onlyShowChildren && (
@@ -305,12 +331,11 @@ function Folder({
             cursor: 'default',
             display: 'flex',
             minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
-            paddingBottom: UNIT / 4,
-            paddingLeft: (UNIT / 4) + (INDENT_WIDTH * level),
             paddingRight: (UNIT / 4),
-            paddingTop: UNIT / 4,
           }}
         >
+          {lineEls}
+
           {children && !collapsed && <ChevronDown muted size={ICON_SIZE} />}
           {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
           {!children && <div style={{ width: ICON_SIZE }} />}
