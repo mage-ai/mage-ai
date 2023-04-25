@@ -250,7 +250,8 @@ function TripleLayout({
           <AsideHeaderStyle
             style={{
               width: hasAfterNavigationItems
-                ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 1)
+                // Required
+                ? afterWidthFinal - (VERTICAL_NAVIGATION_WIDTH - 1)
                 : afterWidthFinal,
             }}
             visible={afterHidden}
@@ -336,7 +337,8 @@ function TripleLayout({
           style={{
             overflow: hasBeforeNavigationItems ? 'auto' : 'hidden',
             width: hasBeforeNavigationItems
-              ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 1)
+              // Required
+              ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 2)
               : beforeWidthFinal,
           }}
           visible={beforeHidden}

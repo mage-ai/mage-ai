@@ -40,6 +40,10 @@ export const IconContainerStyle = styled.div<IconContainerProps>`
     background-color: ${getColorsForBlockType(BlockTypeEnum.EXTENSION, props).accent};
   `}
 
+  ${props => props.rose && `
+    background-color: ${getColorsForBlockType(BlockTypeEnum.CALLBACK, props).accent};
+  `}
+
   ${props => props.yellow && `
     background-color: ${getColorsForBlockType(BlockTypeEnum.DATA_EXPORTER, props).accent};
   `}

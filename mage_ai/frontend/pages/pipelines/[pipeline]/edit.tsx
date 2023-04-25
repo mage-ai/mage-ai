@@ -617,6 +617,7 @@ function PipelineDetailPage({
 
     const blocksByExtensions = {};
     const blocksByUUID = {};
+    const callbacksByUUID = {};
 
     blocks.forEach((block: BlockType) => {
       const {
@@ -708,6 +709,8 @@ function PipelineDetailPage({
           blocksByExtensions[extensionUUID] = [];
         }
         blocksByExtensions[extensionUUID].push(blockPayload);
+      } else if (BlockTypeEnum.CALLBACK === type) {
+        callbacksByUUID[blockPayload.uuid] = blockPayload;
       } else {
         blocksByUUID[blockPayload.uuid] = blockPayload;
       }
@@ -726,11 +729,17 @@ function PipelineDetailPage({
     });
 
     const blocksToSave = [];
+    const callbacksToSave = [];
+
     // @ts-ignore
     (pipelineOverride?.blocks || blocks).forEach(({ uuid }) => {
       const b = blocksByUUID[uuid];
+      const c = callbacksByUUID[uuid];
+
       if (typeof b !== 'undefined') {
         blocksToSave.push(b);
+      } else if (typeof c !== 'undefined') {
+        callbacksToSave.push(c);
       }
     });
 
@@ -740,6 +749,7 @@ function PipelineDetailPage({
         ...pipeline,
         ...pipelineOverride,
         blocks: blocksToSave,
+        callbacks: callbacksToSave,
         extensions: extensionsToSave,
         updated_at: utcNowDateString,
         widgets: widgets.map((block: BlockType) => {
@@ -839,6 +849,8 @@ function PipelineDetailPage({
     blocks.forEach((block: BlockType) => {
       if (BlockTypeEnum.EXTENSION === block.type) {
         blocksInSidekickInner.push(block);
+      } else if (BlockTypeEnum.CALLBACK === block.type) {
+        blocksInSidekickInner.push(block);
       } else {
         blocksInNotebookInner.push(block);
       }
@@ -894,12 +906,18 @@ function PipelineDetailPage({
 
   const [deleteBlock] = useMutation(
     ({
+      type: blockType,
       extension_uuid: extensionUUID,
       uuid,
     }: BlockType) => {
       const query: {
         extension_uuid?: string;
+        type?: string;
       } = {};
+
+      if (blockType) {
+        query.block_type = blockType;
+      }
       if (extensionUUID) {
         query.extension_uuid = extensionUUID;
       }
@@ -1338,6 +1356,9 @@ function PipelineDetailPage({
       if (typeof pipeline?.blocks !== 'undefined') {
         arr.push(...pipeline?.blocks);
       }
+      if (typeof pipeline?.callbacks !== 'undefined') {
+        arr.push(...pipeline?.callbacks);
+      }
       if (typeof pipeline?.extensions !== 'undefined') {
         // @ts-ignore
         Object.entries(pipeline?.extensions || {}).forEach(([extensionUUID, { blocks }]) => {
@@ -1350,6 +1371,7 @@ function PipelineDetailPage({
     }
   }, [
     pipeline?.blocks,
+    pipeline?.callbacks,
     pipeline?.extensions,
   ]);
 

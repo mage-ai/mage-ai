@@ -1,13 +1,14 @@
 import {
-  Alphabet,
-  Code,
+  Callback,
+  Charts,
   Lightning,
-  NavData,
-  NavGraph,
   NavReport,
-  NavTree,
+  Secrets,
   Settings,
+  Table,
   Terminal,
+  Tree,
+  Variables,
 } from '@oracle/icons';
 import { indexBy } from '@utils/array';
 
@@ -15,6 +16,7 @@ export const VIEW_QUERY_PARAM = 'sideview';
 export const VH_PERCENTAGE = 90;
 
 export enum ViewKeyEnum {
+  CALLBACKS = 'callbacks',
   CHARTS = 'charts',
   DATA = 'data',
   EXTENSIONS = 'power_ups',
@@ -29,6 +31,7 @@ export enum ViewKeyEnum {
 }
 
 export const FULL_WIDTH_VIEWS = [
+  ViewKeyEnum.CALLBACKS,
   ViewKeyEnum.CHARTS,
   ViewKeyEnum.DATA,
   ViewKeyEnum.EXTENSIONS,
@@ -63,6 +66,10 @@ export const SIDEKICK_VIEWS: {
     label: 'Secrets',
   },
   {
+    key: ViewKeyEnum.CALLBACKS,
+    label: 'Callbacks',
+  },
+  {
     key: ViewKeyEnum.EXTENSIONS,
     label: 'Power ups',
   },
@@ -85,14 +92,15 @@ export const SIDEKICK_VIEWS: {
 export const SIDEKICK_VIEWS_BY_KEY = indexBy(SIDEKICK_VIEWS, ({ key }) => key);
 
 export const NAV_ICON_MAPPING = {
-  [ViewKeyEnum.CHARTS]: NavGraph,
-  [ViewKeyEnum.DATA]: NavData,
+  [ViewKeyEnum.CALLBACKS]: Callback,
+  [ViewKeyEnum.CHARTS]: Charts,
+  [ViewKeyEnum.DATA]: Table,
   [ViewKeyEnum.EXTENSIONS]: Lightning,
-  [ViewKeyEnum.GRAPHS]: NavGraph,
+  [ViewKeyEnum.GRAPHS]: Charts,
   [ViewKeyEnum.REPORTS]: NavReport,
-  [ViewKeyEnum.SECRETS]: Code,
+  [ViewKeyEnum.SECRETS]: Secrets,
   [ViewKeyEnum.SETTINGS]: Settings,
   [ViewKeyEnum.TERMINAL]: Terminal,
-  [ViewKeyEnum.TREE]: NavTree,
-  [ViewKeyEnum.VARIABLES]: Alphabet,
+  [ViewKeyEnum.TREE]: Tree,
+  [ViewKeyEnum.VARIABLES]: Variables,
 };

@@ -53,6 +53,9 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.EXTENSION === blockType || blockColor === BlockColorEnum.TEAL) {
     accent = (theme?.accent || dark.accent).teal;
     accentLight = (theme?.accent || dark.accent).tealLight;
+  } else if (BlockTypeEnum.CALLBACK === blockType) {
+    accent = (theme?.accent || dark.accent).rose;
+    accentLight = (theme?.accent || dark.accent).roseLight;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType
     || blockColor === BlockColorEnum.GREY
     || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {

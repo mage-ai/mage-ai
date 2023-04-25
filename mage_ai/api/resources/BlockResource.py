@@ -69,13 +69,18 @@ class BlockResource(GenericResource):
         error = ApiError.RESOURCE_INVALID.copy()
 
         query = kwargs.get('query', {})
+
         extension_uuid = query.get('extension_uuid', [None])
         if extension_uuid:
             extension_uuid = extension_uuid[0]
 
+        block_type = query.get('block_type', [None])
+        if block_type:
+            block_type = block_type[0]
+
         pipeline = kwargs.get('parent_model')
         if pipeline:
-            block = pipeline.get_block(pk, extension_uuid=extension_uuid)
+            block = pipeline.get_block(pk, block_type=block_type, extension_uuid=extension_uuid)
             if block:
                 return self(block, user, **kwargs)
             else:

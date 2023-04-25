@@ -54,6 +54,7 @@ export interface PipelineExtensionsType {
 export default interface PipelineType {
   actions?: TransformerActionType[];
   blocks?: BlockType[];
+  callbacks?: BlockType[];
   data_integration?: {
     catalog: CatalogType;
   };
