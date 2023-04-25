@@ -8,9 +8,14 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.code import is_pyspark_code
 from typing import Union
+import os
 
 
 class ExecutorFactory:
+    @classmethod
+    def get_default_executor_type(self):
+        return os.getenv('DEFAULT_EXECUTOR_TYPE', ExecutorType.LOCAL_PYTHON)
+
     @classmethod
     def get_pipeline_executor(
         self,
@@ -51,6 +56,9 @@ class ExecutorFactory:
                 executor_type = ExecutorType.PYSPARK
             else:
                 executor_type = block.executor_type
+                if executor_type == ExecutorType.LOCAL_PYTHON:
+                    # Use default executor type
+                    executor_type = self.get_default_executor_type()
         if executor_type == ExecutorType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_block_executor import (
                 PySparkBlockExecutor,

@@ -66,6 +66,7 @@ class RepoConfig:
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
             self.gcp_cloud_run_config = repo_config.get('gcp_cloud_run_config')
+            self.k8s_executor_config = repo_config.get('k8s_executor_config')
             self.notification_config = repo_config.get('notification_config', dict())
             self.queue_config = repo_config.get('queue_config', dict())
 
