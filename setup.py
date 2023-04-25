@@ -92,6 +92,7 @@ setuptools.setup(
             'kafka-python==2.0.2',
             'opensearch-py==2.0.0',
             'pika==1.3.1',
+            'pymongo==4.3.3',
             'requests_aws4auth==1.1.2',
         ],
         'all': [
@@ -125,6 +126,7 @@ setuptools.setup(
             'pika==1.3.1',
             'psycopg2==2.9.3',
             'psycopg2-binary==2.9.3',
+            'pymongo==4.3.3',
             'pyodbc==4.0.35',
             'redshift-connector==2.0.909',
             'requests_aws4auth==1.1.2',

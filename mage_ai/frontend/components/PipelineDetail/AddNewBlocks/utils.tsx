@@ -41,6 +41,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.S3,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
+        DataSourceTypeEnum.MONGODB,
         DataSourceTypeEnum.OPENSEARCH,
       ],
       [BlockTypeEnum.TRANSFORMER]: [
