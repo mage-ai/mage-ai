@@ -8,10 +8,12 @@ import {
 } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useMutation } from 'react-query';
 
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
+import CodeBlockExtraContent from '../Extensions/GreatExpectations/CodeBlockExtraContent';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
@@ -28,13 +30,14 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ICON_SIZE, IconContainerStyle } from '../AddNewBlocks/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { indexBy } from '@utils/array';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { useKeyboardContext } from '@context/Keyboard';
 import {
   getdataSourceMenuItems,
   groupBlockTemplates,
 } from '@components/PipelineDetail/AddNewBlocks/utils';
+import { indexBy } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { useKeyboardContext } from '@context/Keyboard';
 
 type CallbacksProps = {} & ExtensionProps;
 
@@ -129,6 +132,41 @@ function Callbacks({
     },
   }), {}), [runningBlocks]);
 
+  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+    ({
+      block,
+      upstream_blocks: upstreamBlocks,
+    }: {
+      block: BlockType,
+      upstream_blocks: string[];
+    }) => api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      encodeURIComponent(block?.uuid),
+      {
+        query: {
+          block_type: block?.type,
+        },
+      },
+    )({
+      block: {
+        upstream_blocks: upstreamBlocks,
+      },
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const codeBlocks = useMemo(() => callbackBlocks.map((block: BlockType, idx: number) => {
     const {
       type,
@@ -163,15 +201,26 @@ function Callbacks({
             setAnyInputFocused(false);
           }}
           executionState={executionState}
-          // extraContent={(
-          //   <CodeBlockExtraContent
-          //     block={block}
-          //     blocks={blocksInNotebook}
-          //     onUpdateCallback={fetchPipeline}
-          //     pipeline={pipeline}
-          //     setErrors={setErrors}
-          //   />
-          // )}
+          extraContent={(
+            <CodeBlockExtraContent
+              block={block}
+              blocks={blocksInNotebook}
+              inputPlaceholder="Select blocks to add callbacks to"
+              loading={isLoadingUpdateBlock}
+              pipeline={pipeline}
+              setErrors={setErrors}
+              supportedUpstreamBlockTypes={[
+                BlockTypeEnum.CUSTOM,
+                BlockTypeEnum.DATA_EXPORTER,
+                BlockTypeEnum.DATA_LOADER,
+                BlockTypeEnum.DBT,
+                BlockTypeEnum.SCRATCHPAD,
+                BlockTypeEnum.SENSOR,
+                BlockTypeEnum.TRANSFORMER,
+              ]}
+              updateBlock={updateBlock}
+            />
+          )}
           fetchFileTree={fetchFileTree}
           fetchPipeline={fetchPipeline}
           hideRunButton
@@ -204,6 +253,7 @@ function Callbacks({
     fetchFileTree,
     fetchPipeline,
     interruptKernel,
+    isLoadingUpdateBlock,
     messages,
     onChangeCallbackBlock,
     onChangeCodeBlock,
@@ -218,6 +268,7 @@ function Callbacks({
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,
+    updateBlock,
   ]);
 
   const uuidKeyboard = 'Callbacks/index';

@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
  } from 'react';
+import { useMutation } from 'react-query';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -16,6 +17,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import api from '@api';
 import { Add } from '@oracle/icons';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import { ExtensionProps } from '../constants';
@@ -27,6 +29,7 @@ import {
 import { ICON_SIZE, IconContainerStyle } from '../../AddNewBlocks/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -98,6 +101,41 @@ function GreatExpectations({
     },
   }), {}), [runningBlocks]);
 
+  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+    ({
+      block,
+      upstream_blocks: upstreamBlocks,
+    }: {
+      block: BlockType,
+      upstream_blocks: string[];
+    }) => api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      encodeURIComponent(block?.uuid),
+      {
+        query: {
+          extension_uuid: block?.extension_uuid,
+        },
+      },
+    )({
+      block: {
+        upstream_blocks: upstreamBlocks,
+      },
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const codeBlocks = useMemo(() => extensionBlocks.map((blockInit: BlockType, idx: number) => {
     const block = {
       ...blockInit,
@@ -140,10 +178,17 @@ function GreatExpectations({
           extraContent={(
             <CodeBlockExtraContent
               block={block}
+              blockActionDescription="Click a block name to run expectations on it."
               blocks={blocksInNotebook}
-              onUpdateCallback={fetchPipeline}
-              pipeline={pipeline}
-              setErrors={setErrors}
+              inputPlaceholder="Select blocks to run expectations on"
+              loading={isLoadingUpdateBlock}
+              supportedUpstreamBlockTypes={[
+                BlockTypeEnum.DATA_EXPORTER,
+                BlockTypeEnum.DATA_LOADER,
+                BlockTypeEnum.DBT,
+                BlockTypeEnum.TRANSFORMER,
+              ]}
+              updateBlock={updateBlock}
             />
           )}
           fetchFileTree={fetchFileTree}
@@ -179,6 +224,7 @@ function GreatExpectations({
     fetchFileTree,
     fetchPipeline,
     interruptKernel,
+    isLoadingUpdateBlock,
     messages,
     onChangeCallbackBlock,
     onChangeCodeBlock,
@@ -193,6 +239,7 @@ function GreatExpectations({
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,
+    updateBlock,
   ]);
 
   const uuidKeyboard = 'Extensions/GreatExpectations/index';

@@ -1,6 +1,5 @@
 import { ThemeContext } from 'styled-components';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
 
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -15,17 +14,18 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import api from '@api';
 import { Search } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
-import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
 type CodeBlockExtraContentProps = {
   block: BlockType;
+  blockActionDescription?: string;
   blocks: BlockType[];
+  inputPlaceholder?: string;
+  loading?: boolean;
   onUpdateCallback?: () => void;
   pipeline: PipelineType;
   runBlockAndTrack?: (payload: {
@@ -40,15 +40,22 @@ type CodeBlockExtraContentProps = {
     runTests?: boolean,
   }) => void;
   setErrors: (errors: ErrorsType) => void;
+  supportedUpstreamBlockTypes: BlockTypeEnum[];
+  updateBlock: (payload: {
+    block: BlockType;
+    upstream_blocks: string[];
+  }) => void;
 };
 
 function CodeBlockExtraContent({
   block,
+  blockActionDescription,
   blocks,
-  onUpdateCallback,
-  pipeline,
+  inputPlaceholder,
+  loading,
   runBlockAndTrack,
-  setErrors,
+  supportedUpstreamBlockTypes,
+  updateBlock,
 }: CodeBlockExtraContentProps) {
   const themeContext = useContext(ThemeContext);
   const [blockNameFilter, setBlockNameFilter] = useState<string>('');
@@ -68,40 +75,6 @@ function CodeBlockExtraContent({
     upstreamBlocksByUUID,
   ]);
 
-  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
-    ({
-      upstream_blocks: upstreamBlocks,
-    }: {
-      upstream_blocks: string[];
-    }) => api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
-      encodeURIComponent(block?.uuid),
-      {
-        query: {
-          extension_uuid: block?.extension_uuid,
-        },
-      },
-    )({
-      block: {
-        upstream_blocks: upstreamBlocks,
-      },
-    }),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            onUpdateCallback?.();
-            setOptionsVisible(false);
-          },
-          onErrorCallback: (response, errors) => setErrors?.({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
   const blocksFiltered = useMemo(() => blocks?.filter(({
     name,
     type,
@@ -109,15 +82,11 @@ function CodeBlockExtraContent({
   }) => (
     name?.toLowerCase().includes(blockNameFilter?.toLowerCase())
     || uuid?.toLowerCase().includes(blockNameFilter?.toLowerCase())
-  ) && [
-    BlockTypeEnum.DATA_EXPORTER,
-    BlockTypeEnum.DATA_LOADER,
-    BlockTypeEnum.DBT,
-    BlockTypeEnum.TRANSFORMER,
-  ].includes(type),
+  ) && supportedUpstreamBlockTypes?.includes(type),
   ) || [], [
     blockNameFilter,
     blocks,
+    supportedUpstreamBlockTypes,
   ]);
 
   const blockOptions = useMemo(() => {
@@ -222,7 +191,7 @@ function CodeBlockExtraContent({
             pauseEvent(e);
             setOptionsVisible(true);
           }}
-          placeholder="Select blocks to run expectations on"
+          placeholder={inputPlaceholder}
           small
           value={blockNameFilter}
         />
@@ -235,12 +204,11 @@ function CodeBlockExtraContent({
               <FlexContainer justifyContent="flex-end">
                 <Button
                   compact
-                  loading={isLoadingUpdateBlock}
-                  onClick={() => {
-                    updateBlock({
-                      upstream_blocks: Object.keys(upstreamBlocksByUUID),
-                    });
-                  }}
+                  loading={loading}
+                  onClick={() => updateBlock({
+                    block,
+                    upstream_blocks: Object.keys(upstreamBlocksByUUID),
+                  }).then(() => setOptionsVisible(false))}
                   small
                 >
                   Save selected blocks
@@ -253,11 +221,13 @@ function CodeBlockExtraContent({
 
       {!optionsVisible && block?.upstream_blocks?.length >= 1 && (
         <Spacing pb={1} pr={1}>
-          <Spacing mt={1} pl={1}>
-            <Text muted small>
-              Click a block name below to run expectations on it.
-            </Text>
-          </Spacing>
+          {blockActionDescription && (
+            <Spacing mt={1} pl={1}>
+              <Text muted small>
+                {blockActionDescription}
+              </Text>
+            </Spacing>
+          )}
 
           <FlexContainer alignItems="center">
             {block?.upstream_blocks?.map((uuid: string) => {
@@ -285,14 +255,17 @@ function CodeBlockExtraContent({
                     backgroundColor={color}
                     compact
                     disabled={!runBlockAndTrack}
-                    onClick={() => {
-                      runBlockAndTrack?.({
-                        block: {
-                          ...block,
-                          upstream_blocks: [b?.uuid],
-                        },
-                      });
-                    }}
+                    onClick={blockActionDescription
+                      ? () => {
+                        runBlockAndTrack?.({
+                          block: {
+                            ...block,
+                            upstream_blocks: [b?.uuid],
+                          },
+                        });
+                      }
+                      : null
+                    }
                     small
                   >
                     <Text monospace small>
