@@ -64,6 +64,7 @@ PipelinePolicy.allow_write([
 PipelinePolicy.allow_write([
     'add_upstream_for_block_uuid',
     'extensions',
+    'pipeline_runs',
     'schedules',
     'status',
 ] + PipelinePresenter.default_attributes, scopes=[
