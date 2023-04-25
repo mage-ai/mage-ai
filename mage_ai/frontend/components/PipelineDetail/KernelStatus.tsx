@@ -190,7 +190,7 @@ function KernelStatus({
 
       const i = Math.floor(Math.log(memory) / Math.log(k));
 
-      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))}${sizes[i]}`;
     }
   }, [usage?.kernel_memory]);
 
