@@ -11,6 +11,7 @@ import { ThemeProvider } from 'styled-components';
 
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
+import AuthToken from '@api/utils/AuthToken';
 import Head from '@oracle/elements/Head';
 import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
@@ -30,6 +31,7 @@ import {
   gridTheme as gridThemeDefault,
   theme as stylesTheme,
 } from '@styles/theme';
+import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
 
 type AppInternalProps = {
   defaultTitle?: string;
@@ -122,6 +124,8 @@ function MyApp(props: MyAppProps & AppProps) {
   const { data } = api.project_settings.list({}, {}, { pauseFetch: !noValue });
   const requireUserAuthentication =
     useMemo(() => data?.project_settings?.[0]?.require_user_authentication, [data]);
+
+
   useEffect(() => {
     if (noValue &&
       typeof requireUserAuthentication !== 'undefined' &&
@@ -132,6 +136,19 @@ function MyApp(props: MyAppProps & AppProps) {
         requireUserAuthentication,
         REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
       );
+
+      const loggedIn = AuthToken.isLoggedIn();
+      if (requireUserAuthentication && !loggedIn) {
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
+
+        if ('/sign-in' !== currentPath) {
+          const query = {
+            ...queryFromUrl(),
+            redirect_url: currentPath,
+          };
+          redirectToUrl(`/sign-in?${queryString(query)}`);
+        }
+      }
     }
   }, [noValue, requireUserAuthentication]);
 
