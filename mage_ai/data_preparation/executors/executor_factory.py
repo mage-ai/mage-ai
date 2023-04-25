@@ -14,7 +14,10 @@ import os
 class ExecutorFactory:
     @classmethod
     def get_default_executor_type(self):
-        return os.getenv('DEFAULT_EXECUTOR_TYPE', ExecutorType.LOCAL_PYTHON)
+        executor_type = os.getenv('DEFAULT_EXECUTOR_TYPE', ExecutorType.LOCAL_PYTHON)
+        if ExecutorType.is_valid_type(executor_type):
+            return executor_type
+        return ExecutorType.LOCAL_PYTHON
 
     @classmethod
     def get_pipeline_executor(
