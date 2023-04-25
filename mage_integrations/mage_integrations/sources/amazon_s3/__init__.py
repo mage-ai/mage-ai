@@ -68,6 +68,25 @@ class AmazonS3(Source):
         return configs
 
     def build_client(self):
+        if (
+            not self.config.get('aws_access_key_id') and
+            not self.config.get('aws_secret_access_key')
+        ):
+            role_arn = self.config.get('role_arn')
+            if not role_arn:
+                raise Exception('Please provide (aws_access_key_id, aws_secret_access_key)'
+                                ' or role_arn for authentication')
+            role_session_name = self.config.get('role_session_name', 'mage-data-integration')
+            session = boto3.Session()
+            sts = session.client("sts")
+            response = sts.assume_role(
+                RoleArn="arn:aws:iam::xxx:role/s3-readonly-access",
+                RoleSessionName="learnaws-test-session"
+            )
+        else:
+            aws_access_key_id = self.config.get('aws_access_key_id')
+            aws_secret_access_key = self.config.get('aws_secret_access_key')
+
         config = Config(
            retries={
               'max_attempts': 10,
@@ -77,8 +96,8 @@ class AmazonS3(Source):
 
         return boto3.client(
             's3',
-            aws_access_key_id=self.config['aws_access_key_id'],
-            aws_secret_access_key=self.config['aws_secret_access_key'],
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
             config=config,
             region_name=self.region,
         )
