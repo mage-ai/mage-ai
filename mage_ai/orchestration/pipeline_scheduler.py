@@ -3,6 +3,7 @@ from dateutil.relativedelta import relativedelta
 from mage_ai.data_integrations.utils.scheduler import (
     clear_source_output_files,
     initialize_state_and_runs,
+    start_scheduler,
 )
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
@@ -29,7 +30,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
     BlockRun,
@@ -854,6 +855,34 @@ def run_pipeline(pipeline_run_id, variables, tags):
         global_vars=variables,
         tags=tags,
     )
+
+
+@safe_db_query
+def retry_pipeline_run(
+    pipeline_run: Dict,
+) -> 'PipelineRun':
+    pipeline_uuid = pipeline_run['pipeline_uuid']
+    pipeline = Pipeline.get(pipeline_uuid, check_if_exists=True)
+    if pipeline is None or not pipeline.is_valid_pipeline(pipeline.dir_path):
+        raise Exception(f'Pipeline {pipeline_uuid} is not a valid pipeline.')
+
+    pipeline_schedule_id = pipeline_run['pipeline_schedule_id']
+    pipeline_run_model = PipelineRun(
+        id=pipeline_run['id'],
+        pipeline_schedule_id=pipeline_schedule_id,
+        pipeline_uuid=pipeline_uuid,
+    )
+    execution_date = datetime.fromisoformat(pipeline_run['execution_date'])
+    new_pipeline_run = pipeline_run_model.create(
+        create_block_runs=False,
+        execution_date=execution_date,
+        pipeline_schedule_id=pipeline_schedule_id,
+        pipeline_uuid=pipeline_run_model.pipeline_uuid,
+        variables=pipeline_run.get('variables', {}),
+    )
+    start_scheduler(new_pipeline_run)
+
+    return new_pipeline_run
 
 
 def stop_pipeline_run(
