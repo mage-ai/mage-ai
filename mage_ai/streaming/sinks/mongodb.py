@@ -22,7 +22,10 @@ class MongoDbSink(BaseSink):
         self.collection = self.database[self.config.collection_name]
 
     def write(self, data: Dict):
-        self.collection.insert_one({"_source": data})
+        if type(data) is dict:
+            self.collection.insert_one(data)
+        else:
+            self.collection.insert_one({"data": data})
         self._print(f'[MongoDB] Ingest data {data}, time={time.time()}')
 
     def batch_write(self, data: List[Dict]):
