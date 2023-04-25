@@ -471,6 +471,16 @@ class Pipeline:
                 ),
             ))
 
+        blocks_with_callbacks = {}
+        for callback_block in self.callbacks_by_uuid.values():
+            for upstream_block in callback_block.upstream_blocks:
+                if upstream_block.uuid not in blocks_with_callbacks:
+                    blocks_with_callbacks[upstream_block.uuid] = []
+                blocks_with_callbacks[upstream_block.uuid].append(callback_block)
+
+        for block in self.blocks_by_uuid.values():
+            block.callback_blocks = blocks_with_callbacks.get(block.uuid, [])
+
         self.validate('A cycle was detected in the loaded pipeline')
 
     def __initialize_blocks_by_uuid(
@@ -484,11 +494,6 @@ class Pipeline:
 
         for b in configs:
             block = blocks_by_uuid[b['uuid']]
-            block.callback_blocks = [
-                all_blocks_by_uuid[uuid] for uuid in b.get('callback_blocks', [])
-                if uuid in all_blocks_by_uuid
-            ]
-
             block.downstream_blocks = [
                 all_blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
                 if uuid in all_blocks_by_uuid

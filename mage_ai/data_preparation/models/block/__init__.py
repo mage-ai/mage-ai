@@ -1326,7 +1326,6 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
-            callback_blocks=self.callback_block_uuids,
             color=self.color,
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
