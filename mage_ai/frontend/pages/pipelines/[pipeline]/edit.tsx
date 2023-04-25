@@ -2237,8 +2237,10 @@ function PipelineDetailPage({
         afterHidden={afterHidden}
         afterNavigationItems={buildNavigationItemsSidekick({
           activeView: activeSidekickView,
-          pipelineUUID,
+          pipeline,
+          secrets,
           setActiveSidekickView,
+          variables: globalVariables,
         })}
         afterOverflow={ViewKeyEnum.DATA === activeSidekickView ? 'hidden' : null}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (

@@ -1,3 +1,4 @@
+import PipelineType from '@interfaces/PipelineType';
 import {
   Callback,
   Charts,
@@ -46,32 +47,91 @@ export const MESSAGE_VIEWS = [
 ];
 
 export const SIDEKICK_VIEWS: {
+  buildLabel?: (opts: {
+    pipeline: PipelineType;
+  }) => string;
   key: ViewKeyEnum;
   label: string;
+  secrets?: {
+    [key: string]: any;
+  }[];
+  variables?: {
+    [key: string]: any;
+  }[];
 }[] = [
   {
     key: ViewKeyEnum.TREE,
     label: 'Tree',
   },
   {
+    buildLabel: ({
+      pipeline,
+    }) => {
+      const { widgets = [] } = pipeline || {};
+
+      if (widgets?.length >= 1) {
+        return `Charts (${widgets.length})`;
+      }
+
+      return 'Charts';
+    },
     key: ViewKeyEnum.CHARTS,
-    label: 'Charts',
   },
   {
+    buildLabel: ({
+      variables,
+    }) => {
+      if (variables?.length >= 1) {
+        return `Variables (${variables.length})`;
+      }
+
+      return 'Variables';
+    },
     key: ViewKeyEnum.VARIABLES,
-    label: 'Variables',
   },
   {
+    buildLabel: ({
+      secrets,
+    }) => {
+      if (secrets?.length >= 1) {
+        return `Secrets (${secrets.length})`;
+      }
+
+      return 'Secrets';
+    },
     key: ViewKeyEnum.SECRETS,
-    label: 'Secrets',
   },
   {
+    buildLabel: ({
+      pipeline,
+    }) => {
+      const { callbacks = [] } = pipeline || {};
+
+      if (callbacks?.length >= 1) {
+        return `Callbacks (${callbacks.length})`;
+      }
+
+      return 'Callbacks';
+    },
     key: ViewKeyEnum.CALLBACKS,
-    label: 'Callbacks',
   },
   {
+    buildLabel: ({
+      pipeline,
+    }) => {
+      const { extensions = {} } = pipeline || {};
+      let extensionsCount = 0;
+      Object.values(extensions).forEach(({ blocks }) => {
+        extensionsCount += blocks?.length || 0;
+      });
+
+      if (extensionsCount >= 1) {
+        return `Power ups (${extensionsCount})`;
+      }
+
+      return 'Power ups';
+    },
     key: ViewKeyEnum.EXTENSIONS,
-    label: 'Power ups',
   },
   {
     key: ViewKeyEnum.DATA,
