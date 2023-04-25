@@ -8,6 +8,7 @@ import {
 import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 
+import BlockType from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
@@ -69,6 +70,7 @@ type KernelStatusProps = {
   savePipelineContent: () => void;
   selectedFilePath?: string;
   setErrors: (errors: ErrorsType) => void;
+  setRunningBlocks: (blocks: BlockType[]) => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -86,12 +88,12 @@ function KernelStatus({
   savePipelineContent,
   selectedFilePath,
   setErrors,
+  setRunningBlocks,
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
     alive,
-    name,
     usage,
   } = kernel || {};
   const [isEditingPipeline, setIsEditingPipeline] = useState(false);
@@ -108,8 +110,14 @@ function KernelStatus({
     data: dataClusters,
     mutate: fetchClusters,
   } = api.clusters.detail(selectedSparkClusterType);
-  const clusters: ClusterType[] = useMemo(() => dataClusters?.cluster?.clusters || [], dataClusters);
-  const selectedCluster = find(clusters, ({ is_active: isActive }) => isActive);
+  const clusters: ClusterType[] = useMemo(
+    () => dataClusters?.cluster?.clusters || [],
+    [dataClusters],
+  );
+  const selectedCluster = useMemo(
+    () => find(clusters, ({ is_active: isActive }) => isActive),
+    [clusters],
+  );
 
   const [updateCluster] = useMutation(
     api.clusters.useUpdate(selectedSparkClusterType),
@@ -196,33 +204,38 @@ function KernelStatus({
 
   const [showKernelWarning, hideKernelWarning] = useModal(() => (
     <PopupMenu
-      centerOnScreen
       cancelText="Close"
+      centerOnScreen
       confirmText="Don't show again"
       neutral
+      onCancel={hideKernelWarning}
       onClick={() => {
         set(LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING, 1);
         hideKernelWarning();
       }}
-      onCancel={hideKernelWarning}
       subtitle={
-        "You may need to refresh your page to continue using the notebook. Unexpected " +
-        "kernel restarts may be caused by your kernel running out of memory."
+        'You may need to refresh your page to continue using the notebook. Unexpected ' +
+        'kernel restarts may be caused by your kernel running out of memory.'
       }
       title="The kernel has restarted"
       width={UNIT * 34}
     />
-  ));
+  ), {}, [], {
+    background: true,
+    uuid: 'restart_kernel_warning',
+  });
 
   useEffect(() => {
     const hide = get(LOCAL_STORAGE_KEY_HIDE_KERNEL_WARNING, 0);
     if (kernelPid !== kernelPidPrevious && isBusy && !hide) {
       showKernelWarning();
+      setRunningBlocks([]);
     }
   }, [
     isBusy,
     kernelPid,
     kernelPidPrevious,
+    setRunningBlocks,
   ]);
 
   const kernelStatus = useMemo(() => (
