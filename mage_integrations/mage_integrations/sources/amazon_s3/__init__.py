@@ -68,6 +68,13 @@ class AmazonS3(Source):
         return configs
 
     def build_client(self):
+        config = Config(
+           retries={
+              'max_attempts': 10,
+              'mode': 'standard',
+           },
+        )
+
         if (
             not self.config.get('aws_access_key_id') and
             not self.config.get('aws_secret_access_key')
@@ -76,28 +83,31 @@ class AmazonS3(Source):
             if not role_arn:
                 raise Exception('Please provide (aws_access_key_id, aws_secret_access_key)'
                                 ' or role_arn for authentication')
+            # Assume IAM role and get credentials
             role_session_name = self.config.get('role_session_name', 'mage-data-integration')
-            session = boto3.Session()
-            sts = session.client("sts")
-            response = sts.assume_role(
-                RoleArn="arn:aws:iam::xxx:role/s3-readonly-access",
-                RoleSessionName="learnaws-test-session"
+            sts_session = boto3.Session()
+            sts_connection = sts_session.client('sts')
+            assume_role_object = sts_connection.assume_role(
+                RoleArn=role_arn,
+                RoleSessionName=role_session_name,
             )
-        else:
-            aws_access_key_id = self.config.get('aws_access_key_id')
-            aws_secret_access_key = self.config.get('aws_secret_access_key')
 
-        config = Config(
-           retries={
-              'max_attempts': 10,
-              'mode': 'standard',
-           },
-        )
+            session = boto3.Session(
+                aws_access_key_id=assume_role_object['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assume_role_object['Credentials']['SecretAccessKey'],
+                aws_session_token=assume_role_object['Credentials']['SessionToken'],
+            )
+
+            return session.client(
+                's3',
+                config=config,
+                region_name=self.region,
+            )
 
         return boto3.client(
             's3',
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
+            aws_access_key_id=self.config.get('aws_access_key_id'),
+            aws_secret_access_key=self.config.get('aws_secret_access_key'),
             config=config,
             region_name=self.region,
         )
