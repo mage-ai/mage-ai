@@ -5,7 +5,6 @@ import { useMutation } from 'react-query';
 import AuthToken from '@api/utils/AuthToken';
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Panel from '@oracle/components/Panel/v2';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -17,15 +16,14 @@ import { Col, Row } from '@components/shared/Grid';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { OutputContainerStyle } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { getWebSocket } from '@api/utils/url';
-import { pauseEvent } from '@utils/events';
 import { onSuccess } from '@api/utils/response';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import Flex from '@oracle/components/Flex';
 import Terminal from '@components/Terminal';
 import TextArea from '@oracle/elements/Inputs/TextArea';
 import Checkbox from '@oracle/elements/Checkbox';
 import { remove } from '@utils/array';
-import { HeaderStyle, TerminalStyle } from './GitActions.style';
+import { HeaderStyle, PanelStyle, TerminalStyle } from './GitActions.style';
+import Flex from '@oracle/components/Flex';
 
 
 const GIT_ACTION_OPTIONS = {
@@ -90,7 +88,7 @@ function GitActions({
     },
   );
 
-  const [getStatus, { isLoading: isLoadingGetStatus }] = useMutation(
+  const [getStatus] = useMutation(
     () => api.git_branches.useUpdate(branch)({ git_branch: { action_type: 'status' } }),
     {
       onSuccess: (response: any) => onSuccess(
@@ -104,7 +102,7 @@ function GitActions({
           },
         },
       ),
-    }
+    },
   );
 
   const [performAction, { isLoading: isLoadingPerformAction }] = useMutation(
@@ -125,7 +123,7 @@ function GitActions({
           },
         },
       ),
-    }
+    },
   );
 
   const [
@@ -149,7 +147,7 @@ function GitActions({
           },
         },
       ),
-    }
+    },
   );
   
   const [status, setStatus] = useState<string>();
@@ -182,6 +180,30 @@ function GitActions({
   
   useEffect(() => updateStatus(), [action, updateStatus]);
 
+  const token = useMemo(() => new AuthToken(), []);
+  const sharedWebsocketData = useMemo(() => {
+    const params = {
+      api_key: OAUTH2_APPLICATION_CLIENT_ID,
+      term_name: 'git',
+      token: token.decodedToken.token,
+    };
+    if (gitSettings?.repo_path) {
+      params['cwd'] = gitSettings?.repo_path;
+    }
+    return params;
+  }, [
+    token,
+    gitSettings?.repo_path,
+  ]);
+
+  const {
+    lastMessage,
+    sendMessage,
+  } = useWebSocket(getWebSocket('terminal'), {
+    queryParams: sharedWebsocketData,
+    shouldReconnect: () => true,
+  }, 'cwd' in sharedWebsocketData);
+
   const fileCheckbox = (file) => (
     <Checkbox
       checked={(payload?.['files'] || []).includes(file)}
@@ -205,6 +227,7 @@ function GitActions({
           };
         });
       }}
+      small
     />
   );
 
@@ -219,26 +242,25 @@ function GitActions({
         Include all changes
       </Button>
       <OutputContainerStyle noScrollbarTrackBackground>
-        <Spacing mb={1} />
         {modifiedFiles && modifiedFiles.length > 0 && (
-          <>
+          <Spacing mb={1}>
             <Spacing my={1}>
               <Text>
                 Modified files
               </Text>
             </Spacing>
-            {modifiedFiles.map(fileCheckbox)}
-          </>
+            {modifiedFiles.map((fileCheckbox))}
+          </Spacing>
         )}
         {untrackedFiles && untrackedFiles.length > 0 && (
-          <>
+          <Spacing mb={1}>
             <Spacing my={1}>
               <Text>
                 Untracked files
               </Text>
             </Spacing>
             {untrackedFiles.map(fileCheckbox)}
-          </>
+          </Spacing>
         )}
       </OutputContainerStyle>
     </>
@@ -441,117 +463,103 @@ function GitActions({
     status,
   ]);
 
-  const token = useMemo(() => new AuthToken(), []);
-  const sharedWebsocketData = useMemo(() => ({
-    api_key: OAUTH2_APPLICATION_CLIENT_ID,
-    token: token.decodedToken.token,
-  }), [
-    token,
+  const terminalEl = useMemo(() => (
+    <Terminal
+      lastMessage={lastMessage}
+      sendMessage={sendMessage}
+    />
+  ), [
+    lastMessage,
   ]);
 
-  const {
-    lastMessage,
-    sendMessage,
-  } = useWebSocket(getWebSocket('terminal'), {
-    shouldReconnect: () => true,
-    queryParams: sharedWebsocketData,
-  });
-
   return (
-    <div style={{
-      height: '75vh',
-      width: '75vw',
-    }}>
-      <Panel fullHeight>
-        <HeaderStyle>
-          <Spacing m={2}>
-            <FlexContainer>
-              <Select
-                beforeIcon={<Branch />}
-                compact
-                key="select_branch"
-                onChange={(e) => {
-                  e.preventDefault();
-                  // @ts-ignore
-                  switchBranch({
-                    git_branch: {
-                      name: e.target.value
-                    },
-                  });
-                }}
-                placeholder="Select a branch"
-                value={branch}
-              >
-                {allBranches?.map(({ name }) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </Select>
-              <Spacing ml={2} />
-              <Select
-                compact
-                key="select_git_action"
-                onChange={(e) => {
-                  e.preventDefault();
-                  setAction(e.target.value);
-                  setMessage(null);
-                  setPayload(null);
-                }}
-                value={action}
-              >
-                <option value="">
-                  Select an action
+    <PanelStyle>
+      <HeaderStyle>
+        <Spacing m={2}>
+          <FlexContainer>
+            <Select
+              beforeIcon={<Branch />}
+              compact
+              key="select_branch"
+              onChange={(e) => {
+                e.preventDefault();
+                // @ts-ignore
+                switchBranch({
+                  git_branch: {
+                    name: e.target.value
+                  },
+                });
+              }}
+              placeholder="Select a branch"
+              value={branch}
+            >
+              {allBranches?.map(({ name }) => (
+                <option key={name} value={name}>
+                  {name}
                 </option>
-                {Object.entries(GIT_ACTION_OPTIONS).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
+              ))}
+            </Select>
+            <Spacing ml={2} />
+            <Select
+              compact
+              key="select_git_action"
+              onChange={(e) => {
+                e.preventDefault();
+                setAction(e.target.value);
+                setShowTerminal(false);
+                setMessage(null);
+                setPayload(null);
+              }}
+              value={action}
+            >
+              <option value="">
+                Select an action
+              </option>
+              {Object.entries(GIT_ACTION_OPTIONS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </Select>
+          </FlexContainer>
+        </Spacing>
+        <Spacing m={2}>
+          <FlexContainer alignItems="center">
+            <Text>UI</Text>
+            <Spacing ml={1} />
+            <ToggleSwitch
+              checked={!!showTerminal}
+              monotone
+              onCheck={() => setShowTerminal(prev => !prev)}
+            />
+            <Spacing ml={1} />
+            <Text>Terminal</Text>
+          </FlexContainer>
+        </Spacing>
+      </HeaderStyle>
+      <FlexContainer>
+        <div style={{ width: '50%' }}>
+          <Spacing p={2}>
+            {action === 'commit' ? addFilesEl : (
+              <OutputContainerStyle noScrollbarTrackBackground>
+                {status?.split('\\n')?.map((t) => (
+                  <Text key={t} monospace preWrap small>
+                    {t}
+                  </Text>
                 ))}
-              </Select>
-            </FlexContainer>
+              </OutputContainerStyle>
+            )}
           </Spacing>
-          <Spacing m={2}>
-            <FlexContainer alignItems="center">
-              <Text>UI</Text>
-              <Spacing ml={1} />
-              <ToggleSwitch
-                checked={!!showTerminal}
-                monotone
-                onCheck={() => setShowTerminal(prev => !prev)}
-              />
-              <Spacing ml={1} />
-              <Text>Terminal</Text>
-            </FlexContainer>
-          </Spacing>
-        </HeaderStyle>
-        <Row fullHeight>
-          <Col md={6}>
-            <Spacing p={2}>
-              {action === 'commit' ? addFilesEl : (
-                <OutputContainerStyle noScrollbarTrackBackground>
-                  {status?.split('\\n')?.map((t) => (
-                    <Text key={t} monospace preWrap small>
-                      {t}
-                    </Text>
-                  ))}
-                </OutputContainerStyle>
-              )}
-            </Spacing>
-          </Col>
-          <Col md={6}>
-            {showTerminal ? (
-              <TerminalStyle>
-                <Terminal
-                  lastMessage={lastMessage}
-                  sendMessage={sendMessage}
-                />
-              </TerminalStyle>
-            ) : actionPanel}
-          </Col>
-        </Row>
-      </Panel>
-    </div>
+        </div>
+        <div style={{ width: '50%' }}>
+          {showTerminal ? (
+            <TerminalStyle>
+              {terminalEl}
+            </TerminalStyle>
+          ) : actionPanel}
+        </div>
+      </FlexContainer>
+    </PanelStyle>
   );
 }
 

@@ -51,7 +51,7 @@ class SecretResource(DatabaseResource):
         return self(model, user, **kwargs)
 
     @classmethod
-    def _filter_secrets(self, secret: Secret, user) -> bool: 
+    def _filter_secrets(self, secret: Secret, user) -> bool:
         # Only include git secrets that were created by the current user.
         preferences = GitConfig(get_preferences(user=user).sync_config)
         whitelist_secrets = [
