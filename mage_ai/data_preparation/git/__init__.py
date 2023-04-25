@@ -2,11 +2,11 @@ from mage_ai.data_preparation.models.constants import PREFERENCES_FILE
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import get_secret_value
-from mage_ai.data_preparation.sync import GitConfig
+from mage_ai.data_preparation.sync import AuthType, GitConfig
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.logger import VerboseFunctionExec
 from typing import Any, List
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit, urlunsplit
 import asyncio
 import base64
 import os
@@ -25,6 +25,7 @@ class Git:
         self.repo_path = git_config.repo_path or os.getcwd()
         os.makedirs(self.repo_path, exist_ok=True)
         self.git_config = git_config
+        self.auth_type = git_config.auth_type
         try:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
@@ -34,12 +35,23 @@ class Git:
 
         self.__set_git_config()
 
+        if self.auth_type == AuthType.HTTPS:
+            url = urlsplit(self.remote_repo_link)
+            token = get_secret_value(
+                git_config.access_token_secret_name,
+                repo_name=get_repo_path(),
+            )
+            user = git_config.username
+            url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
+            self.remote_repo_link = urlunsplit(url)
+
         try:
             self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
         except git.exc.GitCommandError:
             # if the remote already exists
             pass
 
+        # replace the existing remote url if it is different from the provided url
         self.origin = self.repo.remotes[REMOTE_NAME]
         if self.remote_repo_link not in self.origin.urls:
             self.origin.set_url(self.remote_repo_link)
@@ -129,21 +141,28 @@ class Git:
         will configure and test SSH settings before executing the Git command.
         '''
         def wrapper(self, *args, **kwargs):
-            private_key_file = self.__create_ssh_keys()
+            if self.auth_type == AuthType.SSH:
+                private_key_file = self.__create_ssh_keys()
 
-            git_ssh_cmd = f'ssh -i {private_key_file}'
-            with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+                git_ssh_cmd = f'ssh -i {private_key_file}'
+                with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+                    try:
+                        asyncio.run(self.check_connection())
+                    except TimeoutError as err:
+                        url = f'ssh://{self.git_config.remote_repo_link}'
+                        hostname = urlparse(url).hostname
+                        if hostname:
+                            cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'  # noqa: E501
+                            self._run_command(cmd)
+                            asyncio.run(self.check_connection())
+                        else:
+                            raise err
+                    func(self, *args, **kwargs)
+            else:
                 try:
                     asyncio.run(self.check_connection())
                 except TimeoutError as err:
-                    url = f'ssh://{self.git_config.remote_repo_link}'
-                    hostname = urlparse(url).hostname
-                    if hostname:
-                        cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'  # noqa: E501
-                        self._run_command(cmd)
-                        asyncio.run(self.check_connection())
-                    else:
-                        raise err
+                    raise err
                 func(self, *args, **kwargs)
 
         return wrapper
@@ -194,14 +213,16 @@ class Git:
         from git import Repo
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
         os.mkdir(tmp_path)
-
-        private_key_file = self.__create_ssh_keys()
         try:
+            env = {}
+            if self.auth_type == AuthType.SSH:
+                private_key_file = self.__create_ssh_keys()
+                env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
             Repo.clone_from(
                 self.remote_repo_link,
                 to_path=tmp_path,
                 origin=REMOTE_NAME,
-                env={'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
+                env=env,
             )
 
             preferences_file = os.path.join(self.repo_path, PREFERENCES_FILE)

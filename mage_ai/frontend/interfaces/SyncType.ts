@@ -1,10 +1,16 @@
+export enum AuthType {
+  SSH = 'ssh',
+  HTTPS = 'https',
+}
+
 export default interface SyncType {
   type?: string;
+  auth_type?: AuthType;
   remote_repo_link?: string;
   repo_path?: string;
   branch?: string;
   sync_on_pipeline_run?: boolean;
-};
+}
 
 export const GIT_FIELDS = [
   {
@@ -17,7 +23,7 @@ export const GIT_FIELDS = [
     autoComplete: 'repo_path',
     label: 'Local directory path',
     labelDescription: "Defaults to Python's os.getcwd() if omitted. Mage will create this local directory if it doesn't already exist.",
-    uuid: 'repo_path'
+    uuid: 'repo_path',
   },
 ];
 
@@ -25,12 +31,12 @@ export const OPTIONAL_GIT_FIELDS = [
   {
     autoComplete: 'username',
     label: 'Username',
-    uuid: 'username'
+    uuid: 'username',
   },
   {
     autoComplete: 'email',
     label: 'Email',
-    uuid: 'email'
+    uuid: 'email',
   },
   {
     autoComplete: 'ssh_public_key',
@@ -45,6 +51,29 @@ export const OPTIONAL_GIT_FIELDS = [
     labelDescription: 'Follow same steps as the public key, but run "cat ~/.ssh/id_rsa | base64 | tr -d \\\\n && echo" instead. The key will be stored as a Mage secret.',
     type: 'password',
     uuid: 'ssh_private_key',
+  },
+];
+
+export const HTTPS_GIT_FIELDS = [
+  {
+    autoComplete: 'username',
+    label: 'Username',
+    required: true,
+    uuid: 'username',
+  },
+  {
+    autoComplete: 'email',
+    label: 'Email',
+    required: true,
+    uuid: 'email',
+  },
+  {
+    autoComplete: 'access_token',
+    label: 'Access token',
+    labelDescription: 'Add your Git access token to authenticate with your provided username. The access token will be stored as a Mage secret.',
+    required: true,
+    type: 'password',
+    uuid: 'access_token',
   },
 ];
 

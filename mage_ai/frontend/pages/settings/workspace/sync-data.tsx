@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 
@@ -8,10 +8,13 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import Select from '@oracle/elements/Inputs/Select';
 import SettingsDashboard from '@components/settings/Dashboard';
 import Spacing from '@oracle/elements/Spacing';
 import SyncType, {
+  AuthType,
   GIT_FIELDS,
+  HTTPS_GIT_FIELDS,
   OPTIONAL_GIT_FIELDS,
   SYNC_FIELDS,
 } from '@interfaces/SyncType';
@@ -111,6 +114,14 @@ function SyncData() {
     }
   );
 
+  const authType = useMemo(() => sync?.auth_type || AuthType.SSH, [sync?.auth_type]);
+  const additionalGitFields = useMemo(() => {
+    if (authType === AuthType.HTTPS) {
+      return HTTPS_GIT_FIELDS;
+    }
+    return OPTIONAL_GIT_FIELDS;
+  }, [authType]);
+
   return (
     <SettingsDashboard
       uuidItemSelected={SECTION_ITEM_UUID_GIT_SETTINGS}
@@ -127,13 +138,41 @@ function SyncData() {
         </Headline>
         <Spacing mt={1}>
           <Text bold>
+            Authentication type
+          </Text>
+        </Spacing>
+        <Spacing mt={1}>
+          <Select
+            compact
+            label="Authentication type"
+            onChange={(e) => {
+              const type = e.target.value;
+              setSync(prev => ({
+                ...prev,
+                auth_type: type,
+              }));
+            }}
+            value={authType}
+          >
+            {Object.entries(AuthType).map(([k, v]) => (
+              <option key={v} value={v}>
+                {k}
+              </option>
+            ))}
+          </Select>
+        </Spacing>
+        <Spacing mt={1}>
+          <Text bold>
             You can enable the Git integration by supplying the url
-            for your remote repository. <Text bold inline>
+            for your remote repository.
+          </Text>
+          {authType === AuthType.SSH && (
+            <Text bold>
               You will need to <Link href="https://docs.mage.ai/developing-in-the-cloud/setting-up-git" openNewWindow>
                 set up your SSH key
               </Link> if you have not done so already.
             </Text>
-          </Text>
+          )}
         </Spacing>
 
         <form>
@@ -177,13 +216,12 @@ function SyncData() {
 
         <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <Text bold>
-            (OPTIONAL) These fields are recommended if your Git and SSH settings can be reset unexpectedly.
-            Filling out these fields will allow Mage to continue to connect to the remote Git
-            repository.
+            These fields are {authType === AuthType.HTTPS ? 'required': 'recommended'} to
+            help Mage configure your Git settings.
           </Text>
         </Spacing>
         <form>
-          {OPTIONAL_GIT_FIELDS.map(({
+          {additionalGitFields.map(({
             autoComplete,
             disabled,
             label,
@@ -246,8 +284,8 @@ function SyncData() {
                 href="https://docs.mage.ai/production/data-sync/git#git-sync"
                 large
                 openNewWindow>
-                  Git Sync
-                </Link>
+                Git Sync
+              </Link>
             </Text>
           </FlexContainer>
         </Spacing>

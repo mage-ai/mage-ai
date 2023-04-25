@@ -222,7 +222,7 @@ function GitActions({
         <Spacing mb={1} />
         {modifiedFiles && modifiedFiles.length > 0 && (
           <>
-            <Spacing mb={1}>
+            <Spacing my={1}>
               <Text>
                 Modified files
               </Text>
@@ -232,7 +232,7 @@ function GitActions({
         )}
         {untrackedFiles && untrackedFiles.length > 0 && (
           <>
-            <Spacing mb={1}>
+            <Spacing my={1}>
               <Text>
                 Untracked files
               </Text>
