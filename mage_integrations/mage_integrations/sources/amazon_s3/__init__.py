@@ -77,18 +77,15 @@ class AmazonS3(Source):
 
         if (
             not self.config.get('aws_access_key_id') and
-            not self.config.get('aws_secret_access_key')
+            not self.config.get('aws_secret_access_key') and
+            self.config.get('role_arn')
         ):
-            role_arn = self.config.get('role_arn')
-            if not role_arn:
-                raise Exception('Please provide (aws_access_key_id, aws_secret_access_key)'
-                                ' or role_arn for authentication')
             # Assume IAM role and get credentials
             role_session_name = self.config.get('role_session_name', 'mage-data-integration')
             sts_session = boto3.Session()
             sts_connection = sts_session.client('sts')
             assume_role_object = sts_connection.assume_role(
-                RoleArn=role_arn,
+                RoleArn=self.config.get('role_arn'),
                 RoleSessionName=role_session_name,
             )
 
