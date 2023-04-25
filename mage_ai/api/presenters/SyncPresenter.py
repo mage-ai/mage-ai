@@ -12,4 +12,6 @@ class SyncPresenter(BasePresenter):
         'repo_path',
         'sync_on_pipeline_run',
         'type',
+        'access_token',
+        'auth_type',
     ]
