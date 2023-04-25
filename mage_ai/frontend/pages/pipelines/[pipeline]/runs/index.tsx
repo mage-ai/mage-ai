@@ -59,7 +59,7 @@ const TABS = [
   TAB_BLOCK_RUNS,
 ];
 
-const LIMIT = 25;
+const LIMIT = 30;
 const MAX_PAGES = 9;
 
 type PipelineRunsProp = {

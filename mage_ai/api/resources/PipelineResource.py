@@ -201,7 +201,12 @@ class PipelineResource(BaseResource):
 
         def retry_pipeline_runs(pipeline_runs):
             for run in pipeline_runs:
-                self.model.retry_pipeline_run(run)
+                pipeline_run = PipelineRun(
+                    id=run['id'],
+                    pipeline_schedule_id=run['pipeline_schedule_id'],
+                    pipeline_uuid=run['pipeline_uuid']
+                )
+                pipeline_run.retry_pipeline_run(run)
 
         status = payload.get('status')
         pipeline_uuid = self.model.uuid
