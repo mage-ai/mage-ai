@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
 class BlockPresenter(BasePresenter):
     default_attributes = [
         'all_upstream_blocks_executed',
+        'callback_blocks',
         'color',
         'configuration',
         'downstream_blocks',

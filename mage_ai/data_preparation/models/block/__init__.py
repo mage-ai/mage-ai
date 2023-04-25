@@ -249,6 +249,7 @@ class Block:
 
         self._outputs = None
         self._outputs_loaded = False
+        self._callback_blocks = []
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
@@ -290,6 +291,14 @@ class Block:
             )
         return None
 
+    @property
+    def callback_blocks(self):
+        return ([self.callback_block] or []) + self._callback_blocks
+
+    @uuid.setter
+    def callback_blocks(self, x):
+        self._callback_blocks = x
+
     async def content_async(self):
         if self._content is None:
             self._content = await self.file.content_async()
@@ -317,6 +326,10 @@ class Block:
             if self._outputs is None or len(self._outputs) == 0:
                 self._outputs = await self.get_outputs_async()
         return self._outputs
+
+    @property
+    def callback_block_uuids(self):
+        return [b.uuid for b in self.callback_blocks]
 
     @property
     def upstream_block_uuids(self):
@@ -469,7 +482,11 @@ class Block:
             file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
             file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
             if os.path.exists(file_path):
-                if pipeline is not None and pipeline.has_block(uuid, extension_uuid=extension_uuid):
+                if pipeline is not None and pipeline.has_block(
+                    uuid,
+                    block_type=block_type,
+                    extension_uuid=extension_uuid,
+                ):
                     raise Exception(f'Block {uuid} already exists. Please use a different name.')
             else:
                 load_template(
@@ -619,8 +636,8 @@ class Block:
                 **kwargs
             )
         except Exception as e:
-            if self.callback_block:
-                self.callback_block.execute_callback(
+            for callback_block in self.callback_blocks:
+                callback_block.execute_callback(
                     'on_failure',
                     global_vars=global_vars,
                     logger=logger,
@@ -628,8 +645,8 @@ class Block:
                 )
             raise e
 
-        if self.callback_block:
-            self.callback_block.execute_callback(
+        for callback_block in self.callback_blocks:
+            callback_block.execute_callback(
                 'on_success',
                 global_vars=global_vars,
                 logger=logger,
@@ -1959,7 +1976,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self.uuid = new_uuid
         new_file_path = self.file_path
         if self.pipeline is not None:
-            if self.pipeline.has_block(new_uuid, extension_uuid=self.extension_uuid):
+            if self.pipeline.has_block(
+                new_uuid,
+                block_type=self.type,
+                extension_uuid=self.extension_uuid,
+            ):
                 raise Exception(
                     f'Block {new_uuid} already exists in pipeline. Please use a different name.'
                 )
