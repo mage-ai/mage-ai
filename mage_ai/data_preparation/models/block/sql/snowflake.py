@@ -25,10 +25,12 @@ def create_upstream_block_tables(
     )
     configuration = configuration if configuration else block.configuration
 
-    database_default = (configuration.get('data_provider_database') or \
-        loader.default_database()).upper()
-    schema_name_default = (configuration.get('data_provider_schema') or \
-        loader.default_schema()).upper()
+    database_default = (configuration.get(
+        'data_provider_database',
+    ) or loader.default_database()).upper()
+    schema_name_default = (configuration.get(
+        'data_provider_schema',
+    ) or loader.default_schema()).upper()
 
     mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):

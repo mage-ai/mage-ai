@@ -14,7 +14,7 @@ import { getColorsForBlockType } from '../index.style';
 import { pauseEvent } from '@utils/events';
 
 type ConfigurationType = {
-  [key: string]: string | number | boolean | ConfigurationType;
+  [key: string]: any;
 };
 
 type UpstreamBlockSettingsProps = {
@@ -59,9 +59,11 @@ function UpstreamBlockSettings({
   const columns = useMemo(() => {
     const arr = [
       {
+        tooltipMessage: null,
         uuid: 'Variable',
       },
       {
+        tooltipMessage: null,
         uuid: 'Block',
       },
     ];
@@ -144,7 +146,6 @@ function UpstreamBlockSettings({
           <TextInput
             borderless
             compact
-            default
             key={key}
             monospace
             onChange={({
@@ -155,8 +156,10 @@ function UpstreamBlockSettings({
 
               updateBlockConfiguration({
                 [CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION]: {
+                  // @ts-ignore
                   ...config,
                   [uuid]: {
+                    // @ts-ignore
                     ...configUpstreamBlock,
                     [CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME]: value,
                   },

@@ -1855,10 +1855,12 @@ function CodeBlock({
                         <>
                           The interpolated tables below are available in queries from upstream blocks.
                           <br />
-                          For example, you can use the query <Text inline monospace small>
+                          Example: <Text inline monospace small>
                             {'SELECT * FROM {{ df_1 }}'}
-                          </Text> to insert all the rows from an upstream block
-                          into the designated database table.
+                          </Text> to insert
+                          all rows from <Text inline monospace small>
+                            {block?.upstream_blocks?.[0]}
+                          </Text> into a table.
                         </>
                       )}
                     </Text>
