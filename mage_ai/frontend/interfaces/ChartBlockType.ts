@@ -22,6 +22,8 @@ export const CONFIG_KEY_DBT_PROJECT_NAME = 'dbt_project_name';
 export const CONFIG_KEY_EXPORT_WRITE_POLICY = 'export_write_policy';
 export const CONFIG_KEY_LIMIT = 'limit';
 export const CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME = 'unique_upstream_table_name';
+export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION = 'upstream_block_configuration';
+export const CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME = 'table_name';
 export const CONFIG_KEY_USE_RAW_SQL = 'use_raw_sql';
 
 export const VARIABLE_NAMES = [

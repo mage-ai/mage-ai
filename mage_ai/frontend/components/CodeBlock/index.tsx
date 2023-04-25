@@ -56,6 +56,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
+import UpstreamBlockSettings from './UpstreamBlockSettings';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
@@ -241,6 +242,7 @@ function CodeBlock({
   const [currentTime, setCurrentTime] = useState<number>(null);
 
   const [dataProviderConfig, setDataProviderConfig] = useState({
+    ...blockConfiguration,
     [CONFIG_KEY_DATA_PROVIDER]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER],
     [CONFIG_KEY_DATA_PROVIDER_DATABASE]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER_DATABASE],
     [CONFIG_KEY_DATA_PROVIDER_PROFILE]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER_PROFILE],
@@ -741,7 +743,7 @@ function CodeBlock({
         <>
           <Divider />
           <Spacing mt={1}>
-            <CodeHelperStyle>
+            <CodeHelperStyle normalPadding>
               <Text small>
                 Callback block: define @on_success or @on_failure callbacks for this block.
               </Text>
@@ -1228,7 +1230,7 @@ function CodeBlock({
               {BlockTypeEnum.DBT === block.type
                 && !codeCollapsed
                 && (
-                <CodeHelperStyle>
+                <CodeHelperStyle normalPadding>
                   <FlexContainer
                     alignItems="center"
                     justifyContent="space-between"
@@ -1467,7 +1469,7 @@ function CodeBlock({
                 && !codeCollapsed
                 && BlockTypeEnum.DBT !== block.type
                 && (
-                <CodeHelperStyle>
+                <CodeHelperStyle normalPadding>
                   <FlexContainer
                     flexWrap="wrap"
                     style={{ marginTop: '-8px' }}
@@ -1684,6 +1686,7 @@ function CodeBlock({
                           </Tooltip>
                         </>
                       )}
+                      <Spacing mr={1} />
                     </FlexContainer>
 
                     {!dataProviderConfig[CONFIG_KEY_USE_RAW_SQL] && (
@@ -1761,56 +1764,55 @@ function CodeBlock({
                             </Select>
                           </FlexContainer>
                         </Tooltip>
+                        <Spacing mr={1} />
                       </FlexContainer>
                     )}
 
                     {dataProviderConfig?.[CONFIG_KEY_DATA_PROVIDER] === DataProviderEnum.TRINO
                       && block.upstream_blocks.length >= 1
                       && (
-                      <>
-                        <Spacing mr={1} />
+                      <FlexContainer alignItems="center"  style={{ marginTop: '8px' }}>
+                        <Tooltip
+                          appearBefore
+                          block
+                          description={
+                            <Text default inline>
+                              If checked, upstream blocks that aren’t SQL blocks
+                              <br />
+                              will have their data exported into a table that is
+                              <br />
+                              uniquely named upon each block run. For example,
+                              <br />
+                              <Text default inline monospace>
+                                [pipeline_uuid]_[block_uuid]_[unique_timestamp]
+                              </Text>.
+                            </Text>
+                          }
+                          size={null}
+                          widthFitContent
+                        >
+                          <FlexContainer alignItems="center">
+                            <Checkbox
+                              checked={dataProviderConfig[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]}
+                              label={
+                                <Text muted small>
+                                  Unique upstream table names
+                                </Text>
+                              }
+                              onClick={(e) => {
+                                pauseEvent(e);
+                                updateDataProviderConfig({
+                                  [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: !dataProviderConfig[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
+                                });
+                              }}
+                            />
+                            <span>&nbsp;</span>
+                            <Info muted />
+                          </FlexContainer>
+                        </Tooltip>
 
-                        <FlexContainer alignItems="center"  style={{ marginTop: '8px' }}>
-                          <Tooltip
-                            appearBefore
-                            block
-                            description={
-                              <Text default inline>
-                                If checked, upstream blocks that aren’t SQL blocks
-                                <br />
-                                will have their data exported into a table that is
-                                <br />
-                                uniquely named upon each block run. For example,
-                                <br />
-                                <Text default inline monospace>
-                                  [pipeline_uuid]_[block_uuid]_[unique_timestamp]
-                                </Text>.
-                              </Text>
-                            }
-                            size={null}
-                            widthFitContent
-                          >
-                            <FlexContainer alignItems="center">
-                              <Checkbox
-                                checked={dataProviderConfig[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]}
-                                label={
-                                  <Text muted small>
-                                    Unique upstream table names
-                                  </Text>
-                                }
-                                onClick={(e) => {
-                                  pauseEvent(e);
-                                  updateDataProviderConfig({
-                                    [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: !dataProviderConfig[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
-                                  });
-                                }}
-                              />
-                              <span>&nbsp;</span>
-                              <Info muted />
-                            </FlexContainer>
-                          </Tooltip>
-                        </FlexContainer>
-                      </>
+                        <Spacing mr={1} />
+                      </FlexContainer>
                     )}
                   </FlexContainer>
                 </CodeHelperStyle>
@@ -1845,7 +1847,7 @@ function CodeBlock({
                 && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(block.type)
                 && !isStreamingPipeline
                 && (
-                <CodeHelperStyle>
+                <CodeHelperStyle normalPadding>
                   <Spacing mr={5}>
                     <Text muted small>
                       {!isSQLBlock && `Positional arguments for ${isRBlock ? '' : 'decorated '}function:`}
@@ -1853,10 +1855,12 @@ function CodeBlock({
                         <>
                           The interpolated tables below are available in queries from upstream blocks.
                           <br />
-                          For example, you can use the query <Text inline monospace small>
+                          Example: <Text inline monospace small>
                             {'SELECT * FROM {{ df_1 }}'}
-                          </Text> to insert all the rows from an upstream block
-                          into the designated database table.
+                          </Text> to insert
+                          all rows from <Text inline monospace small>
+                            {block?.upstream_blocks?.[0]}
+                          </Text> into a table.
                         </>
                       )}
                     </Text>
@@ -1890,7 +1894,17 @@ function CodeBlock({
                       </>
                     )}
 
-                    {block.upstream_blocks.map((blockUUID, i) => {
+                    {isSQLBlock && block?.upstream_blocks?.length >= 1 && (
+                      <UpstreamBlockSettings
+                        block={block}
+                        blockConfiguration={dataProviderConfig}
+                        blockRefs={blockRefs}
+                        blocks={block?.upstream_blocks?.map(blockUUID => blocksMapping?.[blockUUID])}
+                        updateBlockConfiguration={updateDataProviderConfig}
+                      />
+                    )}
+
+                    {!isSQLBlock && block.upstream_blocks.map((blockUUID, i) => {
                       const b = blocksMapping[blockUUID];
                       const blockColor = getColorsForBlockType(
                           b?.type,

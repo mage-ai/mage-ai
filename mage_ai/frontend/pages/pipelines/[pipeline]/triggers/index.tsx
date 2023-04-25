@@ -152,7 +152,7 @@ function PipelineSchedules({
       : !isEmptyObject(variablesOrig) ? variablesOrig : null;
 
     return (props: DependencyGraphProps) => {
-      const dependencyGraphHeight = props.height - (showVariables ? 151 : 0);
+      const dependencyGraphHeight = props.height - (showVariables ? 151 : 80);
 
       return (
         <>

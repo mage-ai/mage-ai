@@ -198,7 +198,7 @@ function KernelStatus({
 
       const i = Math.floor(Math.log(memory) / Math.log(k));
 
-      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+      return `${parseFloat((memory / Math.pow(k, i)).toFixed(dm))}${sizes[i]}`;
     }
   }, [usage?.kernel_memory]);
 
@@ -440,25 +440,23 @@ function KernelStatus({
               </FlexContainer>
             )}
           </Spacing>
+
+          {usage && (
+            <Spacing mr={PADDING_UNITS}>
+              <Flex flexDirection="column">
+                <Text monospace muted xsmall>
+                  CPU: {usage?.kernel_cpu}{typeof usage?.kernel_cpu !== 'undefined' && '%'}
+                </Text>
+                <Text monospace muted xsmall>
+                  Memory: {kernelMemory}
+                </Text>
+              </Flex>
+            </Spacing>
+          )}
         </FlexContainer>
-        
+
         <Spacing px={PADDING_UNITS}>
           <Flex alignItems="center">
-            {kernelStatus}
-            <Spacing ml={2}/>
-            {usage && (
-              <>
-                <Flex flexDirection="column">
-                  <Text xsmall>
-                    Memory: {kernelMemory}
-                  </Text>
-                  <Text xsmall>
-                    CPU: {usage?.kernel_cpu}
-                  </Text>
-                </Flex>
-                <Spacing ml={2}/>
-              </>
-            )}
             <Tooltip
               appearBefore
               block
@@ -493,6 +491,10 @@ function KernelStatus({
                 {saveStatus}
               </Text>
             </Tooltip>
+
+            <Spacing ml={2}/>
+
+            {kernelStatus}
           </Flex>
         </Spacing>
       </FlexContainer>

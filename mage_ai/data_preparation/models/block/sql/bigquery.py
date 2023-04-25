@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
     blocks_in_query,
     interpolate_input,
     should_cache_data_from_upstream,
+    table_name_parts,
 )
 from mage_ai.io.config import ConfigKey
 from pandas import DataFrame
@@ -23,7 +24,7 @@ def create_upstream_block_tables(
         source_table_name_for_block,
     )
     configuration = configuration if configuration else block.configuration
-    database = configuration.get('data_provider_database') or loader.default_database()
+    database_default = configuration.get('data_provider_database') or loader.default_database()
 
     mapping = blocks_in_query(block, query)
     for idx, upstream_block in enumerate(block.upstream_blocks):
@@ -38,8 +39,6 @@ def create_upstream_block_tables(
         ]):
             if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
                 continue
-
-            table_name = upstream_block.table_name
 
             df = get_variable(
                 upstream_block.pipeline.uuid,
@@ -63,7 +62,12 @@ def create_upstream_block_tables(
                 print(f'\n\nNo data in upstream block {upstream_block.uuid}.')
                 continue
 
-            schema_name = configuration.get('data_provider_schema')
+            database_custom, schema_name, table_name = table_name_parts(
+                configuration,
+                upstream_block,
+            )
+
+            database = database_custom or database_default
 
             if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
                 attributes_dict = parse_attributes(block)

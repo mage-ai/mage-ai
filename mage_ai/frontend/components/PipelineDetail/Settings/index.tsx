@@ -69,6 +69,8 @@ function PipelineSettings({
     hiddenBlocks,
   ]);
 
+  const noBlocks = useMemo(() => !blocks?.length, [blocks]);
+
   return (
     <Spacing p={PADDING_UNITS}>
       <TextInput
@@ -98,7 +100,8 @@ function PipelineSettings({
 
       <Spacing mt={5}>
         <Checkbox
-          checked={allBlocksHidden}
+          checked={allBlocksHidden && !noBlocks}
+          disabled={noBlocks}
           label="Hide all blocks in notebook"
           onClick={() => setHiddenBlocks(() => {
             if (allBlocksHidden) {
