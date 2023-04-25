@@ -2,10 +2,6 @@ import Ansi from 'ansi-to-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
-import KernelOutputType, {
-  DataTypeEnum,
-  DATA_TYPE_TEXTLIKE,
-} from '@interfaces/KernelOutputType';
 import Text from '@oracle/elements/Text';
 import {
   CharacterStyle,
@@ -14,6 +10,10 @@ import {
   InputStyle,
   LineStyle,
 } from './index.style';
+import {
+  DataTypeEnum,
+  DATA_TYPE_TEXTLIKE,
+} from '@interfaces/KernelOutputType';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_LEFT,
@@ -55,9 +55,6 @@ function Terminal({
   const [cursorIndex, setCursorIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [focus, setFocus] = useState<boolean>(false);
-  const [kernelOutputs, setKernelOutputs] = useState<(KernelOutputType & {
-    command: boolean;
-  })[]>([]);
 
   const [stdout, setStdout] = useState<string>();
 
@@ -72,7 +69,7 @@ function Terminal({
           return p + out;
         }
         return p;
-      })
+      });
     }
   }, [
     lastMessage,
@@ -87,7 +84,7 @@ function Terminal({
     const splitStdout =
       stdout
         .split('\n')
-        .filter(d => !d.includes("# Mage terminal settings command"));
+        .filter(d => !d.includes('# Mage terminal settings command'));
 
     return splitStdout.map(d => ({
       data: d,
@@ -126,10 +123,10 @@ function Terminal({
 
   const sendCommand = useCallback((cmd) => {
     sendMessage(JSON.stringify([
-      'stdin', cmd
+      'stdin', cmd,
     ]));
     sendMessage(JSON.stringify([
-      'stdin', '\r'
+      'stdin', '\r',
     ]));
     if (cmd?.length >= 2) {
       setCommandIndex(commandHistory.length + 1);
@@ -178,10 +175,10 @@ function Terminal({
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
           if (command?.length >= 0) {
             sendMessage(JSON.stringify([
-              'stdin', command
+              'stdin', command,
             ]));
             sendMessage(JSON.stringify([
-              'stdin', '\x03'
+              'stdin', '\x03',
             ]));
             setCursorIndex(0);
           }
@@ -276,14 +273,14 @@ in the context menu that appears.
       setCommand,
       setCommandHistory,
       setCommandIndex,
-      setKernelOutputs,
       terminalUUID,
     ],
   );
 
-  const lastCommand = useMemo(() => {
-    return kernelOutputsUpdated[kernelOutputsUpdated.length - 1]?.data;
-  }, [kernelOutputsUpdated]);
+  const lastCommand = useMemo(
+    () => kernelOutputsUpdated[kernelOutputsUpdated.length - 1]?.data,
+    [kernelOutputsUpdated],
+  );
 
   return (
     <ContainerStyle
@@ -360,7 +357,7 @@ in the context menu that appears.
                     // <LineStyle key={key}>
                     <div key={key}>
                       {displayElement}
-                    </div>
+                    </div>,
                     // </LineStyle>,
                   );
                 }
