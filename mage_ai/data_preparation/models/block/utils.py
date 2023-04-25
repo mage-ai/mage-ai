@@ -520,7 +520,7 @@ def fetch_input_variables(
                             val = variable_values[dynamic_block_index]
                             kwargs_vars.append(val)
 
-                if len(final_value) >= 1 and type(final_value[0]) is pd.DataFrame:
+                if len(final_value) >= 1 and all([type(v) is pd.DataFrame for v in final_value]):
                     final_value = pd.concat(final_value)
 
                 if not should_reduce:
