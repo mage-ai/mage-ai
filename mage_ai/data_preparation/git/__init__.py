@@ -29,6 +29,8 @@ class Git:
             # need to commit something to initialize the repository
             self.commit('Initial commit')
 
+        self.__set_git_config()
+
         try:
             self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
         except git.exc.GitCommandError:
@@ -38,8 +40,6 @@ class Git:
         self.origin = self.repo.remotes[REMOTE_NAME]
         if self.remote_repo_link not in self.origin.urls:
             self.origin.set_url(self.remote_repo_link)
-
-        self.__set_git_config()
 
     @classmethod
     def get_manager(self, user: User = None) -> 'Git':
@@ -190,14 +190,13 @@ class Git:
         current.checkout()
 
     def __set_git_config(self) -> None:
-        config_writer = self.repo.config_writer()
         if self.git_config.username:
-            config_writer.set_value(
+            self.repo.config_writer().set_value(
                 'user', 'name', self.git_config.username).release()
         if self.git_config.email:
-            config_writer.set_value(
+            self.repo.config_writer().set_value(
                 'user', 'email', self.git_config.email).release()
-        config_writer.set_value(
+        self.repo.config_writer('global').set_value(
             'safe', 'directory', self.repo_path).release()
 
     def __pip_install(self) -> None:
