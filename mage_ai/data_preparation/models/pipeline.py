@@ -488,6 +488,7 @@ class Pipeline:
                 all_blocks_by_uuid[uuid] for uuid in b.get('callback_blocks', [])
                 if uuid in all_blocks_by_uuid
             ]
+
             block.downstream_blocks = [
                 all_blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
                 if uuid in all_blocks_by_uuid
@@ -534,7 +535,7 @@ class Pipeline:
 
         data = dict(
             blocks=blocks_data,
-            calbacks=callbacks_data,
+            callbacks=callbacks_data,
             widgets=widgets_data,
         )
 
@@ -960,6 +961,7 @@ class Pipeline:
     def update_block(
         self,
         block: Block,
+        callback_block_uuids: List[str] = None,
         upstream_block_uuids: List[str] = None,
         widget: bool = False,
     ):
@@ -1021,6 +1023,20 @@ class Pipeline:
 
                 # All blocks will depend on non-widget type blocks
                 block.update_upstream_blocks(self.get_blocks(upstream_block_uuids, widget=False))
+        elif callback_block_uuids is not None:
+            callback_blocks = []
+            for callback_block_uuid in callback_block_uuids:
+                callback_block = self.callbacks_by_uuid.get(callback_block_uuid)
+                if not callback_block:
+                    raise Exception(
+                        f'Callback block {callback_block_uuid} is not in the {self.uuid} pipeline.',
+                    )
+
+                callback_blocks.append(callback_block)
+
+            # Callback blocks don’t have an upstream.
+            # The normal block will know about the callback block via the callback_blocks field.
+            block.update_callback_blocks(callback_blocks)
         else:
             save_kwargs['block_uuid'] = block.uuid
 

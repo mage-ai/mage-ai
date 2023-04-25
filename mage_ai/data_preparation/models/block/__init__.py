@@ -249,7 +249,7 @@ class Block:
 
         self._outputs = None
         self._outputs_loaded = False
-        self._callback_blocks = []
+        self.callback_blocks = []
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
@@ -290,14 +290,6 @@ class Block:
                 pipeline=self.pipeline,
             )
         return None
-
-    @property
-    def callback_blocks(self):
-        return ([self.callback_block] or []) + self._callback_blocks
-
-    @uuid.setter
-    def callback_blocks(self, x):
-        self._callback_blocks = x
 
     async def content_async(self):
         if self._content is None:
@@ -628,6 +620,12 @@ class Block:
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
+        arr = []
+        if self.callback_block:
+            arr.append(self.callback_block)
+        if self.callback_blocks:
+            arr += self.callback_blocks
+
         try:
             output = self.execute_sync(
                 global_vars=global_vars,
@@ -636,7 +634,7 @@ class Block:
                 **kwargs
             )
         except Exception as e:
-            for callback_block in self.callback_blocks:
+            for callback_block in arr:
                 callback_block.execute_callback(
                     'on_failure',
                     global_vars=global_vars,
@@ -645,7 +643,7 @@ class Block:
                 )
             raise e
 
-        for callback_block in self.callback_blocks:
+        for callback_block in arr:
             callback_block.execute_callback(
                 'on_success',
                 global_vars=global_vars,
@@ -1328,6 +1326,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
+            callback_blocks=self.callback_block_uuids,
             color=self.color,
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
@@ -1409,22 +1408,32 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def update(self, data, **kwargs):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
+
         if (
             'type' in data
             and self.type == BlockType.SCRATCHPAD
             and data['type'] != BlockType.SCRATCHPAD
         ):
             self.__update_type(data['type'])
+
         if 'color' in data and data['color'] != self.color:
             self.color = data['color']
             self.__update_pipeline_block()
+
         if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
             self.upstream_block_uuids
         ):
             self.__update_upstream_blocks(data['upstream_blocks'])
+
+        if 'callback_blocks' in data and set(data['callback_blocks']) != set(
+            self.callback_block_uuids
+        ):
+            self.__update_callback_blocks(data['callback_blocks'])
+
         if 'executor_type' in data and data['executor_type'] != self.executor_type:
             self.executor_type = data['executor_type']
             self.__update_pipeline_block()
+
         if 'has_callback' in data and data['has_callback'] != self.has_callback:
             self.has_callback = data['has_callback']
             if self.has_callback:
@@ -1432,6 +1441,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block()
 
         return self
+
+    def update_callback_blocks(self, callback_blocks: List[Any]) -> None:
+        self.callback_blocks = callback_blocks
 
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
         self.upstream_blocks = upstream_blocks
@@ -2033,6 +2045,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self.pipeline.update_block(
             self,
             upstream_block_uuids=upstream_blocks,
+            widget=BlockType.CHART == self.type,
+        )
+
+    def __update_callback_blocks(self, block_uuids: List[str]):
+        if self.pipeline is None:
+            return
+
+        self.pipeline.update_block(
+            self,
+            callback_block_uuids=block_uuids,
             widget=BlockType.CHART == self.type,
         )
 

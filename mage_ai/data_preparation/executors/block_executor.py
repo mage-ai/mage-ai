@@ -186,9 +186,15 @@ class BlockExecutor:
         logging_tags,
         pipeline_run,
     ):
+        arr = []
         if self.block.callback_block:
+            arr.append(self.block.callback_block)
+        if self.block.callback_blocks:
+            arr += self.block.callback_blocks
+
+        for callback_block in self.block:
             try:
-                self.block.callback_block.execute_callback(
+                callback_block.execute_callback(
                     callback,
                     global_vars=global_vars,
                     logger=self.logger,
