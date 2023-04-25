@@ -38,8 +38,8 @@ class AmazonS3(Destination):
 
         return boto3.client(
             's3',
-            aws_access_key_id=self.config['aws_access_key_id'],
-            aws_secret_access_key=self.config['aws_secret_access_key'],
+            aws_access_key_id=self.config.get('aws_access_key_id'),
+            aws_secret_access_key=self.config.get('aws_secret_access_key'),
             config=config,
             region_name=self.region,
         )

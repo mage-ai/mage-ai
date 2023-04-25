@@ -75,10 +75,36 @@ class AmazonS3(Source):
            },
         )
 
+        if (
+            not self.config.get('aws_access_key_id') and
+            not self.config.get('aws_secret_access_key') and
+            self.config.get('role_arn')
+        ):
+            # Assume IAM role and get credentials
+            role_session_name = self.config.get('role_session_name', 'mage-data-integration')
+            sts_session = boto3.Session()
+            sts_connection = sts_session.client('sts')
+            assume_role_object = sts_connection.assume_role(
+                RoleArn=self.config.get('role_arn'),
+                RoleSessionName=role_session_name,
+            )
+
+            session = boto3.Session(
+                aws_access_key_id=assume_role_object['Credentials']['AccessKeyId'],
+                aws_secret_access_key=assume_role_object['Credentials']['SecretAccessKey'],
+                aws_session_token=assume_role_object['Credentials']['SessionToken'],
+            )
+
+            return session.client(
+                's3',
+                config=config,
+                region_name=self.region,
+            )
+
         return boto3.client(
             's3',
-            aws_access_key_id=self.config['aws_access_key_id'],
-            aws_secret_access_key=self.config['aws_secret_access_key'],
+            aws_access_key_id=self.config.get('aws_access_key_id'),
+            aws_secret_access_key=self.config.get('aws_secret_access_key'),
             config=config,
             region_name=self.region,
         )
