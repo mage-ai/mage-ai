@@ -1,6 +1,5 @@
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES
 from mage_ai.data_preparation.logging.logger import DictLogger
-from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
