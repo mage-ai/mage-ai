@@ -241,6 +241,16 @@ function CodeBlock({
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
 
+  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipeline?.type;
+  const isDBT = BlockTypeEnum.DBT === block?.type;
+  const isSQLBlock = BlockLanguageEnum.SQL === block?.language;
+  const isRBlock = BlockLanguageEnum.R === block?.language;
+
+  let defaultLimitValue = blockConfiguration[CONFIG_KEY_LIMIT];
+  if (!isDBT && isSQLBlock && defaultLimitValue === undefined) {
+    defaultLimitValue = DEFAULT_SQL_CONFIG_KEY_LIMIT;
+  }
+
   const [dataProviderConfig, setDataProviderConfig] = useState({
     ...blockConfiguration,
     [CONFIG_KEY_DATA_PROVIDER]: blockConfiguration[CONFIG_KEY_DATA_PROVIDER],
@@ -252,7 +262,7 @@ function CodeBlock({
     [CONFIG_KEY_DBT_PROJECT_NAME]: blockConfiguration[CONFIG_KEY_DBT_PROJECT_NAME],
     [CONFIG_KEY_EXPORT_WRITE_POLICY]: blockConfiguration[CONFIG_KEY_EXPORT_WRITE_POLICY]
       || ExportWritePolicyEnum.APPEND,
-    [CONFIG_KEY_LIMIT]: blockConfiguration[CONFIG_KEY_LIMIT],
+    [CONFIG_KEY_LIMIT]: defaultLimitValue,
     [CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME]: blockConfiguration[CONFIG_KEY_UNIQUE_UPSTREAM_TABLE_NAME],
     [CONFIG_KEY_USE_RAW_SQL]: !!blockConfiguration[CONFIG_KEY_USE_RAW_SQL],
   });
@@ -266,11 +276,6 @@ function CodeBlock({
   const [runStartTime, setRunStartTime] = useState<number>(null);
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT[0]);
-
-  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipeline?.type;
-  const isDBT = BlockTypeEnum.DBT === block?.type;
-  const isSQLBlock = BlockLanguageEnum.SQL === block?.language;
-  const isRBlock = BlockLanguageEnum.R === block?.language;
 
   const [collected, drag, dragPreview] = useDrag(() => ({
     collect: (monitor) => ({
@@ -925,14 +930,6 @@ function CodeBlock({
     dataProviderConfig,
     savePipelineContent,
   ]);
-
-  useEffect(() => {
-    if (!isDBT && isSQLBlock && !dataProviderConfig[CONFIG_KEY_LIMIT]) {
-      updateDataProviderConfig({
-        [CONFIG_KEY_LIMIT]: DEFAULT_SQL_CONFIG_KEY_LIMIT,
-      });
-    }
-  }, []);
 
   const requiresDatabaseName = (DataSourceTypeEnum.BIGQUERY === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
     || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
