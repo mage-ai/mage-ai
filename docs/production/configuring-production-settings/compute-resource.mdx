@@ -20,9 +20,16 @@ service by updating the Terraform variables and then running `terraform apply`
   [`mage-ai-terraform-templates/gcp/variables.tf`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
   file.
 
-## 2. Customize the compute resource of the Mage executor
+## 2. Set executor type and customize the compute resource of the Mage executor
 
-Mage provides multiple executors to execute blocks.
+Mage provides multiple executors to execute blocks. Here are the available executor types:
+* `local_python`
+* `ecs`
+* `gcp_cloud_run`
+* `k8s`
+
+Mage uses `local_python` executor type by default. If you want to specify another executor_type as the default executor type for blocks,
+you can set the environment variable `DEFAULT_EXECUTOR_TYPE` to one executor type mentioned above.
 
 ### Local python executor
 
@@ -49,25 +56,35 @@ blocks:
 ```
 By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
 
-To customize the compute resource for Kubernetes executor, you can add the `executor_config` at block level.
+There're two ways to customize the compute resource for Kubernetes executor:
 
-Example config:
-
-```yaml
-blocks:
-- uuid: example_data_loader
-  type: data_loader
-  upstream_blocks: []
-  downstream_blocks: []
-  executor_type: k8s
-  executor_config:
-    resource_limits:
-      cpu: 1000m
-      memory: 2048Mi
-    resource_requests:
-      cpu: 500m
-      memory: 1024Mi
-```
+1. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
+    ```yaml
+    blocks:
+    - uuid: example_data_loader
+      type: data_loader
+      upstream_blocks: []
+      downstream_blocks: []
+      executor_type: k8s
+      executor_config:
+        resource_limits:
+          cpu: 1000m
+          memory: 2048Mi
+        resource_requests:
+          cpu: 500m
+          memory: 1024Mi
+    ```
+2. Add the `k8s_executor_config` to project's metadata.yaml. This `k8s_executor_config` will apply to all the blocks that use k8s executor
+in this project. Example config:
+    ```yaml
+    k8s_executor_config:
+      resource_limits:
+        cpu: 1000m
+        memory: 2048Mi
+      resource_requests:
+        cpu: 500m
+        memory: 1024Mi
+    ```
 
 
 ### AWS ECS executor

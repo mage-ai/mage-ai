@@ -66,6 +66,10 @@ class ExecutorType(str, Enum):
     K8S = 'k8s'
     PYSPARK = 'pyspark'
 
+    @classmethod
+    def is_valid_type(cls, executor_type: str) -> bool:
+        return executor_type.upper() in cls.__members__
+
 
 class PipelineType(str, Enum):
     INTEGRATION = 'integration'
