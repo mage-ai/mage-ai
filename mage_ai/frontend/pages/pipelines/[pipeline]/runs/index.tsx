@@ -129,6 +129,7 @@ function PipelineRuns({
       }
 
       setQuery(newQuery);
+      setSelectedRuns({});
     }
   }, [
     pipelineUUID,
