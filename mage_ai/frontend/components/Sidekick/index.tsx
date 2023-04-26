@@ -11,6 +11,7 @@ import BlockType, {
   StatisticsType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import Callbacks, { CallbacksProps } from '@components/PipelineDetail/Callbacks';
 import Charts, { ChartsPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -115,7 +116,7 @@ export type SidekickProps = {
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
   updatePipelineMetadata: (name: string, type?: string) => void;
-} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps;
+} & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & CallbacksProps;
 
 function Sidekick({
   activeView,
@@ -147,6 +148,7 @@ function Sidekick({
   onChangeCallbackBlock,
   onChangeChartBlock,
   onChangeCodeBlock,
+  onSelectBlockFile,
   pipeline,
   pipelineMessages,
   runBlock,
@@ -277,6 +279,33 @@ function Sidekick({
     pipeline,
     secrets,
   ]);
+
+  const extensionsAndCallbacksProps = {
+    addNewBlockAtIndex,
+    autocompleteItems,
+    blockRefs,
+    blocks,
+    blocksInNotebook,
+    deleteBlock,
+    fetchFileTree,
+    fetchPipeline,
+    interruptKernel,
+    messages,
+    onChangeCallbackBlock,
+    onChangeCodeBlock,
+    onSelectBlockFile,
+    pipeline,
+    runBlock,
+    runningBlocks,
+    savePipelineContent,
+    selectedBlock,
+    setAnyInputFocused,
+    setErrors,
+    setHiddenBlocks,
+    setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
+  };
 
   return (
     <>
@@ -525,28 +554,13 @@ function Sidekick({
 
         {ViewKeyEnum.EXTENSIONS === activeView && (
           <Extensions
-            addNewBlockAtIndex={addNewBlockAtIndex}
-            autocompleteItems={autocompleteItems}
-            blockRefs={blockRefs}
-            blocks={blocks}
-            blocksInNotebook={blocksInNotebook}
-            deleteBlock={deleteBlock}
-            fetchFileTree={fetchFileTree}
-            fetchPipeline={fetchPipeline}
-            interruptKernel={interruptKernel}
-            messages={messages}
-            onChangeCallbackBlock={onChangeCallbackBlock}
-            onChangeCodeBlock={onChangeCodeBlock}
-            pipeline={pipeline}
-            runBlock={runBlock}
-            runningBlocks={runningBlocks}
-            savePipelineContent={savePipelineContent}
-            selectedBlock={selectedBlock}
-            setAnyInputFocused={setAnyInputFocused}
-            setErrors={setErrors}
-            setSelectedBlock={setSelectedBlock}
-            setTextareaFocused={setTextareaFocused}
-            textareaFocused={textareaFocused}
+            {...extensionsAndCallbacksProps}
+          />
+        )}
+
+        {ViewKeyEnum.CALLBACKS === activeView && (
+          <Callbacks
+            {...extensionsAndCallbacksProps}
           />
         )}
       </SidekickContainerStyle>

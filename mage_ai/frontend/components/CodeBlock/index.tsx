@@ -13,6 +13,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import Badge from '@oracle/components/Badge';
+import BlockExtras from './BlockExtras';
 import BlockTemplateType from '@interfaces/BlockTemplateType';
 import BlockType, {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
@@ -131,6 +132,7 @@ const DEFAULT_SQL_CONFIG_KEY_LIMIT = 1000;
 type CodeBlockProps = {
   addNewBlock?: (block: BlockType) => Promise<any>;
   addNewBlockMenuOpenIdx?: number;
+  allBlocks: BlockType[];
   allowCodeBlockShortcuts?: boolean;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
@@ -154,7 +156,9 @@ type CodeBlockProps = {
   onChange?: (value: string) => void;
   onClickAddSingleDBTModel?: (blockIdx: number) => void;
   onDrop?: (block: BlockType, blockDropped: BlockType) => void;
-  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+    blockUUID: string;
+  }) => void;
   pipeline: PipelineType;
   runBlock: (payload: {
     block: BlockType;
@@ -185,6 +189,7 @@ function CodeBlock({
   addNewBlock,
   addNewBlockMenuOpenIdx,
   addWidget,
+  allBlocks,
   allowCodeBlockShortcuts,
   autocompleteItems,
   block,
@@ -1984,6 +1989,17 @@ function CodeBlock({
                     {`${Math.round((currentTime - runStartTime) / 1000)}`}s
                   </Text>
                 </TimeTrackerStyle>
+              )}
+
+              {!codeCollapsed && ![
+                BlockTypeEnum.CALLBACK,
+                BlockTypeEnum.EXTENSION,
+              ].includes(block?.type) && (
+                <BlockExtras
+                  block={block}
+                  blocks={allBlocks}
+                  openSidekickView={openSidekickView}
+                />
               )}
             </CodeContainerStyle>
 

@@ -24,6 +24,7 @@ PipelinePolicy.allow_actions([
 ], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
+    'callbacks',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -32,6 +33,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
+    'callbacks',
     'extensions',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -42,6 +44,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 ], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
+    'callbacks',
     'extensions',
     'schedules',
 ], scopes=[
@@ -51,6 +54,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 PipelinePolicy.allow_write([
+    'callbacks',
     'clone_pipeline_uuid',
     'extensions',
     'name',
@@ -63,6 +67,7 @@ PipelinePolicy.allow_write([
 
 PipelinePolicy.allow_write([
     'add_upstream_for_block_uuid',
+    'callbacks',
     'extensions',
     'pipeline_runs',
     'schedules',

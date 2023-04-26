@@ -69,6 +69,13 @@ TEMPLATES = [
         name='Trigger pipeline',
         path='data_exporters/orchestration/triggers/default.jinja',
     ),
+    dict(
+        block_type=BlockType.CALLBACK,
+        description='Base template with empty functions.',
+        language=BlockLanguage.PYTHON,
+        name='Base template',
+        path='callbacks/base.jinja',
+    ),
 ]
 
 TEMPLATES_BY_UUID = index_by(lambda x: x['name'], TEMPLATES)

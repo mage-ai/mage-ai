@@ -1,5 +1,5 @@
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
-import BlockType, { BlockRequestPayloadType } from '@interfaces/BlockType';
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import ErrorsType from '@interfaces/ErrorsType';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';
@@ -24,6 +24,11 @@ export type ExtensionProps = {
   };
   onChangeCallbackBlock: (type: string, uuid: string, value: string) => void;
   onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
+  onSelectBlockFile?: (
+    blockUUID: string,
+    blockType: BlockTypeEnum,
+    filePath: string,
+  ) => void;
   pipeline: PipelineType;
   runBlock: (payload: {
     block: BlockType;
@@ -43,6 +48,11 @@ export type ExtensionProps = {
   selectedBlock?: BlockType;
   setAnyInputFocused?: (value: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
+  setHiddenBlocks: ((opts: {
+    [uuid: string]: BlockType;
+  }) => {
+    [uuid: string]: BlockType;
+  });
   setSelectedBlock: (block: BlockType) => void;
   setTextareaFocused: (textareaFocused: boolean) => void;
   textareaFocused: boolean;

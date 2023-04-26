@@ -270,20 +270,30 @@ function PipelineDetailPage({
   const setActiveSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
+    opts?: {
+      blockUUID: string;
+    },
   ) => {
-    if (queryFromUrl()[VIEW_QUERY_PARAM] !== newView) {
-      goToWithQuery({
-        [VIEW_QUERY_PARAM]: newView,
-      }, {
-        preserveParams: [
-          'block_uuid',
-          'file_path',
-          'file_paths[]',
-        ],
-        pushHistory,
-        replaceParams: true,
-      });
+    const newQuery: {
+      [VIEW_QUERY_PARAM]: ViewKeyEnum;
+      block_uuid?: string;
+    } = {
+      [VIEW_QUERY_PARAM]: newView,
+    };
+
+    if (opts?.blockUUID) {
+      newQuery.block_uuid = opts?.blockUUID;
     }
+
+    goToWithQuery(newQuery, {
+      preserveParams: [
+        'block_uuid',
+        'file_path',
+        'file_paths[]',
+      ],
+      pushHistory,
+      replaceParams: true,
+    });
   }, []);
 
   useEffect(() => {
@@ -295,9 +305,12 @@ function PipelineDetailPage({
   const openSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory?: boolean,
+    opts?: {
+      blockUUID: string;
+    },
   ) => {
-    setActiveSidekickView(newView, pushHistory);
     setAfterHidden(false);
+    setTimeout(() => setActiveSidekickView(newView, pushHistory, opts), 1);
   }, [setActiveSidekickView]);
 
   const blockRefs = useRef({});
@@ -617,6 +630,7 @@ function PipelineDetailPage({
 
     const blocksByExtensions = {};
     const blocksByUUID = {};
+    const callbacksByUUID = {};
 
     blocks.forEach((block: BlockType) => {
       const {
@@ -708,6 +722,8 @@ function PipelineDetailPage({
           blocksByExtensions[extensionUUID] = [];
         }
         blocksByExtensions[extensionUUID].push(blockPayload);
+      } else if (BlockTypeEnum.CALLBACK === type) {
+        callbacksByUUID[blockPayload.uuid] = blockPayload;
       } else {
         blocksByUUID[blockPayload.uuid] = blockPayload;
       }
@@ -726,11 +742,17 @@ function PipelineDetailPage({
     });
 
     const blocksToSave = [];
+    const callbacksToSave = [];
+
     // @ts-ignore
     (pipelineOverride?.blocks || blocks).forEach(({ uuid }) => {
       const b = blocksByUUID[uuid];
+      const c = callbacksByUUID[uuid];
+
       if (typeof b !== 'undefined') {
         blocksToSave.push(b);
+      } else if (typeof c !== 'undefined') {
+        callbacksToSave.push(c);
       }
     });
 
@@ -740,6 +762,7 @@ function PipelineDetailPage({
         ...pipeline,
         ...pipelineOverride,
         blocks: blocksToSave,
+        callbacks: callbacksToSave,
         extensions: extensionsToSave,
         updated_at: utcNowDateString,
         widgets: widgets.map((block: BlockType) => {
@@ -839,6 +862,8 @@ function PipelineDetailPage({
     blocks.forEach((block: BlockType) => {
       if (BlockTypeEnum.EXTENSION === block.type) {
         blocksInSidekickInner.push(block);
+      } else if (BlockTypeEnum.CALLBACK === block.type) {
+        blocksInSidekickInner.push(block);
       } else {
         blocksInNotebookInner.push(block);
       }
@@ -894,12 +919,18 @@ function PipelineDetailPage({
 
   const [deleteBlock] = useMutation(
     ({
+      type: blockType,
       extension_uuid: extensionUUID,
       uuid,
     }: BlockType) => {
       const query: {
         extension_uuid?: string;
+        block_type?: string;
       } = {};
+
+      if (blockType) {
+        query.block_type = blockType;
+      }
       if (extensionUUID) {
         query.extension_uuid = extensionUUID;
       }
@@ -1338,6 +1369,9 @@ function PipelineDetailPage({
       if (typeof pipeline?.blocks !== 'undefined') {
         arr.push(...pipeline?.blocks);
       }
+      if (typeof pipeline?.callbacks !== 'undefined') {
+        arr.push(...pipeline?.callbacks);
+      }
       if (typeof pipeline?.extensions !== 'undefined') {
         // @ts-ignore
         Object.entries(pipeline?.extensions || {}).forEach(([extensionUUID, { blocks }]) => {
@@ -1350,6 +1384,7 @@ function PipelineDetailPage({
     }
   }, [
     pipeline?.blocks,
+    pipeline?.callbacks,
     pipeline?.extensions,
   ]);
 
@@ -1436,6 +1471,7 @@ function PipelineDetailPage({
         blockRef?.current?.scrollIntoView();
       }
       goToWithQuery({
+        block_uuid: null,
         file_path: null,
         'file_paths[]': [],
       });
@@ -1733,8 +1769,8 @@ function PipelineDetailPage({
     lastMessage: lastTerminalMessage,
     sendMessage: sendTerminalMessage,
   } = useWebSocket(getWebSocket('terminal'), {
-    shouldReconnect: () => true,
     queryParams: sharedWebsocketData,
+    shouldReconnect: () => true,
   });
 
   const sideKick = useMemo(() => (
@@ -1773,6 +1809,7 @@ function PipelineDetailPage({
       onChangeCallbackBlock={onChangeCallbackBlock}
       onChangeChartBlock={onChangeChartBlock}
       onChangeCodeBlock={onChangeCodeBlock}
+      onSelectBlockFile={onSelectBlockFile}
       pipeline={pipeline}
       pipelineMessages={pipelineMessages}
       runBlock={runBlock}
@@ -1827,6 +1864,7 @@ function PipelineDetailPage({
     onChangeCallbackBlock,
     onChangeChartBlock,
     onChangeCodeBlock,
+    onSelectBlockFile,
     pipeline,
     pipelineMessages,
     runBlock,
@@ -1872,6 +1910,7 @@ function PipelineDetailPage({
           onCreateCallback?: (block: BlockType) => void;
         },
       ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
+      allBlocks={blocks}
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
@@ -1931,6 +1970,7 @@ function PipelineDetailPage({
     autocompleteItems,
     automaticallyNameBlocks,
     blockRefs,
+    blocks,
     blocksInNotebook,
     dataProviders,
     deleteBlock,
@@ -2215,8 +2255,10 @@ function PipelineDetailPage({
         afterHidden={afterHidden}
         afterNavigationItems={buildNavigationItemsSidekick({
           activeView: activeSidekickView,
-          pipelineUUID,
+          pipeline,
+          secrets,
           setActiveSidekickView,
+          variables: globalVariables,
         })}
         afterOverflow={ViewKeyEnum.DATA === activeSidekickView ? 'hidden' : null}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (

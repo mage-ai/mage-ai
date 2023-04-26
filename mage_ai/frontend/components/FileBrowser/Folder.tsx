@@ -121,12 +121,22 @@ function Folder({
     [childrenProp],
   );
 
-  const disabled = isFileDisabled
+  const disabledColor = isFileDisabled
     ? isFileDisabled(filePathToUse, children)
     : (
       disabledProp
         || name === '__init__.py'
         || !!name?.match(/^\./)
+        || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
+    );
+
+  const disabled = isFileDisabled
+    ? isFileDisabled(filePathToUse, children)
+    : (
+      disabledProp
+        || name === '__init__.py'
+        // Don’t disable hidden folders
+        || (!!name?.match(/^\./) && !children)
         || (!name.match(ALL_SUPPORTED_FILE_EXTENSIONS_REGEX) && !childrenProp)
     );
 
@@ -346,7 +356,7 @@ function Folder({
               marginRight: UNIT / 2,
             }}
           >
-            {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
+            {!color && <IconEl disabled={disabledColor} size={ICON_SIZE} />}
             {color && (
               <Circle
                 color={color}

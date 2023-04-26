@@ -1,17 +1,20 @@
 import {
   createRef,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
- } from 'react';
+} from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockTemplateType from '@interfaces/BlockTemplateType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
-import CodeBlockExtraContent from './CodeBlockExtraContent';
-import ExtensionOptionType, { ExtensionOptionTemplateType } from '@interfaces/ExtensionOptionType';
+import CodeBlockExtraContent from '../Extensions/GreatExpectations/CodeBlockExtraContent';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
@@ -20,37 +23,40 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Add } from '@oracle/icons';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
-import { ExtensionProps } from '../constants';
+import { ExtensionProps } from '../Extensions/constants';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { ICON_SIZE, IconContainerStyle } from '../../AddNewBlocks/index.style';
+import { ICON_SIZE, IconContainerStyle } from '../AddNewBlocks/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import {
+  getdataSourceMenuItems,
+  groupBlockTemplates,
+} from '@components/PipelineDetail/AddNewBlocks/utils';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { queryFromUrl } from '@utils/url';
 import { useKeyboardContext } from '@context/Keyboard';
 
-type GreatExpectationsProps = {
-  extensionOption: ExtensionOptionType;
-} & ExtensionProps;
+export type CallbacksProps = {} & ExtensionProps;
 
-function GreatExpectations({
+function Callbacks({
   addNewBlockAtIndex,
   autocompleteItems,
   blockRefs,
   blocks,
   blocksInNotebook,
   deleteBlock,
-  extensionOption,
   fetchFileTree,
   fetchPipeline,
   interruptKernel,
   messages,
   onChangeCallbackBlock,
   onChangeCodeBlock,
+  onSelectBlockFile,
   pipeline,
   runBlock,
   runningBlocks,
@@ -58,32 +64,87 @@ function GreatExpectations({
   selectedBlock,
   setAnyInputFocused,
   setErrors,
+  setHiddenBlocks,
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
-}: GreatExpectationsProps) {
+}: CallbacksProps) {
   const refParent = useRef(null);
   const [dropdownMenuVisible, setDropdownMenuVisible] = useState<boolean>(false);
+
+  const qUrl = queryFromUrl();
   const {
-    uuid: extensionUUID,
-  } = extensionOption || {};
-  const { extensions } = pipeline || {};
-  const templates: ExtensionOptionTemplateType[] = useMemo(() => extensionOption?.templates || [], [
-    extensionOption,
+    block_uuid: blockUUIDFromUrl,
+  } = qUrl;
+
+  useEffect(() => {
+    const block = blocks.find(({ uuid }) => blockUUIDFromUrl?.split(':')?.[0] === uuid);
+
+    if (block) {
+      if (!selectedBlock || block?.uuid !== selectedBlock?.uuid) {
+        // @ts-ignore
+        setHiddenBlocks(prev => ({
+          ...prev,
+          [block.uuid]: false,
+        }));
+        onSelectBlockFile(block.uuid, block.type, null);
+      }
+    }
+  }, [
+    blockUUIDFromUrl,
+    blocks,
+    onSelectBlockFile,
+    selectedBlock,
+    setHiddenBlocks,
   ]);
 
-  const extension = useMemo(() => extensions?.[extensionUUID], [
-    extensionUUID,
-    extensions,
+  const {
+    type: pipelineType,
+  } = pipeline || {};
+
+  const callbackBlocks = useMemo(() => pipeline?.callbacks || [], [pipeline]);
+  const callbackBlocksByUUID = useMemo(() => indexBy(callbackBlocks, ({ uuid }) => uuid), [
+    callbackBlocks,
   ]);
-  const extensionBlocks = useMemo(() => extension?.blocks || [], [extension]);
-  const extensionBlocksByUUID = useMemo(() => indexBy(extensionBlocks, ({ uuid }) => uuid), [
-    extensionBlocks,
+
+  const { data: dataBlockTemplates } = api.block_templates.list({}, {
+    revalidateOnFocus: false,
+  });
+  const blockTemplates: BlockTemplateType[] =
+    useMemo(() => dataBlockTemplates?.block_templates || [], [
+      dataBlockTemplates,
+    ]);
+
+  const addNewBlock = useCallback(payload => addNewBlockAtIndex(
+    payload,
+    callbackBlocks?.length || 0,
+  ), [
+    addNewBlockAtIndex,
+    callbackBlocks,
   ]);
-  const isSelected = useMemo(() => extensionUUID === selectedBlock?.extension_uuid
-    && extensionBlocksByUUID[selectedBlock?.uuid], [
-    extensionBlocksByUUID,
-    extensionUUID,
+  const blockTemplatesByBlockType = useMemo(() => groupBlockTemplates(
+    blockTemplates,
+    addNewBlock,
+  ), [
+    addNewBlock,
+    blockTemplates,
+  ]);
+  const callbackItems = useMemo(() => getdataSourceMenuItems(
+    addNewBlock,
+    BlockTypeEnum.CALLBACK,
+    pipelineType,
+    {
+      blockTemplatesByBlockType,
+      languages: [BlockLanguageEnum.PYTHON],
+    },
+  ), [
+    addNewBlock,
+    blockTemplatesByBlockType,
+    pipelineType,
+  ]);
+
+  const isSelected = useMemo(() => callbackBlocksByUUID[selectedBlock?.uuid], [
+    callbackBlocksByUUID,
     selectedBlock,
   ]);
 
@@ -113,7 +174,7 @@ function GreatExpectations({
       encodeURIComponent(block?.uuid),
       {
         query: {
-          extension_uuid: block?.extension_uuid,
+          block_type: block?.type,
         },
       },
     )({
@@ -136,11 +197,7 @@ function GreatExpectations({
     },
   );
 
-  const codeBlocks = useMemo(() => extensionBlocks.map((blockInit: BlockType, idx: number) => {
-    const block = {
-      ...blockInit,
-      extension_uuid: extensionUUID,
-    };
+  const codeBlocks = useMemo(() => callbackBlocks.map((block: BlockType, idx: number) => {
     const {
       type,
       uuid,
@@ -171,7 +228,6 @@ function GreatExpectations({
           deleteBlock={(b: BlockType) => {
             deleteBlock({
               ...b,
-              extension_uuid: extensionUUID,
             });
             setAnyInputFocused(false);
           }}
@@ -179,14 +235,24 @@ function GreatExpectations({
           extraContent={(
             <CodeBlockExtraContent
               block={block}
-              blockActionDescription="Click a block name to run expectations on it."
               blocks={blocksInNotebook}
-              inputPlaceholder="Select blocks to run expectations on"
+              inputPlaceholder="Select blocks to add callbacks to"
               loading={isLoadingUpdateBlock}
+              onClickTag={(block: BlockType) => {
+                // @ts-ignore
+                setHiddenBlocks(prev => ({
+                  ...prev,
+                  [block.uuid]: false,
+                }));
+                onSelectBlockFile(block.uuid, block.type, null);
+              }}
               supportedUpstreamBlockTypes={[
+                BlockTypeEnum.CUSTOM,
                 BlockTypeEnum.DATA_EXPORTER,
                 BlockTypeEnum.DATA_LOADER,
                 BlockTypeEnum.DBT,
+                BlockTypeEnum.SCRATCHPAD,
+                BlockTypeEnum.SENSOR,
                 BlockTypeEnum.TRANSFORMER,
               ]}
               updateBlock={updateBlock}
@@ -219,9 +285,8 @@ function GreatExpectations({
     blockRefs,
     blocks,
     blocksInNotebook,
+    callbackBlocks,
     deleteBlock,
-    extensionBlocks,
-    extensionUUID,
     fetchFileTree,
     fetchPipeline,
     interruptKernel,
@@ -229,6 +294,7 @@ function GreatExpectations({
     messages,
     onChangeCallbackBlock,
     onChangeCodeBlock,
+    onSelectBlockFile,
     pipeline,
     runBlock,
     runningBlocks,
@@ -237,13 +303,14 @@ function GreatExpectations({
     selectedBlock,
     setAnyInputFocused,
     setErrors,
+    setHiddenBlocks,
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,
     updateBlock,
   ]);
 
-  const uuidKeyboard = 'Extensions/GreatExpectations/index';
+  const uuidKeyboard = 'Callbacks/index';
   const {
     disableGlobalKeyboardShortcuts,
     registerOnKeyDown,
@@ -275,89 +342,60 @@ function GreatExpectations({
   );
 
   return (
-    <>
-      <Spacing mb={PADDING_UNITS}>
-        <Text default>
-          Add an extension block to start writing expectations for blocks in the current pipeline.
-        </Text>
-        <Spacing mt={1}>
+    <DndProvider backend={HTML5Backend}>
+      <Spacing p={PADDING_UNITS}>
+        <Spacing mb={PADDING_UNITS}>
           <Text default>
-            When a block in your pipeline runs, it’ll run any tests you define in its code.
-            All associated extension blocks will also run during that phase.
-            Learn more about the <Link
-              href="https://docs.mage.ai/development/testing/great-expectations"
-              openNewWindow
-            >
-              Great Expectation power up
-            </Link>.
+            Run 1 or more callback block functions whenever another block succeeds or fails.
           </Text>
+          <Spacing mt={1}>
+            <Text default>
+              Learn more about <Link
+                href="https://docs.mage.ai/guides/blocks/callbacks#adding-a-callback-to-your-block"
+                openNewWindow
+              >
+                callbacks
+              </Link>.
+            </Text>
+          </Spacing>
         </Spacing>
-        <Spacing mt={1}>
-          <Text default>
-            For all available expectations, read Great Expectation’s <Link
-              href="https://greatexpectations.io/expectations/"
-              openNewWindow
-            >
-              documentation
-            </Link>.
-          </Text>
-        </Spacing>
-      </Spacing>
 
-      {codeBlocks}
+        {codeBlocks}
 
-      <Spacing mt={PADDING_UNITS}>
-        <ClickOutside
-          onClickOutside={() => setDropdownMenuVisible(false)}
-          open
-        >
-          <FlyoutMenuWrapper
-            disableKeyboardShortcuts
-            items={templates?.map(({
-              description,
-              name,
-              path,
-              uuid,
-            }) => ({
-              label: () => name,
-              onClick: () => addNewBlockAtIndex(
-                {
-                  config: {
-                    template_path: path,
-                  },
-                  extension_uuid: extensionUUID,
-                  type: BlockTypeEnum.EXTENSION,
-                },
-                extensionBlocks?.length || 0,
-              ),
-              tooltip: () => description,
-              uuid,
-            }))}
-            onClickCallback={() => setDropdownMenuVisible(false)}
-            open={dropdownMenuVisible}
-            parentRef={refParent}
-            uuid="Extension"
+        <Spacing mt={PADDING_UNITS}>
+          <ClickOutside
+            onClickOutside={() => setDropdownMenuVisible(false)}
+            open
           >
-            <KeyboardShortcutButton
-              beforeElement={
-                <IconContainerStyle teal>
-                  <Add size={ICON_SIZE} />
-                </IconContainerStyle>
-              }
-              inline
-              onClick={(e) => {
-                e.preventDefault();
-                setDropdownMenuVisible(true);
-              }}
-              uuid="AddNewBlocks/Extension"
+            <FlyoutMenuWrapper
+              disableKeyboardShortcuts
+              items={callbackItems}
+              onClickCallback={() => setDropdownMenuVisible(false)}
+              open={dropdownMenuVisible}
+              parentRef={refParent}
+              uuid="Callback"
             >
-              Extension block
-            </KeyboardShortcutButton>
-          </FlyoutMenuWrapper>
-        </ClickOutside>
+              <KeyboardShortcutButton
+                beforeElement={
+                  <IconContainerStyle rose>
+                    <Add size={ICON_SIZE} />
+                  </IconContainerStyle>
+                }
+                inline
+                onClick={(e) => {
+                  e.preventDefault();
+                  setDropdownMenuVisible(true);
+                }}
+                uuid="AddNewBlocks/Callback"
+              >
+                Callback block
+              </KeyboardShortcutButton>
+            </FlyoutMenuWrapper>
+          </ClickOutside>
+        </Spacing>
       </Spacing>
-    </>
+    </DndProvider>
   );
 }
 
-export default GreatExpectations;
+export default Callbacks;

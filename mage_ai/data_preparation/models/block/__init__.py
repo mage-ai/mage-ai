@@ -1,6 +1,6 @@
 from contextlib import redirect_stdout
 from datetime import datetime
-from inspect import Parameter, signature
+from inspect import Parameter, isfunction, signature
 from logging import Logger
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
@@ -22,18 +22,20 @@ from mage_ai.data_preparation.models.block.utils import (
     should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
+    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     BlockColor,
     BlockLanguage,
     BlockStatus,
     BlockType,
-    ExecutorType,
-    PipelineType,
-    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
+    CALLBACK_STATUSES,
     CUSTOM_EXECUTION_BLOCK_TYPES,
+    CallbackStatus,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    ExecutorType,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
@@ -249,6 +251,7 @@ class Block:
 
         self._outputs = None
         self._outputs_loaded = False
+        self.callback_blocks = []
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
@@ -317,6 +320,10 @@ class Block:
             if self._outputs is None or len(self._outputs) == 0:
                 self._outputs = await self.get_outputs_async()
         return self._outputs
+
+    @property
+    def callback_block_uuids(self):
+        return [b.uuid for b in self.callback_blocks]
 
     @property
     def upstream_block_uuids(self):
@@ -469,7 +476,11 @@ class Block:
             file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
             file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
             if os.path.exists(file_path):
-                if pipeline is not None and pipeline.has_block(uuid, extension_uuid=extension_uuid):
+                if pipeline is not None and pipeline.has_block(
+                    uuid,
+                    block_type=block_type,
+                    extension_uuid=extension_uuid,
+                ):
                     raise Exception(f'Block {uuid} already exists. Please use a different name.')
             else:
                 load_template(
@@ -611,6 +622,12 @@ class Block:
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
+        arr = []
+        if self.callback_block:
+            arr.append(self.callback_block)
+        if self.callback_blocks:
+            arr += self.callback_blocks
+
         try:
             output = self.execute_sync(
                 global_vars=global_vars,
@@ -619,8 +636,8 @@ class Block:
                 **kwargs
             )
         except Exception as e:
-            if self.callback_block:
-                self.callback_block.execute_callback(
+            for callback_block in arr:
+                callback_block.execute_callback(
                     'on_failure',
                     global_vars=global_vars,
                     logger=logger,
@@ -628,8 +645,8 @@ class Block:
                 )
             raise e
 
-        if self.callback_block:
-            self.callback_block.execute_callback(
+        for callback_block in arr:
+            callback_block.execute_callback(
                 'on_success',
                 global_vars=global_vars,
                 logger=logger,
@@ -1302,7 +1319,7 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         variable_mapping = self.__save_outputs_prepare(outputs)
         await self.store_variables_async(variable_mapping, override=override)
 
-    def to_dict_base(self):
+    def to_dict_base(self, include_callback_blocks: bool = False):
         language = self.language
         if language and type(self.language) is not str:
             language = self.language.value
@@ -1324,17 +1341,23 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             upstream_blocks=self.upstream_block_uuids,
             uuid=self.uuid,
         )
+
+        if include_callback_blocks:
+            data['callback_blocks'] = self.callback_block_uuids
+
         return data
 
     def to_dict(
         self,
-        include_content=False,
-        include_outputs=False,
-        sample_count=None,
+        include_callback_blocks: bool = False,
+        include_content: bool = False,
+        include_outputs: bool = False,
+        sample_count: int = None,
         check_if_file_exists: bool = False,
         **kwargs,
     ):
-        data = self.to_dict_base()
+        data = self.to_dict_base(include_callback_blocks=include_callback_blocks)
+
         if include_content:
             data['content'] = self.content
             if self.callback_block is not None:
@@ -1357,12 +1380,13 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self,
         include_block_metadata: bool = False,
         inclide_block_tags: bool = False,
+        include_callback_blocks: bool = False,
         include_content: bool = False,
         include_outputs: bool = False,
         sample_count: int = None,
         check_if_file_exists: bool = False,
     ):
-        data = self.to_dict_base()
+        data = self.to_dict_base(include_callback_blocks=include_callback_blocks)
 
         if include_content:
             data['content'] = await self.content_async()
@@ -1392,22 +1416,32 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
     def update(self, data, **kwargs):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
+
         if (
             'type' in data
             and self.type == BlockType.SCRATCHPAD
             and data['type'] != BlockType.SCRATCHPAD
         ):
             self.__update_type(data['type'])
+
         if 'color' in data and data['color'] != self.color:
             self.color = data['color']
             self.__update_pipeline_block()
+
         if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
             self.upstream_block_uuids
         ):
             self.__update_upstream_blocks(data['upstream_blocks'])
+
+        if 'callback_blocks' in data and set(data['callback_blocks']) != set(
+            self.callback_block_uuids
+        ):
+            self.__update_callback_blocks(data['callback_blocks'])
+
         if 'executor_type' in data and data['executor_type'] != self.executor_type:
             self.executor_type = data['executor_type']
             self.__update_pipeline_block()
+
         if 'has_callback' in data and data['has_callback'] != self.has_callback:
             self.has_callback = data['has_callback']
             if self.has_callback:
@@ -1415,6 +1449,9 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
             self.__update_pipeline_block()
 
         return self
+
+    def update_callback_blocks(self, callback_blocks: List[Any]) -> None:
+        self.callback_blocks = callback_blocks
 
     def update_upstream_blocks(self, upstream_blocks: List[Any]) -> None:
         self.upstream_blocks = upstream_blocks
@@ -1959,7 +1996,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self.uuid = new_uuid
         new_file_path = self.file_path
         if self.pipeline is not None:
-            if self.pipeline.has_block(new_uuid, extension_uuid=self.extension_uuid):
+            if self.pipeline.has_block(
+                new_uuid,
+                block_type=self.type,
+                extension_uuid=self.extension_uuid,
+            ):
                 raise Exception(
                     f'Block {new_uuid} already exists in pipeline. Please use a different name.'
                 )
@@ -2012,6 +2053,16 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         self.pipeline.update_block(
             self,
             upstream_block_uuids=upstream_blocks,
+            widget=BlockType.CHART == self.type,
+        )
+
+    def __update_callback_blocks(self, block_uuids: List[str]):
+        if self.pipeline is None:
+            return
+
+        self.pipeline.update_block(
+            self,
+            callback_block_uuids=block_uuids,
             widget=BlockType.CHART == self.type,
         )
 
@@ -2076,17 +2127,33 @@ class CallbackBlock(Block):
                     pipeline_run=pipeline_run,
                 ),
             )
-            fs = dict(on_success=[], on_failure=[])
-            globals = {
-                k: self._block_decorator(v) for k, v in fs.items()
-            }
-            exec(self.content, globals)
 
-            callback_functions = fs[callback]
+            callback_functions = []
+            failure_functions = []
+            success_functions = []
 
-            if callback_functions:
-                callback = callback_functions[0]
-                callback(**global_vars)
+            results = dict(
+                callback=self._block_decorator(callback_functions),
+                on_failure=super()._block_decorator(failure_functions),
+                on_success=super()._block_decorator(success_functions),
+            )
+            exec(self.content, results)
+
+            callback_functions_legacy = []
+            callback_status = None
+
+            if 'on_failure' == callback:
+                callback_functions_legacy = failure_functions
+                callback_status = CallbackStatus.FAILURE
+            elif 'on_success' == callback:
+                callback_functions_legacy = success_functions
+                callback_status = CallbackStatus.SUCCESS
+
+            for callback_function in callback_functions_legacy:
+                callback_function(**global_vars)
+
+            for callback_function in callback_functions:
+                callback_function(callback_status, **global_vars)
 
     def update_content(self, content, widget=False):
         if not self.file.exists():
@@ -2103,3 +2170,29 @@ class CallbackBlock(Block):
             self._content = content
             await self.file.update_content_async(content)
         return self
+
+    def _block_decorator(self, decorated_functions):
+        def custom_code(callback_status: CallbackStatus = CallbackStatus.SUCCESS, *args, **kwargs):
+            # If the decorator is just @callback with no arguments, default to success callback
+            if isfunction(callback_status):
+                def func(callback_status_inner, *args, **kwargs):
+                    if callback_status_inner == CallbackStatus.SUCCESS:
+                        return callback_status(*args, **kwargs)
+                decorated_functions.append(func)
+                return func
+
+            if callback_status not in CALLBACK_STATUSES:
+                raise Exception(
+                    f"Callback status '{callback_status}' in @callback decorator must be 1 of: "
+                    f"{', '.join(CALLBACK_STATUSES)}",
+                )
+
+            def inner(function):
+                def func(callback_status_inner, *args, **kwargs):
+                    if callback_status_inner == callback_status:
+                        return function(*args, **kwargs)
+                decorated_functions.append(func)
+
+            return inner
+
+        return custom_code

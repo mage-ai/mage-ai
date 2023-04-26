@@ -80,26 +80,40 @@ export const createDataSourceMenuItems = (
     }));
 };
 
-export const getNonPythonMenuItems = (
+function SQLMenuItems(
   addNewBlock: (block: BlockRequestPayloadType) => void,
   blockType: BlockTypeEnum,
-) => ([
-  {
+) {
+  return {
     label: () => 'SQL',
     onClick: () => addNewBlock({
       language: BlockLanguageEnum.SQL,
       type: blockType,
     }),
     uuid: `${blockType}/sql`,
-  },
-  {
+  };
+}
+
+function RMenuItems(
+  addNewBlock: (block: BlockRequestPayloadType) => void,
+  blockType: BlockTypeEnum,
+) {
+  return {
     label: () => 'R',
     onClick: () => addNewBlock({
       language: BlockLanguageEnum.R,
       type: blockType,
     }),
     uuid: `${blockType}/r`,
-  },
+  };
+}
+
+export const getNonPythonMenuItems = (
+  addNewBlock: (block: BlockRequestPayloadType) => void,
+  blockType: BlockTypeEnum,
+) => ([
+  SQLMenuItems(addNewBlock, blockType),
+  RMenuItems(addNewBlock, blockType),
 ]);
 
 export function groupBlockTemplates(
@@ -209,9 +223,13 @@ export const getdataSourceMenuItems = (
         [language: string]: FlyoutMenuItemType;
       }
     };
+    languages?: BlockLanguageEnum[];
   },
 ) => {
-  const blockTemplatesByBlockType = opts?.blockTemplatesByBlockType;
+  const {
+    blockTemplatesByBlockType,
+    languages,
+  } = opts || {};
 
   const dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
       (blockType: BlockTypeEnum) => ([
@@ -230,15 +248,25 @@ export const getdataSourceMenuItems = (
     const additionalTemplates =
       blockTemplatesByBlockType?.[blockType]?.[BlockLanguageEnum.PYTHON]?.items || [];
 
-    return [
+    const arr = [
       {
         // @ts-ignore
-        items: dataSourceMenuItemsMapping[blockType].concat(additionalTemplates),
+        items: (dataSourceMenuItemsMapping[blockType] || []).concat(additionalTemplates),
         label: () => 'Python',
         uuid: `${blockType}/${BlockLanguageEnum.PYTHON}`,
       },
-      ...getNonPythonMenuItems(addNewBlock, blockType),
     ];
+
+    if (!languages || languages?.includes(BlockLanguageEnum.SQL)) {
+      // @ts-ignore
+      arr.push(SQLMenuItems(addNewBlock, blockType));
+    }
+    if (!languages || languages?.includes(BlockLanguageEnum.R)) {
+      // @ts-ignore
+      arr.push(RMenuItems(addNewBlock, blockType));
+    }
+
+    return arr;
   }
 };
 

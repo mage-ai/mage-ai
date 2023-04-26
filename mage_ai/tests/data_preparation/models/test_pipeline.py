@@ -96,6 +96,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=False,
                 ),
             ],
+            callbacks=[],
             updated_at=None,
             widgets=[
                 dict(
@@ -208,6 +209,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=False,
                 )
             ],
+            callbacks=[],
             updated_at=None,
             widgets=[],
         ))
@@ -295,6 +297,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=True,
                 )
             ],
+            callbacks=[],
             updated_at=None,
             widgets=[],
         ))
@@ -433,6 +436,7 @@ class PipelineTest(DBTestCase):
                     all_upstream_blocks_executed=True,
                 )
             ],
+            callbacks=[],
             updated_at=None,
             widgets=[],
         ))
@@ -578,6 +582,7 @@ class PipelineTest(DBTestCase):
                             "uuid": "destination_block",
                         },
                     ],
+                    "callbacks": [],
                     "widgets": [],
                 },
             )

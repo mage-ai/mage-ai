@@ -59,6 +59,11 @@ class BlockColor(str, Enum):
     YELLOW = 'yellow'
 
 
+class CallbackStatus(str, Enum):
+    FAILURE = 'failure'
+    SUCCESS = 'success'
+
+
 class ExecutorType(str, Enum):
     LOCAL_PYTHON = 'local_python'
     ECS = 'ecs'
@@ -92,12 +97,20 @@ BLOCK_LANGUAGE_TO_FILE_EXTENSION = {
     BlockLanguage.YAML: 'yaml',
 }
 
+
+CALLBACK_STATUSES = [
+    CallbackStatus.FAILURE,
+    CallbackStatus.SUCCESS,
+]
+
+
 FILE_EXTENSION_TO_BLOCK_LANGUAGE = {
     'py': BlockLanguage.PYTHON,
     'r': BlockLanguage.R,
     'sql': BlockLanguage.SQL,
     'yaml': BlockLanguage.YAML,
 }
+
 
 CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.CHART,

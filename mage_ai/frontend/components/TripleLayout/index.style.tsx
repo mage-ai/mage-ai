@@ -147,7 +147,7 @@ export const AsideHeaderStyle = styled.div<{
   ${props => !props.visible && `
     border-left: 1px solid transparent;
     border-right: 1px solid transparent;
-    border-color: ${(props.theme.borders || dark.borders).medium} !important;
+    border-bottom-color: ${(props.theme.borders || dark.borders).medium} !important;
   `}
 `;
 
@@ -263,6 +263,7 @@ export const NavigationInnerStyle = styled.div<{
 }>`
   height: 100%;
   position: fixed;
+  z-index: 5;
 
   ${props => props.aligned === 'left' && `
     border-right: 1px solid ${(props.theme.borders || dark.borders).medium};

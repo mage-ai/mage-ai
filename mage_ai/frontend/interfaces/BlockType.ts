@@ -26,6 +26,7 @@ export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
 };
 
 export enum BlockTypeEnum {
+  CALLBACK = 'callback',
   CHART = 'chart',
   CUSTOM = 'custom',
   DATA_EXPORTER = 'data_exporter',
@@ -81,6 +82,7 @@ export const BLOCK_TYPES_NO_DATA_TABLE = [
 ];
 
 export const BLOCK_TYPES_WITH_NO_PARENTS = [
+  BlockTypeEnum.CALLBACK,
   BlockTypeEnum.EXTENSION,
   BlockTypeEnum.SCRATCHPAD,
 ];
@@ -150,6 +152,7 @@ export interface BlockRequestPayloadType {
 
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
+  callback_blocks?: string[];
   callback_content?: string;
   color?: BlockColorEnum;
   configuration?: ConfigurationType;
@@ -195,6 +198,7 @@ export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
 ];
 
 export const BLOCK_TYPE_NAME_MAPPING = {
+  [BlockTypeEnum.EXTENSION]: 'Callback',
   [BlockTypeEnum.CUSTOM]: 'Custom',
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',

@@ -18,6 +18,8 @@ export type ThemeType = {
     primaryTransparent: string;
     purple: string;
     purpleLight: string;
+    rose: string;
+    roseLight: string;
     teal: string;
     tealLight: string;
     warning: string;

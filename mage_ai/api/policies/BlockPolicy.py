@@ -71,6 +71,7 @@ BlockPolicy.allow_write([
 BlockPolicy.allow_write([
     'all_upstream_blocks_executed',
     'bookmark_values',
+    'callback_blocks',
     'color',
     'configuration',
     'content',
