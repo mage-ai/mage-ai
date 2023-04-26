@@ -175,7 +175,13 @@
                 "development/blocks/sensors/templates"
               ]
             },
-            "guides/blocks/callbacks",
+            {
+              "group": "Callbacks",
+              "pages": [
+                "development/blocks/callbacks/overview",
+                "development/blocks/callbacks/templates"
+              ]
+            },
             {
               "group": "SQL",
               "pages": [
