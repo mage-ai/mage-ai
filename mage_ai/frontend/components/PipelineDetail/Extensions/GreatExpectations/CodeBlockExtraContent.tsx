@@ -37,6 +37,7 @@ type CodeBlockExtraContentProps = {
     runUpstream?: boolean,
     runTests?: boolean,
   }) => void;
+  supportedUpstreamBlockLanguages?: BlockLanguageEnum[];
   supportedUpstreamBlockTypes: BlockTypeEnum[];
   updateBlock: (payload: {
     block: BlockType;
@@ -52,6 +53,7 @@ function CodeBlockExtraContent({
   loading,
   onClickTag,
   runBlockAndTrack,
+  supportedUpstreamBlockLanguages,
   supportedUpstreamBlockTypes,
   updateBlock,
 }: CodeBlockExtraContentProps) {
@@ -109,7 +111,9 @@ function CodeBlockExtraContent({
       }
 
       const checked: boolean = !!upstreamBlocksByUUID?.[uuid];
-      const disabled: boolean = ![BlockLanguageEnum.PYTHON].includes(language);
+      const disabled: boolean = supportedUpstreamBlockLanguages !== null
+        && typeof supportedUpstreamBlockLanguages !== 'undefined'
+        && !supportedUpstreamBlockLanguages?.includes(language);
 
       arr.push(
         <Spacing

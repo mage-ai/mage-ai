@@ -425,7 +425,9 @@ class Block:
         elif BlockType.DBT == block_type:
             return DBTBlock
         elif pipeline and PipelineType.INTEGRATION == pipeline.type:
-            if BlockType.DATA_LOADER == block_type:
+            if BlockType.CALLBACK == block_type:
+                return CallbackBlock
+            elif BlockType.DATA_LOADER == block_type:
                 return SourceBlock
             elif BlockType.DATA_EXPORTER == block_type:
                 return DestinationBlock
@@ -2111,13 +2113,16 @@ class CallbackBlock(Block):
         global_vars: Dict = None,
         logger: Logger = None,
         logging_tags: Dict = None,
+        parent_block: Block = None,
         **kwargs
     ):
         pipeline_run = kwargs.get('pipeline_run')
+
         if logger is not None:
             stdout = StreamToLogger(logger, logging_tags=logging_tags)
         else:
             stdout = sys.stdout
+
         with redirect_stdout(stdout):
             global_vars = merge_dict(
                 global_vars or dict(),
@@ -2127,6 +2132,22 @@ class CallbackBlock(Block):
                     pipeline_run=pipeline_run,
                 ),
             )
+
+            if parent_block and \
+                    parent_block.pipeline and \
+                    PipelineType.INTEGRATION == parent_block.pipeline.type:
+
+                template_runtime_configuration = parent_block.template_runtime_configuration
+                index = template_runtime_configuration.get('index', None)
+                is_last_block_run = template_runtime_configuration.get('is_last_block_run', False)
+                selected_streams = template_runtime_configuration.get('selected_streams', [])
+                stream = selected_streams[0] if len(selected_streams) >= 1 else None
+                destination_table = template_runtime_configuration.get('destination_table', stream)
+
+                global_vars['index'] = index
+                global_vars['is_last_block_run'] = is_last_block_run
+                global_vars['stream'] = stream
+                global_vars['destination_table'] = destination_table
 
             callback_functions = []
             failure_functions = []
