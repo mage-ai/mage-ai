@@ -89,6 +89,7 @@ setuptools.setup(
             'botocore==1.29.60',
         ],
         'streaming': [
+            'confluent-avro',
             'kafka-python==2.0.2',
             'opensearch-py==2.0.0',
             'pika==1.3.1',
