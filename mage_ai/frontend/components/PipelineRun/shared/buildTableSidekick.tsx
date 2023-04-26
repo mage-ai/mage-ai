@@ -50,7 +50,13 @@ export default function({
     : (selectedRun?.variables || {});
   const eventVariables = selectedRun?.event_variables;
   if (eventVariables && isObject(eventVariables) && !isEmptyObject(eventVariables)) {
-    pattern['event'] = { ...eventVariables };
+    if (isObject(pattern) && pattern.hasOwnProperty('event')) {
+      const varsEvent = isObject(pattern.event) ? pattern.event : {};
+      // @ts-ignore
+      pattern['event'] = { ...varsEvent, ...eventVariables };
+    } else {
+      pattern['event'] = { ...eventVariables };
+    }
   }
   const patternDisplay = [];
   if (pattern) {
