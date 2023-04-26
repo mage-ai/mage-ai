@@ -171,7 +171,7 @@ class KafkaSource(BaseSource):
         elif self.config.serde_config.serialization_method == SerializationMethod.AVRO:
             return self.avro_serde.value.deserialize(message)
         elif self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
-            return self.avro_serde.value.deserialize(message)
+            return message
         else:
             return json.loads(message.decode('utf-8'))
 
