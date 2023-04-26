@@ -5,6 +5,10 @@ execute_block method of mage_ai/data_preparation/models/block.py file.
 """
 
 
+def callback(function):
+    return function
+
+
 def custom(function):
     return function
 

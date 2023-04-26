@@ -22,18 +22,20 @@ from mage_ai.data_preparation.models.block.utils import (
     should_reduce_output,
 )
 from mage_ai.data_preparation.models.constants import (
+    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     BlockColor,
     BlockLanguage,
     BlockStatus,
     BlockType,
-    ExecutorType,
-    PipelineType,
-    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
+    CALLBACK_STATUSES,
     CUSTOM_EXECUTION_BLOCK_TYPES,
+    CallbackStatus,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    ExecutorType,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
@@ -2125,17 +2127,33 @@ class CallbackBlock(Block):
                     pipeline_run=pipeline_run,
                 ),
             )
-            fs = dict(on_success=[], on_failure=[])
-            globals = {
-                k: self._block_decorator(v) for k, v in fs.items()
-            }
-            exec(self.content, globals)
 
-            callback_functions = fs[callback]
+            callback_functions = []
+            failure_functions = []
+            success_functions = []
 
-            if callback_functions:
-                callback = callback_functions[0]
-                callback(**global_vars)
+            results = dict(
+                callback=self._block_decorator(callback_functions),
+                on_failure=super()._block_decorator(failure_functions),
+                on_success=super()._block_decorator(success_functions),
+            )
+            exec(self.content, results)
+
+            callback_functions_legacy = []
+            callback_status = None
+
+            if 'on_failure' == callback:
+                callback_functions_legacy = failure_functions
+                callback_status = CallbackStatus.FAILURE
+            elif 'on_success' == callback:
+                callback_functions_legacy = success_functions
+                callback_status = CallbackStatus.SUCCESS
+
+            for callback_function in callback_functions_legacy:
+                callback_function(**global_vars)
+
+            for callback_function in callback_functions:
+                callback_function(callback_status, **global_vars)
 
     def update_content(self, content, widget=False):
         if not self.file.exists():
@@ -2152,3 +2170,21 @@ class CallbackBlock(Block):
             self._content = content
             await self.file.update_content_async(content)
         return self
+
+    def _block_decorator(self, decorated_functions):
+        def custom_code(callback_status: CallbackStatus = CallbackStatus.SUCCESS, *args, **kwargs):
+            if callback_status not in CALLBACK_STATUSES:
+                raise Exception(
+                    f"Callback status '{callback_status}' in @callback decorator must be 1 of: "
+                    f"{', '.join(CALLBACK_STATUSES)}",
+                )
+
+            def inner(function):
+                def func(callback_status_inner, *args, **kwargs):
+                    if callback_status_inner == callback_status:
+                        return function(*args, **kwargs)
+                decorated_functions.append(func)
+
+            return inner
+
+        return custom_code
