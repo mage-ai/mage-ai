@@ -1,6 +1,6 @@
 from contextlib import redirect_stdout
 from datetime import datetime
-from inspect import Parameter, signature
+from inspect import Parameter, isfunction, signature
 from logging import Logger
 from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
@@ -2173,6 +2173,14 @@ class CallbackBlock(Block):
 
     def _block_decorator(self, decorated_functions):
         def custom_code(callback_status: CallbackStatus = CallbackStatus.SUCCESS, *args, **kwargs):
+            # If the decorator is just @callback with no arguments, default to success callback
+            if isfunction(callback_status):
+                def func(callback_status_inner, *args, **kwargs):
+                    if callback_status_inner == CallbackStatus.SUCCESS:
+                        return callback_status(*args, **kwargs)
+                decorated_functions.append(func)
+                return func
+
             if callback_status not in CALLBACK_STATUSES:
                 raise Exception(
                     f"Callback status '{callback_status}' in @callback decorator must be 1 of: "

@@ -6,11 +6,11 @@ if 'callback' not in globals():
 
 {% block content %}
 @callback('success')
-def on_success(**kwargs):
+def success_callback(**kwargs):
     pass
 
 
 @callback('failure')
-def on_failure(**kwargs):
+def failure_callback(**kwargs):
     pass
 {% endblock %}
