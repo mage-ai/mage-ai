@@ -147,13 +147,13 @@ class Git:
                         url = f'ssh://{self.git_config.remote_repo_link}'
                         hostname = urlparse(url).hostname
                         if hostname:
-                            cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'  # noqa: E501
+                            cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'
                             self._run_command(cmd)
                             asyncio.run(self.check_connection())
                         else:
                             raise TimeoutError(
-                                "Connecting to remote timed out, make sure your SSH key is set up properly"
-                                " and your repository host is added as a known host. More information here:"
+                                "Connecting to remote timed out, make sure your SSH key is set up properly"  # noqa: E501
+                                " and your repository host is added as a known host. More information here:"  # noqa: E501
                                 " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
                     func(self, *args, **kwargs)
             else:
