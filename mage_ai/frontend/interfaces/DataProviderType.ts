@@ -13,6 +13,7 @@ export const EXPORT_WRITE_POLICIES = [
 export enum DataProviderEnum {
   BIGQUERY = 'bigquery',
   CLICKHOUSE = 'clickhouse',
+  DRUID = 'druid',
   MYSQL = 'mysql',
   POSTGRES = 'postgres',
   REDSHIFT = 'redshift',

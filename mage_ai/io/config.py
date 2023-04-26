@@ -29,6 +29,12 @@ class ConfigKey(str, Enum):
     CLICKHOUSE_PORT = 'CLICKHOUSE_PORT'
     CLICKHOUSE_USERNAME = 'CLICKHOUSE_USERNAME'
     GOOGLE_LOCATION = 'GOOGLE_LOCATION'
+    DRUID_HOST = 'DRUID_HOST'
+    DRUID_PASSWORD = 'DRUID_PASSWORD'
+    DRUID_PATH = 'DRUID_PATH'
+    DRUID_PORT = 'DRUID_PORT'
+    DRUID_SCHEME = 'DRUID_SCHEME'
+    DRUID_USER = 'DRUID_USER'
     GOOGLE_SERVICE_ACC_KEY = 'GOOGLE_SERVICE_ACC_KEY'
     GOOGLE_SERVICE_ACC_KEY_FILEPATH = 'GOOGLE_SERVICE_ACC_KEY_FILEPATH'
     MSSQL_DATABASE = 'MSSQL_DATABASE'
@@ -268,6 +274,7 @@ class VerboseConfigKey(str, Enum):
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
     CLICKHOUSE = 'ClickHouse'
+    DRUID = 'Druid'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
@@ -322,6 +329,12 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.CLICKHOUSE, 'port'),
         ConfigKey.CLICKHOUSE_USERNAME: (
             VerboseConfigKey.CLICKHOUSE, 'username'),
+        ConfigKey.DRUID_HOST: (VerboseConfigKey.DRUID, 'host'),
+        ConfigKey.DRUID_PASSWORD: (VerboseConfigKey.DRUID, 'password'),
+        ConfigKey.DRUID_PATH: (VerboseConfigKey.DRUID, 'path'),
+        ConfigKey.DRUID_PORT: (VerboseConfigKey.DRUID, 'port'),
+        ConfigKey.DRUID_SCHEME: (VerboseConfigKey.DRUID, 'scheme'),
+        ConfigKey.DRUID_USER: (VerboseConfigKey.DRUID, 'user'),
         ConfigKey.POSTGRES_DBNAME: (VerboseConfigKey.POSTGRES, 'database'),
         ConfigKey.POSTGRES_HOST: (VerboseConfigKey.POSTGRES, 'host'),
         ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),

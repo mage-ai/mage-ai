@@ -3,6 +3,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.sql import (
     bigquery,
     clickhouse,
+    druid,
     mssql,
     mysql,
     postgres,
@@ -176,6 +177,47 @@ def execute_sql_code(
                         verbose=False,
                     ),
                 ]
+
+    elif DataSource.DRUID.value == data_provider:
+        from mage_ai.io.druid import Druid
+
+        with Druid.with_config(config_file_loader) as loader:
+            druid.create_upstream_block_tables(
+                loader,
+                block,
+                configuration=configuration,
+                execution_partition=execution_partition,
+                query=query,
+            )
+
+            query_string = druid.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
+
+            if use_raw_sql:
+                return execute_raw_sql(
+                    loader,
+                    block,
+                    query_string,
+                    configuration=configuration,
+                    should_query=should_query,
+                )
+            else:
+                loader.export(
+                    None,
+                    None,
+                    table_name,
+                    query_string=query_string,
+                    **kwargs_shared,
+                )
+
+                if should_query:
+                    return [
+                        loader.load(
+                            f'SELECT * FROM {table_name}',
+                            limit=limit,
+                            verbose=False,
+                        ),
+                    ]
     elif DataSource.MSSQL.value == data_provider:
         from mage_ai.io.mssql import MSSQL
 

@@ -9,6 +9,7 @@ class IOConfigKeys(str, Enum):
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
     CLICKHOUSE = 'ClickHouse'
+    DRUID = 'Druid'
     FILE = 'File'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
