@@ -37,6 +37,7 @@ import {
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { queryFromUrl } from '@utils/url';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type CallbacksProps = {} & ExtensionProps;
@@ -54,6 +55,7 @@ function Callbacks({
   messages,
   onChangeCallbackBlock,
   onChangeCodeBlock,
+  onSelectBlockFile,
   pipeline,
   runBlock,
   runningBlocks,
@@ -61,12 +63,39 @@ function Callbacks({
   selectedBlock,
   setAnyInputFocused,
   setErrors,
+  setHiddenBlocks,
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
 }: CallbacksProps) {
   const refParent = useRef(null);
   const [dropdownMenuVisible, setDropdownMenuVisible] = useState<boolean>(false);
+
+  const qUrl = queryFromUrl();
+  const {
+    block_uuid: blockUUIDFromUrl,
+  } = qUrl;
+
+  useEffect(() => {
+    const block = blocks.find(({ uuid }) => blockUUIDFromUrl?.split(':')?.[0] === uuid);
+
+    if (block) {
+      if (!selectedBlock || block?.uuid !== selectedBlock?.uuid) {
+        // ts-ignore
+        setHiddenBlocks(prev => ({
+          ...prev,
+          [block.uuid]: false,
+        }));
+        onSelectBlockFile(block.uuid, block.type, null);
+      }
+    }
+  }, [
+    blockUUIDFromUrl,
+    blocks,
+    onSelectBlockFile,
+    selectedBlock,
+    setHiddenBlocks,
+  ]);
 
   const {
     type: pipelineType,
@@ -207,6 +236,14 @@ function Callbacks({
               blocks={blocksInNotebook}
               inputPlaceholder="Select blocks to add callbacks to"
               loading={isLoadingUpdateBlock}
+              onClickTag={(block: BlockType) => {
+                // ts-ignore
+                setHiddenBlocks(prev => ({
+                  ...prev,
+                  [block.uuid]: false,
+                }));
+                onSelectBlockFile(block.uuid, block.type, null);
+              }}
               pipeline={pipeline}
               setErrors={setErrors}
               supportedUpstreamBlockTypes={[
@@ -257,6 +294,7 @@ function Callbacks({
     messages,
     onChangeCallbackBlock,
     onChangeCodeBlock,
+    onSelectBlockFile,
     pipeline,
     runBlock,
     runningBlocks,
@@ -265,6 +303,7 @@ function Callbacks({
     selectedBlock,
     setAnyInputFocused,
     setErrors,
+    setHiddenBlocks,
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,

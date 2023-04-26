@@ -576,18 +576,20 @@ class Pipeline:
         self,
         include_block_metadata: bool = False,
         inclide_block_tags: bool = False,
+        include_callback_blocks: bool = False,
         include_content: bool = False,
         include_extensions: bool = False,
         include_outputs: bool = False,
         sample_count: int = None,
     ):
         shared_kwargs = dict(
-            include_block_metadata=include_block_metadata,
+            check_if_file_exists=True,
             inclide_block_tags=inclide_block_tags,
+            include_block_metadata=include_block_metadata,
+            include_callback_blocks=include_callback_blocks,
             include_content=include_content,
             include_outputs=include_outputs,
             sample_count=sample_count,
-            check_if_file_exists=True,
         )
         blocks_data = await asyncio.gather(
             *[b.to_dict_async(**shared_kwargs) for b in self.blocks_by_uuid.values()]

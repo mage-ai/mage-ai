@@ -82,6 +82,7 @@ type PipelineDetailProps = {
   addWidget: (widget: BlockType, opts?: {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
+  allBlocks: BlockType[];
   allowCodeBlockShortcuts?: boolean;
   anyInputFocused: boolean;
   autocompleteItems: AutocompleteItemType[];
@@ -108,7 +109,9 @@ type PipelineDetailProps = {
   };
   onChangeCallbackBlock: (type: string, uuid: string, value: string) => void;
   onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
-  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean, opts?: {
+    blockUUID: string;
+  }) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
@@ -149,6 +152,7 @@ type PipelineDetailProps = {
 function PipelineDetail({
   addNewBlockAtIndex,
   addWidget,
+  allBlocks,
   allowCodeBlockShortcuts,
   anyInputFocused,
   autocompleteItems,
@@ -468,6 +472,7 @@ function PipelineDetail({
             }}
             addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
             addWidget={addWidget}
+            allBlocks={allBlocks}
             allowCodeBlockShortcuts={allowCodeBlockShortcuts}
             autocompleteItems={autocompleteItems}
             block={block}
@@ -528,6 +533,7 @@ function PipelineDetail({
     addNewBlockAtIndex,
     addNewBlockMenuOpenIdx,
     addWidget,
+    allBlocks,
     allowCodeBlockShortcuts,
     autocompleteItems,
     blockRefs,

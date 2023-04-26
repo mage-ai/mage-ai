@@ -152,6 +152,7 @@ export interface BlockRequestPayloadType {
 
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
+  callback_blocks?: string[];
   callback_content?: string;
   color?: BlockColorEnum;
   configuration?: ConfigurationType;

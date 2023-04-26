@@ -8,6 +8,8 @@ import BlockType, {
 import PipelineType from '@interfaces/PipelineType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { capitalizeRemoveUnderscoreLower, lowercase } from '@utils/string';
+import { goToWithQuery } from '@utils/routing';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 
 export const getUpstreamBlockUuids = (
   currentBlock: BlockType,
@@ -243,15 +245,23 @@ export const getMoreActionsItems = (
 
     items.push({
       label: () => has_callback ? 'Remove callback' : 'Add callback',
-      onClick: () => savePipelineContent({
-        block: {
-          ...block,
-          has_callback: !has_callback,
-        },
-      }).then(() => {
-        fetchFileTree();
-        fetchPipeline();
-      }),
+      onClick: () => {
+        if (has_callback) {
+          return savePipelineContent({
+            block: {
+              ...block,
+              has_callback: !has_callback,
+            },
+          }).then(() => {
+            fetchFileTree();
+            fetchPipeline();
+          });
+        } else {
+          goToWithQuery({
+            sideview: ViewKeyEnum.CALLBACKS,
+          });
+        }
+      },
       uuid: 'has_callback',
     });
   }

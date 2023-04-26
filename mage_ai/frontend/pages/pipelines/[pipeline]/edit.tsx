@@ -270,20 +270,30 @@ function PipelineDetailPage({
   const setActiveSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
+    opts?: {
+      blockUUID: string;
+    },
   ) => {
-    if (queryFromUrl()[VIEW_QUERY_PARAM] !== newView) {
-      goToWithQuery({
-        [VIEW_QUERY_PARAM]: newView,
-      }, {
-        preserveParams: [
-          'block_uuid',
-          'file_path',
-          'file_paths[]',
-        ],
-        pushHistory,
-        replaceParams: true,
-      });
+    const newQuery: {
+      [VIEW_QUERY_PARAM]: ViewKeyEnum;
+      block_uuid?: string;
+    } = {
+      [VIEW_QUERY_PARAM]: newView,
+    };
+
+    if (opts?.blockUUID) {
+      newQuery.block_uuid = opts?.blockUUID;
     }
+
+    goToWithQuery(newQuery, {
+      preserveParams: [
+        'block_uuid',
+        'file_path',
+        'file_paths[]',
+      ],
+      pushHistory,
+      replaceParams: true,
+    });
   }, []);
 
   useEffect(() => {
@@ -295,9 +305,12 @@ function PipelineDetailPage({
   const openSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory?: boolean,
+    opts?: {
+      blockUUID: string;
+    },
   ) => {
-    setActiveSidekickView(newView, pushHistory);
     setAfterHidden(false);
+    setTimeout(() => setActiveSidekickView(newView, pushHistory, opts), 1);
   }, [setActiveSidekickView]);
 
   const blockRefs = useRef({});
@@ -1458,6 +1471,7 @@ function PipelineDetailPage({
         blockRef?.current?.scrollIntoView();
       }
       goToWithQuery({
+        block_uuid: null,
         file_path: null,
         'file_paths[]': [],
       });
@@ -1755,8 +1769,8 @@ function PipelineDetailPage({
     lastMessage: lastTerminalMessage,
     sendMessage: sendTerminalMessage,
   } = useWebSocket(getWebSocket('terminal'), {
-    shouldReconnect: () => true,
     queryParams: sharedWebsocketData,
+    shouldReconnect: () => true,
   });
 
   const sideKick = useMemo(() => (
@@ -1795,6 +1809,7 @@ function PipelineDetailPage({
       onChangeCallbackBlock={onChangeCallbackBlock}
       onChangeChartBlock={onChangeChartBlock}
       onChangeCodeBlock={onChangeCodeBlock}
+      onSelectBlockFile={onSelectBlockFile}
       pipeline={pipeline}
       pipelineMessages={pipelineMessages}
       runBlock={runBlock}
@@ -1849,6 +1864,7 @@ function PipelineDetailPage({
     onChangeCallbackBlock,
     onChangeChartBlock,
     onChangeCodeBlock,
+    onSelectBlockFile,
     pipeline,
     pipelineMessages,
     runBlock,
@@ -1894,6 +1910,7 @@ function PipelineDetailPage({
           onCreateCallback?: (block: BlockType) => void;
         },
       ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
+      allBlocks={blocks}
       allowCodeBlockShortcuts={allowCodeBlockShortcuts}
       anyInputFocused={anyInputFocused}
       autocompleteItems={autocompleteItems}
@@ -1953,6 +1970,7 @@ function PipelineDetailPage({
     autocompleteItems,
     automaticallyNameBlocks,
     blockRefs,
+    blocks,
     blocksInNotebook,
     dataProviders,
     deleteBlock,

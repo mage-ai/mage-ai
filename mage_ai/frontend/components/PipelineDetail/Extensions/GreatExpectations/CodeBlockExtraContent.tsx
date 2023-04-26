@@ -26,6 +26,7 @@ type CodeBlockExtraContentProps = {
   blocks: BlockType[];
   inputPlaceholder?: string;
   loading?: boolean;
+  onClickTag?: (block: BlockType) => void;
   onUpdateCallback?: () => void;
   pipeline: PipelineType;
   runBlockAndTrack?: (payload: {
@@ -53,6 +54,7 @@ function CodeBlockExtraContent({
   blocks,
   inputPlaceholder,
   loading,
+  onClickTag,
   runBlockAndTrack,
   supportedUpstreamBlockTypes,
   updateBlock,
@@ -247,7 +249,7 @@ function CodeBlockExtraContent({
                   blockColor: colorInit,
                   theme: themeContext,
                 },
-              ).accent;
+              ).accentLight;
 
               return (
                 <Spacing key={uuid} ml={1} mt={1}>
@@ -255,8 +257,12 @@ function CodeBlockExtraContent({
                     backgroundColor={color}
                     compact
                     disabled={!runBlockAndTrack}
-                    onClick={blockActionDescription
-                      ? () => {
+                    onClick={(e) => {
+                      pauseEvent(e);
+
+                      if (onClickTag) {
+                        onClickTag(b);
+                      } else {
                         runBlockAndTrack?.({
                           block: {
                             ...block,
@@ -264,8 +270,7 @@ function CodeBlockExtraContent({
                           },
                         });
                       }
-                      : null
-                    }
+                    }}
                     small
                   >
                     <Text monospace small>
