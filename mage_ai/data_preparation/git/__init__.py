@@ -26,12 +26,21 @@ class Git:
         os.makedirs(self.repo_path, exist_ok=True)
         self.git_config = git_config
         self.auth_type = git_config.auth_type
+
+        if self.auth_type == AuthType.HTTPS:
+            url = urlsplit(self.remote_repo_link)
+            token = get_secret_value(
+                git_config.access_token_secret_name,
+                repo_name=get_repo_path(),
+            )
+            user = git_config.username
+            url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
+            self.remote_repo_link = urlunsplit(url)
+
         try:
             self.repo = git.Repo(self.repo_path)
         except git.exc.InvalidGitRepositoryError:
-            self.repo = git.Repo.init(self.repo_path)
-            # need to commit something to initialize the repository
-            self.commit('Initial commit')
+            self.__setup_repo()
 
         self.__set_git_config()
 
@@ -68,7 +77,7 @@ class Git:
 
     @property
     def branches(self) -> List:
-        return [head.name for head in self.repo.heads]
+        return [branch.name for branch in self.repo.branches]
 
     def untracked_files(self, untracked_files: bool = False) -> List[str]:
         from git.compat import defenc
@@ -126,10 +135,7 @@ class Git:
 
         if return_code is None:
             proc.kill()
-            raise TimeoutError(
-                "Connecting to remote timed out, make sure your SSH key is set up properly"
-                " and your repository host is added as a known host. More information here:"
-                " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
+            raise TimeoutError
 
     def _run_command(self, command: str) -> None:
         proc = subprocess.Popen(args=command, shell=True)
@@ -156,13 +162,13 @@ class Git:
                             self._run_command(cmd)
                             asyncio.run(self.check_connection())
                         else:
-                            raise err
+                            raise TimeoutError(
+                                "Connecting to remote timed out, make sure your SSH key is set up properly"
+                                " and your repository host is added as a known host. More information here:"
+                                " https://docs.mage.ai/developing-in-the-cloud/setting-up-git#5-add-github-com-to-known-hosts")  # noqa: E501
                     func(self, *args, **kwargs)
             else:
-                try:
-                    asyncio.run(self.check_connection())
-                except TimeoutError as err:
-                    raise err
+                asyncio.run(self.check_connection())
                 func(self, *args, **kwargs)
 
         return wrapper
@@ -304,3 +310,38 @@ class Git:
                 except Exception:
                     pass
         return private_key_file
+
+    def __setup_repo(self):
+        import git
+        tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
+        os.mkdir(tmp_path)
+        try:
+            env = {}
+            if self.auth_type == AuthType.SSH:
+                private_key_file = self.__create_ssh_keys()
+                env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
+            mygit = git.cmd.Git(self.repo_path)
+            mygit.update_environment(**env)
+            mygit.clone(
+                self.remote_repo_link,
+                tmp_path,
+                origin=REMOTE_NAME,
+                kill_after_timeout=30,
+            )
+
+            preferences_file = os.path.join(self.repo_path, PREFERENCES_FILE)
+            if os.path.exists(preferences_file):
+                shutil.copy(
+                    preferences_file,
+                    os.path.join(tmp_path, PREFERENCES_FILE),
+                )
+            git_folder = os.path.join(self.repo_path, '.git')
+            tmp_git_folder = os.path.join(tmp_path, '.git')
+            shutil.move(tmp_git_folder, git_folder)
+            self.repo = git.Repo(path=self.repo_path)
+        except Exception:
+            self.repo = git.Repo.init(self.repo_path)
+            # need to commit something to initialize the repository
+            self.commit('Initial commit')
+        finally:
+            shutil.rmtree(tmp_path)

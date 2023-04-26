@@ -457,6 +457,7 @@ function GitActions({
     isLoading,
     action,
     error,
+    gitSettings,
     message,
     payload,
     confirmMessage,
@@ -470,6 +471,7 @@ function GitActions({
     />
   ), [
     lastMessage,
+    sendMessage,
   ]);
 
   return (
@@ -486,7 +488,7 @@ function GitActions({
                 // @ts-ignore
                 switchBranch({
                   git_branch: {
-                    name: e.target.value
+                    name: e.target.value,
                   },
                 });
               }}
