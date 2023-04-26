@@ -58,3 +58,13 @@ serde_config:
 serde_config:
   serialization_method: RAW_VALUE
 ```
+
+## Deserialize message with Avro schema in Confluent schema registry
+
+```yaml
+serde_config:
+  serialization_method: AVRO
+  schema_registry_url: https://schema_registry_url
+  schema_registry_username: username
+  schema_registry_password: password
+```

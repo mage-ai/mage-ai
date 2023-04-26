@@ -116,7 +116,7 @@ class KafkaSource(BaseSource):
                     ),
                     headers={'Content-Type': 'application/vnd.schemaregistry.v1+json'},
                 )
-                self.avroSerde = AvroKeyValueSerde(self.registry_client, self.config.topic)
+                self.avro_serde = AvroKeyValueSerde(self.registry_client, self.config.topic)
 
     def read(self, handler: Callable):
         self._print('Start consuming messages.')
@@ -168,6 +168,8 @@ class KafkaSource(BaseSource):
             obj = self.schema_class()
             obj.ParseFromString(message)
             return MessageToDict(obj)
+        elif self.config.serde_config.serialization_method == SerializationMethod.AVRO:
+            return self.avro_serde.value.deserialize(message)
         elif self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
             return self.avro_serde.value.deserialize(message)
         else:
