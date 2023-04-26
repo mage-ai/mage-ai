@@ -115,8 +115,10 @@ export const getMoreActionsItems = (
 
   const items: FlyoutMenuItemType[] = [];
 
-  if (BlockTypeEnum.EXTENSION === block.type) {
-  } else {
+  if (![
+    BlockTypeEnum.CALLBACK,
+    BlockTypeEnum.EXTENSION,
+  ].includes(block.type)) {
     items.push({
       label: () => isDBT
         ? 'Execute and run upstream blocks'
