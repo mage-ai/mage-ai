@@ -10,7 +10,7 @@ import {
   PADDING_UNITS,
 } from '@oracle/styles/units/spacing';
 import { createBlockStatus } from '@components/Triggers/utils';
-import { isEmptyObject } from '@utils/hash';
+import { isEmptyObject, isObject } from '@utils/hash';
 
 const TAB_DETAILS = { uuid: 'Run details' };
 const TAB_TREE = { uuid: 'Dependency tree' };
@@ -45,9 +45,12 @@ export default function({
     updatedProps['noStatus'] = true;
   }
 
-  const pattern = selectedRun?.variables || {};
-  if (!(isEmptyObject(selectedRun?.event_variables || {}))) {
-    pattern['event'] = selectedRun.event_variables;
+  const pattern = isObject(selectedRun?.variables)
+    ? { ...selectedRun?.variables }
+    : (selectedRun?.variables || {});
+  const eventVariables = selectedRun?.event_variables;
+  if (eventVariables && isObject(eventVariables) && !isEmptyObject(eventVariables)) {
+    pattern['event'] = { ...eventVariables };
   }
   const patternDisplay = [];
   if (pattern) {
