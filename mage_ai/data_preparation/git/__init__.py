@@ -1,4 +1,3 @@
-from mage_ai.data_preparation.models.constants import PREFERENCES_FILE
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.shared.secrets import get_secret_value
@@ -43,16 +42,6 @@ class Git:
             self.__setup_repo()
 
         self.__set_git_config()
-
-        if self.auth_type == AuthType.HTTPS:
-            url = urlsplit(self.remote_repo_link)
-            token = get_secret_value(
-                git_config.access_token_secret_name,
-                repo_name=get_repo_path(),
-            )
-            user = git_config.username
-            url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
-            self.remote_repo_link = urlunsplit(url)
 
         try:
             self.repo.create_remote(REMOTE_NAME, self.remote_repo_link)
@@ -154,7 +143,7 @@ class Git:
                 with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
                     try:
                         asyncio.run(self.check_connection())
-                    except TimeoutError as err:
+                    except TimeoutError:
                         url = f'ssh://{self.git_config.remote_repo_link}'
                         hostname = urlparse(url).hostname
                         if hostname:
@@ -220,6 +209,8 @@ class Git:
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
         os.mkdir(tmp_path)
         try:
+            # Clone remote repo to a tmp folder, and copy over the contents
+            # of the tmp folder to the local repo.
             env = {}
             if self.auth_type == AuthType.SSH:
                 private_key_file = self.__create_ssh_keys()
@@ -231,14 +222,15 @@ class Git:
                 env=env,
             )
 
-            preferences_file = os.path.join(self.repo_path, PREFERENCES_FILE)
-            if os.path.exists(preferences_file):
-                shutil.copy(
-                    preferences_file,
-                    os.path.join(tmp_path, PREFERENCES_FILE),
-                )
-            shutil.rmtree(self.repo_path)
-            shutil.copytree(tmp_path, self.repo_path)
+            shutil.rmtree(os.path.join(self.repo_path, '.git'))
+            shutil.copytree(
+                tmp_path,
+                self.repo_path,
+                dirs_exist_ok=True,
+                ignore=lambda x, y: ['.preferences.yaml']
+            )
+            self.repo.git.clean('-fd', exclude='.preferences.yaml')
+            self.__pip_install()
         finally:
             shutil.rmtree(tmp_path)
 
@@ -316,6 +308,8 @@ class Git:
         tmp_path = f'{self.repo_path}_{str(uuid.uuid4())}'
         os.mkdir(tmp_path)
         try:
+            # Clone the remote repo and copy over the .git folder
+            # to initialize the local repository.
             env = {}
             if self.auth_type == AuthType.SSH:
                 private_key_file = self.__create_ssh_keys()
@@ -329,12 +323,6 @@ class Git:
                 kill_after_timeout=30,
             )
 
-            preferences_file = os.path.join(self.repo_path, PREFERENCES_FILE)
-            if os.path.exists(preferences_file):
-                shutil.copy(
-                    preferences_file,
-                    os.path.join(tmp_path, PREFERENCES_FILE),
-                )
             git_folder = os.path.join(self.repo_path, '.git')
             tmp_git_folder = os.path.join(tmp_path, '.git')
             shutil.move(tmp_git_folder, git_folder)
