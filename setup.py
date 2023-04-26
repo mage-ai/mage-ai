@@ -105,6 +105,7 @@ setuptools.setup(
             'boto3==1.26.60',
             'botocore==1.29.60',
             'clickhouse-connect==0.5.20',
+            'confluent-avro',
             'db-dtypes==1.0.5',
             'dbt-bigquery==1.4.0',
             'dbt-core==1.4.0',
