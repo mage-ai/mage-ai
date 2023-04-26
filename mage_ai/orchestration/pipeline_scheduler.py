@@ -883,14 +883,20 @@ def retry_pipeline_run(
     if pipeline is None or not pipeline.is_valid_pipeline(pipeline.dir_path):
         raise Exception(f'Pipeline {pipeline_uuid} is not a valid pipeline.')
 
-    pipeline_run_model = PipelineRun.get(pipeline_run['id'])
+    pipeline_schedule_id = pipeline_run['pipeline_schedule_id']
+    pipeline_run_model = PipelineRun(
+        id=pipeline_run['id'],
+        pipeline_schedule_id=pipeline_schedule_id,
+        pipeline_uuid=pipeline_uuid,
+    )
+    execution_date = datetime.fromisoformat(pipeline_run['execution_date'])
     new_pipeline_run = pipeline_run_model.create(
         create_block_runs=False,
-        execution_date=pipeline_run_model.execution_date,
-        event_variables=pipeline_run_model.event_variables,
-        pipeline_schedule_id=pipeline_run_model.pipeline_schedule_id,
+        execution_date=execution_date,
+        event_variables=pipeline_run.get('event_variables', {}),
+        pipeline_schedule_id=pipeline_schedule_id,
         pipeline_uuid=pipeline_run_model.pipeline_uuid,
-        variables=pipeline_run_model.variables,
+        variables=pipeline_run.get('variables', {}),
     )
     start_scheduler(new_pipeline_run)
 
