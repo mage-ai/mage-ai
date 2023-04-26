@@ -89,6 +89,7 @@ setuptools.setup(
             'botocore==1.29.60',
         ],
         'streaming': [
+            'confluent-avro',
             'kafka-python==2.0.2',
             'opensearch-py==2.0.0',
             'pika==1.3.1',
@@ -105,6 +106,7 @@ setuptools.setup(
             'boto3==1.26.60',
             'botocore==1.29.60',
             'clickhouse-connect==0.5.20',
+            'confluent-avro',
             'db-dtypes==1.0.5',
             'dbt-bigquery==1.4.0',
             'dbt-core==1.4.0',

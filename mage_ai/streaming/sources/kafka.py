@@ -90,20 +90,33 @@ class KafkaSource(BaseSource):
         self._print('Finish initializing consumer.')
 
         self.schema_class = None
-        if self.config.serde_config is not None and \
-                self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF:
-            schema_classpath = self.config.serde_config.schema_classpath
-            if schema_classpath is None:
-                return
-            self._print(f'Loading message schema from {schema_classpath}')
-            parts = schema_classpath.split('.')
-            if len(parts) >= 2:
-                class_name = parts[-1]
-                libpath = '.'.join(parts[:-1])
-                self.schema_class = getattr(
-                    importlib.import_module(libpath),
-                    class_name,
+        if self.config.serde_config is not None:
+            if self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF:
+                schema_classpath = self.config.serde_config.schema_classpath
+                if schema_classpath is None:
+                    return
+                self._print(f'Loading message schema from {schema_classpath}')
+                parts = schema_classpath.split('.')
+                if len(parts) >= 2:
+                    class_name = parts[-1]
+                    libpath = '.'.join(parts[:-1])
+                    self.schema_class = getattr(
+                        importlib.import_module(libpath),
+                        class_name,
+                    )
+            elif self.config.serde_config.serialization_method == SerializationMethod.AVRO:
+                from confluent_avro import AvroKeyValueSerde, SchemaRegistry
+                from confluent_avro.schema_registry import HTTPBasicAuth
+
+                self.registry_client = SchemaRegistry(
+                    self.config.serde_config.schema_registry_url,
+                    HTTPBasicAuth(
+                        self.config.serde_config.schema_registry_username,
+                        self.config.serde_config.schema_registry_password,
+                    ),
+                    headers={'Content-Type': 'application/vnd.schemaregistry.v1+json'},
                 )
+                self.avro_serde = AvroKeyValueSerde(self.registry_client, self.config.topic)
 
     def read(self, handler: Callable):
         self._print('Start consuming messages.')
@@ -147,18 +160,23 @@ class KafkaSource(BaseSource):
         return True
 
     def __deserialize_message(self, message):
-        if self.config.serde_config is not None and \
-                self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF and \
+        if self.config.serde_config is None:
+            return self.__deserialize_json(message)
+        if self.config.serde_config.serialization_method == SerializationMethod.PROTOBUF and \
                 self.schema_class is not None:
             from google.protobuf.json_format import MessageToDict
             obj = self.schema_class()
             obj.ParseFromString(message)
             return MessageToDict(obj)
-        elif self.config.serde_config is not None and \
-                self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
+        elif self.config.serde_config.serialization_method == SerializationMethod.AVRO:
+            return self.avro_serde.value.deserialize(message)
+        elif self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE:
             return message
         else:
             return json.loads(message.decode('utf-8'))
+
+    def __deserialize_json(self, message):
+        return json.loads(message.decode('utf-8'))
 
     def __print_message(self, message):
         self._print(f'Receive message {message.partition}:{message.offset}: '
