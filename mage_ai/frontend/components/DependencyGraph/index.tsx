@@ -11,6 +11,7 @@ import {
 import { useMutation } from 'react-query';
 
 import BlockType, {
+  BLOCK_TYPES_WITH_NO_PARENTS,
   BlockLanguageEnum,
   BlockTypeEnum,
   SetEditingBlockType,
@@ -172,7 +173,7 @@ function DependencyGraph({
 
   const blocksInit = useMemo(() => pipeline?.blocks?.filter(({
     type,
-  }) => BlockTypeEnum.SCRATCHPAD !== type) || [], [
+  }) => !BLOCK_TYPES_WITH_NO_PARENTS.includes(type)) || [], [
     pipeline?.blocks,
   ]);
   const dynamicUpstreamBlocksData =

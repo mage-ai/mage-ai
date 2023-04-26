@@ -20,6 +20,8 @@ export type ThemeType = {
     purpleLight: string;
     rose: string;
     roseLight: string;
+    sky: string;
+    skyLight: string;
     teal: string;
     tealLight: string;
     warning: string;

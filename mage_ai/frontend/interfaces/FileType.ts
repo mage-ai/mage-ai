@@ -2,6 +2,7 @@ import { BlockLanguageEnum } from './BlockType';
 
 export enum FileExtensionEnum {
   JSON = 'json',
+  MD = 'md',
   PY = 'py',
   R = 'r',
   SQL = 'sql',
@@ -23,6 +24,7 @@ export const CODE_BLOCK_FILE_EXTENSIONS = [
 
 const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
   FileExtensionEnum.JSON,
+  FileExtensionEnum.MD,
   FileExtensionEnum.PY,
   FileExtensionEnum.R,
   FileExtensionEnum.SQL,
@@ -34,10 +36,8 @@ const SUPPORTED_EDITABLE_FILE_EXTENSIONS = [
 export const SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX =
   new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
 
-const ALL_SUPPORTED_FILE_EXTENSIONS = SUPPORTED_EDITABLE_FILE_EXTENSIONS.concat(FileExtensionEnum.PY);
-
 export const ALL_SUPPORTED_FILE_EXTENSIONS_REGEX =
-  new RegExp(ALL_SUPPORTED_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
+  new RegExp(SUPPORTED_EDITABLE_FILE_EXTENSIONS.map(ext => `\.${ext}$`).join('|'));
 
 export default interface FileType {
   children: FileType[];
@@ -53,6 +53,7 @@ export const FOLDER_NAME_CONFIG = 'config';
 export const FOLDER_NAME_PIPELINES = 'pipelines';
 export const METADATA_FILENAME = 'metadata.yaml';
 export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
+  [FileExtensionEnum.MD]: BlockLanguageEnum.MARKDOWN,
   [FileExtensionEnum.JSON]: FileExtensionEnum.JSON,
   [FileExtensionEnum.PY]: BlockLanguageEnum.PYTHON,
   [FileExtensionEnum.R]: BlockLanguageEnum.R,
@@ -62,9 +63,10 @@ export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
   [FileExtensionEnum.YML]: BlockLanguageEnum.YAML,
 };
 export const FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE = {
+  [BlockLanguageEnum.MARKDOWN]: FileExtensionEnum.MD,
   [BlockLanguageEnum.PYTHON]: FileExtensionEnum.PY,
   [BlockLanguageEnum.R]: FileExtensionEnum.R,
   [BlockLanguageEnum.SQL]: FileExtensionEnum.SQL,
   [BlockLanguageEnum.YAML]: FileExtensionEnum.YAML,
   text: FileExtensionEnum.TXT,
-}
+};

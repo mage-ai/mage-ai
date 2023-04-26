@@ -1,5 +1,4 @@
 import * as path from 'path';
-import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
   useEffect,
@@ -10,7 +9,6 @@ import {
 import { useGlobalState } from '@storage/state';
 import { useMutation } from 'react-query';
 
-import AuthToken from '@api/utils/AuthToken';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
@@ -22,19 +20,16 @@ import FileType, {
   SpecialFileEnum,
 } from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
-import { DEFAULT_TERMINAL_UUID } from '@components/Terminal';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   buildAddBlockRequestPayload,
@@ -44,7 +39,6 @@ import {
 import { find } from '@utils/array';
 import { getBlockFromFile } from '../FileBrowser/utils';
 import { getNonPythonBlockFromFile } from '@components/FileBrowser/utils';
-import { getWebSocket } from '@api/utils/url';
 import { isJsonString } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -169,9 +163,6 @@ function FileEditor({
         <CodeEditor
           autoHeight
           language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
-          onSave={(value: string) => {
-            saveFile(value, file);
-          }}
           // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
           // onDidChangeCursorPosition={onDidChangeCursorPosition}
           onChange={(value: string) => {
@@ -184,6 +175,9 @@ function FileEditor({
               [file?.path]: true,
             }));
             setTouched(true);
+          }}
+          onSave={(value: string) => {
+            saveFile(value, file);
           }}
           selected
           textareaFocused

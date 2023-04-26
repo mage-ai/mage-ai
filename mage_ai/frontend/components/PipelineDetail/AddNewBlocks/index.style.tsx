@@ -14,6 +14,7 @@ type IconContainerProps = {
   compact?: boolean;
   purple?: boolean;
   rose?: boolean;
+  sky?: boolean;
   teal?: boolean;
   yellow?: boolean;
 };
@@ -35,6 +36,10 @@ export const IconContainerStyle = styled.div<IconContainerProps>`
 
   ${props => props.purple && `
     background-color: ${getColorsForBlockType(BlockTypeEnum.TRANSFORMER, props).accent};
+  `}
+
+  ${props => props.sky && `
+    background-color: ${getColorsForBlockType(BlockTypeEnum.MARKDOWN, props).accent};
   `}
 
   ${props => props.teal && `

@@ -529,8 +529,8 @@ function CodeBlock({
   const hasError = !!messagesWithType.find(({ error }) => error);
 
   const color = getColorsForBlockType(
-    block.type,
-    { blockColor: block.color, theme: themeContext },
+    block?.type,
+    { blockColor: block?.color, theme: themeContext },
   ).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
 

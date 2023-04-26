@@ -43,6 +43,7 @@ type AddNewBlocksProps = {
   hideDataLoader?: boolean;
   hideDbt?: boolean;
   hideCustom?: boolean;
+  hideMarkdown?: boolean;
   hideRecommendations?: boolean;
   hideScratchpad?: boolean;
   hideSensor?: boolean;
@@ -71,6 +72,7 @@ function AddNewBlocks({
   hideDataExporter,
   hideDataLoader,
   hideDbt,
+  hideMarkdown,
   hideRecommendations,
   hideScratchpad,
   hideSensor,
@@ -403,15 +405,6 @@ function AddNewBlocks({
                     label: () => 'SQL',
                     uuid: 'custom_block_sql',
                   },
-                  // {
-                  //   items: createColorMenuItems(
-                  //     addNewBlock,
-                  //     BlockTypeEnum.CUSTOM,
-                  //     BlockLanguageEnum.R,
-                  //   ),
-                  //   label: () => 'R',
-                  //   uuid: 'custom_block_r',
-                  // },
                 ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex ===CUSTOM_BUTTON_INDEX}
@@ -512,23 +505,31 @@ function AddNewBlocks({
             </ButtonWrapper>
           )}
 
-          {/*{!hideRecommendations && (
-            <KeyboardShortcutButton
-              {...sharedProps}
-              beforeElement={
-                <IconContainerStyle compact={compact}>
-                  <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-                </IconContainerStyle>
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                setRecsWindowOpenBlockIdx(blockIdx);
-              }}
-              uuid="AddNewBlocks/Recommendations"
-            >
-              Recs
-            </KeyboardShortcutButton>
-          )}*/}
+          {!hideMarkdown && (
+            <ButtonWrapper>
+              <KeyboardShortcutButton
+                {...sharedProps}
+                beforeElement={
+                  <IconContainerStyle compact={compact} sky>
+                    <Add
+                      inverted
+                      size={iconSize}
+                    />
+                  </IconContainerStyle>
+                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  addNewBlock({
+                    language: BlockLanguageEnum.MARKDOWN,
+                    type: BlockTypeEnum.MARKDOWN,
+                  });
+                }}
+                uuid="AddNewBlocks/Markdown"
+              >
+                Markdown
+              </KeyboardShortcutButton>
+            </ButtonWrapper>
+          )}
         </FlexContainer>
       </ClickOutside>
     </FlexContainer>
