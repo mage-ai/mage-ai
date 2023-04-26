@@ -3,14 +3,12 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import ErrorsType from '@interfaces/ErrorsType';
 import Checkbox from '@oracle/elements/Checkbox';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
@@ -28,7 +26,6 @@ type CodeBlockExtraContentProps = {
   loading?: boolean;
   onClickTag?: (block: BlockType) => void;
   onUpdateCallback?: () => void;
-  pipeline: PipelineType;
   runBlockAndTrack?: (payload: {
     block: BlockType,
     code?: string,
@@ -40,12 +37,11 @@ type CodeBlockExtraContentProps = {
     runUpstream?: boolean,
     runTests?: boolean,
   }) => void;
-  setErrors: (errors: ErrorsType) => void;
   supportedUpstreamBlockTypes: BlockTypeEnum[];
   updateBlock: (payload: {
     block: BlockType;
     upstream_blocks: string[];
-  }) => void;
+  }) => any;
 };
 
 function CodeBlockExtraContent({

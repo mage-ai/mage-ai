@@ -10,6 +10,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useMutation } from 'react-query';
 
+import BlockTemplateType from '@interfaces/BlockTemplateType';
 import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
@@ -40,7 +41,7 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl } from '@utils/url';
 import { useKeyboardContext } from '@context/Keyboard';
 
-type CallbacksProps = {} & ExtensionProps;
+export type CallbacksProps = {} & ExtensionProps;
 
 function Callbacks({
   addNewBlockAtIndex,
@@ -81,7 +82,7 @@ function Callbacks({
 
     if (block) {
       if (!selectedBlock || block?.uuid !== selectedBlock?.uuid) {
-        // ts-ignore
+        // @ts-ignore
         setHiddenBlocks(prev => ({
           ...prev,
           [block.uuid]: false,
@@ -217,6 +218,7 @@ function Callbacks({
     return (
       <Spacing key={uuid} mt={PADDING_UNITS}>
         <CodeBlock
+          allBlocks={blocks}
           autocompleteItems={autocompleteItems}
           block={block}
           blockIdx={idx}
@@ -237,15 +239,13 @@ function Callbacks({
               inputPlaceholder="Select blocks to add callbacks to"
               loading={isLoadingUpdateBlock}
               onClickTag={(block: BlockType) => {
-                // ts-ignore
+                // @ts-ignore
                 setHiddenBlocks(prev => ({
                   ...prev,
                   [block.uuid]: false,
                 }));
                 onSelectBlockFile(block.uuid, block.type, null);
               }}
-              pipeline={pipeline}
-              setErrors={setErrors}
               supportedUpstreamBlockTypes={[
                 BlockTypeEnum.CUSTOM,
                 BlockTypeEnum.DATA_EXPORTER,

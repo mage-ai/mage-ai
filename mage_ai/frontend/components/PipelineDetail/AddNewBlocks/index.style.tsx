@@ -13,6 +13,7 @@ type IconContainerProps = {
   border?: boolean;
   compact?: boolean;
   purple?: boolean;
+  rose?: boolean;
   teal?: boolean;
   yellow?: boolean;
 };

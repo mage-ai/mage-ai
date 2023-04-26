@@ -49,15 +49,15 @@ export const MESSAGE_VIEWS = [
 export const SIDEKICK_VIEWS: {
   buildLabel?: (opts: {
     pipeline: PipelineType;
+    secrets?: {
+      [key: string]: any;
+    }[];
+    variables?: {
+      [key: string]: any;
+    }[];
   }) => string;
   key: ViewKeyEnum;
-  label: string;
-  secrets?: {
-    [key: string]: any;
-  }[];
-  variables?: {
-    [key: string]: any;
-  }[];
+  label?: string;
 }[] = [
   {
     key: ViewKeyEnum.TREE,

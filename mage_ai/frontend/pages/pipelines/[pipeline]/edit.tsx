@@ -925,7 +925,7 @@ function PipelineDetailPage({
     }: BlockType) => {
       const query: {
         extension_uuid?: string;
-        type?: string;
+        block_type?: string;
       } = {};
 
       if (blockType) {

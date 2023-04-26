@@ -161,6 +161,7 @@ function GreatExpectations({
     return (
       <Spacing key={uuid} mt={PADDING_UNITS}>
         <CodeBlock
+          allBlocks={blocks}
           autocompleteItems={autocompleteItems}
           block={block}
           blockIdx={idx}

@@ -1,5 +1,5 @@
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
-import BlockType, { BlockRequestPayloadType } from '@interfaces/BlockType';
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import ErrorsType from '@interfaces/ErrorsType';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';

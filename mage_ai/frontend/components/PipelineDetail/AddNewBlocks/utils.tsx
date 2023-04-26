@@ -258,9 +258,11 @@ export const getdataSourceMenuItems = (
     ];
 
     if (!languages || languages?.includes(BlockLanguageEnum.SQL)) {
+      // @ts-ignore
       arr.push(SQLMenuItems(addNewBlock, blockType));
     }
     if (!languages || languages?.includes(BlockLanguageEnum.R)) {
+      // @ts-ignore
       arr.push(RMenuItems(addNewBlock, blockType));
     }
 
