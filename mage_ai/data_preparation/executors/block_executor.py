@@ -200,11 +200,13 @@ class BlockExecutor:
                     global_vars=global_vars,
                     logger=self.logger,
                     logging_tags=logging_tags,
+                    parent_block=self.block,
                     pipeline_run=pipeline_run,
                 )
             except Exception as callback_err:
                 self.logger.exception(
-                    f'Failed to execute {callback} callback block for {self.block.uuid}',
+                    f'Failed to execute {callback} callback block {callback_block.uuid} ' +
+                    f'for block {self.block.uuid}.',
                     **merge_dict(logging_tags, dict(
                         error=callback_err,
                     )),

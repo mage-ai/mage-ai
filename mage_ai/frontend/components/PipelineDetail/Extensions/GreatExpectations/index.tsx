@@ -7,7 +7,7 @@ import {
  } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@components/CodeBlock';
 import CodeBlockExtraContent from './CodeBlockExtraContent';
@@ -183,6 +183,9 @@ function GreatExpectations({
               blocks={blocksInNotebook}
               inputPlaceholder="Select blocks to run expectations on"
               loading={isLoadingUpdateBlock}
+              supportedUpstreamBlockLanguages={[
+                BlockLanguageEnum.PYTHON,
+              ]}
               supportedUpstreamBlockTypes={[
                 BlockTypeEnum.DATA_EXPORTER,
                 BlockTypeEnum.DATA_LOADER,
