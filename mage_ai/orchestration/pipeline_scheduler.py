@@ -893,6 +893,7 @@ def retry_pipeline_run(
     new_pipeline_run = pipeline_run_model.create(
         create_block_runs=False,
         execution_date=execution_date,
+        event_variables=pipeline_run.get('event_variables', {}),
         pipeline_schedule_id=pipeline_schedule_id,
         pipeline_uuid=pipeline_run_model.pipeline_uuid,
         variables=pipeline_run.get('variables', {}),

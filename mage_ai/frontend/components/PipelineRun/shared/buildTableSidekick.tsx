@@ -10,6 +10,7 @@ import {
   PADDING_UNITS,
 } from '@oracle/styles/units/spacing';
 import { createBlockStatus } from '@components/Triggers/utils';
+import { isEmptyObject, isObject } from '@utils/hash';
 
 const TAB_DETAILS = { uuid: 'Run details' };
 const TAB_TREE = { uuid: 'Dependency tree' };
@@ -18,6 +19,8 @@ export const TABS = [
   TAB_DETAILS,
 ];
 
+
+// eslint-disable-next-line import/no-anonymous-default-export
 export default function({
   height,
   heightOffset,
@@ -42,9 +45,18 @@ export default function({
     updatedProps['noStatus'] = true;
   }
 
-  const pattern = selectedRun?.variables || {};
-  if (selectedRun?.event_variables) {
-    pattern['event'] = selectedRun.event_variables;
+  const pattern = isObject(selectedRun?.variables)
+    ? { ...selectedRun?.variables }
+    : (selectedRun?.variables || {});
+  const eventVariables = selectedRun?.event_variables;
+  if (eventVariables && isObject(eventVariables) && !isEmptyObject(eventVariables)) {
+    if (isObject(pattern) && pattern.hasOwnProperty('event')) {
+      const varsEvent = isObject(pattern.event) ? pattern.event : {};
+      // @ts-ignore
+      pattern['event'] = { ...varsEvent, ...eventVariables };
+    } else {
+      pattern['event'] = { ...eventVariables };
+    }
   }
   const patternDisplay = [];
   if (pattern) {
@@ -57,11 +69,12 @@ export default function({
     ['Run ID', selectedRun?.id],
     ['Variables', (
       <CodeBlock
+        key="variable_value"
         language="json"
         small
         source={patternDisplay.join('\n')}
       />
-    )]
+    )],
   ];
   const details = selectedRun && (
     <Spacing pb={PADDING_UNITS} px={PADDING_UNITS}>
@@ -69,11 +82,12 @@ export default function({
         alignTop
         columnFlex={[null, 1]}
         columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
-        rows={rows.map(([k, v]) => [
-          <Text monospace muted>
+        rows={rows.map(([k, v], idx) => [
+          <Text key={`key_${idx}`} monospace muted>
             {k}
           </Text>,
           <Text
+            key={`val_${idx}`}
             monospace
             textOverflow
           >

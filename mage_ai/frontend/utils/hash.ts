@@ -30,6 +30,14 @@ export function ignoreKeys(d, keys) {
   return copy;
 }
 
+export function isObject(variable: any) {
+  return (
+    typeof variable === 'object' &&
+    !Array.isArray(variable) &&
+    variable !== null
+  );
+}
+
 export function isEmptyObject(obj) {
   return !obj || Object.values({ ...obj, id: null }).every(
     (val) =>
