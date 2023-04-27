@@ -44,7 +44,6 @@ type AddNewBlocksProps = {
   hideDbt?: boolean;
   hideCustom?: boolean;
   hideMarkdown?: boolean;
-  hideRecommendations?: boolean;
   hideScratchpad?: boolean;
   hideSensor?: boolean;
   hideTransformer?: boolean;
@@ -53,7 +52,6 @@ type AddNewBlocksProps = {
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
-  setRecsWindowOpenBlockIdx?: (idx: number) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -73,7 +71,6 @@ function AddNewBlocks({
   hideDataLoader,
   hideDbt,
   hideMarkdown,
-  hideRecommendations,
   hideScratchpad,
   hideSensor,
   hideTransformer,
@@ -82,7 +79,6 @@ function AddNewBlocks({
   pipeline,
   setAddNewBlockMenuOpenIdx,
   setCreatingNewDBTModel,
-  setRecsWindowOpenBlockIdx,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);

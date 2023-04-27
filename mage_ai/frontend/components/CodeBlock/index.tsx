@@ -180,7 +180,6 @@ type CodeBlockProps = {
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
-  setRecsWindowOpenBlockIdx?: (idx: number) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
@@ -228,7 +227,6 @@ function CodeBlock({
   setEditingBlock,
   setErrors,
   setOutputBlocks,
-  setRecsWindowOpenBlockIdx,
   setSelected,
   setSelectedOutputBlock,
   setTextareaFocused,
@@ -2075,7 +2073,6 @@ function CodeBlock({
                   pipeline={pipeline}
                   setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
                   setCreatingNewDBTModel={setCreatingNewDBTModel}
-                  setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
                 />
               </Spacing>
             )}
