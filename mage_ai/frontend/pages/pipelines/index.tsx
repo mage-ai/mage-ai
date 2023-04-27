@@ -1,6 +1,6 @@
 import NextLink from 'next/link';
 import { MutateFunction, useMutation } from 'react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
@@ -50,6 +50,8 @@ const sharedOpenButtonProps = {
 
 function PipelineListPage() {
   const router = useRouter();
+  const refTable = useRef(null);
+
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
   const [searchText, setSearchText] = useState<string>(null);
   const [pipelinesEditing, setPipelinesEditing] = useState<{
@@ -163,9 +165,11 @@ function PipelineListPage() {
   );
 
   const [showInputModal, hideInputModal] = useModal(({
+    pipeline,
     pipelineDescription,
     pipelineName,
   }: {
+    pipeline?: PipelineType;
     pipelineDescription?: string;
     pipelineName?: string;
   }) => (
@@ -175,8 +179,10 @@ function PipelineListPage() {
       noEmptyValue={!!pipelineName}
       onClose={hideInputModal}
       onSave={(value: string) => {
-        if (selectedPipeline) {
-          const selectedPipelineUUID = selectedPipeline.uuid;
+        const pipelineToUse = pipeline || selectedPipeline;
+
+        if (pipelineToUse) {
+          const selectedPipelineUUID = pipelineToUse.uuid;
           const pipelineUpdateRequestBody: PipelineType = {
             uuid: selectedPipelineUUID,
           };
@@ -430,6 +436,43 @@ function PipelineListPage() {
                     '/pipelines/[pipeline]',
                     `/pipelines/${pipelines[rowIndex].uuid}`,
                 );
+              }}
+              ref={refTable}
+              renderRightClickMenuItems={(rowIndex: number) => {
+                const selectedPipeline = pipelines[rowIndex];
+
+                return [
+                  {
+                    label: () => 'Edit description',
+                    onClick: () => showInputModal({
+                      pipeline: selectedPipeline,
+                      pipelineDescription: selectedPipeline?.description,
+                    }),
+                    uuid: 'edit_description',
+                  },
+                  {
+                    label: () => 'Rename',
+                    onClick: () => showInputModal({
+                      pipeline: selectedPipeline,
+                      pipelineName: selectedPipeline?.name,
+                    }),
+                    uuid: 'rename',
+                  },
+                  {
+                    label: () => 'Clone',
+                    onClick: () => clonePipeline({
+                      pipeline: {
+                        clone_pipeline_uuid: selectedPipeline?.uuid,
+                      },
+                    }),
+                    uuid: 'clone',
+                  },
+                  {
+                    label: () => 'Delete',
+                    onClick: () => deletePipeline(selectedPipeline?.uuid),
+                    uuid: 'delete',
+                  },
+                ];
               }}
               rows={pipelines.map((pipeline, idx) => {
                 const {
