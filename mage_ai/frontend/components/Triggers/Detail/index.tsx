@@ -424,6 +424,7 @@ function TriggerDetail({
 
   const dbtSettingsTable = useMemo(() => {
     const arr = [];
+    // @ts-ignore
     const blocksData = scheduleVariables?.[MAGE_VARIABLES_KEY]?.blocks;
 
     pipeline?.blocks?.forEach((block) => {

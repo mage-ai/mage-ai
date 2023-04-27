@@ -305,7 +305,11 @@ function DependencyGraph({
     return mapping;
   }, [blocks]);
 
-  const displayTextForBlock = useCallback((block: BlockType): string => {
+  const displayTextForBlock = useCallback((block: BlockType): {
+    displayText: string;
+    kicker?: string;
+    subtitle?: string;
+  } => {
     let displayText;
     let kicker;
     let subtitle;

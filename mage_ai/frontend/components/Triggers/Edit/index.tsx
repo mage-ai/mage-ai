@@ -1106,6 +1106,7 @@ function Edit({
         <Spacing mb={UNITS_BETWEEN_SECTIONS}>
           <DBTSettings
             blocks={dbtBlocks}
+            // @ts-ignore
             updateVariables={setRuntimeVariables}
             variables={{
               ...scheduleVariables,
