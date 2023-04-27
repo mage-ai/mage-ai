@@ -5,8 +5,10 @@ import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import {
   BORDER_RADIUS,
   BORDER_STYLE,
+  BORDER_WIDTH,
   BORDER_WIDTH_THICK,
 } from '@oracle/styles/units/borders';
+import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { transition } from '@oracle/styles/mixins';
@@ -130,6 +132,7 @@ export const HiddenBlockContainerStyle = styled.div<BorderColorShareProps>`
 `;
 
 export const BlockHeaderStyle = styled.div<{
+  bottomBorder?: boolean;
   zIndex: number;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
@@ -150,6 +153,10 @@ export const BlockHeaderStyle = styled.div<{
     background-color: ${(props.theme || dark).background.content};
   `}
 
+  ${props => props.bottomBorder && `
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium2};
+  `}
+
   ${props => props.zIndex && `
     z-index: ${6 + (props.zIndex || 0)};
   `}
@@ -157,6 +164,7 @@ export const BlockHeaderStyle = styled.div<{
 
 export const CodeContainerStyle = styled.div<{
   hasOutput: boolean;
+  lightBackground?: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
@@ -170,6 +178,10 @@ export const CodeContainerStyle = styled.div<{
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+
+  ${props => props.lightBackground && `
+    background-color: ${(props.theme || dark).background.content};
   `}
 
   ${props => !props.hasOutput && `

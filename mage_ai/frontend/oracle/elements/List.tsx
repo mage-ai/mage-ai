@@ -100,7 +100,7 @@ function List({
     >
       {React.Children.map(children, (child, idx) => (
         <ListItemStyle
-          key={child.props.key}
+          key={child.props?.key || idx}
           large={large}
           marginTop={idx >= 1}
           {...props}

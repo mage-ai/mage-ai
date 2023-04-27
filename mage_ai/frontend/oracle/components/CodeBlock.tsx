@@ -62,8 +62,8 @@ function CodeBlock({
   }
   return (
     <ReactMarkdown
-      source={source}
       renderers={{ code: Code }}
+      source={source}
     />
   );
 }

@@ -51,6 +51,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
+import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -263,6 +264,7 @@ function CodeBlock({
   const isDBT = BlockTypeEnum.DBT === blockType;
   const isSQLBlock = BlockLanguageEnum.SQL === blockLanguage;
   const isRBlock = BlockLanguageEnum.R === blockLanguage;
+  const isMarkdown = BlockTypeEnum.MARKDOWN === blockType;
 
   let defaultLimitValue = blockConfiguration[CONFIG_KEY_LIMIT];
   if (!isDBT && isSQLBlock && defaultLimitValue === undefined) {
@@ -948,6 +950,7 @@ function CodeBlock({
 
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
 
+  const markdownEl = useMemo(() => <Markdown>{content}</Markdown>, [content]);
   const limitInputEl = useMemo(() => (
     <TextInput
       compact
@@ -997,6 +1000,7 @@ function CodeBlock({
               ...borderColorShareProps,
               ...collected,
             }}
+            bottomBorder={isMarkdown}
             onClick={() => onClickSelectBlock()}
             ref={drag}
             zIndex={blocksLength + 1 - (blockIdx || 0)}
@@ -1235,6 +1239,7 @@ function CodeBlock({
               {...borderColorShareProps}
               className={selected && textareaFocused ? 'selected' : null}
               hasOutput={!!buttonTabs || hasOutput}
+              lightBackground={isMarkdown && !isEditingBlock}
             >
               {BlockTypeEnum.DBT === blockType
                 && !codeCollapsed
@@ -1963,7 +1968,10 @@ function CodeBlock({
               {!blockError && (
                 <>
                   {!codeCollapsed
-                    ? codeEditorEl
+                    ? (!(isMarkdown && !isEditingBlock)
+                      ? codeEditorEl
+                      : markdownEl
+                    )
                     : (
                       <Spacing px={1}>
                         <Text monospace muted>
