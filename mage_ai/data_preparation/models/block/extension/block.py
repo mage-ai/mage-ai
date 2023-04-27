@@ -12,7 +12,12 @@ class ExtensionBlock(Block):
         return output
 
     def _block_decorator(self, decorated_functions):
-        def custom_code(extension_name: str, *args, **kwargs):
+        def custom_code(
+            extension_name: str,
+            expectations: List[Dict] = None,
+            *args,
+            **kwargs,
+        ):
             if not extension_name or type(extension_name) is not str:
                 raise Exception(
                     'No @extension decorator found with a valid extension name, ' +
@@ -28,7 +33,7 @@ class ExtensionBlock(Block):
             def inner(function):
                 def func(*args, **kwargs):
                     if EXTENSION_UUID_GREAT_EXPECTATIONS == extension_name:
-                        ge = GreatExpectations(self)
+                        ge = GreatExpectations(self, expectations=expectations)
                         validators_and_uuids = ge.build_validators(*args, **kwargs)
                         validators = [t[0] for t in validators_and_uuids]
                         function(*validators)
