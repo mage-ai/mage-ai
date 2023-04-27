@@ -7,6 +7,7 @@ description: "Configure Mage settings through environment variables."
 | Variable name             | Description                   | Example values     |
 | ------------------------- | ----------------------------- | ----------------- |
 | `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | [Example](/production/configuring-production-settings/overview#postgres) |
+| `MAGE_PUBLIC_HOST` | The public host url that can be used to access the Mage app. This value will be used in emails or other notifications. | `http://localhost:6789` |
 | `REQUIRE_USER_AUTHENTICATION`  | Enable user authentication in Mage. [More information](/production/authentication/overview) | 1 |
 | `AUTHENTICATION_MODE` | Set the authentication mode in Mage. Omitting the variable will default to basic password authentication. | `ldap` |
 | `LDAP_ADMIN_USERNAME`  | [More information](/production/authentication/overview#ldap) | See link                     |
