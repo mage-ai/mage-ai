@@ -13,7 +13,7 @@ DEFAULT_WAIT_TIME_SECONDS = 1
 
 class MessageDeletionMethod(str, Enum):
     AFTER_RECEIVED = 'AFTER_RECEIVED'
-    MANNUAL = 'MANNUAL'
+    MANUAL = 'MANUAL'
 
 
 @dataclass
