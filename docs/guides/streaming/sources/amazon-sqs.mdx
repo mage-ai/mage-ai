@@ -9,7 +9,7 @@ connector_type: amazon_sqs
 queue_name: test-queue
 batch_size: 10
 wait_time_seconds: 1
-message_deletion_method: AFTER_RECEIVED   # AFTER_RECEIVED or MANNUAL
+message_deletion_method: AFTER_RECEIVED   # AFTER_RECEIVED or MANUAL
 
 serde_config:
   serialization_method: JSON
@@ -42,7 +42,7 @@ We support two ways to delete messages:
     * Set `message_deletion_method: AFTER_RECEIVED` in the source config.
     * The input of the transformer is the list of deserialized message body.
 1. Manually delete the message in transformer after processing the message.
-    * Set `message_deletion_method: MANNUAL` in the source config.
+    * Set `message_deletion_method: MANUAL` in the source config.
     * The input of the transformer is the list of dictionary with the structure
       ```python
       {
