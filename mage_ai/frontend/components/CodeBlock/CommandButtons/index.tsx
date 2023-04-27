@@ -24,9 +24,9 @@ import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
+  Charts,
   Close,
   Ellipsis,
-  NavGraph,
   PlayButtonFilled,
 } from '@oracle/icons';
 import {
@@ -370,7 +370,7 @@ function CommandButtons({
                 noPadding
                 onClick={() => setShowAddCharts(currState => !currState)}
               >
-                <NavGraph size={UNIT * 2.25} />
+                <Charts size={UNIT * 2.25} />
               </Button>
             </Tooltip>
           </Spacing>

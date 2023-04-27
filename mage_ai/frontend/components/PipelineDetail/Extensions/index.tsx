@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
+import DBT from './DBT';
 import ExtensionOptionType, { ExtensionTypeEnum } from '@interfaces/ExtensionOptionType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -52,6 +53,33 @@ function Extensions({
     setSelectedExtensionUUID(queryFromUrl()?.extension);
   }, [router.asPath]);
 
+  const extensionDetailEl = useMemo(() => {
+    if (!pipeline) {
+      return null;
+    }
+
+    let ExtensionComponent;
+    if (ExtensionTypeEnum.GREAT_EXPECTATIONS === selectedExtensionUUID) {
+      ExtensionComponent = GreatExpectations;
+    } else if (ExtensionTypeEnum.DBT === selectedExtensionUUID) {
+      ExtensionComponent = DBT;
+    }
+
+    if (ExtensionComponent) {
+      return (
+        <ExtensionComponent
+          {...sharedProps}
+          extensionOption={extensionOption}
+        />
+      );
+    }
+  }, [
+    extensionOption,
+    pipeline,
+    selectedExtensionUUID,
+    sharedProps,
+  ]);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <Spacing p={PADDING_UNITS}>
@@ -78,63 +106,59 @@ function Extensions({
         )}
         {!data && !selectedExtensionUUID && <Spinner />}
 
-        {ExtensionTypeEnum.GREAT_EXPECTATIONS === selectedExtensionUUID && pipeline && (
-          <GreatExpectations
-            {...sharedProps}
-            extensionOption={extensionOption}
-          />
-        )}
+        {extensionDetailEl}
 
         {!selectedExtensionUUID && extensionOptions?.map(({
           description,
           name,
           uuid,
-        }) => (
-          <Link
-            block
-            key={uuid}
-            noHoverUnderline
-            onClick={() => goToWithQuery({
-              extension: uuid,
-            }, {
-              pushHistory: true,
-            })}
-            preventDefault
-          >
-            <Panel dark>
-              <FlexContainer
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <Flex alignItems="center">
-                  <PanelV2 fullWidth={false}>
-                    <Spacing p={PADDING_UNITS}>
-                      <FlexContainer alignItems="center">
-                        <img
-                          alt={name}
-                          height={UNIT * 3}
-                          src={`/images/extensions/${uuid}/logo.png`}
-                          width={UNIT * 3}
-                        />
-                      </FlexContainer>
-                    </Spacing>
-                  </PanelV2>
+        }, idx: number) => (
+          <Spacing key={uuid} mt={idx >= 1 ? PADDING_UNITS : 0}>
+            <Link
+              block
+              noHoverUnderline
+              onClick={() => goToWithQuery({
+                extension: uuid,
+              }, {
+                pushHistory: true,
+              })}
+              preventDefault
+            >
+              <Panel dark>
+                <FlexContainer
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Flex alignItems="center">
+                    <PanelV2 fullWidth={false}>
+                      <Spacing p={PADDING_UNITS}>
+                        <FlexContainer alignItems="center">
+                          <img
+                            alt={name}
+                            height={UNIT * 3}
+                            src={`/images/extensions/${uuid}/logo.png`}
+                            width={UNIT * 3}
+                          />
+                        </FlexContainer>
+                      </Spacing>
+                    </PanelV2>
 
-                  <Spacing mr={PADDING_UNITS} />
+                    <Spacing mr={PADDING_UNITS} />
 
-                  <Flex flexDirection="column">
-                    <Text bold>
-                      {name}
-                    </Text>
-                    <Text default small>
-                      {description}
-                    </Text>
+                    <Flex flexDirection="column">
+                      <Text bold>
+                        {name}
+                      </Text>
+                      <Text default small>
+                        {description}
+                      </Text>
+                    </Flex>
                   </Flex>
-                </Flex>
-                <ChevronRight />
-              </FlexContainer>
-            </Panel>
-          </Link>
+                  <ChevronRight />
+                </FlexContainer>
+              </Panel>
+            </Link>
+          </Spacing>
         ))}
       </Spacing>
     </DndProvider>

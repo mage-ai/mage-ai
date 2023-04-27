@@ -1706,7 +1706,7 @@ function PipelineDetailPage({
         code,
         extension_uuid: extensionUUID,
         pipeline_uuid: pipeline?.uuid,
-        run_downstream: runDownstream,
+        run_downstream: runDownstream, // This will only run downstream blocks that are charts/widgets
         run_settings: runSettings,
         run_tests: runTests,
         run_upstream: runUpstream,
@@ -2249,6 +2249,8 @@ function PipelineDetailPage({
           <SidekickHeader
             activeView={activeSidekickView}
             pipeline={pipeline}
+            secrets={secrets}
+            variables={globalVariables}
           />
         )}
         afterHeightOffset={HEADER_HEIGHT}

@@ -351,7 +351,7 @@ function Callbacks({
           <Spacing mt={1}>
             <Text default>
               Learn more about <Link
-                href="https://docs.mage.ai/guides/blocks/callbacks#adding-a-callback-to-your-block"
+                href="https://docs.mage.ai/development/blocks/callbacks/overview"
                 openNewWindow
               >
                 callbacks

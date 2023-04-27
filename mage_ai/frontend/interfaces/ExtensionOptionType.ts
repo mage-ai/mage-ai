@@ -1,4 +1,5 @@
 export enum ExtensionTypeEnum {
+  DBT = 'dbt',
   GREAT_EXPECTATIONS = 'great_expectations',
 }
 
