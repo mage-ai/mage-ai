@@ -15,6 +15,7 @@ class DataSource(str, Enum):
     API = 'api'
     BIGQUERY = 'bigquery'
     CLICKHOUSE = 'clickhouse'
+    DRUID = 'druid'
     FILE = 'file'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     KAFKA = 'kafka'

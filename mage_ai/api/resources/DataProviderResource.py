@@ -9,6 +9,7 @@ import yaml
 DATA_PROVIDERS = [
     DataSource.BIGQUERY,
     DataSource.CLICKHOUSE,
+    DataSource.DRUID,
     DataSource.MSSQL,
     DataSource.MYSQL,
     DataSource.POSTGRES,
@@ -19,6 +20,7 @@ DATA_PROVIDERS = [
 DATA_PROVIDERS_NAME = {
     DataSource.BIGQUERY: 'BigQuery',
     DataSource.CLICKHOUSE: 'ClickHouse',
+    DataSource.DRUID: 'Druid',
     DataSource.MSSQL: 'Microsoft SQL Server',
     DataSource.MYSQL: 'MySQL',
     DataSource.POSTGRES: 'PostgreSQL',

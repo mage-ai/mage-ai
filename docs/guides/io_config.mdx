@@ -21,6 +21,12 @@ default:
   AZURE_CLIENT_SECRET: "{{ env_var('AZURE_CLIENT_SECRET') }}"
   AZURE_STORAGE_ACCOUNT_NAME: "{{ env_var('AZURE_STORAGE_ACCOUNT_NAME') }}"
   AZURE_TENANT_ID: "{{ env_var('AZURE_TENANT_ID') }}"
+  DRUID_HOST: host
+  DRUID_PASSWORD: password
+  DRUID_PATH: /druid/v2/sql/
+  DRUID_PORT: 8082
+  DRUID_SCHEME: http
+  DRUID_USER: user
   GOOGLE_SERVICE_ACC_KEY:
     type: service_account
     project_id: project-id

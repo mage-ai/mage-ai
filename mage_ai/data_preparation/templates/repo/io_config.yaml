@@ -16,6 +16,12 @@ default:
   CLICKHOUSE_PASSWORD: null
   CLICKHOUSE_PORT: 8123
   CLICKHOUSE_USERNAME: null
+  DRUID_HOST: hostname
+  DRUID_PASSWORD: password
+  DRUID_PATH: /druid/v2/sql/
+  DRUID_PORT: 8082
+  DRUID_SCHEME: http
+  DRUID_USER: user
   GOOGLE_SERVICE_ACC_KEY:
     type: service_account
     project_id: project-id

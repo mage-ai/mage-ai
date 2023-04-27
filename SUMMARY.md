@@ -86,6 +86,7 @@
         * [PostgreSQL](mage\_integrations/mage\_integrations/connections/postgresql/README.md)
   * Code block integrations
     * [BigQuery](docs/integrations/BigQuery.md)
+    * [Druid](docs/integrations/Druid.md)
     * [MySQL](docs/integrations/MySQL.md)
     * [PostgreSQL](docs/integrations/PostgreSQL.md)
     * [Redshift](docs/integrations/Redshift.md)
