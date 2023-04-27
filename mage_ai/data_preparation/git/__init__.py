@@ -151,7 +151,7 @@ class Git:
                     try:
                         asyncio.run(self.check_connection())
                     except ChildProcessError as err:
-                        if 'Host key validation failed' in str(err):
+                        if 'Host key verification failed' in str(err):
                             if hostname:
                                 add_host_to_known_hosts(hostname)
                         else:
@@ -311,6 +311,9 @@ class Git:
                         private_key_file = custom_private_key_file
                 except Exception:
                     pass
+            else:
+                private_key_file = custom_private_key_file
+
         return private_key_file
 
     def __setup_repo(self):
