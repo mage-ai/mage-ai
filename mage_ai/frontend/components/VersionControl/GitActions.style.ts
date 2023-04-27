@@ -4,6 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/constants';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 
 export const HeaderStyle = styled.div`
@@ -22,16 +23,26 @@ export const TerminalStyle = styled.div`
 `;
 
 export const PanelStyle = styled.div`
-	${ScrollbarStyledCss}
+	// ${ScrollbarStyledCss}
 
 	height: 75vh;
 	min-height: 300px;
 	width: 75vw;
 	backgroundColor: #232429;
-	overflow-y: auto;
+	// overflow-y: auto;
 	border-radius: ${BORDER_RADIUS}px;
 
 	${props => `
     background-color: ${(props.theme.background || dark.background).panel};
   `}
+`;
+
+export const OutputStyle = styled.div<{
+  noScrollbarTrackBackground?: boolean;	
+}>`
+	${ScrollbarStyledCss}
+
+	padding: ${2 * UNIT}px ;
+  height: calc(75vh - ${HEADER_HEIGHT}px);
+	overflow-y: auto;
 `;

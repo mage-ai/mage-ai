@@ -4,26 +4,28 @@ import { useMutation } from 'react-query';
 
 import AuthToken from '@api/utils/AuthToken';
 import Button from '@oracle/elements/Button';
+import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import Terminal from '@components/Terminal';
 import Text from '@oracle/elements/Text';
+import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import { Branch } from '@oracle/icons';
-import { Col, Row } from '@components/shared/Grid';
+import {
+  HeaderStyle,
+  OutputStyle,
+  PanelStyle,
+  TerminalStyle,
+} from './GitActions.style';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { OutputContainerStyle } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
-import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import Terminal from '@components/Terminal';
-import TextArea from '@oracle/elements/Inputs/TextArea';
-import Checkbox from '@oracle/elements/Checkbox';
 import { remove } from '@utils/array';
-import { HeaderStyle, PanelStyle, TerminalStyle } from './GitActions.style';
-import Flex from '@oracle/components/Flex';
 
 
 const GIT_ACTION_OPTIONS = {
@@ -32,7 +34,7 @@ const GIT_ACTION_OPTIONS = {
   'commit': 'Commit & push',
   'pull': 'Pull',
   'reset_hard': 'Hard reset',
-}
+};
 
 type GitActionsProps = {
   branch: string;
@@ -241,28 +243,26 @@ function GitActions({
       >
         Include all changes
       </Button>
-      <OutputContainerStyle noScrollbarTrackBackground>
-        {modifiedFiles && modifiedFiles.length > 0 && (
-          <Spacing mb={1}>
-            <Spacing my={1}>
-              <Text>
-                Modified files
-              </Text>
-            </Spacing>
-            {modifiedFiles.map((fileCheckbox))}
+      {modifiedFiles && modifiedFiles.length > 0 && (
+        <Spacing mb={1}>
+          <Spacing my={1}>
+            <Text>
+              Modified files
+            </Text>
           </Spacing>
-        )}
-        {untrackedFiles && untrackedFiles.length > 0 && (
-          <Spacing mb={1}>
-            <Spacing my={1}>
-              <Text>
-                Untracked files
-              </Text>
-            </Spacing>
-            {untrackedFiles.map(fileCheckbox)}
+          {modifiedFiles.map((fileCheckbox))}
+        </Spacing>
+      )}
+      {untrackedFiles && untrackedFiles.length > 0 && (
+        <Spacing mb={1}>
+          <Spacing my={1}>
+            <Text>
+              Untracked files
+            </Text>
           </Spacing>
-        )}
-      </OutputContainerStyle>
+          {untrackedFiles.map(fileCheckbox)}
+        </Spacing>
+      )}
     </>
   ), [
     modifiedFiles,
@@ -541,17 +541,17 @@ function GitActions({
       </HeaderStyle>
       <FlexContainer>
         <div style={{ width: '50%' }}>
-          <Spacing p={2}>
+          <OutputStyle>
             {action === 'commit' ? addFilesEl : (
-              <OutputContainerStyle noScrollbarTrackBackground>
+              <>
                 {status?.split('\\n')?.map((t) => (
                   <Text key={t} monospace preWrap small>
                     {t}
                   </Text>
                 ))}
-              </OutputContainerStyle>
+              </>
             )}
-          </Spacing>
+          </OutputStyle>
         </div>
         <div style={{ width: '50%' }}>
           {showTerminal ? (
