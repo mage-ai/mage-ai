@@ -111,12 +111,12 @@ export const getMoreActionsItems = (
     reduce_output: reduceOutput,
   } = configuration || {};
   const isDBT = BlockTypeEnum.DBT === block?.type;
-
   const items: FlyoutMenuItemType[] = [];
 
   if (![
     BlockTypeEnum.CALLBACK,
     BlockTypeEnum.EXTENSION,
+    BlockTypeEnum.MARKDOWN,
   ].includes(block.type)) {
     items.push({
       label: () => isDBT

@@ -288,7 +288,8 @@ function CodeBlock({
   });
 
   const [errorMessages, setErrorMessages] = useState(null);
-  const [isEditingBlock, setIsEditingBlock] = useState(false);
+  const [isEditingBlock, setIsEditingBlock] = useState<boolean>(false);
+  const [isEditingBlockName, setIsEditingBlockName] = useState<boolean>(false);
   const [newBlockUuid, setNewBlockUuid] = useState(blockUUID);
   const [outputCollapsed, setOutputCollapsed] = useState(false);
   const [runCount, setRunCount] = useState<number>(0);
@@ -607,30 +608,26 @@ function CodeBlock({
   const [updateBlock] = useMutation(
     api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
     {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            setIsEditingBlock(false);
-            fetchPipeline();
-            fetchFileTree();
-            setContent(content);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
       onError: (response: any) => {
         const {
           messages,
         } = onError(response);
         setErrorMessages(messages);
       },
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setIsEditingBlockName(false);
+            fetchPipeline();
+            fetchFileTree();
+            setContent(content);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
     },
   );
 
@@ -651,7 +648,7 @@ function CodeBlock({
         return;
       }
 
-      if (isEditingBlock
+      if (isEditingBlockName
         && String(keyHistory[0]) === String(KEY_CODE_ENTER)
         && String(keyHistory[1]) !== String(KEY_CODE_META)
       ) {
@@ -686,7 +683,7 @@ function CodeBlock({
       addNewBlock,
       block,
       hideRunButton,
-      isEditingBlock,
+      isEditingBlockName,
       newBlockUuid,
       runBlockAndTrack,
       selected,
@@ -982,7 +979,6 @@ function CodeBlock({
     setAnyInputFocused,
     updateDataProviderConfig,
   ]);
-  console.log('isEditingBlock:', isEditingBlock);
 
   return (
     <div ref={drop}>
@@ -1093,7 +1089,7 @@ function CodeBlock({
                       notRequired
                       onBlur={() => setTimeout(() => {
                         setAnyInputFocused(false);
-                        setIsEditingBlock(false);
+                        setIsEditingBlockName(false);
                       }, 300)}
                       onChange={(e) => {
                         setNewBlockUuid(e.target.value);
@@ -1101,18 +1097,18 @@ function CodeBlock({
                       }}
                       onClick={() => {
                         setAnyInputFocused(true);
-                        setIsEditingBlock(true);
+                        setIsEditingBlockName(true);
                       }}
                       onFocus={() => {
                         setAnyInputFocused(true);
-                        setIsEditingBlock(true);
+                        setIsEditingBlockName(true);
                       }}
                       stacked
-                      value={!isEditingBlock && blockUUID}
+                      value={!isEditingBlockName && blockUUID}
                     />
                   )}
 
-                  {isEditingBlock && !isDBT && (
+                  {isEditingBlockName && !isDBT && (
                     <>
                       <Spacing ml={1} />
                       <Link
@@ -1123,7 +1119,7 @@ function CodeBlock({
                             uuid: blockUUID,
                           },
                         }).then(() => {
-                          setIsEditingBlock(false);
+                          setIsEditingBlockName(false);
                           fetchPipeline();
                           fetchFileTree();
                         })}
@@ -1196,12 +1192,13 @@ function CodeBlock({
                 fetchFileTree={fetchFileTree}
                 fetchPipeline={fetchPipeline}
                 interruptKernel={interruptKernel}
+                isEditingBlock={isEditingBlock}
+                setIsEditingBlock={setIsEditingBlock}
                 pipeline={pipeline}
                 runBlock={hideRunButton ? null : runBlockAndTrack}
                 savePipelineContent={savePipelineContent}
                 setErrors={setErrors}
                 setOutputCollapsed={setOutputCollapsed}
-                visible={selected || isInProgress}
               />
 
               <Spacing px={1}>

@@ -1,3 +1,5 @@
+import { UNIT } from '@oracle/styles/units/spacing';
+
 export const TAB_DBT_PREVIEW_UUID = { uuid: 'Preview results' };
 export const TAB_DBT_LOGS_UUID = { uuid: 'Logs' };
 export const TAB_DBT_SQL_UUID = { uuid: 'SQL' };
@@ -9,4 +11,5 @@ export const TABS_DBT = [
   TAB_DBT_LINEAGE_UUID,
 ];
 
+export const DEFAULT_ICON_SIZE = UNIT * 2.5;
 export const DRAG_AND_DROP_TYPE = 'CodeBlock_HiddenBlock';
