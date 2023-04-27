@@ -3,6 +3,7 @@ from mage_ai.services.email.email import send_email
 from mage_ai.services.slack.slack import send_slack_message
 from mage_ai.services.teams.teams import send_teams_message
 from mage_ai.services.google_chat.google_chat import send_google_chat_message
+from mage_ai.settings import MAGE_PUBLIC_HOST
 import os
 
 
@@ -94,5 +95,5 @@ class NotificationSender:
             )
 
     def __pipeline_run_url(self, pipeline, pipeline_run):
-        return f'http://localhost:6789/pipelines/{pipeline.uuid}/triggers/'\
+        return f'{MAGE_PUBLIC_HOST}/pipelines/{pipeline.uuid}/triggers/'\
                f'{pipeline_run.pipeline_schedule_id}'
