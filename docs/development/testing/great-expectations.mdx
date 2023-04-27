@@ -25,12 +25,14 @@ They must be Python blocks (SQL block support coming soon).
         response = requests.get(url)
         return pd.read_csv(io.StringIO(response.text), sep=',')
     ```
-    
+
     For more expectations, read Great Expectation’s [documentation](https://greatexpectations.io/expectations/).
 
 1. [Add Great Expectations power up to your pipeline](/design/blocks/extension#how-to-add-extensions-to-your-pipeline).
 1. In the list of available power ups, click the option for <b>Great Expectations</b>.
     ![Power ups](https://github.com/mage-ai/assets/blob/main/notebook/extensions/power-ups.jpg?raw=true)
+
+---
 
 ## Adding expectations to your pipeline
 
@@ -48,6 +50,11 @@ If it appears, fill in `test number of rows` as the name and click the button la
             max_value=10000,
         )
     ```
+
+    <Note>
+        You can add expectations using code or from a JSON object.
+        See section [Defining expectations](#defining-expectations) below for more details.
+    </Note>
 
 1. In the extension block near the bottom, click the input field that says
 “Select blocks to run expectations on”.
@@ -131,6 +138,71 @@ Whenever you run a block while editing your pipeline,
 any associated Great Expectations extension blocks will also be ran.
 
 If any expectations fail, the block output will display an error message with the failure results.
+
+---
+
+## Defining expectations
+
+### Code
+
+```python
+@extension('great_expectations')
+def validate(validator, *args, **kwargs):
+    validator.expect_table_row_count_to_be_between(
+        min_value=1000,
+        max_value=10000,
+    )
+```
+
+### JSON object
+
+```python
+expectations_json = [
+  {
+    "expectation_type": "expect_table_row_count_to_be_between",
+    "kwargs": {
+      "min_value": 1000,
+      "max_value": 10000
+    }
+  },
+  {
+    "expectation_type": "expect_column_values_to_not_be_null",
+    "kwargs": {
+      "column": "user ID",
+      "result_format": "BASIC"
+    }
+  }
+]
+
+
+@extension('great_expectations', expectations=expectations_json)
+def validate(validator, *args, **kwargs):
+    pass
+```
+
+### Code and JSON object
+
+```python
+expectations_json = [
+  {
+    "expectation_type": "expect_column_values_to_not_be_null",
+    "kwargs": {
+      "column": "user ID",
+      "result_format": "BASIC"
+    }
+  }
+]
+
+
+@extension('great_expectations', expectations=expectations_json)
+def validate(validator, *args, **kwargs):
+    validator.expect_table_row_count_to_be_between(
+        min_value=1000,
+        max_value=10000,
+    )
+```
+
+---
 
 ## Running expectations end-to-end
 

@@ -1,13 +1,15 @@
+from great_expectations.core import ExpectationSuite
 from great_expectations.core.batch import RuntimeBatchRequest
 from mage_ai.data_preparation.models.constants import BlockLanguage
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 import great_expectations as gx
 import pandas as pd
 
 
 class GreatExpectations():
-    def __init__(self, block):
+    def __init__(self, block, expectations: List[Dict] = None):
         self.block = block
+        self.expectations = expectations
 
     def build_validators(
         self,
@@ -71,11 +73,21 @@ class GreatExpectations():
                 pass
 
             context.add_datasource(**datasource_config)
-            context.add_or_update_expectation_suite(expectation_suite_name=expectation_suite_name)
-            validator = context.get_validator(
-                batch_request=batch_request,
-                expectation_suite_name=expectation_suite_name,
-            )
+
+            validator_options = dict(batch_request=batch_request)
+
+            if self.expectations and len(self.expectations) >= 1:
+                validator_options['expectation_suite'] = ExpectationSuite(
+                    expectation_suite_name=expectation_suite_name,
+                    expectations=self.expectations,
+                )
+            else:
+                context.add_or_update_expectation_suite(
+                    expectation_suite_name=expectation_suite_name,
+                )
+                validator_options['expectation_suite_name'] = expectation_suite_name
+
+            validator = context.get_validator(**validator_options)
 
             validators.append((validator, uuid))
 
