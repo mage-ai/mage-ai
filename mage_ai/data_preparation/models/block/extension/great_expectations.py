@@ -82,7 +82,9 @@ class GreatExpectations():
                     expectations=self.expectations,
                 )
             else:
-                context.add_or_update_expectation_suite(expectation_suite_name=expectation_suite_name)
+                context.add_or_update_expectation_suite(
+                    expectation_suite_name=expectation_suite_name,
+                )
                 validator_options['expectation_suite_name'] = expectation_suite_name
 
             validator = context.get_validator(**validator_options)
