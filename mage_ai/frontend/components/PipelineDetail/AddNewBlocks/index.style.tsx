@@ -12,6 +12,7 @@ type IconContainerProps = {
   blue?: boolean;
   border?: boolean;
   compact?: boolean;
+  grey?: boolean;
   purple?: boolean;
   rose?: boolean;
   sky?: boolean;
@@ -28,6 +29,10 @@ export const IconContainerStyle = styled.div<IconContainerProps>`
 
   ${props => props.border && `
     border: 1px dotted ${(props.theme.content || dark.content).active};
+  `}
+
+  ${props => props.grey && `
+    background-color: ${getColorsForBlockType(BlockTypeEnum.SCRATCHPAD, props).accent};
   `}
 
   ${props => props.blue && `

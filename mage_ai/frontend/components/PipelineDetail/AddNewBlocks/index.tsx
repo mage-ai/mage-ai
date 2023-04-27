@@ -416,8 +416,11 @@ function AddNewBlocks({
                   <KeyboardShortcutButton
                     {...sharedProps}
                     beforeElement={
-                      <IconContainerStyle compact={compact}>
-                        <Edit size={iconSize} />
+                      <IconContainerStyle compact={compact} grey>
+                        <Add
+                          inverted
+                          size={iconSize}
+                        />
                       </IconContainerStyle>
                     }
                     onClick={(e) => {

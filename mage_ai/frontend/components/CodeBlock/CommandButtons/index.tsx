@@ -407,7 +407,7 @@ function CommandButtons({
           <Tooltip
             appearBefore
             default
-            label="testing"
+            label={isEditingBlock ? 'Close editor' : 'Edit'}
             size={DEFAULT_ICON_SIZE}
             widthFitContent
           >
