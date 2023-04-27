@@ -1,9 +1,15 @@
 import NextLink from 'next/link';
-import { useCallback, useMemo } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenu, { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -14,7 +20,10 @@ import {
   TableRowStyle,
   TableStyle,
 } from './index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
+
+const MENU_WIDTH: number = UNIT * 20;
 
 export type ColumnType = {
   center?: boolean;
@@ -50,6 +59,9 @@ type TableProps = {
   noHeader?: boolean;
   onClickRow?: (index: number) => void;
   onDoubleClickRow?: (index: number) => void;
+  onRightClickRow?: (index: number, event?: any) => void;
+  renderRightClickMenu?: (rowIndex: number) => any;
+  renderRightClickMenuItems?: (rowIndex: number) => FlyoutMenuItemType[];
   rows: any[][];
   rowVerticalPadding?: number;
   stickyFirstColumn?: boolean;
@@ -75,13 +87,22 @@ function Table({
   noHeader,
   onClickRow,
   onDoubleClickRow,
+  onRightClickRow,
+  renderRightClickMenu,
+  renderRightClickMenuItems,
   rows,
   rowVerticalPadding,
   stickyFirstColumn,
   stickyHeader,
   uuid,
   wrapColumns,
-}: TableProps) {
+}: TableProps, ref) {
+  const [coordinates, setCoordinates] = useState<{
+    x: number;
+    y: number;
+  }>(null);
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number>(null);
+
   const totalFlex = useMemo(() => columnFlex.reduce((acc, val) => acc + (val || 0), 0), [
     columnFlex,
   ]);
@@ -93,6 +114,75 @@ function Table({
 
     return null;
   }, [columnFlex, totalFlex]);
+
+  const handleClick = useCallback(() => setCoordinates(null), [
+    setCoordinates,
+  ]);
+  useEffect(() => {
+    document?.addEventListener('click', handleClick);
+
+    return () => {
+      document?.removeEventListener('click', handleClick);
+    };
+  }, [
+    handleClick,
+  ]);
+
+  const hasRightClickMenu = useMemo(() => renderRightClickMenu || renderRightClickMenuItems, [
+    renderRightClickMenu,
+    renderRightClickMenuItems,
+  ]);
+
+  const rightClickMenu = useMemo(() => {
+    if (!hasRightClickMenu) {
+      return null;
+    }
+
+    const {
+      x: xContainer,
+      width,
+    } = ref?.current?.getBoundingClientRect() || {};
+    const {
+      x = 0,
+      y = 0,
+    } = coordinates || {};
+    let xFinal = x;
+    if (x + MENU_WIDTH >= xContainer + width) {
+      xFinal = (xContainer + width) - (MENU_WIDTH + UNIT);
+    }
+    if (xFinal < 0) {
+      xFinal = 0;
+    }
+
+    return (
+      <div
+        style={{
+          left: xFinal,
+          position: 'fixed',
+          top: y + (UNIT / 2),
+          zIndex: 100,
+        }}
+      >
+        {renderRightClickMenu?.(focusedRowIndex)}
+        {renderRightClickMenuItems && (
+          <FlyoutMenu
+            items={renderRightClickMenuItems(focusedRowIndex) || []}
+            open
+            parentRef={undefined}
+            uuid="FileBrowser/ContextMenu"
+            width={MENU_WIDTH}
+          />
+        )}
+      </div>
+    );
+  }, [
+    coordinates,
+    focusedRowIndex,
+    hasRightClickMenu,
+    ref,
+    renderRightClickMenu,
+    renderRightClickMenuItems,
+  ]);
 
   const rowEls = useMemo(() => rows?.map((cells, rowIndex) => {
     const linkProps = buildLinkProps?.(rowIndex);
@@ -154,6 +244,19 @@ function Table({
           noHover={!(linkProps || onClickRow)}
           // @ts-ignore
           onClick={onClickRow ? (e) => handleRowClick(rowIndex, e) : null}
+          onContextMenu={hasRightClickMenu
+            ? (e) => {
+              e.preventDefault();
+
+              setCoordinates({
+                x: e.pageX,
+                y: e.pageY,
+              });
+              setFocusedRowIndex(rowIndex);
+              onRightClickRow?.(rowIndex, e);
+            }
+            : null
+          }
         >
           {cellEls}
         </TableRowStyle>
@@ -187,18 +290,21 @@ function Table({
   }), [
     alignTop,
     buildLinkProps,
+    buildRowProps,
     calculateCellWidth,
     columnBorders,
     columnMaxWidth,
     compact,
-    buildRowProps,
+    hasRightClickMenu,
     highlightRowOnHover,
     isSelectedRow,
     noBorder,
     onClickRow,
     onDoubleClickRow,
+    onRightClickRow,
     rowVerticalPadding,
     rows,
+    setFocusedRowIndex,
     stickyFirstColumn,
     uuid,
     wrapColumns,
@@ -241,7 +347,7 @@ function Table({
       ))}
     </TableRowStyle>
   ), [columnBorders, columns, compact, noBorder, stickyHeader, uuid]);
-  
+
   const tableEl = useMemo(() => {
     if (grouping && grouping?.column && grouping?.values?.length > 0) {
       const {
@@ -254,7 +360,7 @@ function Table({
         if (groupingValues.includes(groupingValue)) {
           acc[groupingTitle] = (acc[groupingTitle] || []).concat(rowEl);
         }
-  
+
         return acc;
       }, {});
       const rowElGroupings = Object.entries(groupedRowElsByValue)
@@ -309,7 +415,13 @@ function Table({
     rowEls,
   ]);
 
-  return tableEl;
+  return (
+    <div style={{ position: 'relative' }}>
+      {tableEl}
+
+      {hasRightClickMenu && coordinates && rightClickMenu}
+    </div>
+  );
 }
 
-export default Table;
+export default React.forwardRef(Table);
