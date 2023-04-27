@@ -1,7 +1,7 @@
 variables_dir: ~/.mage_data
 remote_variables_dir: s3://bucket/path_prefix
 
-variables_retention_period: '30d'
+variables_retention_period: '90d'
 
 emr_config:
   # You can customize the EMR cluster instance size with the two parameters

@@ -14,8 +14,6 @@ if is_test():
 else:
     DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
 
-DEFAULT_VARIABLE_RETENTION_PERIOD = '30d'
-
 
 class RepoConfig:
     def __init__(self, repo_path: str = None, config_dict: Dict = None):
@@ -80,10 +78,7 @@ class RepoConfig:
 
             self.logging_config = repo_config.get('logging_config', dict())
 
-            self.variables_retention_period = repo_config.get(
-                'variables_retention_period',
-                DEFAULT_VARIABLE_RETENTION_PERIOD,
-            )
+            self.variables_retention_period = repo_config.get('variables_retention_period')
         except Exception:
             traceback.print_exc()
             pass
