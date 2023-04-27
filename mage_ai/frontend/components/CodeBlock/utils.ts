@@ -290,26 +290,28 @@ export function buildTags({ tags }: BlockType): {
 }[] {
   const arr = [];
 
-  if (tags?.includes(TagEnum.DYNAMIC)) {
-    arr.push({
-      description: 'This block will create N blocks for each of its downstream blocks.',
-      title: capitalizeRemoveUnderscoreLower(TagEnum.DYNAMIC),
-    });
-  }
-
-  if (tags?.includes(TagEnum.DYNAMIC_CHILD)) {
-    arr.push({
-      description: 'This block is dynamically created by its upstream parent block that is dynamic.',
-      title: capitalizeRemoveUnderscoreLower(TagEnum.DYNAMIC_CHILD),
-    });
-  }
-
-  if (tags?.includes(TagEnum.REDUCE_OUTPUT)) {
-    arr.push({
-      description: 'Reduce output from all dynamically created blocks into a single array output.',
-      title: capitalizeRemoveUnderscoreLower(TagEnum.REDUCE_OUTPUT),
-    });
-  }
+  tags?.forEach((tag: TagEnum) => {
+    if (TagEnum.DYNAMIC === tag) {
+      arr.push({
+        description: 'This block will create N blocks for each of its downstream blocks.',
+        title: capitalizeRemoveUnderscoreLower(TagEnum.DYNAMIC),
+      });
+    } else if (TagEnum.DYNAMIC_CHILD === tag) {
+      arr.push({
+        description: 'This block is dynamically created by its upstream parent block that is dynamic.',
+        title: capitalizeRemoveUnderscoreLower(TagEnum.DYNAMIC_CHILD),
+      });
+    } else if (TagEnum.REDUCE_OUTPUT === tag) {
+      arr.push({
+        description: 'Reduce output from all dynamically created blocks into a single array output.',
+        title: capitalizeRemoveUnderscoreLower(TagEnum.REDUCE_OUTPUT),
+      });
+    } else {
+      arr.push({
+        title: tag,
+      });
+    }
+  });
 
   return arr;
 }

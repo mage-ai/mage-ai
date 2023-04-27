@@ -2,7 +2,7 @@ import { ThemeContext } from 'styled-components';
 import { useContext } from 'react';
 
 import Badge from '@oracle/components/Badge';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
@@ -19,6 +19,7 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildTags } from '@components/CodeBlock/utils';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getModelAttributes } from '@utils/models/dbt';
 import { getRuntimeText } from './utils';
 
 type GraphNodeProps = {
@@ -80,6 +81,16 @@ function GraphNode({
 
   const inverted = INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)
     || INVERTED_TEXT_COLOR_BLOCK_COLORS.includes(color);
+
+  let kicker;
+  let subtitle;
+
+  if (BlockTypeEnum.DBT === type) {
+    const {
+      project,
+    } = getModelAttributes(block);
+    kicker = project;
+  }
 
   return (
     <NodeStyle
@@ -158,6 +169,16 @@ function GraphNode({
             padding: '8px 0',
           }}
         >
+          {kicker && (
+            <Text
+              bold
+              inverted={inverted}
+              monospace
+              xsmall
+            >
+              {kicker}
+            </Text>
+          )}
           {bodyText && (
             <Text
               inverted={inverted}
