@@ -87,6 +87,33 @@ def only_run_this_function_on_failure(**kwargs):
     pass
 ```
 
+### Keyword arguments
+
+Here are the keyword arguments that are  available in each callback function:
+
+| Name | Description | Sample value |
+| --- | --- | --- |
+| `block_uuid` | Callback block UUID. | `'fireball_callback'` |
+| `ds` | Date string when the parent block started executing. | `'2023-12-25'` |
+| `event` | A dictionary containing metadata from an event triggered pipeline. | `{}` |
+| `execution_date` | Python datetime object for when the parent block started executing. | `datetime.datetime(2023, 4, 26, 20, 28, 17, 335254, tzinfo=datetime.timezone.utc)` |
+| `execution_partition` | Partition used for the parent block when it was executed. | `'207/20230426T202817'` |
+| `hr` | Hour string when the parent block started executing. | `'20'` |
+| `pipeline_run` | Python pipeline run object associated to the current run. | `PipelineRun(id=2357, pipeline_uuid=fire_etl, execution_date=2023-04-26 20:28:17.335254+00:00)` |
+| `pipeline_uuid` | UUID of the current pipeline. | `'fire_etl'` |
+
+#### Data integration pipelines only
+
+The following keyword arguments are only available in callback functions with parent blocks in a
+data integration pipelines:
+
+| Name | Description | Sample value |
+| --- | --- | --- |
+| `destination_table` | The table name that the source data is being exported to. | `'dim_users_v1'` |
+| `index` | The order in which the parent block executed compared to other blocks of the same type. | `0` |
+| `is_last_block_run` | Boolean value for whether or not the parent block was the last block ran for the block type in the pipeline. | `True` or `False` |
+| `stream` | The name of the source stream (or table) that the parent block is syncing for. | `'stripe_transactions'` |
+
 ---
 
 ## Legacy
