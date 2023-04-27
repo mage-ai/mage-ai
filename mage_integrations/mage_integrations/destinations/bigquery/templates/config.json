@@ -3,5 +3,6 @@
   "project_id": "",
   "dataset": "",
   "location": "",
-  "disable_update_column_types": false
+  "disable_update_column_types": false,
+  "gcs_bucket_name": ""
 }
