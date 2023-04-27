@@ -120,7 +120,7 @@ class Git:
                 err.decode('UTF-8') if err
                 else 'Error connecting to remote, make sure your SSH key is set up properly.'
             )
-            raise Exception(message)
+            raise ChildProcessError(message)
 
         if return_code is None:
             proc.kill()
@@ -136,20 +136,29 @@ class Git:
         will configure and test SSH settings before executing the Git command.
         '''
         def wrapper(self, *args, **kwargs):
-            if self.auth_type == AuthType.SSH:
-                private_key_file = self.__create_ssh_keys()
+            def add_host_to_known_hosts(hostname):
+                cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'
+                self._run_command(cmd)
+                asyncio.run(self.check_connection())
 
+            if self.auth_type == AuthType.SSH:
+                url = f'ssh://{self.git_config.remote_repo_link}'
+                hostname = urlparse(url).hostname
+
+                private_key_file = self.__create_ssh_keys()
                 git_ssh_cmd = f'ssh -i {private_key_file}'
                 with self.repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
                     try:
                         asyncio.run(self.check_connection())
+                    except ChildProcessError as err:
+                        if 'Host key validation failed' in str(err):
+                            if hostname:
+                                add_host_to_known_hosts(hostname)
+                        else:
+                            raise err
                     except TimeoutError:
-                        url = f'ssh://{self.git_config.remote_repo_link}'
-                        hostname = urlparse(url).hostname
                         if hostname:
-                            cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'
-                            self._run_command(cmd)
-                            asyncio.run(self.check_connection())
+                            add_host_to_known_hosts(hostname)
                         else:
                             raise TimeoutError(
                                 "Connecting to remote timed out, make sure your SSH key is set up properly"  # noqa: E501
@@ -285,20 +294,21 @@ class Git:
         pk_secret_name = self.git_config.ssh_private_key_secret_name
         private_key_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'id_rsa')
         if pk_secret_name:
-            private_key_file = os.path.join(
+            custom_private_key_file = os.path.join(
                 DEFAULT_SSH_KEY_DIRECTORY,
                 f'id_rsa_{pk_secret_name}'
             )
-            if not os.path.exists(private_key_file):
+            if not os.path.exists(custom_private_key_file):
                 try:
                     private_key = get_secret_value(
                         pk_secret_name,
                         repo_name=get_repo_path(),
                     )
                     if private_key:
-                        with open(private_key_file, 'w') as f:
+                        with open(custom_private_key_file, 'w') as f:
                             f.write(base64.b64decode(private_key).decode('utf-8'))
-                        os.chmod(private_key_file, 0o600)
+                        os.chmod(custom_private_key_file, 0o600)
+                        private_key_file = custom_private_key_file
                 except Exception:
                     pass
         return private_key_file
