@@ -3,6 +3,8 @@ import { ScheduleTypeEnum } from './PipelineScheduleType';
 
 export const RunStatus = RunStatusEnum;
 
+export const MAGE_VARIABLES_KEY = '__mage_variables';
+
 export const RUN_STATUS_TO_LABEL = {
   [RunStatus.CANCELLED]: 'Cancelled',
   [RunStatus.COMPLETED]: 'Done',

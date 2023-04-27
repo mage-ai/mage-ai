@@ -14,6 +14,7 @@ import Checkbox from '@oracle/elements/Checkbox';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@oracle/components/CodeBlock';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
+import DBTSettings from '../DBTSettings';
 import EventMatcherType, { PROVIDER_EVENTS } from '@interfaces/EventMatcherType';
 import EventRuleType from '@interfaces/EventRuleType';
 import Divider from '@oracle/elements/Divider';
@@ -45,11 +46,14 @@ import {
   Schedule,
   Trash,
 } from '@oracle/icons';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import { CardStyle } from './index.style';
+import { MAGE_VARIABLES_KEY } from '@interfaces/PipelineRunType';
 import {
   PADDING_UNITS,
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+  UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
@@ -732,12 +736,16 @@ function Edit({
   ), [
     eventMatchers,
     eventRules,
+    eventRulesByName,
     name,
+    updateEventMatcher,
   ]);
+
+  const windowIsDefined = typeof window !== 'undefined';
 
   const apiMemo = useMemo(() => {
     let url = '';
-    if (typeof window !== 'undefined') {
+    if (windowIsDefined) {
       url = `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
 
       if (pipelineSchedule?.token) {
@@ -746,7 +754,7 @@ function Edit({
     }
 
     let port;
-    if (typeof window !== 'undefined') {
+    if (windowIsDefined) {
       port = window.location.port;
 
       if (port) {
@@ -887,7 +895,7 @@ function Edit({
   }, [
     name,
     pipelineSchedule,
-    typeof window,
+    windowIsDefined,
   ]);
 
   const saveButtonDisabled = !scheduleType || (
@@ -900,87 +908,69 @@ function Edit({
     )
   );
 
+  const dbtBlocks =
+    useMemo(() => pipeline?.blocks?.filter(({ type }) => BlockTypeEnum.DBT === type) || [], [
+      pipeline,
+    ]);
+
   // TODO: allow users to set their own custom runtime variables.
   const afterMemo = useMemo(() => (
     <Spacing p={PADDING_UNITS}>
-      {!isEmptyObject(formattedVariables) && (
-        <>
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Headline>
+          Pipeline run settings
+        </Headline>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <FlexContainer alignItems="center">
+            <Checkbox
+              checked={settings?.allow_blocks_to_fail}
+              label="Keep running pipeline even if blocks fail"
+              onClick={() => setSettings(prev => ({
+                ...prev,
+                allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
+              }))}
+            />
+          </FlexContainer>
+        </Spacing>
+
+        {ScheduleTypeEnum.TIME === scheduleType && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <FlexContainer alignItems="center">
+              <Checkbox
+                checked={settings?.skip_if_previous_running}
+                label="Skip run if previous run still in progress"
+                onClick={() => setSettings(prev => ({
+                  ...prev,
+                  skip_if_previous_running: !settings?.skip_if_previous_running,
+                }))}
+              />
+            </FlexContainer>
+          </Spacing>
+        )}
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
           <FlexContainer alignItems="center">
             <Spacing mr={2}>
               <ToggleSwitch
-                checked={overwriteVariables}
-                onCheck={setOverwriteVariables}
+                checked={enableSLA}
+                onCheck={val => {
+                  setEnableSLA(val);
+                  if (!val) {
+                    setSchedule(schedule => ({
+                      ...schedule,
+                      slaAmount: 0,
+                    }));
+                  }
+                }}
               />
             </Spacing>
-            <Text monospace muted>
-              Overwrite global variables
+            <Text default monospace>
+              Configure trigger SLA
             </Text>
           </FlexContainer>
 
-          {overwriteVariables && runtimeVariables
-            && Object.entries(runtimeVariables).length > 0 && (
-            <Spacing mt={2}>
-              <Table
-                columnFlex={[null, 1]}
-                columns={[
-                  {
-                    uuid: 'Variable',
-                  },
-                  {
-                    uuid: 'Value',
-                  },
-                ]}
-                rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
-                  <Text
-                    default
-                    key={`variable_${uuid}`}
-                    monospace
-                  >
-                    {uuid}
-                  </Text>,
-                  <TextInput
-                    borderless
-                    key={`variable_uuid_input_${uuid}`}
-                    monospace
-                    onChange={(e) => {
-                      e.preventDefault();
-                      setRuntimeVariables(vars => ({
-                        ...vars,
-                        [uuid]: e.target.value,
-                      }));
-                    }}
-                    paddingHorizontal={0}
-                    placeholder="Variable value"
-                    value={value}
-                  />,
-                ])}
-              />
-            </Spacing>
-          )}
-        </>
-      )}
-      <Spacing mt={2}>
-        <FlexContainer alignItems="center">
-          <Spacing mr={2}>
-            <ToggleSwitch
-              checked={enableSLA}
-              onCheck={val => {
-                setEnableSLA(val);
-                if (!val) {
-                  setSchedule(schedule => ({
-                    ...schedule,
-                    slaAmount: 0,
-                  }));
-                }
-              }}
-            />
-          </Spacing>
-          <Text default monospace>
-            Configure trigger SLA
-          </Text>
-        </FlexContainer>
-        {enableSLA && (
-          <Spacing mt={2}>
+          {enableSLA && (
             <Table
               columnFlex={[null, 1]}
               rows={[[
@@ -1034,59 +1024,110 @@ function Edit({
                       ))}
                     </Select>
                   </Flex>
-                </FlexContainer>
+                </FlexContainer>,
               ]]}
             />
-          </Spacing>
-        )}
-        <Spacing mt={2}>
-          <Headline level={5} monospace>
-            Additional settings
-          </Headline>
-          {ScheduleTypeEnum.TIME === scheduleType && (
-            <Spacing mt={2}>
-              <FlexContainer alignItems="center">
-                <Checkbox
-                  checked={settings?.skip_if_previous_running}
-                  onClick={() => setSettings(prev => ({
-                    ...prev,
-                    skip_if_previous_running: !settings?.skip_if_previous_running,
-                  }))}
-                />
-                <Spacing ml={2}/>
-                <Text default monospace small>
-                  Skip run if previous run still in progress
-                </Text>
-              </FlexContainer>
-            </Spacing>
           )}
-
-          <Spacing mt={2}>
-            <FlexContainer alignItems="center">
-              <Checkbox
-                checked={settings?.allow_blocks_to_fail}
-                onClick={() => setSettings(prev => ({
-                  ...prev,
-                  allow_blocks_to_fail: !settings?.allow_blocks_to_fail,
-                }))}
-              />
-              <Spacing ml={2}/>
-              <Text default monospace small>
-                Keep running pipeline even if blocks fail
-              </Text>
-            </FlexContainer>
-          </Spacing>
         </Spacing>
       </Spacing>
+
+      <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+        <Headline>
+          Runtime variables
+        </Headline>
+
+        {!isEmptyObject(formattedVariables) && (
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <FlexContainer alignItems="center">
+              <Spacing mr={2}>
+                <ToggleSwitch
+                  checked={overwriteVariables}
+                  onCheck={setOverwriteVariables}
+                />
+              </Spacing>
+              <Text monospace muted>
+                Overwrite global variables
+              </Text>
+            </FlexContainer>
+
+            {overwriteVariables
+              && runtimeVariables
+              && Object.entries(runtimeVariables).length > 0
+              && (
+              <Spacing mt={1}>
+                <Table
+                  columnFlex={[null, 1]}
+                  columns={[
+                    {
+                      uuid: 'Variable',
+                    },
+                    {
+                      uuid: 'Value',
+                    },
+                  ]}
+                  rows={Object.entries(runtimeVariables).reduce((acc, [uuid, value]) => {
+                    if (MAGE_VARIABLES_KEY === uuid) {
+                      return acc;
+                    }
+
+                    return acc.concat([[
+                      <Text
+                        default
+                        key={`variable_${uuid}`}
+                        monospace
+                      >
+                        {uuid}
+                      </Text>,
+                      <TextInput
+                        borderless
+                        key={`variable_uuid_input_${uuid}`}
+                        monospace
+                        onChange={(e) => {
+                          e.preventDefault();
+                          setRuntimeVariables(vars => ({
+                            ...vars,
+                            [uuid]: e.target.value,
+                          }));
+                        }}
+                        paddingHorizontal={0}
+                        placeholder="Variable value"
+                        value={value}
+                      />,
+                    ]]);
+                  }, [])}
+                />
+              </Spacing>
+            )}
+          </Spacing>
+        )}
+      </Spacing>
+
+      {dbtBlocks?.length >= 1 && (
+        <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+          <DBTSettings
+            blocks={dbtBlocks}
+            // @ts-ignore
+            updateVariables={setRuntimeVariables}
+            variables={{
+              ...scheduleVariables,
+              ...runtimeVariables,
+            }}
+          />
+        </Spacing>
+      )}
     </Spacing>
   ), [
+    dbtBlocks,
     enableSLA,
     formattedVariables,
     overwriteVariables,
     runtimeVariables,
     schedule,
+    scheduleType,
+    scheduleVariables,
     setEnableSLA,
     setOverwriteVariables,
+    setRuntimeVariables,
     settings,
   ]);
 

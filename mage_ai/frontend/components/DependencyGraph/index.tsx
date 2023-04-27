@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 import { parse } from 'yaml';
@@ -14,7 +15,6 @@ import BlockType, {
   BlockTypeEnum,
   SetEditingBlockType,
   StatusTypeEnum,
-  TagEnum,
 } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
@@ -42,7 +42,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { getModelName } from '@utils/models/dbt';
+import { getModelAttributes } from '@utils/models/dbt';
 import { isActivePort } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { useDynamicUpstreamBlocks } from '@utils/models/block';
@@ -305,8 +305,14 @@ function DependencyGraph({
     return mapping;
   }, [blocks]);
 
-  const displayTextForBlock = useCallback((block: BlockType): string => {
+  const displayTextForBlock = useCallback((block: BlockType): {
+    displayText: string;
+    kicker?: string;
+    subtitle?: string;
+  } => {
     let displayText;
+    let kicker;
+    let subtitle;
 
     if (PipelineTypeEnum.INTEGRATION === pipeline?.type && BlockTypeEnum.TRANSFORMER !== block.type) {
       let contentParsed: {
@@ -323,14 +329,23 @@ function DependencyGraph({
         displayText = `${block.uuid}: ${contentParsed?.destination}`;
       }
     } else if (BlockTypeEnum.DBT === block.type && BlockLanguageEnum.SQL === block.language) {
-      displayText = getModelName(block, { fullPath: true });
+      const {
+        name: modelName,
+        project,
+      } = getModelAttributes(block);
+      displayText = modelName;
+      kicker = project;
     }
 
     if (!displayText) {
       displayText = block.uuid;
     }
 
-    return displayText;
+    return {
+      displayText,
+      kicker,
+      subtitle,
+    };
   }, [
     pipeline,
   ]);
@@ -343,7 +358,11 @@ function DependencyGraph({
     const edgesInner: EdgeType[] = [];
 
     blocks.forEach((block: BlockType) => {
-      const displayText = displayTextForBlock(block);
+      const {
+        displayText,
+        kicker,
+        subtitle,
+      } = displayTextForBlock(block);
 
       const {
         tags = [],
@@ -396,6 +415,22 @@ function DependencyGraph({
       if (tags?.length >= 1) {
         nodeHeight += 26;
       }
+      if (kicker) {
+        nodeHeight += 26;
+      }
+      if (subtitle) {
+        nodeHeight += 26;
+      }
+
+      let longestText = displayText;
+      [
+        kicker,
+        subtitle,
+      ].forEach((text) => {
+        if (text && text.length > longestText.length) {
+          longestText = text;
+        }
+      });
 
       nodesInner.push({
         data: {
@@ -404,7 +439,7 @@ function DependencyGraph({
         height: nodeHeight,
         id: uuid,
         ports,
-        width: (displayText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
+        width: (longestText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
           + (disabledProp ? 0 : UNIT * 5)
           + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
           + (blockStatus?.[block.uuid]?.runtime ? 50 : 0),
@@ -678,6 +713,9 @@ function DependencyGraph({
                 } = event;
 
                 const blockStatus = getBlockStatus(block);
+                const {
+                  displayText,
+                } = displayTextForBlock(block);
 
                 return (
                   <foreignObject
@@ -692,7 +730,7 @@ function DependencyGraph({
                   >
                     <GraphNode
                       block={block}
-                      bodyText={`${displayTextForBlock(block)}${blockEditing?.uuid === block.uuid ? ' (editing)' : ''}`}
+                      bodyText={`${displayText}${blockEditing?.uuid === block.uuid ? ' (editing)' : ''}`}
                       disabled={blockEditing?.uuid === block.uuid}
                       height={nodeHeight}
                       hideStatus={disabledProp}

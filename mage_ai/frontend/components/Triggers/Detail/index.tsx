@@ -28,9 +28,11 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
 import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import {
   CalendarDate,
   Info,
+  Lightning,
   MultiShare,
   MusicNotes,
   Pause,
@@ -39,6 +41,7 @@ import {
   Sun,
   Switch,
 } from '@oracle/icons';
+import { MAGE_VARIABLES_KEY } from '@interfaces/PipelineRunType';
 import {
   PADDING_UNITS,
   UNIT,
@@ -53,6 +56,7 @@ import {
   getFormattedVariables,
 } from '@components/Sidekick/utils';
 import { convertSeconds } from '../utils';
+import { getModelAttributes } from '@utils/models/dbt';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject } from '@utils/hash';
 import { isViewer } from '@utils/session';
@@ -357,10 +361,11 @@ function TriggerDetail({
   }, [
     isActive,
     scheduleInterval,
+    scheduleType,
     settings,
     sla,
     startTime,
-    scheduleType,
+    status,
   ]);
 
   const scheduleVariables = useMemo(() => scheduleVariablesInit || {}, [scheduleVariablesInit]);
@@ -369,10 +374,12 @@ function TriggerDetail({
 
     if (!isEmptyObject(scheduleVariables)) {
       Object.entries(scheduleVariables).forEach(([k, v]) => {
-        arr.push({
-          uuid: k,
-          value: getFormattedVariable(v),
-        });
+        if (MAGE_VARIABLES_KEY !== k) {
+          arr.push({
+            uuid: k,
+            value: getFormattedVariable(v),
+          });
+        }
       });
     } else {
       arr = getFormattedVariables(variables, block => block.uuid === 'global');
@@ -411,8 +418,85 @@ function TriggerDetail({
     );
   }, [
     scheduleType,
-    scheduleVariablesInit,
+    scheduleVariables,
     variables,
+  ]);
+
+  const dbtSettingsTable = useMemo(() => {
+    const arr = [];
+    // @ts-ignore
+    const blocksData = scheduleVariables?.[MAGE_VARIABLES_KEY]?.blocks;
+
+    pipeline?.blocks?.forEach((block) => {
+      const {
+        type,
+        uuid,
+      } = block;
+
+      if (BlockTypeEnum.DBT === type) {
+        const config = blocksData?.[uuid]?.configuration;
+        const {
+          flags,
+          prefix,
+          suffix,
+        } = config || {};
+        const {
+          name: modelName,
+        } = getModelAttributes(block);
+
+        if (flags || prefix || suffix) {
+          arr.push({
+            flags,
+            prefix,
+            suffix,
+            uuid: modelName,
+          });
+        }
+      }
+    });
+
+    if (typeof arr === 'undefined' || !arr?.length) {
+      return null;
+    }
+
+    return (
+      <Table
+        columnFlex={[1, null]}
+        rows={arr.map(({
+          flags,
+          prefix,
+          suffix,
+          uuid,
+        }) => [
+          <Text
+            key={`settings_variable_label_${uuid}`}
+            monospace
+            small
+          >
+            {prefix && (
+              <Text inline monospace muted small>
+                {prefix}
+              </Text>
+            )}{uuid}{suffix && (
+              <Text inline monospace muted small>
+                {suffix}
+              </Text>
+            )}
+          </Text>,
+          <Text
+            key={`settings_variable_${uuid}`}
+            monospace
+            muted
+            small
+          >
+            {flags && flags.join(', ')}
+          </Text>,
+        ])}
+      />
+    );
+  }, [
+    pipeline,
+    scheduleVariables,
   ]);
 
   const eventsTable = useMemo(() => (
@@ -464,6 +548,9 @@ function TriggerDetail({
               {ScheduleTypeEnum.EVENT === scheduleType && (
                 <MusicNotes size={5 * UNIT} />
               )}
+              {ScheduleTypeEnum.API === scheduleType && (
+                <Lightning size={5 * UNIT} />
+              )}
               {!scheduleType && (
                 <MultiShare size={5 * UNIT} />
               )}
@@ -509,6 +596,20 @@ function TriggerDetail({
               <Divider light mt={1} short />
 
               {variablesTable}
+            </Spacing>
+          )}
+
+          {dbtSettingsTable && (
+            <Spacing my={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline level={5}>
+                  dbt runtime settings
+                </Headline>
+              </Spacing>
+
+              <Divider light mt={1} short />
+
+              {dbtSettingsTable}
             </Spacing>
           )}
         </BeforeStyle>

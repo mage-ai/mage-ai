@@ -127,6 +127,7 @@
         "dbt/running-dbt-tests",
         "dbt/sources",
         "dbt/connection-profiles",
+        "dbt/incremental-models",
         "dbt/docs"
       ]
     },

@@ -20,6 +20,7 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
+from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
@@ -874,6 +875,9 @@ def build_command_line_arguments(
 
     variables_json = {}
     for k, v in variables.items():
+        if PIPELINE_RUN_MAGE_VARIABLES_KEY == k:
+            continue
+
         if type(v) is str or \
                 type(v) is int or \
                 type(v) is bool or \
@@ -892,6 +896,18 @@ def build_command_line_arguments(
         ),
     ]
 
+    runtime_configuration = variables.get(
+        PIPELINE_RUN_MAGE_VARIABLES_KEY,
+        {},
+    ).get('blocks', {}).get(block.uuid, {}).get('configuration')
+
+    if runtime_configuration:
+        if runtime_configuration.get('flags'):
+            flags = runtime_configuration['flags']
+            flags = flags if type(flags) is list else [flags]
+            # e.g. --full-refresh
+            args += flags
+
     if BlockLanguage.SQL == block.language:
         attr = parse_attributes(block)
         project_name = attr['project_name']
@@ -909,6 +925,15 @@ def build_command_line_arguments(
                 path = os.path.join(project_full_path, target_path, 'compiled', file_path)
                 if os.path.exists(path):
                     os.remove(path)
+
+        if runtime_configuration:
+            prefix = runtime_configuration.get('prefix')
+            if prefix:
+                path_to_model = f'{prefix}{path_to_model}'
+
+            suffix = runtime_configuration.get('suffix')
+            if suffix:
+                path_to_model = f'{path_to_model}{suffix}'
 
         args += [
             '--select',
