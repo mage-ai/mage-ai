@@ -311,6 +311,9 @@ class Git:
                         private_key_file = custom_private_key_file
                 except Exception:
                     pass
+            else:
+                private_key_file = custom_private_key_file
+
         return private_key_file
 
     def __setup_repo(self):
