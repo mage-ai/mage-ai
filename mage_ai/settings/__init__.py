@@ -35,3 +35,5 @@ USE_UNIQUE_TERMINAL = os.getenv('USE_UNIQUE_TERMINAL', None)
 # sentry environment variables
 SENTRY_DSN = os.getenv('SENTRY_DSN', None)
 SENTRY_TRACES_SAMPLE_RATE = os.getenv('SENTRY_TRACES_SAMPLE_RATE', 1.0)
+
+MAGE_PUBLIC_HOST = os.getenv('MAGE_PUBLIC_HOST') or 'http://localhost:6789'
