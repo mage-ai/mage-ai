@@ -110,6 +110,9 @@ class VariableManager:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         repo_config = get_repo_config()
+        if not repo_config.variables_retention_period:
+            print('Variable retention period is not provided.')
+            return
         min_partition = (datetime.utcnow() -
                          str_to_timedelta(repo_config.variables_retention_period)).strftime(
                             format='%Y%m%dT%H%M%S')
