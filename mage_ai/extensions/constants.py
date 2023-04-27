@@ -1,3 +1,8 @@
+# from mage_ai.extensions.dbt.constants import (
+#     EXTENSION_DESCRIPTION as EXTENSION_DESCRIPTION_GREAT_DBT,
+#     EXTENSION_NAME as EXTENSION_NAME_GREAT_DBT,
+#     EXTENSION_UUID as EXTENSION_UUID_GREAT_DBT,
+# )
 from mage_ai.extensions.great_expectations.constants import (
     EXTENSION_DESCRIPTION as EXTENSION_DESCRIPTION_GREAT_EXPECTATIONS,
     EXTENSION_NAME as EXTENSION_NAME_GREAT_EXPECTATIONS,
@@ -13,6 +18,11 @@ EXTENSIONS = [
         templates=EXTENSION_TEMPLATES_GREAT_EXPECTATIONS,
         uuid=EXTENSION_UUID_GREAT_EXPECTATIONS,
     ),
+    # dict(
+    #     description=EXTENSION_DESCRIPTION_GREAT_DBT,
+    #     name=EXTENSION_NAME_GREAT_DBT,
+    #     uuid=EXTENSION_UUID_GREAT_DBT,
+    # ),
 ]
 
 EXTENSIONS_BY_UUID = index_by(lambda x: x['uuid'], EXTENSIONS)

@@ -407,10 +407,16 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 client.execute(block_output_process_code)
 
             if run_downstream:
+                # This will only run downstream blocks that are charts/widgets
                 for block in block.downstream_blocks:
+                    if BlockType.CHART != block.type:
+                        continue
+
                     self.on_message(json.dumps(dict(
+                        api_key=message.get('api_key'),
                         code=block.file.content(),
                         pipeline_uuid=pipeline_uuid,
+                        token=message.get('token'),
                         type=block.type,
                         uuid=block.uuid,
                     )))

@@ -20,19 +20,33 @@ import { queryFromUrl } from '@utils/url';
 type SidekickHeaderProps = {
   activeView: ViewKeyEnum;
   pipeline: PipelineType;
+  secrets?: {
+    [key: string]: any;
+  }[];
+  variables?: {
+    [key: string]: any;
+  }[];
 };
 
 function SidekickHeader({
   activeView,
   pipeline,
+  secrets,
+  variables,
 }: SidekickHeaderProps) {
   const pipelineUUID = pipeline?.uuid;
   const query = queryFromUrl();
 
   const sidekickView = SIDEKICK_VIEWS_BY_KEY[activeView];
+  const sidekickLabel = sidekickView?.buildLabel?.({
+    pipeline,
+    secrets,
+    variables,
+  }) || sidekickView?.label;
+
   let el = (
     <Text bold>
-      {sidekickView?.label}
+      {sidekickLabel}
     </Text>
   );
 
@@ -59,7 +73,7 @@ function SidekickHeader({
           passHref
         >
           <Link default>
-            {sidekickView?.label}
+            {sidekickLabel}
           </Link>
         </NextLink>
         <Text monospace muted>
