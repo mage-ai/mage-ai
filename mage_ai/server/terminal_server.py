@@ -6,6 +6,35 @@ import tornado.websocket
 import re
 
 
+class MageTermManager(terminado.NamedTermManager):
+    def get_terminal(self, term_name: str, **kwargs):
+        assert term_name is not None
+
+        if term_name in self.terminals:
+            return self.terminals[term_name]
+
+        if self.max_terminals and len(self.terminals) >= self.max_terminals:
+            raise terminado.management.MaxTerminalsReached(self.max_terminals)
+
+        # Create new terminal
+        self.log.info("New terminal with specified name: %s", term_name)
+        term = self.new_terminal(**kwargs)
+        term.term_name = term_name
+        self.terminals[term_name] = term
+        self.start_reading(term)
+        return term
+
+
+class MageUniqueTermManager(terminado.UniqueTermManager):
+    def get_terminal(self, url_component=None, **kwargs):
+        if self.max_terminals and len(self.ptys_by_fd) >= self.max_terminals:
+            raise terminado.management.MaxTerminalsReached(self.max_terminals)
+
+        term = self.new_terminal(**kwargs)
+        self.start_reading(term)
+        return term
+
+
 class TerminalWebsocketServer(terminado.TermSocket):
     @property
     def term_command(self):
@@ -31,9 +60,11 @@ class TerminalWebsocketServer(terminado.TermSocket):
         # Jupyter has a mixin to ping websockets and keep connections through
         # proxies alive. Call super() to allow that to set up:
         tornado.websocket.WebSocketHandler.open(self, *args, **kwargs)
-
         api_key = self.get_argument('api_key', None, True)
         token = self.get_argument('token', None, True)
+
+        cwd = self.get_argument('cwd', None, True)
+        term_name = self.get_argument('term_name', None, True)
 
         user = None
         if REQUIRE_USER_AUTHENTICATION and api_key and token:
@@ -47,14 +78,16 @@ class TerminalWebsocketServer(terminado.TermSocket):
                     oauth_token.user
                 if valid:
                     user = oauth_token.user
+                else:
+                    raise Exception('Invalid token')
 
-        self.term_name = "tty"
+        self.term_name = term_name if term_name else 'tty'
         if user:
-            self.term_name = f'terminal_{user.id}'
+            self.term_name = f'{self.term_name}_{user.id}'
 
         self._logger.info("TermSocket.open: %s", self.term_name)
 
-        self.terminal = self.term_manager.get_terminal(self.term_name)
+        self.terminal = self.term_manager.get_terminal(self.term_name, cwd=cwd)
         self.terminal.clients.append(self)
         self.__initiate_terminal(self.terminal)
 

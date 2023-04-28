@@ -43,7 +43,11 @@ from mage_ai.server.scheduler_manager import (
     scheduler_manager,
 )
 from mage_ai.server.subscriber import get_messages
-from mage_ai.server.terminal_server import TerminalWebsocketServer
+from mage_ai.server.terminal_server import (
+    MageTermManager,
+    MageUniqueTermManager,
+    TerminalWebsocketServer,
+)
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
     OAUTH2_APPLICATION_CLIENT_ID,
@@ -65,7 +69,6 @@ import argparse
 import asyncio
 import json
 import os
-import terminado
 import tornado.ioloop
 import tornado.web
 import webbrowser
@@ -161,9 +164,9 @@ def make_app():
         shell_command = 'bash'
         if os.name == 'nt':
             shell_command = 'cmd'
-    term_klass = terminado.NamedTermManager
+    term_klass = MageTermManager
     if USE_UNIQUE_TERMINAL:
-        term_klass = terminado.UniqueTermManager
+        term_klass = MageUniqueTermManager
     term_manager = term_klass(shell_command=[shell_command])
 
     routes = [

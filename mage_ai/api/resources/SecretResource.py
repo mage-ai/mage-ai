@@ -8,6 +8,7 @@ from mage_ai.data_preparation.shared.secrets import (
 )
 from mage_ai.data_preparation.sync import (
     GitConfig,
+    GIT_ACCESS_TOKEN_SECRET_NAME,
     GIT_SSH_PRIVATE_KEY_SECRET_NAME,
     GIT_SSH_PUBLIC_KEY_SECRET_NAME,
 )
@@ -51,11 +52,14 @@ class SecretResource(DatabaseResource):
 
     @classmethod
     def _filter_secrets(self, secret: Secret, user) -> bool:
+        # Only include git secrets that were created by the current user.
         preferences = GitConfig(get_preferences(user=user).sync_config)
         whitelist_secrets = [
             preferences.ssh_private_key_secret_name,
             preferences.ssh_public_key_secret_name,
+            preferences.access_token_secret_name,
         ]
         return not secret.name.startswith(GIT_SSH_PRIVATE_KEY_SECRET_NAME) \
             and not secret.name.startswith(GIT_SSH_PUBLIC_KEY_SECRET_NAME) \
+            and not secret.name.startswith(GIT_ACCESS_TOKEN_SECRET_NAME) \
             or secret.name in whitelist_secrets
