@@ -1,6 +1,7 @@
 connector_type: google_cloud_pubsub
-project_id: project_id
-topic_id: topic_id
-subscription_id: subscription_id
+project_id: my-project-id
+topic_id: my-topic-id
+subscription_id: my-subscription-id
 timeout: 5
 batch_size: 100
+pubsub_emulator_host: "host.docker.internal:8085"

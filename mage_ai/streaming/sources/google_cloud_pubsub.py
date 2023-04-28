@@ -5,6 +5,7 @@ from mage_ai.shared.config import BaseConfig
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
 from typing import Callable
+import os
 
 
 @dataclass
@@ -14,12 +15,15 @@ class GoogleCloudPubSubConfig(BaseConfig):
     subscription_id: str
     timeout: int = 5
     batch_size: int = DEFAULT_BATCH_SIZE
+    pubsub_emulator_host: str = None  # e.g., host.docker.internal:8085
 
 
 class GoogleCloudPubSubSource(BaseSource):
     config_class = GoogleCloudPubSubConfig
 
     def init_client(self) -> None:
+        if self.config.pubsub_emulator_host is not None:
+            os.environ["PUBSUB_EMULATOR_HOST"] = self.config.pubsub_emulator_host
         self.subscriber_client = pubsub_v1.SubscriberClient()
 
     def read(self, handler: Callable) -> None:
@@ -64,9 +68,11 @@ class GoogleCloudPubSubSource(BaseSource):
                 return
 
             ack_ids = []
+            self._print(f"Total number of received messages: {len(response.received_messages)}")
             for received_message in response.received_messages:
                 self._print(f"Received: {received_message.message.data}.")
                 handler(dict(data=received_message.data.decode()))
+                self._print(f"Handled: {received_message.message.data}.")
                 ack_ids.append(received_message.ack_id)
 
             # Acknowledges the received messages so they will not be sent again.
