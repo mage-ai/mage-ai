@@ -1,9 +1,17 @@
 ---
-title: "Load, transform, and export restaurant data"
-sidebarTitle: "ETL pipeline"
+title: "ETL (extract, transform, load) pipeline tutorial"
+sidebarTitle: "Tutorial"
+icon: "timeline-arrow"
+description: "Build a data pipeline that loads restaurant data, visualizes it, transforms it, then exports it to a PostgreSQL database."
+"og:image": "https://media.tenor.com/1pJZ2eVbkx8AAAAd/eat-restaurant.gif"
 ---
 
-![Restaurant](/media/restaurant-food.gif)
+<Frame>
+    <img
+        alt="Restaurant data"
+        src="https://media.tenor.com/1pJZ2eVbkx8AAAAd/eat-restaurant.gif"
+    />
+</Frame>
 
 In this tutorial, we’ll create a data pipeline that does the following:
 
@@ -12,126 +20,146 @@ In this tutorial, we’ll create a data pipeline that does the following:
 3. Transform the data and create 2 new columns
 4. Write the transformed data to PostgreSQL
 
-If you prefer to skip the tutorial and view the finished code, follow
-[this guide](/tutorials/etl/complete-project).
+## Setup
 
-If you haven’t setup a project before, check out the
-[setup guide](/getting-started/setup) before starting.
+If you haven’t created a Mage project before, follow the
+[setup guide](/getting-started/setup) before starting this tutorial.
 
----
-
-## 1. Create new pipeline
-
-In the top left corner, click `File > New pipeline`. Then, click the name of the
-pipeline and rename it to `etl demo`.
-
-![Create new pipeline](/media/create-new-pipeline.gif)
+<Note>
+    If you prefer to skip the tutorial and view the finished code, follow
+    [this guide](/tutorials/etl/complete-project).
+</Note>
 
 ---
 
-## 2. Load data
+## `1.` Create new pipeline
 
-1. Click the `+ Data loader` button, select `Python`, then click the template
-   called `API`.
-2. Rename the block to `load dataset`.
-3. In the function named `load_data_from_api`, set the `url` variable to:
-   `https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv`.
-4. Run the block by clicking the play icon button or using the keyboard
-   shortcuts `⌘ + Enter`, `Control + Enter`, or `Shift + Enter`.
+1. Go to the pipelines list page (`/pipelines`).
+    This is the default page when navigating to Mage in your web browser.
+1. In the top left corner of the page, click the button labeled <b>+ New</b>,
+    then select the option labeled <b>Standard (batch)</b> to create a new pipeline.
+1. In the left vertical navigation, click the last link labeled <b>Pipeline settings</b>.
+1. Change the pipeline’s name to `ETL demo`.
+1. Click the button labeled <b>Save pipeline settings</b>.
 
-After you run the block (⌘ + Enter), you can immediately see a sample of the
-data in the block’s output.
-
-![](/media/load-data.gif)
-
-Here is what the code should look like:
-
-```python
-import io
-import pandas as pd
-import requests
-from pandas import DataFrame
-
-if 'data_loader' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
-if 'test' not in globals():
-    from mage_ai.data_preparation.decorators import test
-
-
-@data_loader
-def load_data_from_api() -> DataFrame:
-    """
-    Template for loading data from API
-    """
-    url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
-
-    response = requests.get(url)
-    return pd.read_csv(io.StringIO(response.text), sep=',')
-
-
-@test
-def test_output(df) -> None:
-    """
-    Template code for testing the output of the block.
-    """
-    assert df is not None, 'The output is undefined'
-```
+<Frame>
+    <img
+        alt="Create new pipeline"
+        src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/create-new-pipeline.gif?raw=true"
+    />
+</Frame>
 
 ---
 
-## 3. Visualize data
+## `2.` Load data from an API
 
-### 3a. Distribution of ratings
+1. In the left vertical navigation, click the 1st link labeled <b>Edit pipeline</b>.
+1. Click the button labeled <b>+ Data loader</b>,
+    then hover over <b>Python</b>, and click the option labeled <b>API</b>.
+1. A dialog menu will appear. Change the block name to `load data`.
+1. Click the button labeled <b>Save and add block</b>.
+1. Paste the following code in the data loader block:
+
+    ```python
+    import io
+    import pandas as pd
+    import requests
+
+
+    @data_loader
+    def load_data_from_api(*args, **kwargs):
+        url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
+        response = requests.get(url)
+        return pd.read_csv(io.StringIO(response.text), sep=',')
+
+
+    @test
+    def test_row_count(df, *args) -> None:
+        assert len(df.index) >= 1000, 'The data does not have enough rows.'
+    ```
+
+1. Run the block by clicking the play icon button in the top right corner of the data loader block
+    or press 1 of the following keyboard shortcuts:
+
+        - `⌘ + Enter`
+        - `Control + Enter`
+        - `Shift + Enter`
+
+1. After you run the block (⌘ + Enter), you’ll see a sample of the data that was loaded.
+
+    <Frame>
+        <img
+            alt="Load data"
+            src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/load-data.gif?raw=true"
+        />
+    </Frame>
+
+---
+
+## `3.` Visualize data
+
+### `3a.` Distribution of ratings
 
 We’ll add a chart to visualize how frequent people give 1 star, 2 star, 3 star,
 4 star, or 5 star ratings.
 
-1. Click the `+ Add chart` button in the top right corner, then click
-   `Histogram`.
-2. Click the pencil icon in the top right corner of the chart to edit the chart.
-3. In the dropdown labeled "Number column for chart", select the column
-   `rating`.
-4. Click the play button icon in the top right corner of the chart to run the
+1. In the top right corner of the data loader block, click the charts icon.
+1. In the dropdown menu, select the option labeled <b>Histogram</b>.
+    This will add a new chart block in the right side of the page (aka the sidekick).
+1. Click the pencil icon in the top right corner of the chart block to edit the chart.
+1. In the dropdown menu labeled <b>Number column for chart</b>,
+    select the option for column `rating`.
+1. Click the play button icon in the top right corner of the chart block to run the
    chart.
+1. The chart should look like this:
+    <Frame>
+        <img
+            alt="Distribution of ratings"
+            src="/media/histogram.jpeg"
+        />
+    </Frame>
 
-![histogram demo](/media/histogram.gif)
-
-Your chart should look like:
-
-![histogram chart](/media/histogram.jpeg)
-
-### 3b. Number of meals per user
+### `3b.` Number of meals per user
 
 Let’s add another chart to see how many meals each user has.
 
-1. Click the `+ Add chart` button in the top right corner, then click
-   `Bar chart`.
-2. Click the pencil icon in the top right corner of the chart to edit the chart.
-3. In the dropdown labeled "Group by columns", select the column `user ID`.
-4. Under the "Metrics" section, in the dropdown labeled "aggregation", select
-   `count_distinct`.
-5. Under the "Metrics" section, in the dropdown labeled "column", select
-   `meal transaction ID`.
-6. Click the play button icon in the top right corner of the chart to run the
+1. In the top right corner of the data loader block, click the charts icon.
+1. In the dropdown menu, select the option labeled <b>Bar chart</b>.
+    This will add a new chart block in the right side of the page (aka the sidekick).
+1. Click the pencil icon in the top right corner of the chart block to edit the chart.
+1. In the dropdown menu labeled <b>Group by columns</b>,
+    select the option for column `user ID`.
+1. Under the <b>Metrics</b> section:
+    1. In the dropdown menu labeled <b>aggregation</b>,
+        select the option for `count_distinct`.
+    1. In the dropdown menu labeled <b>column</b>,
+        select the option for column `meal transaction ID`.
+1. Click the play button icon in the top right corner of the chart block to run the
    chart.
+1. The chart should look like this:
+    <Frame>
+        <img
+            alt="Number of meals per user"
+            src="/media/bar-chart.jpeg"
+        />
+    </Frame>
 
-![bar-chart demo](/media/bar-chart.gif)
+---
 
-Your chart should look like:
-
-![bar-chart chart](/media/bar-chart.jpeg)
-
-## 4. Transform data
+## `4.` Transform data
 
 Let’s transform the data in 2 ways:
+
 - Add a column that counts the number of meals for each user.
 - Clean the column names to properly store in a PostgreSQL database.
 
-<br />
+Follow these steps:
 
-1. Click the `+ Transformer` button, select `Python`, select `Generic`.
-1. Rename the block to `transform data`.
-1. Paste the following code into the block:
+1. Click the button labeled <b>+ Transformer</b>,
+    then hover over <b>Python</b>, and click the option labeled <b>Generic (no template)</b>.
+1. A dialog menu will appear. Change the block name to `transform data`.
+1. Click the button labeled <b>Save and add block</b>.
+1. Paste the following code in the transformer block:
 
     ```python
     def number_of_rows_per_key(df, key, column_name):
@@ -153,7 +181,7 @@ Let’s transform the data in 2 ways:
         # Clean column names
         df.columns = [clean_column(col) for col in df.columns]
 
-        return df
+        return df.iloc[:100]
 
 
     @test
@@ -161,87 +189,114 @@ Let’s transform the data in 2 ways:
         assert len(df.columns) >= 11, 'There needs to be at least 11 columns.'
     ```
 
-1. Run the block by clicking the play icon button or using the keyboard
-   shortcuts `⌘ + Enter`, `Control + Enter`, or `Shift + Enter`.
+1. Run the block by clicking the play icon button in the top right corner of the data loader block
+    or press 1 of the following keyboard shortcuts:
 
-![transform](/media/transform.gif)
+        - `⌘ + Enter`
+        - `Control + Enter`
+        - `Shift + Enter`
+
+1. After you run the block (⌘ + Enter), you’ll see a sample of the data that was transformed.
+
+    <Frame>
+        <img
+            alt="Transform data"
+            src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/transform-data.gif?raw=true"
+        />
+    </Frame>
 
 ---
 
-## 5. Export data to PostgreSQL
+## `5.` Export data to PostgreSQL
 
-### 5a. Add PostgreSQL credentials in `io_config.yaml` file.
+### `5a.` Add credentials
 
 1. On the left side of the screen in the file browser, click on the file named
    `io_config.yaml`.
-2. Then, paste the following credentials:
+1. Then, paste the following credentials:
 
-```yaml
-version: 0.1.1
-default:
-  POSTGRES_DBNAME: mage/demo2
-  POSTGRES_USER: mage
-  POSTGRES_PASSWORD: v2_3upzD_eMSdiu5AMjgzSbi3K7KTAuE
-  POSTGRES_HOST: db.bit.io
-  POSTGRES_PORT: 5432
-```
+    ```yaml
+    version: 0.1.1
+    default:
+      POSTGRES_DBNAME: mage/demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: v2_43Yy3_5LtqyXUE3ew6PrqH2y8zQyH
+      POSTGRES_HOST: db.bit.io
+      POSTGRES_PORT: 5432
+      POSTGRES_SCHEMA: etl_demo
+    ```
 
-3. Save the file by pressing `⌘ + Enter` or `Control + Enter`.
-4. Close the file by pressing the `X` button on the right of the file name at
-   the top of the screen.
+1. Save the file by pressing:
 
-![credentials](/media/credentials.gif)
+    - Clicking the button labeled <b>Save file content</b>
+    - `⌘ + Enter`
+    - `Control + Enter`
 
-### 5b. Export data
+1. Close the file by pressing the `X` button on the right of the file name at
+   the top of the screen or click the button labeled <b>View pipeline</b> to return to the
+   `ETL demo` pipeline.
 
-1. Click the `+ Data exporter` button and select `SQL`.
-2. Under the `Data provider` dropdown, select `Postgres`.
-3. Under the `Profile` dropdown, select `default`.
-4. In the input field labeled `Save to schema:`, enter `mage`.
-5. Under the `Write policy` dropdown, select `Replace`.
-6. Enter the following SQL query in the code block: `SELECT * FROM {{ df_1 }}`
-7. Execute the entire pipeline by pressing the `Execute pipeline` button on in
-   your sidekick on the right.
+### `5b.` Export data using SQL
 
-![Data exporter SQL](https://github.com/mage-ai/assets/blob/main/pipelines/data-exporter-sql.gif?raw=true)
+1. Click the button labeled <b>+ Data exporter</b>
+    and then click the option labeled <b>SQL</b>.
+1. A dialog menu will appear. Change the block name to `export data`.
+1. Click the button labeled <b>Save and add block</b>.
+1. At the top of the block, in the 1st dropdown menu labeled <b>Connection</b>,
+    select the option labeled <b>PostgreSQL</b>.
+1. At the top of the block, in the 2nd dropdown menu labeled <b>Profile</b>,
+    select the option labeled <b>default</b>.
+1. At the top of the block, in the last dropdown menu labeled <b>Write policy</b>,
+    select the option labeled <b>Replace</b>.
+1. Paste the following SQL statement in the data exporter block:
 
-Your output should look something like this:
+    ```sql
+    SELECT * FROM {{ df_1 }}
+    ```
 
-```
-aving current pipeline config for backup. This may take some time...
-[load_dataset] Executing data_loader block...
-[load_dataset] --------------------------------------------------------------
-[load_dataset] 1/1 tests passed.
-[load_dataset] DONE
-[transform_data] Executing transformer block...
-[transform_data] --------------------------------------------------------------
-[transform_data] 1/1 tests passed.
-[transform_data] DONE
-[morning_sun] Executing data_exporter block...
-[morning_sun] Postgres initialized
-[morning_sun] └─ Opening connection to PostgreSQL database...
-[morning_sun] DONE
-[morning_sun]
-[morning_sun] ├─
-[morning_sun] └─ Exporting data to 'mage.dev_etl_demo_morning_sun_v1'...
-[morning_sun] DONE
-[morning_sun]
-[morning_sun] ├─
-[morning_sun] └─ Loading data...
-[morning_sun] DONE
-[morning_sun] --------------------------------------------------------------
-[morning_sun] 0/0 tests passed.
-[morning_sun] DONE
-Pipeline etl_demo execution complete.
-You can see the code block output in the corresponding code block.
-```
+1. Run the block by clicking the play icon button in the top right corner of the data loader block
+    or press 1 of the following keyboard shortcuts:
+
+        - `⌘ + Enter`
+        - `Control + Enter`
+        - `Shift + Enter`
+
+1. You should see output statements like this:
+
+    ```
+    Postgres initialized
+    └─ Opening connection to PostgreSQL database...
+    DONE
+    Exporting data from upstream block transform_data to etl_demo.dev_etl_demo_transform_data_v1.
+    ├─
+    └─ Exporting data to 'etl_demo.dev_etl_demo_export_data_v1'...
+    ├─ E
+    └─ Loading data...
+    DONE
+    ```
+
+1. After you run the block (⌘ + Enter), you’ll see a sample of the data that was exported.
+
+    <Frame>
+        <img
+            alt="Export data"
+            src="https://github.com/mage-ai/assets/blob/main/tutorials/etl/export-data.gif?raw=true"
+        />
+    </Frame>
 
 ---
 
-## Congratulations!
+## 🎉 Congratulations!
 
-You’ve successfully built a pipeline for loading data, transforming it, and
-exporting it to PostgreSQL.
+You’ve successfully built an end-to-end ETL pipeline that loaded data,
+transformed it, and exported it to a database.
 
-If you have more questions or ideas, please live chat with us in
-[Slack](https://www.mage.ai/chat)
+Now you’re ready to raid the dungeons and find magical treasures with your new powers!
+
+<img
+    alt="Lightning mage"
+    src="https://raw.githubusercontent.com/mage-ai/assets/af9fafa41d823fe8e710d54f86164bef4378f5c3/mascots/earth/casting.svg"
+/>
+
+If you have more questions or ideas, get real-time help in our live support
+[Slack channel](https://www.mage.ai/chat).

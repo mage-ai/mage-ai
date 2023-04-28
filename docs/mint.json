@@ -57,7 +57,7 @@
       "group": "Tutorials",
       "pages": [
         {
-          "group": "ETL",
+          "group": "ETL pipeline",
           "pages": [
             "tutorials/load-api-data",
             "tutorials/etl/complete-project"
