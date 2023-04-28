@@ -151,7 +151,7 @@ class Git:
                     try:
                         asyncio.run(self.check_connection())
                     except ChildProcessError as err:
-                        if 'Host key validation failed' in str(err):
+                        if 'Host key verification failed' in str(err):
                             if hostname:
                                 add_host_to_known_hosts(hostname)
                         else:
