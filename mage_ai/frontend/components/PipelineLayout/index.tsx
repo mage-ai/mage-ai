@@ -207,6 +207,7 @@ function PipelineLayout({
         headerOffset={headerOffset}
         mainContainerHeader={mainContainerHeader}
         mainContainerRef={mainContainerRef}
+        navigationShowMore
         setAfterHidden={setAfterHidden}
         setAfterMousedownActive={setAfterMousedownActive}
         setAfterWidth={setAfterWidth}

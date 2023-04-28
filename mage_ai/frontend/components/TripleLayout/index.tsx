@@ -76,6 +76,7 @@ type TripleLayoutProps = {
   leftOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
+  navigationShowMore?: boolean;
   setAfterHidden?: (value: boolean) => void;
   setAfterMousedownActive?: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
@@ -109,6 +110,7 @@ function TripleLayout({
   leftOffset = 0,
   mainContainerHeader,
   mainContainerRef,
+  navigationShowMore,
   setAfterHidden,
   setAfterMousedownActive,
   setAfterWidth,
@@ -452,7 +454,11 @@ function TripleLayout({
               {!beforeHidden && (
                 <>
                   <NavigationInnerStyle aligned="left">
-                    <VerticalNavigationStyle borderLess>
+                    <VerticalNavigationStyle
+                      aligned="left"
+                      borderLess
+                      showMore={navigationShowMore}
+                    >
                       <VerticalNavigation
                         aligned="left"
                         navigationItems={beforeNavigationItems}
@@ -522,7 +528,11 @@ function TripleLayout({
               {!afterHidden && (
                 <>
                   <NavigationInnerStyle aligned="right">
-                    <VerticalNavigationStyle borderLess>
+                    <VerticalNavigationStyle
+                      aligned="right"
+                      borderLess
+                      showMore={navigationShowMore}
+                    >
                       <VerticalNavigation
                         aligned="right"
                         navigationItems={afterNavigationItems}
