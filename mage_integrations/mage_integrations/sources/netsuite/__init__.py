@@ -27,7 +27,8 @@ class Netsuite(Source):
 
     def sync(self, catalog: Catalog) -> None:
         client = build_client(self.config)
-        do_sync(client, catalog, self.state or {}, logger=self.logger)
+        client.connect_tba()
+        do_sync(client, catalog.to_dict(), self.state or {}, logger=self.logger)
 
     def test_connection(self):
         client = build_client(self.config)
