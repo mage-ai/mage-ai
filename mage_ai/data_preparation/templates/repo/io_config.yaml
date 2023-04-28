@@ -62,6 +62,7 @@ default:
   SNOWFLAKE_DEFAULT_DB: optional_default_database
   SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
   SNOWFLAKE_ROLE: role
+  SNOWFLAKE_TIMEOUT: null                     # Optional timeout in seconds
   trino:
     catalog: postgresql                       # Change this to the catalog of your choice
     host: 127.0.0.1
