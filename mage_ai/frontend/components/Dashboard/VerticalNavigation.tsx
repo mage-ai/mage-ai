@@ -1,10 +1,14 @@
+import NextLink from 'next/link';
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import ClientOnly from '@hocs/ClientOnly';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
 import PipelineV2Gradient from '@oracle/icons/custom/PipelineV2Gradient';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import SettingsGradient from '@oracle/icons/custom/SettingsGradient';
@@ -42,11 +46,15 @@ export type NavigationItem = {
 export type VerticalNavigationProps = {
   aligned?: 'left' | 'right';
   navigationItems?: NavigationItem[];
+  showMore?: boolean;
+  visible?: boolean;
 };
 
 function VerticalNavigation({
   aligned,
   navigationItems,
+  showMore,
+  visible,
 }: VerticalNavigationProps) {
   const router = useRouter();
   const { pathname } = router;
@@ -116,66 +124,157 @@ function VerticalNavigation({
       const selected: boolean = isSelected
         ? isSelected(pathname, item)
         : !!pathname.match(new RegExp(`^/${id}[/]*`));
+
       const IconToUse = (selected && IconSelected) ? IconSelected : Icon;
+      const displayText = label();
+
+      let buttonEl;
+      let iconEl;
+
+      const sharedNavigationItemProps = {
+        primary: !IconToUse,
+        selected: !IconSelected && showMore && selected,
+        selectedWithGradientIcon: IconSelected && showMore && selected,
+      };
+
+      if (selected && IconSelected) {
+        iconEl = (
+          <div
+            style={{
+              height: ICON_SIZE,
+              width: ICON_SIZE,
+            }}
+          >
+            <IconToUse muted size={ICON_SIZE} />
+          </div>
+        );
+
+        if (showMore || visible) {
+          iconEl = (
+            <NavigationItemStyle {...sharedNavigationItemProps}>
+              <IconToUse muted size={ICON_SIZE} />
+            </NavigationItemStyle>
+          );
+        }
+
+        buttonEl = (
+          <GradientButton
+            backgroundGradient={PURPLE_BLUE}
+            backgroundPanel
+            basic
+            borderWidth={2}
+            disabled={disabled}
+            linkProps={linkProps}
+            onClick={onClick}
+            paddingUnits={1}
+          >
+            {iconEl}
+          </GradientButton>
+        );
+
+        if (showMore) {
+          buttonEl = iconEl;
+        }
+      } else if (!selected || (selected && !IconSelected)) {
+        iconEl = (
+          <NavigationItemStyle {...sharedNavigationItemProps}>
+            {IconToUse
+              ? <IconToUse
+                muted={!selected}
+                size={ICON_SIZE}
+              />
+              : <Text>Edit</Text>
+            }
+          </NavigationItemStyle>
+        );
+
+        buttonEl = (
+          <KeyboardShortcutButton
+            disabled={disabled}
+            inline
+            linkProps={linkProps}
+            noHoverUnderline
+            noPadding
+            onClick={onClick}
+            primary={selected}
+            sameColorAsText
+            uuid={`VerticalNavigation/${id}`}
+          >
+            {iconEl}
+          </KeyboardShortcutButton>
+        );
+
+        if (showMore) {
+          buttonEl = iconEl;
+        }
+      }
+
+      let el;
+      if ('left' === aligned) {
+        el = (
+          <FlexContainer alignItems="center">
+            <Flex flex={1}>
+              <Text default={!selected}>
+                {displayText}
+              </Text>
+            </Flex>
+            <Spacing mr={2} />
+            {iconEl}
+          </FlexContainer>
+        );
+      } else {
+        el = (
+          <FlexContainer alignItems="center">
+            {iconEl}
+            <Spacing mr={2} />
+            <Flex flex={1}>
+              <Text default={!selected}>
+                {displayText}
+              </Text>
+            </Flex>
+          </FlexContainer>
+        );
+      }
+
+      let clickEl = (
+        <Link
+          block
+          noHoverUnderline
+          onClick={onClick}
+        >
+          {el}
+        </Link>
+      );
+      if (linkProps) {
+        clickEl = (
+          <NextLink
+            {...linkProps}
+            passHref
+          >
+            {clickEl}
+          </NextLink>
+        );
+      }
 
       return (
         <Spacing
           key={`button-${id}`}
           mt={idx >= 1 ? PADDING_UNITS : 0}
         >
-          <Tooltip
-            appearBefore={'right' === aligned}
-            height={5 * UNIT}
-            label={label()}
-            size={null}
-            widthFitContent
-          >
-            {(selected && IconSelected) && (
-              <GradientButton
-                backgroundGradient={PURPLE_BLUE}
-                backgroundPanel
-                basic
-                borderWidth={2}
-                disabled={disabled}
-                linkProps={linkProps}
-                onClick={onClick}
-                paddingUnits={1}
-              >
-                <div
-                  style={{
-                    height: ICON_SIZE,
-                    width: ICON_SIZE,
-                  }}
-                >
-                  <IconToUse muted size={ICON_SIZE} />
-                </div>
-              </GradientButton>
-            )}
+          {!visible && !showMore && (
+            <Tooltip
+              appearBefore={'right' === aligned}
+              height={5 * UNIT}
+              label={displayText}
+              size={null}
+              widthFitContent
+            >
+              {buttonEl}
+            </Tooltip>
+          )}
+          {!visible && showMore && buttonEl}
 
-            {(!selected || (selected && !IconSelected)) && (
-              <KeyboardShortcutButton
-                block
-                disabled={disabled}
-                linkProps={linkProps}
-                noHoverUnderline
-                noPadding
-                onClick={onClick}
-                primary={selected}
-                sameColorAsText
-                uuid={`VerticalNavigation/${id}`}
-              >
-                <NavigationItemStyle primary={!IconToUse}>
-                  {IconToUse
-                    ? <IconToUse
-                      muted={!selected}
-                      size={ICON_SIZE}
-                    />
-                    : <Text>Edit</Text>
-                  }
-                </NavigationItemStyle>
-              </KeyboardShortcutButton>
-            )}
-          </Tooltip>
+          {visible && clickEl}
         </Spacing>
       );
     });
@@ -183,8 +282,9 @@ function VerticalNavigation({
     aligned,
     navigationItems,
     pathname,
+    showMore,
+    visible,
   ]);
-
 
   return (
     <ClientOnly>

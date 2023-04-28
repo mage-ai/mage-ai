@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
@@ -22,16 +23,62 @@ export const ContainerStyle = styled.div`
   `}
 `;
 
-export const VerticalNavigationStyle = styled.div<{
+type VerticalNavigationStyleProps = {
   borderLess?: boolean;
-}>`
+  showMore?: boolean;
+};
+
+const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps>`
   padding: ${PADDING_UNITS * UNIT}px;
 
   ${props => !props.borderLess && `
     background-color: ${(props.theme.background || dark.background).panel};
     border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
+
+  @keyframes animate-in {
+    0% {
+      width: ${UNIT * 9}px;
+    }
+
+    100% {
+      width: ${UNIT * 40}px;
+    }
+  }
+
+  ${props => props.showMore && `
+    &:hover {
+      animation: animate-in 40ms linear forwards;
+      height: 100%;
+      position: fixed;
+      z-index: 100;
+    }
+  `}
 `;
+
+export function VerticalNavigationStyle({
+  borderLess,
+  children,
+  showMore,
+}: {
+  children: any;
+} & VerticalNavigationStyleProps) {
+  const [visible, setVisible] = useState<boolean>(false);
+
+  return (
+    <VerticalNavigationStyleComponent
+      borderLess={borderLess}
+      onMouseEnter={showMore ? () => setVisible(true) : null}
+      onMouseLeave={showMore ? () => setVisible(false) : null}
+      showMore={showMore}
+    >
+      {React.cloneElement(children, {
+        showMore,
+        visible,
+      })}
+    </VerticalNavigationStyleComponent>
+  );
+}
 
 export const SubheaderStyle = styled.div`
   width: 100%;
@@ -60,12 +107,15 @@ export const ContentStyle = styled.div<{
 
 export const NavigationItemStyle = styled.div<{
   primary?: boolean;
+  selected?: boolean;
 }>`
-  display: flex;
   align-items: center;
+  border-radius: ${BORDER_RADIUS}px;
+  display: flex;
+  height: ${UNIT * 5}px;
   justify-content: center;
   padding: ${UNIT}px;
-  border-radius: ${BORDER_RADIUS}px;
+  width: ${UNIT * 5}px;
 
   ${props => props.primary && `
     ${transition()}
@@ -75,5 +125,22 @@ export const NavigationItemStyle = styled.div<{
     &:hover {
       background-color: ${(props.theme || dark).interactive.linkSecondary};
     }
+  `}
+
+  ${props => props.selected && `
+    background-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    color: ${(props.theme.monotone || dark.monotone).white};
+
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover} !important;
+      border-color: ${(props.theme.interactive || dark.interactive).linkPrimary} !important;
+    }
+  `}
+
+  ${props => props.selectedWithGradientIcon && `
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 `;

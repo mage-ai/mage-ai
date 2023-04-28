@@ -10,6 +10,7 @@ import {
   BlocksSeparated,
   BlocksStacked,
   Chart,
+  Code,
   Schedule,
   Settings,
   TodoList,
@@ -95,11 +96,12 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
   if (!isViewer()) {
     // @ts-ignore
     navigationItems.unshift({
-      Icon: null,
+      Icon: Code,
       IconSelected: null,
       // @ts-ignore
       disabled: !pipelineUUID,
       id: PageNameEnum.EDIT,
+      isSelected: () => PageNameEnum.EDIT === pageName,
       label: () => 'Edit pipeline',
       linkProps: {
         as: `/pipelines/${pipelineUUID}/edit`,
