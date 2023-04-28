@@ -5,8 +5,10 @@ import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import {
   BORDER_RADIUS,
   BORDER_STYLE,
+  BORDER_WIDTH,
   BORDER_WIDTH_THICK,
 } from '@oracle/styles/units/borders';
+import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { transition } from '@oracle/styles/mixins';
@@ -30,26 +32,29 @@ export function getColorsForBlockType(
   const { blockColor, isSelected, theme } = props || {};
 
   if (isSelected) {
-    accent = (theme?.content || dark.content).active;
+    accent = (theme || dark).content.active;
   } else if (BlockTypeEnum.TRANSFORMER === blockType
     || blockColor === BlockColorEnum.PURPLE) {
-    accent = (theme?.accent || dark.accent).purple;
-    accentLight = (theme?.accent || dark.accent).purpleLight;
+    accent = (theme || dark).accent.purple;
+    accentLight = (theme || dark).accent.purpleLight;
   } else if (BlockTypeEnum.DATA_EXPORTER === blockType
     || blockColor === BlockColorEnum.YELLOW) {
-    accent = (theme?.accent || dark.accent).yellow;
-    accentLight = (theme?.accent || dark.accent).yellowLight;
+    accent = (theme || dark).accent.yellow;
+    accentLight = (theme || dark).accent.yellowLight;
   } else if (BlockTypeEnum.DATA_LOADER === blockType
     || blockColor === BlockColorEnum.BLUE) {
-    accent = (theme?.accent || dark.accent).blue;
-    accentLight = (theme?.accent || dark.accent).blueLight;
+    accent = (theme || dark).accent.blue;
+    accentLight = (theme || dark).accent.blueLight;
+  } else if (BlockTypeEnum.MARKDOWN === blockType) {
+    accent = (theme || dark).accent.sky;
+    accentLight = (theme || dark).accent.skyLight;
   } else if (BlockTypeEnum.SENSOR === blockType
     || blockColor === BlockColorEnum.PINK) {
-    accent = (theme?.accent || dark.accent).pink;
-    accentLight = (theme?.accent || dark.accent).pinkLight;
+    accent = (theme || dark).accent.pink;
+    accentLight = (theme || dark).accent.pinkLight;
   } else if (BlockTypeEnum.DBT === blockType) {
-    accent = (theme?.accent || dark.accent).dbt;
-    accentLight = (theme?.accent || dark.accent).dbtLight;
+    accent = (theme || dark).accent.dbt;
+    accentLight = (theme || dark).accent.dbtLight;
   } else if (BlockTypeEnum.EXTENSION === blockType || blockColor === BlockColorEnum.TEAL) {
     accent = (theme?.accent || dark.accent).teal;
     accentLight = (theme?.accent || dark.accent).tealLight;
@@ -59,8 +64,8 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.SCRATCHPAD === blockType
     || blockColor === BlockColorEnum.GREY
     || (BlockTypeEnum.CUSTOM === blockType && !blockColor)) {
-    accent = (theme?.content || dark.content).default;
-    accentLight = (theme?.accent || dark.accent).contentDefaultTransparent;
+    accent = (theme || dark).content.default;
+    accentLight = (theme || dark).accent.contentDefaultTransparent;
   }
 
   return {
@@ -127,6 +132,7 @@ export const HiddenBlockContainerStyle = styled.div<BorderColorShareProps>`
 `;
 
 export const BlockHeaderStyle = styled.div<{
+  bottomBorder?: boolean;
   zIndex: number;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
@@ -147,6 +153,10 @@ export const BlockHeaderStyle = styled.div<{
     background-color: ${(props.theme || dark).background.content};
   `}
 
+  ${props => props.bottomBorder && `
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium2};
+  `}
+
   ${props => props.zIndex && `
     z-index: ${6 + (props.zIndex || 0)};
   `}
@@ -154,6 +164,7 @@ export const BlockHeaderStyle = styled.div<{
 
 export const CodeContainerStyle = styled.div<{
   hasOutput: boolean;
+  lightBackground?: boolean;
 } & BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
@@ -167,6 +178,10 @@ export const CodeContainerStyle = styled.div<{
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+
+  ${props => props.lightBackground && `
+    background-color: ${(props.theme || dark).background.content};
   `}
 
   ${props => !props.hasOutput && `

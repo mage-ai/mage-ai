@@ -7,7 +7,7 @@ import React, {
 import * as ReactDOM from 'react-dom';
 import Editor from '@monaco-editor/react';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Text from '@oracle/elements/Text';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -329,6 +329,7 @@ function CodeEditor({
             vertical: 'hidden',
           },
           wordBasedSuggestions: false,
+          wordWrap: block?.type === BlockTypeEnum.MARKDOWN ? 'on' : 'off',
         }}
         theme={theme}
         value={value}

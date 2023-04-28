@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
@@ -19,7 +19,6 @@ import {
   Pipeline,
 } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
-import { FileContextEnum } from './index';
 import {
   ICON_SIZE,
   INDENT_WIDTH,

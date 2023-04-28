@@ -25,10 +25,13 @@ import dark from '@oracle/styles/themes/dark';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   Charts,
+  Check,
   Close,
+  Edit,
   Ellipsis,
   PlayButtonFilled,
 } from '@oracle/icons';
+import { DEFAULT_ICON_SIZE } from '../constants';
 import {
   KEY_SYMBOL_CONTROL,
   KEY_SYMBOL_ENTER,
@@ -58,6 +61,7 @@ type CommandButtonsProps = {
   block: BlockType;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  isEditingBlock?: boolean;
   pipeline?: PipelineType;
   runBlock?: (payload: {
     block: BlockType;
@@ -74,9 +78,9 @@ type CommandButtonsProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setIsEditingBlock?: (isEditingBlock: any) => void;
   setOutputCollapsed: (outputCollapsed: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
-  visible: boolean;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
@@ -89,12 +93,13 @@ function CommandButtons({
   fetchFileTree,
   fetchPipeline,
   interruptKernel,
+  isEditingBlock,
   pipeline,
   runBlock,
+  setIsEditingBlock,
   savePipelineContent,
   setErrors,
   setOutputCollapsed,
-  visible,
 }: CommandButtonsProps) {
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
@@ -141,6 +146,7 @@ function CommandButtons({
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const isDBT = useMemo(() => BlockTypeEnum.DBT === block?.type, [block]);
+  const isMarkdown = useMemo(() => BlockTypeEnum.MARKDOWN === block?.type, [block]);
 
   const [updatePipeline, { isLoading: isLoadingUpdatePipeline }] = useMutation(
     api.pipelines.useUpdate(pipeline?.uuid),
@@ -183,7 +189,7 @@ function CommandButtons({
               default
               label={(
                 <Text>
-                  {isDBT ? 'Compile and preview data' : 'Run block'}
+                  Run block
                   &nbsp;
                   &nbsp;
                   <KeyboardTextGroup
@@ -291,7 +297,7 @@ function CommandButtons({
                 />
               </Text>
             )}
-            size={UNIT * 2.5}
+            size={DEFAULT_ICON_SIZE}
             widthFitContent
           >
             <Button
@@ -302,7 +308,7 @@ function CommandButtons({
             >
               <Circle
                 borderSize={1.5}
-                size={UNIT * 2.5}
+                size={DEFAULT_ICON_SIZE}
               >
                 <Close size={UNIT * 1} />
               </Circle>
@@ -331,7 +337,7 @@ function CommandButtons({
                   Convert block
                 </Text>
               )}
-              size={UNIT * 2.5}
+              size={DEFAULT_ICON_SIZE}
               widthFitContent
             >
               <Button
@@ -341,7 +347,7 @@ function CommandButtons({
                 onClick={() => setShowConvertMenu(!showConvertMenu)}
                 ref={refConvertBlock}
               >
-                <Convert size={UNIT * 2.5} />
+                <Convert size={DEFAULT_ICON_SIZE} />
               </Button>
             </Tooltip>
           </FlyoutMenuWrapper>
@@ -396,6 +402,30 @@ function CommandButtons({
         </>
       )}
 
+      {isMarkdown && (
+        <Spacing ml={PADDING_UNITS}>
+          <Tooltip
+            appearBefore
+            default
+            label={isEditingBlock ? 'Close editor' : 'Edit'}
+            size={DEFAULT_ICON_SIZE}
+            widthFitContent
+          >
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => setIsEditingBlock(prevState => !prevState)}
+            >
+              {isEditingBlock
+                ? <Check size={DEFAULT_ICON_SIZE} success />
+                : <Edit size={DEFAULT_ICON_SIZE} />
+              }
+            </Button>
+          </Tooltip>
+        </Spacing>
+      )}
+
       <div ref={refMoreActions}>
         <Spacing ml={PADDING_UNITS}>
           <Tooltip
@@ -406,7 +436,7 @@ function CommandButtons({
                 More actions
               </Text>
             )}
-            size={UNIT * 2.5}
+            size={DEFAULT_ICON_SIZE}
             widthFitContent
           >
             <Button
@@ -417,7 +447,7 @@ function CommandButtons({
             >
               <Circle
                 borderSize={1.5}
-                size={UNIT * 2.5}
+                size={DEFAULT_ICON_SIZE}
               >
                 <Ellipsis size={UNIT} />
               </Circle>

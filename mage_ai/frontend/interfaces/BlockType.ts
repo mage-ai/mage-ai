@@ -12,6 +12,7 @@ export enum TagEnum {
 }
 
 export enum BlockLanguageEnum {
+  MARKDOWN = 'markdown',
   PYTHON = 'python',
   R = 'r',
   SQL = 'sql',
@@ -19,6 +20,7 @@ export enum BlockLanguageEnum {
 }
 
 export const ABBREV_BLOCK_LANGUAGE_MAPPING = {
+  [BlockLanguageEnum.MARKDOWN]: 'MD',
   [BlockLanguageEnum.PYTHON]: 'PY',
   [BlockLanguageEnum.R]: 'R',
   [BlockLanguageEnum.SQL]: 'SQL',
@@ -35,6 +37,7 @@ export enum BlockTypeEnum {
   EXTENSION = 'extension',
   SCRATCHPAD = 'scratchpad',
   SENSOR = 'sensor',
+  MARKDOWN = 'markdown',
   TRANSFORMER = 'transformer',
 }
 
@@ -54,6 +57,7 @@ export const BLOCK_TYPES = [
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.SCRATCHPAD,
   BlockTypeEnum.SENSOR,
+  BlockTypeEnum.MARKDOWN,
   BlockTypeEnum.TRANSFORMER,
 ];
 
@@ -79,12 +83,15 @@ export const BLOCK_TYPES_NO_DATA_TABLE = [
   BlockTypeEnum.CHART,
   BlockTypeEnum.SCRATCHPAD,
   BlockTypeEnum.SENSOR,
+  BlockTypeEnum.MARKDOWN,
 ];
 
 export const BLOCK_TYPES_WITH_NO_PARENTS = [
   BlockTypeEnum.CALLBACK,
+  BlockTypeEnum.CHART,
   BlockTypeEnum.EXTENSION,
   BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.MARKDOWN,
 ];
 
 export enum StatusTypeEnum {
@@ -205,6 +212,7 @@ export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.EXTENSION]: 'Extension',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
   [BlockTypeEnum.SENSOR]: 'Sensor',
+  [BlockTypeEnum.MARKDOWN]: 'Markdown',
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 
@@ -221,6 +229,7 @@ export const BLOCK_TYPE_ABBREVIATION_MAPPING = {
   [BlockTypeEnum.DATA_LOADER]: 'DL',
   [BlockTypeEnum.SCRATCHPAD]: 'SP',
   [BlockTypeEnum.SENSOR]: 'SR',
+  [BlockTypeEnum.MARKDOWN]: 'MD',
   [BlockTypeEnum.TRANSFORMER]: 'TF',
 };
 

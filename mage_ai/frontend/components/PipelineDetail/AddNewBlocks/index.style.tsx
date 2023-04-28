@@ -12,8 +12,10 @@ type IconContainerProps = {
   blue?: boolean;
   border?: boolean;
   compact?: boolean;
+  grey?: boolean;
   purple?: boolean;
   rose?: boolean;
+  sky?: boolean;
   teal?: boolean;
   yellow?: boolean;
 };
@@ -29,12 +31,20 @@ export const IconContainerStyle = styled.div<IconContainerProps>`
     border: 1px dotted ${(props.theme.content || dark.content).active};
   `}
 
+  ${props => props.grey && `
+    background-color: ${getColorsForBlockType(BlockTypeEnum.SCRATCHPAD, props).accent};
+  `}
+
   ${props => props.blue && `
     background-color: ${getColorsForBlockType(BlockTypeEnum.DATA_LOADER, props).accent};
   `}
 
   ${props => props.purple && `
     background-color: ${getColorsForBlockType(BlockTypeEnum.TRANSFORMER, props).accent};
+  `}
+
+  ${props => props.sky && `
+    background-color: ${getColorsForBlockType(BlockTypeEnum.MARKDOWN, props).accent};
   `}
 
   ${props => props.teal && `

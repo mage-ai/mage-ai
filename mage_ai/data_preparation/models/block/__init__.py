@@ -584,7 +584,7 @@ class Block:
                 commit=commit,
                 force=force,
             )
-            # For block_type SCRATCHPAD, also delete the file if possible
+            # For block_type SCRATCHPAD and MARKDOWN, also delete the file if possible
             if self.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
                 pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
                 pipelines = [

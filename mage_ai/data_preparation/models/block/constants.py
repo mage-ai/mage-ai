@@ -15,6 +15,7 @@ BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_LOADER: Block,
     BlockType.DBT: DBTBlock,
     BlockType.EXTENSION: ExtensionBlock,
+    BlockType.MARKDOWN: Block,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: Block,
     BlockType.SENSOR: SensorBlock,

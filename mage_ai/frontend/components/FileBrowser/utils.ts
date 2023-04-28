@@ -137,6 +137,7 @@ export function getNonPythonBlockFromFile(
   const yamlRegex = new RegExp(`\.${FileExtensionEnum.YAML}$`);
   const rRegex = new RegExp(`\.${FileExtensionEnum.R}$`);
   const sqlRegex = new RegExp(`\.${FileExtensionEnum.SQL}$`);
+  const mdRegex = new RegExp(`\.${FileExtensionEnum.MD}$`);
   if (fileName.match(yamlRegex) && YAML_BLOCK_TYPES.includes(blockType)) {
     return {
       type: blockType,
@@ -156,6 +157,11 @@ export function getNonPythonBlockFromFile(
     return {
       type: blockType,
       uuid: blockUUID,
+    };
+  } else if (fileName.match(mdRegex) && blockType === BlockTypeEnum.MARKDOWN) {
+    return {
+      type: blockType,
+      uuid: fileName.replace(mdRegex, ''),
     };
   }
 }

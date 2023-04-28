@@ -42,14 +42,14 @@ function CodeBlock({
           fontSize: small ? 12 : 14,
           marginBottom: 0,
           marginTop: 0,
+          maxWidth,
           paddingBottom: UNIT * 2,
           paddingTop: UNIT * 2,
-          maxWidth,
         }}
+        language={language}
         lineNumberStyle={{
           color: (themeContext.content || dark.content).muted,
         }}
-        language={language}
         showLineNumbers={showLineNumbers}
         style={darkStyle}
         useInlineStyles
@@ -62,9 +62,14 @@ function CodeBlock({
   }
   return (
     <ReactMarkdown
-      source={source}
-      renderers={{ code: Code }}
-    />
+      components={{
+        code: ({ children }) => (
+          <Code value={children} />
+        ),
+      }}
+    >
+      {source}
+    </ReactMarkdown>
   );
 }
 

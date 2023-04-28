@@ -435,7 +435,6 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
-  const [recsWindowOpenBlockIdx, setRecsWindowOpenBlockIdx] = useState<number>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -1205,7 +1204,6 @@ function PipelineDetailPage({
               },
             } = response;
             onCreateCallback?.(block);
-            setRecsWindowOpenBlockIdx(null);
             fetchFileTree();
             fetchPipeline().then(({
               pipeline: {
@@ -1953,7 +1951,6 @@ function PipelineDetailPage({
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
-      setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
       setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}

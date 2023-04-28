@@ -139,7 +139,6 @@ type PipelineDetailProps = {
   });
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
-  setRecsWindowOpenBlockIdx: (idx: number) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -193,7 +192,6 @@ function PipelineDetail({
   setMessages,
   setOutputBlocks,
   setPipelineContentTouched,
-  setRecsWindowOpenBlockIdx,
   setRunningBlocks,
   setSelectedBlock,
   setSelectedOutputBlock,
@@ -282,7 +280,6 @@ function PipelineDetail({
 
           if (keyMapping[KEY_CODE_ESCAPE]) {
             setSelectedBlock(null);
-            setRecsWindowOpenBlockIdx(null);
           } else if (keyHistory[0] === KEY_CODE_I
             && keyHistory[1] === KEY_CODE_I
           ) {
@@ -443,6 +440,7 @@ function PipelineDetail({
       blockRefs.current[path] = createRef();
 
       let el;
+      const isMarkdown = type === BlockTypeEnum.MARKDOWN;
       const isHidden = !!hiddenBlocks?.[uuid];
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
       const currentBlockRef = blockRefs.current[path];
@@ -490,7 +488,7 @@ function PipelineDetail({
             executionState={executionState}
             fetchFileTree={fetchFileTree}
             fetchPipeline={fetchPipeline}
-            hideRunButton={isStreaming}
+            hideRunButton={isStreaming || isMarkdown}
             interruptKernel={interruptKernel}
             key={uuid}
             mainContainerRef={mainContainerRef}
@@ -514,7 +512,6 @@ function PipelineDetail({
             setEditingBlock={setEditingBlock}
             setErrors={setErrors}
             setOutputBlocks={setOutputBlocks}
-            setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
             setSelectedOutputBlock={setSelectedOutputBlock}
             setTextareaFocused={setTextareaFocused}
@@ -569,7 +566,6 @@ function PipelineDetail({
     setErrors,
     setHiddenBlocks,
     setOutputBlocks,
-    setRecsWindowOpenBlockIdx,
     setSelectedBlock,
     setSelectedOutputBlock,
     setTextareaFocused,
@@ -669,13 +665,11 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       hideDataExporter={isIntegration}
       hideDataLoader={isIntegration}
       hideDbt={isIntegration || isStreaming}
-      hideRecommendations={isIntegration}
       hideScratchpad={isIntegration}
       hideSensor={isIntegration}
       onClickAddSingleDBTModel={onClickAddSingleDBTModel}
       pipeline={pipeline}
       setCreatingNewDBTModel={setCreatingNewDBTModel}
-      setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
     />
   ), [
     addNewBlockAtIndex,
@@ -686,7 +680,6 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     numberOfBlocks,
     onClickAddSingleDBTModel,
     pipeline,
-    setRecsWindowOpenBlockIdx,
     setSelectedBlock,
     setTextareaFocused,
   ]);

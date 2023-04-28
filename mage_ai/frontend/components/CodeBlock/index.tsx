@@ -51,6 +51,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
+import Markdown from '@oracle/components/Markdown';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -180,7 +181,6 @@ type CodeBlockProps = {
   setCreatingNewDBTModel?: (creatingNewDBTModel: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
-  setRecsWindowOpenBlockIdx?: (idx: number) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
   widgets?: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
@@ -228,7 +228,6 @@ function CodeBlock({
   setEditingBlock,
   setErrors,
   setOutputBlocks,
-  setRecsWindowOpenBlockIdx,
   setSelected,
   setSelectedOutputBlock,
   setTextareaFocused,
@@ -237,7 +236,18 @@ function CodeBlock({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
 
-  const blockConfiguration = useMemo(() => block?.configuration || {}, [block]);
+  const {
+    callback_content: callbackContentOrig,
+    configuration: blockConfig = {},
+    color: blockColor,
+    error: blockError,
+    has_callback: hasCallback,
+    language: blockLanguage,
+    type: blockType,
+    upstream_blocks: blockUpstreamBlocks = [],
+    uuid: blockUUID,
+  } = block || {};
+  const blockConfiguration = useMemo(() => blockConfig, [blockConfig]);
 
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
@@ -246,10 +256,15 @@ function CodeBlock({
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
 
-  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipeline?.type;
-  const isDBT = BlockTypeEnum.DBT === block?.type;
-  const isSQLBlock = BlockLanguageEnum.SQL === block?.language;
-  const isRBlock = BlockLanguageEnum.R === block?.language;
+  const {
+    type: pipelineType,
+    uuid: pipelineUUID,
+  } = pipeline || {};
+  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipelineType;
+  const isDBT = BlockTypeEnum.DBT === blockType;
+  const isSQLBlock = BlockLanguageEnum.SQL === blockLanguage;
+  const isRBlock = BlockLanguageEnum.R === blockLanguage;
+  const isMarkdown = BlockTypeEnum.MARKDOWN === blockType;
 
   let defaultLimitValue = blockConfiguration[CONFIG_KEY_LIMIT];
   if (!isDBT && isSQLBlock && defaultLimitValue === undefined) {
@@ -273,8 +288,9 @@ function CodeBlock({
   });
 
   const [errorMessages, setErrorMessages] = useState(null);
-  const [isEditingBlock, setIsEditingBlock] = useState(false);
-  const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
+  const [isEditingBlock, setIsEditingBlock] = useState<boolean>(isMarkdown);
+  const [isEditingBlockName, setIsEditingBlockName] = useState<boolean>(false);
+  const [newBlockUuid, setNewBlockUuid] = useState(blockUUID);
   const [outputCollapsed, setOutputCollapsed] = useState(false);
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
@@ -318,10 +334,6 @@ function CodeBlock({
     !dbtProfileTargets?.includes(dbtProfileTarget),
   );
 
-  const {
-    callback_content: callbackContentOrig,
-    has_callback: hasCallback,
-  } = block;
   const [callbackContent, setCallbackContent] = useState(null);
   useEffect(() => {
     if (callbackContentOrig !== callbackContent) {
@@ -337,7 +349,7 @@ function CodeBlock({
       const {
         messages: messagesInit,
       } = initializeContentAndMessages([block]);
-      const msgs = messagesInit?.[block?.type]?.[block?.uuid];
+      const msgs = messagesInit?.[blockType]?.[blockUUID];
       if (msgs?.length >= 1) {
         setMessages(msgs);
       }
@@ -372,12 +384,12 @@ function CodeBlock({
   ]);
 
   const codeCollapsedUUID = useMemo(() => (
-    `${pipeline?.uuid}/${block?.uuid}/codeCollapsed`
-  ), [pipeline?.uuid, block?.uuid]);
+    `${pipelineUUID}/${blockUUID}/codeCollapsed`
+  ), [pipelineUUID, blockUUID]);
 
   const outputCollapsedUUID = useMemo(() => (
-    `${pipeline?.uuid}/${block?.uuid}/outputCollapsed`
-  ), [pipeline?.uuid, block?.uuid]);
+    `${pipelineUUID}/${blockUUID}/outputCollapsed`
+  ), [pipelineUUID, blockUUID]);
 
   useEffect(() => {
     setCodeCollapsed(get(codeCollapsedUUID, false));
@@ -392,7 +404,7 @@ function CodeBlock({
 
   const hasDownstreamWidgets = useMemo(() => !!widgets?.find(({
     upstream_blocks: upstreamBlocks,
-  }: BlockType) => upstreamBlocks.includes(block.uuid)), [
+  }: BlockType) => upstreamBlocks.includes(blockUUID)), [
     block,
     widgets,
   ]);
@@ -460,7 +472,7 @@ function CodeBlock({
     setSelectedTab,
   ]);
 
-  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === block.uuid)
+  const isInProgress = !!runningBlocks?.find(({ uuid }) => uuid === blockUUID)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
   useEffect(() => {
@@ -529,10 +541,10 @@ function CodeBlock({
   const hasError = !!messagesWithType.find(({ error }) => error);
 
   const color = getColorsForBlockType(
-    block.type,
-    { blockColor: block.color, theme: themeContext },
+    blockType,
+    { blockColor, theme: themeContext },
   ).accent;
-  const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
+  const numberOfParentBlocks = blockUpstreamBlocks?.length || 0;
 
   const {
     dynamic,
@@ -578,11 +590,11 @@ function CodeBlock({
     data: dataBlock,
     mutate: fetchBlock,
   } = api.blocks.pipelines.detail(
-    pipeline?.uuid,
+    pipelineUUID,
     (
       TAB_DBT_LINEAGE_UUID.uuid === selectedTab?.uuid ||
         TAB_DBT_SQL_UUID.uuid === selectedTab?.uuid
-    ) ? encodeURIComponent(block?.uuid)
+    ) ? encodeURIComponent(blockUUID)
       : null,
     {
       _format: 'dbt',
@@ -594,36 +606,32 @@ function CodeBlock({
   const blockMetadata = useMemo(() => dataBlock?.block?.metadata || {}, [dataBlock]);
 
   const [updateBlock] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, block.uuid),
+    api.blocks.pipelines.useUpdate(pipelineUUID, blockUUID),
     {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            setIsEditingBlock(false);
-            fetchPipeline();
-            fetchFileTree();
-            setContent(content);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
       onError: (response: any) => {
         const {
           messages,
         } = onError(response);
         setErrorMessages(messages);
       },
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setIsEditingBlockName(false);
+            fetchPipeline();
+            fetchFileTree();
+            setContent(content);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
     },
   );
 
-  const uuidKeyboard = `CodeBlock/${block.uuid}`;
+  const uuidKeyboard = `CodeBlock/${blockUUID}`;
   const {
     registerOnKeyDown,
     unregisterOnKeyDown,
@@ -640,11 +648,11 @@ function CodeBlock({
         return;
       }
 
-      if (isEditingBlock
+      if (isEditingBlockName
         && String(keyHistory[0]) === String(KEY_CODE_ENTER)
         && String(keyHistory[1]) !== String(KEY_CODE_META)
       ) {
-        if (block.uuid === newBlockUuid) {
+        if (blockUUID === newBlockUuid) {
           event.target.blur();
         } else {
           // @ts-ignore
@@ -663,9 +671,9 @@ function CodeBlock({
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping) && addNewBlock) {
           event.preventDefault();
           addNewBlock({
-            language: block.language,
-            type: block.type,
-            upstream_blocks: [block.uuid],
+            language: blockLanguage,
+            type: blockType,
+            upstream_blocks: [blockUUID],
           });
           runBlockAndTrack({ block });
         }
@@ -675,7 +683,7 @@ function CodeBlock({
       addNewBlock,
       block,
       hideRunButton,
-      isEditingBlock,
+      isEditingBlockName,
       newBlockUuid,
       runBlockAndTrack,
       selected,
@@ -718,13 +726,13 @@ function CodeBlock({
         autocompleteProviders={autocompleteProviders}
         block={block}
         height={height}
-        language={block.language}
+        language={blockLanguage}
         onChange={(val: string) => {
           setContent(val);
           onChange?.(val);
         }}
         onDidChangeCursorPosition={onDidChangeCursorPosition}
-        placeholder={BlockTypeEnum.DBT === block.type && BlockLanguageEnum.YAML === block.language
+        placeholder={BlockTypeEnum.DBT === blockType && BlockLanguageEnum.YAML === blockLanguage
           ? `e.g. --select ${dbtProjectName || 'project'}/models --exclude ${dbtProjectName || 'project'}/models/some_dir`
           : 'Start typing here...'
         }
@@ -925,7 +933,7 @@ function CodeBlock({
         savePipelineContent({
           block: {
             configuration: data,
-            uuid: block.uuid,
+            uuid: blockUUID,
           },
         });
       }
@@ -941,6 +949,25 @@ function CodeBlock({
   );
 
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
+
+  const markdownEl = useMemo(() => (
+    (!content)
+    ?
+      <Spacing px={1}>
+        <Text monospace muted>
+          Double-click to edit
+        </Text>
+      </Spacing>
+    :
+      <Markdown>
+        {content}
+      </Markdown>
+  ), [content]);
+  useEffect(() => {
+    if (isMarkdown && isEditingBlock && !selected) {
+      setIsEditingBlock(false);
+    }
+  }, [isEditingBlock, isMarkdown, selected]);
 
   const limitInputEl = useMemo(() => (
     <TextInput
@@ -991,6 +1018,7 @@ function CodeBlock({
               ...borderColorShareProps,
               ...collected,
             }}
+            bottomBorder={isMarkdown}
             onClick={() => onClickSelectBlock()}
             ref={drag}
             zIndex={blocksLength + 1 - (blockIdx || 0)}
@@ -1002,7 +1030,7 @@ function CodeBlock({
               <Flex alignItems="center" flex={1}>
                 <FlexContainer alignItems="center">
                   <Badge monospace>
-                    {ABBREV_BLOCK_LANGUAGE_MAPPING[block.language]}
+                    {ABBREV_BLOCK_LANGUAGE_MAPPING[blockLanguage]}
                   </Badge>
 
                   <Spacing mr={1} />
@@ -1030,12 +1058,12 @@ function CodeBlock({
                       {(
                         isDBT
                           ? BlockTypeEnum.DBT
-                          : BLOCK_TYPE_NAME_MAPPING[block.type]
+                          : BLOCK_TYPE_NAME_MAPPING[blockType]
                       )?.toUpperCase()}
                     </Text>
                   </FlyoutMenuWrapper>
 
-                  {BlockTypeEnum.SCRATCHPAD === block.type && (
+                  {BlockTypeEnum.SCRATCHPAD === blockType && (
                     <>
                       &nbsp;
                       <Button
@@ -1058,7 +1086,7 @@ function CodeBlock({
                 <Spacing mr={1} />
 
                 <FlexContainer alignItems="center">
-                  {isDBT && BlockLanguageEnum.YAML !== block.language && (
+                  {isDBT && BlockLanguageEnum.YAML !== blockLanguage && (
                     <Tooltip
                       block
                       label={getModelName(block, {
@@ -1072,7 +1100,7 @@ function CodeBlock({
                     </Tooltip>
                   )}
 
-                  {(!isDBT || BlockLanguageEnum.YAML === block.language) && (
+                  {(!isDBT || BlockLanguageEnum.YAML === blockLanguage) && (
                     <LabelWithValueClicker
                       bold={false}
                       inputValue={newBlockUuid}
@@ -1081,7 +1109,7 @@ function CodeBlock({
                       notRequired
                       onBlur={() => setTimeout(() => {
                         setAnyInputFocused(false);
-                        setIsEditingBlock(false);
+                        setIsEditingBlockName(false);
                       }, 300)}
                       onChange={(e) => {
                         setNewBlockUuid(e.target.value);
@@ -1089,18 +1117,18 @@ function CodeBlock({
                       }}
                       onClick={() => {
                         setAnyInputFocused(true);
-                        setIsEditingBlock(true);
+                        setIsEditingBlockName(true);
                       }}
                       onFocus={() => {
                         setAnyInputFocused(true);
-                        setIsEditingBlock(true);
+                        setIsEditingBlockName(true);
                       }}
                       stacked
-                      value={!isEditingBlock && block.uuid}
+                      value={!isEditingBlockName && blockUUID}
                     />
                   )}
 
-                  {isEditingBlock && !isDBT && (
+                  {isEditingBlockName && !isDBT && (
                     <>
                       <Spacing ml={1} />
                       <Link
@@ -1108,10 +1136,10 @@ function CodeBlock({
                         onClick={() => savePipelineContent({
                           block: {
                             name: newBlockUuid,
-                            uuid: block.uuid,
+                            uuid: blockUUID,
                           },
                         }).then(() => {
-                          setIsEditingBlock(false);
+                          setIsEditingBlockName(false);
                           fetchPipeline();
                           fetchFileTree();
                         })}
@@ -1127,7 +1155,7 @@ function CodeBlock({
 
                 <Spacing mr={2} />
 
-                {!BLOCK_TYPES_WITH_NO_PARENTS.includes(block.type) && (
+                {!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType) && (
                   <Tooltip
                     appearBefore
                     block
@@ -1149,7 +1177,7 @@ function CodeBlock({
                         setEditingBlock({
                           upstreamBlocks: {
                             block,
-                            values: block.upstream_blocks?.map(uuid => ({ uuid })),
+                            values: blockUpstreamBlocks?.map(uuid => ({ uuid })),
                           },
                         });
                       }}
@@ -1184,12 +1212,13 @@ function CodeBlock({
                 fetchFileTree={fetchFileTree}
                 fetchPipeline={fetchPipeline}
                 interruptKernel={interruptKernel}
+                isEditingBlock={isEditingBlock}
+                setIsEditingBlock={setIsEditingBlock}
                 pipeline={pipeline}
                 runBlock={hideRunButton ? null : runBlockAndTrack}
                 savePipelineContent={savePipelineContent}
                 setErrors={setErrors}
                 setOutputCollapsed={setOutputCollapsed}
-                visible={selected || isInProgress}
               />
 
               <Spacing px={1}>
@@ -1228,8 +1257,14 @@ function CodeBlock({
               {...borderColorShareProps}
               className={selected && textareaFocused ? 'selected' : null}
               hasOutput={!!buttonTabs || hasOutput}
+              lightBackground={isMarkdown && !isEditingBlock}
+              onDoubleClick={() => {
+                if (isMarkdown && !isEditingBlock) {
+                  setIsEditingBlock(true);
+                }
+              }}
             >
-              {BlockTypeEnum.DBT === block.type
+              {BlockTypeEnum.DBT === blockType
                 && !codeCollapsed
                 && (
                 <CodeHelperStyle normalPadding>
@@ -1238,7 +1273,7 @@ function CodeBlock({
                     justifyContent="space-between"
                   >
                     <Flex alignItems="center">
-                      {BlockLanguageEnum.YAML === block.language && (
+                      {BlockLanguageEnum.YAML === blockLanguage && (
                         <Select
                           compact
                           monospace
@@ -1270,7 +1305,7 @@ function CodeBlock({
                         </Select>
                       )}
 
-                      {BlockLanguageEnum.YAML !== block.language && (
+                      {BlockLanguageEnum.YAML !== blockLanguage && (
                         <Text monospace small>
                           {dbtProjectName}
                         </Text>
@@ -1393,7 +1428,7 @@ function CodeBlock({
                       </FlexContainer>
                     </Flex>
 
-                    {BlockLanguageEnum.YAML !== block.language && (
+                    {BlockLanguageEnum.YAML !== blockLanguage && (
                       <FlexContainer alignItems="center">
                         <Tooltip
                           appearBefore
@@ -1427,11 +1462,11 @@ function CodeBlock({
                     )}
                   </FlexContainer>
 
-                  {BlockLanguageEnum.YAML === block.language && (
+                  {BlockLanguageEnum.YAML === blockLanguage && (
                     <Spacing mt={1}>
                       <FlexContainer alignItems="center">
                         <Flex flex={1}>
-                          <Text monospace default small>
+                          <Text default monospace small>
                             dbt run <Text
                               inline
                               monospace
@@ -1469,7 +1504,7 @@ function CodeBlock({
 
               {isSQLBlock
                 && !codeCollapsed
-                && BlockTypeEnum.DBT !== block.type
+                && BlockTypeEnum.DBT !== blockType
                 && (
                 <CodeHelperStyle normalPadding>
                   <FlexContainer
@@ -1652,7 +1687,7 @@ function CodeBlock({
                                 If blank, the default table name will be:
                                 <br />
                                 <Text inline monospace>
-                                  {pipeline?.uuid}_{block?.uuid}
+                                  {pipelineUUID}_{blockUUID}
                                 </Text>
                                 <br />
                                 This field is optional.
@@ -1771,7 +1806,7 @@ function CodeBlock({
                     )}
 
                     {dataProviderConfig?.[CONFIG_KEY_DATA_PROVIDER] === DataProviderEnum.TRINO
-                      && block.upstream_blocks.length >= 1
+                      && blockUpstreamBlocks.length >= 1
                       && (
                       <FlexContainer alignItems="center"  style={{ marginTop: '8px' }}>
                         <Tooltip
@@ -1844,9 +1879,9 @@ function CodeBlock({
                 </CodeHelperStyle>
               )}
 
-              {block.upstream_blocks.length >= 1
+              {blockUpstreamBlocks.length >= 1
                 && !codeCollapsed
-                && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(block.type)
+                && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(blockType)
                 && !isStreamingPipeline
                 && (
                 <CodeHelperStyle normalPadding>
@@ -1861,7 +1896,7 @@ function CodeBlock({
                             {'SELECT * FROM {{ df_1 }}'}
                           </Text> to insert
                           all rows from <Text inline monospace small>
-                            {block?.upstream_blocks?.[0]}
+                            {blockUpstreamBlocks?.[0]}
                           </Text> into a table.
                         </>
                       )}
@@ -1872,41 +1907,41 @@ function CodeBlock({
                     {(!isSQLBlock && !isRBlock) && (
                       <>
                         <Text monospace muted small>
-                          {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
-                          {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
-                          {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
-                          {BlockTypeEnum.CUSTOM === block.type && '@custom'}
+                          {BlockTypeEnum.DATA_EXPORTER === blockType && '@data_exporter'}
+                          {BlockTypeEnum.DATA_LOADER === blockType && '@data_loader'}
+                          {BlockTypeEnum.TRANSFORMER === blockType && '@transformer'}
+                          {BlockTypeEnum.CUSTOM === blockType && '@custom'}
                         </Text>
                         <Text monospace muted small>
-                          def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
-                            || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
-                            || (BlockTypeEnum.TRANSFORMER === block.type && 'transform')
-                            || (BlockTypeEnum.CUSTOM === block.type && 'transform_custom')}
-                          ({block.upstream_blocks.map((_,i) => i >= 1 ? `data_${i + 1}` : 'data').join(', ')}):
+                          def {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
+                            || (BlockTypeEnum.DATA_LOADER === blockType && 'load_data')
+                            || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')
+                            || (BlockTypeEnum.CUSTOM === blockType && 'transform_custom')}
+                          ({blockUpstreamBlocks.map((_,i) => i >= 1 ? `data_${i + 1}` : 'data').join(', ')}):
                         </Text>
                       </>
                     )}
                     {isRBlock && (
                       <>
                         <Text monospace muted small>
-                          {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
-                            || (BlockTypeEnum.TRANSFORMER === block.type && 'transform')}
-                          &nbsp;← function({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
+                          {BlockTypeEnum.DATA_EXPORTER === blockType && 'export_data'
+                            || (BlockTypeEnum.TRANSFORMER === blockType && 'transform')}
+                          &nbsp;← function({blockUpstreamBlocks.map((_,i) => `df_${i + 1}`).join(', ')}):
                         </Text>
                       </>
                     )}
 
-                    {isSQLBlock && block?.upstream_blocks?.length >= 1 && (
+                    {isSQLBlock && blockUpstreamBlocks?.length >= 1 && (
                       <UpstreamBlockSettings
                         block={block}
                         blockConfiguration={dataProviderConfig}
                         blockRefs={blockRefs}
-                        blocks={block?.upstream_blocks?.map(blockUUID => blocksMapping?.[blockUUID])}
+                        blocks={blockUpstreamBlocks?.map(blockUUID => blocksMapping?.[blockUUID])}
                         updateBlockConfiguration={updateDataProviderConfig}
                       />
                     )}
 
-                    {!isSQLBlock && block.upstream_blocks.map((blockUUID, i) => {
+                    {!isSQLBlock && blockUpstreamBlocks.map((blockUUID, i) => {
                       const b = blocksMapping[blockUUID];
                       const blockColor = getColorsForBlockType(
                           b?.type,
@@ -1953,10 +1988,13 @@ function CodeBlock({
                 </CodeHelperStyle>
               )}
 
-              {!block?.error && (
+              {!blockError && (
                 <>
                   {!codeCollapsed
-                    ? codeEditorEl
+                    ? (!(isMarkdown && !isEditingBlock)
+                      ? codeEditorEl
+                      : markdownEl
+                    )
                     : (
                       <Spacing px={1}>
                         <Text monospace muted>
@@ -1972,13 +2010,13 @@ function CodeBlock({
                 runBlockAndTrack,
               })}
 
-              {block?.error && (
+              {blockError && (
                 <Spacing p={PADDING_UNITS}>
                   <Text bold danger>
-                    {block?.error?.error}
+                    {blockError?.error}
                   </Text>
                   <Text muted>
-                    {block?.error?.message}
+                    {blockError?.message}
                   </Text>
                 </Spacing>
               )}
@@ -1994,7 +2032,7 @@ function CodeBlock({
               {!codeCollapsed && ![
                 BlockTypeEnum.CALLBACK,
                 BlockTypeEnum.EXTENSION,
-              ].includes(block?.type) && (
+              ].includes(blockType) && (
                 <BlockExtras
                   block={block}
                   blocks={allBlocks}
@@ -2024,19 +2062,19 @@ function CodeBlock({
                     let configuration = newBlock.configuration;
                     const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
 
-                    if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
+                    if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(blockType)
                       && BlockTypeEnum.SCRATCHPAD === newBlock.type
                     ) {
                       content = `from mage_ai.data_preparation.variable_manager import get_variable
 
 
-  df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')`;
+  df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                     }
                     content = addScratchpadNote(newBlock, content);
 
-                    if (BlockLanguageEnum.SQL === block.language) {
+                    if (BlockLanguageEnum.SQL === blockLanguage) {
                       configuration = {
-                        ...selectKeys(block.configuration, [
+                        ...selectKeys(blockConfiguration, [
                           CONFIG_KEY_DATA_PROVIDER,
                           CONFIG_KEY_DATA_PROVIDER_DATABASE,
                           CONFIG_KEY_DATA_PROVIDER_PROFILE,
@@ -2066,7 +2104,6 @@ function CodeBlock({
                   pipeline={pipeline}
                   setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
                   setCreatingNewDBTModel={setCreatingNewDBTModel}
-                  setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
                 />
               </Spacing>
             )}

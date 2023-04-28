@@ -1,5 +1,6 @@
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
+  BLOCK_TYPES_WITH_NO_PARENTS,
   BlockRequestPayloadType,
   BlockTypeEnum,
   CONVERTIBLE_BLOCK_TYPES,
@@ -17,10 +18,8 @@ export const getUpstreamBlockUuids = (
 ): string[] => {
   const upstreamBlocks = newBlock?.upstream_blocks || [];
 
-  if (BlockTypeEnum.CHART !== currentBlock.type
-    && BlockTypeEnum.SCRATCHPAD !== currentBlock.type
-    && BlockTypeEnum.CHART !== newBlock?.type
-    && BlockTypeEnum.SCRATCHPAD !== newBlock?.type
+  if (!BLOCK_TYPES_WITH_NO_PARENTS.includes(currentBlock?.type)
+    && !BLOCK_TYPES_WITH_NO_PARENTS.includes(newBlock?.type)
     && (
       BlockTypeEnum.DATA_LOADER !== newBlock?.type
         || BlockTypeEnum.SENSOR === currentBlock.type
@@ -112,12 +111,12 @@ export const getMoreActionsItems = (
     reduce_output: reduceOutput,
   } = configuration || {};
   const isDBT = BlockTypeEnum.DBT === block?.type;
-
   const items: FlyoutMenuItemType[] = [];
 
   if (![
     BlockTypeEnum.CALLBACK,
     BlockTypeEnum.EXTENSION,
+    BlockTypeEnum.MARKDOWN,
   ].includes(block.type)) {
     items.push({
       label: () => isDBT
