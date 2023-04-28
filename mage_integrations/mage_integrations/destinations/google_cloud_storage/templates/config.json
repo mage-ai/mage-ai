@@ -1,0 +1,8 @@
+{
+  "bucket": null,
+  "file_type": "parquet",
+  "object_key_path": null,
+  "table": null,
+  "date_partition_format": null,
+  "google_application_credentials": "/path/to/your/service/account/key.json"
+}
