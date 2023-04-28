@@ -14,7 +14,7 @@ great_expectations==0.15.50
 httpx==0.23.1
 inflection==0.5.1
 ipykernel==6.15.0
-ipython
+ipython==7.34.0
 itsdangerous~=1.1.0
 joblib>=1.1.0
 jupyter-server-proxy==3.2.1
