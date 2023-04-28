@@ -951,6 +951,12 @@ function CodeBlock({
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
 
   const markdownEl = useMemo(() => <Markdown>{content}</Markdown>, [content]);
+  useEffect(() => {
+    if (isMarkdown && isEditingBlock && !selected) {
+      setIsEditingBlock(false);
+    }
+  }, [isEditingBlock, isMarkdown, selected]);
+
   const limitInputEl = useMemo(() => (
     <TextInput
       compact
@@ -1240,6 +1246,11 @@ function CodeBlock({
               className={selected && textareaFocused ? 'selected' : null}
               hasOutput={!!buttonTabs || hasOutput}
               lightBackground={isMarkdown && !isEditingBlock}
+              onDoubleClick={() => {
+                if (isMarkdown && !isEditingBlock) {
+                  setIsEditingBlock(true);
+                }
+              }}
             >
               {BlockTypeEnum.DBT === blockType
                 && !codeCollapsed
