@@ -37,6 +37,6 @@ def interpolate_input_data(block, query, loader):
     return interpolate_input(
         block,
         query,
-        get_database=lambda opts: loader.default_database(),
+        get_database=lambda opts: f'"{loader.default_database()}"',
         get_schema=lambda opts: loader.default_schema(),
     )
