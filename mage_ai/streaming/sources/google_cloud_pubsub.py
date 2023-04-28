@@ -71,7 +71,7 @@ class GoogleCloudPubSubSource(BaseSource):
             self._print(f"Total number of received messages: {len(response.received_messages)}")
             for received_message in response.received_messages:
                 self._print(f"Received: {received_message.message.data}.")
-                handler(dict(data=received_message.data.decode()))
+                handler(dict(data=received_message.message.data.decode()))
                 self._print(f"Handled: {received_message.message.data}.")
                 ack_ids.append(received_message.ack_id)
 
