@@ -8,7 +8,6 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import Link from '@oracle/elements/Link';
 import PipelineV2Gradient from '@oracle/icons/custom/PipelineV2Gradient';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import SettingsGradient from '@oracle/icons/custom/SettingsGradient';
@@ -23,7 +22,10 @@ import {
   Settings,
   Terminal,
 } from '@oracle/icons';
-import { NavigationItemStyle } from './index.style';
+import {
+  NavigationItemStyle,
+  NavigationLinkStyle,
+} from './index.style';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
@@ -133,8 +135,9 @@ function VerticalNavigation({
 
       const sharedNavigationItemProps = {
         primary: !IconToUse,
-        selected: !IconSelected && showMore && selected,
-        selectedWithGradientIcon: IconSelected && showMore && selected,
+        selected: showMore && selected,
+        showMore,
+        withGradient: IconSelected,
       };
 
       if (selected && IconSelected) {
@@ -210,11 +213,15 @@ function VerticalNavigation({
       }
 
       let el;
-      if ('left' === aligned) {
+      if ('right' === aligned) {
         el = (
-          <FlexContainer alignItems="center">
-            <Flex flex={1}>
-              <Text default={!selected}>
+          <FlexContainer
+            alignItems="center"
+            fullWidth
+            justifyContent="flex-end"
+          >
+            <Flex flex={1} justifyContent="flex-end">
+              <Text noWrapping>
                 {displayText}
               </Text>
             </Flex>
@@ -228,7 +235,7 @@ function VerticalNavigation({
             {iconEl}
             <Spacing mr={2} />
             <Flex flex={1}>
-              <Text default={!selected}>
+              <Text noWrapping>
                 {displayText}
               </Text>
             </Flex>
@@ -237,13 +244,13 @@ function VerticalNavigation({
       }
 
       let clickEl = (
-        <Link
-          block
-          noHoverUnderline
+        <NavigationLinkStyle
+          href="#"
           onClick={onClick}
+          selected={selected}
         >
           {el}
-        </Link>
+        </NavigationLinkStyle>
       );
       if (linkProps) {
         clickEl = (
@@ -256,25 +263,47 @@ function VerticalNavigation({
         );
       }
 
+      if ('right' === aligned) {
+        buttonEl = (
+          <FlexContainer
+            alignItems="center"
+            fullWidth
+            justifyContent="flex-end"
+          >
+            {buttonEl}
+          </FlexContainer>
+        );
+      }
+
+      let finalEl;
+
+      if (visible) {
+        finalEl = clickEl;
+      } else if (showMore) {
+        finalEl = buttonEl;
+      } else {
+        finalEl = (
+          <Tooltip
+            appearBefore={'right' === aligned}
+            height={5 * UNIT}
+            label={displayText}
+            size={null}
+            widthFitContent
+          >
+            {buttonEl}
+          </Tooltip>
+        );
+      }
+
       return (
         <Spacing
           key={`button-${id}`}
-          mt={idx >= 1 ? PADDING_UNITS : 0}
+          mt={showMore && visible
+            ? 0
+            : idx >= 1 ? PADDING_UNITS : 0
+          }
         >
-          {!visible && !showMore && (
-            <Tooltip
-              appearBefore={'right' === aligned}
-              height={5 * UNIT}
-              label={displayText}
-              size={null}
-              widthFitContent
-            >
-              {buttonEl}
-            </Tooltip>
-          )}
-          {!visible && showMore && buttonEl}
-
-          {visible && clickEl}
+          {finalEl}
         </Spacing>
       );
     });
