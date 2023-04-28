@@ -288,7 +288,7 @@ function CodeBlock({
   });
 
   const [errorMessages, setErrorMessages] = useState(null);
-  const [isEditingBlock, setIsEditingBlock] = useState<boolean>(false);
+  const [isEditingBlock, setIsEditingBlock] = useState<boolean>(isMarkdown);
   const [isEditingBlockName, setIsEditingBlockName] = useState<boolean>(false);
   const [newBlockUuid, setNewBlockUuid] = useState(blockUUID);
   const [outputCollapsed, setOutputCollapsed] = useState(false);
@@ -950,7 +950,19 @@ function CodeBlock({
 
   const blocksLength = useMemo(() => blocks?.length || 0, [blocks]);
 
-  const markdownEl = useMemo(() => <Markdown>{content}</Markdown>, [content]);
+  const markdownEl = useMemo(() => (
+    (!content)
+    ?
+      <Spacing px={1}>
+        <Text monospace muted>
+          Double-click to edit
+        </Text>
+      </Spacing>
+    :
+      <Markdown>
+        {content}
+      </Markdown>
+  ), [content]);
   useEffect(() => {
     if (isMarkdown && isEditingBlock && !selected) {
       setIsEditingBlock(false);
