@@ -1,19 +1,13 @@
-import BackfillGradient from '@oracle/icons/custom/BackfillGradient';
-import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
-import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
-import ChartGradient from '@oracle/icons/custom/ChartGradient';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
-import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import {
-  Backfill,
-  BlocksSeparated,
-  BlocksStacked,
-  Chart,
+  BackfillV2,
   Code,
+  Lightning,
+  Logs,
+  Monitor,
+  PipeIcon,
   Schedule,
   Settings,
-  TodoList,
 } from '@oracle/icons';
 import { PageNameEnum } from './constants';
 import { isViewer } from '@utils/session';
@@ -23,8 +17,7 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
 
   const navigationItems = [
     {
-      Icon: Schedule,
-      IconSelected: ScheduleGradient,
+      Icon: Lightning,
       id: PageNameEnum.TRIGGERS,
       isSelected: () => PageNameEnum.TRIGGERS === pageName,
       label: () => 'Triggers',
@@ -34,8 +27,7 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
       },
     },
     {
-      Icon: BlocksStacked,
-      IconSelected: BlocksStackedGradient,
+      Icon: Schedule,
       id: PageNameEnum.RUNS,
       isSelected: () => PageNameEnum.RUNS === pageName,
       label: () => 'Runs',
@@ -45,8 +37,7 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
       },
     },
     {
-      Icon: Backfill,
-      IconSelected: BackfillGradient,
+      Icon: BackfillV2,
       id: PageNameEnum.BACKFILLS,
       isSelected: () => PageNameEnum.BACKFILLS === pageName,
       label: () => 'Backfills',
@@ -56,8 +47,7 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
       },
     },
     {
-      Icon: TodoList,
-      IconSelected: TodoListGradient,
+      Icon: Logs,
       id: PageNameEnum.PIPELINE_LOGS,
       isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
       label: () => 'Logs',
@@ -67,8 +57,7 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
       },
     },
     {
-      Icon: Chart,
-      IconSelected: ChartGradient,
+      Icon: Monitor,
       id: PageNameEnum.MONITOR,
       isSelected: () => PageNameEnum.MONITOR === pageName,
       label: () => 'Monitor',
@@ -81,8 +70,7 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
 
   if (PipelineTypeEnum.INTEGRATION === pipeline?.type) {
     navigationItems.unshift({
-      Icon: BlocksSeparated,
-      IconSelected: BlocksSeparatedGradient,
+      Icon: PipeIcon,
       id: PageNameEnum.SYNCS,
       isSelected: () => PageNameEnum.SYNCS === pageName,
       label: () => 'Syncs',
@@ -97,7 +85,6 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
     // @ts-ignore
     navigationItems.unshift({
       Icon: Code,
-      IconSelected: null,
       // @ts-ignore
       disabled: !pipelineUUID,
       id: PageNameEnum.EDIT,
@@ -112,7 +99,6 @@ export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineT
     // @ts-ignore
     navigationItems.push({
       Icon: Settings,
-      IconSelected: null,
       id: PageNameEnum.SETTINGS,
       isSelected: () => PageNameEnum.SETTINGS === pageName,
       label: () => 'Pipeline settings',

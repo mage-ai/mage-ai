@@ -2,22 +2,17 @@ import NextLink from 'next/link';
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
-import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineV2Gradient from '@oracle/icons/custom/PipelineV2Gradient';
-import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
-import SettingsGradient from '@oracle/icons/custom/SettingsGradient';
-import TerminalGradient from '@oracle/icons/custom/TerminalGradient';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import {
-  BlocksStacked,
-  PipelineV2,
+  Lightning,
+  PipelineV3,
   Schedule,
   Settings,
   Terminal,
@@ -64,8 +59,7 @@ function VerticalNavigation({
   const buttons = useMemo(() => {
     const defaultItems = [
       {
-        Icon: PipelineV2,
-        IconSelected: PipelineV2Gradient,
+        Icon: PipelineV3,
         id: 'pipelines',
         label: () => 'Pipelines',
         linkProps: {
@@ -73,8 +67,7 @@ function VerticalNavigation({
         },
       },
       {
-        Icon: Schedule,
-        IconSelected: ScheduleGradient,
+        Icon: Lightning,
         id: 'triggers',
         label: () => 'Triggers',
         linkProps: {
@@ -82,8 +75,7 @@ function VerticalNavigation({
         },
       },
       {
-        Icon: BlocksStacked,
-        IconSelected: BlocksStackedGradient,
+        Icon: Schedule,
         id: 'pipeline-runs',
         label: () => 'Pipelines runs',
         linkProps: {
@@ -92,7 +84,6 @@ function VerticalNavigation({
       },
       {
         Icon: Terminal,
-        IconSelected: TerminalGradient,
         id: 'terminal',
         label: () => 'Terminal',
         linkProps: {
@@ -101,7 +92,6 @@ function VerticalNavigation({
       },
       {
         Icon: Settings,
-        IconSelected: SettingsGradient,
         id: 'settings',
         label: () => 'Settings',
         linkProps: {
