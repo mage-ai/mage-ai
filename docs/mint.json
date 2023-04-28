@@ -63,6 +63,7 @@
             "tutorials/etl/complete-project"
           ]
         },
+        "guides/data-integration-pipeline",
         "tutorials/setup-dbt",
         {
           "group": "ML",
