@@ -5,6 +5,14 @@ description: "Version control your Mage project with Git"
 
 ## Configure Git settings
 
+<Note>
+By using the Git integration through Mage, Mage will automatically set your local repo
+as a safe directory (i.e. `git config --global --add safe.directory <local repo path>`)
+
+</Note>
+
+### SSH authentication 
+
 <Warning>
 **SSH keys with passphrase are not supported**
 
@@ -17,12 +25,6 @@ you don't have to enter your SSH key passphrase every time you perform an action
 `eval $(ssh-agent -s) && ssh-add ~/.ssh/id_rsa`
 
 </Warning>
-
-<Note>
-By using the Git integration through Mage, Mage will automatically set your local repo
-as a safe directory (i.e. `git config --global --add safe.directory <local repo path>`)
-
-</Note>
 
 To use the Mage Git integration, you will need to first configure Git settings.
 The following instructions are tailored to Github, but the Git integration can work with
@@ -37,6 +39,7 @@ to Github, unless you want them to.
 haven't already. Check out this sections 3 and 4 of this
 [guide](https://docs.mage.ai/developing-in-the-cloud/setting-up-git#3-set-up-ssh-key)
 to set up your SSH key.
+5. Select SSH as the authentication type.
 5. Fill out the form:
     1. `Remote repo url`: Your Github repository's remote url. Use the SSH link instead of HTTPS link.
         ![Github url](/media/github-url.png)
@@ -58,7 +61,35 @@ to set up your SSH key.
         each trigger is run.
 8. Save your Git settings
 
-### Git sync
+### HTTPS/Token authentication
+
+1. Ensure that `.preferences.yaml` file is added to your repo's `.gitignore` file so that your Git settings aren't pushed
+to Github, unless you want them to.
+2. Go to your Mage settings:
+![Mage settings](/media/mage-settings.png)
+3. Navigate to the "Git settings" section of the Mage settings page.
+4. Create a Git access token and save it for later.
+    1. [GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+    2. [GitLab](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
+5. Fill out the form:
+    1. `Remote repo url`: Your Github repository's remote url. Use the SSH link instead of HTTPS link.
+        ![Github url](/media/github-url.png)
+    2. `Local directory path`: The directory in your machine that will be synced with the Github repository.
+        If this field is omitted, it will default to the path determined by Python's `os.getcwd()`. You can
+        check what your current working directory is in a Scratchpad block.
+6. Fill out the remaining git fields:
+    1. `Username`: Your git username. Your username will be used for token authentication.
+    2. `Email`: Your git email.
+    3. `Access token`: Enter the Git access token that you created in step 4.
+7. Fill out the _optional_ sync fields if you are using a [Git sync](/production/data-sync/git#git-sync)
+   (this is a separate Git feature):
+    1. `Branch name`: This field is only used when running a Git sync. Git syncs can be run either from this
+        Git settings page, or before every trigger run.
+    2. `Sync before each trigger run`: If this field is checked, then Mage will sync with Github before
+        each trigger is run.
+8. Save your Git settings
+
+## Git sync
 
 Git sync is a separate feature from integrating Mage with Github. Running a Git sync will ***overwrite all local changes***,
 and replace them with the code in the specified remote branch. Git syncs can be run either from the
