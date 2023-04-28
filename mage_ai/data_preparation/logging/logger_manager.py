@@ -7,7 +7,7 @@ import io
 import logging
 import os
 
-MAX_LOG_FILE_SIZE = 5 * 1024 * 1024
+MAX_LOG_FILE_SIZE = 20 * 1024 * 1024
 
 
 class LoggerManager:
