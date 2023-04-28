@@ -80,6 +80,7 @@ class ConfigKey(str, Enum):
     SNOWFLAKE_PRIVATE_KEY_PASSPHRASE = 'SNOWFLAKE_PRIVATE_KEY_PASSPHRASE'
     SNOWFLAKE_PRIVATE_KEY_PATH = 'SNOWFLAKE_PRIVATE_KEY_PATH'
     SNOWFLAKE_ROLE = 'SNOWFLAKE_ROLE'
+    SNOWFLAKE_TIMEOUT = 'SNOWFLAKE_TIMEOUT'
     SNOWFLAKE_USER = 'SNOWFLAKE_USER'
     TRINO_CATALOG = 'TRINO_CATALOG'
     TRINO_HOST = 'TRINO_HOST'
@@ -346,6 +347,7 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
         ConfigKey.SNOWFLAKE_DEFAULT_WH: (VerboseConfigKey.SNOWFLAKE, 'warehouse'),
         ConfigKey.SNOWFLAKE_PASSWORD: (VerboseConfigKey.SNOWFLAKE, 'password'),
+        ConfigKey.SNOWFLAKE_TIMEOUT: (VerboseConfigKey.SNOWFLAKE, 'timeout'),
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
     }
 
