@@ -238,7 +238,7 @@ class Snowflake(BaseSQLConnection):
 
                 cur.execute(f'USE DATABASE {database}', timeout=self.timeout)
                 cur.execute(
-                    f'SELECT * FROM information_schema.tables WHERE table_schema = ' +
+                    'SELECT * FROM information_schema.tables WHERE table_schema = ' +
                     f'\'{schema}\' AND table_name = \'{table_name}\'',
                     timeout=self.timeout,
                 )
