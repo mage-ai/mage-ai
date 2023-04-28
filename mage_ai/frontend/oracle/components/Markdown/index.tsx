@@ -8,19 +8,26 @@ import dark from '@oracle/styles/themes/dark';
 import { MarkdownContainer } from './index.style';
 
 type MarkdownProps = {
-  maxWidth?: number;
   children: string;
 };
 
 function Markdown({
-  maxWidth,
   children,
 }: MarkdownProps) {
   return (
     <MarkdownContainer>
       <ReactMarkdown
         components={{
-          a: ({ children }) => <Link inline primary>{children}</Link>,
+          a: ({ children, href }) => (
+            <Link
+              href={href}
+              inline
+              openNewWindow
+              primary
+            >
+              {children}
+            </Link>
+          ),
           code: ({ children }) => (
             <Text
               backgroundColor={dark.interactive.defaultBorder}

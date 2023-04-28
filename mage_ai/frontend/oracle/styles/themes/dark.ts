@@ -71,7 +71,7 @@ export default {
     rose: '#D1A2AB',
     roseLight: 'rgba(209, 162, 171, 0.5)',
     sky: BLUE_SKY_DARK,
-    skyLight: 'rgba(106, 161, 224, 0.5)',
+    skyLight: 'rgba(106, 161, 224, 0.05)',
     teal: '#00B4CC',
     tealLight: 'rgba(0, 180, 204, 0.5)',
     warning: '#DD9900',
