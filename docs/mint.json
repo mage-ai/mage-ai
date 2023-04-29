@@ -193,7 +193,8 @@
             },
             "guides/r-blocks",
             "guides/blocks/dynamic-blocks",
-            "guides/blocks/custom-blocks"
+            "guides/blocks/custom-blocks",
+            "guides/blocks/markdown-blocks"
           ]
         },
         {
