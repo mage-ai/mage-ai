@@ -143,10 +143,6 @@ class PipelineSchedule(BaseModel):
         now = datetime.now(timezone.utc)
 
         if self.schedule_interval is None:
-            # This is required for API triggered pipelines.
-            if ScheduleType.API == self.schedule_type:
-                return now
-
             return None
 
         if self.schedule_interval == '@once':
