@@ -39,13 +39,23 @@ gcloud beta emulators pubsub start --project=my-project-id
 $(gcloud beta emulators pubsub env-init)
 ```
 
-## Create a `topic_id` for testing
+## Create a topic and a subscription
 
-Use the procedures listed under the `Using the emulator` section to create a `topic_id`, e.g.,
+Use the `gcloud pubsub topics create` command to create a topic:
 
 ```
-python publisher.py my-project-id create my-topic-id
+gcloud pubsub topics create test-topic-id
 ```
+
+After you create a topic, you can subscribe or publish to it. Use the
+`gcloud pubsub subscriptions create` command to create a subscription.
+
+```
+gcloud pubsub subscriptions create test-subscription-id-0 --topic my-topic
+```
+
+Only messages published to the topic after the subscription is created
+are available to subscriber applications.
 
 ## Start Mage
 
