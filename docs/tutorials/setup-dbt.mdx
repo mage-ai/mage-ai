@@ -226,22 +226,26 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
     the tests named `unique` under both models. Your file should look like this:
 
     ```yaml 
+
     version: 2
-        models:
-          - name: my_first_dbt_model
-            description: "A starter dbt model"
-            columns:
-              - name: id
-                description: "The primary key for this table"
-                tests:
-                  - not_null
-          - name: my_second_dbt_model
-            description: "A starter dbt model"
-            columns:
-              - name: id
-                description: "The primary key for this table"
-                tests:
-                  - not_null
+
+    models:
+      - name: my_first_dbt_model
+        description: "A starter dbt model"
+        columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+              - not_null
+
+      - name: my_second_dbt_model
+        description: "A starter dbt model"
+        columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+              - not_null
+
     ```
 
 6.  Click on the **`Failed`** button next to the pipeline run and click
