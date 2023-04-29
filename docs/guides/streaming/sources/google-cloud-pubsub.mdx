@@ -34,7 +34,7 @@ to set up the local Google Cloud PubSub emulator.
 Use the command listed under the `Starting the emulator` section to create a `project_id`, e.g.,
 
 ```
-gcloud beta emulators pubsub start --project=my-project-id
+gcloud beta emulators pubsub start --project=test-project-id
 
 $(gcloud beta emulators pubsub env-init)
 ```
@@ -51,7 +51,7 @@ After you create a topic, you can subscribe or publish to it. Use the
 `gcloud pubsub subscriptions create` command to create a subscription.
 
 ```
-gcloud pubsub subscriptions create test-subscription-id-0 --topic my-topic
+gcloud pubsub subscriptions create test-subscription-id-0 --topic test-topic-id
 ```
 
 Only messages published to the topic after the subscription is created
