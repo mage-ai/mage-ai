@@ -12,7 +12,6 @@ def get_messages(callback=None):
         try:
             client = get_active_kernel_client()
             message = client.get_iopub_msg(timeout=1)
-            logger.info(f'[{now}] Message:', message)
 
             if message.get('content'):
                 if callback:
