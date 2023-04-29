@@ -26,7 +26,7 @@ pubsub_emulator_host: "host.docker.internal:8085"
 ## Set up Google Cloud Pubsub emulator
 
 To test out Google Cloud PubSub source locally, follow the instructions in
-[Testing apps locally with the emulator](https://docs.mage.ai/community/contributing)
+[Testing apps locally with the emulator](https://cloud.google.com/pubsub/docs/emulator)
 to set up the local Google Cloud PubSub emulator.
 
 ## Create a `project_id` for testing
@@ -71,7 +71,7 @@ are available to subscriber applications.
     topic_id: test-topic-id
     subscription_id: test-subscription-id-0
     timeout: 5
-    batch_size: 10
+    batch_size: 100
     pubsub_emulator_host: "host.docker.internal:8085"
     ```
 
@@ -117,10 +117,13 @@ the bottom, click the button <b>Execute pipeline</b> to test the pipeline.
 
 ### Publish some testing messages
 
-Please use the example given in the [Testing apps locally with the emulator](https://docs.mage.ai/community/contributing)
+Please use the publisher example given in the [Testing apps locally with the emulator](https://cloud.google.com/pubsub/docs/emulator)
 
+```
+python publisher.py test-project-id publish test-topic-id
+```
 
-You should see an output like this:
+You should see an output similar to the following:
 
 ```
 [still_brook] [GoogleCloudPubSubSource] Subscription already exists: projects/test-project-id/subscriptions/test-subscription-id-0
