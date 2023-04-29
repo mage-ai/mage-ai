@@ -60,6 +60,11 @@ export default class AuthToken {
   }
 
   static async logout(callback: any = null) {
+    // @ts-ignore
+    ls.clear();
+    removeUser();
+    removeToken();
+
     try {
       if (callback) {
         await callback();
@@ -67,11 +72,8 @@ export default class AuthToken {
         await redirectToUrl('/sign-in');
       }
     } catch {
+      console.log('Sign out error.')
     }
-    // @ts-ignore
-    ls.clear();
-    removeUser();
-    removeToken();
   }
 
   logout = AuthToken.logout;

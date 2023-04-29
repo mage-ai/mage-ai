@@ -1,5 +1,4 @@
 import BasePage from '@components/BasePage';
-import PublicRoute from '@components/shared/PublicRoute';
 import SignForm from '@components/Sessions/SignForm';
 
 function SignInPage() {
@@ -14,4 +13,4 @@ function SignInPage() {
 
 SignInPage.getInitialProps = async () => ({});
 
-export default PublicRoute(SignInPage, { redirectUrl: '/' });
+export default SignInPage;

@@ -60,6 +60,7 @@ from mage_ai.settings import (
 )
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
+from time import sleep
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
@@ -297,6 +298,9 @@ async def main(
 
     if REQUIRE_USER_AUTHENTICATION:
         print('User authentication is enabled.')
+        # We need to sleep for a few seconds after creating all the tables or else there
+        # may be an error trying to create users.
+        sleep(3)
         user = User.query.filter(User.owner == True).first()  # noqa: E712
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
