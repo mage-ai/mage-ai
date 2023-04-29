@@ -117,11 +117,13 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 1. Under the data loader block you just added, click the button **`DBT model`**,
    then click the option `Single model`.
-2. In the file browser that pops up, click the file named
-   `my_second_dbt_model.sql` under the folders `demo/models/example/`. 1. This
-   will add 2 DBT blocks to your pipeline: 1 for the DBT model named
-   `my_first_dbt_model` and the 2nd for the DBT model named
-   `my_second_dbt_model`. 1. The model named `my_first_dbt_model` was added to
+1. In the file browser that pops up, click the file named
+   `my_second_dbt_model.sql` under the folders `demo/models/example/`. 
+   
+   1. This will add 2 DBT blocks to your pipeline: 1 for the DBT model named
+   `my_first_dbt_model` and the 2nd for the DBT model named `my_second_dbt_model`. 
+   
+   1. The model named `my_first_dbt_model` was added to
    the pipeline because `my_second_dbt_model` references it.
 
 ![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
@@ -223,8 +225,8 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 5.  Open the file `demo_project/dbt/demo/models/example/schema.yml` and remove
     the tests named `unique` under both models. Your file should look like this:
 
-    ````yaml version: 2
-
+    ```yaml 
+    version: 2
         models:
           - name: my_first_dbt_model
             description: "A starter dbt model"
@@ -233,7 +235,6 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
                 description: "The primary key for this table"
                 tests:
                   - not_null
-
           - name: my_second_dbt_model
             description: "A starter dbt model"
             columns:
@@ -241,9 +242,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
                 description: "The primary key for this table"
                 tests:
                   - not_null
-        ```
-
-    ````
+    ```
 
 6.  Click on the **`Failed`** button next to the pipeline run and click
     **`Retry run`**. It should complete running successfully after a few
