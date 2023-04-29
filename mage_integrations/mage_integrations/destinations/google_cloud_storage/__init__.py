@@ -25,7 +25,7 @@ class GoogleCloudStorage(Destination):
     
     def build_client(self) -> Client:
         return Client.from_service_account_json(
-            json_credentials_path=self.config['google_service_acc_key_filepath']
+            json_credentials_path=self.config['google_application_credentials']
         )
         
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
