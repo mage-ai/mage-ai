@@ -1,11 +1,18 @@
 ---
 title: "Core abstractions"
+icon: "microchip"
 description: "These are the fundamental concepts that Mage uses to operate."
+"og:image": "https://user-images.githubusercontent.com/78053898/198752755-ed44ffd6-7e6c-45d3-a4ca-91f2810ce46c.svg"
 ---
 
-![](https://user-images.githubusercontent.com/78053898/198752755-ed44ffd6-7e6c-45d3-a4ca-91f2810ce46c.svg)
+<Frame>
+  <img
+    alt="Core abstractions"
+    src="https://user-images.githubusercontent.com/78053898/198752755-ed44ffd6-7e6c-45d3-a4ca-91f2810ce46c.svg"
+  />
+</Frame>
 
-### Project
+## Project
 
 A project is like a repository on GitHub; this is where you write all your code.
 
@@ -46,7 +53,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 mage init [project_name]
 ```
 
-### Pipeline
+## Pipeline
 
 A pipeline contains references to all the blocks of code you want to run, charts
 for visualizing data, and organizes the dependency between each block of code.
@@ -61,7 +68,7 @@ This is what it could look like in the notebook UI:
   src="https://github.com/mage-ai/mage-ai/raw/master/media/data-pipeline-overview.jpg"
 />
 
-### Block
+## Block
 
 A block is a file with code that can be executed independently or within a
 pipeline.
@@ -101,7 +108,7 @@ def load_data_from_api() -> DataFrame:
 Each block file is stored in a folder that matches its respective type (e.g.
 transformers are stored in `[project_name]/transformers/`.
 
-### Sensor
+## Sensor
 
 A sensor is a block that continuously evaluates a condition until it’s met or
 until a period of time has elapsed.
@@ -144,7 +151,7 @@ def check_condition(**kwargs) -> bool:
   current execution date.
 </Note>
 
-### Data product
+## Data product
 
 Every block produces data after it's been executed. These are called **data
 products** in Mage.
@@ -166,7 +173,7 @@ Some examples of data products produced by blocks:
 
 - 🎧 Audio file
 
-### Trigger
+## Trigger
 
 A trigger is a set of instructions that determine when or how a pipeline should
 run. A pipeline can have 1 or more triggers.
@@ -179,7 +186,7 @@ There are 3 types of triggers:
 
 3. API
 
-#### Schedule
+### Schedule
 
 A schedule-type trigger will instruct the pipeline to run after a start date and
 on a set interval.
@@ -198,7 +205,7 @@ Currently, the frequency pipelines can be scheduled for include:
 
 - Every N minutes (coming soon)
 
-#### Event
+### Event
 
 An event-type trigger will instruct the pipeline to run whenever a specific
 event occurs.
@@ -215,7 +222,7 @@ Check out this
 [**tutorial**](/guides/triggers/events/aws) on how
 to create an event trigger.
 
-#### API
+### API
 
 An API-type trigger will instruct the pipeline to run after a specific API call
 is made.
@@ -224,7 +231,7 @@ You can make a POST request to an endpoint provided in the UI when creating or
 editing a trigger. You can optionally include runtime variables in your request
 payload.
 
-### Run
+## Run
 
 A run record stores information about when it was started, its status, when it
 was completed, any runtime variables used in the execution of the pipeline or
@@ -235,16 +242,16 @@ building the pipeline and block), a run record is created in a database.
 
 There are 2 types of runs:
 
-#### Pipeline run
+### Pipeline run
 
 This contains information about the entire pipeline execution.
 
-#### Block run
+### Block run
 
 Every time a pipeline is executed, each block in the pipeline will be executed
 and potentially create a block run record.
 
-### Log
+## Log
 
 A log is a file that contains system output information.
 
@@ -265,26 +272,26 @@ Here is an example of a log in the
 Logs are stored on disk wherever Mage is running. However, you can configure
 where you want log files written to (e.g. Amazon S3, Google Storage, etc).
 
-### Backfill
+## Backfill
 
 A backfill creates 1 or more pipeline runs for a pipeline.
 
-### Event
+## Event
 
 _WIP_
 
-### Metric
+## Metric
 
 _WIP_
 
-### Partition
+## Partition
 
 _WIP_
 
-### Version
+## Version
 
 _WIP_
 
-### Service
+## Service
 
 _WIP_
