@@ -531,7 +531,7 @@ def run_integration_pipeline(
 
     pipeline_schedule = pipeline_run.pipeline_schedule
     schedule_interval = pipeline_schedule.schedule_interval
-    if ScheduleType.API == self.pipeline_schedule:
+    if ScheduleType.API == pipeline_schedule.schedule_type:
         execution_date = datetime.utcnow()
     else:
         # This will be none if trigger is API type

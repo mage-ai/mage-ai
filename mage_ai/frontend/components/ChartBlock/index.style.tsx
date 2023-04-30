@@ -17,7 +17,7 @@ export const ChartBlockStyle = styled.div`
   // overflow: hidden;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).chartBlock};
+    background-color: ${(props.theme.background || dark.background).codeArea};
   `}
 `;
 

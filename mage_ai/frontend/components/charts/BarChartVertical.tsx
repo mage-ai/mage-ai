@@ -22,6 +22,8 @@ import { isNumeric } from '@utils/string';
 type BarChartVerticalProps = SharedProps;
 type BarChartVerticalContainerProps = BarChartVerticalProps;
 
+const X_TICK_WIDTH = UNIT * 6;
+
 const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
   keyForYData = yKey,
   ...props
@@ -62,6 +64,8 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
     keyForYData,
     orientationVertical: true,
   });
+
+  const xNumTicksToDislay = Math.min(xNumTicks, width / X_TICK_WIDTH);
 
   return width < 10 ? null : (
     <div>
@@ -156,7 +160,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
               <AxisBottom
                 hideTicks
                 left={margin.left}
-                numTicks={xNumTicks}
+                numTicks={xNumTicksToDislay}
                 scale={yScale}
                 stroke={colors.muted}
                 tickFormat={xLabelFormat}
