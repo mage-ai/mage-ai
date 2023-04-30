@@ -60,6 +60,7 @@ from mage_ai.settings import (
 )
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 from time import sleep
 from tornado import autoreload
 from tornado.ioloop import PeriodicCallback
@@ -367,6 +368,8 @@ def start_server(
     if not os.path.exists(project):
         init_repo(project)
     set_repo_path(project)
+
+    asyncio.run(UsageStatisticLogger().project_impression())
 
     if dbt_docs:
         run_docs_server()

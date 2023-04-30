@@ -7,6 +7,8 @@ from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings import AUTHENTICATION_MODE
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
+import asyncio
 
 
 class SessionResource(BaseResource):
@@ -24,6 +26,11 @@ class SessionResource(BaseResource):
             error.update(
                 {'message': 'Email/username and password are required.'})
             raise ApiError(error)
+
+        def _create_callback(resource):
+            asyncio.run(UsageStatisticLogger().user_impression())
+
+        self.on_create_callback = _create_callback
 
         user = None
         if AUTHENTICATION_MODE.lower() == 'ldap':
