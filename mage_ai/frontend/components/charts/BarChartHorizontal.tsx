@@ -25,6 +25,7 @@ type BarStackHorizontalContainerProps = BarStackHorizontalProps;
 
 const MAX_FIELDS_DISPLAYED: number = 50;
 const MAX_LABEL_LENGTH: number = 20;
+const Y_TICK_HEIGHT = UNIT * 3;
 
 const defaultMargin = {
   bottom: 5 * UNIT,
@@ -77,6 +78,14 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
     showTooltip,
     width,
     yLabelFormat: yLabelFormatProp,
+  });
+
+  const tickValuesToDisplay = [];
+  const ticksToShow = Math.floor(tickValues?.length / Math.floor(height / Y_TICK_HEIGHT));
+  tickValues?.forEach((val, idx: number) => {
+    if (idx % ticksToShow === 0) {
+      tickValuesToDisplay.push(val);
+    }
   });
 
   return width < 10 ? null : (
@@ -165,7 +174,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
                 textAnchor: 'end',
               })}
               tickStroke={colors.muted}
-              tickValues={tickValues}
+              tickValues={tickValuesToDisplay}
               top={2}
             />
 

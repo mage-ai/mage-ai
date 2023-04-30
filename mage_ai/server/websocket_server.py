@@ -317,13 +317,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             output_dict,
         )
 
-        logger.info(
-            f'[{block_uuid}] Sending message for {msg_id} to '
-            f'{len(self.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
-        )
+        # KernelResource: when getting a kernel,
+        # it will trigger this send_message from the WebSocket subscriber.
+        # This log message is unnecessary and publishing to clients is also unnecessary.
+        if block_uuid:
+            logger.info(
+                f'[{block_uuid}] Sending message for {msg_id} to '
+                f'{len(self.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
+            )
 
-        for client in self.clients:
-            client.write_message(json.dumps(message_final))
+            for client in self.clients:
+                client.write_message(json.dumps(message_final))
 
     def __execute_block(
         self,
@@ -346,7 +350,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         widget = BlockType.CHART == block_type
 
-        block = pipeline.get_block(block_uuid, extension_uuid=extension_uuid, widget=widget)
+        block = pipeline.get_block(
+            block_uuid,
+            block_type=block_type,
+            extension_uuid=extension_uuid,
+            widget=widget,
+        )
 
         reload_all_repo_modules(custom_code)
 

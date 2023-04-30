@@ -1,6 +1,6 @@
+import { useCallback, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
 
 import ApiErrorType from '@interfaces/ApiErrorType';
 import AuthToken from '@api/utils/AuthToken';
@@ -42,7 +42,7 @@ function SignForm({
     [KEY_PASSWORD]?: string;
   }>({});
 
-  const [create, { isLoading }] = useMutation(
+  const [createRequest, { isLoading }] = useMutation(
     api.sessions.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -72,6 +72,10 @@ function SignForm({
       ),
     },
   );
+
+  const create = useCallback(payload => AuthToken.logout(() => createRequest(payload)), [
+    createRequest,
+  ]);
 
   return (
     <Row fullHeight>

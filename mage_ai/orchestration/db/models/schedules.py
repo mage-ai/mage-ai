@@ -140,10 +140,11 @@ class PipelineSchedule(BaseModel):
             self.create(**kwargs)
 
     def current_execution_date(self) -> datetime:
+        now = datetime.now(timezone.utc)
+
         if self.schedule_interval is None:
             return None
 
-        now = datetime.now(timezone.utc)
         if self.schedule_interval == '@once':
             return now
         elif self.schedule_interval == '@daily':

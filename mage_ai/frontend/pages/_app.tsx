@@ -122,9 +122,9 @@ function MyApp(props: MyAppProps & AppProps) {
   );
   const noValue = typeof val === 'undefined' || val === null || !REQUIRE_USER_AUTHENTICATION();
   const { data } = api.project_settings.list({}, {}, { pauseFetch: !noValue });
+  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
   const requireUserAuthentication =
     useMemo(() => data?.project_settings?.[0]?.require_user_authentication, [data]);
-
 
   useEffect(() => {
     if (noValue &&
@@ -136,21 +136,24 @@ function MyApp(props: MyAppProps & AppProps) {
         requireUserAuthentication,
         REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
       );
+    }
 
-      const loggedIn = AuthToken.isLoggedIn();
-      if (requireUserAuthentication && !loggedIn) {
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
-
-        if ('/sign-in' !== currentPath) {
-          const query = {
-            ...queryFromUrl(),
-            redirect_url: currentPath,
-          };
-          redirectToUrl(`/sign-in?${queryString(query)}`);
-        }
+    const loggedIn = AuthToken.isLoggedIn();
+    if ((requireUserAuthentication && !loggedIn) || dataProjects?.error?.code === 401) {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : null;
+      if ('/sign-in' !== currentPath) {
+        const query = {
+          ...queryFromUrl(),
+          redirect_url: currentPath,
+        };
+        redirectToUrl(`/sign-in?${queryString(query)}`);
       }
     }
-  }, [noValue, requireUserAuthentication]);
+  }, [
+    dataProjects,
+    noValue,
+    requireUserAuthentication,
+  ]);
 
   return (
     <KeyboardContext.Provider value={keyboardContextValue}>
