@@ -15,10 +15,18 @@ class GoogleCloudPubSubConfig(BaseConfig):
     subscription_id: str
     timeout: int = 5
     batch_size: int = DEFAULT_BATCH_SIZE
-    pubsub_emulator_host: str = None  # e.g., host.docker.internal:8085
+    pubsub_emulator_host: str = None  # e.g., "host.docker.internal:8085"
+    google_application_credentials: str = None  # e.g., "./google_credentials.json"
 
 
 class GoogleCloudPubSubSource(BaseSource):
+    """
+    Handles data transfer between a Google Cloud Pub/Sub topic and the Mage app.
+
+    GOOGLE_APPLICATION_CREDENTIALS environment could be used to set the Google Cloud
+    credentials file for authentication.
+    """
+
     config_class = GoogleCloudPubSubConfig
 
     def _exist_subscription(self, project_id: str) -> bool:
@@ -50,6 +58,8 @@ class GoogleCloudPubSubSource(BaseSource):
     def init_client(self) -> None:
         if self.config.pubsub_emulator_host is not None:
             os.environ["PUBSUB_EMULATOR_HOST"] = self.config.pubsub_emulator_host
+        if self.config.google_application_credentials is not None:
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.config.google_application_credentials
         self.subscriber_client = pubsub_v1.SubscriberClient()
         self.subscription_path = self.subscriber_client.subscription_path(
             self.config.project_id, self.config.subscription_id)

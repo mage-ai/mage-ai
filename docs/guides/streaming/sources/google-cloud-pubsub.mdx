@@ -21,6 +21,7 @@ subscription_id: test-subscription-id-0
 timeout: 5
 batch_size: 100
 pubsub_emulator_host: "host.docker.internal:8085"
+google_application_credentials: str = None  # e.g., "./google_credentials.json"
 ```
 
 ## Set up Google Cloud Pubsub emulator
@@ -73,6 +74,7 @@ are available to subscriber applications.
     timeout: 5
     batch_size: 100
     pubsub_emulator_host: "host.docker.internal:8085"
+    google_application_credentials: str = None  # e.g., "./google_credentials.json"
     ```
 
 4. Add a transformer block and paste the following:
