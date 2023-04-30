@@ -62,9 +62,9 @@ class ProjectResource(GenericResource):
         data = {}
 
         if 'help_improve_mage' in payload:
-            data['help_improve_mage'] = payload['help_improve_mage']
-            if data['help_improve_mage'] and not repo_config.project_uuid:
+            if payload['help_improve_mage'] and not repo_config.project_uuid:
                 data['project_uuid'] = uuid.uuid4().hex
+            data['help_improve_mage'] = payload['help_improve_mage']
 
         if len(data.keys()) >= 1:
             repo_config.save(**data)
