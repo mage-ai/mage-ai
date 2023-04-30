@@ -59,7 +59,8 @@ class GoogleCloudPubSubSource(BaseSource):
         if self.config.pubsub_emulator_host is not None:
             os.environ["PUBSUB_EMULATOR_HOST"] = self.config.pubsub_emulator_host
         if self.config.google_application_credentials is not None:
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.config.google_application_credentials
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
+                self.config.google_application_credentials
         self.subscriber_client = pubsub_v1.SubscriberClient()
         self.subscription_path = self.subscriber_client.subscription_path(
             self.config.project_id, self.config.subscription_id)
