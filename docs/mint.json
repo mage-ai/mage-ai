@@ -66,7 +66,7 @@
         "guides/data-integration-pipeline",
         "tutorials/setup-dbt",
         {
-          "group": "ML",
+          "group": "Machine learning pipeline",
           "pages": [
             "tutorials/train-model",
             "tutorials/train/complete-project"
