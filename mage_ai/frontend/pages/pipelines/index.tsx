@@ -478,15 +478,26 @@ function PipelineListPage() {
         </Spacing>
       )}
 
-      <Text muted small>
-        To learn more about how this works, please check out the <Link
-          href="https://docs.mage.ai/contributing/statistics/overview"
-          openNewWindow
-          small
-        >
-          documentation
-        </Link>.
-      </Text>
+      <Spacing mb={PADDING_UNITS}>
+        <Text muted small>
+          To learn more about how this works, please check out the <Link
+            href="https://docs.mage.ai/contributing/statistics/overview"
+            openNewWindow
+            small
+          >
+            documentation
+          </Link>.
+        </Text>
+      </Spacing>
+
+      <Button
+        onClick={() => updateProject({
+          help_improve_mage: true,
+        }).then(() => hideHelpMageModal())}
+        secondary
+      >
+        Close
+      </Button>
     </Panel>
   ), {}, [
     project,
