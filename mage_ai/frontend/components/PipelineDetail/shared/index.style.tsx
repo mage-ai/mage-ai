@@ -8,8 +8,4 @@ export const BEFORE_WIDTH = 34 * UNIT;
 
 export const BeforeStyle = styled.div`
   min-height: calc(100vh - ${HEADER_HEIGHT}px);
-
-  ${props => `
-    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
-  `}
 `;

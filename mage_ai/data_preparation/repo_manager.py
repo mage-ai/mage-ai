@@ -4,6 +4,7 @@ from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.shared.environments import is_test
 from typing import Dict
 import os
+import ruamel.yaml
 import sys
 import traceback
 import yaml
@@ -22,9 +23,8 @@ class RepoConfig:
         self.repo_name = os.path.basename(self.repo_path)
         try:
             if not config_dict:
-                metadata_path = os.path.join(self.repo_path, 'metadata.yaml')
-                if os.path.exists(metadata_path):
-                    with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
+                if os.path.exists(self.metadata_path):
+                    with open(self.metadata_path) as f:
                         config_file = Template(f.read()).render(
                             **get_template_vars()
                         )
@@ -67,6 +67,8 @@ class RepoConfig:
             self.k8s_executor_config = repo_config.get('k8s_executor_config')
             self.notification_config = repo_config.get('notification_config', dict())
             self.queue_config = repo_config.get('queue_config', dict())
+            self.project_uuid = repo_config.get('project_uuid')
+            self.help_improve_mage = repo_config.get('help_improve_mage')
 
             self.s3_bucket = None
             self.s3_path_prefix = None
@@ -89,6 +91,10 @@ class RepoConfig:
         repo_config = RepoConfig(repo_path=repo_path, config_dict=config_dict)
         return repo_config
 
+    @property
+    def metadata_path(self) -> str:
+        return os.path.join(self.repo_path, 'metadata.yaml')
+
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
             ecs_config=self.ecs_config,
@@ -100,7 +106,25 @@ class RepoConfig:
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
             variables_retention_period=self.variables_retention_period,
             remote_variables_dir=self.remote_variables_dir,
+            project_uuid=self.project_uuid,
+            help_improve_mage=self.help_improve_mage,
         )
+
+    def save(self, **kwargs) -> None:
+        yml = ruamel.yaml.YAML()
+        yml.preserve_quotes = True
+        yml.indent(mapping=2, sequence=2, offset=0)
+
+        with open(self.metadata_path) as f:
+            data = yml.load(f)
+
+        for key, value in kwargs.items():
+            data[key] = value
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+        with open(self.metadata_path, 'w') as f:
+            yml.dump(data, f)
 
 
 def init_repo(repo_path: str) -> None:
