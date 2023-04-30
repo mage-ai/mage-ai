@@ -20,6 +20,7 @@ export const LIME_DARK = '#8ADE00';
 export const LIME_LIGHT = '#D0F299';
 export const LIME_XLIGHT = '#E8F8CC';
 export const LIME_TEXT = '#24B400';
+export const LIME_TRASPARENT = 'rgb(138, 222, 0, 0.3)';
 export const NAVY = '#0F4CFF';
 export const PEACH = '#B98D95';
 export const PINK = '#FF4FF8';

@@ -20,6 +20,7 @@ import {
   GREY500,
   LIME_DARK,
   LIME_TEXT,
+  LIME_TRASPARENT,
   NAVY,
   PEACH,
   PINK,
@@ -100,6 +101,7 @@ export default {
     scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',
     scrollbarTrack: '#2E3036', // defaultBackground
     success: LIME_DARK,
+    successLight: LIME_TRASPARENT,
     table: '#292A2F',
   },
   borders: {

@@ -35,11 +35,19 @@ const PanelStyle = styled.div<{
     width: 100%;
   `}
 
-  ${props => `
+  ${props => !props.borderless && `
     border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
-  ${props => !props.dark && `
+  ${props => props.success && `
+    background-color: ${(props.theme.background || dark.background).successLight};
+  `}
+
+  ${props => props.success && !props.borderless && `
+    border: 1px solid ${(props.theme.background || dark.background).success};
+  `}
+
+  ${props => !props.dark && !props.success && `
     background-color: ${(props.theme.background || dark.background).panel};
   `}
 
@@ -171,6 +179,7 @@ function Panel({
   noPadding,
   overflowVisible,
   subtitle,
+  success,
 }: PanelProps) {
   return (
     <PanelStyle
@@ -183,6 +192,7 @@ function Panel({
       minWidth={minWidth}
       overflowVisible={overflowVisible}
       ref={containerRef}
+      success={success}
     >
       {(header || headerTitle) &&
         <HeaderStyle
