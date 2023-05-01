@@ -8,13 +8,12 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.settings import AUTHENTICATION_MODE
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
-import asyncio
 
 
 class SessionResource(BaseResource):
     @classmethod
     @safe_db_query
-    def create(self, payload, _, **kwargs):
+    async def create(self, payload, _, **kwargs):
         email = payload.get('email')
         password = payload.get('password')
         username = payload.get('username')
@@ -27,8 +26,8 @@ class SessionResource(BaseResource):
                 {'message': 'Email/username and password are required.'})
             raise ApiError(error)
 
-        def _create_callback(resource):
-            asyncio.run(UsageStatisticLogger().users_impression())
+        async def _create_callback(resource):
+            await UsageStatisticLogger().users_impression()
 
         self.on_create_callback = _create_callback
 

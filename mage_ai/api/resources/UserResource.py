@@ -6,7 +6,6 @@ from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.hash import extract, ignore_keys
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
-import asyncio
 
 
 class UserResource(DatabaseResource):
@@ -18,7 +17,7 @@ class UserResource(DatabaseResource):
 
     @classmethod
     @safe_db_query
-    def create(self, payload, user, **kwargs):
+    async def create(self, payload, user, **kwargs):
         email = payload.get('email')
         password = payload.get('password')
         password_confirmation = payload.get('password_confirmation')
@@ -80,8 +79,8 @@ class UserResource(DatabaseResource):
                 resource.model, kwargs['oauth_client'])
             resource.model_options['oauth_token'] = oauth_token
 
-        def _create_callback(resource):
-            asyncio.run(UsageStatisticLogger().users_impression())
+        async def _create_callback(resource):
+            await UsageStatisticLogger().users_impression()
 
         self.on_create_callback = _create_callback
 
