@@ -33,7 +33,7 @@ the Google Cloud PubSub service locally through an emulator (see more details at
 
 1. Open Mage in your browser.
 2. Click <b>`+ New pipeline`</b>, then select `Streaming`.
-3. Add a data loader block, select `Google Cloud PubSub`, and paste the following:
+3. Add a data loader block, select `Google Cloud PubSub`, and change the settings to those of your PubSub project:
 
     ```yaml
     connector_type: google_cloud_pubsub
@@ -42,8 +42,8 @@ the Google Cloud PubSub service locally through an emulator (see more details at
     subscription_id: test-subscription-id-0
     timeout: 5
     batch_size: 100
-    pubsub_emulator_host: "host.docker.internal:8085"
-    path_to_credentials_json_file: null  # e.g., "./google_credentials.json"
+    pubsub_emulator_host: null
+    path_to_credentials_json_file: "./google_credentials.json"
     ```
 
 4. Add a transformer block and paste the following:
