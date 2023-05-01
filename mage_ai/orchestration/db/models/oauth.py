@@ -44,10 +44,13 @@ class User(BaseModel):
                 User.email == value
             ).one_or_none()
             if self.email != value and existing_email is not None:
-                raise ValidationError('Email address is already in use. Choose a different one.', metadata=dict(
-                    key=key,
-                    value=value,
-                ))
+                raise ValidationError(
+                    'Email address is already in use. Please choose a different one.',
+                    metadata=dict(
+                        key=key,
+                        value=value,
+                    )
+                )
 
             regex = re.compile(r"([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\"([]!#-[^-~ \t]|(\\[\t -~]))+\")@([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|\[[\t -Z^-~]*])")  # noqa: E501
             if not re.fullmatch(regex, value):

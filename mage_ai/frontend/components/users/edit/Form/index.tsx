@@ -77,12 +77,13 @@ function UserEditForm({
           },
           onErrorCallback: ({
             error: {
+              exception,
               message,
               type,
             },
           }) => {
             toast.error(
-              message,
+              exception || message,
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
                 toastId: type,

@@ -174,6 +174,10 @@ function UsersListPage() {
 
           if (rowUserID === currentUserID) {
             router.push('/settings/account/profile');
+          } else if (+query?.user_id === rowUserID) {
+            goToWithQuery({
+              user_id: null,
+            });
           } else {
             goToWithQuery({
               add_new_user: null,
