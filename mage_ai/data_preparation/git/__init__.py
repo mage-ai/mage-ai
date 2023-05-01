@@ -204,13 +204,11 @@ class Git:
                 self.repo.git.add('.')
             self.repo.index.commit(message)
 
-    def change_branch(self, branch) -> None:
+    def switch_branch(self, branch) -> None:
         if branch in self.repo.heads:
-            current = self.repo.heads[branch]
+            self.repo.git.switch(branch)
         else:
-            current = self.repo.create_head(branch)
-
-        current.checkout()
+            self.repo.git.switch('-c', branch)
 
     @_remote_command
     def clone(self):
