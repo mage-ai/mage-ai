@@ -25,6 +25,7 @@ class Intercom(Source):
         tap_stream_id = stream.tap_stream_id
         stream_obj = STREAMS[tap_stream_id](client, logger=self.logger)
 
+        bookmarks = bookmarks or dict()
         for record in stream_obj.get_records(bookmark_datetime=bookmarks.get('updated_at')):
             yield [record]
 
