@@ -99,9 +99,9 @@ class JobManager():
         if k8s_config and (k8s_config.resource_limits or k8s_config.resource_requests):
             resource_kwargs = dict()
             if k8s_config.resource_limits:
-                resource_kwargs['limits'] = k8s_config.resource_limits.to_dict()
+                resource_kwargs['limits'] = k8s_config.resource_limits
             if k8s_config.resource_requests:
-                resource_kwargs['requests'] = k8s_config.resource_requests.to_dict()
+                resource_kwargs['requests'] = k8s_config.resource_requests
             container_kwargs['resources'] = client.V1ResourceRequirements(
                 **resource_kwargs,
             )
