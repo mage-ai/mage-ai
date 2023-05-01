@@ -23,9 +23,9 @@ class Intercom(Source):
             self.config.get('user_agent')
         )
         tap_stream_id = stream.tap_stream_id
-        stream_obj = STREAMS[tap_stream_id](client)
+        stream_obj = STREAMS[tap_stream_id](client, logger=self.logger)
 
-        for record in stream_obj.get_records():
+        for record in stream_obj.get_records(bookmark_datetime=bookmarks.get('updated_at')):
             yield [record]
 
     def get_forced_replication_method(self, stream_id):
