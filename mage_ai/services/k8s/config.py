@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from mage_ai.shared.config import BaseConfig
 from typing import Dict
-import traceback
+# import traceback
 
 ECS_CONTAINER_METADATA_URI_VAR = 'ECS_CONTAINER_METADATA_URI_V4'
 
