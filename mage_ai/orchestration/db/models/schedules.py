@@ -49,7 +49,7 @@ pipeline_schedule_event_matcher_association_table = Table(
 
 class PipelineSchedule(BaseModel):
     name = Column(String(255))
-    pipeline_uuid = Column(String(255))
+    pipeline_uuid = Column(String(255), index=True)
     schedule_type = Column(Enum(ScheduleType))
     start_time = Column(DateTime(timezone=True), default=None)
     schedule_interval = Column(String(50))
