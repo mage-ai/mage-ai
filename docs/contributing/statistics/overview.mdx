@@ -7,7 +7,7 @@ description: "Please contribute usage statistics to help improve the developer e
 ---
 
 <Check>
-    All usage statistics is completely <b>anonymous</b>.
+    All usage statistics are completely <b>anonymous</b>.
 
     It’s <b>impossible</b> for Mage to know which statistics belongs to whom.
 </Check>
@@ -108,22 +108,22 @@ Here’s a sample of the JSON payload containing usage statistics that could be 
 ### Enable
 
 To enable sending usage statistics, add a key in the project’s `metadata.yaml` file called
-`usage_statistics` with the value `true`.
+`help_improve_mage` with the value `true`.
 
 Here is an example:
 
 ```yaml
 project_uuid: 4279d28ab1f64644b1f2f4f779be7b7e
-usage_statistics: true
+help_improve_mage: true
 ```
 
 ### Disable
 
-To disable, change the value of `usage_statistics` to `false`.
+To disable, change the value of `help_improve_mage` to `false`.
 
 Here is an example:
 
 ```yaml
 project_uuid: 4279d28ab1f64644b1f2f4f779be7b7e
-usage_statistics: false
+help_improve_mage: false
 ```

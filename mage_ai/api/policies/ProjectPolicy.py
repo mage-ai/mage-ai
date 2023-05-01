@@ -14,9 +14,24 @@ ProjectPolicy.allow_actions([
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
+ProjectPolicy.allow_actions([
+    constants.UPDATE,
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
 ProjectPolicy.allow_read(ProjectPresenter.default_attributes + [
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.LIST,
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_viewer_role())
+
+ProjectPolicy.allow_write([
+    'help_improve_mage',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

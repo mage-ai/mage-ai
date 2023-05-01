@@ -1,14 +1,17 @@
 import NextLink from 'next/link';
 import { MutateFunction, useMutation } from 'react-query';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import InputModal from '@oracle/elements/Inputs/InputModal';
+import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import Panel from '@oracle/components/Panel';
 import PipelineType, {
   PipelineGroupingEnum,
   PipelineQueryEnum,
@@ -17,27 +20,29 @@ import PipelineType, {
   PIPELINE_TYPE_LABEL_MAPPING,
 } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import ProjectType from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { Check, Clone, File, Open, Pause, PlayButtonFilled } from '@oracle/icons';
+import { Check, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator, removeUnderscore } from '@utils/string';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { useModal } from '@context/Modal';
+import { useError } from '@context/Error';
 
 const sharedOpenButtonProps = {
   borderRadius: BORDER_RADIUS_SMALL,
@@ -79,6 +84,9 @@ function PipelineListPage() {
 
     return pipelinesFinal;
   }, [data?.pipelines, searchText]);
+
+  const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
+  const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
 
   const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
     api.pipelines.useCreate(),
@@ -357,6 +365,166 @@ function PipelineListPage() {
     showInputModal,
   ]);
 
+  const [showError] = useError(null, {}, [], {
+    uuid: 'pipelines/list',
+  });
+  const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
+    api.projects.useUpdate(project?.name),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchProjects();
+          },
+          onErrorCallback: (response, errors) => showError({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+  const updateProject = useCallback((payload: {
+    help_improve_mage?: boolean;
+  }) => updateProjectBase({
+    project: payload,
+  }), [updateProjectBase]);
+
+  const [showHelpMageModal, hideHelpMageModal] = useModal(() => (
+    <Panel maxWidth={UNIT * 60}>
+      <Spacing mb={1}>
+        <Headline>
+          Help improve Mage
+        </Headline>
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text default>
+          Please contribute usage statistics to help improve the developer experience
+          for you and everyone in the community 🤝.
+        </Text>
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Panel success>
+          <FlexContainer alignItems="center">
+            <Secrets size={UNIT * 5} success />
+            <Spacing mr={1} />
+            <Flex>
+              <Text>
+                All usage statistics are completely anonymous.
+                It’s impossible for Mage to know which statistics belongs to whom.
+              </Text>
+            </Flex>
+          </FlexContainer>
+        </Panel>
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text default>
+          By opting into sending usage statistics to <Link
+            href="https://www.mage.ai"
+            openNewWindow
+          >
+            Mage
+          </Link>, it’ll help the team and community of contributors (<Link
+            href="https://www.mage.ai/chat"
+            openNewWindow
+          >
+            Magers
+          </Link>)
+          learn what’s going wrong with the tool and what improvements can be made.
+        </Text>
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text default>
+          In addition to helping reduce potential errors,
+          you’ll help inform which features are useful and which need work.
+        </Text>
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Text bold>
+            I want to help make Mage more powerful for everyone
+          </Text>
+
+          <Spacing mr={PADDING_UNITS} />
+
+          <ToggleSwitch
+            checked
+            onCheck={() => {
+              if (typeof window !== 'undefined') {
+                if (window.confirm(
+                  'Are you sure you don’t want to help everyone in the community?',
+                )) {
+                  updateProject({
+                    help_improve_mage: false,
+                  }).then(() => hideHelpMageModal());
+                }
+              } else {
+                updateProject({
+                  help_improve_mage: false,
+                }).then(() => hideHelpMageModal());
+              }
+            }}
+          />
+        </FlexContainer>
+      </Spacing>
+
+      {isLoadingUpdateProject && (
+        <Spacing mb={PADDING_UNITS}>
+          <Spinner inverted />
+        </Spacing>
+      )}
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text muted small>
+          To learn more about how this works, please check out the <Link
+            href="https://docs.mage.ai/contributing/statistics/overview"
+            openNewWindow
+            small
+          >
+            documentation
+          </Link>.
+        </Text>
+      </Spacing>
+
+      <Button
+        onClick={() => updateProject({
+          help_improve_mage: true,
+        }).then(() => hideHelpMageModal())}
+        secondary
+      >
+        Close
+      </Button>
+    </Panel>
+  ), {}, [
+    project,
+  ], {
+    background: true,
+    hideCallback: () => {
+      updateProject({
+        help_improve_mage: true,
+      });
+    },
+    uuid: 'help_mage',
+  });
+
+  useEffect(() => {
+    // TODO (tommy dangerous): remove False after updating API service to support new endpoint
+    if (false && project && project?.help_improve_mage === null) {
+      showHelpMageModal();
+    }
+  }, [
+    project,
+    showHelpMageModal,
+  ]);
+
   return (
     <Dashboard
       errors={errors}
@@ -433,8 +601,8 @@ function PipelineListPage() {
               })}
               onDoubleClickRow={(rowIndex: number) => {
                 router.push(
-                    '/pipelines/[pipeline]',
-                    `/pipelines/${pipelines[rowIndex].uuid}`,
+                    '/pipelines/[pipeline]/edit',
+                    `/pipelines/${pipelines[rowIndex].uuid}/edit`,
                 );
               }}
               ref={refTable}

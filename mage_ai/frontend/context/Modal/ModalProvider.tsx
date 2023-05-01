@@ -36,9 +36,9 @@ export interface ModalProviderProps {
  * Provides modal context and renders ModalRoot.
  */
 export const ModalProvider = ({
+  children,
   container,
   rootComponent,
-  children
 }: ModalProviderProps) => {
   if (container && !(container instanceof HTMLElement)) {
     throw new Error(`Container must specify DOM element to mount modal root into.

@@ -27,6 +27,7 @@ const PanelStyle = styled.div<{
   maxWidth?: number;
   minWidth?: number;
   overflowVisible?: boolean;
+  success?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
@@ -35,11 +36,19 @@ const PanelStyle = styled.div<{
     width: 100%;
   `}
 
-  ${props => `
+  ${props => !props.borderless && `
     border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
-  ${props => !props.dark && `
+  ${props => props.success && `
+    background-color: ${(props.theme.background || dark.background).successLight};
+  `}
+
+  ${props => props.success && !props.borderless && `
+    border: 1px solid ${(props.theme.background || dark.background).success};
+  `}
+
+  ${props => !props.dark && !props.success && `
     background-color: ${(props.theme.background || dark.background).panel};
   `}
 
@@ -149,6 +158,7 @@ export type PanelProps = {
   noPadding?: boolean;
   overflowVisible?: boolean;
   subtitle?: string;
+  success?: boolean;
 };
 
 function Panel({
@@ -171,6 +181,7 @@ function Panel({
   noPadding,
   overflowVisible,
   subtitle,
+  success,
 }: PanelProps) {
   return (
     <PanelStyle
@@ -183,6 +194,7 @@ function Panel({
       minWidth={minWidth}
       overflowVisible={overflowVisible}
       ref={containerRef}
+      success={success}
     >
       {(header || headerTitle) &&
         <HeaderStyle

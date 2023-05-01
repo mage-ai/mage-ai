@@ -19,6 +19,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.utils import clean_name
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 from sqlalchemy import (
     Column,
     Boolean,
@@ -33,6 +34,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func
 from typing import Dict, List
+import asyncio
 import enum
 import pytz
 import traceback
@@ -308,6 +310,17 @@ class PipelineRun(BaseModel):
             ]),
             PipelineRun.passed_sla.is_(False),
         ).all()
+
+    @safe_db_query
+    def complete(self):
+        self.update(
+            completed_at=datetime.now(),
+            status=self.PipelineRunStatus.COMPLETED,
+        )
+
+        asyncio.run(UsageStatisticLogger().pipeline_runs_impression(
+            lambda: self.query.filter(self.status == self.PipelineRunStatus.COMPLETED).count(),
+        ))
 
     @safe_db_query
     def create_block_run(

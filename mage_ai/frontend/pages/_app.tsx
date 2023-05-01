@@ -17,6 +17,7 @@ import KeyboardContext from '@context/Keyboard';
 import ToastWrapper from '@components/Toast/ToastWrapper';
 import api from '@api';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
+import { ErrorProvider } from '@context/Error';
 import { ModalProvider } from '@context/Modal';
 import { RED } from '@oracle/styles/colors/main';
 import {
@@ -166,20 +167,22 @@ function MyApp(props: MyAppProps & AppProps) {
         <GridThemeProvider gridTheme={gridThemeDefault}>
           <ModalProvider>
             <SheetProvider>
-              <Head
-                defaultTitle={defaultTitle}
-                title={title}
-              >
-                <meta
-                  content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-                  name="viewport"
-                />
-              </Head>
+              <ErrorProvider>
+                <Head
+                  defaultTitle={defaultTitle}
+                  title={title}
+                >
+                  <meta
+                    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
+                    name="viewport"
+                  />
+                </Head>
 
-              <LoadingBar color={RED} ref={refLoadingBar} />
+                <LoadingBar color={RED} ref={refLoadingBar} />
 
-              {/* @ts-ignore */}
-              <Component {...pageProps} />
+                {/* @ts-ignore */}
+                <Component {...pageProps} />
+              </ErrorProvider>
             </SheetProvider>
           </ModalProvider>
         </GridThemeProvider>

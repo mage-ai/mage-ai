@@ -145,7 +145,9 @@ class BaseResource(Resource):
                 res = await res
 
             if self.on_create_callback:
-                self.on_create_callback(resource=res)
+                callback = self.on_create_callback(resource=res)
+                if callback and inspect.isawaitable(callback):
+                    await callback
 
             return res
         except Exception as err:
