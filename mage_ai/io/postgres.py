@@ -265,6 +265,12 @@ class Postgres(BaseSQL):
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
     ) -> None:
+        if unique_constraints and unique_conflict_method:
+            use_insert_command = True
+        else:
+            # Use COPY command
+            use_insert_command = False
+
         def clean_array_value(val):
             if val is None or type(val) is not str or len(val) < 2:
                 return val
@@ -285,6 +291,12 @@ class Postgres(BaseSQL):
                     default=encode_complex,
                     ignore_nan=True,
                 )
+            elif not use_insert_command and type(val) is list:
+                return clean_array_value(simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ))
             return val
 
         df_ = df.copy()
@@ -300,19 +312,19 @@ class Postgres(BaseSQL):
                 df_[col] = df_[col].apply(lambda x: serialize_obj(x))
         df_.replace({np.NaN: None}, inplace=True)
 
-        values_placeholder = ', '.join(["%s" for i in range(len(columns))])
-        values = []
-        for i, row in df_.iterrows():
-            values.append(tuple(row))
-
         insert_columns = ', '.join([f'"{col}"'for col in columns])
 
-        commands = [
-            f'INSERT INTO {full_table_name} ({insert_columns})',
-            f'VALUES ({values_placeholder})',
-        ]
+        if use_insert_command:
+            # Use INSERT command
+            values_placeholder = ', '.join(["%s" for i in range(len(columns))])
+            values = []
+            for i, row in df_.iterrows():
+                values.append(tuple(row))
+            commands = [
+                f'INSERT INTO {full_table_name} ({insert_columns})',
+                f'VALUES ({values_placeholder})',
+            ]
 
-        if unique_constraints and unique_conflict_method:
             unique_constraints = \
                 [f'"{self._clean_column_name(col, allow_reserved_words=allow_reserved_words)}"'
                  for col in unique_constraints]
@@ -328,5 +340,21 @@ class Postgres(BaseSQL):
                 )
             else:
                 commands.append('DO NOTHING')
-
-        cursor.executemany('\n'.join(commands), values)
+            cursor.executemany('\n'.join(commands), values)
+        else:
+            # Use COPY command
+            df_.to_csv(
+                buffer,
+                header=False,
+                index=False,
+                na_rep='',
+            )
+            buffer.seek(0)
+            cursor.copy_expert(f"""
+COPY {full_table_name} ({insert_columns}) FROM STDIN (
+    FORMAT csv
+    , DELIMITER \',\'
+    , NULL \'\'
+    , FORCE_NULL({insert_columns})
+);
+        """, buffer)
