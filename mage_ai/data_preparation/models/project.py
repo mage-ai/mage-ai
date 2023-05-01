@@ -4,7 +4,7 @@ import aiohttp
 
 
 class Project():
-    def __init__(self, repo_config = None):
+    def __init__(self, repo_config=None):
         parts = get_repo_path().split('/')
 
         self.name = parts[-1]

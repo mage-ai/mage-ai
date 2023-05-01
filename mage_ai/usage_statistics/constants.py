@@ -1,7 +1,7 @@
 import enum
 
 
-API_ENDPOINT = 'https://api.mage.ai/v1/record'
+API_ENDPOINT = 'https://api.mage.ai/v1/usage_statistics'
 
 
 class EventActionType(str, enum.Enum):

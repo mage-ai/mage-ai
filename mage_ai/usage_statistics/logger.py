@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.models.project import Project
-from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.shared.hash import merge_dict
@@ -11,12 +10,13 @@ import platform
 
 
 class UsageStatisticLogger():
-    def __init__(self, project = None):
+    def __init__(self, project=None):
         self.project = project or Project()
 
     @property
     def help_improve_mage(self) -> bool:
-        return self.project.help_improve_mage
+        # TODO (tommy dangerous): remove False after updating API service to support new endpoint
+        return False and self.project.help_improve_mage
 
     async def project_impression(self) -> bool:
         if not self.help_improve_mage:
@@ -68,9 +68,7 @@ class UsageStatisticLogger():
                     API_ENDPOINT,
                     json=dict(
                         api_key='KwnbpKJNe6gOjC2X5ilxafFvxbNppiIfGejB2hlY',
-                        label=1,
                         usage_statistics=data_to_send,
-                        uuid='mage',
                     ),
                     timeout=3,
                 ) as response:
@@ -88,4 +86,3 @@ class UsageStatisticLogger():
             platform=platform.platform(),
             project_uuid=self.project.project_uuid,
         )
-

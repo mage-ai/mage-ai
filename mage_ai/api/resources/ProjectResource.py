@@ -7,7 +7,7 @@ from mage_ai.usage_statistics.logger import UsageStatisticLogger
 import uuid
 
 
-async def build_project(repo_config = None, **kwargs):
+async def build_project(repo_config=None, **kwargs):
     project = Project(repo_config=repo_config)
 
     model = merge_dict(project.repo_config.to_dict(), dict(
