@@ -236,9 +236,11 @@ function UserEditForm({
                   {ROLE_DISPLAY_MAPPING[value]}
                 </option>
               ))}
-              <option key="owner_role" value={RoleValueEnum.OWNER}>
-                {ROLE_DISPLAY_MAPPING[RoleValueEnum.OWNER]}
-              </option>
+              {!newUser &&
+                <option key="owner_role" value={RoleValueEnum.OWNER}>
+                  {ROLE_DISPLAY_MAPPING[RoleValueEnum.OWNER]}
+                </option>
+              }
             </Select>
           </Spacing>
         )}
