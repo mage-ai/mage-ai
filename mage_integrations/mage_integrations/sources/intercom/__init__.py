@@ -33,6 +33,8 @@ class Intercom(Source):
             bookmark_datetime = bookmarks.get('updated_at', self.config.get('start_date'))
         else:
             bookmark_datetime = None
+        if bookmark_datetime is not None:
+            bookmark_datetime = singer.utils.strptime_to_utc(bookmark_datetime)
         for record in stream_obj.get_records(bookmark_datetime=bookmark_datetime):
             yield [record]
 
