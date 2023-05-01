@@ -654,7 +654,7 @@ class Segments(IncrementalStream):
             else:
                 paging = False
 
-            yield from response.get(self.data_key,  [])
+            yield from response.get(self.data_key, [])
 
 
 class Tags(FullTableStream):

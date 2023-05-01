@@ -1,4 +1,7 @@
 from mage_integrations.sources.base import Source, main
+from mage_integrations.sources.constants import (
+    REPLICATION_METHOD_INCREMENTAL,
+)
 from mage_integrations.sources.intercom.client import IntercomClient
 from mage_integrations.sources.intercom.streams import STREAMS
 from typing import Dict, Generator, List
@@ -26,7 +29,11 @@ class Intercom(Source):
         stream_obj = STREAMS[tap_stream_id](client, logger=self.logger)
 
         bookmarks = bookmarks or dict()
-        for record in stream_obj.get_records(bookmark_datetime=bookmarks.get('updated_at')):
+        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
+            bookmark_datetime = bookmarks.get('updated_at', self.config.get('start_date'))
+        else:
+            bookmark_datetime = None
+        for record in stream_obj.get_records(bookmark_datetime=bookmark_datetime):
             yield [record]
 
     def get_forced_replication_method(self, stream_id):
