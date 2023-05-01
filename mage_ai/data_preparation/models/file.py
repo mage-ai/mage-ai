@@ -205,7 +205,7 @@ class File:
             file_version_only=file_version_only,
             overwrite=overwrite,
         ):
-            with open(file_path, write_type) as f:
+            with open(file_path, write_type, encoding='utf-8') as f:
                 if content:
                     f.write(content)
         self.validate_content(dir_path, filename, content)
@@ -230,7 +230,7 @@ class File:
             file_version_only=file_version_only,
             overwrite=overwrite,
         ):
-            async with aiofiles.open(file_path, mode=write_type) as fp:
+            async with aiofiles.open(file_path, mode=write_type, encoding='utf-8') as fp:
                 await fp.write(content)
 
     def exists(self) -> bool:
@@ -238,7 +238,7 @@ class File:
 
     def content(self):
         try:
-            with open(self.file_path) as fp:
+            with open(self.file_path, encoding='utf-8') as fp:
                 file_content = fp.read()
             return file_content
         except FileNotFoundError as err:
@@ -247,7 +247,7 @@ class File:
 
     async def content_async(self):
         try:
-            async with aiofiles.open(self.file_path, mode='r') as fp:
+            async with aiofiles.open(self.file_path, mode='r', encoding='utf-8') as fp:
                 file_content = await fp.read()
             return file_content
         except FileNotFoundError as err:
