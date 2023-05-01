@@ -31,7 +31,9 @@ sys.path.insert(0, os.path.dirname(
                 os.path.dirname(os.path.abspath(__file__)))))))
 
 from mage_ai.orchestration.db.models.base import Base  # noqa: E402
-
+import mage_ai.orchestration.db.models.oauth  # noqa: E402, F401
+import mage_ai.orchestration.db.models.schedules  # noqa: E402, F401
+import mage_ai.orchestration.db.models.secrets  # noqa: E402, F401
 
 target_metadata = Base.metadata
 
