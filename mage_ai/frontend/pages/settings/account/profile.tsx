@@ -13,7 +13,7 @@ import { getUser } from '@utils/session';
 
 function ProfilePage() {
   const { id } = getUser() || {};
-  const { data } = api.users.detail(id);
+  const { data, mutate: fetchUser } = api.users.detail(id);
   const user = data?.user;
 
   return (
@@ -25,6 +25,7 @@ function ProfilePage() {
         <Panel>
           <UserEditForm
             disabledFields={['roles']}
+            onSaveSuccess={fetchUser}
             user={user}
           />
         </Panel>

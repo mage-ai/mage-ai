@@ -23,6 +23,7 @@ import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
+import { sortByKey } from '@utils/array';
 
 function UsersListPage() {
   const router = useRouter();
@@ -35,7 +36,10 @@ function UsersListPage() {
   const { data, mutate: fetchUsers } = api.users.list({}, {
     revalidateOnFocus: false,
   });
-  const users = useMemo(() => data?.users || [], [data]);
+  const users = useMemo(
+    () => sortByKey(data?.users || [], 'username'),
+    [data],
+  );
   const { data: dataUser, mutate: fetchUser } = api.users.detail(query?.user_id, {}, {
     revalidateOnFocus: false,
   });
@@ -103,6 +107,10 @@ function UsersListPage() {
               fetchUsers();
             }}
             onSaveSuccess={() => {
+              goToWithQuery({
+                add_new_user: null,
+                user_id: null,
+              });
               fetchUser();
               fetchUsers();
             }}
