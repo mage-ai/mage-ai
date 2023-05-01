@@ -13,6 +13,7 @@ from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, retry_pi
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.kernels import PIPELINE_TO_KERNEL_NAME
 from mage_ai.shared.hash import group_by, ignore_keys
+from mage_ai.usage_statistics.logger import UsageStatisticLogger
 from sqlalchemy.orm import aliased
 import asyncio
 
@@ -38,6 +39,8 @@ class PipelineResource(BaseResource):
             pipeline_statuses = pipeline_statuses.split(',')
 
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+
+        await UsageStatisticLogger().pipelines_impression(lambda: len(pipeline_uuids))
 
         async def get_pipeline(uuid):
             try:

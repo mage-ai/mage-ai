@@ -81,7 +81,7 @@ class UserResource(DatabaseResource):
             resource.model_options['oauth_token'] = oauth_token
 
         def _create_callback(resource):
-            asyncio.run(UsageStatisticLogger().user_impression())
+            asyncio.run(UsageStatisticLogger().users_impression())
 
         self.on_create_callback = _create_callback
 

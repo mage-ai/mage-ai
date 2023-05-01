@@ -134,10 +134,7 @@ class PipelineScheduler:
                         pipeline_run=self.pipeline_run,
                     )
                 else:
-                    self.pipeline_run.update(
-                        status=PipelineRun.PipelineRunStatus.COMPLETED,
-                        completed_at=datetime.now(),
-                    )
+                    self.pipeline_run.complete()
                     self.notification_sender.send_pipeline_run_success_message(
                         pipeline=self.pipeline,
                         pipeline_run=self.pipeline_run,

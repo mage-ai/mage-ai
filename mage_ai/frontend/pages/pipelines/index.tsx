@@ -596,8 +596,8 @@ function PipelineListPage() {
               })}
               onDoubleClickRow={(rowIndex: number) => {
                 router.push(
-                    '/pipelines/[pipeline]',
-                    `/pipelines/${pipelines[rowIndex].uuid}`,
+                    '/pipelines/[pipeline]/edit',
+                    `/pipelines/${pipelines[rowIndex].uuid}/edit`,
                 );
               }}
               ref={refTable}
