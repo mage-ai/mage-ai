@@ -5,4 +5,4 @@ subscription_id: my-subscription-id
 timeout: 5
 batch_size: 100
 pubsub_emulator_host: "host.docker.internal:8085"
-google_application_credentials: "./google_credentials.json"
+path_to_credentials_json_file: "./google_credentials.json"
