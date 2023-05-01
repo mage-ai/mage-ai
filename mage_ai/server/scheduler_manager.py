@@ -26,7 +26,10 @@ def run_scheduler():
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
         )
 
-    database_manager.run_migrations()
+    try:
+        database_manager.run_migrations()
+    except Exception:
+        traceback.print_exc()
     try:
         LoopTimeTrigger().start()
     except Exception as e:
