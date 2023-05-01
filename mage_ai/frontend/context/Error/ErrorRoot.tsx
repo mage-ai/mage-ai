@@ -7,7 +7,7 @@ import ErrorPopup from '@components/ErrorPopup';
 import {
   ErrorObjectType,
   ErrorType,
-} from './ModalContext';
+} from './ErrorContext';
 
 interface ErrorRootProps {
   component?: React.ComponentType<any>;
@@ -101,7 +101,7 @@ export const ErrorRoot = memo(
             if (hideProp) {
               hideProp();
             } else if (hideError) {
-              hideError();
+              hideError(key);
             }
 
             if (hideCallback) {

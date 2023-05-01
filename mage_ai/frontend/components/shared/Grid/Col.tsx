@@ -21,6 +21,7 @@ type ColProps = {
   };
   xl?: number;
   xs?: number;
+  xxl?: number;
 };
 
 function Col({

@@ -18,7 +18,7 @@ ProjectPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
+], condition=lambda policy: policy.has_at_least_viewer_role())
 
 ProjectPolicy.allow_read(ProjectPresenter.default_attributes + [
 ], scopes=[
@@ -34,4 +34,4 @@ ProjectPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
+], condition=lambda policy: policy.has_at_least_viewer_role())

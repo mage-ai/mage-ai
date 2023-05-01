@@ -27,6 +27,7 @@ const PanelStyle = styled.div<{
   maxWidth?: number;
   minWidth?: number;
   overflowVisible?: boolean;
+  success?: boolean;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
@@ -157,6 +158,7 @@ export type PanelProps = {
   noPadding?: boolean;
   overflowVisible?: boolean;
   subtitle?: string;
+  success?: boolean;
 };
 
 function Panel({

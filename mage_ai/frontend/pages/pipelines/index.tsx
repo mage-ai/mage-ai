@@ -42,6 +42,7 @@ import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { useModal } from '@context/Modal';
+import { useError } from '@context/Error';
 
 const sharedOpenButtonProps = {
   borderRadius: BORDER_RADIUS_SMALL,
@@ -364,6 +365,9 @@ function PipelineListPage() {
     showInputModal,
   ]);
 
+  const [showError] = useError(null, {}, [], {
+    uuid: 'pipelines/list',
+  });
   const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
     api.projects.useUpdate(project?.name),
     {

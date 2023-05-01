@@ -11,6 +11,7 @@ import {
   ErrorContext,
   ErrorProps,
   ErrorType,
+  UseErrorOptionsType,
 } from './ErrorContext';
 import {
   generateKey,
