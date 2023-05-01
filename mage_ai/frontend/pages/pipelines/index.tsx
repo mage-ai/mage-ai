@@ -516,8 +516,7 @@ function PipelineListPage() {
   });
 
   useEffect(() => {
-    // TODO (tommy dangerous): remove False after updating API service to support new endpoint
-    if (false && project && project?.help_improve_mage === null) {
+    if (project && project?.help_improve_mage === null) {
       showHelpMageModal();
     }
   }, [

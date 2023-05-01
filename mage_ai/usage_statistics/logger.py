@@ -15,8 +15,7 @@ class UsageStatisticLogger():
 
     @property
     def help_improve_mage(self) -> bool:
-        # TODO (tommy dangerous): remove False after updating API service to support new endpoint
-        return False and self.project.help_improve_mage
+        return self.project.help_improve_mage
 
     async def project_impression(self) -> bool:
         if not self.help_improve_mage:
