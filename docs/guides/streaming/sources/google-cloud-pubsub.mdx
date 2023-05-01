@@ -27,24 +27,6 @@ path_to_credentials_json_file: "./google_credentials.json"
 The `pubsub_emulator_host` parameter is optional, which could be used when you need to test
 the Google Cloud PubSub service locally through an emulator (see more details at the bottom).
 
-## Create a topic and a subscription
-
-Use the `gcloud pubsub topics create` command to create a topic:
-
-```
-gcloud pubsub topics create test-topic-id
-```
-
-After you create a topic, you can subscribe or publish to it. Use the
-`gcloud pubsub subscriptions create` command to create a subscription.
-
-```
-gcloud pubsub subscriptions create test-subscription-id-0 --topic test-topic-id
-```
-
-Only messages published to the topic after the subscription is created
-are available to subscriber applications.
-
 ## Start Mage
 
 ### Create a new pipeline
@@ -85,7 +67,7 @@ are available to subscriber applications.
             Transformed messages
         """
         # Specify your transformation logic here
-        print(messages)
+        print(f'Transform: {messages}')
         return messages
     ```
 
@@ -144,3 +126,21 @@ gcloud beta emulators pubsub start --project=test-project-id
 
 $(gcloud beta emulators pubsub env-init)
 ```
+
+## Create a topic and a subscription
+
+Use the `gcloud pubsub topics create` command to create a topic:
+
+```
+gcloud pubsub topics create test-topic-id
+```
+
+After you create a topic, you can subscribe or publish to it. Use the
+`gcloud pubsub subscriptions create` command to create a subscription.
+
+```
+gcloud pubsub subscriptions create test-subscription-id-0 --topic test-topic-id
+```
+
+Only messages published to the topic after the subscription is created
+are available to subscriber applications.
