@@ -1,4 +1,5 @@
 from mage_ai.streaming.sources.azure_event_hub import AzureEventHubSource
+from mage_ai.streaming.sources.google_cloud_pubsub import GoogleCloudPubSubSource
 from mage_ai.streaming.sources.kafka import KafkaSource
 from mage_ai.streaming.sources.rabbitmq import RabbitMQSource
 from mage_ai.streaming.sources.source_factory import SourceFactory
@@ -27,6 +28,17 @@ class SourceFactoryTests(TestCase):
             )
             source = SourceFactory.get_source(config)
             self.assertIsInstance(source, AzureEventHubSource)
+            mock_init.assert_called_once_with(config)
+
+    def test_get_source_google_cloud_pubsub(self):
+        with patch.object(GoogleCloudPubSubSource,
+                          '__init__',
+                          return_value=None) as mock_init:
+            config = dict(
+                connector_type='google_cloud_pubsub',
+            )
+            source = SourceFactory.get_source(config)
+            self.assertIsInstance(source, GoogleCloudPubSubSource)
             mock_init.assert_called_once_with(config)
 
     def test_get_source_rabbitmq(self):

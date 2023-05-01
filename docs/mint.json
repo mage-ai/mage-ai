@@ -214,6 +214,7 @@
               "pages": [
                 "guides/streaming/sources/amazon-sqs",
                 "guides/streaming/sources/azure-event-hub",
+                "guides/streaming/sources/google-cloud-pubsub",
                 "guides/streaming/sources/kafka",
                 "guides/streaming/sources/kinesis"
               ]

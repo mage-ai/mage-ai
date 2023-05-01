@@ -32,6 +32,7 @@ const getDataSourceTypes = (
       [BlockTypeEnum.DATA_LOADER]: [
         DataSourceTypeEnum.AMAZON_SQS,
         DataSourceTypeEnum.AZURE_EVENT_HUB,
+        DataSourceTypeEnum.GOOGLE_CLOUD_PUBSUB,
         DataSourceTypeEnum.KAFKA,
         DataSourceTypeEnum.KINESIS,
         DataSourceTypeEnum.RABBITMQ,

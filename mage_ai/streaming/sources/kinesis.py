@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from mage_ai.shared.config import BaseConfig
+from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE
 from mage_ai.streaming.sources.base import BaseSource
 from typing import Callable
 import boto3
 import json
-
-DEFAULT_BATCH_SIZE = 100
 
 
 @dataclass
