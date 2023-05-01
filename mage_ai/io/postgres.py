@@ -351,7 +351,7 @@ class Postgres(BaseSQL):
             )
             buffer.seek(0)
             cursor.copy_expert(f"""
-COPY {full_table_name} FROM STDIN (
+COPY {full_table_name} ({insert_columns}) FROM STDIN (
     FORMAT csv
     , DELIMITER \',\'
     , NULL \'\'
