@@ -97,18 +97,20 @@ python publisher.py test-project-id publish test-topic-id
 You should see an output similar to the following:
 
 ```
-[still_brook] [GoogleCloudPubSubSource] Subscription already exists: projects/test-project-id/subscriptions/test-subscription-id-0
-[still_brook] [GoogleCloudPubSubSource] Start consuming messages.
-[still_brook] [GoogleCloudPubSubSource] Number of received messages: 9
-[still_brook] [GoogleCloudPubSubSource] Received: b'Message number 1'.
-[red_sun] {'data': 'Message number 1'}
-[still_brook] [DummySink] Batch ingest 1 records, time=1682669990.5688324. Sample: {'data': 'Message number 1'}
-[still_brook] [GoogleCloudPubSubSource] Handled: b'Message number 1'.
-
-......
-
-Pipeline still_brook execution complete.
-You can see the code block output in the corresponding code block.
+[silent_mountain] [GoogleCloudPubSubSource] Subscription already exists: projects/my-pubsub-project-385206/subscriptions/my-topic-1-sub
+[silent_mountain] [GoogleCloudPubSubSource] Start consuming batch messages.
+[silent_mountain] [GoogleCloudPubSubSource] Number of received messages: 4
+[late_wood] Transform: [{'data': 'Google Cloud PubSub Message number 1'}, {'data': 'Google Cloud PubSub Message number 8'}, {'data': 'Google Cloud PubSub Message number 2'}, {'data': 'Google Cloud PubSub Message number 3'}]
+[silent_mountain] [DummySink] Batch ingest 4 records, time=1682968557.6466439. Sample: {'data': 'Google Cloud PubSub Message number 1'}
+[silent_mountain] [GoogleCloudPubSubSource] Received and acknowledged 4 messages from projects/my-pubsub-project-385206/subscriptions/my-topic-1-sub.
+[silent_mountain] [GoogleCloudPubSubSource] Number of received messages: 4
+[late_wood] Transform: [{'data': 'Google Cloud PubSub Message number 7'}, {'data': 'Google Cloud PubSub Message number 9'}, {'data': 'Google Cloud PubSub Message number 4'}, {'data': 'Google Cloud PubSub Message number 5'}]
+[silent_mountain] [DummySink] Batch ingest 4 records, time=1682968559.027885. Sample: {'data': 'Google Cloud PubSub Message number 7'}
+[silent_mountain] [GoogleCloudPubSubSource] Received and acknowledged 4 messages from projects/my-pubsub-project-385206/subscriptions/my-topic-1-sub.
+[silent_mountain] [GoogleCloudPubSubSource] Number of received messages: 1
+[late_wood] Transform: [{'data': 'Google Cloud PubSub Message number 6'}]
+[silent_mountain] [DummySink] Batch ingest 1 records, time=1682968560.894928. Sample: {'data': 'Google Cloud PubSub Message number 6'}
+[silent_mountain] [GoogleCloudPubSubSource] Received and acknowledged 1 messages from projects/my-pubsub-project-385206/subscriptions/my-topic-1-sub.
 ```
 
 ## Set up Google Cloud Pubsub emulator
