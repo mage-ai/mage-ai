@@ -121,7 +121,6 @@ def parse_line(line: str) -> Dict:
 
     try:
         data1 = json.loads(text)
-        print('data1:', data1)
         tags = data1.get('tags', {})
         message = data1.get('message', '')
         try:
@@ -141,8 +140,6 @@ def parse_line(line: str) -> Dict:
 
 def get_metrics(logs_by_uuid: Dict, key_and_key_metrics: List[Tuple[str, List[str]]]) -> Dict:
     metrics = {}
-
-    print('logs by uuid:', logs_by_uuid)
 
     for uuid in logs_by_uuid.keys():
         metrics[uuid] = {}
