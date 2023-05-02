@@ -72,3 +72,17 @@ class BaseStorage(ABC):
         Write json to a file with file path asynchronously.
         """
         pass
+
+    @abstractmethod
+    def write_parquet(self, df, file_path: str) -> None:
+        """
+        Write Pandas dataframe to a file in parquet format.
+        """
+        pass
+
+    @abstractmethod
+    def write_polars_dataframe(self, df, file_path: str) -> None:
+        """
+        Write Polars dataframe to a file in parquet format.
+        """
+        pass

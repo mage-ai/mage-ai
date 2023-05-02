@@ -7,6 +7,7 @@ from typing import Dict, List
 import io
 import json
 import pandas as pd
+import polars as pl
 import simplejson
 
 
@@ -81,5 +82,11 @@ class S3Storage(BaseStorage):
     def write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
         buffer = io.BytesIO()
         df.to_parquet(buffer)
+        buffer.seek(0)
+        self.client.upload_object(s3_url_path(file_path), buffer)
+
+    def write_polars_dataframe(self, df: pl.DataFrame, file_path: str) -> None:
+        buffer = io.BytesIO()
+        df.write_parquet(buffer)
         buffer.seek(0)
         self.client.upload_object(s3_url_path(file_path), buffer)
