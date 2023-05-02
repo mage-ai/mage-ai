@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Paginate from '@components/shared/Paginate';
@@ -65,23 +66,26 @@ import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
 
 type TriggerDetailProps = {
+  errors: ErrorsType;
   fetchPipelineSchedule: () => void;
   pipeline: PipelineType;
   pipelineSchedule?: PipelineScheduleType;
+  setErrors: (errors: ErrorsType) => void;
   variables?: PipelineVariableType[];
 };
 
 const LIMIT = 30;
 
 function TriggerDetail({
+  errors,
   fetchPipelineSchedule,
   pipeline,
   pipelineSchedule,
+  setErrors,
   variables,
 }: TriggerDetailProps) {
   const router = useRouter();
   const isViewerRole = isViewer();
-  const [errors, setErrors] = useState(null);
 
   const {
     uuid: pipelineUUID,
@@ -135,10 +139,10 @@ function TriggerDetail({
           })}
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
+          setErrors={setErrors}
         />
         <Spacing p={2}>
           <Paginate
-            page={Number(page)}
             maxPages={9}
             onUpdate={(p) => {
               const newPage = Number(p);
@@ -151,6 +155,7 @@ function TriggerDetail({
                 `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}?${queryString(updatedQuery)}`,
               );
             }}
+            page={Number(page)}
             totalPages={Math.ceil(totalRuns / LIMIT)}
           />
         </Spacing>
@@ -210,7 +215,7 @@ function TriggerDetail({
           monospace
         >
           {SCHEDULE_TYPE_TO_LABEL[scheduleType]?.()}
-        </Text>
+        </Text>,
       ],
       [
         <FlexContainer
@@ -230,7 +235,7 @@ function TriggerDetail({
           success={isActive}
         >
           {status}
-        </Text>
+        </Text>,
       ],
     ];
 
@@ -254,8 +259,8 @@ function TriggerDetail({
             monospace
           >
             {`${time} ${finalUnit}`}
-          </Text>
-        ]
+          </Text>,
+        ],
       );
     }
 
@@ -508,7 +513,7 @@ function TriggerDetail({
         },
         {
           uuid: 'Event',
-        }
+        },
       ]}
       rows={eventMatchers?.map(({
         event_type: eventType,

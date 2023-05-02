@@ -66,9 +66,8 @@ function RetryButton({
     && pipelineRunId === cancelingRunId
     && RunStatus.RUNNING === status;
 
-  const [createPipelineRun] = useMutation(
-    ScheduleTypeEnum.API === pipelineScheduleType
-      && pipelineScheduleToken
+  const [createPipelineRun]: any = useMutation(
+    (ScheduleTypeEnum.API === pipelineScheduleType && pipelineScheduleToken)
       ? api.pipeline_runs.pipeline_schedules.useCreateWithParent(pipelineScheduleId, pipelineScheduleToken)
       : api.pipeline_runs.pipeline_schedules.useCreate(pipelineScheduleId),
     {
@@ -88,7 +87,6 @@ function RetryButton({
 
   const retryPipelineRun = useCallback(() => {
     setShowConfirmationId(null);
-    // @ts-ignore
     createPipelineRun({
       pipeline_run: {
         execution_date: pipelineRun?.execution_date,
