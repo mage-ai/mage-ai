@@ -115,8 +115,11 @@ class RepoConfig:
         yml.preserve_quotes = True
         yml.indent(mapping=2, sequence=2, offset=0)
 
-        with open(self.metadata_path) as f:
-            data = yml.load(f)
+        if os.path.exists(self.metadata_path):
+            with open(self.metadata_path) as f:
+                data = yml.load(f)
+        else:
+            data = {}
 
         for key, value in kwargs.items():
             data[key] = value
