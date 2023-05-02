@@ -63,6 +63,8 @@ class IntegrationBlock(Block):
                 stream=stream,
             )
             source_output_file_path = self.pipeline.source_output_file_path(stream, index)
+            destination_output_file_path = \
+                self.pipeline.destination_output_file_path(stream, index)
 
             stream_catalog = get_catalog_by_stream(
                 self.pipeline.data_loader.file_path,
@@ -293,6 +295,8 @@ class IntegrationBlock(Block):
                 ),
                 '--input_file_path',
                 source_output_file_path,
+                '--output_file_path',
+                destination_output_file_path,
             ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             for line in proc.stdout:

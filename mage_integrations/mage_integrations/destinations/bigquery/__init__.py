@@ -1,7 +1,7 @@
+from ast import literal_eval
 from functools import reduce
 from google.api_core.exceptions import BadRequest
-from google.cloud import bigquery, storage
-from google.oauth2 import service_account
+from google.cloud import bigquery
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
     MAX_QUERY_BUFFER,
@@ -13,13 +13,21 @@ from mage_integrations.destinations.bigquery.constants import (
 )
 from mage_integrations.destinations.bigquery.utils import (
     convert_array,
+    convert_array_for_batch_load,
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
+    convert_datetime_for_batch_load,
     convert_json_or_string,
+    convert_json_or_string_for_batch_load,
     remove_duplicate_rows,
 )
-from mage_integrations.destinations.constants import KEY_VALUE, UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import (
+    COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_ARRAY,
+    KEY_VALUE,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
+)
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
@@ -36,14 +44,6 @@ import os
 import pandas as pd
 import sys
 import uuid
-
-from ast import literal_eval
-from mage_integrations.destinations.constants import (
-    COLUMN_FORMAT_DATETIME,
-    COLUMN_TYPE_ARRAY,
-)
-import dateutil.parser
-import io
 
 
 def convert_column_if_json(value, column_type):
@@ -379,8 +379,6 @@ WHERE table_id = '{table_name}'
 
             client = connection.client
 
-            # results, jobs = self.__upload_to_file(record_data, client, stream)
-
             job = client.query(
                 'SELECT 1',
                 job_config=bigquery.QueryJobConfig(create_session=True),
@@ -408,9 +406,12 @@ WHERE table_id = '{table_name}'
             )
             job.result()
 
-            # for job in jobs:
-            #     if job.num_dml_affected_rows:
-            #         self.records_affected += job.num_dml_affected_rows
+            for job in jobs:
+                try:
+                    if job.num_dml_affected_rows:
+                        self.records_affected += job.num_dml_affected_rows
+                except Exception:
+                    pass
 
             return results
         except Exception as err:
@@ -588,8 +589,14 @@ WHERE table_id = '{table_name}'
         job_results = []
 
         if self.config.get('use_batch_load'):
-            self.logger.info('-------USING BATCH LOAD METHOD FOR BIG QUERY---------')
-            job_results, jobs = self.__upload_to_file(record_data, client, mapping, columns, full_table_name)
+            self.logger.info('Using batch load method for BigQuery...')
+            job_results, jobs = self.__upload_to_file(
+                client,
+                record_data,
+                mapping,
+                columns,
+                full_table_name,
+            )
         else:
 
             max_subquery_count = self.config.get('max_subquery_count', MAX_SUBQUERY_COUNT)
@@ -679,10 +686,14 @@ WHERE table_id = '{table_name}'
 
         return job_results, jobs
 
-    def __upload_to_file(self, record_data, client, mapping, columns, full_table_name):
-        record_size = 0
-        records = []
-
+    def __upload_to_file(
+        self,
+        client,
+        record_data: List[Dict],
+        mapping: Dict,
+        columns: List[str],
+        full_table_name: str,
+    ):
         job_results = []
         jobs = []
 
@@ -696,65 +707,49 @@ WHERE table_id = '{table_name}'
 
                 column_type_dict = mapping[column]
                 column_type = column_type_dict['type']
-                column_type_converted = column_type_dict['type_converted']
                 column_settings = column_type_dict['column_settings']
 
                 value_final = v
-                if COLUMN_TYPE_ARRAY == column_type:
-                    if v is None:
-                        value_final = []
-                    else:
+                if v is None and COLUMN_TYPE_ARRAY == column_type:
+                    value_final = []
+                if v is not None:
+                    if COLUMN_TYPE_ARRAY == column_type:
                         if type(v) is str:
                             v = literal_eval(v)
-                elif v is not None:
-                    if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-                        parts = v.split('.')
-                        arr = parts
-                        if len(parts) >= 2:
-                            arr = parts[:-1]
-                            tz = parts[-1][:3]
-                            arr.append(tz)
-                            final_value = '.'.join(arr)
-                        else:
-                            final_value = v
 
-                        value_final = dateutil.parser.parse(final_value).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                        value_final = convert_array_for_batch_load(v, column_type_dict)
+                    elif COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+                        value_final = convert_datetime_for_batch_load(v)
+                    else:
+                        value_final = convert_json_or_string_for_batch_load(v, column_type_dict)
 
                 vals.append(value_final)
             values.append(vals)
-        rds = []
-        for v in values:
-            # print('record:', v)
-            rds.append(v)
-            record_size += sys.getsizeof(v)
-            if record_size > (MAX_QUERY_PARAMETERS_SIZE * MAX_QUERY_BUFFER):
-                df = pd.DataFrame.from_records(rds, columns=columns)
-                df.to_json(self.output_file_path, orient='records', lines=True)
-                job_result, job = self.__create_load_job(client, mapping, full_table_name)
-                job_results.append(job_result)
-                jobs.append(job)
-                records = []
-                record_size = 0
-        if len(rds) > 0:
-            df = pd.DataFrame.from_records(rds, columns=columns)
-            df.to_json(self.output_file_path, orient='records', lines=True)
-            job_result, job = self.__create_load_job(client, mapping, full_table_name)
-            job_results.append(job_result)
-            jobs.append(job)
-        
+        df = pd.DataFrame.from_records(values, columns=columns)
+        df.to_json(self.output_file_path, orient='records', lines=True)
+        job_result, job = self.__create_load_job(client, mapping, full_table_name)
+        job_results.append(job_result)
+        jobs.append(job)
+
         return job_results, jobs
 
-    def __create_load_job(self, client, mapping, full_table_name):
+    def __create_load_job(
+        self,
+        client,
+        mapping: str,
+        full_table_name: str,
+    ):
         schema_fields = []
-        print('mapping:', mapping)
         for col, obj in mapping.items():
+            item_type_converted = obj['item_type_converted']
+            type_converted = obj['type_converted']
+            is_array_type = COLUMN_TYPE_ARRAY == obj['type']
             schema_field = bigquery.SchemaField(
                 name=col,
-                field_type=obj['item_type_converted'] if obj['type'] == 'array' else obj['type_converted'],
-                mode='REPEATED' if obj['type'] == 'array' else 'NULLABLE',
+                field_type=item_type_converted if is_array_type else type_converted,
+                mode='REPEATED' if is_array_type else 'NULLABLE',
             )
             schema_fields.append(schema_field)
-        print('schema:', schema_fields)
 
         job_config = bigquery.LoadJobConfig(
             schema=schema_fields,
@@ -768,11 +763,9 @@ WHERE table_id = '{table_name}'
                     job_config=job_config,
                 )
                 result = job.result()
-        except BadRequest as ex:
+        except BadRequest:
             for err in job.errors:
-                print('----------------JOB ERROR:', err)
-            for err in ex.errors:
-                print('----------------BAD REQUEST ERROR:', err)
+                self.logger.exception('BigQuery batch load error:', err)
             raise
         finally:
             os.remove(self.output_file_path)
