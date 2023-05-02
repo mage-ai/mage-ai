@@ -62,6 +62,7 @@ UserPolicy.allow_write([
     'email',
     'first_name',
     'last_name',
+    'owner',
     'password',
     'password_confirmation',
     'roles',

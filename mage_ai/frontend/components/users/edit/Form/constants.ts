@@ -16,7 +16,7 @@ export const USER_PROFILE_FIELDS = [
   },
   {
     autoComplete: 'email',
-    disabled: true,
+    disabled: false,
     label: 'Email',
     required: true,
     type: 'email',

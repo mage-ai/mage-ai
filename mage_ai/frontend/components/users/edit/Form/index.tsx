@@ -8,7 +8,11 @@ import Headline from '@oracle/elements/Headline';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import UserType, { ROLES, ROLE_DISPLAY_MAPPING } from '@interfaces/UserType';
+import UserType, {
+  ROLE_DISPLAY_MAPPING,
+  ROLES,
+  RoleValueEnum,
+} from '@interfaces/UserType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -73,12 +77,13 @@ function UserEditForm({
           },
           onErrorCallback: ({
             error: {
+              exception,
               message,
               type,
             },
           }) => {
             toast.error(
-              message,
+              exception || message,
               {
                 position: toast.POSITION.BOTTOM_RIGHT,
                 toastId: type,
@@ -206,14 +211,25 @@ function UserEditForm({
               // @ts-ignore
               onChange={e => {
                 setButtonDisabled(false);
-                setProfile(prev => ({
-                  ...prev,
-                  roles: e.target.value,
-                }));
+
+                if (e.target.value === RoleValueEnum.OWNER) {
+                  setProfile(prev => ({
+                    ...prev,
+                    owner: true,
+                    roles: null,
+                  }));
+                } else {
+                  setProfile(prev => ({
+                    ...prev,
+                    owner: false,
+                    roles: e.target.value,
+                  }));
+                }
               }}
               primary
               setContentOnMount
-              value={profile?.roles || user?.roles || ''}
+              value={(profile?.owner ? RoleValueEnum.OWNER : profile?.roles)
+                || (user?.roles || '')}
             >
               <option value="" />
               {ROLES.map((value) => (
@@ -221,6 +237,11 @@ function UserEditForm({
                   {ROLE_DISPLAY_MAPPING[value]}
                 </option>
               ))}
+              {!newUser &&
+                <option key="owner_role" value={RoleValueEnum.OWNER}>
+                  {ROLE_DISPLAY_MAPPING[RoleValueEnum.OWNER]}
+                </option>
+              }
             </Select>
           </Spacing>
         )}
