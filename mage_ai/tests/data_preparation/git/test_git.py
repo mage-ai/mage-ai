@@ -2,10 +2,6 @@ from mage_ai.api.resources.SyncResource import (
     get_ssh_private_key_secret_name,
     get_ssh_public_key_secret_name,
 )
-from mage_ai.data_preparation.preferences import (
-    get_preferences,
-    Preferences,
-)
 from mage_ai.data_preparation.shared.secrets import create_secret
 from mage_ai.data_preparation.sync import (
     AuthType,
@@ -13,14 +9,14 @@ from mage_ai.data_preparation.sync import (
 )
 from mage_ai.data_preparation.git import Git
 from mage_ai.tests.base_test import DBTestCase
-import asyncio
 import os
+import unittest
 
-REPO_SECRET = '89d7debf-a215-4419-ac73-4e8ab742ebb3'
-USERNAME_SECRET = 'd7c81004-ddda-4a50-9dc9-aff3e2a71339'
-EMAIL_SECRET = '42e49aec-8f9e-40b8-9779-17e1beb62d35'
-SSH_PUBLIC_KEY_SECRET = 'e2dd9a4f-1255-4d35-ad1f-1aa1c89dfd05'
-SSH_PRIVATE_KEY_SECRET = '6a93252e-527b-431b-9785-4dc950d2000f'
+REPO_SECRET = 'MAGE_TEST_REPO'
+USERNAME_SECRET = 'MAGE_TEST_USERNAME'
+EMAIL_SECRET = 'MAGE_TEST_EMAIL'
+SSH_PUBLIC_KEY_SECRET = 'MAGE_TEST_SSH_PUBLIC_KEY'
+SSH_PRIVATE_KEY_SECRET = 'MAGE_TEST_SSH_PRIVATE_KEY'
 
 
 class GitTest(DBTestCase):
@@ -36,16 +32,20 @@ class GitTest(DBTestCase):
             email=os.getenv(EMAIL_SECRET),
             auth_type=AuthType.SSH,
         )
-        pubk_secret_name = get_ssh_public_key_secret_name()
-        create_secret(pubk_secret_name, os.getenv(SSH_PUBLIC_KEY_SECRET))
-        payload['ssh_public_key_secret_name'] = pubk_secret_name
 
-        pk_secret_name = get_ssh_private_key_secret_name()
-        create_secret(pk_secret_name, os.getenv(SSH_PRIVATE_KEY_SECRET))
-        payload['ssh_public_key_secret_name'] = pk_secret_name
+        if os.getenv(SSH_PUBLIC_KEY_SECRET):
+            pubk_secret_name = get_ssh_public_key_secret_name()
+            create_secret(pubk_secret_name, os.getenv(SSH_PUBLIC_KEY_SECRET))
+            payload['ssh_public_key_secret_name'] = pubk_secret_name
+
+        if os.getenv(SSH_PRIVATE_KEY_SECRET):
+            pk_secret_name = get_ssh_private_key_secret_name()
+            create_secret(pk_secret_name, os.getenv(SSH_PRIVATE_KEY_SECRET))
+            payload['ssh_public_key_secret_name'] = pk_secret_name
 
         self.git_config = GitConfig.load(config=payload)
 
+    @unittest.skipif(os.getenv(REPO_SECRET) is None, 'Git repository not provided')
     def test_set_up_repo(self):
         git_manager = Git(self.git_config)
 

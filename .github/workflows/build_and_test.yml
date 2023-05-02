@@ -40,6 +40,10 @@ jobs:
           pip install -r mage_integrations/requirements.txt
           pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
+        env:
+          - MAGE_TEST_REPO: ${{ secrets.GIT_TEST_REPO }}
+          - MAGE_TEST_USERNAME: ${{ secrets.CI_USERNAME }}
+          - MAGE_TEST_EMAIL: ${{ secrets.CI_EMAIL }}
         run: |
           python3 -m unittest discover -s mage_ai --failfast
       - name: Run mage integrations unit tests
