@@ -24,7 +24,7 @@ class Git:
         self.repo_path = git_config.repo_path or os.getcwd()
         os.makedirs(self.repo_path, exist_ok=True)
         self.git_config = git_config
-        self.auth_type = git_config.auth_type
+        self.auth_type = git_config.auth_type or AuthType.SSH
 
         if self.auth_type == AuthType.HTTPS:
             url = urlsplit(self.remote_repo_link)
@@ -204,13 +204,11 @@ class Git:
                 self.repo.git.add('.')
             self.repo.index.commit(message)
 
-    def change_branch(self, branch) -> None:
+    def switch_branch(self, branch) -> None:
         if branch in self.repo.heads:
-            current = self.repo.heads[branch]
+            self.repo.git.switch(branch)
         else:
-            current = self.repo.create_head(branch)
-
-        current.checkout()
+            self.repo.git.switch('-c', branch)
 
     @_remote_command
     def clone(self):
