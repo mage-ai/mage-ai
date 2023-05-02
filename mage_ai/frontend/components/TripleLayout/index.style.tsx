@@ -263,7 +263,7 @@ export const NavigationInnerStyle = styled.div<{
 }>`
   height: 100%;
   position: fixed;
-  z-index: 5;
+  z-index: 6;
 
   ${props => props.aligned === 'left' && `
     border-right: 1px solid ${(props.theme.borders || dark.borders).medium};

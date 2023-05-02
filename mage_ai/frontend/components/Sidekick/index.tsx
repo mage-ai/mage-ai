@@ -33,7 +33,7 @@ import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTa
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
-import { Close } from '@oracle/icons';
+import { Charts as ChartsIcon, Close } from '@oracle/icons';
 import {
   MESSAGE_VIEWS,
   VH_PERCENTAGE,
@@ -45,7 +45,7 @@ import {
   get,
 } from '@storage/localStorage';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   PaddingContainerStyle,
   SidekickContainerStyle,
@@ -523,14 +523,24 @@ function Sidekick({
           :
             <FlexContainer
               alignItems="center"
+              flexDirection="column"
               justifyContent="center"
               verticalHeight={VH_PERCENTAGE}
               verticalHeightOffset={heightOffset}
               width={afterWidth}
             >
-              <Spacing pl={1} />
-              <EmptyCharts size={358} />
-              <Spacing pr={1} />
+              <Spacing px={1}>
+                <FlexContainer flexDirection="row">
+                  <Text center default>
+                    Add a chart by clicking the chart icon
+                    &nbsp;<ChartsIcon size={UNIT * 1.5} />&nbsp;
+                    in the top right corner of a block.
+                  </Text>
+                </FlexContainer>
+              </Spacing>
+              <Spacing mt={PADDING_UNITS} px={1}>
+                <EmptyCharts size={UNIT * 40} />
+              </Spacing>
             </FlexContainer>
         )}
 

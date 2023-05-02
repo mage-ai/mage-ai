@@ -51,7 +51,6 @@ function Charts({
     },
   }), {}), [runningBlocks]);
 
-
   return (
     <FlexContainer
       flexDirection="column"
