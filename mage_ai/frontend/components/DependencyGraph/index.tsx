@@ -221,24 +221,33 @@ function DependencyGraph({
   );
 
   const [updateBlockByDragAndDrop] = useMutation(
-    // @ts-ignore
-    ({ fromBlock, toBlock, removeDependency }:
+    ({ fromBlock, portSide, toBlock, removeDependency }:
       {
         fromBlock: BlockType;
+        portSide?: SideEnum;
         toBlock: BlockType;
         removeDependency?: boolean;
       },
-    ) => api.blocks.pipelines.useUpdate(
-      pipeline?.uuid,
-      encodeURIComponent(toBlock.uuid),
-    )({
-      block: {
-        ...toBlock,
-        upstream_blocks: removeDependency
-          ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
-          : toBlock.upstream_blocks.concat(fromBlock.uuid),
-      },
-    }),
+    ) => {
+      let blockToUpdate = toBlock;
+      let upstreamBlocks = toBlock.upstream_blocks.concat(fromBlock.uuid);
+      if (!removeDependency && portSide === SideEnum.NORTH) {
+        blockToUpdate = fromBlock;
+        upstreamBlocks = fromBlock.upstream_blocks.concat(toBlock.uuid);
+      }
+
+      return api.blocks.pipelines.useUpdate(
+        pipeline?.uuid,
+        encodeURIComponent(blockToUpdate.uuid),
+      )({
+        block: {
+          ...blockToUpdate,
+          upstream_blocks: removeDependency
+            ? toBlock.upstream_blocks.filter(uuid => uuid !== fromBlock.uuid)
+            : upstreamBlocks,
+        },
+      });
+    },
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -677,8 +686,8 @@ function DependencyGraph({
                         setActivePort(null);
                       }}
                       onDragStart={(e, initial, port) => {
-                        // @ts-ignore
-                        setActivePort({ id: port?.id, side: port?.side });
+                        const side = port?.side as SideEnum;
+                        setActivePort({ id: port?.id, side });
                       }}
                       onEnter={() => setShowPorts(true)}
                       rx={10}
@@ -766,8 +775,12 @@ function DependencyGraph({
               return;
             }
 
-            // @ts-ignore
-            updateBlockByDragAndDrop({ fromBlock, toBlock });
+            const portSide = port?.side as SideEnum;
+            updateBlockByDragAndDrop({
+              fromBlock,
+              portSide: portSide || SideEnum.SOUTH,
+              toBlock,
+            });
           }}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
           pannable={pannable}
