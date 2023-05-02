@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
@@ -98,15 +99,16 @@ def __build_dates(backfill: Backfill) -> List[datetime]:
                 unit = 'seconds'
             current_datetime += timedelta(**{unit: backfill.interval_units})
         else:
-            month = 1 if Backfill.IntervalType.MONTH == interval_type else 0
-            year = 1 if Backfill.IntervalType.YEAR == interval_type else 0
-            current_datetime = datetime(
-                current_datetime.year + year,
-                current_datetime.month + month,
-                current_datetime.day,
-                current_datetime.hour,
-                current_datetime.minute,
-                current_datetime.second,
-            ).replace(tzinfo=current_datetime.tzinfo)
+            key = None
+            if Backfill.IntervalType.MONTH == interval_type:
+                key = 'months'
+            elif Backfill.IntervalType.YEAR == interval_type:
+                key = 'years'
+
+            delta = {
+                key: backfill.interval_units,
+            }
+            current_datetime = current_datetime + relativedelta(**delta)
+            current_datetime = current_datetime.replace(tzinfo=current_datetime.tzinfo)
 
     return dates
