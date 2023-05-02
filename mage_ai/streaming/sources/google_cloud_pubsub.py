@@ -30,6 +30,24 @@ class GoogleCloudPubSubSource(BaseSource):
 
     config_class = GoogleCloudPubSubConfig
 
+    def _get_publisher_client(self) -> pubsub_v1.PublisherClient:
+        if self.config.path_to_credentials_json_file is not None:
+            credentials = service_account.Credentials.from_service_account_file(
+                self.config.path_to_credentials_json_file
+            )
+            return pubsub_v1.PublisherClient(credentials=credentials)
+        else:
+            return pubsub_v1.PublisherClient()
+
+    def _get_subscriber_client(self) -> pubsub_v1.SubscriberClient:
+        if self.config.path_to_credentials_json_file is not None:
+            credentials = service_account.Credentials.from_service_account_file(
+                self.config.path_to_credentials_json_file
+            )
+            return pubsub_v1.SubscriberClient(credentials=credentials)
+        else:
+            return pubsub_v1.SubscriberClient()
+
     def _exist_subscription(self, project_id: str) -> bool:
         project_path = f'projects/{project_id}'
         subscriptions = self.subscriber_client.list_subscriptions(
@@ -48,7 +66,7 @@ class GoogleCloudPubSubSource(BaseSource):
             self._print(f'Subscription already exists: {self.subscription_path}')
             return
 
-        publisher = pubsub_v1.PublisherClient()
+        publisher = self._get_publisher_client()
         topic_path = publisher.topic_path(project_id, topic_id)
         subscription = self.subscriber_client.create_subscription(
             request={'name': self.subscription_path, 'topic': topic_path}
@@ -59,15 +77,8 @@ class GoogleCloudPubSubSource(BaseSource):
     def init_client(self) -> None:
         if self.config.pubsub_emulator_host is not None:
             os.environ['PUBSUB_EMULATOR_HOST'] = self.config.pubsub_emulator_host
-        if self.config.path_to_credentials_json_file is not None:
-            # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = \
-            #     self.config.path_to_credentials_json_file
-            credentials = service_account.Credentials.from_service_account_file(
-                self.config.path_to_credentials_json_file
-            )
-            self.subscriber_client = pubsub_v1.SubscriberClient(credentials=credentials)
-        else:
-            self.subscriber_client = pubsub_v1.SubscriberClient()
+
+        self.subscriber_client = self._get_subscriber_client()
         self.subscription_path = self.subscriber_client.subscription_path(
             self.config.project_id, self.config.subscription_id)
         self._create_subscription(
