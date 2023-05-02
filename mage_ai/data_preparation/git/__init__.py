@@ -24,7 +24,7 @@ class Git:
         self.repo_path = git_config.repo_path or os.getcwd()
         os.makedirs(self.repo_path, exist_ok=True)
         self.git_config = git_config
-        self.auth_type = git_config.auth_type
+        self.auth_type = git_config.auth_type or AuthType.SSH
 
         if self.auth_type == AuthType.HTTPS:
             url = urlsplit(self.remote_repo_link)

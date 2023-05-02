@@ -27,14 +27,13 @@ class Preferences:
             elif os.path.exists(self.preferences_file_path):
                 with open(self.preferences_file_path) as f:
                     preferences = yaml.full_load(f.read()) or {}
-
         except Exception:
             traceback.print_exc()
             pass
 
         self.sync_config = preferences.get('sync_config', dict())
 
-    def is_valid_git_config(self) -> bool:
+    def has_valid_git_config(self) -> bool:
         return 'remote_repo_link' in self.sync_config and 'repo_path' in self.sync_config
 
     def update_preferences(self, updates: Dict):

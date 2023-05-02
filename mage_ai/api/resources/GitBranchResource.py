@@ -18,14 +18,15 @@ class GitBranchResource(GenericResource):
     def create(self, payload, user, **kwargs):
         branch = payload.get('name')
         git_manager = Git.get_manager(user=user)
-        git_manager.change_branch(branch)
+        git_manager.switch_branch(branch)
 
         return self(dict(name=git_manager.current_branch), user, **kwargs)
 
     @classmethod
     async def member(self, pk, user, **kwargs):
         branch = None
-        if get_preferences(user=user).is_valid_git_config():
+        preferences = get_preferences(user=user)
+        if preferences.has_valid_git_config():
             git_manager = Git.get_manager(user=user)
             branch = git_manager.current_branch
         return self(dict(name=branch), user, **kwargs)
