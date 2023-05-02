@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResource
 from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
-from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db import db_connection
