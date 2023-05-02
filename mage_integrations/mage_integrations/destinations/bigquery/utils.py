@@ -49,7 +49,7 @@ def remove_emoji_code(v: str) -> str:
 def stringify_object_and_remove_emoji_code(v: str) -> str:
     if type(v) is dict or type(v) is list:
         v = json.dumps(v)
-    remove_emoji_code(v)
+    v = remove_emoji_code(v)
     if type(v) is not str:
         v = str(v)
     return v

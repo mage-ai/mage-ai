@@ -136,7 +136,7 @@ class IntegrationPipeline(Pipeline):
 
     def destination_output_folder(self, stream: str) -> str:
         return f'{self.destination_dir}/{clean_name(stream)}/output'
-    
+
     def destination_output_file_path(self, stream: str, index: int = 0) -> str:
         stream_dir = self.destination_output_folder(stream)
         file_path = f'{stream_dir}/{number_string(index)}'

@@ -36,7 +36,6 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping,
 )
 from mage_integrations.destinations.sql.utils import clean_column_name
-from mage_integrations.destinations.utils import update_record_with_internal_columns
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Any, Dict, List, Tuple
 import google
@@ -58,6 +57,10 @@ class BigQuery(Destination):
     SCHEMA_CONFIG_KEY = 'dataset'
 
     BATCH_SIZE = 500
+
+    def __init__(self, **kwargs):
+        Destination.__init__(self, **kwargs)
+        self.use_batch_load = self.config.get('use_batch_load')
 
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
@@ -210,58 +213,6 @@ WHERE table_id = '{table_name}'
                     records_inserted += t[0]
 
         return records_inserted, 0
-
-    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
-        database_name = self.config.get(self.DATABASE_CONFIG_KEY)
-        schema_name = self.config.get(self.SCHEMA_CONFIG_KEY)
-        table_name = self.config.get('table')
-
-        tags = dict(
-            database_name=database_name,
-            records=len(record_data),
-            schema_name=schema_name,
-            stream=stream,
-            table_name=table_name,
-        )
-
-        self.logger.info('Export data started', tags=tags)
-
-        unique_constraints = self.unique_constraints.get(stream)
-        unique_conflict_method = self.unique_conflict_methods.get(stream)
-
-        # Add _mage_created_at and _mage_updated_at columns
-        for r in record_data:
-            r['record'] = update_record_with_internal_columns(r['record'])
-
-        # Create schema if not exists
-        create_schema_commands = self.build_create_schema_commands(
-            database_name=database_name,
-            schema_name=schema_name,
-        )
-        self.build_connection().execute(create_schema_commands, commit=True)
-
-        query_strings = self.build_query_strings(record_data, stream)
-
-        data = self.process_queries(
-            query_strings,
-            record_data=record_data,
-            stream=stream,
-            tags=tags,
-        )
-
-        records_inserted, records_updated = self.calculate_records_inserted_and_updated(
-            data,
-            unique_constraints=unique_constraints,
-            unique_conflict_method=unique_conflict_method,
-        )
-
-        tags.update(
-            records_affected=self.records_affected,
-            records_inserted=records_inserted,
-            records_updated=records_updated,
-        )
-
-        self.logger.info('Export data completed.', tags=tags)
 
     def handle_insert_commands(
         self,
@@ -567,7 +518,7 @@ WHERE table_id = '{table_name}'
                 tags=tags,
             )
 
-        if self.config.get('use_batch_load'):
+        if self.use_batch_load:
             return [[] for _ in job_results], jobs
         else:
             return [[row.values() for row in row_iterator] for row_iterator in job_results], jobs
@@ -588,7 +539,7 @@ WHERE table_id = '{table_name}'
         jobs = []
         job_results = []
 
-        if self.config.get('use_batch_load'):
+        if self.use_batch_load:
             self.logger.info('Using batch load method for BigQuery...')
             job_results, jobs = self.__upload_to_file(
                 client,
@@ -598,7 +549,6 @@ WHERE table_id = '{table_name}'
                 full_table_name,
             )
         else:
-
             max_subquery_count = self.config.get('max_subquery_count', MAX_SUBQUERY_COUNT)
 
             insert_statement = f"INSERT INTO {full_table_name} ({insert_columns}) VALUES"
@@ -645,7 +595,7 @@ WHERE table_id = '{table_name}'
                             arr.append(f'@{variable_name}')
 
                             query_payload_size += sys.getsizeof(value)
-                    
+
                     row_value = f'({",".join(arr)})'
                     query_size += len(row_value)
                     row_values.append(row_value)
@@ -755,20 +705,20 @@ WHERE table_id = '{table_name}'
             schema=schema_fields,
             source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
         )
-        try:
-            with open(self.output_file_path, 'rb') as source_file:
-                job = client.load_table_from_file(
-                    source_file,
-                    full_table_name,
-                    job_config=job_config,
-                )
+        with open(self.output_file_path, 'rb') as source_file:
+            job = client.load_table_from_file(
+                source_file,
+                full_table_name,
+                job_config=job_config,
+            )
+            try:
                 result = job.result()
-        except BadRequest:
-            for err in job.errors:
-                self.logger.exception('BigQuery batch load error:', err)
-            raise
-        finally:
-            os.remove(self.output_file_path)
+            except BadRequest:
+                for err in job.errors:
+                    self.logger.exception('BigQuery batch load error:', err)
+                raise
+            finally:
+                os.remove(self.output_file_path)
 
         return result, job
 
