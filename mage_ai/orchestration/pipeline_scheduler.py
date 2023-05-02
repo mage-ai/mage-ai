@@ -48,7 +48,7 @@ from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.shared.retry import retry
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 import pytz
 import traceback
 
@@ -855,6 +855,29 @@ def run_pipeline(pipeline_run_id, variables, tags):
         global_vars=variables,
         tags=tags,
     )
+
+
+def configure_pipeline_run_payload(
+    pipeline_schedule: PipelineSchedule,
+    pipeline_type: PipelineType,
+    payload: Dict = {},
+) -> Tuple[Dict, bool]:
+    if 'variables' not in payload:
+        payload['variables'] = {}
+
+    payload['pipeline_schedule_id'] = pipeline_schedule.id
+    payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
+    execution_date = payload.get('execution_date')
+    if execution_date is None:
+        payload['execution_date'] = datetime.utcnow()
+    elif not isinstance(execution_date, datetime):
+        payload['execution_date'] = datetime.fromisoformat(execution_date)
+
+    is_integration = PipelineType.INTEGRATION == pipeline_type
+    if is_integration:
+        payload['create_block_runs'] = False
+
+    return payload, is_integration
 
 
 def start_scheduler(pipeline_run: PipelineRun) -> None:

@@ -1,11 +1,14 @@
-from datetime import datetime
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.orchestration.pipeline_scheduler import start_scheduler, stop_pipeline_run
+from mage_ai.orchestration.pipeline_scheduler import (
+    configure_pipeline_run_payload,
+    start_scheduler,
+    stop_pipeline_run,
+)
 from sqlalchemy.orm import selectinload
 
 
@@ -147,18 +150,11 @@ class PipelineRunResource(DatabaseResource):
         pipeline_schedule = kwargs.get('parent_model')
 
         pipeline = Pipeline.get(pipeline_schedule.pipeline_uuid)
-
-        if 'variables' not in payload:
-            payload['variables'] = {}
-
-        payload['pipeline_schedule_id'] = pipeline_schedule.id
-        payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
-        if payload.get('execution_date') is None:
-            payload['execution_date'] = datetime.utcnow()
-
-        is_integration = PipelineType.INTEGRATION == pipeline.type
-        if is_integration:
-            payload['create_block_runs'] = False
+        configured_payload, _ = configure_pipeline_run_payload(
+            pipeline_schedule,
+            pipeline.type,
+            payload,
+        )
 
         def _create_callback(resource):
             pipeline_run = resource.model
@@ -166,7 +162,7 @@ class PipelineRunResource(DatabaseResource):
 
         self.on_create_callback = _create_callback
 
-        return super().create(payload, user, **kwargs)
+        return super().create(configured_payload, user, **kwargs)
 
     @safe_db_query
     def update(self, payload, **kwargs):

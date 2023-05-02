@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
 from mage_ai.api.resources.PipelineScheduleResource import PipelineScheduleResource
 from mage_ai.data_integrations.utils.scheduler import initialize_state_and_runs
-from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import ScheduleStatus, ScheduleType
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
-from mage_ai.orchestration.pipeline_scheduler import get_variables
+from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload, get_variables
 from mage_ai.orchestration.triggers.constants import (
     DEFAULT_POLL_INTERVAL,
     TRIGGER_NAME_FOR_TRIGGER_CREATED_FROM_CODE,
@@ -20,16 +19,13 @@ def create_and_start_pipeline_run(
     pipeline_schedule: PipelineSchedule,
     payload: Dict = {},
 ) -> PipelineRun:
-    payload['pipeline_schedule_id'] = pipeline_schedule.id
-    payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
-    if payload.get('execution_date') is None:
-        payload['execution_date'] = datetime.utcnow()
+    configured_payload, is_integration = configure_pipeline_run_payload(
+        pipeline_schedule,
+        pipeline.type,
+        payload,
+    )
 
-    is_integration = PipelineType.INTEGRATION == pipeline.type
-    if is_integration:
-        payload['create_block_runs'] = False
-
-    pipeline_run = PipelineRun.create(**payload)
+    pipeline_run = PipelineRun.create(**configured_payload)
 
     from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
     pipeline_scheduler = PipelineScheduler(pipeline_run)

@@ -15,6 +15,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@oracle/components/CodeBlock';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import DBTSettings from '../DBTSettings';
+import ErrorsType from '@interfaces/ErrorsType';
 import EventMatcherType, { PROVIDER_EVENTS } from '@interfaces/EventMatcherType';
 import EventRuleType from '@interfaces/EventRuleType';
 import Divider from '@oracle/elements/Divider';
@@ -93,24 +94,26 @@ const getTriggerTypes = (
 };
 
 type EditProps = {
+  errors: ErrorsType;
   fetchPipelineSchedule: () => void;
   pipeline: PipelineType;
   pipelineSchedule?: PipelineScheduleType;
+  setErrors: (errors: ErrorsType) => void;
   variables?: PipelineVariableType[];
 };
 
 function Edit({
+  errors,
   fetchPipelineSchedule,
   pipeline,
   pipelineSchedule,
+  setErrors,
   variables,
 }: EditProps) {
   const router = useRouter();
   const pipelineUUID = pipeline?.uuid;
   const pipelineScheduleID = pipelineSchedule?.id;
   const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
-
-  const [errors, setErrors] = useState(null);
 
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
@@ -136,7 +139,6 @@ function Edit({
     settings: settingsInit = {},
     sla,
     start_time: startTime,
-    token,
     variables: scheduleVariablesInit = {},
   } = schedule || {};
 
