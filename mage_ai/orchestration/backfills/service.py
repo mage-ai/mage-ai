@@ -105,7 +105,9 @@ def __build_dates(backfill: Backfill) -> List[datetime]:
             elif Backfill.IntervalType.YEAR == interval_type:
                 key = 'years'
 
-            delta = { key: backfill.interval_units }
+            delta = {
+                key: backfill.interval_units,
+            }
             current_datetime = current_datetime + relativedelta(**delta)
             current_datetime = current_datetime.replace(tzinfo=current_datetime.tzinfo)
 
