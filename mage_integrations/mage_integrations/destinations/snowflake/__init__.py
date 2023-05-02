@@ -26,7 +26,7 @@ from mage_integrations.utils.array import batch
 from mage_integrations.utils.strings import is_number
 
 
-def convert_array(value, column_settings):
+def convert_array(value, column_settings) -> str:
     def format_value(val):
         val_str = str(val)
         if type(val) is list or type(val) is dict:
@@ -44,7 +44,7 @@ def convert_array(value, column_settings):
     return 'NULL'
 
 
-def convert_column_if_json(value, column_type):
+def convert_column_if_json(value, column_type) -> str:
     if SNOWFLAKE_COLUMN_TYPE_VARIANT == column_type:
         value = (
             value.
@@ -169,7 +169,8 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
         unique_constraints: List[str] = None,
     ) -> List[str]:
         full_table_name = self.full_table_name(database_name, schema_name, table_name)
-        full_table_name_temp = self.full_table_name_temp(database_name, schema_name, table_name)
+        full_table_name_temp = self.full_table_name(
+            database_name, schema_name, table_name, temp=True)
 
         columns = list(schema['properties'].keys())
         mapping = column_type_mapping(
@@ -268,17 +269,20 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             f'USE DATABASE {database_name}',
         ] + super().build_create_schema_commands(database_name, schema_name)
 
-    def full_table_name(self, database_name: str, schema_name: str, table_name: str) -> str:
+    def full_table_name(
+        self,
+        database_name: str,
+        schema_name: str,
+        table_name: str,
+        temp: bool = False,
+    ) -> str:
+        if temp:
+            table_name = f'temp_{table_name}'
+
         if self.disable_double_quotes:
             return f'{database_name}.{schema_name}.{table_name}'
 
         return f'"{database_name}"."{schema_name}"."{table_name}"'
-
-    def full_table_name_temp(self, database_name: str, schema_name: str, table_name: str) -> str:
-        if self.disable_double_quotes:
-            return f'{database_name}.{schema_name}.temp_{table_name}'
-
-        return f'"{database_name}"."{schema_name}"."temp_{table_name}"'
 
     def does_table_exist(
         self,
