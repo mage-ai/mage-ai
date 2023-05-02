@@ -84,4 +84,5 @@ class UsageStatisticLogger():
         return dict(
             platform=platform.platform(),
             project_uuid=self.project.project_uuid,
+            version=self.project.version,
         )
