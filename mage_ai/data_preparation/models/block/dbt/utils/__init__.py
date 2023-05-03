@@ -1171,7 +1171,8 @@ def model_config(text: str) -> Dict:
                 key = key.strip()
                 value = value.strip()
                 if value:
-                    if (value[0] == "'" and value[-1] == "'") or (value[0] == '"' and value[-1] == '"'):
+                    if (value[0] == "'" and value[-1] == "'") \
+                            or (value[0] == '"' and value[-1] == '"'):
                         value = value[1:-1]
                 config[key] = value
 
