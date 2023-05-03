@@ -24,7 +24,7 @@ class BigQuery(Connection):
 
         if self.credentials_info is None:
             if self.path_to_credentials_json_file is None:
-                raise Exception('No valid credentials provided.')
+                raise Exception('No valid crendentials provided.')
             self.credentials_info = service_account.Credentials.from_service_account_file(
                 self.path_to_credentials_json_file,
             )

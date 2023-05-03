@@ -58,7 +58,6 @@ class Destination():
         input_file_path: str = None,
         log_to_stdout: bool = False,
         logger=LOGGER,
-        output_file_path: str = None,
         settings: Dict = None,
         settings_file_path: str = None,
         state_file_path: str = None,
@@ -70,7 +69,6 @@ class Destination():
             argument_parser.add_argument('--debug', action='store_true')
             argument_parser.add_argument('--input_file_path', type=str, default=None)
             argument_parser.add_argument('--log_to_stdout', type=bool, default=False)
-            argument_parser.add_argument('--output_file_path', type=str, default=None)
             argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
             argument_parser.add_argument('--test_connection', action='store_true')
@@ -86,8 +84,6 @@ class Destination():
                 input_file_path = args.input_file_path
             if args.log_to_stdout:
                 log_to_stdout = args.log_to_stdout
-            if args.output_file_path:
-                output_file_path = args.output_file_path
             if args.settings:
                 settings_file_path = args.settings
             if args.state:
@@ -105,7 +101,6 @@ class Destination():
         self.key_properties = None
         self.input_file_path = input_file_path
         self.logger = Logger(caller=self, log_to_stdout=log_to_stdout, logger=logger)
-        self.output_file_path = output_file_path
         self.partition_keys = None
         self.replication_methods = None
         self.schemas = None

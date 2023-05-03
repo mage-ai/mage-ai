@@ -3,6 +3,5 @@
   "project_id": "",
   "dataset": "",
   "location": "",
-  "disable_update_column_types": false,
-  "use_batch_load": false
+  "disable_update_column_types": false
 }
