@@ -12,6 +12,7 @@ from mage_integrations.destinations.mssql.utils import (
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
+    build_alter_table_command,
     build_insert_command,
     column_type_mapping,
 )
@@ -63,6 +64,42 @@ END
                 key_properties=self.key_properties.get(stream),
                 schema=schema,
                 unique_constraints=unique_constraints,
+            ),
+        ]
+
+    def build_alter_table_commands(
+        self,
+        schema: Dict,
+        schema_name: str,
+        stream: str,
+        table_name: str,
+        database_name: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        results = self.build_connection().load(f"""
+SELECT
+    column_name
+    , data_type
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+        """)
+        current_columns = [r[0].lower() for r in results]
+        schema_columns = schema['properties'].keys()
+        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+
+        if not new_columns:
+            return []
+
+        # TODO: Support alter column types
+        return [
+            build_alter_table_command(
+                column_type_mapping=column_type_mapping(
+                    schema,
+                    convert_column_type,
+                    lambda item_type_converted: 'TEXT',
+                ),
+                columns=new_columns,
+                full_table_name=f'{schema_name}.{table_name}',
             ),
         ]
 
