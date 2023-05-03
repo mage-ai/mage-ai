@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.constants import (
     REPLICATION_METHOD_INCREMENTAL,
@@ -6,8 +7,6 @@ from mage_integrations.sources.intercom.client import IntercomClient
 from mage_integrations.sources.intercom.streams import STREAMS
 from typing import Dict, Generator, List
 import singer
-
-LOGGER = singer.get_logger()
 
 
 class Intercom(Source):
@@ -34,7 +33,10 @@ class Intercom(Source):
         else:
             bookmark_datetime = None
         if bookmark_datetime is not None:
-            bookmark_datetime = singer.utils.strptime_to_utc(bookmark_datetime)
+            if type(bookmark_datetime) is int:
+                bookmark_datetime = datetime.fromtimestamp(bookmark_datetime)
+            else:
+                bookmark_datetime = singer.utils.strptime_to_utc(bookmark_datetime)
         for record in stream_obj.get_records(bookmark_datetime=bookmark_datetime):
             yield [record]
 
