@@ -15,7 +15,7 @@ from mage_ai.data_preparation.models.block.sql.utils.shared import (
     has_create_or_insert_statement,
     interpolate_vars,
 )
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import (
     DataSource,
@@ -80,7 +80,7 @@ def execute_sql_code(
     else:
         if block.downstream_blocks and \
             len(block.downstream_blocks) >= 1 and \
-                not all([BlockType.SQL == d_block.type for d_block in block.downstream_blocks]):
+                not all([BlockLanguage.SQL == d_block.language for d_block in block.downstream_blocks]):
             limit = QUERY_ROW_LIMIT
         else:
             limit = min(limit, QUERY_ROW_LIMIT)
