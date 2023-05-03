@@ -533,8 +533,9 @@ function Sidekick({
                 <FlexContainer flexDirection="row">
                   <Text center default>
                     Add a chart by clicking the chart icon
-                    &nbsp;<ChartsIcon size={UNIT * 1.5} />&nbsp;
-                    in the top right corner of a block.
+                    &nbsp;<ChartsIcon size={UNIT * 1.5} />&nbsp;in
+                    <br />
+                    the top right corner of a block (if applicable).
                   </Text>
                 </FlexContainer>
               </Spacing>
