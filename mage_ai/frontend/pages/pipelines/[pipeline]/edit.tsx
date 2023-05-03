@@ -1082,14 +1082,12 @@ function PipelineDetailPage({
             fetchFileTree();
           },
           onErrorCallback: (response, errors) => {
-            console.log('response:', response);
-            console.log('errors:', errors);
             showDeleteConfirmation();
-            // setErrors({
-            //   displayMessage: response.exception,
-            //   errors,
-            //   response,
-            // });
+            setErrors({
+              displayMessage: response.exception,
+              errors,
+              response,
+            });
           },
         },
       ),

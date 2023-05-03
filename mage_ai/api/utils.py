@@ -46,7 +46,8 @@ def has_at_least_editor_role_and_notebook_edit_access(user) -> bool:
 
 
 def has_at_least_editor_role_and_pipeline_edit_access(user) -> bool:
-    return not DISABLE_PIPELINE_EDIT_ACCESS and has_at_least_editor_role(user)
+    return not DISABLE_PIPELINE_EDIT_ACCESS and \
+        has_at_least_editor_role_and_notebook_edit_access(user)
 
 
 def has_at_least_viewer_role(user) -> bool:

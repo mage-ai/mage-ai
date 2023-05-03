@@ -20,7 +20,7 @@ PipelinePolicy.allow_actions([
     constants.DELETE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
+], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 PipelinePolicy.allow_actions([
     constants.UPDATE,
@@ -45,7 +45,7 @@ PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
 ], on_action=[
     constants.CREATE,
     constants.DELETE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
+], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 PipelinePolicy.allow_read(PipelinePresenter.default_attributes + [
     'callbacks',
@@ -76,7 +76,7 @@ PipelinePolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
+], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 PipelinePolicy.allow_write([
     'add_upstream_for_block_uuid',
@@ -87,7 +87,7 @@ PipelinePolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
+], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
 
 PipelinePolicy.allow_write([
     'pipeline_runs',
@@ -125,4 +125,4 @@ PipelinePolicy.allow_query([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.has_at_least_editor_role_and_edit_access())
+], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
