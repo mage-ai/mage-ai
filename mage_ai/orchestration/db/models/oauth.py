@@ -73,6 +73,13 @@ class User(BaseModel):
             elif self.roles & 4 != 0:
                 return 'Viewer'
 
+    @property
+    def is_admin(self) -> bool:
+        if not self.owner and self.roles:
+            return self.roles & 1 != 0
+
+        return False
+
 
 class Oauth2Application(BaseModel):
     class AuthorizationGrantType(str, enum.Enum):

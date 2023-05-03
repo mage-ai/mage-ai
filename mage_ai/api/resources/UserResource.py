@@ -88,15 +88,21 @@ class UserResource(DatabaseResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
+        error = ApiError.RESOURCE_INVALID.copy()
+
+        if self.current_user.is_admin and self.owner:
+            error.update(
+                {'message': 'Admins cannot update users who are Owners.'})
+            raise ApiError(error)
+
         password = payload.get('password')
 
         if password:
             password_current = payload.get('password_current')
             password_confirmation = payload.get('password_confirmation')
 
-            error = ApiError.RESOURCE_INVALID.copy()
-
-            if self.current_user.id == self.id or not self.current_user.owner:
+            if self.current_user.id == self.id or \
+                    (not self.current_user.owner and self.current_user.roles & 1 == 0):
                 if not password_current or not verify_password(
                     password_current,
                     self.password_hash,

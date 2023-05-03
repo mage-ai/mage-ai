@@ -27,7 +27,7 @@ import { sortByKey } from '@utils/array';
 
 function UsersListPage() {
   const router = useRouter();
-  const { id: currentUserID } = getUser() || {};
+  const { id: currentUserID, owner: isOwner } = getUser() || {};
   const [query, setQuery] = useState<{
     add_new_user: boolean;
     user_id: number;
@@ -37,8 +37,12 @@ function UsersListPage() {
     revalidateOnFocus: false,
   });
   const users = useMemo(
-    () => sortByKey(data?.users || [], 'username'),
-    [data],
+    () => {
+      const filteredUsers = (data?.users || [])
+        .filter(({ owner }) => isOwner ? true : !owner);
+      return sortByKey(filteredUsers, 'username');
+    },
+    [data, isOwner],
   );
   const { data: dataUser, mutate: fetchUser } = api.users.detail(query?.user_id, {}, {
     revalidateOnFocus: false,
