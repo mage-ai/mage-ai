@@ -111,7 +111,7 @@ class UserResource(DatabaseResource):
                 error.update(
                     {'message': 'Admins cannot update users who are Owners.'})
                 raise ApiError(error)
-            elif self.is_admin:
+            elif self.is_admin and self.current_user.id != self.id:
                 error.update(
                     {'message': 'Admins cannot update users who are Admins.'})
                 raise ApiError(error)

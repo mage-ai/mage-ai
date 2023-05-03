@@ -10,6 +10,7 @@ class UserPolicy(BasePolicy):
 
 
 UserPolicy.allow_actions([
+    constants.CREATE,
     constants.DELETE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -23,7 +24,6 @@ UserPolicy.allow_actions([
 ], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
 
 UserPolicy.allow_actions([
-    constants.CREATE,
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
@@ -40,7 +40,7 @@ UserPolicy.allow_read(UserPresenter.default_attributes + [
 ], on_action=[
     constants.CREATE,
     constants.DELETE,
-], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
+], condition=lambda policy: policy.is_current_user() or policy.is_owner())
 
 UserPolicy.allow_write([
     'avatar',
@@ -86,4 +86,4 @@ UserPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.CREATE,
-], condition=lambda policy: policy.has_at_least_admin_role())
+], condition=lambda policy: policy.is_owner())
