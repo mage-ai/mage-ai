@@ -311,7 +311,7 @@ class Git:
                         repo_name=get_repo_path(),
                     )
                     if os.getenv(GIT_SSH_PRIVATE_KEY_VAR):
-                        public_key = os.getenv(GIT_SSH_PRIVATE_KEY_VAR)
+                        private_key = os.getenv(GIT_SSH_PRIVATE_KEY_VAR)
                     if private_key:
                         with open(custom_private_key_file, 'w') as f:
                             f.write(base64.b64decode(private_key).decode('utf-8'))

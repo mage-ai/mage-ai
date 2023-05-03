@@ -12,7 +12,8 @@ GIT_REPO_PATH_VAR = 'GIT_REPO_PATH'
 GIT_USERNAME_VAR = 'GIT_USERNAME'
 GIT_EMAIL_VAR = 'GIT_EMAIL'
 GIT_AUTH_TYPE_VAR = 'GIT_AUTH_TYPE'
-GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
+GIT_BRANCH_VAR = 'GIT_BRANCH'
+GIT_SYNC_ON_PIPELINE_RUN_TYPE = 'GIT_SYNC_ON_PIPELINE_RUN'
 
 
 class Preferences:
@@ -43,9 +44,11 @@ class Preferences:
             self.sync_config = dict(
                 remote_repo_link=os.getenv(GIT_REPO_LINK_VAR),
                 repo_path=os.getenv(GIT_REPO_PATH_VAR),
+                auth_type=os.getenv(GIT_AUTH_TYPE_VAR),
                 username=os.getenv(GIT_USERNAME_VAR),
                 email=os.getenv(GIT_EMAIL_VAR),
-                auth_type=os.getenv(GIT_AUTH_TYPE_VAR),
+                branch=os.getenv(GIT_BRANCH_VAR),
+                sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_TYPE))),
             )
         else:
             self.sync_config = preferences.get('sync_config', dict())
