@@ -134,21 +134,6 @@ class IntegrationPipeline(Pipeline):
 
         return file_path
 
-    def destination_output_folder(self, stream: str) -> str:
-        return f'{self.destination_dir}/{clean_name(stream)}/output'
-
-    def destination_output_file_path(self, stream: str, index: int = 0) -> str:
-        stream_dir = self.destination_output_folder(stream)
-        file_path = f'{stream_dir}/{number_string(index)}'
-
-        os.makedirs(stream_dir, exist_ok=True)
-
-        if not os.path.exists(file_path):
-            with open(file_path, 'w') as f:
-                f.write('')
-
-        return file_path
-
     def source_output_folder(self, stream: str) -> str:
         return f'{self.source_dir}/{clean_name(stream)}/output'
 

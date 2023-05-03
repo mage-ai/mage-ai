@@ -39,6 +39,7 @@ from mage_integrations.destinations.sql.utils import clean_column_name
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Any, Dict, List, Tuple
 import google
+import io
 import os
 import pandas as pd
 import sys
@@ -676,8 +677,8 @@ WHERE table_id = '{table_name}'
                 vals.append(value_final)
             values.append(vals)
         df = pd.DataFrame.from_records(values, columns=columns)
-        df.to_json(self.output_file_path, orient='records', lines=True)
-        job_result, job = self.__create_load_job(client, mapping, full_table_name)
+        json_data = df.to_json(orient='records', lines=True)
+        job_result, job = self.__create_load_job(client, mapping, full_table_name, json_data)
         job_results.append(job_result)
         jobs.append(job)
 
@@ -688,6 +689,7 @@ WHERE table_id = '{table_name}'
         client,
         mapping: str,
         full_table_name: str,
+        json_data: str,
     ):
         schema_fields = []
         for col, obj in mapping.items():
@@ -705,20 +707,18 @@ WHERE table_id = '{table_name}'
             schema=schema_fields,
             source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
         )
-        with open(self.output_file_path, 'rb') as source_file:
-            job = client.load_table_from_file(
-                source_file,
-                full_table_name,
-                job_config=job_config,
-            )
-            try:
-                result = job.result()
-            except BadRequest:
-                for err in job.errors:
-                    self.logger.exception('BigQuery batch load error:', err)
-                raise
-            finally:
-                os.remove(self.output_file_path)
+        json_file = io.StringIO(json_data)
+        job = client.load_table_from_file(
+            json_file,
+            full_table_name,
+            job_config=job_config,
+        )
+        try:
+            result = job.result()
+        except BadRequest:
+            for err in job.errors:
+                self.logger.exception('BigQuery batch load error:', err)
+            raise
 
         return result, job
 
