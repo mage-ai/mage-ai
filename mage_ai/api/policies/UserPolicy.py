@@ -21,17 +21,17 @@ UserPolicy.allow_actions([
     constants.UPDATE,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.is_current_user() or policy.is_owner())
+], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
 
 UserPolicy.allow_actions([
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.is_owner())
+], condition=lambda policy: policy.has_at_least_admin_role())
 
 UserPolicy.allow_read(UserPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.is_current_user() or policy.is_owner())
+], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
 
 UserPolicy.allow_read(UserPresenter.default_attributes + [
     'token',
@@ -55,14 +55,29 @@ UserPolicy.allow_write([
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
     constants.UPDATE,
-], condition=lambda policy: policy.is_current_user() or policy.is_owner())
+], condition=lambda policy: policy.is_current_user() or policy.has_at_least_admin_role())
+
+UserPolicy.allow_write([
+    'roles',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_admin_role())
+
+UserPolicy.allow_write([
+    'owner',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.is_owner())
 
 UserPolicy.allow_write([
     'avatar',
     'email',
     'first_name',
     'last_name',
-    'owner',
     'password',
     'password_confirmation',
     'roles',

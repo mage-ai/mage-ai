@@ -19,7 +19,7 @@ export const SECTIONS = ({ owner, roles }: UserType) => {
     },
   ];
 
-  if (owner) {
+  if (owner || roles === RoleValueEnum.ADMIN) {
     workspaceItems.push({
       linkProps: {
         href: '/settings/workspace/users',
@@ -27,7 +27,6 @@ export const SECTIONS = ({ owner, roles }: UserType) => {
       uuid: SECTION_ITEM_UUID_USERS,
     });
   }
-
   if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
     workspaceItems.push({
       linkProps: {

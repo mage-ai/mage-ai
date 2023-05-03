@@ -23,11 +23,10 @@ import { getUser } from '@utils/session';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
-import { sortByKey } from '@utils/array';
 
 function UsersListPage() {
   const router = useRouter();
-  const { id: currentUserID } = getUser() || {};
+  const { id: currentUserID, owner: isOwner } = getUser() || {};
   const [query, setQuery] = useState<{
     add_new_user: boolean;
     user_id: number;
@@ -37,8 +36,8 @@ function UsersListPage() {
     revalidateOnFocus: false,
   });
   const users = useMemo(
-    () => sortByKey(data?.users || [], 'username'),
-    [data],
+    () => data?.users || [],
+    [data?.users],
   );
   const { data: dataUser, mutate: fetchUser } = api.users.detail(query?.user_id, {}, {
     revalidateOnFocus: false,
@@ -137,18 +136,20 @@ function UsersListPage() {
       uuidItemSelected={SECTION_ITEM_UUID_USERS}
       uuidWorkspaceSelected={SECTION_UUID_WORKSPACE}
     >
-      <Spacing p={PADDING_UNITS}>
-        <Button
-          beforeIcon={<Add />}
-          onClick={() => goToWithQuery({
-            add_new_user: 1,
-            user_id: null,
-          })}
-          primary
-        >
-          Add new user
-        </Button>
-      </Spacing>
+      {isOwner &&
+        <Spacing p={PADDING_UNITS}>
+          <Button
+            beforeIcon={<Add />}
+            onClick={() => goToWithQuery({
+              add_new_user: 1,
+              user_id: null,
+            })}
+            primary
+          >
+            Add new user
+          </Button>
+        </Spacing>
+      }
 
       <Spacing p={PADDING_UNITS}>
         <Headline>
