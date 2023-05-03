@@ -114,3 +114,11 @@ BlockPolicy.allow_query([
     constants.DELETE,
     constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
+
+BlockPolicy.allow_query([
+    'update_state',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.UPDATE,
+], condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access())
