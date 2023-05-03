@@ -441,6 +441,7 @@ function PipelineDetail({
 
       let el;
       const isMarkdown = type === BlockTypeEnum.MARKDOWN;
+      const isTransformer = type === BlockTypeEnum.TRANSFORMER;
       const isHidden = !!hiddenBlocks?.[uuid];
       const noDivider = idx === numberOfBlocks - 1 || isIntegration;
       const currentBlockRef = blockRefs.current[path];
@@ -488,7 +489,7 @@ function PipelineDetail({
             executionState={executionState}
             fetchFileTree={fetchFileTree}
             fetchPipeline={fetchPipeline}
-            hideRunButton={isStreaming || isMarkdown}
+            hideRunButton={isStreaming || isMarkdown || (isIntegration && isTransformer)}
             interruptKernel={interruptKernel}
             key={uuid}
             mainContainerRef={mainContainerRef}

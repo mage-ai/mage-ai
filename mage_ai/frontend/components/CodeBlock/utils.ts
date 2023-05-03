@@ -82,7 +82,7 @@ export const getMoreActionsItems = (
   }) => void,
   deleteBlock: (block: BlockType) => void,
   setOutputCollapsed: (outputCollapsed: boolean) => void,
-  isStreamingPipeline: boolean,
+  onlyIncludeDeleteBlock?: boolean,
   opts?: {
     blocksMapping: {
       [uuid: string]: BlockType;
@@ -276,7 +276,7 @@ export const getMoreActionsItems = (
     uuid: 'delete_block',
   });
 
-  if (isStreamingPipeline) {
+  if (onlyIncludeDeleteBlock) {
     return [items.pop()];
   }
 
