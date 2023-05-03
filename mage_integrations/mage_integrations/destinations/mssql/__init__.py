@@ -138,7 +138,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
                 f'USING (VALUES {insert_values}) AS b({insert_columns})',
-                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
+                f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
             ]
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
