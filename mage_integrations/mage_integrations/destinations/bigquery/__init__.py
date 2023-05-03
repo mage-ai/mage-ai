@@ -1,4 +1,6 @@
+from ast import literal_eval
 from functools import reduce
+from google.api_core.exceptions import BadRequest
 from google.cloud import bigquery
 from mage_integrations.connections.bigquery import BigQuery as BigQueryConnection
 from mage_integrations.destinations.bigquery.constants import (
@@ -11,13 +13,21 @@ from mage_integrations.destinations.bigquery.constants import (
 )
 from mage_integrations.destinations.bigquery.utils import (
     convert_array,
+    convert_array_for_batch_load,
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
+    convert_datetime_for_batch_load,
     convert_json_or_string,
+    convert_json_or_string_for_batch_load,
     remove_duplicate_rows,
 )
-from mage_integrations.destinations.constants import KEY_VALUE, UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.constants import (
+    COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_ARRAY,
+    KEY_VALUE,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
+)
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
     build_alter_table_command,
@@ -29,6 +39,9 @@ from mage_integrations.destinations.sql.utils import clean_column_name
 from mage_integrations.utils.dictionary import merge_dict
 from typing import Any, Dict, List, Tuple
 import google
+import io
+import os
+import pandas as pd
 import sys
 import uuid
 
@@ -45,6 +58,10 @@ class BigQuery(Destination):
     SCHEMA_CONFIG_KEY = 'dataset'
 
     BATCH_SIZE = 500
+
+    def __init__(self, **kwargs):
+        Destination.__init__(self, **kwargs)
+        self.use_batch_load = self.config.get('use_batch_load')
 
     def build_connection(self) -> BigQueryConnection:
         return BigQueryConnection(
@@ -342,8 +359,11 @@ WHERE table_id = '{table_name}'
             job.result()
 
             for job in jobs:
-                if job.num_dml_affected_rows:
-                    self.records_affected += job.num_dml_affected_rows
+                try:
+                    if job.num_dml_affected_rows:
+                        self.records_affected += job.num_dml_affected_rows
+                except Exception:
+                    pass
 
             return results
         except Exception as err:
@@ -448,6 +468,7 @@ WHERE table_id = '{table_name}'
                 mapping=mapping,
                 count_rows=False,
                 query_job_config=query_job_config,
+                record_data=record_data,
                 tags=tags,
             )
 
@@ -494,10 +515,14 @@ WHERE table_id = '{table_name}'
                 mapping=mapping,
                 count_rows=True,
                 query_job_config=query_job_config,
+                record_data=record_data,
                 tags=tags,
             )
 
-        return [[row.values() for row in row_iterator] for row_iterator in job_results], jobs
+        if self.use_batch_load:
+            return [[] for _ in job_results], jobs
+        else:
+            return [[row.values() for row in row_iterator] for row_iterator in job_results], jobs
 
     def __insert_with_limits(
         self,
@@ -507,6 +532,7 @@ WHERE table_id = '{table_name}'
         insert_columns: str,
         insert_values: List[Any],
         mapping: Dict,
+        record_data: List[Dict],
         count_rows: bool = True,
         query_job_config: Dict = {},
         tags: Dict = {},
@@ -514,92 +540,187 @@ WHERE table_id = '{table_name}'
         jobs = []
         job_results = []
 
-        max_subquery_count = self.config.get('max_subquery_count', MAX_SUBQUERY_COUNT)
-
-        insert_statement = f"INSERT INTO {full_table_name} ({insert_columns}) VALUES"
-
-        while len(insert_values) >= 1:
-            query_size = len(insert_statement)
-            query_payload_size = 0
-            query_parameters = []
-
-            row_values = []
-            row_idx = -1
-
-            while query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * MAX_QUERY_BUFFER) and \
-                    len(query_parameters) < (MAX_QUERY_PARAMETERS * MAX_QUERY_BUFFER) and \
-                    query_size < (MAX_QUERY_STRING_SIZE * MAX_QUERY_BUFFER) and \
-                    row_idx + 1 < len(insert_values) and \
-                    len(row_values) < max_subquery_count:
-
-                row_idx += 1
-
-                values_for_row = insert_values[row_idx]
-                arr = []
-                for col_idx, column in enumerate(columns):
-                    type_converted = mapping[column]['type_converted']
-                    value = values_for_row[col_idx]
-
-                    if type_converted in [
-                        'ARRAY',
-                        'BOOLEAN',
-                        'DATETIME',
-                        'JSON',
-                        'TEXT',
-                    ]:
-                        arr.append(value)
-                    else:
-                        variable_name = f'r{row_idx}_{col_idx}'
-
-                        query_param = bigquery.ScalarQueryParameter(
-                            variable_name,
-                            convert_converted_type_to_parameter_type(type_converted),
-                            None if 'NULL' in value else value,
-                        )
-                        query_parameters.append(query_param)
-                        arr.append(f'@{variable_name}')
-
-                        query_payload_size += sys.getsizeof(value)
-                
-                row_value = f'({",".join(arr)})'
-                query_size += len(row_value)
-                row_values.append(row_value)
-
-            query_arr = [
-                f"{insert_statement} {','.join(row_values)};",
-            ]
-
-            if count_rows:
-                query_arr.append('SELECT @@row_count;')
-            query = '\n'.join(query_arr)
-
-            if row_idx + 1 >= len(insert_values):
-                insert_values = []
-            else:
-                insert_values = insert_values[(row_idx + 1):]
-
-            tags2 = merge_dict(tags, dict(
-                batch_size=len(row_values),
-                records_remaining=len(insert_values),
-            ))
-
-            # Documentation https://cloud.google.com/bigquery/quotas
-            self.logger.info(f'Unresolved Standard SQL query length: {sys.getsizeof(query) / 1000} kbs.', tags=tags2)
-            self.logger.info(f'Number of Standard SQL query parameters: {len(query_parameters)}.', tags=tags2)
-            self.logger.info(f'Request payload size: {query_payload_size / 1000} kbs.', tags=tags2)
-
-            job = client.query(
-                query,
-                job_config=bigquery.QueryJobConfig(**merge_dict(query_job_config, dict(
-                    query_parameters=query_parameters,
-                ))),
+        if self.use_batch_load:
+            self.logger.info('Using batch load method for BigQuery...')
+            job_results, jobs = self.__upload_to_file(
+                client,
+                record_data,
+                mapping,
+                columns,
+                full_table_name,
             )
+        else:
+            max_subquery_count = self.config.get('max_subquery_count', MAX_SUBQUERY_COUNT)
 
-            jobs.append(job)
-            result = job.result(timeout=QUERY_JOB_MAX_TIMEOUT_SECONDS)
-            job_results.append(result)
+            insert_statement = f"INSERT INTO {full_table_name} ({insert_columns}) VALUES"
+
+            while len(insert_values) >= 1:
+                query_size = len(insert_statement)
+                query_payload_size = 0
+                query_parameters = []
+
+                row_values = []
+                row_idx = -1
+
+                while query_payload_size < (MAX_QUERY_PARAMETERS_SIZE * MAX_QUERY_BUFFER) and \
+                        len(query_parameters) < (MAX_QUERY_PARAMETERS * MAX_QUERY_BUFFER) and \
+                        query_size < (MAX_QUERY_STRING_SIZE * MAX_QUERY_BUFFER) and \
+                        row_idx + 1 < len(insert_values) and \
+                        len(row_values) < max_subquery_count:
+
+                    row_idx += 1
+
+                    values_for_row = insert_values[row_idx]
+                    arr = []
+                    for col_idx, column in enumerate(columns):
+                        type_converted = mapping[column]['type_converted']
+                        value = values_for_row[col_idx]
+
+                        if type_converted in [
+                            'ARRAY',
+                            'BOOLEAN',
+                            'DATETIME',
+                            'JSON',
+                            'TEXT',
+                        ]:
+                            arr.append(value)
+                        else:
+                            variable_name = f'r{row_idx}_{col_idx}'
+
+                            query_param = bigquery.ScalarQueryParameter(
+                                variable_name,
+                                convert_converted_type_to_parameter_type(type_converted),
+                                None if 'NULL' in value else value,
+                            )
+                            query_parameters.append(query_param)
+                            arr.append(f'@{variable_name}')
+
+                            query_payload_size += sys.getsizeof(value)
+
+                    row_value = f'({",".join(arr)})'
+                    query_size += len(row_value)
+                    row_values.append(row_value)
+
+                query_arr = [
+                    f"{insert_statement} {','.join(row_values)};",
+                ]
+
+                if count_rows:
+                    query_arr.append('SELECT @@row_count;')
+                query = '\n'.join(query_arr)
+
+                if row_idx + 1 >= len(insert_values):
+                    insert_values = []
+                else:
+                    insert_values = insert_values[(row_idx + 1):]
+
+                tags2 = merge_dict(tags, dict(
+                    batch_size=len(row_values),
+                    records_remaining=len(insert_values),
+                ))
+
+                # Documentation https://cloud.google.com/bigquery/quotas
+                self.logger.info(f'Unresolved Standard SQL query length: {sys.getsizeof(query) / 1000} kbs.', tags=tags2)
+                self.logger.info(f'Number of Standard SQL query parameters: {len(query_parameters)}.', tags=tags2)
+                self.logger.info(f'Request payload size: {query_payload_size / 1000} kbs.', tags=tags2)
+
+                job = client.query(
+                    query,
+                    job_config=bigquery.QueryJobConfig(**merge_dict(query_job_config, dict(
+                        query_parameters=query_parameters,
+                    ))),
+                )
+
+                jobs.append(job)
+                result = job.result(timeout=QUERY_JOB_MAX_TIMEOUT_SECONDS)
+                job_results.append(result)
 
         return job_results, jobs
+
+    def __upload_to_file(
+        self,
+        client,
+        record_data: List[Dict],
+        mapping: Dict,
+        columns: List[str],
+        full_table_name: str,
+    ):
+        job_results = []
+        jobs = []
+
+        records = [d['record'] for d in record_data]
+
+        values = []
+        for row in records:
+            vals = []
+            for column in columns:
+                v = row.get(column, None)
+
+                column_type_dict = mapping[column]
+                column_type = column_type_dict['type']
+                column_settings = column_type_dict['column_settings']
+
+                value_final = v
+                if v is None and COLUMN_TYPE_ARRAY == column_type:
+                    value_final = []
+                if v is not None:
+                    if COLUMN_TYPE_ARRAY == column_type:
+                        if type(v) is str:
+                            v = literal_eval(v)
+
+                        value_final = convert_array_for_batch_load(v, column_type_dict)
+                    elif COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+                        value_final = convert_datetime_for_batch_load(v)
+                    else:
+                        value_final = convert_json_or_string_for_batch_load(v, column_type_dict)
+
+                vals.append(value_final)
+            values.append(vals)
+        df = pd.DataFrame.from_records(values, columns=columns)
+        json_data = df.to_json(orient='records', lines=True)
+        job_result, job = self.__create_load_job(client, mapping, full_table_name, json_data)
+        job_results.append(job_result)
+        jobs.append(job)
+
+        return job_results, jobs
+
+    def __create_load_job(
+        self,
+        client,
+        mapping: str,
+        full_table_name: str,
+        json_data: str,
+    ):
+        schema_fields = []
+        for col, obj in mapping.items():
+            item_type_converted = obj['item_type_converted']
+            type_converted = obj['type_converted']
+            is_array_type = COLUMN_TYPE_ARRAY == obj['type']
+            schema_field = bigquery.SchemaField(
+                name=col,
+                field_type=item_type_converted if is_array_type else type_converted,
+                mode='REPEATED' if is_array_type else 'NULLABLE',
+            )
+            schema_fields.append(schema_field)
+
+        job_config = bigquery.LoadJobConfig(
+            schema=schema_fields,
+            source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+        )
+        json_file = io.StringIO(json_data)
+        job = client.load_table_from_file(
+            json_file,
+            full_table_name,
+            job_config=job_config,
+        )
+        try:
+            result = job.result()
+        except BadRequest:
+            for err in job.errors:
+                self.logger.exception('BigQuery batch load error:', err)
+            raise
+
+        return result, job
 
 
 if __name__ == '__main__':
