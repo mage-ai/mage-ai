@@ -1757,8 +1757,6 @@ function PipelineDetailPage({
       block,
     } = payload;
 
-    console.log('fml:', disablePipelineEditAccess);
-
     if (disablePipelineEditAccess) {
       return runBlockOrig(payload);
     } else {
