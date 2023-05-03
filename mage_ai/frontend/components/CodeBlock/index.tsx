@@ -260,7 +260,7 @@ function CodeBlock({
     type: pipelineType,
     uuid: pipelineUUID,
   } = pipeline || {};
-  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipelineType;
+  const isStreamingPipeline = useMemo(() => PipelineTypeEnum.STREAMING === pipelineType, [pipelineType]);
   const isDBT = BlockTypeEnum.DBT === blockType;
   const isSQLBlock = BlockLanguageEnum.SQL === blockLanguage;
   const isRBlock = BlockLanguageEnum.R === blockLanguage;
@@ -1213,11 +1213,11 @@ function CodeBlock({
                 fetchPipeline={fetchPipeline}
                 interruptKernel={interruptKernel}
                 isEditingBlock={isEditingBlock}
-                setIsEditingBlock={setIsEditingBlock}
                 pipeline={pipeline}
                 runBlock={hideRunButton ? null : runBlockAndTrack}
                 savePipelineContent={savePipelineContent}
                 setErrors={setErrors}
+                setIsEditingBlock={setIsEditingBlock}
                 setOutputCollapsed={setOutputCollapsed}
               />
 

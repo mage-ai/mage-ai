@@ -20,7 +20,7 @@ type AddChartMenuProps = {
   onClickCallback: () => void;
   open: boolean;
   parentRef: any;
-  runBlock: (payload: {
+  runBlock?: (payload: {
     block: BlockType;
     code?: string;
     disableReset?: boolean;
@@ -75,13 +75,13 @@ function AddChartMenu({
         onCreateCallback: (widget: BlockType) => {
           if (block && BlockLanguageEnum.SQL !== block.language) {
             if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
-              runBlock({
+              runBlock?.({
                 block: widget,
                 code: content,
                 disableReset: true,
               });
             } else {
-              runBlock({
+              runBlock?.({
                 block,
                 runDownstream: true,
               });
@@ -115,13 +115,13 @@ function AddChartMenu({
         onCreateCallback: (widget: BlockType) => {
           if (block && BlockLanguageEnum.SQL !== block.language) {
             if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
-              runBlock({
+              runBlock?.({
                 block: widget,
                 code: widget.content,
                 disableReset: true,
               });
             } else {
-              runBlock({
+              runBlock?.({
                 block,
                 runDownstream: true,
               });

@@ -889,6 +889,7 @@ function IntegrationPipeline({
                 hideDataExporter
                 hideDataLoader
                 hideDbt
+                hideMarkdown
                 hideScratchpad
                 hideSensor
                 hideTransformerDataSources

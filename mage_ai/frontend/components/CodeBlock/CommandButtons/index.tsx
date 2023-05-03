@@ -125,7 +125,8 @@ function CommandButtons({
     type,
     { blockColor: blockColor, theme: themeContext },
   ).accent;
-  const isStreamingPipeline = pipelineType === PipelineTypeEnum.STREAMING;
+  const isStreaming = useMemo(() => pipelineType === PipelineTypeEnum.STREAMING, [pipelineType]);
+  const isIntegration = useMemo(() => pipelineType === PipelineTypeEnum.INTEGRATION, [pipelineType]);
 
   const convertBlockMenuItems =
     useMemo(() => buildConvertBlockMenuItems(
@@ -181,7 +182,7 @@ function CommandButtons({
         />
       )}
 
-      {runBlock && (!isInProgress && !isStreamingPipeline) &&  (
+      {runBlock && (!isInProgress && !isStreaming) &&  (
         <>
           {!isDBT && (
             <Tooltip
@@ -317,7 +318,7 @@ function CommandButtons({
         </Spacing>
       )}
 
-      {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreamingPipeline) && (
+      {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreaming) && (
         <Spacing ml={PADDING_UNITS}>
           <FlyoutMenuWrapper
             items={convertBlockMenuItems}
@@ -357,7 +358,7 @@ function CommandButtons({
       {([
         BlockTypeEnum.DATA_LOADER,
         BlockTypeEnum.TRANSFORMER,
-      ].includes(block.type) && !isStreamingPipeline) && (
+      ].includes(block.type) && !isStreaming && !isIntegration) && (
         <>
           <Spacing
             ml={PADDING_UNITS}
@@ -466,7 +467,7 @@ function CommandButtons({
             runBlock,
             deleteBlock,
             setOutputCollapsed,
-            isStreamingPipeline,
+            isStreaming || isIntegration,
             {
               blocksMapping,
               fetchFileTree,
