@@ -26,8 +26,7 @@ class UserResource(DatabaseResource):
 
         if user.is_admin:
             results = results \
-                .filter(User.owner == False) \
-                .filter(User.roles > 1)
+                .filter(User.owner == False).filter(User.roles > 1)     # noqa: E712
 
         return results
 
