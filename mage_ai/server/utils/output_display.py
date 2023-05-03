@@ -138,6 +138,7 @@ def __custom_output():
     from mage_ai.shared.parsers import encode_complex, sample_output
     import json
     import pandas as pd
+    import polars as pl
     import simplejson
     import warnings
 
@@ -174,6 +175,8 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
+    elif isinstance(_internal_output_return, pl.DataFrame):
+        return print(_internal_output_return)
     elif type(_internal_output_return).__module__ == 'pyspark.sql.dataframe':
         _sample = _internal_output_return.limit({DATAFRAME_SAMPLE_COUNT_PREVIEW}).toPandas()
         _columns = _sample.columns.tolist()[:40]
