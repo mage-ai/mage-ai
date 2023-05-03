@@ -16,6 +16,11 @@ import uuid
 DEFAULT_SSH_KEY_DIRECTORY = os.path.expanduser('~/.ssh')
 REMOTE_NAME = 'mage-repo'
 
+# Git authentication variables
+GIT_SSH_PUBLIC_KEY_VAR = 'GIT_SSH_PUBLIC_KEY'
+GIT_SSH_PRIVATE_KEY_VAR = 'GIT_SSH_PRIVATE_KEY'
+GIT_ACCESS_TOKEN_VAR = 'GIT_ACCESS_TOKEN'
+
 
 class Git:
     def __init__(self, git_config: GitConfig) -> None:
@@ -32,6 +37,8 @@ class Git:
                 git_config.access_token_secret_name,
                 repo_name=get_repo_path(),
             )
+            if os.getenv(GIT_ACCESS_TOKEN_VAR):
+                token = os.getenv(GIT_ACCESS_TOKEN_VAR)
             user = git_config.username
             url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
             self.remote_repo_link = urlunsplit(url)
@@ -136,9 +143,8 @@ class Git:
         will configure and test SSH settings before executing the Git command.
         '''
         def wrapper(self, *args, **kwargs):
-            def add_host_to_known_hosts(hostname):
-                cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'
-                self._run_command(cmd)
+            def add_host_to_known_hosts():
+                self.__add_host_to_known_hosts()
                 asyncio.run(self.check_connection())
 
             if self.auth_type == AuthType.SSH:
@@ -283,6 +289,8 @@ class Git:
                         pubk_secret_name,
                         repo_name=get_repo_path(),
                     )
+                    if os.getenv(GIT_SSH_PUBLIC_KEY_VAR):
+                        public_key = os.getenv(GIT_SSH_PUBLIC_KEY_VAR)
                     if public_key:
                         with open(public_key_file, 'w') as f:
                             f.write(base64.b64decode(public_key).decode('utf-8'))
@@ -302,6 +310,8 @@ class Git:
                         pk_secret_name,
                         repo_name=get_repo_path(),
                     )
+                    if os.getenv(GIT_SSH_PRIVATE_KEY_VAR):
+                        public_key = os.getenv(GIT_SSH_PRIVATE_KEY_VAR)
                     if private_key:
                         with open(custom_private_key_file, 'w') as f:
                             f.write(base64.b64decode(private_key).decode('utf-8'))
@@ -325,9 +335,10 @@ class Git:
             if self.auth_type == AuthType.SSH:
                 private_key_file = self.__create_ssh_keys()
                 env = {'GIT_SSH_COMMAND': f'ssh -i {private_key_file}'}
-            mygit = git.cmd.Git(self.repo_path)
-            mygit.update_environment(**env)
-            mygit.clone(
+                self.__add_host_to_known_hosts()
+            repo_git = git.cmd.Git(self.repo_path)
+            repo_git.update_environment(**env)
+            repo_git.clone(
                 self.remote_repo_link,
                 tmp_path,
                 origin=REMOTE_NAME,
@@ -344,3 +355,10 @@ class Git:
             self.commit('Initial commit')
         finally:
             shutil.rmtree(tmp_path)
+
+    def __add_host_to_known_hosts(self):
+        url = f'ssh://{self.git_config.remote_repo_link}'
+        hostname = urlparse(url).hostname
+        if hostname:
+            cmd = f'ssh-keyscan -t rsa {hostname} >> ~/.ssh/known_hosts'
+            self._run_command(cmd)
