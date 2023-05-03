@@ -17,6 +17,22 @@ class UserResource(DatabaseResource):
 
     @classmethod
     @safe_db_query
+    def collection(self, query_arg, meta, user, **kwargs):
+        results = (
+            User.
+            query.
+            order_by(User.username.asc())
+        )
+
+        if user.is_admin:
+            results = results \
+                .filter(User.owner == False) \
+                .filter(User.roles > 1)
+
+        return results
+
+    @classmethod
+    @safe_db_query
     async def create(self, payload, user, **kwargs):
         email = payload.get('email')
         password = payload.get('password')
@@ -90,13 +106,21 @@ class UserResource(DatabaseResource):
     def update(self, payload, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
 
-        if self.current_user.is_admin and self.owner:
-            error.update(
-                {'message': 'Admins cannot update users who are Owners.'})
-            raise ApiError(error)
+        if self.current_user.is_admin:
+            if self.owner:
+                error.update(
+                    {'message': 'Admins cannot update users who are Owners.'})
+                raise ApiError(error)
+            elif self.is_admin:
+                error.update(
+                    {'message': 'Admins cannot update users who are Admins.'})
+                raise ApiError(error)
+            elif payload.get('roles') and int(payload.get('roles')) & 1 != 0:
+                error.update(
+                    {'message': 'Admins cannot make other users Admins.'})
+                raise ApiError(error)
 
         password = payload.get('password')
-
         if password:
             password_current = payload.get('password_current')
             password_confirmation = payload.get('password_confirmation')

@@ -51,7 +51,16 @@ function UserEditForm({
     [key: string]: string;
   }>({});
   const [profile, setProfile] = useState<UserType>(null);
-  const { owner: isOwner } = getUser() || {};
+  const {
+    id: currentUserId,
+    owner: isOwner,
+    roles: currentUserRoles,
+  } = getUser() || {};
+  const roleOptions = ROLES.filter((role: number) => (
+    (currentUserRoles === RoleValueEnum.ADMIN && currentUserId !== user?.id)
+      ? role > RoleValueEnum.ADMIN
+      : true
+  ));
 
   const [updateUser, { isLoading }] = useMutation(
     newUser ? api.users.useCreate() : api.users.useUpdate(user?.id),
@@ -239,7 +248,7 @@ function UserEditForm({
                 || (user?.roles || '')}
             >
               <option value="" />
-              {ROLES.map((value) => (
+              {roleOptions.map((value) => (
                 <option key={value} value={value}>
                   {ROLE_DISPLAY_MAPPING[value]}
                 </option>
