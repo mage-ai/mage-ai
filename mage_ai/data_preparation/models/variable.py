@@ -459,6 +459,7 @@ class Variable:
             )
         except Exception as err:
             print(f'Sample output error: {err}.')
+            traceback.print_exc()
 
     def __write_polars_dataframe(self, data: pl.DataFrame) -> None:
         self.storage.makedirs(self.variable_path, exist_ok=True)
@@ -481,6 +482,7 @@ class Variable:
             )
         except Exception as err:
             print(f'Sample output error: {err}.')
+            traceback.print_exc()
 
     def __write_spark_parquet(self, data) -> None:
         (
