@@ -6,6 +6,7 @@ from mage_integrations.destinations.constants import (
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.mssql.utils import (
+    build_alter_table_command,
     build_create_table_command,
     clean_column_name,
     convert_column_type,
@@ -66,6 +67,42 @@ END
             ),
         ]
 
+    def build_alter_table_commands(
+        self,
+        schema: Dict,
+        schema_name: str,
+        stream: str,
+        table_name: str,
+        database_name: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        results = self.build_connection().load(f"""
+SELECT
+    column_name
+    , data_type
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+        """)
+        current_columns = [r[0].lower() for r in results]
+        schema_columns = schema['properties'].keys()
+        new_columns = [c for c in schema_columns if clean_column_name(c) not in current_columns]
+
+        if not new_columns:
+            return []
+
+        # TODO: Support alter column types
+        return [
+            build_alter_table_command(
+                column_type_mapping=column_type_mapping(
+                    schema,
+                    convert_column_type,
+                    lambda item_type_converted: 'TEXT',
+                ),
+                columns=new_columns,
+                full_table_name=f'{schema_name}.{table_name}',
+            ),
+        ]
+
     def build_insert_commands(
         self,
         records: List[Dict],
@@ -101,7 +138,7 @@ END
             merge_commands = [
                 f'MERGE INTO {full_table_name} AS a',
                 f'USING (VALUES {insert_values}) AS b({insert_columns})',
-                f"ON {', '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
+                f"ON {' AND '.join([f'a.{col} = b.{col}' for col in unique_constraints_clean])}",
             ]
 
             if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:

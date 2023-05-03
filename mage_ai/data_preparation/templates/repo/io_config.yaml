@@ -34,6 +34,13 @@ default:
     client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/your_service_account_email"
   GOOGLE_SERVICE_ACC_KEY_FILEPATH: "/path/to/your/service/account/key.json"
   GOOGLE_LOCATION: US # Optional
+  MSSQL_DATABASE: database
+  MSSQL_SCHEMA: schema
+  MSSQL_DRIVER: "ODBC Driver 18 for SQL Server"
+  MSSQL_HOST: host
+  MSSQL_PASSWORD: password
+  MSSQL_PORT: 1433
+  MSSQL_USER: SA
   MYSQL_DATABASE: database
   MYSQL_HOST: host
   MYSQL_PASSWORD: password
