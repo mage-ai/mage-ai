@@ -57,6 +57,13 @@ def parse_attributes(block) -> Dict:
         model_name = '.'.join(parts[:-1])
         file_extension = parts[-1]
 
+    # Check the model SQL file content for a config with an alias value. If it exists,
+    # use that alias value as the table name instead of the model’s name.
+    table_name = model_name
+    config = model_config(block.content)
+    if config.get('alias'):
+        table_name = config['alias']
+
     full_path = os.path.join(get_repo_path(), 'dbt', file_path)
 
     project_full_path = os.path.join(get_repo_path(), 'dbt', project_name)
@@ -96,6 +103,7 @@ def parse_attributes(block) -> Dict:
         source_name=source_name,
         sources_full_path=sources_full_path,
         sources_full_path_legacy=sources_full_path_legacy,
+        table_name=table_name,
     )
 
 
@@ -386,7 +394,15 @@ def get_profile(block, profile_target: str = None) -> Dict:
     attr = parse_attributes(block)
     project_name = attr['project_name']
     profiles_full_path = attr['profiles_full_path']
-    return load_profile(project_name, profiles_full_path, profile_target)
+
+    profile = load_profile(project_name, profiles_full_path, profile_target)
+
+    # If the model SQL file contains a config with schema, change the schema to use that.
+    config = model_config(block.content)
+    if config.get('schema'):
+        profile = config['schema']
+
+    return profile
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
@@ -694,15 +710,15 @@ def interpolate_input(
             continue
 
         attrs = parse_attributes(upstream_block)
-        model_name = attrs['model_name']
+        table_name = attrs['table_name']
 
         arr = []
         if profile_database:
             arr.append(__quoted(profile_database))
         if profile_schema:
             arr.append(__quoted(profile_schema))
-        if model_name:
-            arr.append(__quoted(model_name))
+        if table_name:
+            arr.append(__quoted(table_name))
         matcher1 = '.'.join(arr)
 
         database = configuration.get('data_provider_database')
@@ -1083,6 +1099,7 @@ def fetch_model_data(
 ) -> DataFrame:
     attributes_dict = parse_attributes(block)
     model_name = attributes_dict['model_name']
+    table_name = attributes_dict['table_name']
 
     # bigquery: dataset, schema
     # postgres: schema
@@ -1110,7 +1127,7 @@ def fetch_model_data(
     if model_configuration_schema:
         schema = f"{schema}_{model_configuration_schema}"
 
-    query_string = f'SELECT * FROM {schema}.{model_name}'
+    query_string = f'SELECT * FROM {schema}.{table_name}'
 
     return execute_query(block, profile_target, query_string, limit)
 
@@ -1134,3 +1151,28 @@ def upstream_blocks_from_sources(block: Block) -> List[Block]:
             arr.append(b)
 
     return arr
+
+
+def model_config(text: str) -> Dict:
+    """
+    Extract the run time configuration for the model.
+    https://docs.getdbt.com/docs/build/custom-aliases
+    e.g. {{ config(...) }}
+    """
+    matches = re.findall(r"""{{\s+config\(([^)]+)\)\s+}}""", text)
+
+    config = {}
+    for key_values_string in matches:
+        key_values = key_values_string.strip().split(',')
+        for key_value_string in key_values:
+            parts = key_value_string.strip().split('=')
+            if len(parts) == 2:
+                key, value = parts
+                key = key.strip()
+                value = value.strip()
+                if value:
+                    if (value[0] == "'" and value[-1] == "'") or (value[0] == '"' and value[-1] == '"'):
+                        value = value[1:-1]
+                config[key] = value
+
+    return config
