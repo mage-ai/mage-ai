@@ -186,6 +186,7 @@ class BaseOperation():
                 self.__payload_for_resource().keys(),
                 **self.__payload_for_resource(),
             )
+            policy.authorize_query(self.query)
             options = updated_options.copy()
             options.pop('payload', None)
             await res.process_update(self.__payload_for_resource(), **options)

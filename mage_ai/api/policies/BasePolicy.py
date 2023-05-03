@@ -208,7 +208,6 @@ class BasePolicy():
                 error_message = 'Query parameter {} of value {} is not permitted.'.format(
                     key, value)
                 config = self.__class__.query_rule(key)
-
                 if not config:
                     error = ApiError.UNAUTHORIZED_ACCESS
                     error.update({
