@@ -186,8 +186,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         oauth_token and \
                         oauth_token.user and \
                         has_at_least_editor_role(oauth_token.user)
-
-            if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS:
+            if not valid or DISABLE_NOTEBOOK_EDIT_ACCESS == 1:
                 return self.send_message(
                     dict(
                         data=ApiError.UNAUTHORIZED_ACCESS['message'],
