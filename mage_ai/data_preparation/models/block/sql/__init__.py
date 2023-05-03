@@ -78,7 +78,12 @@ def execute_sql_code(
     if test_execution:
         limit = min(limit, QUERY_ROW_LIMIT)
     else:
-        limit = QUERY_ROW_LIMIT
+        if block.downstream_blocks and \
+            len(block.downstream_blocks) >= 1 and \
+                not all([BlockType.SQL == d_block.type for d_block in block.downstream_blocks]):
+            limit = QUERY_ROW_LIMIT
+        else:
+            limit = min(limit, QUERY_ROW_LIMIT)
 
     if DataSource.BIGQUERY.value == data_provider:
         from mage_ai.io.bigquery import BigQuery
