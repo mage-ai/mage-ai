@@ -218,18 +218,21 @@ class DBTBlock(Block):
                         not all([BlockType.DBT == block.type for block in self.downstream_blocks]):
                     limit = None
 
-                df = fetch_model_data(
-                    self,
-                    dbt_profile_target,
-                    limit=limit,
-                )
+                try:
+                    df = fetch_model_data(
+                        self,
+                        dbt_profile_target,
+                        limit=limit,
+                    )
 
-                self.store_variables(
-                    dict(output_0=df),
-                    execution_partition=execution_partition,
-                    override_outputs=True,
-                )
-                outputs = [df]
+                    self.store_variables(
+                        dict(output_0=df),
+                        execution_partition=execution_partition,
+                        override_outputs=True,
+                    )
+                    outputs = [df]
+                except Exception as err:
+                    print(f'Error: {err}')
 
         try:
             shutil.rmtree(profiles_dir)

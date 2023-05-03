@@ -395,14 +395,7 @@ def get_profile(block, profile_target: str = None) -> Dict:
     project_name = attr['project_name']
     profiles_full_path = attr['profiles_full_path']
 
-    profile = load_profile(project_name, profiles_full_path, profile_target)
-
-    # If the model SQL file contains a config with schema, change the schema to use that.
-    config = model_config(block.content)
-    if config.get('schema'):
-        profile = config['schema']
-
-    return profile
+    return load_profile(project_name, profiles_full_path, profile_target)
 
 
 def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
@@ -1118,14 +1111,23 @@ def fetch_model_data(
         )
 
     # Check dbt_profiles for schema to append
-    model_configurations = get_model_configurations_from_dbt_project_settings(block)
-    model_configuration_schema = None
-    if model_configurations:
-        model_configuration_schema = model_configurations.get('schema') or \
-            model_configurations.get('+schema')
 
-    if model_configuration_schema:
-        schema = f"{schema}_{model_configuration_schema}"
+    # If the model SQL file contains a config with schema, change the schema to use that.
+    # https://docs.getdbt.com/reference/resource-configs/schema
+    config = model_config(block.content)
+    config_schema = config.get('schema')
+    if config_schema:
+        schema = f'{schema}_{config_schema}'
+    else:
+        # settings from the dbt_project.yml
+        model_configurations = get_model_configurations_from_dbt_project_settings(block)
+        model_configuration_schema = None
+        if model_configurations:
+            model_configuration_schema = model_configurations.get('schema') or \
+                model_configurations.get('+schema')
+
+        if model_configuration_schema:
+            schema = f"{schema}_{model_configuration_schema}"
 
     query_string = f'SELECT * FROM {schema}.{table_name}'
 
