@@ -148,7 +148,6 @@ function PipelineLayout({
     if (pipeline) {
       breadcrumbs.push(...[
         {
-          // gradientColor: PAGE_NAME_EDIT === page ? null : PURPLE_BLUE,
           bold: PAGE_NAME_EDIT !== page,
           label: () => pipeline?.uuid,
           linkProps: {
@@ -161,7 +160,6 @@ function PipelineLayout({
       if (PAGE_NAME_EDIT === page) {
         breadcrumbs.push(...[
           {
-            // gradientColor: PURPLE_BLUE,
             bold: true,
             label: () => capitalize(page),
           },

@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import moment from 'moment';
 import styled from 'styled-components';
 
 import BarStackChart from '@components/charts/BarStack';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
@@ -45,6 +46,7 @@ function PipelineRunsMonitor({
   pipeline: pipelineProp,
 }: PipelineRunsMonitorProps) {
   const pipelineUUID = pipelineProp.uuid;
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const { data: dataPipelineSchedules } = api.pipeline_schedules.pipelines.list(pipelineUUID);
   const pipelineSchedules = useMemo(
@@ -172,8 +174,10 @@ function PipelineRunsMonitor({
   return (
     <Monitor
       breadcrumbs={breadcrumbs}
+      errors={errors}
       monitorType={MonitorTypeEnum.PIPELINE_RUNS}
       pipeline={pipeline}
+      setErrors={setErrors}
     >
       <Spacing mt={2} mx={2}>
         <Spacing ml={1}>
@@ -251,7 +255,7 @@ function PipelineRunsMonitor({
         })}
       </Spacing>
     </Monitor>
-  )
+  );
 }
 
 PipelineRunsMonitor.getInitialProps = async (ctx: any) => {

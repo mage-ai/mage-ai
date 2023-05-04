@@ -14,6 +14,7 @@ import {
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -71,6 +72,7 @@ function PipelineLogsPage({
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
   const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
   const [scrollToBottom, setScrollToBottom] = useState(false);
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -321,8 +323,10 @@ function PipelineLogsPage({
           label: () => 'Logs',
         },
       ]}
+      errors={errors}
       pageName={PageNameEnum.PIPELINE_LOGS}
       pipeline={pipeline}
+      setErrors={setErrors}
       subheader={null}
       title={({ name }) => `${name} logs`}
       uuid="pipeline/logs"

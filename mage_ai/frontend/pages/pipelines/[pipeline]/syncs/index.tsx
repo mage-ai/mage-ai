@@ -5,6 +5,7 @@ import {
   useState,
 } from 'react';
 
+import ErrorsType from '@interfaces/ErrorsType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType from '@interfaces/PipelineRunType';
 import PrivateRoute from '@components/shared/PrivateRoute';
@@ -39,6 +40,7 @@ function PipelineSyncs({
 
   const q = queryFromUrl();
 
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedStream, setSelectedStream] = useState<string>(null);
   const [selectedPipelineRun, setSelectedPipelineRun] = useState<PipelineRunType>(null);
 
@@ -119,8 +121,10 @@ function PipelineSyncs({
     <PipelineDetailPage
       breadcrumbs={breadcrumbs}
       buildSidekick={buildSidekick}
+      errors={errors}
       pageName={PageNameEnum.SYNCS}
       pipeline={pipeline}
+      setErrors={setErrors}
       title={({ name }) => `${name} syncs`}
       uuid={`${PageNameEnum.SYNCS}_${pipelineUUID}`}
     >
