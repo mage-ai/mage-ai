@@ -6,9 +6,10 @@ import BlockRunType from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
+import PipelineRunType, { COMPLETED_STATUSES, RunStatus } from '@interfaces/PipelineRunType';
 import PipelineType from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
@@ -68,7 +69,7 @@ function PipelineBlockRuns({
     [dataPipelineRun],
   );
 
-  const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }] = useMutation(
+  const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
     api.pipeline_runs.useUpdate(pipelineRun?.id),
     {
       onSuccess: (response: any) => onSuccess(
@@ -81,13 +82,6 @@ function PipelineBlockRuns({
       ),
     },
   );
-
-  // @ts-ignore
-  const retryBlocks = () => updatePipelineRun({
-    pipeline_run: {
-      'pipeline_run_action': 'retry_blocks',
-    },
-  });
 
   const {
     data: dataOutput,
@@ -159,19 +153,48 @@ function PipelineBlockRuns({
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       setErrors={setErrors}
-      subheader={pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED && (
-        <Button
-          danger
-          loading={isLoadingUpdatePipelineRun}
-          onClick={(e) => {
-            pauseEvent(e);
-            retryBlocks();
-          }}
-          outline
-        >
-          Retry incomplete blocks
-        </Button>
-      )}
+      subheader={
+        <FlexContainer alignItems="center">
+          {(pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED) && (
+            <Button
+              danger
+              loading={isLoadingUpdatePipelineRun}
+              onClick={(e) => {
+                pauseEvent(e);
+                updatePipelineRun({
+                  pipeline_run: {
+                    'pipeline_run_action': 'retry_blocks',
+                  },
+                });
+              }}
+              outline
+            >
+              Retry incomplete blocks
+            </Button>
+          )}
+          {(selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status)) && (
+            <>
+              <Spacing ml={2} />
+              <Button
+                loading={isLoadingUpdatePipelineRun}
+                onClick={(e) => {
+                  pauseEvent(e);
+                  updatePipelineRun({
+                    pipeline_run: {
+                      'from_block_uuid': selectedRun.block_uuid,
+                      'pipeline_run_action': 'retry_blocks',
+                    },
+                  });
+                }}
+                outline
+                primary
+              >
+                Retry from selected block ({selectedRun.block_uuid})
+              </Button>
+            </>
+          )}
+        </FlexContainer>
+      }
       title={({ name }) => `${name} runs`}
       uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRun?.id}`}
     >
