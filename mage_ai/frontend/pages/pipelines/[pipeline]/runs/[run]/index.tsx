@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
@@ -13,10 +13,15 @@ import PipelineType from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
-import buildTableSidekick from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
+import buildTableSidekick, {
+  TAB_OUTPUT,
+  TAB_TREE,
+  TABS as TABS_SIDEKICK,
+} from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
 import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
@@ -32,6 +37,7 @@ function PipelineBlockRuns({
   pipelineRun: pipelineRunProp,
 }: PipelineBlockRunsProps) {
   const [selectedRun, setSelectedRun] = useState<BlockRunType>();
+  const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const pipelineUUID = pipelineProp.uuid;
@@ -94,6 +100,12 @@ function PipelineBlockRuns({
     type: dataType,
   }: OutputType = dataOutput?.outputs?.[0] || {};
 
+  useEffect(() => {
+    if (!selectedRun && selectedTabSidekick?.uuid === TAB_OUTPUT.uuid) {
+      setSelectedTabSidekick(TAB_TREE);
+    }
+  }, [selectedRun, selectedTabSidekick?.uuid]);
+
   const blockRuns = useMemo(() => pipelineRun?.block_runs, [pipelineRun]);
 
   const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
@@ -138,6 +150,8 @@ function PipelineBlockRuns({
         loadingData: loadingOutput,
         rows,
         selectedRun,
+        selectedTab: selectedTabSidekick,
+        setSelectedTab: setSelectedTabSidekick,
         showDynamicBlocks: true,
         textData,
       })}

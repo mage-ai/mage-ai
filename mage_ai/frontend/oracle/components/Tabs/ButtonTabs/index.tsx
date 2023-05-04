@@ -104,7 +104,7 @@ function ButtonTabs({
         );
       } else {
         arr.push(
-          <div key={`button-tab-${uuid}`} style={{ padding: 4 }}>
+          <div key={`button-tab-${uuid}`} style={{ padding: 2 }}>
             <Button
               borderLess
               compact={small}

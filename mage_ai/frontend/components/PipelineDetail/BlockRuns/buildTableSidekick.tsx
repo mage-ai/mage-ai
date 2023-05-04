@@ -1,16 +1,25 @@
 import BlockRunType from '@interfaces/BlockRunType';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Headline from '@oracle/elements/Headline';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import { DataTypeEnum } from '@interfaces/KernelOutputType';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
+import { TABS_HEIGHT_OFFSET } from '@components/PipelineRun/shared/buildTableSidekick';
 import { createBlockStatus } from '@components/Triggers/utils';
 import { isJsonString } from '@utils/string';
+
+export const TAB_TREE = { uuid: 'Dependency tree' };
+export const TAB_OUTPUT = { uuid: 'Block output' };
+export const TABS = [
+  TAB_TREE,
+  TAB_OUTPUT,
+];
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default function({
@@ -24,6 +33,8 @@ export default function({
   renderColumnHeader,
   rows,
   selectedRun,
+  selectedTab,
+  setSelectedTab,
   textData,
   ...props
 }: {
@@ -39,10 +50,11 @@ export default function({
   }) => any;
   rows: string[][] | number[][];
   selectedRun?: BlockRunType;
+  selectedTab?: TabType;
+  setSelectedTab?: (tab: TabType) => void;
   showDynamicBlocks?: boolean;
   textData?: string;
 }) {
-
   const updatedProps = { ...props };
   updatedProps['blockStatus'] = createBlockStatus(blockRuns);
 
@@ -85,34 +97,44 @@ export default function({
     : emptyOutputMessageEl
   );
 
+  const showTabs = selectedTab && setSelectedTab;
+
   return (
     <>
-      {!selectedRun && (
-        <DependencyGraph
-          {...updatedProps}
-          height={height}
-          heightOffset={(heightOffset || 0)}
-          pipeline={pipeline}
-        />
-      )}
-
-      {selectedRun && (
-        <>
-          <Spacing
-            pl={2}
-            py={3}
-            style={{ position: 'fixed' }}
-          >
-            <Headline level={4} muted>
-              Block Output
-            </Headline>
+      <div
+        style={{
+          position: 'fixed',
+          top: '50px',
+        }}
+      >
+        {showTabs && (
+          <Spacing py={PADDING_UNITS}>
+            <ButtonTabs
+              onClickTab={setSelectedTab}
+              selectedTabUUID={selectedTab?.uuid}
+              tabs={selectedRun ? TABS : TABS.slice(0, 1)}
+            />
           </Spacing>
-          <div
-            style={{
-              position: 'relative',
-              top: '75px',
-            }}
-          >
+        )}
+      </div>
+
+      <div
+        style={{
+          position: 'relative',
+          top: '75px',
+        }}
+      >
+        {(!selectedRun || TAB_TREE.uuid === selectedTab?.uuid) && (
+          <DependencyGraph
+            {...updatedProps}
+            height={height}
+            heightOffset={(heightOffset || 0) + (showTabs ? TABS_HEIGHT_OFFSET : 0)}
+            pipeline={pipeline}
+          />
+        )}
+
+        {(selectedRun && TAB_OUTPUT.uuid === selectedTab?.uuid) && (
+          <>
             {loadingData && (
               <Spacing mt={2}>
                 <FlexContainer alignItems="center" fullWidth justifyContent="center">
@@ -122,9 +144,9 @@ export default function({
             )}
             {(!loadingData && dataType === DataTypeEnum.TABLE) && blockOutputTable}
             {(!loadingData && dataType !== DataTypeEnum.TABLE) && blockOutputText}
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </>
   );
 }
