@@ -120,7 +120,7 @@ setuptools.setup(
             'google-cloud-bigquery~=3.0',
             'google-cloud-iam==2.9.0',
             'google-cloud-pubsub==2.16.0',
-            'google-cloud-run==0.4.2',
+            'google-cloud-run==0.5.0',
             'google-cloud-storage==2.5.0',
             'great_expectations==0.15.50',
             'kafka-python==2.0.2',
