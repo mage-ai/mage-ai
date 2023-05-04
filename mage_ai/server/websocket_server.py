@@ -320,7 +320,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         # KernelResource: when getting a kernel,
         # it will trigger this send_message from the WebSocket subscriber.
         # This log message is unnecessary and publishing to clients is also unnecessary.
-        if block_uuid:
+        if block_uuid or pipeline_uuid:
             logger.info(
                 f'[{block_uuid}] Sending message for {msg_id} to '
                 f'{len(self.clients)} client(s):\n{json.dumps(message_final, indent=2)}'
