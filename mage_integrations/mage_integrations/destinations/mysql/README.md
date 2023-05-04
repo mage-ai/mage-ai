@@ -21,6 +21,6 @@ You must enter the following credentials when configuring this source:
 | `ssh_port` | (Optional) The port of the intermediate bastion server. Default value: 22 | `22` |
 | `ssh_username` | (Optional) The username used to connect to the bastion server. | `username` |
 | `ssh_password` | (Optional) The password used to connect to the bastion server. It should be set if you authenticate with the bastion server with password. | `password` |
-| `ssh_pkey` | (Optional) The path to the private key used to connect to the bastion server. It should be set if you authenticate with the bastion server with private key. | `/path/to/private/key` |
+| `ssh_pkey` | (Optional) The path to the private key used to connect to the bastion server or the content of the key file. It should be set if you authenticate with the bastion server with private key. | `/path/to/private/key` |
 | `use_lowercase` | (Optional) Whether to use lower case for column names. | `true` or `false` |
 <br />
