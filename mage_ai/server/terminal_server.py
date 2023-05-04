@@ -1,6 +1,14 @@
-from mage_ai.api.utils import authenticate_client_and_token
+from mage_ai.api.utils import (
+    authenticate_client_and_token,
+    has_at_least_editor_role,
+)
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
-from mage_ai.settings import REQUIRE_USER_AUTHENTICATION
+from mage_ai.settings import (
+    is_disable_pipeline_edit_access,
+    REQUIRE_USER_AUTHENTICATION,
+)
+from tornado import gen
+import json
 import terminado
 import tornado.websocket
 import re
@@ -78,8 +86,6 @@ class TerminalWebsocketServer(terminado.TermSocket):
                     oauth_token.user
                 if valid:
                     user = oauth_token.user
-                else:
-                    raise Exception('Invalid token')
 
         self.term_name = term_name if term_name else 'tty'
         if user:
@@ -90,6 +96,33 @@ class TerminalWebsocketServer(terminado.TermSocket):
         self.terminal = self.term_manager.get_terminal(self.term_name, cwd=cwd)
         self.terminal.clients.append(self)
         self.__initiate_terminal(self.terminal)
+
+    @gen.coroutine
+    def on_message(self, raw_message):
+        message = json.loads(raw_message)
+
+        api_key = message.get('api_key')
+        token = message.get('token')
+        command = message.get('command')
+
+        if REQUIRE_USER_AUTHENTICATION or is_disable_pipeline_edit_access():
+            valid = False
+
+            if api_key and token:
+                oauth_client = Oauth2Application.query.filter(
+                    Oauth2Application.client_id == api_key,
+                ).first()
+                if oauth_client:
+                    oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
+                    valid = valid and \
+                        oauth_token and \
+                        oauth_token.user and \
+                        has_at_least_editor_role(oauth_token.user)
+            if not valid or is_disable_pipeline_edit_access():
+                return self.send_json_message(
+                    ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
+
+        super().on_message(json.dumps(command))
 
     def __initiate_terminal(self, terminal):
         self.send_json_message(["setup", {}])
