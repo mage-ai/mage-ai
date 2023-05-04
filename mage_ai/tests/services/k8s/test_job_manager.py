@@ -86,6 +86,7 @@ class JobManagerTests(TestCase):
             restart_policy='Never',
             containers=[mock_v1_container],
             volumes=job_manager.pod_config.spec.volumes,
+            image_pull_secrets=job_manager.pod_config.spec.image_pull_secrets,
         )
         mock_client.V1JobSpec.assert_called_once_with(
             template=mock_v1_pod_template_spec,
