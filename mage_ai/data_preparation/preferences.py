@@ -6,6 +6,15 @@ import os
 import traceback
 import yaml
 
+# Git environment variables
+GIT_REPO_LINK_VAR = 'GIT_REPO_LINK'
+GIT_REPO_PATH_VAR = 'GIT_REPO_PATH'
+GIT_USERNAME_VAR = 'GIT_USERNAME'
+GIT_EMAIL_VAR = 'GIT_EMAIL'
+GIT_AUTH_TYPE_VAR = 'GIT_AUTH_TYPE'
+GIT_BRANCH_VAR = 'GIT_BRANCH'
+GIT_SYNC_ON_PIPELINE_RUN_TYPE = 'GIT_SYNC_ON_PIPELINE_RUN'
+
 
 class Preferences:
     def __init__(
@@ -31,7 +40,18 @@ class Preferences:
             traceback.print_exc()
             pass
 
-        self.sync_config = preferences.get('sync_config', dict())
+        if os.getenv(GIT_REPO_LINK_VAR):
+            self.sync_config = dict(
+                remote_repo_link=os.getenv(GIT_REPO_LINK_VAR),
+                repo_path=os.getenv(GIT_REPO_PATH_VAR),
+                auth_type=os.getenv(GIT_AUTH_TYPE_VAR),
+                username=os.getenv(GIT_USERNAME_VAR),
+                email=os.getenv(GIT_EMAIL_VAR),
+                branch=os.getenv(GIT_BRANCH_VAR),
+                sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_TYPE))),
+            )
+        else:
+            self.sync_config = preferences.get('sync_config', dict())
 
     def has_valid_git_config(self) -> bool:
         return 'remote_repo_link' in self.sync_config and 'repo_path' in self.sync_config

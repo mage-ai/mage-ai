@@ -97,3 +97,23 @@ Git settings page, or before every trigger run if you selected the `Sync before 
 
 This feature should only be used if you are not planning to make any local changes to your Mage repository.
 
+## Git settings as environment variables
+
+You can choose to pass in Git settings as environment variables. Mage will read from these environment
+variables to configure your Git repo.
+
+Git settings
+* GIT_REPO_LINK: corresponds to `Remote repo url`
+* GIT_REPO_PATH: corresponds to `Local directory path`
+* GIT_USERNAME: corresponds to `Username`
+* GIT_EMAIL: corresponds to `Email`
+* GIT_AUTH_TYPE: Authentication type, options: "ssh" or "https"
+
+Git sync settings (optional)
+* GIT_BRANCH: corresponds to `Branch name`
+* GIT_SYNC_ON_PIPELINE_RUN: corresponds to `Sync before each triggger run`, options: 0 or 1
+
+Authentication environment variables (optional). Mage will use your saved git secrets if they are available.
+* GIT_SSH_PUBLIC_KEY: SSH public key encoded in base64, used for ssh auth type
+* GIT_SSH_PRIVATE_KEY: SSH private key encoded in base64, used for ssh auth type
+* GIT_ACCESS_TOKEN: Git access token, used for https auth type
