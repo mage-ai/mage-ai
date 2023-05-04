@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
@@ -20,6 +20,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { buildNavigationItems } from './utils';
+import { parseErrorFromResponse } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -76,6 +77,16 @@ function PipelineDetailPage({
     revalidateOnFocus: false,
   });
   const pipeline = data?.pipeline;
+  useEffect(() => {
+    if (data?.error) {
+      setErrors({
+        errors: parseErrorFromResponse(data),
+        response: data,
+      });
+    } else {
+      setErrors(null);
+    }
+  }, [data, setErrors]);
 
   const after = useMemo(() => {
     if (afterProp) {
@@ -119,23 +130,25 @@ function PipelineDetailPage({
           },
         });
         arr.push(...breadcrumbsProp);
-
-        // if (!arr[arr.length - 1].gradientColor) {
-        //   arr[arr.length - 1].gradientColor = PURPLE_BLUE;
-        // }
         arr[arr.length - 1].bold = true;
       } else {
         arr.push({
-          // gradientColor: PURPLE_BLUE,
           bold: true,
           label: () => pipeline.name,
         });
       }
+    } else if (data?.error) {
+      arr.push({
+        bold: true,
+        danger: true,
+        label: () => 'Error loading pipeline',
+      });
     }
 
     return arr;
   }, [
     breadcrumbsProp,
+    data?.error,
     pipeline,
     pipelineUUID,
   ]);

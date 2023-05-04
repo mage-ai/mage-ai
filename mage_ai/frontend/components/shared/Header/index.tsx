@@ -37,7 +37,7 @@ import { useModal } from '@context/Modal';
 
 export type BreadcrumbType = {
   bold?: boolean;
-  gradientColor?: string;
+  danger?: string;
   label: () => string;
   linkProps?: {
     href: string;
@@ -114,7 +114,7 @@ function Header({
 
     breadcrumbs.forEach(({
       bold,
-      gradientColor,
+      danger,
       label,
       linkProps,
     }, idx: number) => {
@@ -135,6 +135,7 @@ function Header({
       const titleEl = (
         <Text
           bold={bold}
+          danger={danger}
           default={!bold}
           monospace
         >
@@ -146,12 +147,7 @@ function Header({
           key={`breadcrumb-${title}`}
           ml={idx === 0 ? 2 : 0}
         >
-          {gradientColor && (
-            <GradientText backgroundGradient={gradientColor}>
-              {titleEl}
-            </GradientText>
-          )}
-          {!gradientColor && titleEl}
+          {titleEl}
         </Spacing>
       );
 

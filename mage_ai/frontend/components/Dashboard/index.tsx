@@ -98,7 +98,6 @@ function Dashboard({
         },
       },
       {
-        // gradientColor: PURPLE_BLUE,
         bold: true,
         label: () => title,
       },
