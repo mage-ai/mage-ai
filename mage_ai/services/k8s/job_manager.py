@@ -115,6 +115,7 @@ class JobManager():
             spec=client.V1PodSpec(
                 restart_policy='Never',
                 containers=[container],
+                image_pull_secrets=self.pod_config.spec.image_pull_secrets,
                 volumes=self.pod_config.spec.volumes,
             ),
         )
