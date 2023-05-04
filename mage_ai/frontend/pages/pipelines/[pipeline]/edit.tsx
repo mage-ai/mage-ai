@@ -179,6 +179,13 @@ function PipelineDetailPage({
 
   const mainContainerRef = useRef(null);
 
+  // Server status
+  const { data: serverStatus } = api.status.list();
+  const disablePipelineEditAccess = useMemo(
+    () => serverStatus?.status?.disable_pipeline_edit_access,
+    [serverStatus],
+  );
+
   // Kernels
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
@@ -1082,14 +1089,12 @@ function PipelineDetailPage({
             fetchFileTree();
           },
           onErrorCallback: (response, errors) => {
-            console.log('response:', response);
-            console.log('errors:', errors);
             showDeleteConfirmation();
-            // setErrors({
-            //   displayMessage: response.exception,
-            //   errors,
-            //   response,
-            // });
+            setErrors({
+              displayMessage: response.exception,
+              errors,
+              response,
+            });
           },
         },
       ),
@@ -1588,8 +1593,10 @@ function PipelineDetailPage({
             runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
           );
         }
-
-        setPipelineContentTouched(true);
+        
+        if (!disablePipelineEditAccess) {
+          setPipelineContentTouched(true);
+        }
       }
     },
     onOpen: () => console.log('socketUrlPublish opened'),
@@ -1750,15 +1757,20 @@ function PipelineDetailPage({
       block,
     } = payload;
 
-    return savePipelineContent({
-      block: {
-        outputs: [],
-        uuid: block.uuid,
-      },
-    }, {
-      contentOnly: true,
-    }).then(() => runBlockOrig(payload));
+    if (disablePipelineEditAccess) {
+      return runBlockOrig(payload);
+    } else {
+      return savePipelineContent({
+        block: {
+          outputs: [],
+          uuid: block.uuid,
+        },
+      }, {
+        contentOnly: true,
+      }).then(() => runBlockOrig(payload));
+    }
   }, [
+    disablePipelineEditAccess,
     runBlockOrig,
     savePipelineContent,
   ]);

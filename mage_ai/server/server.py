@@ -47,10 +47,11 @@ from mage_ai.server.terminal_server import (
 )
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
-    OAUTH2_APPLICATION_CLIENT_ID,
-    REQUIRE_USER_AUTHENTICATION,
+    is_disable_pipeline_edit_access,
     AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
+    OAUTH2_APPLICATION_CLIENT_ID,
+    REQUIRE_USER_AUTHENTICATION,
     SERVER_VERBOSITY,
     SHELL_COMMAND,
     USE_UNIQUE_TERMINAL,
@@ -125,6 +126,7 @@ class ApiStatusHandler(BaseHandler):
             'repo_path': get_repo_path(),
             'scheduler_status': scheduler_manager.get_status(),
             'instance_type': instance_type,
+            'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
         }
         self.write(dict(status=status))
 

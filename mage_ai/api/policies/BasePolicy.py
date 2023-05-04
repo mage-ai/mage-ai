@@ -5,7 +5,8 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.utils import (
     has_at_least_admin_role,
     has_at_least_editor_role,
-    has_at_least_editor_role_and_edit_access,
+    has_at_least_editor_role_and_notebook_edit_access,
+    has_at_least_editor_role_and_pipeline_edit_access,
     has_at_least_viewer_role,
     is_owner,
 )
@@ -132,8 +133,11 @@ class BasePolicy():
     def has_at_least_editor_role(self) -> bool:
         return has_at_least_editor_role(self.current_user)
 
-    def has_at_least_editor_role_and_edit_access(self) -> bool:
-        return has_at_least_editor_role_and_edit_access(self.current_user)
+    def has_at_least_editor_role_and_notebook_edit_access(self) -> bool:
+        return has_at_least_editor_role_and_notebook_edit_access(self.current_user)
+
+    def has_at_least_editor_role_and_pipeline_edit_access(self) -> bool:
+        return has_at_least_editor_role_and_pipeline_edit_access(self.current_user)
 
     def has_at_least_viewer_role(self) -> bool:
         return has_at_least_viewer_role(self.current_user)
@@ -204,7 +208,6 @@ class BasePolicy():
                 error_message = 'Query parameter {} of value {} is not permitted.'.format(
                     key, value)
                 config = self.__class__.query_rule(key)
-
                 if not config:
                     error = ApiError.UNAUTHORIZED_ACCESS
                     error.update({

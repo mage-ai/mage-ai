@@ -7,12 +7,18 @@ sidebarTitle: "Overview"
 
 ### Read only access
 
-You can configure Mage to not allow any edits to pipelines or blocks. Users will only
-be able to create triggers and view the existing pipelines. They will also have access to
-features such as syncing with Github and future remote repository integrations.
+You can configure Mage to not allow any edits to pipelines or blocks and/or not allow edit or execute
+access for the notebook. Users will only be able to create triggers and view the existing pipelines.
+They will have access to features such as syncing with Github and future remote repository integrations.
 
 To enable this feature set the following environment variable:
-`export DISABLE_NOTEBOOK_EDIT_ACCESS=1`
+`export DISABLE_NOTEBOOK_EDIT_ACCESS=<value>`
+
+The available values are 
+* 0: this is the same as omitting the variable
+* 1: no edit/execute access to the notebook within Mage. Users will not be able to use the notebook to edit pipeline content, execute blocks,
+  create secrets, or create variables.
+* 2: no edit access for pipelines. Users will not be able to edit pipeline/block metadata or content.
 
 ### Databases
 

@@ -1,5 +1,6 @@
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken
 from mage_ai.settings import (
+    is_disable_pipeline_edit_access,
     DISABLE_NOTEBOOK_EDIT_ACCESS,
     REQUIRE_USER_AUTHENTICATION,
 )
@@ -40,8 +41,12 @@ def has_at_least_editor_role(user) -> bool:
         (user.roles and user.roles & 2 != 0)
 
 
-def has_at_least_editor_role_and_edit_access(user) -> bool:
-    return not DISABLE_NOTEBOOK_EDIT_ACCESS and has_at_least_editor_role(user)
+def has_at_least_editor_role_and_notebook_edit_access(user) -> bool:
+    return DISABLE_NOTEBOOK_EDIT_ACCESS != 1 and has_at_least_editor_role(user)
+
+
+def has_at_least_editor_role_and_pipeline_edit_access(user) -> bool:
+    return not is_disable_pipeline_edit_access() and has_at_least_editor_role(user)
 
 
 def has_at_least_viewer_role(user) -> bool:
