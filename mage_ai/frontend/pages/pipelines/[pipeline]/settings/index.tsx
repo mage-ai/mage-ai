@@ -1,3 +1,6 @@
+import { useState } from 'react';
+
+import ErrorsType from '@interfaces/ErrorsType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineType from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
@@ -14,6 +17,7 @@ type PipelineSettingsProps = {
 function PipelineSettings({
   pipeline: pipelineProp,
 }: PipelineSettingsProps) {
+  const [errors, setErrors] = useState<ErrorsType>(null);
   const pipelineUUID = pipelineProp?.uuid;
   const { data } = api.pipelines.detail(pipelineUUID);
   const pipeline = {
@@ -51,8 +55,10 @@ function PipelineSettings({
           label: () => 'Settings',
         },
       ]}
+      errors={errors}
       pageName={PageNameEnum.SETTINGS}
       pipeline={pipeline}
+      setErrors={setErrors}
       title={({ name }) => `${name} settings`}
       uuid={`${PageNameEnum.SETTINGS}_${pipelineUUID}`}
     >

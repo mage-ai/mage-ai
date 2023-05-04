@@ -79,12 +79,12 @@ function PipelineDetailPage({
   const pipeline = data?.pipeline;
   useEffect(() => {
     if (data?.error) {
-      setErrors({
+      setErrors?.({
         errors: parseErrorFromResponse(data),
         response: data,
       });
     } else {
-      setErrors(null);
+      setErrors?.(null);
     }
   }, [data, setErrors]);
 
