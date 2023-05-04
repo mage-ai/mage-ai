@@ -1,6 +1,4 @@
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
-from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
-from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import (
     get_repo_path,
     init_repo,
@@ -13,7 +11,6 @@ from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
     ApiPipelineBlockAnalysisHandler,
-    ApiPipelineBlockExecuteHandler,
     ApiPipelineBlockOutputHandler,
 )
 from mage_ai.server.api.clusters import (
@@ -69,7 +66,6 @@ from tornado.options import options
 from typing import Union
 import argparse
 import asyncio
-import json
 import os
 import tornado.ioloop
 import tornado.web
@@ -89,26 +85,6 @@ class PipelineRunsPageHandler(tornado.web.RequestHandler):
 class ManagePageHandler(tornado.web.RequestHandler):
     def get(self, *args):
         self.render('manage.html')
-
-
-class ApiPipelineExecuteHandler(BaseHandler):
-    def post(self, pipeline_uuid):
-        pipeline = Pipeline.get(pipeline_uuid)
-
-        global_vars = None
-        if len(self.request.body) != 0:
-            global_vars = json.loads(self.request.body).get('global_vars')
-
-        asyncio.run(pipeline.execute(global_vars=global_vars))
-        self.write(
-            dict(
-                pipeline=pipeline.to_dict(
-                    include_outputs=True,
-                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                )
-            )
-        )
-        self.finish()
 
 
 class ApiSchedulerHandler(BaseHandler):
@@ -215,12 +191,6 @@ def make_app():
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
 
-        # Where is this used?
-        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
-        (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/execute',
-            ApiPipelineBlockExecuteHandler,
-        ),
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
