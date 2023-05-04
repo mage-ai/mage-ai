@@ -136,10 +136,6 @@ function Terminal({
       ...oauthWebsocketData,
       command: ['stdin', cmd + '\r'],
     }));
-    // sendMessage(JSON.stringify({
-    //   ...oauthWebsocketData,
-    //   command: ['stdin', '\r'],
-    // }));
     if (cmd?.length >= 2) {
       setCommandIndex(commandHistory.length + 1);
       setCommandHistory(prev => prev.concat(cmd));
@@ -188,12 +184,12 @@ function Terminal({
           if (command?.length >= 0) {
             sendMessage(JSON.stringify({
               ...oauthWebsocketData,
-              command: ['stdin', command + '\x03'],
+              command: ['stdin', command],
             }));
-            // sendMessage(JSON.stringify({
-            //   ...oauthWebsocketData,
-            //   command: ['stdin', '\x03'],
-            // }));
+            sendMessage(JSON.stringify({
+              ...oauthWebsocketData,
+              command: ['stdin', '\x03'],
+            }));
             setCursorIndex(0);
           }
           setCommand('');
