@@ -6,23 +6,9 @@ description: "Configure Mage settings through environment variables."
 
 | Variable name             | Description                   | Example values     |
 | ------------------------- | ----------------------------- | ----------------- |
-| `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | [Example](/production/configuring-production-settings/overview#postgres) |
-| `MAGE_PUBLIC_HOST` | The public host url that can be used to access the Mage app. This value will be used in emails or other notifications. | `http://localhost:6789` |
-| `REQUIRE_USER_AUTHENTICATION`  | Enable user authentication in Mage. [More information](/production/authentication/overview) | 1 |
 | `AUTHENTICATION_MODE` | Set the authentication mode in Mage. Omitting the variable will default to basic password authentication. | `ldap` |
-| `LDAP_ADMIN_USERNAME`  | [More information](/production/authentication/overview#ldap) | See link                     |
-| `LDAP_SERVER`          | [More information](/production/authentication/overview#ldap) | See link          |
-| `LDAP_BIND_DN`         | [More information](/production/authentication/overview#ldap) | See link |
-| `LDAP_BIND_PASSWORD`   | [More information](/production/authentication/overview#ldap) | See link                  |
-| `LDAP_BASE_DN`         | [More information](/production/authentication/overview#ldap) | See link         |
-| `LDAP_AUTHENTICATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
-| `LDAP_AUTHORIZATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
-| `DISABLE_NOTEBOOK_EDIT_ACCESS` | Setting this variable will disable edit access based on the value. [More information](/production/configuring-production-settings/overview#read-only-access) | 1 |
-| `SERVER_VERBOSITY` | [More information](/production/observability/logging#server-logging) | See link |
-| `SHELL_COMMAND` | Set shell command to use for the Mage terminal. Default command is `bash` for macOS/Unix and `cmd` for Windows. | `bash`, `cmd`, ... |
-| `HIDE_ENV_VAR_VALUES` | Filter out environment variables in notebook output. | 1 |
 | `DEBUG` | Turn on "debug" mode. Mage will output more logs that could be useful for debugging issues. | 1 |
-| `ULIMIT_NO_FILE` | Override the maximum number of open files allowed in Mage processes. | 8192 |
+| `DISABLE_NOTEBOOK_EDIT_ACCESS` | Setting this variable will disable edit access based on the value. [More information](/production/configuring-production-settings/overview#read-only-access) | 1 |
 | `GIT_REPO_LINK`               | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
 | `GIT_REPO_PATH`               | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
 | `GIT_USERNAME`                | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
@@ -33,3 +19,18 @@ description: "Configure Mage settings through environment variables."
 | `GIT_SSH_PUBLIC_KEY`          | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
 | `GIT_SSH_PRIVATE_KEY`         | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
 | `GIT_ACCESS_TOKEN`            | [More information](/production/data-sync/git#git-settings-as-environment-variables) | See link |
+| `HIDE_ENV_VAR_VALUES` | Filter out environment variables in notebook output. | 1 |
+| `LDAP_ADMIN_USERNAME`  | [More information](/production/authentication/overview#ldap) | See link                     |
+| `LDAP_SERVER`          | [More information](/production/authentication/overview#ldap) | See link          |
+| `LDAP_BIND_DN`         | [More information](/production/authentication/overview#ldap) | See link |
+| `LDAP_BIND_PASSWORD`   | [More information](/production/authentication/overview#ldap) | See link                  |
+| `LDAP_BASE_DN`         | [More information](/production/authentication/overview#ldap) | See link         |
+| `LDAP_AUTHENTICATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
+| `LDAP_AUTHORIZATION_FILTER` | [More information](/production/authentication/overview#ldap) | See link |
+| `MAGE_DATABASE_CONNECTION_URL` | Specify the database connection url for orchestration DB. Defaults to local sqlite db. | [Example](/production/configuring-production-settings/overview#postgres) |
+| `MAGE_PUBLIC_HOST` | The public host url that can be used to access the Mage app. This value will be used in emails or other notifications. | `http://localhost:6789` |
+| `REQUIRE_USER_AUTHENTICATION`  | Enable user authentication in Mage. [More information](/production/authentication/overview) | 1 |
+| `SERVER_VERBOSITY` | [More information](/production/observability/logging#server-logging) | See link |
+| `SHELL_COMMAND` | Set shell command to use for the Mage terminal. Default command is `bash` for macOS/Unix and `cmd` for Windows. | `bash`, `cmd`, ... |
+| `ULIMIT_NO_FILE` | Override the maximum number of open files allowed in Mage processes. | 8192 |
+| `USER_CODE_PATH` | Set this path to be `/home/src/{your_project_name}` so that Mage starts your project and installs the packages in requirements.txt when starting the container. | `/home/src/mage_project` |
