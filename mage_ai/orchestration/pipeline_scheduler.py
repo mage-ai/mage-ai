@@ -460,12 +460,13 @@ class PipelineScheduler:
         )
 
     def __fetch_crashed_block_runs(self) -> None:
-        running_block_runs = [b for b in self.pipeline_run.block_runs if b.status in [
+        running_or_queued_block_runs = [b for b in self.pipeline_run.block_runs if b.status in [
             BlockRun.BlockRunStatus.RUNNING,
+            BlockRun.BlockRunStatus.QUEUED,
         ]]
 
         crashed_runs = []
-        for br in running_block_runs:
+        for br in running_or_queued_block_runs:
             if not job_manager.has_block_run_job(br.id):
                 br.update(status=BlockRun.BlockRunStatus.INITIAL)
                 crashed_runs.append(br)
