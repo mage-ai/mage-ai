@@ -1,6 +1,7 @@
 import Ansi from 'ansi-to-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Text from '@oracle/elements/Text';
 import {
@@ -26,6 +27,7 @@ import {
   KEY_CODE_META,
   KEY_CODE_V,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -57,6 +59,14 @@ function Terminal({
   const [focus, setFocus] = useState<boolean>(false);
 
   const [stdout, setStdout] = useState<string>();
+
+  const token = useMemo(() => new AuthToken(), []);
+  const oauthWebsocketData = useMemo(() => ({
+    api_key: OAUTH2_APPLICATION_CLIENT_ID,
+    token: token.decodedToken.token,
+  }), [
+    token,
+  ]);
 
   useEffect(() => {
     if (lastMessage) {
@@ -122,12 +132,14 @@ function Terminal({
   }, [command]);
 
   const sendCommand = useCallback((cmd) => {
-    sendMessage(JSON.stringify([
-      'stdin', cmd,
-    ]));
-    sendMessage(JSON.stringify([
-      'stdin', '\r',
-    ]));
+    sendMessage(JSON.stringify({
+      ...oauthWebsocketData,
+      command: ['stdin', cmd + '\r'],
+    }));
+    // sendMessage(JSON.stringify({
+    //   ...oauthWebsocketData,
+    //   command: ['stdin', '\r'],
+    // }));
     if (cmd?.length >= 2) {
       setCommandIndex(commandHistory.length + 1);
       setCommandHistory(prev => prev.concat(cmd));
@@ -174,12 +186,14 @@ function Terminal({
         pauseEvent(event);
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
           if (command?.length >= 0) {
-            sendMessage(JSON.stringify([
-              'stdin', command,
-            ]));
-            sendMessage(JSON.stringify([
-              'stdin', '\x03',
-            ]));
+            sendMessage(JSON.stringify({
+              ...oauthWebsocketData,
+              command: ['stdin', command + '\x03'],
+            }));
+            // sendMessage(JSON.stringify({
+            //   ...oauthWebsocketData,
+            //   command: ['stdin', '\x03'],
+            // }));
             setCursorIndex(0);
           }
           setCommand('');
