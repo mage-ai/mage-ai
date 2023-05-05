@@ -389,7 +389,7 @@ function DependencyGraph({
           id: `${uuid}-${block2.uuid}-from`,
           side: SideEnum.SOUTH,
         })));
-      } else if (blockType !== BlockTypeEnum.DATA_EXPORTER) {
+      } else {
         ports.push({
           ...SHARED_PORT_PROPS,
           id: `${uuid}-from`,
@@ -397,7 +397,7 @@ function DependencyGraph({
         });
       }
 
-      if (upstreamBlocks.length === 0 && blockType !== BlockTypeEnum.DATA_LOADER) {
+      if (upstreamBlocks.length === 0) {
         ports.push({
           ...SHARED_PORT_PROPS,
           id: `${uuid}-to`,
