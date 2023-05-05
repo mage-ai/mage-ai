@@ -6,13 +6,20 @@ import BlockRunType from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineRunType, { COMPLETED_STATUSES, RunStatus } from '@interfaces/PipelineRunType';
+import PipelineRunType, {
+  COMPLETED_STATUSES,
+  RUNNING_STATUSES,
+  RunStatus,
+} from '@interfaces/PipelineRunType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
 import api from '@api';
 import buildTableSidekick, {
   TAB_OUTPUT,
@@ -64,13 +71,19 @@ function PipelineBlockRuns({
       revalidateOnFocus: true,
     },
   );
-  const pipelineRun = useMemo(
-    () => dataPipelineRun?.pipeline_run,
+  const pipelineRun: PipelineRunType = useMemo(
+    () => dataPipelineRun?.pipeline_run || {},
     [dataPipelineRun],
   );
+  const {
+    block_runs: pipelineRunBlockRuns,
+    execution_date: pipelineRunExecutionDate,
+    id: pipelineRunId,
+    status: pipelineRunStatus,
+  } = pipelineRun;
 
   const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
-    api.pipeline_runs.useUpdate(pipelineRun?.id),
+    api.pipeline_runs.useUpdate(pipelineRunId),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -103,7 +116,7 @@ function PipelineBlockRuns({
     }
   }, [selectedRun, selectedTabSidekick?.uuid]);
 
-  const blockRuns = useMemo(() => pipelineRun?.block_runs, [pipelineRun]);
+  const blockRuns = useMemo(() => pipelineRunBlockRuns || [], [pipelineRun]);
 
   const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
   const rows = blockSampleData?.rows || [];
@@ -126,12 +139,12 @@ function PipelineBlockRuns({
   ]);
 
   const showRetryIncompleteBlocksButton = (pipeline?.type !== PipelineTypeEnum.STREAMING
-    && pipelineRun?.status
-    && pipelineRun.status !== RunStatus.COMPLETED
+    && pipelineRunStatus
+    && pipelineRunStatus !== RunStatus.COMPLETED
   );
   const showRetryFromBlockButton = (pipeline?.type === PipelineTypeEnum.PYTHON
     && selectedRun
-    && COMPLETED_STATUSES.includes(pipelineRun?.status)
+    && COMPLETED_STATUSES.includes(pipelineRunStatus)
   );
 
   return (
@@ -145,7 +158,7 @@ function PipelineBlockRuns({
           },
         },
         {
-          label: () => pipelineRun?.execution_date,
+          label: () => pipelineRunExecutionDate,
         },
       ]}
       buildSidekick={props => buildTableSidekick({
@@ -167,6 +180,16 @@ function PipelineBlockRuns({
       setErrors={setErrors}
       subheader={(showRetryIncompleteBlocksButton || showRetryFromBlockButton) && (
         <FlexContainer alignItems="center">
+          {RUNNING_STATUSES.includes(pipelineRunStatus) && (
+            <Flex>
+              <Text bold default large>
+                Pipeline is running
+              </Text>
+              <Spacing mr={1} />
+              <Spinner inverted />
+              <Spacing mr={2} />
+            </Flex>
+          )}
           {showRetryIncompleteBlocksButton && (
             <>
               <Button
@@ -209,7 +232,7 @@ function PipelineBlockRuns({
         )
       }
       title={({ name }) => `${name} runs`}
-      uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRun?.id}`}
+      uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRunId}`}
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
         <Headline level={5}>
