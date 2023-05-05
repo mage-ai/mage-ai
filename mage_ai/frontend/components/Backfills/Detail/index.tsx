@@ -113,7 +113,6 @@ function BackfillDetail({
     {
       ...pipelineRunsRequestQuery,
       backfill_id: modelID,
-      order_by: ['id DESC'],
     },
     {
       refreshInterval: 3000,

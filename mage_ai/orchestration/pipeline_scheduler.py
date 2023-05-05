@@ -916,6 +916,7 @@ def retry_pipeline_run(
     )
     execution_date = datetime.fromisoformat(pipeline_run['execution_date'])
     new_pipeline_run = pipeline_run_model.create(
+        backfill_id=pipeline_run.get('backfill_id'),
         create_block_runs=False,
         execution_date=execution_date,
         event_variables=pipeline_run.get('event_variables', {}),
