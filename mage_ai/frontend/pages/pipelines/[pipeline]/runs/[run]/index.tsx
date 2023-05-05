@@ -10,7 +10,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, { COMPLETED_STATUSES, RunStatus } from '@interfaces/PipelineRunType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
@@ -125,6 +125,12 @@ function PipelineBlockRuns({
     selectedRun,
   ]);
 
+  const showRetryIncompleteBlocksButton = (pipeline?.type !== PipelineTypeEnum.STREAMING
+    && pipelineRun?.status
+    && pipelineRun.status !== RunStatus.COMPLETED
+  );
+  const showRetryFromBlockButton = selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -156,48 +162,47 @@ function PipelineBlockRuns({
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       setErrors={setErrors}
-      subheader={((pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED)
-        || (selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status))) && (
-          <FlexContainer alignItems="center">
-            {(pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED) && (
-              <>
-                <Button
-                  danger
-                  loading={isLoadingUpdatePipelineRun}
-                  onClick={(e) => {
-                    pauseEvent(e);
-                    updatePipelineRun({
-                      pipeline_run: {
-                        'pipeline_run_action': 'retry_blocks',
-                      },
-                    });
-                  }}
-                  outline
-                >
-                  Retry incomplete blocks
-                </Button>
-                <Spacing mr={2} />
-              </>
-            )}
-            {(selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status)) && (
+      subheader={(showRetryIncompleteBlocksButton || showRetryFromBlockButton) && (
+        <FlexContainer alignItems="center">
+          {showRetryIncompleteBlocksButton && (
+            <>
               <Button
+                danger
                 loading={isLoadingUpdatePipelineRun}
                 onClick={(e) => {
                   pauseEvent(e);
                   updatePipelineRun({
                     pipeline_run: {
-                      'from_block_uuid': selectedRun.block_uuid,
                       'pipeline_run_action': 'retry_blocks',
                     },
                   });
                 }}
                 outline
-                primary
               >
-                Retry from selected block ({selectedRun.block_uuid})
+                Retry incomplete blocks
               </Button>
-            )}
-          </FlexContainer>
+              <Spacing mr={2} />
+            </>
+          )}
+          {showRetryFromBlockButton && (
+            <Button
+              loading={isLoadingUpdatePipelineRun}
+              onClick={(e) => {
+                pauseEvent(e);
+                updatePipelineRun({
+                  pipeline_run: {
+                    'from_block_uuid': selectedRun.block_uuid,
+                    'pipeline_run_action': 'retry_blocks',
+                  },
+                });
+              }}
+              outline
+              primary
+            >
+              Retry from selected block ({selectedRun.block_uuid})
+            </Button>
+          )}
+        </FlexContainer>
         )
       }
       title={({ name }) => `${name} runs`}
