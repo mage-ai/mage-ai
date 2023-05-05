@@ -158,6 +158,7 @@ def make_app():
         (r'/settings/(.*)', MainPageHandler),
         (r'/sign-in', MainPageHandler),
         (r'/terminal', MainPageHandler),
+        (r'/triggers', MainPageHandler),
         (r'/manage', ManagePageHandler),
         (
             r'/_next/static/(.*)',
