@@ -73,8 +73,8 @@ def build_create_table_command(
         columns_and_types.append(f"CONSTRAINT {index_name} Unique({', '.join(unique_constraints)})")
 
     if key_properties and len(key_properties) >= 1:
-        col = clean_column_name(key_properties[0])
-        columns_and_types.append(f'PRIMARY KEY ({col})')
+        clean_keys = [clean_column_name(k) for k in key_properties]
+        columns_and_types.append(f'PRIMARY KEY ({", ".join(clean_keys)})')
 
     return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
 
