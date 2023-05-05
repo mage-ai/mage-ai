@@ -37,7 +37,7 @@ function PipelineBlockRuns({
   pipeline: pipelineProp,
   pipelineRun: pipelineRunProp,
 }: PipelineBlockRunsProps) {
-  const [selectedRun, setSelectedRun] = useState<BlockRunType>();
+  const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
   const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
@@ -74,6 +74,9 @@ function PipelineBlockRuns({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
+          callback: () => {
+            setSelectedRun(null);
+          },
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
