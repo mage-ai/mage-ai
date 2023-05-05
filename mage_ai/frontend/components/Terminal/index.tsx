@@ -134,7 +134,11 @@ function Terminal({
   const sendCommand = useCallback((cmd) => {
     sendMessage(JSON.stringify({
       ...oauthWebsocketData,
-      command: ['stdin', cmd + '\r'],
+      command: ['stdin', cmd],
+    }));
+    sendMessage(JSON.stringify({
+      ...oauthWebsocketData,
+      command: ['stdin', '\r'],
     }));
     if (cmd?.length >= 2) {
       setCommandIndex(commandHistory.length + 1);
