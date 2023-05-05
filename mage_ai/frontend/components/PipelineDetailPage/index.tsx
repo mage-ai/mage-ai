@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useRouter } from 'next/router';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
@@ -69,6 +70,8 @@ function PipelineDetailPage({
   uuid,
 }: PipelineDetailPageProps) {
   const { height } = useWindowSize();
+  const router = useRouter();
+  const { pipeline: pipelineUUIDFromUrl }: any = router.query;
 
   const pipelineUUID = pipelineProp.uuid;
   const { data } = api.pipelines.detail(pipelineUUID, {
@@ -162,7 +165,7 @@ function PipelineDetailPage({
         before={before}
         beforeWidth={beforeWidth}
         breadcrumbs={breadcrumbs}
-        navigationItems={buildNavigationItems(pageName, pipeline)}
+        navigationItems={buildNavigationItems(pageName, pipeline, pipelineUUIDFromUrl)}
         subheaderChildren={typeof subheader !== 'undefined' && subheader}
         title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
         uuid={uuid}

@@ -12,8 +12,13 @@ import {
 import { PageNameEnum } from './constants';
 import { isViewer } from '@utils/session';
 
-export function buildNavigationItems(pageName: PageNameEnum, pipeline: PipelineType) {
-  const { uuid: pipelineUUID } = pipeline || {};
+export function buildNavigationItems(
+  pageName: PageNameEnum,
+  pipeline: PipelineType,
+  pipelineUUIDFromUrl?: string,
+) {
+  const { uuid } = pipeline || {};
+  const pipelineUUID = uuid || pipelineUUIDFromUrl;
 
   const navigationItems = [
     {

@@ -118,7 +118,8 @@ function PipelineDetailPage({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const pipelineUUID = pipelineProp.uuid;
+  const { pipeline: pipelineUUIDFromUrl }: any = router.query;
+  const pipelineUUID = pipelineProp.uuid || pipelineUUIDFromUrl;
 
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
