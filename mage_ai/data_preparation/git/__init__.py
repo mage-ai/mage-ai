@@ -160,12 +160,12 @@ class Git:
                     except ChildProcessError as err:
                         if 'Host key verification failed' in str(err):
                             if hostname:
-                                add_host_to_known_hosts(hostname)
+                                add_host_to_known_hosts()
                         else:
                             raise err
                     except TimeoutError:
                         if hostname:
-                            add_host_to_known_hosts(hostname)
+                            add_host_to_known_hosts()
                         else:
                             raise TimeoutError(
                                 "Connecting to remote timed out, make sure your SSH key is set up properly"  # noqa: E501
