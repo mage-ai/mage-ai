@@ -153,28 +153,30 @@ function PipelineBlockRuns({
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       setErrors={setErrors}
-      subheader={
-        <FlexContainer alignItems="center">
-          {(pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED) && (
-            <Button
-              danger
-              loading={isLoadingUpdatePipelineRun}
-              onClick={(e) => {
-                pauseEvent(e);
-                updatePipelineRun({
-                  pipeline_run: {
-                    'pipeline_run_action': 'retry_blocks',
-                  },
-                });
-              }}
-              outline
-            >
-              Retry incomplete blocks
-            </Button>
-          )}
-          {(selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status)) && (
-            <>
-              <Spacing ml={2} />
+      subheader={((pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED)
+        || (selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status))) && (
+          <FlexContainer alignItems="center">
+            {(pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED) && (
+              <>
+                <Button
+                  danger
+                  loading={isLoadingUpdatePipelineRun}
+                  onClick={(e) => {
+                    pauseEvent(e);
+                    updatePipelineRun({
+                      pipeline_run: {
+                        'pipeline_run_action': 'retry_blocks',
+                      },
+                    });
+                  }}
+                  outline
+                >
+                  Retry incomplete blocks
+                </Button>
+                <Spacing mr={2} />
+              </>
+            )}
+            {(selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status)) && (
               <Button
                 loading={isLoadingUpdatePipelineRun}
                 onClick={(e) => {
@@ -191,9 +193,9 @@ function PipelineBlockRuns({
               >
                 Retry from selected block ({selectedRun.block_uuid})
               </Button>
-            </>
-          )}
-        </FlexContainer>
+            )}
+          </FlexContainer>
+        )
       }
       title={({ name }) => `${name} runs`}
       uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRun?.id}`}

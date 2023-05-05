@@ -61,6 +61,7 @@ PipelineRunPolicy.allow_write([
 ], condition=lambda policy: policy.has_at_least_editor_role())
 
 PipelineRunPolicy.allow_write([
+    'from_block_uuid',
     'pipeline_run_action',
     'status',
 ], scopes=[

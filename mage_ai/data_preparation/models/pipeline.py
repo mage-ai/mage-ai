@@ -954,6 +954,26 @@ class Pipeline:
     def get_executable_blocks(self):
         return [b for b in self.blocks_by_uuid.values() if b.executable]
 
+    def get_downstream_block_uuids(
+        self,
+        starting_block_uuid: str,
+    ) -> List[str]:
+        final_downstream_block_uuids_set = set()
+        starting_block = self.blocks_by_uuid.get(starting_block_uuid)
+        if starting_block:
+            final_downstream_block_uuids_set.add(starting_block_uuid)
+            downstream_block_uuids = starting_block.downstream_block_uuids
+            for block_uuid in downstream_block_uuids:
+                nested_downstream_block_uuids = self.get_downstream_block_uuids(
+                    block_uuid,
+                )
+                for block_uuid in nested_downstream_block_uuids:
+                    final_downstream_block_uuids_set.add(block_uuid)
+        else:
+            return []
+
+        return list(final_downstream_block_uuids_set)
+
     def has_block(self, block_uuid: str, block_type: str = None, extension_uuid: str = None):
         if extension_uuid:
             return self.extensions and \
