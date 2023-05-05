@@ -75,16 +75,18 @@ def get_valid_secrets() -> List:
 
 def get_secret_value(name: str, repo_name: str = None) -> str:
     from mage_ai.orchestration.db.models.secrets import Secret
-    fernet = Fernet(get_encryption_key())
+    key = get_encryption_key()
+    if key:
+        fernet = Fernet(key)
 
-    conditions = [Secret.name == name]
-    if repo_name:
-        conditions.append(Secret.repo_name == repo_name)
-    secret = None
-    try:
-        secret = Secret.query.filter(*conditions).one_or_none()
-    except Exception:
-        print(f'WARNING: Could not find secret value for secret {name}')
+        conditions = [Secret.name == name]
+        if repo_name:
+            conditions.append(Secret.repo_name == repo_name)
+        secret = None
+        try:
+            secret = Secret.query.filter(*conditions).one_or_none()
+        except Exception:
+            print(f'WARNING: Could not find secret value for secret {name}')
 
-    if secret:
-        return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
+        if secret:
+            return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')

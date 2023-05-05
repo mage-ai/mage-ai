@@ -48,7 +48,7 @@ class Preferences:
                 username=os.getenv(GIT_USERNAME_VAR),
                 email=os.getenv(GIT_EMAIL_VAR),
                 branch=os.getenv(GIT_BRANCH_VAR),
-                sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_TYPE))),
+                sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_TYPE) or 0)),
             )
         else:
             self.sync_config = preferences.get('sync_config', dict())
