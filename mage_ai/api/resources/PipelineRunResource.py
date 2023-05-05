@@ -171,15 +171,7 @@ class PipelineRunResource(DatabaseResource):
             pipeline = Pipeline.get(self.model.pipeline_uuid)
             block_runs_to_retry = []
             from_block_uuid = payload.get('from_block_uuid')
-            if PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:
-                block_runs_to_retry = \
-                    list(
-                        filter(
-                            lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
-                            self.model.block_runs
-                        )
-                    )
-            elif from_block_uuid is not None:
+            if from_block_uuid is not None:
                 from_block = pipeline.blocks_by_uuid.get(from_block_uuid)
                 if from_block:
                     downstream_blocks = from_block.get_all_downstream_blocks()
@@ -191,6 +183,14 @@ class PipelineRunResource(DatabaseResource):
                                 self.model.block_runs
                             )
                         )
+            elif PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:
+                block_runs_to_retry = \
+                    list(
+                        filter(
+                            lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
+                            self.model.block_runs
+                        )
+                    )
 
             # Update block run status to INITIAL
             BlockRun.batch_update_status(
