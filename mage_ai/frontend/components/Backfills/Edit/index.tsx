@@ -50,15 +50,19 @@ import { selectKeys } from '@utils/hash';
 
 type BackfillEditProps = {
   backfill: BackfillType;
+  errors: ErrorsType,
   fetchBackfill: () => void;
   pipeline: PipelineType;
+  setErrors: (errors: ErrorsType) => void;
   variables?: PipelineVariableType[];
 };
 
 function BackfillEdit({
   backfill: modelProp,
+  errors,
   fetchBackfill,
   pipeline,
+  setErrors,
   variables,
 }: BackfillEditProps) {
   const router = useRouter();
@@ -76,7 +80,6 @@ function BackfillEdit({
     uuid: pipelineUUID,
   } = pipeline;
 
-  const [errors, setErrors] = useState<ErrorsType>(null);
   const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [setupType, setSetupType] = useState<string>(
     blockUUID ? BACKFILL_TYPE_CODE : BACKFILL_TYPE_DATETIME,
