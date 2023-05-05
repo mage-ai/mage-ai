@@ -43,7 +43,7 @@ class Preferences:
         if os.getenv(GIT_REPO_LINK_VAR):
             self.sync_config = dict(
                 remote_repo_link=os.getenv(GIT_REPO_LINK_VAR),
-                repo_path=os.getenv(GIT_REPO_PATH_VAR),
+                repo_path=os.getenv(GIT_REPO_PATH_VAR, os.getcwd()),
                 auth_type=os.getenv(GIT_AUTH_TYPE_VAR),
                 username=os.getenv(GIT_USERNAME_VAR),
                 email=os.getenv(GIT_EMAIL_VAR),

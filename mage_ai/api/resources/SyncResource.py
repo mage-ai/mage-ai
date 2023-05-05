@@ -14,6 +14,7 @@ from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.secrets import Secret
+import os
 
 
 def get_ssh_public_key_secret_name(user: User = None) -> str:
@@ -77,6 +78,9 @@ class SyncResource(GenericResource):
 
         preferences = Preferences(user=user) if user else get_preferences()
         updated_config = dict(preferences.sync_config, **payload)
+        # default repo_path to os.getcwd()
+        if not updated_config.get('repo_path', None):
+            updated_config['repo_path'] = os.getcwd()
         # Validate payload
         sync_config = GitConfig.load(config=updated_config)
 
