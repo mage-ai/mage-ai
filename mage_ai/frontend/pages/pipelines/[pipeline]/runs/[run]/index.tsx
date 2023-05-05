@@ -129,7 +129,10 @@ function PipelineBlockRuns({
     && pipelineRun?.status
     && pipelineRun.status !== RunStatus.COMPLETED
   );
-  const showRetryFromBlockButton = selectedRun && COMPLETED_STATUSES.includes(pipelineRun?.status);
+  const showRetryFromBlockButton = (pipeline?.type === PipelineTypeEnum.PYTHON
+    && selectedRun
+    && COMPLETED_STATUSES.includes(pipelineRun?.status)
+  );
 
   return (
     <PipelineDetailPage
