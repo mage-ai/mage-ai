@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
@@ -6,17 +6,30 @@ import BlockRunType from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineRunType, {
+  COMPLETED_STATUSES,
+  RUNNING_STATUSES,
+  RunStatus,
+} from '@interfaces/PipelineRunType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
 import api from '@api';
-import buildTableSidekick from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
+import buildTableSidekick, {
+  TAB_OUTPUT,
+  TAB_TREE,
+  TABS as TABS_SIDEKICK,
+} from '@components/PipelineDetail/BlockRuns/buildTableSidekick';
 import { OutputType } from '@interfaces/BlockType';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
@@ -31,7 +44,8 @@ function PipelineBlockRuns({
   pipeline: pipelineProp,
   pipelineRun: pipelineRunProp,
 }: PipelineBlockRunsProps) {
-  const [selectedRun, setSelectedRun] = useState<BlockRunType>();
+  const [selectedRun, setSelectedRun] = useState<BlockRunType>(null);
+  const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const pipelineUUID = pipelineProp.uuid;
@@ -57,16 +71,25 @@ function PipelineBlockRuns({
       revalidateOnFocus: true,
     },
   );
-  const pipelineRun = useMemo(
-    () => dataPipelineRun?.pipeline_run,
+  const pipelineRun: PipelineRunType = useMemo(
+    () => dataPipelineRun?.pipeline_run || {},
     [dataPipelineRun],
   );
+  const {
+    block_runs: pipelineRunBlockRuns,
+    execution_date: pipelineRunExecutionDate,
+    id: pipelineRunId,
+    status: pipelineRunStatus,
+  } = pipelineRun;
 
-  const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }] = useMutation(
-    api.pipeline_runs.useUpdate(pipelineRun?.id),
+  const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }]: any = useMutation(
+    api.pipeline_runs.useUpdate(pipelineRunId),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
+          callback: () => {
+            setSelectedRun(null);
+          },
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
@@ -75,13 +98,6 @@ function PipelineBlockRuns({
       ),
     },
   );
-
-  // @ts-ignore
-  const retryBlocks = () => updatePipelineRun({
-    pipeline_run: {
-      'pipeline_run_action': 'retry_blocks',
-    },
-  });
 
   const {
     data: dataOutput,
@@ -94,7 +110,13 @@ function PipelineBlockRuns({
     type: dataType,
   }: OutputType = dataOutput?.outputs?.[0] || {};
 
-  const blockRuns = useMemo(() => pipelineRun?.block_runs, [pipelineRun]);
+  useEffect(() => {
+    if (!selectedRun && selectedTabSidekick?.uuid === TAB_OUTPUT.uuid) {
+      setSelectedTabSidekick(TAB_TREE);
+    }
+  }, [selectedRun, selectedTabSidekick?.uuid]);
+
+  const blockRuns = useMemo(() => pipelineRunBlockRuns || [], [pipelineRun]);
 
   const columns = (blockSampleData?.columns || []).slice(0, MAX_COLUMNS);
   const rows = blockSampleData?.rows || [];
@@ -116,6 +138,15 @@ function PipelineBlockRuns({
     selectedRun,
   ]);
 
+  const showRetryIncompleteBlocksButton = (pipeline?.type !== PipelineTypeEnum.STREAMING
+    && pipelineRunStatus
+    && pipelineRunStatus !== RunStatus.COMPLETED
+  );
+  const showRetryFromBlockButton = (pipeline?.type === PipelineTypeEnum.PYTHON
+    && selectedRun
+    && COMPLETED_STATUSES.includes(pipelineRunStatus)
+  );
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -127,7 +158,7 @@ function PipelineBlockRuns({
           },
         },
         {
-          label: () => pipelineRun?.execution_date,
+          label: () => pipelineRunExecutionDate,
         },
       ]}
       buildSidekick={props => buildTableSidekick({
@@ -138,6 +169,8 @@ function PipelineBlockRuns({
         loadingData: loadingOutput,
         rows,
         selectedRun,
+        selectedTab: selectedTabSidekick,
+        setSelectedTab: setSelectedTabSidekick,
         showDynamicBlocks: true,
         textData,
       })}
@@ -145,21 +178,61 @@ function PipelineBlockRuns({
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
       setErrors={setErrors}
-      subheader={pipelineRun?.status && pipelineRun.status !== RunStatus.COMPLETED && (
-        <Button
-          danger
-          loading={isLoadingUpdatePipelineRun}
-          onClick={(e) => {
-            pauseEvent(e);
-            retryBlocks();
-          }}
-          outline
-        >
-          Retry incomplete blocks
-        </Button>
-      )}
+      subheader={(showRetryIncompleteBlocksButton || showRetryFromBlockButton) && (
+        <FlexContainer alignItems="center">
+          {RUNNING_STATUSES.includes(pipelineRunStatus) && (
+            <Flex>
+              <Text bold default large>
+                Pipeline is running
+              </Text>
+              <Spacing mr={1} />
+              <Spinner inverted />
+              <Spacing mr={2} />
+            </Flex>
+          )}
+          {showRetryIncompleteBlocksButton && (
+            <>
+              <Button
+                danger
+                loading={isLoadingUpdatePipelineRun}
+                onClick={(e) => {
+                  pauseEvent(e);
+                  updatePipelineRun({
+                    pipeline_run: {
+                      'pipeline_run_action': 'retry_blocks',
+                    },
+                  });
+                }}
+                outline
+              >
+                Retry incomplete blocks
+              </Button>
+              <Spacing mr={2} />
+            </>
+          )}
+          {showRetryFromBlockButton && (
+            <Button
+              loading={isLoadingUpdatePipelineRun}
+              onClick={(e) => {
+                pauseEvent(e);
+                updatePipelineRun({
+                  pipeline_run: {
+                    'from_block_uuid': selectedRun.block_uuid,
+                    'pipeline_run_action': 'retry_blocks',
+                  },
+                });
+              }}
+              outline
+              primary
+            >
+              Retry from selected block ({selectedRun.block_uuid})
+            </Button>
+          )}
+        </FlexContainer>
+        )
+      }
       title={({ name }) => `${name} runs`}
-      uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRun?.id}`}
+      uuid={`${PageNameEnum.RUNS}_${pipelineUUID}_${pipelineRunId}`}
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
         <Headline level={5}>

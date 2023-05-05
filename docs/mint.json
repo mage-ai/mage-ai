@@ -296,6 +296,12 @@
             "orchestration/backfills/overview",
             "orchestration/backfills/guides"
           ]
+        },
+        {
+          "group": "Pipeline runs",
+          "pages": [
+            "orchestration/pipeline-runs/retrying-block-runs"
+          ]
         }
       ]
     },

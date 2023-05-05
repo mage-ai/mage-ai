@@ -166,23 +166,35 @@ class PipelineRunResource(DatabaseResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
-        if 'retry_blocks' == payload.get('pipeline_run_action') and \
-                PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:
+        if 'retry_blocks' == payload.get('pipeline_run_action'):
             self.model.refresh()
-
             pipeline = Pipeline.get(self.model.pipeline_uuid)
-
-            incomplete_block_runs = \
-                list(
-                    filter(
-                        lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
-                        self.model.block_runs
+            block_runs_to_retry = []
+            from_block_uuid = payload.get('from_block_uuid')
+            if from_block_uuid is not None:
+                from_block = pipeline.blocks_by_uuid.get(from_block_uuid)
+                if from_block:
+                    downstream_blocks = from_block.get_all_downstream_blocks()
+                    downstream_block_uuids = [b.uuid for b in downstream_blocks] + [from_block_uuid]
+                    block_runs_to_retry = \
+                        list(
+                            filter(
+                                lambda br: br.block_uuid in downstream_block_uuids,
+                                self.model.block_runs
+                            )
+                        )
+            elif PipelineRun.PipelineRunStatus.COMPLETED != self.model.status:
+                block_runs_to_retry = \
+                    list(
+                        filter(
+                            lambda br: br.status != BlockRun.BlockRunStatus.COMPLETED,
+                            self.model.block_runs
+                        )
                     )
-                )
 
             # Update block run status to INITIAL
             BlockRun.batch_update_status(
-                [b.id for b in incomplete_block_runs],
+                [b.id for b in block_runs_to_retry],
                 BlockRun.BlockRunStatus.INITIAL,
             )
 
@@ -193,7 +205,7 @@ class PipelineRunResource(DatabaseResource):
                 if PipelineType.INTEGRATION == pipeline.type:
                     execution_process_manager.terminate_pipeline_process(self.model.id)
                 else:
-                    for br in incomplete_block_runs:
+                    for br in block_runs_to_retry:
                         execution_process_manager.terminate_block_process(
                             self.model.id,
                             br.id,

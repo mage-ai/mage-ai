@@ -12,6 +12,7 @@ import {
 import { createBlockStatus } from '@components/Triggers/utils';
 import { isEmptyObject, isObject } from '@utils/hash';
 
+export const TABS_HEIGHT_OFFSET = 76;
 const TAB_DETAILS = { uuid: 'Run details' };
 const TAB_TREE = { uuid: 'Dependency tree' };
 export const TABS = [
@@ -117,7 +118,7 @@ export default function({
         <DependencyGraph
           {...updatedProps}
           height={height}
-          heightOffset={(heightOffset || 0) + (showTabs ? 76 : 0)}
+          heightOffset={(heightOffset || 0) + (showTabs ? TABS_HEIGHT_OFFSET : 0)}
           pipeline={pipeline}
         />
       )}
