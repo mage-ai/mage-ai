@@ -2,6 +2,9 @@ from mage_integrations.connections.sql.base import Connection
 from mysql.connector import connect
 from sshtunnel import SSHTunnelForwarder
 import enum
+import io
+import os
+import paramiko
 
 
 class ConnectionMethod(str, enum.Enum):
@@ -46,7 +49,12 @@ class MySQL(Connection):
         if self.connection_method == ConnectionMethod.SSH_TUNNEL:
             ssh_setting = dict(ssh_username=self.ssh_username)
             if self.ssh_pkey is not None:
-                ssh_setting['ssh_pkey'] = self.ssh_pkey
+                if os.path.exists(self.ssh_pkey):
+                    ssh_setting['ssh_pkey'] = self.ssh_pkey
+                else:
+                    ssh_setting['ssh_pkey'] = paramiko.RSAKey.from_private_key(
+                        io.StringIO(self.ssh_pkey),
+                    )
             else:
                 ssh_setting['ssh_password'] = self.ssh_password
             self.ssh_tunnel = SSHTunnelForwarder(
