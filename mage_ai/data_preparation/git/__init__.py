@@ -33,12 +33,13 @@ class Git:
 
         if self.auth_type == AuthType.HTTPS:
             url = urlsplit(self.remote_repo_link)
-            token = get_secret_value(
-                git_config.access_token_secret_name,
-                repo_name=get_repo_path(),
-            )
             if os.getenv(GIT_ACCESS_TOKEN_VAR):
                 token = os.getenv(GIT_ACCESS_TOKEN_VAR)
+            else:
+                token = get_secret_value(
+                    git_config.access_token_secret_name,
+                    repo_name=get_repo_path(),
+                )
             user = git_config.username
             url = url._replace(netloc=f'{user}:{token}@{url.netloc}')
             self.remote_repo_link = urlunsplit(url)
