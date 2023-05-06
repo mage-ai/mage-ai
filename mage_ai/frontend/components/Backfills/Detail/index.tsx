@@ -63,15 +63,19 @@ const LIMIT = 40;
 
 type BackfillDetailProps = {
   backfill: BackfillType;
+  errors: ErrorsType;
   fetchBackfill: () => void;
   pipeline: PipelineType;
+  setErrors: (errors: ErrorsType) => void;
   variables?: PipelineVariableType[];
 };
 
 function BackfillDetail({
   backfill: model,
+  errors,
   fetchBackfill,
   pipeline,
+  setErrors,
   variables,
 }: BackfillDetailProps) {
   const isViewerRole = isViewer();
@@ -94,7 +98,6 @@ function BackfillDetail({
   } = pipeline;
 
   const q = queryFromUrl();
-  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     _limit: LIMIT,
@@ -110,7 +113,6 @@ function BackfillDetail({
     {
       ...pipelineRunsRequestQuery,
       backfill_id: modelID,
-      order_by: ['id DESC'],
     },
     {
       refreshInterval: 3000,
@@ -156,6 +158,7 @@ function BackfillDetail({
           })}
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
+          setErrors={setErrors}
         />
         <Spacing p={2}>
           <Paginate
