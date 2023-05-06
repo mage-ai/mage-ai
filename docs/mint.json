@@ -402,6 +402,7 @@
           "pages": [
             "production/observability/alerting-slack",
             "production/observability/alerting-teams",
+            "production/observability/alerting-opsgenie",
             "production/observability/alerting-email"
           ]
         }

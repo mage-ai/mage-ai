@@ -6,9 +6,11 @@ from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG,
+    OPSGENIE_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG_NO_ALERT_ON,
 )
 from unittest.mock import patch
+from unittest.mock import ANY
 
 
 class NotificationSenderTests(DBTestCase):
@@ -113,3 +115,21 @@ class NotificationSenderTests(DBTestCase):
         sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
         self.assertEqual(mock_send_email.call_count, 0)
         self.assertEqual(mock_send_teams_message.call_count, 0)
+
+    @patch('mage_ai.orchestration.notification.sender.send_opsgenie_alert')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_send_pipeline_run_failure_message_using_opsgenie(
+            self,
+            mock_send_email,
+            mock_send_opsgenie_message,
+    ):
+        notification_config = NotificationConfig.load(config=OPSGENIE_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
+        self.assertEqual(mock_send_email.call_count, 0)
+        mock_send_opsgenie_message.assert_called_once_with(
+            notification_config.opsgenie_config,
+            message=ANY,
+            description=ANY,
+        )
