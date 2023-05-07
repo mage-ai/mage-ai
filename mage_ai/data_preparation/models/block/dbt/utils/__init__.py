@@ -782,10 +782,12 @@ def interpolate_refs_with_table_names(
     elif DataSource.SNOWFLAKE == profile_type:
         database = profile['database']
         schema = profile['schema']
+    elif DataSource.SPARK == profile_type:
+        database = profile['schema']
+        schema = None
     elif DataSource.TRINO == profile_type:
         database = profile['catalog']
         schema = profile['schema']
-
     return interpolate_input(
         block,
         query_string,
