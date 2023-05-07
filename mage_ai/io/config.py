@@ -82,6 +82,16 @@ class ConfigKey(str, Enum):
     SNOWFLAKE_ROLE = 'SNOWFLAKE_ROLE'
     SNOWFLAKE_TIMEOUT = 'SNOWFLAKE_TIMEOUT'
     SNOWFLAKE_USER = 'SNOWFLAKE_USER'
+    SPARK_CLUSTER = 'SPARK_CLUSTER'
+    SPARK_DRIVER = 'SPARK_DRIVER'
+    SPARK_ENDPOINT = 'SPARK_ENDPOINT'
+    SPARK_HOST = 'SPARK_HOST'
+    SPARK_ORGANIZATION = 'SPARK_ORGANIZATION'
+    SPARK_PORT = 'SPARK_PORT'
+    SPARK_SCHEMA = 'SPARK_SCHEMA'
+    SPARK_SERVER_SIDE_PARAMETERS = 'SPARK_SERVER_SIDE_PARAMETERS'
+    SPARK_TOKEN = 'SPARK_TOKEN'
+    SPARK_USER = 'SPARK_USER'
     TRINO_CATALOG = 'TRINO_CATALOG'
     TRINO_HOST = 'TRINO_HOST'
     TRINO_PASSWORD = 'TRINO_PASSWORD'
@@ -349,6 +359,17 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_PASSWORD: (VerboseConfigKey.SNOWFLAKE, 'password'),
         ConfigKey.SNOWFLAKE_TIMEOUT: (VerboseConfigKey.SNOWFLAKE, 'timeout'),
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
+        ConfigKey.SPARK_CLUSTER: (VerboseConfigKey.SNOWFLAKE, 'cluster'),
+        ConfigKey.SPARK_DRIVER: (VerboseConfigKey.SNOWFLAKE, 'driver'),
+        ConfigKey.SPARK_ENDPOINT: (VerboseConfigKey.SNOWFLAKE, 'endpoint'),
+        ConfigKey.SPARK_HOST: (VerboseConfigKey.SNOWFLAKE, 'host'),
+        ConfigKey.SPARK_ORGANIZATION: (VerboseConfigKey.SNOWFLAKE, 'organization'),
+        ConfigKey.SPARK_PORT: (VerboseConfigKey.SNOWFLAKE, 'port'),
+        ConfigKey.SPARK_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
+        ConfigKey.SPARK_SERVER_SIDE_PARAMETERS: (
+            VerboseConfigKey.SNOWFLAKE, 'server_side_parameters'),
+        ConfigKey.SPARK_TOKEN: (VerboseConfigKey.SNOWFLAKE, 'token'),
+        ConfigKey.SPARK_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
     }
 
     def __init__(

@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.block.sql import (
     postgres,
     redshift,
     snowflake,
+    spark,
     trino,
 )
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
@@ -526,6 +527,28 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
             data_provider=profile_type,
             data_provider_database=database,
             data_provider_schema=schema,
+            export_write_policy=ExportWritePolicy.REPLACE,
+        )
+    elif DataSource.SPARK == profile_type:
+        schema = profile.get('schema')
+
+        config = dict(
+            SPARK_DRIVER=profile.get('driver'),
+            SPARK_SCHEMA=schema,
+            SPARK_HOST=profile.get('host'),
+            SPARK_ORGANIZATION=profile.get('organization'),
+            SPARK_TOKEN=profile.get('token'),
+            SPARK_ENDPOINT=profile.get('endpoint'),
+            SPARK_CLUSTER=profile.get('cluster'),
+            SPARK_PORT=profile.get('port'),
+            SPARK_USER=profile.get('user'),
+            SPARK_SERVER_SIDE_PARAMETERS=profile.get('server_side_parameters'),
+        )
+
+        config_file_loader = ConfigFileLoader()
+        configuration = dict(
+            data_provider=profile_type,
+            data_provider_database=schema,
             export_write_policy=ExportWritePolicy.REPLACE,
         )
     elif DataSource.TRINO == profile_type:
