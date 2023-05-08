@@ -114,7 +114,7 @@ setuptools.setup(
             'dbt-postgres==1.4.0',
             'dbt-redshift==1.4.0',
             'dbt-snowflake==1.4.0',
-            'dbt-spark==1.5.0',
+            'dbt-spark==1.4.0',
             'dbt-sqlserver==1.3.1',
             'dbt-trino==1.4.0',
             'google-api-core==2.11.0',
