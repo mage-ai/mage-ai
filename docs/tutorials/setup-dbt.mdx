@@ -64,8 +64,8 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 1. Go to the [Mage dashboard](http://localhost:6789/) and click the button
    **`+ New pipeline`** and select the option labeled `Standard (batch)`.
-2. Near the top of the page, click the pipeline name and change it to
-   `dbt demo pipeline`.
+2. Click the `Pipeline settings` icon in the left pane, and change its name
+   to `dbt demo pipeline`, the click the `Save pipeline settings` button.
 
 ---
 
@@ -97,10 +97,9 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 ## 5. Add data loader block to pipeline
 
 1. Click the **`+ Data loader`** button, select `Python`, then click `API`.
-2. At the top of the block, on the right of `DATA LOADER`, click the name of the
-   block.
-3. Change the name to `load data`.
-4. Paste the following code in that block:
+2. In the popup dialog `Data loader block name`, change the name to `load data`,
+   then click the `Save and add block` button.
+3. Paste the following code in that block:
 
     ```python
     import io
@@ -124,13 +123,13 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 
 1. Under the data loader block you just added, click the button **`DBT model`**,
    then click the option `Single model`.
-1. In the file browser that pops up, click the file named
+2. In the file browser that pops up, click the file named
    `my_second_dbt_model.sql` under the folders `demo/models/example/`. 
    
    1. This will add 2 DBT blocks to your pipeline: 1 for the DBT model named
    `my_first_dbt_model` and the 2nd for the DBT model named `my_second_dbt_model`. 
    
-   1. The model named `my_first_dbt_model` was added to
+   2. The model named `my_first_dbt_model` was added to
    the pipeline because `my_second_dbt_model` references it.
 
 ![](https://github.com/mage-ai/assets/blob/main/dbt/add-dbt-model.gif?raw=true)
