@@ -174,7 +174,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         token = message.get('token')
 
         if REQUIRE_USER_AUTHENTICATION or DISABLE_NOTEBOOK_EDIT_ACCESS:
-            valid = False
+            valid = not REQUIRE_USER_AUTHENTICATION
 
             if api_key and token:
                 oauth_client = Oauth2Application.query.filter(
