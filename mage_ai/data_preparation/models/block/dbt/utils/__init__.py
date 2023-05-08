@@ -81,13 +81,11 @@ def parse_attributes(block) -> Dict:
 
     source_name = f'mage_{project_name}'
     if profile:
-        if DataSource.MYSQL == profile.get('type'):
-            source_name = profile['schema']
-        elif DataSource.REDSHIFT == profile.get('type'):
-            source_name = profile['schema']
-        elif DataSource.TRINO == profile.get('type'):
-            source_name = profile['schema']
-        elif DataSource.MSSQL == profile.get('type'):
+        if (DataSource.MYSQL == profile.get('type') or
+                DataSource.REDSHIFT == profile.get('type') or
+                DataSource.TRINO == profile.get('type') or
+                DataSource.MSSQL == profile.get('type') or
+                DataSource.SPARK == profile.get('type')):
             source_name = profile['schema']
 
     return dict(
@@ -574,9 +572,9 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         attr = parse_attributes(block)
         profiles_full_path = attr['profiles_full_path']
 
-        msg = f'No configuration matching profile type {profile_type}. ' \
-            f'Change your target in {profiles_full_path} ' \
-            'or add dbt_profile_target to your global variables.'
+        msg = f'No configuration matching profile type {profile_type}. '
+              f'Change your target in {profiles_full_path} '
+              'or add dbt_profile_target to your global variables.'
         raise Exception(msg)
 
     return config_file_loader, configuration
@@ -912,13 +910,13 @@ def build_command_line_arguments(
         if PIPELINE_RUN_MAGE_VARIABLES_KEY == k:
             continue
 
-        if type(v) is str or \
-                type(v) is int or \
-                type(v) is bool or \
-                type(v) is float or \
-                type(v) is dict or \
-                type(v) is list or \
-                type(v) is datetime:
+        if (type(v) is str or
+                type(v) is int or
+                type(v) is bool or
+                type(v) is float or
+                type(v) is dict or
+                type(v) is list or
+                type(v) is datetime):
             variables_json[k] = v
 
     args = [
@@ -990,8 +988,8 @@ def build_command_line_arguments(
         profiles_dir,
     ]
 
-    dbt_profile_target = block.configuration.get('dbt_profile_target') \
-        or variables.get('dbt_profile_target')
+    dbt_profile_target = (block.configuration.get('dbt_profile_target') or
+        variables.get('dbt_profile_target'))
 
     if dbt_profile_target:
         dbt_profile_target = Template(dbt_profile_target).render(
@@ -1148,8 +1146,8 @@ def fetch_model_data(
         model_configurations = get_model_configurations_from_dbt_project_settings(block)
         model_configuration_schema = None
         if model_configurations:
-            model_configuration_schema = model_configurations.get('schema') or \
-                model_configurations.get('+schema')
+            model_configuration_schema = (model_configurations.get('schema') or
+                model_configurations.get('+schema'))
 
         if model_configuration_schema:
             schema = f"{schema}_{model_configuration_schema}"
@@ -1198,8 +1196,8 @@ def model_config(text: str) -> Dict:
                 key = key.strip()
                 value = value.strip()
                 if value:
-                    if (value[0] == "'" and value[-1] == "'") \
-                            or (value[0] == '"' and value[-1] == '"'):
+                    if ((value[0] == "'" and value[-1] == "'") or
+                            (value[0] == '"' and value[-1] == '"')):
                         value = value[1:-1]
                 config[key] = value
 

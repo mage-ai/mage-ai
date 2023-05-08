@@ -23,10 +23,8 @@ def create_upstream_block_tables(
         execution_partition,
         cache_upstream_dbt_models,
         cache_keys=[
-            ConfigKey.MSSQL_DATABASE,
-            ConfigKey.MSSQL_SCHEMA,
-            ConfigKey.MSSQL_HOST,
-            ConfigKey.MSSQL_PORT,
+            ConfigKey.SPARK_SCHEMA,
+            ConfigKey.SPARK_HOST,
         ],
         no_schema=True,
         query=query,
