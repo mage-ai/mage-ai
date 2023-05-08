@@ -20,7 +20,7 @@ import BlockType, {
   SetEditingBlockType,
 } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
-import CodeBlock from '@components/CodeBlock';
+import CodeBlock, { DEFAULT_SQL_CONFIG_KEY_LIMIT } from '@components/CodeBlock';
 import DataProviderType from '@interfaces/DataProviderType';
 import ErrorsType from '@interfaces/ErrorsType';
 import FileSelectorPopup from '@components/FileSelectorPopup';
@@ -737,6 +737,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
                 const newBlock: BlockRequestPayloadType = {
                   configuration: {
                     file_path: finalFilePath,
+                    limit: DEFAULT_SQL_CONFIG_KEY_LIMIT,
                   },
                   language: BlockLanguageEnum.SQL,
                   name: removeExtensionFromFilename(finalFilePath),

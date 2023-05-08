@@ -128,7 +128,7 @@ import { selectKeys } from '@utils/hash';
 import { useDynamicUpstreamBlocks } from '@utils/models/block';
 import { useKeyboardContext } from '@context/Keyboard';
 
-const DEFAULT_SQL_CONFIG_KEY_LIMIT = 1000;
+export const DEFAULT_SQL_CONFIG_KEY_LIMIT = 1000;
 
 type CodeBlockProps = {
   addNewBlock?: (block: BlockType) => Promise<any>;
