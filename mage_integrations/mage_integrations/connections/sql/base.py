@@ -55,7 +55,7 @@ class Connection(BaseConnection):
                     data.append(cursor.fetchall())
             except Exception as err:
                 self.logger.error(f'Error while executing query: {str(err)}. '
-                                  f'Query string: {query_string}')
+                                  f'Query string: {query_string[:1000]}')
                 raise err
 
             now2 = datetime.utcnow().timestamp()
