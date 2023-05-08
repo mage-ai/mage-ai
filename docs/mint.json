@@ -323,6 +323,7 @@
               "pages": [
                 "production/ci-cd/local-cloud/repository-setup",
                 "production/ci-cd/local-cloud/github-actions",
+                "production/ci-cd/staging-production/github-actions",
                 "production/ci-cd/local-cloud/gitlab-ci-cd",
                 "production/ci-cd/local-cloud/buildkite"
               ]
