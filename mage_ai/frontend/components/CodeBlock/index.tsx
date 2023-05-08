@@ -267,7 +267,7 @@ function CodeBlock({
   const isMarkdown = BlockTypeEnum.MARKDOWN === blockType;
 
   let defaultLimitValue = blockConfiguration[CONFIG_KEY_LIMIT];
-  if (!isDBT && isSQLBlock && defaultLimitValue === undefined) {
+  if (isSQLBlock && defaultLimitValue === undefined) {
     defaultLimitValue = DEFAULT_SQL_CONFIG_KEY_LIMIT;
   }
 
@@ -357,6 +357,8 @@ function CodeBlock({
   },
   [
     block,
+    blockType,
+    blockUUID,
     blockPrevious,
     setMessages,
   ]);
@@ -405,7 +407,7 @@ function CodeBlock({
   const hasDownstreamWidgets = useMemo(() => !!widgets?.find(({
     upstream_blocks: upstreamBlocks,
   }: BlockType) => upstreamBlocks.includes(blockUUID)), [
-    block,
+    blockUUID,
     widgets,
   ]);
 
@@ -794,6 +796,8 @@ function CodeBlock({
   ), [
     autocompleteProviders,
     block,
+    blockLanguage,
+    blockType,
     callbackContent,
     content,
     dbtProjectName,
@@ -939,7 +943,7 @@ function CodeBlock({
       }
     }, 1000);
   }, [
-    block,
+    blockUUID,
     dataProviderConfig,
     savePipelineContent,
   ]);
