@@ -116,6 +116,8 @@ BlockPolicy.allow_query([
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
 BlockPolicy.allow_query([
+    'block_type',
+    'extension_uuid',
     'update_state',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
