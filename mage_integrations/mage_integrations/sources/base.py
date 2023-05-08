@@ -119,6 +119,7 @@ class Source:
         """
         parts = inspect.getfile(self).split('/')
         absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
+        self.logger.info(f"Testing absolute_path: {absolute_path}")
 
         templates = {}
         for filename in os.listdir(absolute_path):

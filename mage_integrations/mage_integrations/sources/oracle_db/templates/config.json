@@ -1,0 +1,7 @@
+{
+    "host": "oracle_db",
+    "port": "1521",
+    "sid": "",
+    "password": "123456",
+    "database": "test_database"
+}
