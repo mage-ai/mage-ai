@@ -91,6 +91,7 @@ def get_secret_value(name: str, repo_name: str = None) -> str:
         if secret:
             return fernet.decrypt(secret.value.encode('utf-8')).decode('utf-8')
 
+
 def delete_secret(name: str) -> None:
     from mage_ai.orchestration.db.models.secrets import Secret
 
