@@ -572,9 +572,9 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         attr = parse_attributes(block)
         profiles_full_path = attr['profiles_full_path']
 
-        msg = f'No configuration matching profile type {profile_type}. '
-              f'Change your target in {profiles_full_path} '
-              'or add dbt_profile_target to your global variables.'
+        msg = (f'No configuration matching profile type {profile_type}. '
+               f'Change your target in {profiles_full_path} '
+               'or add dbt_profile_target to your global variables.')
         raise Exception(msg)
 
     return config_file_loader, configuration

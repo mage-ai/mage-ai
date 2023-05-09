@@ -5,57 +5,62 @@ from mage_ai.io.export_utils import (
     infer_dtypes,
 )
 from pandas import DataFrame
+from pyspark.sql import SparkSession
 from typing import Dict, List, Union
-import clickhouse_connect
 
 
 class Spark(BaseSQLDatabase):
     """
-    Handles data transfer betwee a ClickHouse data warehouse and the Mage app.
+    Handles data transfer betwee a Spark session and the Mage app.
     """
+    def _get_spark_session(self, **kwargs):
+        if self.spark_init:
+            return self.spark
+        try:
+            kwargs.get('verbose')
+            self.spark = SparkSession.builder.master(
+                kwargs.get('host', 'local')).getOrCreate()
+            self.spark_init = True
+        except Exception:
+            self.spark = None
+        return self.spark
+
     def __init__(self, **kwargs) -> None:
         """
-        Initializes settings for connecting to a ClickHouse warehouse.
-
-        To authenticate (and authorize) access to a ClickHouse warehouse,
-        credentials, i.e., username and password, must be provided.
-
-        All keyword arguments will be passed to the ClickHouse client.
+        Initializes settings for connecting to a Spark session.
         """
         if kwargs.get('verbose') is not None:
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
-        with self.printer.print_msg('Connecting to ClickHouse'):
-            self.client = clickhouse_connect.get_client(**kwargs)
+        self.spark_init = False
+        self.spark = None
+        with self.printer.print_msg('Connecting to Spark Session'):
+            self.client = self._get_spark_session(**kwargs)
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader) -> 'ClickHouse':
+    def with_config(cls, config: BaseConfigLoader) -> 'Spark':
         """
-        Initializes ClickHouse client from configuration loader
+        Initializes Spark Session client from configuration loader
 
         Args:
             config (BaseConfigLoader): Configuration loader object
         """
-        if ConfigKey.CLICKHOUSE_HOST not in config:
+        if ConfigKey.SPARK_HOST not in config:
             raise ValueError(
-                'No valid configuration settings found for ClickHouse. '
+                'No valid configuration settings found for Spark Session. '
                 'You must specify host.'
             )
         return cls(
-            database=config[ConfigKey.CLICKHOUSE_DATABASE],
-            host=config[ConfigKey.CLICKHOUSE_HOST],
-            interface=config[ConfigKey.CLICKHOUSE_INTERFACE],
-            password=config[ConfigKey.CLICKHOUSE_PASSWORD],
-            port=config[ConfigKey.CLICKHOUSE_PORT],
-            username=config[ConfigKey.CLICKHOUSE_USERNAME],
+            database=config[ConfigKey.SPARK_SCHEMA],
+            host=config[ConfigKey.SPARK_HOST],
         )
 
     def execute(self, command_string: str, **kwargs) -> None:
         """
-        Sends command to the connected ClickHouse warehouse.
+        Sends command to the connected Spark Session.
 
         Args:
-            command_string (str): Command to execute on the ClickHouse warehouse.
+            command_string (str): Command to execute on the Spark Session.
             **kwargs: Additional arguments to pass to command, such as configurations
         """
         with self.printer.print_msg(f'Executing query \'{command_string}\''):
@@ -69,10 +74,10 @@ class Spark(BaseSQLDatabase):
         **kwargs,
     ) -> DataFrame:
         """
-        Sends query to the connected ClickHouse warehouse.
+        Sends query to the connected Spark Session.
 
         Args:
-            query (str): Query to execute on the ClickHouse warehouse.
+            query (str): Query to execute on the Spark Session.
             **kwargs: Additional arguments to pass to query, such as query configurations
         """
         query = self._clean_query(query)
@@ -115,7 +120,7 @@ class Spark(BaseSQLDatabase):
         **kwargs,
     ) -> DataFrame:
         """
-        Loads data from ClickHouse into a Pandas data frame based on the query given.
+        Loads data from Spark Session into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. When a select query
         is provided, this function will load at maximum 10,000,000 rows of data. To operate on more
         data, consider performing data transformations in warehouse.
@@ -160,7 +165,7 @@ class Spark(BaseSQLDatabase):
         **kwargs,
     ) -> None:
         """
-        Exports a Pandas data frame to a ClickHouse warehouse based on the table name.
+        Exports a Pandas data frame to a Spark Session based on the table name.
         If table doesn't exist, the table is automatically created.
 
         Args:
