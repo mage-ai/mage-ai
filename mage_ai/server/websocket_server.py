@@ -40,6 +40,7 @@ from mage_ai.server.utils.output_display import (
     get_pipeline_execution_code,
 )
 from mage_ai.settings import (
+    is_disable_pipeline_edit_access,
     DISABLE_NOTEBOOK_EDIT_ACCESS,
     HIDE_ENV_VAR_VALUES,
     REQUIRE_USER_AUTHENTICATION,
@@ -355,6 +356,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             extension_uuid=extension_uuid,
             widget=widget,
         )
+
+        # Execute saved block content when pipeline edits are disabled
+        if is_disable_pipeline_edit_access():
+            custom_code = block.content
 
         reload_all_repo_modules(custom_code)
 
