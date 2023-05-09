@@ -1,3 +1,38 @@
+[tool.poetry]
+name = "mage-ai"
+version = "0.8.75-dev"
+description = "DevEx poetry configuration"
+authors = ["Mage"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "*"
+black = "*"
+flake8 = "*"
+pre-commit = "*"
+pytest = "*"
+pytest-cov = "*"
+interrogate = "*"
+isort = "*"
+commitizen = "*"
+ipykernel = "^6.17.1"
+pandas-stubs = "*"
+flake8-bugbear = "*"
+sourcery = "*"
+
+[tool.isort]
+profile = "black"
+import_heading_stdlib = "Python Standard Library Imports"
+import_heading_thirdparty = "Third Party Imports"
+import_heading_firstparty = "Mage Imports"
+# src_paths = ["<path-to-src-code>"]
+# known_first_party = ["<any packages defined locally>"]
+# known_third_party = ["<any 3rd party packages with potential name collisions>"]
+
+
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
