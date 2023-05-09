@@ -25,6 +25,7 @@ def create_upstream_block_tables(
         cache_keys=[
             ConfigKey.SPARK_SCHEMA,
             ConfigKey.SPARK_HOST,
+            ConfigKey.SPARK_METHOD,
         ],
         no_schema=True,
         query=query,

@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQL, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import (
     clean_df_for_export,
@@ -9,7 +9,7 @@ from pyspark.sql import SparkSession
 from typing import Dict, List, Union
 
 
-class Spark(BaseSQLDatabase):
+class Spark(BaseSQL):
     """
     Handles data transfer betwee a Spark session and the Mage app.
     """

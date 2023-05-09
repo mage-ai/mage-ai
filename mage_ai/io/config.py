@@ -360,17 +360,18 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_PASSWORD: (VerboseConfigKey.SNOWFLAKE, 'password'),
         ConfigKey.SNOWFLAKE_TIMEOUT: (VerboseConfigKey.SNOWFLAKE, 'timeout'),
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
-        ConfigKey.SPARK_CLUSTER: (VerboseConfigKey.SNOWFLAKE, 'cluster'),
-        ConfigKey.SPARK_DRIVER: (VerboseConfigKey.SNOWFLAKE, 'driver'),
-        ConfigKey.SPARK_ENDPOINT: (VerboseConfigKey.SNOWFLAKE, 'endpoint'),
-        ConfigKey.SPARK_HOST: (VerboseConfigKey.SNOWFLAKE, 'host'),
-        ConfigKey.SPARK_ORGANIZATION: (VerboseConfigKey.SNOWFLAKE, 'organization'),
-        ConfigKey.SPARK_PORT: (VerboseConfigKey.SNOWFLAKE, 'port'),
-        ConfigKey.SPARK_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
+        ConfigKey.SPARK_CLUSTER: (VerboseConfigKey.SPARK, 'cluster'),
+        ConfigKey.SPARK_DRIVER: (VerboseConfigKey.SPARK, 'driver'),
+        ConfigKey.SPARK_ENDPOINT: (VerboseConfigKey.SPARK, 'endpoint'),
+        ConfigKey.SPARK_HOST: (VerboseConfigKey.SPARK, 'host'),
+        ConfigKey.SPARK_METHOD: (VerboseConfigKey.SPARK, 'method'),
+        ConfigKey.SPARK_ORGANIZATION: (VerboseConfigKey.SPARK, 'organization'),
+        ConfigKey.SPARK_PORT: (VerboseConfigKey.SPARK, 'port'),
+        ConfigKey.SPARK_SCHEMA: (VerboseConfigKey.SPARK, 'schema'),
         ConfigKey.SPARK_SERVER_SIDE_PARAMETERS: (
-            VerboseConfigKey.SNOWFLAKE, 'server_side_parameters'),
-        ConfigKey.SPARK_TOKEN: (VerboseConfigKey.SNOWFLAKE, 'token'),
-        ConfigKey.SPARK_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
+            VerboseConfigKey.SPARK, 'server_side_parameters'),
+        ConfigKey.SPARK_TOKEN: (VerboseConfigKey.SPARK, 'token'),
+        ConfigKey.SPARK_USER: (VerboseConfigKey.SPARK, 'user'),
     }
 
     def __init__(

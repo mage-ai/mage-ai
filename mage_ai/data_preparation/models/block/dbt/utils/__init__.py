@@ -531,16 +531,8 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         schema = profile.get('schema')
 
         config = dict(
-            SPARK_DRIVER=profile.get('driver'),
-            SPARK_SCHEMA=schema,
             SPARK_HOST=profile.get('host'),
-            SPARK_ORGANIZATION=profile.get('organization'),
-            SPARK_TOKEN=profile.get('token'),
-            SPARK_ENDPOINT=profile.get('endpoint'),
-            SPARK_CLUSTER=profile.get('cluster'),
-            SPARK_PORT=profile.get('port'),
-            SPARK_USER=profile.get('user'),
-            SPARK_SERVER_SIDE_PARAMETERS=profile.get('server_side_parameters'),
+            SPARK_METHOD=profile.get('method'),
         )
 
         config_file_loader = ConfigFileLoader()
@@ -681,6 +673,15 @@ def create_upstream_tables(
 
         with Snowflake.with_config(config_file_loader) as loader:
             snowflake.create_upstream_block_tables(
+                loader,
+                block,
+                **kwargs_shared,
+            )
+    elif DataSource.SPARK == data_provider:
+        from mage_ai.io.spark import Spark
+
+        with Spark.with_config(config_file_loader) as loader:
+            spark.create_upstream_block_tables(
                 loader,
                 block,
                 **kwargs_shared,
