@@ -11,7 +11,9 @@ env:
   ECS_STAGING_SERVICE: MY_STAGING_ECS_SERVICE               # set this to your Amazon ECS staging service name
   ECS_PRODUCTION_SERVICE: MY_PROD_ECS_SERVICE               # set this to your Amazon ECS production service name
   ECS_CLUSTER: MY_ECS_CLUSTER                               # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: MY_ECS_TASK_DEFINITION               # set this to the path to your Amazon ECS task definition
+  ECS_STAGING_TASK_DEFINITION: MY_ECS_TASK_DEFINITION       # set this to the path to your Amazon ECS staging task definition
+                                                            # file, e.g. .aws/task-definition.json
+  ECS_PRODUCTION_TASK_DEFINITION: MY_ECS_TASK_DEFINITION    # set this to the path to your Amazon ECS production task definition
                                                             # file, e.g. .aws/task-definition.json
   CONTAINER_NAME: MY_CONTAINER_NAME                         # set this to the name of the container in the
                                                             # containerDefinitions section of your task definition
@@ -51,7 +53,7 @@ jobs:
           # be deployed to ECS.
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
   deploy-staging:
     name: Deploy staging
@@ -72,7 +74,7 @@ jobs:
 
       - name: Download task definition
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+          aws ecs describe-task-definition --task-definition ${{ env.ECS_STAGING_TASK_DEFINITION }} \
             --query taskDefinition > task-definition.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
@@ -107,7 +109,7 @@ jobs:
 
       - name: Download task definition
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+          aws ecs describe-task-definition --task-definition ${{ env.ECS_PRODUCTION_TASK_DEFINITION }} \
             --query taskDefinition > task-definition.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
