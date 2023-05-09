@@ -1,12 +1,14 @@
-from click import Context
-from mage_ai.cli.utils import parse_runtime_variables
-from rich import print
-from typer.core import TyperGroup
-from typing import List, Union
 import json
 import os
 import sys
+from typing import List, Union
+
 import typer
+from click import Context
+from rich import print
+from typer.core import TyperGroup
+
+from mage_ai.cli.utils import parse_runtime_variables
 
 
 class OrderCommands(TyperGroup):
@@ -110,15 +112,14 @@ def run(
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
 
-    from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
+    import sentry_sdk
+
+    from mage_ai.data_preparation.executors.executor_factory import \
+        ExecutorFactory
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection
-    import sentry_sdk
-    from mage_ai.settings import (
-        SENTRY_DSN,
-        SENTRY_TRACES_SAMPLE_RATE,
-    )
+    from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
     from mage_ai.shared.hash import merge_dict
 
     sentry_dsn = SENTRY_DSN
@@ -144,7 +145,11 @@ def run(
         template_runtime_configuration = json.loads(template_runtime_configuration)
 
     if block_uuid is None:
-        ExecutorFactory.get_pipeline_executor(pipeline).execute(
+        ExecutorFactory.get_pipeline_executor(
+            pipeline,
+            execution_partition=execution_partition,
+            executor_type=executor_type,
+        ).execute(
             analyze_outputs=False,
             global_vars=global_vars,
             run_sensors=not skip_sensors,
