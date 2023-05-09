@@ -4,6 +4,7 @@ from mage_ai.services.email.config import EmailConfig
 from mage_ai.services.google_chat.config import GoogleChatConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
+from mage_ai.services.opsgenie.config import OpsgenieConfig
 from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 import traceback
@@ -26,6 +27,7 @@ class NotificationConfig(BaseConfig):
     alert_on: List[AlertOn] = field(default_factory=lambda: DEFAULT_ALERT_ON)
     email_config: EmailConfig = None
     google_chat_config: GoogleChatConfig = None
+    opsgenie_config: OpsgenieConfig = None
     slack_config: SlackConfig = None
     teams_config: TeamsConfig = None
 
@@ -68,4 +70,13 @@ class NotificationConfig(BaseConfig):
             except Exception:
                 traceback.print_exc()
                 notification_config.email_config = None
+        if notification_config.opsgenie_config is not None and \
+                type(notification_config.opsgenie_config) is dict:
+            try:
+                notification_config.opsgenie_config = OpsgenieConfig.load(
+                    config=notification_config.opsgenie_config,
+                )
+            except Exception:
+                traceback.print_exc()
+                notification_config.opsgenie_config = None
         return notification_config

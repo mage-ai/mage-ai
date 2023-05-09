@@ -49,3 +49,15 @@ TEAMS_NOTIFICATION_CONFIG_NO_ALERT_ON = dict(
         webhook_url='test_webhook_url',
     )
 )
+
+
+OPSGENIE_NOTIFICATION_CONFIG = dict(
+    alert_on=[
+        'trigger_failure',
+        'trigger_success',
+    ],
+    opsgenie_config=dict(
+        url='test_url',
+        api_key='test_api_key',
+    )
+)
