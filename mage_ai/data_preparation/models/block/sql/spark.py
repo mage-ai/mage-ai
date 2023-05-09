@@ -23,9 +23,9 @@ def create_upstream_block_tables(
         execution_partition,
         cache_upstream_dbt_models,
         cache_keys=[
-            ConfigKey.SPARK_SCHEMA,
-            ConfigKey.SPARK_HOST,
             ConfigKey.SPARK_METHOD,
+            ConfigKey.SPARK_HOST,
+            ConfigKey.SPARK_SCHEMA,
         ],
         no_schema=True,
         query=query,

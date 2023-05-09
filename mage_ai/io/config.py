@@ -290,6 +290,7 @@ class VerboseConfigKey(str, Enum):
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
+    SPARK = 'Spark'
 
 
 class ConfigFileLoader(BaseConfigLoader):

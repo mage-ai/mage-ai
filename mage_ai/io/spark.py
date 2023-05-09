@@ -51,8 +51,9 @@ class Spark(BaseSQL):
                 'You must specify host.'
             )
         return cls(
-            database=config[ConfigKey.SPARK_SCHEMA],
+            method=config[ConfigKey.SPARK_METHOD],
             host=config[ConfigKey.SPARK_HOST],
+            database=config[ConfigKey.SPARK_SCHEMA],
         )
 
     def execute(self, command_string: str, **kwargs) -> None:

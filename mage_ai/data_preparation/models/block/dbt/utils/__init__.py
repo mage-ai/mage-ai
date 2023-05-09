@@ -531,8 +531,8 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         schema = profile.get('schema')
 
         config = dict(
-            SPARK_HOST=profile.get('host'),
             SPARK_METHOD=profile.get('method'),
+            SPARK_HOST=profile.get('host'),
         )
 
         config_file_loader = ConfigFileLoader()
