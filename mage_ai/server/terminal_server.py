@@ -10,7 +10,6 @@ from mage_ai.settings import (
 from tornado import gen
 import json
 import terminado
-import tornado.websocket
 import re
 
 
@@ -59,7 +58,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
             updated_text = xterm_escape.sub('', text)
         self.send_json_message(["stdout", updated_text])
 
-    def open(self, *args, **kwargs):
+    def open(self, url_component=None):
         """Websocket connection opened.
 
         Call our terminal manager to get a terminal, and connect to it as a
@@ -67,7 +66,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
         """
         # Jupyter has a mixin to ping websockets and keep connections through
         # proxies alive. Call super() to allow that to set up:
-        tornado.websocket.WebSocketHandler.open(self, *args, **kwargs)
+        super(terminado.TermSocket, self).open(url_component)
         api_key = self.get_argument('api_key', None, True)
         token = self.get_argument('token', None, True)
 

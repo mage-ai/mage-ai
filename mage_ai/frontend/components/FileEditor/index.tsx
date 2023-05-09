@@ -9,6 +9,7 @@ import {
 import { useGlobalState } from '@storage/state';
 import { useMutation } from 'react-query';
 
+import AuthToken from '@api/utils/AuthToken';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
@@ -30,6 +31,7 @@ import {
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import {
   buildAddBlockRequestPayload,
@@ -81,6 +83,14 @@ function FileEditor({
   const [file, setFile] = useState<FileType>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const containerRef = useRef(null);
+
+  const token = useMemo(() => new AuthToken(), []);
+  const oauthWebsocketData = useMemo(() => ({
+    api_key: OAUTH2_APPLICATION_CLIENT_ID,
+    token: token.decodedToken.token,
+  }), [
+    token,
+  ]);
 
   const { data: serverStatus } = api.status.list();
   const repoPath = serverStatus?.status?.repo_path;
@@ -261,9 +271,10 @@ function FileEditor({
         loading={loading}
         onClick={() => {
           openSidekickView(ViewKeyEnum.TERMINAL);
-          sendTerminalMessage(JSON.stringify([
-            'stdin', `pip install -r ${repoPath}/requirements.txt\r`,
-          ]));
+          sendTerminalMessage(JSON.stringify({
+            ...oauthWebsocketData,
+            command: ['stdin', `pip install -r ${repoPath}/requirements.txt\r`],
+          }));
         }}
         title={!repoPath
           ? 'Please use right panel terminal to install packages.'
