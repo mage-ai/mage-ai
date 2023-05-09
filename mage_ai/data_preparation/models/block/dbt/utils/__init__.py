@@ -990,7 +990,7 @@ def build_command_line_arguments(
     ]
 
     dbt_profile_target = (block.configuration.get('dbt_profile_target') or
-        variables.get('dbt_profile_target'))
+                          variables.get('dbt_profile_target'))
 
     if dbt_profile_target:
         dbt_profile_target = Template(dbt_profile_target).render(
@@ -1148,7 +1148,7 @@ def fetch_model_data(
         model_configuration_schema = None
         if model_configurations:
             model_configuration_schema = (model_configurations.get('schema') or
-                model_configurations.get('+schema'))
+                                          model_configurations.get('+schema'))
 
         if model_configuration_schema:
             schema = f"{schema}_{model_configuration_schema}"
