@@ -337,7 +337,9 @@ function TripleLayout({
       {setBeforeHidden && (
         <AsideHeaderStyle
           style={{
-            overflow: hasBeforeNavigationItems ? 'auto' : 'hidden',
+            overflow: beforeHidden
+              ? 'visible'
+              : (hasBeforeNavigationItems ? 'auto' : 'hidden'),
             width: hasBeforeNavigationItems
               // Required
               ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 2)
@@ -359,6 +361,8 @@ function TripleLayout({
 
             <Flex>
               <Tooltip
+                appearAbove={!beforeHidden}
+                appearBefore={!beforeHidden}
                 block
                 key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
                 label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
