@@ -623,7 +623,7 @@ def run_integration_pipeline(
                 continue
 
             transformer_block_runs = [br for br in block_runs_in_order if (
-                br.block_uuid not in [data_loader_uuid, data_exporter_uuid] and \
+                br.block_uuid not in [data_loader_uuid, data_exporter_uuid] and
                 br.id in executable_block_run_ids
             )]
 
