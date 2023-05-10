@@ -43,7 +43,7 @@ from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
-from mage_ai.shared.array import find
+from mage_ai.shared.array import find, is_equal
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import index_by, merge_dict
@@ -564,6 +564,7 @@ def run_integration_pipeline(
 
     data_loader_block = integration_pipeline.data_loader
     data_exporter_block = integration_pipeline.data_exporter
+    transformer_block = integration_pipeline.transformer
 
     for stream in integration_pipeline.streams(variables):
         tap_stream_id = stream['tap_stream_id']
@@ -572,6 +573,26 @@ def run_integration_pipeline(
         block_runs_for_stream = list(filter(lambda br: tap_stream_id in br.block_uuid, block_runs))
         if len(block_runs_for_stream) == 0:
             continue
+
+        block_run_ids_for_stream = [br.id for br in block_runs_for_stream]
+        starting_block = data_loader_block
+        if is_equal(executable_block_runs, block_run_ids_for_stream):
+            """
+            If starting the pipeline run from a selected block, the executable block
+            runs should all belong to a single stream. Since we currently only support
+            3 blocks in an integration pipeline (loader/transformer/exporter), two
+            executable block runs would indicate starting from the transformer block,
+            and one would indicate starting from the data exporter block.
+            """
+            if len(block_runs_for_stream) == 2 and \
+                transformer_block and \
+                find(
+                    lambda br: transformer_block.uuid in br.block_uuid,
+                    block_runs_for_stream):
+                starting_block = transformer_block
+            elif len(block_runs_for_stream) == 1 and \
+                    data_exporter_block.uuid in block_runs_for_stream[0].block_uuid:
+                starting_block = data_exporter_block
 
         indexes = [0]
         for br in block_runs_for_stream:
@@ -593,7 +614,7 @@ def run_integration_pipeline(
 
         for idx in range(max_index + 1):
             block_runs_in_order = []
-            current_block = data_loader_block
+            current_block = starting_block
 
             while True:
                 block_runs_in_order.append(
@@ -641,6 +662,10 @@ def run_integration_pipeline(
             ] + [(br, shared_dict) for br in transformer_block_runs] + [
                 (data_exporter_block_run, shared_dict),
             ]
+            if starting_block == transformer_block:
+                block_runs_and_configs = block_runs_and_configs[1:]
+            elif starting_block == data_exporter_block:
+                block_runs_and_configs = block_runs_and_configs[-1:]
 
             block_failed = False
             for idx2, tup in enumerate(block_runs_and_configs):

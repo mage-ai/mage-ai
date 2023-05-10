@@ -1,3 +1,4 @@
+from collections import Counter
 import random
 
 
@@ -43,3 +44,8 @@ def unique_by(arr1, key):
         arr2.append(item)
         mapping[k] = True
     return arr2
+
+
+def is_equal(li1, li2):
+    # List items must be hashable (e.g. strings or numbers)
+    return Counter(li1) == Counter(li2)
