@@ -1,3 +1,5 @@
+export const GLOBAL_VARIABLES_UUID = 'global';
+
 export default interface PipelineVariableType {
   block: {
     uuid: string;

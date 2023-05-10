@@ -12,7 +12,7 @@ import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineScheduleType, { ScheduleIntervalEnum } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
-import PipelineVariableType, { VariableType } from '@interfaces/PipelineVariableType';
+import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -124,7 +124,7 @@ function CreateSchedule({
   useEffect(
     () => {
       if (variables) {
-        const formattedVariables = getFormattedVariables(variables, block => block.uuid === 'global');
+        const formattedVariables = getFormattedVariables(variables, block => block.uuid === GLOBAL_VARIABLES_UUID);
         if (overwriteVariables) {
           setRuntimeVariables(formattedVariables?.reduce(
             (vars, { uuid, value }) => ({ ...vars, [uuid]: scheduleVariables[uuid] || value }),
@@ -170,130 +170,128 @@ function CreateSchedule({
     runtimeVariables,
     schedule_interval,
     time,
-  ])
+  ]);
 
-  const detailsMemo = useMemo(() => {
-    return (
-      <>
-        <Headline level={5} monospace>
-          Details
-        </Headline>
-        <Spacing mb={2} />
-        <FlexTable
-          borderRadius
-          columnFlex={[1, 2]}
-          paddingHorizontal={0}
-          rows={[
-            [
-              <Spacing pl={2}>
-                <Text
-                  color={BLUE_TEXT}
-                  monospace
-                >
-                  job name
-                </Text>
-              </Spacing>,
+  const detailsMemo = useMemo(() => (
+    <>
+      <Headline level={5} monospace>
+        Details
+      </Headline>
+      <Spacing mb={2} />
+      <FlexTable
+        borderRadius
+        columnFlex={[1, 2]}
+        paddingHorizontal={0}
+        rows={[
+          [
+            <Spacing pl={2}>
+              <Text
+                color={BLUE_TEXT}
+                monospace
+              >
+                job name
+              </Text>
+            </Spacing>,
+            <TextInput
+              borderless
+              monospace
+              onChange={e => {
+                e.preventDefault();
+                setSchedule(s => ({
+                  ...s,
+                  name: e.target.value,
+                }));
+              }}
+              paddingHorizontal={16}
+              paddingVertical={12}
+              placeholder="enter schedule name"
+              value={name}
+            />
+          ],
+          [
+            <Spacing pl={2}>
+              <Text
+                color={BLUE_TEXT}
+                monospace
+              >
+                frequency
+              </Text>
+            </Spacing>,
+            <Select
+              monospace
+              noBorder
+              onChange={e => {
+                e.preventDefault();
+                setSchedule(s => ({
+                  ...s,
+                  schedule_interval: e.target.value,
+                }))
+              }}
+              paddingHorizontal={16}
+              paddingVertical={12}
+              placeholder="select interval"
+              value={schedule_interval}
+            >
+              {Object.values(ScheduleIntervalEnum).map(value => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </Select>
+          ],
+          [
+            <Spacing pl={2}>
+              <Text
+                color={BLUE_TEXT}
+                monospace
+              >
+                start date
+              </Text>
+            </Spacing>,
+            <Flex flexDirection="column">
               <TextInput
                 borderless
                 monospace
-                onChange={e => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    name: e.target.value,
-                  }));
-                }}
+                onClick={() => setShowCalendar(val => !val)}
                 paddingHorizontal={16}
                 paddingVertical={12}
-                placeholder="enter schedule name"
-                value={name}
+                placeholder="YYYY-MM-DD HH:MM"
+                value={date
+                  ? `${date.toISOString().split('T')[0]} ${time}`
+                  : ''
+                }
               />
-            ],
-            [
-              <Spacing pl={2}>
-                <Text
-                  color={BLUE_TEXT}
-                  monospace
+              <div style={{ position: 'absolute', zIndex: 100 }}>
+                <ClickOutside
+                  disableEscape
+                  onClickOutside={() => setShowCalendar(false)}
+                  open={showCalendar}
                 >
-                  frequency
-                </Text>
-              </Spacing>,
-              <Select
-                monospace
-                noBorder
-                onChange={e => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    schedule_interval: e.target.value,
-                  }))
-                }}
-                paddingHorizontal={16}
-                paddingVertical={12}
-                placeholder="select interval"
-                value={schedule_interval}
-              >
-                {Object.values(ScheduleIntervalEnum).map(value => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </Select>
-            ],
-            [
-              <Spacing pl={2}>
-                <Text
-                  color={BLUE_TEXT}
-                  monospace
-                >
-                  start date
-                </Text>
-              </Spacing>,
-              <Flex flexDirection="column">
-                <TextInput
-                  borderless
-                  monospace
-                  onClick={() => setShowCalendar(val => !val)}
-                  paddingHorizontal={16}
-                  paddingVertical={12}
-                  placeholder="YYYY-MM-DD HH:MM"
-                  value={date
-                    ? `${date.toISOString().split('T')[0]} ${time}`
-                    : ''
-                  }
-                />
-                <div style={{ position: 'absolute', zIndex: 100 }}>
-                  <ClickOutside
-                    disableEscape
-                    onClickOutside={() => setShowCalendar(false)}
-                    open={showCalendar}
-                  >
-                    <DateSelectionContainer>
-                      <Calendar
-                        onChange={setDate}
-                        value={date}
-                      />
-                      <Spacing mb={2} />
-                      <TextInput
-                        label="Time (UTC)"
-                        monospace
-                        onChange={e => {
-                          e.preventDefault();
-                          setTime(e.target.value);
-                        }}
-                        paddingVertical={12}
-                        value={time}
-                      />
-                    </DateSelectionContainer>
-                  </ClickOutside>
-                </div>
-              </Flex>
-            ],
-          ]}
-        />
-      </>
-    )
-  }, [
+                  <DateSelectionContainer>
+                    <Calendar
+                      onChange={setDate}
+                      value={date}
+                    />
+                    <Spacing mb={2} />
+                    <TextInput
+                      label="Time (UTC)"
+                      monospace
+                      onChange={e => {
+                        e.preventDefault();
+                        setTime(e.target.value);
+                      }}
+                      paddingVertical={12}
+                      value={time}
+                    />
+                  </DateSelectionContainer>
+                </ClickOutside>
+              </div>
+            </Flex>
+          ],
+        ]}
+      />
+    </>
+  ), [
     date,
     schedule,
     showCalendar,

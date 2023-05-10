@@ -8,14 +8,17 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   SIDEKICK_VIEWS_BY_KEY,
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { getFormattedVariables } from './utils';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
+
 
 type SidekickHeaderProps = {
   activeView: ViewKeyEnum;
@@ -36,12 +39,13 @@ function SidekickHeader({
 }: SidekickHeaderProps) {
   const pipelineUUID = pipeline?.uuid;
   const query = queryFromUrl();
+  const globalVars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
   const sidekickView = SIDEKICK_VIEWS_BY_KEY[activeView];
   const sidekickLabel = sidekickView?.buildLabel?.({
     pipeline,
     secrets,
-    variables,
+    variables: globalVars,
   }) || sidekickView?.label;
 
   let el = (
