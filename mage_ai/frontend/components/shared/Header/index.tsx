@@ -77,7 +77,7 @@ function Header({
   const {
     data: dataGitBranch,
     mutate: fetchBranch,
-  } = api.git_branches.detail('test');
+  } = api.git_branches.detail('test', {}, { revalidateOnFocus: false });
   const branch = useMemo(() => dataGitBranch?.['git_branch']?.['name'], [dataGitBranch]);
 
   const {
