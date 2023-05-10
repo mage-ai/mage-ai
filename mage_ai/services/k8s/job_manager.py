@@ -1,12 +1,13 @@
-from kubernetes import client, config
-from mage_ai.services.k8s.config import K8sExecutorConfig
-from mage_ai.services.k8s.constants import (
-    DEFAULT_NAMESPACE,
-    KUBE_POD_NAME_ENV_VAR,
-)
-from mage_ai.shared.hash import merge_dict
 import os
 import time
+
+from kubernetes import client, config
+from kubernetes.client.rest import ApiException
+
+from mage_ai.services.k8s.config import K8sExecutorConfig
+from mage_ai.services.k8s.constants import (DEFAULT_NAMESPACE,
+                                            KUBE_POD_NAME_ENV_VAR)
+from mage_ai.shared.hash import merge_dict
 
 
 class JobManager():
@@ -53,14 +54,15 @@ class JobManager():
         command: str,
         k8s_config=None,
     ):
-        if type(k8s_config) is dict:
-            k8s_config = K8sExecutorConfig.load(config=k8s_config)
-        job = self.create_job_object(
-            command,
-            k8s_config=k8s_config,
-        )
+        if not self.job_exists():
+            if type(k8s_config) is dict:
+                k8s_config = K8sExecutorConfig.load(config=k8s_config)
+            job = self.create_job_object(
+                command,
+                k8s_config=k8s_config,
+            )
 
-        self.create_job(job)
+            self.create_job(job)
 
         api_response = None
         job_completed = False
@@ -145,6 +147,17 @@ class JobManager():
                 propagation_policy='Foreground',
                 grace_period_seconds=0))
         self._print("Job deleted. status='%s'" % str(api_response.status))
+
+    def job_exists(self):
+        try:
+            self.batch_api_client.read_namespaced_job(
+                name=self.job_name,
+                namespace=self.namespace
+            )
+            return True
+        except ApiException:
+            pass
+        return False
 
     def _print(self, message, **kwargs):
         if self.logger is None:
