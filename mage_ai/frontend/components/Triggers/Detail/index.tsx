@@ -20,7 +20,7 @@ import PipelineScheduleType, {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
-import PipelineVariableType from '@interfaces/PipelineVariableType';
+import PipelineVariableType, { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -387,7 +387,7 @@ function TriggerDetail({
         }
       });
     } else {
-      arr = getFormattedVariables(variables, block => block.uuid === 'global');
+      arr = getFormattedVariables(variables, block => block.uuid === GLOBAL_VARIABLES_UUID);
     }
 
     arr = addTriggerVariables(arr || [], scheduleType);

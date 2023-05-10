@@ -21,7 +21,9 @@ function BackfillDetailPage({
 
   const {
     data: dataGlobalVariables,
-  } = api.variables.pipelines.list(pipelineUUID);
+  } = api.variables.pipelines.list(pipelineUUID, {}, {
+    revalidateOnFocus: false,
+  });
   const globalVariables = useMemo(() => dataGlobalVariables?.variables, [dataGlobalVariables]);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {

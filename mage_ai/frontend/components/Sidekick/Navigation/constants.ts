@@ -1,4 +1,5 @@
 import PipelineType from '@interfaces/PipelineType';
+import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { NavigationItem } from '@components/Dashboard/VerticalNavigation';
 import {
   NAV_ICON_MAPPING,
@@ -27,7 +28,7 @@ export function buildNavigationItems({
     [key: string]: any;
   }[];
 }): NavigationItem[] {
-  const vars = getFormattedVariables(variables, (block) => block.uuid === 'global');
+  const vars = getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID);
 
   return SIDEKICK_VIEWS.map(({
     buildLabel,

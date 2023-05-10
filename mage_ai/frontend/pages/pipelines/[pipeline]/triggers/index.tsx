@@ -31,6 +31,7 @@ import {
   Add,
   PlayButton,
 } from '@oracle/icons';
+import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { dateFormatLong } from '@utils/date';
@@ -58,7 +59,9 @@ function PipelineSchedules({
 
   const {
     data: dataGlobalVariables,
-  } = api.variables.pipelines.list(pipelineUUID);
+  } = api.variables.pipelines.list(pipelineUUID, {}, {
+    revalidateOnFocus: false,
+  });
   const globalVariables = dataGlobalVariables?.variables;
 
   const q = queryFromUrl();
@@ -109,7 +112,7 @@ function PipelineSchedules({
   const variablesOrig = useMemo(() => (
     getFormattedVariables(
       globalVariables,
-      block => block.uuid === 'global',
+      block => block.uuid === GLOBAL_VARIABLES_UUID,
     )?.reduce((acc, { uuid, value }) => ({
       ...acc,
       [uuid]: value,

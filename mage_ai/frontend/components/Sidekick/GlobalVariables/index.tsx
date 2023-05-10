@@ -10,7 +10,10 @@ import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
-import PipelineVariableType, { VariableType } from '@interfaces/PipelineVariableType';
+import PipelineVariableType, {
+  GLOBAL_VARIABLES_UUID,
+  VariableType,
+} from '@interfaces/PipelineVariableType';
 import Row from '@components/shared/Grid/Row';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -164,7 +167,7 @@ function GlobalVariables({
 
   const tableWidth = useMemo(() => width - 4 * UNIT, [width]);
   const globalVariables = useMemo(
-    () => getFormattedVariables(variables, (block) => block.uuid === 'global'),
+    () => getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID),
     [variables],
   );
 

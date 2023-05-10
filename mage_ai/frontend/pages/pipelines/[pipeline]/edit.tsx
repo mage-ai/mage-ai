@@ -181,7 +181,9 @@ function PipelineDetailPage({
   const mainContainerRef = useRef(null);
 
   // Server status
-  const { data: serverStatus } = api.status.list();
+  const { data: serverStatus } = api.status.list({}, {
+    revalidateOnFocus: false,
+  });
   const disablePipelineEditAccess = useMemo(
     () => serverStatus?.status?.disable_pipeline_edit_access,
     [serverStatus],
@@ -387,7 +389,7 @@ function PipelineDetailPage({
 
   // Data providers
   const { data: dataDataProviders } = api.data_providers.list({}, {
-    revalidateOnFocus: true,
+    revalidateOnFocus: false,
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
 
@@ -395,14 +397,16 @@ function PipelineDetailPage({
   const {
     data: dataGlobalVariables,
     mutate: fetchVariables,
-  } = api.variables.pipelines.list(pipelineUUID);
+  } = api.variables.pipelines.list(pipelineUUID, {}, {
+    revalidateOnFocus: false,
+  });
   const globalVariables = dataGlobalVariables?.variables;
 
   // Secrets
   const {
     data: dataSecrets,
     mutate: fetchSecrets,
-  } = api.secrets.list();
+  } = api.secrets.list({}, { revalidateOnFocus: false });
   const secrets = dataSecrets?.secrets;
 
   // Blocks
@@ -546,7 +550,7 @@ function PipelineDetailPage({
     mutate: fetchAutocompleteItems,
   } = api.autocomplete_items.list({}, {
     refreshInterval: false,
-    revalidateOnFocus: true,
+    revalidateOnFocus: false,
   });
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
