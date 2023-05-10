@@ -1,10 +1,12 @@
-from google.api_core.exceptions import AlreadyExists
-from google.api.launch_stage_pb2 import LaunchStage
-from google.cloud import run_v2
-from google.oauth2 import service_account
-from mage_ai.services.gcp.cloud_run.config import CloudRunConfig
 import json
 import os
+
+from google.api.launch_stage_pb2 import LaunchStage
+from google.api_core.exceptions import AlreadyExists
+from google.cloud import run_v2
+from google.oauth2 import service_account
+
+from mage_ai.services.gcp.cloud_run.config import CloudRunConfig
 
 
 def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None:
@@ -37,6 +39,7 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
     containers_with_cmd = service_template.containers
     for c in containers_with_cmd:
         c.command = command.split(' ')
+        c.startup_probe = None
     execution_template = run_v2.ExecutionTemplate(
         task_count=1,
         template=run_v2.TaskTemplate(
