@@ -152,6 +152,7 @@ def run(
         ).execute(
             analyze_outputs=False,
             global_vars=global_vars,
+            pipeline_run_id=pipeline_run_id,
             run_sensors=not skip_sensors,
             run_tests=test,
             update_status=False,

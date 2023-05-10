@@ -54,13 +54,13 @@ class ExecutorFactory:
                 if executor_type == ExecutorType.LOCAL_PYTHON or executor_type is None:
                     # Use default executor type
                     executor_type = self.get_default_executor_type()
-        if pipeline.type == PipelineType.PYSPARK:
+        if executor_type == ExecutorType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_pipeline_executor import \
                 PySparkPipelineExecutor
 
             # Run pipeline on EMR cluster
             return PySparkPipelineExecutor(pipeline)
-        elif pipeline.executor_type == ExecutorType.K8S:
+        elif executor_type == ExecutorType.K8S:
             from mage_ai.data_preparation.executors.k8s_pipeline_executor import \
                 K8sPipelineExecutor
             return K8sPipelineExecutor(pipeline, execution_partition=execution_partition)

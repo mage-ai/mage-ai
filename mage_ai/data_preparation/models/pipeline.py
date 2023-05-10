@@ -509,7 +509,9 @@ class Pipeline:
         base = dict(
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
+            executor_config=self.executor_config,
             executor_count=self.executor_count,
+            executor_type=self.executor_type,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,
