@@ -133,15 +133,9 @@ class ApiStatusHandler(BaseHandler):
             'scheduler_status': scheduler_manager.get_status(),
             'instance_type': instance_type,
             'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
+            'require_user_authentication': REQUIRE_USER_AUTHENTICATION,
         }
         self.write(dict(status=status))
-
-
-class ApiProjectSettingsHandler(BaseHandler):
-    def get(self):
-        self.write(dict(project_settings=[
-            dict(require_user_authentication=REQUIRE_USER_AUTHENTICATION),
-        ]))
 
 
 def make_app():
@@ -200,15 +194,6 @@ def make_app():
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
 
-        (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
-            ApiPipelineBlockAnalysisHandler,
-        ),
-        (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/outputs',
-            ApiPipelineBlockOutputHandler,
-        ),
-
         # Trigger pipeline via API
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
@@ -217,11 +202,6 @@ def make_app():
 
         # Status
         (r'/api/status', ApiStatusHandler),
-
-        # This is used to check scheduler status and manually fix it
-        (r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler),
-
-        (r'/api/project_settings', ApiProjectSettingsHandler),
 
         # API v1 routes
         (
