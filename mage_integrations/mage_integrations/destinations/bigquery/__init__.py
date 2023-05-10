@@ -457,6 +457,17 @@ WHERE table_id = '{table_name}'
                     query,
                     job_config=bigquery.QueryJobConfig(**query_job_config),
                 )
+                # The temp table created by the create table command is created in a new
+                # dataset, so we need to get the full table name by checking the job results.
+                try:
+                    destination_table = \
+                        job._properties['configuration']['query']['destinationTable']
+                    temp_project_id = destination_table['projectId']
+                    temp_dataset_id = destination_table['datasetId']
+                    temp_table_id = destination_table['tableId']
+                    temp_table_name = f'{temp_project_id}.{temp_dataset_id}.{temp_table_id}'
+                except Exception:
+                    pass
                 job.result()
 
             job_results, jobs_from_insert = self.__insert_with_limits(
