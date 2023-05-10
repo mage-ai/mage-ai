@@ -1,14 +1,17 @@
-from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
-from mage_ai.data_preparation.models.widget import Widget
-from mage_ai.tests.base_test import DBTestCase
-from mage_ai.tests.factory import create_pipeline_run_with_schedule
-from unittest.mock import patch
 import asyncio
 import json
 import os
+from unittest.mock import patch
+
 import yaml
+
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.pipeline import (InvalidPipelineError,
+                                                      Pipeline)
+from mage_ai.data_preparation.models.widget import Widget
+from mage_ai.tests.base_test import DBTestCase
+from mage_ai.tests.factory import create_pipeline_run_with_schedule
 
 
 class PipelineTest(DBTestCase):
@@ -30,7 +33,9 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_config=dict(),
             executor_count=1,
+            executor_type=None,
             name='test pipeline 2',
             uuid='test_pipeline_2',
             type='python',
@@ -158,7 +163,9 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_config=dict(),
             executor_count=1,
+            executor_type=None,
             name='test pipeline 3',
             uuid='test_pipeline_3',
             type='python',
@@ -231,7 +238,9 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_config=dict(),
             executor_count=1,
+            executor_type=None,
             name='test pipeline 4',
             uuid='test_pipeline_4',
             type='python',
@@ -325,7 +334,9 @@ class PipelineTest(DBTestCase):
         self.assertEqual(pipeline.to_dict(), dict(
             data_integration=None,
             description=None,
+            executor_config=dict(),
             executor_count=1,
+            executor_type=None,
             name='test pipeline 5',
             uuid='test_pipeline_5',
             type='python',
@@ -544,7 +555,9 @@ class PipelineTest(DBTestCase):
                 {
                     "data_integration": None,
                     "description": None,
+                    "executor_config": {},
                     "executor_count": 1,
+                    "executor_type": None,
                     "extensions": {},
                     "name": "test_pipeline_9",
                     "type": "integration",
