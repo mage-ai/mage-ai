@@ -40,10 +40,6 @@ class IntegrationPipeline(Pipeline):
         return find(lambda x: BlockType.DATA_EXPORTER == x.type, self.blocks)
 
     @property
-    def transformer(self) -> Block:
-        return find(lambda x: BlockType.TRANSFORMER == x.type, self.blocks)
-
-    @property
     def destination_config(self) -> Dict:
         if self.data_exporter and self.data_exporter.content:
             return yaml.safe_load(self.data_exporter.content)
