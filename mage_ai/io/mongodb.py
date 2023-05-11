@@ -69,7 +69,7 @@ class MongoDB(BaseIO):
         Exports the input dataframe to the MongoDB collection
 
         Args:
-            df (Union[DataFrame, List[Dict]): Data frame or List of Dictionary to export.
+            data (Union[DataFrame, List[Dict]): Data frame or List of Dictionary to export.
             collection (str): MongoDB collection name.
         """
         if not data:
