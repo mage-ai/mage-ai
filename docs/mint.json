@@ -419,6 +419,7 @@
           "pages": [
             "integrations/databases/BigQuery",
             "integrations/databases/ClickHouse",
+            "integrations/databases/MicrosoftSQLServer",
             "integrations/databases/MySQL",
             "integrations/databases/PostgreSQL",
             "integrations/databases/Redshift",
