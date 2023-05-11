@@ -10,6 +10,8 @@ As such, make sure you have Python 3.8 on your PATH. Verify this with:
 python --version
 ```
 
+### Anaconda + Poetry
+***
 One way to do this is to use Anaconda + poetry.
 
 Create an Anaconda virtual environment with the correct version of python:
@@ -43,6 +45,29 @@ Then install the dev dependencies:
 make dev_env
 ```
 
+### Virtualenv
+***
+To use virtualenv to set up the project, first you need to create a virtualenv environment folder in the root of the repo:
+```bash
+python -m venv .venv
+```
+
+Then activate it:
+```bash
+source .venv/bin/activate
+```
+
+To install the dependencies from any of the requirements.txt files in the repo, run:
+```bash
+pip install -r <path/to/requirements.txt>
+```
+
+Then, to install the dev-dependencies from the `pyproject.toml` file, run:
+```bash
+pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')['tool']['poetry']['group']['dev']['dependencies'].keys()))" | tr '\n' ' ')
+```
+
+This command just uses Python and the `toml` library to output the dev dependencies from the `pyproject.toml` as a space-delimited list, and passes that output to the `pip install` command.
 ## Git Hooks
 
 To install the Git hooks that we use, run the Make command:
