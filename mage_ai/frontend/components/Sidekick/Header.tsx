@@ -10,6 +10,7 @@ import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { SHARED_ZOOM_BUTTON_PROPS } from '@components/DependencyGraph/constants';
@@ -106,16 +107,26 @@ function SidekickHeader({
             </Text>
           </Button>
           <Spacing mr={1} />
-          <Button
-            {...SHARED_ZOOM_BUTTON_PROPS}
-            onClick={() => {
-              treeRef?.current?.fitCanvas?.();
-            }}
+          <Tooltip
+            appearAbove
+            appearBefore
+            default
+            label="Shortcut: Double-click canvas"
+            lightBackground
+            size={null}
+            widthFitContent
           >
-            <Text noWrapping>
-              Reset
-            </Text>
-          </Button>
+            <Button
+              {...SHARED_ZOOM_BUTTON_PROPS}
+              onClick={() => {
+                treeRef?.current?.fitCanvas?.();
+              }}
+            >
+              <Text noWrapping>
+                Reset
+              </Text>
+            </Button>
+          </Tooltip>
           <Spacing mr={1} />
           <Text bold>{depGraphZoom?.toFixed(2)}x</Text>
         </Flex>
