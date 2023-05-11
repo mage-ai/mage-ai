@@ -15,6 +15,7 @@ from mage_ai.data_preparation.repo_manager import (
     get_project_type,
     get_repo_config,
     get_repo_path,
+    init_repo,
     ProjectType,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
@@ -89,9 +90,12 @@ class WorkspaceResource(GenericResource):
         if not cluster_type:
             cluster_type = payload.get('cluster_type')
 
+        name = payload.get('name')
+        if get_project_type() == ProjectType.MAIN:
+            init_repo(os.path.join(get_repo_path(), 'projects', name))
+
         if cluster_type == ClusterType.K8S:
             from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
-            name = payload.get('name')
             namespace = payload.get('namespace', os.getenv(KUBE_NAMESPACE))
             storage_class_name = payload.get(
                 'storage_class_name',
@@ -115,7 +119,6 @@ class WorkspaceResource(GenericResource):
             )
         elif cluster_type == ClusterType.ECS:
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-            name = payload.get('name')
             cluster_name = payload.get('cluster_name', os.getenv(ECS_CLUSTER_NAME))
             task_definition = payload.get(
                 'task_definition',
@@ -136,7 +139,6 @@ class WorkspaceResource(GenericResource):
         elif cluster_type == ClusterType.CLOUD_RUN:
             from mage_ai.cluster_manager.gcp.cloud_run_service_manager \
                 import CloudRunServiceManager
-            name = payload.get('name')
             project_id = payload.get('project_id', os.getenv(GCP_PROJECT_ID))
             path_to_credentials = payload.get(
                 'path_to_credentials',

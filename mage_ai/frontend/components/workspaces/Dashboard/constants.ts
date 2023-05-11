@@ -27,29 +27,28 @@ export function buildNavigationItems(
     },
   ];
 
-  if (owner || roles === RoleValueEnum.ADMIN) {
-    workspaceItems.push({
-      Icon: WorkspacesUsersIcon,
-      id: WorkspacesPageNameEnum.USERS,
-      isSelected: () => WorkspacesPageNameEnum.USERS === pageName,
-      label: () => 'Users',
-      linkProps: {
-        href: '/manage/users',
-      },
-    });
-  }
-  if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
-    
-    workspaceItems.push({
-      Icon: Settings,
-      id: WorkspacesPageNameEnum.SETTINGS,
-      isSelected: () => WorkspacesPageNameEnum.SETTINGS === pageName,
-      label: () => 'Settings',
-      linkProps: {
-        href: '/manage/settings',
-      },
-    });
-  }
+  // if (owner || roles === RoleValueEnum.ADMIN) {
+  //   workspaceItems.push({
+  //     Icon: WorkspacesUsersIcon,
+  //     id: WorkspacesPageNameEnum.USERS,
+  //     isSelected: () => WorkspacesPageNameEnum.USERS === pageName,
+  //     label: () => 'Users',
+  //     linkProps: {
+  //       href: '/manage/users',
+  //     },
+  //   });
+  // }
+  // if (!REQUIRE_USER_AUTHENTICATION() || roles <= RoleValueEnum.EDITOR) {
+  //   workspaceItems.push({
+  //     Icon: Settings,
+  //     id: WorkspacesPageNameEnum.SETTINGS,
+  //     isSelected: () => WorkspacesPageNameEnum.SETTINGS === pageName,
+  //     label: () => 'Settings',
+  //     linkProps: {
+  //       href: '/manage/settings',
+  //     },
+  //   });
+  // }
 
   return workspaceItems;
 }
