@@ -165,6 +165,8 @@ function IntegrationPipeline({
     onChangeCodeBlock,
     pipeline,
   ]);
+  const transformerBlock: BlockType =
+    useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.TRANSFORMER === type), [blocks]);
 
   const catalog: CatalogType =
     useMemo(() => (!isEmptyObject(dataLoaderBlockContent?.catalog)
@@ -896,6 +898,7 @@ function IntegrationPipeline({
                 hideMarkdown
                 hideScratchpad
                 hideSensor
+                hideTransformer={!!transformerBlock}
                 hideTransformerDataSources
                 pipeline={pipeline}
               />
