@@ -2242,7 +2242,6 @@ function PipelineDetailPage({
   const buttonTabs = useMemo(() => (
     <Spacing px={1}>
       <ButtonTabs
-        allowScroll
         noPadding
         onClickTab={(tab: TabType) => {
           setSelectedTab(tab);

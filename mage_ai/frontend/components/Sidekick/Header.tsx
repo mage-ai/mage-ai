@@ -12,6 +12,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import { AsideHeaderInnerStyle } from '@components/TripleLayout/index.style';
 import { GLOBAL_VARIABLES_UUID } from '@interfaces/PipelineVariableType';
 import { SHARED_ZOOM_BUTTON_PROPS } from '@components/DependencyGraph/constants';
 import {
@@ -19,7 +20,6 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
-import { SidekickHeaderContainerStyle } from './index.style';
 import { getFormattedVariables } from './utils';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
@@ -157,9 +157,9 @@ function SidekickHeader({
   }
 
   return (
-    <SidekickHeaderContainerStyle>
+    <AsideHeaderInnerStyle>
       {el}
-    </SidekickHeaderContainerStyle>
+    </AsideHeaderInnerStyle>
   );
 }
 

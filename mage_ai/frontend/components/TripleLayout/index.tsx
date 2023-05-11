@@ -20,6 +20,7 @@ import {
   AfterInnerStyle,
   AfterStyle,
   AsideHeaderStyle,
+  AsideHeaderInnerStyle,
   AsideSubheaderStyle,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
@@ -339,7 +340,7 @@ function TripleLayout({
           style={{
             overflow: beforeHidden
               ? 'visible'
-              : (hasBeforeNavigationItems ? 'auto' : 'hidden'),
+              : 'hidden',
             width: hasBeforeNavigationItems
               // Required
               ? beforeWidthFinal - (VERTICAL_NAVIGATION_WIDTH + 2)
@@ -353,11 +354,10 @@ function TripleLayout({
             fullWidth
             justifyContent="space-between"
           >
-            <Flex>
+            <AsideHeaderInnerStyle noPadding>
               <Spacing pl={beforeHidden ? 1 : 0} />
-
               {!beforeHidden && beforeHeader}
-            </Flex>
+            </AsideHeaderInnerStyle>
 
             <Flex>
               <Tooltip
