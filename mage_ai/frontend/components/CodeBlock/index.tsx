@@ -114,7 +114,12 @@ import {
 } from './constants';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/AddNewBlocks/utils';
-import { buildBorderProps, buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
+import {
+  buildBorderProps,
+  buildConvertBlockMenuItems,
+  getDownstreamBlockUuids,
+  getUpstreamBlockUuids,
+} from './utils';
 import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
@@ -2065,7 +2070,7 @@ function CodeBlock({
                     let content = newBlock.content;
                     let configuration = newBlock.configuration;
                     const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
-                    const downstreamBlocks = block.downstream_blocks || [];
+                    const downstreamBlocks = getDownstreamBlockUuids(block, newBlock);
 
                     if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(blockType)
                       && BlockTypeEnum.SCRATCHPAD === newBlock.type
