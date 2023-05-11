@@ -460,7 +460,7 @@ function TripleLayout({
                   <NavigationInnerStyle aligned="left">
                     <VerticalNavigationStyle
                       aligned="left"
-                      borderLess
+                      borderless
                       showMore={navigationShowMore}
                     >
                       <VerticalNavigation
@@ -534,7 +534,7 @@ function TripleLayout({
                   <NavigationInnerStyle aligned="right">
                     <VerticalNavigationStyle
                       aligned="right"
-                      borderLess
+                      borderless
                       showMore={navigationShowMore}
                     >
                       <VerticalNavigation

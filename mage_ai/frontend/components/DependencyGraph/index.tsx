@@ -1,5 +1,5 @@
-import * as osPath from 'path';
 import dynamic from 'next/dynamic';
+import { CanvasRef } from 'reaflow';
 import { ThemeContext } from 'styled-components';
 import { parse } from 'yaml';
 import {
@@ -50,8 +50,11 @@ import { useDynamicUpstreamBlocks } from '@utils/models/block';
 
 const Canvas = dynamic(
   async () => {
-    const reaflow = await import('reaflow');
-    return reaflow.Canvas;
+    const { Canvas } = await import('reaflow');
+
+    return ({ forwardedRef, ...props }: any) => (
+      <Canvas ref={forwardedRef} {...props} />
+    );
   },
   {
     ssr: false,
@@ -72,17 +75,6 @@ const Edge = dynamic(
   async () => {
     const reaflow = await import('reaflow');
     return reaflow.Edge;
-  },
-  {
-    ssr: false,
-  },
-);
-
-
-const MarkerArrow = dynamic(
-  async () => {
-    const reaflow = await import('reaflow');
-    return reaflow.MarkerArrow;
   },
   {
     ssr: false,
@@ -133,7 +125,9 @@ export type DependencyGraphProps = {
     response: any;
   }) => void;
   setSelectedBlock?: (block: BlockType) => void;
+  setZoom?: (zoom: number) => void;
   showDynamicBlocks?: boolean;
+  treeRef?: { current?: CanvasRef };
   zoomable?: boolean;
 } & SetEditingBlockType;
 
@@ -155,7 +149,9 @@ function DependencyGraph({
   setEditingBlock,
   setErrors,
   setSelectedBlock,
+  setZoom,
   showDynamicBlocks = false,
+  treeRef,
   zoomable = true,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -376,7 +372,6 @@ function DependencyGraph({
 
       const {
         tags = [],
-        type: blockType,
         upstream_blocks: upstreamBlocks = [],
         uuid,
       } = block;
@@ -602,7 +597,10 @@ function DependencyGraph({
         </Spacing>
       )}
 
-      <GraphContainerStyle height={containerHeight}>
+      <GraphContainerStyle
+        height={containerHeight}
+        onDoubleClick={() => treeRef?.current?.fitCanvas?.()}
+      >
         <Canvas
           arrow={null}
           disabled={disabledProp}
@@ -639,8 +637,11 @@ function DependencyGraph({
           }}
           edges={edges}
           fit
+          forwardedRef={treeRef}
           maxHeight={ZOOMABLE_CANVAS_SIZE}
           maxWidth={ZOOMABLE_CANVAS_SIZE}
+          maxZoom={1}
+          minZoom={-0.7}
           node={(node) => (
             <Node
               {...node}
@@ -769,8 +770,8 @@ function DependencyGraph({
                   )
             );
             if (fromBlock?.upstream_blocks?.includes(toBlock.uuid)
-             || from.id === to.id
-             || isConnectingIntegrationSourceAndDestination
+              || from.id === to.id
+              || isConnectingIntegrationSourceAndDestination
             ) {
               return;
             }
@@ -783,6 +784,7 @@ function DependencyGraph({
             });
           }}
           onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
+          onZoomChange={z => setZoom?.(z)}
           pannable={pannable}
           selections={edgeSelections}
           zoomable={zoomable}

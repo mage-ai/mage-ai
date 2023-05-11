@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { ALL_HEADERS_HEIGHT } from '@components/TripleLayout/index.style';
 import { COLUMN_HEADER_CHART_HEIGHT } from '@components/datasets/overview/utils';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const TOTAL_PADDING = UNIT * 4;
@@ -22,6 +22,14 @@ export const SidekickContainerStyle = styled.div<{
   ${props => `
     height: calc(100vh - ${ALL_HEADERS_HEIGHT}px - ${props.heightOffset}px);
   `}
+`;
+
+export const SidekickHeaderContainerStyle = styled.div`
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  padding: 0 ${UNIT}px;
+  ${hideScrollBar()}
 `;
 
 export const PaddingContainerStyle = styled.div<{ noPadding?: boolean }>`

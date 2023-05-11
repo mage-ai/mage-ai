@@ -135,6 +135,7 @@ function PipelineDetailPage({
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
+  const [depGraphZoom, setDepGraphZoom] = useState<number>(1);
 
   const localStorageTabSelectedKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
@@ -325,6 +326,7 @@ function PipelineDetailPage({
 
   const blockRefs = useRef({});
   const chartRefs = useRef({});
+  const treeRef = useRef(null);
   const callbackByBlockUUID = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
@@ -1838,6 +1840,7 @@ function PipelineDetailPage({
       setActiveSidekickView={setActiveSidekickView}
       setAllowCodeBlockShortcuts={setAllowCodeBlockShortcuts}
       setAnyInputFocused={setAnyInputFocused}
+      setDepGraphZoom={setDepGraphZoom}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
@@ -1847,6 +1850,7 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}
       textareaFocused={textareaFocused}
+      treeRef={treeRef}
       updatePipelineMetadata={updatePipelineMetadata}
       updateWidget={updateWidget}
       widgets={widgets}
@@ -2262,8 +2266,10 @@ function PipelineDetailPage({
         afterHeader={(
           <SidekickHeader
             activeView={activeSidekickView}
+            depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             secrets={secrets}
+            treeRef={treeRef}
             variables={globalVariables}
           />
         )}
