@@ -5,10 +5,15 @@ repos:
     rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
+        types: [python]
     -   id: end-of-file-fixer
+        types: [python]
     -   id: check-yaml
+        types: [python]
     -   id: debug-statements
+        types: [python]
     -   id: name-tests-test
+        types: [python]
         args:
           - "--pytest-test-first"
     -   id: requirements-txt-fixer
