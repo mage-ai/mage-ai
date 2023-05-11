@@ -3,8 +3,7 @@ import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
-import ConfigureInstance from '@components/Manage/ConfigureInstance';
-import Dashboard from '@components/Dashboard';
+import ConfigureWorkspace from '@components/workspaces/ConfigureWorkspace';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import PrivateRoute from '@components/shared/PrivateRoute';
@@ -16,18 +15,20 @@ import { Ellipsis, Expand } from '@oracle/icons';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
+import WorkspacesDashboard from '@components/workspaces/Dashboard';
+import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
+import WorkspaceType, { InstanceType } from '@interfaces/WorkspaceType';
 
 function MoreActions({
-  fetchInstances,
+  fetchWorkspaces,
   instance,
-  instanceType,
+  clusterType,
 }: {
-  fetchInstances: any;
-  instance: any;
-  instanceType: string;
+  fetchWorkspaces: any;
+  instance: InstanceType;
+  clusterType: string;
 }) {
   const refMoreActions = useRef(null);
   const [showMoreActions, setShowMoreActions] = useState<boolean>();
@@ -38,18 +39,20 @@ function MoreActions({
     task_arn,
   } = instance;
 
-  const query = {};
+  const query = {
+    cluster_type: clusterType,
+  };
   if (task_arn) {
     query['task_arn'] = task_arn;
   }
 
-  const [updateInstance] = useMutation(
-    api.instances.clusters.useUpdate(instanceType, name),
+  const [updateWorkspace] = useMutation(
+    api.workspaces.useUpdate(name),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchInstances();
+            fetchWorkspaces();
             setShowMoreActions(false);
           },
           onErrorCallback: ({
@@ -60,18 +63,18 @@ function MoreActions({
           }) => {
             console.log(errors, message);
           },
-        }
-      )
-    }
-  )
+        },
+      ),
+    },
+  );
 
-  const [deleteInstance] = useMutation(
-    api.instances.clusters.useDelete(instanceType, name, query),
+  const [deleteWorkspace] = useMutation(
+    api.workspaces.useDelete(name, query),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchInstances();
+            fetchWorkspaces();
             setShowMoreActions(false);
           },
           onErrorCallback: ({
@@ -82,31 +85,32 @@ function MoreActions({
           }) => {
             console.log(errors, message);
           },
-        }
-      )
-    }
+        },
+      ),
+    },
   );
 
   const actions = useMemo(() => {
     const {
-      status
+      status,
     } = instance;
 
     const items = [
       {
-        label: () => <Text>Delete instance</Text>,
+        label: () => <Text>Delete workspace</Text>,
         onClick: () => setConfirmDelete(true),
-        uuid: 'delete_instance',
+        uuid: 'delete_workspace',
       },
-    ]
+    ];
 
     if (status === 'STOPPED') {
       items.unshift({
         label: () => <Text>Resume instance</Text>,
         // @ts-ignore
         onClick: () => updateInstance({
-          instance: {
+          workspace: {
             action: 'resume',
+            cluster_type: clusterType,
             name: instance.name,
             task_arn: instance.task_arn,
           },
@@ -117,9 +121,10 @@ function MoreActions({
       items.unshift({
         label: () => <Text>Stop instance</Text>,
         // @ts-ignore
-        onClick: () => updateInstance({
+        onClick: () => updateWorkspace({
           instance: {
             action: 'stop',
+            cluster_type: clusterType,
             name: instance.name,
             task_arn: instance.task_arn,
           },
@@ -127,12 +132,12 @@ function MoreActions({
         uuid: 'stop_instance',
       });
     }
-    return items
-  }, [instance])
+    return items;
+  }, [clusterType, instance, updateWorkspace]);
 
   return (
     <>
-      {instanceType === 'ecs' && (
+      {clusterType === 'ecs' && (
         <div
           ref={refMoreActions}
           style={{
@@ -173,7 +178,7 @@ function MoreActions({
                 <FlexContainer>
                   <Button
                     danger
-                    onClick={deleteInstance}
+                    onClick={deleteWorkspace}
                   >
                     Confirm
                   </Button>
@@ -193,7 +198,7 @@ function MoreActions({
                 open={showMoreActions}
                 parentRef={refMoreActions}
                 topOffset={-UNIT * 3}
-                uuid="Manage/more_actions"
+                uuid="workspaces/more_actions"
                 width={UNIT * 25}
               />
             )}
@@ -204,47 +209,39 @@ function MoreActions({
   );
 }
 
-function InstanceListPage() {
-  const [error, setError] = useState<string>();
-
+function WorkspacePage() {
   const { data: dataStatus } = api.status.list();
-  const instanceType = dataStatus?.status?.['instance_type'] || 'ecs';
+  const clusterType = dataStatus?.status?.['instance_type'] || 'ecs';
 
-  const { data: dataInstances, mutate: fetchInstances } = api.instances.clusters.list(
-    instanceType,
-    {},
+  const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     {
-      refreshInterval: 3000,
+      query: {
+        cluster_type: clusterType,
+      },
+    },
+    {
+      refreshInterval: 5000,
       revalidateOnFocus: true,
     },
   );
 
-  const instances = useMemo(
-    () => dataInstances?.instances?.filter(({ name }) => name),
-    [dataInstances],
+  const workspaces = useMemo(
+    () => dataWorkspaces?.workspaces?.filter(({ name }) => name),
+    [dataWorkspaces],
   );
 
   return (
-    <Dashboard
-      afterWidth={VERTICAL_NAVIGATION_WIDTH}
-      beforeWidth={VERTICAL_NAVIGATION_WIDTH}
-      breadcrumbs={[
-        {
-          bold: true,
-          label: () => `Manage (${instanceType})`,
-        },
-      ]}
-      navigationItems={[]}
+    <WorkspacesDashboard  
+      pageName={WorkspacesPageNameEnum.WORKSPACES}
       subheaderChildren={
-        <ConfigureInstance
-          fetchInstances={fetchInstances}
-          instanceType={instanceType}
+        <ConfigureWorkspace
+          clusterType={clusterType}
+          fetchWorkspaces={fetchWorkspaces}
         />
       }
-      title={`Manage`}
-      uuid="Manage/index"
     >
       <Table
+        columnFlex={[2, 4, 2, 3, 1, null]}
         columns={[
           {
             uuid: 'Status',
@@ -266,18 +263,16 @@ function InstanceListPage() {
             uuid: 'Actions',
           },
         ]}
-        columnFlex={[2, 4, 2, 3, 1, null]}
-        rows={instances?.map(instance => {
-
+        rows={workspaces?.map(({ instance }: WorkspaceType) => {
           const {
             ip,
             name,
             status,
             type,
-          } = instance
+          } = instance;
 
           let link = `http://${ip}`;
-          if (instanceType === 'ecs') {
+          if (clusterType === 'ecs') {
             link = `http://${ip}:6789`;
           }
 
@@ -286,6 +281,7 @@ function InstanceListPage() {
               borderRadius={BORDER_RADIUS_XXXLARGE}
               danger={'STOPPED' === status}
               default={'PROVISIONING' === status}
+              key="status"
               notClickable
               padding="6px"
               primary={'RUNNING' === status}
@@ -293,33 +289,41 @@ function InstanceListPage() {
             >
               {capitalizeRemoveUnderscoreLower(status)}
             </Button>,
-            <Text>
+            <Text
+              key="name"
+            >
               {name}
             </Text>,
-            <Text>
+            <Text
+              key="type"
+            >
               {capitalizeRemoveUnderscoreLower(type)}
             </Text>,
-            <Text>
+            <Text
+              key="ip"
+            >
               {ip}
             </Text>,
             <Button
               iconOnly
+              key="open_button"
               onClick={() => window.open(link)}
             >
               <Expand size={2 * UNIT} />
             </Button>,
             <MoreActions
-              fetchInstances={fetchInstances}
+              fetchInstances={fetchWorkspaces}
               instance={instance}
-              instanceType={instanceType}
-            />
-          ]
+              instanceType={clusterType}
+              key="more_actions"
+            />,
+          ];
         })}
       />
-    </Dashboard>
+    </WorkspacesDashboard>
   );
 }
 
-InstanceListPage.getInitialProps = async () => ({});
+WorkspacePage.getInitialProps = async () => ({});
 
-export default PrivateRoute(InstanceListPage);
+export default PrivateRoute(WorkspacePage);

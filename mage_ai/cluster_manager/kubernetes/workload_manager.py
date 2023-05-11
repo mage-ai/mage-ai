@@ -234,7 +234,7 @@ class WorkloadManager:
             }
         }
 
-        self.core_client.create_namespaced_service(self.namespace, service)
+        return self.core_client.create_namespaced_service(self.namespace, service)
 
     def __populate_env_vars(self, container_config) -> List:
         env_vars = []
