@@ -6,6 +6,8 @@ from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
 from typing import Dict, Generator, List
 import boto3
+# TODO: refactor this common row_to_singer_record function
+# to util file to share between different sources.
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
 REQUIRED_TABLE_CONFIG_KEYS = ['table_name']
@@ -56,12 +58,20 @@ class DynamoDb(Source):
         Read streams in DynamoDB.
         '''
         client = self.build_client()
-        streams = []
-        for table_config in self.table_configs:
-            catalog_entry = self.discover_stream(client, table_config['table_name'])
-            if catalog_entry is not None:
-                streams.append(catalog_entry)
-        return Catalog(streams)
+        self.logger.info(f'Testing streams: {streams}')
+        outputs = []
+        if streams:
+            # Check if streams available
+            for stream in streams:
+                catalog_entry = self.discover_stream(client, stream)
+                if catalog_entry is not None:
+                    outputs.append(catalog_entry)
+        else:
+            for table_config in self.table_configs:
+                catalog_entry = self.discover_stream(client, table_config['table_name'])
+                if catalog_entry is not None:
+                    outputs.append(catalog_entry)
+        return Catalog(outputs)
 
     def build_client(self):
         '''
@@ -118,8 +128,8 @@ class DynamoDb(Source):
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         table_name = stream.tap_stream_id
-        data = []
         for result in self.scan_table(table_name):
+            data = []
             for item in result.get('Items', []):
                 record_message = common.row_to_singer_record(
                         stream.to_dict(),
@@ -128,7 +138,7 @@ class DynamoDb(Source):
                         None,
                     )
                 data.append(record_message.record)
-        yield data
+            yield data
 
 
 if __name__ == '__main__':
