@@ -871,6 +871,11 @@ def execute_query(
 
         with Snowflake.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
+    elif DataSource.SPARK == data_provider:
+        from mage_ai.io.spark import SPARK
+
+        with SPARK.with_config(config_file_loader) as loader:
+            return loader.load(query_string, **shared_kwargs)
     elif DataSource.TRINO == data_provider:
         from mage_ai.io.trino import Trino
 
