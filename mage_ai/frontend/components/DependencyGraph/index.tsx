@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useMutation } from 'react-query';
@@ -155,6 +156,9 @@ function DependencyGraph({
   zoomable = true,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
+  const treeInnerRef = useRef<CanvasRef>(null);
+  const canvasRef = treeRef || treeInnerRef;
+
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
   const [showPortsState, setShowPorts] = useState<boolean>(false);
   const [activePort, setActivePort] = useState<{ id: string, side: SideEnum }>(null);
@@ -599,7 +603,7 @@ function DependencyGraph({
 
       <GraphContainerStyle
         height={containerHeight}
-        onDoubleClick={() => treeRef?.current?.fitCanvas?.()}
+        onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
       >
         <Canvas
           arrow={null}
@@ -637,7 +641,7 @@ function DependencyGraph({
           }}
           edges={edges}
           fit
-          forwardedRef={treeRef}
+          forwardedRef={canvasRef}
           maxHeight={ZOOMABLE_CANVAS_SIZE}
           maxWidth={ZOOMABLE_CANVAS_SIZE}
           maxZoom={1}
