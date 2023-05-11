@@ -65,7 +65,7 @@ function ButtonTabs({
           <Text
             bold
             default={!selected}
-            noWrapping={allowScroll}
+            noWrapping
             small
           >
             {displayText}
@@ -125,7 +125,6 @@ function ButtonTabs({
 
     return arr;
   }, [
-    allowScroll,
     onClickTab,
     selectedTabUUID,
     small,

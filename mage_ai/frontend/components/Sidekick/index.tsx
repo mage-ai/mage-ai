@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
 import BlockCharts from '@components/BlockCharts';
@@ -32,6 +33,7 @@ import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
+
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Charts as ChartsIcon, Close } from '@oracle/icons';
 import {
@@ -90,7 +92,6 @@ export type SidekickProps = {
   insights: InsightType[][];
   interruptKernel: () => void;
   isPipelineExecuting: boolean;
-  isPipelineUpdating?: boolean;
   globalVariables: PipelineVariableType[];
   lastTerminalMessage: WebSocketEventMap['message'] | null;
   metadata: MetadataType;
@@ -102,11 +103,8 @@ export type SidekickProps = {
   selectedBlock: BlockType;
   selectedFilePath?: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
-  setActiveSidekickView?: (
-    newView: ViewKeyEnum,
-    pushHistory?: boolean,
-  ) => void;
   setAllowCodeBlockShortcuts?: (allowCodeBlockShortcuts: boolean) => void;
+  setDepGraphZoom?: (zoom: number) => void;
   setDisableShortcuts: (disableShortcuts: boolean) => void;
   setHiddenBlocks: ((opts: {
     [uuid: string]: BlockType;
@@ -115,7 +113,7 @@ export type SidekickProps = {
   });
   setErrors: (errors: ErrorsType) => void;
   statistics: StatisticsType;
-  updatePipelineMetadata: (name: string, type?: string) => void;
+  treeRef?: { current?: CanvasRef };
 } & SetEditingBlockType & ChartsPropsShared & ExtensionsProps & CallbacksProps;
 
 function Sidekick({
@@ -141,7 +139,6 @@ function Sidekick({
   insights,
   interruptKernel,
   isPipelineExecuting,
-  isPipelineUpdating,
   lastTerminalMessage,
   messages,
   metadata,
@@ -159,9 +156,9 @@ function Sidekick({
   selectedBlock,
   selectedFilePath,
   sendTerminalMessage,
-  setActiveSidekickView,
   setAllowCodeBlockShortcuts,
   setAnyInputFocused,
+  setDepGraphZoom,
   setDisableShortcuts,
   setEditingBlock,
   setErrors,
@@ -170,7 +167,7 @@ function Sidekick({
   setTextareaFocused,
   statistics,
   textareaFocused,
-  updatePipelineMetadata,
+  treeRef,
   updateWidget,
   widgets,
 }: SidekickProps) {
@@ -379,6 +376,8 @@ function Sidekick({
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
                 setSelectedBlock={setSelectedBlock}
+                setZoom={setDepGraphZoom}
+                treeRef={treeRef}
               />
               {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
                 <Spacing p={1}>
