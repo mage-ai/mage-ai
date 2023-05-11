@@ -19,6 +19,7 @@ RUN apt -y install curl freetds-dev freetds-bin
 # Install R
 # RUN apt install -y r-base
 # RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
+# RUN R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
 # Install Python dependencies
 COPY requirements.txt requirements.txt
