@@ -25,12 +25,6 @@ sourcery = "*"
 
 [tool.isort]
 profile = "black"
-import_heading_stdlib = "Python Standard Library Imports"
-import_heading_thirdparty = "Third Party Imports"
-import_heading_firstparty = "Mage Imports"
-# src_paths = ["<path-to-src-code>"]
-# known_first_party = ["<any packages defined locally>"]
-# known_third_party = ["<any 3rd party packages with potential name collisions>"]
 
 
 [build-system]
