@@ -47,6 +47,12 @@ WorkspacePolicy.allow_write([
     'storage_class_name',
     'service_account_name',
     'container_config',
+    'cluster_name',
+    'task_definition',
+    'container_name',
+    'project_id',
+    'path_to_credentials',
+    'region',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[

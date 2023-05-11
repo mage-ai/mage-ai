@@ -8,6 +8,7 @@ from mage_ai.cluster_manager.constants import (
     GCP_PROJECT_ID,
     GCP_REGION,
     KUBE_NAMESPACE,
+    KUBE_SERVICE_ACCOUNT_NAME,
     KUBE_STORAGE_CLASS_NAME,
 )
 from mage_ai.data_preparation.repo_manager import (
@@ -91,9 +92,12 @@ class WorkspaceResource(GenericResource):
             namespace = payload.get('namespace', os.getenv(KUBE_NAMESPACE))
             storage_class_name = payload.get(
                 'storage_class_name',
-                os.getenv(KUBE_STORAGE_CLASS_NAME)
+                os.getenv(KUBE_STORAGE_CLASS_NAME),
             )
-            service_account_name = payload.get('service_account_name')
+            service_account_name = payload.get(
+                'service_account_name',
+                os.getenv(KUBE_SERVICE_ACCOUNT_NAME),
+            )
             container_config_yaml = payload.get('container_config')
             container_config = None
             if container_config_yaml:

@@ -1,6 +1,7 @@
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
     get_project_type,
+    get_repo_config,
     get_repo_path,
     init_repo,
     set_repo_path,
@@ -111,9 +112,11 @@ class ApiStatusHandler(BaseHandler):
             GCP_PROJECT_ID,
             KUBE_NAMESPACE,
         )
-
+        
         instance_type = None
-        if os.getenv(ECS_CLUSTER_NAME):
+        if get_project_type() == ProjectType.MAIN:
+            instance_type = get_repo_config().cluster_type
+        elif os.getenv(ECS_CLUSTER_NAME):
             instance_type = ClusterType.ECS
         elif os.getenv(GCP_PROJECT_ID):
             instance_type = ClusterType.CLOUD_RUN
