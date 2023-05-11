@@ -20,3 +20,11 @@ rm -rf mage_data/[project_name]/pipelines/[pipeline_name]/.variables
 > the pipeline that is freezing the browser.
 
 The above command will remove the data output files for each block in your pipeline.
+
+---
+
+## Can’t connect to local database from within Mage via Docker
+
+If you’re running Mage via Docker and you’re trying to connect to a local database outside of
+Docker, you must use the following `host` or `IP` value when trying to connect to it:
+`host.docker.internal`.
