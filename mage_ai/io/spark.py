@@ -66,7 +66,7 @@ class Spark(BaseSQL):
         """
         with self.printer.print_msg(f'Executing query \'{command_string}\''):
             command_string = self._clean_query(command_string)
-            self.client.command(command_string, **kwargs)
+            self.client.sql(command_string, **kwargs)
 
     def execute_query(
         self,
@@ -83,7 +83,7 @@ class Spark(BaseSQL):
         """
         query = self._clean_query(query)
         with self.printer.print_msg(f'Executing query \'{query}\''):
-            result = self.client.query_df(query, parameters=parameters)
+            result = self.client.sql(query, parameters=parameters).toPandas()
 
         return result
 
@@ -104,9 +104,9 @@ class Spark(BaseSQL):
 
             if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
                     fetch_query_at_indexes[idx]:
-                result = self.client.query_df(query, parameters=parameters)
+                result = self.client.sql(query, parameters=parameters).toPandas()
             else:
-                result = self.client.command(query, parameters=parameters)
+                result = self.client.sql(query, parameters=parameters).toPandas()
 
             results.append(result)
 
@@ -149,9 +149,9 @@ class Spark(BaseSQL):
         query_string = self._clean_query(query_string)
 
         with self.printer.print_msg(print_message):
-            return self.client.query_df(
+            return self.client.sql(
                 self._enforce_limit(query_string, limit), **kwargs
-            )
+            ).toPandas()
 
     def export(
         self,
@@ -198,9 +198,9 @@ class Spark(BaseSQL):
 
         def __process(database: Union[str, None]):
 
-            df_existing = self.client.query_df(f"""
+            df_existing = self.client.sql(f"""
 EXISTS TABLE {database}.{table_name}
-""")
+""").toPandas()
 
             table_exists = not df_existing.empty and df_existing.iloc[0, 0] == 1
             should_create_table = not table_exists
@@ -212,28 +212,28 @@ EXISTS TABLE {database}.{table_name}
                         ' exists in database {database}.',
                     )
                 elif ExportWritePolicy.REPLACE == if_exists:
-                    self.client.command(
+                    self.client.sql(
                         f'DROP TABLE IF EXISTS {database}.{table_name}')
                     should_create_table = True
 
             if query_string:
-                self.client.command(f'USE {database}')
+                self.client.sql(f'USE {database}')
 
                 if should_create_table:
-                    self.client.command(f"""
+                    self.client.sql(f"""
 CREATE TABLE IF NOT EXISTS {database}.{table_name} ENGINE = Memory AS
 {query_string}
 """)
                 else:
-                    self.client.command(f"""
+                    self.client.sql(f"""
 INSERT INTO {database}.{table_name}
 {query_string}
 """)
             else:
                 if should_create_table:
-                    self.client.command(create_table_statement)
-
-                self.client.insert_df(f'{database}.{table_name}', df)
+                    self.client.sql(create_table_statement)
+                spark_df = self.client.createDataFrame(df)
+                spark_df.write.mode('append').saveAsTable(f'{database}.{table_name}')
 
         if verbose:
             with self.printer.print_msg(
