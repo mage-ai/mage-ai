@@ -107,6 +107,14 @@ class File:
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path)
 
     @classmethod
+    def from_paths(self, file_paths, repo_path=None):
+        repo_path = repo_path or get_repo_path()
+        return [
+            File(os.path.basename(file_path), os.path.dirname(file_path), repo_path)
+            for file_path in file_paths
+        ]
+
+    @classmethod
     def get_all_files(self, repo_path):
         return traverse(os.path.basename(repo_path), True, repo_path)
 

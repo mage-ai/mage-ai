@@ -19,7 +19,7 @@ class StreamToLogger(object):
 
     def write(self, buf):
         for line in buf.rstrip().splitlines():
-            self.logger.log(self.log_level, line.rstrip(), **self.logging_tags)
+            self.logger.info(line.rstrip(), **self.logging_tags)
 
     def flush(self):
         pass

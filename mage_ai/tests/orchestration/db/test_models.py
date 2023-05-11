@@ -1,4 +1,5 @@
 from datetime import datetime
+from freezegun import freeze_time
 from mage_ai.data_preparation.models.triggers import (
     ScheduleStatus,
 )
@@ -127,6 +128,7 @@ class PipelineRunTests(DBTestCase):
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}',
         )
 
+    @freeze_time(datetime(2023, 1, 1))
     def test_log_file(self):
         execution_date = datetime.now()
         pipeline_run = create_pipeline_run_with_schedule(
@@ -137,9 +139,9 @@ class PipelineRunTests(DBTestCase):
         expected_file_path = os.path.join(
             get_repo_config(self.repo_path).variables_dir,
             'pipelines/test_pipeline/.logs',
-            f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/pipeline.log',
+            f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/20230101/00/pipeline.log',
         )
-        self.assertEqual(pipeline_run.logs.get('path'), expected_file_path)
+        self.assertEqual(pipeline_run.logs[0].get('path'), expected_file_path)
 
     def test_active_runs(self):
         create_pipeline_with_blocks(
@@ -212,4 +214,4 @@ class BlockRunTests(DBTestCase):
                 'pipelines/test_pipeline/.logs',
                 f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/{b.block_uuid}.log',
             )
-            self.assertEquals(b.logs.get('path'), expected_file_path)
+            self.assertEqual(b.logs[0].get('path'), expected_file_path)

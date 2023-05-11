@@ -46,7 +46,7 @@ export interface LogDataType {
 
 export default interface LogType {
   content: string;
-  createdAt?: string;
+  created_at?: string;
   data?: LogDataType;
   name: string;
   path: string;
