@@ -28,7 +28,7 @@ export const SidekickHeaderContainerStyle = styled.div`
   display: flex;
   flex: 1;
   overflow: auto;
-  padding: 0 ${UNIT}px;
+  padding: 0 ${UNIT * 2}px;
   ${hideScrollBar()}
 `;
 
