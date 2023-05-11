@@ -25,6 +25,7 @@ RUN tag=$(tail -n 1 constants.py) && VERSION=$(echo $tag | tr -d "'") && ${PIP} 
 # Install R
 RUN apt install -y r-base
 RUN R -e "install.packages('pacman', repos='http://cran.us.r-project.org')"
+RUN R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
 # Set up spark kernel
 RUN ${PIP} install sparkmagic
