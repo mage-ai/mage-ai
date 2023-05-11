@@ -533,9 +533,10 @@ def config_file_loader_and_configuration(block, profile_target: str) -> Dict:
         config = dict(
             SPARK_METHOD=profile.get('method'),
             SPARK_HOST=profile.get('host'),
+            SPARK_SCHEMA=profile.get('schema'),
         )
 
-        config_file_loader = ConfigFileLoader()
+        config_file_loader = ConfigFileLoader(config=config)
         configuration = dict(
             data_provider=profile_type,
             data_provider_database=schema,
@@ -872,10 +873,10 @@ def execute_query(
         with Snowflake.with_config(config_file_loader) as loader:
             return loader.load(query_string, **shared_kwargs)
     elif DataSource.SPARK == data_provider:
-        from mage_ai.io.spark import SPARK
+        from mage_ai.io.spark import Spark
 
-        with SPARK.with_config(config_file_loader) as loader:
-            return loader.load(query_string, **shared_kwargs)
+        loader = Spark.with_config(config_file_loader)
+        return loader.load(query_string, **shared_kwargs)
     elif DataSource.TRINO == data_provider:
         from mage_ai.io.trino import Trino
 
