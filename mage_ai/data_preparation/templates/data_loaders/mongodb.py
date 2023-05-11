@@ -1,14 +1,9 @@
 {% extends "data_loaders/default.jinja" %}
 {% block imports %}
-from os import path
-
-import pandas as pd
-from pymongo import MongoClient
-
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.mongodb import MongoDB
-
+from os import path
 {{ super() -}}
 {% endblock %}
 
