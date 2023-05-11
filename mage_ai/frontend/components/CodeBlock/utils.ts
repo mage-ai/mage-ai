@@ -31,6 +31,21 @@ export const getUpstreamBlockUuids = (
   return upstreamBlocks;
 };
 
+export const getDownstreamBlockUuids = (
+  currentBlock: BlockType,
+  newBlock?: BlockRequestPayloadType,
+): string[] => {
+  let downstreamBlocks = [];
+
+  if (!BLOCK_TYPES_WITH_NO_PARENTS.includes(currentBlock?.type)
+    && !BLOCK_TYPES_WITH_NO_PARENTS.includes(newBlock?.type)
+  ) {
+    downstreamBlocks = downstreamBlocks.concat(currentBlock?.downstream_blocks || []);
+  }
+
+  return downstreamBlocks;
+};
+
 export const buildConvertBlockMenuItems = (
   b: BlockType,
   blocks: BlockType[],
