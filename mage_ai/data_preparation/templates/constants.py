@@ -30,6 +30,13 @@ TEMPLATES = [
         path='data_loaders/deltalake/gcs.py',
     ),
     dict(
+        block_type=BlockType.DATA_LOADER,
+        description='Load data from MongoDB.',
+        language=BlockLanguage.PYTHON,
+        name='MongoDB',
+        path='data_loaders/mongodb.py',
+    ),
+    dict(
         block_type=BlockType.DATA_EXPORTER,
         description='Export data to a Delta Table in Amazon S3.',
         groups=[GROUP_DELTA_LAKE],
@@ -52,6 +59,13 @@ TEMPLATES = [
         language=BlockLanguage.PYTHON,
         name='Google Cloud Storage',
         path='data_exporters/deltalake/gcs.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        description='Export data to MongoDB.',
+        language=BlockLanguage.PYTHON,
+        name='MongoDB',
+        path='data_exporters/mongodb.py',
     ),
     dict(
         block_type=BlockType.DATA_LOADER,
