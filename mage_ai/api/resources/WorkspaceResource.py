@@ -80,6 +80,7 @@ class WorkspaceResource(GenericResource):
             instance=instance_map[pk],
         ), user, **kwargs)
 
+    @classmethod
     @safe_db_query
     def create(self, payload, user, **kwargs):
         cluster_type = self.verify_project()
