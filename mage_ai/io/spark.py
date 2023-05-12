@@ -205,7 +205,7 @@ class Spark(BaseSQLDatabase):
 
                 if should_create_table:
                     self.client.sql(f"""
-CREATE TABLE IF NOT EXISTS {database}.{table_name} ENGINE = Memory AS
+CREATE TABLE IF NOT EXISTS {database}.{table_name} AS
 {query_string}
 """)
                 else:
