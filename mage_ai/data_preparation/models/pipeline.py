@@ -1,3 +1,13 @@
+import asyncio
+import datetime
+import json
+import os
+import shutil
+from typing import Callable, Dict, List
+
+import aiofiles
+import yaml
+
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
 from mage_ai.data_preparation.models.block.errors import (
@@ -6,34 +16,29 @@ from mage_ai.data_preparation.models.block.errors import (
 )
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
-    BlockLanguage,
-    BlockType,
     DATA_INTEGRATION_CATALOG_FILE,
-    ExecutorType,
-    PipelineType,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
+    BlockLanguage,
+    BlockType,
+    ExecutorType,
+    PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
+from mage_ai.data_preparation.repo_manager import (
+    RepoConfig,
+    get_repo_config,
+    get_repo_path,
+)
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import extract, index_by, ignore_keys, merge_dict
+from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
-from typing import Callable, Dict, List
-import aiofiles
-import asyncio
-import datetime
-import json
-import os
-import shutil
-import yaml
-
 
 CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
 METADATA_FILE_NAME = 'metadata.yaml'
@@ -46,6 +51,8 @@ class Pipeline:
         self.data_integration = None
         self.description = None
         self.extensions = {}
+        self.executor_type = None
+        self.executor_config = dict()
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.schedules = []
@@ -191,8 +198,9 @@ class Pipeline:
 
     @classmethod
     def get(self, uuid, repo_path: str = None, check_if_exists: bool = False):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-            import IntegrationPipeline
+        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+            IntegrationPipeline,
+        )
 
         if check_if_exists and not os.path.exists(
             os.path.join(
@@ -211,8 +219,9 @@ class Pipeline:
 
     @classmethod
     async def get_async(self, uuid, repo_path: str = None):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline \
-            import IntegrationPipeline
+        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+            IntegrationPipeline,
+        )
         repo_path = repo_path or get_repo_path()
         config_path = os.path.join(
             repo_path,
@@ -349,8 +358,9 @@ class Pipeline:
         order based on a block's upstream dependencies.
         """
         if self.type == PipelineType.STREAMING:
-            from mage_ai.data_preparation.executors.streaming_pipeline_executor \
-                import StreamingPipelineExecutor
+            from mage_ai.data_preparation.executors.streaming_pipeline_executor import (
+                StreamingPipelineExecutor,
+            )
             StreamingPipelineExecutor(self).execute(
                 build_block_output_stdout=build_block_output_stdout,
             )
@@ -413,6 +423,8 @@ class Pipeline:
 
         self.block_configs = config.get('blocks') or []
         self.callback_configs = config.get('callbacks') or []
+        self.executor_type = config.get('executor_type')
+        self.executor_config = config.get('executor_confid') or dict()
         self.widget_configs = config.get('widgets') or []
 
         self.variables = config.get('variables')
@@ -509,7 +521,9 @@ class Pipeline:
         base = dict(
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
+            executor_config=self.executor_config,
             executor_count=self.executor_count,
+            executor_type=self.executor_type,
             name=self.name,
             type=self.type.value if type(self.type) is not str else self.type,
             updated_at=self.updated_at,

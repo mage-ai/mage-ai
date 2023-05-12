@@ -1,16 +1,15 @@
-from mage_ai.api.utils import (
-    authenticate_client_and_token,
-    has_at_least_editor_role,
-)
+import json
+import re
+
+import terminado
+from tornado import gen
+
+from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
 from mage_ai.orchestration.db.models.oauth import Oauth2Application
 from mage_ai.settings import (
-    is_disable_pipeline_edit_access,
     REQUIRE_USER_AUTHENTICATION,
+    is_disable_pipeline_edit_access,
 )
-from tornado import gen
-import json
-import terminado
-import re
 
 
 class MageTermManager(terminado.NamedTermManager):

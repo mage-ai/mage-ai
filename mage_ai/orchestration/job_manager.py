@@ -1,6 +1,7 @@
-from mage_ai.orchestration.queue.queue_factory import QueueFactory
-from typing import Callable, Union
 from enum import Enum
+from typing import Callable, Union
+
+from mage_ai.orchestration.queue.queue_factory import QueueFactory
 
 
 class JobType(str, Enum):

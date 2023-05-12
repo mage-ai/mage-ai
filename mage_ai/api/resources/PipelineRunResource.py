@@ -1,3 +1,5 @@
+from sqlalchemy.orm import selectinload
+
 from mage_ai.api.operations.constants import META_KEY_LIMIT, META_KEY_OFFSET
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.models.constants import PipelineType
@@ -9,7 +11,6 @@ from mage_ai.orchestration.pipeline_scheduler import (
     start_scheduler,
     stop_pipeline_run,
 )
-from sqlalchemy.orm import selectinload
 
 
 class PipelineRunResource(DatabaseResource):
@@ -210,8 +211,9 @@ class PipelineRunResource(DatabaseResource):
                 BlockRun.BlockRunStatus.INITIAL,
             )
 
-            from mage_ai.orchestration.execution_process_manager \
-                import execution_process_manager
+            from mage_ai.orchestration.execution_process_manager import (
+                execution_process_manager,
+            )
 
             if PipelineType.STREAMING != pipeline.type:
                 if PipelineType.INTEGRATION == pipeline.type:

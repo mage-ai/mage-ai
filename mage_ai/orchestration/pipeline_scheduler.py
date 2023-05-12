@@ -1,5 +1,10 @@
+import traceback
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Tuple
+
+import pytz
 from dateutil.relativedelta import relativedelta
+
 from mage_ai.data_integrations.utils.scheduler import (
     clear_source_output_files,
     initialize_state_and_runs,
@@ -15,9 +20,11 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block_child,
     should_reduce_output,
 )
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
+from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+    IntegrationPipeline,
+)
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
@@ -48,9 +55,6 @@ from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.shared.retry import retry
-from typing import Any, Dict, List, Tuple
-import pytz
-import traceback
 
 MEMORY_USAGE_MAXIMUM = 0.95
 
@@ -854,12 +858,18 @@ def run_pipeline(pipeline_run_id, variables, tags):
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
                                    f'pipeline {pipeline.uuid}',
                                    **tags)
-
+    executor_type = ExecutorFactory.get_pipeline_executor_type(pipeline)
+    try:
+        pipeline_run.update(executor_type=executor_type)
+    except Exception:
+        traceback.print_exc()
     ExecutorFactory.get_pipeline_executor(
         pipeline,
         execution_partition=pipeline_run.execution_partition,
+        executor_type=executor_type,
     ).execute(
         global_vars=variables,
+        pipeline_run_id=pipeline_run_id,
         tags=tags,
     )
 
@@ -888,7 +898,10 @@ def configure_pipeline_run_payload(
 
 
 def start_scheduler(pipeline_run: PipelineRun) -> None:
-    from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler, get_variables
+    from mage_ai.orchestration.pipeline_scheduler import (
+        PipelineScheduler,
+        get_variables,
+    )
 
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
@@ -964,6 +977,14 @@ def stop_pipeline_run(
 
     if pipeline and pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
         job_manager.kill_pipeline_run_job(pipeline_run.id)
+        if pipeline_run.executor_type == ExecutorType.K8S:
+            """
+            TODO: Support running and cancelling pipeline runs in ECS and GCP_CLOUD_RUN executors
+            """
+            ExecutorFactory.get_pipeline_executor(
+                pipeline,
+                executor_type=pipeline_run.executor_type,
+            ).cancel(pipeline_run_id=pipeline_run.id)
     else:
         for b in running_blocks:
             job_manager.kill_block_run_job(b.id)

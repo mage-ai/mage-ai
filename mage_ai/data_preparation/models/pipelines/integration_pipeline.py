@@ -1,3 +1,13 @@
+import importlib
+import json
+import os
+import subprocess
+from typing import Any, Dict, List
+
+import pandas as pd
+import simplejson
+import yaml
+
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_integrations.utils.config import (
     build_config_json,
@@ -12,16 +22,8 @@ from mage_ai.data_preparation.models.pipelines.utils import number_string
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig
-from mage_ai.shared.utils import clean_name
 from mage_ai.shared.parsers import encode_complex, extract_json_objects
-from typing import Any, Dict, List
-import importlib
-import json
-import os
-import pandas as pd
-import simplejson
-import subprocess
-import yaml
+from mage_ai.shared.utils import clean_name
 
 PYTHON = 'python3'
 

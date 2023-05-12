@@ -1,10 +1,32 @@
-from croniter import croniter
+import asyncio
+import enum
+import traceback
+import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Dict, List
+
+import pytz
+from croniter import croniter
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+)
+from sqlalchemy.orm import joinedload, relationship, validates
+from sqlalchemy.sql import func
+
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
     get_all_ancestors,
     is_dynamic_block,
 )
+from mage_ai.data_preparation.models.constants import ExecutorType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -20,26 +42,6 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
-from sqlalchemy import (
-    Column,
-    Boolean,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Integer,
-    JSON,
-    String,
-    Table,
-)
-from sqlalchemy.orm import joinedload, relationship, validates
-from sqlalchemy.sql import func
-from typing import Dict, List
-import asyncio
-import enum
-import pytz
-import traceback
-import uuid
-
 
 pipeline_schedule_event_matcher_association_table = Table(
     'pipeline_schedule_event_matcher_association',
@@ -219,6 +221,7 @@ class PipelineRun(BaseModel):
     event_variables = Column(JSON)
     metrics = Column(JSON)
     backfill_id = Column(Integer, ForeignKey('backfill.id'))
+    executor_type = Column(Enum(ExecutorType), default=ExecutorType.LOCAL_PYTHON)
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
@@ -512,6 +515,7 @@ class EventMatcher(BaseModel):
 
             if event_matcher.event_type == EventMatcher.EventType.AWS_EVENT:
                 from mage_ai.services.aws.events.events import update_event_rule_targets
+
                 # For AWS event, update related AWS infra (add trigger to lambda function)
                 update_event_rule_targets(event_matcher.name)
 
