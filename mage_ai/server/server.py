@@ -112,7 +112,6 @@ class ApiStatusHandler(BaseHandler):
             GCP_PROJECT_ID,
             KUBE_NAMESPACE,
         )
-        
         instance_type = None
         if get_project_type() == ProjectType.MAIN:
             instance_type = get_repo_config().cluster_type

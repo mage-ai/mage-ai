@@ -312,9 +312,9 @@ function WorkspacePage() {
               <Expand size={2 * UNIT} />
             </Button>,
             <MoreActions
-              fetchInstances={fetchWorkspaces}
+              clusterType={clusterType}
+              fetchWorkspaces={fetchWorkspaces}
               instance={instance}
-              instanceType={clusterType}
               key="more_actions"
             />,
           ];
