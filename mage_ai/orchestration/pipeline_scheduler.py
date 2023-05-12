@@ -6,34 +6,44 @@ import pytz
 from dateutil.relativedelta import relativedelta
 
 from mage_ai.data_integrations.utils.scheduler import (
-    clear_source_output_files, initialize_state_and_runs)
+    clear_source_output_files,
+    initialize_state_and_runs,
+)
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logging.logger import DictLogger
-from mage_ai.data_preparation.logging.logger_manager_factory import \
-    LoggerManagerFactory
+from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.utils import (
-    create_block_runs_from_dynamic_block, dynamic_block_uuid,
-    dynamic_block_values_and_metadata, is_dynamic_block,
-    is_dynamic_block_child, should_reduce_output)
-from mage_ai.data_preparation.models.constants import PipelineType
+    create_block_runs_from_dynamic_block,
+    dynamic_block_uuid,
+    dynamic_block_values_and_metadata,
+    is_dynamic_block,
+    is_dynamic_block_child,
+    should_reduce_output,
+)
+from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.pipelines.integration_pipeline import \
-    IntegrationPipeline
-from mage_ai.data_preparation.models.triggers import (ScheduleInterval,
-                                                      ScheduleStatus,
-                                                      ScheduleType,
-                                                      get_triggers_by_pipeline)
+from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+    IntegrationPipeline,
+)
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+    get_triggers_by_pipeline,
+)
 from mage_ai.data_preparation.preferences import get_preferences
-from mage_ai.data_preparation.repo_manager import (get_repo_config,
-                                                   get_repo_path)
+from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.sync import GitConfig
 from mage_ai.data_preparation.sync.git_sync import GitSync
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
-from mage_ai.orchestration.db.models.schedules import (Backfill, BlockRun,
-                                                       EventMatcher,
-                                                       PipelineRun,
-                                                       PipelineSchedule)
+from mage_ai.orchestration.db.models.schedules import (
+    Backfill,
+    BlockRun,
+    EventMatcher,
+    PipelineRun,
+    PipelineSchedule,
+)
 from mage_ai.orchestration.job_manager import JobType, job_manager
 from mage_ai.orchestration.metrics.pipeline_run import calculate_metrics
 from mage_ai.orchestration.notification.config import NotificationConfig
@@ -848,10 +858,15 @@ def run_pipeline(pipeline_run_id, variables, tags):
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
                                    f'pipeline {pipeline.uuid}',
                                    **tags)
-
+    executor_type = ExecutorFactory.get_pipeline_executor_type(pipeline)
+    try:
+        pipeline_run.update(executor_type=executor_type)
+    except Exception:
+        traceback.print_exc()
     ExecutorFactory.get_pipeline_executor(
         pipeline,
         execution_partition=pipeline_run.execution_partition,
+        executor_type=executor_type,
     ).execute(
         global_vars=variables,
         pipeline_run_id=pipeline_run_id,
@@ -883,8 +898,10 @@ def configure_pipeline_run_payload(
 
 
 def start_scheduler(pipeline_run: PipelineRun) -> None:
-    from mage_ai.orchestration.pipeline_scheduler import (PipelineScheduler,
-                                                          get_variables)
+    from mage_ai.orchestration.pipeline_scheduler import (
+        PipelineScheduler,
+        get_variables,
+    )
 
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     is_integration = PipelineType.INTEGRATION == pipeline_run.pipeline.type
@@ -960,6 +977,14 @@ def stop_pipeline_run(
 
     if pipeline and pipeline.type in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
         job_manager.kill_pipeline_run_job(pipeline_run.id)
+        if pipeline_run.executor_type == ExecutorType.K8S:
+            """
+            TODO: Support running and cancelling pipeline runs in ECS and GCP_CLOUD_RUN executors
+            """
+            ExecutorFactory.get_pipeline_executor(
+                pipeline,
+                executor_type=pipeline_run.executor_type,
+            ).cancel(pipeline_run_id=pipeline_run.id)
     else:
         for b in running_blocks:
             job_manager.kill_block_run_job(b.id)

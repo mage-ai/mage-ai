@@ -1,9 +1,10 @@
+import asyncio
+from typing import Dict
+
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.hash import merge_dict
-from typing import Dict
-import asyncio
 
 
 class PipelineExecutor:
@@ -16,6 +17,9 @@ class PipelineExecutor:
             repo_config=self.pipeline.repo_config,
         )
         self.logger = DictLogger(self.logger_manager.logger)
+
+    def cancel(self, **kwargs):
+        pass
 
     def execute(
         self,

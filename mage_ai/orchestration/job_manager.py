@@ -1,6 +1,8 @@
-from mage_ai.orchestration.queue.queue_factory import QueueFactory
-from typing import Callable, Union
 from enum import Enum
+from typing import Callable, Union
+
+from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
+from mage_ai.orchestration.queue.queue_factory import QueueFactory
 
 
 class JobType(str, Enum):
@@ -38,12 +40,22 @@ class JobManager:
     def kill_block_run_job(self, block_run_id):
         print(f'Kill block run id: {block_run_id}')
         job_id = self.__job_id(JobType.BLOCK_RUN, block_run_id)
-        return self.queue.kill_job(job_id)
+        self.queue.kill_job(job_id)
+        try:
+            executor = ExecutorFactory.get_block_executor(block_run_id)
+            executor.kill_job()
+        except Exception:
+            pass
 
     def kill_pipeline_run_job(self, pipeline_run_id):
         print(f'Kill pipeline run id: {pipeline_run_id}')
         job_id = self.__job_id(JobType.PIPELINE_RUN, pipeline_run_id)
-        return self.queue.kill_job(job_id)
+        self.queue.kill_job(job_id)
+        try:
+            executor = ExecutorFactory.get_block_executor(pipeline_run_id)
+            executor.kill_job()
+        except Exception:
+            pass
 
     def __job_id(self, job_type: JobType, uid: Union[str, int]):
         return f'{job_type}_{uid}'

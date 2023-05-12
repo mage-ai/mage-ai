@@ -1,11 +1,25 @@
+import traceback
 from typing import Dict
 
-from mage_ai.data_preparation.executors.pipeline_executor import \
-    PipelineExecutor
+from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.services.k8s.job_manager import JobManager as K8sJobManager
 
 
 class K8sPipelineExecutor(PipelineExecutor):
+    def cancel(
+        self,
+        pipeline_run_id: int = None,
+    ):
+        if pipeline_run_id is None:
+            return
+        try:
+            job_manager = K8sJobManager(
+                job_name=f'mage-data-prep-pipeline-{pipeline_run_id}',
+            )
+            job_manager.delete_job()
+        except Exception:
+            traceback.print_exc()
+
     def execute(
         self,
         pipeline_run_id: int = None,
