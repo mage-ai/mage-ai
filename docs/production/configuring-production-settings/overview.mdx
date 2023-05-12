@@ -37,3 +37,7 @@ ulimit is a built-in Linux command that allows viewing or limiting system resour
 If you get `OSError: [Errno 24] Too many open files` error when running in Mage in production,
 you can set the environment variable `ULIMIT_NO_FILE` to a larger number (e.g. 8192 or 16384) and restart
 Mage server to increase the maximum number of open files allowed in Mage processes.
+
+If you get `OSError: [Errno 24] Too many open files` error when running Mage locally on your laptop,
+you can increase the limit with the command `ulimit -n 8192` (or a larger number). Add this command to
+`~/.bash_profile` or `~/.zshrc` file so that this config can be applied automatically in the terminal.
