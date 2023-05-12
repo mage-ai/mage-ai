@@ -8,7 +8,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 export const GraphContainerStyle = styled.div<{
   height?: number;
 }>`
-  div:only-child {
+  div {
     ${ScrollbarStyledCss}
   }
 

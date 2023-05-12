@@ -123,7 +123,7 @@ const ContentStyle = styled.div<TooltipWrapperProps>`
   `}
 
   ${props => props.appearBefore && `
-    right: 0;
+    right: ${UNIT * 2}px;
   `}
 
   ${props => props.leftPosition && `

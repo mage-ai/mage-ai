@@ -122,6 +122,12 @@ class IntegrationPipeline(Pipeline):
         transformer_file = importlib.import_module('mage_integrations.transformers.base')
         return os.path.abspath(transformer_file.__file__)
 
+    def block_from_block_uuid_with_stream(
+        self,
+        block_uuid_with_stream: str,
+    ) -> Block:
+        return find(lambda x: block_uuid_with_stream.startswith(x.uuid), self.blocks)
+
     def destination_state_file_path(self, stream: str, destination_table: str) -> str:
         stream_dir = f'{self.destination_dir}/{clean_name(stream)}'
         file_path = f'{stream_dir}/{clean_name(destination_table)}_state'

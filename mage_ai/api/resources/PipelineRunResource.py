@@ -172,10 +172,22 @@ class PipelineRunResource(DatabaseResource):
             block_runs_to_retry = []
             from_block_uuid = payload.get('from_block_uuid')
             if from_block_uuid is not None:
-                from_block = pipeline.blocks_by_uuid.get(from_block_uuid)
+                is_integration = pipeline.type == PipelineType.INTEGRATION
+                if is_integration:
+                    from_block = pipeline.block_from_block_uuid_with_stream(from_block_uuid)
+                else:
+                    from_block = pipeline.blocks_by_uuid.get(from_block_uuid)
+
                 if from_block:
                     downstream_blocks = from_block.get_all_downstream_blocks()
-                    downstream_block_uuids = [b.uuid for b in downstream_blocks] + [from_block_uuid]
+                    if is_integration:
+                        block_uuid_suffix = from_block_uuid[len(from_block.uuid):]
+                        downstream_block_uuids = [from_block_uuid] + \
+                            [f'{b.uuid}{block_uuid_suffix}' for b in downstream_blocks]
+                    else:
+                        downstream_block_uuids = [from_block_uuid] + \
+                            [b.uuid for b in downstream_blocks]
+
                     block_runs_to_retry = \
                         list(
                             filter(

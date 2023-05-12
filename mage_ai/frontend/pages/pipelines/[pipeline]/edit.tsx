@@ -135,6 +135,7 @@ function PipelineDetailPage({
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [disableShortcuts, setDisableShortcuts] = useState<boolean>(false);
   const [allowCodeBlockShortcuts, setAllowCodeBlockShortcuts] = useState<boolean>(false);
+  const [depGraphZoom, setDepGraphZoom] = useState<number>(1);
 
   const localStorageTabSelectedKey =
     `${LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED}_${pipelineUUID}`;
@@ -181,7 +182,9 @@ function PipelineDetailPage({
   const mainContainerRef = useRef(null);
 
   // Server status
-  const { data: serverStatus } = api.status.list();
+  const { data: serverStatus } = api.status.list({}, {
+    revalidateOnFocus: false,
+  });
   const disablePipelineEditAccess = useMemo(
     () => serverStatus?.status?.disable_pipeline_edit_access,
     [serverStatus],
@@ -323,6 +326,7 @@ function PipelineDetailPage({
 
   const blockRefs = useRef({});
   const chartRefs = useRef({});
+  const treeRef = useRef(null);
   const callbackByBlockUUID = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
@@ -387,7 +391,7 @@ function PipelineDetailPage({
 
   // Data providers
   const { data: dataDataProviders } = api.data_providers.list({}, {
-    revalidateOnFocus: true,
+    revalidateOnFocus: false,
   });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
 
@@ -395,14 +399,16 @@ function PipelineDetailPage({
   const {
     data: dataGlobalVariables,
     mutate: fetchVariables,
-  } = api.variables.pipelines.list(pipelineUUID);
+  } = api.variables.pipelines.list(pipelineUUID, {}, {
+    revalidateOnFocus: false,
+  });
   const globalVariables = dataGlobalVariables?.variables;
 
   // Secrets
   const {
     data: dataSecrets,
     mutate: fetchSecrets,
-  } = api.secrets.list();
+  } = api.secrets.list({}, { revalidateOnFocus: false });
   const secrets = dataSecrets?.secrets;
 
   // Blocks
@@ -546,7 +552,7 @@ function PipelineDetailPage({
     mutate: fetchAutocompleteItems,
   } = api.autocomplete_items.list({}, {
     refreshInterval: false,
-    revalidateOnFocus: true,
+    revalidateOnFocus: false,
   });
   const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
 
@@ -1834,6 +1840,7 @@ function PipelineDetailPage({
       setActiveSidekickView={setActiveSidekickView}
       setAllowCodeBlockShortcuts={setAllowCodeBlockShortcuts}
       setAnyInputFocused={setAnyInputFocused}
+      setDepGraphZoom={setDepGraphZoom}
       setDisableShortcuts={setDisableShortcuts}
       setEditingBlock={setEditingBlock}
       setErrors={setErrors}
@@ -1843,6 +1850,7 @@ function PipelineDetailPage({
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}
       textareaFocused={textareaFocused}
+      treeRef={treeRef}
       updatePipelineMetadata={updatePipelineMetadata}
       updateWidget={updateWidget}
       widgets={widgets}
@@ -2234,7 +2242,6 @@ function PipelineDetailPage({
   const buttonTabs = useMemo(() => (
     <Spacing px={1}>
       <ButtonTabs
-        allowScroll
         noPadding
         onClickTab={(tab: TabType) => {
           setSelectedTab(tab);
@@ -2258,8 +2265,10 @@ function PipelineDetailPage({
         afterHeader={(
           <SidekickHeader
             activeView={activeSidekickView}
+            depGraphZoom={depGraphZoom}
             pipeline={pipeline}
             secrets={secrets}
+            treeRef={treeRef}
             variables={globalVariables}
           />
         )}

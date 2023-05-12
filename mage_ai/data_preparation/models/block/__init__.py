@@ -1,14 +1,22 @@
+import asyncio
+import functools
+import json
+import os
+import sys
+import time
+import traceback
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, isfunction, signature
 from logging import Logger
-from mage_ai.data_cleaner.shared.utils import (
-    is_geo_dataframe,
-    is_spark_dataframe,
-)
-from mage_ai.data_preparation.models.block.errors import (
-    HasDownstreamDependencies,
-)
+from queue import Queue
+from typing import Any, Callable, Dict, List, Set, Tuple
+
+import pandas as pd
+import simplejson
+
+from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.block.extension.utils import handle_run_tests
 from mage_ai.data_preparation.models.block.utils import (
     clean_name,
@@ -23,18 +31,18 @@ from mage_ai.data_preparation.models.block.utils import (
 )
 from mage_ai.data_preparation.models.constants import (
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
+    CALLBACK_STATUSES,
+    CUSTOM_EXECUTION_BLOCK_TYPES,
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
+    DATAFRAME_ANALYSIS_MAX_ROWS,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
     BlockColor,
     BlockLanguage,
     BlockStatus,
     BlockType,
-    CALLBACK_STATUSES,
-    CUSTOM_EXECUTION_BLOCK_TYPES,
     CallbackStatus,
-    DATAFRAME_ANALYSIS_MAX_COLUMNS,
-    DATAFRAME_ANALYSIS_MAX_ROWS,
-    DATAFRAME_SAMPLE_COUNT_PREVIEW,
     ExecutorType,
-    NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
     PipelineType,
 )
 from mage_ai.data_preparation.models.file import File
@@ -49,21 +57,8 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import format_enum
-from mage_ai.shared.utils import (
-    clean_name as clean_name_orig,
-    is_spark_env,
-)
-from queue import Queue
-from typing import Any, Callable, Dict, List, Set, Tuple
-import asyncio
-import functools
-import json
-import os
-import pandas as pd
-import simplejson
-import sys
-import time
-import traceback
+from mage_ai.shared.utils import clean_name as clean_name_orig
+from mage_ai.shared.utils import is_spark_env
 
 PYTHON_COMMAND = 'python3'
 
@@ -388,7 +383,9 @@ class Block:
 
     @classmethod
     def after_create(self, block: 'Block', **kwargs):
-        from mage_ai.data_preparation.models.block.dbt.utils import add_blocks_upstream_from_refs
+        from mage_ai.data_preparation.models.block.dbt.utils import (
+            add_blocks_upstream_from_refs,
+        )
         widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
@@ -414,7 +411,9 @@ class Block:
         from mage_ai.data_preparation.models.block.constants import BLOCK_TYPE_TO_CLASS
         from mage_ai.data_preparation.models.block.dbt import DBTBlock
         from mage_ai.data_preparation.models.block.integration import (
-            SourceBlock, DestinationBlock, TransformerBlock
+            DestinationBlock,
+            SourceBlock,
+            TransformerBlock,
         )
         from mage_ai.data_preparation.models.block.r import RBlock
         from mage_ai.data_preparation.models.block.sql import SQLBlock
@@ -1756,6 +1755,8 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
                     global_vars['spark'] = spark
         if 'env' not in global_vars:
             global_vars['env'] = get_env()
+        if 'configuration' not in global_vars:
+            global_vars['configuration'] = self.configuration
         return global_vars
 
     def __get_spark_session(self):

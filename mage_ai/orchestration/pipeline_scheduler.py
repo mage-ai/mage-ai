@@ -564,6 +564,7 @@ def run_integration_pipeline(
 
     data_loader_block = integration_pipeline.data_loader
     data_exporter_block = integration_pipeline.data_exporter
+    executable_block_run_ids = set(executable_block_runs)
 
     for stream in integration_pipeline.streams(variables):
         tap_stream_id = stream['tap_stream_id']
@@ -621,10 +622,10 @@ def run_integration_pipeline(
             if not data_loader_block_run or not data_exporter_block_run:
                 continue
 
-            transformer_block_runs = [br for br in block_runs_in_order if br.block_uuid not in [
-                data_loader_uuid,
-                data_exporter_uuid,
-            ]]
+            transformer_block_runs = [br for br in block_runs_in_order if (
+                br.block_uuid not in [data_loader_uuid, data_exporter_uuid] and
+                br.id in executable_block_run_ids
+            )]
 
             index = stream.get('index', idx)
 
@@ -641,6 +642,11 @@ def run_integration_pipeline(
             ] + [(br, shared_dict) for br in transformer_block_runs] + [
                 (data_exporter_block_run, shared_dict),
             ]
+            if len(executable_block_runs) == 1 and \
+                    data_exporter_block_run.id in executable_block_run_ids:
+                block_runs_and_configs = block_runs_and_configs[-1:]
+            elif data_loader_block_run.id not in executable_block_run_ids:
+                block_runs_and_configs = block_runs_and_configs[1:]
 
             block_failed = False
             for idx2, tup in enumerate(block_runs_and_configs):

@@ -151,6 +151,20 @@ export const AsideHeaderStyle = styled.div<{
   `}
 `;
 
+export const AsideHeaderInnerStyle = styled.div<{
+  noPadding?: boolean;
+}>`
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  padding: 0 ${UNIT * 2}px;
+  ${hideScrollBar()}
+
+  ${props => props.noPadding && `
+    padding: 0;
+  `}
+`;
+
 export const AsideSubheaderStyle = styled.div<{
   visible: boolean;
 }>`

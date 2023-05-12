@@ -98,7 +98,9 @@ function IntegrationPipeline({
   const [sourceVisible, setSourceVisible] = useState(true);
   const [transformerVisible, setTransformerVisible] = useState(true);
 
-  const { data: dataIntegrationSources } = api.integration_sources.list();
+  const { data: dataIntegrationSources } = api.integration_sources.list({}, {
+    revalidateOnFocus: false,
+  });
   const integrationSources: IntegrationSourceType[] =
     useMemo(() => dataIntegrationSources?.integration_sources || [], [
       dataIntegrationSources,
@@ -106,7 +108,9 @@ function IntegrationPipeline({
   const integrationSourcesByUUID =
     useMemo(() => indexBy(integrationSources, ({ uuid }) => uuid), [integrationSources]);
 
-  const { data: dataIntegrationDestinations } = api.integration_destinations.list();
+  const { data: dataIntegrationDestinations } = api.integration_destinations.list({}, {
+    revalidateOnFocus: false,
+  });
   const integrationDestinations: IntegrationSourceType[] =
     useMemo(() => dataIntegrationDestinations?.integration_destinations || [], [
       dataIntegrationDestinations,
@@ -161,6 +165,8 @@ function IntegrationPipeline({
     onChangeCodeBlock,
     pipeline,
   ]);
+  const transformerBlock: BlockType =
+    useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.TRANSFORMER === type), [blocks]);
 
   const catalog: CatalogType =
     useMemo(() => (!isEmptyObject(dataLoaderBlockContent?.catalog)
@@ -892,6 +898,7 @@ function IntegrationPipeline({
                 hideMarkdown
                 hideScratchpad
                 hideSensor
+                hideTransformer={!!transformerBlock}
                 hideTransformerDataSources
                 pipeline={pipeline}
               />

@@ -26,22 +26,22 @@ export const ContainerStyle = styled.div`
 
 type VerticalNavigationStyleProps = {
   aligned?: 'left' | 'right';
-  borderLess?: boolean;
+  borderless?: boolean;
   showMore?: boolean;
 };
 
 const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps>`
   height: calc(100% - ${HEADER_HEIGHT}px);
 
-  ${props => !props.borderLess && `
+  ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
   `}
 
-  ${props => !props.borderLess && props.aligned !== 'right' && `
+  ${props => !props.borderless && props.aligned !== 'right' && `
     border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 
-  ${props => !props.borderLess && props.aligned === 'right' && `
+  ${props => !props.borderless && props.aligned === 'right' && `
     border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 
@@ -73,7 +73,7 @@ const VerticalNavigationStyleComponent = styled.div<VerticalNavigationStyleProps
 
 export function VerticalNavigationStyle({
   aligned,
-  borderLess,
+  borderless,
   children,
   showMore,
 }: {
@@ -84,7 +84,7 @@ export function VerticalNavigationStyle({
   return (
     <VerticalNavigationStyleComponent
       aligned={aligned}
-      borderLess={borderLess && !visible}
+      borderless={borderless && !visible}
       onMouseEnter={showMore ? () => setVisible(true) : null}
       onMouseLeave={showMore ? () => setVisible(false) : null}
       showMore={showMore}

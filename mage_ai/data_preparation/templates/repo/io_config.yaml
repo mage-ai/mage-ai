@@ -34,6 +34,12 @@ default:
     client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/your_service_account_email"
   GOOGLE_SERVICE_ACC_KEY_FILEPATH: "/path/to/your/service/account/key.json"
   GOOGLE_LOCATION: US # Optional
+  MONGODB_DATABASE: database
+  MONGODB_HOST: host
+  MONGODB_PASSWORD: password
+  MONGODB_PORT: 27017
+  MONGODB_COLLECTION: collection
+  MONGODB_USER: user
   MSSQL_DATABASE: database
   MSSQL_SCHEMA: schema
   MSSQL_DRIVER: "ODBC Driver 18 for SQL Server"

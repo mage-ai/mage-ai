@@ -109,7 +109,7 @@ function KernelStatus({
   const {
     data: dataClusters,
     mutate: fetchClusters,
-  } = api.clusters.detail(selectedSparkClusterType);
+  } = api.clusters.detail(selectedSparkClusterType, {}, { revalidateOnFocus: false });
   const clusters: ClusterType[] = useMemo(
     () => dataClusters?.cluster?.clusters || [],
     [dataClusters],

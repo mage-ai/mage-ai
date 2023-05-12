@@ -9,6 +9,7 @@ import React, {
 import { CSSTransition } from 'react-transition-group';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
@@ -48,10 +49,8 @@ import {
 } from '@interfaces/ChartBlockType';
 import {
   KEY_CODES_SYSTEM,
-  KEY_CODE_A,
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_UP,
-  KEY_CODE_B,
   KEY_CODE_CONTROL,
   KEY_CODE_D,
   KEY_CODE_ENTER,
@@ -68,6 +67,7 @@ import { addScratchpadNote, addSqlBlockNote } from '@components/PipelineDetail/A
 import { addUnderscores, randomNameGenerator, removeExtensionFromFilename } from '@utils/string';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -368,6 +368,36 @@ function PipelineDetail({
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
   }, [pipeline]);
 
+  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+    ({
+      block,
+      upstreamBlocks,
+    }: {
+      block: BlockType,
+      upstreamBlocks: string[];
+    }) => api.blocks.pipelines.useUpdate(
+      pipeline?.uuid,
+      block?.uuid,
+    )({
+      block: {
+        upstream_blocks: upstreamBlocks,
+      },
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const onClickAddSingleDBTModel = useCallback((blockIndex: number) => {
     setAddDBTModelVisible(true);
     setLastBlockIndex(blockIndex);
@@ -464,10 +494,27 @@ function PipelineDetail({
       } else {
         el = (
           <CodeBlock
-            addNewBlock={(b: BlockRequestPayloadType) => {
+            addNewBlock={(
+              b: BlockRequestPayloadType,
+              downstreamBlocks?: string[],
+            ) => {
               setTextareaFocused(true);
+              const onCreateCallback = (block: BlockType) => {
+                if (downstreamBlocks?.length === 1) {
+                  const downstreamBlockUUID = downstreamBlocks[0];
+                  updateBlock({
+                    block: { uuid: downstreamBlockUUID },
+                    upstreamBlocks: [block.uuid],
+                  });
+                }
+                setSelectedBlock?.(block);
+              };
 
-              return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+              return addNewBlockAtIndex(
+                b,
+                idx + 1,
+                onCreateCallback,
+              );
             }}
             addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
             addWidget={addWidget}
