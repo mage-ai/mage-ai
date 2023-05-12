@@ -1,0 +1,54 @@
+blocks:
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - export_s3
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: load_json
+  status: updated
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_json
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - json_to_df
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: export_s3
+  status: not_executed
+  type: data_exporter
+  upstream_blocks:
+  - load_json
+  uuid: export_s3
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: json_to_df
+  status: not_executed
+  type: transformer
+  upstream_blocks:
+  - export_s3
+  uuid: json_to_df
+callbacks: []
+data_integration: null
+description: null
+executor_count: 1
+extensions: {}
+name: json_to_s3
+type: python
+updated_at: '2023-05-12 11:56:05'
+uuid: json_to_s3
+widgets: []

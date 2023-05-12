@@ -1,0 +1,24 @@
+blocks:
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: load_json
+  status: not_executed
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_json
+callbacks: []
+data_integration: null
+description: null
+executor_count: 1
+extensions: {}
+name: restless hill
+type: python
+updated_at: '2023-05-12 11:31:41'
+uuid: restless_hill
+widgets: []
