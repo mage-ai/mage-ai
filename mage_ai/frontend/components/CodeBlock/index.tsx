@@ -1164,7 +1164,8 @@ function CodeBlock({
 
                 <Spacing mr={2} />
 
-                {!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType) && (
+                {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
+                  && mainContainerWidth > 700) && (
                   <Tooltip
                     appearBefore
                     block
