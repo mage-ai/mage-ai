@@ -223,14 +223,13 @@ class WorkloadManager:
                 'ports': [
                     {
                         'protocol': 'TCP',
-                        'port': 80,
-                        'targetPort': 6789,
+                        'port': 6789,
                     }
                 ],
                 'selector': {
                     'app': deployment_name
                 },
-                'type': os.getenv(KUBE_SERVICE_TYPE, LOAD_BALANCER_SERVICE_TYPE)
+                'type': 'NodePort'
             }
         }
 

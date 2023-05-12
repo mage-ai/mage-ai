@@ -214,11 +214,7 @@ function WorkspacePage() {
   const clusterType = dataStatus?.status?.['instance_type'] || 'ecs';
 
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
-    {
-      query: {
-        cluster_type: clusterType,
-      },
-    },
+    { cluster_type: clusterType },
     {
       refreshInterval: 5000,
       revalidateOnFocus: true,
