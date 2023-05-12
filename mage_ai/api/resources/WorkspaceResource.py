@@ -61,7 +61,7 @@ class WorkspaceResource(GenericResource):
             if project in instance_map
         ]
 
-        return self(workspaces, user, **kwargs)
+        return self.build_result_set(workspaces, user, **kwargs)
 
     @classmethod
     @safe_db_query
