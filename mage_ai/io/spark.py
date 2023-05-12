@@ -189,13 +189,6 @@ class Spark(BaseSQLDatabase):
         elif type(df) is list:
             df = DataFrame(df)
 
-        if not query_string:
-            if index:
-                df = df.reset_index()
-
-            dtypes = infer_dtypes(df)
-            df = clean_df_for_export(df, self.clean, dtypes)
-
         def __process(database: Union[str, None]):
 
             df_existing = self.client.sql(f"""
