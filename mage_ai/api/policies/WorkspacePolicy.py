@@ -59,3 +59,12 @@ WorkspacePolicy.allow_write([
     constants.CREATE,
     constants.UPDATE,
 ], condition=lambda policy: policy.is_owner())
+
+WorkspacePolicy.allow_query([
+    'cluster_type',
+], scopes=[
+    OauthScope.CLIENT_PRIVATE,
+], on_action=[
+    constants.DETAIL,
+    constants.LIST,
+], condition=lambda policy: policy.has_at_least_admin_role())
