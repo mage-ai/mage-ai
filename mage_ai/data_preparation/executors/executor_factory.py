@@ -64,7 +64,7 @@ class ExecutorFactory:
             executor_type (Union[ExecutorType, str, None], optional): If the executor_type is
                 specified. Use this executor_type directly.        """
 
-        executor_type = self.get_default_executor_type(pipeline, executor_type=executor_type)
+        executor_type = self.get_pipeline_executor_type(pipeline, executor_type=executor_type)
         if executor_type == ExecutorType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_pipeline_executor import (
                 PySparkPipelineExecutor,
