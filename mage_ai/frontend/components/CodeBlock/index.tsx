@@ -303,7 +303,7 @@ function CodeBlock({
   const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
   const [selectedTab, setSelectedTab] = useState<TabType>(TABS_DBT[0]);
 
-  const [collected, drag, dragPreview] = useDrag(() => ({
+  const [collected, drag] = useDrag(() => ({
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -345,6 +345,7 @@ function CodeBlock({
       setCallbackContent(callbackContentOrig);
     }
   }, [
+    callbackContent,
     callbackContentOrig,
   ]);
 
@@ -704,9 +705,12 @@ function CodeBlock({
     if (runStartTime) {
       interval = setInterval(() => setCurrentTime(Number(new Date())), 1000);
     }
+    if (currentTime && !isInProgress) {
+      clearInterval(interval);
+    }
 
     return () => clearInterval(interval);
-  }, [runStartTime]);
+  }, [currentTime, isInProgress, runStartTime]);
 
 
   const buildBlockMenu = useCallback((b: BlockType) => {
@@ -1164,7 +1168,8 @@ function CodeBlock({
 
                 <Spacing mr={2} />
 
-                {!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType) && (
+                {(!BLOCK_TYPES_WITH_NO_PARENTS.includes(blockType)
+                  && mainContainerWidth > 700) && (
                   <Tooltip
                     appearBefore
                     block

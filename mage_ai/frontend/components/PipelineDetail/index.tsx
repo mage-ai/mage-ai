@@ -29,7 +29,6 @@ import FileType, { FileExtensionEnum } from '@interfaces/FileType';
 import HiddenBlock from '@components/CodeBlock/HiddenBlock';
 import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
-import KernelType, { SetMessagesType } from '@interfaces/KernelType';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
@@ -100,8 +99,6 @@ type PipelineDetailProps = {
     [uuid: string]: BlockType;
   };
   interruptKernel: () => void;
-  isPipelineUpdating: boolean;
-  kernel: KernelType;
   mainContainerRef: any;
   mainContainerWidth: number;
   messages: {
@@ -114,7 +111,6 @@ type PipelineDetailProps = {
   }) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
-  pipelineLastSaved: Date;
   restartKernel: () => void;
   runBlock: (payload: {
     block: BlockType;
@@ -139,14 +135,13 @@ type PipelineDetailProps = {
   });
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
-  setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
   setSelectedStream: (stream: string) => void;
   setTextareaFocused: (value: boolean) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
-} & SetEditingBlockType & SetMessagesType;
+} & SetEditingBlockType;
 
 function PipelineDetail({
   addNewBlockAtIndex,
@@ -167,8 +162,6 @@ function PipelineDetail({
   globalVariables,
   hiddenBlocks,
   interruptKernel,
-  isPipelineUpdating,
-  kernel,
   mainContainerRef,
   mainContainerWidth,
   messages,
@@ -177,7 +170,6 @@ function PipelineDetail({
   openSidekickView,
   pipeline,
   pipelineContentTouched,
-  pipelineLastSaved,
   restartKernel,
   runBlock,
   runningBlocks = [],
@@ -189,10 +181,8 @@ function PipelineDetail({
   setErrors,
   setIntegrationStreams,
   setHiddenBlocks,
-  setMessages,
   setOutputBlocks,
   setPipelineContentTouched,
-  setRunningBlocks,
   setSelectedBlock,
   setSelectedOutputBlock,
   setSelectedStream,
@@ -368,7 +358,7 @@ function PipelineDetail({
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
   }, [pipeline]);
 
-  const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
+  const [updateBlock] = useMutation(
     ({
       block,
       upstreamBlocks,
@@ -618,6 +608,7 @@ function PipelineDetail({
     setSelectedOutputBlock,
     setTextareaFocused,
     textareaFocused,
+    updateBlock,
     widgets,
   ]);
 

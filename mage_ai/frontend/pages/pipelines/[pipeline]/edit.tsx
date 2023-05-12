@@ -1062,8 +1062,8 @@ function PipelineDetailPage({
     <PopupMenu
       centerOnScreen
       neutral
-      onClick={() => deleteBlockFile(block)}
       onCancel={hideDeleteConfirmation}
+      onClick={() => deleteBlockFile(block)}
       subtitle={
         'Deleting this block is dangerous. Your block may have downstream ' +
         'dependencies that depend on this block. You can delete this block anyway ' +
@@ -1946,8 +1946,6 @@ function PipelineDetailPage({
       // @ts-ignore
       hiddenBlocks={hiddenBlocks}
       interruptKernel={interruptKernel}
-      isPipelineUpdating={isPipelineUpdating}
-      kernel={kernel}
       mainContainerRef={mainContainerRef}
       mainContainerWidth={mainContainerWidth}
       messages={messages}
@@ -1956,7 +1954,6 @@ function PipelineDetailPage({
       openSidekickView={openSidekickView}
       pipeline={pipeline}
       pipelineContentTouched={pipelineContentTouched}
-      pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
       runBlock={runBlock}
       runningBlocks={runningBlocks}
@@ -1969,10 +1966,8 @@ function PipelineDetailPage({
       // @ts-ignore
       setHiddenBlocks={setHiddenBlocks}
       setIntegrationStreams={setIntegrationStreams}
-      setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
-      setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
       setSelectedStream={setSelectedStream}
@@ -2000,8 +1995,6 @@ function PipelineDetailPage({
     globalVariables,
     hiddenBlocks,
     interruptKernel,
-    isPipelineUpdating,
-    kernel,
     mainContainerRef,
     mainContainerWidth,
     messages,
@@ -2010,7 +2003,6 @@ function PipelineDetailPage({
     openSidekickView,
     pipeline,
     pipelineContentTouched,
-    pipelineLastSaved,
     restartKernel,
     runBlock,
     runningBlocks,
@@ -2020,9 +2012,7 @@ function PipelineDetailPage({
     setEditingBlock,
     setErrors,
     setHiddenBlocks,
-    setMessages,
     setPipelineContentTouched,
-    setRunningBlocks,
     setSelectedBlock,
     setTextareaFocused,
     showAddBlockModal,
