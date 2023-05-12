@@ -190,12 +190,7 @@ class Spark(BaseSQLDatabase):
             df = DataFrame(df)
 
         def __process(database: Union[str, None]):
-
-            df_existing = self.client.sql(f"""
-EXISTS TABLE {database}.{table_name}
-""").toPandas()
-
-            table_exists = not df_existing.empty and df_existing.iloc[0, 0] == 1
+            table_exists = self.client.catalog.tableExists(f'{database}.{table_name}')
             should_create_table = not table_exists
 
             if table_exists:
