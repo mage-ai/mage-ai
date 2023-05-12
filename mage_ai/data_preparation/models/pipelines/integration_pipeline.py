@@ -347,8 +347,11 @@ class IntegrationPipeline(Pipeline):
                 raise Exception(message)
 
     def discover_streams(self) -> List[str]:
+        LOGGER = singer.get_logger()
+        LOGGER.info('Testing running discover_streams generic  11111')
         if self.source_file_path and self.data_loader.file_path:
             try:
+                LOGGER.info(f'Testing source_file_path {self.source_file_path}')
                 run_args = [
                     PYTHON,
                     self.source_file_path,
@@ -357,6 +360,7 @@ class IntegrationPipeline(Pipeline):
                     '--discover',
                     '--discover_streams',
                 ]
+                LOGGER.info(f'Testing run_args {run_args}')
 
                 proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.check_returncode()

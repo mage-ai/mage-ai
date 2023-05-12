@@ -4,8 +4,15 @@ from datetime import datetime
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
+from mage_integrations.sources.constants import (
+    COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_NUMBER,
+    COLUMN_TYPE_STRING,
+)
 from typing import Dict, Generator, List
 import boto3
+from singer.schema import Schema
+import singer
 # TODO: refactor this common row_to_singer_record function
 # to util file to share between different sources.
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
@@ -20,34 +27,65 @@ class DynamoDb(Source):
     @property
     def region(self) -> str:
         return self.config.get('aws_region', 'us-west-2')
-    
-    @property
-    def table_configs(self):
-        """
-        Used for multiple streams. Each table config has the key of table_name.
-        """
-        configs = self.config.get('table_configs', [])
-        configs = [c for c in configs if all(k in c for k in REQUIRED_TABLE_CONFIG_KEYS)]
-        return configs
+
+    def discover_streams(self) -> List[Dict]:
+        client = self.build_client()
+        self.logger.info('Testing running inside discover_streams')
+
+        response = client.list_tables()
+        table_list = response.get('TableNames')
+        while response.get('LastEvaluatedTableName') is not None:
+            response = client.list_tables(ExclusiveStartTableName=response.get('LastEvaluatedTableName'))
+            table_list += response.get('TableNames')
+
+        return [dict(
+            stream=stream_id,
+            tap_stream_id=stream_id,
+        ) for stream_id in table_list]
 
     def discover_stream(self, client, table_name):
         '''
         Read a single table in DynamoDB.
         '''
+        self.logger.info('Testing running discover_stream in dynamodb')
         try:
             table_info = client.describe_table(TableName=table_name).get('Table', {})
         except ClientError:
             self.logger.error(f'Access to table {table_name} was denied, skipping')
             return None
-
+        self.logger.info(f'{table_info}')
         key_props = [key_schema.get('AttributeName')
                      for key_schema in table_info.get('KeySchema', [])]
+        properties = dict()
+        for column_schema in table_info.get('AttributeDefinitions', []):
+            column_name = column_schema.get('AttributeName')
+            column_type = column_schema.get('AttributeType')
+            column_types = []
+            if column_type == 'S':
+                column_types.append(COLUMN_TYPE_STRING)
+            elif column_type == 'N':
+                column_types.append(COLUMN_TYPE_NUMBER)
+            elif column_type == 'B':
+                column_types.append(COLUMN_TYPE_OBJECT)
+            else:
+                self.logger.error(f'Unknown column type {column_type} for column {column_name}')
+
+            properties[column_name] = dict(
+                    type=column_types,
+                )
+        schema = Schema.from_dict(dict(
+                properties=properties,
+                type='object',
+            ))
         metadata = get_standard_metadata(
                 key_properties=key_props,
+                schema=schema.to_dict(),
+                stream_id=table_name,
             )
         catalog_entry = CatalogEntry(
                 key_properties=key_props,
                 metadata=metadata,
+                schema=schema,
                 stream=table_name,
                 tap_stream_id=table_name,
             )
@@ -57,18 +95,15 @@ class DynamoDb(Source):
         '''
         Read streams in DynamoDB.
         '''
+        self.logger.info('Testing running discover in dynamodb')
+        
         client = self.build_client()
-        self.logger.info(f'Testing streams: {streams}')
+        self.logger.info('Debugging running discover')
         outputs = []
         if streams:
             # Check if streams available
             for stream in streams:
                 catalog_entry = self.discover_stream(client, stream)
-                if catalog_entry is not None:
-                    outputs.append(catalog_entry)
-        else:
-            for table_config in self.table_configs:
-                catalog_entry = self.discover_stream(client, table_config['table_name'])
                 if catalog_entry is not None:
                     outputs.append(catalog_entry)
         return Catalog(outputs)
@@ -94,8 +129,10 @@ class DynamoDb(Source):
 
     def test_connection(self) -> None:
         client = self.build_client()
-        for table_config in self.table_configs:
-            client.describe_table(TableName=table_config['table_name'])
+        client.describe_endpoints()
+
+        all_tables_response = client.list_tables()
+        self.logger.info(f'Testing all_tables_response: {all_tables_response}')
 
     def scan_table(self, table_name):
         '''
@@ -142,4 +179,5 @@ class DynamoDb(Source):
 
 
 if __name__ == '__main__':
+    LOGGER = singer.get_logger()
     main(DynamoDb)
