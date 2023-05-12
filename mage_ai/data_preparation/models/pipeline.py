@@ -8,20 +8,29 @@ from typing import Callable, Dict, List
 import aiofiles
 import yaml
 
-from mage_ai.data_preparation.models.block import (Block, run_blocks,
-                                                   run_blocks_sync)
-from mage_ai.data_preparation.models.block.dbt.utils import \
-    update_model_settings
+from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block.dbt.utils import update_model_settings
 from mage_ai.data_preparation.models.block.errors import (
-    HasDownstreamDependencies, NoMultipleDynamicUpstreamBlocks)
+    HasDownstreamDependencies,
+    NoMultipleDynamicUpstreamBlocks,
+)
 from mage_ai.data_preparation.models.block.utils import is_dynamic_block
 from mage_ai.data_preparation.models.constants import (
-    DATA_INTEGRATION_CATALOG_FILE, PIPELINE_CONFIG_FILE, PIPELINES_FOLDER,
-    BlockLanguage, BlockType, ExecutorType, PipelineType)
+    DATA_INTEGRATION_CATALOG_FILE,
+    PIPELINE_CONFIG_FILE,
+    PIPELINES_FOLDER,
+    BlockLanguage,
+    BlockType,
+    ExecutorType,
+    PipelineType,
+)
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import (RepoConfig, get_repo_config,
-                                                   get_repo_path)
+from mage_ai.data_preparation.repo_manager import (
+    RepoConfig,
+    get_repo_config,
+    get_repo_path,
+)
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.orchestration.db import db_connection, safe_db_query
@@ -189,8 +198,9 @@ class Pipeline:
 
     @classmethod
     def get(self, uuid, repo_path: str = None, check_if_exists: bool = False):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline import \
-            IntegrationPipeline
+        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+            IntegrationPipeline,
+        )
 
         if check_if_exists and not os.path.exists(
             os.path.join(
@@ -209,8 +219,9 @@ class Pipeline:
 
     @classmethod
     async def get_async(self, uuid, repo_path: str = None):
-        from mage_ai.data_preparation.models.pipelines.integration_pipeline import \
-            IntegrationPipeline
+        from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
+            IntegrationPipeline,
+        )
         repo_path = repo_path or get_repo_path()
         config_path = os.path.join(
             repo_path,
@@ -347,8 +358,9 @@ class Pipeline:
         order based on a block's upstream dependencies.
         """
         if self.type == PipelineType.STREAMING:
-            from mage_ai.data_preparation.executors.streaming_pipeline_executor import \
-                StreamingPipelineExecutor
+            from mage_ai.data_preparation.executors.streaming_pipeline_executor import (
+                StreamingPipelineExecutor,
+            )
             StreamingPipelineExecutor(self).execute(
                 build_block_output_stdout=build_block_output_stdout,
             )
@@ -640,7 +652,10 @@ class Pipeline:
     @safe_db_query
     def __transfer_related_models(self, old_uuid, new_uuid):
         from mage_ai.orchestration.db.models.schedules import (
-            Backfill, PipelineRun, PipelineSchedule)
+            Backfill,
+            PipelineRun,
+            PipelineSchedule,
+        )
 
         # Migrate pipeline schedules
         PipelineSchedule.query.filter(PipelineSchedule.pipeline_uuid == old_uuid).update({

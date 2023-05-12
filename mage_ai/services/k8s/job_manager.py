@@ -5,8 +5,7 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 from mage_ai.services.k8s.config import K8sExecutorConfig
-from mage_ai.services.k8s.constants import (DEFAULT_NAMESPACE,
-                                            KUBE_POD_NAME_ENV_VAR)
+from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE, KUBE_POD_NAME_ENV_VAR
 from mage_ai.shared.hash import merge_dict
 
 

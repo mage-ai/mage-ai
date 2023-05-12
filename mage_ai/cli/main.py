@@ -114,8 +114,7 @@ def run(
 
     import sentry_sdk
 
-    from mage_ai.data_preparation.executors.executor_factory import \
-        ExecutorFactory
+    from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.data_preparation.variable_manager import get_global_variables
     from mage_ai.orchestration.db import db_connection

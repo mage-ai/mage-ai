@@ -7,8 +7,7 @@ import yaml
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.data_preparation.models.pipeline import (InvalidPipelineError,
-                                                      Pipeline)
+from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline_run_with_schedule
