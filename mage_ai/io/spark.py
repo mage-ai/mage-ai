@@ -1,9 +1,5 @@
 from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import (
-    clean_df_for_export,
-    infer_dtypes,
-)
 from pandas import DataFrame
 from pyspark.sql import SparkSession
 from typing import Dict, List, Union

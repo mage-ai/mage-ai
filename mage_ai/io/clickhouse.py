@@ -1,9 +1,5 @@
 from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from mage_ai.io.export_utils import (
-    clean_df_for_export,
-    infer_dtypes,
-)
 from pandas import DataFrame
 from typing import Dict, List, Union
 import clickhouse_connect
@@ -182,13 +178,6 @@ class ClickHouse(BaseSQLDatabase):
             df = DataFrame([df])
         elif type(df) is list:
             df = DataFrame(df)
-
-        if not query_string:
-            if index:
-                df = df.reset_index()
-
-            dtypes = infer_dtypes(df)
-            df = clean_df_for_export(df, self.clean, dtypes)
 
         def __process(database: Union[str, None]):
 
