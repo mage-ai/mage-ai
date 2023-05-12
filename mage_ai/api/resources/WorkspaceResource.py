@@ -40,8 +40,10 @@ class WorkspaceResource(GenericResource):
 
         cluster_type = self.verify_project()
         if not cluster_type:
-            query = kwargs.get('query', {})
-            cluster_type = query.get('cluster_type')
+            cluster_type = query_arg.get('cluster_type', [None])
+            if cluster_type:
+                cluster_type = cluster_type[0]
+
         instances = self.get_instances(cluster_type)
         instance_map = {
             instance.get('name'): instance
