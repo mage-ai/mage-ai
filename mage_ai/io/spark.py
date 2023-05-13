@@ -13,7 +13,6 @@ class Spark(BaseSQLDatabase):
         if self.spark_init:
             return self.spark
         try:
-            kwargs.get('verbose')
             self.spark = SparkSession.builder.master(
                 kwargs.get('host', 'local')).getOrCreate()
             self.spark_init = True
@@ -28,8 +27,8 @@ class Spark(BaseSQLDatabase):
         if kwargs.get('verbose') is not None:
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
-        self.spark_init = False
         self.spark = None
+        self.spark_init = False
         with self.printer.print_msg('Connecting to Spark Session'):
             self.client = self._get_spark_session(**kwargs)
 
@@ -51,18 +50,6 @@ class Spark(BaseSQLDatabase):
             host=config[ConfigKey.SPARK_HOST],
             database=config[ConfigKey.SPARK_SCHEMA],
         )
-
-    def execute(self, command_string: str, **kwargs) -> None:
-        """
-        Sends command to the connected Spark Session.
-
-        Args:
-            command_string (str): Command to execute on the Spark Session.
-            **kwargs: Additional arguments to pass to command, such as configurations
-        """
-        with self.printer.print_msg(f'Executing query \'{command_string}\''):
-            command_string = self._clean_query(command_string)
-            self.client.sql(command_string, **kwargs)
 
     def execute_query(
         self,
@@ -93,16 +80,15 @@ class Spark(BaseSQLDatabase):
         results = []
 
         for idx, query in enumerate(queries):
-            parameters = query_variables[idx] \
-                        if query_variables and idx < len(query_variables) \
-                        else {}
+            parameters = (query_variables[idx]
+                          if query_variables and idx < len(query_variables)
+                          else {})
             query = self._clean_query(query)
+            result = self.client.sql(query, parameters=parameters)
 
-            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
-                    fetch_query_at_indexes[idx]:
-                result = self.client.sql(query, parameters=parameters).toPandas()
-            else:
-                result = self.client.sql(query, parameters=parameters).toPandas()
+            if (fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and
+                    fetch_query_at_indexes[idx]):
+                result = result.toPandas()
 
             results.append(result)
 
