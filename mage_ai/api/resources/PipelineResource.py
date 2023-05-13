@@ -46,7 +46,8 @@ class PipelineResource(BaseResource):
             try:
                 return await Pipeline.get_async(uuid)
             except Exception as err:
-                raise Exception(f'Error loading pipeline {uuid}: {err}.')
+                print(f'Error loading pipeline {uuid}: {err}.')
+                return None
 
         pipelines = await asyncio.gather(
             *[get_pipeline(uuid) for uuid in pipeline_uuids]
