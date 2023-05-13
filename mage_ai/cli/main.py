@@ -23,9 +23,9 @@ app = typer.Typer(
 @app.command()
 def init(
     project_path: str = typer.Argument(..., help='path of the Mage project to be created.'),
-    project_type: Union[str, None] = typer.Option(
-        'standalone', help='type of project to create, options are main, sub, or standalone'
-    ),
+    # project_type: Union[str, None] = typer.Option(
+    #     'standalone', help='type of project to create, options are main, sub, or standalone'
+    # ),
 ):
     """
     Initialize Mage project.
@@ -33,7 +33,7 @@ def init(
     from mage_ai.data_preparation.repo_manager import init_repo
 
     repo_path = os.path.join(os.getcwd(), project_path)
-    init_repo(repo_path, project_type)
+    init_repo(repo_path)
     print(f'Initialized Mage project at {repo_path}')
 
 

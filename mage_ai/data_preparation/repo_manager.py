@@ -146,7 +146,7 @@ def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> Non
     """
     if os.path.exists(repo_path):
         raise FileExistsError(f'Repository {repo_path} already exists')
-    
+
     if project_type == ProjectType.MAIN:
         copy_template_directory('main', repo_path)
     else:

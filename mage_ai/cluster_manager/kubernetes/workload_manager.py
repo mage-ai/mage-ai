@@ -6,7 +6,7 @@ from mage_ai.cluster_manager.constants import (
     GCP_BACKEND_CONFIG_ANNOTATION,
     KUBE_SERVICE_GCP_BACKEND_CONFIG,
     KUBE_SERVICE_TYPE,
-    LOAD_BALANCER_SERVICE_TYPE,
+    NODE_PORT_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME
 )
@@ -229,7 +229,7 @@ class WorkloadManager:
                 'selector': {
                     'app': deployment_name
                 },
-                'type': 'NodePort'
+                'type': os.getenv(KUBE_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE)
             }
         }
 
