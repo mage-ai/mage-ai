@@ -21,7 +21,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { buildNavigationItems } from './utils';
-import { parseErrorFromResponse } from '@api/utils/response';
+import { displayErrorFromReadResponse } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -81,14 +81,7 @@ function PipelineDetailPage({
   });
   const pipeline = data?.pipeline;
   useEffect(() => {
-    if (data?.error) {
-      setErrors?.({
-        errors: parseErrorFromResponse(data),
-        response: data,
-      });
-    } else {
-      setErrors?.(null);
-    }
+    displayErrorFromReadResponse(data, setErrors);
   }, [data, setErrors]);
 
   const after = useMemo(() => {

@@ -1,3 +1,5 @@
+import ErrorsType from '@interfaces/ErrorsType';
+
 export function parseError(res) {
   const { error } = res;
   const {
@@ -140,4 +142,24 @@ export function onSuccess(response: any, opts = {}) {
   }
 
   return errorOrSuccess(response, opts);
+}
+
+export function displayErrorFromReadResponse(
+  data: any,
+  setErrors: (errors: ErrorsType) => void,
+  links?: {
+    href?: string;
+    label: string;
+    onClick?: () => void;
+  }[],
+) {
+  if (data?.error) {
+    setErrors?.({
+      errors: parseErrorFromResponse(data),
+      links,
+      response: data,
+    });
+  } else {
+    setErrors?.(null);
+  }
 }

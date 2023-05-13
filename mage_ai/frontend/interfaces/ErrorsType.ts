@@ -16,5 +16,10 @@ export type ErrorType = {
 
 export default interface ErrorsType {
   errors: ErrorType;
+  links?: {
+    href?: string;
+    label: string;
+    onClick?: () => void;
+  }[];
   response: ErrorResponseType;
 }

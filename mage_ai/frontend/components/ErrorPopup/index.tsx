@@ -15,8 +15,9 @@ type ErrorPopupProps = {
   displayMessage?: string;
   errors?: ErrorType;
   links?: {
+    href?: string;
     label: string;
-    onClick: () => void;
+    onClick?: () => void;
   }[];
   onClose?: () => void;
   response?: ErrorResponseType;
@@ -153,11 +154,13 @@ function ErrorPopup({
         </Spacing>
       )}
 
-      {links?.map(({ label, onClick }, idx) => (
+      {links?.map(({ href, label, onClick }) => (
         <Spacing key={label} mt={2}>
           <Link
+            href={href}
             large
             onClick={onClick}
+            openNewWindow={!!href}
             underline
             warning
           >
