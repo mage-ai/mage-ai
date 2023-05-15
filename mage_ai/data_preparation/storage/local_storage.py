@@ -54,6 +54,9 @@ class LocalStorage(BaseStorage):
                 return default_value
 
     def write_json_file(self, file_path: str, data) -> None:
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+
         with open(file_path, 'w') as file:
             simplejson.dump(
                 data,
