@@ -183,11 +183,11 @@ function PipelineDetailPage({
   const mainContainerRef = useRef(null);
 
   // Server status
-  const { data: serverStatus } = api.status.list({}, {
+  const { data: serverStatus } = api.statuses.list({}, {
     revalidateOnFocus: false,
   });
   const disablePipelineEditAccess = useMemo(
-    () => serverStatus?.status?.disable_pipeline_edit_access,
+    () => serverStatus?.statuses?.[0]?.disable_pipeline_edit_access,
     [serverStatus],
   );
 
@@ -474,15 +474,16 @@ function PipelineDetailPage({
   }, [pipelineUUID, pipelineUUIDPrev]);
 
   const {
-    data: blockSampleData,
+    data: blockOutputData,
     mutate: fetchSampleData,
-  } = api.blocks.pipelines.outputs.detail(
-    !afterHidden && pipelineUUID,
+  } = api.block_outputs.detail(
     selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
       && selectedOutputBlock?.type !== BlockTypeEnum.CHART
       && selectedOutputBlock?.uuid
       && encodeURIComponent(selectedOutputBlock?.uuid),
+    { pipeline_uuid: !afterHidden && pipelineUUID },
   );
+  const blockSampleData = useMemo(() => blockOutputData?.block_output, [blockOutputData]);
   const sampleData: SampleDataType = useMemo(() => {
     if (isIntegration) {
       return find(

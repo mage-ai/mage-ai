@@ -1,11 +1,24 @@
+import argparse
+import asyncio
+import os
+import traceback
+import webbrowser
+from time import sleep
+from typing import Union
+
+import tornado.ioloop
+import tornado.web
+from tornado import autoreload
+from tornado.ioloop import PeriodicCallback
+from tornado.log import enable_pretty_logging
+from tornado.options import options
+
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
+    ProjectType,
     get_project_type,
-    get_repo_config,
-    get_repo_path,
     init_repo,
     set_repo_path,
-    ProjectType,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
@@ -13,15 +26,7 @@ from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
-from mage_ai.server.api.blocks import (
-    ApiPipelineBlockAnalysisHandler,
-    ApiPipelineBlockOutputHandler,
-)
-from mage_ai.server.api.clusters import (
-    ApiInstanceDetailHandler,
-    ApiInstancesHandler,
-    ClusterType,
-)
+from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
@@ -51,7 +56,6 @@ from mage_ai.server.terminal_server import (
 )
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
-    is_disable_pipeline_edit_access,
     AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
@@ -63,19 +67,6 @@ from mage_ai.settings import (
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
-from time import sleep
-from tornado import autoreload
-from tornado.ioloop import PeriodicCallback
-from tornado.log import enable_pretty_logging
-from tornado.options import options
-from typing import Union
-import argparse
-import asyncio
-import os
-import tornado.ioloop
-import tornado.web
-import traceback
-import webbrowser
 
 
 class MainPageHandler(tornado.web.RequestHandler):
@@ -103,45 +94,6 @@ class ApiSchedulerHandler(BaseHandler):
         elif action_type == 'stop':
             scheduler_manager.stop_scheduler()
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
-
-
-class ApiStatusHandler(BaseHandler):
-    def get(self):
-        from mage_ai.cluster_manager.constants import (
-            ECS_CLUSTER_NAME,
-            GCP_PROJECT_ID,
-            KUBE_NAMESPACE,
-        )
-        instance_type = None
-        if get_project_type() == ProjectType.MAIN:
-            instance_type = get_repo_config().cluster_type
-        elif os.getenv(ECS_CLUSTER_NAME):
-            instance_type = ClusterType.ECS
-        elif os.getenv(GCP_PROJECT_ID):
-            instance_type = ClusterType.CLOUD_RUN
-        else:
-            try:
-                from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
-                if WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
-                    instance_type = ClusterType.K8S
-            except ModuleNotFoundError:
-                pass
-
-        status = {
-            'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
-            'repo_path': get_repo_path(),
-            'scheduler_status': scheduler_manager.get_status(),
-            'instance_type': instance_type,
-            'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
-        }
-        self.write(dict(status=status))
-
-
-class ApiProjectSettingsHandler(BaseHandler):
-    def get(self):
-        self.write(dict(project_settings=[
-            dict(require_user_authentication=REQUIRE_USER_AUTHENTICATION),
-        ]))
 
 
 def make_app():
@@ -188,25 +140,15 @@ def make_app():
         ),
         (r'/websocket/', WebSocketServer),
         (r'/websocket/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
-        # These are hard to test until we do a full Docker build and deploy to cloud
-        (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
-        (
-            r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)',
-            ApiInstanceDetailHandler,
-        ),
-
         # Not sure what is using this, perhaps the event triggering via Lambda?
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
-
+        # TODO: This call is not easily removed from the frontend so will change this
+        # in a future PR.
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
-        ),
-        (
-            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/outputs',
-            ApiPipelineBlockOutputHandler,
         ),
 
         # Trigger pipeline via API
@@ -214,14 +156,6 @@ def make_app():
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
             ApiTriggerPipelineHandler,
         ),
-
-        # Status
-        (r'/api/status', ApiStatusHandler),
-
-        # This is used to check scheduler status and manually fix it
-        (r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler),
-
-        (r'/api/project_settings', ApiProjectSettingsHandler),
 
         # API v1 routes
         (

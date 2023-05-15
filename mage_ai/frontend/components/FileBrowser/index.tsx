@@ -84,8 +84,8 @@ function FileBrowser({
   const [draggingFile, setDraggingFile] = useState<FileType>(null);
   const [selectedFile, setSelectedFile] = useState<FileType>(null);
 
-  const { data: serverStatus } = api.status.list();
-  const repoPath = useMemo(() => serverStatus?.status?.repo_path, [serverStatus]);
+  const { data: serverStatus } = api.statuses.list();
+  const repoPath = useMemo(() => serverStatus?.statuses?.[0]?.repo_path, [serverStatus]);
 
   const [deleteFile] = useMutation(
     (fullPath: string) => api.files.useDelete(fullPath)(),

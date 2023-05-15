@@ -27,6 +27,7 @@ export const BACKFILLS: 'backfills' = 'backfills';
 export const BLOCKS: 'blocks' = 'blocks';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const BLOCK_OUTPUTS = 'block_outputs';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
@@ -54,10 +55,9 @@ export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
 export const PROJECTS: 'projects' = 'projects';
-export const PROJECT_SETTINGS: 'project_settings' = 'project_settings';
 export const SECRETS: 'secrets' = 'secrets';
 export const SESSIONS: 'sessions' = 'sessions';
-export const STATUS: 'status' = 'status';
+export const STATUSES: 'statuses' = 'statuses';
 export const SYNCS: 'syncs' = 'syncs';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const USERS: 'users' = 'users';
@@ -77,7 +77,7 @@ const RESOURCES: any[][] = [
   [BLOCKS],
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],
-  [BLOCKS, PIPELINES, OUTPUTS],
+  [BLOCK_OUTPUTS],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
   [DATA_PROVIDERS],
@@ -106,10 +106,9 @@ const RESOURCES: any[][] = [
   [PIPELINE_SCHEDULES],
   [PIPELINE_SCHEDULES, PIPELINES],
   [PROJECTS],
-  [PROJECT_SETTINGS],
   [SECRETS],
   [SESSIONS],
-  [STATUS],
+  [STATUSES],
   [SYNCS],
   [USERS],
   [VARIABLES, PIPELINES],

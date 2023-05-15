@@ -92,8 +92,8 @@ function FileEditor({
     token,
   ]);
 
-  const { data: serverStatus } = api.status.list();
-  const repoPath = serverStatus?.status?.repo_path;
+  const { data: serverStatus } = api.statuses.list();
+  const repoPath = useMemo(() => serverStatus?.statuses?.[0]?.repo_path, [serverStatus]);
   const { data } = api.file_contents.detail(filePath);
   useEffect(() => {
     if (data?.file_content) {

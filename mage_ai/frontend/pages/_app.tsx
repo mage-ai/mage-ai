@@ -122,10 +122,10 @@ function MyApp(props: MyAppProps & AppProps) {
     REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
   );
   const noValue = typeof val === 'undefined' || val === null || !REQUIRE_USER_AUTHENTICATION();
-  const { data } = api.project_settings.list({}, {}, { pauseFetch: !noValue });
-  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
+  const { data } = api.statuses.list({}, {}, { pauseFetch: !noValue });
   const requireUserAuthentication =
-    useMemo(() => data?.project_settings?.[0]?.require_user_authentication, [data]);
+    useMemo(() => data?.statuses?.[0]?.require_user_authentication, [data]);
+  const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
 
   useEffect(() => {
     if (noValue &&
