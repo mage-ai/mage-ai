@@ -67,4 +67,5 @@ WorkspacePolicy.allow_query([
 ], on_action=[
     constants.DETAIL,
     constants.LIST,
+    constants.UPDATE,
 ], condition=lambda policy: policy.has_at_least_admin_role())

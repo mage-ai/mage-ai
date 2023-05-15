@@ -23,6 +23,7 @@ from mage_ai.server.api.clusters import ClusterType
 from mage_ai.server.logger import Logger
 from typing import Dict, List
 import os
+import shutil
 import yaml
 
 logger = Logger().new_server_logger(__name__)
@@ -69,7 +70,7 @@ class WorkspaceResource(GenericResource):
         cluster_type = self.verify_project(pk)
         if not cluster_type:
             query = kwargs.get('query', {})
-            cluster_type = query.get('cluster_type')
+            cluster_type = query.get('cluster_type')[0]
 
         instances = self.get_instances(cluster_type)
         instance_map = {
@@ -171,32 +172,34 @@ class WorkspaceResource(GenericResource):
             action = payload.get('action')
 
             ecs_instance_manager = EcsTaskManager(cluster_name)
-            instance = None
             if action == 'stop':
-                instance = ecs_instance_manager.stop_task(task_arn)
+                ecs_instance_manager.stop_task(task_arn)
             elif action == 'resume':
-                instance = ecs_instance_manager.create_task(
+                ecs_instance_manager.create_task(
                     instance_name,
                     task_definition,
                     container_name,
                 )
 
-        return self(
-            dict(name=instance_name, instance=instance),
-            self.current_user,
-            **kwargs
-        )
+        return self
 
     def delete(self, **kwargs):
         cluster_type = self.model.get('cluster_type')
-        instance_name = self.model.get('name')
+        workspace_name = self.model.get('name')
+        instance = self.model.get('instance')
+
+        repo_path = get_repo_path()
+        project_folder = os.path.join(repo_path, 'projects', workspace_name)
+
+        if get_project_type() == ProjectType.MAIN:
+            shutil.rmtree(project_folder)
         if cluster_type == 'ecs':
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-            task_arn = self.get_argument('task_arn', None)
-            cluster_name = self.get_argument('cluster_name', os.getenv(ECS_CLUSTER_NAME))
+            task_arn = instance.get('task_arn')
+            cluster_name = os.getenv(ECS_CLUSTER_NAME)
 
             ecs_instance_manager = EcsTaskManager(cluster_name)
-            ecs_instance_manager.delete_task(instance_name, task_arn)
+            ecs_instance_manager.delete_task(workspace_name, task_arn)
 
         return self
 

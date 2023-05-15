@@ -42,12 +42,9 @@ function MoreActions({
   const query = {
     cluster_type: clusterType,
   };
-  if (task_arn) {
-    query['task_arn'] = task_arn;
-  }
 
   const [updateWorkspace] = useMutation(
-    api.workspaces.useUpdate(name),
+    api.workspaces.useUpdate(name, query),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -107,7 +104,7 @@ function MoreActions({
       items.unshift({
         label: () => <Text>Resume instance</Text>,
         // @ts-ignore
-        onClick: () => updateInstance({
+        onClick: () => updateWorkspace({
           workspace: {
             action: 'resume',
             cluster_type: clusterType,
@@ -122,7 +119,7 @@ function MoreActions({
         label: () => <Text>Stop instance</Text>,
         // @ts-ignore
         onClick: () => updateWorkspace({
-          instance: {
+          workspace: {
             action: 'stop',
             cluster_type: clusterType,
             name: instance.name,
