@@ -1,3 +1,9 @@
+import json
+import traceback
+from typing import Callable, Dict, List, Union
+
+import requests
+
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dbt.utils import run_dbt_tests
@@ -5,10 +11,6 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
-from typing import Callable, Dict, List, Union
-import json
-import requests
-import traceback
 
 
 class BlockExecutor:
@@ -41,6 +43,7 @@ class BlockExecutor:
         on_start: Union[Callable[[str], None], None] = None,
         input_from_output: Union[Dict, None] = None,
         verify_output: bool = True,
+        retry_count: int = 1,
         runtime_arguments: Union[Dict, None] = None,
         template_runtime_configuration: Union[Dict, None] = None,
         dynamic_block_index: Union[int, None] = None,
@@ -61,21 +64,27 @@ class BlockExecutor:
             pipeline_run = PipelineRun.query.get(kwargs['pipeline_run_id']) \
                 if 'pipeline_run_id' in kwargs else None
             try:
-                result = self._execute(
-                    analyze_outputs=analyze_outputs,
-                    callback_url=callback_url,
-                    global_vars=global_vars,
-                    update_status=update_status,
-                    input_from_output=input_from_output,
-                    logging_tags=tags,
-                    verify_output=verify_output,
-                    runtime_arguments=runtime_arguments,
-                    template_runtime_configuration=template_runtime_configuration,
-                    dynamic_block_index=dynamic_block_index,
-                    dynamic_block_uuid=dynamic_block_uuid,
-                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                    **kwargs,
-                )
+                from mage_ai.shared.retry import retry
+
+                @retry(retries=retry_count, delay=5, logger=self.logger, logging_tags=tags)
+                def __execute_with_retry():
+                    return self._execute(
+                        analyze_outputs=analyze_outputs,
+                        callback_url=callback_url,
+                        global_vars=global_vars,
+                        update_status=update_status,
+                        input_from_output=input_from_output,
+                        logging_tags=tags,
+                        verify_output=verify_output,
+                        runtime_arguments=runtime_arguments,
+                        template_runtime_configuration=template_runtime_configuration,
+                        dynamic_block_index=dynamic_block_index,
+                        dynamic_block_uuid=dynamic_block_uuid,
+                        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                        **kwargs,
+                    )
+
+                result = __execute_with_retry()
             except Exception as e:
                 self.logger.exception(
                     f'Failed to execute block {self.block.uuid}',
@@ -116,7 +125,7 @@ class BlockExecutor:
                     'completed',
                     block_run_id=kwargs.get('block_run_id'),
                     callback_url=callback_url,
-                    tags=tags
+                    tags=tags,
                 )
             self._execute_callback(
                 'on_success',

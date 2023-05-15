@@ -688,6 +688,7 @@ def run_integration_pipeline(
                         tags_updated,
                         pipeline_type=PipelineType.INTEGRATION,
                         verify_output=False,
+                        retry_count=1,  # Not retry for data integration pipeline blocks
                         runtime_arguments=runtime_arguments,
                         schedule_after_complete=False,
                         template_runtime_configuration=template_runtime_configuration,
@@ -735,6 +736,7 @@ def run_block(
     input_from_output: Dict = None,
     pipeline_type: PipelineType = None,
     verify_output: bool = True,
+    retry_count: int = 3,
     runtime_arguments: Dict = None,
     schedule_after_complete: bool = False,
     template_runtime_configuration: Dict = None,
@@ -843,6 +845,7 @@ def run_block(
         input_from_output=input_from_output,
         verify_output=verify_output,
         pipeline_run_id=pipeline_run_id,
+        retry_count=retry_count,
         runtime_arguments=runtime_arguments,
         template_runtime_configuration=template_runtime_configuration,
         dynamic_block_index=dynamic_block_index,

@@ -1,4 +1,5 @@
 import time
+from typing import Dict
 
 
 def retry(
@@ -6,6 +7,8 @@ def retry(
     delay: int = 5,
     max_delay: int = 60,
     exponential_backoff: bool = True,
+    logger=None,
+    logging_tags: Dict = dict(),
 ):
     """
     Create the decorator to retry a method
@@ -19,19 +22,26 @@ def retry(
     """
     def retry_decorator(func):
         def retry_func(*args, **kwargs):
-            attempt = 0
+            attempt = 1
             total_delay = 0
             curr_delay = delay
-            while attempt < retries:
+            while attempt <= retries:
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    print(
-                        'Exception thrown when attempting to run %s, attempt '
-                        '%d of %d' % (func, attempt, retries)
-                    )
+                    if logger is None:
+                        print(
+                            'Exception thrown when attempting to run %s, attempt '
+                            '%d of %d' % (func, attempt, retries)
+                        )
+                    else:
+                        logger.info(
+                            f'Exception thrown when attempting to run {func}, attempt '
+                            f'{attempt} of {retries}',
+                            **logging_tags,
+                        )
                     attempt += 1
-                    if attempt >= retries or total_delay + curr_delay >= max_delay:
+                    if attempt > retries or total_delay + curr_delay >= max_delay:
                         raise e
                     time.sleep(curr_delay)
                     total_delay += curr_delay
