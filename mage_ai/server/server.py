@@ -1,8 +1,6 @@
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
     get_project_type,
-    get_repo_config,
-    get_repo_path,
     init_repo,
     set_repo_path,
     ProjectType,
@@ -15,11 +13,6 @@ from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
     ApiPipelineBlockAnalysisHandler,
-)
-from mage_ai.server.api.clusters import (
-    ApiInstanceDetailHandler,
-    ApiInstancesHandler,
-    ClusterType,
 )
 from mage_ai.server.api.events import (
     ApiEventHandler,
@@ -50,7 +43,6 @@ from mage_ai.server.terminal_server import (
 )
 from mage_ai.server.websocket_server import WebSocketServer
 from mage_ai.settings import (
-    is_disable_pipeline_edit_access,
     AUTHENTICATION_MODE,
     LDAP_ADMIN_USERNAME,
     OAUTH2_APPLICATION_CLIENT_ID,
@@ -102,39 +94,6 @@ class ApiSchedulerHandler(BaseHandler):
         elif action_type == 'stop':
             scheduler_manager.stop_scheduler()
         self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
-
-
-class ApiStatusHandler(BaseHandler):
-    def get(self):
-        from mage_ai.cluster_manager.constants import (
-            ECS_CLUSTER_NAME,
-            GCP_PROJECT_ID,
-            KUBE_NAMESPACE,
-        )
-        instance_type = None
-        if get_project_type() == ProjectType.MAIN:
-            instance_type = get_repo_config().cluster_type
-        elif os.getenv(ECS_CLUSTER_NAME):
-            instance_type = ClusterType.ECS
-        elif os.getenv(GCP_PROJECT_ID):
-            instance_type = ClusterType.CLOUD_RUN
-        else:
-            try:
-                from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
-                if WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
-                    instance_type = ClusterType.K8S
-            except ModuleNotFoundError:
-                pass
-
-        status = {
-            'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
-            'repo_path': get_repo_path(),
-            'scheduler_status': scheduler_manager.get_status(),
-            'instance_type': instance_type,
-            'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
-            'require_user_authentication': REQUIRE_USER_AUTHENTICATION,
-        }
-        self.write(dict(status=status))
 
 
 def make_app():

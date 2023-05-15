@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.server.api.base import BaseHandler
 
 
