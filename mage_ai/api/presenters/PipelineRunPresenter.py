@@ -9,6 +9,7 @@ class PipelineRunPresenter(BasePresenter):
         'created_at',
         'event_variables',
         'execution_date',
+        'executor_type',
         'id',
         'metrics',
         'passed_sla',
