@@ -27,6 +27,7 @@ export const BACKFILLS: 'backfills' = 'backfills';
 export const BLOCKS: 'blocks' = 'blocks';
 export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCK_TEMPLATES = 'block_templates';
+export const BLOCK_OUTPUTS = 'block_outputs';
 export const CLUSTERS: 'clusters' = 'clusters';
 export const COLUMNS: 'columns' = 'columns';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
@@ -78,6 +79,7 @@ const RESOURCES: any[][] = [
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],
   [BLOCKS, PIPELINES, OUTPUTS],
+  [BLOCK_OUTPUTS],
   [CLUSTERS],
   [COLUMNS, FEATURE_SETS],
   [DATA_PROVIDERS],

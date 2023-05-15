@@ -9,7 +9,7 @@ class BlockOutputPolicy(BasePolicy):
 
 
 BlockOutputPolicy.allow_actions([
-    constants.CREATE,
+    constants.DETAIL,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
@@ -17,14 +17,13 @@ BlockOutputPolicy.allow_actions([
 BlockOutputPolicy.allow_read(BlockOutputPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.CREATE,
+    constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())
 
-BlockOutputPolicy.allow_write([
-    'block_uuid',
+BlockOutputPolicy.allow_query([
     'pipeline_uuid',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
-    constants.CREATE,
+    constants.DETAIL,
 ], condition=lambda policy: policy.has_at_least_viewer_role())

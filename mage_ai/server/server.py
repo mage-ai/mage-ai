@@ -15,7 +15,6 @@ from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import (
     ApiPipelineBlockAnalysisHandler,
-    ApiPipelineBlockOutputHandler,
 )
 from mage_ai.server.api.clusters import (
     ApiInstanceDetailHandler,
@@ -193,6 +192,10 @@ def make_app():
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
+            ApiPipelineBlockAnalysisHandler,
+        ),
 
         # Trigger pipeline via API
         (
