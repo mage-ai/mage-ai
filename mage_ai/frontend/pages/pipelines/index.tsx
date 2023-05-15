@@ -29,6 +29,7 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import Toolbar from '@components/shared/Table/Toolbar';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
+
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { Check, Clone, File, Open, Pause, PlayButtonFilled, Secrets } from '@oracle/icons';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
@@ -37,9 +38,9 @@ import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { TableContainerStyle } from '@components/shared/Table/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, randomNameGenerator, removeUnderscore } from '@utils/string';
+import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { filterQuery, queryFromUrl } from '@utils/url';
 import { goToWithQuery } from '@utils/routing';
-import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
@@ -87,6 +88,20 @@ function PipelineListPage() {
 
   const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
+
+  useEffect(() => {
+    if (data?.error?.exception?.includes('Too many open files')) {
+      const links = [
+        {
+          href: 'https://docs.mage.ai/production/configuring-production-settings/overview#ulimit',
+          label: 'Refer to the docs for troubleshooting this error.',
+        },
+      ];
+      displayErrorFromReadResponse(data, setErrors, links);
+    } else {
+      displayErrorFromReadResponse(data, setErrors);
+    }
+  }, [data]);
 
   const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
     api.pipelines.useCreate(),

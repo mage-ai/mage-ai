@@ -46,8 +46,12 @@ class PipelineResource(BaseResource):
             try:
                 return await Pipeline.get_async(uuid)
             except Exception as err:
-                print(f'Error loading pipeline {uuid}: {err}.')
-                return None
+                err_message = f'Error loading pipeline {uuid}: {err}.'
+                if err.__class__.__name__ == 'OSError' and 'Too many open files' in err.strerror:
+                    raise Exception(err_message)
+                else:
+                    print(err_message)
+                    return None
 
         pipelines = await asyncio.gather(
             *[get_pipeline(uuid) for uuid in pipeline_uuids]

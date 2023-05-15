@@ -49,6 +49,7 @@ import SidekickHeader from '@components/Sidekick/Header';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
 import { Close } from '@oracle/icons';
 import {
   EDIT_BEFORE_TABS,
@@ -56,6 +57,10 @@ import {
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
+import {
+  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
+  SpecialFileEnum,
+} from '@interfaces/FileType';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import {
   LOCAL_STORAGE_KEY_AUTOMATICALLY_NAME_BLOCKS,
@@ -67,17 +72,13 @@ import {
   get,
   set,
 } from '@storage/localStorage';
-import {
-  FILE_EXTENSION_TO_LANGUAGE_MAPPING_REVERSE,
-  SpecialFileEnum,
-} from '@interfaces/FileType';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
+import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
-import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildNavigationItems } from '@components/PipelineDetailPage/utils';
 import {
@@ -91,12 +92,12 @@ import {
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
 import { cleanName, randomNameGenerator } from '@utils/string';
+import { displayErrorFromReadResponse, onSuccess } from '@api/utils/response';
 import { equals, find, indexBy, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { isEmptyObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
-import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useModal } from '@context/Modal';
 import { useWindowSize } from '@utils/sizes';
@@ -257,12 +258,7 @@ function PipelineDetailPage({
     showStalePipelineMessageModal,
   ]);
   useEffect(() => {
-    if (data?.error) {
-      setErrors({
-        errors: parseErrorFromResponse(data),
-        response: data,
-      });
-    }
+    displayErrorFromReadResponse(data, setErrors);
   }, [data]);
 
   const qUrl = queryFromUrl();
