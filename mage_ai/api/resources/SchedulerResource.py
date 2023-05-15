@@ -1,8 +1,6 @@
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.server.scheduler_manager import (
-    scheduler_manager,
-)
+from mage_ai.server.scheduler_manager import scheduler_manager
 
 
 class SchedulerResource(GenericResource):

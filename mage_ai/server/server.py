@@ -1,9 +1,24 @@
+import argparse
+import asyncio
+import os
+import traceback
+import webbrowser
+from time import sleep
+from typing import Union
+
+import tornado.ioloop
+import tornado.web
+from tornado import autoreload
+from tornado.ioloop import PeriodicCallback
+from tornado.log import enable_pretty_logging
+from tornado.options import options
+
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
+    ProjectType,
     get_project_type,
     init_repo,
     set_repo_path,
-    ProjectType,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
@@ -11,9 +26,7 @@ from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
-from mage_ai.server.api.blocks import (
-    ApiPipelineBlockAnalysisHandler,
-)
+from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
 from mage_ai.server.api.events import (
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
@@ -54,19 +67,6 @@ from mage_ai.settings import (
 from mage_ai.shared.logger import LoggingLevel
 from mage_ai.shared.utils import is_port_in_use
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
-from time import sleep
-from tornado import autoreload
-from tornado.ioloop import PeriodicCallback
-from tornado.log import enable_pretty_logging
-from tornado.options import options
-from typing import Union
-import argparse
-import asyncio
-import os
-import tornado.ioloop
-import tornado.web
-import traceback
-import webbrowser
 
 
 class MainPageHandler(tornado.web.RequestHandler):

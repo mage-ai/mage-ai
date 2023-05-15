@@ -1,23 +1,20 @@
+import os
+
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.repo_manager import (
+    ProjectType,
     get_project_type,
     get_repo_config,
     get_repo_path,
-    ProjectType,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.server.api.clusters import (
-    ClusterType,
-)
-from mage_ai.server.scheduler_manager import (
-    scheduler_manager,
-)
+from mage_ai.server.api.clusters import ClusterType
+from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.settings import (
-    is_disable_pipeline_edit_access,
     REQUIRE_USER_AUTHENTICATION,
+    is_disable_pipeline_edit_access,
 )
-import os
 
 
 class StatusResource(GenericResource):
@@ -42,7 +39,9 @@ class StatusResource(GenericResource):
             instance_type = ClusterType.CLOUD_RUN
         else:
             try:
-                from mage_ai.cluster_manager.kubernetes.workload_manager import WorkloadManager
+                from mage_ai.cluster_manager.kubernetes.workload_manager import (
+                    WorkloadManager,
+                )
                 if WorkloadManager.load_config() or os.getenv(KUBE_NAMESPACE):
                     instance_type = ClusterType.K8S
             except ModuleNotFoundError:
