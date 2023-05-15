@@ -6,7 +6,7 @@ from mage_ai.cluster_manager.constants import (
     GCP_BACKEND_CONFIG_ANNOTATION,
     KUBE_SERVICE_GCP_BACKEND_CONFIG,
     KUBE_SERVICE_TYPE,
-    LOAD_BALANCER_SERVICE_TYPE,
+    NODE_PORT_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
     SERVICE_ACCOUNT_SECRETS_NAME
 )
@@ -223,18 +223,17 @@ class WorkloadManager:
                 'ports': [
                     {
                         'protocol': 'TCP',
-                        'port': 80,
-                        'targetPort': 6789,
+                        'port': 6789,
                     }
                 ],
                 'selector': {
                     'app': deployment_name
                 },
-                'type': os.getenv(KUBE_SERVICE_TYPE, LOAD_BALANCER_SERVICE_TYPE)
+                'type': os.getenv(KUBE_SERVICE_TYPE, NODE_PORT_SERVICE_TYPE)
             }
         }
 
-        self.core_client.create_namespaced_service(self.namespace, service)
+        return self.core_client.create_namespaced_service(self.namespace, service)
 
     def __populate_env_vars(self, container_config) -> List:
         env_vars = []

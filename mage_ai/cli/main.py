@@ -24,7 +24,10 @@ app = typer.Typer(
 
 @app.command()
 def init(
-    project_path: str = typer.Argument(..., help='path of the Mage project to be created.')
+    project_path: str = typer.Argument(..., help='path of the Mage project to be created.'),
+    # project_type: Union[str, None] = typer.Option(
+    #     'standalone', help='type of project to create, options are main, sub, or standalone'
+    # ),
 ):
     """
     Initialize Mage project.

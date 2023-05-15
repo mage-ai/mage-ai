@@ -64,6 +64,7 @@ export const USERS: 'users' = 'users';
 export const VARIABLES: 'variables' = 'variables';
 export const VERSIONS: 'versions' = 'versions';
 export const WIDGETS: 'widgets' = 'widgets';
+export const WORKSPACES: 'workspaces' = 'workspaces';
 
 // Update this as routes get added
 const RESOURCES: any[][] = [
@@ -114,6 +115,7 @@ const RESOURCES: any[][] = [
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],
   [WIDGETS, PIPELINES],
+  [WORKSPACES],
 ];
 
 const apis: any = {};

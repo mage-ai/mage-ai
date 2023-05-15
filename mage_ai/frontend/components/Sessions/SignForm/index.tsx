@@ -55,7 +55,7 @@ function SignForm({
           }) => {
             setUser(user);
             AuthToken.storeToken(token, () => {
-              let url: string = '/pipelines';
+              let url: string = '/';
               const query = queryFromUrl(window.location.href);
 
               if (typeof window !== 'undefined' && query.redirect_url) {

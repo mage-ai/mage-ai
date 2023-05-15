@@ -1,3 +1,4 @@
+from enum import Enum
 from jinja2 import Template
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.data_preparation.templates.utils import copy_template_directory
@@ -14,6 +15,12 @@ if is_test():
     DEFAULT_MAGE_DATA_DIR = './'
 else:
     DEFAULT_MAGE_DATA_DIR = '~/.mage_data'
+
+
+class ProjectType(str, Enum):
+    MAIN = 'main'
+    SUB = 'sub'
+    STANDALONE = 'standalone'
 
 
 class RepoConfig:
@@ -60,6 +67,8 @@ class RepoConfig:
                     )
             os.makedirs(self.variables_dir, exist_ok=True)
 
+            self.project_type = repo_config.get('project_type')
+            self.cluster_type = repo_config.get('cluster_type')
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
@@ -97,6 +106,7 @@ class RepoConfig:
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
+            project_type=self.project_type,
             ecs_config=self.ecs_config,
             emr_config=self.emr_config,
             gcp_cloud_run_config=self.gcp_cloud_run_config,
@@ -130,18 +140,21 @@ class RepoConfig:
             yml.dump(data, f)
 
 
-def init_repo(repo_path: str) -> None:
+def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> None:
     """
     Initialize a repository under the current path.
     """
     if os.path.exists(repo_path):
         raise FileExistsError(f'Repository {repo_path} already exists')
 
-    os.makedirs(
-        os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
-        exist_ok=True,
-    )
-    copy_template_directory('repo', repo_path)
+    if project_type == ProjectType.MAIN:
+        copy_template_directory('main', repo_path)
+    else:
+        os.makedirs(
+            os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
+            exist_ok=True,
+        )
+        copy_template_directory('repo', repo_path)
 
 
 def get_data_dir() -> str:
@@ -158,6 +171,10 @@ def get_repo_path() -> str:
 
 def get_repo_config(repo_path=None) -> RepoConfig:
     return RepoConfig(repo_path=repo_path)
+
+
+def get_project_type(repo_path=None) -> ProjectType:
+    return get_repo_config(repo_path=repo_path).project_type
 
 
 def set_repo_path(repo_path: str) -> None:

@@ -1,11 +1,15 @@
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
+    get_project_type,
+    get_repo_config,
     get_repo_path,
     init_repo,
     set_repo_path,
+    ProjectType,
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
+from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.models.oauth import Oauth2Application, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
@@ -70,6 +74,7 @@ import asyncio
 import os
 import tornado.ioloop
 import tornado.web
+import traceback
 import webbrowser
 
 
@@ -107,9 +112,10 @@ class ApiStatusHandler(BaseHandler):
             GCP_PROJECT_ID,
             KUBE_NAMESPACE,
         )
-
         instance_type = None
-        if os.getenv(ECS_CLUSTER_NAME):
+        if get_project_type() == ProjectType.MAIN:
+            instance_type = get_repo_config().cluster_type
+        elif os.getenv(ECS_CLUSTER_NAME):
             instance_type = ClusterType.ECS
         elif os.getenv(GCP_PROJECT_ID):
             instance_type = ClusterType.CLOUD_RUN
@@ -347,8 +353,14 @@ def start_server(
     if dbt_docs:
         run_docs_server()
     else:
-        if manage:
+        project_type = get_project_type()
+        if manage or project_type == ProjectType.MAIN:
             os.environ[MANAGE_ENV_VAR] = '1'
+            # run migrations to enable user authentication
+            try:
+                database_manager.run_migrations()
+            except Exception:
+                traceback.print_exc()
         else:
             # Start a subprocess for scheduler
             scheduler_manager.start_scheduler()

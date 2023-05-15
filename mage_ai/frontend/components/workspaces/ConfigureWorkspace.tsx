@@ -20,30 +20,30 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator, replaceSpaces } from '@utils/string';
 
-type ConfigureInstanceProps = {
-  fetchInstances: any,
-  instanceType: string,
+type ConfigureWorkspaceProps = {
+  clusterType: string,
+  fetchWorkspaces: any,
 };
 
-function ConfigureInstance({
-  fetchInstances,
-  instanceType,
-}: ConfigureInstanceProps) {
+function ConfigureWorkspace({
+  clusterType,
+  fetchWorkspaces,
+}: ConfigureWorkspaceProps) {
   const [create, setCreate] = useState<boolean>();
   const [error, setError] = useState<string>();
   const [configureContainer, setConfigureContainer] = useState<boolean>();
   const [containerConfig, setContainerConfig] = useState(null);
-  const [newInstanceName, setNewInstanceName] = useState<string>();
+  const [newWorkspaceName, setNewWorkspaceName] = useState<string>();
   const [serviceAccountName, setServiceAccountName] = useState<string>();
 
-  const [createInstance, { isLoading: isLoadingCreateInstance }] = useMutation(
-    api.instances.clusters.useCreate(instanceType),
+  const [createWorkspace, { isLoading: isLoadingCreateWorkspace }] = useMutation(
+    api.workspaces.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: (res) => {
             if (res['success']) {
-              fetchInstances();
+              fetchWorkspaces();
               setCreate(false);
             } else {
               setError(res['error_message']);
@@ -57,52 +57,54 @@ function ConfigureInstance({
           }) => {
             console.log(errors, message);
           },
-        }
-      )
-    }
+        },
+      ),
+    },
   );
 
-  const updateInstanceName = (name) => {
-    if (instanceType === 'ecs') {
+  const updateWorkspaceName = (name) => {
+    if (clusterType === 'ecs') {
       return replaceSpaces(name, '_');
     } else {
       return replaceSpaces(name, '-');
     }
-  }
+  };
 
-  const instanceNameLabel = () => {
-    if (instanceType === 'ecs') {
-      return "Spaces will be replaced by underscores";
+  const workspaceNameLabel = () => {
+    if (clusterType === 'ecs') {
+      return 'Spaces will be replaced by underscores';
     } else {
-      return "Spaces will be replaced by hyphens";
+      return 'Spaces will be replaced by hyphens';
     }
-  }
+  };
 
   const rows = [
     [
-      <Text bold color={BLUE_SKY}>
-        Instance name
+      <Text bold color={BLUE_SKY} key="workspace_name_label">
+        Workspace name
       </Text>,
       <TextInput
-        label={instanceNameLabel()}
+        key="workspace_name_input"
+        label={workspaceNameLabel()}
         monospace
         onChange={(e) => {
           e.preventDefault();
-          setNewInstanceName(e.target.value);
+          setNewWorkspaceName(e.target.value);
         }}
-        placeholder="Name your new instance"
-        value={newInstanceName}
+        placeholder="Name your new workspace"
+        value={newWorkspaceName}
       />,
-    ]
+    ],
   ];
 
-  if (instanceType === 'k8s') {
+  if (clusterType === 'k8s') {
     rows.push(
       [
-        <Text bold color={BLUE_SKY}>
+        <Text bold color={BLUE_SKY} key="service_account_name">
           Service account name (optional)
         </Text>,
         <TextInput
+          key="service_account_name_label"
           label="Name of service account to be attached to stateful set"
           monospace
           onChange={(e) => {
@@ -112,8 +114,8 @@ function ConfigureInstance({
           placeholder="Service account name"
           value={serviceAccountName}
         />,
-      ]
-    )
+      ],
+    );
   }
   
 
@@ -122,13 +124,13 @@ function ConfigureInstance({
       {create ? (
         <>
           <Headline default level={5} monospace>
-            Configure new instance
+            Configure your workspace
           </Headline>
           <Table
             columnFlex={[null, 3]}
             rows={rows}
           />
-          {instanceType === 'k8s' && (
+          {clusterType === 'k8s' && (
             <>
               <Spacing mt={1}>
                 <FlexContainer alignItems="center">
@@ -160,22 +162,22 @@ function ConfigureInstance({
               )}
             </>
           )}
-          {isLoadingCreateInstance && (
+          {isLoadingCreateWorkspace && (
             <Spacing mt={1}>
               <Text small warning>
                 This may take up to a few minutes... Once the service is created, it may take another 5-10 minutes for the service to be accessible.
               </Text>
             </Spacing>
           )}
-          {!isLoadingCreateInstance && error && (
+          {!isLoadingCreateWorkspace && error && (
             <>
               <Spacing mt={1}>
-                <Text small danger>
+                <Text danger small>
                   Failed to create instance, see error below.
                 </Text>
               </Spacing>
               <Spacing mt={1}>
-                <Text small danger>
+                <Text danger small>
                   {error}
                 </Text>
               </Spacing>
@@ -187,16 +189,17 @@ function ConfigureInstance({
                 background={PURPLE}
                 bold
                 inline
-                loading={isLoadingCreateInstance}
+                loading={isLoadingCreateWorkspace}
                 // @ts-ignore
-                onClick={() => createInstance({
-                  instance: {
-                    name: updateInstanceName(newInstanceName),
-                    service_account_name: serviceAccountName,
+                onClick={() => createWorkspace({
+                  workspace: {
+                    cluster_type: clusterType,
                     container_config: configureContainer && containerConfig,
+                    name: updateWorkspaceName(newWorkspaceName),
+                    service_account_name: serviceAccountName,
                   }
                 })}
-                uuid="EnvironmentListPage/new"
+                uuid="workspaces/create"
               >
                 Create
               </KeyboardShortcutButton>
@@ -205,7 +208,7 @@ function ConfigureInstance({
                 bold
                 inline
                 onClick={() => setCreate(false)}
-                uuid="EnvironmentListPage/cancel"
+                uuid="workspaces/cancel"
               >
                 Cancel
               </KeyboardShortcutButton>
@@ -218,19 +221,17 @@ function ConfigureInstance({
           beforeElement={<Add size={2.5 * UNIT} />}
           bold
           inline
-          // loading={isLoading}
-          // @ts-ignore
           onClick={() => {
-            setNewInstanceName(randomNameGenerator())
+            setNewWorkspaceName(randomNameGenerator());
             setCreate(true);
           }}
-          uuid="EnvironmentListPage/new_instance"
+          uuid="workspaces/new"
         >
-          Create new instance
+          Create new workspace
         </KeyboardShortcutButton>
       )}
     </>
   );
 }
 
-export default ConfigureInstance;
+export default ConfigureWorkspace;
