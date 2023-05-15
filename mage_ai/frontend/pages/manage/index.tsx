@@ -10,16 +10,16 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import WorkspacesDashboard from '@components/workspaces/Dashboard';
+import WorkspaceType, { InstanceType } from '@interfaces/WorkspaceType';
 import api from '@api';
 import { Ellipsis, Expand } from '@oracle/icons';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { PopupContainerStyle } from '@components/PipelineDetail/Runs/Table.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
-import WorkspacesDashboard from '@components/workspaces/Dashboard';
-import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
-import WorkspaceType, { InstanceType } from '@interfaces/WorkspaceType';
 
 function MoreActions({
   fetchWorkspaces,

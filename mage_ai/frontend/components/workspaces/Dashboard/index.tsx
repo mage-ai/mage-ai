@@ -1,10 +1,9 @@
+import React from 'react';
 import Dashboard from '@components/Dashboard';
-import VerticalSectionLinks from '@components/VerticalSectionLinks';
-import { BEFORE_WIDTH, BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { BreadcrumbType } from '@components/shared/Header';
+import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import { WorkspacesPageNameEnum, buildNavigationItems } from './constants';
 import { getUser } from '@utils/session';
-import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { BreadcrumbType } from '@components/shared/Header';
 
 type WorkspacesDashboardProps = {
   breadcrumbs?: BreadcrumbType[],

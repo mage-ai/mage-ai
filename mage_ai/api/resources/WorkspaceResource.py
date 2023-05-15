@@ -19,9 +19,7 @@ from mage_ai.data_preparation.repo_manager import (
 )
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.server.active_kernel import get_active_kernel_name
 from mage_ai.server.api.clusters import ClusterType
-from mage_ai.server.kernels import KernelName
 from mage_ai.server.logger import Logger
 from typing import Dict, List
 import os
@@ -34,10 +32,6 @@ class WorkspaceResource(GenericResource):
     @classmethod
     @safe_db_query
     def collection(self, query_arg, meta, user, **kwargs):
-        repo_path = get_repo_path()
-        projects_folder = os.path.join(repo_path, 'projects')
-        projects = [name for name in os.listdir(projects_folder) if os.path.isdir(name)]
-
         cluster_type = self.verify_project()
         if not cluster_type:
             cluster_type = query_arg.get('cluster_type', [None])
@@ -49,6 +43,13 @@ class WorkspaceResource(GenericResource):
             instance.get('name'): instance
             for instance in instances
         }
+
+        repo_path = get_repo_path()
+        projects_folder = os.path.join(repo_path, 'projects')
+        if get_project_type() == ProjectType.MAIN:
+            projects = [name for name in os.listdir(projects_folder) if os.path.isdir(name)]
+        else:
+            projects = [instance.get('name') for instance in instances]
 
         workspaces = [
             dict(
