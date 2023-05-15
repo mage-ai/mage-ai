@@ -183,11 +183,11 @@ function PipelineDetailPage({
   const mainContainerRef = useRef(null);
 
   // Server status
-  const { data: serverStatus } = api.status.list({}, {
+  const { data: serverStatus } = api.statuses.list({}, {
     revalidateOnFocus: false,
   });
   const disablePipelineEditAccess = useMemo(
-    () => serverStatus?.status?.disable_pipeline_edit_access,
+    () => serverStatus?.statuses?.[0]?.disable_pipeline_edit_access,
     [serverStatus],
   );
 

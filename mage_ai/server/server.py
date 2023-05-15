@@ -181,17 +181,12 @@ def make_app():
         ),
         (r'/websocket/', WebSocketServer),
         (r'/websocket/terminal', TerminalWebsocketServer, {'term_manager': term_manager}),
-        # These are hard to test until we do a full Docker build and deploy to cloud
-        (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
-        (
-            r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)',
-            ApiInstanceDetailHandler,
-        ),
-
         # Not sure what is using this, perhaps the event triggering via Lambda?
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
+        # TODO: This call is not easily removed from the frontend so will change this
+        # in a future PR.
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>[\w\%2f\.]+)/analyses',
             ApiPipelineBlockAnalysisHandler,
@@ -202,9 +197,6 @@ def make_app():
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs/(?P<token>\w+)',
             ApiTriggerPipelineHandler,
         ),
-
-        # Status
-        (r'/api/status', ApiStatusHandler),
 
         # API v1 routes
         (

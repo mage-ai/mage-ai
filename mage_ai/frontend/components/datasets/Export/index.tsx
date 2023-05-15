@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
 import Button from '@oracle/elements/Button';
@@ -85,9 +85,10 @@ function Export({
     metadata: pipelineMetadata,
   } = pipeline || {};
 
-  const { data: status } = api.status.list()
+  const { data: statusData } = api.statuses.list();
+  const status = useMemo(() => statusData?.statuses?.[0], [statusData]);
   const {
-    api_key_provided: apiKeyProvided
+    api_key_provided: apiKeyProvided,
   } = status || {};
 
   return (

@@ -207,8 +207,11 @@ function MoreActions({
 }
 
 function WorkspacePage() {
-  const { data: dataStatus } = api.status.list();
-  const clusterType = dataStatus?.status?.['instance_type'] || 'ecs';
+  const { data: dataStatus } = api.statuses.list();
+  const clusterType = useMemo(
+    () => dataStatus?.statuses?.[0]?.instance_type || 'ecs',
+    [dataStatus],
+  );
 
   const { data: dataWorkspaces, mutate: fetchWorkspaces } = api.workspaces.list(
     { cluster_type: clusterType },
