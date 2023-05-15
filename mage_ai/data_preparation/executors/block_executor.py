@@ -66,7 +66,7 @@ class BlockExecutor:
             try:
                 from mage_ai.shared.retry import retry
 
-                @retry(retries=retry_count, delay=5)
+                @retry(retries=retry_count, delay=5, logger=self.logger, logging_tags=tags)
                 def __execute_with_retry():
                     return self._execute(
                         analyze_outputs=analyze_outputs,
@@ -125,7 +125,7 @@ class BlockExecutor:
                     'completed',
                     block_run_id=kwargs.get('block_run_id'),
                     callback_url=callback_url,
-                    tags=tags
+                    tags=tags,
                 )
             self._execute_callback(
                 'on_success',
