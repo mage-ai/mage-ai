@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import Link from '@oracle/elements/Link';
 import NextLink from 'next/link';
-import router from 'next/router';
 import styled from 'styled-components';
 import { VariableSizeList } from 'react-window';
 import {
@@ -227,7 +226,6 @@ function Table({
 
       if (shouldUseIndexProp) {
         const charLengths = indexProp.map((i: number | number[] | string | string[]) => {
-          let charLength;
           if (numberOfIndexes >= 2) {
             return String(i[idx]).length;
           }
@@ -286,7 +284,6 @@ function Table({
     useBlockLayout,
     useSticky,
   );
-  const { slug = [] } = router.query;
   const removedRowIndexes = new Set(previewIndexes?.removedRows || []);
 
   const renderRow = useCallback(({ index, style }) => {
@@ -399,13 +396,14 @@ function Table({
       </div>
     );
   }, [
+    columnsAll,
     indexProp,
     invalidValues,
     maxWidthOfIndexColumns,
     numberOfIndexes,
     prepareRow,
     rows,
-    slug,
+    shouldUseIndexProp,
   ]);
 
   const listHeight = useMemo(() => {
@@ -429,7 +427,6 @@ function Table({
     return val;
   }, [
     columnHeaderHeight,
-    estimateCellHeight,
     height,
     maxHeight,
     rows,
@@ -449,7 +446,13 @@ function Table({
     >
       {renderRow}
     </VariableSizeList>
-  ), [listHeight, refListOuter, renderRow, rows]);
+  ), [
+    disableScrolling,
+    listHeight,
+    maxHeight,
+    renderRow,
+    rows,
+  ]);
 
   return (
     <div
@@ -556,14 +559,6 @@ function DataTable({
   }))), [
     columnsProp,
     numberOfIndexes,
-  ]);
-
-  const data = useMemo(() => rowsProp?.map(row => row.reduce((acc, v, i) => ({
-    ...acc,
-    [columnsProp[i]]: v,
-  }), {})), [
-    columnsProp,
-    rowsProp,
   ]);
 
   return (
