@@ -13,6 +13,11 @@ from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
 from tornado.options import options
 
+from mage_ai.api.utils import (
+    has_at_least_admin_role,
+    has_at_least_editor_role,
+    has_at_least_viewer_role,
+)
 from mage_ai.authentication.passwords import create_bcrypt_hash, generate_salt
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
@@ -23,7 +28,7 @@ from mage_ai.data_preparation.repo_manager import (
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.database_manager import database_manager
-from mage_ai.orchestration.db.models.oauth import Oauth2Application, User
+from mage_ai.orchestration.db.models.oauth import Oauth2Application, Role, User
 from mage_ai.server.active_kernel import switch_active_kernel
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.blocks import ApiPipelineBlockAnalysisHandler
@@ -215,12 +220,14 @@ async def main(
         # We need to sleep for a few seconds after creating all the tables or else there
         # may be an error trying to create users.
         sleep(3)
+        Role.create_default_roles()
         user = User.query.filter(User.owner == True).first()  # noqa: E712
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
                     owner=True,
+                    roles_new=[Role.query.filter(Role.name == 'owner').first()],
                     username=LDAP_ADMIN_USERNAME,
                 )
             else:
@@ -230,8 +237,21 @@ async def main(
                     password_hash=create_bcrypt_hash('admin', password_salt),
                     password_salt=password_salt,
                     owner=True,
+                    roles_new=[Role.query.filter(Role.name == 'owner').first()],
                     username='admin',
                 )
+        else:
+            if not user.roles_new:
+                all_users = User.query.all()
+                for user in all_users:
+                    if user.owner:
+                        user.update(roles_new=[Role.query.filter(Role.name == 'owner').first()])
+                    elif has_at_least_admin_role(user):
+                        user.update(roles_new=[Role.query.filter(Role.name == 'admin').first()])
+                    elif has_at_least_editor_role(user):
+                        user.update(roles_new=[Role.query.filter(Role.name == 'editor').first()])
+                    elif has_at_least_viewer_role(user):
+                        user.update(roles_new=[Role.query.filter(Role.name == 'viewer').first()])
 
         oauth_client = Oauth2Application.query.filter(
             Oauth2Application.client_id == OAUTH2_APPLICATION_CLIENT_ID,

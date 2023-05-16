@@ -1,7 +1,7 @@
 import enum
 import re
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from sqlalchemy import (
     JSON,
@@ -35,6 +35,7 @@ class User(BaseModel):
 
     oauth2_applications = relationship('Oauth2Application', back_populates='user')
     oauth2_access_tokens = relationship('Oauth2AccessToken', back_populates='user')
+    roles_new = relationship('Role', secondary='user_role', back_populates='users')
 
     @validates('email')
     def validate_email(self, key, value):
@@ -88,6 +89,100 @@ class User(BaseModel):
     def git_settings(self) -> Union[Dict, None]:
         preferences = self.preferences or dict()
         return preferences.get(get_repo_path(), {}).get('git_settings')
+
+
+class Role(BaseModel):
+    name = Column(String(255))
+    permissions = relationship('Permission', back_populates='role')
+    users = relationship('User', secondary='user_role', back_populates='roles_new')
+
+    @classmethod
+    @safe_db_query
+    def create_default_roles(self):
+        Permission.create_default_global_permissions()
+        owner = self.query.filter(self.name == 'owner').first()
+        if not owner:
+            self.create(
+                name='owner',
+                permissions=[
+                    Permission.query.filter(
+                        Permission.entity == Permission.Entity.GLOBAL,
+                        Permission.access == Permission.Access.OWNER,
+                    ).first()
+                ]
+            )
+        admin = self.query.filter(self.name == 'admin').first()
+        if not admin:
+            self.create(
+                name='admin',
+                permissions=[
+                    Permission.query.filter(
+                        Permission.entity == Permission.Entity.GLOBAL,
+                        Permission.access == Permission.Access.ADMIN,
+                    ).first()
+                ]
+            )
+        editor = self.query.filter(self.name == 'editor').first()
+        if not editor:
+            self.create(
+                name='editor',
+                permissions=[
+                    Permission.query.filter(
+                        Permission.entity == Permission.Entity.GLOBAL,
+                        Permission.access == Permission.Access.EDIT,
+                    ).first()
+                ]
+            )
+        viewer = self.query.filter(self.name == 'viewer').first()
+        if not viewer:
+            self.create(
+                name='viewer',
+                permissions=[
+                    Permission.query.filter(
+                        Permission.entity == Permission.Entity.GLOBAL,
+                        Permission.access == Permission.Access.VIEW,
+                    ).first()
+                ]
+            )
+
+
+class UserRole(BaseModel):
+    user_id = Column(Integer, ForeignKey('user.id'))
+    role_id = Column(Integer, ForeignKey('role.id'))
+
+
+class Permission(BaseModel):
+    class Entity(str, enum.Enum):
+        GLOBAL = 'global'
+        PROJECT = 'project'
+        PIPELINE = 'pipeline'
+
+    class Access(str, enum.Enum):
+        VIEW = 'view'
+        EDIT = 'edit'
+        ADMIN = 'admin'
+        OWNER = 'owner'
+
+    entity_id = Column(String(255))
+    entity = Column(Enum(Entity), default=Entity.GLOBAL)
+    access = Column(Integer, default=None)
+    role_id = Column(Integer, ForeignKey('role.id'))
+
+    role = relationship(Role, back_populates='permissions')
+
+    @classmethod
+    @safe_db_query
+    def create_default_global_permissions(self) -> List['Permission']:
+        permissions = self.query.filter(self.entity == Permission.Entity.GLOBAL).all()
+        if len(permissions) == 0:
+            for access in Permission.Access:
+                permissions.append(
+                    self.create(
+                        entity=Permission.Entity.GLOBAL,
+                        access=access,
+                    )
+                )
+        return permissions
 
 
 class Oauth2Application(BaseModel):
