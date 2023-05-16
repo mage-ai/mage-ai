@@ -40,6 +40,20 @@ def should_cache_data_from_upstream(
     config_keys: List[str],
     config_profile_keys: List[str],
 ) -> bool:
+    """Check whether it's necessary to upload the data from upstream block to
+    SQL database.
+
+    1. Compare the keys in the config_keys between block's configuration and upstream_block's
+        configuration.
+    2. Compare the kyes in config_profile_keys between block's profile config and upstream_block's
+        profile config in io_config.yaml
+
+    Args:
+        block (Block): The current block.
+        upstream_block (Block): The upstream block.
+        config_keys (List[str]): The keys in block configuration to compare.
+        config_profile_keys (List[str]): The keys in io_config.yaml profiles to compare.
+    """
     if BlockType.SENSOR == upstream_block.type:
         return False
 
@@ -192,7 +206,7 @@ def table_name_parts(
 
     Args:
         configuration (Dict): Current block configuration.
-        upstream_block (TYPE): Upstream block.
+        upstream_block (TYPE): The upstream block.
         no_schema (bool, optional): Whether the database uses schema. If true, the database doesn't
             use schema, e.g. MySQL.
     Returns:
