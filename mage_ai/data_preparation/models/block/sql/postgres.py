@@ -1,9 +1,10 @@
+from typing import Dict
+
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     create_upstream_block_tables as create_upstream_block_tables_orig,
-    interpolate_input,
 )
+from mage_ai.data_preparation.models.block.sql.utils.shared import interpolate_input
 from mage_ai.io.config import ConfigKey
-from typing import Dict
 
 
 def create_upstream_block_tables(
@@ -26,7 +27,7 @@ def create_upstream_block_tables(
             ConfigKey.POSTGRES_DBNAME,
             ConfigKey.POSTGRES_HOST,
             ConfigKey.POSTGRES_PORT,
-            ConfigKey.POSTGRES_SCHEMA,
+            # ConfigKey.POSTGRES_SCHEMA,
         ],
         query=query,
         schema_name=loader.default_schema(),
