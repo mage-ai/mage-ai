@@ -51,6 +51,18 @@ class Spark(BaseSQLDatabase):
             database=config[ConfigKey.SPARK_SCHEMA],
         )
 
+    def execute(self, query_string: str, **kwargs) -> None:
+        """
+        Sends query to the connected Spark Session.
+
+        Args:
+            query_string (str): Query to execute on the Spark Session.
+            **kwargs: Additional arguments to pass to query, such as query configurations
+        """
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
+            self.client.sql(query_string, **kwargs)
+
     def execute_query(
         self,
         query: str,
