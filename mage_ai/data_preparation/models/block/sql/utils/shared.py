@@ -1,4 +1,10 @@
+import re
+from os import path
+from typing import Callable, Dict, List, Tuple
+
 from jinja2 import Template
+from pandas import DataFrame
+
 from mage_ai.data_preparation.models.block.sql.constants import (
     CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION,
     CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME,
@@ -7,10 +13,6 @@ from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.io.config import ConfigFileLoader
-from os import path
-from pandas import DataFrame
-from typing import Callable, Dict, List, Tuple
-import re
 
 
 def build_variable_pattern(variable_name: str):
@@ -47,11 +49,11 @@ def should_cache_data_from_upstream(
 
     config_path = path.join(get_repo_path(), 'io_config.yaml')
 
-    config1 = block.configuration or {}
-    config2 = upstream_block.configuration or {}
+    block_config = block.configuration or {}
+    upstream_block_config = upstream_block.configuration or {}
 
-    data_provider1 = config1.get('data_provider_profile')
-    data_provider2 = config2.get('data_provider_profile')
+    block_data_provider = block_config.get('data_provider_profile')
+    upstream_block_data_provider = upstream_block_config.get('data_provider_profile')
 
     # if config1.get('use_raw_sql'):
     #     return False
@@ -59,17 +61,18 @@ def should_cache_data_from_upstream(
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
         return True
 
-    loader1 = ConfigFileLoader(config_path, data_provider1)
-    loader2 = ConfigFileLoader(config_path, data_provider2)
+    block_loader = ConfigFileLoader(config_path, block_data_provider)
+    upstream_block_loader = ConfigFileLoader(config_path, upstream_block_data_provider)
 
     return not all([
-        config1.get(k) and
-        config2.get(k) and
-        config1.get(k) == config2.get(k) for k in config_keys
+        block_config.get(k) and
+        upstream_block_config.get(k) and
+        block_config.get(k) == upstream_block_config.get(k) for k in config_keys
     ]) or not all([
-        loader1.config.get(k) and
-        loader2.config.get(k) and
-        loader1.config.get(k) == loader2.config.get(k) for k in config_profile_keys
+        block_loader.config.get(k) and
+        upstream_block_loader.config.get(k) and
+        block_loader.config.get(k) == upstream_block_loader.config.get(k)
+        for k in config_profile_keys
     ])
 
 
@@ -161,7 +164,9 @@ def interpolate_input(
     return query
 
 
-def interpolate_vars(query, global_vars=dict()):
+def interpolate_vars(query, global_vars=None):
+    if global_vars is None:
+        global_vars = dict()
     return Template(query).render(**global_vars)
 
 
@@ -170,6 +175,29 @@ def table_name_parts(
     upstream_block,
     no_schema: bool = False,
 ) -> Tuple[str, str, str]:
+    """Get the table name parts (database, schema, table_name) of the upstream block.
+    The upstream block will be uploaded to the full table name. The full table name
+    will also be used in the SQL query interpolation to replace {{ df_[idx] }}.
+
+    Priority:
+    1. Get the database, schema and table_name from the block configuration with the foramt
+        ```yaml
+        upstream_block_configuration:
+            [block_uuid]:
+                table_name: database.schema.table
+        ```
+    2. Use the upstream block's table name
+    3. Use the `data_provider_schema` from the upstream block's configuration if it exists
+    4. Use the `data_provider_schema` from the current block's configuration
+
+    Args:
+        configuration (Dict): Current block configuration.
+        upstream_block (TYPE): Upstream block.
+        no_schema (bool, optional): Whether the database uses schema. If true, the database doesn't
+            use schema, e.g. MySQL.
+    Returns:
+        Tuple of (database, schema, table)
+    """
     database = None
     schema = None
     table = None
@@ -195,7 +223,11 @@ def table_name_parts(
         table = upstream_block.table_name
 
     if not schema and not no_schema:
-        schema = configuration.get('data_provider_schema')
+        if upstream_block.configuration and \
+                upstream_block.configuration.get('data_provider_schema'):
+            schema = upstream_block.configuration.get('data_provider_schema')
+        else:
+            schema = configuration.get('data_provider_schema')
 
     return database, schema, table
 
@@ -207,11 +239,13 @@ def create_upstream_block_tables(
     configuration: Dict = None,
     execution_partition: str = None,
     cache_upstream_dbt_models: bool = False,
-    cache_keys: List[str] = [],
+    cache_keys: List[str] = None,
     no_schema: bool = False,
     query: str = None,
     schema_name: str = None,
 ):
+    if cache_keys is None:
+        cache_keys = []
     from mage_ai.data_preparation.models.block.dbt.utils import (
         parse_attributes,
         source_table_name_for_block,
@@ -219,7 +253,7 @@ def create_upstream_block_tables(
     configuration = configuration if configuration else block.configuration
 
     mapping = blocks_in_query(block, query)
-    for idx, upstream_block in enumerate(block.upstream_blocks):
+    for _, upstream_block in enumerate(block.upstream_blocks):
         if query and upstream_block.uuid not in mapping:
             continue
 
