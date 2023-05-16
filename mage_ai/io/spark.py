@@ -1,62 +1,67 @@
 from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
+from pyspark.sql import SparkSession
 from typing import Dict, List, Union
-import clickhouse_connect
 
 
-class ClickHouse(BaseSQLDatabase):
+class Spark(BaseSQLDatabase):
     """
-    Handles data transfer between a ClickHouse data warehouse and the Mage app.
+    Handles data transfer between a Spark session and the Mage app.
     """
+    def _get_spark_session(self, **kwargs):
+        if self.spark_init:
+            return self.spark
+        try:
+            self.spark = SparkSession.builder.master(
+                kwargs.get('host', 'local')).getOrCreate()
+            self.spark_init = True
+        except Exception:
+            self.spark = None
+        return self.spark
+
     def __init__(self, **kwargs) -> None:
         """
-        Initializes settings for connecting to a ClickHouse warehouse.
-
-        To authenticate (and authorize) access to a ClickHouse warehouse,
-        credentials, i.e., username and password, must be provided.
-
-        All keyword arguments will be passed to the ClickHouse client.
+        Initializes settings for connecting to a Spark session.
         """
         if kwargs.get('verbose') is not None:
             kwargs.pop('verbose')
         super().__init__(verbose=kwargs.get('verbose', True))
-        with self.printer.print_msg('Connecting to ClickHouse'):
-            self.client = clickhouse_connect.get_client(**kwargs)
+        self.spark = None
+        self.spark_init = False
+        with self.printer.print_msg('Connecting to Spark Session'):
+            self.client = self._get_spark_session(**kwargs)
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader) -> 'ClickHouse':
+    def with_config(cls, config: BaseConfigLoader) -> 'Spark':
         """
-        Initializes ClickHouse client from configuration loader
+        Initializes Spark Session client from configuration loader
 
         Args:
             config (BaseConfigLoader): Configuration loader object
         """
-        if ConfigKey.CLICKHOUSE_HOST not in config:
+        if ConfigKey.SPARK_HOST not in config:
             raise ValueError(
-                'No valid configuration settings found for ClickHouse. '
+                'No valid configuration settings found for Spark Session. '
                 'You must specify host.'
             )
         return cls(
-            database=config[ConfigKey.CLICKHOUSE_DATABASE],
-            host=config[ConfigKey.CLICKHOUSE_HOST],
-            interface=config[ConfigKey.CLICKHOUSE_INTERFACE],
-            password=config[ConfigKey.CLICKHOUSE_PASSWORD],
-            port=config[ConfigKey.CLICKHOUSE_PORT],
-            username=config[ConfigKey.CLICKHOUSE_USERNAME],
+            method=config[ConfigKey.SPARK_METHOD],
+            host=config[ConfigKey.SPARK_HOST],
+            database=config[ConfigKey.SPARK_SCHEMA],
         )
 
-    def execute(self, command_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs) -> None:
         """
-        Sends command to the connected ClickHouse warehouse.
+        Sends query to the connected Spark Session.
 
         Args:
-            command_string (str): Command to execute on the ClickHouse warehouse.
-            **kwargs: Additional arguments to pass to command, such as configurations
+            query_string (str): Query to execute on the Spark Session.
+            **kwargs: Additional arguments to pass to query, such as query configurations
         """
-        with self.printer.print_msg(f'Executing query \'{command_string}\''):
-            command_string = self._clean_query(command_string)
-            self.client.command(command_string, **kwargs)
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
+            self.client.sql(query_string, **kwargs)
 
     def execute_query(
         self,
@@ -65,15 +70,15 @@ class ClickHouse(BaseSQLDatabase):
         **kwargs,
     ) -> DataFrame:
         """
-        Sends query to the connected ClickHouse warehouse.
+        Sends query to the connected Spark Session.
 
         Args:
-            query (str): Query to execute on the ClickHouse warehouse.
+            query (str): Query to execute on the Spark Session.
             **kwargs: Additional arguments to pass to query, such as query configurations
         """
         query = self._clean_query(query)
         with self.printer.print_msg(f'Executing query \'{query}\''):
-            result = self.client.query_df(query, parameters=parameters)
+            result = self.client.sql(query, parameters=parameters).toPandas()
 
         return result
 
@@ -87,16 +92,15 @@ class ClickHouse(BaseSQLDatabase):
         results = []
 
         for idx, query in enumerate(queries):
-            parameters = query_variables[idx] \
-                        if query_variables and idx < len(query_variables) \
-                        else {}
+            parameters = (query_variables[idx]
+                          if query_variables and idx < len(query_variables)
+                          else {})
             query = self._clean_query(query)
+            result = self.client.sql(query, parameters=parameters)
 
-            if fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and \
-                    fetch_query_at_indexes[idx]:
-                result = self.client.query_df(query, parameters=parameters)
-            else:
-                result = self.client.command(query, parameters=parameters)
+            if (fetch_query_at_indexes and idx < len(fetch_query_at_indexes) and
+                    fetch_query_at_indexes[idx]):
+                result = result.toPandas()
 
             results.append(result)
 
@@ -111,7 +115,7 @@ class ClickHouse(BaseSQLDatabase):
         **kwargs,
     ) -> DataFrame:
         """
-        Loads data from ClickHouse into a Pandas data frame based on the query given.
+        Loads data from Spark Session into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. When a select query
         is provided, this function will load at maximum 10,000,000 rows of data. To operate on more
         data, consider performing data transformations in warehouse.
@@ -139,9 +143,9 @@ class ClickHouse(BaseSQLDatabase):
         query_string = self._clean_query(query_string)
 
         with self.printer.print_msg(print_message):
-            return self.client.query_df(
+            return self.client.sql(
                 self._enforce_limit(query_string, limit), **kwargs
-            )
+            ).toPandas()
 
     def export(
         self,
@@ -156,7 +160,7 @@ class ClickHouse(BaseSQLDatabase):
         **kwargs,
     ) -> None:
         """
-        Exports a Pandas data frame to a ClickHouse warehouse based on the table name.
+        Exports a Pandas data frame to a Spark Session based on the table name.
         If table doesn't exist, the table is automatically created.
 
         Args:
@@ -180,12 +184,7 @@ class ClickHouse(BaseSQLDatabase):
             df = DataFrame(df)
 
         def __process(database: Union[str, None]):
-
-            df_existing = self.client.query_df(f"""
-EXISTS TABLE {database}.{table_name}
-""")
-
-            table_exists = not df_existing.empty and df_existing.iloc[0, 0] == 1
+            table_exists = self.client.catalog.tableExists(f'{database}.{table_name}')
             should_create_table = not table_exists
 
             if table_exists:
@@ -195,28 +194,28 @@ EXISTS TABLE {database}.{table_name}
                         ' exists in database {database}.',
                     )
                 elif ExportWritePolicy.REPLACE == if_exists:
-                    self.client.command(
+                    self.client.sql(
                         f'DROP TABLE IF EXISTS {database}.{table_name}')
                     should_create_table = True
 
             if query_string:
-                self.client.command(f'USE {database}')
+                self.client.sql(f'USE {database}')
 
                 if should_create_table:
-                    self.client.command(f"""
-CREATE TABLE IF NOT EXISTS {database}.{table_name} ENGINE = Memory AS
+                    self.client.sql(f"""
+CREATE TABLE IF NOT EXISTS {database}.{table_name} AS
 {query_string}
 """)
                 else:
-                    self.client.command(f"""
+                    self.client.sql(f"""
 INSERT INTO {database}.{table_name}
 {query_string}
 """)
             else:
                 if should_create_table:
-                    self.client.command(create_table_statement)
-
-                self.client.insert_df(f'{database}.{table_name}', df)
+                    self.client.sql(create_table_statement)
+                spark_df = self.client.createDataFrame(df)
+                spark_df.write.mode('append').saveAsTable(f'{database}.{table_name}')
 
         if verbose:
             with self.printer.print_msg(

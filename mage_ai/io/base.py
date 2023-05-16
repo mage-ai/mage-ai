@@ -26,6 +26,7 @@ class DataSource(str, Enum):
     REDSHIFT = 'redshift'
     S3 = 's3'
     SNOWFLAKE = 'snowflake'
+    SPARK = 'spark'
     TRINO = 'trino'
 
 

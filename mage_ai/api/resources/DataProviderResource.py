@@ -15,6 +15,7 @@ DATA_PROVIDERS = [
     DataSource.POSTGRES,
     DataSource.REDSHIFT,
     DataSource.SNOWFLAKE,
+    DataSource.SPARK,
     DataSource.TRINO,
 ]
 DATA_PROVIDERS_NAME = {
@@ -26,6 +27,7 @@ DATA_PROVIDERS_NAME = {
     DataSource.POSTGRES: 'PostgreSQL',
     DataSource.REDSHIFT: 'Redshift',
     DataSource.SNOWFLAKE: 'Snowflake',
+    DataSource.SPARK: 'Spark',
     DataSource.TRINO: 'Trino',
 }
 

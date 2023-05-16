@@ -101,6 +101,18 @@ class ConfigKey(str, Enum):
     SNOWFLAKE_TIMEOUT = 'SNOWFLAKE_TIMEOUT'
     SNOWFLAKE_USER = 'SNOWFLAKE_USER'
 
+    SPARK_CLUSTER = 'SPARK_CLUSTER'
+    SPARK_DRIVER = 'SPARK_DRIVER'
+    SPARK_ENDPOINT = 'SPARK_ENDPOINT'
+    SPARK_HOST = 'SPARK_HOST'
+    SPARK_METHOD = 'SPARK_METHOD'
+    SPARK_ORGANIZATION = 'SPARK_ORGANIZATION'
+    SPARK_PORT = 'SPARK_PORT'
+    SPARK_SCHEMA = 'SPARK_SCHEMA'
+    SPARK_SERVER_SIDE_PARAMETERS = 'SPARK_SERVER_SIDE_PARAMETERS'
+    SPARK_TOKEN = 'SPARK_TOKEN'
+    SPARK_USER = 'SPARK_USER'
+
     TRINO_CATALOG = 'TRINO_CATALOG'
     TRINO_HOST = 'TRINO_HOST'
     TRINO_PASSWORD = 'TRINO_PASSWORD'
@@ -298,6 +310,7 @@ class VerboseConfigKey(str, Enum):
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     SNOWFLAKE = 'Snowflake'
+    SPARK = 'Spark'
 
 
 class ConfigFileLoader(BaseConfigLoader):
@@ -368,6 +381,18 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_PASSWORD: (VerboseConfigKey.SNOWFLAKE, 'password'),
         ConfigKey.SNOWFLAKE_TIMEOUT: (VerboseConfigKey.SNOWFLAKE, 'timeout'),
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
+        ConfigKey.SPARK_CLUSTER: (VerboseConfigKey.SPARK, 'cluster'),
+        ConfigKey.SPARK_DRIVER: (VerboseConfigKey.SPARK, 'driver'),
+        ConfigKey.SPARK_ENDPOINT: (VerboseConfigKey.SPARK, 'endpoint'),
+        ConfigKey.SPARK_HOST: (VerboseConfigKey.SPARK, 'host'),
+        ConfigKey.SPARK_METHOD: (VerboseConfigKey.SPARK, 'method'),
+        ConfigKey.SPARK_ORGANIZATION: (VerboseConfigKey.SPARK, 'organization'),
+        ConfigKey.SPARK_PORT: (VerboseConfigKey.SPARK, 'port'),
+        ConfigKey.SPARK_SCHEMA: (VerboseConfigKey.SPARK, 'schema'),
+        ConfigKey.SPARK_SERVER_SIDE_PARAMETERS: (
+            VerboseConfigKey.SPARK, 'server_side_parameters'),
+        ConfigKey.SPARK_TOKEN: (VerboseConfigKey.SPARK, 'token'),
+        ConfigKey.SPARK_USER: (VerboseConfigKey.SPARK, 'user'),
     }
 
     def __init__(
