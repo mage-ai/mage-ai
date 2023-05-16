@@ -420,6 +420,7 @@
             "integrations/databases/BigQuery",
             "integrations/databases/ClickHouse",
             "integrations/databases/MicrosoftSQLServer",
+            "integrations/databases/MongoDB",
             "integrations/databases/MySQL",
             "integrations/databases/PostgreSQL",
             "integrations/databases/Redshift",
