@@ -7,7 +7,7 @@ import clickhouse_connect
 
 class ClickHouse(BaseSQLDatabase):
     """
-    Handles data transfer betwee a ClickHouse data warehouse and the Mage app.
+    Handles data transfer between a ClickHouse data warehouse and the Mage app.
     """
     def __init__(self, **kwargs) -> None:
         """

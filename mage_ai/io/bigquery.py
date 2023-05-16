@@ -13,7 +13,7 @@ from typing import Dict, List, Mapping, Union
 
 class BigQuery(BaseSQLDatabase):
     """
-    Handles data transfer betwee a BigQuery data warehouse and the Mage app.
+    Handles data transfer between a BigQuery data warehouse and the Mage app.
     """
 
     def __init__(self, **kwargs) -> None:

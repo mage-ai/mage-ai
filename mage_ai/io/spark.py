@@ -7,7 +7,7 @@ from typing import Dict, List, Union
 
 class Spark(BaseSQLDatabase):
     """
-    Handles data transfer betwee a Spark session and the Mage app.
+    Handles data transfer between a Spark session and the Mage app.
     """
     def _get_spark_session(self, **kwargs):
         if self.spark_init:
