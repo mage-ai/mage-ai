@@ -73,6 +73,8 @@ def should_cache_data_from_upstream(
     #     return False
 
     if BlockLanguage.SQL == block.language and BlockLanguage.SQL != upstream_block.language:
+        # If current block uses SQL but upstream block doesn't use SQL, always upload upstream block
+        # to the SQL database.
         return True
 
     block_loader = ConfigFileLoader(config_path, block_data_provider)
@@ -237,8 +239,10 @@ def table_name_parts(
         table = upstream_block.table_name
 
     if not schema and not no_schema:
-        if upstream_block.configuration and \
-                upstream_block.configuration.get('data_provider_schema'):
+        upstream_configuration = upstream_block.configuration
+        if upstream_configuration and \
+            configuration.get('data_provider') == upstream_configuration.get('data_provider') and \
+                upstream_configuration.get('data_provider_schema'):
             schema = upstream_block.configuration.get('data_provider_schema')
         else:
             schema = configuration.get('data_provider_schema')
