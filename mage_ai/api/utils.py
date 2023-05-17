@@ -87,6 +87,8 @@ def get_access_for_user(
     Otherwise, search for permissions for the specified entity and entity_id, and
     return the access of the user for that entity.
     '''
+    if not user:
+        return 0
     permissions = []
     for role in user.roles_new:
         if entity is None:

@@ -107,7 +107,7 @@ class Role(BaseModel):
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.OWNER,
+                        Permission.access == 1,
                     ).first()
                 ]
             )
@@ -118,7 +118,7 @@ class Role(BaseModel):
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.ADMIN,
+                        Permission.access == 2,
                     ).first()
                 ]
             )
@@ -129,7 +129,7 @@ class Role(BaseModel):
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.EDIT,
+                        Permission.access == 4,
                     ).first()
                 ]
             )
@@ -140,7 +140,7 @@ class Role(BaseModel):
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
-                        Permission.access == Permission.Access.VIEW,
+                        Permission.access == 8,
                     ).first()
                 ]
             )
@@ -159,6 +159,10 @@ class Permission(BaseModel):
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
+    # 1 = owner
+    # 2 = admin
+    # 4 = edit
+    # 8 = view
     access = Column(Integer, default=None)
     role_id = Column(Integer, ForeignKey('role.id'))
 

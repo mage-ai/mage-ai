@@ -1,8 +1,8 @@
 """Create user roles, roles, and permissions
 
-Revision ID: 5ec3ff540f41
+Revision ID: 83a74eca6ea1
 Revises: 66e67039b8a2
-Create Date: 2023-05-16 08:45:59.978618
+Create Date: 2023-05-17 10:10:41.359684
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '5ec3ff540f41'
+revision = '83a74eca6ea1'
 down_revision = '66e67039b8a2'
 branch_labels = None
 depends_on = None
@@ -31,7 +31,7 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('entity_id', sa.String(length=255), nullable=True),
     sa.Column('entity', sa.Enum('GLOBAL', 'PROJECT', 'PIPELINE', name='entity'), nullable=True),
-    sa.Column('access', sa.Enum('VIEW', 'EDIT', 'ADMIN', 'OWNER', name='access'), nullable=True),
+    sa.Column('access', sa.Integer(), nullable=True),
     sa.Column('role_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['role_id'], ['role.id'], ),
     sa.PrimaryKeyConstraint('id')
