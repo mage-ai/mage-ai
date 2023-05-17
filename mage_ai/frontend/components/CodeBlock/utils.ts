@@ -1,6 +1,7 @@
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
   BLOCK_TYPES_WITH_NO_PARENTS,
+  BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
   CONVERTIBLE_BLOCK_TYPES,
@@ -119,6 +120,7 @@ export const getMoreActionsItems = (
     configuration,
     downstream_blocks: downstreamBlocks,
     has_callback,
+    language,
     upstream_blocks: upstreamBlocks,
   } = block || {};
   const {
@@ -172,7 +174,7 @@ export const getMoreActionsItems = (
     });
 
     if (isDBT) {
-      items.unshift(...[
+      const dbtItems = [
         {
           label: () => 'Run model',
           onClick: () => runBlock({
@@ -206,7 +208,10 @@ export const getMoreActionsItems = (
           tooltip: () => 'Execute command dbt build.',
           uuid: 'build_model',
         },
-        {
+      ];
+
+      if (BlockLanguageEnum.SQL === language) {
+        dbtItems.push({
           label: () => 'Add upstream models',
           onClick: () => {
             updatePipeline({
@@ -217,8 +222,10 @@ export const getMoreActionsItems = (
           },
           tooltip: () => 'Add upstream models for this model to the pipeline.',
           uuid: 'add_upstream_models',
-        },
-      ]);
+        });
+      }
+
+      items.unshift(...dbtItems);
     }
 
     if (!isDBT && savePipelineContent && (dynamic || otherDynamicBlocks.length === 0)) {
