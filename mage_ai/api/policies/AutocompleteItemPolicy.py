@@ -5,7 +5,9 @@ from mage_ai.api.presenters.AutocompleteItemPresenter import AutocompleteItemPre
 
 
 class AutocompleteItemPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 AutocompleteItemPolicy.allow_actions([

@@ -157,12 +157,6 @@ class Permission(BaseModel):
         PROJECT = 'project'
         PIPELINE = 'pipeline'
 
-    class Access(str, enum.Enum):
-        VIEW = 'view'
-        EDIT = 'edit'
-        ADMIN = 'admin'
-        OWNER = 'owner'
-
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
     access = Column(Integer, default=None)
@@ -175,10 +169,11 @@ class Permission(BaseModel):
     def create_default_global_permissions(self) -> List['Permission']:
         permissions = self.query.filter(self.entity == Permission.Entity.GLOBAL).all()
         if len(permissions) == 0:
-            for access in Permission.Access:
+            for access in [1, 2, 4, 8]:
                 permissions.append(
                     self.create(
                         entity=Permission.Entity.GLOBAL,
+                        entity_id='global',
                         access=access,
                     )
                 )

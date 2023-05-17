@@ -5,7 +5,9 @@ from mage_ai.api.presenters.BlockTemplatePresenter import BlockTemplatePresenter
 
 
 class BlockTemplatePolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 BlockTemplatePolicy.allow_actions([

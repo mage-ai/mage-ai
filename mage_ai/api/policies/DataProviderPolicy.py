@@ -5,7 +5,9 @@ from mage_ai.api.presenters.DataProviderPresenter import DataProviderPresenter
 
 
 class DataProviderPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 DataProviderPolicy.allow_actions([

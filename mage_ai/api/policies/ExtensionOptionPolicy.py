@@ -5,7 +5,9 @@ from mage_ai.api.presenters.ExtensionOptionPresenter import ExtensionOptionPrese
 
 
 class ExtensionOptionPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 ExtensionOptionPolicy.allow_actions([

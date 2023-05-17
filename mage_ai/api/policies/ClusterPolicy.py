@@ -5,7 +5,9 @@ from mage_ai.api.presenters.ClusterPresenter import ClusterPresenter
 
 
 class ClusterPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 ClusterPolicy.allow_actions([

@@ -5,7 +5,9 @@ from mage_ai.api.presenters.FileVersionPresenter import FileVersionPresenter
 
 
 class FileVersionPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        return None, None
 
 
 FileVersionPolicy.allow_actions([

@@ -2,10 +2,17 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BackfillPresenter import BackfillPresenter
+from mage_ai.orchestration.db.models.oauth import Permission
 
 
 class BackfillPolicy(BasePolicy):
-    pass
+    @property
+    def entity(self):
+        parent_model = self.options.get('parent_model')
+        if parent_model:
+            return Permission.Entity.PIPELINE, parent_model.uuid
+
+        return super().entity
 
 
 BackfillPolicy.allow_actions([
