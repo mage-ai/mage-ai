@@ -1,8 +1,9 @@
 import NextLink from 'next/link';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
 import ClientOnly from '@hocs/ClientOnly';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
@@ -11,6 +12,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import {
+  DocumentIcon,
   Lightning,
   PipelineV3,
   Schedule,
@@ -25,39 +27,10 @@ import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 const ICON_SIZE = 3 * UNIT;
-
-export type NavigationItem = {
-  Icon: any;
-  IconSelected?: any;
-  disabled?: boolean;
-  id: string;
-  isSelected?: (pathname: string, item: NavigationItem) => boolean;
-  label: () => string;
-  linkProps?: {
-    as?: string;
-    href: string;
-  };
-  onClick?: (e: any) => void;
-};
-
-export type VerticalNavigationProps = {
-  aligned?: 'left' | 'right';
-  navigationItems?: NavigationItem[];
-  showMore?: boolean;
-  visible?: boolean;
-};
-
-function VerticalNavigation({
-  aligned,
-  navigationItems,
-  showMore,
-  visible,
-}: VerticalNavigationProps) {
-  const router = useRouter();
-  const { pathname } = router;
-
-  const buttons = useMemo(() => {
-    const defaultItems = [
+const DEFAULT_ITEMS = [
+  {
+    id: 'main',
+    items: [
       {
         Icon: PipelineV3,
         id: 'pipelines',
@@ -82,6 +55,19 @@ function VerticalNavigation({
           href: '/pipeline-runs',
         },
       },
+    ],
+  },
+  {
+    id: 'misc',
+    items: [
+      {
+        Icon: DocumentIcon,
+        id: 'files',
+        label: () => 'Files',
+        linkProps: {
+          href: '/files',
+        },
+      },
       {
         Icon: Terminal,
         id: 'terminal',
@@ -98,210 +84,269 @@ function VerticalNavigation({
           href: '/settings',
         },
       },
-    ];
+    ],
+  },
+];
 
-    const items = navigationItems || defaultItems;
+export type NavigationItem = {
+  Icon?: any;
+  IconSelected?: any;
+  disabled?: boolean;
+  id: string;
+  isSelected?: (pathname: string, item: NavigationItem) => boolean;
+  items?: NavigationItem[];
+  label?: () => string;
+  linkProps?: {
+    as?: string;
+    href: string;
+  };
+  onClick?: (e: any) => void;
+};
 
-    return items.map((item, idx: number) => {
-      const {
-        Icon,
-        IconSelected,
-        disabled,
-        id,
-        isSelected,
-        label,
-        linkProps,
-        onClick,
-      } = item;
-      const selected: boolean = isSelected
-        ? isSelected(pathname, item)
-        : !!pathname.match(new RegExp(`^/${id}[/]*`));
+export type VerticalNavigationProps = {
+  aligned?: 'left' | 'right';
+  navigationItems?: NavigationItem[];
+  showMore?: boolean;
+  visible?: boolean;
+};
 
-      const IconToUse = (selected && IconSelected) ? IconSelected : Icon;
-      const displayText = label();
+function VerticalNavigation({
+  aligned,
+  navigationItems,
+  showMore,
+  visible,
+}: VerticalNavigationProps) {
+  const router = useRouter();
+  const { pathname } = router;
 
-      let buttonEl;
-      let iconEl;
+  const buildItem = useCallback((item, idx: number) => {
+    const {
+      Icon,
+      IconSelected,
+      disabled,
+      id,
+      isSelected,
+      label,
+      linkProps,
+      onClick,
+    } = item;
+    const selected: boolean = isSelected
+      ? isSelected(pathname, item)
+      : !!pathname.match(new RegExp(`^/${id}[/]*`));
 
-      const sharedNavigationItemProps = {
-        primary: !IconToUse,
-        selected: showMore && selected,
-        showMore,
-        withGradient: IconSelected,
-      };
+    const IconToUse = (selected && IconSelected) ? IconSelected : Icon;
+    const displayText = label?.();
 
-      if (selected && IconSelected) {
+    let buttonEl;
+    let iconEl;
+
+    const sharedNavigationItemProps = {
+      primary: !IconToUse,
+      selected: showMore && selected,
+      showMore,
+      withGradient: IconSelected,
+    };
+
+    if (selected && IconSelected) {
+      iconEl = (
+        <div
+          style={{
+            height: ICON_SIZE,
+            width: ICON_SIZE,
+          }}
+        >
+          <IconToUse muted size={ICON_SIZE} />
+        </div>
+      );
+
+      if (showMore || visible) {
         iconEl = (
-          <div
-            style={{
-              height: ICON_SIZE,
-              width: ICON_SIZE,
-            }}
-          >
+          <NavigationItemStyle {...sharedNavigationItemProps}>
             <IconToUse muted size={ICON_SIZE} />
-          </div>
+          </NavigationItemStyle>
         );
+      }
 
-        if (showMore || visible) {
-          iconEl = (
-            <NavigationItemStyle {...sharedNavigationItemProps}>
-              <IconToUse muted size={ICON_SIZE} />
-            </NavigationItemStyle>
+      buttonEl = (
+        <GradientButton
+          backgroundGradient={PURPLE_BLUE}
+          backgroundPanel
+          basic
+          borderWidth={2}
+          disabled={disabled}
+          linkProps={linkProps}
+          onClick={onClick}
+          paddingUnits={1}
+        >
+          {iconEl}
+        </GradientButton>
+      );
+
+      if (showMore) {
+        buttonEl = iconEl;
+      }
+    } else if (!selected || (selected && !IconSelected)) {
+      iconEl = (
+        <NavigationItemStyle {...sharedNavigationItemProps}>
+          {IconToUse
+            ? <IconToUse
+              muted={!selected}
+              size={ICON_SIZE}
+            />
+            : <Text>Edit</Text>
+          }
+        </NavigationItemStyle>
+      );
+
+      buttonEl = (
+        <KeyboardShortcutButton
+          disabled={disabled}
+          inline
+          linkProps={linkProps}
+          noHoverUnderline
+          noPadding
+          onClick={onClick}
+          primary={selected}
+          sameColorAsText
+          uuid={`VerticalNavigation/${id}`}
+        >
+          {iconEl}
+        </KeyboardShortcutButton>
+      );
+
+      if (showMore) {
+        buttonEl = iconEl;
+      }
+    }
+
+    let el;
+    if ('right' === aligned) {
+      el = (
+        <FlexContainer
+          alignItems="center"
+          fullWidth
+          justifyContent="flex-end"
+        >
+          <Flex flex={1} justifyContent="flex-end">
+            <Text noWrapping>
+              {displayText}
+            </Text>
+          </Flex>
+          <Spacing mr={2} />
+          {iconEl}
+        </FlexContainer>
+      );
+    } else {
+      el = (
+        <FlexContainer alignItems="center">
+          {iconEl}
+          <Spacing mr={2} />
+          <Flex flex={1}>
+            <Text noWrapping>
+              {displayText}
+            </Text>
+          </Flex>
+        </FlexContainer>
+      );
+    }
+
+    let clickEl = (
+      <NavigationLinkStyle
+        href="#"
+        onClick={onClick}
+        selected={selected}
+      >
+        {el}
+      </NavigationLinkStyle>
+    );
+    if (linkProps) {
+      clickEl = (
+        <NextLink
+          {...linkProps}
+          passHref
+        >
+          {clickEl}
+        </NextLink>
+      );
+    }
+
+    if ('right' === aligned) {
+      buttonEl = (
+        <FlexContainer
+          alignItems="center"
+          fullWidth
+          justifyContent="flex-end"
+        >
+          {buttonEl}
+        </FlexContainer>
+      );
+    }
+
+    let finalEl;
+
+    if (visible) {
+      finalEl = clickEl;
+    } else if (showMore) {
+      finalEl = buttonEl;
+    } else {
+      finalEl = (
+        <Tooltip
+          appearBefore={'right' === aligned}
+          height={5 * UNIT}
+          label={displayText}
+          size={null}
+          widthFitContent
+        >
+          {buttonEl}
+        </Tooltip>
+      );
+    }
+
+    return (
+      <Spacing
+        key={`button-${id}`}
+        mt={showMore && visible
+          ? 0
+          : idx >= 1 ? PADDING_UNITS : 0
+        }
+      >
+        {finalEl}
+      </Spacing>
+    );
+  }, [
+    aligned,
+    pathname,
+    showMore,
+    visible,
+  ]);
+
+  const buttons = useMemo(() => {
+    const arr = [];
+    (navigationItems || DEFAULT_ITEMS).forEach((item, idx: number) => {
+      const { id, items } = item;
+
+      if (items?.length >= 1) {
+        if (idx >= 1) {
+          arr.push(
+            <Spacing
+              key={id}
+              my={visible ? PADDING_UNITS : PADDING_UNITS + 1}
+            >
+              <Divider light />
+            </Spacing>,
           );
         }
 
-        buttonEl = (
-          <GradientButton
-            backgroundGradient={PURPLE_BLUE}
-            backgroundPanel
-            basic
-            borderWidth={2}
-            disabled={disabled}
-            linkProps={linkProps}
-            onClick={onClick}
-            paddingUnits={1}
-          >
-            {iconEl}
-          </GradientButton>
-        );
-
-        if (showMore) {
-          buttonEl = iconEl;
-        }
-      } else if (!selected || (selected && !IconSelected)) {
-        iconEl = (
-          <NavigationItemStyle {...sharedNavigationItemProps}>
-            {IconToUse
-              ? <IconToUse
-                muted={!selected}
-                size={ICON_SIZE}
-              />
-              : <Text>Edit</Text>
-            }
-          </NavigationItemStyle>
-        );
-
-        buttonEl = (
-          <KeyboardShortcutButton
-            disabled={disabled}
-            inline
-            linkProps={linkProps}
-            noHoverUnderline
-            noPadding
-            onClick={onClick}
-            primary={selected}
-            sameColorAsText
-            uuid={`VerticalNavigation/${id}`}
-          >
-            {iconEl}
-          </KeyboardShortcutButton>
-        );
-
-        if (showMore) {
-          buttonEl = iconEl;
-        }
-      }
-
-      let el;
-      if ('right' === aligned) {
-        el = (
-          <FlexContainer
-            alignItems="center"
-            fullWidth
-            justifyContent="flex-end"
-          >
-            <Flex flex={1} justifyContent="flex-end">
-              <Text noWrapping>
-                {displayText}
-              </Text>
-            </Flex>
-            <Spacing mr={2} />
-            {iconEl}
-          </FlexContainer>
-        );
+        arr.push(...items.map((item2, idx2: number) => buildItem(item2, idx2)));
       } else {
-        el = (
-          <FlexContainer alignItems="center">
-            {iconEl}
-            <Spacing mr={2} />
-            <Flex flex={1}>
-              <Text noWrapping>
-                {displayText}
-              </Text>
-            </Flex>
-          </FlexContainer>
-        );
+        arr.push(buildItem(item, idx));
       }
-
-      let clickEl = (
-        <NavigationLinkStyle
-          href="#"
-          onClick={onClick}
-          selected={selected}
-        >
-          {el}
-        </NavigationLinkStyle>
-      );
-      if (linkProps) {
-        clickEl = (
-          <NextLink
-            {...linkProps}
-            passHref
-          >
-            {clickEl}
-          </NextLink>
-        );
-      }
-
-      if ('right' === aligned) {
-        buttonEl = (
-          <FlexContainer
-            alignItems="center"
-            fullWidth
-            justifyContent="flex-end"
-          >
-            {buttonEl}
-          </FlexContainer>
-        );
-      }
-
-      let finalEl;
-
-      if (visible) {
-        finalEl = clickEl;
-      } else if (showMore) {
-        finalEl = buttonEl;
-      } else {
-        finalEl = (
-          <Tooltip
-            appearBefore={'right' === aligned}
-            height={5 * UNIT}
-            label={displayText}
-            size={null}
-            widthFitContent
-          >
-            {buttonEl}
-          </Tooltip>
-        );
-      }
-
-      return (
-        <Spacing
-          key={`button-${id}`}
-          mt={showMore && visible
-            ? 0
-            : idx >= 1 ? PADDING_UNITS : 0
-          }
-        >
-          {finalEl}
-        </Spacing>
-      );
     });
+
+    return arr;
   }, [
-    aligned,
+    buildItem,
     navigationItems,
-    pathname,
-    showMore,
     visible,
   ]);
 
