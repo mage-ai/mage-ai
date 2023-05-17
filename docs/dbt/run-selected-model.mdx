@@ -32,7 +32,7 @@ description: "(and optionally exclude others)"
         $ dbt run --select path/to/my_model.sql  # run a specific model by its path
         ```
 
-        ```yaml --include
+        ```yaml --exclude
         $ dbt run --exclude my_dbt_project_name
         $ dbt run --exclude my_dbt_model
         $ dbt run --exclude path.to.my.models
