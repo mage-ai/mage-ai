@@ -1,19 +1,19 @@
+import os
 from datetime import datetime
-from mage_ai.data_preparation.models.triggers import (
-    ScheduleStatus,
-)
+
+from freezegun import freeze_time
+
+from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.triggers import ScheduleStatus
 from mage_ai.data_preparation.repo_manager import get_repo_config
-from mage_ai.orchestration.db.models.schedules import (
-    PipelineRun,
-    PipelineSchedule,
-)
+from mage_ai.orchestration.db.models.schedules import PipelineRun, PipelineSchedule
+from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
     create_pipeline_run,
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
 )
-import os
 
 
 class PipelineScheduleTests(DBTestCase):
@@ -27,7 +27,7 @@ class PipelineScheduleTests(DBTestCase):
 
     def test_pipeline_runs_count(self):
         pipeline_schedule = PipelineSchedule.create(pipeline_uuid='test_pipeline')
-        for i in range(5):
+        for _ in range(5):
             create_pipeline_run_with_schedule(
                 'test_pipeline',
                 pipeline_schedule_id=pipeline_schedule.id,
@@ -127,6 +127,17 @@ class PipelineRunTests(DBTestCase):
             f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}',
         )
 
+    @freeze_time('2023-05-01 01:20:33')
+    def test_execution_partition_from_variables(self):
+        pipeline_schedule = PipelineSchedule.create(pipeline_uuid='test_pipeline')
+        payload = configure_pipeline_run_payload(pipeline_schedule, PipelineType.PYTHON, dict())[0]
+        pipeline_run = PipelineRun.create(**payload)
+        execution_date_str = datetime.utcnow().strftime(format='%Y%m%dT%H%M%S_%f')
+        self.assertEqual(
+            pipeline_run.execution_partition,
+            f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}',
+        )
+
     def test_log_file(self):
         execution_date = datetime.now()
         pipeline_run = create_pipeline_run_with_schedule(
@@ -212,4 +223,4 @@ class BlockRunTests(DBTestCase):
                 'pipelines/test_pipeline/.logs',
                 f'{pipeline_run.pipeline_schedule_id}/{execution_date_str}/{b.block_uuid}.log',
             )
-            self.assertEquals(b.logs.get('path'), expected_file_path)
+            self.assertEqual(b.logs.get('path'), expected_file_path)

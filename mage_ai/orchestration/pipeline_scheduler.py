@@ -1,3 +1,4 @@
+import os
 import traceback
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Tuple
@@ -900,7 +901,10 @@ def configure_pipeline_run_payload(
 
     # Set execution_partition in variables
     payload['variables']['execution_partition'] = \
-        payload['execution_date'].strftime(format='%Y%m%dT%H%M%S_%f')
+        os.sep.join([
+            str(pipeline_schedule.id),
+            payload['execution_date'].strftime(format='%Y%m%dT%H%M%S_%f'),
+        ])
 
     is_integration = PipelineType.INTEGRATION == pipeline_type
     if is_integration:
