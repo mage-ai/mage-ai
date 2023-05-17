@@ -448,7 +448,8 @@
         "integrations/hightouch",
         "integrations/stitch",
         "integrations/metaplane",
-        "integrations/great-expectations"
+        "integrations/great-expectations",
+        "integrations/polars"
       ]
     },
     {
