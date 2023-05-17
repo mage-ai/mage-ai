@@ -1,10 +1,10 @@
+import aiofiles
+import yaml
+
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource
 from mage_ai.orchestration.db import safe_db_query
-import aiofiles
-import yaml
-
 
 DATA_PROVIDERS = [
     DataSource.BIGQUERY,
