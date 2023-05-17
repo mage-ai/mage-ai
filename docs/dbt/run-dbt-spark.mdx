@@ -5,19 +5,15 @@ sidebarTitle: "Run dbt-spark"
 
 The following procedure demonstrates how to run `dbt-spark` with a pySpark session.
 
-1.  Start the Mage development environment through the following command:
-```
-$  ./scripts/dev.sh demo_project 
-```
-2. Click the `Terminal` icon on the right side of the Mage UI, and install the
-required packages and libraries for `pyspark`:
-```
-root@488dc9529cf3:/home/src#  apt-get update && \
-apt-get install -y --no-install-recommends \
-openjdk-11-jre
+1. Follow the instructions given at [Build Mage docker image with Spark environment](https://docs.mage.ai/integrations/spark-pyspark#1-build-mage-docker-image-with-spark-environment)
+to build a Mage docker image with Spark.
 
-root@488dc9529cf3:/home/src#  pip install pyspark
+2. Run the following command in your terminal to start Mage using docker:
 ```
+docker run -it --name mage_spark -p 6789:6789 -v $(pwd):/home/src mage_spark \
+  /app/run_app.sh mage start demo_project
+```
+
 3. Create a new pipeline with a name `dbt_spark`, and add a `Scratchpad` to
 test out the connection with PySpark, with the following code:
 ```
