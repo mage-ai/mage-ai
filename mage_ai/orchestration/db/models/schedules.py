@@ -237,6 +237,8 @@ class PipelineRun(BaseModel):
 
     @property
     def execution_partition(self) -> str:
+        if self.variables and self.variables.get('execution_partition'):
+            return self.variables.get('execution_partition')
         if self.execution_date is None:
             return str(self.pipeline_schedule_id)
         else:
