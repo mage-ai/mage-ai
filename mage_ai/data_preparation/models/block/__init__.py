@@ -227,9 +227,11 @@ class Block:
         status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
         language: BlockLanguage = BlockLanguage.PYTHON,
-        configuration: Dict = dict(),
+        configuration: Dict = None,
         has_callback: bool = False,
     ):
+        if configuration is None:
+            configuration = dict()
         self.name = name or uuid
         self._uuid = uuid
         self.type = block_type
@@ -614,7 +616,7 @@ class Block:
         self,
         global_vars: Dict = None,
         logger: Logger = None,
-        logging_tags: Dict = dict(),
+        logging_tags: Dict = None,
         **kwargs
     ):
         """
@@ -623,6 +625,9 @@ class Block:
         websocket as a way to test the code in the callback. To run a block in a pipeline
         run, use a BlockExecutor.
         """
+        if logging_tags is None:
+            logging_tags = dict()
+
         arr = []
         if self.callback_block:
             arr.append(self.callback_block)
@@ -643,6 +648,7 @@ class Block:
                     global_vars=global_vars,
                     logger=logger,
                     logging_tags=logging_tags,
+                    parent_block=self,
                 )
             raise e
 
@@ -652,6 +658,7 @@ class Block:
                 global_vars=global_vars,
                 logger=logger,
                 logging_tags=logging_tags,
+                parent_block=self,
             )
 
         return output
@@ -664,7 +671,7 @@ class Block:
         execution_partition: str = None,
         global_vars: Dict = None,
         logger: Logger = None,
-        logging_tags: Dict = dict(),
+        logging_tags: Dict = None,
         run_all_blocks: bool = False,
         test_execution: bool = False,
         update_status: bool = True,
@@ -678,6 +685,9 @@ class Block:
         run_settings: Dict = None,
         **kwargs,
     ) -> Dict:
+        if logging_tags is None:
+            logging_tags = dict()
+
         try:
             if not run_all_blocks:
                 not_executed_upstream_blocks = list(
@@ -873,7 +883,7 @@ class Block:
         execution_partition: str = None,
         input_args: List = None,
         logger: Logger = None,
-        logging_tags: Dict = dict(),
+        logging_tags: Dict = None,
         global_vars: Dict = None,
         test_execution: bool = False,
         input_from_output: Dict = None,
@@ -883,6 +893,9 @@ class Block:
         run_settings: Dict = None,
         **kwargs,
     ) -> Dict:
+        if logging_tags is None:
+            logging_tags = dict()
+
         # Add pipeline uuid and block uuid to global_vars
         global_vars = merge_dict(
             global_vars or dict(),
@@ -951,7 +964,7 @@ class Block:
         execution_partition: str = None,
         input_vars: List = None,
         logger: Logger = None,
-        logging_tags: Dict = dict(),
+        logging_tags: Dict = None,
         global_vars: Dict = None,
         test_execution: bool = False,
         input_from_output: Dict = None,
@@ -960,6 +973,9 @@ class Block:
         run_settings: Dict = None,
         **kwargs,
     ) -> List:
+        if logging_tags is None:
+            logging_tags = dict()
+
         decorated_functions = []
         test_functions = []
 
@@ -1531,13 +1547,18 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
-        global_vars: Dict = {},
+        global_vars: Dict = None,
         logger: Logger = None,
-        logging_tags: Dict = dict(),
+        logging_tags: Dict = None,
         update_tests: bool = True,
         dynamic_block_uuid: str = None,
         from_notebook: bool = False,
     ) -> None:
+        if global_vars is None:
+            global_vars = dict()
+        if logging_tags is None:
+            logging_tags = dict()
+
         self.dynamic_block_uuid = dynamic_block_uuid
 
         if self.pipeline \
@@ -2133,6 +2154,8 @@ class CallbackBlock(Block):
                     pipeline_run=pipeline_run,
                 ),
             )
+            if parent_block:
+                global_vars['parent_block_uuid'] = parent_block.uuid
 
             if parent_block and \
                     parent_block.pipeline and \
