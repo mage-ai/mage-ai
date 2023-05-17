@@ -177,7 +177,6 @@ class Permission(BaseModel):
                 permissions.append(
                     self.create(
                         entity=Permission.Entity.GLOBAL,
-                        entity_id='global',
                         access=access,
                     )
                 )

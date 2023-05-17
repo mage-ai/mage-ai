@@ -105,10 +105,10 @@ def get_access_for_user(
     access = 0
     if permissions:
         for permission in permissions:
-            access = access | permission
+            access = access | permission.access
+        return access
     else:
-        get_parent_access_for_entity(user, entity)
-    return access
+        return get_parent_access_for_entity(user, entity)
 
 
 def get_parent_access_for_entity(user: User, entity) -> int:
