@@ -274,7 +274,9 @@ class PipelineScheduler:
                     tags=merge_dict(tags, dict(metrics=self.pipeline_run.metrics)),
                 )
 
-    def memory_usage_failure(self, tags: Dict = {}) -> None:
+    def memory_usage_failure(self, tags: Dict = None) -> None:
+        if tags is None:
+            tags = dict()
         msg = 'Memory usage across all pipeline runs has reached or exceeded the maximum '\
             f'limit of {int(MEMORY_USAGE_MAXIMUM * 100)}%.'
         self.logger.info(msg, tags=tags)
@@ -603,7 +605,8 @@ def run_integration_pipeline(
             while True:
                 block_runs_in_order.append(
                     find(
-                        lambda b: b.block_uuid == f'{current_block.uuid}:{tap_stream_id}:{idx}',
+                        lambda b: b.block_uuid ==
+                        f'{current_block.uuid}:{tap_stream_id}:{idx}',  # noqa: B023
                         all_block_runs,
                     )
                 )
@@ -616,11 +619,11 @@ def run_integration_pipeline(
             data_exporter_uuid = f'{data_exporter_block.uuid}:{tap_stream_id}:{idx}'
 
             data_loader_block_run = find(
-                lambda b: b.block_uuid == data_loader_uuid,
+                lambda b: b.block_uuid == data_loader_uuid,     # noqa: B023
                 all_block_runs,
             )
             data_exporter_block_run = find(
-                lambda b: b.block_uuid == data_exporter_uuid,
+                lambda b: b.block_uuid == data_exporter_uuid,   # noqa: B023
                 block_runs_for_stream,
             )
             if not data_loader_block_run or not data_exporter_block_run:
@@ -653,7 +656,7 @@ def run_integration_pipeline(
                 block_runs_and_configs = block_runs_and_configs[1:]
 
             block_failed = False
-            for idx2, tup in enumerate(block_runs_and_configs):
+            for _, tup in enumerate(block_runs_and_configs):
                 block_run, template_runtime_configuration = tup
 
                 tags_updated = merge_dict(tags, dict(
@@ -813,7 +816,7 @@ def run_block(
                     block_grandparent_uuid,
                 )
 
-                for idx, value in enumerate(values):
+                for idx, _ in enumerate(values):
                     if idx < len(block_metadata):
                         metadata = block_metadata[idx].copy()
                     else:
@@ -880,8 +883,10 @@ def run_pipeline(pipeline_run_id, variables, tags):
 def configure_pipeline_run_payload(
     pipeline_schedule: PipelineSchedule,
     pipeline_type: PipelineType,
-    payload: Dict = {},
+    payload: Dict = None,
 ) -> Tuple[Dict, bool]:
+    if payload is None:
+        payload = dict()
     if 'variables' not in payload:
         payload['variables'] = {}
 
@@ -892,6 +897,10 @@ def configure_pipeline_run_payload(
         payload['execution_date'] = datetime.utcnow()
     elif not isinstance(execution_date, datetime):
         payload['execution_date'] = datetime.fromisoformat(execution_date)
+
+    # Set execution_partition in variables
+    payload['variables']['execution_partition'] = \
+        payload['execution_date'].strftime(format='%Y%m%dT%H%M%S_%f')
 
     is_integration = PipelineType.INTEGRATION == pipeline_type
     if is_integration:
@@ -1115,7 +1124,9 @@ def schedule_all():
     job_manager.clean_up_jobs()
 
 
-def schedule_with_event(event: Dict = dict()):
+def schedule_with_event(event: Dict = None):
+    if event is None:
+        event = dict()
     logger.info(f'Schedule with event {event}')
     all_event_matchers = EventMatcher.active_event_matchers()
     for e in all_event_matchers:
@@ -1145,7 +1156,9 @@ def sync_schedules(pipeline_uuids: List[str]):
             PipelineSchedule.create_or_update(pipeline_trigger)
 
 
-def get_variables(pipeline_run, extra_variables: Dict = {}) -> Dict:
+def get_variables(pipeline_run, extra_variables: Dict = None) -> Dict:
+    if extra_variables is None:
+        extra_variables = dict()
     if not pipeline_run:
         return {}
 

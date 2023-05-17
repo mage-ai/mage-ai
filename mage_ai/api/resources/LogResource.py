@@ -1,12 +1,18 @@
 from datetime import datetime
+from typing import Dict, List
+
+from sqlalchemy.orm import aliased
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import META_KEY_LIMIT
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun, PipelineSchedule
-from sqlalchemy.orm import aliased
-from typing import Dict, List
+from mage_ai.orchestration.db.models.schedules import (
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
 
 MAX_LOG_FILES = 20
 
@@ -96,6 +102,7 @@ class LogResource(GenericResource):
             a.pipeline_schedule_id,
             a.pipeline_schedule_id,
             a.pipeline_uuid,
+            a.variables,
         ]
 
         total_pipeline_run_log_count = 0
@@ -155,6 +162,7 @@ class LogResource(GenericResource):
                 model.execution_date = row.execution_date
                 model.pipeline_schedule_id = row.pipeline_schedule_id
                 model.pipeline_uuid = row.pipeline_uuid
+                model.variables = row.variables
                 logs = await model.logs_async()
                 pipeline_log_file_path = logs.get('path')
                 if pipeline_log_file_path not in processed_pipeline_run_log_files:
@@ -235,6 +243,7 @@ class LogResource(GenericResource):
             model.execution_date = row.execution_date
             model.pipeline_schedule_id = row.pipeline_schedule_id
             model.pipeline_uuid = row.pipeline_uuid
+            model.variables = row.variables
 
             model2 = BlockRun()
             model2.block_uuid = row.block_uuid
