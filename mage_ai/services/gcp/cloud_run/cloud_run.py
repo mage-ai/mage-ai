@@ -1,26 +1,33 @@
 import json
 import os
+from typing import Dict
 
 from google.api.launch_stage_pb2 import LaunchStage
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import run_v2
 from google.oauth2 import service_account
 
+from mage_ai.server.logger import Logger
 from mage_ai.services.gcp.cloud_run.config import CloudRunConfig
 
+logger = Logger().new_server_logger(__name__)
 
-def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None:
+
+CLOUD_RUN_CLIENT_SCOPES = [
+    'https://www.googleapis.com/auth/cloud-platform',
+    'https://www.googleapis.com/auth/compute',
+]
+
+
+def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict:
     if type(cloud_run_config) is dict:
         cloud_run_config = CloudRunConfig.load(config=cloud_run_config)
 
-    scopes = [
-        'https://www.googleapis.com/auth/cloud-platform',
-        'https://www.googleapis.com/auth/compute',
-    ]
     credentials = service_account.Credentials.from_service_account_file(
         cloud_run_config.path_to_credentials_json_file,
-        scopes=scopes,
+        scopes=CLOUD_RUN_CLIENT_SCOPES,
     )
+    jobs_client = run_v2.JobsClient(credentials=credentials)
 
     # Get existing service
     resource_prefix = f'projects/{cloud_run_config.project_id}/locations/{cloud_run_config.region}'
@@ -34,8 +41,6 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
     service_template = existing_service.template
 
     # Create job
-    jobs_client = run_v2.JobsClient(credentials=credentials)
-
     containers_with_cmd = service_template.containers
     for c in containers_with_cmd:
         c.command = command.split(' ')
@@ -63,18 +68,29 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> None
     )
     try:
         operation = jobs_client.create_job(request=request)
-        print("Waiting for create_job operation to complete...")
+        logger.info("Waiting for create_job operation to complete...")
         response = operation.result()
-        print(json.dumps(response, indent=4, default=str))
+        logger.info(json.dumps(response, indent=4, default=str))
     except AlreadyExists:
         pass
 
+    job_name = f'{resource_prefix}/jobs/{job_id}'
+
     # Run job
     operation = jobs_client.run_job(request=run_v2.RunJobRequest(
-        name=f'{resource_prefix}/jobs/{job_id}'
+        name=job_name,
     ))
-    print("Waiting for run_job operation to complete...")
-
+    logger.info('Waiting for run_job operation to complete...')
     response = operation.result()
-    print(json.dumps(response, indent=4, default=str))
+    logger.info(json.dumps(response, indent=4, default=str))
+
+    # Delete the job after job completes
+    delete_request = run_v2.DeleteJobRequest(
+        name=job_name,
+    )
+    delete_operation = jobs_client.delete_job(request=delete_request)
+    delete_response = delete_operation.result()
+    logger.info('Waiting for delete_job operation to complete...')
+    logger.info(json.dumps(delete_response, indent=4, default=str))
+
     return response
