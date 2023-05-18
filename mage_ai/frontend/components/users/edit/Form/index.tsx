@@ -1,5 +1,5 @@
 import { toast } from 'react-toastify';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -52,15 +52,21 @@ function UserEditForm({
   }>({});
   const [profile, setProfile] = useState<UserType>(null);
   const {
-    id: currentUserId,
     owner: isOwner,
-    roles: currentUserRoles,
   } = getUser() || {};
-  const roleOptions = ROLES.filter((role: number) => (
-    (currentUserRoles === RoleValueEnum.ADMIN && currentUserId !== user?.id)
-      ? role > RoleValueEnum.ADMIN
-      : true
-  ));
+  // const roleOptions = ROLES.filter((role: number) => (
+  //   (currentUserRoles === RoleValueEnum.ADMIN && currentUserId !== user?.id)
+  //     ? role > RoleValueEnum.ADMIN
+  //     : true
+  // ));
+
+  const { data: dataRoles, mutate: fetchRoles } = api.roles.list({}, {
+    revalidateOnFocus: false,
+  });
+  const roles = useMemo(
+    () => dataRoles?.roles || [],
+    [dataRoles?.roles],
+  );
 
   const [updateUser, { isLoading }] = useMutation(
     newUser ? api.users.useCreate() : api.users.useUpdate(user?.id),
@@ -176,6 +182,15 @@ function UserEditForm({
     userPrev,
   ]);
 
+  const profileRoleValue = useMemo(() => {
+    const roles_new = profile?.roles_new;
+    if (roles_new && roles_new.length > 0) {
+      return roles_new[0];
+    } else {
+      return profile?.owner ? RoleValueEnum.OWNER : profile?.roles;
+    }
+  }, [profile]);
+
   return (
     <>
       <Headline>
@@ -223,41 +238,31 @@ function UserEditForm({
               // @ts-ignore
               onChange={e => {
                 setButtonDisabled(false);
-
-                if (e.target.value === RoleValueEnum.OWNER) {
-                  setProfile(prev => ({
-                    ...prev,
-                    owner: true,
-                    roles: null,
-                  }));
-                } else {
-                  const updatedProfile: UserType = {
-                    roles: e.target.value,
-                  };
-                  if (isOwner) {
-                    updatedProfile.owner = false;
-                  }
-                  setProfile(prev => ({
-                    ...prev,
-                    ...updatedProfile,
-                  }));
-                }
+                const updatedProfile: UserType = {
+                  roles_new: [e.target.value],
+                };
+                setProfile(prev => ({
+                  ...prev,
+                  ...updatedProfile,
+                }));
               }}
               primary
               setContentOnMount
-              value={(profile?.owner ? RoleValueEnum.OWNER : profile?.roles)
-                || (user?.roles || '')}
+              value={profileRoleValue
+                || user?.roles
+                || user?.roles_new?.[0]?.id}
             >
-              {roleOptions.map((value) => (
-                <option key={value} value={value}>
-                  {ROLE_DISPLAY_MAPPING[value]}
+              <option value="" />
+              {roles.map(({ id, name }) => (
+                <option key={name} value={id}>
+                  {name}
                 </option>
               ))}
-              {(!newUser && isOwner) &&
+              {/* {(!newUser && isOwner) &&
                 <option key="owner_role" value={RoleValueEnum.OWNER}>
                   {ROLE_DISPLAY_MAPPING[RoleValueEnum.OWNER]}
                 </option>
-              }
+              } */}
             </Select>
           </Spacing>
         )}

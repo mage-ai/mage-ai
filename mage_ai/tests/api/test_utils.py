@@ -1,7 +1,6 @@
 from mage_ai.tests.base_test import AsyncDBTestCase as TestCase
 from mage_ai.api.middleware import parse_cookie_header
 from mage_ai.api.utils import (
-    get_access_for_user,
     has_at_least_editor_role,
     has_at_least_viewer_role,
     is_owner,
@@ -50,13 +49,13 @@ class UtilsTest(DBTestCase):
             roles_new=[Role.query.filter(Role.name == 'owner').first()],
             username='admin',
         )
-        access = get_access_for_user(user, None)
+        access = user.get_access(None)
         self.assertEqual(1, access)
 
-        access = get_access_for_user(user, Permission.Entity.GLOBAL, None)
+        access = user.get_access(Permission.Entity.GLOBAL, None)
         self.assertEqual(1, access)
 
-        access = get_access_for_user(user, Permission.Entity.PIPELINE, 'test')
+        access = user.get_access(Permission.Entity.PIPELINE, 'test')
         self.assertEqual(1, access)
 
         self.assertTrue(is_owner(user))
@@ -79,16 +78,16 @@ class UtilsTest(DBTestCase):
             )],
             username='editor',
         )
-        access = get_access_for_user(user, None)
+        access = user.get_access(None)
         self.assertEqual(4, access)
 
-        access = get_access_for_user(user, Permission.Entity.GLOBAL, None)
+        access = user.get_access(Permission.Entity.GLOBAL, None)
         self.assertEqual(0, access)
 
-        access = get_access_for_user(user, Permission.Entity.PIPELINE, 'test')
+        access = user.get_access(Permission.Entity.PIPELINE, 'test')
         self.assertEqual(4, access)
 
-        access = get_access_for_user(user, Permission.Entity.PIPELINE, 'not_test')
+        access = user.get_access(Permission.Entity.PIPELINE, 'not_test')
         self.assertEqual(0, access)
 
         self.assertTrue(has_at_least_editor_role(user, Permission.Entity.PIPELINE, 'test'))
@@ -125,19 +124,19 @@ class UtilsTest(DBTestCase):
             )],
             username='editor2',
         )
-        access = get_access_for_user(user, None)
+        access = user.get_access(None)
         self.assertEqual(12, access)
 
-        access = get_access_for_user(user, Permission.Entity.GLOBAL, None)
+        access = user.get_access(Permission.Entity.GLOBAL, None)
         self.assertEqual(0, access)
 
-        access = get_access_for_user(user, Permission.Entity.PIPELINE, 'test')
+        access = user.get_access(Permission.Entity.PIPELINE, 'test')
         self.assertEqual(12, access)
 
-        access = get_access_for_user(user, Permission.Entity.PIPELINE, 'test1')
+        access = user.get_access(Permission.Entity.PIPELINE, 'test1')
         self.assertEqual(8, access)
 
-        access = get_access_for_user(user, Permission.Entity.PIPELINE, 'not_test')
+        access = user.get_access(Permission.Entity.PIPELINE, 'not_test')
         self.assertEqual(0, access)
 
         self.assertTrue(has_at_least_editor_role(user, Permission.Entity.PIPELINE, 'test'))

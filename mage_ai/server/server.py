@@ -221,12 +221,11 @@ async def main(
         # may be an error trying to create users.
         sleep(3)
         Role.create_default_roles()
-        user = User.query.filter(User.owner == True).first()  # noqa: E712
+        user = User.query.filter(User._owner == True).first()  # noqa: E712
         if not user:
             print('User with owner permission doesn’t exist, creating owner user.')
             if AUTHENTICATION_MODE.lower() == 'ldap':
                 user = User.create(
-                    owner=True,
                     roles_new=[Role.query.filter(Role.name == 'owner').first()],
                     username=LDAP_ADMIN_USERNAME,
                 )
@@ -236,7 +235,6 @@ async def main(
                     email='admin@admin.com',
                     password_hash=create_bcrypt_hash('admin', password_salt),
                     password_salt=password_salt,
-                    owner=True,
                     roles_new=[Role.query.filter(Role.name == 'owner').first()],
                     username='admin',
                 )

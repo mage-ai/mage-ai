@@ -26,7 +26,7 @@ class User(BaseModel):
     email = Column(String(255), default=None, index=True, unique=True)
     first_name = Column(String(255), default=None)
     last_name = Column(String(255), default=None)
-    owner = Column(Boolean, default=False)
+    _owner = Column('owner', Boolean, default=False)
     password_hash = Column(String(255), default=None)
     password_salt = Column(String(255), default=None)
     roles = Column(Integer, default=None)
@@ -67,6 +67,28 @@ class User(BaseModel):
         return value
 
     @property
+    def project_access(self) -> int:
+        return self.get_access(Permission.Entity.PROJECT, get_repo_path())
+
+    def get_access(
+        self,
+        entity: Union['Permission.Entity', None],
+        entity_id: Union[str, None] = None,
+    ) -> int:
+        '''
+        If entity is None, we will go through all of the user's permissions and
+        get the "highest" permission regardless of entity type. This should only be
+        used for resources that are not entity dependent.
+
+        Otherwise, search for permissions for the specified entity and entity_id, and
+        return the access of the user for that entity.
+        '''
+        access = 0
+        for role in self.roles_new:
+            access = access | role.get_access(entity, entity_id)
+        return access
+
+    @property
     def roles_display(self) -> str:
         if self.owner:
             return 'Owner'
@@ -79,7 +101,15 @@ class User(BaseModel):
                 return 'Viewer'
 
     @property
+    def owner(self) -> bool:
+        access = self.project_access if self.roles_new else 0
+        return self._owner or access & 1 != 0
+
+    @property
     def is_admin(self) -> bool:
+        if self.roles_new:
+            access = self.project_access
+            return access & 1 == 0 and access & 2 != 0
         if not self.owner and self.roles:
             return self.roles & 1 != 0
 
@@ -103,7 +133,7 @@ class Role(BaseModel):
         owner = self.query.filter(self.name == 'owner').first()
         if not owner:
             self.create(
-                name='owner',
+                name='Owner',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
@@ -114,7 +144,7 @@ class Role(BaseModel):
         admin = self.query.filter(self.name == 'admin').first()
         if not admin:
             self.create(
-                name='admin',
+                name='Admin',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
@@ -125,7 +155,7 @@ class Role(BaseModel):
         editor = self.query.filter(self.name == 'editor').first()
         if not editor:
             self.create(
-                name='editor',
+                name='Editor',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
@@ -136,7 +166,7 @@ class Role(BaseModel):
         viewer = self.query.filter(self.name == 'viewer').first()
         if not viewer:
             self.create(
-                name='viewer',
+                name='Viewer',
                 permissions=[
                     Permission.query.filter(
                         Permission.entity == Permission.Entity.GLOBAL,
@@ -144,6 +174,43 @@ class Role(BaseModel):
                     ).first()
                 ]
             )
+
+    def get_access(
+        self,
+        entity: Union['Permission.Entity', None],
+        entity_id: Union[str, None] = None,
+    ) -> int:
+        permissions = []
+        if entity is None:
+            permissions.extend(self.permissions)
+        else:
+            entity_permissions = list(filter(
+                lambda perm: perm.entity == entity and
+                (entity_id is None or perm.entity_id == entity_id),
+                self.permissions,
+            ))
+            if entity_permissions:
+                permissions.extend(entity_permissions)
+
+        access = 0
+        if permissions:
+            for permission in permissions:
+                access = access | permission.access
+            return access
+        else:
+            return self.get_parent_access(entity)
+
+    def get_parent_access(self, entity) -> int:
+        '''
+        This method is used when a role does not have a permission for a specified entity. Then,
+        we will go up the entity chain to see if there are permissions for parent entities.
+        '''
+        if entity == Permission.Entity.PIPELINE:
+            return self.get_access(Permission.Entity.PROJECT, get_repo_path())
+        elif entity == Permission.Entity.PROJECT:
+            return self.get_access(Permission.Entity.GLOBAL)
+        else:
+            return 0
 
 
 class UserRole(BaseModel):
