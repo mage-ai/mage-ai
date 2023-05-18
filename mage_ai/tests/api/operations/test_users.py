@@ -1,5 +1,5 @@
 from mage_ai.orchestration.db.models.oauth import User
-from mage_ai.tests.api.operations.base import BaseApiTestCase
+from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
 
 
@@ -57,7 +57,7 @@ class UserOperationTests(BaseApiTestCase):
         await self.assertRaisesAsync(Exception, _func)
 
     async def test_execute_list(self):
-        owner = create_user(owner=True)
+        owner = create_user(_owner=True)
 
         email1 = self.faker.email()
         email2 = self.faker.email()

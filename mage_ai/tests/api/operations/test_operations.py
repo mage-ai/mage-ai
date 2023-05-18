@@ -1,6 +1,7 @@
-from mage_ai.api.operations import constants
-from mage_ai.tests.api.operations.base import BaseApiTestCase
 from unittest.mock import patch
+
+from mage_ai.api.operations import constants
+from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 
 
 class OperationTests(BaseApiTestCase):
