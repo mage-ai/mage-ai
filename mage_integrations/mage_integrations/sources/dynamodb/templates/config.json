@@ -1,13 +1,5 @@
 {
     "aws_access_key_id": null,
-    "aws_region": "us-east-1",
-    "aws_secret_access_key": null,
-    "table_configs": [
-        {
-            "table_name": "table_name_1"
-        },
-        {
-            "table_name": "table_name_2"
-        }
-    ]
+    "aws_region": "us-west-2",
+    "aws_secret_access_key": null
 }

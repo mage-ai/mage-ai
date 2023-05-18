@@ -57,7 +57,6 @@ class Source:
         verbose: int = 1,
     ):
         args = parse_args([])
-
         if args:
             if args.catalog:
                 catalog = args.catalog
@@ -141,7 +140,6 @@ class Source:
         Returns:
             Catalog: Description
         """
-        self.logger.info('Testing running discover base')
         catalog_entries = []
         for stream_id, schema in self.load_schemas_from_folder().items():
             if not streams or stream_id in streams:
@@ -156,7 +154,6 @@ class Source:
         Returns:
             List[Dict]: Description
         """
-        self.logger.info('Testing running discover_streams generic 2222')
         return [dict(
             stream=stream_id,
             tap_stream_id=stream_id,

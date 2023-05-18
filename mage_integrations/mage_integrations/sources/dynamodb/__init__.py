@@ -9,34 +9,42 @@ from mage_integrations.sources.constants import (
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_STRING,
 )
+from singer.schema import Schema
 from typing import Dict, Generator, List
 import boto3
-from singer.schema import Schema
-import singer
 # TODO: refactor this common row_to_singer_record function
 # to util file to share between different sources.
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
-REQUIRED_TABLE_CONFIG_KEYS = ['table_name']
 LAST_EVALUATED_TABLE_NAME = 'LastEvaluatedTableName'
 LAST_EVALUATED_KEY = 'LastEvaluatedKey'
 EXCLUSIVE_STAR_KEY = 'ExclusiveStartKey'
+TABLE_NAMES = 'TableNames'
+TABLE = 'Table'
+AWS_REGION = 'aws_region'
+ATTRIBUTE_NAME = 'AttributeName'
+ATTRIBUTE_TYPE = 'AttributeType'
+KEY_SCHEMA = 'KeySchema'
+ATTRIBUTE_DEFINITIONS = 'AttributeDefinitions'
+AWS_ACCESS_KEY_ID = 'aws_access_key_id'
+AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
+ITEMS = 'Items'
 
 
 class DynamoDb(Source):
     @property
     def region(self) -> str:
-        return self.config.get('aws_region', 'us-west-2')
+        return self.config.get(AWS_REGION, 'us-west-2')
 
     def discover_streams(self) -> List[Dict]:
         client = self.build_client()
-        self.logger.info('Testing running inside discover_streams')
 
         response = client.list_tables()
-        table_list = response.get('TableNames')
-        while response.get('LastEvaluatedTableName') is not None:
-            response = client.list_tables(ExclusiveStartTableName=response.get('LastEvaluatedTableName'))
-            table_list += response.get('TableNames')
+        table_list = response.get(TABLE_NAMES)
+        while response.get(LAST_EVALUATED_TABLE_NAME) is not None:
+            response = client.list_tables(
+                ExclusiveStartTableName=response.get(LAST_EVALUATED_TABLE_NAME))
+            table_list += response.get(TABLE_NAMES)
 
         return [dict(
             stream=stream_id,
@@ -47,19 +55,17 @@ class DynamoDb(Source):
         '''
         Read a single table in DynamoDB.
         '''
-        self.logger.info('Testing running discover_stream in dynamodb')
         try:
-            table_info = client.describe_table(TableName=table_name).get('Table', {})
+            table_info = client.describe_table(TableName=table_name).get(TABLE, {})
         except ClientError:
             self.logger.error(f'Access to table {table_name} was denied, skipping')
             return None
-        self.logger.info(f'{table_info}')
-        key_props = [key_schema.get('AttributeName')
-                     for key_schema in table_info.get('KeySchema', [])]
+        key_props = [key_schema.get(ATTRIBUTE_NAME)
+                     for key_schema in table_info.get(KEY_SCHEMA, [])]
         properties = dict()
-        for column_schema in table_info.get('AttributeDefinitions', []):
-            column_name = column_schema.get('AttributeName')
-            column_type = column_schema.get('AttributeType')
+        for column_schema in table_info.get(ATTRIBUTE_DEFINITIONS, []):
+            column_name = column_schema.get(ATTRIBUTE_NAME)
+            column_type = column_schema.get(ATTRIBUTE_TYPE)
             column_types = []
             if column_type == 'S':
                 column_types.append(COLUMN_TYPE_STRING)
@@ -95,10 +101,7 @@ class DynamoDb(Source):
         '''
         Read streams in DynamoDB.
         '''
-        self.logger.info('Testing running discover in dynamodb')
-        
         client = self.build_client()
-        self.logger.info('Debugging running discover')
         outputs = []
         if streams:
             # Check if streams available
@@ -121,8 +124,8 @@ class DynamoDb(Source):
 
         return boto3.client(
             'dynamodb',
-            aws_access_key_id=self.config['aws_access_key_id'],
-            aws_secret_access_key=self.config['aws_secret_access_key'],
+            aws_access_key_id=self.config[AWS_ACCESS_KEY_ID],
+            aws_secret_access_key=self.config[AWS_SECRET_ACCESS_KEY],
             config=config,
             region_name=self.region,
         )
@@ -130,9 +133,6 @@ class DynamoDb(Source):
     def test_connection(self) -> None:
         client = self.build_client()
         client.describe_endpoints()
-
-        all_tables_response = client.list_tables()
-        self.logger.info(f'Testing all_tables_response: {all_tables_response}')
 
     def scan_table(self, table_name):
         '''
@@ -167,7 +167,7 @@ class DynamoDb(Source):
         table_name = stream.tap_stream_id
         for result in self.scan_table(table_name):
             data = []
-            for item in result.get('Items', []):
+            for item in result.get(ITEMS, []):
                 record_message = common.row_to_singer_record(
                         stream.to_dict(),
                         item,
@@ -179,5 +179,4 @@ class DynamoDb(Source):
 
 
 if __name__ == '__main__':
-    LOGGER = singer.get_logger()
     main(DynamoDb)

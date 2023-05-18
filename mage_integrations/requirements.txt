@@ -1,6 +1,6 @@
 attrs==17.4.0
 azure-storage-blob==12.14.1
-backoff==1.8.0
+backoff==1.10.0
 couchbase==4.1.1
 deltalake==0.7.0
 facebook_business==16.0.0
@@ -24,7 +24,7 @@ redshift-connector==2.0.909
 requests==2.27.1
 requests_mock==1.10.0
 simplejson==3.11.1
-snowflake-connector-python==2.7.9
+snowflake-connector-python==2.9.0
 sshtunnel==0.4.0
 stripe==4.2.0
 trino==0.321.0
