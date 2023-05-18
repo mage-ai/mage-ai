@@ -48,6 +48,14 @@ triggers:
   schedule_interval: "@hourly"
   start_time: 2023-03-01
   status: inactive
+- name: test_example_trigger_with_extra_settings
+  schedule_type: time
+  schedule_interval: "@hourly"
+  start_time: 2023-03-01
+  status: inactive
+  settings:
+    skip_if_previous_running: true
+    allow_blocks_to_fail: true
 ```
 
 ## Modify triggers
