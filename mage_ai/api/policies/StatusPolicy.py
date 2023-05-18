@@ -12,10 +12,12 @@ StatusPolicy.allow_actions([
     constants.LIST,
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+    OauthScope.CLIENT_PUBLIC,
+])
 
 StatusPolicy.allow_read(StatusPresenter.default_attributes, scopes=[
     OauthScope.CLIENT_PRIVATE,
+    OauthScope.CLIENT_PUBLIC,
 ], on_action=[
     constants.LIST,
-], condition=lambda policy: policy.has_at_least_viewer_role())
+])
