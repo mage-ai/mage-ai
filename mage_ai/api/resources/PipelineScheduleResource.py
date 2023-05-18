@@ -1,13 +1,16 @@
-from mage_ai.shared.hash import merge_dict
+import uuid
+
+from sqlalchemy.orm import selectinload
+
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
-from sqlalchemy.orm import selectinload
-import uuid
+from mage_ai.shared.hash import merge_dict
 
 
 class PipelineScheduleResource(DatabaseResource):
@@ -19,17 +22,23 @@ class PipelineScheduleResource(DatabaseResource):
     def collection(self, query_arg, meta, user, **kwargs):
         pipeline = kwargs.get('parent_model')
 
+        query = PipelineSchedule.query.filter(
+            PipelineSchedule.repo_name == get_repo_path() or
+            PipelineSchedule.repo_name is None,
+        )
         if pipeline:
             return (
-                PipelineSchedule.
                 query.
+                filter(
+                    PipelineSchedule.repo_name == get_repo_path(),
+                    PipelineSchedule.repo_name is None,
+                ).
                 options(selectinload(PipelineSchedule.event_matchers)).
                 options(selectinload(PipelineSchedule.pipeline_runs)).
                 filter(PipelineSchedule.pipeline_uuid == pipeline.uuid).
                 order_by(PipelineSchedule.id.desc(), PipelineSchedule.start_time.desc())
             )
 
-        query = PipelineSchedule.query
         order_by = query_arg.get('order_by', [None])
         if order_by[0]:
             order_by = order_by[0]
@@ -51,6 +60,7 @@ class PipelineScheduleResource(DatabaseResource):
     def create(self, payload, user, **kwargs):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid
+        payload['repo_name'] = get_repo_path()
 
         if 'token' not in payload:
             payload['token'] = uuid.uuid4().hex

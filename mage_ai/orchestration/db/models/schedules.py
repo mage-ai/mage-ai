@@ -61,6 +61,7 @@ class PipelineSchedule(BaseModel):
     variables = Column(JSON)
     sla = Column(Integer, default=None)  # in seconds
     token = Column(String(255), index=True, default=None)
+    repo_name = Column(String(255))
     settings = Column(JSON)
 
     backfills = relationship('Backfill', back_populates='pipeline_schedule')
