@@ -90,11 +90,11 @@ function RetryButton({
     createPipelineRun({
       pipeline_run: {
         backfill_id: pipelineRun?.backfill_id,
-        event_variables: pipelineRun?.event_variables,
+        event_variables: pipelineRun?.event_variables || {},
         execution_date: pipelineRun?.execution_date,
         pipeline_schedule_id: pipelineRun?.pipeline_schedule_id,
         pipeline_uuid: pipelineRun?.pipeline_uuid,
-        variables: pipelineRun?.variables,
+        variables: pipelineRun?.variables || {},
       },
     });
   }, [

@@ -52,6 +52,7 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [], scope
 PipelineRunPolicy.allow_write([
     'backfill_id',
     'execution_date',
+    'event_variables',
     'pipeline_schedule_id',
     'pipeline_uuid',
     'variables',
