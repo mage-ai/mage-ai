@@ -43,6 +43,9 @@ def parse_output_message(message: dict) -> dict:
     if content.get('name') in ['stdout', 'stderr']:
         text_stdout = content.get('text')
         data_content = text_stdout.split('\n')
+        data_content_truncated = data_content[:100]
+        if len(data_content) > 100:
+            data_content = data_content_truncated + ['... (output truncated)']
         data_type = DataType.TEXT_PLAIN
     elif image:
         data_content = image
