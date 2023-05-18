@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.shared.environments import get_env
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import API_ENDPOINT, EventActionType, EventObjectType
 from typing import Callable, Dict
@@ -82,6 +83,7 @@ class UsageStatisticLogger():
 
     def __shared_metadata(self) -> Dict:
         return dict(
+            environment=get_env(),
             platform=platform.platform(),
             project_uuid=self.project.project_uuid,
             version=self.project.version,
