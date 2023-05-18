@@ -7,8 +7,9 @@ from mage_ai.authentication.passwords import (
     generate_salt,
     verify_password,
 )
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.oauth import Role, User
+from mage_ai.orchestration.db.models.oauth import Permission, Role, User
 from mage_ai.shared.hash import extract, ignore_keys
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
@@ -128,7 +129,7 @@ class UserResource(DatabaseResource):
         ))
         payload['roles_new'] = roles_new
 
-        access = get_access_for_roles(roles_new)
+        access = get_access_for_roles(roles_new, Permission.Entity.PROJECT, get_repo_path())
 
         if self.current_user.is_admin:
             if self.owner:
