@@ -1,4 +1,8 @@
+import os
+from typing import Dict, List
+
 from kubernetes import client, config
+
 from mage_ai.cluster_manager.constants import (
     CLOUD_SQL_CONNECTION_NAME,
     CONNECTION_URL_SECRETS_NAME,
@@ -8,17 +12,14 @@ from mage_ai.cluster_manager.constants import (
     KUBE_SERVICE_TYPE,
     NODE_PORT_SERVICE_TYPE,
     SERVICE_ACCOUNT_CREDENTIAL_FILE_PATH,
-    SERVICE_ACCOUNT_SECRETS_NAME
+    SERVICE_ACCOUNT_SECRETS_NAME,
 )
 from mage_ai.orchestration.constants import (
     DATABASE_CONNECTION_URL_ENV_VAR,
     DB_NAME,
     DB_PASS,
-    DB_USER
+    DB_USER,
 )
-from typing import Dict, List
-
-import os
 
 
 class WorkloadManager:
@@ -67,12 +68,13 @@ class WorkloadManager:
 
         return services_list
 
-    def create_stateful_set(
+    def create_deployment(
         self,
         deployment_name,
         container_config: Dict = None,
         service_account_name: str = None,
         storage_class_name: str = None,
+        volume_host_path: str = None,
     ):
         if container_config is None:
             container_config = dict()
@@ -122,7 +124,7 @@ class WorkloadManager:
                     },
                     'resources': {
                         'requests': {
-                            'memory': '2Gi',
+                            'memory': '1Gi',
                             'cpu': '1'
                         }
                     },
@@ -144,13 +146,22 @@ class WorkloadManager:
                 }
             )
 
-        stateful_set_template_spec = dict()
+        if volume_host_path:
+            volumes.append(
+                {
+                    'name': 'mage-data',
+                    'hostPath': {
+                        'path': volume_host_path
+                    },
+                }
+            )
+        deployment_template_spec = dict()
         if service_account_name:
-            stateful_set_template_spec['serviceAccountName'] = service_account_name
+            deployment_template_spec['serviceAccountName'] = service_account_name
 
-        stateful_set = {
+        deployment = {
             'apiVersion': 'apps/v1',
-            'kind': 'StatefulSet',
+            'kind': 'Deployment',
             'metadata': {
                 'name': deployment_name,
                 'labels': {
@@ -175,31 +186,13 @@ class WorkloadManager:
                         'terminationGracePeriodSeconds': 10,
                         'containers': containers,
                         'volumes': volumes,
-                        **stateful_set_template_spec
+                        **deployment_template_spec
                     }
                 },
-                'volumeClaimTemplates': [
-                    {
-                        'metadata': {
-                            'name': 'mage-data'
-                        },
-                        'spec': {
-                            'accessModes': [
-                                'ReadWriteOnce'
-                            ],
-                            'storageClassName': storage_class_name,
-                            'resources': {
-                                'requests': {
-                                    'storage': '1Gi'
-                                }
-                            }
-                        }
-                    }
-                ]
             }
         }
 
-        self.apps_client.create_namespaced_stateful_set(self.namespace, stateful_set)
+        self.apps_client.create_namespaced_deployment(self.namespace, deployment)
 
         service_name = f'{deployment_name}-service'
 

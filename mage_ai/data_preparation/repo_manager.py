@@ -1,14 +1,17 @@
+import os
+import shutil
+import sys
+import traceback
 from enum import Enum
+from typing import Dict
+
+import ruamel.yaml
+import yaml
 from jinja2 import Template
+
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.shared.environments import is_test
-from typing import Dict
-import os
-import ruamel.yaml
-import sys
-import traceback
-import yaml
 
 MAGE_DATA_DIR_ENV_VAR = 'MAGE_DATA_DIR'
 if is_test():
@@ -149,6 +152,20 @@ def init_repo(repo_path: str, project_type: str = ProjectType.STANDALONE) -> Non
 
     if project_type == ProjectType.MAIN:
         copy_template_directory('main', repo_path)
+    elif project_type == ProjectType.SUB:
+        os.makedirs(
+            os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
+            exist_ok=True,
+        )
+        copy_template_directory('repo', repo_path)
+        new_repo_config = get_repo_config(repo_path)
+        current_metadata = get_repo_config().metadata_path
+        new_metadata = new_repo_config.metadata_path
+        if os.path.exists(get_repo_config().metadata_path):
+            shutil.copyfile(current_metadata, new_metadata)
+        new_repo_config.save(
+            project_type=ProjectType.SUB,
+        )
     else:
         os.makedirs(
             os.getenv(MAGE_DATA_DIR_ENV_VAR) or DEFAULT_MAGE_DATA_DIR,
