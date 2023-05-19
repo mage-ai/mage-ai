@@ -55,6 +55,7 @@ import {
   EDIT_BEFORE_TABS,
   EDIT_BEFORE_TAB_ALL_FILES,
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
+  MAX_PRINT_OUTPUT_LINES,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
 import {
@@ -665,6 +666,7 @@ function PipelineDetailPage({
 
       if (messagesForBlock) {
         const arr2 = [];
+        let plainTextLineCount = 0;
 
         messagesForBlock.forEach((d: KernelOutputType) => {
           const {
@@ -681,9 +683,17 @@ function PipelineDetailPage({
 
                 return acc.concat(text);
               }, []);
+
+              if (type === DataTypeEnum.TEXT_PLAIN) {
+                plainTextLineCount += data?.length || 0;
+              }
             }
 
-            arr2.push(d);
+            // The saved print output is limited to MAX_PRINT_OUTPUT_LINES in order to
+            // minimize the Pipeline PUT request payload when saving the pipeline.
+            if (plainTextLineCount < MAX_PRINT_OUTPUT_LINES) {
+              arr2.push(d);
+            }
           }
         });
 
@@ -1597,7 +1607,7 @@ function PipelineDetailPage({
             runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
           );
         }
-        
+
         if (!disablePipelineEditAccess) {
           setPipelineContentTouched(true);
         }
