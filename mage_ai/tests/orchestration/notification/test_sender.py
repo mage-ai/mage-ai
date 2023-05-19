@@ -1,16 +1,16 @@
+from unittest.mock import ANY, patch
+
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline, create_pipeline_run_with_schedule
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
+    OPSGENIE_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG,
-    OPSGENIE_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG_NO_ALERT_ON,
 )
-from unittest.mock import patch
-from unittest.mock import ANY
 
 
 class NotificationSenderTests(DBTestCase):
@@ -57,7 +57,9 @@ class NotificationSenderTests(DBTestCase):
             'Failed to run Pipeline `test_pipeline` '
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
-            f'at execution time `{pipeline_run.execution_date}`.'
+            f'at execution time `{pipeline_run.execution_date}`.\n'
+            f'Open http://localhost:6789/pipelines/test_pipeline/triggers/'
+            f'{pipeline_run.pipeline_schedule.id} to check pipeline run results and logs.'
         )
         mock_send_slack.assert_called_once_with(
             notification_config.slack_config,
