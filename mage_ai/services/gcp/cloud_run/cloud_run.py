@@ -23,16 +23,19 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict
     if type(cloud_run_config) is dict:
         cloud_run_config = CloudRunConfig.load(config=cloud_run_config)
 
-    credentials = service_account.Credentials.from_service_account_file(
-        cloud_run_config.path_to_credentials_json_file,
-        scopes=CLOUD_RUN_CLIENT_SCOPES,
-    )
+    if cloud_run_config.path_to_credentials_json_file:
+        credentials = service_account.Credentials.from_service_account_file(
+            cloud_run_config.path_to_credentials_json_file,
+            scopes=CLOUD_RUN_CLIENT_SCOPES,
+        )
+    else:
+        credentials = None
     jobs_client = run_v2.JobsClient(credentials=credentials)
+    services_client = run_v2.ServicesClient(credentials=credentials)
 
     # Get existing service
     resource_prefix = f'projects/{cloud_run_config.project_id}/locations/{cloud_run_config.region}'
     existing_service_name = os.getenv('GCP_SERVICE_NAME')
-    services_client = run_v2.ServicesClient(credentials=credentials)
     existing_service = services_client.get_service(
         run_v2.GetServiceRequest(
             name=f'{resource_prefix}/services/{existing_service_name}'
