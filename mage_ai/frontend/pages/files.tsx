@@ -6,6 +6,7 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import api from '@api';
 import { goToWithQuery } from '@utils/routing';
 import { queryFromUrl } from '@utils/url';
+import { useError } from '@context/Error';
 
 function FilesPage() {
   const fileTreeRef = useRef(null);
@@ -13,20 +14,31 @@ function FilesPage() {
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
-  const openFile = useCallback((filePath: string) => {
-    const filePathEncoded = encodeURIComponent(filePath);
-    let filePaths = queryFromUrl()['file_paths[]'] || [];
-    if (!Array.isArray(filePaths)) {
-      filePaths = [filePaths];
-    }
-    if (!filePaths.includes(filePathEncoded)) {
-      filePaths.push(filePathEncoded);
-    }
-    goToWithQuery({
-      file_path: filePathEncoded,
-      'file_paths[]': filePaths,
-    });
+  const openFile = useCallback((filePath: string, isFolder: boolean) => {
+    console.log(filePath, isFolder);
+
+    // Use local storage to keep track
   }, []);
+
+  // const [showError] = useError(null, {}, [], {
+  //   uuid: 'FilesPage',
+  // });
+  // const [updateProjectBase, { isLoading: isLoadingUpdateProject }]: any = useMutation(
+  //   api.projects.useUpdate(project?.name),
+  //   {
+  //     onSuccess: (response: any) => onSuccess(
+  //       response, {
+  //         callback: () => {
+  //           fetchProjects();
+  //         },
+  //         onErrorCallback: (response, errors) => showError({
+  //           errors,
+  //           response,
+  //         }),
+  //       },
+  //     ),
+  //   },
+  // );
 
   return (
     <Dashboard
@@ -36,12 +48,9 @@ function FilesPage() {
       <FileBrowser
         fetchFileTree={fetchFileTree}
         files={files}
-        // onSelectBlockFile={onSelectBlockFile}
-        openFile={openFile}
+        onClickFile={(path: string) => openFile(path)}
+        onClickFolder={(path: string) => openFile(path, true)}
         ref={fileTreeRef}
-        // setErrors={setErrors}
-        // setSelectedBlock={setSelectedBlock}
-        // widgets={widgets}
       />
     </Dashboard>
   );

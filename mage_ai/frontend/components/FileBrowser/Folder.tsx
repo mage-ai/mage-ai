@@ -50,7 +50,9 @@ export type FolderSharedProps = {
     blockType: BlockTypeEnum,
     filePath: string,
   ) => void;
-  openFile: (path: string) => void;
+  onClickFile?: (path: string) => void;
+  onClickFolder?: (path: string) => void;
+  openFile?: (path: string) => void;
   openPipeline?: (uuid: string) => void;
   openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   selectFile?: (path: string) => void;
@@ -80,6 +82,8 @@ function Folder({
   file,
   isFileDisabled,
   level,
+  onClickFile,
+  onClickFolder,
   onSelectBlockFile,
   onlyShowChildren,
   openFile,
@@ -172,6 +176,8 @@ function Folder({
       isFileDisabled={isFileDisabled}
       key={`${uuid}/${f?.name || DEFAULT_NAME}`}
       level={onlyShowChildren ? level : level + 1}
+      onClickFile={onClickFile}
+      onClickFolder={onClickFolder}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openPipeline={openPipeline}
@@ -195,6 +201,8 @@ function Folder({
     file,
     isFileDisabled,
     level,
+    onClickFile,
+    onClickFolder,
     onSelectBlockFile,
     onlyShowChildren,
     openFile,
@@ -269,28 +277,34 @@ function Folder({
               if (allowSelectingFolders) {
                 selectFile(filePathToUse);
               } else {
-                  setCollapsed((collapsedPrev) => {
-                    set(uuid, !collapsedPrev);
+                setCollapsed((collapsedPrev) => {
+                  set(uuid, !collapsedPrev);
 
-                    return !collapsedPrev;
-                  });
+                  return !collapsedPrev;
+                });
               }
-            } else if (nonPythonBlockFromFile) {
-              onSelectBlockFile?.(
-                nonPythonBlockFromFile.uuid,
-                nonPythonBlockFromFile.type,
-                getFullPathWithoutRootFolder(file),
-              );
-            } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
-              openFile(filePathToUse);
+
+              onClickFolder?.(filePathToUse);
             } else {
-              const block = getBlockFromFile(file);
-              if (block) {
+              if (onClickFile) {
+                onClickFile(filePathToUse);
+              } else if (nonPythonBlockFromFile) {
                 onSelectBlockFile?.(
-                  block.uuid,
-                  block.type,
+                  nonPythonBlockFromFile.uuid,
+                  nonPythonBlockFromFile.type,
                   getFullPathWithoutRootFolder(file),
                 );
+              } else if (name.match(SUPPORTED_EDITABLE_FILE_EXTENSIONS_REGEX)) {
+                openFile?.(filePathToUse);
+              } else {
+                const block = getBlockFromFile(file);
+                if (block) {
+                  onSelectBlockFile?.(
+                    block.uuid,
+                    block.type,
+                    getFullPathWithoutRootFolder(file),
+                  );
+                }
               }
             }
           }}
