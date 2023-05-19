@@ -55,7 +55,6 @@ import {
   EDIT_BEFORE_TABS,
   EDIT_BEFORE_TAB_ALL_FILES,
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
-  MAX_REQ_PRINT_OUTPUT_LINES,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
 import {
@@ -189,6 +188,10 @@ function PipelineDetailPage({
   });
   const disablePipelineEditAccess = useMemo(
     () => serverStatus?.statuses?.[0]?.disable_pipeline_edit_access,
+    [serverStatus],
+  );
+  const maxPrintOutputLines = useMemo(
+    () => serverStatus?.statuses?.[0]?.max_print_output_lines,
     [serverStatus],
   );
 
@@ -689,9 +692,16 @@ function PipelineDetailPage({
               }
             }
 
-            // The saved print output is limited to MAX_REQ_PRINT_OUTPUT_LINES in order to
-            // minimize the Pipeline PUT request payload when saving the pipeline.
-            if (plainTextLineCount < MAX_REQ_PRINT_OUTPUT_LINES) {
+            /*
+             * The saved print output is limited to maxPrintOutputLines (taken from
+             * MAX_PRINT_OUTPUT_LINES env var on backend) in order to
+             * minimize the Pipeline PUT request payload when saving the pipeline.
+             *
+             * An additional 5 is added to the maxPrintOutputLines condition below to account
+             * for a few extra lines that indicate passed tests, truncated output message, or
+             * misc empty string. Otherwise, the print output may not be saved as intended.
+             */
+            if (!maxPrintOutputLines || plainTextLineCount < maxPrintOutputLines + 5) {
               arr2.push(d);
             }
           }

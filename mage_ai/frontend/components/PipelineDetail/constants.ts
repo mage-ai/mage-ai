@@ -1,5 +1,4 @@
 export const PAGE_NAME_EDIT = 'edit';
-export const MAX_REQ_PRINT_OUTPUT_LINES = 150;
 
 export const EDIT_BEFORE_TAB_ALL_FILES = {
   uuid: 'All files',
