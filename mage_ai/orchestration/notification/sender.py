@@ -1,11 +1,12 @@
+import os
+
 from mage_ai.orchestration.notification.config import AlertOn, NotificationConfig
 from mage_ai.services.email.email import send_email
+from mage_ai.services.google_chat.google_chat import send_google_chat_message
 from mage_ai.services.opsgenie.opsgenie import send_opsgenie_alert
 from mage_ai.services.slack.slack import send_slack_message
 from mage_ai.services.teams.teams import send_teams_message
-from mage_ai.services.google_chat.google_chat import send_google_chat_message
 from mage_ai.settings import MAGE_PUBLIC_HOST
-import os
 
 
 class NotificationSender:
@@ -18,10 +19,17 @@ class NotificationSender:
         summary: str = None,
         details: str = None,
     ) -> None:
+        """Send messages to the notification channels.
+
+        Args:
+            title (str, optional): Short sentence, used as title (e.g. Email subject)
+            summary (str, optional): Mid-length sentences, used as the summary of the message.
+            details (str, optional): Long message, used as the body of the message (e.g. Email body)
+        """
         if summary is None:
             return
         if self.config.slack_config is not None and self.config.slack_config.is_valid:
-            send_slack_message(self.config.slack_config, summary)
+            send_slack_message(self.config.slack_config, details or summary)
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
             send_teams_message(self.config.teams_config, summary)
@@ -75,9 +83,14 @@ class NotificationSender:
                 f'at execution time `{pipeline_run.execution_date}`.'
             )
             email_content = f'{message}\n'
-            if os.getenv('ENV') != 'production':
+            if os.getenv('ENV') != 'production' or MAGE_PUBLIC_HOST != 'http://localhost:6789':
+                """
+                Include the URL for the following cases
+                1. Dev environment: Use the default localhost as host in URL
+                2. Production environment: If MAGE_PUBLIC_HOST is set, use it as host.
+                """
                 email_content += f'Open {self.__pipeline_run_url(pipeline, pipeline_run)} '\
-                                  'to check pipeline run results and logs.'
+                                 'to check pipeline run results and logs.'
             self.send(
                 title=f'Failed to run Mage pipeline {pipeline.uuid}',
                 summary=message,
