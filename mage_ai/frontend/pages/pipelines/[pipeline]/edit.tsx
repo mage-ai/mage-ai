@@ -55,7 +55,7 @@ import {
   EDIT_BEFORE_TABS,
   EDIT_BEFORE_TAB_ALL_FILES,
   EDIT_BEFORE_TAB_FILES_IN_PIPELINE,
-  MAX_PRINT_OUTPUT_LINES,
+  MAX_REQ_PRINT_OUTPUT_LINES,
   PAGE_NAME_EDIT,
 } from '@components/PipelineDetail/constants';
 import {
@@ -689,9 +689,9 @@ function PipelineDetailPage({
               }
             }
 
-            // The saved print output is limited to MAX_PRINT_OUTPUT_LINES in order to
+            // The saved print output is limited to MAX_REQ_PRINT_OUTPUT_LINES in order to
             // minimize the Pipeline PUT request payload when saving the pipeline.
-            if (plainTextLineCount < MAX_PRINT_OUTPUT_LINES) {
+            if (plainTextLineCount < MAX_REQ_PRINT_OUTPUT_LINES) {
               arr2.push(d);
             }
           }
