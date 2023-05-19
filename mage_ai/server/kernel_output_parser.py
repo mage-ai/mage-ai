@@ -1,5 +1,7 @@
 from enum import Enum
 
+from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
+
 
 class DataType(str, Enum):
     DATA_FRAME = 'data_frame'
@@ -44,6 +46,9 @@ def parse_output_message(message: dict) -> dict:
         text_stdout = content.get('text')
         data_content = text_stdout.split('\n')
         data_type = DataType.TEXT_PLAIN
+        if content.get('name') == 'stdout' and len(data_content) > MAX_PRINT_OUTPUT_LINES:
+            data_content_truncated = data_content[:MAX_PRINT_OUTPUT_LINES]
+            data_content = data_content_truncated + ['... (output truncated)']
     elif image:
         data_content = image
         data_type = DataType.IMAGE_PNG

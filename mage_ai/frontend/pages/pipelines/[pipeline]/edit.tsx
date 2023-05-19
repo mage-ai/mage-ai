@@ -190,6 +190,10 @@ function PipelineDetailPage({
     () => serverStatus?.statuses?.[0]?.disable_pipeline_edit_access,
     [serverStatus],
   );
+  const maxPrintOutputLines = useMemo(
+    () => serverStatus?.statuses?.[0]?.max_print_output_lines,
+    [serverStatus],
+  );
 
   // Kernels
   const [messages, setMessages] = useState<{
@@ -665,6 +669,7 @@ function PipelineDetailPage({
 
       if (messagesForBlock) {
         const arr2 = [];
+        let plainTextLineCount = 0;
 
         messagesForBlock.forEach((d: KernelOutputType) => {
           const {
@@ -681,9 +686,24 @@ function PipelineDetailPage({
 
                 return acc.concat(text);
               }, []);
+
+              if (type === DataTypeEnum.TEXT_PLAIN) {
+                plainTextLineCount += data?.length || 0;
+              }
             }
 
-            arr2.push(d);
+            /*
+             * The saved print output is limited to maxPrintOutputLines (taken from
+             * MAX_PRINT_OUTPUT_LINES env var on backend) in order to
+             * minimize the Pipeline PUT request payload when saving the pipeline.
+             *
+             * An additional 5 is added to the maxPrintOutputLines condition below to account
+             * for a few extra lines that indicate passed tests, truncated output message, or
+             * misc empty string. Otherwise, the print output may not be saved as intended.
+             */
+            if (!maxPrintOutputLines || plainTextLineCount < maxPrintOutputLines + 5) {
+              arr2.push(d);
+            }
           }
         });
 
@@ -1597,7 +1617,7 @@ function PipelineDetailPage({
             runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
           );
         }
-        
+
         if (!disablePipelineEditAccess) {
           setPipelineContentTouched(true);
         }

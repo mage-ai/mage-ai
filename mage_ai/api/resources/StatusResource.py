@@ -1,6 +1,7 @@
 import os
 
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
 from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_project_type,
@@ -53,6 +54,7 @@ class StatusResource(GenericResource):
             'scheduler_status': scheduler_manager.get_status(),
             'instance_type': instance_type,
             'disable_pipeline_edit_access': is_disable_pipeline_edit_access(),
+            'max_print_output_lines': MAX_PRINT_OUTPUT_LINES,
             'require_user_authentication': REQUIRE_USER_AUTHENTICATION,
         }
         return self.build_result_set([status], user, **kwargs)
