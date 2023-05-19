@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from mage_ai.shared.config import BaseConfig
+from typing import Dict
 import os
 
 GIT_ACCESS_TOKEN_SECRET_NAME = 'mage_git_access_token'
@@ -17,13 +18,22 @@ class AuthType(str, Enum):
 class GitConfig(BaseConfig):
     remote_repo_link: str
     repo_path: str = os.getcwd()
-    username: str = ''
-    email: str = ''
     branch: str = 'main'
     sync_on_pipeline_run: bool = False
+    auth_type: AuthType = AuthType.SSH
+    # User settings moved to UserGitConfig, these will be used for Git syncs
+    username: str = ''
+    email: str = ''
     ssh_private_key_secret_name: str = GIT_SSH_PRIVATE_KEY_SECRET_NAME
     ssh_public_key_secret_name: str = GIT_SSH_PUBLIC_KEY_SECRET_NAME
-    auth_type: AuthType = AuthType.SSH
     access_token_secret_name: str = GIT_ACCESS_TOKEN_SECRET_NAME
     # This is not necessary anymore, but leaving it for backwards compatibility
     type: str = 'git'
+
+@dataclass
+class UserGitConfig(BaseConfig):
+    username: str = ''
+    email: str = ''
+    ssh_private_key_secret_name: str = GIT_SSH_PRIVATE_KEY_SECRET_NAME
+    ssh_public_key_secret_name: str = GIT_SSH_PUBLIC_KEY_SECRET_NAME
+    access_token_secret_name: str = GIT_ACCESS_TOKEN_SECRET_NAME

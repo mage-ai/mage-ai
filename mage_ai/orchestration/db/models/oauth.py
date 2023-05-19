@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.orm import relationship, validates
+from typing import Dict
 import enum
 import re
 
@@ -79,6 +80,10 @@ class User(BaseModel):
             return self.roles & 1 != 0
 
         return False
+
+    def git_settings(self, repo_path: str) -> Dict:
+        preferences = self.preferences or dict()
+        return preferences.get(repo_path, {}).get('git_settings', {})
 
 
 class Oauth2Application(BaseModel):

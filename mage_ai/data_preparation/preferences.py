@@ -2,6 +2,7 @@ from typing import Dict
 from mage_ai.data_preparation.models.constants import PREFERENCES_FILE
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.orchestration.db.models.oauth import User
+from mage_ai.shared.hash import merge_dict
 import os
 import traceback
 import yaml
@@ -27,19 +28,21 @@ class Preferences:
         self.preferences_file_path = \
             os.path.join(self.repo_path, PREFERENCES_FILE)
         self.user = user
-        preferences = dict()
+        project_preferences = dict()
+        user_preferences = dict()
         try:
             if user:
-                preferences = user.preferences or {}
-            elif config_dict:
-                preferences = config_dict
+                user_preferences = user.preferences or dict()
+            if config_dict:
+                project_preferences = config_dict
             elif os.path.exists(self.preferences_file_path):
                 with open(self.preferences_file_path) as f:
-                    preferences = yaml.full_load(f.read()) or {}
+                    project_preferences = yaml.full_load(f.read()) or {}
         except Exception:
             traceback.print_exc()
             pass
 
+        # Git settings
         if os.getenv(GIT_REPO_LINK_VAR):
             self.sync_config = dict(
                 remote_repo_link=os.getenv(GIT_REPO_LINK_VAR),
@@ -51,7 +54,14 @@ class Preferences:
                 sync_on_pipeline_run=bool(int(os.getenv(GIT_SYNC_ON_PIPELINE_RUN_TYPE) or 0)),
             )
         else:
-            self.sync_config = preferences.get('sync_config', dict())
+            project_sync_config = project_preferences.get('sync_config', dict())
+            user_preferences = (
+                user_preferences.get(self.repo_path)
+                if self.repo_path in user_preferences
+                else user_preferences
+            )
+            user_git_settings = user_preferences.get('sync_config')
+            self.sync_config = merge_dict(project_sync_config, user_git_settings)
 
     def has_valid_git_config(self) -> bool:
         return 'remote_repo_link' in self.sync_config and 'repo_path' in self.sync_config
