@@ -6,6 +6,7 @@ from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.sources.constants import (
     COLUMN_TYPE_OBJECT,
+    COLUMN_TYPE_BINARY,
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_STRING,
 )
@@ -16,19 +17,19 @@ import boto3
 # to util file to share between different sources.
 import mage_integrations.sources.mongodb.tap_mongodb.sync_strategies.common as common
 
-LAST_EVALUATED_TABLE_NAME = 'LastEvaluatedTableName'
-LAST_EVALUATED_KEY = 'LastEvaluatedKey'
-EXCLUSIVE_STAR_KEY = 'ExclusiveStartKey'
-TABLE_NAMES = 'TableNames'
-TABLE = 'Table'
-AWS_REGION = 'aws_region'
+ATTRIBUTE_DEFINITIONS = 'AttributeDefinitions'
 ATTRIBUTE_NAME = 'AttributeName'
 ATTRIBUTE_TYPE = 'AttributeType'
-KEY_SCHEMA = 'KeySchema'
-ATTRIBUTE_DEFINITIONS = 'AttributeDefinitions'
 AWS_ACCESS_KEY_ID = 'aws_access_key_id'
+AWS_REGION = 'aws_region'
 AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
+EXCLUSIVE_STAR_KEY = 'ExclusiveStartKey'
 ITEMS = 'Items'
+KEY_SCHEMA = 'KeySchema'
+LAST_EVALUATED_TABLE_NAME = 'LastEvaluatedTableName'
+LAST_EVALUATED_KEY = 'LastEvaluatedKey'
+TABLE = 'Table'
+TABLE_NAMES = 'TableNames'
 
 
 class DynamoDb(Source):
@@ -72,7 +73,7 @@ class DynamoDb(Source):
             elif column_type == 'N':
                 column_types.append(COLUMN_TYPE_NUMBER)
             elif column_type == 'B':
-                column_types.append(COLUMN_TYPE_OBJECT)
+                column_types.append(COLUMN_TYPE_BINARY)
             else:
                 self.logger.error(f'Unknown column type {column_type} for column {column_name}')
 
