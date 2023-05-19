@@ -46,7 +46,7 @@ class UtilsTest(DBTestCase):
             email='admin@admin.com',
             password_hash=create_bcrypt_hash('admin', password_salt),
             password_salt=password_salt,
-            roles_new=[Role.query.filter(Role.name == 'owner').first()],
+            roles_new=[Role.query.filter(Role.name == 'Owner').first()],
             username='admin',
         )
         access = user.get_access(None)

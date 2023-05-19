@@ -122,7 +122,7 @@ class UserResource(DatabaseResource):
     def update(self, payload, **kwargs):
         error = ApiError.RESOURCE_INVALID.copy()
 
-        roles_new = payload.get('roles_new')
+        roles_new = payload.get('roles_new', [])
         roles_new = list(map(
             lambda role_id: Role.query.get(int(role_id)),
             roles_new,
