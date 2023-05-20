@@ -2038,7 +2038,11 @@ df = get_variable('{self.pipeline.uuid}', '{block_uuid}', 'df')
         )
 
     def _block_decorator(self, decorated_functions) -> Callable:
+<<<<<<< HEAD
         def custom_code(function) -> Callable:
+=======
+        def custom_code(function):
+>>>>>>> 4dd38153 ([hw] Add more method return type hints)
             decorated_functions.append(function)
             return function
 
