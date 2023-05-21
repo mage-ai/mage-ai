@@ -56,7 +56,7 @@ type FileEditorProps = {
   pipeline: PipelineType;
   selectedFilePath: string;
   sendTerminalMessage: (message: string, keep?: boolean) => void;
-  setDisableShortcuts: (disableShortcuts: boolean) => void;
+  setDisableShortcuts?: (disableShortcuts: boolean) => void;
   setErrors?: (errors: ErrorsType) => void;
   setFilesTouched: (data: {
     [path: string]: boolean;
@@ -105,8 +105,8 @@ function FileEditor({
   const [touched, setTouched] = useState<boolean>(false);
 
   useEffect(() => {
-    if (active) {
-      setDisableShortcuts(true);
+    if (active && setDisableShortcuts) {
+      setDisableShortcuts?.(true);
     }
   }, [active, setDisableShortcuts]);
 

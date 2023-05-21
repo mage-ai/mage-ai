@@ -20,6 +20,7 @@ export type FileTabProps = {
   };
   onClickTab?: (filePath: string) => void;
   onClickTabClose?: (filePath: string) => void;
+  renderTabTitle?: (filePath: string) => string;
   savePipelineContent?: () => void;
 };
 
@@ -36,6 +37,7 @@ function FileTab({
   isLast,
   onClickTab,
   onClickTabClose,
+  renderTabTitle,
   savePipelineContent,
   selected,
   themeContext,
@@ -71,41 +73,50 @@ function FileTab({
           alignItems="center"
           fullHeight
         >
-          {!filesTouched[filePath] && (
-            <FileFill
-              muted={!selected}
-              size={UNIT * 1.5}
-            />
-          )}
-
-          {filesTouched[filePath] && (
-            <Tooltip
-              label="Unsaved changes"
-              size={null}
-              widthFitContent
-            >
-              <div style={{ padding: 1 }}>
-                <Circle
-                  borderColor={(themeContext || dark).borders.danger}
-                  size={UNIT * 1.25}
-                />
-              </div>
-            </Tooltip>
-          )}
-
-          <Spacing mr={1} />
-
-          <Text
-            muted={!selected}
+          <Tooltip
+            appearAbove
+            appearBefore
+            label={filePath}
+            size={null}
+            widthFitContent
           >
-            {filePath}
-          </Text>
+            <FlexContainer
+              alignItems="center"
+              fullHeight
+            >
+              {!filesTouched[filePath] && (
+                <FileFill
+                  muted={!selected}
+                  size={UNIT * 1.5}
+                />
+              )}
+
+              {filesTouched[filePath] && (
+                <Tooltip
+                  label="Unsaved changes"
+                  size={null}
+                  widthFitContent
+                >
+                  <div style={{ padding: 1 }}>
+                    <Circle
+                      borderColor={(themeContext || dark).borders.danger}
+                      size={UNIT * 1.25}
+                    />
+                  </div>
+                </Tooltip>
+              )}
+
+              <Spacing mr={1} />
+
+              <Text muted={!selected}>
+                {renderTabTitle ? renderTabTitle(filePath) : filePath}
+              </Text>
+            </FlexContainer>
+          </Tooltip>
 
           <Spacing mr={2} />
 
           <Tooltip
-            appearAbove
-            appearBefore
             label="Close"
             size={null}
             widthFitContent

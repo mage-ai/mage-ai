@@ -1,10 +1,14 @@
+import * as osPath from 'path';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import ApiReloader from '@components/ApiReloader';
 import Dashboard from '@components/Dashboard';
 import FileBrowser from '@components/FileBrowser';
-import PrivateRoute from '@components/shared/PrivateRoute';
-import api from '@api';
+import FileEditor from '@components/FileEditor';
 import FileTabs from '@components/PipelineDetail/FileTabs';
+import PrivateRoute from '@components/shared/PrivateRoute';
+import TripleLayout from '@components/TripleLayout';
+import api from '@api';
 import {
   addOpenFilePath as addOpenFilePathLocalStorage,
   getOpenFilePaths,
@@ -13,10 +17,29 @@ import {
 } from '@storage/files';
 import { useError } from '@context/Error';
 
+function getFilenameFromFilePath(filePath: string): string {
+  const parts = filePath.split(osPath.sep);
+  const filename = parts[parts.length - 1];
+  return filename;
+}
+
 function FilesPage() {
   const fileTreeRef = useRef(null);
   const [openFilePaths, setOpenFilePathsState] = useState<string[]>([]);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
+  const [filesTouched, setFilesTouched] = useState<{
+    [filePath: string]: boolean;
+  }>({});
+
+  const openFilenameMapping = useMemo(() => openFilePaths.reduce((acc, filePath: string) => {
+    const filename = getFilenameFromFilePath(filePath);
+    if (!acc[filename]) {
+      acc[filename] = [];
+    }
+    acc[filename].push(filePath);
+
+    return acc;
+  }, {}), [openFilePaths]);
 
   const setOpenFilePaths = useCallback((filePaths: string[]) => {
     setOpenFilePathsLocalStorage(filePaths);
@@ -86,14 +109,25 @@ function FilesPage() {
   const fileTabsMemo = useMemo(() => (
     <FileTabs
       filePaths={openFilePaths}
-      // filesTouched={filesTouched}
+      filesTouched={filesTouched}
       isSelectedFilePath={(filePath: string, selectedFilePath: string) => filePath === selectedFilePath}
       onClickTab={(filePath: string) => setSelectedFilePath(filePath)}
       onClickTabClose={(filePath: string) => removeOpenFilePath(filePath)}
+      renderTabTitle={(filePath: string) => {
+        const filename = getFilenameFromFilePath(filePath);
+        const arr = openFilenameMapping[filename];
+        if (arr && arr?.length >= 2) {
+          return filePath;
+        }
+
+        return filename;
+      }}
       selectedFilePath={selectedFilePath}
     />
   ), [
+    filesTouched,
     openFilePaths,
+    openFilenameMapping,
     removeOpenFilePath,
     selectedFilePath,
   ]);
@@ -113,12 +147,40 @@ function FilesPage() {
     openFile,
   ]);
 
+  const fileEditorMemo = useMemo(() => openFilePaths?.map((filePath: string) => (
+    <div
+      key={filePath}
+      style={{
+        display: selectedFilePath === filePath
+          ? null
+          : 'none',
+      }}
+    >
+      <ApiReloader uuid={`FileEditor/${decodeURIComponent(filePath)}`}>
+        <FileEditor
+          active={selectedFilePath === filePath}
+          filePath={filePath}
+          // openSidekickView={openSidekickView}
+          selectedFilePath={selectedFilePath}
+          // sendTerminalMessage={sendTerminalMessage}
+          // setDisableShortcuts={setDisableShortcuts}
+          // setErrors={setErrors}
+          setFilesTouched={setFilesTouched}
+        />
+      </ApiReloader>
+    </div>
+  )), [
+    openFilePaths,
+    selectedFilePath,
+  ]);
+
   return (
     <Dashboard
       title="Files"
       uuid="Files/index"
     >
       {fileTabsMemo}
+      {fileEditorMemo}
       {fileBrowserMemo}
     </Dashboard>
   );
