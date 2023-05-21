@@ -18,10 +18,10 @@ def extract_selected_columns(metadata_array: List[dict]) -> List[str]:
            len(breadcrumb) == 2 and \
            breadcrumb[0] == 'properties':
             column = breadcrumb[1]
-            selected = metadata.get(METADATA_KEY_SELECTED, False)
+            # selected = metadata.get(METADATA_KEY_SELECTED, False)
 
-            if selected:
-                columns.append(column)
+            # if selected:
+            columns.append(column)
 
     return columns
 

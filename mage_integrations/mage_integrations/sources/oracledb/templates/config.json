@@ -1,0 +1,7 @@
+{
+    "host": "oracle-db1",
+    "port": "1521",
+    "service": "xepdb1",
+    "password": "123456",
+    "user": "ot"
+}
