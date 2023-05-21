@@ -522,7 +522,7 @@ function CodeOutput({
     tableContent,
   ]);
 
-  if (!buttonTabs && !hasOutput) {
+  if (!buttonTabs && !hasError && !hasOutput) {
     return null;
   }
 

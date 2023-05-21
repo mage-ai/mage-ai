@@ -82,10 +82,29 @@ def build_time_series_buckets(df, datetime_column, time_interval, metrics):
         return []
 
     datetimes = datetimes.unique()
-    min_value_datetime = dateutil.parser.parse(datetimes.min())
-    max_value_datetime = dateutil.parser.parse(datetimes.max())
+    min_value_datetime = datetimes.min()
+    max_value_datetime = datetimes.max()
 
-    a, b = [dateutil.parser.parse(d) for d in sorted(datetimes)[:2]]
+    if type(min_value_datetime) is str:
+        min_value_datetime = dateutil.parser.parse(min_value_datetime)
+    if type(max_value_datetime) is str:
+        max_value_datetime = dateutil.parser.parse(max_value_datetime)
+
+    # If you manually convert the datetime column to a datetime, Pandas will use numpy.datetime64
+    # type. This type does not have the methods year, month, day, etc that is used down below.
+    datetimes_temp = []
+    for dt in datetimes:
+        if type(dt) is np.datetime64:
+            datetimes_temp.append(pd.to_datetime(dt.astype(datetime)).to_pydatetime())
+        else:
+            datetimes_temp.append(dt)
+    datetimes = datetimes_temp
+    if type(min_value_datetime) is np.datetime64:
+        min_value_datetime = pd.to_datetime(min_value_datetime.astype(datetime)).to_pydatetime()
+    if type(max_value_datetime) is np.datetime64:
+        max_value_datetime = pd.to_datetime(max_value_datetime.astype(datetime)).to_pydatetime()
+
+    a, b = [dateutil.parser.parse(d) if type(d) is str else d for d in sorted(datetimes)[:2]]
 
     year = min_value_datetime.year
     month = min_value_datetime.month

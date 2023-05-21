@@ -326,6 +326,7 @@ function ChartBlock({
     />
   ), [
     autocompleteProviders,
+    block,
     chartType,
     content,
     isEditing,
@@ -336,7 +337,7 @@ function ChartBlock({
     updateContent,
   ]);
 
-  const codeOutputEl = useMemo(() => hasError && hasOutput && (
+  const codeOutputEl = useMemo(() => (hasError || hasOutput) && (
     <CodeOutput
       {...borderColorShareProps}
       block={block}
@@ -374,7 +375,7 @@ function ChartBlock({
   }, [
     isEditing,
     isEditingPrevious,
-    refChartContainer.current,
+    refChartContainer,
     setChartWidth,
     width,
     widthPrevious,
@@ -425,13 +426,15 @@ function ChartBlock({
               {blockUUID}
             </Text>
           </Link>
-        </Spacing>
+        </Spacing>,
       );
     });
 
     return arr;
   }, [
+    blockRefs,
     blocksMapping,
+    themeContext,
     upstreamBlocks,
   ]);
 
@@ -483,6 +486,7 @@ function ChartBlock({
 
     return arr;
   }, [
+    chartType,
     configuration,
     configurationOptions,
   ]);
@@ -512,6 +516,7 @@ function ChartBlock({
     chartTypePrevious,
     configuration,
     content,
+    defaultSettings,
     updateConfiguration,
     updateContent,
     upstreamBlocks,
@@ -757,13 +762,12 @@ function ChartBlock({
     }), {
     noCode: [],
   }), [
-    blocksMapping,
+    block,
     configuration,
     configurationOptions,
-    outputs,
+    dataBlock,
     setSelectedBlock,
     updateConfiguration,
-    upstreamBlocks,
   ]);
 
   const [updateBlock] = useMutation(
