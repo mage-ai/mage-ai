@@ -5,7 +5,6 @@ from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.utils import get_standard_metadata
 from mage_integrations.sources.constants import (
-    COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_BINARY,
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_STRING,
@@ -23,7 +22,7 @@ ATTRIBUTE_TYPE = 'AttributeType'
 AWS_ACCESS_KEY_ID = 'aws_access_key_id'
 AWS_REGION = 'aws_region'
 AWS_SECRET_ACCESS_KEY = 'aws_secret_access_key'
-EXCLUSIVE_STAR_KEY = 'ExclusiveStartKey'
+EXCLUSIVE_START_KEY = 'ExclusiveStartKey'
 ITEMS = 'Items'
 KEY_SCHEMA = 'KeySchema'
 LAST_EVALUATED_TABLE_NAME = 'LastEvaluatedTableName'
@@ -135,7 +134,7 @@ class DynamoDb(Source):
         client = self.build_client()
         client.describe_endpoints()
 
-    def scan_table(self, table_name):
+    def scan_table(self, table_name, last_evaluated_key):
         '''
         Scan records in one table.
         '''
@@ -147,12 +146,15 @@ class DynamoDb(Source):
         client = self.build_client()
         has_more = True
 
+        if last_evaluated_key is not None:
+            scan_params[EXCLUSIVE_START_KEY] = last_evaluated_key
+
         while has_more:
             result = client.scan(**scan_params)
             yield result
 
             if result.get(LAST_EVALUATED_KEY):
-                scan_params[EXCLUSIVE_STAR_KEY] = result[LAST_EVALUATED_KEY]
+                scan_params[EXCLUSIVE_START_KEY] = result[LAST_EVALUATED_KEY]
 
             has_more = result.get(LAST_EVALUATED_KEY, False)
 
@@ -166,8 +168,17 @@ class DynamoDb(Source):
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
         table_name = stream.tap_stream_id
-        for result in self.scan_table(table_name):
+
+        bookmark_last_modified = None
+        if bookmarks is not None and bookmarks.get(LAST_EVALUATED_KEY) is not None:
+            bookmark_last_modified = bookmarks.get(LAST_EVALUATED_KEY)
+
+        for result in self.scan_table(table_name, bookmark_last_modified):
             data = []
+
+            if result.get(LAST_EVALUATED_KEY):
+                bookmark_last_modified = result[LAST_EVALUATED_KEY]
+
             for item in result.get(ITEMS, []):
                 record_message = common.row_to_singer_record(
                         stream.to_dict(),
