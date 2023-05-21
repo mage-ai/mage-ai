@@ -41,6 +41,8 @@ class Source(BaseSource):
         raise Exception('Subclasses must implement the build_connection method.')
 
     def discover(self, streams: List[str] = None) -> Catalog:
+        self.logger.info("Testing sql base discover method")
+
         query = self.build_discover_query(streams=streams)
 
         rows = self.build_connection().load(query)
@@ -257,6 +259,7 @@ WHERE table_schema = '{schema}'
         pass
 
     def _limit_query_string(self, limit, offset):
+        self.logger.info("Testing _limit_query_string")
         return f'LIMIT {limit} OFFSET {offset}'
 
     def _replication_method(self, stream, bookmarks: Dict = None):
@@ -304,6 +307,9 @@ WHERE table_schema = '{schema}'
                     order_by_columns.append(col)
 
         columns = extract_selected_columns(stream.metadata)
+        self.logger.info(f"Testing _fetch_rows metadata: {stream.metadata}")
+        self.logger.info(f"Testing _fetch_rows columns: {columns}")
+
         clean_columns = self.update_column_names(columns)
 
         if not order_by_columns:
@@ -379,6 +385,7 @@ WHERE table_schema = '{schema}'
             ]
         with_limit_query_string = '\n'.join(with_limit_query_string)
 
+        self.logger.info(f"Testing _fetch_rows query: {with_limit_query_string}")
         rows_temp = self.build_connection().load(with_limit_query_string)
         if count_records:
             rows = [dict(number_of_records=row[0]) for row in rows_temp]
